@@ -1,0 +1,18 @@
+apply plugin: "com.android.application"
+
+android {
+    namespace "com.xxcomic"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.xxcomic"
+        minSdk 23
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.1"
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+}

@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "com.xxcomic.app-merged_res-5:/mipmap_ic_launcher.xml.flat",
+        "source": "com.xxcomic.app-main-7:/mipmap/ic_launcher.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-5:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.xxcomic.app-main-7:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-5:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.xxcomic.app-main-7:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-5:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.xxcomic.app-main-7:/drawable/ic_launcher_foreground.xml"
+    }
+]

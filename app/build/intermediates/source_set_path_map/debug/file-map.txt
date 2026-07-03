@@ -1,0 +1,8 @@
+com.xxcomic.app-pngs-0 F:\softForCode\codex-project\xx-comic\app\build\generated\res\pngs\debug
+com.xxcomic.app-resValues-1 F:\softForCode\codex-project\xx-comic\app\build\generated\res\resValues\debug
+com.xxcomic.app-rs-2 F:\softForCode\codex-project\xx-comic\app\build\generated\res\rs\debug
+com.xxcomic.app-packageDebugResources-3 F:\softForCode\codex-project\xx-comic\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.xxcomic.app-packageDebugResources-4 F:\softForCode\codex-project\xx-comic\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.xxcomic.app-merged_res-5 F:\softForCode\codex-project\xx-comic\app\build\intermediates\merged_res\debug
+com.xxcomic.app-debug-6 F:\softForCode\codex-project\xx-comic\app\src\debug\res
+com.xxcomic.app-main-7 F:\softForCode\codex-project\xx-comic\app\src\main\res

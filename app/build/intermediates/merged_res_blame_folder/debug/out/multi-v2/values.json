@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.xxcomic.app-mergeDebugResources-3:/values/values.xml",
+            "map": [
+                {
+                    "source": "F:\\softForCode\\codex-project\\xx-comic\\app\\src\\main\\res\\values\\styles.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "8",
+                        "endColumns": "12",
+                        "endOffsets": "446"
+                    }
+                }
+            ]
+        }
+    ]
+}
