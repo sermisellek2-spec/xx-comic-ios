@@ -1,44 +1,86 @@
-# XX Comic Android MVP
+# XX Comic
 
-原生 Android 漫画阅读 App。当前版本已改回项目原型图的暖色卡片样式，并接入包子漫画真实数据。
+原生 Android 漫画阅读 App，当前专注 Android 版本。项目使用 Java + Android View 实现，不依赖跨端框架。
 
-## 当前能力
+## 功能概览
 
-- 搜索页使用原型图风格：浅暖背景、橙色选中态、双列漫画卡片。
-- 默认展示包子漫画“最新上架”分类，也可以输入漫画名或作者后点击键盘搜索。
-- 搜索结果、封面、详情、章节目录、阅读图片来自 `https://cn.bzmgcn.com` 页面解析。
-- 详情页使用原型图结构：渐变 hero、白色信息卡、收藏/阅读按钮、阅读来源、章节目录。
-- 阅读页使用原型图结构：深色顶栏、漫画图片流、上一章/下一章。
-- 收藏、阅读进度、站源状态、自定义站源、章节排序、缓存状态使用 `SharedPreferences` 保存。
-- Java 编译已固定为 UTF-8，避免中文搜索词和界面文案在 APK 中变成乱码。
+- 收藏页作为默认首页，支持收藏、继续阅读、最近阅读置顶和重复收藏处理。
+- 搜索页支持已启用站源切换、站源分类筛选、键盘触发搜索和下拉分页加载。
+- 支持多站源全站搜索，并发搜索所有启用站源后汇总展示结果。
+- 详情页按需加载章节目录，目录使用抽屉弹出，避免进入详情时被目录请求拖慢。
+- 阅读页支持上下章切换、目录抽屉、点击中心切换全屏、左右轻点切换上一章/下一章。
+- 支持白天/黑夜主题，默认按时间自动切换，也可在“我的”页面手动切换。
+- 支持站源配置导入/导出、站源可用性检测、缓存清理和错误日志查看/导出/清理。
 
-## 验证
+## 内置站源
 
-静态源检查：
+- 包子漫画：`https://cn.bzmgcn.com`
+- 漫画屋：`https://www.mhua5.com`
+- 爱看漫画：`https://www.0592cr.com`
+- G社漫画：`https://m.g-mh.org`
 
-```bash
-node tools/check-android-source.js
-```
+站源搜索、分类、详情、目录和章节解析配置集中在代码内的站源配置中；导出的 JSON 会携带当前站源配置，方便其他用户导入后直接使用。
 
-真实包子漫画页面探测：
+## 环境要求
 
-```bash
-node tools/probe-baozi.js
-```
+- JDK 17
+- Android Gradle Plugin 7.4.2
+- compileSdk 34
+- minSdk 23
 
-Android Debug APK：
+如果本机没有配置全局 `JAVA_HOME`，可以临时指定 JetBrains Runtime：
 
 ```powershell
-$env:JAVA_HOME='C:\Users\15361\.jdks\corretto-17.0.12'
+$env:JAVA_HOME='C:\Program Files\JetBrains\IntelliJ IDEA 2024.1.6\jbr'
+$env:Path="$env:JAVA_HOME\bin;$env:Path"
+```
+
+## 构建
+
+```powershell
 .\gradlew.bat assembleDebug
 ```
 
-输出位置：
+Debug APK 输出位置：
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## 数据源说明
+## 常用验证
 
-包子漫画章节入口会通过 `page_direct` 跳转到真实章节页。`BaoziComicSource` 已处理 302 跳转，并解析章节页中的 `scomic` 图片地址。站点结构变化时，先运行 `tools/probe-baozi.js` 判断搜索、详情和图片选择器是否仍然可用。
+静态源码检查：
+
+```bash
+node tools/check-android-source.js
+```
+
+包子漫画页面探测：
+
+```bash
+node tools/probe-baozi.js
+```
+
+完整编译验证：
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+## 目录结构
+
+```text
+app/src/main/java/com/xxcomic/
+  MainActivity.java          主界面、页面跳转、交互逻辑
+  UIHelpers.java             UI 组件和主题 token
+  DataHelpers.java           本地数据辅助逻辑
+  source/                    各站源解析与配置
+tools/                       本地探测和检查脚本
+```
+
+## 开发注意
+
+- 先保留原生 View 写法，避免引入不必要依赖。
+- 站源解析变更前，优先用对应探针或接口返回确认真实 HTML/JSON 结构。
+- 搜索、目录和章节加载都应保留 loading/错误状态，避免静默卡住。
+- 修改后至少运行 `.\gradlew.bat assembleDebug`。

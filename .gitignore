@@ -1,0 +1,40 @@
+# Gradle
+.gradle/
+build/
+*/build/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Local environment
+local.properties
+*.keystore
+*.jks
+
+# Android generated files
+captures/
+.externalNativeBuild/
+.cxx/
+
+# APK / bundle outputs
+*.apk
+*.ap_
+*.aab
+
+# Java / Kotlin generated files
+*.class
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
