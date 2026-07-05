@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>名侦探柯南：零的日常 - 漫画屋-漫画大全-免费漫画在线看-最好看的漫画</title>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1" >
+<meta name="keywords" content="漫画屋,动漫屋,在线漫画,漫画大全,免费漫画,漫画在线看,手机看漫画,手机漫画,日漫,国漫,韩漫">
+<meta name="description" content="漫画屋&#40;www.mhua5.com&#41;为您提供优质的漫画阅读体验，日本漫画,港台漫画,韩国漫画,欧美漫画,好漫画。热门漫画：火影忍者、海贼王、死神、一拳超人、古惑仔等漫画阅读网站，就在漫画屋">
+<!-- Mccms core JS build, must be loaded -->
+<script>var Mcpath = {url:'www.mhua5.com',web:'/',basepath:'/packs/',tpl:'/template/pc/default/',istel:1};</script>
+<link rel="stylesheet" href="/packs/layui/css/layui.css">
+<script src="/packs/layui/layui.all.js"></script>
+<script src="/packs/mccms/base.js"></script>
+<!-- //Mccms core JS build, must be loaded -->
+
+<!-- This template needs to be built -->
+<link rel="shortcut icon" href="/template/pc/default/images/favicon.ico" type="image/x-icon"/>
+<link rel="Bookmark" href="/template/pc/default/images/favicon.ico"/>
+<link rel="stylesheet" href="/template/pc/default/css/common_home.css">
+<link rel="stylesheet" href="/template/pc/default/css/home.css">
+<script src="/template/pc/default/js/jquery.lazyload.min.js"></script>
+<script src="/template/pc/default/js/jquery.SuperSlide.2.1.3.js"></script>
+<script src="/template/pc/default/js/index.js"></script>
+<!--[if lt IE 9]>
+	<script src="/template/pc/default/js/respond.js"></script>
+<![endif]-->
+<script>
+window._bd_share_config = {"common" : {"bdSnsKey" : {},"bdText" : document.title,"bdUrl" : window.location.href,"bdDesc":'',"bdMini" : "2","bdMiniList" : false,"bdStyle" : "0","bdSize" : "32",},"share" : {}};
+with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+</head>
+<body class="p-detail">
+<div style='display:none;'><img src='/template/pc/default/images/app_logo.png' /></div>
+<div class="in-header">
+	<div class="in-header__wrap container--response">
+    	<a class="in-header__logo" href="https://www.mhua5.com/"></a>
+    	<div class="in-header__nav">
+      		<ul class="clearfix">
+		        <li id="nav_index" class="nav-item">
+		        	<a href="https://www.mhua5.com/">首页</a>
+		        	<div class="underline"></div>
+		        </li>
+		        <li id="nav_update" class="nav-item">
+			        <a href="/index.php/custom/update">更新</a>
+			        <div class="underline"></div>
+		        </li>
+		        <li id="nav_hot" class="nav-item">
+		        	<a href="/index.php/custom/top">排行</a>
+		        	<div class="underline"></div>
+		        </li>
+		        <li id="nav_type" class="nav-item">
+		        	<a href="/index.php/category/">分类</a>
+		        	<div class="underline"></div>
+		        </li>
+             <!--   <li id="nav_book" class="nav-item">
+                    <a href="/index.php/book">小说</a>
+                    <div class="underline"></div>
+                    <img class="new" src="/template/pc/default/images/ic_nav_newxs.png" alt="new">
+                </li>-->
+      		</ul>
+        </div>
+        <div class="in-header__search">
+            <input class="input j-header-input" type="text" placeholder="请输入漫画标题或者作者名">
+            <span class="button"></span>
+            <i class="iconfont icon-ic_head_search"></i>
+            <div class="in-dialog--search hide">
+                <div class="search-hot-wr">
+                    <p class="dialog-title">今日热搜</p>
+                    <div class="search-hot">
+                        <script class="hot-search-tpl" type="text/html">
+                          {{#layui.each(d, function(index, item) { }}
+                            <div class="search-hot__item {{ index == 0 ? 'active' : '' }}">
+                                <p class="search-item__name">
+                                    <span class="num {{ index < 3 ? 'num--' + (index + 1) : '' }}">{{ index + 1 }}</span>
+                                    <span class="comic-title">{{ item.name }}</span>
+                                </p>
+                                <a class="search-item__detail fl" href="{{ item.url }}">
+                                    <span class="num {{ index < 3 ? 'num--' + (index + 1) : '' }}">{{ index + 1 }}</span>
+                                    <span class="cover"><img src="{{ item.pic}}" alt="{{ item.name }}"></span>
+                                    <p class="title">{{ item.name }}</p>
+                                    <p class="text">作者：{{ item.author }}</p>
+                                    <p class="text">{{ item.text}}</p>
+                                </a>
+                            </div>
+                          {{# }) }}
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="in-header__user">
+            <ul class="fl clearfix">
+                <li class="user-item j-user-msg">
+                    <a href="/index.php/user/message" rel="nofollow">
+                        <i class="iconfont icon-ic_head_inform"></i>
+                        <span class="item-text">消息</span>
+                    </a>
+                </li>
+                <li class="user-item j-header-his">
+                    <a href="/index.php/user/read" rel="nofollow">
+                        <i class="iconfont icon-ic_head_footprint"></i>
+                        <span class="item-text">历史</span>
+                    </a>
+                    <div class="in-dialog--his hide">
+                        <p class="in-dialog__title">我看过的<a class="more" href="/index.php/user/read">查看全部></a></p>
+                        <p class="in-dialog__offline">登录同步看到各端数据，<a class="hl" href="/index.php/user/login">请登录</a></p>
+                        <ul class="in-dialog__user-list hide"></ul>
+                        <script class="header-his-tpl" type="text/html">
+                            {{# layui.each(d, function(index, item) { }}
+                            <li class="list-item">
+                                <a class="cover" href="{{ item.url }}"><img src="{{ item.pic}}" alt="{{ item.name }}"></a>
+                                <p class="comic-title"><a href="{{ item.url }}">{{ item.name }}</a></p>
+                                <p class="read-at">读至：<a href="{{ item.chapter_url }}">{{ item.chapter_name }}</a></p>
+                                <p class="update">更至：<a class="hl" href="{{ item.chapter_xurl }}">{{ item.chapter_xname }}</a></p>
+                                <a class="read" href="{{ item.chapter_url }}">续看></a>
+                            </li>
+                            {{# }) }}
+                        </script>
+                        <div class="in-dialog__empty">还没有看过的漫画，<a class="hl" href="/index.php/category/">去追一部</a></div>
+                        <span class="triangle"><i class="iconfont icon-ic_nav_toast_sj"></i></span>
+                    </div>
+                </li>
+                <li class="user-item j-header-coll">
+                    <a href="/index.php/user/fav" rel="nofollow">
+                        <i class="iconfont icon-ic_head_coll"></i>
+                        <span class="item-text">收藏</span>
+                    </a>
+                    <div class="in-dialog--coll hide">
+                        <p class="in-dialog__title">我收藏的<a class="more" href="/index.php/user/fav">查看全部></a></p>
+                        <ul class="in-dialog__user-list">
+                        <script class="header-coll-tpl" type="text/html">
+                        {{# layui.each(d, function(index, item) { }}
+                            <li class="list-item">
+                                <a class="cover" href="{{ item.url }}"><img src="{{ item.pic}}" alt="{{ item.name }}"></a>
+                                <p class="comic-title"><a href="{{ item.url }}">{{ item.name }}</a></p>
+                                <p class="read-at">读至：<a href="{{ item.chapter_url }}">{{ item.chapter_name }}</a></p>
+                                <p class="update">更至：<a class="hl" href="{{ item.chapter_xurl }}">{{ item.chapter_xname }}</a></p>
+                                <a class="read" href="{{ item.chapter_url }}">续看></a>
+                            </li>
+                        {{# }) }}
+                        </script>
+                        </ul>
+                        <div class="in-dialog__empty coll hide">还没有收藏的漫画，<a class="hl" href="/index.php/category/">去追一部</a></div>
+                        <div class="in-dialog__empty offline">登录查看收藏记录，<a class="hl" href="/index.php/user/login">去登录</a></div>
+                        <span class="triangle"><i class="iconfont icon-ic_nav_toast_sj"></i></span>
+                    </div>
+                </li>
+                <li class="user-item">
+                    <a href="/index.php/author/comic/add">
+                        <i class="iconfont icon-ic_head_tg"></i>
+                        <span class="item-text">投稿</span>
+                    </a>
+                </li>
+                <!--
+                <li class="user-item j-header-down">
+                    <a href="" rel="nofollow">
+                        <i class="iconfont icon-ic_head_app"></i>
+                        <span class="item-text">下载APP</span>
+                    </a>
+                    <div class="in-dialog--download hide">
+                        <img class="qr-code" src="/template/pc/default/images/pic_screen1_ewm.png" alt="下载二维码">
+                        <p class="text"><i class="iconfont icon-ic_nav_app_"></i> 海量免费漫画</p>
+                        <p class="text"><i class="iconfont icon-ic_nav_app_1"></i> 流畅阅读体验</p>
+                        <p class="text"><i class="iconfont icon-ic_nav_app_2"></i> 无码高清画质</p>
+                        <span class="triangle"><i class="iconfont icon-ic_nav_toast_sj"></i></span>
+                    </div>
+                </li>
+            	-->
+            </ul>
+            <div class="j-header-avatar in-header__avatar fl">
+                <a href="/index.php/user"><img class="j-user-avatar" src="/template/pc/default/images/pic_login_defaulthead.png" alt="用户头像"></a>
+                <div class="j-dialog-avatar dialog__header-avatar hide">
+                    <div class="in-dialog--avatar">
+                        <span class="triangle"><i class="iconfont icon-ic_nav_toast_sj"></i></span>
+                        <div class="j-dialog-tourist row-1">
+                            <p class="base-info">
+                                <a class="j-user-name nickname" href="/index.php/user/login">游客</a>
+                                <i class="vip-tag icon icon-vip-tag"></i>
+                                <a class="j-user-logout logout" href="/index.php/user/login">登录领更多</a>
+                            </p>
+                            <p class="expire">VIP到期：<span class="j-user-vip-time">体验已到期</span></p>
+                        </div>
+                        <div class="row-2">
+                            <div class="fund-item">
+                                <div class="fund-item__icon"><i class="icon-user-yb"></i></div>
+                                <div class="fund-item__info">金币<br><span class="j-user-gold">0</span></div>
+                            </div>
+                            <div class="fund-item">
+                                <div class="fund-item__icon"><i class="icon-user-yp"></i></div>
+                                <div class="fund-item__info">月票<br><span class="j-user-ticket">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <script class="userinfo" type="text/html">
+                        <span class="triangle"><i class="iconfont icon-ic_nav_toast_sj"></i></span>
+                        <div class="j-dialog-user row-1">
+                            <p class="base-info">
+                                <a class="j-user-name nickname" href="/index.php/user">{{d.nichen}}</a>
+                                <i class="j-user-vip vip-tag icon-vip-tag icon-vip-type2"></i>
+                                <a class="j-user-logout logout" href="javascript:;">退出登录</a>
+                            </p>
+                            <p class="expire">VIP到期：<span class="j-user-vip-time">{{d.viptime}}</span></p>
+                            <a class="j-agin-buy-vip buy-vip" href="javascript:;">续费VIP</a>
+                        </div>
+                        <div class="row-2">
+                            <div class="fund-item">
+                                <div class="fund-item__icon"><i class="icon-user-yb"></i></div>
+                                <div class="fund-item__info">金币<br><span class="j-user-gold">{{d.cion}}</span></div>
+                            </div>
+                            <div class="fund-item">
+                                <div class="fund-item__icon"><i class="icon-user-yp"></i></div>
+                                <div class="fund-item__info">月票<br><span class="j-user-ticket">{{d.ticket}}</span></div>
+                            </div>
+                        </div>
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="de-info-wr" data-price="49" data-is_vip="1">
+    <div class="de-info__bg" style="background-image: url('https://static-tw.baozimh.com/cover/mingzhentankenanlingderichang-xinjinglongyan.jpg?w=285&h=375&q=100');"></div>
+    <div class="de-info__overlay">
+        <div class="overlay-bottom"></div>
+    </div>
+    <div class="container--response">
+        <div class="de-info__box">
+            <div class="de-info__cover"><img class="lazy" src="https://static-tw.baozimh.com/cover/mingzhentankenanlingderichang-xinjinglongyan.jpg?w=285&h=375&q=100" alt="名侦探柯南：零的日常"></div>
+            <p class="comic-title j-comic-title">名侦探柯南：零的日常</p>
+            <div class="comic-author">
+                <a href="/index.php/author"><img class="avatar" src="https://www.mhua5.com/packs/mccms/empty.png" alt="新井隆广"></a>
+                <span class="name"><a href="/index.php/author">新井隆广</a></span>
+                <span>|</span>
+                <span><a href="/index.php/author">2部作品</a></span>
+            </div>
+            <div class="comic-status">
+                <span class="text">题材: <b><a target="_blank" href="/index.php/category/tags/7">冒险</a> <a target="_blank" href="/index.php/category/tags/8">科幻</a> </b></span>
+                <span class="text">收藏: <b>0</b></span>
+                <span class="text">人气: <b>4262</b></span>
+            </div>
+            <div class="comic-intro">
+                <span class="title">简介: </span>
+                <p class="intro">
+                青山刚昌完全监修的安室透公式番外！！尚、无人知晓，拥有3张面孔的男子的日常——<p class="show"><span class="txt">展开</span> <i class="iconfont">&#xe6a3;</i></p>
+                <p class="intro-total">青山刚昌完全监修的安室透公式番外！！尚、无人知晓，拥有3张面孔的男子的日常——</p>
+                </p>
+            </div>
+            <div class="comic-handles clearfix">
+                <a class="btn--read" href="/index.php/chapter/818304">
+                    <i class="icon-de-read"></i>
+                    <span class="txt1">开始阅读</span>
+                </a>
+                <a data-id="37081" class="btn--collect j-user-collect" href="javascript:void(0);">
+                    <i class="icon-de-coll_hl"></i>
+                    <i class="icon-de-coll"></i>
+                    <span class="txt1">收藏</span>
+                    <span class="txt2">已收藏</span>
+                </a>
+            </div>
+            <div class="de-rate-wr">
+                <div class="rate-handle" data-score="99"></div>
+                <p class="rate-count">（<span class="num">0</span>人评价）</p>
+            </div>
+            <div class="de-user-handle">
+                <a data-id="37081" data-name="名侦探柯南：零的日常" data-rank="98249" data-ticket="0" class="btn--ticket" href="javascript:void(0);"><i class="icon-de-ticket"></i>投月票(<font class='ticket-num'>0</font>)</a>
+                <a class="btn--gold" href="javascript:void(0);"><i class="icon-de-gold "></i>打赏(<font class="cion-num">0</font>) </a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container--response de-container-wr clearfix">
+    <div class="de-container">
+        <div class="de-chapter">
+            <div class="de-chapter__title">
+                <span>连载</span>
+                <span class="update-time">第60话</span>
+                <div class="btn--sort reversed" style="display: block;">
+                  <span class="dx"><i class="iconfont icon-sortdown"></i> 倒序</span>
+                  <span class="zx"><i class="iconfont icon-sortup"></i> 正序</span>
+                </div>
+            </div>
+            <div class="chapter__list clearfix">
+                <ul class="chapter__list-box clearfix">
+                
+                    <li class="j-chapter-item chapter__item chapter-818328">
+                        <a class="j-chapter-link" href="/index.php/chapter/818328">
+                            
+                            
+                            
+                            第02回
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818329">
+                        <a class="j-chapter-link" href="/index.php/chapter/818329">
+                            
+                            
+                            
+                            第03回
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818330">
+                        <a class="j-chapter-link" href="/index.php/chapter/818330">
+                            
+                            
+                            
+                            第04回
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818331">
+                        <a class="j-chapter-link" href="/index.php/chapter/818331">
+                            
+                            
+                            
+                            第05回
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818332">
+                        <a class="j-chapter-link" href="/index.php/chapter/818332">
+                            
+                            
+                            
+                            第06回
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818333">
+                        <a class="j-chapter-link" href="/index.php/chapter/818333">
+                            
+                            
+                            
+                            第7话 睡不着吗？
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818334">
+                        <a class="j-chapter-link" href="/index.php/chapter/818334">
+                            
+                            
+                            
+                            第8话 让你变漂亮
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818335">
+                        <a class="j-chapter-link" href="/index.php/chapter/818335">
+                            
+                            
+                            
+                            第9话 不可以哦
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818336">
+                        <a class="j-chapter-link" href="/index.php/chapter/818336">
+                            
+                            
+                            
+                            第10话 决定了
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818337">
+                        <a class="j-chapter-link" href="/index.php/chapter/818337">
+                            
+                            
+                            
+                            第11话 狎宴
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818338">
+                        <a class="j-chapter-link" href="/index.php/chapter/818338">
+                            
+                            
+                            
+                            第12话 我是卡迈尔
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818339">
+                        <a class="j-chapter-link" href="/index.php/chapter/818339">
+                            
+                            
+                            
+                            第13话 啊…
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818340">
+                        <a class="j-chapter-link" href="/index.php/chapter/818340">
+                            
+                            
+                            
+                            第14话 长得好吗？
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818341">
+                        <a class="j-chapter-link" href="/index.php/chapter/818341">
+                            
+                            
+                            
+                            第15话 对咖喱失礼
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818342">
+                        <a class="j-chapter-link" href="/index.php/chapter/818342">
+                            
+                            
+                            
+                            第16话 是这样吧？
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818343">
+                        <a class="j-chapter-link" href="/index.php/chapter/818343">
+                            
+                            
+                            
+                            第17话 哥哥！？
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818344">
+                        <a class="j-chapter-link" href="/index.php/chapter/818344">
+                            
+                            
+                            
+                            第18话 目标是大鱼
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818345">
+                        <a class="j-chapter-link" href="/index.php/chapter/818345">
+                            
+                            
+                            
+                            第19话 心灵的绿洲
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818346">
+                        <a class="j-chapter-link" href="/index.php/chapter/818346">
+                            
+                            
+                            
+                            第20话 打游戏哦
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818347">
+                        <a class="j-chapter-link" href="/index.php/chapter/818347">
+                            
+                            
+                            
+                            第21话 请赶紧逃
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818348">
+                        <a class="j-chapter-link" href="/index.php/chapter/818348">
+                            
+                            
+                            
+                            第22话 波洛的大哥哥
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818349">
+                        <a class="j-chapter-link" href="/index.php/chapter/818349">
+                            
+                            
+                            
+                            第23话 不要模仿
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818350">
+                        <a class="j-chapter-link" href="/index.php/chapter/818350">
+                            
+                            
+                            
+                            第24话 小狗狗
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818351">
+                        <a class="j-chapter-link" href="/index.php/chapter/818351">
+                            
+                            
+                            
+                            第25话 我是王牌
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818352">
+                        <a class="j-chapter-link" href="/index.php/chapter/818352">
+                            
+                            
+                            
+                            第26话 米花
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818353">
+                        <a class="j-chapter-link" href="/index.php/chapter/818353">
+                            
+                            
+                            
+                            第27话 并不为零
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818354">
+                        <a class="j-chapter-link" href="/index.php/chapter/818354">
+                            
+                            
+                            
+                            第28话 有点……
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818355">
+                        <a class="j-chapter-link" href="/index.php/chapter/818355">
+                            
+                            
+                            
+                            第29话 灯笼裤
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818356">
+                        <a class="j-chapter-link" href="/index.php/chapter/818356">
+                            
+                            
+                            
+                            第30话 面包教室
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818357">
+                        <a class="j-chapter-link" href="/index.php/chapter/818357">
+                            
+                            
+                            
+                            第31话 生存教室
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818358">
+                        <a class="j-chapter-link" href="/index.php/chapter/818358">
+                            
+                            
+                            
+                            第32话 正好
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818359">
+                        <a class="j-chapter-link" href="/index.php/chapter/818359">
+                            
+                            
+                            
+                            第33话 这么说的话
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818360">
+                        <a class="j-chapter-link" href="/index.php/chapter/818360">
+                            
+                            
+                            
+                            第34话 Ready Go
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818361">
+                        <a class="j-chapter-link" href="/index.php/chapter/818361">
+                            
+                            
+                            
+                            第35话 振作起来
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818327">
+                        <a class="j-chapter-link" href="/index.php/chapter/818327">
+                            
+                            
+                            
+                            第36话 HANZO
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818326">
+                        <a class="j-chapter-link" href="/index.php/chapter/818326">
+                            
+                            
+                            
+                            第37话 无所谓哦
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818325">
+                        <a class="j-chapter-link" href="/index.php/chapter/818325">
+                            
+                            
+                            
+                            第38话 奇怪的传闻
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818324">
+                        <a class="j-chapter-link" href="/index.php/chapter/818324">
+                            
+                            
+                            
+                            第39话 拜托你了
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818323">
+                        <a class="j-chapter-link" href="/index.php/chapter/818323">
+                            
+                            
+                            
+                            第40话 花瓣咒语
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818322">
+                        <a class="j-chapter-link" href="/index.php/chapter/818322">
+                            
+                            
+                            
+                            第42话 看起来不同
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818321">
+                        <a class="j-chapter-link" href="/index.php/chapter/818321">
+                            
+                            
+                            
+                            第43话 可爱与强大
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818320">
+                        <a class="j-chapter-link" href="/index.php/chapter/818320">
+                            
+                            
+                            
+                            第44话 要优雅……
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818319">
+                        <a class="j-chapter-link" href="/index.php/chapter/818319">
+                            
+                            
+                            
+                            第45话 河童古井
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818318">
+                        <a class="j-chapter-link" href="/index.php/chapter/818318">
+                            
+                            
+                            
+                            第46话 电话中的对话
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818317">
+                        <a class="j-chapter-link" href="/index.php/chapter/818317">
+                            
+                            
+                            
+                            第47话 看望
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818316">
+                        <a class="j-chapter-link" href="/index.php/chapter/818316">
+                            
+                            
+                            
+                            第48话 戳破谎言的方法
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818315">
+                        <a class="j-chapter-link" href="/index.php/chapter/818315">
+                            
+                            
+                            
+                            第49话 这可是个大功劳……
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818314">
+                        <a class="j-chapter-link" href="/index.php/chapter/818314">
+                            
+                            
+                            
+                            第50话 也许能有办法呢
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818313">
+                        <a class="j-chapter-link" href="/index.php/chapter/818313">
+                            
+                            
+                            
+                            第51话 原因是什么……？
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818312">
+                        <a class="j-chapter-link" href="/index.php/chapter/818312">
+                            
+                            
+                            
+                            第52话 死神……
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818311">
+                        <a class="j-chapter-link" href="/index.php/chapter/818311">
+                            
+                            
+                            
+                            第53话 如果我能……
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818310">
+                        <a class="j-chapter-link" href="/index.php/chapter/818310">
+                            
+                            
+                            
+                            第54话 很遗憾
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818309">
+                        <a class="j-chapter-link" href="/index.php/chapter/818309">
+                            
+                            
+                            
+                            第55话 调查
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818308">
+                        <a class="j-chapter-link" href="/index.php/chapter/818308">
+                            
+                            
+                            
+                            第56话 请问要点什么？
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818307">
+                        <a class="j-chapter-link" href="/index.php/chapter/818307">
+                            
+                            
+                            
+                            第57话 来吧，猜猜是哪边？
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818306">
+                        <a class="j-chapter-link" href="/index.php/chapter/818306">
+                            
+                            
+                            
+                            第58话
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818305">
+                        <a class="j-chapter-link" href="/index.php/chapter/818305">
+                            
+                            
+                            
+                            第59话
+                        </a>
+                    </li>
+                
+                    <li class="j-chapter-item chapter__item chapter-818304">
+                        <a class="j-chapter-link" href="/index.php/chapter/818304">
+                            
+                            
+                            
+                            第60话
+                        </a>
+                    </li>
+                
+                </ul>
+                <div class="chapter__more hide" data-id="1">
+                    <a class="btn close" href="javascript:void(0);">
+                        <span class="down" href="javascript:void(0);">查看所有章节 <i class="iconfont icon-ic_detaillist_down1"></i></span>
+                        <span class="up" href="javascript:void(0);">收起 <i class="iconfont icon-ic_detaillist_up"></i></span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="de-gift">
+            <div class="de-gift__title">
+                <span>用礼物支持大大</span>
+                <p class="txt fr">
+                    <span>金币余额 <b class="hl j-user-gold">0</b></span>
+                    <span class="gap">|</span>
+                    <a class="j-pay-gold" href="javascript:;">充值金币</a>
+                </p>
+            </div>
+            <div class="de-gift__scroll clearfix"></div>
+            <ul class="de-gift__item-box clearfix">
+            
+                <li class="de-gift__item active" data-id="1" data-cion="1">
+                  <img class="gift-pic" src="https://www.mhua5.com/attachment/gift/2020/02/23/202002230109475103.png" alt="爱心猫粮">
+                  <p class="title">爱心猫粮</p>
+                  <p class="price">1金币</p>
+                </li>
+            
+                <li class="de-gift__item" data-id="2" data-cion="10">
+                  <img class="gift-pic" src="https://www.mhua5.com/attachment/gift/2020/02/23/202002230110417724.png" alt="南瓜喵">
+                  <p class="title">南瓜喵</p>
+                  <p class="price">10金币</p>
+                </li>
+            
+                <li class="de-gift__item" data-id="3" data-cion="50">
+                  <img class="gift-pic" src="https://www.mhua5.com/attachment/gift/2020/02/23/202002230110521793.png" alt="喵喵玩具">
+                  <p class="title">喵喵玩具</p>
+                  <p class="price">50金币</p>
+                </li>
+            
+                <li class="de-gift__item" data-id="4" data-cion="88">
+                  <img class="gift-pic" src="https://www.mhua5.com/attachment/gift/2020/02/23/202002230111068216.png" alt="喵喵毛线">
+                  <p class="title">喵喵毛线</p>
+                  <p class="price">88金币</p>
+                </li>
+            
+                <li class="de-gift__item" data-id="5" data-cion="100">
+                  <img class="gift-pic" src="https://www.mhua5.com/attachment/gift/2020/02/23/202002230111279507.png" alt="喵喵项圈">
+                  <p class="title">喵喵项圈</p>
+                  <p class="price">100金币</p>
+                </li>
+            
+                <li class="de-gift__item" data-id="6" data-cion="200">
+                  <img class="gift-pic" src="https://www.mhua5.com/attachment/gift/2020/02/23/202002230111366816.png" alt="喵喵手纸">
+                  <p class="title">喵喵手纸</p>
+                  <p class="price">200金币</p>
+                </li>
+            
+                <li class="de-gift__item" data-id="7" data-cion="520">
+                  <img class="gift-pic" src="https://www.mhua5.com/attachment/gift/2020/02/23/202002230112064988.png" alt="喵喵跑车">
+                  <p class="title">喵喵跑车</p>
+                  <p class="price">520金币</p>
+                </li>
+            
+                <li class="de-gift__item" data-id="8" data-cion="1314">
+                  <img class="gift-pic" src="https://www.mhua5.com/attachment/gift/2020/02/23/202002230112221466.png" alt="喵喵别墅">
+                  <p class="title">喵喵别墅</p>
+                  <p class="price">1314金币</p>
+                </li>
+            
+            </ul>
+            <div class="send-gift" data-mid="37081" data-id="0" data-cion="0">
+                <span class="j-loading-icon loading-icon hide">
+                    <i class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop"></i>
+                </span>
+                <span class="txt">我要打赏</span>
+            </div>
+        </div>
+        <div class="guess-u-like clearfix">
+            <p class="guess__title">猜你喜欢！最热漫画等你翻牌</p>
+            <div class="guess__list clearfix">
+                <div class="slide-wrapper">
+                    
+                    <div class="guess-item slide-item">
+                        <div class="cover">
+                            <a href="/index.php/comic/zhenghoufangdeshenwei"><img class="lazy-slide lazy" data-original="https://static-tw.baozimh.com/cover/zhenghoufangdeshenwei-erokiwuwanmishengkonosirosinko.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt="正后方的神威"></a>
+                            <div class="cover__tag">第78話</div>
+                        </div>
+                        <p class="comic__title"><a href="/index.php/comic/zhenghoufangdeshenwei">正后方的神威</a></p>
+                        <p class="comic__feature"> 正后方的神威 えろ...</p>
+                    </div>
+                    
+                    <div class="guess-item slide-item">
+                        <div class="cover">
+                            <a href="/index.php/comic/doupocangkong"><img class="lazy-slide lazy" data-original="https://static-tw.baozimh.com/cover/doupocangqiong-zhiyinmankerenxiang.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt="斗破苍穹"></a>
+                            <div class="cover__tag">第519回 帝戰終局</div>
+                        </div>
+                        <p class="comic__title"><a href="/index.php/comic/doupocangkong">斗破苍穹</a></p>
+                        <p class="comic__feature">正所谓三十年河东三十...</p>
+                    </div>
+                    
+                    <div class="guess-item slide-item">
+                        <div class="cover">
+                            <a href="/index.php/comic/shaosong"><img class="lazy-slide lazy" data-original="https://static-tw.baozimh.com/cover/shaosong-yuewenmanhua.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt="绍宋"></a>
+                            <div class="cover__tag">211 塬上爭鋒</div>
+                        </div>
+                        <p class="comic__title"><a href="/index.php/comic/shaosong">绍宋</a></p>
+                        <p class="comic__feature">皇九子赵构在南京应天...</p>
+                    </div>
+                    
+                    <div class="guess-item slide-item">
+                        <div class="cover">
+                            <a href="/index.php/comic/yirenzhixia"><img class="lazy-slide lazy" data-original="https://static-tw.baozimh.com/cover/yirenzhixia-dongmantang.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt="一人之下"></a>
+                            <div class="cover__tag">新766 到訪</div>
+                        </div>
+                        <p class="comic__title"><a href="/index.php/comic/yirenzhixia">一人之下</a></p>
+                        <p class="comic__feature">一人之下漫画： 他，...</p>
+                    </div>
+                    
+                    <div class="guess-item slide-item">
+                        <div class="cover">
+                            <a href="/index.php/comic/jiuzhushen"><img class="lazy-slide lazy" data-original="https://static-tw.baozimh.com/cover/jiuzhushen-mojitosmcjizhishe.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt="九柱神"></a>
+                            <div class="cover__tag">176 神殿钥匙</div>
+                        </div>
+                        <p class="comic__title"><a href="/index.php/comic/jiuzhushen">九柱神</a></p>
+                        <p class="comic__feature">和平的埃及因战争之神...</p>
+                    </div>
+                    
+                    <div class="guess-item slide-item">
+                        <div class="cover">
+                            <a href="/index.php/comic/lianaibaojun"><img class="lazy-slide lazy" data-original="https://static-tw.baozimh.com/cover/lianaibaojun-sanxingmegane.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt="恋爱暴君"></a>
+                            <div class="cover__tag">第53.5话</div>
+                        </div>
+                        <p class="comic__title"><a href="/index.php/comic/lianaibaojun">恋爱暴君</a></p>
+                        <p class="comic__feature">“虽然很突然，你要是...</p>
+                    </div>
+                    
+                    <div class="guess-item slide-item">
+                        <div class="cover">
+                            <a href="/index.php/comic/wuliandianfeng"><img class="lazy-slide lazy" data-original="https://static-tw.baozimh.com/cover/wuliandianfeng-pikapi.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt="武炼巅峰"></a>
+                            <div class="cover__tag">3877 寻找救援</div>
+                        </div>
+                        <p class="comic__title"><a href="/index.php/comic/wuliandianfeng">武炼巅峰</a></p>
+                        <p class="comic__feature">武之巅峰，是孤独，是...</p>
+                    </div>
+                    
+                    <div class="guess-item slide-item">
+                        <div class="cover">
+                            <a href="/index.php/comic/douluodalu3longwangchuanshuo"><img class="lazy-slide lazy" data-original="https://static-tw.baozimh.com/cover/douluodalu3longwangchuanshuo-shenman.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt="斗罗大陆3龙王传说"></a>
+                            <div class="cover__tag">第272话 开始解除第二道封印2</div>
+                        </div>
+                        <p class="comic__title"><a href="/index.php/comic/douluodalu3longwangchuanshuo">斗罗大陆3龙王传说</a></p>
+                        <p class="comic__feature">伴随着魂导科技的进步...</p>
+                    </div>
+                    
+                </div>
+                <div class="prev"><i class="layui-icon layui-icon-left"></i></div>
+                <div class="next"><i class="layui-icon layui-icon-right"></i></div>
+            </div>
+        </div>
+        <div class="j-module-comment de-comment">
+            <p class="de-comment__title">评论 <span class="count">共 <b class="j-comment-num hl">0</b> 条评论</span></p>
+            <div class="comment-box de-comment__item">
+                <div class="de-comment__item-left">
+                    <div class="de-comment__item--avatar j-user-login">
+                        <img class="j-user-avatar" src="/packs/mccms/user.png" alt="">
+                    </div>
+                </div>
+                <div class="de-comment__item-right">
+                    <div class="j-user-nick-name de-comment__item--nickname nickname" style="margin-bottom:8px;">主人，登录后才能发表评论呦~</div>
+                    <div class="j-comment-box de-comment__item--comment">
+                        <div class="de-comment__textarea-wrap">
+                            <div class="comment-kuang j-comment-textarea de-comment__item--textarea has-placeholder" contenteditable="true" placeholder="看点槽点，不吐不快！别憋着，马上大声说出来吧～">看点槽点，不吐不快！别憋着，马上大声说出来吧～</div>
+                        </div>
+                        <div class="de-comment__item--btn-group">
+                            <div class="j-comment-emoji de-comment__item--emoji"><i class="icon-comment-emoji"></i><span>表情</span>
+                            <div class="j-comment-face-box de-comment__face-box hide">
+                                <div class="triangle-up"></div>
+                                <div class="de-comment__face-con">
+                                    <ul class="j-facelist de-comment__face-list">
+                                        
+                                        <li class="j-face-item face-item" data-id="[em:1]">
+                                            <img class="j-face-img" src="/packs/face/1.jpg" alt="">
+                                            <p class="j-face-name">心碎</p>
+                                        </li>
+                                        
+                                        <li class="j-face-item face-item" data-id="[em:2]">
+                                            <img class="j-face-img" src="/packs/face/2.jpg" alt="">
+                                            <p class="j-face-name">睡觉</p>
+                                        </li>
+                                        
+                                        <li class="j-face-item face-item" data-id="[em:3]">
+                                            <img class="j-face-img" src="/packs/face/3.jpg" alt="">
+                                            <p class="j-face-name">吃瓜</p>
+                                        </li>
+                                        
+                                        <li class="j-face-item face-item" data-id="[em:4]">
+                                            <img class="j-face-img" src="/packs/face/4.jpg" alt="">
+                                            <p class="j-face-name">嘿嘿嘿</p>
+                                        </li>
+                                        
+                                        <li class="j-face-item face-item" data-id="[em:5]">
+                                            <img class="j-face-img" src="/packs/face/5.jpg" alt="">
+                                            <p class="j-face-name">心动</p>
+                                        </li>
+                                        
+                                        <li class="j-face-item face-item" data-id="[em:6]">
+                                            <img class="j-face-img" src="/packs/face/6.jpg" alt="">
+                                            <p class="j-face-name">泪奔</p>
+                                        </li>
+                                        
+                                        <li class="j-face-item face-item" data-id="[em:7]">
+                                            <img class="j-face-img" src="/packs/face/7.jpg" alt="">
+                                            <p class="j-face-name">闹了</p>
+                                        </li>
+                                        
+                                        <li class="j-face-item face-item" data-id="[em:8]">
+                                            <img class="j-face-img" src="/packs/face/8.jpg" alt="">
+                                            <p class="j-face-name">求抱抱</p>
+                                        </li>
+                                        
+                                        <li class="j-face-item face-item" data-id="[em:9]">
+                                            <img class="j-face-img" src="/packs/face/9.jpg" alt="">
+                                            <p class="j-face-name">开心</p>
+                                        </li>
+                                        
+                                        <li class="j-face-item face-item" data-id="[em:10]">
+                                            <img class="j-face-img" src="/packs/face/10.jpg" alt="">
+                                            <p class="j-face-name">小鱼干</p>
+                                        </li>
+                                        
+                                    </ul>
+                                </div>
+                            </div>
+                            </div>
+                            <div data-id="37081" class="j-comment-submit de-comment__item--submit">
+                                发布评论
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mccms_comment_list"><span style="text-align: center;display: block;">评论加载中...</span></div>
+        </div>
+    </div>
+    <div class="de-rank-wr clearfix">
+        <div class="de-rank-box">
+            <p class="head">打赏榜</p>
+            <div class="rank-list">
+                
+                <div class="rank-item active">
+                    <div class="item--default">
+                        <span class="num num--1">1</span>
+                        <span class="comic-name"><a href="/index.php/comic/paohuiguinudeshengcunfangshi">炮灰闺女的生存方式</a></span>
+                        <span class="count">打赏：4</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/paohuiguinudeshengcunfangshi"><img class="lazy" src="https://static-tw.baozimh.com/cover/paohuiguinudeshengcunfangshi-wulichouchouliulangcaogongzuoshi.jpg?w=285&h=375&q=100" alt="炮灰闺女的生存方式"></a>
+                        <p class="comic__title"><a href="/index.php/comic/paohuiguinudeshengcunfangshi">炮灰闺女的生存方式</a></p>
+                        <p class="comic__feature">叶七七一朝穿越，竟穿...</p>
+                        <p class="count">打赏：4</p>
+                        <span class="num num--1">1</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--2">2</span>
+                        <span class="comic-name"><a href="/index.php/comic/renyuxianluo">人鱼陷落</a></span>
+                        <span class="count">打赏：3</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/renyuxianluo"><img class="lazy" src="https://static-tw.baozimh.com/cover/renyuxianluo-linqianyuanzhuliulangcaogongzuoshi.jpg?w=285&h=375&q=100" alt="人鱼陷落"></a>
+                        <p class="comic__title"><a href="/index.php/comic/renyuxianluo">人鱼陷落</a></p>
+                        <p class="comic__feature">战术指挥大佬（撒娇白...</p>
+                        <p class="count">打赏：3</p>
+                        <span class="num num--2">2</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--3">3</span>
+                        <span class="comic-name"><a href="/index.php/comic/nianxialinjutianmigongxian">年下邻居 甜蜜攻陷</a></span>
+                        <span class="count">打赏：3</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/nianxialinjutianmigongxian"><img class="lazy" src="https://static-tw.baozimh.com/cover/nianxialinjutianmigongxian-eposimarutugomoriayu.jpg?w=285&h=375&q=100" alt="年下邻居 甜蜜攻陷"></a>
+                        <p class="comic__title"><a href="/index.php/comic/nianxialinjutianmigongxian">年下邻居 甜蜜攻陷</a></p>
+                        <p class="comic__feature">年下四岁的学生强势闯...</p>
+                        <p class="count">打赏：3</p>
+                        <span class="num num--3">3</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--4">4</span>
+                        <span class="comic-name"><a href="/index.php/comic/shuohuangdexiaogouhuibeichidiaode"> 说谎的小狗会被吃掉的 </a></span>
+                        <span class="count">打赏：2</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/shuohuangdexiaogouhuibeichidiaode"><img class="lazy" src="https://static-tw.baozimh.com/cover/shuohuangdexiaogouhuibeichidiaode-px.jpg?w=285&h=375&q=100" alt=" 说谎的小狗会被吃掉的 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/shuohuangdexiaogouhuibeichidiaode"> 说谎的小狗会被吃掉的 </a></p>
+                        <p class="comic__feature"> 明明是杂食动物，却...</p>
+                        <p class="count">打赏：2</p>
+                        <span class="num num--4">4</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--5">5</span>
+                        <span class="comic-name"><a href="/index.php/comic/worangzuixiangbeiyongbaodenanrengeiweixiele">我让最想被拥抱的男人给威胁了</a></span>
+                        <span class="count">打赏：2</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/worangzuixiangbeiyongbaodenanrengeiweixiele"><img class="lazy" src="https://static-tw.baozimh.com/cover/worangzuixiangbeiyongbaodenanrengeiweixieliao-yingritizi.jpg?w=285&h=375&q=100" alt="我让最想被拥抱的男人给威胁了"></a>
+                        <p class="comic__title"><a href="/index.php/comic/worangzuixiangbeiyongbaodenanrengeiweixiele">我让最想被拥抱的男人给威胁了</a></p>
+                        <p class="comic__feature">&#40全一册&#4...</p>
+                        <p class="count">打赏：2</p>
+                        <span class="num num--5">5</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--6">6</span>
+                        <span class="comic-name"><a href="/index.php/comic/yuanzun">元尊</a></span>
+                        <span class="count">打赏：2</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/yuanzun"><img class="lazy" src="http://oss.mkzcdn.com/comic/cover/20230106/63b79116552c5-750x999.jpg!cover-400" alt="元尊"></a>
+                        <p class="comic__title"><a href="/index.php/comic/yuanzun">元尊</a></p>
+                        <p class="comic__feature">主人公周元，为周朝皇...</p>
+                        <p class="count">打赏：2</p>
+                        <span class="num num--6">6</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--7">7</span>
+                        <span class="comic-name"><a href="/index.php/comic/yirenzhixia">一人之下</a></span>
+                        <span class="count">打赏：2</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/yirenzhixia"><img class="lazy" src="https://static-tw.baozimh.com/cover/yirenzhixia-dongmantang.jpg?w=285&h=375&q=100" alt="一人之下"></a>
+                        <p class="comic__title"><a href="/index.php/comic/yirenzhixia">一人之下</a></p>
+                        <p class="comic__feature">一人之下漫画： 他，...</p>
+                        <p class="count">打赏：2</p>
+                        <span class="num num--7">7</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--8">8</span>
+                        <span class="comic-name"><a href="/index.php/comic/douluodalu4zhongjidouluo">斗罗大陆4终极斗罗</a></span>
+                        <span class="count">打赏：2</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/douluodalu4zhongjidouluo"><img class="lazy" src="https://static-tw.baozimh.com/cover/douluodalu4zhongjidouluo-shenman.jpg?w=285&h=375&q=100" alt="斗罗大陆4终极斗罗"></a>
+                        <p class="comic__title"><a href="/index.php/comic/douluodalu4zhongjidouluo">斗罗大陆4终极斗罗</a></p>
+                        <p class="comic__feature">斗罗联邦科考队在极北...</p>
+                        <p class="count">打赏：2</p>
+                        <span class="num num--8">8</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--9">9</span>
+                        <span class="comic-name"><a href="/index.php/comic/wotianmingdafanpaigezhoushuanggeng">我！天命大反派（隔周双更）</a></span>
+                        <span class="count">打赏：2</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/wotianmingdafanpaigezhoushuanggeng"><img class="lazy" src="https://static-tw.baozimh.com/cover/wotianmingdafanpai-tianmingfanpaiyuanzhuhuizhudongman.jpg?w=285&h=375&q=100" alt="我！天命大反派（隔周双更）"></a>
+                        <p class="comic__title"><a href="/index.php/comic/wotianmingdafanpaigezhoushuanggeng">我！天命大反派（隔周双更）</a></p>
+                        <p class="comic__feature">顾长歌穿越到玄幻世界...</p>
+                        <p class="count">打赏：2</p>
+                        <span class="num num--9">9</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--10">10</span>
+                        <span class="comic-name"><a href="/index.php/comic/paiqiushaonianguguanchunyi"> 排球少年！！  -  古館春一 </a></span>
+                        <span class="count">打赏：1</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/paiqiushaonianguguanchunyi"><img class="lazy" src="https://static-tw.baozimh.com/cover/paiqiushaonian-guguanchunyi.jpg?w=285&h=375&q=100" alt=" 排球少年！！  -  古館春一 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/paiqiushaonianguguanchunyi"> 排球少年！！  -  古館春一 </a></p>
+                        <p class="comic__feature"> 作品連載於週刊雜誌...</p>
+                        <p class="count">打赏：1</p>
+                        <span class="num num--10">10</span>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <div class="de-rank-box">
+            <p class="head">月票榜</p>
+            <div class="rank-list">
+                
+                <div class="rank-item active">
+                    <div class="item--default">
+                        <span class="num num--1">1</span>
+                        <span class="comic-name"><a href="/index.php/comic/xianzhezhimeng"> 賢者之夢 </a></span>
+                        <span class="count">月票：0</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/xianzhezhimeng"><img class="lazy" src="https://static-tw.baozimh.com/cover/unknown?w=285&h=375&q=100" alt=" 賢者之夢 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/xianzhezhimeng"> 賢者之夢 </a></p>
+                        <p class="comic__feature"> unknown </p>
+                        <p class="count">月票：0</p>
+                        <span class="num num--1">1</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--2">2</span>
+                        <span class="comic-name"><a href="/index.php/comic/quanminzhuantefawangjinengmoxianjiacitiao"> 全民轉職：法王技能無限加詞條 </a></span>
+                        <span class="count">月票：0</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/quanminzhuantefawangjinengmoxianjiacitiao"><img class="lazy" src="https://static-tw.baozimh.com/cover/quanminzhuanzhifawangjinengwuxianjiacitiao-doufudongguayuanzhumanchaoshe.jpg?w=285&h=375&q=100" alt=" 全民轉職：法王技能無限加詞條 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/quanminzhuantefawangjinengmoxianjiacitiao"> 全民轉職：法王技能無限加詞條 </a></p>
+                        <p class="comic__feature"> 穿越到全民轉職的異...</p>
+                        <p class="count">月票：0</p>
+                        <span class="num num--2">2</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--3">3</span>
+                        <span class="comic-name"><a href="/index.php/comic/guanwutadegushi"> 關於Ta的故事 </a></span>
+                        <span class="count">月票：0</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/guanwutadegushi"><img class="lazy" src="https://static-tw.baozimh.com/cover/guanyutadegushi-dadada.jpg?w=285&h=375&q=100" alt=" 關於Ta的故事 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/guanwutadegushi"> 關於Ta的故事 </a></p>
+                        <p class="comic__feature"> 千金病嬌和窮b男主...</p>
+                        <p class="count">月票：0</p>
+                        <span class="num num--3">3</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--4">4</span>
+                        <span class="comic-name"><a href="/index.php/comic/fengpifanpaideliangcibejiju"> 瘋批反派的兩次BE結局 </a></span>
+                        <span class="count">月票：0</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/fengpifanpaideliangcibejiju"><img class="lazy" src="https://static-tw.baozimh.com/cover/fengpifanpaideliangcibejieju-yizhuxiao.jpg?w=285&h=375&q=100" alt=" 瘋批反派的兩次BE結局 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/fengpifanpaideliangcibejiju"> 瘋批反派的兩次BE結局 </a></p>
+                        <p class="comic__feature"> 人性的逃脫-出現意...</p>
+                        <p class="count">月票：0</p>
+                        <span class="num num--4">4</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--5">5</span>
+                        <span class="comic-name"><a href="/index.php/comic/shenxiaowanxiangzhongguoshenxiangushi"> 神霄萬象：中國神仙故事 </a></span>
+                        <span class="count">月票：0</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/shenxiaowanxiangzhongguoshenxiangushi"><img class="lazy" src="https://static-tw.baozimh.com/cover/shenxiaomoxiangzhongguoshenxiangushi-yingmuwenhua.jpg?w=285&h=375&q=100" alt=" 神霄萬象：中國神仙故事 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/shenxiaowanxiangzhongguoshenxiangushi"> 神霄萬象：中國神仙故事 </a></p>
+                        <p class="comic__feature"> 天地玄黃，道佛同輝...</p>
+                        <p class="count">月票：0</p>
+                        <span class="num num--5">5</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--6">6</span>
+                        <span class="comic-name"><a href="/index.php/comic/dongnan"> 東南 </a></span>
+                        <span class="count">月票：0</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/dongnan"><img class="lazy" src="https://static-tw.baozimh.com/cover/dongnan-qiqiguowang.jpg?w=285&h=375&q=100" alt=" 東南 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/dongnan"> 東南 </a></p>
+                        <p class="comic__feature"> 東南與西北神魂共生...</p>
+                        <p class="count">月票：0</p>
+                        <span class="num num--6">6</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--7">7</span>
+                        <span class="comic-name"><a href="/index.php/comic/wulindiyifengzi"> 武林第一瘋子 </a></span>
+                        <span class="count">月票：0</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/wulindiyifengzi"><img class="lazy" src="https://static-tw.baozimh.com/cover/wulindiyifengzi-gonboongkimeunsongbumkyoo.jpg?w=285&h=375&q=100" alt=" 武林第一瘋子 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/wulindiyifengzi"> 武林第一瘋子 </a></p>
+                        <p class="comic__feature"> 惡人遍地的江湖， ...</p>
+                        <p class="count">月票：0</p>
+                        <span class="num num--7">7</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--8">8</span>
+                        <span class="comic-name"><a href="/index.php/comic/sishenjianglin"> 死神降臨 </a></span>
+                        <span class="count">月票：0</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/sishenjianglin"><img class="lazy" src="https://static-tw.baozimh.com/cover/sishenjianglin-yizhuxiao.jpg?w=285&h=375&q=100" alt=" 死神降臨 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/sishenjianglin"> 死神降臨 </a></p>
+                        <p class="comic__feature"> 夏血與婆婆是生活在...</p>
+                        <p class="count">月票：0</p>
+                        <span class="num num--8">8</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--9">9</span>
+                        <span class="comic-name"><a href="/index.php/comic/chuanyueshanye"> 穿越山野 </a></span>
+                        <span class="count">月票：0</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/chuanyueshanye"><img class="lazy" src="https://static-tw.baozimh.com/cover/chuanyueshanye-hujiaoduoshi.jpg?w=285&h=375&q=100" alt=" 穿越山野 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/chuanyueshanye"> 穿越山野 </a></p>
+                        <p class="comic__feature"> 一起來騎山地車吧！...</p>
+                        <p class="count">月票：0</p>
+                        <span class="num num--9">9</span>
+                    </div>
+                </div>
+                
+                <div class="rank-item">
+                    <div class="item--default">
+                        <span class="num num--10">10</span>
+                        <span class="comic-name"><a href="/index.php/comic/tianshirenlei"> 天使×人類 </a></span>
+                        <span class="count">月票：0</span>
+                    </div>
+                    <div class="item--detail hide">
+                        <a class="cover" href="/index.php/comic/tianshirenlei"><img class="lazy" src="https://static-tw.baozimh.com/cover/tianshixrenlei-kkshijiejumincfsr9d.jpg?w=285&h=375&q=100" alt=" 天使×人類 "></a>
+                        <p class="comic__title"><a href="/index.php/comic/tianshirenlei"> 天使×人類 </a></p>
+                        <p class="comic__feature"> 引導人類靈魂的天使...</p>
+                        <p class="count">月票：0</p>
+                        <span class="num num--10">10</span>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <div class="de-daily">
+            <p class="head">最近更新</p>
+            <div class="daily-list">
+            
+                <div class="daily__item">
+                    <a class="cover" href="/index.php/comic/candytuft"><img class="lazy" data-original="https://static-tw.baozimh.com/cover/candytuft-duoren.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt=" CANDYTUFT "></a>
+                    <p class="comic-title"><a href="/index.php/comic/candytuft"> CANDYTUFT </a></p>
+                    <p class="tags"></p>
+                    <p class="feature"> 由數位老師共同創作...</p>
+                </div>
+            
+                <div class="daily__item">
+                    <a class="cover" href="/index.php/comic/zhuanshengtiancaixiaoshouwang"><img class="lazy" data-original="https://static-tw.bzmgcn.com/cover/zhuanshengtiancaixiaoshouwang-hyunrimdankim.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt=" 转生天才销售王 "></a>
+                    <p class="comic-title"><a href="/index.php/comic/zhuanshengtiancaixiaoshouwang"> 转生天才销售王 </a></p>
+                    <p class="tags">其它</p>
+                    <p class="feature"> 在一场车祸中丧生的...</p>
+                </div>
+            
+                <div class="daily__item">
+                    <a class="cover" href="/index.php/comic/hunchunjianshenxunluban"><img class="lazy" data-original="https://static-tw.baozimh.com/cover/hundunjianshen-xunlukeji.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt="混沌剑神（驯鹿版）"></a>
+                    <p class="comic-title"><a href="/index.php/comic/hunchunjianshenxunluban">混沌剑神（驯鹿版）</a></p>
+                    <p class="tags">玄幻 古风</p>
+                    <p class="feature">剑尘，江湖中公认的第...</p>
+                </div>
+            
+                <div class="daily__item">
+                    <a class="cover" href="/index.php/comic/quanminzhuantefawangjinengmoxianjiacitiao"><img class="lazy" data-original="https://static-tw.baozimh.com/cover/quanminzhuanzhifawangjinengwuxianjiacitiao-doufudongguayuanzhumanchaoshe.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt=" 全民轉職：法王技能無限加詞條 "></a>
+                    <p class="comic-title"><a href="/index.php/comic/quanminzhuantefawangjinengmoxianjiacitiao"> 全民轉職：法王技能無限加詞條 </a></p>
+                    <p class="tags"></p>
+                    <p class="feature"> 穿越到全民轉職的異...</p>
+                </div>
+            
+                <div class="daily__item">
+                    <a class="cover" href="/index.php/comic/yishijiechanqiangbaba"><img class="lazy" data-original="https://static-tw.baozimh.com/cover/yishijiedanqinbaba-watchaw.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt=" 異世界單親爸爸 "></a>
+                    <p class="comic-title"><a href="/index.php/comic/yishijiechanqiangbaba"> 異世界單親爸爸 </a></p>
+                    <p class="tags"></p>
+                    <p class="feature"> 父女誤入黑暗異界，...</p>
+                </div>
+            
+                <div class="daily__item">
+                    <a class="cover" href="/index.php/comic/zhonghuoyicidangnisaozi"><img class="lazy" data-original="https://static-tw.baozimh.com/cover/zhonghuoyicidangnisaozi-seogacdahyejeonghayunmi.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt=" 重活一次當你嫂子 "></a>
+                    <p class="comic-title"><a href="/index.php/comic/zhonghuoyicidangnisaozi"> 重活一次當你嫂子 </a></p>
+                    <p class="tags"></p>
+                    <p class="feature"> 前夫背叛重生復仇，...</p>
+                </div>
+            
+                <div class="daily__item">
+                    <a class="cover" href="/index.php/comic/mitandemojiaoshenghuo"><img class="lazy" data-original="https://static-tw.baozimh.com/cover/mitandemojiaoshenghuo-eunhodalgon.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt=" 密探的魔教生活 "></a>
+                    <p class="comic-title"><a href="/index.php/comic/mitandemojiaoshenghuo"> 密探的魔教生活 </a></p>
+                    <p class="tags"></p>
+                    <p class="feature"> 十五年前的正邪魔戰...</p>
+                </div>
+            
+                <div class="daily__item">
+                    <a class="cover" href="/index.php/comic/guanwutadegushi"><img class="lazy" data-original="https://static-tw.baozimh.com/cover/guanyutadegushi-dadada.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt=" 關於Ta的故事 "></a>
+                    <p class="comic-title"><a href="/index.php/comic/guanwutadegushi"> 關於Ta的故事 </a></p>
+                    <p class="tags"></p>
+                    <p class="feature"> 千金病嬌和窮b男主...</p>
+                </div>
+            
+                <div class="daily__item">
+                    <a class="cover" href="/index.php/comic/fengpifanpaideliangcibejiju"><img class="lazy" data-original="https://static-tw.baozimh.com/cover/fengpifanpaideliangcibejieju-yizhuxiao.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt=" 瘋批反派的兩次BE結局 "></a>
+                    <p class="comic-title"><a href="/index.php/comic/fengpifanpaideliangcibejiju"> 瘋批反派的兩次BE結局 </a></p>
+                    <p class="tags"></p>
+                    <p class="feature"> 人性的逃脫-出現意...</p>
+                </div>
+            
+                <div class="daily__item">
+                    <a class="cover" href="/index.php/comic/shenxiaowanxiangzhongguoshenxiangushi"><img class="lazy" data-original="https://static-tw.baozimh.com/cover/shenxiaomoxiangzhongguoshenxiangushi-yingmuwenhua.jpg?w=285&h=375&q=100" src="/template/pc/default/images/bg_loadimg_3x4.png" alt=" 神霄萬象：中國神仙故事 "></a>
+                    <p class="comic-title"><a href="/index.php/comic/shenxiaowanxiangzhongguoshenxiangushi"> 神霄萬象：中國神仙故事 </a></p>
+                    <p class="tags"></p>
+                    <p class="feature"> 天地玄黃，道佛同輝...</p>
+                </div>
+            
+        </div>
+      </div>
+    </div>
+</div>
+<div class="footer-wrapper">
+    <!-- footer-bottom -->
+    <div class="container--response">
+        <div class="footer-bottom">
+            <ul class="footer-link clearfix">
+                <li><a href="/index.php/custom/about" target="help" rel="nofollow">关于我们</a></li>
+                <li><a href="/index.php/custom/contact" target="help" rel="nofollow">联系我们</a></li>
+                <li><a href="/index.php/custom/map" target="help" rel="nofollow">网站地图</a></li>
+                <li><a href="/index.php/custom/notice" target="help" rel="nofollow">法律声明</a></li>
+                <li><a href="/index.php/custom/verify" target="help" rel="nofollow">内容审核</a></li>
+                <li>网站统计</li>
+            </ul>
+            <p>
+                <span>京ICP备18000000号</span>
+                漫画屋-漫画大全-免费漫画在线看-最好看的漫画（www.mhua5.com）是一家漫画免费分享以及在线浏览平台
+            </p>
+            <p>
+                <span>Copyright ©2010-2022 <a href="/" rel="nofollow">漫画屋-漫画大全-免费漫画在线看-最好看的漫画</a></span>版权所有
+            </p>
+        </div>
+    </div>
+</div>
+<div class="in-aside-handle">
+    <div class="aside__item qr-code">
+        <i class="iconfont icon-ic_float_ewm"></i>
+        <div class="qr-code-pic hide"></div>
+    </div>
+    <div class="aside__item share">
+        <i class="iconfont icon-ic_float_fx"></i>
+        <ul class="share-full clearfix hide bdsharebuttonbox" id="bdshare" data-tag="share_1">
+            <a class="aside-share__item qq" data-cmd="sqq"></a>
+            <a class="aside-share__item wx" data-cmd="weixin"></a>
+            <a class="aside-share__item wb" data-cmd="tsina"></a>
+            <a class="aside-share__item kj" data-cmd="qzone"></a>
+        </ul>
+    </div>
+    <div class="aside__item feedback j-home-feed">
+        <i class="iconfont icon-ic_float_fk"></i>
+        <a href="tencent://message/?uin=888888&Site=www.mhua5.com&Menu=yes" target="_blank" rel="nofollow">
+        <p class="feed-full hide">在线反馈</p>
+        </a>
+    </div>
+    <div class="aside__item back-top hide">
+        <i class="iconfont icon-ic_float_top"></i>
+        <p class="back-full hide">返回顶部</p>
+    </div>
+</div>
+<script src="/template/pc/default/js/jquery.liMarquee.js"></script>
+<script type="text/javascript">
+$(function(){
+    chapterMore();
+    get_comment(37081);
+    get_Score(37081);
+    giftList(37081);
+    isCollect(37081);
+    isBuyRead(37081);
+})
+</script>
+<script src="/index.php/api/hits/comic/37081"></script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"5231d262ba8e4fd293ef117cbb43cb73","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

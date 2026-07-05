@@ -72,4 +72,28 @@ public final class ComicModels {
             this.nextPageUrl = nextPageUrl;
         }
     }
+
+    public static final class Source {
+        public final String id;
+        public final String name;
+        public final String domain;
+        public final String url;
+        public boolean enabled;
+
+        public Source(String id, String name, String domain, boolean enabled) {
+            this.id = id;
+            this.name = name;
+            this.domain = domain;
+            this.url = "";
+            this.enabled = enabled;
+        }
+
+        public Source(String id, String name, String domain, String url, boolean builtin, boolean enabled) {
+            this.id = id;
+            this.name = name;
+            this.domain = domain;
+            this.url = url;
+            this.enabled = enabled;
+        }
+    }
 }

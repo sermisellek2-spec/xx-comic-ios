@@ -147,14 +147,14 @@ public class Mhua5ComicSource implements ComicSource {
             if (TextUtils.isEmpty(title) || !seen.add(href)) continue;
             chapters.add(new ComicModels.Chapter(rawChapterId(href), title, chapterUrl(href), 0, index++));
         }
-        if (!chapters.isEmpty()) return chapters;
-
-        Matcher mobileMatcher = MOBILE_CHAPTER_PATTERN.matcher(html);
-        while (mobileMatcher.find()) {
-            String href = decode(mobileMatcher.group(1));
-            String title = clean(mobileMatcher.group(2));
-            if (TextUtils.isEmpty(title) || !seen.add(href)) continue;
-            chapters.add(new ComicModels.Chapter(rawChapterId(href), title, chapterUrl(href), 0, index++));
+        if (chapters.isEmpty()) {
+            Matcher mobileMatcher = MOBILE_CHAPTER_PATTERN.matcher(html);
+            while (mobileMatcher.find()) {
+                String href = decode(mobileMatcher.group(1));
+                String title = clean(mobileMatcher.group(2));
+                if (TextUtils.isEmpty(title) || !seen.add(href)) continue;
+                chapters.add(new ComicModels.Chapter(rawChapterId(href), title, chapterUrl(href), 0, index++));
+            }
         }
         return chapters;
     }

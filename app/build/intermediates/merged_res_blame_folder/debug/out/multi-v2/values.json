@@ -1,17 +1,36 @@
 {
     "logs": [
         {
-            "outputFile": "com.xxcomic.app-mergeDebugResources-3:/values/values.xml",
+            "outputFile": "com.xxcomic.app-mergeDebugResources-4:/values/values.xml",
             "map": [
+                {
+                    "source": "C:\\Users\\15361\\.gradle\\caches\\transforms-3\\7fc90d974d4f5ce2bbe8427885325263\\transformed\\shimmer-0.5.0\\res\\values\\values.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "34",
+                        "endColumns": "22",
+                        "endOffsets": "1573"
+                    },
+                    "to": {
+                        "startLines": "7",
+                        "startColumns": "4",
+                        "startOffsets": "329",
+                        "endLines": "39",
+                        "endColumns": "22",
+                        "endOffsets": "1847"
+                    }
+                },
                 {
                     "source": "F:\\softForCode\\codex-project\\xx-comic\\app\\src\\main\\res\\values\\styles.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
                         "startOffsets": "55",
-                        "endLines": "8",
+                        "endLines": "6",
                         "endColumns": "12",
-                        "endOffsets": "446"
+                        "endOffsets": "324"
                     }
                 }
             ]

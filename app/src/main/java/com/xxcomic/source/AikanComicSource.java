@@ -12,6 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -95,12 +96,13 @@ public class AikanComicSource implements ComicSource {
         String chapterBlock = chapterDirectoryBlock(html);
         List<ComicModels.Chapter> chapters = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
+        Set<String> seenTitles = new HashSet<>();
         Matcher matcher = CHAPTER_PATTERN.matcher(chapterBlock);
         int index = 0;
         while (matcher.find()) {
             String href = decode(matcher.group(1));
             String title = clean(matcher.group(2));
-            if (TextUtils.isEmpty(title) || isNoticeChapter(title) || !seen.add(href)) continue;
+            if (TextUtils.isEmpty(title) || isNoticeChapter(title) || !seen.add(href) || !seenTitles.add(title)) continue;
             chapters.add(new ComicModels.Chapter(rawChapterId(href), title, absolute(href), 0, index++));
         }
         return chapters;
@@ -123,7 +125,8 @@ public class AikanComicSource implements ComicSource {
             String image = cleanReaderImageUrl(json.group(1));
             if (isReaderImage(image) && seen.add(image)) images.add(image);
         }
-        String next = first(html, "next_chapter'\\)\\.html\\('<a href=\"([^\"]+)\"");
+        String next = first(html, "<a class=\"rd-aside__item j-rd-next\" _href=\"([^\"]+)\"");
+        if (TextUtils.isEmpty(next)) next = first(html, "<[^>]+class=\"[^\"]*next[^\"]*\"[^>]+_href=\"([^\"]*)\"");
         if (images.isEmpty() && SCRIPT_IMAGE_PATTERN.matcher(html).find()) {
             title = clean(title, "图片由站点脚本加密加载，当前版本未解析到图片");
         }
@@ -200,12 +203,10 @@ public class AikanComicSource implements ComicSource {
     private String chapterDirectoryBlock(String html) {
         int title = html == null ? -1 : html.indexOf("章节目录");
         if (title < 0) return html == null ? "" : html;
-        int start = html.indexOf("comics-chapters__item", title);
-        if (start < 0) return html.substring(title);
-        int end = html.indexOf("but-vip", start);
-        if (end < 0) end = html.indexOf("section-title", start + 1);
+        int end = html.indexOf("but-vip", title);
+        if (end < 0) end = html.indexOf("section-title", title + 1);
         if (end < 0) end = html.length();
-        return html.substring(start, end);
+        return html.substring(title, end);
     }
 
     private List<String> parseTags(String value) {
@@ -270,7 +271,7 @@ public class AikanComicSource implements ComicSource {
     }
 
     private boolean isNoticeChapter(String title) {
-        return title.contains("公告") || title.contains("查看更多");
+        return title.contains("公告") || title.contains("查看更多") || title.contains("最新");
     }
 
     private String absolute(String url) {

@@ -1,8 +1,9 @@
-com.xxcomic.app-pngs-0 F:\softForCode\codex-project\xx-comic\app\build\generated\res\pngs\debug
-com.xxcomic.app-resValues-1 F:\softForCode\codex-project\xx-comic\app\build\generated\res\resValues\debug
-com.xxcomic.app-rs-2 F:\softForCode\codex-project\xx-comic\app\build\generated\res\rs\debug
-com.xxcomic.app-packageDebugResources-3 F:\softForCode\codex-project\xx-comic\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
-com.xxcomic.app-packageDebugResources-4 F:\softForCode\codex-project\xx-comic\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
-com.xxcomic.app-merged_res-5 F:\softForCode\codex-project\xx-comic\app\build\intermediates\merged_res\debug
-com.xxcomic.app-debug-6 F:\softForCode\codex-project\xx-comic\app\src\debug\res
-com.xxcomic.app-main-7 F:\softForCode\codex-project\xx-comic\app\src\main\res
+com.xxcomic.app-shimmer-0.5.0-0 C:\Users\15361\.gradle\caches\transforms-3\7fc90d974d4f5ce2bbe8427885325263\transformed\shimmer-0.5.0\res
+com.xxcomic.app-pngs-1 F:\softForCode\codex-project\xx-comic\app\build\generated\res\pngs\debug
+com.xxcomic.app-resValues-2 F:\softForCode\codex-project\xx-comic\app\build\generated\res\resValues\debug
+com.xxcomic.app-rs-3 F:\softForCode\codex-project\xx-comic\app\build\generated\res\rs\debug
+com.xxcomic.app-packageDebugResources-4 F:\softForCode\codex-project\xx-comic\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.xxcomic.app-packageDebugResources-5 F:\softForCode\codex-project\xx-comic\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.xxcomic.app-merged_res-6 F:\softForCode\codex-project\xx-comic\app\build\intermediates\merged_res\debug
+com.xxcomic.app-debug-7 F:\softForCode\codex-project\xx-comic\app\src\debug\res
+com.xxcomic.app-main-8 F:\softForCode\codex-project\xx-comic\app\src\main\res

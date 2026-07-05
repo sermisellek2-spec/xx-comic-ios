@@ -1,17 +1,26 @@
 package com.xxcomic;
 
 import android.app.Activity;
+import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RadialGradient;
+import android.graphics.Rect;
+import android.graphics.Shader;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Space;
 import android.widget.TextView;
@@ -22,27 +31,32 @@ public final class UIHelpers {
     private UIHelpers() {
     }
 
-    public static int BG = Color.rgb(255, 255, 255);
-    public static int SURFACE = Color.rgb(250, 249, 246);
-    public static int CARD = Color.rgb(255, 255, 255);
-    public static int CARD_SOFT = Color.rgb(250, 249, 246);
-    public static int TEXT = Color.rgb(28, 28, 26);
-    public static int TEXT2 = Color.rgb(74, 74, 71);
-    public static int TEXT3 = Color.rgb(139, 138, 133);
-    public static int BORDER = Color.rgb(236, 233, 227);
-    public static int BORDER_SOFT = Color.rgb(241, 239, 232);
-    public static int ACCENT = Color.rgb(28, 28, 26);
-    public static int BRAND = Color.rgb(245, 158, 11);
-    public static int PLACEHOLDER = Color.rgb(231, 229, 226);
-    public static int READER_TEXT = Color.rgb(232, 232, 230);
-    public static int ACCENT_LIGHT = Color.rgb(241, 239, 232);
-    public static int ACCENT_SOFT = Color.rgb(250, 249, 246);
-    public static int ACCENT_DARK = Color.rgb(28, 28, 26);
-    public static int GREEN = Color.rgb(29, 158, 117);
+    public static int BG = Color.rgb(254, 252, 248);
+    public static int SURFACE = Color.rgb(248, 245, 238);
+    public static int CARD = Color.rgb(255, 252, 246);
+    public static int CARD_SOFT = Color.rgb(248, 245, 238);
+    public static int TEXT = Color.rgb(26, 28, 30);
+    public static int TEXT2 = Color.rgb(74, 77, 82);
+    public static int TEXT3 = Color.rgb(139, 142, 148);
+    public static int TEXT4 = Color.rgb(180, 183, 189);
+    public static int BORDER = Color.rgb(232, 227, 215);
+    public static int BORDER_SOFT = Color.rgb(241, 236, 223);
+    public static int ACCENT = Color.rgb(26, 28, 30);
+    public static int ON_ACCENT = Color.rgb(255, 255, 255);
+    public static int ACCENT_SOFT = Color.rgb(241, 236, 223);
+    public static int BRAND = Color.rgb(217, 119, 6);
+    public static int PLACEHOLDER = Color.rgb(237, 231, 217);
+    public static int READER_TEXT = Color.rgb(232, 228, 220);
+    public static int ACCENT_LIGHT = Color.rgb(241, 236, 223);
+    public static int ACCENT_DARK = Color.rgb(26, 28, 30);
+    public static int GREEN = Color.rgb(91, 140, 90);
     public static int GREEN_LIGHT = Color.rgb(229, 247, 239);
-    public static int DANGER = Color.rgb(220, 77, 77);
-    public static int DARK = Color.rgb(22, 22, 26);
-    public static int DARK_BAR = Color.rgb(15, 15, 18);
+    public static int DANGER = Color.rgb(200, 69, 69);
+    public static int STATUS_SERIAL = Color.rgb(91, 140, 90);
+    public static int STATUS_COMPLETE = Color.rgb(139, 142, 148);
+    public static int STATUS_NEW = Color.rgb(194, 65, 12);
+    public static int DARK = Color.rgb(22, 22, 25);
+    public static int DARK_BAR = Color.rgb(14, 14, 17);
     private static boolean nightTheme = false;
 
     public static boolean applyAutoTheme() {
@@ -81,48 +95,62 @@ public final class UIHelpers {
 
     private static void applyDayTheme() {
         nightTheme = false;
-        BG = Color.rgb(255, 255, 255);
-        SURFACE = Color.rgb(250, 249, 246);
-        CARD = Color.rgb(255, 255, 255);
-        CARD_SOFT = Color.rgb(250, 249, 246);
-        TEXT = Color.rgb(28, 28, 26);
-        TEXT2 = Color.rgb(74, 74, 71);
-        TEXT3 = Color.rgb(139, 138, 133);
-        BORDER = Color.rgb(236, 233, 227);
-        BORDER_SOFT = Color.rgb(241, 239, 232);
-        ACCENT = Color.rgb(28, 28, 26);
-        BRAND = Color.rgb(245, 158, 11);
-        PLACEHOLDER = Color.rgb(231, 229, 226);
-        READER_TEXT = Color.rgb(232, 232, 230);
-        ACCENT_LIGHT = Color.rgb(241, 239, 232);
-        ACCENT_SOFT = Color.rgb(250, 249, 246);
-        ACCENT_DARK = Color.rgb(28, 28, 26);
+        BG = Color.rgb(254, 252, 248);
+        SURFACE = Color.rgb(248, 245, 238);
+        CARD = Color.rgb(255, 252, 246);
+        CARD_SOFT = Color.rgb(248, 245, 238);
+        TEXT = Color.rgb(26, 28, 30);
+        TEXT2 = Color.rgb(74, 77, 82);
+        TEXT3 = Color.rgb(139, 142, 148);
+        TEXT4 = Color.rgb(180, 183, 189);
+        BORDER = Color.rgb(232, 227, 215);
+        BORDER_SOFT = Color.rgb(241, 236, 223);
+        ACCENT = Color.rgb(26, 28, 30);
+        ON_ACCENT = Color.rgb(255, 255, 255);
+        BRAND = Color.rgb(217, 119, 6);
+        PLACEHOLDER = Color.rgb(237, 231, 217);
+        READER_TEXT = Color.rgb(232, 228, 220);
+        ACCENT_LIGHT = Color.rgb(241, 236, 223);
+        ACCENT_SOFT = Color.rgb(241, 236, 223);
+        ACCENT_DARK = Color.rgb(26, 28, 30);
+        GREEN = Color.rgb(91, 140, 90);
         GREEN_LIGHT = Color.rgb(229, 247, 239);
-        DARK = Color.rgb(22, 22, 26);
-        DARK_BAR = Color.rgb(15, 15, 18);
+        DANGER = Color.rgb(200, 69, 69);
+        STATUS_SERIAL = Color.rgb(91, 140, 90);
+        STATUS_COMPLETE = Color.rgb(139, 142, 148);
+        STATUS_NEW = Color.rgb(194, 65, 12);
+        DARK = Color.rgb(22, 22, 25);
+        DARK_BAR = Color.rgb(14, 14, 17);
     }
 
     private static void applyNightTheme() {
         nightTheme = true;
-        BG = Color.rgb(18, 18, 20);
-        SURFACE = Color.rgb(28, 28, 31);
-        CARD = Color.rgb(34, 34, 38);
-        CARD_SOFT = Color.rgb(31, 30, 34);
-        TEXT = Color.rgb(242, 238, 232);
-        TEXT2 = Color.rgb(190, 184, 176);
-        TEXT3 = Color.rgb(134, 128, 121);
-        BORDER = Color.rgb(58, 54, 50);
-        BORDER_SOFT = Color.rgb(45, 42, 39);
-        ACCENT = Color.rgb(74, 74, 71);
+        BG = Color.rgb(21, 21, 26);
+        SURFACE = Color.rgb(28, 28, 34);
+        CARD = Color.rgb(34, 34, 42);
+        CARD_SOFT = Color.rgb(31, 31, 38);
+        TEXT = Color.rgb(232, 228, 220);
+        TEXT2 = Color.rgb(184, 180, 172);
+        TEXT3 = Color.rgb(132, 130, 124);
+        TEXT4 = Color.rgb(92, 90, 86);
+        BORDER = Color.rgb(45, 45, 52);
+        BORDER_SOFT = Color.rgb(38, 38, 44);
+        ACCENT = Color.rgb(232, 228, 220);
+        ON_ACCENT = Color.rgb(21, 21, 26);
         BRAND = Color.rgb(245, 158, 11);
         PLACEHOLDER = Color.rgb(58, 54, 50);
-        READER_TEXT = Color.rgb(232, 232, 230);
-        ACCENT_LIGHT = Color.rgb(45, 42, 39);
-        ACCENT_SOFT = Color.rgb(31, 30, 34);
-        ACCENT_DARK = Color.rgb(232, 232, 230);
+        READER_TEXT = Color.rgb(232, 228, 220);
+        ACCENT_LIGHT = Color.rgb(45, 45, 52);
+        ACCENT_SOFT = Color.rgb(45, 45, 52);
+        ACCENT_DARK = Color.rgb(232, 228, 220);
+        GREEN = Color.rgb(91, 140, 90);
         GREEN_LIGHT = Color.rgb(24, 58, 42);
-        DARK = Color.rgb(22, 22, 26);
-        DARK_BAR = Color.rgb(15, 15, 18);
+        DANGER = Color.rgb(200, 69, 69);
+        STATUS_SERIAL = Color.rgb(91, 140, 90);
+        STATUS_COMPLETE = Color.rgb(132, 130, 124);
+        STATUS_NEW = Color.rgb(224, 123, 57);
+        DARK = Color.rgb(15, 15, 18);
+        DARK_BAR = Color.rgb(8, 8, 11);
     }
 
     public static TextView text(Activity ctx, String value, int sp, int color, int style) {
@@ -151,8 +179,110 @@ public final class UIHelpers {
         return drawable;
     }
 
-    public static GradientDrawable gradient(int[] colors, int radius) {
-        return round(PLACEHOLDER, radius, Color.TRANSPARENT);
+    public static Drawable paperTexture(Activity ctx) {
+        final int step = dp(ctx, 8);
+        return new Drawable() {
+            private final Paint bgPaint = new Paint();
+            private final Paint linePaint = new Paint();
+            {
+                bgPaint.setColor(PLACEHOLDER);
+                linePaint.setColor(Color.argb(13, 0, 0, 0));
+                linePaint.setStrokeWidth(0.5f);
+                linePaint.setAntiAlias(true);
+            }
+            @Override
+            public void draw(Canvas canvas) {
+                Rect b = getBounds();
+                canvas.drawRect(b, bgPaint);
+                int h = b.height(), w = b.width();
+                for (int x = -h; x < w + h; x += step) {
+                    canvas.drawLine(x, 0, x + h, h, linePaint);
+                }
+            }
+            @Override public void setAlpha(int alpha) { }
+            @Override public void setColorFilter(android.graphics.ColorFilter colorFilter) { }
+            @Override public int getOpacity() { return android.graphics.PixelFormat.OPAQUE; }
+        };
+    }
+
+    public static View coverPlaceholder(Activity ctx, String title) {
+        FrameLayout frame = new FrameLayout(ctx);
+        GradientDrawable bg = round(PLACEHOLDER, dp(ctx, 8), Color.TRANSPARENT);
+        Drawable texture = paperTexture(ctx);
+        android.graphics.drawable.LayerDrawable layers = new android.graphics.drawable.LayerDrawable(new Drawable[]{ bg, texture });
+        frame.setBackground(layers);
+        char first = (title == null || title.isEmpty()) ? '·' : title.charAt(0);
+        TextView tv = new TextView(ctx);
+        tv.setText(String.valueOf(first));
+        tv.setTypeface(Typeface.SERIF);
+        tv.setTextSize(32);
+        tv.setTextColor(TEXT3);
+        tv.setGravity(Gravity.CENTER);
+        frame.addView(tv, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT));
+        return frame;
+    }
+
+    public static final class StatusDotView extends View {
+        private int color = Color.TRANSPARENT;
+        private final Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint ringPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint haloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        public StatusDotView(Context ctx) {
+            super(ctx);
+            ringPaint.setStyle(Paint.Style.STROKE);
+            ringPaint.setStrokeWidth(dpFromContext(ctx, 1.5f));
+        }
+
+        private static int dpFromContext(Context ctx, float v) {
+            return Math.round(v * ctx.getResources().getDisplayMetrics().density);
+        }
+
+        public void setStatus(String status) {
+            if (status == null || status.isEmpty()) {
+                setVisibility(View.GONE);
+                return;
+            }
+            if (status.contains("連載") || status.contains("连载") || status.toLowerCase().contains("ongoing")) {
+                color = STATUS_SERIAL;
+            } else if (status.contains("完結") || status.contains("完结") || status.toLowerCase().contains("complet")) {
+                color = STATUS_COMPLETE;
+            } else if (status.contains("新着") || status.contains("新") || status.toLowerCase().contains("new")) {
+                color = STATUS_NEW;
+            } else {
+                setVisibility(View.GONE);
+                return;
+            }
+            setVisibility(View.VISIBLE);
+            invalidate();
+        }
+
+        @Override
+        protected void onMeasure(int widthSpec, int heightSpec) {
+            int size = dpFromContext(getContext(), 16f);
+            setMeasuredDimension(size, size);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            if (color == Color.TRANSPARENT) return;
+            int w = getWidth(), h = getHeight();
+            float cx = w / 2f, cy = h / 2f;
+            float haloR = Math.min(w, h) / 2f;
+            RadialGradient halo = new RadialGradient(cx, cy, haloR,
+                new int[]{ Color.argb(80, Color.red(color), Color.green(color), Color.blue(color)),
+                           Color.argb(0, Color.red(color), Color.green(color), Color.blue(color)) },
+                null, Shader.TileMode.CLAMP);
+            haloPaint.setShader(halo);
+            canvas.drawCircle(cx, cy, haloR, haloPaint);
+            float dotR = dpFromContext(getContext(), 4f);
+            dotPaint.setColor(color);
+            canvas.drawCircle(cx, cy, dotR, dotPaint);
+            ringPaint.setColor(Color.WHITE);
+            canvas.drawCircle(cx, cy, dotR + dpFromContext(getContext(), 0.75f), ringPaint);
+        }
     }
 
     public static Space space(Activity ctx, int width, int height) {
@@ -240,7 +370,7 @@ public final class UIHelpers {
         LinearLayout card = new LinearLayout(ctx);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(dp(ctx, 14), dp(ctx, 14), dp(ctx, 14), dp(ctx, 14));
-        card.setBackground(round(CARD, dp(ctx, 12), BORDER));
+        card.setBackground(round(CARD, dp(ctx, 12), Color.TRANSPARENT));
         card.setElevation(dp(ctx, 1));
         LinearLayout.LayoutParams lp = marginBottom(-1, dp(ctx, 12));
         card.setLayoutParams(lp);
@@ -268,7 +398,7 @@ public final class UIHelpers {
     }
 
     public static Button primaryButton(Activity ctx, String title) {
-        return actionButton(ctx, title, ACCENT, Color.WHITE);
+        return actionButton(ctx, title, ACCENT, ON_ACCENT);
     }
 
     public static Button brandButton(Activity ctx, String title) {
@@ -287,21 +417,12 @@ public final class UIHelpers {
         return new LinearLayout.LayoutParams(0, dp(ctx, 44), weight);
     }
 
-    public static TextView pill(Activity ctx, String value, int bg, int fg) {
-        TextView pill = text(ctx, value, 12, fg, Typeface.NORMAL);
-        pill.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        pill.setGravity(Gravity.CENTER);
-        pill.setPadding(dp(ctx, 12), dp(ctx, 6), dp(ctx, 12), dp(ctx, 6));
-        pill.setBackground(round(bg, dp(ctx, 15), bg == Color.WHITE ? BORDER : Color.TRANSPARENT));
-        return pill;
-    }
-
     public static TextView chip(Activity ctx, String value, boolean selected) {
-        TextView chip = text(ctx, value, 12, selected ? Color.WHITE : TEXT3, Typeface.NORMAL);
+        TextView chip = text(ctx, value, 12, selected ? ON_ACCENT : TEXT3, Typeface.NORMAL);
         chip.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         chip.setGravity(Gravity.CENTER);
         chip.setPadding(dp(ctx, 14), dp(ctx, 7), dp(ctx, 14), dp(ctx, 7));
-        chip.setBackground(round(selected ? ACCENT : SURFACE, dp(ctx, 16), Color.TRANSPARENT));
+        chip.setBackground(round(selected ? ACCENT : SURFACE, dp(ctx, 12), Color.TRANSPARENT));
         return chip;
     }
 
@@ -310,6 +431,16 @@ public final class UIHelpers {
         view.setGravity(Gravity.CENTER);
         view.setBackground(round(Color.argb(45, 255, 255, 255), dp(ctx, 20), Color.TRANSPARENT));
         return view;
+    }
+
+    public static ImageView vectorIconButton(Activity ctx, int iconRes, int color, int paddingDp) {
+        ImageView iv = new ImageView(ctx);
+        iv.setImageResource(iconRes);
+        iv.setImageTintList(android.content.res.ColorStateList.valueOf(color));
+        int pad = dp(ctx, paddingDp);
+        iv.setPadding(pad, pad, pad, pad);
+        iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        return iv;
     }
 
     public static HorizontalScrollView tagRow(Activity ctx, java.util.List<String> values) {
@@ -340,10 +471,121 @@ public final class UIHelpers {
         input.setSingleLine(true);
         input.setFocusable(editable);
         input.setPadding(dp(ctx, 16), 0, dp(ctx, 16), 0);
-        input.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.ic_menu_search, 0, 0, 0);
+        input.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_search, 0, 0, 0);
+        input.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(TEXT3));
         input.setCompoundDrawablePadding(dp(ctx, 9));
         input.setMinHeight(dp(ctx, 44));
         input.setBackground(round(SURFACE, dp(ctx, 10), BORDER));
         return input;
+    }
+
+    public static com.facebook.shimmer.ShimmerFrameLayout shimmerFrame(Activity ctx) {
+        com.facebook.shimmer.ShimmerFrameLayout frame = new com.facebook.shimmer.ShimmerFrameLayout(ctx);
+        com.facebook.shimmer.Shimmer shimmer = new com.facebook.shimmer.Shimmer.AlphaHighlightBuilder()
+            .setDuration(1500L)
+            .setRepeatDelay(300L)
+            .setBaseAlpha(0.4f)
+            .setHighlightAlpha(0.3f)
+            .setDirection(com.facebook.shimmer.Shimmer.Direction.LEFT_TO_RIGHT)
+            .build();
+        frame.setShimmer(shimmer);
+        frame.startShimmer();
+        return frame;
+    }
+
+    public static View skeletonCard(Activity ctx, String variant) {
+        boolean grid = "grid".equals(variant);
+        LinearLayout card = new LinearLayout(ctx);
+        card.setOrientation(LinearLayout.VERTICAL);
+        int coverH = grid ? dp(ctx, 214) : dp(ctx, 107);
+        int coverW = grid ? -1 : dp(ctx, 80);
+        View cover = new View(ctx);
+        cover.setBackground(round(SURFACE, dp(ctx, 8), Color.TRANSPARENT));
+        if (grid) {
+            card.addView(cover, new LinearLayout.LayoutParams(-1, coverH));
+        } else {
+            LinearLayout row = new LinearLayout(ctx);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.addView(cover, new LinearLayout.LayoutParams(coverW, coverH));
+            LinearLayout info = new LinearLayout(ctx);
+            info.setOrientation(LinearLayout.VERTICAL);
+            info.setPadding(dp(ctx, 12), 0, 0, 0);
+            View line1 = new View(ctx);
+            line1.setBackground(round(TEXT3, dp(ctx, 4), Color.TRANSPARENT));
+            info.addView(line1, new LinearLayout.LayoutParams(dp(ctx, 120), dp(ctx, 16)));
+            View line2 = new View(ctx);
+            line2.setBackground(round(BORDER, dp(ctx, 4), Color.TRANSPARENT));
+            LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(dp(ctx, 80), dp(ctx, 12));
+            lp2.topMargin = dp(ctx, 8);
+            info.addView(line2, lp2);
+            row.addView(info, weight(1));
+            card.addView(row);
+        }
+        return card;
+    }
+
+    public static View emptyState(Activity ctx, int iconRes, String title, String desc, String action, Runnable onAction) {
+        LinearLayout box = new LinearLayout(ctx);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setGravity(Gravity.CENTER);
+        box.setPadding(dp(ctx, 24), dp(ctx, 48), dp(ctx, 24), dp(ctx, 48));
+        ImageView icon = new ImageView(ctx);
+        icon.setImageResource(iconRes);
+        icon.setImageTintList(android.content.res.ColorStateList.valueOf(TEXT3));
+        LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(dp(ctx, 72), dp(ctx, 72));
+        box.addView(icon, iconLp);
+        TextView t = new TextView(ctx);
+        t.setText(title);
+        t.setTypeface(Typeface.SERIF);
+        t.setTextSize(16);
+        t.setTextColor(TEXT2);
+        t.setLetterSpacing(-0.02f);
+        t.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        tlp.topMargin = dp(ctx, 20);
+        box.addView(t, tlp);
+        if (!TextUtils.isEmpty(desc)) {
+            TextView d = new TextView(ctx);
+            d.setText(desc);
+            d.setTextSize(13);
+            d.setTextColor(TEXT3);
+            d.setGravity(Gravity.CENTER);
+            d.setMaxLines(2);
+            d.setEllipsize(TextUtils.TruncateAt.END);
+            LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            dlp.topMargin = dp(ctx, 8);
+            box.addView(d, dlp);
+        }
+        if (!TextUtils.isEmpty(action) && onAction != null) {
+            Button btn = secondaryButton(ctx, action);
+            btn.setOnClickListener(v -> onAction.run());
+            LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(ctx, 42));
+            blp.topMargin = dp(ctx, 20);
+            box.addView(btn, blp);
+        }
+        return box;
+    }
+
+    public static void tapFeedback(View v) {
+        v.setOnTouchListener((view, e) -> {
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    animateAlpha(view, 1f, 0.7f);
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    animateAlpha(view, 0.7f, 1f);
+                    break;
+            }
+            return false;
+        });
+    }
+
+    private static void animateAlpha(View v, float from, float to) {
+        android.animation.ValueAnimator a = android.animation.ValueAnimator.ofFloat(from, to);
+        a.setDuration(250L);
+        a.setInterpolator(new android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f));
+        a.addUpdateListener(an -> v.setAlpha((float) an.getAnimatedValue()));
+        a.start();
     }
 }

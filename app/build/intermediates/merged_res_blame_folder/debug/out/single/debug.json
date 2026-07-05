@@ -1,18 +1,102 @@
 [
     {
-        "merged": "com.xxcomic.app-merged_res-5:/mipmap_ic_launcher.xml.flat",
-        "source": "com.xxcomic.app-main-7:/mipmap/ic_launcher.xml"
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_back.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_back.xml"
     },
     {
-        "merged": "com.xxcomic.app-merged_res-5:/drawable_ic_launcher_background.xml.flat",
-        "source": "com.xxcomic.app-main-7:/drawable/ic_launcher_background.xml"
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_sun.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_sun.xml"
     },
     {
-        "merged": "com.xxcomic.app-merged_res-5:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "com.xxcomic.app-main-7:/mipmap-anydpi-v26/ic_launcher.xml"
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_profile.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_profile.xml"
     },
     {
-        "merged": "com.xxcomic.app-merged_res-5:/drawable_ic_launcher_foreground.xml.flat",
-        "source": "com.xxcomic.app-main-7:/drawable/ic_launcher_foreground.xml"
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_bookshelf.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_bookshelf.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_auto.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_auto.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_chevron_right.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_chevron_right.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_close.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_close.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_favorite_fill.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_favorite_fill.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_menu.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_menu.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_trash.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_trash.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_search.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_search.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_chevron_left.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_chevron_left.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_moon.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_moon.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.xxcomic.app-main-8:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_source.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_source.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_lightning.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_lightning.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_history.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_history.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_search_nav.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_search_nav.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_chapter_list.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_chapter_list.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_favorite.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_favorite.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_cloud_off.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_cloud_off.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/mipmap_ic_launcher.xml.flat",
+        "source": "com.xxcomic.app-main-8:/mipmap/ic_launcher.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_magnifier.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_magnifier.xml"
+    },
+    {
+        "merged": "com.xxcomic.app-merged_res-6:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.xxcomic.app-main-8:/drawable/ic_launcher_background.xml"
     }
 ]

@@ -118,6 +118,27 @@ public class SourceConfig {
         return new SourceConfig("gmh", "G社漫画", "m.g-mh.org", "https://m.g-mh.org", "https://m.g-mh.org/", "", "", "", "", enabled, routes, filters);
     }
 
+    public static SourceConfig mkzhan(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        JSONObject filters = new JSONObject();
+        try {
+            routes.put("latest", "/category{query}");
+            routes.put("search", "/search/?keyword={keyword}");
+            routes.put("category", "/category{query}");
+            routes.put("detail", "/{comicId}/");
+            routes.put("chapter", "/{comicId}/{chapterId}.html");
+            routes.put("chapterApi", "https://comic.mkzcdn.com/chapter/content/v1/?chapter_id={chapterId}&comic_id={comicId}&quality=1&type=1&format=0&uid=&sign=");
+            filters.put("filter.serial", "finish=1");
+            filters.put("filter.pub", "finish=2");
+            filters.put("filter.free", "is_free=1");
+            filters.put("filter.fee", "is_fee=1");
+            filters.put("filter.vip", "is_vip=1");
+            filters.put("filter.all", "");
+        } catch (JSONException ignored) {
+        }
+        return new SourceConfig("mkzhan", "漫客栈", "www.mkzhan.com", "https://www.mkzhan.com", "https://www.mkzhan.com/", "", "", "", "", enabled, routes, filters);
+    }
+
     public SourceConfig withEnabled(boolean value) {
         return new SourceConfig(id, name, domain, baseUrl, referer, latestPath, searchPath, categoryPath, detailPath, value, routes, filters);
     }

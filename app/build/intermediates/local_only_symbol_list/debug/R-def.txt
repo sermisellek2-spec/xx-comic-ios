@@ -1,6 +1,27 @@
 R_DEF: Internal format may change without notice
 local
+drawable ic_auto
+drawable ic_back
+drawable ic_bookshelf
+drawable ic_chapter_list
+drawable ic_chevron_left
+drawable ic_chevron_right
+drawable ic_close
+drawable ic_cloud_off
+drawable ic_favorite
+drawable ic_favorite_fill
+drawable ic_history
 drawable ic_launcher_background
 drawable ic_launcher_foreground
+drawable ic_lightning
+drawable ic_magnifier
+drawable ic_menu
+drawable ic_moon
+drawable ic_profile
+drawable ic_search
+drawable ic_search_nav
+drawable ic_source
+drawable ic_sun
+drawable ic_trash
 mipmap ic_launcher
 style AppTheme

@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Read(//c/Users/15361/.claude/**)",
+      "Read(//c/Users/15361/.claude/plugins/**)",
+      "Bash(JAVA_HOME='C:\\\\Program Files\\\\JetBrains\\\\IntelliJ IDEA 2024.1.6\\\\jbr' ./gradlew.bat assembleDebug)",
+      "Bash(node tools/probe-mhua5-aikan-chapters.js)",
+      "Bash(awk 'NR>=420 && NR<=440' tools/probe-aikan-detail.html)",
+      "Bash(awk 'NR>=9600 && NR<=9620' tools/probe-aikan-detail.html)",
+      "Bash(awk 'NR>=185 && NR<=215' tools/probe-aikan-detail.html)",
+      "Bash(awk 'NR>=410 && NR<=425' tools/probe-aikan-detail.html)",
+      "Bash(awk 'NR>=60 && NR<=140' tools/probe-mhua5-detail.html)",
+      "Bash(node tools/sim-aikan-parse.js)",
+      "Bash(node tools/sim-mhua5-parse.js)",
+      "Bash(./gradlew.bat assembleDebug)"
+    ]
+  }
+}

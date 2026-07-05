@@ -4,6 +4,7 @@ ADDED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xm
 INJECTED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xml:2:1-23:12
 INJECTED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xml:2:1-23:12
 INJECTED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xml:2:1-23:12
+MERGED from [com.facebook.shimmer:shimmer:0.5.0] C:\Users\15361\.gradle\caches\transforms-3\7fc90d974d4f5ce2bbe8427885325263\transformed\shimmer-0.5.0\AndroidManifest.xml:2:1-7:12
 INJECTED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xml:2:1-23:12
 INJECTED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xml:2:1-23:12
 INJECTED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xml:2:1-23:12
@@ -65,6 +66,8 @@ uses-sdk
 INJECTED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xml
 INJECTED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xml
+MERGED from [com.facebook.shimmer:shimmer:0.5.0] C:\Users\15361\.gradle\caches\transforms-3\7fc90d974d4f5ce2bbe8427885325263\transformed\shimmer-0.5.0\AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.shimmer:shimmer:0.5.0] C:\Users\15361\.gradle\caches\transforms-3\7fc90d974d4f5ce2bbe8427885325263\transformed\shimmer-0.5.0\AndroidManifest.xml:5:5-44
 INJECTED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xml
 INJECTED from F:\softForCode\codex-project\xx-comic\app\src\main\AndroidManifest.xml
 	android:targetSdkVersion
