@@ -139,6 +139,41 @@ public class SourceConfig {
         return new SourceConfig("mkzhan", "漫客栈", "www.mkzhan.com", "https://www.mkzhan.com", "https://www.mkzhan.com/", "", "", "", "", enabled, routes, filters);
     }
 
+    public static SourceConfig hiperdex(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        JSONObject filters = new JSONObject();
+        try {
+            routes.put("latest", "/manga/?m_orderby=latest{pageQuery}");
+            routes.put("search", "/?s={keyword}&post_type=wp-manga{pageQuery}");
+            routes.put("category", "/manga/{genrePath}{pagePath}");
+            routes.put("detail", "/manga/{comicId}/");
+            routes.put("chapter", "/manga/{comicId}/{chapterSlug}/");
+            filters.put("genre.all", "");
+            filters.put("genre.manhwa", "manhwa");
+            filters.put("genre.webtoon", "webtoon");
+            filters.put("genre.romance", "romance");
+            filters.put("genre.drama", "drama");
+        } catch (JSONException ignored) {
+        }
+        return new SourceConfig("hiperdex", "HiperDEX", "hiperdex.com", "https://hiperdex.com", "https://hiperdex.com/", "", "", "", "", enabled, routes, filters);
+    }
+
+    public static SourceConfig hanman18(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        JSONObject filters = new JSONObject();
+        try {
+            routes.put("latest", "/list-manga{pagePath}");
+            routes.put("search", "/search?search={keyword}");
+            routes.put("category", "/list-manga{pagePath}");
+            routes.put("detail", "/manhwa/{comicId}");
+            routes.put("chapter", "/manhwa/{comicId}/{chapterId}");
+            routes.put("home", "/");
+            filters.put("category.all", "");
+        } catch (JSONException ignored) {
+        }
+        return new SourceConfig("hanman18", "Hanman18", "hanman18.com", "https://hanman18.com", "https://hanman18.com/", "", "", "", "", enabled, routes, filters);
+    }
+
     public SourceConfig withEnabled(boolean value) {
         return new SourceConfig(id, name, domain, baseUrl, referer, latestPath, searchPath, categoryPath, detailPath, value, routes, filters);
     }

@@ -13,7 +13,15 @@
       "Bash(awk 'NR>=60 && NR<=140' tools/probe-mhua5-detail.html)",
       "Bash(node tools/sim-aikan-parse.js)",
       "Bash(node tools/sim-mhua5-parse.js)",
-      "Bash(./gradlew.bat assembleDebug)"
+      "Bash(./gradlew.bat assembleDebug)",
+      "Bash(curl -s -m 25 -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/124.0.0.0 Safari/537.36\" -e \"https://hanman18.com/\" \"https://hanman18.com/manhwa/meilixinshijie/262\" -o tools/probe-hanman18-chapter.html)",
+      "Bash(rm -f tools/probe-hanman18-chapter.html)",
+      "Bash(curl -sS -m 20 -o /dev/null -w \"code=%{http_code} time=%{time_total}s\\\\n\" \"https://hanman18.com/\")",
+      "Bash(curl -sS -L -m 30 -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/124.0.0.0 Safari/537.36\" -e \"https://hanman18.com/\" \"https://hanman18.com/manhwa/meilixinshijie/262\" -o tools/probe-hanman18-chapter.html -w \"code=%{http_code} size=%{size_download}\\\\n\")",
+      "Bash(echo \"exit=$?\")",
+      "Bash(ls -l tools/probe-hanman18-chapter.html)",
+      "Bash(ls -l tools/check-hanman18-source.ps1)",
+      "Bash(cat tools/check-hanman18-source.ps1)"
     ]
   }
 }

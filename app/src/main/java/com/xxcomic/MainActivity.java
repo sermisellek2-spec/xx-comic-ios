@@ -46,6 +46,8 @@ import com.xxcomic.source.AikanComicSource;
 import com.xxcomic.source.ComicModels;
 import com.xxcomic.source.ComicSource;
 import com.xxcomic.source.GmhComicSource;
+import com.xxcomic.source.HiperdexComicSource;
+import com.xxcomic.source.Hanman18ComicSource;
 import com.xxcomic.source.MkzhanComicSource;
 import com.xxcomic.source.Mhua5ComicSource;
 import com.xxcomic.source.SourceConfig;
@@ -122,11 +124,15 @@ public class MainActivity extends Activity {
     private ComicSource aikanClient;
     private ComicSource gmhClient;
     private ComicSource mkzhanClient;
+    private ComicSource hiperdexClient;
+    private ComicSource hanman18Client;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
     private SourceConfig mhua5Config = SourceConfig.mhua5(true);
     private SourceConfig aikanConfig = SourceConfig.aikan(true);
     private SourceConfig gmhConfig = SourceConfig.gmh(true);
     private SourceConfig mkzhanConfig = SourceConfig.mkzhan(true);
+    private SourceConfig hiperdexConfig = SourceConfig.hiperdex(true);
+    private SourceConfig hanman18Config = SourceConfig.hanman18(true);
     private final List<ComicModels.ComicSummary> searchResults = new ArrayList<>();
     private final List<ComicModels.ComicSummary> globalSearchResults = new ArrayList<>();
     private final List<String> globalSearchHistory = new ArrayList<>();
@@ -156,6 +162,8 @@ public class MainActivity extends Activity {
     private boolean aikanEnabled = true;
     private boolean gmhEnabled = true;
     private boolean mkzhanEnabled = true;
+    private boolean hiperdexEnabled = true;
+    private boolean hanman18Enabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
     private boolean readerLeftHand = false;
@@ -649,6 +657,20 @@ public class MainActivity extends Activity {
         page.addView(sourceCard(mkzhanConfig.name, mkzhanConfig.domain, mkzhanEnabled, () -> {
             mkzhanEnabled = !mkzhanEnabled;
             mkzhanConfig = mkzhanConfig.withEnabled(mkzhanEnabled);
+            rebuildSourceClients();
+            saveLocalState();
+            showTab(2);
+        }));
+        page.addView(sourceCard(hiperdexConfig.name, hiperdexConfig.domain, hiperdexEnabled, () -> {
+            hiperdexEnabled = !hiperdexEnabled;
+            hiperdexConfig = hiperdexConfig.withEnabled(hiperdexEnabled);
+            rebuildSourceClients();
+            saveLocalState();
+            showTab(2);
+        }));
+        page.addView(sourceCard(hanman18Config.name, hanman18Config.domain, hanman18Enabled, () -> {
+            hanman18Enabled = !hanman18Enabled;
+            hanman18Config = hanman18Config.withEnabled(hanman18Enabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
@@ -1802,6 +1824,8 @@ public class MainActivity extends Activity {
         if (aikanClient.id().equals(sourceId)) return aikanClient.name();
         if (gmhClient.id().equals(sourceId)) return gmhClient.name();
         if (mkzhanClient.id().equals(sourceId)) return mkzhanClient.name();
+        if (hiperdexClient.id().equals(sourceId)) return hiperdexClient.name();
+        if (hanman18Client.id().equals(sourceId)) return hanman18Client.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(sourceId)) return item.name;
         }
@@ -1814,6 +1838,8 @@ public class MainActivity extends Activity {
         if (aikanClient.id().equals(selectedSourceId) && aikanEnabled) return aikanClient;
         if (gmhClient.id().equals(selectedSourceId) && gmhEnabled) return gmhClient;
         if (mkzhanClient.id().equals(selectedSourceId) && mkzhanEnabled) return mkzhanClient;
+        if (hiperdexClient.id().equals(selectedSourceId) && hiperdexEnabled) return hiperdexClient;
+        if (hanman18Client.id().equals(selectedSourceId) && hanman18Enabled) return hanman18Client;
         List<ComicSource> enabled = enabledBuiltinSources();
         if (enabled.isEmpty()) return null;
         selectedSourceId = enabled.get(0).id();
@@ -1827,6 +1853,8 @@ public class MainActivity extends Activity {
         if (aikanEnabled) sources.add(aikanClient);
         if (gmhEnabled) sources.add(gmhClient);
         if (mkzhanEnabled) sources.add(mkzhanClient);
+        if (hiperdexEnabled) sources.add(hiperdexClient);
+        if (hanman18Enabled) sources.add(hanman18Client);
         return sources;
     }
 
@@ -1837,6 +1865,8 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(aikanClient.id() + ":")) return aikanClient;
         if (comicId != null && comicId.startsWith(gmhClient.id() + ":")) return gmhClient;
         if (comicId != null && comicId.startsWith(mkzhanClient.id() + ":")) return mkzhanClient;
+        if (comicId != null && comicId.startsWith(hiperdexClient.id() + ":")) return hiperdexClient;
+        if (comicId != null && comicId.startsWith(hanman18Client.id() + ":")) return hanman18Client;
         return sourceClient;
     }
 
@@ -1849,6 +1879,8 @@ public class MainActivity extends Activity {
         if (aikanClient.id().equals(sourceId)) return aikanClient;
         if (gmhClient.id().equals(sourceId)) return gmhClient;
         if (mkzhanClient.id().equals(sourceId)) return mkzhanClient;
+        if (hiperdexClient.id().equals(sourceId)) return hiperdexClient;
+        if (hanman18Client.id().equals(sourceId)) return hanman18Client;
         return sourceClient;
     }
 
@@ -1952,7 +1984,12 @@ public class MainActivity extends Activity {
                 ComicSource client = sourceForDetail(detail);
                 List<ComicModels.Chapter> loadedChapters = client.chapters(detail.summary.comicId);
                 if (loadedChapters.isEmpty()) {
-                    throw new IOException("Chapter list is empty: " + detail.summary.title);
+                    main.post(() -> {
+                        if (!isCurrentLoading(loadingGeneration)) return;
+                        pageLoading = false;
+                        showInfo("暂无章节", "未找到该漫画的章节目录，可能暂无可用章节或站源暂未收录。");
+                    });
+                    return;
                 }
                 normalizeChaptersOldestFirst(loadedChapters);
                 ComicModels.ComicDetail loaded = new ComicModels.ComicDetail(
@@ -1992,6 +2029,7 @@ public class MainActivity extends Activity {
             });
             return;
         }
+        chapterDesc = false;
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 16), UIHelpers.dp(this, 16), UIHelpers.dp(this, 16));
@@ -2336,6 +2374,8 @@ public class MainActivity extends Activity {
         if (imageUrl != null && imageUrl.contains(mhua5Config.domain)) return mhua5Config.referer;
         if (imageUrl != null && (imageUrl.contains(gmhConfig.domain) || imageUrl.contains("g-mh.online") || imageUrl.contains("6wm.top"))) return gmhConfig.referer;
         if (imageUrl != null && (imageUrl.contains(mkzhanConfig.domain) || imageUrl.contains("mkzcdn.com"))) return mkzhanConfig.referer;
+        if (imageUrl != null && (imageUrl.contains(hiperdexConfig.domain) || imageUrl.contains("r2d2storage.com"))) return hiperdexConfig.referer;
+        if (imageUrl != null && (imageUrl.contains(hanman18Config.domain) || imageUrl.contains("manga18.club"))) return hanman18Config.referer;
         return baoziConfig.referer;
     }
 
@@ -2403,6 +2443,8 @@ public class MainActivity extends Activity {
         if (aikanEnabled) names.add(aikanClient.name());
         if (gmhEnabled) names.add(gmhClient.name());
         if (mkzhanEnabled) names.add(mkzhanClient.name());
+        if (hiperdexEnabled) names.add(hiperdexClient.name());
+        if (hanman18Enabled) names.add(hanman18Client.name());
         return names;
     }
 
@@ -2412,6 +2454,8 @@ public class MainActivity extends Activity {
         if (aikanClient.id().equals(selectedSourceId)) return aikanClient.name();
         if (gmhClient.id().equals(selectedSourceId)) return gmhClient.name();
         if (mkzhanClient.id().equals(selectedSourceId)) return mkzhanClient.name();
+        if (hiperdexClient.id().equals(selectedSourceId)) return hiperdexClient.name();
+        if (hanman18Client.id().equals(selectedSourceId)) return hanman18Client.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(selectedSourceId)) return item.name;
         }
@@ -2424,6 +2468,8 @@ public class MainActivity extends Activity {
         if (aikanClient.name().equals(name)) return aikanClient.id();
         if (gmhClient.name().equals(name)) return gmhClient.id();
         if (mkzhanClient.name().equals(name)) return mkzhanClient.id();
+        if (hiperdexClient.name().equals(name)) return hiperdexClient.id();
+        if (hanman18Client.name().equals(name)) return hanman18Client.id();
         for (ComicModels.Source item : customSources) {
             if (item.name.equals(name)) return item.id;
         }
@@ -2463,6 +2509,14 @@ public class MainActivity extends Activity {
             grid.addView(searchTagRow(mkzhanFilterLabels(), false));
             return grid;
         }
+        if (hanman18Client.id().equals(selectedSourceId)) {
+            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "受欢迎的"), true));
+            return grid;
+        }
+        if (hiperdexClient.id().equals(selectedSourceId)) {
+            grid.addView(searchTagRow(Arrays.asList(ALL_TAG), true));
+            return grid;
+        }
         if (aikanClient.id().equals(selectedSourceId)) {
             grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "连载中", "已完结"), false));
             return grid;
@@ -2488,6 +2542,11 @@ public class MainActivity extends Activity {
         if ("日本".equals(value)) return "jp";
         if ("韩国".equals(value)) return "kr";
         if ("欧美".equals(value)) return "en";
+        if ("Manhwa".equals(value)) return "manhwa";
+        if ("Webtoon".equals(value)) return "webtoon";
+        if ("Romance".equals(value)) return "romance";
+        if ("Drama".equals(value)) return "drama";
+        if ("受欢迎的".equals(value)) return "popular";
         return "all";
     }
 
@@ -3016,6 +3075,8 @@ public class MainActivity extends Activity {
         sources.put(aikanConfig.withEnabled(aikanEnabled).toJson());
         sources.put(gmhConfig.withEnabled(gmhEnabled).toJson());
         sources.put(mkzhanConfig.withEnabled(mkzhanEnabled).toJson());
+        sources.put(hiperdexConfig.withEnabled(hiperdexEnabled).toJson());
+        sources.put(hanman18Config.withEnabled(hanman18Enabled).toJson());
         root.put("sources", sources);
         JSONArray custom = new JSONArray();
         for (ComicModels.Source item : customSources) {
@@ -3059,6 +3120,12 @@ public class MainActivity extends Activity {
                     mkzhanConfig = SourceConfig.fromJson(item, SourceConfig.mkzhan(true));
                     mkzhanConfig = normalizeMkzhanConfig(mkzhanConfig);
                     mkzhanEnabled = mkzhanConfig.enabled;
+                } else if (hiperdexConfig.id.equals(id)) {
+                    hiperdexConfig = SourceConfig.fromJson(item, SourceConfig.hiperdex(true));
+                    hiperdexEnabled = hiperdexConfig.enabled;
+                } else if (hanman18Config.id.equals(id)) {
+                    hanman18Config = SourceConfig.fromJson(item, SourceConfig.hanman18(true));
+                    hanman18Enabled = hanman18Config.enabled;
                 }
             }
         }
@@ -3072,6 +3139,8 @@ public class MainActivity extends Activity {
                 if (aikanConfig.id.equals(id)) aikanEnabled = item.optBoolean("enabled", true);
                 if (gmhConfig.id.equals(id)) gmhEnabled = item.optBoolean("enabled", true);
                 if (mkzhanConfig.id.equals(id)) mkzhanEnabled = item.optBoolean("enabled", true);
+                if (hiperdexConfig.id.equals(id)) hiperdexEnabled = item.optBoolean("enabled", true);
+                if (hanman18Config.id.equals(id)) hanman18Enabled = item.optBoolean("enabled", true);
             }
         }
         rebuildSourceClients();
@@ -3113,6 +3182,8 @@ public class MainActivity extends Activity {
         aikanClient = new AikanComicSource(aikanConfig.withEnabled(aikanEnabled));
         gmhClient = new GmhComicSource(gmhConfig.withEnabled(gmhEnabled));
         mkzhanClient = new MkzhanComicSource(mkzhanConfig.withEnabled(mkzhanEnabled));
+        hiperdexClient = new HiperdexComicSource(hiperdexConfig.withEnabled(hiperdexEnabled));
+        hanman18Client = new Hanman18ComicSource(hanman18Config.withEnabled(hanman18Enabled));
     }
 
     private String readHistoryText() {
@@ -3133,6 +3204,8 @@ public class MainActivity extends Activity {
         aikanEnabled = prefs.getBoolean("source.aikan.enabled", true);
         gmhEnabled = prefs.getBoolean("source.gmh.enabled", true);
         mkzhanEnabled = prefs.getBoolean("source.mkzhan.enabled", true);
+        hiperdexEnabled = prefs.getBoolean("source.hiperdex.enabled", true);
+        hanman18Enabled = prefs.getBoolean("source.hanman18.enabled", true);
         restoreSourceConfigs(prefs.getString("source.configs", ""));
         rebuildSourceClients();
         chapterDesc = prefs.getBoolean("chapter.desc", false);
@@ -3183,6 +3256,8 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.aikan.enabled", aikanEnabled);
         editor.putBoolean("source.gmh.enabled", gmhEnabled);
         editor.putBoolean("source.mkzhan.enabled", mkzhanEnabled);
+        editor.putBoolean("source.hiperdex.enabled", hiperdexEnabled);
+        editor.putBoolean("source.hanman18.enabled", hanman18Enabled);
         editor.putString("source.configs", encodeSourceConfigs());
         editor.putBoolean("chapter.desc", chapterDesc);
         editor.putInt("theme.mode", themeMode);
@@ -3215,6 +3290,8 @@ public class MainActivity extends Activity {
             aikanConfig = SourceConfig.aikan(aikanEnabled);
             gmhConfig = SourceConfig.gmh(gmhEnabled);
             mkzhanConfig = SourceConfig.mkzhan(mkzhanEnabled);
+            hiperdexConfig = SourceConfig.hiperdex(hiperdexEnabled);
+            hanman18Config = SourceConfig.hanman18(hanman18Enabled);
             return;
         }
         try {
@@ -3238,6 +3315,12 @@ public class MainActivity extends Activity {
                     mkzhanConfig = SourceConfig.fromJson(item, SourceConfig.mkzhan(mkzhanEnabled));
                     mkzhanConfig = normalizeMkzhanConfig(mkzhanConfig);
                     mkzhanEnabled = mkzhanConfig.enabled;
+                } else if (SourceConfig.hiperdex(true).id.equals(id)) {
+                    hiperdexConfig = SourceConfig.fromJson(item, SourceConfig.hiperdex(hiperdexEnabled));
+                    hiperdexEnabled = hiperdexConfig.enabled;
+                } else if (SourceConfig.hanman18(true).id.equals(id)) {
+                    hanman18Config = SourceConfig.fromJson(item, SourceConfig.hanman18(hanman18Enabled));
+                    hanman18Enabled = hanman18Config.enabled;
                 }
             }
         } catch (JSONException ignored) {
@@ -3246,6 +3329,8 @@ public class MainActivity extends Activity {
             aikanConfig = SourceConfig.aikan(aikanEnabled);
             gmhConfig = SourceConfig.gmh(gmhEnabled);
             mkzhanConfig = SourceConfig.mkzhan(mkzhanEnabled);
+            hiperdexConfig = SourceConfig.hiperdex(hiperdexEnabled);
+            hanman18Config = SourceConfig.hanman18(hanman18Enabled);
         }
     }
 
@@ -3257,6 +3342,8 @@ public class MainActivity extends Activity {
             array.put(aikanConfig.withEnabled(aikanEnabled).toJson());
             array.put(gmhConfig.withEnabled(gmhEnabled).toJson());
             array.put(mkzhanConfig.withEnabled(mkzhanEnabled).toJson());
+            array.put(hiperdexConfig.withEnabled(hiperdexEnabled).toJson());
+            array.put(hanman18Config.withEnabled(hanman18Enabled).toJson());
             return array.toString();
         } catch (JSONException ignored) {
             return "[]";
