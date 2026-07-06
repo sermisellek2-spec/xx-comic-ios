@@ -47,6 +47,7 @@ import com.xxcomic.source.ComicModels;
 import com.xxcomic.source.ComicSource;
 import com.xxcomic.source.GmhComicSource;
 import com.xxcomic.source.HiperdexComicSource;
+import com.xxcomic.source.ManhuaguiComicSource;
 import com.xxcomic.source.Hanman18ComicSource;
 import com.xxcomic.source.MkzhanComicSource;
 import com.xxcomic.source.Mhua5ComicSource;
@@ -101,6 +102,7 @@ public class MainActivity extends Activity {
     private static final int IMPORT_SOURCES_REQUEST = 1001;
     private static final int EXPORT_SOURCES_REQUEST = 1002;
     private static final int EXPORT_LOGS_REQUEST = 1003;
+    private static final String IMAGE_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private final Handler main = new Handler(Looper.getMainLooper());
     // 按模块拆分线程池，互不阻塞：搜索中切到收藏页，封面图走 imageIo 不被搜索阻塞
     private final ExecutorService searchIo = Executors.newFixedThreadPool(2);
@@ -125,6 +127,7 @@ public class MainActivity extends Activity {
     private ComicSource gmhClient;
     private ComicSource mkzhanClient;
     private ComicSource hiperdexClient;
+    private ComicSource manhuaguiClient;
     private ComicSource hanman18Client;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
     private SourceConfig mhua5Config = SourceConfig.mhua5(true);
@@ -132,6 +135,7 @@ public class MainActivity extends Activity {
     private SourceConfig gmhConfig = SourceConfig.gmh(true);
     private SourceConfig mkzhanConfig = SourceConfig.mkzhan(true);
     private SourceConfig hiperdexConfig = SourceConfig.hiperdex(true);
+    private SourceConfig manhuaguiConfig = SourceConfig.manhuagui(true);
     private SourceConfig hanman18Config = SourceConfig.hanman18(true);
     private final List<ComicModels.ComicSummary> searchResults = new ArrayList<>();
     private final List<ComicModels.ComicSummary> globalSearchResults = new ArrayList<>();
@@ -163,6 +167,7 @@ public class MainActivity extends Activity {
     private boolean gmhEnabled = true;
     private boolean mkzhanEnabled = true;
     private boolean hiperdexEnabled = true;
+    private boolean manhuaguiEnabled = true;
     private boolean hanman18Enabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
@@ -334,23 +339,29 @@ public class MainActivity extends Activity {
             showTab(3);
             return true;
         }
+        if (readerVisible && !TextUtils.isEmpty(activeDetailId)) {
+            showDetail(activeDetailId);
+            return true;
+        }
+        if (!TextUtils.isEmpty(activeDetailId)) {
+            // Exit detail → restore the concurrent-search list if we came from it, else the search page.
+            activeDetailId = "";
+            if (standaloneSearchVisible) {
+                showStandaloneSearch(standaloneSearchResultsMode);
+            } else {
+                showTab(currentTab);
+            }
+            return true;
+        }
         if (standaloneSearchVisible) {
             if (standaloneSearchResultsMode) {
                 showStandaloneSearch(false);
             } else {
                 standaloneSearchVisible = false;
                 standaloneSearchResultsMode = false;
+                clearSearchInputs();
                 showTab(0);
             }
-            return true;
-        }
-        if (readerVisible && !TextUtils.isEmpty(activeDetailId)) {
-            showDetail(activeDetailId);
-            return true;
-        }
-        if (!TextUtils.isEmpty(activeDetailId)) {
-            activeDetailId = "";
-            showTab(currentTab);
             return true;
         }
         return false;
@@ -430,6 +441,13 @@ public class MainActivity extends Activity {
     private Future<?> track(Future<?> f) {
         currentScreenFutures.add(f);
         return f;
+    }
+
+    // Top-level page switch (bottom-nav tap / exiting standalone search) should clear the search
+    // inputs; down-navigation (entering detail) and back-from-detail must NOT clear them.
+    private void clearSearchInputs() {
+        searchQuery = "";
+        globalSearchQuery = "";
     }
 
     private void showTab(int tab) {
@@ -668,6 +686,13 @@ public class MainActivity extends Activity {
             saveLocalState();
             showTab(2);
         }));
+        page.addView(sourceCard(manhuaguiConfig.name, manhuaguiConfig.domain, manhuaguiEnabled, () -> {
+            manhuaguiEnabled = !manhuaguiEnabled;
+            manhuaguiConfig = manhuaguiConfig.withEnabled(manhuaguiEnabled);
+            rebuildSourceClients();
+            saveLocalState();
+            showTab(2);
+        }));
         page.addView(sourceCard(hanman18Config.name, hanman18Config.domain, hanman18Enabled, () -> {
             hanman18Enabled = !hanman18Enabled;
             hanman18Config = hanman18Config.withEnabled(hanman18Enabled);
@@ -714,7 +739,7 @@ public class MainActivity extends Activity {
         group.addView(UIHelpers.divider(this));
         group.addView(menuItemWithIcon(R.drawable.ic_lightning, "错误日志", errorLogSummary(), () -> showErrorLogs()));
         group.addView(UIHelpers.divider(this));
-        group.addView(menuItemWithIcon(R.drawable.ic_profile, "关于 App", "1.0.2", () -> showInfo("关于 App", "XX Comic 已接入包子漫画、漫画屋的搜索、详情、阅读图片和本地缓存。")));
+        group.addView(menuItemWithIcon(R.drawable.ic_profile, "关于 App", "1.0.3", () -> showInfo("关于 App", "XX Comic 已接入包子漫画、漫画屋的搜索、详情、阅读图片和本地缓存。")));
         page.addView(group);
     }
 
@@ -816,6 +841,7 @@ public class MainActivity extends Activity {
         back.setOnClickListener(v -> {
             standaloneSearchVisible = false;
             standaloneSearchResultsMode = false;
+            clearSearchInputs();
             showTab(0);
         });
         LinearLayout.LayoutParams backParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 40), UIHelpers.dp(this, 40));
@@ -1098,11 +1124,7 @@ public class MainActivity extends Activity {
     private LinearLayout globalResultRow(ComicModels.ComicSummary item) {
         LinearLayout row = UIHelpers.card(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setOnClickListener(v -> {
-            standaloneSearchVisible = false;
-            standaloneSearchResultsMode = false;
-            showDetail(item.comicId);
-        });
+        row.setOnClickListener(v -> showDetail(item.comicId));
         row.addView(coverFrame(item.coverUrl, 72, 96));
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
@@ -1122,7 +1144,10 @@ public class MainActivity extends Activity {
         LinearLayout item = UIHelpers.surfaceCard(this);
         item.setOrientation(LinearLayout.VERTICAL);
         item.setPadding(UIHelpers.dp(this, 10), UIHelpers.dp(this, 10), UIHelpers.dp(this, 10), UIHelpers.dp(this, 10));
-        item.setOnClickListener(v -> showDetail(comic.comicId));
+        item.setOnClickListener(v -> {
+            if (searchScroll != null) pendingSearchScrollY = searchScroll.getScrollY();
+            showDetail(comic.comicId);
+        });
         item.addView(coverFrame(comic.coverUrl, -1, 202));
         TextView title = UIHelpers.text(this, comic.title, 14, UIHelpers.TEXT, Typeface.NORMAL);
         title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
@@ -1526,7 +1551,7 @@ public class MainActivity extends Activity {
                 image.setBackgroundColor(UIHelpers.DARK);
                 image.setOnTouchListener((v, event) -> handleReaderTap(event, detail, page));
                 pages.addView(image, new LinearLayout.LayoutParams(-1, -2));
-                loadImage(image, url);
+                loadImage(image, url, detail.chapters.get(readerChapterIndex).url);
             }
         }
         shell.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
@@ -1825,6 +1850,7 @@ public class MainActivity extends Activity {
         if (gmhClient.id().equals(sourceId)) return gmhClient.name();
         if (mkzhanClient.id().equals(sourceId)) return mkzhanClient.name();
         if (hiperdexClient.id().equals(sourceId)) return hiperdexClient.name();
+        if (manhuaguiClient.id().equals(sourceId)) return manhuaguiClient.name();
         if (hanman18Client.id().equals(sourceId)) return hanman18Client.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(sourceId)) return item.name;
@@ -1839,6 +1865,7 @@ public class MainActivity extends Activity {
         if (gmhClient.id().equals(selectedSourceId) && gmhEnabled) return gmhClient;
         if (mkzhanClient.id().equals(selectedSourceId) && mkzhanEnabled) return mkzhanClient;
         if (hiperdexClient.id().equals(selectedSourceId) && hiperdexEnabled) return hiperdexClient;
+        if (manhuaguiClient.id().equals(selectedSourceId) && manhuaguiEnabled) return manhuaguiClient;
         if (hanman18Client.id().equals(selectedSourceId) && hanman18Enabled) return hanman18Client;
         List<ComicSource> enabled = enabledBuiltinSources();
         if (enabled.isEmpty()) return null;
@@ -1854,6 +1881,7 @@ public class MainActivity extends Activity {
         if (gmhEnabled) sources.add(gmhClient);
         if (mkzhanEnabled) sources.add(mkzhanClient);
         if (hiperdexEnabled) sources.add(hiperdexClient);
+        if (manhuaguiEnabled) sources.add(manhuaguiClient);
         if (hanman18Enabled) sources.add(hanman18Client);
         return sources;
     }
@@ -1866,6 +1894,7 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(gmhClient.id() + ":")) return gmhClient;
         if (comicId != null && comicId.startsWith(mkzhanClient.id() + ":")) return mkzhanClient;
         if (comicId != null && comicId.startsWith(hiperdexClient.id() + ":")) return hiperdexClient;
+        if (comicId != null && comicId.startsWith(manhuaguiClient.id() + ":")) return manhuaguiClient;
         if (comicId != null && comicId.startsWith(hanman18Client.id() + ":")) return hanman18Client;
         return sourceClient;
     }
@@ -1880,6 +1909,7 @@ public class MainActivity extends Activity {
         if (gmhClient.id().equals(sourceId)) return gmhClient;
         if (mkzhanClient.id().equals(sourceId)) return mkzhanClient;
         if (hiperdexClient.id().equals(sourceId)) return hiperdexClient;
+        if (manhuaguiClient.id().equals(sourceId)) return manhuaguiClient;
         if (hanman18Client.id().equals(sourceId)) return hanman18Client;
         return sourceClient;
     }
@@ -2303,6 +2333,10 @@ public class MainActivity extends Activity {
     }
 
     private void loadImage(ImageView target, String imageUrl) {
+        loadImage(target, imageUrl, "");
+    }
+
+    private void loadImage(ImageView target, String imageUrl, String pageReferer) {
         if (TextUtils.isEmpty(imageUrl)) return;
         // 内存命中：同步 set，不进 imageIo，切 Tab 重建列表时即时显示。
         Bitmap memHit = imageMemoryCache.get(imageUrl);
@@ -2321,23 +2355,31 @@ public class MainActivity extends Activity {
                         main.post(() -> target.setImageBitmap(cachedBitmap));
                         return;
                     }
+                    cached.delete();
                 }
                 connection = (HttpURLConnection) new URL(imageUrl).openConnection();
                 connection.setInstanceFollowRedirects(true);
                 connection.setConnectTimeout(10000);
-                connection.setReadTimeout(20000);
-                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Android) XXComic/1.0");
-                connection.setRequestProperty("Referer", refererForImage(imageUrl));
+                connection.setReadTimeout(30000);
+                String referer = refererForImage(imageUrl, pageReferer);
+                applyImageHeaders(connection, referer);
+                int code = connection.getResponseCode();
+                if (code >= 400) throw new IOException("Image HTTP " + code + ": " + imageUrl + "; referer=" + referer);
+                String contentType = clean(connection.getContentType(), "");
                 try (InputStream stream = connection.getInputStream()) {
                     byte[] bytes = readAllBytes(stream);
-                    writeImageCache(cached, bytes);
                     Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     if (bitmap != null) {
+                        writeImageCache(cached, bytes);
                         imageMemoryCache.put(imageUrl, bitmap);
                         main.post(() -> target.setImageBitmap(bitmap));
+                    } else {
+                        cached.delete();
+                        throw new IOException("Image decode failed: " + imageUrl + "; bytes=" + bytes.length + "; type=" + contentType + "; referer=" + referer);
                     }
                 }
-            } catch (Exception ignored) {
+            } catch (Exception error) {
+                appendErrorLog("图片加载失败", error);
                 main.post(() -> target.setImageDrawable(new ColorDrawable(UIHelpers.BORDER_SOFT)));
             } finally {
                 if (connection != null) connection.disconnect();
@@ -2356,8 +2398,7 @@ public class MainActivity extends Activity {
                 connection.setInstanceFollowRedirects(true);
                 connection.setConnectTimeout(10000);
                 connection.setReadTimeout(20000);
-                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Android) XXComic/1.0");
-                connection.setRequestProperty("Referer", refererForImage(imageUrl));
+                applyImageHeaders(connection, refererForImage(imageUrl));
                 try (InputStream stream = connection.getInputStream()) {
                     writeImageCache(cached, readAllBytes(stream));
                 }
@@ -2369,12 +2410,29 @@ public class MainActivity extends Activity {
         });
     }
 
+    private void applyImageHeaders(HttpURLConnection connection, String referer) {
+        connection.setRequestProperty("User-Agent", IMAGE_USER_AGENT);
+        connection.setRequestProperty("Accept", "image/webp,image/apng,image/*,*/*;q=0.8");
+        connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8");
+        connection.setRequestProperty("Sec-Fetch-Dest", "image");
+        connection.setRequestProperty("Sec-Fetch-Mode", "no-cors");
+        connection.setRequestProperty("Sec-Fetch-Site", "cross-site");
+        if (!TextUtils.isEmpty(referer)) connection.setRequestProperty("Referer", referer);
+    }
+
     private String refererForImage(String imageUrl) {
+        return refererForImage(imageUrl, "");
+    }
+
+    private String refererForImage(String imageUrl, String pageReferer) {
         if (imageUrl != null && (imageUrl.contains(aikanConfig.domain) || imageUrl.contains("qrqrs.com"))) return aikanConfig.referer;
         if (imageUrl != null && imageUrl.contains(mhua5Config.domain)) return mhua5Config.referer;
         if (imageUrl != null && (imageUrl.contains(gmhConfig.domain) || imageUrl.contains("g-mh.online") || imageUrl.contains("6wm.top"))) return gmhConfig.referer;
         if (imageUrl != null && (imageUrl.contains(mkzhanConfig.domain) || imageUrl.contains("mkzcdn.com"))) return mkzhanConfig.referer;
         if (imageUrl != null && (imageUrl.contains(hiperdexConfig.domain) || imageUrl.contains("r2d2storage.com"))) return hiperdexConfig.referer;
+        if (imageUrl != null && (imageUrl.contains(manhuaguiConfig.domain) || imageUrl.contains("mhgui.com") || imageUrl.contains("hamreus.com"))) {
+            return TextUtils.isEmpty(pageReferer) ? manhuaguiConfig.referer : pageReferer;
+        }
         if (imageUrl != null && (imageUrl.contains(hanman18Config.domain) || imageUrl.contains("manga18.club"))) return hanman18Config.referer;
         return baoziConfig.referer;
     }
@@ -2444,6 +2502,7 @@ public class MainActivity extends Activity {
         if (gmhEnabled) names.add(gmhClient.name());
         if (mkzhanEnabled) names.add(mkzhanClient.name());
         if (hiperdexEnabled) names.add(hiperdexClient.name());
+        if (manhuaguiEnabled) names.add(manhuaguiClient.name());
         if (hanman18Enabled) names.add(hanman18Client.name());
         return names;
     }
@@ -2455,6 +2514,7 @@ public class MainActivity extends Activity {
         if (gmhClient.id().equals(selectedSourceId)) return gmhClient.name();
         if (mkzhanClient.id().equals(selectedSourceId)) return mkzhanClient.name();
         if (hiperdexClient.id().equals(selectedSourceId)) return hiperdexClient.name();
+        if (manhuaguiClient.id().equals(selectedSourceId)) return manhuaguiClient.name();
         if (hanman18Client.id().equals(selectedSourceId)) return hanman18Client.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(selectedSourceId)) return item.name;
@@ -2469,6 +2529,7 @@ public class MainActivity extends Activity {
         if (gmhClient.name().equals(name)) return gmhClient.id();
         if (mkzhanClient.name().equals(name)) return mkzhanClient.id();
         if (hiperdexClient.name().equals(name)) return hiperdexClient.id();
+        if (manhuaguiClient.name().equals(name)) return manhuaguiClient.id();
         if (hanman18Client.name().equals(name)) return hanman18Client.id();
         for (ComicModels.Source item : customSources) {
             if (item.name.equals(name)) return item.id;
@@ -2513,6 +2574,11 @@ public class MainActivity extends Activity {
             grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "受欢迎的"), true));
             return grid;
         }
+        if (manhuaguiClient.id().equals(selectedSourceId)) {
+            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "日本", "内地", "韩国", "港台", "欧美", "其它"), true), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
+            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "连载", "完结"), false));
+            return grid;
+        }
         if (hiperdexClient.id().equals(selectedSourceId)) {
             grid.addView(searchTagRow(Arrays.asList(ALL_TAG), true));
             return grid;
@@ -2542,6 +2608,9 @@ public class MainActivity extends Activity {
         if ("日本".equals(value)) return "jp";
         if ("韩国".equals(value)) return "kr";
         if ("欧美".equals(value)) return "en";
+        if ("内地".equals(value)) return "cn";
+        if ("港台".equals(value)) return "hk";
+        if ("其它".equals(value)) return "other";
         if ("Manhwa".equals(value)) return "manhwa";
         if ("Webtoon".equals(value)) return "webtoon";
         if ("Romance".equals(value)) return "romance";
@@ -2612,7 +2681,10 @@ public class MainActivity extends Activity {
             labelLp.topMargin = UIHelpers.dp(this, 4);
             tab.addView(icon);
             tab.addView(label, labelLp);
-            tab.setOnClickListener(v -> showTab(index));
+            tab.setOnClickListener(v -> {
+                if (index != currentTab) clearSearchInputs();
+                showTab(index);
+            });
             tabs.addView(tab, UIHelpers.weight(1));
         }
         return wrap;
@@ -3076,6 +3148,7 @@ public class MainActivity extends Activity {
         sources.put(gmhConfig.withEnabled(gmhEnabled).toJson());
         sources.put(mkzhanConfig.withEnabled(mkzhanEnabled).toJson());
         sources.put(hiperdexConfig.withEnabled(hiperdexEnabled).toJson());
+        sources.put(manhuaguiConfig.withEnabled(manhuaguiEnabled).toJson());
         sources.put(hanman18Config.withEnabled(hanman18Enabled).toJson());
         root.put("sources", sources);
         JSONArray custom = new JSONArray();
@@ -3123,6 +3196,9 @@ public class MainActivity extends Activity {
                 } else if (hiperdexConfig.id.equals(id)) {
                     hiperdexConfig = SourceConfig.fromJson(item, SourceConfig.hiperdex(true));
                     hiperdexEnabled = hiperdexConfig.enabled;
+                } else if (manhuaguiConfig.id.equals(id)) {
+                    manhuaguiConfig = SourceConfig.fromJson(item, SourceConfig.manhuagui(true));
+                    manhuaguiEnabled = manhuaguiConfig.enabled;
                 } else if (hanman18Config.id.equals(id)) {
                     hanman18Config = SourceConfig.fromJson(item, SourceConfig.hanman18(true));
                     hanman18Enabled = hanman18Config.enabled;
@@ -3140,6 +3216,7 @@ public class MainActivity extends Activity {
                 if (gmhConfig.id.equals(id)) gmhEnabled = item.optBoolean("enabled", true);
                 if (mkzhanConfig.id.equals(id)) mkzhanEnabled = item.optBoolean("enabled", true);
                 if (hiperdexConfig.id.equals(id)) hiperdexEnabled = item.optBoolean("enabled", true);
+                if (manhuaguiConfig.id.equals(id)) manhuaguiEnabled = item.optBoolean("enabled", true);
                 if (hanman18Config.id.equals(id)) hanman18Enabled = item.optBoolean("enabled", true);
             }
         }
@@ -3183,6 +3260,7 @@ public class MainActivity extends Activity {
         gmhClient = new GmhComicSource(gmhConfig.withEnabled(gmhEnabled));
         mkzhanClient = new MkzhanComicSource(mkzhanConfig.withEnabled(mkzhanEnabled));
         hiperdexClient = new HiperdexComicSource(hiperdexConfig.withEnabled(hiperdexEnabled));
+        manhuaguiClient = new ManhuaguiComicSource(manhuaguiConfig.withEnabled(manhuaguiEnabled));
         hanman18Client = new Hanman18ComicSource(hanman18Config.withEnabled(hanman18Enabled));
     }
 
@@ -3205,6 +3283,7 @@ public class MainActivity extends Activity {
         gmhEnabled = prefs.getBoolean("source.gmh.enabled", true);
         mkzhanEnabled = prefs.getBoolean("source.mkzhan.enabled", true);
         hiperdexEnabled = prefs.getBoolean("source.hiperdex.enabled", true);
+        manhuaguiEnabled = prefs.getBoolean("source.manhuagui.enabled", true);
         hanman18Enabled = prefs.getBoolean("source.hanman18.enabled", true);
         restoreSourceConfigs(prefs.getString("source.configs", ""));
         rebuildSourceClients();
@@ -3257,6 +3336,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.gmh.enabled", gmhEnabled);
         editor.putBoolean("source.mkzhan.enabled", mkzhanEnabled);
         editor.putBoolean("source.hiperdex.enabled", hiperdexEnabled);
+        editor.putBoolean("source.manhuagui.enabled", manhuaguiEnabled);
         editor.putBoolean("source.hanman18.enabled", hanman18Enabled);
         editor.putString("source.configs", encodeSourceConfigs());
         editor.putBoolean("chapter.desc", chapterDesc);
@@ -3291,6 +3371,7 @@ public class MainActivity extends Activity {
             gmhConfig = SourceConfig.gmh(gmhEnabled);
             mkzhanConfig = SourceConfig.mkzhan(mkzhanEnabled);
             hiperdexConfig = SourceConfig.hiperdex(hiperdexEnabled);
+            manhuaguiConfig = SourceConfig.manhuagui(manhuaguiEnabled);
             hanman18Config = SourceConfig.hanman18(hanman18Enabled);
             return;
         }
@@ -3318,6 +3399,9 @@ public class MainActivity extends Activity {
                 } else if (SourceConfig.hiperdex(true).id.equals(id)) {
                     hiperdexConfig = SourceConfig.fromJson(item, SourceConfig.hiperdex(hiperdexEnabled));
                     hiperdexEnabled = hiperdexConfig.enabled;
+                } else if (SourceConfig.manhuagui(true).id.equals(id)) {
+                    manhuaguiConfig = SourceConfig.fromJson(item, SourceConfig.manhuagui(manhuaguiEnabled));
+                    manhuaguiEnabled = manhuaguiConfig.enabled;
                 } else if (SourceConfig.hanman18(true).id.equals(id)) {
                     hanman18Config = SourceConfig.fromJson(item, SourceConfig.hanman18(hanman18Enabled));
                     hanman18Enabled = hanman18Config.enabled;
@@ -3330,6 +3414,7 @@ public class MainActivity extends Activity {
             gmhConfig = SourceConfig.gmh(gmhEnabled);
             mkzhanConfig = SourceConfig.mkzhan(mkzhanEnabled);
             hiperdexConfig = SourceConfig.hiperdex(hiperdexEnabled);
+            manhuaguiConfig = SourceConfig.manhuagui(manhuaguiEnabled);
             hanman18Config = SourceConfig.hanman18(hanman18Enabled);
         }
     }
@@ -3343,6 +3428,7 @@ public class MainActivity extends Activity {
             array.put(gmhConfig.withEnabled(gmhEnabled).toJson());
             array.put(mkzhanConfig.withEnabled(mkzhanEnabled).toJson());
             array.put(hiperdexConfig.withEnabled(hiperdexEnabled).toJson());
+            array.put(manhuaguiConfig.withEnabled(manhuaguiEnabled).toJson());
             array.put(hanman18Config.withEnabled(hanman18Enabled).toJson());
             return array.toString();
         } catch (JSONException ignored) {

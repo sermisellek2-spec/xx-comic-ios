@@ -174,6 +174,30 @@ public class SourceConfig {
         return new SourceConfig("hanman18", "Hanman18", "hanman18.com", "https://hanman18.com", "https://hanman18.com/", "", "", "", "", enabled, routes, filters);
     }
 
+    public static SourceConfig manhuagui(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        JSONObject filters = new JSONObject();
+        try {
+            routes.put("latest", "/list");
+            routes.put("search", "/s/{keyword}.html");
+            routes.put("category", "/list");
+            routes.put("detail", "/comic/{comicId}");
+            routes.put("chapter", "/comic/{comicId}/{chapterId}.html");
+            filters.put("region.all", "");
+            filters.put("region.jp", "japan");
+            filters.put("region.cn", "china");
+            filters.put("region.kr", "korea");
+            filters.put("region.hk", "hongkong");
+            filters.put("region.en", "europe");
+            filters.put("region.other", "other");
+            filters.put("state.all", "");
+            filters.put("state.serial", "lianzai");
+            filters.put("state.pub", "wanjie");
+        } catch (JSONException ignored) {
+        }
+        return new SourceConfig("manhuagui", "漫画柜", "www.manhuagui.com", "https://www.manhuagui.com", "https://www.manhuagui.com/", "", "", "", "", enabled, routes, filters);
+    }
+
     public SourceConfig withEnabled(boolean value) {
         return new SourceConfig(id, name, domain, baseUrl, referer, latestPath, searchPath, categoryPath, detailPath, value, routes, filters);
     }
