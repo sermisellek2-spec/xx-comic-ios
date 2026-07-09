@@ -198,6 +198,29 @@ public class SourceConfig {
         return new SourceConfig("manhuagui", "漫画柜", "www.manhuagui.com", "https://www.manhuagui.com", "https://www.manhuagui.com/", "", "", "", "", enabled, routes, filters);
     }
 
+    public static SourceConfig d5d6(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        JSONObject filters = new JSONObject();
+        try {
+            routes.put("latest", "/jiujiucate_jiujiuquanbu_allvisit_0_{page}/");
+            routes.put("search", "/search/{keyword}/");
+            routes.put("category", "/jiujiucate_{slug}_allvisit_{finish}_{page}/");
+            routes.put("categoryIndex", "/jiujiucate_quanbu/");
+            routes.put("detail", "/jiujiucomic_{comicId}/");
+            routes.put("chapter", "/jiujiucomic_{comicId}/{chapterId}.html");
+            filters.put("category.all", "jiujiuquanbu");
+            filters.put("category.cn", "jiujiudalu");
+            filters.put("category.jp", "jiujiuriben");
+            filters.put("category.kr", "jiujiuhanguo");
+            filters.put("category.en", "jiujiuoumei");
+            filters.put("state.all", "0");
+            filters.put("state.serial", "1");
+            filters.put("state.pub", "2");
+        } catch (JSONException ignored) {
+        }
+        return new SourceConfig("d5d6", "悦看漫画", "www.d5d6.com", "https://www.d5d6.com", "https://www.d5d6.com/", "", "", "", "", enabled, routes, filters);
+    }
+
     public SourceConfig withEnabled(boolean value) {
         return new SourceConfig(id, name, domain, baseUrl, referer, latestPath, searchPath, categoryPath, detailPath, value, routes, filters);
     }

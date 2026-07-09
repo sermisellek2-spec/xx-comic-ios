@@ -45,6 +45,7 @@ import com.xxcomic.source.BaoziComicSource;
 import com.xxcomic.source.AikanComicSource;
 import com.xxcomic.source.ComicModels;
 import com.xxcomic.source.ComicSource;
+import com.xxcomic.source.D5d6ComicSource;
 import com.xxcomic.source.GmhComicSource;
 import com.xxcomic.source.HiperdexComicSource;
 import com.xxcomic.source.ManhuaguiComicSource;
@@ -129,6 +130,7 @@ public class MainActivity extends Activity {
     private ComicSource hiperdexClient;
     private ComicSource manhuaguiClient;
     private ComicSource hanman18Client;
+    private ComicSource d5d6Client;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
     private SourceConfig mhua5Config = SourceConfig.mhua5(true);
     private SourceConfig aikanConfig = SourceConfig.aikan(true);
@@ -137,6 +139,7 @@ public class MainActivity extends Activity {
     private SourceConfig hiperdexConfig = SourceConfig.hiperdex(true);
     private SourceConfig manhuaguiConfig = SourceConfig.manhuagui(true);
     private SourceConfig hanman18Config = SourceConfig.hanman18(true);
+    private SourceConfig d5d6Config = SourceConfig.d5d6(true);
     private final List<ComicModels.ComicSummary> searchResults = new ArrayList<>();
     private final List<ComicModels.ComicSummary> globalSearchResults = new ArrayList<>();
     private final List<String> globalSearchHistory = new ArrayList<>();
@@ -161,6 +164,9 @@ public class MainActivity extends Activity {
     private String selectedSourceId = "baozimh";
     private String selectedRegion = "all";
     private String selectedState = "all";
+    private String selectedRegionLabel = ALL_TAG;
+    private String selectedStateLabel = ALL_TAG;
+    private Runnable filterDrawerAction;
     private boolean sourceEnabled = true;
     private boolean mhua5Enabled = true;
     private boolean aikanEnabled = true;
@@ -169,6 +175,7 @@ public class MainActivity extends Activity {
     private boolean hiperdexEnabled = true;
     private boolean manhuaguiEnabled = true;
     private boolean hanman18Enabled = true;
+    private boolean d5d6Enabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
     private boolean readerLeftHand = false;
@@ -213,6 +220,8 @@ public class MainActivity extends Activity {
     private String pendingLogText = "";
     private PopupWindow activePopup;
     private ScrollView searchScroll;
+    private LinearLayout searchResultsContent;
+    private View searchPagingFooter;
     // 搜索页分类栏折叠状态：用状态机 + reflow 守卫，避免 GONE/VISIBLE 引发 ScrollView clamp
     // scrollY 产生「隐藏→上滑→显示→下滑→隐藏」的闪烁循环。
     private boolean searchCategoryHidden;
@@ -520,12 +529,9 @@ public class MainActivity extends Activity {
             }
         });
         page.addView(input, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 42)));
-        final View sourceSection = sectionText("搜索来源 · 已启用的站源");
-        final View sourceDrop = sourceDropdown();
-        final View tagGrid = searchTagGrid(searchTags());
-        page.addView(sourceSection);
-        page.addView(sourceDrop);
-        page.addView(tagGrid);
+        TextView filterTrigger = UIHelpers.chip(this, "▾ " + selectedSourceName() + " · " + currentFilterLabel(), true);
+        filterTrigger.setOnClickListener(v -> showFilterDrawer());
+        page.addView(filterTrigger, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 10)));
         page.addView(sectionTitle("搜索结果"));
 
         ScrollView scroll = new ScrollView(this);
@@ -533,37 +539,14 @@ public class MainActivity extends Activity {
         tuneScroll(scroll);
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
+        searchResultsContent = content;
+        searchPagingFooter = null;
         scroll.addView(content, UIHelpers.matchWrap());
-        searchCategoryHidden = false;
-        searchCategoryToggling = false;
         scroll.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
             View child = scroll.getChildAt(0);
             if (child != null && scrollY + scroll.getHeight() >= child.getHeight() - UIHelpers.dp(this, 120)) {
                 loadNextSearchPage();
             }
-            // 自身切换引发的 reflow 期间忽略，避免反向抖动
-            if (searchCategoryToggling) return;
-            int delta = scrollY - oldScrollY;
-            int thresh = UIHelpers.dp(this, 14);  // 方向阈值加大，避免临界值抖动
-            boolean shouldHide = !searchCategoryHidden && delta > thresh && scrollY > UIHelpers.dp(this, 8);
-            boolean shouldShow = searchCategoryHidden && (delta < -thresh || scrollY <= UIHelpers.dp(this, 2));
-            if (!shouldHide && !shouldShow) return;
-            searchCategoryHidden = shouldHide;
-            searchCategoryToggling = true;
-            int vis = shouldHide ? View.GONE : View.VISIBLE;
-            sourceSection.setVisibility(vis);
-            sourceDrop.setVisibility(vis);
-            tagGrid.setVisibility(vis);
-            // GONE/VISIBLE 会 reflow ScrollView 并 clamp scrollY，产生反向 onScrollChange；
-            // 等本次布局完成后(onPreDraw)再放开守卫，使该次 reflow 被上面 return 拦截，打破闪烁循环。
-            scroll.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
-                @Override
-                public boolean onPreDraw() {
-                    scroll.getViewTreeObserver().removeOnPreDrawListener(this);
-                    searchCategoryToggling = false;
-                    return true;
-                }
-            });
         });
         page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         if (pendingSearchScrollY >= 0) {
@@ -596,25 +579,52 @@ public class MainActivity extends Activity {
             }));
             return;
         }
-        for (int i = 0; i < visible.size(); i += 2) {
+        appendSearchRows(content, visible);
+        renderSearchPagingFooter(content);
+    }
+
+    private void appendSearchResults(List<ComicModels.ComicSummary> list) {
+        if (searchResultsContent == null) {
+            showTab(1);
+            return;
+        }
+        appendSearchRows(searchResultsContent, list);
+        renderSearchPagingFooter(searchResultsContent);
+    }
+
+    private void appendSearchRows(LinearLayout content, List<ComicModels.ComicSummary> items) {
+        for (int i = 0; i < items.size(); i += 2) {
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
-            row.addView(resultCard(visible.get(i)), UIHelpers.weight(1));
-            if (i + 1 < visible.size()) {
+            row.addView(resultCard(items.get(i)), UIHelpers.weight(1));
+            if (i + 1 < items.size()) {
                 row.addView(UIHelpers.space(this, UIHelpers.dp(this, 12), 1));
-                row.addView(resultCard(visible.get(i + 1)), UIHelpers.weight(1));
+                row.addView(resultCard(items.get(i + 1)), UIHelpers.weight(1));
             }
             content.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 14)));
         }
+    }
+
+    private void renderSearchPagingFooter(LinearLayout content) {
+        removeSearchPagingFooter();
         if (searchAppending) {
-            content.addView(loadingMoreView(), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 16)));
+            searchPagingFooter = loadingMoreView();
         } else if (!searchHasMore) {
-            TextView end = UIHelpers.text(this, "已经到底了", 12, UIHelpers.TEXT3, Typeface.NORMAL);
+            TextView end = UIHelpers.text(this, "\u5df2\u7ecf\u5230\u5e95\u4e86", 12, UIHelpers.TEXT3, Typeface.NORMAL);
             end.setGravity(Gravity.CENTER);
-            content.addView(end, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 16)));
+            searchPagingFooter = end;
+        }
+        if (searchPagingFooter != null) {
+            content.addView(searchPagingFooter, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 16)));
         }
     }
 
+    private void removeSearchPagingFooter() {
+        if (searchPagingFooter != null && searchPagingFooter.getParent() instanceof ViewGroup) {
+            ((ViewGroup) searchPagingFooter.getParent()).removeView(searchPagingFooter);
+        }
+        searchPagingFooter = null;
+    }
     private void renderFavorites(LinearLayout page) {
         addTitle(page, "我的收藏", null);
         EditText input = UIHelpers.searchBox(this, "搜索漫画名称或作者", true);
@@ -696,6 +706,13 @@ public class MainActivity extends Activity {
         page.addView(sourceCard(hanman18Config.name, hanman18Config.domain, hanman18Enabled, () -> {
             hanman18Enabled = !hanman18Enabled;
             hanman18Config = hanman18Config.withEnabled(hanman18Enabled);
+            rebuildSourceClients();
+            saveLocalState();
+            showTab(2);
+        }));
+        page.addView(sourceCard(d5d6Config.name, d5d6Config.domain, d5d6Enabled, () -> {
+            d5d6Enabled = !d5d6Enabled;
+            d5d6Config = d5d6Config.withEnabled(d5d6Enabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
@@ -1616,7 +1633,12 @@ public class MainActivity extends Activity {
         ComicSource client = selectedSource();
         if (client == null) return;
         int generation = ++searchGeneration;
-        if (append) searchAppending = true; else searchLoading = true;
+        if (append) {
+            searchAppending = true;
+            if (currentTab == 1 && searchResultsContent != null) renderSearchPagingFooter(searchResultsContent);
+        } else {
+            searchLoading = true;
+        }
         if (currentTab == 1 && !append) showTab(1);
         track(searchIo.submit(() -> {
             try {
@@ -1634,8 +1656,11 @@ public class MainActivity extends Activity {
                     searchLoading = false;
                     searchAppending = false;
                     if (currentTab == 1) {
-                        if (append && searchScroll != null) pendingSearchScrollY = searchScroll.getScrollY();
-                        showTab(1);
+                        if (append && searchResultsContent != null) {
+                            appendSearchResults(list);
+                        } else {
+                            showTab(1);
+                        }
                     }
                 });
             } catch (Exception error) {
@@ -1852,6 +1877,7 @@ public class MainActivity extends Activity {
         if (hiperdexClient.id().equals(sourceId)) return hiperdexClient.name();
         if (manhuaguiClient.id().equals(sourceId)) return manhuaguiClient.name();
         if (hanman18Client.id().equals(sourceId)) return hanman18Client.name();
+        if (d5d6Client.id().equals(sourceId)) return d5d6Client.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(sourceId)) return item.name;
         }
@@ -1867,6 +1893,7 @@ public class MainActivity extends Activity {
         if (hiperdexClient.id().equals(selectedSourceId) && hiperdexEnabled) return hiperdexClient;
         if (manhuaguiClient.id().equals(selectedSourceId) && manhuaguiEnabled) return manhuaguiClient;
         if (hanman18Client.id().equals(selectedSourceId) && hanman18Enabled) return hanman18Client;
+        if (d5d6Client.id().equals(selectedSourceId) && d5d6Enabled) return d5d6Client;
         List<ComicSource> enabled = enabledBuiltinSources();
         if (enabled.isEmpty()) return null;
         selectedSourceId = enabled.get(0).id();
@@ -1883,6 +1910,7 @@ public class MainActivity extends Activity {
         if (hiperdexEnabled) sources.add(hiperdexClient);
         if (manhuaguiEnabled) sources.add(manhuaguiClient);
         if (hanman18Enabled) sources.add(hanman18Client);
+        if (d5d6Enabled) sources.add(d5d6Client);
         return sources;
     }
 
@@ -1896,6 +1924,7 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(hiperdexClient.id() + ":")) return hiperdexClient;
         if (comicId != null && comicId.startsWith(manhuaguiClient.id() + ":")) return manhuaguiClient;
         if (comicId != null && comicId.startsWith(hanman18Client.id() + ":")) return hanman18Client;
+        if (comicId != null && comicId.startsWith(d5d6Client.id() + ":")) return d5d6Client;
         return sourceClient;
     }
 
@@ -1911,6 +1940,7 @@ public class MainActivity extends Activity {
         if (hiperdexClient.id().equals(sourceId)) return hiperdexClient;
         if (manhuaguiClient.id().equals(sourceId)) return manhuaguiClient;
         if (hanman18Client.id().equals(sourceId)) return hanman18Client;
+        if (d5d6Client.id().equals(sourceId)) return d5d6Client;
         return sourceClient;
     }
 
@@ -1933,7 +1963,11 @@ public class MainActivity extends Activity {
                 main.post(() -> {
                     sourceCategories.clear();
                     sourceCategories.addAll(list);
-                    if (currentTab == 1) showTab(1);
+                    if (filterDrawerAction != null) {
+                        filterDrawerAction.run();
+                    } else if (currentTab == 1) {
+                        showTab(1);
+                    }
                 });
             } catch (Exception ignored) {
             }
@@ -2434,7 +2468,160 @@ public class MainActivity extends Activity {
             return TextUtils.isEmpty(pageReferer) ? manhuaguiConfig.referer : pageReferer;
         }
         if (imageUrl != null && (imageUrl.contains(hanman18Config.domain) || imageUrl.contains("manga18.club"))) return hanman18Config.referer;
+        if (imageUrl != null && imageUrl.contains(d5d6Config.domain)) return d5d6Config.referer;
         return baoziConfig.referer;
+    }
+
+    private String currentFilterLabel() {
+        if (!"all".equals(selectedRegion) && !TextUtils.isEmpty(selectedRegion)) return selectedRegionLabel;
+        if (!"all".equals(selectedState) && !TextUtils.isEmpty(selectedState)) return selectedStateLabel;
+        return ALL_TAG;
+    }
+
+    private View dividerLine() {
+        View d = new View(this);
+        d.setBackgroundColor(UIHelpers.BORDER_SOFT);
+        d.setLayoutParams(new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 1)));
+        return d;
+    }
+
+    private void showFilterDrawer() {
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int panelWidth = Math.min(screenWidth - UIHelpers.dp(this, 56), UIHelpers.dp(this, 320));
+
+        final String origSourceId = selectedSourceId;
+        final String origRegion = selectedRegion;
+        final String origState = selectedState;
+        final String origRegionLabel = selectedRegionLabel;
+        final String origStateLabel = selectedStateLabel;
+        final boolean[] confirmed = {false};
+
+        FrameLayout overlay = new FrameLayout(this);
+        View backdrop = new View(this);
+        backdrop.setBackgroundColor(Color.argb(150, 0, 0, 0));
+        overlay.addView(backdrop, UIHelpers.match());
+
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        android.graphics.drawable.GradientDrawable panelBg = new android.graphics.drawable.GradientDrawable();
+        panelBg.setColor(UIHelpers.CARD);
+        float r = UIHelpers.dp(this, 22);
+        panelBg.setCornerRadii(new float[]{r, r, 0, 0, 0, 0, r, r});
+        panel.setBackground(panelBg);
+        panel.setPadding(UIHelpers.dp(this, 18), UIHelpers.dp(this, 14), UIHelpers.dp(this, 18), UIHelpers.dp(this, 16));
+        overlay.addView(panel, new FrameLayout.LayoutParams(panelWidth, -1, Gravity.RIGHT));
+
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.addView(UIHelpers.text(this, "筛选", 18, UIHelpers.TEXT, Typeface.BOLD), UIHelpers.weight(1));
+        TextView close = UIHelpers.text(this, "✕", 18, UIHelpers.TEXT2, Typeface.NORMAL);
+        close.setPadding(UIHelpers.dp(this, 14), UIHelpers.dp(this, 6), UIHelpers.dp(this, 14), UIHelpers.dp(this, 6));
+        close.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 18), UIHelpers.BORDER_SOFT));
+        header.addView(close);
+        panel.addView(header, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 12)));
+
+        LinearLayout tabs = new LinearLayout(this);
+        tabs.setOrientation(LinearLayout.HORIZONTAL);
+        TextView tabSource = UIHelpers.text(this, "站源", 14, UIHelpers.TEXT2, Typeface.NORMAL);
+        TextView tabCategory = UIHelpers.text(this, "分类", 14, UIHelpers.TEXT2, Typeface.NORMAL);
+        tabSource.setGravity(Gravity.CENTER);
+        tabCategory.setGravity(Gravity.CENTER);
+        tabSource.setPadding(0, UIHelpers.dp(this, 10), 0, UIHelpers.dp(this, 10));
+        tabCategory.setPadding(0, UIHelpers.dp(this, 10), 0, UIHelpers.dp(this, 10));
+        tabSource.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 12), UIHelpers.BORDER_SOFT));
+        tabCategory.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 12), UIHelpers.BORDER_SOFT));
+        tabs.addView(tabSource, UIHelpers.weight(1));
+        tabs.addView(tabCategory, UIHelpers.weight(1));
+        panel.addView(tabs, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+
+        ScrollView contentScroll = new ScrollView(this);
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        contentScroll.addView(content, UIHelpers.matchWrap());
+        panel.addView(contentScroll, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        Button confirm = UIHelpers.brandButton(this, "\u786e\u8ba4\u641c\u7d22");
+        confirm.setTextSize(15);
+        confirm.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        confirm.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 8), UIHelpers.dp(this, 16), UIHelpers.dp(this, 8));
+        confirm.setMinHeight(UIHelpers.dp(this, 48));
+        confirm.setMinimumHeight(UIHelpers.dp(this, 48));
+        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 48));
+        confirmLp.topMargin = UIHelpers.dp(this, 12);
+        panel.addView(confirm, confirmLp);
+
+        PopupWindow popup = new PopupWindow(overlay, -1, -1, true);
+        popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popup.setOnDismissListener(() -> {
+            if (activePopup == popup) activePopup = null;
+            filterDrawerAction = null;
+            if (!confirmed[0]) {
+                selectedSourceId = origSourceId;
+                selectedRegion = origRegion;
+                selectedState = origState;
+                selectedRegionLabel = origRegionLabel;
+                selectedStateLabel = origStateLabel;
+            }
+        });
+        close.setOnClickListener(v -> popup.dismiss());
+        backdrop.setOnClickListener(v -> popup.dismiss());
+
+        final int[] filterTab = {1};
+        final Runnable[] fill = new Runnable[1];
+        fill[0] = () -> {
+            content.removeAllViews();
+            boolean sourceTab = filterTab[0] == 0;
+            tabSource.setTextColor(sourceTab ? UIHelpers.ACCENT : UIHelpers.TEXT2);
+            tabCategory.setTextColor(!sourceTab ? UIHelpers.ACCENT : UIHelpers.TEXT2);
+            tabSource.setTypeface(Typeface.create("sans-serif-medium", sourceTab ? Typeface.BOLD : Typeface.NORMAL));
+            tabCategory.setTypeface(Typeface.create("sans-serif-medium", !sourceTab ? Typeface.BOLD : Typeface.NORMAL));
+            if (sourceTab) {
+                filterDrawerAction = null;
+                for (String name : enabledSourceNames()) {
+                    String sid = sourceIdForName(name);
+                    boolean sel = sid.equals(selectedSourceId);
+                    TextView row = UIHelpers.text(this, name, 15, sel ? UIHelpers.ACCENT : UIHelpers.TEXT, sel ? Typeface.BOLD : Typeface.NORMAL);
+                    row.setPadding(0, UIHelpers.dp(this, 13), 0, UIHelpers.dp(this, 13));
+                    row.setOnClickListener(v -> {
+                        selectedSourceId = sid;
+                        selectedRegion = "all";
+                        selectedState = "all";
+                        selectedRegionLabel = ALL_TAG;
+                        selectedStateLabel = ALL_TAG;
+                        sourceCategories.clear();
+                        loadSourceCategories();
+                        filterTab[0] = 1;
+                        fill[0].run();
+                    });
+                    content.addView(row);
+                    content.addView(dividerLine());
+                }
+            } else {
+                filterDrawerAction = () -> fill[0].run();
+                content.addView(searchTagGrid(searchTags()));
+            }
+        };
+        tabSource.setOnClickListener(v -> { filterTab[0] = 0; fill[0].run(); });
+        tabCategory.setOnClickListener(v -> { filterTab[0] = 1; fill[0].run(); });
+        confirm.setOnClickListener(v -> {
+            confirmed[0] = true;
+            boolean sourceChanged = !selectedSourceId.equals(origSourceId);
+            searchQuery = "";
+            searchResults.clear();
+            showTab(1);
+            if (sourceChanged) loadSourceCategories();
+            loadCategory();
+            popup.dismiss();
+        });
+
+        activePopup = popup;
+        popup.showAtLocation(root, Gravity.CENTER, 0, 0);
+        fill[0].run();
+        panel.setTranslationX(panelWidth);
+        panel.animate().translationX(0).setDuration(220).start();
+        backdrop.setAlpha(0f);
+        backdrop.animate().alpha(1f).setDuration(220).start();
     }
 
     private TextView sourceDropdown() {
@@ -2457,6 +2644,8 @@ public class MainActivity extends Activity {
                     selectedSourceId = sourceIdForName(items[which]);
                     selectedRegion = "all";
                     selectedState = "all";
+                    selectedRegionLabel = ALL_TAG;
+                    selectedStateLabel = ALL_TAG;
                     sourceCategories.clear();
                     searchResults.clear();
                     showTab(1);
@@ -2504,6 +2693,7 @@ public class MainActivity extends Activity {
         if (hiperdexEnabled) names.add(hiperdexClient.name());
         if (manhuaguiEnabled) names.add(manhuaguiClient.name());
         if (hanman18Enabled) names.add(hanman18Client.name());
+        if (d5d6Enabled) names.add(d5d6Client.name());
         return names;
     }
 
@@ -2516,6 +2706,7 @@ public class MainActivity extends Activity {
         if (hiperdexClient.id().equals(selectedSourceId)) return hiperdexClient.name();
         if (manhuaguiClient.id().equals(selectedSourceId)) return manhuaguiClient.name();
         if (hanman18Client.id().equals(selectedSourceId)) return hanman18Client.name();
+        if (d5d6Client.id().equals(selectedSourceId)) return d5d6Client.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(selectedSourceId)) return item.name;
         }
@@ -2531,6 +2722,7 @@ public class MainActivity extends Activity {
         if (hiperdexClient.name().equals(name)) return hiperdexClient.id();
         if (manhuaguiClient.name().equals(name)) return manhuaguiClient.id();
         if (hanman18Client.name().equals(name)) return hanman18Client.id();
+        if (d5d6Client.name().equals(name)) return d5d6Client.id();
         for (ComicModels.Source item : customSources) {
             if (item.name.equals(name)) return item.id;
         }
@@ -2549,13 +2741,12 @@ public class MainActivity extends Activity {
             chip.setOnClickListener(v -> {
                 if (regionRow) {
                     selectedRegion = codeForRegion(value);
+                    selectedRegionLabel = value;
                 } else {
                     selectedState = codeForState(value);
+                    selectedStateLabel = value;
                 }
-                searchQuery = "";
-                searchResults.clear();
-                showTab(1);
-                loadCategory();
+                if (filterDrawerAction != null) filterDrawerAction.run();
             });
             row.addView(chip, UIHelpers.marginRight(-2, UIHelpers.dp(this, 14)));
         }
@@ -2563,6 +2754,63 @@ public class MainActivity extends Activity {
         return scroll;
     }
 
+    private LinearLayout searchTagColumn(List<String> values, boolean regionRow) {
+        LinearLayout column = new LinearLayout(this);
+        column.setOrientation(LinearLayout.VERTICAL);
+        if (values == null || values.isEmpty()) return column;
+        final int columns = 3;
+        final int cellHeight = UIHelpers.dp(this, 34);
+        final int cellGap = UIHelpers.dp(this, 8);
+        LinearLayout row = null;
+        for (int i = 0; i < values.size(); i++) {
+            if (i % columns == 0) {
+                row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                column.addView(row, UIHelpers.marginBottom(-1, cellGap));
+            }
+            String value = values.get(i);
+            boolean selected = regionRow ? codeForRegion(value).equals(selectedRegion) : codeForState(value).equals(selectedState);
+            TextView chip = filterGridChip(value, selected);
+            chip.setSingleLine(true);
+            chip.setEllipsize(TextUtils.TruncateAt.END);
+            chip.setGravity(Gravity.CENTER);
+            chip.setOnClickListener(v -> {
+                if (regionRow) {
+                    selectedRegion = codeForRegion(value);
+                    selectedRegionLabel = value;
+                } else {
+                    selectedState = codeForState(value);
+                    selectedStateLabel = value;
+                }
+                if (filterDrawerAction != null) filterDrawerAction.run();
+            });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, cellHeight, 1);
+            if (i % columns != columns - 1) lp.rightMargin = cellGap;
+            row.addView(chip, lp);
+        }
+        int remainder = values.size() % columns;
+        if (remainder != 0 && column.getChildCount() > 0) {
+            LinearLayout lastRow = (LinearLayout) column.getChildAt(column.getChildCount() - 1);
+            for (int i = remainder; i < columns; i++) {
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, cellHeight, 1);
+                if (i != columns - 1) lp.rightMargin = cellGap;
+                lastRow.addView(new View(this), lp);
+            }
+        }
+        return column;
+    }
+
+    private TextView filterGridChip(String value, boolean selected) {
+        TextView chip = UIHelpers.text(this, value, 12, selected ? UIHelpers.ON_ACCENT : UIHelpers.TEXT3, Typeface.NORMAL);
+        chip.setIncludeFontPadding(false);
+        chip.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        chip.setPadding(UIHelpers.dp(this, 6), 0, UIHelpers.dp(this, 6), 0);
+        chip.setBackground(UIHelpers.round(
+                selected ? UIHelpers.ACCENT : UIHelpers.SURFACE,
+                UIHelpers.dp(this, 10),
+                selected ? Color.TRANSPARENT : UIHelpers.BORDER_SOFT));
+        return chip;
+    }
     private LinearLayout searchTagGrid(List<String> values) {
         LinearLayout grid = new LinearLayout(this);
         grid.setOrientation(LinearLayout.VERTICAL);
@@ -2575,20 +2823,29 @@ public class MainActivity extends Activity {
             return grid;
         }
         if (manhuaguiClient.id().equals(selectedSourceId)) {
-            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "日本", "内地", "韩国", "港台", "欧美", "其它"), true), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
-            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "连载", "完结"), false));
+            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
+            grid.addView(searchTagColumn(categories, true), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "\u8fde\u8f7d", "\u5b8c\u7ed3"), false));
             return grid;
         }
         if (hiperdexClient.id().equals(selectedSourceId)) {
-            grid.addView(searchTagRow(Arrays.asList(ALL_TAG), true));
+            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
+            grid.addView(searchTagColumn(categories, true));
             return grid;
         }
         if (aikanClient.id().equals(selectedSourceId)) {
             grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "连载中", "已完结"), false));
             return grid;
         }
+        if (d5d6Client.id().equals(selectedSourceId)) {
+            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
+            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "\u8fde\u8f7d\u4e2d", "\u5df2\u5b8c\u6210"), false), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+            grid.addView(searchTagColumn(categories, true));
+            return grid;
+        }
         if (gmhClient.id().equals(selectedSourceId)) {
-            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "韩漫", "热门", "国漫", "日漫"), true));
+            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
+            grid.addView(searchTagColumn(categories, true));
             return grid;
         }
         grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "国漫", "日本", "韩国", "欧美"), true), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
@@ -2616,10 +2873,17 @@ public class MainActivity extends Activity {
         if ("Romance".equals(value)) return "romance";
         if ("Drama".equals(value)) return "drama";
         if ("受欢迎的".equals(value)) return "popular";
+        if ("大陆".equals(value)) return "cn";
+        if ("日本".equals(value)) return "jp";
+        if ("韩国".equals(value)) return "kr";
+        if ("欧美".equals(value)) return "en";
+        if (d5d6Client != null && d5d6Client.id().equals(selectedSourceId) && !ALL_TAG.equals(value)) return value;
         return "all";
     }
 
     private String codeForState(String value) {
+        if ("\u8fde\u8f7d".equals(value) || "\u8fde\u8f7d\u4e2d".equals(value)) return "serial";
+        if ("\u5b8c\u7ed3".equals(value) || "\u5df2\u5b8c\u7ed3".equals(value) || "\u5df2\u5b8c\u6210".equals(value)) return "pub";
         if ("连载".equals(value)) return "serial";
         if ("完结".equals(value)) return "pub";
         if ("免费".equals(value)) return "free";
@@ -2627,6 +2891,9 @@ public class MainActivity extends Activity {
         if ("VIP".equals(value)) return "vip";
         if ("连载中".equals(value)) return "serial";
         if ("已完结".equals(value)) return "pub";
+        if ("连载中".equals(value)) return "serial";
+        if ("已完成".equals(value)) return "pub";
+        if ("\u5df2\u5b8c\u6210".equals(value)) return "pub";
         return "all";
     }
 
@@ -2635,7 +2902,7 @@ public class MainActivity extends Activity {
         values.add(ALL_TAG);
         if (!sourceCategories.isEmpty()) {
             for (String category : sourceCategories) {
-                if (!TextUtils.isEmpty(category) && !values.contains(category) && values.size() < 12) values.add(category);
+                if (!TextUtils.isEmpty(category) && !values.contains(category)) values.add(category);
             }
         } else {
             for (ComicModels.ComicSummary item : searchResults) {
@@ -3150,6 +3417,7 @@ public class MainActivity extends Activity {
         sources.put(hiperdexConfig.withEnabled(hiperdexEnabled).toJson());
         sources.put(manhuaguiConfig.withEnabled(manhuaguiEnabled).toJson());
         sources.put(hanman18Config.withEnabled(hanman18Enabled).toJson());
+        sources.put(d5d6Config.withEnabled(d5d6Enabled).toJson());
         root.put("sources", sources);
         JSONArray custom = new JSONArray();
         for (ComicModels.Source item : customSources) {
@@ -3202,6 +3470,9 @@ public class MainActivity extends Activity {
                 } else if (hanman18Config.id.equals(id)) {
                     hanman18Config = SourceConfig.fromJson(item, SourceConfig.hanman18(true));
                     hanman18Enabled = hanman18Config.enabled;
+                } else if (d5d6Config.id.equals(id)) {
+                    d5d6Config = SourceConfig.fromJson(item, SourceConfig.d5d6(true));
+                    d5d6Enabled = d5d6Config.enabled;
                 }
             }
         }
@@ -3218,6 +3489,7 @@ public class MainActivity extends Activity {
                 if (hiperdexConfig.id.equals(id)) hiperdexEnabled = item.optBoolean("enabled", true);
                 if (manhuaguiConfig.id.equals(id)) manhuaguiEnabled = item.optBoolean("enabled", true);
                 if (hanman18Config.id.equals(id)) hanman18Enabled = item.optBoolean("enabled", true);
+                if (d5d6Config.id.equals(id)) d5d6Enabled = item.optBoolean("enabled", true);
             }
         }
         rebuildSourceClients();
@@ -3262,6 +3534,7 @@ public class MainActivity extends Activity {
         hiperdexClient = new HiperdexComicSource(hiperdexConfig.withEnabled(hiperdexEnabled));
         manhuaguiClient = new ManhuaguiComicSource(manhuaguiConfig.withEnabled(manhuaguiEnabled));
         hanman18Client = new Hanman18ComicSource(hanman18Config.withEnabled(hanman18Enabled));
+        d5d6Client = new D5d6ComicSource(d5d6Config.withEnabled(d5d6Enabled));
     }
 
     private String readHistoryText() {
@@ -3285,6 +3558,7 @@ public class MainActivity extends Activity {
         hiperdexEnabled = prefs.getBoolean("source.hiperdex.enabled", true);
         manhuaguiEnabled = prefs.getBoolean("source.manhuagui.enabled", true);
         hanman18Enabled = prefs.getBoolean("source.hanman18.enabled", true);
+        d5d6Enabled = prefs.getBoolean("source.d5d6.enabled", true);
         restoreSourceConfigs(prefs.getString("source.configs", ""));
         rebuildSourceClients();
         chapterDesc = prefs.getBoolean("chapter.desc", false);
@@ -3338,6 +3612,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.hiperdex.enabled", hiperdexEnabled);
         editor.putBoolean("source.manhuagui.enabled", manhuaguiEnabled);
         editor.putBoolean("source.hanman18.enabled", hanman18Enabled);
+        editor.putBoolean("source.d5d6.enabled", d5d6Enabled);
         editor.putString("source.configs", encodeSourceConfigs());
         editor.putBoolean("chapter.desc", chapterDesc);
         editor.putInt("theme.mode", themeMode);
@@ -3373,6 +3648,7 @@ public class MainActivity extends Activity {
             hiperdexConfig = SourceConfig.hiperdex(hiperdexEnabled);
             manhuaguiConfig = SourceConfig.manhuagui(manhuaguiEnabled);
             hanman18Config = SourceConfig.hanman18(hanman18Enabled);
+            d5d6Config = SourceConfig.d5d6(d5d6Enabled);
             return;
         }
         try {
@@ -3405,6 +3681,9 @@ public class MainActivity extends Activity {
                 } else if (SourceConfig.hanman18(true).id.equals(id)) {
                     hanman18Config = SourceConfig.fromJson(item, SourceConfig.hanman18(hanman18Enabled));
                     hanman18Enabled = hanman18Config.enabled;
+                } else if (SourceConfig.d5d6(true).id.equals(id)) {
+                    d5d6Config = SourceConfig.fromJson(item, SourceConfig.d5d6(d5d6Enabled));
+                    d5d6Enabled = d5d6Config.enabled;
                 }
             }
         } catch (JSONException ignored) {
@@ -3416,6 +3695,7 @@ public class MainActivity extends Activity {
             hiperdexConfig = SourceConfig.hiperdex(hiperdexEnabled);
             manhuaguiConfig = SourceConfig.manhuagui(manhuaguiEnabled);
             hanman18Config = SourceConfig.hanman18(hanman18Enabled);
+            d5d6Config = SourceConfig.d5d6(d5d6Enabled);
         }
     }
 
@@ -3430,6 +3710,7 @@ public class MainActivity extends Activity {
             array.put(hiperdexConfig.withEnabled(hiperdexEnabled).toJson());
             array.put(manhuaguiConfig.withEnabled(manhuaguiEnabled).toJson());
             array.put(hanman18Config.withEnabled(hanman18Enabled).toJson());
+            array.put(d5d6Config.withEnabled(d5d6Enabled).toJson());
             return array.toString();
         } catch (JSONException ignored) {
             return "[]";
