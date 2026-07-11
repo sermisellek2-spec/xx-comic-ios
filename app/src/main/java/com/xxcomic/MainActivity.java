@@ -28,6 +28,7 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -95,6 +96,8 @@ public class MainActivity extends Activity {
     private static final int DETAIL_HERO_DP = 128;
     private static final int CHAPTER_DRAWER_BATCH_SIZE = 40;
     private static final long READER_PROGRESS_ANIM_MS = 30L;
+    private static final int READER_POSITION_SCALE = 10000;
+    private static final long READER_POSITION_SAVE_DELAY_MS = 250L;
     private static final String SUMMARIES_CACHE_KEY = "cache.summaries";
     private static final String DETAILS_CACHE_KEY = "cache.details";
     private static final String CHAPTERS_CACHE_KEY = "cache.chapters";
@@ -154,7 +157,9 @@ public class MainActivity extends Activity {
     private final List<String> sourceCategories = new ArrayList<>();
     private final List<ComicModels.Source> customSources = new ArrayList<>();
     private final Map<String, Integer> progress = new HashMap<>();
+    private final Map<String, Integer> readerPositions = new HashMap<>();
     private final Map<String, Long> lastViewedAt = new HashMap<>();
+    private final Runnable persistReaderPositionRunnable = this::saveLocalState;
 
     private FrameLayout root;
     private int currentTab = 1;
@@ -271,6 +276,7 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         main.removeCallbacks(themeSwitchRunnable);
+        main.removeCallbacks(persistReaderPositionRunnable);
         searchIo.shutdownNow();
         detailIo.shutdownNow();
         imageIo.shutdownNow();
@@ -1553,11 +1559,36 @@ public class MainActivity extends Activity {
         ScrollView scroll = new ScrollView(this);
         tuneScroll(scroll);
         scroll.setFillViewport(true);
-        scroll.setOnTouchListener((v, event) -> handleReaderTap(event, detail, page));
         LinearLayout pages = new LinearLayout(this);
         pages.setOrientation(LinearLayout.VERTICAL);
         pages.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
         scroll.addView(pages, UIHelpers.matchWrap());
+
+        ComicModels.Chapter activeChapter = detail.chapters.get(readerChapterIndex);
+        String positionKey = readerPositionKey(detail.summary.comicId, activeChapter);
+        int savedPosition = readerPositions.containsKey(positionKey) ? readerPositions.get(positionKey) : 0;
+        final boolean[] restoringPosition = {savedPosition > 0};
+        final ViewTreeObserver.OnGlobalLayoutListener[] restoreListener = new ViewTreeObserver.OnGlobalLayoutListener[1];
+        Runnable stopRestoring = () -> {
+            restoringPosition[0] = false;
+            if (restoreListener[0] != null && pages.getViewTreeObserver().isAlive()) {
+                pages.getViewTreeObserver().removeOnGlobalLayoutListener(restoreListener[0]);
+            }
+        };
+        if (savedPosition > 0) {
+            restoreListener[0] = () -> {
+                if (restoringPosition[0]) restoreReaderPosition(scroll, pages, savedPosition);
+            };
+            pages.getViewTreeObserver().addOnGlobalLayoutListener(restoreListener[0]);
+            scroll.post(() -> restoreReaderPosition(scroll, pages, savedPosition));
+        }
+        scroll.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            if (!restoringPosition[0]) saveReaderPosition(scroll, pages, positionKey);
+        });
+        scroll.setOnTouchListener((v, event) -> {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) stopRestoring.run();
+            return handleReaderTap(event, detail, page);
+        });
         if (page.imageUrls.isEmpty()) {
             pages.addView(readerSkeletonState("没有解析到图片，请返回重试"), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 360)));
         } else {
@@ -1566,7 +1597,10 @@ public class MainActivity extends Activity {
                 image.setAdjustViewBounds(true);
                 image.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 image.setBackgroundColor(UIHelpers.DARK);
-                image.setOnTouchListener((v, event) -> handleReaderTap(event, detail, page));
+                image.setOnTouchListener((v, event) -> {
+                    if (event.getActionMasked() == MotionEvent.ACTION_DOWN) stopRestoring.run();
+                    return handleReaderTap(event, detail, page);
+                });
                 pages.addView(image, new LinearLayout.LayoutParams(-1, -2));
                 loadImage(image, url, detail.chapters.get(readerChapterIndex).url);
             }
@@ -2204,6 +2238,7 @@ public class MainActivity extends Activity {
     private void deleteFavorite(String id) {
         favorites.remove(id);
         progress.remove(id);
+        removeReaderPositions(id);
         lastViewedAt.remove(id);
         saveLocalState();
         showToast("已删除收藏");
@@ -2221,6 +2256,7 @@ public class MainActivity extends Activity {
             if (target.equals(normalizedComicTitle(oldTitle))) {
                 favorites.remove(oldId);
                 progress.remove(oldId);
+                removeReaderPositions(oldId);
                 lastViewedAt.remove(oldId);
             }
         }
@@ -3170,6 +3206,34 @@ public class MainActivity extends Activity {
         return value == null ? 0 : value;
     }
 
+    private String readerPositionKey(String comicId, ComicModels.Chapter chapter) {
+        String chapterId = TextUtils.isEmpty(chapter.chapterId) ? chapter.url : chapter.chapterId;
+        return comicId + "\u001f" + chapterId;
+    }
+
+    private void saveReaderPosition(ScrollView scroll, View pages, String positionKey) {
+        int maxScroll = Math.max(0, pages.getHeight() - scroll.getHeight());
+        if (maxScroll <= 0) return;
+        int position = (int) Math.round(scroll.getScrollY() * (double) READER_POSITION_SCALE / maxScroll);
+        readerPositions.put(positionKey, Math.max(0, Math.min(READER_POSITION_SCALE, position)));
+        main.removeCallbacks(persistReaderPositionRunnable);
+        main.postDelayed(persistReaderPositionRunnable, READER_POSITION_SAVE_DELAY_MS);
+    }
+
+    private void restoreReaderPosition(ScrollView scroll, View pages, int savedPosition) {
+        int maxScroll = Math.max(0, pages.getHeight() - scroll.getHeight());
+        if (maxScroll <= 0 || savedPosition <= 0) return;
+        int clamped = Math.max(0, Math.min(READER_POSITION_SCALE, savedPosition));
+        scroll.scrollTo(0, (int) Math.round(maxScroll * (double) clamped / READER_POSITION_SCALE));
+    }
+
+    private void removeReaderPositions(String comicId) {
+        String prefix = comicId + "\u001f";
+        for (String key : new ArrayList<>(readerPositions.keySet())) {
+            if (key.startsWith(prefix)) readerPositions.remove(key);
+        }
+    }
+
     private void showToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
@@ -3583,6 +3647,21 @@ public class MainActivity extends Activity {
                 }
             }
         }
+        readerPositions.clear();
+        String readerPositionsText = prefs.getString("reader.positions", "");
+        if (!TextUtils.isEmpty(readerPositionsText)) {
+            try {
+                JSONObject object = new JSONObject(readerPositionsText);
+                JSONArray names = object.names();
+                if (names != null) {
+                    for (int i = 0; i < names.length(); i++) {
+                        String key = names.optString(i);
+                        if (!TextUtils.isEmpty(key)) readerPositions.put(key, object.optInt(key, 0));
+                    }
+                }
+            } catch (JSONException ignored) {
+            }
+        }
         lastViewedAt.clear();
         String viewedText = prefs.getString("last.viewed", "");
         if (!TextUtils.isEmpty(viewedText)) {
@@ -3623,6 +3702,14 @@ public class MainActivity extends Activity {
         List<String> rows = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : progress.entrySet()) rows.add(entry.getKey() + ":" + entry.getValue());
         editor.putString("progress", TextUtils.join(",", rows));
+        JSONObject readerPositionObject = new JSONObject();
+        try {
+            for (Map.Entry<String, Integer> entry : readerPositions.entrySet()) {
+                readerPositionObject.put(entry.getKey(), entry.getValue());
+            }
+        } catch (JSONException ignored) {
+        }
+        editor.putString("reader.positions", readerPositionObject.toString());
         List<String> viewedRows = new ArrayList<>();
         for (Map.Entry<String, Long> entry : lastViewedAt.entrySet()) viewedRows.add(entry.getKey() + ":" + entry.getValue());
         editor.putString("last.viewed", TextUtils.join(",", viewedRows));
@@ -3935,6 +4022,7 @@ public class MainActivity extends Activity {
             clear.setOnClickListener(v -> {
                 styledDialog("清空阅读历史", "将清除所有阅读进度记录，收藏不会受影响。", "清空", () -> {
                     progress.clear();
+                    readerPositions.clear();
                     lastViewedAt.clear();
                     saveLocalState();
                     showHistory();
@@ -4020,6 +4108,7 @@ public class MainActivity extends Activity {
         close.setOnClickListener(v -> {
             styledDialog("删除这条记录", "将移除该漫画的阅读进度。", "删除", () -> {
                 progress.remove(comicId);
+                removeReaderPositions(comicId);
                 lastViewedAt.remove(comicId);
                 saveLocalState();
                 showHistory();
