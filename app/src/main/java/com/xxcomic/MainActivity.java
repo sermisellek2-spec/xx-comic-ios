@@ -101,6 +101,7 @@ public class MainActivity extends Activity {
     private static final String SUMMARIES_CACHE_KEY = "cache.summaries";
     private static final String DETAILS_CACHE_KEY = "cache.details";
     private static final String CHAPTERS_CACHE_KEY = "cache.chapters";
+    private static final long IMAGE_CACHE_MAX_BYTES = 1000L * 1024L * 1024L;
     private static final String ERROR_LOGS_KEY = "error.logs";
     private static final int ERROR_LOG_MAX_CHARS = 60000;
     private static final int IMPORT_SOURCES_REQUEST = 1001;
@@ -123,6 +124,8 @@ public class MainActivity extends Activity {
                     return value == null ? 0 : value.getByteCount();
                 }
             };
+    private final Object imageCacheLock = new Object();
+    private long imageCacheBytes = -1L;
     // 当前页的活跃 Future 列表，切屏时统一 cancel，避免旧页请求占用线程
     private List<Future<?>> currentScreenFutures = new ArrayList<>();
     private ComicSource sourceClient;
@@ -2421,6 +2424,7 @@ public class MainActivity extends Activity {
                 if (cached.exists()) {
                     Bitmap cachedBitmap = BitmapFactory.decodeFile(cached.getAbsolutePath());
                     if (cachedBitmap != null) {
+                        cached.setLastModified(System.currentTimeMillis());
                         imageMemoryCache.put(imageUrl, cachedBitmap);
                         main.post(() -> target.setImageBitmap(cachedBitmap));
                         return;
@@ -2463,7 +2467,10 @@ public class MainActivity extends Activity {
             HttpURLConnection connection = null;
             try {
                 File cached = imageCacheFile(imageUrl);
-                if (cached.exists()) return;
+                if (cached.exists()) {
+                    cached.setLastModified(System.currentTimeMillis());
+                    return;
+                }
                 connection = (HttpURLConnection) new URL(imageUrl).openConnection();
                 connection.setInstanceFollowRedirects(true);
                 connection.setConnectTimeout(10000);
@@ -3976,10 +3983,28 @@ public class MainActivity extends Activity {
     }
 
     private void writeImageCache(File file, byte[] bytes) throws java.io.IOException {
-        File parent = file.getParentFile();
-        if (parent != null && !parent.exists()) parent.mkdirs();
-        try (FileOutputStream output = new FileOutputStream(file)) {
-            output.write(bytes);
+        synchronized (imageCacheLock) {
+            File parent = file.getParentFile();
+            if (parent != null && !parent.exists()) parent.mkdirs();
+            if (imageCacheBytes < 0L) imageCacheBytes = dirSize(parent);
+            long previousLength = file.exists() ? file.length() : 0L;
+            try (FileOutputStream output = new FileOutputStream(file)) {
+                output.write(bytes);
+            }
+            imageCacheBytes += file.length() - previousLength;
+            if (imageCacheBytes > IMAGE_CACHE_MAX_BYTES) trimImageCache();
+        }
+    }
+
+    private void trimImageCache() {
+        File dir = new File(getCacheDir(), "images");
+        File[] files = dir.listFiles(File::isFile);
+        if (files == null || files.length == 0) return;
+        Arrays.sort(files, (left, right) -> Long.compare(left.lastModified(), right.lastModified()));
+        for (File file : files) {
+            if (imageCacheBytes <= IMAGE_CACHE_MAX_BYTES) break;
+            long length = file.length();
+            if (file.delete()) imageCacheBytes -= length;
         }
     }
 
@@ -4125,18 +4150,17 @@ public class MainActivity extends Activity {
     }
 
     private void clearAppCache() {
-        deleteFiles(new File(getCacheDir(), "images"));
-        summaries.clear();
-        details.clear();
+        synchronized (imageCacheLock) {
+            deleteFiles(new File(getCacheDir(), "images"));
+            imageCacheBytes = 0L;
+        }
+        imageMemoryCache.evictAll();
+        Set<String> favoriteIds = new HashSet<>(favorites);
+        summaries.keySet().retainAll(favoriteIds);
+        details.keySet().retainAll(favoriteIds);
         chapters.clear();
-        SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
-        editor.remove(DETAILS_CACHE_KEY);
-        editor.remove(CHAPTERS_CACHE_KEY);
-        editor.remove(SUMMARIES_CACHE_KEY);
-        editor.putString("cache.size", "0 MB");
-        editor.apply();
-        cacheSize = "0 MB";
-        showToast("缓存已清理");
+        persistComicCaches();
+        showToast("缓存已清理，收藏数据已保留");
         showTab(3);
     }
 
@@ -4152,7 +4176,13 @@ public class MainActivity extends Activity {
     }
 
     private void updateCacheSize() {
-        long bytes = dirSize(new File(getCacheDir(), "images"))
+        long imageBytes;
+        synchronized (imageCacheLock) {
+            imageCacheBytes = dirSize(new File(getCacheDir(), "images"));
+            if (imageCacheBytes > IMAGE_CACHE_MAX_BYTES) trimImageCache();
+            imageBytes = imageCacheBytes;
+        }
+        long bytes = imageBytes
                 + getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(SUMMARIES_CACHE_KEY, "").length()
                 + getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(DETAILS_CACHE_KEY, "").length()
                 + getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(CHAPTERS_CACHE_KEY, "").length();
