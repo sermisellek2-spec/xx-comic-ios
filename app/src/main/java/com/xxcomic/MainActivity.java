@@ -64,6 +64,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -110,7 +111,7 @@ public class MainActivity extends Activity {
     private static final String IMAGE_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private final Handler main = new Handler(Looper.getMainLooper());
     // 按模块拆分线程池，互不阻塞：搜索中切到收藏页，封面图走 imageIo 不被搜索阻塞
-    private final ExecutorService searchIo = Executors.newFixedThreadPool(2);
+    private final ExecutorService searchIo = Executors.newFixedThreadPool(9);
     private final ExecutorService detailIo = Executors.newFixedThreadPool(2);
     private final ExecutorService imageIo = Executors.newFixedThreadPool(4);
     private final ExecutorService miscIo = Executors.newFixedThreadPool(1);
@@ -128,6 +129,7 @@ public class MainActivity extends Activity {
     private long imageCacheBytes = -1L;
     // 当前页的活跃 Future 列表，切屏时统一 cancel，避免旧页请求占用线程
     private List<Future<?>> currentScreenFutures = new ArrayList<>();
+    private List<Future<?>> currentImageFutures = new ArrayList<>();
     private ComicSource sourceClient;
     private ComicSource mhua5Client;
     private ComicSource aikanClient;
@@ -453,12 +455,25 @@ public class MainActivity extends Activity {
             if (f != null && !f.isDone()) f.cancel(true);
         }
         currentScreenFutures = new ArrayList<>();
+        cancelCurrentImageTasks();
     }
 
     /** 跟踪一个 Future 到当前屏，切屏时会被 cancel */
     private Future<?> track(Future<?> f) {
         currentScreenFutures.add(f);
         return f;
+    }
+
+    private Future<?> trackImage(Future<?> f) {
+        currentImageFutures.add(f);
+        return f;
+    }
+
+    private void cancelCurrentImageTasks() {
+        for (Future<?> f : currentImageFutures) {
+            if (f != null && !f.isDone()) f.cancel(true);
+        }
+        currentImageFutures = new ArrayList<>();
     }
 
     // Top-level page switch (bottom-nav tap / exiting standalone search) should clear the search
@@ -609,6 +624,9 @@ public class MainActivity extends Activity {
             if (i + 1 < items.size()) {
                 row.addView(UIHelpers.space(this, UIHelpers.dp(this, 12), 1));
                 row.addView(resultCard(items.get(i + 1)), UIHelpers.weight(1));
+            } else {
+                row.addView(UIHelpers.space(this, UIHelpers.dp(this, 12), 1));
+                row.addView(new View(this), UIHelpers.weight(1));
             }
             content.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 14)));
         }
@@ -663,63 +681,67 @@ public class MainActivity extends Activity {
         add.setOnClickListener(v -> showAddSourceDialog());
         page.addView(add, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 10)));
         add.setVisibility(View.GONE);
-        page.addView(sourceCard(baoziConfig.name, baoziConfig.domain, sourceEnabled, () -> {
+        LinearLayout enabledSources = new LinearLayout(this);
+        enabledSources.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout disabledSources = new LinearLayout(this);
+        disabledSources.setOrientation(LinearLayout.VERTICAL);
+        addSourceCard(enabledSources, disabledSources, sourceEnabled, sourceCard(baoziConfig.name, baoziConfig.domain, sourceEnabled, () -> {
             sourceEnabled = !sourceEnabled;
             baoziConfig = baoziConfig.withEnabled(sourceEnabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
         }));
-        page.addView(sourceCard(mhua5Config.name, mhua5Config.domain, mhua5Enabled, () -> {
+        addSourceCard(enabledSources, disabledSources, mhua5Enabled, sourceCard(mhua5Config.name, mhua5Config.domain, mhua5Enabled, () -> {
             mhua5Enabled = !mhua5Enabled;
             mhua5Config = mhua5Config.withEnabled(mhua5Enabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
         }));
-        page.addView(sourceCard(aikanConfig.name, aikanConfig.domain, aikanEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, aikanEnabled, sourceCard(aikanConfig.name, aikanConfig.domain, aikanEnabled, () -> {
             aikanEnabled = !aikanEnabled;
             aikanConfig = aikanConfig.withEnabled(aikanEnabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
         }));
-        page.addView(sourceCard(gmhConfig.name, gmhConfig.domain, gmhEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, gmhEnabled, sourceCard(gmhConfig.name, gmhConfig.domain, gmhEnabled, () -> {
             gmhEnabled = !gmhEnabled;
             gmhConfig = gmhConfig.withEnabled(gmhEnabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
         }));
-        page.addView(sourceCard(mkzhanConfig.name, mkzhanConfig.domain, mkzhanEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, mkzhanEnabled, sourceCard(mkzhanConfig.name, mkzhanConfig.domain, mkzhanEnabled, () -> {
             mkzhanEnabled = !mkzhanEnabled;
             mkzhanConfig = mkzhanConfig.withEnabled(mkzhanEnabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
         }));
-        page.addView(sourceCard(hiperdexConfig.name, hiperdexConfig.domain, hiperdexEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, hiperdexEnabled, sourceCard(hiperdexConfig.name, hiperdexConfig.domain, hiperdexEnabled, () -> {
             hiperdexEnabled = !hiperdexEnabled;
             hiperdexConfig = hiperdexConfig.withEnabled(hiperdexEnabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
         }));
-        page.addView(sourceCard(manhuaguiConfig.name, manhuaguiConfig.domain, manhuaguiEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, manhuaguiEnabled, sourceCard(manhuaguiConfig.name, manhuaguiConfig.domain, manhuaguiEnabled, () -> {
             manhuaguiEnabled = !manhuaguiEnabled;
             manhuaguiConfig = manhuaguiConfig.withEnabled(manhuaguiEnabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
         }));
-        page.addView(sourceCard(hanman18Config.name, hanman18Config.domain, hanman18Enabled, () -> {
+        addSourceCard(enabledSources, disabledSources, hanman18Enabled, sourceCard(hanman18Config.name, hanman18Config.domain, hanman18Enabled, () -> {
             hanman18Enabled = !hanman18Enabled;
             hanman18Config = hanman18Config.withEnabled(hanman18Enabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
         }));
-        page.addView(sourceCard(d5d6Config.name, d5d6Config.domain, d5d6Enabled, () -> {
+        addSourceCard(enabledSources, disabledSources, d5d6Enabled, sourceCard(d5d6Config.name, d5d6Config.domain, d5d6Enabled, () -> {
             d5d6Enabled = !d5d6Enabled;
             d5d6Config = d5d6Config.withEnabled(d5d6Enabled);
             rebuildSourceClients();
@@ -727,12 +749,14 @@ public class MainActivity extends Activity {
             showTab(2);
         }));
         for (ComicModels.Source item : customSources) {
-            page.addView(sourceCard(item.name, item.url, item.enabled, () -> {
+            addSourceCard(enabledSources, disabledSources, item.enabled, sourceCard(item.name, item.url, item.enabled, () -> {
                 item.enabled = !item.enabled;
                 saveLocalState();
                 showTab(2);
             }));
         }
+        page.addView(enabledSources);
+        page.addView(disabledSources);
         LinearLayout ioButtons = new LinearLayout(this);
         ioButtons.setOrientation(LinearLayout.HORIZONTAL);
         Button export = UIHelpers.primaryButton(this, "导出站源配置");
@@ -748,6 +772,10 @@ public class MainActivity extends Activity {
         check.setOnClickListener(v -> healthCheck());
         page.addView(check, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
         check.setVisibility(View.GONE);
+    }
+
+    private void addSourceCard(LinearLayout enabledSources, LinearLayout disabledSources, boolean enabled, View card) {
+        (enabled ? enabledSources : disabledSources).addView(card);
     }
 
     private void renderProfile(LinearLayout page) {
@@ -952,6 +980,7 @@ public class MainActivity extends Activity {
             tab.setMinWidth(UIHelpers.dp(this, 108));
             tab.setMaxWidth(UIHelpers.dp(this, 150));
             tab.setOnClickListener(v -> {
+                cancelCurrentImageTasks();
                 selectedGlobalSearchSourceId = sourceId;
                 refreshGlobalSearchTabs();
                 refreshGlobalSearchResults();
@@ -1799,15 +1828,6 @@ public class MainActivity extends Activity {
                         if (!globalResultsForSource(sourceId).isEmpty() && globalResultsForSource(selectedGlobalSearchSourceId).isEmpty()) {
                             selectedGlobalSearchSourceId = sourceId;
                         }
-                        if (standaloneSearchVisible && standaloneSearchResultsMode) {
-                            refreshGlobalSearchTabs();
-                            // 仅当完成的站源是当前选中站源时才重建结果列表；否则非选中站源每次完成
-                            // 都会 removeAllViews+重建选中源的所有行，使封面图 in-flight 的 ImageView
-                            // 被 detach，图片加载完成时 set 回脱离层级的旧 view 而不显示。
-                            if (sourceId.equals(selectedGlobalSearchSourceId)) {
-                                refreshGlobalSearchResults();
-                            }
-                        }
                     }
                     if (counted.compareAndSet(false, true)) {
                         if (isFailed) {
@@ -1816,6 +1836,7 @@ public class MainActivity extends Activity {
                         }
                         globalSearchCompletedSourceIds.add(sourceId);
                         globalSearchCompletedSources++;
+                        refreshGlobalSearchSourceState(sourceId);
                         onGlobalSearchSourceDone(generation);
                     }
                     if (System.currentTimeMillis() >= 0) return;
@@ -1857,6 +1878,7 @@ public class MainActivity extends Activity {
                         globalSearchFailedSourceIds.add(client.id());
                         globalSearchCompletedSourceIds.add(client.id());
                         globalSearchCompletedSources++;
+                        refreshGlobalSearchSourceState(client.id());
                         onGlobalSearchSourceDone(generation);
                     }
                 });
@@ -1877,6 +1899,12 @@ public class MainActivity extends Activity {
                 refreshGlobalSearchResults();
             }
         }
+    }
+
+    private void refreshGlobalSearchSourceState(String sourceId) {
+        if (!standaloneSearchVisible || !standaloneSearchResultsMode) return;
+        refreshGlobalSearchTabs();
+        if (sourceId.equals(selectedGlobalSearchSourceId)) refreshGlobalSearchResults();
     }
 
     /** 更新底部状态文字：N/M 完成 · K 失败 */
@@ -2417,7 +2445,7 @@ public class MainActivity extends Activity {
             target.setImageBitmap(memHit);
             return;
         }
-        track(imageIo.submit(() -> {
+        trackImage(imageIo.submit(() -> {
             HttpURLConnection connection = null;
             try {
                 File cached = imageCacheFile(imageUrl);
@@ -2453,6 +2481,7 @@ public class MainActivity extends Activity {
                     }
                 }
             } catch (Exception error) {
+                if (isExpectedTaskCancellation(error)) return;
                 appendErrorLog("图片加载失败", error);
                 main.post(() -> target.setImageDrawable(new ColorDrawable(UIHelpers.BORDER_SOFT)));
             } finally {
@@ -3298,6 +3327,11 @@ public class MainActivity extends Activity {
         dialog.setButton(AlertDialog.BUTTON_NEUTRAL, "关闭", (d, w) -> d.dismiss());
         android.widget.Button neu = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
         if (neu != null) neu.setTextColor(UIHelpers.TEXT3);
+        TextView messageView = (TextView) dialog.findViewById(android.R.id.message);
+        if (messageView != null) {
+            messageView.setTextIsSelectable(true);
+            messageView.setLongClickable(true);
+        }
     }
 
     private String errorLogSummary() {
@@ -3324,6 +3358,13 @@ public class MainActivity extends Activity {
         String logs = entry + (TextUtils.isEmpty(current) ? "" : "\n\n" + current);
         if (logs.length() > ERROR_LOG_MAX_CHARS) logs = logs.substring(0, ERROR_LOG_MAX_CHARS);
         getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().putString(ERROR_LOGS_KEY, logs).apply();
+    }
+
+    private boolean isExpectedTaskCancellation(Exception error) {
+        return Thread.currentThread().isInterrupted()
+                || error instanceof InterruptedException
+                || (error instanceof InterruptedIOException
+                && "thread interrupted".equalsIgnoreCase(clean(error.getMessage(), "")));
     }
 
     private void clearErrorLogs() {

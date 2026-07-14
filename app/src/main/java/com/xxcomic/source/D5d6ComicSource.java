@@ -166,18 +166,24 @@ public class D5d6ComicSource implements ComicSource {
     private List<ComicModels.ComicSummary> parseCards(String html) {
         List<ComicModels.ComicSummary> result = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
-        Matcher hrefMatcher = Pattern.compile("<a[^>]+href=[\"']([^\"']*jiujiucomic_\\d+/?)[\"'][^>]*>[\\s\\S]*?</a>", Pattern.CASE_INSENSITIVE).matcher(html == null ? "" : html);
-        while (hrefMatcher.find()) {
-            String block = hrefMatcher.group(0);
-            String href = decode(hrefMatcher.group(1));
+        Matcher cardMatcher = Pattern.compile(
+                "<li[^>]*>\\s*<div[^>]+class=[\"'][^\"']*cart-item[^\"']*[\"'][^>]*>[\\s\\S]*?</li>",
+                Pattern.CASE_INSENSITIVE).matcher(html == null ? "" : html);
+        while (cardMatcher.find()) {
+            String block = cardMatcher.group(0);
+            String href = decode(first(block, "<a[^>]+class=[\"'][^\"']*cart-cover[^\"']*[\"'][^>]+href=[\"']([^\"']+)[\"']"));
+            if (TextUtils.isEmpty(href)) href = decode(first(block, "<a[^>]+href=[\"']([^\"']*jiujiucomic_\\d+/?)[\"']"));
             String rawId = rawComicId(href);
             if (TextUtils.isEmpty(rawId) || !seen.add(rawId)) continue;
             String imageTag = firstRaw(block, "<img[^>]+>");
-            String title = clean(attr(block, "title"));
+            String info = firstRaw(block, "<div[^>]+class=[\"'][^\"']*cart-info[^\"']*[\"'][^>]*>[\\s\\S]*?</div>");
+            String title = clean(first(info, "<p[^>]*>[\\s\\S]*?<a[^>]*>([\\s\\S]*?)</a>"));
             if (TextUtils.isEmpty(title)) title = clean(attr(imageTag, "alt"));
-            if (TextUtils.isEmpty(title)) title = clean(block);
+            if (TextUtils.isEmpty(title)) title = clean(attr(block, "title"));
+            if (TextUtils.isEmpty(title)) continue;
+            String latest = clean(first(block, "<span[^>]+class=[\"'][^\"']*new-chapter[^\"']*[\"'][^>]*>([\\s\\S]*?)</span>"));
             String cover = imageUrlFromTag(imageTag);
-            result.add(new ComicModels.ComicSummary(SOURCE_ID, PREFIX + rawId, title, absolute(cover), "", new ArrayList<String>()));
+            result.add(new ComicModels.ComicSummary(SOURCE_ID, PREFIX + rawId, title, absolute(cover), latest, new ArrayList<String>()));
         }
         return result;
     }
