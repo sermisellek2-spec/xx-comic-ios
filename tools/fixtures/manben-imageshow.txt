@@ -1,0 +1,12 @@
+var chapterimage={
+  "PageIndex":2,
+  "Images":[
+    "/1_6422.jpg?cid=615293&key=aaa",
+    "/2_1934.jpg?cid=615293&key=bbb"
+  ],
+  "ImageSize":["800/1133","800/1133"],
+  "ImagePix":"https://manhua1032-223-111-182-10.cdndm5.com/34/33771/615292",
+  "IsEnd":false,
+  "PreloadPix":null,
+  "PreloadImages":["/3_9251.jpg?cid=615293&key=ccc", "/4_2556.jpg?cid=615293&key=ddd"]
+};

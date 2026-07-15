@@ -47,6 +47,7 @@ import com.xxcomic.source.AikanComicSource;
 import com.xxcomic.source.ComicModels;
 import com.xxcomic.source.ComicSource;
 import com.xxcomic.source.D5d6ComicSource;
+import com.xxcomic.source.ManbenComicSource;
 import com.xxcomic.source.GmhComicSource;
 import com.xxcomic.source.HiperdexComicSource;
 import com.xxcomic.source.ManhuaguiComicSource;
@@ -111,7 +112,7 @@ public class MainActivity extends Activity {
     private static final String IMAGE_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private final Handler main = new Handler(Looper.getMainLooper());
     // 按模块拆分线程池，互不阻塞：搜索中切到收藏页，封面图走 imageIo 不被搜索阻塞
-    private final ExecutorService searchIo = Executors.newFixedThreadPool(9);
+    private final ExecutorService searchIo = Executors.newFixedThreadPool(10);
     private final ExecutorService detailIo = Executors.newFixedThreadPool(2);
     private final ExecutorService imageIo = Executors.newFixedThreadPool(4);
     private final ExecutorService miscIo = Executors.newFixedThreadPool(1);
@@ -139,6 +140,7 @@ public class MainActivity extends Activity {
     private ComicSource manhuaguiClient;
     private ComicSource hanman18Client;
     private ComicSource d5d6Client;
+    private ComicSource manbenClient;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
     private SourceConfig mhua5Config = SourceConfig.mhua5(true);
     private SourceConfig aikanConfig = SourceConfig.aikan(true);
@@ -148,6 +150,7 @@ public class MainActivity extends Activity {
     private SourceConfig manhuaguiConfig = SourceConfig.manhuagui(true);
     private SourceConfig hanman18Config = SourceConfig.hanman18(true);
     private SourceConfig d5d6Config = SourceConfig.d5d6(true);
+    private SourceConfig manbenConfig = SourceConfig.manben(true);
     private final List<ComicModels.ComicSummary> searchResults = new ArrayList<>();
     private final List<ComicModels.ComicSummary> globalSearchResults = new ArrayList<>();
     private final List<String> globalSearchHistory = new ArrayList<>();
@@ -163,6 +166,7 @@ public class MainActivity extends Activity {
     private final List<ComicModels.Source> customSources = new ArrayList<>();
     private final Map<String, Integer> progress = new HashMap<>();
     private final Map<String, Integer> readerPositions = new HashMap<>();
+    private final Map<String, Long> favoriteAt = new HashMap<>();
     private final Map<String, Long> lastViewedAt = new HashMap<>();
     private final Runnable persistReaderPositionRunnable = this::saveLocalState;
 
@@ -186,6 +190,7 @@ public class MainActivity extends Activity {
     private boolean manhuaguiEnabled = true;
     private boolean hanman18Enabled = true;
     private boolean d5d6Enabled = true;
+    private boolean manbenEnabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
     private boolean readerLeftHand = false;
@@ -197,6 +202,7 @@ public class MainActivity extends Activity {
     private boolean readerFullscreen = false;
     private boolean searchLoading = false;
     private boolean searchAppending = false;
+    private boolean defaultSearchRefreshPending = false;
     private boolean searchHasMore = true;
     private int searchPage = 1;
     private boolean standaloneSearchVisible = false;
@@ -259,8 +265,6 @@ public class MainActivity extends Activity {
         applyThemeAndSystemBars();
         scheduleThemeSwitch();
         showTab(0);
-        loadDefaultCategory();
-        loadSourceCategories();
     }
 
     @Override
@@ -455,6 +459,9 @@ public class MainActivity extends Activity {
             if (f != null && !f.isDone()) f.cancel(true);
         }
         currentScreenFutures = new ArrayList<>();
+        searchGeneration++;
+        searchLoading = false;
+        searchAppending = false;
         cancelCurrentImageTasks();
     }
 
@@ -484,9 +491,15 @@ public class MainActivity extends Activity {
     }
 
     private void showTab(int tab) {
-        enterScreen();
+        showTab(tab, true);
+    }
+
+    private void showTab(int tab, boolean cancelTasks) {
+        int previousTab = currentTab;
+        if (cancelTasks) enterScreen();
         applyThemeAndSystemBars();
         currentTab = tab;
+        if (tab == 1 && previousTab != 1 && TextUtils.isEmpty(searchQuery.trim())) defaultSearchRefreshPending = true;
         activeDetailId = "";
         historyVisible = false;
         standaloneSearchVisible = false;
@@ -517,6 +530,8 @@ public class MainActivity extends Activity {
         if (tab == 2) renderSources(page);
         if (tab == 3) renderProfile(page);
         shell.addView(makeBottomNav(), UIHelpers.frame(-1, UIHelpers.dp(this, 64), Gravity.BOTTOM, UIHelpers.dp(this, 8), 0, UIHelpers.dp(this, 8), 0));
+        if (tab == 1 && previousTab != 1 && sourceCategories.isEmpty()) loadSourceCategories();
+        scheduleDefaultSearchLoad();
     }
 
     private void renderSearch(LinearLayout page) {
@@ -744,6 +759,13 @@ public class MainActivity extends Activity {
         addSourceCard(enabledSources, disabledSources, d5d6Enabled, sourceCard(d5d6Config.name, d5d6Config.domain, d5d6Enabled, () -> {
             d5d6Enabled = !d5d6Enabled;
             d5d6Config = d5d6Config.withEnabled(d5d6Enabled);
+            rebuildSourceClients();
+            saveLocalState();
+            showTab(2);
+        }));
+        addSourceCard(enabledSources, disabledSources, manbenEnabled, sourceCard(manbenConfig.name, manbenConfig.domain, manbenEnabled, () -> {
+            manbenEnabled = !manbenEnabled;
+            manbenConfig = manbenConfig.withEnabled(manbenEnabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
@@ -1705,7 +1727,7 @@ public class MainActivity extends Activity {
         } else {
             searchLoading = true;
         }
-        if (currentTab == 1 && !append) showTab(1);
+        if (currentTab == 1 && !append) showTab(1, false);
         track(searchIo.submit(() -> {
             try {
                 List<ComicModels.ComicSummary> list = categoryMode
@@ -1716,7 +1738,6 @@ public class MainActivity extends Activity {
                     if (!append) searchResults.clear();
                     searchResults.addAll(list);
                     for (ComicModels.ComicSummary item : list) summaries.put(item.comicId, item);
-                    persistComicCaches();
                     searchPage = page;
                     searchHasMore = !list.isEmpty();
                     searchLoading = false;
@@ -1725,12 +1746,19 @@ public class MainActivity extends Activity {
                         if (append && searchResultsContent != null) {
                             appendSearchResults(list);
                         } else {
-                            showTab(1);
+                            showTab(1, false);
                         }
                     }
+                    persistComicCachesAsync();
                 });
             } catch (Exception error) {
                 main.post(() -> {
+                    if (generation != searchGeneration) return;
+                    if (isExpectedTaskCancellation(error)) {
+                        searchLoading = false;
+                        searchAppending = false;
+                        return;
+                    }
                     searchLoading = false;
                     searchAppending = false;
                     if (append) {
@@ -1943,6 +1971,7 @@ public class MainActivity extends Activity {
         if (manhuaguiClient.id().equals(sourceId)) return manhuaguiClient.name();
         if (hanman18Client.id().equals(sourceId)) return hanman18Client.name();
         if (d5d6Client.id().equals(sourceId)) return d5d6Client.name();
+        if (manbenClient.id().equals(sourceId)) return manbenClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(sourceId)) return item.name;
         }
@@ -1959,6 +1988,7 @@ public class MainActivity extends Activity {
         if (manhuaguiClient.id().equals(selectedSourceId) && manhuaguiEnabled) return manhuaguiClient;
         if (hanman18Client.id().equals(selectedSourceId) && hanman18Enabled) return hanman18Client;
         if (d5d6Client.id().equals(selectedSourceId) && d5d6Enabled) return d5d6Client;
+        if (manbenClient.id().equals(selectedSourceId) && manbenEnabled) return manbenClient;
         List<ComicSource> enabled = enabledBuiltinSources();
         if (enabled.isEmpty()) return null;
         selectedSourceId = enabled.get(0).id();
@@ -1976,6 +2006,7 @@ public class MainActivity extends Activity {
         if (manhuaguiEnabled) sources.add(manhuaguiClient);
         if (hanman18Enabled) sources.add(hanman18Client);
         if (d5d6Enabled) sources.add(d5d6Client);
+        if (manbenEnabled) sources.add(manbenClient);
         return sources;
     }
 
@@ -1990,6 +2021,7 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(manhuaguiClient.id() + ":")) return manhuaguiClient;
         if (comicId != null && comicId.startsWith(hanman18Client.id() + ":")) return hanman18Client;
         if (comicId != null && comicId.startsWith(d5d6Client.id() + ":")) return d5d6Client;
+        if (comicId != null && comicId.startsWith(manbenClient.id() + ":")) return manbenClient;
         return sourceClient;
     }
 
@@ -2006,12 +2038,32 @@ public class MainActivity extends Activity {
         if (manhuaguiClient.id().equals(sourceId)) return manhuaguiClient;
         if (hanman18Client.id().equals(sourceId)) return hanman18Client;
         if (d5d6Client.id().equals(sourceId)) return d5d6Client;
+        if (manbenClient.id().equals(sourceId)) return manbenClient;
         return sourceClient;
     }
 
     private void loadDefaultCategory() {
         resetSearchPaging();
         loadSearchPage("", 1, false, true);
+    }
+
+    private void scheduleDefaultSearchLoad() {
+        if (currentTab != 1 || selectedSource() == null
+                || (!searchResults.isEmpty() && !defaultSearchRefreshPending)
+                || !TextUtils.isEmpty(searchQuery.trim()) || searchLoading) return;
+        int generation = searchGeneration;
+        boolean refreshCached = defaultSearchRefreshPending;
+        defaultSearchRefreshPending = false;
+        searchLoading = true;
+        main.post(() -> {
+            if (generation != searchGeneration) return;
+            if (currentTab != 1 || (!searchResults.isEmpty() && !refreshCached)
+                    || !TextUtils.isEmpty(searchQuery.trim())) {
+                searchLoading = false;
+                return;
+            }
+            loadDefaultCategory();
+        });
     }
 
     private void loadCategory() {
@@ -2031,7 +2083,7 @@ public class MainActivity extends Activity {
                     if (filterDrawerAction != null) {
                         filterDrawerAction.run();
                     } else if (currentTab == 1) {
-                        showTab(1);
+                        showTab(1, false);
                     }
                 });
             } catch (Exception ignored) {
@@ -2251,11 +2303,13 @@ public class MainActivity extends Activity {
         String id = detail.summary.comicId;
         if (favorites.contains(id)) {
             favorites.remove(id);
+            favoriteAt.remove(id);
             showToast("已取消收藏");
         } else {
             removeDuplicateFavorites(detail);
             favorites.remove(id);
             favorites.add(0, id);
+            favoriteAt.put(id, System.currentTimeMillis());
             details.put(id, detail);
             summaries.put(id, detail.summary);
             persistComicCaches();
@@ -2270,6 +2324,7 @@ public class MainActivity extends Activity {
         favorites.remove(id);
         progress.remove(id);
         removeReaderPositions(id);
+        favoriteAt.remove(id);
         lastViewedAt.remove(id);
         saveLocalState();
         showToast("已删除收藏");
@@ -2288,6 +2343,7 @@ public class MainActivity extends Activity {
                 favorites.remove(oldId);
                 progress.remove(oldId);
                 removeReaderPositions(oldId);
+                favoriteAt.remove(oldId);
                 lastViewedAt.remove(oldId);
             }
         }
@@ -2541,6 +2597,9 @@ public class MainActivity extends Activity {
         }
         if (imageUrl != null && (imageUrl.contains(hanman18Config.domain) || imageUrl.contains("manga18.club"))) return hanman18Config.referer;
         if (imageUrl != null && imageUrl.contains(d5d6Config.domain)) return d5d6Config.referer;
+        if (imageUrl != null && (imageUrl.contains(manbenConfig.domain) || imageUrl.contains("cdndm5.com"))) {
+            return TextUtils.isEmpty(pageReferer) ? manbenConfig.referer : pageReferer;
+        }
         return baoziConfig.referer;
     }
 
@@ -2766,6 +2825,7 @@ public class MainActivity extends Activity {
         if (manhuaguiEnabled) names.add(manhuaguiClient.name());
         if (hanman18Enabled) names.add(hanman18Client.name());
         if (d5d6Enabled) names.add(d5d6Client.name());
+        if (manbenEnabled) names.add(manbenClient.name());
         return names;
     }
 
@@ -2779,6 +2839,7 @@ public class MainActivity extends Activity {
         if (manhuaguiClient.id().equals(selectedSourceId)) return manhuaguiClient.name();
         if (hanman18Client.id().equals(selectedSourceId)) return hanman18Client.name();
         if (d5d6Client.id().equals(selectedSourceId)) return d5d6Client.name();
+        if (manbenClient.id().equals(selectedSourceId)) return manbenClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(selectedSourceId)) return item.name;
         }
@@ -2795,6 +2856,7 @@ public class MainActivity extends Activity {
         if (manhuaguiClient.name().equals(name)) return manhuaguiClient.id();
         if (hanman18Client.name().equals(name)) return hanman18Client.id();
         if (d5d6Client.name().equals(name)) return d5d6Client.id();
+        if (manbenClient.name().equals(name)) return manbenClient.id();
         for (ComicModels.Source item : customSources) {
             if (item.name.equals(name)) return item.id;
         }
@@ -2915,6 +2977,12 @@ public class MainActivity extends Activity {
             grid.addView(searchTagColumn(categories, true));
             return grid;
         }
+        if (manbenClient.id().equals(selectedSourceId)) {
+            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
+            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "\u8fde\u8f7d\u4e2d", "\u5df2\u5b8c\u6210"), false), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+            grid.addView(searchTagColumn(categories, true));
+            return grid;
+        }
         if (gmhClient.id().equals(selectedSourceId)) {
             List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
             grid.addView(searchTagColumn(categories, true));
@@ -2950,6 +3018,7 @@ public class MainActivity extends Activity {
         if ("韩国".equals(value)) return "kr";
         if ("欧美".equals(value)) return "en";
         if (d5d6Client != null && d5d6Client.id().equals(selectedSourceId) && !ALL_TAG.equals(value)) return value;
+        if (manbenClient != null && manbenClient.id().equals(selectedSourceId) && !ALL_TAG.equals(value)) return value;
         return "all";
     }
 
@@ -3217,8 +3286,12 @@ public class MainActivity extends Activity {
             if (query.isEmpty() || haystack.contains(query)) visible.add(id);
         }
         Collections.sort(visible, (left, right) -> {
-            long leftTime = lastViewedAt.containsKey(left) ? lastViewedAt.get(left) : 0L;
-            long rightTime = lastViewedAt.containsKey(right) ? lastViewedAt.get(right) : 0L;
+            long leftFavoriteTime = favoriteAt.containsKey(left) ? favoriteAt.get(left) : 0L;
+            long rightFavoriteTime = favoriteAt.containsKey(right) ? favoriteAt.get(right) : 0L;
+            long leftReadTime = lastViewedAt.containsKey(left) ? lastViewedAt.get(left) : 0L;
+            long rightReadTime = lastViewedAt.containsKey(right) ? lastViewedAt.get(right) : 0L;
+            long leftTime = Math.max(leftFavoriteTime, leftReadTime);
+            long rightTime = Math.max(rightFavoriteTime, rightReadTime);
             if (leftTime != rightTime) return Long.compare(rightTime, leftTime);
             return Integer.compare(favorites.indexOf(left), favorites.indexOf(right));
         });
@@ -3530,6 +3603,7 @@ public class MainActivity extends Activity {
         sources.put(manhuaguiConfig.withEnabled(manhuaguiEnabled).toJson());
         sources.put(hanman18Config.withEnabled(hanman18Enabled).toJson());
         sources.put(d5d6Config.withEnabled(d5d6Enabled).toJson());
+        sources.put(manbenConfig.withEnabled(manbenEnabled).toJson());
         root.put("sources", sources);
         JSONArray custom = new JSONArray();
         for (ComicModels.Source item : customSources) {
@@ -3585,6 +3659,9 @@ public class MainActivity extends Activity {
                 } else if (d5d6Config.id.equals(id)) {
                     d5d6Config = SourceConfig.fromJson(item, SourceConfig.d5d6(true));
                     d5d6Enabled = d5d6Config.enabled;
+                } else if (manbenConfig.id.equals(id)) {
+                    manbenConfig = SourceConfig.fromJson(item, SourceConfig.manben(true));
+                    manbenEnabled = manbenConfig.enabled;
                 }
             }
         }
@@ -3602,6 +3679,7 @@ public class MainActivity extends Activity {
                 if (manhuaguiConfig.id.equals(id)) manhuaguiEnabled = item.optBoolean("enabled", true);
                 if (hanman18Config.id.equals(id)) hanman18Enabled = item.optBoolean("enabled", true);
                 if (d5d6Config.id.equals(id)) d5d6Enabled = item.optBoolean("enabled", true);
+                if (manbenConfig.id.equals(id)) manbenEnabled = item.optBoolean("enabled", true);
             }
         }
         rebuildSourceClients();
@@ -3647,6 +3725,7 @@ public class MainActivity extends Activity {
         manhuaguiClient = new ManhuaguiComicSource(manhuaguiConfig.withEnabled(manhuaguiEnabled));
         hanman18Client = new Hanman18ComicSource(hanman18Config.withEnabled(hanman18Enabled));
         d5d6Client = new D5d6ComicSource(d5d6Config.withEnabled(d5d6Enabled));
+        manbenClient = new ManbenComicSource(manbenConfig.withEnabled(manbenEnabled));
     }
 
     private String readHistoryText() {
@@ -3671,6 +3750,7 @@ public class MainActivity extends Activity {
         manhuaguiEnabled = prefs.getBoolean("source.manhuagui.enabled", true);
         hanman18Enabled = prefs.getBoolean("source.hanman18.enabled", true);
         d5d6Enabled = prefs.getBoolean("source.d5d6.enabled", true);
+        manbenEnabled = prefs.getBoolean("source.manben.enabled", true);
         restoreSourceConfigs(prefs.getString("source.configs", ""));
         rebuildSourceClients();
         chapterDesc = prefs.getBoolean("chapter.desc", false);
@@ -3724,6 +3804,20 @@ public class MainActivity extends Activity {
                 }
             }
         }
+        favoriteAt.clear();
+        String favoriteText = prefs.getString("favorite.at", "");
+        if (!TextUtils.isEmpty(favoriteText)) {
+            for (String row : favoriteText.split(",")) {
+                int sep = row.lastIndexOf(':');
+                if (sep <= 0) continue;
+                String comicId = row.substring(0, sep);
+                String valueStr = row.substring(sep + 1);
+                try {
+                    favoriteAt.put(comicId, Long.parseLong(valueStr));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
         restoreCustomSources(prefs.getString("custom.sources", ""));
         restoreComicCaches(prefs);
         updateCacheSize();
@@ -3740,6 +3834,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.manhuagui.enabled", manhuaguiEnabled);
         editor.putBoolean("source.hanman18.enabled", hanman18Enabled);
         editor.putBoolean("source.d5d6.enabled", d5d6Enabled);
+        editor.putBoolean("source.manben.enabled", manbenEnabled);
         editor.putString("source.configs", encodeSourceConfigs());
         editor.putBoolean("chapter.desc", chapterDesc);
         editor.putInt("theme.mode", themeMode);
@@ -3761,6 +3856,9 @@ public class MainActivity extends Activity {
         List<String> viewedRows = new ArrayList<>();
         for (Map.Entry<String, Long> entry : lastViewedAt.entrySet()) viewedRows.add(entry.getKey() + ":" + entry.getValue());
         editor.putString("last.viewed", TextUtils.join(",", viewedRows));
+        List<String> favoriteRows = new ArrayList<>();
+        for (Map.Entry<String, Long> entry : favoriteAt.entrySet()) favoriteRows.add(entry.getKey() + ":" + entry.getValue());
+        editor.putString("favorite.at", TextUtils.join(",", favoriteRows));
         editor.putString("custom.sources", encodeCustomSources());
         editor.apply();
     }
@@ -3784,6 +3882,7 @@ public class MainActivity extends Activity {
             manhuaguiConfig = SourceConfig.manhuagui(manhuaguiEnabled);
             hanman18Config = SourceConfig.hanman18(hanman18Enabled);
             d5d6Config = SourceConfig.d5d6(d5d6Enabled);
+            manbenConfig = SourceConfig.manben(manbenEnabled);
             return;
         }
         try {
@@ -3819,6 +3918,9 @@ public class MainActivity extends Activity {
                 } else if (SourceConfig.d5d6(true).id.equals(id)) {
                     d5d6Config = SourceConfig.fromJson(item, SourceConfig.d5d6(d5d6Enabled));
                     d5d6Enabled = d5d6Config.enabled;
+                } else if (SourceConfig.manben(true).id.equals(id)) {
+                    manbenConfig = SourceConfig.fromJson(item, SourceConfig.manben(manbenEnabled));
+                    manbenEnabled = manbenConfig.enabled;
                 }
             }
         } catch (JSONException ignored) {
@@ -3831,6 +3933,7 @@ public class MainActivity extends Activity {
             manhuaguiConfig = SourceConfig.manhuagui(manhuaguiEnabled);
             hanman18Config = SourceConfig.hanman18(hanman18Enabled);
             d5d6Config = SourceConfig.d5d6(d5d6Enabled);
+            manbenConfig = SourceConfig.manben(manbenEnabled);
         }
     }
 
@@ -3846,6 +3949,7 @@ public class MainActivity extends Activity {
             array.put(manhuaguiConfig.withEnabled(manhuaguiEnabled).toJson());
             array.put(hanman18Config.withEnabled(hanman18Enabled).toJson());
             array.put(d5d6Config.withEnabled(d5d6Enabled).toJson());
+            array.put(manbenConfig.withEnabled(manbenEnabled).toJson());
             return array.toString();
         } catch (JSONException ignored) {
             return "[]";
@@ -3890,13 +3994,29 @@ public class MainActivity extends Activity {
     }
 
     private void persistComicCaches() {
+        persistComicCaches(
+                new ArrayList<>(summaries.values()),
+                new ArrayList<>(details.values()),
+                new ArrayList<>(chapters.values()));
+    }
+
+    private void persistComicCachesAsync() {
+        List<ComicModels.ComicSummary> summarySnapshot = new ArrayList<>(summaries.values());
+        List<ComicModels.ComicDetail> detailSnapshot = new ArrayList<>(details.values());
+        List<ComicModels.ChapterPage> chapterSnapshot = new ArrayList<>(chapters.values());
+        miscIo.execute(() -> persistComicCaches(summarySnapshot, detailSnapshot, chapterSnapshot));
+    }
+
+    private void persistComicCaches(List<ComicModels.ComicSummary> summarySnapshot,
+                                    List<ComicModels.ComicDetail> detailSnapshot,
+                                    List<ComicModels.ChapterPage> chapterSnapshot) {
         try {
             JSONArray summaryArray = new JSONArray();
-            for (ComicModels.ComicSummary summary : summaries.values()) summaryArray.put(summaryToJson(summary));
+            for (ComicModels.ComicSummary summary : summarySnapshot) summaryArray.put(summaryToJson(summary));
             JSONArray detailArray = new JSONArray();
-            for (ComicModels.ComicDetail detail : details.values()) detailArray.put(detailToJson(detail));
+            for (ComicModels.ComicDetail detail : detailSnapshot) detailArray.put(detailToJson(detail));
             JSONArray chapterArray = new JSONArray();
-            for (ComicModels.ChapterPage page : chapters.values()) chapterArray.put(chapterPageToJson(page));
+            for (ComicModels.ChapterPage page : chapterSnapshot) chapterArray.put(chapterPageToJson(page));
             getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
                     .edit()
                     .putString(SUMMARIES_CACHE_KEY, summaryArray.toString())
@@ -3972,11 +4092,17 @@ public class MainActivity extends Activity {
         }
         return new ComicModels.ComicDetail(
                 summary,
-                object.optString("author"),
+                cachedAuthor(summary.sourceId, object.optString("author")),
                 object.optString("status"),
                 object.optString("description"),
                 object.optString("latestChapter"),
                 chapterList);
+    }
+
+    private String cachedAuthor(String sourceId, String author) {
+        if (!"manben".equals(sourceId) || TextUtils.isEmpty(author)) return author;
+        int marker = author.lastIndexOf('>');
+        return marker >= 0 ? author.substring(marker + 1).trim() : author;
     }
 
     private JSONObject chapterPageToJson(ComicModels.ChapterPage page) throws JSONException {
@@ -4200,6 +4326,7 @@ public class MainActivity extends Activity {
         summaries.keySet().retainAll(favoriteIds);
         details.keySet().retainAll(favoriteIds);
         chapters.clear();
+        searchResults.clear();
         persistComicCaches();
         showToast("缓存已清理，收藏数据已保留");
         showTab(3);

@@ -221,6 +221,47 @@ public class SourceConfig {
         return new SourceConfig("d5d6", "悦看漫画", "www.d5d6.com", "https://www.d5d6.com", "https://www.d5d6.com/", "", "", "", "", enabled, routes, filters);
     }
 
+    public static SourceConfig manben(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        JSONObject filters = new JSONObject();
+        try {
+            routes.put("latest", "/mh-list/pagerdata.ashx");
+            routes.put("categoryIndex", "/mh-list/");
+            routes.put("category", "/mh-list/pagerdata.ashx");
+            routes.put("search", "/search?page={page}&title={keyword}&language=1");
+            routes.put("detail", "/mh-{comicId}/");
+            routes.put("chapter", "/m{chapterId}/");
+            routes.put("chapterImages", "/imageshow.ashx?cid={chapterId}&page={page}&showtype=1&ispre=0");
+            filters.put("sort.latest", "2");
+            filters.put("sort.popular", "4");
+            filters.put("state.all", "0");
+            filters.put("state.serial", "1");
+            filters.put("state.pub", "2");
+            filters.put("category.全部", "");
+            filters.put("category.题材·搞笑", "tagid:37");
+            filters.put("category.题材·奇幻", "tagid:14");
+            filters.put("category.题材·热血", "tagid:31");
+            filters.put("category.题材·悬疑", "tagid:17");
+            filters.put("category.题材·格斗", "tagid:28");
+            filters.put("category.题材·科幻", "tagid:25");
+            filters.put("category.题材·励志", "tagid:10");
+            filters.put("category.题材·校园", "tagid:1");
+            filters.put("category.题材·爱情", "tagid:26");
+            filters.put("category.题材·日常", "tagid:7");
+            filters.put("category.题材·战争", "tagid:12");
+            filters.put("category.题材·其他", "tagid:3");
+            filters.put("category.受众·少年向", "tgroup:1");
+            filters.put("category.受众·少女向", "tgroup:2");
+            filters.put("category.受众·青年向", "tgroup:3");
+            filters.put("category.地区·港台", "tarea:35");
+            filters.put("category.地区·日韩", "tarea:36");
+            filters.put("category.地区·大陆", "tarea:37");
+            filters.put("category.地区·欧美", "tarea:52");
+        } catch (JSONException ignored) {
+        }
+        return new SourceConfig("manben", "漫本", "www.manben.com", "https://www.manben.com", "https://www.manben.com/", "", "", "", "", enabled, routes, filters);
+    }
+
     public SourceConfig withEnabled(boolean value) {
         return new SourceConfig(id, name, domain, baseUrl, referer, latestPath, searchPath, categoryPath, detailPath, value, routes, filters);
     }
