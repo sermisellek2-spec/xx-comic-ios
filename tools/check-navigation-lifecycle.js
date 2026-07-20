@@ -1,0 +1,56 @@
+// Async navigation lifecycle contract check.
+// Run: node tools/check-navigation-lifecycle.js
+const fs = require("fs");
+
+const source = fs.readFileSync(
+  "app/src/main/java/com/xxcomic/MainActivity.java",
+  "utf8"
+);
+
+function method(start, end) {
+  return source.slice(source.indexOf(start), source.indexOf(end));
+}
+
+function check(name, condition) {
+  if (!condition) throw new Error("FAIL " + name);
+  console.log("PASS " + name);
+}
+
+const navigateBack = method("private boolean navigateBack", "private void applyThemeAndSystemBars");
+const enterScreen = method("private void enterScreen", "private Future<?> track");
+const showDetail = method("private void showDetail", "private void showReader");
+const showReader = method("private void showReader", "private void showReaderLoading");
+const renderReader = method("private void renderReader", "private View readerProgressBar");
+const standaloneSearch = method("private void showStandaloneSearch", "private void refreshGlobalSearchTabs");
+const ensureChapters = method("private void ensureChaptersThen", "private void showChapterDrawer");
+const showPageLoading = method("private int showPageLoading", "private boolean isCurrentLoading");
+const showHistory = method("private void showHistory", "private View historyRow");
+
+check("loading back action is explicit", /Runnable\s+pageLoadingBackAction/.test(source));
+check("legacy loading return tab is removed", !/pageLoadingReturnTab/.test(source));
+check("loading API accepts a back action", /showPageLoading\(String title, String desc, Runnable backAction\)/.test(showPageLoading));
+check("loading API stores the back action", /pageLoadingBackAction\s*=\s*backAction/.test(showPageLoading));
+check(
+  "loading back invalidates, cancels, then runs the action",
+  /pageLoadingGeneration\+\+[\s\S]*?enterScreen\(\)[\s\S]*?backAction\.run\(\)/.test(navigateBack)
+);
+check("other screen changes invalidate active loading", /if \(pageLoading\)\s*\{[\s\S]*?pageLoading\s*=\s*false;[\s\S]*?pageLoadingBackAction\s*=\s*null;[\s\S]*?pageLoadingGeneration\+\+;[\s\S]*?\}/.test(enterScreen));
+check("detail loading captures an origin action", /showPageLoading\([^;]+detailBackAction\)/s.test(showDetail));
+check("chapter loading returns to detail", /showPageLoading\([^;]+\(\)\s*->\s*showDetail\(detail\.summary\.comicId\)/s.test(ensureChapters));
+check("loading success clears the action", /pageLoadingBackAction\s*=\s*null[\s\S]*?showDetail\(comicId\)/.test(showDetail));
+check("detail loading failure clears the action", /catch \(Exception error\)[\s\S]*?pageLoadingBackAction\s*=\s*null/.test(showDetail));
+check("empty chapter response restores detail before dialog", /loadedChapters\.isEmpty\(\)[\s\S]*?showDetail\(detail\.summary\.comicId\)[\s\S]*?styledDialog\(/.test(ensureChapters));
+check("empty chapter response retries the same action", /loadedChapters\.isEmpty\(\)[\s\S]*?\(\)\s*->\s*ensureChaptersThen\(detail, action\)/.test(ensureChapters));
+check("chapter exception restores detail before dialog", /catch \(Exception error\)[\s\S]*?showDetail\(detail\.summary\.comicId\)[\s\S]*?styledDialog\(/.test(ensureChapters));
+check("chapter exception retries the same action", /catch \(Exception error\)[\s\S]*?\(\)\s*->\s*ensureChaptersThen\(detail, action\)/.test(ensureChapters));
+check("stale chapter callbacks return before UI work", (ensureChapters.match(/if \(!isCurrentLoading\(loadingGeneration\)\) return;/g) || []).length >= 2
+  && /if \(expectedCancellation \|\| !isCurrentLoading\(loadingGeneration\)\) return;/.test(ensureChapters));
+check("stale chapter success cannot update caches", ensureChapters.indexOf("if (!isCurrentLoading(loadingGeneration)) return;")
+  < ensureChapters.indexOf("details.put(detail.summary.comicId, loaded);"));
+
+check("full-site search toolbar uses navigateBack", /back\.setOnClickListener\(v -> navigateBack\(\)\)/.test(standaloneSearch));
+check("detail toolbar uses navigateBack", /back\.setOnClickListener\(v -> navigateBack\(\)\)/.test(showDetail));
+check("reader toolbar uses navigateBack", /back\.setOnClickListener\(v -> navigateBack\(\)\)/.test(renderReader));
+check("history toolbar uses navigateBack", /back\.setOnClickListener\(v -> navigateBack\(\)\)/.test(showHistory));
+
+console.log("navigation lifecycle ok");

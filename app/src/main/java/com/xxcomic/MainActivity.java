@@ -196,6 +196,8 @@ public class MainActivity extends Activity {
     private boolean readerLeftHand = false;
     private String cacheSize = "42.6 MB";
     private int searchGeneration = 0;
+    private int readerGeneration = 0;
+    private int categoryGeneration = 0;
     private int readerChapterIndex = 0;
     private String activeDetailId = "";
     private boolean readerVisible = false;
@@ -210,7 +212,7 @@ public class MainActivity extends Activity {
     private boolean standaloneSearchResultsMode = false;
     private boolean globalSearchLoading = false;
     private boolean pageLoading = false;
-    private int pageLoadingReturnTab = 0;
+    private Runnable pageLoadingBackAction;
     private int pageLoadingGeneration = 0;
     private int pendingSearchScrollY = -1;
     private float edgeDownX = -1f;
@@ -344,9 +346,12 @@ public class MainActivity extends Activity {
 
     private boolean navigateBack() {
         if (pageLoading) {
+            Runnable backAction = pageLoadingBackAction;
             pageLoading = false;
+            pageLoadingBackAction = null;
             pageLoadingGeneration++;
-            if (!TextUtils.isEmpty(activeDetailId)) showDetail(activeDetailId); else showTab(pageLoadingReturnTab);
+            enterScreen();
+            if (backAction != null) backAction.run();
             return true;
         }
         if (readerVisible && readerFullscreen) {
@@ -455,11 +460,17 @@ public class MainActivity extends Activity {
 
     /** 切屏：cancel 上一屏所有未完成的 Future（排队中的不再执行，运行中的收到 interrupt） */
     private void enterScreen() {
+        if (pageLoading) {
+            pageLoading = false;
+            pageLoadingBackAction = null;
+            pageLoadingGeneration++;
+        }
         for (Future<?> f : currentScreenFutures) {
             if (f != null && !f.isDone()) f.cancel(true);
         }
         currentScreenFutures = new ArrayList<>();
         searchGeneration++;
+        readerGeneration++;
         searchLoading = false;
         searchAppending = false;
         cancelCurrentImageTasks();
@@ -914,12 +925,7 @@ public class MainActivity extends Activity {
         top.setBackgroundColor(UIHelpers.BG);
         ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, UIHelpers.TEXT, 8);
         back.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 20), UIHelpers.BORDER_SOFT));
-        back.setOnClickListener(v -> {
-            standaloneSearchVisible = false;
-            standaloneSearchResultsMode = false;
-            clearSearchInputs();
-            showTab(0);
-        });
+        back.setOnClickListener(v -> navigateBack());
         LinearLayout.LayoutParams backParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 40), UIHelpers.dp(this, 40));
         backParams.setMargins(0, 0, UIHelpers.dp(this, 10), 0);
         top.addView(back, backParams);
@@ -1428,13 +1434,24 @@ public class MainActivity extends Activity {
     }
 
     private void showDetail(String comicId) {
+        final boolean returnToStandaloneSearch = standaloneSearchVisible;
+        final boolean returnToStandaloneSearchResults = standaloneSearchResultsMode;
+        final int returnTab = currentTab;
+        Runnable detailBackAction = () -> {
+            activeDetailId = "";
+            if (returnToStandaloneSearch) {
+                showStandaloneSearch(returnToStandaloneSearchResults);
+            } else {
+                showTab(returnTab);
+            }
+        };
         enterScreen();
         applyThemeAndSystemBars();
         activeDetailId = comicId;
         readerVisible = false;
         ComicModels.ComicDetail detail = details.get(comicId);
         if (detail == null) {
-            int loadingGeneration = showPageLoading("正在加载详情...", "正在获取漫画信息。");
+            int loadingGeneration = showPageLoading("正在加载详情...", "正在获取漫画信息。", detailBackAction);
             track(detailIo.submit(() -> {
                 try {
                     ComicSource client = sourceForComicId(comicId);
@@ -1446,19 +1463,15 @@ public class MainActivity extends Activity {
                     main.post(() -> {
                         if (!isCurrentLoading(loadingGeneration)) return;
                         pageLoading = false;
+                        pageLoadingBackAction = null;
                         showDetail(comicId);
                     });
                 } catch (Exception error) {
                     main.post(() -> {
-                        if (!isCurrentLoading(loadingGeneration)) {
-                            appendErrorLog("详情加载失败", error);
-                            return;
-                        }
-                        showError("详情加载失败", error, () -> {
-                            pageLoading = false;
-                            activeDetailId = "";
-                            showTab(currentTab);
-                        });
+                        if (!isCurrentLoading(loadingGeneration)) return;
+                        pageLoading = false;
+                        pageLoadingBackAction = null;
+                        showError("详情加载失败", error, detailBackAction);
                     });
                 }
             }));
@@ -1480,7 +1493,7 @@ public class MainActivity extends Activity {
         content.addView(hero, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, DETAIL_HERO_DP)));
         ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, Color.WHITE, 10);
         back.setBackground(UIHelpers.round(Color.argb(90, 0, 0, 0), UIHelpers.dp(this, 22), Color.TRANSPARENT));
-        back.setOnClickListener(v -> showTab(currentTab));
+        back.setOnClickListener(v -> navigateBack());
         hero.addView(back, UIHelpers.frame(UIHelpers.dp(this, 44), UIHelpers.dp(this, 44), Gravity.TOP | Gravity.LEFT, UIHelpers.dp(this, 14), UIHelpers.dp(this, 18), 0, 0));
 
         LinearLayout body = new LinearLayout(this);
@@ -1536,6 +1549,9 @@ public class MainActivity extends Activity {
         lastViewedAt.put(detail.summary.comicId, System.currentTimeMillis());
         saveLocalState();
         ComicModels.Chapter chapter = detail.chapters.get(readerChapterIndex);
+        int generation = readerGeneration;
+        String comicId = detail.summary.comicId;
+        String chapterUrl = chapter.url;
         ComicModels.ChapterPage cached = chapters.get(chapter.url);
         if (isEmptyChapterPage(cached)) {
             chapters.remove(chapter.url);
@@ -1546,19 +1562,32 @@ public class MainActivity extends Activity {
             track(detailIo.submit(() -> {
                 try {
                     ComicSource client = sourceForDetail(detail);
-                    ComicModels.ChapterPage page = client.chapter(chapter.url);
-                    if (!isEmptyChapterPage(page)) {
-                        chapters.put(chapter.url, page);
-                        persistComicCaches();
-                    }
-                    main.post(() -> renderReader(detail, page));
+                    ComicModels.ChapterPage page = client.chapter(chapterUrl);
+                    main.post(() -> {
+                        if (!isCurrentReaderRequest(generation, comicId, chapterUrl, detail)) return;
+                        if (!isEmptyChapterPage(page)) {
+                            chapters.put(chapterUrl, page);
+                            persistComicCaches();
+                        }
+                        renderReader(detail, page);
+                    });
                 } catch (Exception error) {
-                    main.post(() -> showError("章节加载失败", error));
+                    boolean expectedCancellation = isExpectedTaskCancellation(error);
+                    main.post(() -> {
+                        if (expectedCancellation || !isCurrentReaderRequest(generation, comicId, chapterUrl, detail)) return;
+                        showError("章节加载失败", error);
+                    });
                 }
             }));
             return;
         }
         renderReader(detail, cached);
+    }
+
+    private boolean isCurrentReaderRequest(int generation, String comicId, String chapterUrl, ComicModels.ComicDetail detail) {
+        if (generation != readerGeneration || !readerVisible || !TextUtils.equals(activeDetailId, comicId)) return false;
+        if (readerChapterIndex < 0 || readerChapterIndex >= detail.chapters.size()) return false;
+        return TextUtils.equals(detail.chapters.get(readerChapterIndex).url, chapterUrl);
     }
 
     private void showReaderLoading(ComicModels.ComicDetail detail) {
@@ -1593,7 +1622,7 @@ public class MainActivity extends Activity {
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.setBackgroundColor(UIHelpers.DARK_BAR);
         ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, UIHelpers.READER_TEXT, 8);
-        back.setOnClickListener(v -> showDetail(detail.summary.comicId));
+        back.setOnClickListener(v -> navigateBack());
         top.addView(back, new LinearLayout.LayoutParams(UIHelpers.dp(this, 42), -1));
         TextView name = UIHelpers.text(this, detail.chapters.get(readerChapterIndex).title, 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
         name.setTypeface(Typeface.SERIF);
@@ -2074,10 +2103,13 @@ public class MainActivity extends Activity {
     private void loadSourceCategories() {
         ComicSource client = selectedSource();
         if (client == null) return;
+        int generation = ++categoryGeneration;
+        String sourceId = client.id();
         track(searchIo.submit(() -> {
             try {
                 List<String> list = client.categories();
                 main.post(() -> {
+                    if (generation != categoryGeneration || !TextUtils.equals(sourceId, selectedSourceId)) return;
                     sourceCategories.clear();
                     sourceCategories.addAll(list);
                     if (filterDrawerAction != null) {
@@ -2159,7 +2191,7 @@ public class MainActivity extends Activity {
             action.run(detail);
             return;
         }
-        int loadingGeneration = showPageLoading("正在加载章节目录...", "目录加载完成后会自动打开。");
+        int loadingGeneration = showPageLoading("正在加载章节目录...", "目录加载完成后会自动打开。", () -> showDetail(detail.summary.comicId));
         track(detailIo.submit(() -> {
             try {
                 ComicSource client = sourceForDetail(detail);
@@ -2168,7 +2200,9 @@ public class MainActivity extends Activity {
                     main.post(() -> {
                         if (!isCurrentLoading(loadingGeneration)) return;
                         pageLoading = false;
-                        showInfo("暂无章节", "未找到该漫画的章节目录，可能暂无可用章节或站源暂未收录。");
+                        pageLoadingBackAction = null;
+                        showDetail(detail.summary.comicId);
+                        styledDialog("暂无章节", "未找到该漫画的章节目录，可能暂无可用章节或站源暂未收录。", "重试", () -> ensureChaptersThen(detail, action), "取消", null);
                     });
                     return;
                 }
@@ -2180,23 +2214,23 @@ public class MainActivity extends Activity {
                         detail.description,
                         detail.latestChapter,
                         loadedChapters);
-                details.put(detail.summary.comicId, loaded);
-                persistComicCaches();
                 main.post(() -> {
                     if (!isCurrentLoading(loadingGeneration)) return;
                     pageLoading = false;
+                    pageLoadingBackAction = null;
+                    details.put(detail.summary.comicId, loaded);
+                    persistComicCaches();
                     action.run(loaded);
                 });
             } catch (Exception error) {
+                boolean expectedCancellation = isExpectedTaskCancellation(error);
                 main.post(() -> {
-                    if (!isCurrentLoading(loadingGeneration)) {
-                        appendErrorLog("目录加载失败", error);
-                        return;
-                    }
-                    showError("目录加载失败", error, () -> {
-                        pageLoading = false;
-                        showDetail(detail.summary.comicId);
-                    });
+                    if (expectedCancellation || !isCurrentLoading(loadingGeneration)) return;
+                    pageLoading = false;
+                    pageLoadingBackAction = null;
+                    appendErrorLog("目录加载失败", error);
+                    showDetail(detail.summary.comicId);
+                    styledDialog("目录加载失败", clean(error.getMessage(), "请稍后重试。"), "重试", () -> ensureChaptersThen(detail, action), "取消", null);
                 });
             }
         }));
@@ -3221,9 +3255,9 @@ public class MainActivity extends Activity {
         scroll.setFadingEdgeLength(0);
     }
 
-    private int showPageLoading(String title, String desc) {
+    private int showPageLoading(String title, String desc, Runnable backAction) {
         pageLoading = true;
-        pageLoadingReturnTab = currentTab;
+        pageLoadingBackAction = backAction;
         int generation = ++pageLoadingGeneration;
         root.removeAllViews();
         FrameLayout frame = new FrameLayout(this);
@@ -4191,10 +4225,7 @@ public class MainActivity extends Activity {
         FrameLayout topBar = new FrameLayout(this);
         topBar.setBackgroundColor(UIHelpers.BG);
         ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, UIHelpers.TEXT, 10);
-        back.setOnClickListener(v -> {
-            historyVisible = false;
-            showTab(3);
-        });
+        back.setOnClickListener(v -> navigateBack());
         topBar.addView(back, UIHelpers.frame(UIHelpers.dp(this, 44), UIHelpers.dp(this, 48), Gravity.CENTER_VERTICAL | Gravity.LEFT, UIHelpers.dp(this, 4), 0, 0, 0));
         TextView title = new TextView(this);
         title.setText("阅读历史");
