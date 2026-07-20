@@ -161,6 +161,8 @@ public class MainActivity extends Activity {
     private final Map<String, ComicModels.ComicSummary> summaries = new LinkedHashMap<>();
     private final Map<String, ComicModels.ComicDetail> details = new HashMap<>();
     private final Map<String, ComicModels.ChapterPage> chapters = new HashMap<>();
+    private final Set<String> refreshedComicIds = new HashSet<>();
+    private final Set<String> refreshingComicIds = new HashSet<>();
     private final List<String> favorites = new ArrayList<>();
     private final List<String> sourceCategories = new ArrayList<>();
     private final List<ComicModels.Source> customSources = new ArrayList<>();
@@ -194,7 +196,7 @@ public class MainActivity extends Activity {
     private boolean chapterDesc = false;
     private int themeMode = 0;
     private boolean readerLeftHand = false;
-    private String cacheSize = "42.6 MB";
+    private volatile String cacheSize = "42.6 MB";
     private int searchGeneration = 0;
     private int readerGeneration = 0;
     private int categoryGeneration = 0;
@@ -211,6 +213,7 @@ public class MainActivity extends Activity {
     private boolean historyVisible = false;
     private boolean standaloneSearchResultsMode = false;
     private boolean globalSearchLoading = false;
+    private boolean activityDestroyed = false;
     private boolean pageLoading = false;
     private Runnable pageLoadingBackAction;
     private Runnable detailBackAction;
@@ -287,6 +290,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        activityDestroyed = true;
         main.removeCallbacks(themeSwitchRunnable);
         main.removeCallbacks(persistReaderPositionRunnable);
         for (Future<?> f : currentScreenFutures) {
@@ -1478,14 +1482,14 @@ public class MainActivity extends Activity {
                 try {
                     ComicSource client = sourceForComicId(comicId);
                     ComicModels.ComicDetail loaded = client.detail(comicId);
-                    details.put(comicId, loaded);
-                    summaries.put(comicId, loaded.summary);
-                    persistComicCaches();
                     loadImageToCache(loaded.summary.coverUrl);
                     main.post(() -> {
                         if (!isCurrentLoading(loadingGeneration)) return;
                         pageLoading = false;
                         pageLoadingBackAction = null;
+                        details.put(comicId, loaded);
+                        summaries.put(comicId, loaded.summary);
+                        persistComicCachesAsync();
                         showDetail(comicId);
                     });
                 } catch (Exception error) {
@@ -1556,6 +1560,48 @@ public class MainActivity extends Activity {
         body.addView(buttons, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
 
         body.addView(chapterEntry(detail), UIHelpers.marginTop(-1, UIHelpers.dp(this, 14)));
+        refreshCachedComicOnce(comicId);
+    }
+
+    private void refreshCachedComicOnce(String comicId) {
+        if (refreshedComicIds.contains(comicId) || refreshingComicIds.contains(comicId)) return;
+        refreshingComicIds.add(comicId);
+        detailIo.submit(() -> {
+            try {
+                ComicSource client = sourceForComicId(comicId);
+                ComicModels.ComicDetail loaded = withChapters(client.detail(comicId), client.chapters(comicId));
+                main.post(() -> {
+                    if (activityDestroyed) return;
+                    refreshingComicIds.remove(comicId);
+                    refreshedComicIds.add(comicId);
+                    details.put(comicId, loaded);
+                    summaries.put(comicId, loaded.summary);
+                    persistComicCachesAsync();
+                    loadImageToCache(loaded.summary.coverUrl);
+                    if (TextUtils.equals(activeDetailId, comicId) && !readerVisible) showDetail(comicId);
+                });
+            } catch (Exception error) {
+                main.post(() -> {
+                    if (activityDestroyed) return;
+                    refreshingComicIds.remove(comicId);
+                    refreshedComicIds.add(comicId);
+                });
+            }
+        });
+    }
+
+    private ComicModels.ComicDetail withChapters(ComicModels.ComicDetail detail, List<ComicModels.Chapter> loadedChapters) {
+        List<ComicModels.Chapter> resolved = loadedChapters == null || loadedChapters.isEmpty()
+                ? new ArrayList<>(detail.chapters)
+                : new ArrayList<>(loadedChapters);
+        normalizeChaptersOldestFirst(resolved);
+        return new ComicModels.ComicDetail(
+                detail.summary,
+                detail.author,
+                detail.status,
+                detail.description,
+                detail.latestChapter,
+                resolved);
     }
 
     private void showReader(ComicModels.ComicDetail detail, int chapterIndex) {
@@ -1567,9 +1613,6 @@ public class MainActivity extends Activity {
         readerVisible = true;
         activeDetailId = detail.summary.comicId;
         readerChapterIndex = Math.max(0, Math.min(chapterIndex, detail.chapters.size() - 1));
-        progress.put(detail.summary.comicId, readerChapterIndex);
-        lastViewedAt.put(detail.summary.comicId, System.currentTimeMillis());
-        saveLocalState();
         ComicModels.Chapter chapter = detail.chapters.get(readerChapterIndex);
         int generation = readerGeneration;
         String comicId = detail.summary.comicId;
@@ -1589,9 +1632,9 @@ public class MainActivity extends Activity {
                         if (!isCurrentReaderRequest(generation, comicId, chapterUrl, detail)) return;
                         if (!isEmptyChapterPage(page)) {
                             chapters.put(chapterUrl, page);
-                            persistComicCaches();
+                            persistComicCachesAsync();
                         }
-                        renderReader(detail, page);
+                        commitReaderPage(generation, comicId, chapterUrl, detail, page);
                     });
                 } catch (Exception error) {
                     boolean expectedCancellation = isExpectedTaskCancellation(error);
@@ -1603,7 +1646,20 @@ public class MainActivity extends Activity {
             }));
             return;
         }
-        renderReader(detail, cached);
+        commitReaderPage(generation, comicId, chapterUrl, detail, cached);
+    }
+
+    private void commitReaderPage(int generation, String comicId, String chapterUrl,
+                                  ComicModels.ComicDetail detail, ComicModels.ChapterPage page) {
+        if (!isCurrentReaderRequest(generation, comicId, chapterUrl, detail)) return;
+        if (isEmptyChapterPage(page)) {
+            if (page != null) renderReader(detail, page);
+            return;
+        }
+        progress.put(comicId, readerChapterIndex);
+        lastViewedAt.put(comicId, System.currentTimeMillis());
+        saveLocalState();
+        renderReader(detail, page);
     }
 
     private boolean isCurrentReaderRequest(int generation, String comicId, String chapterUrl, ComicModels.ComicDetail detail) {
@@ -1970,7 +2026,7 @@ public class MainActivity extends Activity {
         updateGlobalSearchStatus();
         if (globalSearchCompletedSources >= globalSearchTotalSources) {
             globalSearchLoading = false;
-            persistComicCaches();
+            persistComicCachesAsync();
             updateGlobalSearchStatus();
             // 全部完成时若列表仍为空，刷新以显示空状态（移除 loading 动画）
             if (standaloneSearchVisible && globalSearchAllResultsEmpty()) {
@@ -2241,7 +2297,7 @@ public class MainActivity extends Activity {
                     pageLoading = false;
                     pageLoadingBackAction = null;
                     details.put(detail.summary.comicId, loaded);
-                    persistComicCaches();
+                    persistComicCachesAsync();
                     action.run(loaded);
                 });
             } catch (Exception error) {
@@ -2368,7 +2424,7 @@ public class MainActivity extends Activity {
             favoriteAt.put(id, System.currentTimeMillis());
             details.put(id, detail);
             summaries.put(id, detail.summary);
-            persistComicCaches();
+            persistComicCachesAsync();
             loadImageToCache(detail.summary.coverUrl);
             showToast("已加入收藏");
         }
@@ -2378,10 +2434,7 @@ public class MainActivity extends Activity {
 
     private void deleteFavorite(String id) {
         favorites.remove(id);
-        progress.remove(id);
-        removeReaderPositions(id);
         favoriteAt.remove(id);
-        lastViewedAt.remove(id);
         saveLocalState();
         showToast("已删除收藏");
         showTab(0);
@@ -2397,10 +2450,7 @@ public class MainActivity extends Activity {
             String oldTitle = oldDetail != null ? oldDetail.summary.title : oldSummary != null ? oldSummary.title : "";
             if (target.equals(normalizedComicTitle(oldTitle))) {
                 favorites.remove(oldId);
-                progress.remove(oldId);
-                removeReaderPositions(oldId);
                 favoriteAt.remove(oldId);
-                lastViewedAt.remove(oldId);
             }
         }
     }
@@ -4049,23 +4099,16 @@ public class MainActivity extends Activity {
         return page == null || page.imageUrls == null || page.imageUrls.isEmpty();
     }
 
-    private void persistComicCaches() {
-        persistComicCaches(
-                new ArrayList<>(summaries.values()),
-                new ArrayList<>(details.values()),
-                new ArrayList<>(chapters.values()));
-    }
-
     private void persistComicCachesAsync() {
         List<ComicModels.ComicSummary> summarySnapshot = new ArrayList<>(summaries.values());
         List<ComicModels.ComicDetail> detailSnapshot = new ArrayList<>(details.values());
         List<ComicModels.ChapterPage> chapterSnapshot = new ArrayList<>(chapters.values());
-        miscIo.execute(() -> persistComicCaches(summarySnapshot, detailSnapshot, chapterSnapshot));
+        miscIo.execute(() -> writeComicCacheSnapshots(summarySnapshot, detailSnapshot, chapterSnapshot));
     }
 
-    private void persistComicCaches(List<ComicModels.ComicSummary> summarySnapshot,
-                                    List<ComicModels.ComicDetail> detailSnapshot,
-                                    List<ComicModels.ChapterPage> chapterSnapshot) {
+    private void writeComicCacheSnapshots(List<ComicModels.ComicSummary> summarySnapshot,
+                                          List<ComicModels.ComicDetail> detailSnapshot,
+                                          List<ComicModels.ChapterPage> chapterSnapshot) {
         try {
             JSONArray summaryArray = new JSONArray();
             for (ComicModels.ComicSummary summary : summarySnapshot) summaryArray.put(summaryToJson(summary));
@@ -4079,7 +4122,6 @@ public class MainActivity extends Activity {
                     .putString(DETAILS_CACHE_KEY, detailArray.toString())
                     .putString(CHAPTERS_CACHE_KEY, chapterArray.toString())
                     .apply();
-            updateCacheSize();
         } catch (JSONException ignored) {
         }
     }
@@ -4380,7 +4422,7 @@ public class MainActivity extends Activity {
         details.keySet().retainAll(favoriteIds);
         chapters.clear();
         searchResults.clear();
-        persistComicCaches();
+        persistComicCachesAsync();
         showToast("缓存已清理，收藏数据已保留");
         showTab(3);
     }
