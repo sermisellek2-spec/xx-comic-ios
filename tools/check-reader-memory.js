@@ -75,5 +75,8 @@ check("backup copy closes before restore rename", /try \(InputStream input[\s\S]
 check("failed backup restore is retained and reported", /return false/.test(readerCacheRestore)
   && /appendErrorLog\("阅读图片缓存恢复失败"/.test(readerCacheWriter));
 check("writer no longer ignores backup rename in finally", !/finally\s*\{[\s\S]*?backup\.renameTo\(file\)/.test(readerCacheWriter));
+check("reader target swap is protected by cache lock", /synchronized \(imageCacheLock\)\s*\{[\s\S]*?file\.renameTo\(backup\)[\s\S]*?temp\.renameTo\(file\)/.test(readerCacheWriter));
+check("backup restore is fully protected by cache lock", /synchronized \(imageCacheLock\)\s*\{[\s\S]*?backup\.exists\(\)[\s\S]*?backup\.renameTo\(target\)[\s\S]*?FileInputStream[\s\S]*?restore\.renameTo\(target\)/.test(readerCacheRestore));
+check("cache restore lock contains no UI work", !/main\.post/.test(readerCacheRestore));
 
 console.log("reader memory ok");

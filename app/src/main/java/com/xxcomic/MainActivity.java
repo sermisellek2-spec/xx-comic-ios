@@ -4536,27 +4536,29 @@ public class MainActivity extends Activity {
     }
 
     private boolean restoreReaderImageBackup(File backup, File target) {
-        if (!backup.exists()) return target.exists();
-        if (target.exists()) return true;
-        if (backup.renameTo(target)) return true;
-        File parent = target.getParentFile();
-        File restore = null;
-        try {
-            restore = File.createTempFile("reader-restore-", ".tmp", parent);
-            try (InputStream input = new FileInputStream(backup);
-                 FileOutputStream output = new FileOutputStream(restore)) {
-                byte[] buffer = new byte[8192];
-                int read;
-                while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
-                output.getFD().sync();
+        synchronized (imageCacheLock) {
+            if (!backup.exists()) return target.exists();
+            if (target.exists()) return true;
+            if (backup.renameTo(target)) return true;
+            File parent = target.getParentFile();
+            File restore = null;
+            try {
+                restore = File.createTempFile("reader-restore-", ".tmp", parent);
+                try (InputStream input = new FileInputStream(backup);
+                     FileOutputStream output = new FileOutputStream(restore)) {
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
+                    output.getFD().sync();
+                }
+                if (!restore.renameTo(target)) return false;
+                if (backup.exists() && !backup.delete()) return false;
+                return true;
+            } catch (IOException error) {
+                return false;
+            } finally {
+                if (restore != null && restore.exists()) restore.delete();
             }
-            if (!restore.renameTo(target)) return false;
-            if (backup.exists() && !backup.delete()) return false;
-            return true;
-        } catch (IOException error) {
-            return false;
-        } finally {
-            if (restore != null && restore.exists()) restore.delete();
         }
     }
 
