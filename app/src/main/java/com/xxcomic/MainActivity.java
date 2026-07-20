@@ -557,6 +557,7 @@ public class MainActivity extends Activity {
         currentTab = tab;
         if (tab == 1 && previousTab != 1 && TextUtils.isEmpty(searchQuery.trim())) defaultSearchRefreshPending = true;
         activeDetailId = "";
+        detailBackAction = null;
         historyVisible = false;
         standaloneSearchVisible = false;
         standaloneSearchResultsMode = false;
@@ -1701,7 +1702,7 @@ public class MainActivity extends Activity {
                     boolean expectedCancellation = isExpectedTaskCancellation(error);
                     main.post(() -> {
                         if (expectedCancellation || !isCurrentReaderRequest(generation, comicId, chapterUrl, detail)) return;
-                        showError("章节加载失败", error);
+                        showError("章节加载失败", error, () -> showDetail(comicId));
                     });
                 }
             }));

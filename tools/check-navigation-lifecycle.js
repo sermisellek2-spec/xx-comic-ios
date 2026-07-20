@@ -19,6 +19,7 @@ function check(name, condition) {
 const navigateBack = method("private boolean navigateBack", "private void applyThemeAndSystemBars");
 const onDestroy = method("protected void onDestroy", "protected void onActivityResult");
 const enterScreen = method("private void enterScreen", "private Future<?> track");
+const showTab = method("private void showTab(int tab)", "private void renderSearch");
 const showDetail = method("private void showDetail", "private void showReader");
 const showReader = method("private void showReader", "private void showReaderLoading");
 const renderReader = method("private void renderReader", "private View readerProgressBar");
@@ -51,6 +52,7 @@ check("detail origin captures history", /boolean returnToHistory\s*=\s*historyVi
 check("detail loading uses the saved origin action", /showPageLoading\([^;]+detailBackAction\)/s.test(showDetail));
 check("history back does not intercept active detail", /if \(historyVisible\s*&&\s*TextUtils\.isEmpty\(activeDetailId\)\)/.test(navigateBack));
 check("detail back runs the saved origin action", /Runnable backAction\s*=\s*detailBackAction;[\s\S]*?detailBackAction\s*=\s*null;[\s\S]*?backAction\.run\(\)/.test(navigateBack));
+check("top-level tabs clear stale detail origins", /activeDetailId\s*=\s*"";[\s\S]*?detailBackAction\s*=\s*null;/.test(showTab));
 const firstShutdown = onDestroy.indexOf("searchIo.shutdownNow()");
 check("destroy cancels screen futures before shutdown", /for \(Future<\?> f : currentScreenFutures\)[\s\S]*?f\.cancel\(true\)[\s\S]*?currentScreenFutures\s*=\s*new ArrayList<>\(\)/.test(onDestroy)
   && onDestroy.indexOf("currentScreenFutures") < firstShutdown);

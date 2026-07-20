@@ -29,5 +29,6 @@ check("success callback uses the complete guard", /main\.post\(\(\)\s*->\s*\{[\s
 check("failure callback uses the complete guard", /catch \(Exception error\)[\s\S]*?main\.post\(\(\)\s*->\s*\{[\s\S]*?if \([^\n]*!isCurrentReaderRequest\(generation, comicId, chapterUrl, detail\)[^\n]*\) return;[\s\S]*?showError/.test(showReader));
 check("expected cancellation is computed on worker", /catch \(Exception error\)\s*\{\s*boolean expectedCancellation\s*=\s*isExpectedTaskCancellation\(error\);/.test(showReader));
 check("cancelled reader errors are silent", /if \(expectedCancellation\s*\|\|\s*!isCurrentReaderRequest/.test(showReader));
+check("reader errors return to the current detail", /showError\("章节加载失败", error, \(\) -> showDetail\(comicId\)\);/.test(showReader));
 
 console.log("reader generation ok");
