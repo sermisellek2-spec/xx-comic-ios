@@ -4,6 +4,11 @@ const source = fs.readFileSync(
   "app/src/main/java/com/xxcomic/MainActivity.java",
   "utf8"
 );
+const readerLoader = source.slice(
+  source.indexOf("private Future<?> loadReaderImage"),
+  source.indexOf("private boolean isCurrentReaderImageRequest")
+);
+const readerImageApplied = readerLoader.slice(readerLoader.indexOf("target.setImageBitmap(loaded);"));
 
 function encodePosition(firstVisible, firstTop, firstHeight, count, lastVisible, lastBottom, viewportBottom) {
   if (count <= 0) return 0;
@@ -42,5 +47,7 @@ check("reader progress restores by row and offset", /setSelectionFromTop\(index,
 check("reader bottom restore has a dedicated branch", /savedPosition\s*==\s*READER_POSITION_SCALE/.test(source));
 check("reader bottom restore waits for the last child", /list\.post\(\(\)\s*->\s*alignReaderBottom\(list\)\)/.test(source));
 check("reader bottom restore aligns measured row to viewport", /int last\s*=\s*list\.getCount\(\)\s*-\s*1[\s\S]*?int childHeight\s*=\s*lastChild\.getHeight\(\)[\s\S]*?int listHeight\s*=\s*Math\.max\([\s\S]*?list\.getHeight\(\)[\s\S]*?setSelectionFromTop\(last, listHeight - childHeight\)/.test(source));
+check("real image height re-aligns bottom restore", /list\.post\(\(\)\s*->\s*\{[\s\S]*?restoringPosition\[0\][\s\S]*?savedPosition\s*==\s*READER_POSITION_SCALE[\s\S]*?alignReaderBottom\(list\)/.test(readerImageApplied));
+check("image-height re-align rechecks row and reader", /TextUtils\.equals\(imageUrl, \(String\) target\.getTag\(\)\)[\s\S]*?isCurrentReaderImageRequest\(generation, comicId, chapterUrl\)/.test(readerImageApplied));
 check("reader scroll saves through ListView listener", /setOnScrollListener\(new AbsListView\.OnScrollListener\(\)/.test(source));
 check("reader persistence remains debounced", /READER_POSITION_SAVE_DELAY_MS\s*=\s*250L/.test(source));

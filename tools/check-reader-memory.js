@@ -34,7 +34,7 @@ check("row binding clears stale drawable", /setImageDrawable\(null\)/.test(rende
 check("row binding tags the current url", /setTag\(imageUrl\)/.test(renderReader));
 check("row binding has a non-zero placeholder", /placeholderHeight\s*=\s*Math\.max\(1,[^;]+\)/.test(renderReader));
 check("reader rows use the placeholder height", /AbsListView\.LayoutParams\(-1, placeholderHeight\)/.test(renderReader));
-check("reader image loads use dedicated path", /loadReaderImage\(image, imageUrl, chapterUrl, generation, comicId\)/.test(renderReader));
+check("reader image loads use dedicated path", /loadReaderImage\(image, imageUrl, chapterUrl, generation, comicId,/.test(renderReader));
 
 check("reader loader is tracked for screen cancellation", /trackImage\(imageIo\.submit/.test(readerLoader));
 check("reader loader returns its future", /private Future<\?> loadReaderImage[\s\S]*?return trackImage\(imageIo\.submit/.test(readerLoader));

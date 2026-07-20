@@ -1769,6 +1769,9 @@ public class MainActivity extends Activity {
         list.setSelector(new ColorDrawable(Color.TRANSPARENT));
         list.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
         list.setClipToPadding(false);
+        String positionKey = readerPositionKey(detail.summary.comicId, activeChapter);
+        int savedPosition = readerPositions.containsKey(positionKey) ? readerPositions.get(positionKey) : 0;
+        final boolean[] restoringPosition = {savedPosition > 0};
         list.setAdapter(new BaseAdapter() {
             @Override
             public int getCount() {
@@ -1801,15 +1804,13 @@ public class MainActivity extends Activity {
                 image.setImageDrawable(null);
                 image.setTag(imageUrl);
                 image.setLayoutParams(new AbsListView.LayoutParams(-1, placeholderHeight));
-                Future<?> future = loadReaderImage(image, imageUrl, chapterUrl, generation, comicId);
+                Future<?> future = loadReaderImage(image, imageUrl, chapterUrl, generation, comicId,
+                        list, restoringPosition, savedPosition);
                 if (future != null) readerImageFutures.put(image, future);
                 return image;
             }
         });
 
-        String positionKey = readerPositionKey(detail.summary.comicId, activeChapter);
-        int savedPosition = readerPositions.containsKey(positionKey) ? readerPositions.get(positionKey) : 0;
-        final boolean[] restoringPosition = {savedPosition > 0};
         list.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -2673,7 +2674,8 @@ public class MainActivity extends Activity {
     }
 
     private Future<?> loadReaderImage(ImageView target, String imageUrl, String chapterUrl,
-                                      int generation, String comicId) {
+                                      int generation, String comicId, ListView list,
+                                      boolean[] restoringPosition, int savedPosition) {
         if (TextUtils.isEmpty(imageUrl)) return null;
         return trackImage(imageIo.submit(() -> {
             HttpURLConnection connection = null;
@@ -2707,6 +2709,16 @@ public class MainActivity extends Activity {
                             * loaded.getHeight() / (float) Math.max(1, loaded.getWidth())));
                     target.setLayoutParams(params);
                     target.setImageBitmap(loaded);
+                    if (restoringPosition[0] && savedPosition == READER_POSITION_SCALE) {
+                        list.post(() -> {
+                            if (!activityDestroyed && restoringPosition[0]
+                                    && savedPosition == READER_POSITION_SCALE
+                                    && TextUtils.equals(imageUrl, (String) target.getTag())
+                                    && isCurrentReaderImageRequest(generation, comicId, chapterUrl)) {
+                                alignReaderBottom(list);
+                            }
+                        });
+                    }
                 });
             } catch (Exception error) {
                 if (isExpectedTaskCancellation(error)) return;
