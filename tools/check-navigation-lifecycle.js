@@ -27,6 +27,7 @@ const showPageLoading = method("private int showPageLoading", "private boolean i
 const showHistory = method("private void showHistory", "private View historyRow");
 
 check("loading back action is explicit", /Runnable\s+pageLoadingBackAction/.test(source));
+check("detail origin back action is explicit", /private Runnable\s+detailBackAction;/.test(source));
 check("legacy loading return tab is removed", !/pageLoadingReturnTab/.test(source));
 check("loading API accepts a back action", /showPageLoading\(String title, String desc, Runnable backAction\)/.test(showPageLoading));
 check("loading API stores the back action", /pageLoadingBackAction\s*=\s*backAction/.test(showPageLoading));
@@ -35,7 +36,11 @@ check(
   /pageLoadingGeneration\+\+[\s\S]*?enterScreen\(\)[\s\S]*?backAction\.run\(\)/.test(navigateBack)
 );
 check("other screen changes invalidate active loading", /if \(pageLoading\)\s*\{[\s\S]*?pageLoading\s*=\s*false;[\s\S]*?pageLoadingBackAction\s*=\s*null;[\s\S]*?pageLoadingGeneration\+\+;[\s\S]*?\}/.test(enterScreen));
-check("detail loading captures an origin action", /showPageLoading\([^;]+detailBackAction\)/s.test(showDetail));
+check("detail origin is captured only on first entry", /if \(TextUtils\.isEmpty\(activeDetailId\)\)\s*\{[\s\S]*?detailBackAction\s*=/.test(showDetail));
+check("detail origin captures history", /boolean returnToHistory\s*=\s*historyVisible;[\s\S]*?if \(returnToHistory\)[\s\S]*?showHistory\(\)/.test(showDetail));
+check("detail loading uses the saved origin action", /showPageLoading\([^;]+detailBackAction\)/s.test(showDetail));
+check("history back does not intercept active detail", /if \(historyVisible\s*&&\s*TextUtils\.isEmpty\(activeDetailId\)\)/.test(navigateBack));
+check("detail back runs the saved origin action", /Runnable backAction\s*=\s*detailBackAction;[\s\S]*?detailBackAction\s*=\s*null;[\s\S]*?backAction\.run\(\)/.test(navigateBack));
 check("chapter loading returns to detail", /showPageLoading\([^;]+\(\)\s*->\s*showDetail\(detail\.summary\.comicId\)/s.test(ensureChapters));
 check("loading success clears the action", /pageLoadingBackAction\s*=\s*null[\s\S]*?showDetail\(comicId\)/.test(showDetail));
 check("detail loading failure clears the action", /catch \(Exception error\)[\s\S]*?pageLoadingBackAction\s*=\s*null/.test(showDetail));

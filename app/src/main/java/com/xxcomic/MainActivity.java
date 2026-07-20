@@ -213,6 +213,7 @@ public class MainActivity extends Activity {
     private boolean globalSearchLoading = false;
     private boolean pageLoading = false;
     private Runnable pageLoadingBackAction;
+    private Runnable detailBackAction;
     private int pageLoadingGeneration = 0;
     private int pendingSearchScrollY = -1;
     private float edgeDownX = -1f;
@@ -363,7 +364,7 @@ public class MainActivity extends Activity {
             activePopup = null;
             return true;
         }
-        if (historyVisible) {
+        if (historyVisible && TextUtils.isEmpty(activeDetailId)) {
             historyVisible = false;
             showTab(3);
             return true;
@@ -373,9 +374,12 @@ public class MainActivity extends Activity {
             return true;
         }
         if (!TextUtils.isEmpty(activeDetailId)) {
-            // Exit detail → restore the concurrent-search list if we came from it, else the search page.
+            Runnable backAction = detailBackAction;
+            detailBackAction = null;
             activeDetailId = "";
-            if (standaloneSearchVisible) {
+            if (backAction != null) {
+                backAction.run();
+            } else if (standaloneSearchVisible) {
                 showStandaloneSearch(standaloneSearchResultsMode);
             } else {
                 showTab(currentTab);
@@ -1434,17 +1438,23 @@ public class MainActivity extends Activity {
     }
 
     private void showDetail(String comicId) {
-        final boolean returnToStandaloneSearch = standaloneSearchVisible;
-        final boolean returnToStandaloneSearchResults = standaloneSearchResultsMode;
-        final int returnTab = currentTab;
-        Runnable detailBackAction = () -> {
-            activeDetailId = "";
-            if (returnToStandaloneSearch) {
-                showStandaloneSearch(returnToStandaloneSearchResults);
-            } else {
-                showTab(returnTab);
-            }
-        };
+        if (TextUtils.isEmpty(activeDetailId)) {
+            final boolean returnToHistory = historyVisible;
+            final boolean returnToStandaloneSearch = standaloneSearchVisible;
+            final boolean returnToStandaloneSearchResults = standaloneSearchResultsMode;
+            final int returnTab = currentTab;
+            detailBackAction = () -> {
+                activeDetailId = "";
+                detailBackAction = null;
+                if (returnToHistory) {
+                    showHistory();
+                } else if (returnToStandaloneSearch) {
+                    showStandaloneSearch(returnToStandaloneSearchResults);
+                } else {
+                    showTab(returnTab);
+                }
+            };
+        }
         enterScreen();
         applyThemeAndSystemBars();
         activeDetailId = comicId;
