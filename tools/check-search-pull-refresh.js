@@ -27,19 +27,27 @@ if (!src.includes("private ProgressBar searchRefreshIndicator")) fail("refresh i
 
 const render = method("private void renderSearch", "private void appendSearchResults");
 if (!render.includes("new ProgressBar(this)")) fail("platform refresh indicator missing");
-if (!render.includes("bindSearchPullRefresh(scroll)")) fail("search scroll does not bind pull refresh");
+if (!render.includes("new PullRefreshScrollView(this)")) fail("search does not use pull-aware scroll dispatch");
 if (!render.includes("searchBody.addView(scroll")) fail("search list is not wrapped with refresh indicator");
 
-const bind = method("private void bindSearchPullRefresh", "private void refreshCurrentSearch");
-if (!bind.includes("scroll.getScrollY() == 0")) fail("pull refresh is not top-only");
-if (!bind.includes("MotionEvent.ACTION_DOWN")) fail("pull start is not handled");
-if (!bind.includes("MotionEvent.ACTION_MOVE")) fail("pull movement is not handled");
-if (!bind.includes("MotionEvent.ACTION_UP")) fail("pull release is not handled");
-if (!bind.includes("MotionEvent.ACTION_CANCEL")) fail("pull cancellation is not handled");
-if (!bind.includes("SEARCH_PULL_REFRESH_DP")) fail("pull trigger does not use threshold");
-if (!bind.includes("scroll.setTranslationY(searchPullDistance)")) fail("pull feedback does not move the list");
-if (!bind.includes("refreshCurrentSearch()")) fail("pull release does not refresh");
-if (!bind.includes("} else if (!searchRefreshing && searchRefreshIndicator != null)")) fail("ordinary touches can hide an active refresh indicator");
+const pullClass = method("private final class PullRefreshScrollView", "private void handleSearchPullRefresh");
+if (!pullClass.includes("dispatchTouchEvent(MotionEvent event)")) fail("pull scroll does not observe child touch dispatch");
+if (!pullClass.includes("handleSearchPullRefresh(this, event)")) fail("pull scroll dispatch does not forward gestures");
+if (!pullClass.includes("onInterceptTouchEvent(MotionEvent event)")) fail("pull scroll does not intercept vertical pulls");
+if (!pullClass.includes("getScaledTouchSlop()")) fail("pull interception ignores touch slop");
+if (!pullClass.includes("searchPullTracking")) fail("pull interception ignores active tracking");
+
+const handle = method("private void handleSearchPullRefresh", "private void refreshCurrentSearch");
+if (handle.includes("setOnTouchListener")) fail("pull refresh still depends on ScrollView onTouch target selection");
+if (!handle.includes("scroll.getScrollY() == 0")) fail("pull refresh is not top-only");
+if (!handle.includes("MotionEvent.ACTION_DOWN")) fail("pull start is not handled");
+if (!handle.includes("MotionEvent.ACTION_MOVE")) fail("pull movement is not handled");
+if (!handle.includes("MotionEvent.ACTION_UP")) fail("pull release is not handled");
+if (!handle.includes("MotionEvent.ACTION_CANCEL")) fail("pull cancellation is not handled");
+if (!handle.includes("SEARCH_PULL_REFRESH_DP")) fail("pull trigger does not use threshold");
+if (!handle.includes("scroll.setTranslationY(searchPullDistance)")) fail("pull feedback does not move the list");
+if (!handle.includes("refreshCurrentSearch()")) fail("pull release does not refresh");
+if (!handle.includes("} else if (!searchRefreshing && searchRefreshIndicator != null)")) fail("ordinary touches can hide an active refresh indicator");
 
 const refresh = method("private void refreshCurrentSearch", "private void finishSearchPullRefresh");
 if (!refresh.includes("searchLoading || searchAppending || searchRefreshing")) fail("refresh concurrency guard missing");

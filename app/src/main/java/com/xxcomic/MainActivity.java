@@ -634,7 +634,7 @@ public class MainActivity extends Activity {
         page.addView(filterTrigger, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 10)));
         page.addView(sectionTitle("搜索结果"));
 
-        ScrollView scroll = new ScrollView(this);
+        PullRefreshScrollView scroll = new PullRefreshScrollView(this);
         searchScroll = scroll;
         tuneScroll(scroll);
         LinearLayout content = new LinearLayout(this);
@@ -657,7 +657,6 @@ public class MainActivity extends Activity {
                 UIHelpers.dp(this, 28), UIHelpers.dp(this, 28), Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         indicatorParams.topMargin = UIHelpers.dp(this, 8);
         searchBody.addView(searchRefreshIndicator, indicatorParams);
-        bindSearchPullRefresh(scroll);
         page.addView(searchBody, new LinearLayout.LayoutParams(-1, 0, 1));
         if (pendingSearchScrollY >= 0) {
             int restoreY = pendingSearchScrollY;
@@ -1937,55 +1936,81 @@ public class MainActivity extends Activity {
         loadSearchPage(keyword, 1, false, false);
     }
 
-    private void bindSearchPullRefresh(ScrollView scroll) {
-        scroll.setOnTouchListener((view, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    searchPullTracking = scroll.getScrollY() == 0 && !searchLoading
-                            && !searchAppending && !searchRefreshing && currentTab == 1;
-                    searchPullStartY = searchPullTracking ? event.getY() : -1f;
-                    searchPullDistance = 0f;
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    if (!searchPullTracking) break;
-                    if (scroll.getScrollY() != 0 || event.getY() <= searchPullStartY) {
-                        searchPullTracking = false;
-                        searchPullDistance = 0f;
-                        scroll.setTranslationY(0f);
-                        if (searchRefreshIndicator != null) searchRefreshIndicator.setVisibility(View.GONE);
-                        break;
-                    }
-                    searchPullDistance = Math.min(UIHelpers.dp(this, 120),
-                            (event.getY() - searchPullStartY) * 0.5f);
-                    scroll.setTranslationY(searchPullDistance);
-                    if (searchRefreshIndicator != null) {
-                        searchRefreshIndicator.setVisibility(View.VISIBLE);
-                        searchRefreshIndicator.setAlpha(Math.min(1f,
-                                (event.getY() - searchPullStartY)
-                                        / UIHelpers.dp(this, SEARCH_PULL_REFRESH_DP)));
-                    }
-                    break;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    boolean trigger = event.getActionMasked() == MotionEvent.ACTION_UP
-                            && searchPullTracking
-                            && event.getY() - searchPullStartY
-                                    >= UIHelpers.dp(this, SEARCH_PULL_REFRESH_DP);
-                    searchPullTracking = false;
-                    searchPullStartY = -1f;
-                    searchPullDistance = 0f;
-                    scroll.animate().translationY(0f).setDuration(160L).start();
-                    if (trigger) {
-                        refreshCurrentSearch();
-                    } else if (!searchRefreshing && searchRefreshIndicator != null) {
-                        searchRefreshIndicator.setVisibility(View.GONE);
-                    }
-                    break;
-                default:
-                    break;
+    private final class PullRefreshScrollView extends ScrollView {
+        private float interceptDownX;
+        private float interceptDownY;
+
+        PullRefreshScrollView(Context context) {
+            super(context);
+        }
+
+        @Override
+        public boolean dispatchTouchEvent(MotionEvent event) {
+            handleSearchPullRefresh(this, event);
+            return super.dispatchTouchEvent(event);
+        }
+
+        @Override
+        public boolean onInterceptTouchEvent(MotionEvent event) {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                interceptDownX = event.getX();
+                interceptDownY = event.getY();
+            } else if (event.getActionMasked() == MotionEvent.ACTION_MOVE && searchPullTracking) {
+                float dx = Math.abs(event.getX() - interceptDownX);
+                float dy = event.getY() - interceptDownY;
+                if (dy > ViewConfiguration.get(PullRefreshScrollView.this.getContext()).getScaledTouchSlop()
+                        && dy > dx) return true;
             }
-            return false;
-        });
+            return super.onInterceptTouchEvent(event);
+        }
+    }
+
+    private void handleSearchPullRefresh(ScrollView scroll, MotionEvent event) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                searchPullTracking = scroll.getScrollY() == 0 && !searchLoading
+                        && !searchAppending && !searchRefreshing && currentTab == 1;
+                searchPullStartY = searchPullTracking ? event.getY() : -1f;
+                searchPullDistance = 0f;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (!searchPullTracking) break;
+                if (scroll.getScrollY() != 0 || event.getY() <= searchPullStartY) {
+                    searchPullTracking = false;
+                    searchPullDistance = 0f;
+                    scroll.setTranslationY(0f);
+                    if (searchRefreshIndicator != null) searchRefreshIndicator.setVisibility(View.GONE);
+                    break;
+                }
+                searchPullDistance = Math.min(UIHelpers.dp(this, 120),
+                        (event.getY() - searchPullStartY) * 0.5f);
+                scroll.setTranslationY(searchPullDistance);
+                if (searchRefreshIndicator != null) {
+                    searchRefreshIndicator.setVisibility(View.VISIBLE);
+                    searchRefreshIndicator.setAlpha(Math.min(1f,
+                            (event.getY() - searchPullStartY)
+                                    / UIHelpers.dp(this, SEARCH_PULL_REFRESH_DP)));
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                boolean trigger = event.getActionMasked() == MotionEvent.ACTION_UP
+                        && searchPullTracking
+                        && event.getY() - searchPullStartY
+                                >= UIHelpers.dp(this, SEARCH_PULL_REFRESH_DP);
+                searchPullTracking = false;
+                searchPullStartY = -1f;
+                searchPullDistance = 0f;
+                scroll.animate().translationY(0f).setDuration(160L).start();
+                if (trigger) {
+                    refreshCurrentSearch();
+                } else if (!searchRefreshing && searchRefreshIndicator != null) {
+                    searchRefreshIndicator.setVisibility(View.GONE);
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     private void refreshCurrentSearch() {
