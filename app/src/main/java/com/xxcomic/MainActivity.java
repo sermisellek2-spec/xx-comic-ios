@@ -163,6 +163,7 @@ public class MainActivity extends Activity {
     private final Map<String, ComicModels.ChapterPage> chapters = new HashMap<>();
     private final Set<String> refreshedComicIds = new HashSet<>();
     private final Set<String> refreshingComicIds = new HashSet<>();
+    private final Map<String, DetailAction> pendingRefreshActions = new HashMap<>();
     private final List<String> favorites = new ArrayList<>();
     private final List<String> sourceCategories = new ArrayList<>();
     private final List<ComicModels.Source> customSources = new ArrayList<>();
@@ -1569,31 +1570,63 @@ public class MainActivity extends Activity {
         detailIo.submit(() -> {
             try {
                 ComicSource client = sourceForComicId(comicId);
-                ComicModels.ComicDetail loaded = withChapters(client.detail(comicId), client.chapters(comicId));
+                ComicModels.ComicDetail freshDetail = client.detail(comicId);
+                List<ComicModels.Chapter> loadedChapters = client.chapters(comicId);
+                if (loadedChapters.isEmpty()) {
+                    main.post(() -> {
+                        if (activityDestroyed) return;
+                        finishComicRefresh(comicId, null);
+                    });
+                    return;
+                }
+                ComicModels.ComicDetail loaded = withChapters(freshDetail, loadedChapters);
                 main.post(() -> {
                     if (activityDestroyed) return;
-                    refreshingComicIds.remove(comicId);
-                    refreshedComicIds.add(comicId);
-                    details.put(comicId, loaded);
-                    summaries.put(comicId, loaded.summary);
-                    persistComicCachesAsync();
-                    loadImageToCache(loaded.summary.coverUrl);
-                    if (TextUtils.equals(activeDetailId, comicId) && !readerVisible) showDetail(comicId);
+                    finishComicRefresh(comicId, loaded);
                 });
             } catch (Exception error) {
                 main.post(() -> {
                     if (activityDestroyed) return;
-                    refreshingComicIds.remove(comicId);
-                    refreshedComicIds.add(comicId);
+                    finishComicRefresh(comicId, null);
                 });
             }
         });
     }
 
+    private void finishComicRefresh(String comicId, ComicModels.ComicDetail loaded) {
+        refreshingComicIds.remove(comicId);
+        refreshedComicIds.add(comicId);
+        DetailAction pendingAction = pendingRefreshActions.remove(comicId);
+        if (loaded != null) {
+            details.put(comicId, loaded);
+            summaries.put(comicId, loaded.summary);
+            persistComicCachesAsync();
+            loadImageToCache(loaded.summary.coverUrl);
+        }
+        if (pendingAction != null) {
+            pendingAction.run(loaded);
+            return;
+        }
+        if (loaded != null && TextUtils.equals(activeDetailId, comicId) && !readerVisible) showDetail(comicId);
+    }
+
+    private void waitForComicRefresh(ComicModels.ComicDetail detail, DetailAction action) {
+        String comicId = detail.summary.comicId;
+        int loadingGeneration = showPageLoading("正在加载章节目录...", "目录加载完成后会自动打开。", () -> showDetail(comicId));
+        pendingRefreshActions.put(comicId, loaded -> {
+            if (!isCurrentLoading(loadingGeneration)) return;
+            pageLoading = false;
+            pageLoadingBackAction = null;
+            if (loaded != null && !loaded.chapters.isEmpty()) {
+                action.run(loaded);
+            } else {
+                ensureChaptersThen(detail, action);
+            }
+        });
+    }
+
     private ComicModels.ComicDetail withChapters(ComicModels.ComicDetail detail, List<ComicModels.Chapter> loadedChapters) {
-        List<ComicModels.Chapter> resolved = loadedChapters == null || loadedChapters.isEmpty()
-                ? new ArrayList<>(detail.chapters)
-                : new ArrayList<>(loadedChapters);
+        List<ComicModels.Chapter> resolved = new ArrayList<>(loadedChapters);
         normalizeChaptersOldestFirst(resolved);
         return new ComicModels.ComicDetail(
                 detail.summary,
@@ -2267,6 +2300,10 @@ public class MainActivity extends Activity {
     private void ensureChaptersThen(ComicModels.ComicDetail detail, DetailAction action) {
         if (!detail.chapters.isEmpty()) {
             action.run(detail);
+            return;
+        }
+        if (refreshingComicIds.contains(detail.summary.comicId)) {
+            waitForComicRefresh(detail, action);
             return;
         }
         int loadingGeneration = showPageLoading("正在加载章节目录...", "目录加载完成后会自动打开。", () -> showDetail(detail.summary.comicId));
