@@ -29,6 +29,8 @@ check("there is no synchronous cache persistence entry point", !/persistComicCac
 check("all cache persistence calls use the async entry point", (source.match(/persistComicCachesAsync\(\)/g) || []).length >= 5);
 check("main thread creates all three snapshots", /new ArrayList<>\(summaries\.values\(\)\)[\s\S]*?new ArrayList<>\(details\.values\(\)\)[\s\S]*?new ArrayList<>\(chapters\.values\(\)/.test(persistAsync));
 check("snapshots are queued once on miscIo", /miscIo\.execute\(\(\)\s*->\s*writeComicCacheSnapshots\(summarySnapshot, detailSnapshot, chapterSnapshot\)\)/.test(persistAsync));
+check("destroyed cache persistence is rejected before snapshots", /if \(activityDestroyed \|\| miscIo\.isShutdown\(\)\) return;/.test(persistAsync) && persistAsync.indexOf("activityDestroyed") < persistAsync.indexOf("new ArrayList"));
+check("cache persistence checks shutdown before executor submission", persistAsync.indexOf("miscIo.isShutdown()") < persistAsync.indexOf("miscIo.execute"));
 check("writer only consumes snapshots", !/summaries\.|details\.|chapters\./.test(writer));
 check("writer serializes JSON and writes SharedPreferences", /JSONArray[\s\S]*?getSharedPreferences[\s\S]*?\.edit\(\)[\s\S]*?\.apply\(\)/.test(writer));
 check("network detail result is handed to main before map writes", showDetail.indexOf("main.post") < showDetail.indexOf("details.put(comicId, loaded)"));

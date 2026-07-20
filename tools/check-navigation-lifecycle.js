@@ -27,6 +27,14 @@ const ensureChapters = method("private void ensureChaptersThen", "private void s
 const showPageLoading = method("private int showPageLoading", "private boolean isCurrentLoading");
 const showHistory = method("private void showHistory", "private View historyRow");
 const cacheWriter = method("private void writeComicCacheSnapshots", "private JSONObject summaryToJson");
+const postMainIfAlive = method("private void postMainIfAlive", "private void clearErrorLogs");
+const writeExportLogs = method("private void writeExportLogs", "private void showAddSourceDialog");
+const writeExportSourceConfig = method("private void writeExportSourceConfig", "private void openImportSourceConfig");
+const importSourceConfig = method("private void importSourceConfig", "private JSONObject sourceConfigJson");
+const healthCheck = method("private void healthCheck", "private void rebuildSourceClients");
+const miscUiTasks = writeExportLogs + writeExportSourceConfig + importSourceConfig + healthCheck;
+const loadSearchPage = method("private void loadSearchPage", "private void loadNextSearchPage");
+const runGlobalSearch = method("private void runGlobalSearch", "private void onGlobalSearchSourceDone");
 
 check("loading back action is explicit", /Runnable\s+pageLoadingBackAction/.test(source));
 check("detail origin back action is explicit", /private Runnable\s+detailBackAction;/.test(source));
@@ -48,8 +56,15 @@ check("destroy cancels screen futures before shutdown", /for \(Future<\?> f : cu
   && onDestroy.indexOf("currentScreenFutures") < firstShutdown);
 check("destroy cancels image futures before shutdown", /cancelCurrentImageTasks\(\)/.test(onDestroy)
   && onDestroy.indexOf("cancelCurrentImageTasks()") < firstShutdown);
+check("destroy marks the activity dead", /activityDestroyed\s*=\s*true;/.test(onDestroy) && onDestroy.indexOf("activityDestroyed = true") < firstShutdown);
+check("misc UI helper drops callbacks after destroy", /main\.post\(\(\)\s*->\s*\{[\s\S]*?if \(activityDestroyed\) return;[\s\S]*?action\.run\(\)/.test(postMainIfAlive));
+check("all misc business UI callbacks use the alive helper", (miscUiTasks.match(/postMainIfAlive\(/g) || []).length === 7 && !/main\.post\(/.test(miscUiTasks));
 check("destroy invalidates async generations", /pageLoadingGeneration\+\+;[\s\S]*?readerGeneration\+\+;[\s\S]*?categoryGeneration\+\+;/.test(onDestroy)
   && onDestroy.indexOf("categoryGeneration++") < firstShutdown);
+check("destroy invalidates posted search callbacks", /searchGeneration\+\+;/.test(onDestroy) && onDestroy.indexOf("searchGeneration++") < firstShutdown);
+check("destroy invalidates posted global search callbacks", /globalSearchGeneration\+\+;/.test(onDestroy) && onDestroy.indexOf("globalSearchGeneration++") < firstShutdown);
+check("posted search success checks the invalidated generation", /main\.post\(\(\)\s*->\s*\{[\s\S]*?if \(generation != searchGeneration\) return;/.test(loadSearchPage));
+check("posted global search success checks the invalidated generation", /main\.post\(\(\)\s*->\s*\{[\s\S]*?if \(generation != globalSearchGeneration\) return;/.test(runGlobalSearch));
 check("destroy clears visible async state", /pageLoading\s*=\s*false;[\s\S]*?readerVisible\s*=\s*false;/.test(onDestroy));
 check("destroy clears navigation actions", /pageLoadingBackAction\s*=\s*null;[\s\S]*?detailBackAction\s*=\s*null;/.test(onDestroy));
 check("destroy does not trigger screen rendering", !/(enterScreen|showTab|showDetail|showReader|showHistory)\(/.test(onDestroy));

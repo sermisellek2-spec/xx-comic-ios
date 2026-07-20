@@ -302,6 +302,8 @@ public class MainActivity extends Activity {
         pageLoadingGeneration++;
         readerGeneration++;
         categoryGeneration++;
+        searchGeneration++;
+        globalSearchGeneration++;
         pageLoading = false;
         readerVisible = false;
         pageLoadingBackAction = null;
@@ -3584,6 +3586,13 @@ public class MainActivity extends Activity {
                 && "thread interrupted".equalsIgnoreCase(clean(error.getMessage(), "")));
     }
 
+    private void postMainIfAlive(Runnable action) {
+        main.post(() -> {
+            if (activityDestroyed) return;
+            action.run();
+        });
+    }
+
     private void clearErrorLogs() {
         getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().remove(ERROR_LOGS_KEY).apply();
         showToast("错误日志已清理");
@@ -3617,9 +3626,9 @@ public class MainActivity extends Activity {
                 if (stream == null) throw new IOException("无法写入文件");
                 stream.write(pendingLogText.getBytes("UTF-8"));
                 stream.flush();
-                main.post(() -> showToast("错误日志已导出"));
+                postMainIfAlive(() -> showToast("错误日志已导出"));
             } catch (Exception error) {
-                main.post(() -> showInfo("导出失败", clean(error.getMessage(), "无法写入日志文件")));
+                postMainIfAlive(() -> showInfo("导出失败", clean(error.getMessage(), "无法写入日志文件")));
             }
         });
     }
@@ -3696,9 +3705,9 @@ public class MainActivity extends Activity {
                 if (stream == null) throw new IOException("无法写入文件");
                 stream.write(pendingExportJson.getBytes("UTF-8"));
                 stream.flush();
-                main.post(() -> showToast("站源配置已导出"));
+                postMainIfAlive(() -> showToast("站源配置已导出"));
             } catch (Exception error) {
-                main.post(() -> showInfo("导出失败", clean(error.getMessage(), "无法写入配置文件")));
+                postMainIfAlive(() -> showInfo("导出失败", clean(error.getMessage(), "无法写入配置文件")));
             }
         });
     }
@@ -3716,7 +3725,7 @@ public class MainActivity extends Activity {
                 String json = new String(readAllBytes(stream), "UTF-8");
                 applySourceConfigJson(new JSONObject(json));
                 saveLocalState();
-                main.post(() -> {
+                postMainIfAlive(() -> {
                     selectedRegion = "all";
                     selectedState = "all";
                     sourceCategories.clear();
@@ -3727,7 +3736,7 @@ public class MainActivity extends Activity {
                     loadDefaultCategory();
                 });
             } catch (Exception error) {
-                main.post(() -> showInfo("导入失败", clean(error.getMessage(), "配置文件格式不正确")));
+                postMainIfAlive(() -> showInfo("导入失败", clean(error.getMessage(), "配置文件格式不正确")));
             }
         });
     }
@@ -3855,7 +3864,7 @@ public class MainActivity extends Activity {
                 rows.add(client.name() + (ok ? " 可用" : " 暂不可用"));
             }
             if (rows.isEmpty()) rows.add("当前没有启用站源");
-            main.post(() -> showInfo("站源检测", TextUtils.join("\n", rows)));
+            postMainIfAlive(() -> showInfo("站源检测", TextUtils.join("\n", rows)));
         });
     }
 
@@ -4138,6 +4147,7 @@ public class MainActivity extends Activity {
     }
 
     private void persistComicCachesAsync() {
+        if (activityDestroyed || miscIo.isShutdown()) return;
         List<ComicModels.ComicSummary> summarySnapshot = new ArrayList<>(summaries.values());
         List<ComicModels.ComicDetail> detailSnapshot = new ArrayList<>(details.values());
         List<ComicModels.ChapterPage> chapterSnapshot = new ArrayList<>(chapters.values());
