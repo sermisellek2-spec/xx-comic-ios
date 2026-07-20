@@ -44,7 +44,7 @@ const appendError = block.slice(block.indexOf("if (append) {", block.indexOf("ca
 if (appendError.includes("searchHasMore =")) fail("append failure must not change searchHasMore");
 if (!src.includes('"加载失败，点击重试"')) fail("retry footer label missing");
 if (!src.includes("searchPage + 1")) fail("retry must use next page");
-if (!src.includes("|| searchAppendFailed ||")) fail("failed append guard missing");
+if (!/\|\|\s*searchAppendFailed\b/.test(src)) fail("failed append guard missing");
 const footerStart = src.indexOf("private void renderSearchPagingFooter");
 const footerEnd = src.indexOf("private void removeSearchPagingFooter", footerStart);
 const footer = src.slice(footerStart, footerEnd);

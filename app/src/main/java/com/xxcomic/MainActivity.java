@@ -104,6 +104,7 @@ public class MainActivity extends Activity {
     private static final long READER_POSITION_SAVE_DELAY_MS = 250L;
     private static final long READER_MAX_DECODE_PIXELS = 8000000L;
     private static final long READER_MAX_DECODE_BYTES = 32L * 1024L * 1024L;
+    private static final int SEARCH_PULL_REFRESH_DP = 72;
     private static final String SUMMARIES_CACHE_KEY = "cache.summaries";
     private static final String DETAILS_CACHE_KEY = "cache.details";
     private static final String CHAPTERS_CACHE_KEY = "cache.chapters";
@@ -211,7 +212,10 @@ public class MainActivity extends Activity {
     private boolean readerFullscreen = false;
     private boolean searchLoading = false;
     private boolean searchAppending = false;
-    private boolean defaultSearchRefreshPending = false;
+    private boolean searchRefreshing = false;
+    private boolean searchPullTracking = false;
+    private float searchPullStartY = -1f;
+    private float searchPullDistance = 0f;
     private boolean searchHasMore = true;
     private boolean searchAppendFailed = false;
     private String searchAppendFailedKeyword = "";
@@ -252,6 +256,7 @@ public class MainActivity extends Activity {
     private String pendingLogText = "";
     private PopupWindow activePopup;
     private ScrollView searchScroll;
+    private ProgressBar searchRefreshIndicator;
     private LinearLayout searchResultsContent;
     private View searchPagingFooter;
     private LinearLayout searchAppendFailedContent;
@@ -505,6 +510,7 @@ public class MainActivity extends Activity {
         readerGeneration++;
         searchLoading = false;
         searchAppending = false;
+        finishSearchPullRefresh();
         clearSearchAppendFailure();
         cancelCurrentImageTasks();
     }
@@ -539,8 +545,7 @@ public class MainActivity extends Activity {
         currentImageFutures = new ArrayList<>();
     }
 
-    // Top-level page switch (bottom-nav tap / exiting standalone search) should clear the search
-    // inputs; down-navigation (entering detail) and back-from-detail must NOT clear them.
+    // Explicitly exiting standalone search clears its inputs; Tab switches preserve search state.
     private void clearSearchInputs() {
         searchQuery = "";
         globalSearchQuery = "";
@@ -555,7 +560,6 @@ public class MainActivity extends Activity {
         if (cancelTasks) enterScreen();
         applyThemeAndSystemBars();
         currentTab = tab;
-        if (tab == 1 && previousTab != 1 && TextUtils.isEmpty(searchQuery.trim())) defaultSearchRefreshPending = true;
         activeDetailId = "";
         detailBackAction = null;
         historyVisible = false;
@@ -644,7 +648,17 @@ public class MainActivity extends Activity {
                 loadNextSearchPage();
             }
         });
-        page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        FrameLayout searchBody = new FrameLayout(this);
+        searchBody.addView(scroll, UIHelpers.match());
+        searchRefreshIndicator = new ProgressBar(this);
+        searchRefreshIndicator.setIndeterminate(true);
+        searchRefreshIndicator.setVisibility(searchRefreshing ? View.VISIBLE : View.GONE);
+        FrameLayout.LayoutParams indicatorParams = new FrameLayout.LayoutParams(
+                UIHelpers.dp(this, 28), UIHelpers.dp(this, 28), Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        indicatorParams.topMargin = UIHelpers.dp(this, 8);
+        searchBody.addView(searchRefreshIndicator, indicatorParams);
+        bindSearchPullRefresh(scroll);
+        page.addView(searchBody, new LinearLayout.LayoutParams(-1, 0, 1));
         if (pendingSearchScrollY >= 0) {
             int restoreY = pendingSearchScrollY;
             pendingSearchScrollY = -1;
@@ -1923,21 +1937,106 @@ public class MainActivity extends Activity {
         loadSearchPage(keyword, 1, false, false);
     }
 
+    private void bindSearchPullRefresh(ScrollView scroll) {
+        scroll.setOnTouchListener((view, event) -> {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    searchPullTracking = scroll.getScrollY() == 0 && !searchLoading
+                            && !searchAppending && !searchRefreshing && currentTab == 1;
+                    searchPullStartY = searchPullTracking ? event.getY() : -1f;
+                    searchPullDistance = 0f;
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    if (!searchPullTracking) break;
+                    if (scroll.getScrollY() != 0 || event.getY() <= searchPullStartY) {
+                        searchPullTracking = false;
+                        searchPullDistance = 0f;
+                        scroll.setTranslationY(0f);
+                        if (searchRefreshIndicator != null) searchRefreshIndicator.setVisibility(View.GONE);
+                        break;
+                    }
+                    searchPullDistance = Math.min(UIHelpers.dp(this, 120),
+                            (event.getY() - searchPullStartY) * 0.5f);
+                    scroll.setTranslationY(searchPullDistance);
+                    if (searchRefreshIndicator != null) {
+                        searchRefreshIndicator.setVisibility(View.VISIBLE);
+                        searchRefreshIndicator.setAlpha(Math.min(1f,
+                                (event.getY() - searchPullStartY)
+                                        / UIHelpers.dp(this, SEARCH_PULL_REFRESH_DP)));
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    boolean trigger = event.getActionMasked() == MotionEvent.ACTION_UP
+                            && searchPullTracking
+                            && event.getY() - searchPullStartY
+                                    >= UIHelpers.dp(this, SEARCH_PULL_REFRESH_DP);
+                    searchPullTracking = false;
+                    searchPullStartY = -1f;
+                    searchPullDistance = 0f;
+                    scroll.animate().translationY(0f).setDuration(160L).start();
+                    if (trigger) {
+                        refreshCurrentSearch();
+                    } else if (!searchRefreshing && searchRefreshIndicator != null) {
+                        searchRefreshIndicator.setVisibility(View.GONE);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return false;
+        });
+    }
+
+    private void refreshCurrentSearch() {
+        if (searchLoading || searchAppending || searchRefreshing || currentTab != 1) return;
+        String keyword = searchQuery.trim();
+        boolean categoryMode = TextUtils.isEmpty(keyword);
+        loadSearchPage(keyword, 1, false, categoryMode, true);
+    }
+
+    private void finishSearchPullRefresh() {
+        searchRefreshing = false;
+        searchPullTracking = false;
+        searchPullStartY = -1f;
+        searchPullDistance = 0f;
+        if (searchScroll != null) {
+            searchScroll.animate().cancel();
+            searchScroll.setTranslationY(0f);
+        }
+        if (searchRefreshIndicator != null) {
+            searchRefreshIndicator.setAlpha(1f);
+            searchRefreshIndicator.setVisibility(View.GONE);
+        }
+    }
+
     private void loadSearchPage(String keyword, int page, boolean append, boolean categoryMode) {
+        loadSearchPage(keyword, page, append, categoryMode, false);
+    }
+
+    private void loadSearchPage(String keyword, int page, boolean append, boolean categoryMode, boolean pullRefresh) {
         ComicSource requestClient = selectedSource();
-        if (requestClient == null) return;
+        if (requestClient == null) {
+            if (pullRefresh) finishSearchPullRefresh();
+            return;
+        }
         String requestSourceId = requestClient.id();
         String requestRegion = selectedRegion;
         String requestState = selectedState;
         int generation = ++searchGeneration;
         clearSearchAppendFailure();
-        if (append) {
+        if (pullRefresh) {
+            searchRefreshing = true;
+            removeSearchPagingFooter();
+        } else if (append) {
             searchAppending = true;
             if (currentTab == 1 && searchResultsContent != null) renderSearchPagingFooter(searchResultsContent);
         } else {
             searchLoading = true;
         }
-        if (currentTab == 1 && !append) showTab(1, false);
+        if (currentTab == 1 && !append) {
+            if (!pullRefresh) showTab(1, false);
+        }
         track(searchIo.submit(() -> {
             try {
                 List<ComicModels.ComicSummary> list = categoryMode
@@ -1954,6 +2053,7 @@ public class MainActivity extends Activity {
                     clearSearchAppendFailure();
                     searchLoading = false;
                     searchAppending = false;
+                    if (pullRefresh) finishSearchPullRefresh();
                     if (currentTab == 1) {
                         if (append && searchResultsContent != null) {
                             appendSearchResults(list);
@@ -1970,11 +2070,19 @@ public class MainActivity extends Activity {
                     if (isExpectedTaskCancellation(error)) {
                         searchLoading = false;
                         searchAppending = false;
+                        if (pullRefresh) finishSearchPullRefresh();
                         return;
                     }
                     searchLoading = false;
                     searchAppending = false;
-                    if (append) {
+                    if (pullRefresh) {
+                        finishSearchPullRefresh();
+                        appendErrorLog("\u641c\u7d22\u5237\u65b0\u5931\u8d25", error);
+                        if (currentTab == 1 && searchResultsContent != null) {
+                            renderSearchPagingFooter(searchResultsContent);
+                        }
+                        showToast("\u5237\u65b0\u5931\u8d25");
+                    } else if (append) {
                         appendErrorLog("搜索分页加载失败", error);
                         searchAppendFailed = true;
                         searchAppendFailedKeyword = keyword;
@@ -1993,11 +2101,13 @@ public class MainActivity extends Activity {
     }
 
     private void loadNextSearchPage() {
-        if (searchLoading || searchAppending || searchAppendFailed || !searchHasMore || currentTab != 1 || standaloneSearchVisible) return;
+        if (searchLoading || searchAppending || searchRefreshing || searchAppendFailed
+                || !searchHasMore || currentTab != 1 || standaloneSearchVisible) return;
         loadSearchPage(searchQuery, searchPage + 1, true, TextUtils.isEmpty(searchQuery.trim()));
     }
 
     private void resetSearchPaging() {
+        finishSearchPullRefresh();
         searchPage = 1;
         searchHasMore = true;
         clearSearchAppendFailure();
@@ -2277,17 +2387,13 @@ public class MainActivity extends Activity {
     }
 
     private void scheduleDefaultSearchLoad() {
-        if (currentTab != 1 || selectedSource() == null
-                || (!searchResults.isEmpty() && !defaultSearchRefreshPending)
+        if (currentTab != 1 || selectedSource() == null || !searchResults.isEmpty()
                 || !TextUtils.isEmpty(searchQuery.trim()) || searchLoading) return;
         int generation = searchGeneration;
-        boolean refreshCached = defaultSearchRefreshPending;
-        defaultSearchRefreshPending = false;
         searchLoading = true;
         main.post(() -> {
             if (generation != searchGeneration) return;
-            if (currentTab != 1 || (!searchResults.isEmpty() && !refreshCached)
-                    || !TextUtils.isEmpty(searchQuery.trim())) {
+            if (currentTab != 1 || !searchResults.isEmpty() || !TextUtils.isEmpty(searchQuery.trim())) {
                 searchLoading = false;
                 return;
             }
@@ -3068,6 +3174,7 @@ public class MainActivity extends Activity {
                             searchGeneration++;
                             searchLoading = false;
                             searchAppending = false;
+                            finishSearchPullRefresh();
                             clearSearchAppendFailure();
                             removeSearchPagingFooter();
                         }
@@ -3447,7 +3554,6 @@ public class MainActivity extends Activity {
             tab.addView(label, labelLp);
             tab.setOnClickListener(v -> {
                 if (index == currentTab) return;
-                clearSearchInputs();
                 showTab(index);
             });
             tabs.addView(tab, UIHelpers.weight(1));
