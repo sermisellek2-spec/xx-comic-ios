@@ -2689,6 +2689,23 @@ public class MainActivity extends Activity {
         return box;
     }
 
+    private long[] captureImageCacheIdentity(File file) {
+        synchronized (imageCacheLock) {
+            if (!file.exists()) return null;
+            return new long[]{file.length(), file.lastModified()};
+        }
+    }
+
+    private void deleteImageCacheIfUnchanged(File file, long[] identity) {
+        if (identity == null) return;
+        synchronized (imageCacheLock) {
+            if (file.exists() && file.length() == identity[0] && file.lastModified() == identity[1]) {
+                long length = file.length();
+                if (file.delete() && imageCacheBytes >= 0L) imageCacheBytes = Math.max(0L, imageCacheBytes - length);
+            }
+        }
+    }
+
     private Future<?> loadReaderImage(ImageView target, String imageUrl, String chapterUrl,
                                       int generation, String comicId, ListView list,
                                       boolean[] restoringPosition, int savedPosition) {
@@ -2697,9 +2714,10 @@ public class MainActivity extends Activity {
             HttpURLConnection connection = null;
             try {
                 File cached = imageCacheFile(imageUrl);
-                Bitmap bitmap = cached.exists() ? decodeReaderImage(cached, readerContentWidth()) : null;
+                long[] cachedIdentity = captureImageCacheIdentity(cached);
+                Bitmap bitmap = cachedIdentity != null ? decodeReaderImage(cached, readerContentWidth()) : null;
                 if (bitmap == null) {
-                    if (cached.exists()) cached.delete();
+                    deleteImageCacheIfUnchanged(cached, cachedIdentity);
                     connection = (HttpURLConnection) new URL(imageUrl).openConnection();
                     connection.setInstanceFollowRedirects(true);
                     connection.setConnectTimeout(10000);
@@ -2799,7 +2817,8 @@ public class MainActivity extends Activity {
             HttpURLConnection connection = null;
             try {
                 File cached = imageCacheFile(imageUrl);
-                if (cached.exists()) {
+                long[] cachedIdentity = captureImageCacheIdentity(cached);
+                if (cachedIdentity != null) {
                     Bitmap cachedBitmap = BitmapFactory.decodeFile(cached.getAbsolutePath());
                     if (cachedBitmap != null) {
                         cached.setLastModified(System.currentTimeMillis());
@@ -2807,7 +2826,7 @@ public class MainActivity extends Activity {
                         main.post(() -> target.setImageBitmap(cachedBitmap));
                         return;
                     }
-                    cached.delete();
+                    deleteImageCacheIfUnchanged(cached, cachedIdentity);
                 }
                 connection = (HttpURLConnection) new URL(imageUrl).openConnection();
                 connection.setInstanceFollowRedirects(true);
@@ -2826,7 +2845,6 @@ public class MainActivity extends Activity {
                         imageMemoryCache.put(imageUrl, bitmap);
                         main.post(() -> target.setImageBitmap(bitmap));
                     } else {
-                        cached.delete();
                         throw new IOException("Image decode failed: " + imageUrl + "; bytes=" + bytes.length + "; type=" + contentType + "; referer=" + referer);
                     }
                 }

@@ -23,6 +23,9 @@ const readerDecode = method("private Bitmap decodeReaderImage", "private void lo
 const readerGuard = method("private boolean isCurrentReaderImageRequest", "private Bitmap decodeReaderImage");
 const readerCacheWriter = method("private void writeReaderImageCache", "private void trimImageCache");
 const readerCacheRestore = method("private boolean restoreReaderImageBackup", "private void trimImageCache");
+const legacyLoader = method("private void loadImage(ImageView target, String imageUrl, String pageReferer)", "private void loadImageToCache");
+const cacheIdentity = method("private long[] captureImageCacheIdentity", "private void deleteImageCacheIfUnchanged");
+const cacheDelete = method("private void deleteImageCacheIfUnchanged", "private Future<?> loadReaderImage");
 
 check("reader uses ListView", /ListView\s+list\s*=\s*new ListView\(this\)/.test(renderReader));
 check("reader uses BaseAdapter", /setAdapter\(new BaseAdapter\(\)/.test(renderReader));
@@ -78,5 +81,11 @@ check("writer no longer ignores backup rename in finally", !/finally\s*\{[\s\S]*
 check("reader target swap is protected by cache lock", /synchronized \(imageCacheLock\)\s*\{[\s\S]*?file\.renameTo\(backup\)[\s\S]*?temp\.renameTo\(file\)/.test(readerCacheWriter));
 check("backup restore is fully protected by cache lock", /synchronized \(imageCacheLock\)\s*\{[\s\S]*?backup\.exists\(\)[\s\S]*?backup\.renameTo\(target\)[\s\S]*?FileInputStream[\s\S]*?restore\.renameTo\(target\)/.test(readerCacheRestore));
 check("cache restore lock contains no UI work", !/main\.post/.test(readerCacheRestore));
+check("cache identity captures length and timestamp under lock", /synchronized \(imageCacheLock\)[\s\S]*?file\.exists\(\)[\s\S]*?file\.length\(\)[\s\S]*?file\.lastModified\(\)/.test(cacheIdentity));
+check("conditional cache delete rechecks identity under lock", /synchronized \(imageCacheLock\)[\s\S]*?file\.length\(\)\s*==\s*identity\[0\][\s\S]*?file\.lastModified\(\)\s*==\s*identity\[1\][\s\S]*?file\.delete\(\)/.test(cacheDelete));
+check("reader disk decode uses identity-checked delete", /captureImageCacheIdentity\(cached\)[\s\S]*?decodeReaderImage\(cached[\s\S]*?deleteImageCacheIfUnchanged\(cached, cachedIdentity\)/.test(readerLoader));
+check("legacy disk decode uses identity-checked delete", /captureImageCacheIdentity\(cached\)[\s\S]*?BitmapFactory\.decodeFile\(cached\.getAbsolutePath\(\)\)[\s\S]*?deleteImageCacheIfUnchanged\(cached, cachedIdentity\)/.test(legacyLoader));
+check("image loaders never directly delete shared cache target", !/cached\.delete\(\)/.test(readerLoader) && !/cached\.delete\(\)/.test(legacyLoader));
+check("cache decode remains outside cache lock", !/synchronized \(imageCacheLock\)[\s\S]*?(?:decodeReaderImage|BitmapFactory\.decodeFile)/.test(cacheIdentity + cacheDelete));
 
 console.log("reader memory ok");
