@@ -24,7 +24,6 @@ import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
-import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.View;
 import android.view.ViewGroup;
@@ -214,6 +213,7 @@ public class MainActivity extends Activity {
     private boolean searchAppending = false;
     private boolean defaultSearchRefreshPending = false;
     private boolean searchHasMore = true;
+    private boolean searchAppendFailed = false;
     private int searchPage = 1;
     private boolean standaloneSearchVisible = false;
     private boolean historyVisible = false;
@@ -268,7 +268,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
         applyThemeAndSystemBars();
         root = new FrameLayout(this);
         setContentView(root);
@@ -700,7 +699,16 @@ public class MainActivity extends Activity {
 
     private void renderSearchPagingFooter(LinearLayout content) {
         removeSearchPagingFooter();
-        if (searchAppending) {
+        if (searchAppendFailed) {
+            TextView retry = UIHelpers.text(this, "加载失败，点击重试", 12, UIHelpers.ACCENT, Typeface.NORMAL);
+            retry.setGravity(Gravity.CENTER);
+            retry.setOnClickListener(v -> {
+                if (currentTab == 1 && searchResultsContent == content && !searchAppending) {
+                    loadSearchPage(searchQuery, searchPage + 1, true, TextUtils.isEmpty(searchQuery.trim()));
+                }
+            });
+            searchPagingFooter = retry;
+        } else if (searchAppending) {
             searchPagingFooter = loadingMoreView();
         } else if (!searchHasMore) {
             TextView end = UIHelpers.text(this, "\u5df2\u7ecf\u5230\u5e95\u4e86", 12, UIHelpers.TEXT3, Typeface.NORMAL);
@@ -821,13 +829,6 @@ public class MainActivity extends Activity {
             saveLocalState();
             showTab(2);
         }));
-        for (ComicModels.Source item : customSources) {
-            addSourceCard(enabledSources, disabledSources, item.enabled, sourceCard(item.name, item.url, item.enabled, () -> {
-                item.enabled = !item.enabled;
-                saveLocalState();
-                showTab(2);
-            }));
-        }
         page.addView(enabledSources);
         page.addView(disabledSources);
         LinearLayout ioButtons = new LinearLayout(this);
@@ -1918,6 +1919,7 @@ public class MainActivity extends Activity {
         ComicSource client = selectedSource();
         if (client == null) return;
         int generation = ++searchGeneration;
+        searchAppendFailed = false;
         if (append) {
             searchAppending = true;
             if (currentTab == 1 && searchResultsContent != null) renderSearchPagingFooter(searchResultsContent);
@@ -1937,6 +1939,7 @@ public class MainActivity extends Activity {
                     for (ComicModels.ComicSummary item : list) summaries.put(item.comicId, item);
                     searchPage = page;
                     searchHasMore = !list.isEmpty();
+                    searchAppendFailed = false;
                     searchLoading = false;
                     searchAppending = false;
                     if (currentTab == 1) {
@@ -1960,7 +1963,8 @@ public class MainActivity extends Activity {
                     searchAppending = false;
                     if (append) {
                         appendErrorLog("搜索分页加载失败", error);
-                        searchHasMore = false;
+                        searchAppendFailed = true;
+                        if (currentTab == 1 && searchResultsContent != null) renderSearchPagingFooter(searchResultsContent);
                         showToast("加载更多失败");
                     } else {
                         showError("加载失败", error);
@@ -1971,13 +1975,14 @@ public class MainActivity extends Activity {
     }
 
     private void loadNextSearchPage() {
-        if (searchLoading || searchAppending || !searchHasMore || currentTab != 1 || standaloneSearchVisible) return;
+        if (searchLoading || searchAppending || searchAppendFailed || !searchHasMore || currentTab != 1 || standaloneSearchVisible) return;
         loadSearchPage(searchQuery, searchPage + 1, true, TextUtils.isEmpty(searchQuery.trim()));
     }
 
     private void resetSearchPaging() {
         searchPage = 1;
         searchHasMore = true;
+        searchAppendFailed = false;
         searchAppending = false;
     }
 
@@ -3402,7 +3407,8 @@ public class MainActivity extends Activity {
             tab.addView(icon);
             tab.addView(label, labelLp);
             tab.setOnClickListener(v -> {
-                if (index != currentTab) clearSearchInputs();
+                if (index == currentTab) return;
+                clearSearchInputs();
                 showTab(index);
             });
             tabs.addView(tab, UIHelpers.weight(1));
@@ -3449,11 +3455,6 @@ public class MainActivity extends Activity {
         popup.setOnDismissListener(() -> {
             if (activePopup == popup) activePopup = null;
         });
-        panel.addView(menuItem("添加站源", "", () -> {
-            popup.dismiss();
-            showAddSourceDialog();
-        }));
-        panel.addView(UIHelpers.divider(this));
         panel.addView(menuItem("导出配置", "", () -> {
             popup.dismiss();
             exportSourceConfig();
