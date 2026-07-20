@@ -22,6 +22,7 @@ const readerSubmit = method("private Future<?> submitReaderImage", "private Futu
 const readerDecode = method("private Bitmap decodeReaderImage", "private void loadImage(");
 const readerGuard = method("private boolean isCurrentReaderImageRequest", "private Bitmap decodeReaderImage");
 const readerCacheWriter = method("private void writeReaderImageCache", "private void trimImageCache");
+const readerCacheRestore = method("private boolean restoreReaderImageBackup", "private void trimImageCache");
 
 check("reader uses ListView", /ListView\s+list\s*=\s*new ListView\(this\)/.test(renderReader));
 check("reader uses BaseAdapter", /setAdapter\(new BaseAdapter\(\)/.test(renderReader));
@@ -65,7 +66,14 @@ check("reader success updates real row height", /params\.height/.test(readerLoad
 check("reader cache temp is created beside destination", /File\.createTempFile\("reader-", "\.tmp", parent\)/.test(readerCacheWriter));
 check("reader cache replacement backs up old file", /file\.renameTo\(backup\)/.test(readerCacheWriter));
 check("reader cache replacement renames temp atomically", /temp\.renameTo\(file\)/.test(readerCacheWriter));
-check("reader cache replacement restores backup on failure", /backup\.renameTo\(file\)/.test(readerCacheWriter));
+check("reader cache replacement restores backup on failure", /restoreReaderImageBackup\(backup, file\)/.test(readerCacheWriter));
 check("reader cache replacement never deletes valid target first", !/file\.delete\(\)/.test(readerCacheWriter));
+check("reader cache writer uses reliable backup helper", /restoreReaderImageBackup\(backup, file\)/.test(readerCacheWriter));
+check("backup helper tries rename before copy", /backup\.renameTo\(target\)[\s\S]*?FileInputStream/.test(readerCacheRestore));
+check("backup copy is flushed to storage", /FileOutputStream[\s\S]*?getFD\(\)\.sync\(\)/.test(readerCacheRestore));
+check("backup copy closes before restore rename", /try \(InputStream input[\s\S]*?\}[\s\S]*?restore\.renameTo\(target\)/.test(readerCacheRestore));
+check("failed backup restore is retained and reported", /return false/.test(readerCacheRestore)
+  && /appendErrorLog\("阅读图片缓存恢复失败"/.test(readerCacheWriter));
+check("writer no longer ignores backup rename in finally", !/finally\s*\{[\s\S]*?backup\.renameTo\(file\)/.test(readerCacheWriter));
 
 console.log("reader memory ok");

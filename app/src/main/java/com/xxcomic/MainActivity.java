@@ -63,6 +63,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -4513,8 +4514,8 @@ public class MainActivity extends Activity {
                 boolean hadPrevious = file.exists();
                 if (hadPrevious && !file.renameTo(backup)) throw new IOException("Cannot back up image cache: " + file);
                 if (!temp.renameTo(file)) {
-                    if (hadPrevious && !backup.renameTo(file)) {
-                        throw new IOException("Cannot restore image cache backup: " + backup);
+                    if (hadPrevious && !restoreReaderImageBackup(backup, file)) {
+                        throw new IOException("Cannot restore image cache backup; retained at: " + backup);
                     }
                     throw new IOException("Cannot move image cache: " + file);
                 }
@@ -4525,8 +4526,37 @@ public class MainActivity extends Activity {
             }
         } finally {
             if (temp.exists()) temp.delete();
-            if (!replaced && backup.exists() && !file.exists()) backup.renameTo(file);
+            if (!replaced && backup.exists() && !file.exists()
+                    && !restoreReaderImageBackup(backup, file)) {
+                appendErrorLog("阅读图片缓存恢复失败",
+                        new IOException("Backup retained at: " + backup));
+            }
             if (replaced && backup.exists()) backup.delete();
+        }
+    }
+
+    private boolean restoreReaderImageBackup(File backup, File target) {
+        if (!backup.exists()) return target.exists();
+        if (target.exists()) return true;
+        if (backup.renameTo(target)) return true;
+        File parent = target.getParentFile();
+        File restore = null;
+        try {
+            restore = File.createTempFile("reader-restore-", ".tmp", parent);
+            try (InputStream input = new FileInputStream(backup);
+                 FileOutputStream output = new FileOutputStream(restore)) {
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
+                output.getFD().sync();
+            }
+            if (!restore.renameTo(target)) return false;
+            if (backup.exists() && !backup.delete()) return false;
+            return true;
+        } catch (IOException error) {
+            return false;
+        } finally {
+            if (restore != null && restore.exists()) restore.delete();
         }
     }
 
