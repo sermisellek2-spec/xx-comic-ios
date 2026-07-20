@@ -18,6 +18,7 @@ function check(name, condition) {
 
 const renderReader = method("private void renderReader", "private boolean handleReaderTap");
 const readerLoader = method("private Future<?> loadReaderImage", "private void loadImage(");
+const readerCacheLoader = method("private void ensureReaderImageCached", "private Future<?> loadReaderImage");
 const readerSubmit = method("private Future<?> submitReaderImage", "private Future<?> loadReaderImage");
 const readerDecode = method("private Bitmap decodeReaderImage", "private void loadImage(");
 const readerGuard = method("private boolean isCurrentReaderImageRequest", "private Bitmap decodeReaderImage");
@@ -47,7 +48,8 @@ check("reader loader returns its future", /private Future<\?> loadReaderImage[\s
 check("reader loader uses a self-cleaning FutureTask", /submitReaderImage\(/.test(readerLoader) && /FutureTask/.test(readerSubmit));
 check("reader Future cleanup runs after completion", /protected void done\(\)[\s\S]*?main\.post[\s\S]*?currentImageFutures\.remove\(this\)/.test(readerSubmit));
 check("reader loader never reads or writes cover memory cache", !/imageMemoryCache/.test(readerLoader));
-check("reader network is streamed to disk", /writeReaderImageCache\(cached, stream\)/.test(readerLoader) && !/readAllBytes|decodeByteArray/.test(readerLoader));
+check("reader network is streamed to disk", /writeReaderImageCache\(cached, stream\)/.test(readerCacheLoader)
+  && !/readAllBytes|decodeByteArray/.test(readerCacheLoader));
 check("reader decode reads bounds first", /inJustDecodeBounds\s*=\s*true[\s\S]*?BitmapFactory\.decodeFile/.test(readerDecode));
 check("reader decode uses sampled decode", /inSampleSize\s*=\s*\(int\) sampleSize[\s\S]*?BitmapFactory\.decodeFile/.test(readerDecode));
 check("reader sample size stays power-of-two", /sampleSize\s*\*=\s*2L/.test(readerDecode));

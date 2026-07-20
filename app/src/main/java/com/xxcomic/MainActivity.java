@@ -104,6 +104,7 @@ public class MainActivity extends Activity {
     private static final long READER_POSITION_SAVE_DELAY_MS = 250L;
     private static final long READER_MAX_DECODE_PIXELS = 8000000L;
     private static final long READER_MAX_DECODE_BYTES = 32L * 1024L * 1024L;
+    private static final int READER_PREFETCH_COUNT = 4;
     private static final int SEARCH_PULL_REFRESH_DP = 72;
     private static final String SUMMARIES_CACHE_KEY = "cache.summaries";
     private static final String DETAILS_CACHE_KEY = "cache.details";
@@ -120,6 +121,7 @@ public class MainActivity extends Activity {
     private final ExecutorService searchIo = Executors.newFixedThreadPool(10);
     private final ExecutorService detailIo = Executors.newFixedThreadPool(2);
     private final ExecutorService imageIo = Executors.newFixedThreadPool(4);
+    private final ExecutorService readerPrefetchIo = Executors.newFixedThreadPool(2);
     private final ExecutorService miscIo = Executors.newFixedThreadPool(1);
     private final ScheduledExecutorService scheduledIo = Executors.newScheduledThreadPool(1);
     // 内存级封面缓存：切 Tab 重建结果列表时同步命中，避免 imageIo 被其他站源的网络加载
@@ -168,6 +170,7 @@ public class MainActivity extends Activity {
     private final Map<String, ComicModels.ChapterPage> chapters = new HashMap<>();
     private final Set<String> refreshedComicIds = new HashSet<>();
     private final Set<String> refreshingComicIds = new HashSet<>();
+    private final Set<String> readerPrefetching = new HashSet<>();
     private final Map<String, DetailAction> pendingRefreshActions = new HashMap<>();
     private final List<String> favorites = new ArrayList<>();
     private final List<String> sourceCategories = new ArrayList<>();
@@ -325,6 +328,7 @@ public class MainActivity extends Activity {
         searchIo.shutdownNow();
         detailIo.shutdownNow();
         imageIo.shutdownNow();
+        readerPrefetchIo.shutdownNow();
         miscIo.shutdown();
         scheduledIo.shutdownNow();
     }
@@ -508,6 +512,7 @@ public class MainActivity extends Activity {
         currentScreenFutures = new ArrayList<>();
         searchGeneration++;
         readerGeneration++;
+        readerPrefetching.clear();
         searchLoading = false;
         searchAppending = false;
         finishSearchPullRefresh();
@@ -527,6 +532,10 @@ public class MainActivity extends Activity {
     }
 
     private Future<?> submitReaderImage(Runnable task) {
+        return submitReaderImage(imageIo, task);
+    }
+
+    private Future<?> submitReaderImage(ExecutorService executor, Runnable task) {
         FutureTask<?> future = new FutureTask<Object>(task, null) {
             @Override
             protected void done() {
@@ -534,7 +543,7 @@ public class MainActivity extends Activity {
             }
         };
         currentImageFutures.add(future);
-        imageIo.execute(future);
+        executor.execute(future);
         return future;
     }
 
@@ -1857,6 +1866,10 @@ public class MainActivity extends Activity {
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                 if (!restoringPosition[0]) saveReaderPosition(list, positionKey);
+                if (visibleItemCount > 0) {
+                    prefetchReaderImages(imageUrls, firstVisibleItem + visibleItemCount,
+                            chapterUrl, generation, comicId);
+                }
             }
         });
         list.setOnTouchListener((v, event) -> {
@@ -1873,6 +1886,8 @@ public class MainActivity extends Activity {
                 if (savedPosition < READER_POSITION_SCALE) list.post(() -> restoringPosition[0] = false);
             });
         }
+        list.post(() -> prefetchReaderImages(imageUrls,
+                Math.max(0, list.getLastVisiblePosition() + 1), chapterUrl, generation, comicId));
         FrameLayout readerContent = new FrameLayout(this);
         readerContent.addView(list, UIHelpers.match());
         View empty = readerSkeletonState("没有解析到图片，请返回重试");
@@ -2869,29 +2884,70 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void prefetchReaderImages(List<String> imageUrls, int start, String chapterUrl,
+                                      int generation, String comicId) {
+        if (generation != readerGeneration || !readerVisible || imageUrls == null) return;
+        int end = Math.min(imageUrls.size(), Math.max(0, start) + READER_PREFETCH_COUNT);
+        for (int i = Math.max(0, start); i < end; i++) {
+            String imageUrl = imageUrls.get(i);
+            String key = chapterUrl + "\n" + imageUrl;
+            if (TextUtils.isEmpty(imageUrl) || !readerPrefetching.add(key)) continue;
+            submitReaderImage(readerPrefetchIo, () -> {
+                try {
+                    if (isCurrentReaderImageRequest(generation, comicId, chapterUrl)) {
+                        ensureReaderImageCached(imageUrl, chapterUrl);
+                    }
+                } catch (Exception error) {
+                    if (!isExpectedTaskCancellation(error)) {
+                        appendErrorLog("\u9605\u8bfb\u56fe\u7247\u9884\u52a0\u8f7d\u5931\u8d25", error);
+                    }
+                } finally {
+                    main.post(() -> readerPrefetching.remove(key));
+                }
+            });
+        }
+    }
+
+    private void ensureReaderImageCached(String imageUrl, String chapterUrl) throws IOException {
+        File cached = imageCacheFile(imageUrl);
+        long[] cachedIdentity = captureImageCacheIdentity(cached);
+        if (cachedIdentity != null && cachedIdentity[0] > 0L) {
+            cached.setLastModified(System.currentTimeMillis());
+            return;
+        }
+        deleteImageCacheIfUnchanged(cached, cachedIdentity);
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(imageUrl).openConnection();
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(30000);
+            String referer = refererForImage(imageUrl, chapterUrl);
+            applyImageHeaders(connection, referer);
+            int code = connection.getResponseCode();
+            if (code >= 400) {
+                throw new IOException("Image HTTP " + code + ": " + imageUrl + "; referer=" + referer);
+            }
+            try (InputStream stream = connection.getInputStream()) {
+                writeReaderImageCache(cached, stream);
+            }
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
     private Future<?> loadReaderImage(ImageView target, String imageUrl, String chapterUrl,
                                       int generation, String comicId, ListView list,
                                       boolean[] restoringPosition, int savedPosition) {
         if (TextUtils.isEmpty(imageUrl)) return null;
         return submitReaderImage(() -> {
-            HttpURLConnection connection = null;
             try {
                 File cached = imageCacheFile(imageUrl);
                 long[] cachedIdentity = captureImageCacheIdentity(cached);
                 Bitmap bitmap = cachedIdentity != null ? decodeReaderImage(cached, readerContentWidth()) : null;
                 if (bitmap == null) {
                     deleteImageCacheIfUnchanged(cached, cachedIdentity);
-                    connection = (HttpURLConnection) new URL(imageUrl).openConnection();
-                    connection.setInstanceFollowRedirects(true);
-                    connection.setConnectTimeout(10000);
-                    connection.setReadTimeout(30000);
-                    String referer = refererForImage(imageUrl, chapterUrl);
-                    applyImageHeaders(connection, referer);
-                    int code = connection.getResponseCode();
-                    if (code >= 400) throw new IOException("Image HTTP " + code + ": " + imageUrl + "; referer=" + referer);
-                    try (InputStream stream = connection.getInputStream()) {
-                        writeReaderImageCache(cached, stream);
-                    }
+                    ensureReaderImageCached(imageUrl, chapterUrl);
                     bitmap = decodeReaderImage(cached, readerContentWidth());
                 } else {
                     cached.setLastModified(System.currentTimeMillis());
@@ -2925,8 +2981,6 @@ public class MainActivity extends Activity {
                             || !isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
                     target.setImageDrawable(new ColorDrawable(UIHelpers.BORDER_SOFT));
                 });
-            } finally {
-                if (connection != null) connection.disconnect();
             }
         });
     }
