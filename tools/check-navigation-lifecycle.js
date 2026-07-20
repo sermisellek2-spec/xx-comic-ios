@@ -19,6 +19,7 @@ function check(name, condition) {
 const navigateBack = method("private boolean navigateBack", "private void applyThemeAndSystemBars");
 const onDestroy = method("protected void onDestroy", "protected void onActivityResult");
 const enterScreen = method("private void enterScreen", "private Future<?> track");
+const filterDrawer = method("private void showFilterDrawer", "private TextView sourceDropdown");
 const showTab = method("private void showTab(int tab)", "private void renderSearch");
 const showDetail = method("private void showDetail", "private void showReader");
 const showReader = method("private void showReader", "private void showReaderLoading");
@@ -89,5 +90,9 @@ check("full-site search toolbar uses navigateBack", /back\.setOnClickListener\(v
 check("detail toolbar uses navigateBack", /back\.setOnClickListener\(v -> navigateBack\(\)\)/.test(showDetail));
 check("reader toolbar uses navigateBack", /back\.setOnClickListener\(v -> navigateBack\(\)\)/.test(renderReader));
 check("history toolbar uses navigateBack", /back\.setOnClickListener\(v -> navigateBack\(\)\)/.test(showHistory));
+const sourcePreselect = filterDrawer.slice(filterDrawer.indexOf("row.setOnClickListener"), filterDrawer.indexOf("content.addView(row)", filterDrawer.indexOf("row.setOnClickListener")));
+check("source preselection invalidates search generation", /searchGeneration\+\+/.test(sourcePreselect));
+check("source preselection clears search loading", /searchLoading\s*=\s*false;[\s\S]*?searchAppending\s*=\s*false;/.test(sourcePreselect));
+check("source preselection removes paging footer", /removeSearchPagingFooter\(\)/.test(sourcePreselect));
 
 console.log("navigation lifecycle ok");

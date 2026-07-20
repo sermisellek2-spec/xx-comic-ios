@@ -24,6 +24,11 @@ if (!block.includes("String requestState = selectedState;")) fail("search reques
 if (!block.includes("requestClient.category(requestRegion, requestState, page)")) fail("category worker does not use filter snapshots");
 if (block.includes("client.category(selectedRegion, selectedState, page)")) fail("category worker reads mutable filters");
 if (!block.includes("!TextUtils.equals(requestSourceId, selectedSourceId)")) fail("search callback source guard missing");
+const filterDrawer = src.slice(src.indexOf("private void showFilterDrawer"), src.indexOf("private TextView sourceDropdown"));
+const sourcePreselect = filterDrawer.slice(filterDrawer.indexOf("row.setOnClickListener"), filterDrawer.indexOf("content.addView(row)", filterDrawer.indexOf("row.setOnClickListener")));
+if (!sourcePreselect.includes("searchGeneration++")) fail("source preselection does not invalidate search requests");
+if (!sourcePreselect.includes("searchLoading = false") || !sourcePreselect.includes("searchAppending = false")) fail("source preselection leaves search loading state");
+if (!sourcePreselect.includes("removeSearchPagingFooter()")) fail("source preselection leaves paging footer");
 if (!src.includes("private boolean searchAppendFailed = false;")) fail("append failure state missing");
 if (!src.includes("private String searchAppendFailedKeyword")) fail("failed request keyword missing");
 if (!src.includes("private int searchAppendFailedPage")) fail("failed request page missing");

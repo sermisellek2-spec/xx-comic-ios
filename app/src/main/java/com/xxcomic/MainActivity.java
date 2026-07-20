@@ -3064,6 +3064,13 @@ public class MainActivity extends Activity {
                     TextView row = UIHelpers.text(this, name, 15, sel ? UIHelpers.ACCENT : UIHelpers.TEXT, sel ? Typeface.BOLD : Typeface.NORMAL);
                     row.setPadding(0, UIHelpers.dp(this, 13), 0, UIHelpers.dp(this, 13));
                     row.setOnClickListener(v -> {
+                        if (!TextUtils.equals(selectedSourceId, sid)) {
+                            searchGeneration++;
+                            searchLoading = false;
+                            searchAppending = false;
+                            clearSearchAppendFailure();
+                            removeSearchPagingFooter();
+                        }
                         selectedSourceId = sid;
                         selectedRegion = "all";
                         selectedState = "all";
