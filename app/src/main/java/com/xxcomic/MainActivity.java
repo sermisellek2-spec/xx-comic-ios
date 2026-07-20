@@ -87,6 +87,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -101,6 +102,8 @@ public class MainActivity extends Activity {
     private static final long READER_PROGRESS_ANIM_MS = 30L;
     private static final int READER_POSITION_SCALE = 10000;
     private static final long READER_POSITION_SAVE_DELAY_MS = 250L;
+    private static final long READER_MAX_DECODE_PIXELS = 8000000L;
+    private static final long READER_MAX_DECODE_BYTES = 32L * 1024L * 1024L;
     private static final String SUMMARIES_CACHE_KEY = "cache.summaries";
     private static final String DETAILS_CACHE_KEY = "cache.details";
     private static final String CHAPTERS_CACHE_KEY = "cache.chapters";
@@ -509,6 +512,18 @@ public class MainActivity extends Activity {
     private Future<?> trackImage(Future<?> f) {
         currentImageFutures.add(f);
         return f;
+    }
+
+    private Future<?> submitReaderImage(Runnable task) {
+        FutureTask<?> future = new FutureTask<Object>(task, null) {
+            @Override
+            protected void done() {
+                main.post(() -> currentImageFutures.remove(this));
+            }
+        };
+        currentImageFutures.add(future);
+        imageIo.execute(future);
+        return future;
     }
 
     private void cancelCurrentImageTasks() {
@@ -2677,7 +2692,7 @@ public class MainActivity extends Activity {
                                       int generation, String comicId, ListView list,
                                       boolean[] restoringPosition, int savedPosition) {
         if (TextUtils.isEmpty(imageUrl)) return null;
-        return trackImage(imageIo.submit(() -> {
+        return submitReaderImage(() -> {
             HttpURLConnection connection = null;
             try {
                 File cached = imageCacheFile(imageUrl);
@@ -2731,7 +2746,7 @@ public class MainActivity extends Activity {
             } finally {
                 if (connection != null) connection.disconnect();
             }
-        }));
+        });
     }
 
     private boolean isCurrentReaderImageRequest(int generation, String comicId, String chapterUrl) {
@@ -2746,10 +2761,20 @@ public class MainActivity extends Activity {
         bounds.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(file.getAbsolutePath(), bounds);
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null;
-        int sampleSize = 1;
-        while (bounds.outWidth / (sampleSize * 2) >= Math.max(1, targetWidth)) sampleSize *= 2;
+        long sampleSize = 1L;
+        long maxBytes = READER_MAX_DECODE_BYTES;
+        while (true) {
+            long sampledWidth = (bounds.outWidth + sampleSize - 1L) / sampleSize;
+            long sampledHeight = (bounds.outHeight + sampleSize - 1L) / sampleSize;
+            long sampledPixels = sampledWidth * sampledHeight;
+            boolean tooWide = sampledWidth > Math.max(1, targetWidth);
+            boolean tooLarge = sampledPixels > READER_MAX_DECODE_PIXELS || sampledPixels > maxBytes / 4L;
+            if (!tooWide && !tooLarge) break;
+            if (sampleSize > Integer.MAX_VALUE / 2L) return null;
+            sampleSize *= 2L;
+        }
         BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = sampleSize;
+        options.inSampleSize = (int) sampleSize;
         return BitmapFactory.decodeFile(file.getAbsolutePath(), options);
     }
 
@@ -4470,7 +4495,9 @@ public class MainActivity extends Activity {
     private void writeReaderImageCache(File file, InputStream stream) throws java.io.IOException {
         File parent = file.getParentFile();
         if (parent != null && !parent.exists()) parent.mkdirs();
-        File temp = File.createTempFile("reader-", ".tmp", getCacheDir());
+        File temp = File.createTempFile("reader-", ".tmp", parent);
+        File backup = new File(parent, file.getName() + ".bak-" + System.nanoTime());
+        boolean replaced = false;
         try {
             try (FileOutputStream output = new FileOutputStream(temp)) {
                 byte[] buffer = new byte[8192];
@@ -4481,15 +4508,25 @@ public class MainActivity extends Activity {
                 }
             }
             synchronized (imageCacheLock) {
-                if (imageCacheBytes < 0L) imageCacheBytes = dirSize(parent);
+                if (imageCacheBytes < 0L) imageCacheBytes = Math.max(0L, dirSize(parent) - temp.length());
                 long previousLength = file.exists() ? file.length() : 0L;
-                if (file.exists() && !file.delete()) throw new IOException("Cannot replace image cache: " + file);
-                if (!temp.renameTo(file)) throw new IOException("Cannot move image cache: " + file);
+                boolean hadPrevious = file.exists();
+                if (hadPrevious && !file.renameTo(backup)) throw new IOException("Cannot back up image cache: " + file);
+                if (!temp.renameTo(file)) {
+                    if (hadPrevious && !backup.renameTo(file)) {
+                        throw new IOException("Cannot restore image cache backup: " + backup);
+                    }
+                    throw new IOException("Cannot move image cache: " + file);
+                }
+                replaced = true;
+                if (backup.exists()) backup.delete();
                 imageCacheBytes += file.length() - previousLength;
                 if (imageCacheBytes > IMAGE_CACHE_MAX_BYTES) trimImageCache();
             }
         } finally {
             if (temp.exists()) temp.delete();
+            if (!replaced && backup.exists() && !file.exists()) backup.renameTo(file);
+            if (replaced && backup.exists()) backup.delete();
         }
     }
 

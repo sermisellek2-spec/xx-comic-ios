@@ -18,8 +18,10 @@ function check(name, condition) {
 
 const renderReader = method("private void renderReader", "private boolean handleReaderTap");
 const readerLoader = method("private Future<?> loadReaderImage", "private void loadImage(");
+const readerSubmit = method("private Future<?> submitReaderImage", "private Future<?> loadReaderImage");
 const readerDecode = method("private Bitmap decodeReaderImage", "private void loadImage(");
 const readerGuard = method("private boolean isCurrentReaderImageRequest", "private Bitmap decodeReaderImage");
+const readerCacheWriter = method("private void writeReaderImageCache", "private void trimImageCache");
 
 check("reader uses ListView", /ListView\s+list\s*=\s*new ListView\(this\)/.test(renderReader));
 check("reader uses BaseAdapter", /setAdapter\(new BaseAdapter\(\)/.test(renderReader));
@@ -36,13 +38,19 @@ check("row binding has a non-zero placeholder", /placeholderHeight\s*=\s*Math\.m
 check("reader rows use the placeholder height", /AbsListView\.LayoutParams\(-1, placeholderHeight\)/.test(renderReader));
 check("reader image loads use dedicated path", /loadReaderImage\(image, imageUrl, chapterUrl, generation, comicId,/.test(renderReader));
 
-check("reader loader is tracked for screen cancellation", /trackImage\(imageIo\.submit/.test(readerLoader));
-check("reader loader returns its future", /private Future<\?> loadReaderImage[\s\S]*?return trackImage\(imageIo\.submit/.test(readerLoader));
+check("reader loader is tracked for screen cancellation", /submitReaderImage\(/.test(readerLoader));
+check("reader loader returns its future", /private Future<\?> loadReaderImage[\s\S]*?return submitReaderImage\(/.test(readerLoader));
+check("reader loader uses a self-cleaning FutureTask", /submitReaderImage\(/.test(readerLoader) && /FutureTask/.test(readerSubmit));
+check("reader Future cleanup runs after completion", /protected void done\(\)[\s\S]*?main\.post[\s\S]*?currentImageFutures\.remove\(this\)/.test(readerSubmit));
 check("reader loader never reads or writes cover memory cache", !/imageMemoryCache/.test(readerLoader));
 check("reader network is streamed to disk", /writeReaderImageCache\(cached, stream\)/.test(readerLoader) && !/readAllBytes|decodeByteArray/.test(readerLoader));
 check("reader decode reads bounds first", /inJustDecodeBounds\s*=\s*true[\s\S]*?BitmapFactory\.decodeFile/.test(readerDecode));
-check("reader decode uses sampled decode", /inSampleSize\s*=\s*sampleSize[\s\S]*?BitmapFactory\.decodeFile/.test(readerDecode));
-check("reader sample size stays power-of-two", /sampleSize\s*\*=\s*2/.test(readerDecode));
+check("reader decode uses sampled decode", /inSampleSize\s*=\s*\(int\) sampleSize[\s\S]*?BitmapFactory\.decodeFile/.test(readerDecode));
+check("reader sample size stays power-of-two", /sampleSize\s*\*=\s*2L/.test(readerDecode));
+check("reader decode caps pixels and bytes", /READER_MAX_DECODE_PIXELS/.test(source) && /READER_MAX_DECODE_BYTES/.test(source)
+  && /sampledPixels/.test(readerDecode) && /maxBytes/.test(readerDecode));
+check("reader decode uses long arithmetic for bounds", /long sampledWidth/.test(readerDecode) && /long sampledHeight/.test(readerDecode)
+  && /long sampledPixels/.test(readerDecode));
 
 check("reader callback checks url tag", /TextUtils\.equals\(imageUrl, \(String\) target\.getTag\(\)\)/.test(readerLoader));
 check("reader callback checks request guard", /isCurrentReaderImageRequest\(generation, comicId, chapterUrl\)/.test(readerLoader));
@@ -53,5 +61,11 @@ check("reader guard checks current chapter", /readerChapterIndex[\s\S]*?chapterU
 check("reader success updates real row height", /params\.height/.test(readerLoader)
   && /(?:bitmap|loaded)\.getHeight\(\)/.test(readerLoader)
   && /(?:bitmap|loaded)\.getWidth\(\)/.test(readerLoader));
+
+check("reader cache temp is created beside destination", /File\.createTempFile\("reader-", "\.tmp", parent\)/.test(readerCacheWriter));
+check("reader cache replacement backs up old file", /file\.renameTo\(backup\)/.test(readerCacheWriter));
+check("reader cache replacement renames temp atomically", /temp\.renameTo\(file\)/.test(readerCacheWriter));
+check("reader cache replacement restores backup on failure", /backup\.renameTo\(file\)/.test(readerCacheWriter));
+check("reader cache replacement never deletes valid target first", !/file\.delete\(\)/.test(readerCacheWriter));
 
 console.log("reader memory ok");
