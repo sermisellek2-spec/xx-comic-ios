@@ -26,6 +26,7 @@ const standaloneSearch = method("private void showStandaloneSearch", "private vo
 const ensureChapters = method("private void ensureChaptersThen", "private void showChapterDrawer");
 const showPageLoading = method("private int showPageLoading", "private boolean isCurrentLoading");
 const showHistory = method("private void showHistory", "private View historyRow");
+const cacheWriter = method("private void writeComicCacheSnapshots", "private JSONObject summaryToJson");
 
 check("loading back action is explicit", /Runnable\s+pageLoadingBackAction/.test(source));
 check("detail origin back action is explicit", /private Runnable\s+detailBackAction;/.test(source));
@@ -52,6 +53,9 @@ check("destroy invalidates async generations", /pageLoadingGeneration\+\+;[\s\S]
 check("destroy clears visible async state", /pageLoading\s*=\s*false;[\s\S]*?readerVisible\s*=\s*false;/.test(onDestroy));
 check("destroy clears navigation actions", /pageLoadingBackAction\s*=\s*null;[\s\S]*?detailBackAction\s*=\s*null;/.test(onDestroy));
 check("destroy does not trigger screen rendering", !/(enterScreen|showTab|showDetail|showReader|showHistory)\(/.test(onDestroy));
+check("destroy lets queued cache snapshots drain", /miscIo\.shutdown\(\)/.test(onDestroy) && !/miscIo\.shutdownNow\(\)/.test(onDestroy));
+check("destroy does not block main waiting for cache persistence", !/awaitTermination/.test(onDestroy));
+check("draining cache snapshots only calculate size", /updateCacheSize\(false\)/.test(cacheWriter) && !/updateCacheSizeAsync|imageIo\.|trimImageCache/.test(cacheWriter));
 check("chapter loading returns to detail", /showPageLoading\([^;]+\(\)\s*->\s*showDetail\(detail\.summary\.comicId\)/s.test(ensureChapters));
 check("loading success clears the action", /pageLoadingBackAction\s*=\s*null[\s\S]*?showDetail\(comicId\)/.test(showDetail));
 check("detail loading failure clears the action", /catch \(Exception error\)[\s\S]*?pageLoadingBackAction\s*=\s*null/.test(showDetail));

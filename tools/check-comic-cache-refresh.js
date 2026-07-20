@@ -28,7 +28,7 @@ check("per-process refreshed ids exist", /Set<String>\s+refreshedComicIds\s*=\s*
 check("in-flight refresh ids exist", /Set<String>\s+refreshingComicIds\s*=\s*new HashSet/.test(source));
 check("one pending user action can wait for each refresh", /Map<String, DetailAction>\s+pendingRefreshActions\s*=\s*new HashMap/.test(source));
 check("activity destruction state exists", /boolean\s+activityDestroyed/.test(source));
-check("cached detail renders before refresh starts", showDetail.indexOf("root.removeAllViews()") < showDetail.indexOf("refreshCachedComicOnce(comicId)"));
+check("cached detail renders before refresh starts", showDetail.indexOf("root.removeAllViews()") < showDetail.indexOf("refreshCachedComicOnce(detail)"));
 check("uncached detail does not wait for the chapter directory", /client\.detail\(comicId\)/.test(initialLoad) && !/client\.chapters\(comicId\)/.test(initialLoad));
 check("refresh is skipped after one process attempt", /refreshedComicIds\.contains\(comicId\)/.test(refresh));
 check("same comic refresh is deduplicated", /refreshingComicIds\.contains\(comicId\)/.test(refresh));
@@ -42,6 +42,7 @@ check("destroyed activity ignores refresh callbacks", (refresh.match(/if \(activ
 check("failed automatic refresh still completes the process attempt", /catch \(Exception error\)[\s\S]*?finishComicRefresh\(comicId, null\)/.test(refresh));
 check("successful refresh rerenders only the active detail", /TextUtils\.equals\(activeDetailId, comicId\)[\s\S]*?!readerVisible[\s\S]*?showDetail\(comicId\)/.test(finishRefresh));
 check("user chapter action waits for an in-flight comic refresh", /refreshingComicIds\.contains\(detail\.summary\.comicId\)[\s\S]*?waitForComicRefresh\(detail, action\)[\s\S]*?return;/.test(ensureChapters));
+check("in-flight refresh is checked before cached chapters", ensureChapters.indexOf("refreshingComicIds.contains") < ensureChapters.indexOf("if (!detail.chapters.isEmpty())"));
 check("waiting action is registered without another worker request", /pendingRefreshActions\.put\(comicId,/.test(waitForRefresh) && !/detailIo\.submit/.test(waitForRefresh));
 check("failed or empty automatic refresh falls through to explicit chapter loading", /ensureChaptersThen\(detail, action\)/.test(waitForRefresh));
 check("refresh clears in-flight state before resuming the user action", finishRefresh.indexOf("refreshingComicIds.remove(comicId)") < finishRefresh.indexOf("pendingAction.run"));

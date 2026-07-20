@@ -197,7 +197,7 @@ public class MainActivity extends Activity {
     private boolean chapterDesc = false;
     private int themeMode = 0;
     private boolean readerLeftHand = false;
-    private volatile String cacheSize = "42.6 MB";
+    private String cacheSize = "42.6 MB";
     private int searchGeneration = 0;
     private int readerGeneration = 0;
     private int categoryGeneration = 0;
@@ -309,7 +309,7 @@ public class MainActivity extends Activity {
         searchIo.shutdownNow();
         detailIo.shutdownNow();
         imageIo.shutdownNow();
-        miscIo.shutdownNow();
+        miscIo.shutdown();
         scheduledIo.shutdownNow();
     }
 
@@ -1561,15 +1561,16 @@ public class MainActivity extends Activity {
         body.addView(buttons, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
 
         body.addView(chapterEntry(detail), UIHelpers.marginTop(-1, UIHelpers.dp(this, 14)));
-        refreshCachedComicOnce(comicId);
+        refreshCachedComicOnce(detail);
     }
 
-    private void refreshCachedComicOnce(String comicId) {
+    private void refreshCachedComicOnce(ComicModels.ComicDetail detail) {
+        String comicId = detail.summary.comicId;
         if (refreshedComicIds.contains(comicId) || refreshingComicIds.contains(comicId)) return;
         refreshingComicIds.add(comicId);
+        ComicSource client = sourceForDetail(detail);
         detailIo.submit(() -> {
             try {
-                ComicSource client = sourceForComicId(comicId);
                 ComicModels.ComicDetail freshDetail = client.detail(comicId);
                 List<ComicModels.Chapter> loadedChapters = client.chapters(comicId);
                 if (loadedChapters.isEmpty()) {
@@ -2298,12 +2299,12 @@ public class MainActivity extends Activity {
     }
 
     private void ensureChaptersThen(ComicModels.ComicDetail detail, DetailAction action) {
-        if (!detail.chapters.isEmpty()) {
-            action.run(detail);
-            return;
-        }
         if (refreshingComicIds.contains(detail.summary.comicId)) {
             waitForComicRefresh(detail, action);
+            return;
+        }
+        if (!detail.chapters.isEmpty()) {
+            action.run(detail);
             return;
         }
         int loadingGeneration = showPageLoading("正在加载章节目录...", "目录加载完成后会自动打开。", () -> showDetail(detail.summary.comicId));
@@ -4159,6 +4160,7 @@ public class MainActivity extends Activity {
                     .putString(DETAILS_CACHE_KEY, detailArray.toString())
                     .putString(CHAPTERS_CACHE_KEY, chapterArray.toString())
                     .apply();
+            updateCacheSize(false);
         } catch (JSONException ignored) {
         }
     }
@@ -4476,18 +4478,26 @@ public class MainActivity extends Activity {
     }
 
     private void updateCacheSize() {
+        updateCacheSize(true);
+    }
+
+    private void updateCacheSize(boolean trimIfNeeded) {
         long imageBytes;
         synchronized (imageCacheLock) {
             imageCacheBytes = dirSize(new File(getCacheDir(), "images"));
-            if (imageCacheBytes > IMAGE_CACHE_MAX_BYTES) trimImageCache();
+            if (trimIfNeeded && imageCacheBytes > IMAGE_CACHE_MAX_BYTES) trimImageCache();
             imageBytes = imageCacheBytes;
         }
         long bytes = imageBytes
                 + getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(SUMMARIES_CACHE_KEY, "").length()
                 + getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(DETAILS_CACHE_KEY, "").length()
                 + getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(CHAPTERS_CACHE_KEY, "").length();
-        cacheSize = formatBytes(bytes);
-        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().putString("cache.size", cacheSize).apply();
+        String updatedCacheSize = formatBytes(bytes);
+        main.post(() -> {
+            if (activityDestroyed) return;
+            cacheSize = updatedCacheSize;
+            getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().putString("cache.size", updatedCacheSize).apply();
+        });
     }
 
     private long dirSize(File file) {
