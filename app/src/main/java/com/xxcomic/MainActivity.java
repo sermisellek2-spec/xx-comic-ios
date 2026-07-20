@@ -214,6 +214,10 @@ public class MainActivity extends Activity {
     private boolean defaultSearchRefreshPending = false;
     private boolean searchHasMore = true;
     private boolean searchAppendFailed = false;
+    private String searchAppendFailedKeyword = "";
+    private int searchAppendFailedPage = -1;
+    private boolean searchAppendFailedCategoryMode = false;
+    private int searchAppendFailedGeneration = -1;
     private int searchPage = 1;
     private boolean standaloneSearchVisible = false;
     private boolean historyVisible = false;
@@ -250,6 +254,7 @@ public class MainActivity extends Activity {
     private ScrollView searchScroll;
     private LinearLayout searchResultsContent;
     private View searchPagingFooter;
+    private LinearLayout searchAppendFailedContent;
     // 搜索页分类栏折叠状态：用状态机 + reflow 守卫，避免 GONE/VISIBLE 引发 ScrollView clamp
     // scrollY 产生「隐藏→上滑→显示→下滑→隐藏」的闪烁循环。
     private boolean searchCategoryHidden;
@@ -500,6 +505,7 @@ public class MainActivity extends Activity {
         readerGeneration++;
         searchLoading = false;
         searchAppending = false;
+        clearSearchAppendFailure();
         cancelCurrentImageTasks();
     }
 
@@ -703,8 +709,9 @@ public class MainActivity extends Activity {
             TextView retry = UIHelpers.text(this, "加载失败，点击重试", 12, UIHelpers.ACCENT, Typeface.NORMAL);
             retry.setGravity(Gravity.CENTER);
             retry.setOnClickListener(v -> {
-                if (currentTab == 1 && searchResultsContent == content && !searchAppending) {
-                    loadSearchPage(searchQuery, searchPage + 1, true, TextUtils.isEmpty(searchQuery.trim()));
+                if (currentTab == 1 && searchResultsContent == content && searchAppendFailedContent == content
+                        && searchAppendFailedGeneration == searchGeneration && !searchLoading && !searchAppending) {
+                    loadSearchPage(searchAppendFailedKeyword, searchAppendFailedPage, true, searchAppendFailedCategoryMode);
                 }
             });
             searchPagingFooter = retry;
@@ -1919,7 +1926,7 @@ public class MainActivity extends Activity {
         ComicSource client = selectedSource();
         if (client == null) return;
         int generation = ++searchGeneration;
-        searchAppendFailed = false;
+        clearSearchAppendFailure();
         if (append) {
             searchAppending = true;
             if (currentTab == 1 && searchResultsContent != null) renderSearchPagingFooter(searchResultsContent);
@@ -1939,7 +1946,7 @@ public class MainActivity extends Activity {
                     for (ComicModels.ComicSummary item : list) summaries.put(item.comicId, item);
                     searchPage = page;
                     searchHasMore = !list.isEmpty();
-                    searchAppendFailed = false;
+                    clearSearchAppendFailure();
                     searchLoading = false;
                     searchAppending = false;
                     if (currentTab == 1) {
@@ -1964,6 +1971,11 @@ public class MainActivity extends Activity {
                     if (append) {
                         appendErrorLog("搜索分页加载失败", error);
                         searchAppendFailed = true;
+                        searchAppendFailedKeyword = keyword;
+                        searchAppendFailedPage = page;
+                        searchAppendFailedCategoryMode = categoryMode;
+                        searchAppendFailedGeneration = generation;
+                        searchAppendFailedContent = searchResultsContent;
                         if (currentTab == 1 && searchResultsContent != null) renderSearchPagingFooter(searchResultsContent);
                         showToast("加载更多失败");
                     } else {
@@ -1982,8 +1994,17 @@ public class MainActivity extends Activity {
     private void resetSearchPaging() {
         searchPage = 1;
         searchHasMore = true;
-        searchAppendFailed = false;
+        clearSearchAppendFailure();
         searchAppending = false;
+    }
+
+    private void clearSearchAppendFailure() {
+        searchAppendFailed = false;
+        searchAppendFailedKeyword = "";
+        searchAppendFailedPage = -1;
+        searchAppendFailedCategoryMode = false;
+        searchAppendFailedGeneration = -1;
+        searchAppendFailedContent = null;
     }
 
     private void startGlobalSearch(String keyword) {

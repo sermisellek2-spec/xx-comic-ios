@@ -18,9 +18,14 @@ if (block.includes("pendingSearchScrollY = searchScroll.getScrollY()")) fail("ap
 if (!block.includes("if (append && searchResultsContent != null)")) fail("append success path missing local-content guard");
 if (!block.includes("appendSearchResults(list);")) fail("append success path missing local append call");
 if (!src.includes("private boolean searchAppendFailed = false;")) fail("append failure state missing");
-if (!block.includes("searchAppendFailed = false")) fail("append success does not clear failure state");
+if (!src.includes("private String searchAppendFailedKeyword")) fail("failed request keyword missing");
+if (!src.includes("private int searchAppendFailedPage")) fail("failed request page missing");
+if (!src.includes("private boolean searchAppendFailedCategoryMode")) fail("failed request category mode missing");
+if (!src.includes("private int searchAppendFailedGeneration")) fail("failed request generation missing");
+if (!src.includes("private LinearLayout searchAppendFailedContent")) fail("failed request content identity missing");
+if (!block.includes("clearSearchAppendFailure()")) fail("append success does not clear failure state");
 if (!block.includes("searchAppendFailed = true")) fail("append failure does not set failure state");
-if (block.indexOf("searchAppendFailed = false") > block.indexOf("if (append)")) fail("request start does not clear failure state");
+if (block.indexOf("clearSearchAppendFailure()") > block.indexOf("if (append)")) fail("request start does not clear failure state");
 if (!block.includes("searchHasMore = !list.isEmpty()")) fail("empty page must still stop pagination");
 if (!block.includes("if (append)")) fail("append error branch missing");
 const appendError = block.slice(block.indexOf("if (append) {", block.indexOf("catch (Exception error)")));
@@ -33,7 +38,26 @@ const footerEnd = src.indexOf("private void removeSearchPagingFooter", footerSta
 const footer = src.slice(footerStart, footerEnd);
 if (footer.indexOf("if (searchAppendFailed)") > footer.indexOf("else if (searchAppending)")) fail("failed footer must replace loading footer");
 if (!footer.includes("searchResultsContent == content")) fail("stale footer retry guard missing");
+if (!footer.includes("searchAppendFailedContent == content")) fail("failed request content guard missing");
+if (!footer.includes("searchAppendFailedGeneration == searchGeneration")) fail("failed request generation guard missing");
+if (!footer.includes("!searchLoading") || !footer.includes("!searchAppending")) fail("retry loading guard missing");
+if (!footer.includes("loadSearchPage(searchAppendFailedKeyword, searchAppendFailedPage, true, searchAppendFailedCategoryMode)")) fail("retry does not reuse original request");
+if (/loadSearchPage\(searchQuery|loadSearchPage\([^\n]*searchPage \+ 1/.test(footer)) fail("retry reads mutable search state");
+if (!appendError.includes("searchAppendFailedKeyword = keyword")) fail("failure does not save request keyword");
+if (!appendError.includes("searchAppendFailedPage = page")) fail("failure does not save request page");
+if (!appendError.includes("searchAppendFailedCategoryMode = categoryMode")) fail("failure does not save request mode");
+if (!appendError.includes("searchAppendFailedGeneration = generation")) fail("failure does not save request generation");
+if (!appendError.includes("searchAppendFailedContent = searchResultsContent")) fail("failure does not save content identity");
 const resetStart = src.indexOf("private void resetSearchPaging()");
 const resetEnd = src.indexOf("private void startGlobalSearch", resetStart);
-if (resetStart < 0 || !src.slice(resetStart, resetEnd).includes("searchAppendFailed = false;")) fail("reset does not clear failure state");
+if (resetStart < 0 || !src.slice(resetStart, resetEnd).includes("clearSearchAppendFailure();")) fail("reset does not clear failure state");
+const clearStart = src.indexOf("private void clearSearchAppendFailure()");
+const clearEnd = src.indexOf("private void startGlobalSearch", clearStart);
+const clear = src.slice(clearStart, clearEnd);
+for (const field of ["searchAppendFailedKeyword", "searchAppendFailedPage", "searchAppendFailedCategoryMode", "searchAppendFailedGeneration", "searchAppendFailedContent"]) {
+  if (!clear.includes(field + " =")) fail("failure cleanup misses " + field);
+}
+const enterStart = src.indexOf("private void enterScreen()");
+const enterEnd = src.indexOf("private Future<?> track", enterStart);
+if (!src.slice(enterStart, enterEnd).includes("clearSearchAppendFailure();")) fail("screen/source switch does not clear failed request");
 pass("search pagination appends without rebuilding tab");
