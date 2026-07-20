@@ -17,6 +17,13 @@ if (!src.includes("private void appendSearchResults")) fail("append helper missi
 if (block.includes("pendingSearchScrollY = searchScroll.getScrollY()")) fail("append path still saves scroll for full tab rebuild");
 if (!block.includes("if (append && searchResultsContent != null)")) fail("append success path missing local-content guard");
 if (!block.includes("appendSearchResults(list);")) fail("append success path missing local append call");
+if (!block.includes("ComicSource requestClient = selectedSource();")) fail("search request client snapshot missing");
+if (!block.includes("String requestSourceId = requestClient.id();")) fail("search request source snapshot missing");
+if (!block.includes("String requestRegion = selectedRegion;")) fail("search request region snapshot missing");
+if (!block.includes("String requestState = selectedState;")) fail("search request state snapshot missing");
+if (!block.includes("requestClient.category(requestRegion, requestState, page)")) fail("category worker does not use filter snapshots");
+if (block.includes("client.category(selectedRegion, selectedState, page)")) fail("category worker reads mutable filters");
+if (!block.includes("!TextUtils.equals(requestSourceId, selectedSourceId)")) fail("search callback source guard missing");
 if (!src.includes("private boolean searchAppendFailed = false;")) fail("append failure state missing");
 if (!src.includes("private String searchAppendFailedKeyword")) fail("failed request keyword missing");
 if (!src.includes("private int searchAppendFailedPage")) fail("failed request page missing");

@@ -1923,8 +1923,11 @@ public class MainActivity extends Activity {
     }
 
     private void loadSearchPage(String keyword, int page, boolean append, boolean categoryMode) {
-        ComicSource client = selectedSource();
-        if (client == null) return;
+        ComicSource requestClient = selectedSource();
+        if (requestClient == null) return;
+        String requestSourceId = requestClient.id();
+        String requestRegion = selectedRegion;
+        String requestState = selectedState;
         int generation = ++searchGeneration;
         clearSearchAppendFailure();
         if (append) {
@@ -1937,10 +1940,11 @@ public class MainActivity extends Activity {
         track(searchIo.submit(() -> {
             try {
                 List<ComicModels.ComicSummary> list = categoryMode
-                        ? client.category(selectedRegion, selectedState, page)
-                        : client.search(keyword == null ? "" : keyword.trim(), page);
+                        ? requestClient.category(requestRegion, requestState, page)
+                        : requestClient.search(keyword == null ? "" : keyword.trim(), page);
                 main.post(() -> {
                     if (generation != searchGeneration) return;
+                    if (!TextUtils.equals(requestSourceId, selectedSourceId)) return;
                     if (!append) searchResults.clear();
                     searchResults.addAll(list);
                     for (ComicModels.ComicSummary item : list) summaries.put(item.comicId, item);
@@ -1961,6 +1965,7 @@ public class MainActivity extends Activity {
             } catch (Exception error) {
                 main.post(() -> {
                     if (generation != searchGeneration) return;
+                    if (!TextUtils.equals(requestSourceId, selectedSourceId)) return;
                     if (isExpectedTaskCancellation(error)) {
                         searchLoading = false;
                         searchAppending = false;
@@ -2963,6 +2968,7 @@ public class MainActivity extends Activity {
         final String origState = selectedState;
         final String origRegionLabel = selectedRegionLabel;
         final String origStateLabel = selectedStateLabel;
+        final List<String> origSourceCategories = new ArrayList<>(sourceCategories);
         final boolean[] confirmed = {false};
 
         FrameLayout overlay = new FrameLayout(this);
@@ -3031,6 +3037,10 @@ public class MainActivity extends Activity {
                 selectedState = origState;
                 selectedRegionLabel = origRegionLabel;
                 selectedStateLabel = origStateLabel;
+                categoryGeneration++;
+                sourceCategories.clear();
+                sourceCategories.addAll(origSourceCategories);
+                if (sourceCategories.isEmpty()) loadSourceCategories();
             }
         });
         close.setOnClickListener(v -> popup.dismiss());

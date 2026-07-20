@@ -10,6 +10,10 @@ const loadSourceCategories = source.slice(
   source.indexOf("private void loadSourceCategories"),
   source.indexOf("private void showDetailThenRead")
 );
+const filterDrawer = source.slice(
+  source.indexOf("private void showFilterDrawer"),
+  source.indexOf("private TextView sourceDropdown")
+);
 
 function check(name, condition) {
   if (!condition) throw new Error("FAIL " + name);
@@ -26,5 +30,11 @@ check(
 const guard = loadSourceCategories.indexOf("generation != categoryGeneration");
 check("category guard precedes clear", guard >= 0 && guard < loadSourceCategories.indexOf("sourceCategories.clear()"));
 check("category guard precedes add", guard >= 0 && guard < loadSourceCategories.indexOf("sourceCategories.addAll(list)"));
+check("filter drawer snapshots categories", /List<String> origSourceCategories\s*=\s*new ArrayList<>\(sourceCategories\);/.test(filterDrawer));
+const dismiss = filterDrawer.slice(filterDrawer.indexOf("popup.setOnDismissListener"), filterDrawer.indexOf("close.setOnClickListener"));
+check("filter cancel invalidates draft category request", dismiss.includes("categoryGeneration++"));
+check("filter cancel clears draft categories", dismiss.includes("sourceCategories.clear();"));
+check("filter cancel restores original categories", dismiss.includes("sourceCategories.addAll(origSourceCategories);"));
+check("filter cancel reloads missing original categories", /if \(sourceCategories\.isEmpty\(\)\) loadSourceCategories\(\);/.test(dismiss));
 
 console.log("source category generation ok");
