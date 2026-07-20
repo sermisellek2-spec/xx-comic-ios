@@ -28,7 +28,8 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
+import android.widget.AbsListView;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -1753,56 +1754,84 @@ public class MainActivity extends Activity {
         readerTopBar = top;
         top.setVisibility(readerFullscreen ? View.GONE : View.VISIBLE);
 
-        ScrollView scroll = new ScrollView(this);
-        tuneScroll(scroll);
-        scroll.setFillViewport(true);
-        LinearLayout pages = new LinearLayout(this);
-        pages.setOrientation(LinearLayout.VERTICAL);
-        pages.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
-        scroll.addView(pages, UIHelpers.matchWrap());
-
         ComicModels.Chapter activeChapter = detail.chapters.get(readerChapterIndex);
+        int generation = readerGeneration;
+        String comicId = detail.summary.comicId;
+        String chapterUrl = activeChapter.url;
+        int contentWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
+        int placeholderHeight = Math.max(1, contentWidth * 4 / 3);
+        List<String> imageUrls = new ArrayList<>(page.imageUrls);
+        ListView list = new ListView(this);
+        list.setBackgroundColor(UIHelpers.DARK);
+        list.setCacheColorHint(UIHelpers.DARK);
+        list.setDivider(null);
+        list.setSelector(new ColorDrawable(Color.TRANSPARENT));
+        list.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
+        list.setClipToPadding(false);
+        list.setAdapter(new BaseAdapter() {
+            @Override
+            public int getCount() {
+                return imageUrls.size();
+            }
+
+            @Override
+            public String getItem(int position) {
+                return imageUrls.get(position);
+            }
+
+            @Override
+            public long getItemId(int position) {
+                return position;
+            }
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                ImageView image;
+                if (convertView instanceof ImageView) {
+                    image = (ImageView) convertView;
+                } else {
+                    image = new ImageView(MainActivity.this);
+                    image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    image.setBackgroundColor(UIHelpers.DARK);
+                }
+                String imageUrl = getItem(position);
+                image.setImageDrawable(null);
+                image.setTag(imageUrl);
+                image.setLayoutParams(new AbsListView.LayoutParams(-1, placeholderHeight));
+                loadReaderImage(image, imageUrl, chapterUrl, generation, comicId);
+                return image;
+            }
+        });
+
         String positionKey = readerPositionKey(detail.summary.comicId, activeChapter);
         int savedPosition = readerPositions.containsKey(positionKey) ? readerPositions.get(positionKey) : 0;
         final boolean[] restoringPosition = {savedPosition > 0};
-        final ViewTreeObserver.OnGlobalLayoutListener[] restoreListener = new ViewTreeObserver.OnGlobalLayoutListener[1];
-        Runnable stopRestoring = () -> {
-            restoringPosition[0] = false;
-            if (restoreListener[0] != null && pages.getViewTreeObserver().isAlive()) {
-                pages.getViewTreeObserver().removeOnGlobalLayoutListener(restoreListener[0]);
+        list.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
             }
-        };
-        if (savedPosition > 0) {
-            restoreListener[0] = () -> {
-                if (restoringPosition[0]) restoreReaderPosition(scroll, pages, savedPosition);
-            };
-            pages.getViewTreeObserver().addOnGlobalLayoutListener(restoreListener[0]);
-            scroll.post(() -> restoreReaderPosition(scroll, pages, savedPosition));
-        }
-        scroll.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
-            if (!restoringPosition[0]) saveReaderPosition(scroll, pages, positionKey);
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (!restoringPosition[0]) saveReaderPosition(list, positionKey);
+            }
         });
-        scroll.setOnTouchListener((v, event) -> {
-            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) stopRestoring.run();
+        list.setOnTouchListener((v, event) -> {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) restoringPosition[0] = false;
             return handleReaderTap(event, detail, page);
         });
-        if (page.imageUrls.isEmpty()) {
-            pages.addView(readerSkeletonState("没有解析到图片，请返回重试"), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 360)));
-        } else {
-            for (String url : page.imageUrls) {
-                ImageView image = new ImageView(this);
-                image.setAdjustViewBounds(true);
-                image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                image.setBackgroundColor(UIHelpers.DARK);
-                image.setOnTouchListener((v, event) -> {
-                    if (event.getActionMasked() == MotionEvent.ACTION_DOWN) stopRestoring.run();
-                    return handleReaderTap(event, detail, page);
-                });
-                pages.addView(image, new LinearLayout.LayoutParams(-1, -2));
-                loadImage(image, url, detail.chapters.get(readerChapterIndex).url);
-            }
+        if (savedPosition > 0) {
+            list.post(() -> {
+                restoreReaderPosition(list, savedPosition);
+                list.post(() -> restoringPosition[0] = false);
+            });
         }
-        shell.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        FrameLayout readerContent = new FrameLayout(this);
+        readerContent.addView(list, UIHelpers.match());
+        View empty = readerSkeletonState("没有解析到图片，请返回重试");
+        readerContent.addView(empty, UIHelpers.match());
+        list.setEmptyView(empty);
+        shell.addView(readerContent, new LinearLayout.LayoutParams(-1, 0, 1));
         shell.addView(readerProgressBar(readerChapterIndex + 1, detail.chapters.size()), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 1)));
 
         LinearLayout bottom = new LinearLayout(this);
@@ -2633,6 +2662,79 @@ public class MainActivity extends Activity {
         text.setGravity(Gravity.CENTER);
         box.addView(text, UIHelpers.marginTop(-1, UIHelpers.dp(this, 16)));
         return box;
+    }
+
+    private void loadReaderImage(ImageView target, String imageUrl, String chapterUrl,
+                                 int generation, String comicId) {
+        if (TextUtils.isEmpty(imageUrl)) return;
+        trackImage(imageIo.submit(() -> {
+            HttpURLConnection connection = null;
+            try {
+                File cached = imageCacheFile(imageUrl);
+                Bitmap bitmap = cached.exists() ? decodeReaderImage(cached, readerContentWidth()) : null;
+                if (bitmap == null) {
+                    if (cached.exists()) cached.delete();
+                    connection = (HttpURLConnection) new URL(imageUrl).openConnection();
+                    connection.setInstanceFollowRedirects(true);
+                    connection.setConnectTimeout(10000);
+                    connection.setReadTimeout(30000);
+                    String referer = refererForImage(imageUrl, chapterUrl);
+                    applyImageHeaders(connection, referer);
+                    int code = connection.getResponseCode();
+                    if (code >= 400) throw new IOException("Image HTTP " + code + ": " + imageUrl + "; referer=" + referer);
+                    try (InputStream stream = connection.getInputStream()) {
+                        writeReaderImageCache(cached, stream);
+                    }
+                    bitmap = decodeReaderImage(cached, readerContentWidth());
+                } else {
+                    cached.setLastModified(System.currentTimeMillis());
+                }
+                if (bitmap == null) throw new IOException("Reader image decode failed: " + imageUrl);
+                Bitmap loaded = bitmap;
+                main.post(() -> {
+                    if (activityDestroyed || !TextUtils.equals(imageUrl, (String) target.getTag())
+                            || !isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
+                    ViewGroup.LayoutParams params = target.getLayoutParams();
+                    params.height = Math.max(1, Math.round(readerContentWidth()
+                            * loaded.getHeight() / (float) Math.max(1, loaded.getWidth())));
+                    target.setLayoutParams(params);
+                    target.setImageBitmap(loaded);
+                });
+            } catch (Exception error) {
+                if (isExpectedTaskCancellation(error)) return;
+                appendErrorLog("图片加载失败", error);
+                main.post(() -> {
+                    if (activityDestroyed || !TextUtils.equals(imageUrl, (String) target.getTag())
+                            || !isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
+                    target.setImageDrawable(new ColorDrawable(UIHelpers.BORDER_SOFT));
+                });
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        }));
+    }
+
+    private boolean isCurrentReaderImageRequest(int generation, String comicId, String chapterUrl) {
+        if (generation != readerGeneration || !readerVisible || !TextUtils.equals(activeDetailId, comicId)) return false;
+        ComicModels.ComicDetail detail = details.get(comicId);
+        if (detail == null || readerChapterIndex < 0 || readerChapterIndex >= detail.chapters.size()) return false;
+        return TextUtils.equals(detail.chapters.get(readerChapterIndex).url, chapterUrl);
+    }
+
+    private Bitmap decodeReaderImage(File file, int targetWidth) {
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(file.getAbsolutePath(), bounds);
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null;
+        int sampleSize = 1;
+        while (bounds.outWidth / (sampleSize * 2) >= Math.max(1, targetWidth)) sampleSize *= 2;
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = sampleSize;
+        return BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+    }
+
+    private int readerContentWidth() {
+        return Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
     }
 
     private void loadImage(ImageView target, String imageUrl) {
@@ -3466,20 +3568,27 @@ public class MainActivity extends Activity {
         return comicId + "\u001f" + chapterId;
     }
 
-    private void saveReaderPosition(ScrollView scroll, View pages, String positionKey) {
-        int maxScroll = Math.max(0, pages.getHeight() - scroll.getHeight());
-        if (maxScroll <= 0) return;
-        int position = (int) Math.round(scroll.getScrollY() * (double) READER_POSITION_SCALE / maxScroll);
+    private void saveReaderPosition(ListView list, String positionKey) {
+        int count = list.getCount();
+        View firstChild = list.getChildAt(0);
+        if (count <= 0 || firstChild == null || firstChild.getHeight() <= 0) return;
+        int firstVisible = list.getFirstVisiblePosition();
+        double offset = Math.max(0d, Math.min(1d, -firstChild.getTop() / (double) firstChild.getHeight()));
+        int position = (int) Math.round((firstVisible + offset) * READER_POSITION_SCALE / count);
         readerPositions.put(positionKey, Math.max(0, Math.min(READER_POSITION_SCALE, position)));
         main.removeCallbacks(persistReaderPositionRunnable);
         main.postDelayed(persistReaderPositionRunnable, READER_POSITION_SAVE_DELAY_MS);
     }
 
-    private void restoreReaderPosition(ScrollView scroll, View pages, int savedPosition) {
-        int maxScroll = Math.max(0, pages.getHeight() - scroll.getHeight());
-        if (maxScroll <= 0 || savedPosition <= 0) return;
+    private void restoreReaderPosition(ListView list, int savedPosition) {
+        int count = list.getCount();
+        if (count <= 0 || savedPosition <= 0) return;
         int clamped = Math.max(0, Math.min(READER_POSITION_SCALE, savedPosition));
-        scroll.scrollTo(0, (int) Math.round(maxScroll * (double) clamped / READER_POSITION_SCALE));
+        double row = clamped * (double) count / READER_POSITION_SCALE;
+        int index = Math.max(0, Math.min(count - 1, (int) Math.floor(row)));
+        int rowHeight = Math.max(1, readerContentWidth() * 4 / 3);
+        int top = -(int) Math.round((row - Math.floor(row)) * rowHeight);
+        list.setSelectionFromTop(index, top);
     }
 
     private void removeReaderPositions(String comicId) {
@@ -4307,6 +4416,32 @@ public class MainActivity extends Activity {
             }
             imageCacheBytes += file.length() - previousLength;
             if (imageCacheBytes > IMAGE_CACHE_MAX_BYTES) trimImageCache();
+        }
+    }
+
+    private void writeReaderImageCache(File file, InputStream stream) throws java.io.IOException {
+        File parent = file.getParentFile();
+        if (parent != null && !parent.exists()) parent.mkdirs();
+        File temp = File.createTempFile("reader-", ".tmp", getCacheDir());
+        try {
+            try (FileOutputStream output = new FileOutputStream(temp)) {
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = stream.read(buffer)) != -1) {
+                    if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("Reader image cancelled");
+                    output.write(buffer, 0, read);
+                }
+            }
+            synchronized (imageCacheLock) {
+                if (imageCacheBytes < 0L) imageCacheBytes = dirSize(parent);
+                long previousLength = file.exists() ? file.length() : 0L;
+                if (file.exists() && !file.delete()) throw new IOException("Cannot replace image cache: " + file);
+                if (!temp.renameTo(file)) throw new IOException("Cannot move image cache: " + file);
+                imageCacheBytes += file.length() - previousLength;
+                if (imageCacheBytes > IMAGE_CACHE_MAX_BYTES) trimImageCache();
+            }
+        } finally {
+            if (temp.exists()) temp.delete();
         }
     }
 
