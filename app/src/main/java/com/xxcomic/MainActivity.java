@@ -1761,6 +1761,7 @@ public class MainActivity extends Activity {
         int contentWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
         int placeholderHeight = Math.max(1, contentWidth * 4 / 3);
         List<String> imageUrls = new ArrayList<>(page.imageUrls);
+        Map<ImageView, Future<?>> readerImageFutures = new HashMap<>();
         ListView list = new ListView(this);
         list.setBackgroundColor(UIHelpers.DARK);
         list.setCacheColorHint(UIHelpers.DARK);
@@ -1794,11 +1795,14 @@ public class MainActivity extends Activity {
                     image.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     image.setBackgroundColor(UIHelpers.DARK);
                 }
+                Future<?> previous = readerImageFutures.remove(image);
+                if (previous != null && !previous.isDone()) previous.cancel(true);
                 String imageUrl = getItem(position);
                 image.setImageDrawable(null);
                 image.setTag(imageUrl);
                 image.setLayoutParams(new AbsListView.LayoutParams(-1, placeholderHeight));
-                loadReaderImage(image, imageUrl, chapterUrl, generation, comicId);
+                Future<?> future = loadReaderImage(image, imageUrl, chapterUrl, generation, comicId);
+                if (future != null) readerImageFutures.put(image, future);
                 return image;
             }
         });
@@ -1820,10 +1824,14 @@ public class MainActivity extends Activity {
             if (event.getActionMasked() == MotionEvent.ACTION_DOWN) restoringPosition[0] = false;
             return handleReaderTap(event, detail, page);
         });
+        list.addOnLayoutChangeListener((v, left, topEdge, right, bottomEdge,
+                                        oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (restoringPosition[0] && savedPosition == READER_POSITION_SCALE) alignReaderBottom(list);
+        });
         if (savedPosition > 0) {
             list.post(() -> {
                 restoreReaderPosition(list, savedPosition);
-                list.post(() -> restoringPosition[0] = false);
+                if (savedPosition < READER_POSITION_SCALE) list.post(() -> restoringPosition[0] = false);
             });
         }
         FrameLayout readerContent = new FrameLayout(this);
@@ -2664,10 +2672,10 @@ public class MainActivity extends Activity {
         return box;
     }
 
-    private void loadReaderImage(ImageView target, String imageUrl, String chapterUrl,
-                                 int generation, String comicId) {
-        if (TextUtils.isEmpty(imageUrl)) return;
-        trackImage(imageIo.submit(() -> {
+    private Future<?> loadReaderImage(ImageView target, String imageUrl, String chapterUrl,
+                                      int generation, String comicId) {
+        if (TextUtils.isEmpty(imageUrl)) return null;
+        return trackImage(imageIo.submit(() -> {
             HttpURLConnection connection = null;
             try {
                 File cached = imageCacheFile(imageUrl);
@@ -3574,7 +3582,15 @@ public class MainActivity extends Activity {
         if (count <= 0 || firstChild == null || firstChild.getHeight() <= 0) return;
         int firstVisible = list.getFirstVisiblePosition();
         double offset = Math.max(0d, Math.min(1d, -firstChild.getTop() / (double) firstChild.getHeight()));
-        int position = (int) Math.round((firstVisible + offset) * READER_POSITION_SCALE / count);
+        int childCount = list.getChildCount();
+        View lastChild = childCount > 0 ? list.getChildAt(childCount - 1) : null;
+        int position;
+        if (list.getLastVisiblePosition() == count - 1 && lastChild != null
+                && lastChild.getBottom() <= list.getHeight() - list.getPaddingBottom()) {
+            position = READER_POSITION_SCALE;
+        } else {
+            position = (int) Math.round((firstVisible + offset) * READER_POSITION_SCALE / count);
+        }
         readerPositions.put(positionKey, Math.max(0, Math.min(READER_POSITION_SCALE, position)));
         main.removeCallbacks(persistReaderPositionRunnable);
         main.postDelayed(persistReaderPositionRunnable, READER_POSITION_SAVE_DELAY_MS);
@@ -3583,12 +3599,32 @@ public class MainActivity extends Activity {
     private void restoreReaderPosition(ListView list, int savedPosition) {
         int count = list.getCount();
         if (count <= 0 || savedPosition <= 0) return;
+        if (savedPosition == READER_POSITION_SCALE) {
+            list.setSelection(count - 1);
+            list.post(() -> alignReaderBottom(list));
+            return;
+        }
         int clamped = Math.max(0, Math.min(READER_POSITION_SCALE, savedPosition));
         double row = clamped * (double) count / READER_POSITION_SCALE;
         int index = Math.max(0, Math.min(count - 1, (int) Math.floor(row)));
         int rowHeight = Math.max(1, readerContentWidth() * 4 / 3);
         int top = -(int) Math.round((row - Math.floor(row)) * rowHeight);
         list.setSelectionFromTop(index, top);
+    }
+
+    private void alignReaderBottom(ListView list) {
+        int last = list.getCount() - 1;
+        if (last < 0) return;
+        if (list.getLastVisiblePosition() != last) {
+            list.setSelection(last);
+            return;
+        }
+        View lastChild = list.getChildAt(list.getChildCount() - 1);
+        if (lastChild == null || lastChild.getHeight() <= 0) return;
+        int childHeight = lastChild.getHeight();
+        int listHeight = Math.max(list.getPaddingTop(), list.getHeight() - list.getPaddingBottom());
+        int top = listHeight - childHeight;
+        if (lastChild.getTop() != top) list.setSelectionFromTop(last, listHeight - childHeight);
     }
 
     private void removeReaderPositions(String comicId) {
