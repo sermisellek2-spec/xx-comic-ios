@@ -289,6 +289,18 @@ public class MainActivity extends Activity {
         super.onDestroy();
         main.removeCallbacks(themeSwitchRunnable);
         main.removeCallbacks(persistReaderPositionRunnable);
+        for (Future<?> f : currentScreenFutures) {
+            if (f != null && !f.isDone()) f.cancel(true);
+        }
+        currentScreenFutures = new ArrayList<>();
+        cancelCurrentImageTasks();
+        pageLoadingGeneration++;
+        readerGeneration++;
+        categoryGeneration++;
+        pageLoading = false;
+        readerVisible = false;
+        pageLoadingBackAction = null;
+        detailBackAction = null;
         searchIo.shutdownNow();
         detailIo.shutdownNow();
         imageIo.shutdownNow();

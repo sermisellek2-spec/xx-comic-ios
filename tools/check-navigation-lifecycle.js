@@ -17,6 +17,7 @@ function check(name, condition) {
 }
 
 const navigateBack = method("private boolean navigateBack", "private void applyThemeAndSystemBars");
+const onDestroy = method("protected void onDestroy", "protected void onActivityResult");
 const enterScreen = method("private void enterScreen", "private Future<?> track");
 const showDetail = method("private void showDetail", "private void showReader");
 const showReader = method("private void showReader", "private void showReaderLoading");
@@ -41,6 +42,16 @@ check("detail origin captures history", /boolean returnToHistory\s*=\s*historyVi
 check("detail loading uses the saved origin action", /showPageLoading\([^;]+detailBackAction\)/s.test(showDetail));
 check("history back does not intercept active detail", /if \(historyVisible\s*&&\s*TextUtils\.isEmpty\(activeDetailId\)\)/.test(navigateBack));
 check("detail back runs the saved origin action", /Runnable backAction\s*=\s*detailBackAction;[\s\S]*?detailBackAction\s*=\s*null;[\s\S]*?backAction\.run\(\)/.test(navigateBack));
+const firstShutdown = onDestroy.indexOf("searchIo.shutdownNow()");
+check("destroy cancels screen futures before shutdown", /for \(Future<\?> f : currentScreenFutures\)[\s\S]*?f\.cancel\(true\)[\s\S]*?currentScreenFutures\s*=\s*new ArrayList<>\(\)/.test(onDestroy)
+  && onDestroy.indexOf("currentScreenFutures") < firstShutdown);
+check("destroy cancels image futures before shutdown", /cancelCurrentImageTasks\(\)/.test(onDestroy)
+  && onDestroy.indexOf("cancelCurrentImageTasks()") < firstShutdown);
+check("destroy invalidates async generations", /pageLoadingGeneration\+\+;[\s\S]*?readerGeneration\+\+;[\s\S]*?categoryGeneration\+\+;/.test(onDestroy)
+  && onDestroy.indexOf("categoryGeneration++") < firstShutdown);
+check("destroy clears visible async state", /pageLoading\s*=\s*false;[\s\S]*?readerVisible\s*=\s*false;/.test(onDestroy));
+check("destroy clears navigation actions", /pageLoadingBackAction\s*=\s*null;[\s\S]*?detailBackAction\s*=\s*null;/.test(onDestroy));
+check("destroy does not trigger screen rendering", !/(enterScreen|showTab|showDetail|showReader|showHistory)\(/.test(onDestroy));
 check("chapter loading returns to detail", /showPageLoading\([^;]+\(\)\s*->\s*showDetail\(detail\.summary\.comicId\)/s.test(ensureChapters));
 check("loading success clears the action", /pageLoadingBackAction\s*=\s*null[\s\S]*?showDetail\(comicId\)/.test(showDetail));
 check("detail loading failure clears the action", /catch \(Exception error\)[\s\S]*?pageLoadingBackAction\s*=\s*null/.test(showDetail));
