@@ -334,7 +334,7 @@ Run:
 
 Expected: `retired mhua5 source checks ok`。
 
-- [ ] **Step 5: 提交探测资产清理**
+- [x] **Step 5: 提交探测资产清理**
 
 ```powershell
 git add tools/check-retired-mhua5-source.js tools/sim-mhua5-parse.js tools/probe-mhua5-search.html tools/probe-mhua5-detail.html tools/probe-mhua5-chapter.html
@@ -349,7 +349,7 @@ git commit -m "chore: 清理漫画屋探测资产"
 - Test: existing source, search, cache, reader checks
 - Test: Android release build
 
-- [ ] **Step 1: 运行站源与缓存专项校验**
+- [x] **Step 1: 运行站源与缓存专项校验**
 
 ```powershell
 $node = 'C:\Users\15361\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe'
@@ -366,7 +366,7 @@ Expected: 所有脚本退出 0。
 
 `tools/check-android-source.js` 在本次修改前已有旧版本号、旧视觉样式和旧全站搜索时序断言失败，经用户确认不纳入本任务通过门槛，也不在本次顺手修复。
 
-- [ ] **Step 2: 检查源码残留和差异格式**
+- [x] **Step 2: 检查源码残留和差异格式**
 
 ```powershell
 rg -n "mhua5Config|mhua5Enabled|SourceConfig\.mhua5|source\.mhua5\.enabled" app/src/main/java
@@ -375,7 +375,7 @@ git diff --check
 
 Expected: `rg` 无匹配；`git diff --check` 退出 0。
 
-- [ ] **Step 3: 运行 Android 测试与 release 构建**
+- [x] **Step 3: 运行 Android 测试与 release 构建**
 
 ```powershell
 .\gradlew.bat :app:testReleaseUnitTest :app:assembleRelease

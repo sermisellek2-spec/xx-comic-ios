@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
     private static final String IMAGE_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private final Handler main = new Handler(Looper.getMainLooper());
     // 按模块拆分线程池，互不阻塞：搜索中切到收藏页，封面图走 imageIo 不被搜索阻塞
-    private final ExecutorService searchIo = Executors.newFixedThreadPool(10);
+    private final ExecutorService searchIo = Executors.newFixedThreadPool(9);
     private final ExecutorService detailIo = Executors.newFixedThreadPool(2);
     private final ExecutorService imageIo = Executors.newFixedThreadPool(4);
     private final ExecutorService readerPrefetchIo = Executors.newFixedThreadPool(2);
