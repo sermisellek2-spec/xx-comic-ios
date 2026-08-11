@@ -167,6 +167,7 @@ assert(/class\s+FiveUmComicSource\s+implements\s+ComicSource/.test(source), "sha
 assert(/volatile\s+Map<String,\s*String>\s+categoryPaths/.test(source), "immutable category snapshot field");
 assert(/Collections\.unmodifiableMap/.test(source), "immutable category snapshot assignment");
 assert(/comic-cover-large/.test(source), "detail parser scopes cover to the real cover block");
+assert(!source.includes("String descriptionBlock"), "detail description survives nested section header");
 assert(/if\s*\(page\s*>\s*1\)\s*return\s+new\s+ArrayList/.test(source), "search does not paginate");
 assert(/SourceConfig\s+manhuazhan\(boolean enabled\)/.test(config), "manhuazhan config");
 assert(/SourceConfig\s+bbyin\(boolean enabled\)/.test(config), "bbyin config");

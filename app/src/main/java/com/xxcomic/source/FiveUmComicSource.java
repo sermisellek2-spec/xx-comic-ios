@@ -95,8 +95,7 @@ public class FiveUmComicSource implements ComicSource {
         }
         String author = clean(first(mainInfo, "作者[：:]\\s*([^<]*?)</span>"));
         if (TextUtils.isEmpty(author)) author = clean(first(mainInfo, "由\\s*([^，。<]+?)\\s*创作"));
-        String descriptionBlock = firstRaw(html, "<div[^>]*class=[\"'][^\"']*\\bcomic-description\\b[^\"']*[\"'][^>]*>[\\s\\S]*?</div>");
-        String description = clean(first(descriptionBlock, "<p[^>]*>([\\s\\S]*?)</p>"));
+        String description = clean(first(html, "<div[^>]*class=[\"'][^\"']*\\bcomic-description\\b[^\"']*[\"'][^>]*>[\\s\\S]*?<p[^>]*>([\\s\\S]*?)</p>"));
         List<String> tags = parseTags(mainInfo);
         String status = statusFromTags(tags);
         List<ComicModels.Chapter> parsedChapters = parseChapters(html);
