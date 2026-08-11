@@ -278,7 +278,7 @@ Run:
 
 Expected: 三个脚本均退出 0；新增脚本输出 `retired mhua5 cache-only checks ok`。
 
-- [ ] **Step 6: 提交缓存只读实现**
+- [x] **Step 6: 提交缓存只读实现**
 
 ```powershell
 git add tools/check-retired-mhua5-cache-only.js tools/check-reader-prefetch.js tools/check-reader-memory.js app/src/main/java/com/xxcomic/MainActivity.java
@@ -295,7 +295,7 @@ git commit -m "fix: 禁止退役站源图片回源"
 - Delete: `tools/probe-mhua5-chapter.html`
 - Test: `tools/check-retired-mhua5-source.js`
 
-- [ ] **Step 1: 先增加旧资产不存在校验**
+- [x] **Step 1: 先增加旧资产不存在校验**
 
 在 `tools/check-retired-mhua5-source.js` 末尾、成功输出前加入：
 
@@ -310,7 +310,7 @@ for (const path of [
 }
 ```
 
-- [ ] **Step 2: 运行校验并确认 RED**
+- [x] **Step 2: 运行校验并确认 RED**
 
 Run:
 
@@ -320,11 +320,11 @@ Run:
 
 Expected: FAIL with `retired mhua5 probe remains: tools/sim-mhua5-parse.js`。
 
-- [ ] **Step 3: 删除四个纯漫画屋探测文件**
+- [x] **Step 3: 删除四个纯漫画屋探测文件**
 
 删除上述四个文件。保留 `probe-mhua5-aikan-chapters.js`、`probe-aikan-mhua5-images.js` 和 `probe-image-referer.js`，因为它们还包含其他站源的探测逻辑。
 
-- [ ] **Step 4: 运行校验并确认 GREEN**
+- [x] **Step 4: 运行校验并确认 GREEN**
 
 Run:
 

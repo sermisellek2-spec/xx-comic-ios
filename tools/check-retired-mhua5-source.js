@@ -58,4 +58,13 @@ for (const marker of ["HttpURLConnection", "new URL(", "Pattern.compile", "Sourc
   check(!retired.includes(marker), `retired adapter still has live implementation: ${marker}`);
 }
 
+for (const path of [
+  "tools/sim-mhua5-parse.js",
+  "tools/probe-mhua5-search.html",
+  "tools/probe-mhua5-detail.html",
+  "tools/probe-mhua5-chapter.html",
+]) {
+  check(!fs.existsSync(path), `retired mhua5 probe remains: ${path}`);
+}
+
 console.log("retired mhua5 source checks ok");
