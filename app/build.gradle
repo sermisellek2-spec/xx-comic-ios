@@ -11,6 +11,12 @@ android {
         versionCode 3
         versionName "1.0.3"
     }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
