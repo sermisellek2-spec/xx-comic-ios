@@ -335,20 +335,22 @@ function renderProfile() {
 
 ```js
 let favoriteSwipeStartX = 0;
+let favoriteSwipeMoved = false;
 function favoriteRow(comic) {
   const revealed = state.revealedFavoriteId === comic.id;
   return `<article class="favorite-row ${revealed ? "revealed" : ""}">
     <button class="favorite-delete" onclick="toggleFavorite('${comic.id}')">删除</button>
-    <button class="favorite-content" onpointerdown="startFavoriteSwipe(event)" onpointerup="endFavoriteSwipe(event,'${comic.id}')" onclick="openDetail('${comic.id}')">
+    <button class="favorite-content" onpointerdown="startFavoriteSwipe(event)" onpointerup="endFavoriteSwipe(event,'${comic.id}')" onclick="openFavorite('${comic.id}')">
       <img src="${comic.cover}" alt="${comic.title}封面"><span><b>${comic.title}</b><small>${comic.latest} · ${comic.source}</small></span>
     </button><button class="favorite-more" aria-label="显示删除操作" onclick="toggleFavoriteActions('${comic.id}')">⋮</button></article>`;
 }
-function startFavoriteSwipe(event) { favoriteSwipeStartX = event.clientX; }
+function startFavoriteSwipe(event) { favoriteSwipeStartX = event.clientX; favoriteSwipeMoved = false; }
 function endFavoriteSwipe(event, id) {
-  if (favoriteSwipeStartX - event.clientX > 36) state.revealedFavoriteId = id;
-  if (event.clientX - favoriteSwipeStartX > 36) state.revealedFavoriteId = null;
+  if (favoriteSwipeStartX - event.clientX > 36) { state.revealedFavoriteId = id; favoriteSwipeMoved = true; }
+  if (event.clientX - favoriteSwipeStartX > 36) { state.revealedFavoriteId = null; favoriteSwipeMoved = true; }
   render();
 }
+function openFavorite(id) { if (favoriteSwipeMoved) { favoriteSwipeMoved = false; return; } openDetail(id); }
 function toggleFavoriteActions(id) { state.revealedFavoriteId = state.revealedFavoriteId === id ? null : id; render(); }
 function resultCard(comic) {
   return `<button class="result-card" onclick="openDetail('${comic.id}')"><img src="${comic.cover}" alt="${comic.title}封面"><b>${comic.title}</b><small>${comic.latest} · ${comic.source}</small></button>`;
@@ -435,15 +437,18 @@ Expected: FAIL，`openGlobalSearch is not a function`。
 function openGlobalSearch() { state.route = "global-search"; state.overlay = null; render(); }
 function submitGlobalSearch(query) { state.query = query.trim() || "夜行录"; state.route = "global-results"; render(); }
 function setGlobalSource(source) { state.selectedSource = source; render(); }
+function selectedSourceLabel() {
+  return { all: "全部站源", baozi: "包子漫画", manhuagui: "漫画柜", aikan: "爱看漫画" }[state.selectedSource] || "全部站源";
+}
 function renderGlobalSearch() {
   return `<section class="page"><header class="top-bar"><button onclick="goTab('favorites')" aria-label="返回">‹</button><h1>全局搜索</h1></header>
-    <label class="search-box">⌕<input value="${state.query}" placeholder="搜索全部站源"></label>
+    <label class="search-box">⌕<input value="${state.query}" onkeydown="if(event.key==='Enter')submitGlobalSearch(this.value)" placeholder="搜索全部站源"></label>
     <h2>搜索历史</h2><button class="history-chip" onclick="submitGlobalSearch('夜行录')">夜行录</button></section>`;
 }
 function renderGlobalResults() {
   return `<section class="page"><header class="top-bar"><button onclick="openGlobalSearch()" aria-label="返回">‹</button><h1>${state.query}</h1></header>
     <div class="source-tabs"><button onclick="setGlobalSource('all')" class="${state.selectedSource === "all" ? "selected" : ""}">全部</button><button onclick="setGlobalSource('baozi')" class="${state.selectedSource === "baozi" ? "selected" : ""}">包子漫画</button><button onclick="setGlobalSource('manhuagui')" class="${state.selectedSource === "manhuagui" ? "selected" : ""}">漫画柜</button><button onclick="setGlobalSource('aikan')" class="${state.selectedSource === "aikan" ? "selected" : ""}">爱看漫画</button></div>
-    <p class="source-result-label">${state.selectedSource === "all" ? "全部站源结果" : "包子漫画结果"}</p>
+    <p class="source-result-label">${selectedSourceLabel()}结果</p>
     <div class="page-scroll">${comics.map(globalResultRow).join("")}<p class="result-status">4 个站源已完成 · 0 个失败</p></div></section>`;
 }
 function globalResultRow(comic) {
@@ -460,9 +465,10 @@ function openDetail(id) { state.selectedComicId = id; state.returnRoute = state.
 function goBackFromDetail() { state.route = state.returnRoute || state.tab; render(); }
 function selectedComic() { return comics.find((comic) => comic.id === state.selectedComicId) || comics[0]; }
 function setFilter(key, value) { state.filters[key] = value; render(); }
+function resetFilters() { state.selectedSource = "all"; state.filters = { region: "全部", status: "全部" }; closeOverlay(); }
 function setReviewState(review) { state.review = review; render(); }
 function setPagination(status) { state.pagination = status; render(); }
-function refreshResults() { state.pagination = "loading"; render(); state.pagination = "idle"; render(); }
+function refreshResults() { state.pagination = "loading"; render(); setTimeout(() => { state.pagination = "idle"; render(); }, 450); }
 function retryPagination() { setPagination("idle"); }
 function loadingState(title, description) {
   return `<section class="state-page" aria-busy="true"><div class="skeleton-list">${Array.from({length:4}, () => '<div class="skeleton-row"><i></i><span></span></div>').join("")}</div><h1>${title}</h1><p>${description}</p></section>`;
@@ -481,7 +487,7 @@ function renderFilterSheet() {
     <div class="sheet-handle"></div><h2>筛选</h2><h3>站源</h3><div class="chip-row"><button onclick="setGlobalSource('baozi')" class="chip ${state.selectedSource === "baozi" ? "selected" : ""}">包子漫画</button><button onclick="setGlobalSource('manhuagui')" class="chip ${state.selectedSource === "manhuagui" ? "selected" : ""}">漫画柜</button></div>
     <h3>地区</h3><div class="chip-row"><button onclick="setFilter('region','全部')" class="chip ${state.filters.region === "全部" ? "selected" : ""}">全部</button><button onclick="setFilter('region','日本')" class="chip ${state.filters.region === "日本" ? "selected" : ""}">日本</button><button onclick="setFilter('region','韩国')" class="chip ${state.filters.region === "韩国" ? "selected" : ""}">韩国</button></div>
     <h3>状态</h3><div class="chip-row"><button onclick="setFilter('status','全部')" class="chip ${state.filters.status === "全部" ? "selected" : ""}">全部</button><button onclick="setFilter('status','连载中')" class="chip ${state.filters.status === "连载中" ? "selected" : ""}">连载中</button><button onclick="setFilter('status','已完结')" class="chip ${state.filters.status === "已完结" ? "selected" : ""}">已完结</button></div>
-    <button class="secondary-button" onclick="closeOverlay()">清空筛选</button></aside>`;
+    <button class="secondary-button" onclick="resetFilters()">清空筛选</button></aside>`;
 }
 
 function renderDetail() {
@@ -508,7 +514,7 @@ function renderSearch() {
   if (state.review === "error") return errorState("搜索失败", "站源暂时不可用", "setReviewState('normal')");
   const cards = state.review === "empty" ? "" : comics.map(resultCard).join("");
   return `<section class="page search-page"><label class="search-box">⌕<input data-testid="search-input" value="${state.query}" onchange="state.query=this.value" placeholder="搜索漫画名称或作者"></label>
-    <div class="search-tools"><button class="filter-trigger" onclick="openOverlay('filter')">▾ ${state.selectedSource === "all" ? "全部站源" : "包子漫画"} · ${state.filters.region}</button><button aria-label="刷新搜索结果" onclick="refreshResults()">↻</button></div>
+    <div class="search-tools"><button class="filter-trigger" onclick="openOverlay('filter')">▾ ${selectedSourceLabel()} · ${state.filters.region}</button><button aria-label="刷新搜索结果" onclick="refreshResults()">↻</button></div>
     <h2>搜索结果</h2><div class="page-scroll" onpointerdown="startPull(event)" onpointerup="endPull(event)">${cards ? `<div class="comic-grid">${cards}</div>${paginationFooter()}` : emptyState("⌕", "没找到这本漫画", "换个关键词，或清空题材筛选再试", "清空筛选", "setReviewState('normal')")}</div></section>`;
 }
 function renderOverlay() {
@@ -529,7 +535,7 @@ function render() {
 ```js
 Object.assign(window.__prototype, {
   openGlobalSearch, submitGlobalSearch, setGlobalSource, openDetail, goBackFromDetail,
-  openOverlay, closeOverlay, setFilter, setReviewState, setPagination, refreshResults, retryPagination
+  openOverlay, closeOverlay, setFilter, resetFilters, setReviewState, setPagination, refreshResults, retryPagination
 });
 ```
 
@@ -755,7 +761,7 @@ git add index.html tools/check-prototype.js
 git commit -m "feat: complete baseline secondary screens"
 ```
 
-### Task 7: 加入审阅状态、夜间主题、响应式和无障碍约束
+### Task 7: 加入稳定审阅入口、夜间主题、响应式和无障碍约束
 
 **Files:**
 - Modify: `index.html`
@@ -765,8 +771,9 @@ git commit -m "feat: complete baseline secondary screens"
 
 ```js
 check("baseline design tokens", html.includes("--bg:#fefcf8") && html.includes("--night-bg:#15151a"));
-includesAll("review handlers", ["function setTheme(", "function setReviewState(", "function setViewport("]);
-includesAll("responsive widths", ["360px", "393px", "430px"]);
+includesAll("review handlers", ["function setTheme(", "function setReviewState(", "function setViewport(", "function setReviewRoute(", "function setReviewLayer("]);
+includesAll("responsive widths", ["setViewport(360)", "setViewport(393)", "setViewport(430)"]);
+includesAll("stable review routes", ["global-search", "global-results", "detail", "reader", "history", "source-menu", "source-error"]);
 includesAll("accessible labels", ['aria-label="返回"', 'aria-label="章节目录"', 'aria-live="polite"', 'aria-modal="true"']);
 check("no negative letter spacing", !/letter-spacing\s*:\s*-/.test(html));
 ```
@@ -781,6 +788,10 @@ api.goTab("search");
 check("empty search renders", appStub.innerHTML.includes("没找到这本漫画"));
 api.setViewport(360);
 check("viewport changes", stubs["phone-shell"].style.width === "360px");
+api.setReviewRoute("history");
+check("review route changes", api.state.route === "history");
+api.setReviewLayer("source-error");
+check("review dialog opens", api.state.dialog === "source-error" && appStub.innerHTML.includes("站源检测失败"));
 ```
 
 Run: `node tools/check-prototype.js`
@@ -797,10 +808,17 @@ Expected: FAIL，缺少夜间令牌或 `setTheme`。
   --night-text-2:#b8b4ac; --night-text-3:#84827c; --night-border:#2d2d34; --night-brand:#f59e0b;
 }
 body[data-theme="night"] #phone-shell { --bg:var(--night-bg); --surface:var(--night-surface); --card:var(--night-card); --text:var(--night-text); --text-2:var(--night-text-2); --text-3:var(--night-text-3); --border:var(--night-border); --brand:var(--night-brand); }
+#phone-shell, .app-shell, .page { background:var(--bg); color:var(--text); }
+.page p, .page small, .page input { color:var(--text-2); }
+.page button, .dialog, .bottom-sheet, .chapter-sheet, .popup-menu { color:var(--text); }
+.dialog, .bottom-sheet, .chapter-sheet, .popup-menu, .bottom-nav { background:var(--card); color:var(--text); }
+.search-box, .page input, .secondary-button, .profile-item { background-color:var(--surface); border-color:var(--border); }
 .result-card { min-width:0; padding:10px; border-radius:12px; background:var(--card); }
 .result-card img { width:100%; height:auto; aspect-ratio:150/202; object-fit:cover; border-radius:8px; }
 .comic-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 .icon-button { width:48px; height:48px; }
+button, select, input { min-height:44px; max-width:100%; }
+button, .profile-item { white-space:normal; overflow-wrap:anywhere; }
 @media (max-width:379px) { #review-controls { position:static; } .stage { padding:12px; } }
 ```
 
@@ -809,32 +827,96 @@ body[data-theme="night"] #phone-shell { --bg:var(--night-bg); --surface:var(--ni
 ```js
 function setTheme(theme) { state.theme = theme; document.body.dataset.theme = theme; render(); }
 function toggleTheme() { setTheme(state.theme === "night" ? "day" : "night"); }
-function setReviewState(review) { state.review = review; render(); }
 function setViewport(width) { document.getElementById("phone-shell").style.width = `${Math.max(360, Math.min(430, width))}px`; }
+function setReviewRoute(route) {
+  state.route = route;
+  if (["favorites", "search", "sources", "profile"].includes(route)) state.tab = route;
+  state.returnRoute = route;
+  state.overlay = null;
+  state.dialog = null;
+  render();
+}
+function setReviewLayer(name) {
+  state.overlay = ["filter", "chapters", "source-menu"].includes(name) ? name : null;
+  state.dialog = ["cache", "logs", "about", "clear-history", "source-error"].includes(name) ? name : null;
+  render();
+}
 function emptyState(icon, title, description, action, handler) {
   return `<div class="empty-state"><span aria-hidden="true">${icon}</span><h2>${title}</h2><p>${description}</p><button onclick="${handler}">${action}</button></div>`;
 }
-function loadingState(title, description) {
-  return `<section class="state-page" aria-busy="true"><div class="skeleton-list">${Array.from({length:4}, () => '<div class="skeleton-row"><i></i><span></span></div>').join("")}</div><h1>${title}</h1><p>${description}</p></section>`;
-}
-function errorState(title, description, retry) {
-  return `<section class="error-state"><h1>${title}</h1><p>${description}</p><button onclick="${retry}">重试</button></section>`;
-}
 ```
 
-将审阅按钮接到 `setTheme('day')`、`setTheme('night')`、`setReviewState('normal'|'empty'|'loading'|'error')` 和 `setViewport(360|393|430)`。
+`setReviewState()`、`loadingState()` 和 `errorState()` 已在 Task 4 定义，本任务不重复声明。把手机画布外的审阅面板替换为原生按钮和下拉菜单；页面与浮层菜单提供全部稳定入口：
+
+```html
+<aside id="review-controls" aria-label="原型审阅控制">
+  <button type="button" onclick="setTheme('day')">日间</button><button type="button" onclick="setTheme('night')">夜间</button>
+  <button type="button" onclick="setReviewState('normal')">正常</button><button type="button" onclick="setReviewState('empty')">空状态</button>
+  <button type="button" onclick="setReviewState('loading')">加载</button><button type="button" onclick="setReviewState('error')">错误</button>
+  <button type="button" onclick="setPagination('loading')">分页加载</button><button type="button" onclick="setPagination('error')">分页错误</button>
+  <button type="button" onclick="setViewport(360)">360</button><button type="button" onclick="setViewport(393)">393</button><button type="button" onclick="setViewport(430)">430</button>
+  <select aria-label="审阅页面" onchange="setReviewRoute(this.value)"><option value="favorites">收藏</option><option value="search">搜索</option><option value="sources">站源</option><option value="profile">我的</option><option value="global-search">全局搜索</option><option value="global-results">全站结果</option><option value="detail">详情</option><option value="reader">阅读器</option><option value="history">阅读历史</option></select>
+  <select aria-label="审阅浮层" onchange="setReviewLayer(this.value)"><option value="">无浮层</option><option value="filter">搜索筛选</option><option value="chapters">章节目录</option><option value="source-menu">站源菜单</option><option value="cache">确认弹窗</option><option value="about">信息弹窗</option><option value="source-error">错误弹窗</option><option value="logs">日志弹窗</option></select>
+</aside>
+```
 
 - [ ] **Step 4: 补齐空状态分支**
 
-`renderFavorites`、`renderSearch`、`renderSources`、`renderHistory` 在 `state.review === "empty"` 时分别返回以下现有文案：
+`renderFavorites`、`renderSearch`、`renderSources`、`renderHistory` 在 `state.review === "empty"` 时分别使用以下现有文案；加载和错误状态使用同一个固定尺寸状态页：
 
 ```js
 const reviewEmpty = {
   favorites: ["♡", "书架还空着", "等你把第一本放进来", "去搜索", "goTab('search')"],
-  search: ["⌕", "没找到这本漫画", "换个关键词，或清空题材筛选再试", "清空筛选", "setReviewState('normal')"],
-  sources: ["▣", "还没有启用站源", "去站源页打开一个漫画来源吧", "恢复默认", "setReviewState('normal')"],
+  search: ["⌕", "没找到这本漫画", "换个关键词，或清空题材筛选再试", "清空筛选", "resetFilters()"],
+  sources: ["▣", "还没有启用站源", "去站源页打开一个漫画来源吧", "恢复默认", "restoreSources()"],
   history: ["◷", "还没有阅读记录", "翻开一本，故事从这里开始", "去搜索", "goTab('search')"]
 };
+```
+
+在四个函数顶部加入以下明确分支，并在正常历史为空时复用 `reviewEmpty.history`；`restoreSources()` 将三个默认站源设为启用：
+
+```js
+function restoreSources() {
+  Object.assign(state.sourceEnabled, { baozi: true, manhuagui: true, aikan: true });
+  setReviewState("normal");
+}
+function primaryReviewState(route) {
+  if (state.review === "loading") return loadingState("正在加载", "内容马上就绪。");
+  if (state.review === "error") return errorState("加载失败", "请稍后重试", "setReviewState('normal')");
+  if (state.review === "empty") return emptyState(...reviewEmpty[route]);
+  return "";
+}
+```
+
+`renderSearch()` 已在 Task 4 处理四种审阅状态。其余三个有内容状态的页面分别插入以下确定分支，再继续执行原有正常渲染：
+
+```js
+// renderFavorites() 的第一行
+const reviewed = primaryReviewState("favorites"); if (reviewed) return reviewed;
+
+// renderSources() 在 rows 声明之后
+const reviewed = primaryReviewState("sources"); if (reviewed) return reviewed;
+if (!rows.some(([id]) => state.sourceEnabled[id])) return emptyState(...reviewEmpty.sources);
+
+// renderHistory() 的第一行
+const reviewed = primaryReviewState("history"); if (reviewed) return reviewed;
+if (!state.history.length) return emptyState(...reviewEmpty.history);
+```
+
+同时导出审阅函数：
+
+```js
+Object.assign(window.__prototype, { setTheme, toggleTheme, setViewport, setReviewRoute, setReviewLayer, restoreSources });
+```
+
+最后添加键盘关闭逻辑，浮层和弹窗均通过同一可预测路径关闭：
+
+```js
+document.addEventListener?.("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (state.dialog) closeDialog();
+  else if (state.overlay) closeOverlay();
+});
 ```
 
 - [ ] **Step 5: 运行检查并提交审阅能力**
@@ -863,7 +945,7 @@ Expected: 所有检查为 `PASS`，末行显示 `prototype checks passed`，退�
 
 - [ ] **Step 2: 运行源码与空白检查**
 
-Run: `git diff --check`
+Run: `git diff --check -- index.html tools/check-prototype.js`
 
 Expected: 无输出，退出码 `0`。
 
@@ -875,11 +957,11 @@ Expected: 无输出。`prototype-assets` 引用全部为相对路径。
 
 Run: `python -m http.server 4173 --directory .`
 
-Expected: `Serving HTTP on ... port 4173`。服务不写入仓库文件。
+Expected: `Serving HTTP on ... port 4173`。若端口已占用，递增选择首个空闲端口并在后续 URL 中保持一致；服务不写入仓库文件。
 
 - [ ] **Step 4: 在三个手机视口检查日间模式**
 
-打开 `http://localhost:4173/index.html?design=baseline`，依次设置：
+加载 `browser:control-in-app-browser` 技能，打开 `http://localhost:4173/index.html?design=baseline`，依次设置：
 
 ```text
 360 × 800
@@ -887,7 +969,7 @@ Expected: `Serving HTTP on ... port 4173`。服务不写入仓库文件。
 430 × 932
 ```
 
-每个视口检查收藏、搜索、站源、我的、全局搜索、详情、阅读器、历史、筛选抽屉、章节抽屉和弹窗。确认无横向溢出、文字遮挡、浮层越界或底部导航位移。
+每个视口通过审阅菜单逐页检查收藏、搜索、站源、我的、全局搜索、全站结果、详情、阅读器、历史、筛选抽屉、章节抽屉、站源菜单和四类弹窗。为三个视口各保存一张全页截图到系统临时目录，不写入仓库；确认无横向溢出、文字遮挡、浮层越界或底部导航位移。
 
 - [ ] **Step 5: 在 `393 × 873` 检查夜间和四种状态**
 
