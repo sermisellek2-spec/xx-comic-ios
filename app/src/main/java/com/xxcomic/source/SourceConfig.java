@@ -241,6 +241,28 @@ public class SourceConfig {
         return new SourceConfig("manben", "漫本", "www.manben.com", "https://www.manben.com", "https://www.manben.com/", "", "", "", "", enabled, routes, filters);
     }
 
+    public static SourceConfig manhuazhan(boolean enabled) {
+        return fiveUm("manhuazhan", "漫画栈", "www.60ti.com", "https://www.60ti.com", enabled);
+    }
+
+    public static SourceConfig bbyin(boolean enabled) {
+        return fiveUm("bbyin", "比卡漫画", "bbyin.com", "https://bbyin.com", enabled);
+    }
+
+    private static SourceConfig fiveUm(String id, String name, String domain, String baseUrl, boolean enabled) {
+        JSONObject routes = new JSONObject();
+        try {
+            routes.put("latest", "/category{pagePath}");
+            routes.put("search", "/search?key={keyword}");
+            routes.put("categoryIndex", "/category/");
+            routes.put("category", "/category{pagePath}");
+            routes.put("detail", "/comic_{comicId}.html");
+            routes.put("chapter", "{chapterUrl}");
+        } catch (JSONException ignored) {
+        }
+        return new SourceConfig(id, name, domain, baseUrl, baseUrl + "/", "", "", "", "", enabled, routes, new JSONObject());
+    }
+
     public SourceConfig withEnabled(boolean value) {
         return new SourceConfig(id, name, domain, baseUrl, referer, latestPath, searchPath, categoryPath, detailPath, value, routes, filters);
     }
