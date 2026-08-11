@@ -1315,7 +1315,7 @@ public class MainActivity extends Activity {
         // 内容卡片
         LinearLayout contentCard = UIHelpers.card(this);
         contentCard.setOrientation(LinearLayout.HORIZONTAL);
-        contentCard.addView(coverFrame(cover, 86, 116));
+        contentCard.addView(coverFrame(cover, 86, 116, isRetiredComic(id)));
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
         info.setPadding(UIHelpers.dp(this, 12), 0, 0, 0);
@@ -1557,7 +1557,8 @@ public class MainActivity extends Activity {
 
         FrameLayout hero = new FrameLayout(this);
         hero.setBackgroundColor(UIHelpers.SURFACE);
-        addBlurredHeroCover(hero, detail.summary.coverUrl, detail.summary.title);
+        boolean cacheOnly = isRetiredSource(detail.summary.sourceId);
+        addBlurredHeroCover(hero, detail.summary.coverUrl, detail.summary.title, cacheOnly);
         content.addView(hero, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, DETAIL_HERO_DP)));
         ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, Color.WHITE, 10);
         back.setBackground(UIHelpers.round(Color.argb(90, 0, 0, 0), UIHelpers.dp(this, 22), Color.TRANSPARENT));
@@ -1574,7 +1575,7 @@ public class MainActivity extends Activity {
         info.setLayoutParams(infoParams);
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.HORIZONTAL);
-        top.addView(coverFrame(detail.summary.coverUrl, 92, 124));
+        top.addView(coverFrame(detail.summary.coverUrl, 92, 124, cacheOnly));
         LinearLayout text = new LinearLayout(this);
         text.setOrientation(LinearLayout.VERTICAL);
         text.setPadding(UIHelpers.dp(this, 12), 0, 0, 0);
@@ -1796,6 +1797,7 @@ public class MainActivity extends Activity {
         int generation = readerGeneration;
         String comicId = detail.summary.comicId;
         String chapterUrl = activeChapter.url;
+        boolean cacheOnly = isRetiredSource(detail.summary.sourceId);
         int contentWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
         int placeholderHeight = Math.max(1, contentWidth * 4 / 3);
         List<String> imageUrls = new ArrayList<>(page.imageUrls);
@@ -1843,7 +1845,7 @@ public class MainActivity extends Activity {
                 image.setTag(imageUrl);
                 image.setLayoutParams(new AbsListView.LayoutParams(-1, placeholderHeight));
                 Future<?> future = loadReaderImage(image, imageUrl, chapterUrl, generation, comicId,
-                        list, restoringPosition, savedPosition);
+                        list, restoringPosition, savedPosition, cacheOnly);
                 if (future != null) readerImageFutures.put(image, future);
                 return image;
             }
@@ -1859,7 +1861,7 @@ public class MainActivity extends Activity {
                 if (!restoringPosition[0]) saveReaderPosition(list, positionKey);
                 if (visibleItemCount > 0) {
                     prefetchReaderImages(imageUrls, firstVisibleItem + visibleItemCount,
-                            chapterUrl, generation, comicId);
+                            chapterUrl, generation, comicId, cacheOnly);
                 }
             }
         });
@@ -1878,7 +1880,7 @@ public class MainActivity extends Activity {
             });
         }
         list.post(() -> prefetchReaderImages(imageUrls,
-                Math.max(0, list.getLastVisiblePosition() + 1), chapterUrl, generation, comicId));
+                Math.max(0, list.getLastVisiblePosition() + 1), chapterUrl, generation, comicId, cacheOnly));
         FrameLayout readerContent = new FrameLayout(this);
         readerContent.addView(list, UIHelpers.match());
         View empty = readerSkeletonState("没有解析到图片，请返回重试");
@@ -2410,6 +2412,20 @@ public class MainActivity extends Activity {
         return sourceClient;
     }
 
+    private boolean isRetiredSource(String sourceId) {
+        return mhua5Client != null && mhua5Client.id().equals(sourceId);
+    }
+
+    private boolean isRetiredComic(String comicId) {
+        ComicModels.ComicDetail detail = details.get(comicId);
+        ComicModels.ComicSummary summary = summaries.get(comicId);
+        String sourceId = detail != null && detail.summary != null
+                ? detail.summary.sourceId
+                : summary == null ? "" : summary.sourceId;
+        return isRetiredSource(sourceId)
+                || (TextUtils.isEmpty(sourceId) && comicId != null && comicId.startsWith(mhua5Client.id() + ":"));
+    }
+
     private void loadDefaultCategory() {
         resetSearchPaging();
         loadSearchPage("", 1, false, true);
@@ -2686,7 +2702,7 @@ public class MainActivity extends Activity {
             details.put(id, detail);
             summaries.put(id, detail.summary);
             persistComicCachesAsync();
-            loadImageToCache(detail.summary.coverUrl);
+            if (!isRetiredSource(detail.summary.sourceId)) loadImageToCache(detail.summary.coverUrl);
             showToast("已加入收藏");
         }
         saveLocalState();
@@ -2720,13 +2736,13 @@ public class MainActivity extends Activity {
         return title == null ? "" : title.toLowerCase(Locale.ROOT).replaceAll("[\\s《》〈〉【】\\[\\]（）()\\-_:：·.,，。!！?？]+", "");
     }
 
-    private ImageView coverView(String url, int widthDp, int heightDp) {
+    private ImageView coverView(String url, int widthDp, int heightDp, boolean cacheOnly) {
         ImageView image = new ImageView(this);
         image.setScaleType(ImageView.ScaleType.CENTER_CROP);
         image.setBackground(UIHelpers.round(UIHelpers.BORDER_SOFT, UIHelpers.dp(this, 10), Color.TRANSPARENT));
         int width = widthDp < 0 ? -1 : UIHelpers.dp(this, widthDp);
         image.setLayoutParams(new LinearLayout.LayoutParams(width, UIHelpers.dp(this, heightDp)));
-        if (!TextUtils.isEmpty(url)) loadImage(image, url);
+        if (!TextUtils.isEmpty(url)) loadImage(image, url, "", cacheOnly);
         return image;
     }
 
@@ -2751,11 +2767,15 @@ public class MainActivity extends Activity {
     }
 
     private FrameLayout coverFrame(String url, int widthDp, int heightDp) {
+        return coverFrame(url, widthDp, heightDp, false);
+    }
+
+    private FrameLayout coverFrame(String url, int widthDp, int heightDp, boolean cacheOnly) {
         FrameLayout frame = new FrameLayout(this);
         frame.setBackground(UIHelpers.round(UIHelpers.PLACEHOLDER, UIHelpers.dp(this, 8), Color.TRANSPARENT));
         int width = widthDp < 0 ? -1 : UIHelpers.dp(this, widthDp);
         frame.setLayoutParams(new LinearLayout.LayoutParams(width, UIHelpers.dp(this, heightDp)));
-        ImageView image = coverView(url, -1, heightDp);
+        ImageView image = coverView(url, -1, heightDp, cacheOnly);
         frame.addView(image, UIHelpers.frame(-1, UIHelpers.dp(this, heightDp), Gravity.CENTER, 0, 0, 0, 0));
         if (TextUtils.isEmpty(url)) {
             TextView mark = UIHelpers.text(this, "漫", 20, UIHelpers.TEXT3, Typeface.NORMAL);
@@ -2765,14 +2785,14 @@ public class MainActivity extends Activity {
         return frame;
     }
 
-    private void addBlurredHeroCover(FrameLayout hero, String coverUrl, String fallbackTitle) {
+    private void addBlurredHeroCover(FrameLayout hero, String coverUrl, String fallbackTitle, boolean cacheOnly) {
         if (!TextUtils.isEmpty(coverUrl)) {
             ImageView cover = new ImageView(this);
             cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
             cover.setAlpha(0.36f);
             applyHeroBlur(cover);
             hero.addView(cover, UIHelpers.frame(-1, -1, Gravity.CENTER, 0, 0, 0, 0));
-            loadImage(cover, coverUrl);
+            loadImage(cover, coverUrl, "", cacheOnly);
         } else {
             TextView title = UIHelpers.text(this, clean(fallbackTitle, "XX Comic"), 20, UIHelpers.TEXT3, Typeface.NORMAL);
             title.setGravity(Gravity.CENTER);
@@ -2874,7 +2894,7 @@ public class MainActivity extends Activity {
     }
 
     private void prefetchReaderImages(List<String> imageUrls, int start, String chapterUrl,
-                                      int generation, String comicId) {
+                                      int generation, String comicId, boolean cacheOnly) {
         if (generation != readerGeneration || !readerVisible || imageUrls == null) return;
         int end = Math.min(imageUrls.size(), Math.max(0, start) + READER_PREFETCH_COUNT);
         for (int i = Math.max(0, start); i < end; i++) {
@@ -2884,7 +2904,7 @@ public class MainActivity extends Activity {
             submitReaderImage(readerPrefetchIo, () -> {
                 try {
                     if (isCurrentReaderImageRequest(generation, comicId, chapterUrl)) {
-                        ensureReaderImageCached(imageUrl, chapterUrl);
+                        ensureReaderImageCached(imageUrl, chapterUrl, cacheOnly);
                     }
                 } catch (Exception error) {
                     if (!isExpectedTaskCancellation(error)) {
@@ -2897,14 +2917,15 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void ensureReaderImageCached(String imageUrl, String chapterUrl) throws IOException {
+    private boolean ensureReaderImageCached(String imageUrl, String chapterUrl, boolean cacheOnly) throws IOException {
         File cached = imageCacheFile(imageUrl);
         long[] cachedIdentity = captureImageCacheIdentity(cached);
         if (cachedIdentity != null && cachedIdentity[0] > 0L) {
             cached.setLastModified(System.currentTimeMillis());
-            return;
+            return true;
         }
         deleteImageCacheIfUnchanged(cached, cachedIdentity);
+        if (cacheOnly) return false;
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) new URL(imageUrl).openConnection();
@@ -2923,11 +2944,12 @@ public class MainActivity extends Activity {
         } finally {
             if (connection != null) connection.disconnect();
         }
+        return true;
     }
 
     private Future<?> loadReaderImage(ImageView target, String imageUrl, String chapterUrl,
                                       int generation, String comicId, ListView list,
-                                      boolean[] restoringPosition, int savedPosition) {
+                                      boolean[] restoringPosition, int savedPosition, boolean cacheOnly) {
         if (TextUtils.isEmpty(imageUrl)) return null;
         return submitReaderImage(() -> {
             try {
@@ -2936,7 +2958,14 @@ public class MainActivity extends Activity {
                 Bitmap bitmap = cachedIdentity != null ? decodeReaderImage(cached, readerContentWidth()) : null;
                 if (bitmap == null) {
                     deleteImageCacheIfUnchanged(cached, cachedIdentity);
-                    ensureReaderImageCached(imageUrl, chapterUrl);
+                    if (!ensureReaderImageCached(imageUrl, chapterUrl, cacheOnly)) {
+                        main.post(() -> {
+                            if (activityDestroyed || !TextUtils.equals(imageUrl, (String) target.getTag())
+                                    || !isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
+                            target.setImageDrawable(new ColorDrawable(UIHelpers.BORDER_SOFT));
+                        });
+                        return;
+                    }
                     bitmap = decodeReaderImage(cached, readerContentWidth());
                 } else {
                     cached.setLastModified(System.currentTimeMillis());
@@ -3008,10 +3037,14 @@ public class MainActivity extends Activity {
     }
 
     private void loadImage(ImageView target, String imageUrl) {
-        loadImage(target, imageUrl, "");
+        loadImage(target, imageUrl, "", false);
     }
 
     private void loadImage(ImageView target, String imageUrl, String pageReferer) {
+        loadImage(target, imageUrl, pageReferer, false);
+    }
+
+    private void loadImage(ImageView target, String imageUrl, String pageReferer, boolean cacheOnly) {
         if (TextUtils.isEmpty(imageUrl)) return;
         // 内存命中：同步 set，不进 imageIo，切 Tab 重建列表时即时显示。
         Bitmap memHit = imageMemoryCache.get(imageUrl);
@@ -3033,6 +3066,10 @@ public class MainActivity extends Activity {
                         return;
                     }
                     deleteImageCacheIfUnchanged(cached, cachedIdentity);
+                }
+                if (cacheOnly) {
+                    main.post(() -> target.setImageDrawable(new ColorDrawable(UIHelpers.BORDER_SOFT)));
+                    return;
                 }
                 connection = (HttpURLConnection) new URL(imageUrl).openConnection();
                 connection.setInstanceFollowRedirects(true);
@@ -4864,7 +4901,7 @@ public class MainActivity extends Activity {
         if (orphaned) {
             cover = UIHelpers.coverPlaceholder(this, "");
         } else if (!TextUtils.isEmpty(summary.coverUrl)) {
-            cover = coverFrame(summary.coverUrl, 80, 107);
+            cover = coverFrame(summary.coverUrl, 80, 107, isRetiredSource(summary.sourceId));
         } else {
             cover = UIHelpers.coverPlaceholder(this, summary.title);
         }

@@ -141,7 +141,7 @@ Run:
 
 Expected: `retired mhua5 source checks ok`。
 
-- [ ] **Step 6: 提交退役适配器和活动注册清理**
+- [x] **Step 6: 提交退役适配器和活动注册清理**
 
 ```powershell
 git add tools/check-retired-mhua5-source.js app/src/main/java/com/xxcomic/source/Mhua5ComicSource.java app/src/main/java/com/xxcomic/source/SourceConfig.java app/src/main/java/com/xxcomic/MainActivity.java
@@ -159,7 +159,7 @@ git commit -m "refactor: 退役漫画屋活动站源"
 - Test: `tools/check-reader-prefetch.js`
 - Test: `tools/check-reader-memory.js`
 
-- [ ] **Step 1: 写入缓存只读校验**
+- [x] **Step 1: 写入缓存只读校验**
 
 新增结构校验，验证退役来源标识会传递到封面、详情大图、正文加载和预加载：
 
@@ -203,7 +203,7 @@ const readerCacheLoader = method("private boolean ensureReaderImageCached", "pri
 
 这些测试修改必须和新增校验一起在生产代码修改前完成。
 
-- [ ] **Step 2: 运行校验并确认 RED**
+- [x] **Step 2: 运行校验并确认 RED**
 
 Run:
 
@@ -215,7 +215,7 @@ Expected: FAIL with `retired source helper missing`。
 
 同时运行更新后的 `check-reader-prefetch.js` 和 `check-reader-memory.js`，预期因 `private boolean ensureReaderImageCached` 尚不存在而失败，证明契约测试确实覆盖新签名。
 
-- [ ] **Step 3: 为封面加载增加缓存只读参数**
+- [x] **Step 3: 为封面加载增加缓存只读参数**
 
 增加来源判断：
 
@@ -245,7 +245,7 @@ private boolean isRetiredComic(String comicId) {
 if (!isRetiredSource(detail.summary.sourceId)) loadImageToCache(detail.summary.coverUrl);
 ```
 
-- [ ] **Step 4: 为阅读器和预加载增加缓存只读参数**
+- [x] **Step 4: 为阅读器和预加载增加缓存只读参数**
 
 将 `ensureReaderImageCached` 改为返回缓存是否可用：
 
@@ -266,7 +266,7 @@ private boolean ensureReaderImageCached(String imageUrl, String chapterUrl, bool
 
 `renderReader()` 计算一次 `cacheOnly`，并传给 `loadReaderImage()` 与 `prefetchReaderImages()`。前台加载在 `ensureReaderImageCached()` 返回 `false` 时直接设置占位并结束；预加载静默跳过，不记录错误。
 
-- [ ] **Step 5: 运行新增及现有阅读器校验并确认 GREEN**
+- [x] **Step 5: 运行新增及现有阅读器校验并确认 GREEN**
 
 Run:
 

@@ -18,7 +18,7 @@ function check(name, condition) {
 
 const renderReader = method("private void renderReader", "private boolean handleReaderTap");
 const readerLoader = method("private Future<?> loadReaderImage", "private void loadImage(");
-const readerCacheLoader = method("private void ensureReaderImageCached", "private Future<?> loadReaderImage");
+const readerCacheLoader = method("private boolean ensureReaderImageCached", "private Future<?> loadReaderImage");
 const readerSubmit = method("private Future<?> submitReaderImage", "private Future<?> loadReaderImage");
 const readerDecode = method("private Bitmap decodeReaderImage", "private void loadImage(");
 const readerGuard = method("private boolean isCurrentReaderImageRequest", "private Bitmap decodeReaderImage");

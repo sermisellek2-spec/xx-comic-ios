@@ -27,19 +27,19 @@ if (!render.includes("list.getLastVisiblePosition() + 1")) fail("reader does not
 if (!render.includes("prefetchReaderImages(imageUrls, firstVisibleItem + visibleItemCount")) fail("reader does not prefetch on scroll");
 if (!render.includes("visibleItemCount > 0")) fail("reader can prefetch visible rows before layout");
 
-const prefetch = method("private void prefetchReaderImages", "private void ensureReaderImageCached");
+const prefetch = method("private void prefetchReaderImages", "private boolean ensureReaderImageCached");
 if (!prefetch.includes("READER_PREFETCH_COUNT")) fail("prefetch window is not bounded");
 if (!prefetch.includes("readerPrefetching.add")) fail("prefetch requests are not deduplicated");
 if (!prefetch.includes("submitReaderImage(readerPrefetchIo")) fail("prefetch can block visible image loads");
 if (!prefetch.includes("ensureReaderImageCached")) fail("prefetch does not use the disk cache path");
 if (/decodeReaderImage/.test(prefetch)) fail("prefetch decodes bitmaps instead of warming disk cache");
 
-const ensure = method("private void ensureReaderImageCached", "private Future<?> loadReaderImage");
+const ensure = method("private boolean ensureReaderImageCached", "private Future<?> loadReaderImage");
 if (!ensure.includes("writeReaderImageCache(cached, stream)")) fail("shared reader cache writer is missing");
 if (!ensure.includes("imageCacheFile(imageUrl)")) fail("reader cache path is not reused");
 
 const loader = method("private Future<?> loadReaderImage", "private boolean isCurrentReaderImageRequest");
-if (!loader.includes("ensureReaderImageCached(imageUrl, chapterUrl)")) fail("visible loader does not reuse prefetch cache");
+if (!loader.includes("ensureReaderImageCached(imageUrl, chapterUrl, cacheOnly)")) fail("visible loader does not preserve retired cache-only state");
 
 const enter = method("private void enterScreen", "private Future<?> track");
 if (!enter.includes("readerPrefetching.clear()")) fail("prefetch dedupe state is not cleared on screen exit");
