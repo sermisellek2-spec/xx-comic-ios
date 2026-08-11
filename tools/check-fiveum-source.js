@@ -90,10 +90,13 @@ function categoryUrl(baseUrl, tagPath, page) {
 
 function parseDetail(html) {
   const titleMatch = String(html || "").match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  const coverBlock = String(html || "").match(/<div[^>]*class=["'][^"']*\bcomic-cover-large\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+  const coverTag = ((coverBlock ? coverBlock[1] : "").match(/<img[^>]*>/i) || [""])[0];
   const authorMatch = String(html || "").match(/作者[：:]\s*([\s\S]*?)<\/span>/i);
   const descriptionMatch = String(html || "").match(/<div[^>]*class=["'][^"']*\bcomic-description\b[^"']*["'][^>]*>[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/i);
   return {
     title: clean(titleMatch ? titleMatch[1] : "").replace(/^《|》$/g, ""),
+    coverUrl: imageFromTag(coverTag),
     author: clean(authorMatch ? authorMatch[1] : ""),
     description: clean(descriptionMatch ? descriptionMatch[1] : ""),
   };
@@ -146,6 +149,7 @@ assert(categories.get("奇幻") === "/category/tags/61", "dynamic category path"
 assert(categoryUrl("https://www.60ti.com", "", 2) === "https://www.60ti.com/category/page/2", "default category pagination");
 assert(categoryUrl("https://bbyin.com", categories.get("奇幻"), 3) === "https://bbyin.com/category/tags/61/page/3", "tag pagination");
 assert(parseDetail(detail).title === "刃牙II", "detail title");
+assert(parseDetail(detail).coverUrl.endsWith("11262s.jpg"), "detail cover outside main info");
 assert(parseDetail(detail).author === "板垣惠介,秋田书店", "detail author");
 assert(parseDetail(detail).description.includes("死刑犯"), "detail description");
 assert(parseChapters(detail, "https://www.60ti.com").length === 2, "chapter URL deduplication");
@@ -162,6 +166,7 @@ const main = fs.readFileSync(path.join(ROOT, "app", "src", "main", "java", "com"
 assert(/class\s+FiveUmComicSource\s+implements\s+ComicSource/.test(source), "shared parser class");
 assert(/volatile\s+Map<String,\s*String>\s+categoryPaths/.test(source), "immutable category snapshot field");
 assert(/Collections\.unmodifiableMap/.test(source), "immutable category snapshot assignment");
+assert(/comic-cover-large/.test(source), "detail parser scopes cover to the real cover block");
 assert(/if\s*\(page\s*>\s*1\)\s*return\s+new\s+ArrayList/.test(source), "search does not paginate");
 assert(/SourceConfig\s+manhuazhan\(boolean enabled\)/.test(config), "manhuazhan config");
 assert(/SourceConfig\s+bbyin\(boolean enabled\)/.test(config), "bbyin config");

@@ -88,7 +88,8 @@ public class FiveUmComicSource implements ComicSource {
         if (TextUtils.isEmpty(title)) throw new IOException(config.name + " 详情解析失败：缺少标题");
 
         String mainInfo = firstRaw(html, "<div[^>]*class=[\"'][^\"']*\\bcomic-main-info\\b[^\"']*[\"'][^>]*>[\\s\\S]*?(?=<div[^>]*class=[\"'][^\"']*\\bcomic-description\\b|$)");
-        String cover = imageUrlFromTag(firstRaw(mainInfo, "<img[^>]*>"));
+        String coverBlock = firstRaw(html, "<div[^>]*class=[\"'][^\"']*\\bcomic-cover-large\\b[^\"']*[\"'][^>]*>[\\s\\S]*?</div>");
+        String cover = imageUrlFromTag(firstRaw(coverBlock, "<img[^>]*>"));
         if (TextUtils.isEmpty(cover)) {
             cover = attr(firstRaw(html, "<meta[^>]+(?:property|name)=[\"']og:image[\"'][^>]*>"), "content");
         }
