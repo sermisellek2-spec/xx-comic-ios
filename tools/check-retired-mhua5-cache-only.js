@@ -58,22 +58,61 @@ check(
   "reader rows do not receive cache-only state",
 );
 check(
-  source.includes("boolean cacheOnly = isRetiredSource(detail.summary.sourceId);"),
-  "detail/reader does not derive retired state",
-);
-check(
   source.includes("coverFrame(cover, 86, 116, isRetiredComic(id))"),
   "favorite cover can still use network",
 );
 check(
-  source.includes("coverFrame(summary.coverUrl, 80, 107, isRetiredSource(summary.sourceId))"),
-  "history cover can still use network",
-);
-check(
   source.includes(
-    "if (!isRetiredSource(detail.summary.sourceId)) loadImageToCache(detail.summary.coverUrl);",
+    "if (!isRetiredComic(detail.summary.comicId)) loadImageToCache(detail.summary.coverUrl);",
   ),
   "favorite action can still pre-download retired cover",
+);
+
+const sourceForComicId = method(
+  "private ComicSource sourceForComicId",
+  "private ComicSource sourceForDetail",
+);
+check(
+  sourceForComicId.indexOf('comicId.startsWith(mhua5Client.id() + ":")') <
+    sourceForComicId.indexOf("if (summary != null)"),
+  "legacy mhua5 id can be routed by an empty source id",
+);
+
+const sourceForDetail = method(
+  "private ComicSource sourceForDetail",
+  "private ComicSource sourceForId",
+);
+check(
+  sourceForDetail.includes("isRetiredComic(detail.summary.comicId)"),
+  "legacy mhua5 detail can fall back to the default source",
+);
+
+const retiredComic = method(
+  "private boolean isRetiredComic",
+  "private void loadDefaultCategory",
+);
+check(
+  retiredComic.includes('comicId.startsWith(mhua5Client.id() + ":")') &&
+    !retiredComic.includes("TextUtils.isEmpty(sourceId) && comicId"),
+  "mhua5 id prefix is not an authoritative retired marker",
+);
+
+check(
+  (source.match(/boolean cacheOnly = isRetiredComic\(detail\.summary\.comicId\);/g) || []).length >= 2,
+  "detail or reader can bypass cache-only mode when source id is empty",
+);
+check(
+  source.includes("coverFrame(summary.coverUrl, 80, 107, isRetiredComic(comicId))"),
+  "history cover can bypass cache-only mode when source id is empty",
+);
+
+const summaryFromJson = method(
+  "private ComicModels.ComicSummary summaryFromJson",
+  "private JSONObject detailToJson",
+);
+check(
+  summaryFromJson.includes("TextUtils.isEmpty(sourceId) && isRetiredComic(comicId)"),
+  "legacy mhua5 cache source id is not normalized",
 );
 
 console.log("retired mhua5 cache-only checks ok");

@@ -1557,7 +1557,7 @@ public class MainActivity extends Activity {
 
         FrameLayout hero = new FrameLayout(this);
         hero.setBackgroundColor(UIHelpers.SURFACE);
-        boolean cacheOnly = isRetiredSource(detail.summary.sourceId);
+        boolean cacheOnly = isRetiredComic(detail.summary.comicId);
         addBlurredHeroCover(hero, detail.summary.coverUrl, detail.summary.title, cacheOnly);
         content.addView(hero, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, DETAIL_HERO_DP)));
         ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, Color.WHITE, 10);
@@ -1797,7 +1797,7 @@ public class MainActivity extends Activity {
         int generation = readerGeneration;
         String comicId = detail.summary.comicId;
         String chapterUrl = activeChapter.url;
-        boolean cacheOnly = isRetiredSource(detail.summary.sourceId);
+        boolean cacheOnly = isRetiredComic(detail.summary.comicId);
         int contentWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
         int placeholderHeight = Math.max(1, contentWidth * 4 / 3);
         List<String> imageUrls = new ArrayList<>(page.imageUrls);
@@ -2381,9 +2381,9 @@ public class MainActivity extends Activity {
     }
 
     private ComicSource sourceForComicId(String comicId) {
+        if (comicId != null && comicId.startsWith(mhua5Client.id() + ":")) return mhua5Client;
         ComicModels.ComicSummary summary = summaries.get(comicId);
         if (summary != null) return sourceForId(summary.sourceId);
-        if (comicId != null && comicId.startsWith(mhua5Client.id() + ":")) return mhua5Client;
         if (comicId != null && comicId.startsWith(aikanClient.id() + ":")) return aikanClient;
         if (comicId != null && comicId.startsWith(gmhClient.id() + ":")) return gmhClient;
         if (comicId != null && comicId.startsWith(mkzhanClient.id() + ":")) return mkzhanClient;
@@ -2396,7 +2396,9 @@ public class MainActivity extends Activity {
     }
 
     private ComicSource sourceForDetail(ComicModels.ComicDetail detail) {
-        return detail == null || detail.summary == null ? sourceClient : sourceForId(detail.summary.sourceId);
+        if (detail == null || detail.summary == null) return sourceClient;
+        if (isRetiredComic(detail.summary.comicId)) return mhua5Client;
+        return sourceForId(detail.summary.sourceId);
     }
 
     private ComicSource sourceForId(String sourceId) {
@@ -2423,7 +2425,7 @@ public class MainActivity extends Activity {
                 ? detail.summary.sourceId
                 : summary == null ? "" : summary.sourceId;
         return isRetiredSource(sourceId)
-                || (TextUtils.isEmpty(sourceId) && comicId != null && comicId.startsWith(mhua5Client.id() + ":"));
+                || (mhua5Client != null && comicId != null && comicId.startsWith(mhua5Client.id() + ":"));
     }
 
     private void loadDefaultCategory() {
@@ -2702,7 +2704,7 @@ public class MainActivity extends Activity {
             details.put(id, detail);
             summaries.put(id, detail.summary);
             persistComicCachesAsync();
-            if (!isRetiredSource(detail.summary.sourceId)) loadImageToCache(detail.summary.coverUrl);
+            if (!isRetiredComic(detail.summary.comicId)) loadImageToCache(detail.summary.coverUrl);
             showToast("已加入收藏");
         }
         saveLocalState();
@@ -4627,9 +4629,12 @@ public class MainActivity extends Activity {
         if (tagsJson != null) {
             for (int i = 0; i < tagsJson.length(); i++) tags.add(tagsJson.optString(i));
         }
+        String sourceId = object.optString("sourceId");
+        String comicId = object.optString("comicId");
+        if (TextUtils.isEmpty(sourceId) && isRetiredComic(comicId)) sourceId = mhua5Client.id();
         return new ComicModels.ComicSummary(
-                object.optString("sourceId"),
-                object.optString("comicId"),
+                sourceId,
+                comicId,
                 object.optString("title"),
                 object.optString("coverUrl"),
                 object.optString("subtitle"),
@@ -4901,7 +4906,7 @@ public class MainActivity extends Activity {
         if (orphaned) {
             cover = UIHelpers.coverPlaceholder(this, "");
         } else if (!TextUtils.isEmpty(summary.coverUrl)) {
-            cover = coverFrame(summary.coverUrl, 80, 107, isRetiredSource(summary.sourceId));
+            cover = coverFrame(summary.coverUrl, 80, 107, isRetiredComic(comicId));
         } else {
             cover = UIHelpers.coverPlaceholder(this, summary.title);
         }
