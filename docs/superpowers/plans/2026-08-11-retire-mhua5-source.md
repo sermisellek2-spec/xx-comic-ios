@@ -19,7 +19,7 @@
 - Modify: `app/src/main/java/com/xxcomic/MainActivity.java`
 - Test: `tools/check-retired-mhua5-source.js`
 
-- [ ] **Step 1: 写入活动站源退役校验**
+- [x] **Step 1: 写入活动站源退役校验**
 
 创建无需第三方依赖的 Node.js 校验脚本：
 
@@ -63,7 +63,7 @@ for (const marker of ["HttpURLConnection", "new URL(", "Pattern.compile", "Sourc
 console.log("retired mhua5 source checks ok");
 ```
 
-- [ ] **Step 2: 运行校验并确认 RED**
+- [x] **Step 2: 运行校验并确认 RED**
 
 Run:
 
@@ -73,7 +73,7 @@ Run:
 
 Expected: FAIL，首个错误为 `active mhua5 marker remains`，证明旧站源仍在活动注册中。
 
-- [ ] **Step 3: 将 `Mhua5ComicSource` 缩减为无网络兼容适配器**
+- [x] **Step 3: 将 `Mhua5ComicSource` 缩减为无网络兼容适配器**
 
 保留类型和接口，删除全部 HTTP、HTML、正则解析及 `SourceConfig` 依赖。实现保持如下行为：
 
@@ -101,7 +101,7 @@ public class Mhua5ComicSource implements ComicSource {
 }
 ```
 
-- [ ] **Step 4: 删除活动配置和 UI/搜索注册**
+- [x] **Step 4: 删除活动配置和 UI/搜索注册**
 
 从 `SourceConfig.java` 删除 `mhua5(boolean)` 工厂。
 
@@ -131,7 +131,7 @@ private void rebuildSourceClients() {
 
 `sourceForComicId()` 保留 `mhua5:` 前缀分支。关于页文案改为不枚举已退役站源的通用描述，例如“XX Comic 已接入多个漫画站源，支持搜索、详情、阅读图片和本地缓存。”
 
-- [ ] **Step 5: 运行校验并确认 GREEN**
+- [x] **Step 5: 运行校验并确认 GREEN**
 
 Run:
 
@@ -355,7 +355,6 @@ git commit -m "chore: 清理漫画屋探测资产"
 $node = 'C:\Users\15361\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe'
 & $node tools/check-retired-mhua5-source.js
 & $node tools/check-retired-mhua5-cache-only.js
-& $node tools/check-android-source.js
 & $node tools/check-default-search-load.js
 & $node tools/check-default-search-cache.js
 & $node tools/check-reader-prefetch.js
@@ -364,6 +363,8 @@ $node = 'C:\Users\15361\.cache\codex-runtimes\codex-primary-runtime\dependencies
 ```
 
 Expected: 所有脚本退出 0。
+
+`tools/check-android-source.js` 在本次修改前已有旧版本号、旧视觉样式和旧全站搜索时序断言失败，经用户确认不纳入本任务通过门槛，也不在本次顺手修复。
 
 - [ ] **Step 2: 检查源码残留和差异格式**
 

@@ -59,27 +59,6 @@ public class SourceConfig {
         return new SourceConfig("baozimh", "包子漫画", "cn.bzmgcn.com", "https://cn.bzmgcn.com", "https://cn.bzmgcn.com/", "", "", "", "", enabled, routes, filters);
     }
 
-    public static SourceConfig mhua5(boolean enabled) {
-        JSONObject routes = new JSONObject();
-        JSONObject filters = new JSONObject();
-        try {
-            routes.put("latest", "/index.php/category{pagePath}");
-            routes.put("search", "/index.php/search?key={keyword}{pageQuery}");
-            routes.put("category", "/index.php/category{cityPath}{finishPath}{pagePath}");
-            routes.put("detail", "/index.php/comic/{comicId}");
-            routes.put("chapter", "/index.php/chapter/{chapterId}");
-            filters.put("city.cn", "42");
-            filters.put("city.jp", "45");
-            filters.put("city.kr", "44");
-            filters.put("city.en", "");
-            filters.put("finish.serial", "1");
-            filters.put("finish.pub", "2");
-            filters.put("finish.all", "");
-        } catch (JSONException ignored) {
-        }
-        return new SourceConfig("mhua5", "漫画屋", "www.mhua5.com", "https://www.mhua5.com", "https://www.mhua5.com/", "", "", "", "", enabled, routes, filters);
-    }
-
     public static SourceConfig aikan(boolean enabled) {
         JSONObject routes = new JSONObject();
         JSONObject filters = new JSONObject();

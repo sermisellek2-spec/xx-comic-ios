@@ -149,7 +149,6 @@ public class MainActivity extends Activity {
     private ComicSource d5d6Client;
     private ComicSource manbenClient;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
-    private SourceConfig mhua5Config = SourceConfig.mhua5(true);
     private SourceConfig aikanConfig = SourceConfig.aikan(true);
     private SourceConfig gmhConfig = SourceConfig.gmh(true);
     private SourceConfig mkzhanConfig = SourceConfig.mkzhan(true);
@@ -193,7 +192,6 @@ public class MainActivity extends Activity {
     private String selectedStateLabel = ALL_TAG;
     private Runnable filterDrawerAction;
     private boolean sourceEnabled = true;
-    private boolean mhua5Enabled = true;
     private boolean aikanEnabled = true;
     private boolean gmhEnabled = true;
     private boolean mkzhanEnabled = true;
@@ -796,13 +794,6 @@ public class MainActivity extends Activity {
             saveLocalState();
             showTab(2);
         }));
-        addSourceCard(enabledSources, disabledSources, mhua5Enabled, sourceCard(mhua5Config.name, mhua5Config.domain, mhua5Enabled, () -> {
-            mhua5Enabled = !mhua5Enabled;
-            mhua5Config = mhua5Config.withEnabled(mhua5Enabled);
-            rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
-        }));
         addSourceCard(enabledSources, disabledSources, aikanEnabled, sourceCard(aikanConfig.name, aikanConfig.domain, aikanEnabled, () -> {
             aikanEnabled = !aikanEnabled;
             aikanConfig = aikanConfig.withEnabled(aikanEnabled);
@@ -897,7 +888,7 @@ public class MainActivity extends Activity {
         group.addView(UIHelpers.divider(this));
         group.addView(menuItemWithIcon(R.drawable.ic_lightning, "错误日志", errorLogSummary(), () -> showErrorLogs()));
         group.addView(UIHelpers.divider(this));
-        group.addView(menuItemWithIcon(R.drawable.ic_profile, "关于 App", "1.0.3", () -> showInfo("关于 App", "XX Comic 已接入包子漫画、漫画屋的搜索、详情、阅读图片和本地缓存。")));
+        group.addView(menuItemWithIcon(R.drawable.ic_profile, "关于 App", "1.0.3", () -> showInfo("关于 App", "XX Comic 已接入多个漫画站源，支持搜索、详情、阅读图片和本地缓存。")));
         page.addView(group);
     }
 
@@ -2359,7 +2350,6 @@ public class MainActivity extends Activity {
 
     private ComicSource selectedSource() {
         if (sourceClient.id().equals(selectedSourceId) && sourceEnabled) return sourceClient;
-        if (mhua5Client.id().equals(selectedSourceId) && mhua5Enabled) return mhua5Client;
         if (aikanClient.id().equals(selectedSourceId) && aikanEnabled) return aikanClient;
         if (gmhClient.id().equals(selectedSourceId) && gmhEnabled) return gmhClient;
         if (mkzhanClient.id().equals(selectedSourceId) && mkzhanEnabled) return mkzhanClient;
@@ -2377,7 +2367,6 @@ public class MainActivity extends Activity {
     private List<ComicSource> enabledBuiltinSources() {
         List<ComicSource> sources = new ArrayList<>();
         if (sourceEnabled) sources.add(sourceClient);
-        if (mhua5Enabled) sources.add(mhua5Client);
         if (aikanEnabled) sources.add(aikanClient);
         if (gmhEnabled) sources.add(gmhClient);
         if (mkzhanEnabled) sources.add(mkzhanClient);
@@ -3117,7 +3106,6 @@ public class MainActivity extends Activity {
 
     private String refererForImage(String imageUrl, String pageReferer) {
         if (imageUrl != null && (imageUrl.contains(aikanConfig.domain) || imageUrl.contains("qrqrs.com"))) return aikanConfig.referer;
-        if (imageUrl != null && imageUrl.contains(mhua5Config.domain)) return mhua5Config.referer;
         if (imageUrl != null && (imageUrl.contains(gmhConfig.domain) || imageUrl.contains("g-mh.online") || imageUrl.contains("6wm.top"))) return gmhConfig.referer;
         if (imageUrl != null && (imageUrl.contains(mkzhanConfig.domain) || imageUrl.contains("mkzcdn.com"))) return mkzhanConfig.referer;
         if (imageUrl != null && (imageUrl.contains(hiperdexConfig.domain) || imageUrl.contains("r2d2storage.com"))) return hiperdexConfig.referer;
@@ -3359,7 +3347,6 @@ public class MainActivity extends Activity {
     private List<String> enabledSourceNames() {
         List<String> names = new ArrayList<>();
         if (sourceEnabled) names.add(sourceClient.name());
-        if (mhua5Enabled) names.add(mhua5Client.name());
         if (aikanEnabled) names.add(aikanClient.name());
         if (gmhEnabled) names.add(gmhClient.name());
         if (mkzhanEnabled) names.add(mkzhanClient.name());
@@ -3373,7 +3360,6 @@ public class MainActivity extends Activity {
 
     private String selectedSourceName() {
         if (sourceClient.id().equals(selectedSourceId)) return sourceClient.name();
-        if (mhua5Client.id().equals(selectedSourceId)) return mhua5Client.name();
         if (aikanClient.id().equals(selectedSourceId)) return aikanClient.name();
         if (gmhClient.id().equals(selectedSourceId)) return gmhClient.name();
         if (mkzhanClient.id().equals(selectedSourceId)) return mkzhanClient.name();
@@ -3390,7 +3376,6 @@ public class MainActivity extends Activity {
 
     private String sourceIdForName(String name) {
         if (sourceClient.name().equals(name)) return sourceClient.id();
-        if (mhua5Client.name().equals(name)) return mhua5Client.id();
         if (aikanClient.name().equals(name)) return aikanClient.id();
         if (gmhClient.name().equals(name)) return gmhClient.id();
         if (mkzhanClient.name().equals(name)) return mkzhanClient.id();
@@ -4174,7 +4159,6 @@ public class MainActivity extends Activity {
         root.put("exportedAt", System.currentTimeMillis());
         JSONArray sources = new JSONArray();
         sources.put(baoziConfig.withEnabled(sourceEnabled).toJson());
-        sources.put(mhua5Config.withEnabled(mhua5Enabled).toJson());
         sources.put(aikanConfig.withEnabled(aikanEnabled).toJson());
         sources.put(gmhConfig.withEnabled(gmhEnabled).toJson());
         sources.put(mkzhanConfig.withEnabled(mkzhanEnabled).toJson());
@@ -4213,9 +4197,6 @@ public class MainActivity extends Activity {
                 if (baoziConfig.id.equals(id)) {
                     baoziConfig = SourceConfig.fromJson(item, SourceConfig.baozi(true));
                     sourceEnabled = baoziConfig.enabled;
-                } else if (mhua5Config.id.equals(id)) {
-                    mhua5Config = SourceConfig.fromJson(item, SourceConfig.mhua5(true));
-                    mhua5Enabled = mhua5Config.enabled;
                 } else if (aikanConfig.id.equals(id)) {
                     aikanConfig = SourceConfig.fromJson(item, SourceConfig.aikan(true));
                     aikanEnabled = aikanConfig.enabled;
@@ -4250,7 +4231,6 @@ public class MainActivity extends Activity {
                 JSONObject item = builtins.getJSONObject(i);
                 String id = item.optString("id");
                 if (baoziConfig.id.equals(id)) sourceEnabled = item.optBoolean("enabled", true);
-                if (mhua5Config.id.equals(id)) mhua5Enabled = item.optBoolean("enabled", true);
                 if (aikanConfig.id.equals(id)) aikanEnabled = item.optBoolean("enabled", true);
                 if (gmhConfig.id.equals(id)) gmhEnabled = item.optBoolean("enabled", true);
                 if (mkzhanConfig.id.equals(id)) mkzhanEnabled = item.optBoolean("enabled", true);
@@ -4296,7 +4276,7 @@ public class MainActivity extends Activity {
 
     private void rebuildSourceClients() {
         sourceClient = new BaoziComicSource(baoziConfig.withEnabled(sourceEnabled));
-        mhua5Client = new Mhua5ComicSource(mhua5Config.withEnabled(mhua5Enabled));
+        mhua5Client = new Mhua5ComicSource();
         aikanClient = new AikanComicSource(aikanConfig.withEnabled(aikanEnabled));
         gmhClient = new GmhComicSource(gmhConfig.withEnabled(gmhEnabled));
         mkzhanClient = new MkzhanComicSource(mkzhanConfig.withEnabled(mkzhanEnabled));
@@ -4321,7 +4301,6 @@ public class MainActivity extends Activity {
     private void restoreLocalState() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         sourceEnabled = prefs.getBoolean("source.baozi.enabled", true);
-        mhua5Enabled = prefs.getBoolean("source.mhua5.enabled", true);
         aikanEnabled = prefs.getBoolean("source.aikan.enabled", true);
         gmhEnabled = prefs.getBoolean("source.gmh.enabled", true);
         mkzhanEnabled = prefs.getBoolean("source.mkzhan.enabled", true);
@@ -4405,7 +4384,6 @@ public class MainActivity extends Activity {
     private void saveLocalState() {
         SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
         editor.putBoolean("source.baozi.enabled", sourceEnabled);
-        editor.putBoolean("source.mhua5.enabled", mhua5Enabled);
         editor.putBoolean("source.aikan.enabled", aikanEnabled);
         editor.putBoolean("source.gmh.enabled", gmhEnabled);
         editor.putBoolean("source.mkzhan.enabled", mkzhanEnabled);
@@ -4453,7 +4431,6 @@ public class MainActivity extends Activity {
     private void restoreSourceConfigs(String value) {
         if (TextUtils.isEmpty(value)) {
             baoziConfig = SourceConfig.baozi(sourceEnabled);
-            mhua5Config = SourceConfig.mhua5(mhua5Enabled);
             aikanConfig = SourceConfig.aikan(aikanEnabled);
             gmhConfig = SourceConfig.gmh(gmhEnabled);
             mkzhanConfig = SourceConfig.mkzhan(mkzhanEnabled);
@@ -4472,9 +4449,6 @@ public class MainActivity extends Activity {
                 if (SourceConfig.baozi(true).id.equals(id)) {
                     baoziConfig = SourceConfig.fromJson(item, SourceConfig.baozi(sourceEnabled));
                     sourceEnabled = baoziConfig.enabled;
-                } else if (SourceConfig.mhua5(true).id.equals(id)) {
-                    mhua5Config = SourceConfig.fromJson(item, SourceConfig.mhua5(mhua5Enabled));
-                    mhua5Enabled = mhua5Config.enabled;
                 } else if (SourceConfig.aikan(true).id.equals(id)) {
                     aikanConfig = SourceConfig.fromJson(item, SourceConfig.aikan(aikanEnabled));
                     aikanEnabled = aikanConfig.enabled;
@@ -4504,7 +4478,6 @@ public class MainActivity extends Activity {
             }
         } catch (JSONException ignored) {
             baoziConfig = SourceConfig.baozi(sourceEnabled);
-            mhua5Config = SourceConfig.mhua5(mhua5Enabled);
             aikanConfig = SourceConfig.aikan(aikanEnabled);
             gmhConfig = SourceConfig.gmh(gmhEnabled);
             mkzhanConfig = SourceConfig.mkzhan(mkzhanEnabled);
@@ -4520,7 +4493,6 @@ public class MainActivity extends Activity {
         try {
             JSONArray array = new JSONArray();
             array.put(baoziConfig.withEnabled(sourceEnabled).toJson());
-            array.put(mhua5Config.withEnabled(mhua5Enabled).toJson());
             array.put(aikanConfig.withEnabled(aikanEnabled).toJson());
             array.put(gmhConfig.withEnabled(gmhEnabled).toJson());
             array.put(mkzhanConfig.withEnabled(mkzhanEnabled).toJson());
