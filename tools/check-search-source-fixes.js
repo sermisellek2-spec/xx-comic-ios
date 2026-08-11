@@ -30,7 +30,7 @@ check(
 );
 check(
   "all builtin searches can start concurrently",
-  main.includes("Executors.newFixedThreadPool(9)")
+  main.includes("Executors.newFixedThreadPool(11)")
 );
 check(
   "global source completion refreshes failed or empty tabs",

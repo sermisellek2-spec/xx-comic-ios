@@ -167,7 +167,15 @@ assert(/SourceConfig\s+manhuazhan\(boolean enabled\)/.test(config), "manhuazhan 
 assert(/SourceConfig\s+bbyin\(boolean enabled\)/.test(config), "bbyin config");
 assert(/newFixedThreadPool\(11\)/.test(main), "search pool matches eleven active sources");
 assert(/SourceConfig\.manhuazhan/.test(main) && /SourceConfig\.bbyin/.test(main), "both source configs registered");
+assert(/ComicSource\s+manhuazhanClient/.test(main) && /ComicSource\s+bbyinClient/.test(main), "both source clients declared");
+assert(/boolean\s+manhuazhanEnabled\s*=\s*true/.test(main) && /boolean\s+bbyinEnabled\s*=\s*true/.test(main), "both sources default enabled");
+assert(/sources\.add\(manhuazhanClient\)/.test(main) && /sources\.add\(bbyinClient\)/.test(main), "both sources join global search");
+assert(/new\s+FiveUmComicSource\(manhuazhanConfig/.test(main) && /new\s+FiveUmComicSource\(bbyinConfig/.test(main), "both source clients rebuilt");
+assert(/source\.manhuazhan\.enabled/.test(main) && /source\.bbyin\.enabled/.test(main), "both enabled states persisted");
+assert(/array\.put\(manhuazhanConfig\.withEnabled/.test(main) && /array\.put\(bbyinConfig\.withEnabled/.test(main), "both configs encoded");
+assert(/manhuazhanClient\.id\(\)\.equals\(selectedSourceId\)[\s\S]{0,100}bbyinClient\.id\(\)\.equals\(selectedSourceId\)/.test(main), "dynamic category UI registered");
 assert(/isFiveUmImage/.test(main) && /requireImageContentType/.test(main), "5um content type protection");
 assert(/\.5um\.net/.test(main) || /5um\.net/.test(main), "5um referer routing");
+assert((main.match(/requireImageContentType\(/g) || []).length >= 4, "all three image cache writes validate 5um content type");
 
 console.log("fiveum source ok", "cards=" + manhuazhanCards.length, "categories=" + categories.size, "chapters=2", "images=" + images.length);

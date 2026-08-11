@@ -47,6 +47,7 @@ import com.xxcomic.source.AikanComicSource;
 import com.xxcomic.source.ComicModels;
 import com.xxcomic.source.ComicSource;
 import com.xxcomic.source.D5d6ComicSource;
+import com.xxcomic.source.FiveUmComicSource;
 import com.xxcomic.source.ManbenComicSource;
 import com.xxcomic.source.GmhComicSource;
 import com.xxcomic.source.HiperdexComicSource;
@@ -118,7 +119,7 @@ public class MainActivity extends Activity {
     private static final String IMAGE_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private final Handler main = new Handler(Looper.getMainLooper());
     // 按模块拆分线程池，互不阻塞：搜索中切到收藏页，封面图走 imageIo 不被搜索阻塞
-    private final ExecutorService searchIo = Executors.newFixedThreadPool(9);
+    private final ExecutorService searchIo = Executors.newFixedThreadPool(11);
     private final ExecutorService detailIo = Executors.newFixedThreadPool(2);
     private final ExecutorService imageIo = Executors.newFixedThreadPool(4);
     private final ExecutorService readerPrefetchIo = Executors.newFixedThreadPool(2);
@@ -148,6 +149,8 @@ public class MainActivity extends Activity {
     private ComicSource hanman18Client;
     private ComicSource d5d6Client;
     private ComicSource manbenClient;
+    private ComicSource manhuazhanClient;
+    private ComicSource bbyinClient;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
     private SourceConfig aikanConfig = SourceConfig.aikan(true);
     private SourceConfig gmhConfig = SourceConfig.gmh(true);
@@ -157,6 +160,8 @@ public class MainActivity extends Activity {
     private SourceConfig hanman18Config = SourceConfig.hanman18(true);
     private SourceConfig d5d6Config = SourceConfig.d5d6(true);
     private SourceConfig manbenConfig = SourceConfig.manben(true);
+    private SourceConfig manhuazhanConfig = SourceConfig.manhuazhan(true);
+    private SourceConfig bbyinConfig = SourceConfig.bbyin(true);
     private final List<ComicModels.ComicSummary> searchResults = new ArrayList<>();
     private final List<ComicModels.ComicSummary> globalSearchResults = new ArrayList<>();
     private final List<String> globalSearchHistory = new ArrayList<>();
@@ -200,6 +205,8 @@ public class MainActivity extends Activity {
     private boolean hanman18Enabled = true;
     private boolean d5d6Enabled = true;
     private boolean manbenEnabled = true;
+    private boolean manhuazhanEnabled = true;
+    private boolean bbyinEnabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
     private boolean readerLeftHand = false;
@@ -846,6 +853,20 @@ public class MainActivity extends Activity {
         addSourceCard(enabledSources, disabledSources, manbenEnabled, sourceCard(manbenConfig.name, manbenConfig.domain, manbenEnabled, () -> {
             manbenEnabled = !manbenEnabled;
             manbenConfig = manbenConfig.withEnabled(manbenEnabled);
+            rebuildSourceClients();
+            saveLocalState();
+            showTab(2);
+        }));
+        addSourceCard(enabledSources, disabledSources, manhuazhanEnabled, sourceCard(manhuazhanConfig.name, manhuazhanConfig.domain, manhuazhanEnabled, () -> {
+            manhuazhanEnabled = !manhuazhanEnabled;
+            manhuazhanConfig = manhuazhanConfig.withEnabled(manhuazhanEnabled);
+            rebuildSourceClients();
+            saveLocalState();
+            showTab(2);
+        }));
+        addSourceCard(enabledSources, disabledSources, bbyinEnabled, sourceCard(bbyinConfig.name, bbyinConfig.domain, bbyinEnabled, () -> {
+            bbyinEnabled = !bbyinEnabled;
+            bbyinConfig = bbyinConfig.withEnabled(bbyinEnabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
@@ -2344,6 +2365,8 @@ public class MainActivity extends Activity {
         if (hanman18Client.id().equals(sourceId)) return hanman18Client.name();
         if (d5d6Client.id().equals(sourceId)) return d5d6Client.name();
         if (manbenClient.id().equals(sourceId)) return manbenClient.name();
+        if (manhuazhanClient.id().equals(sourceId)) return manhuazhanClient.name();
+        if (bbyinClient.id().equals(sourceId)) return bbyinClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(sourceId)) return item.name;
         }
@@ -2360,6 +2383,8 @@ public class MainActivity extends Activity {
         if (hanman18Client.id().equals(selectedSourceId) && hanman18Enabled) return hanman18Client;
         if (d5d6Client.id().equals(selectedSourceId) && d5d6Enabled) return d5d6Client;
         if (manbenClient.id().equals(selectedSourceId) && manbenEnabled) return manbenClient;
+        if (manhuazhanClient.id().equals(selectedSourceId) && manhuazhanEnabled) return manhuazhanClient;
+        if (bbyinClient.id().equals(selectedSourceId) && bbyinEnabled) return bbyinClient;
         List<ComicSource> enabled = enabledBuiltinSources();
         if (enabled.isEmpty()) return null;
         selectedSourceId = enabled.get(0).id();
@@ -2377,6 +2402,8 @@ public class MainActivity extends Activity {
         if (hanman18Enabled) sources.add(hanman18Client);
         if (d5d6Enabled) sources.add(d5d6Client);
         if (manbenEnabled) sources.add(manbenClient);
+        if (manhuazhanEnabled) sources.add(manhuazhanClient);
+        if (bbyinEnabled) sources.add(bbyinClient);
         return sources;
     }
 
@@ -2392,6 +2419,8 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(hanman18Client.id() + ":")) return hanman18Client;
         if (comicId != null && comicId.startsWith(d5d6Client.id() + ":")) return d5d6Client;
         if (comicId != null && comicId.startsWith(manbenClient.id() + ":")) return manbenClient;
+        if (comicId != null && comicId.startsWith(manhuazhanClient.id() + ":")) return manhuazhanClient;
+        if (comicId != null && comicId.startsWith(bbyinClient.id() + ":")) return bbyinClient;
         return sourceClient;
     }
 
@@ -2411,6 +2440,8 @@ public class MainActivity extends Activity {
         if (hanman18Client.id().equals(sourceId)) return hanman18Client;
         if (d5d6Client.id().equals(sourceId)) return d5d6Client;
         if (manbenClient.id().equals(sourceId)) return manbenClient;
+        if (manhuazhanClient.id().equals(sourceId)) return manhuazhanClient;
+        if (bbyinClient.id().equals(sourceId)) return bbyinClient;
         return sourceClient;
     }
 
@@ -2940,6 +2971,7 @@ public class MainActivity extends Activity {
             if (code >= 400) {
                 throw new IOException("Image HTTP " + code + ": " + imageUrl + "; referer=" + referer);
             }
+            requireImageContentType(imageUrl, connection.getContentType());
             try (InputStream stream = connection.getInputStream()) {
                 writeReaderImageCache(cached, stream);
             }
@@ -3082,6 +3114,7 @@ public class MainActivity extends Activity {
                 int code = connection.getResponseCode();
                 if (code >= 400) throw new IOException("Image HTTP " + code + ": " + imageUrl + "; referer=" + referer);
                 String contentType = clean(connection.getContentType(), "");
+                requireImageContentType(imageUrl, contentType);
                 try (InputStream stream = connection.getInputStream()) {
                     byte[] bytes = readAllBytes(stream);
                     Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
@@ -3118,6 +3151,7 @@ public class MainActivity extends Activity {
                 connection.setConnectTimeout(10000);
                 connection.setReadTimeout(20000);
                 applyImageHeaders(connection, refererForImage(imageUrl));
+                requireImageContentType(imageUrl, connection.getContentType());
                 try (InputStream stream = connection.getInputStream()) {
                     writeImageCache(cached, readAllBytes(stream));
                 }
@@ -3144,6 +3178,9 @@ public class MainActivity extends Activity {
     }
 
     private String refererForImage(String imageUrl, String pageReferer) {
+        if (isFiveUmImage(imageUrl)) {
+            return TextUtils.isEmpty(pageReferer) ? manhuazhanConfig.referer : pageReferer;
+        }
         if (imageUrl != null && (imageUrl.contains(aikanConfig.domain) || imageUrl.contains("qrqrs.com"))) return aikanConfig.referer;
         if (imageUrl != null && (imageUrl.contains(gmhConfig.domain) || imageUrl.contains("g-mh.online") || imageUrl.contains("6wm.top"))) return gmhConfig.referer;
         if (imageUrl != null && (imageUrl.contains(mkzhanConfig.domain) || imageUrl.contains("mkzcdn.com"))) return mkzhanConfig.referer;
@@ -3157,6 +3194,20 @@ public class MainActivity extends Activity {
             return TextUtils.isEmpty(pageReferer) ? manbenConfig.referer : pageReferer;
         }
         return baoziConfig.referer;
+    }
+
+    private boolean isFiveUmImage(String imageUrl) {
+        String host = TextUtils.isEmpty(imageUrl) ? "" : Uri.parse(imageUrl).getHost();
+        if (host == null) return false;
+        host = host.toLowerCase(Locale.US);
+        return "5um.net".equals(host) || host.endsWith(".5um.net");
+    }
+
+    private void requireImageContentType(String imageUrl, String contentType) throws IOException {
+        if (isFiveUmImage(imageUrl)
+                && (contentType == null || !contentType.toLowerCase(Locale.US).startsWith("image/"))) {
+            throw new IOException("Unexpected image content type: " + contentType + "; url=" + imageUrl);
+        }
     }
 
     private String currentFilterLabel() {
@@ -3394,6 +3445,8 @@ public class MainActivity extends Activity {
         if (hanman18Enabled) names.add(hanman18Client.name());
         if (d5d6Enabled) names.add(d5d6Client.name());
         if (manbenEnabled) names.add(manbenClient.name());
+        if (manhuazhanEnabled) names.add(manhuazhanClient.name());
+        if (bbyinEnabled) names.add(bbyinClient.name());
         return names;
     }
 
@@ -3407,6 +3460,8 @@ public class MainActivity extends Activity {
         if (hanman18Client.id().equals(selectedSourceId)) return hanman18Client.name();
         if (d5d6Client.id().equals(selectedSourceId)) return d5d6Client.name();
         if (manbenClient.id().equals(selectedSourceId)) return manbenClient.name();
+        if (manhuazhanClient.id().equals(selectedSourceId)) return manhuazhanClient.name();
+        if (bbyinClient.id().equals(selectedSourceId)) return bbyinClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(selectedSourceId)) return item.name;
         }
@@ -3423,6 +3478,8 @@ public class MainActivity extends Activity {
         if (hanman18Client.name().equals(name)) return hanman18Client.id();
         if (d5d6Client.name().equals(name)) return d5d6Client.id();
         if (manbenClient.name().equals(name)) return manbenClient.id();
+        if (manhuazhanClient.name().equals(name)) return manhuazhanClient.id();
+        if (bbyinClient.name().equals(name)) return bbyinClient.id();
         for (ComicModels.Source item : customSources) {
             if (item.name.equals(name)) return item.id;
         }
@@ -3522,6 +3579,11 @@ public class MainActivity extends Activity {
             grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "受欢迎的"), true));
             return grid;
         }
+        if (manhuazhanClient.id().equals(selectedSourceId) || bbyinClient.id().equals(selectedSourceId)) {
+            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
+            grid.addView(searchTagColumn(categories, true));
+            return grid;
+        }
         if (manhuaguiClient.id().equals(selectedSourceId)) {
             List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
             grid.addView(searchTagColumn(categories, true), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
@@ -3564,6 +3626,10 @@ public class MainActivity extends Activity {
     }
 
     private String codeForRegion(String value) {
+        if ((manhuazhanClient != null && manhuazhanClient.id().equals(selectedSourceId))
+                || (bbyinClient != null && bbyinClient.id().equals(selectedSourceId))) {
+            return ALL_TAG.equals(value) ? "all" : value;
+        }
         if ("韩漫".equals(value)) return "kr";
         if ("热门".equals(value)) return "hots";
         if ("日漫".equals(value)) return "jp";
@@ -4206,6 +4272,8 @@ public class MainActivity extends Activity {
         sources.put(hanman18Config.withEnabled(hanman18Enabled).toJson());
         sources.put(d5d6Config.withEnabled(d5d6Enabled).toJson());
         sources.put(manbenConfig.withEnabled(manbenEnabled).toJson());
+        sources.put(manhuazhanConfig.withEnabled(manhuazhanEnabled).toJson());
+        sources.put(bbyinConfig.withEnabled(bbyinEnabled).toJson());
         root.put("sources", sources);
         JSONArray custom = new JSONArray();
         for (ComicModels.Source item : customSources) {
@@ -4261,6 +4329,12 @@ public class MainActivity extends Activity {
                 } else if (manbenConfig.id.equals(id)) {
                     manbenConfig = SourceConfig.fromJson(item, SourceConfig.manben(true));
                     manbenEnabled = manbenConfig.enabled;
+                } else if (manhuazhanConfig.id.equals(id)) {
+                    manhuazhanConfig = SourceConfig.fromJson(item, SourceConfig.manhuazhan(true));
+                    manhuazhanEnabled = manhuazhanConfig.enabled;
+                } else if (bbyinConfig.id.equals(id)) {
+                    bbyinConfig = SourceConfig.fromJson(item, SourceConfig.bbyin(true));
+                    bbyinEnabled = bbyinConfig.enabled;
                 }
             }
         }
@@ -4278,6 +4352,8 @@ public class MainActivity extends Activity {
                 if (hanman18Config.id.equals(id)) hanman18Enabled = item.optBoolean("enabled", true);
                 if (d5d6Config.id.equals(id)) d5d6Enabled = item.optBoolean("enabled", true);
                 if (manbenConfig.id.equals(id)) manbenEnabled = item.optBoolean("enabled", true);
+                if (manhuazhanConfig.id.equals(id)) manhuazhanEnabled = item.optBoolean("enabled", true);
+                if (bbyinConfig.id.equals(id)) bbyinEnabled = item.optBoolean("enabled", true);
             }
         }
         rebuildSourceClients();
@@ -4324,6 +4400,8 @@ public class MainActivity extends Activity {
         hanman18Client = new Hanman18ComicSource(hanman18Config.withEnabled(hanman18Enabled));
         d5d6Client = new D5d6ComicSource(d5d6Config.withEnabled(d5d6Enabled));
         manbenClient = new ManbenComicSource(manbenConfig.withEnabled(manbenEnabled));
+        manhuazhanClient = new FiveUmComicSource(manhuazhanConfig.withEnabled(manhuazhanEnabled));
+        bbyinClient = new FiveUmComicSource(bbyinConfig.withEnabled(bbyinEnabled));
     }
 
     private String readHistoryText() {
@@ -4348,6 +4426,8 @@ public class MainActivity extends Activity {
         hanman18Enabled = prefs.getBoolean("source.hanman18.enabled", true);
         d5d6Enabled = prefs.getBoolean("source.d5d6.enabled", true);
         manbenEnabled = prefs.getBoolean("source.manben.enabled", true);
+        manhuazhanEnabled = prefs.getBoolean("source.manhuazhan.enabled", true);
+        bbyinEnabled = prefs.getBoolean("source.bbyin.enabled", true);
         restoreSourceConfigs(prefs.getString("source.configs", ""));
         rebuildSourceClients();
         chapterDesc = prefs.getBoolean("chapter.desc", false);
@@ -4431,6 +4511,8 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.hanman18.enabled", hanman18Enabled);
         editor.putBoolean("source.d5d6.enabled", d5d6Enabled);
         editor.putBoolean("source.manben.enabled", manbenEnabled);
+        editor.putBoolean("source.manhuazhan.enabled", manhuazhanEnabled);
+        editor.putBoolean("source.bbyin.enabled", bbyinEnabled);
         editor.putString("source.configs", encodeSourceConfigs());
         editor.putBoolean("chapter.desc", chapterDesc);
         editor.putInt("theme.mode", themeMode);
@@ -4478,6 +4560,8 @@ public class MainActivity extends Activity {
             hanman18Config = SourceConfig.hanman18(hanman18Enabled);
             d5d6Config = SourceConfig.d5d6(d5d6Enabled);
             manbenConfig = SourceConfig.manben(manbenEnabled);
+            manhuazhanConfig = SourceConfig.manhuazhan(manhuazhanEnabled);
+            bbyinConfig = SourceConfig.bbyin(bbyinEnabled);
             return;
         }
         try {
@@ -4513,6 +4597,12 @@ public class MainActivity extends Activity {
                 } else if (SourceConfig.manben(true).id.equals(id)) {
                     manbenConfig = SourceConfig.fromJson(item, SourceConfig.manben(manbenEnabled));
                     manbenEnabled = manbenConfig.enabled;
+                } else if (SourceConfig.manhuazhan(true).id.equals(id)) {
+                    manhuazhanConfig = SourceConfig.fromJson(item, SourceConfig.manhuazhan(manhuazhanEnabled));
+                    manhuazhanEnabled = manhuazhanConfig.enabled;
+                } else if (SourceConfig.bbyin(true).id.equals(id)) {
+                    bbyinConfig = SourceConfig.fromJson(item, SourceConfig.bbyin(bbyinEnabled));
+                    bbyinEnabled = bbyinConfig.enabled;
                 }
             }
         } catch (JSONException ignored) {
@@ -4525,6 +4615,8 @@ public class MainActivity extends Activity {
             hanman18Config = SourceConfig.hanman18(hanman18Enabled);
             d5d6Config = SourceConfig.d5d6(d5d6Enabled);
             manbenConfig = SourceConfig.manben(manbenEnabled);
+            manhuazhanConfig = SourceConfig.manhuazhan(manhuazhanEnabled);
+            bbyinConfig = SourceConfig.bbyin(bbyinEnabled);
         }
     }
 
@@ -4540,6 +4632,8 @@ public class MainActivity extends Activity {
             array.put(hanman18Config.withEnabled(hanman18Enabled).toJson());
             array.put(d5d6Config.withEnabled(d5d6Enabled).toJson());
             array.put(manbenConfig.withEnabled(manbenEnabled).toJson());
+            array.put(manhuazhanConfig.withEnabled(manhuazhanEnabled).toJson());
+            array.put(bbyinConfig.withEnabled(bbyinEnabled).toJson());
             return array.toString();
         } catch (JSONException ignored) {
             return "[]";
