@@ -383,7 +383,7 @@ Expected: `rg` 无匹配；`git diff --check` 退出 0。
 
 Expected: `BUILD SUCCESSFUL`；若单元测试目录为空，`testReleaseUnitTest` 可显示 `NO-SOURCE`。
 
-- [ ] **Step 4: 检查最终提交和工作区**
+- [x] **Step 4: 检查最终提交和工作区**
 
 ```powershell
 git status --short --branch
