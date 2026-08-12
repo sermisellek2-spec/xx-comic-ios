@@ -249,6 +249,20 @@ public class SourceConfig {
         return fiveUm("bbyin", "比卡漫画", "bbyin.com", "https://bbyin.com", enabled);
     }
 
+    public static SourceConfig antbyw(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        try {
+            routes.put("latest", "/plugin.php?id=jameson_manhua&c=index&a=ku");
+            routes.put("search", "/plugin.php?id=jameson_manhua&a=search&c=index&keyword={keyword}");
+            routes.put("categoryIndex", "/plugin.php?id=jameson_manhua&a=ku");
+            routes.put("category", "/plugin.php?id=jameson_manhua&c=index&a=ku");
+            routes.put("detail", "/plugin.php?id=jameson_manhua&c=index&a=bofang&kuid={comicId}");
+            routes.put("chapter", "{chapterUrl}");
+        } catch (JSONException ignored) {
+        }
+        return new SourceConfig("antbyw", "tapmanga搬运", "www.antbyw.com", "https://www.antbyw.com", "https://www.antbyw.com/", "", "", "", "", enabled, routes, new JSONObject());
+    }
+
     private static SourceConfig fiveUm(String id, String name, String domain, String baseUrl, boolean enabled) {
         JSONObject routes = new JSONObject();
         try {

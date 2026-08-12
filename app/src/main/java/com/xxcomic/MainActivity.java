@@ -44,6 +44,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.xxcomic.source.BaoziComicSource;
+import com.xxcomic.source.AntbywComicSource;
 import com.xxcomic.source.AikanComicSource;
 import com.xxcomic.source.ComicModels;
 import com.xxcomic.source.ComicSource;
@@ -126,7 +127,7 @@ public class MainActivity extends Activity {
     private static final String IMAGE_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private final Handler main = new Handler(Looper.getMainLooper());
     // 按模块拆分线程池，互不阻塞：搜索中切到收藏页，封面图走 imageIo 不被搜索阻塞
-    private final ExecutorService searchIo = Executors.newFixedThreadPool(11);
+    private final ExecutorService searchIo = Executors.newFixedThreadPool(12);
     private final ExecutorService detailIo = Executors.newFixedThreadPool(2);
     private final ExecutorService imageIo = Executors.newFixedThreadPool(4);
     private final ExecutorService readerPrefetchIo = Executors.newFixedThreadPool(2);
@@ -158,6 +159,7 @@ public class MainActivity extends Activity {
     private ComicSource manbenClient;
     private ComicSource manhuazhanClient;
     private ComicSource bbyinClient;
+    private ComicSource antbywClient;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
     private SourceConfig aikanConfig = SourceConfig.aikan(true);
     private SourceConfig gmhConfig = SourceConfig.gmh(true);
@@ -169,6 +171,7 @@ public class MainActivity extends Activity {
     private SourceConfig manbenConfig = SourceConfig.manben(true);
     private SourceConfig manhuazhanConfig = SourceConfig.manhuazhan(true);
     private SourceConfig bbyinConfig = SourceConfig.bbyin(true);
+    private SourceConfig antbywConfig = SourceConfig.antbyw(true);
     private final List<ComicModels.ComicSummary> searchResults = new ArrayList<>();
     private final List<ComicModels.ComicSummary> globalSearchResults = new ArrayList<>();
     private final List<String> globalSearchHistory = new ArrayList<>();
@@ -214,6 +217,7 @@ public class MainActivity extends Activity {
     private boolean manbenEnabled = true;
     private boolean manhuazhanEnabled = true;
     private boolean bbyinEnabled = true;
+    private boolean antbywEnabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
     private boolean readerLeftHand = false;
@@ -884,6 +888,13 @@ public class MainActivity extends Activity {
         addSourceCard(enabledSources, disabledSources, bbyinEnabled, sourceCard(bbyinConfig.name, bbyinConfig.domain, bbyinEnabled, () -> {
             bbyinEnabled = !bbyinEnabled;
             bbyinConfig = bbyinConfig.withEnabled(bbyinEnabled);
+            rebuildSourceClients();
+            saveLocalState();
+            showTab(2);
+        }));
+        addSourceCard(enabledSources, disabledSources, antbywEnabled, sourceCard(antbywConfig.name, antbywConfig.domain, antbywEnabled, () -> {
+            antbywEnabled = !antbywEnabled;
+            antbywConfig = antbywConfig.withEnabled(antbywEnabled);
             rebuildSourceClients();
             saveLocalState();
             showTab(2);
@@ -2386,6 +2397,7 @@ public class MainActivity extends Activity {
         if (manbenClient.id().equals(sourceId)) return manbenClient.name();
         if (manhuazhanClient.id().equals(sourceId)) return manhuazhanClient.name();
         if (bbyinClient.id().equals(sourceId)) return bbyinClient.name();
+        if (antbywClient.id().equals(sourceId)) return antbywClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(sourceId)) return item.name;
         }
@@ -2404,6 +2416,7 @@ public class MainActivity extends Activity {
         if (manbenClient.id().equals(selectedSourceId) && manbenEnabled) return manbenClient;
         if (manhuazhanClient.id().equals(selectedSourceId) && manhuazhanEnabled) return manhuazhanClient;
         if (bbyinClient.id().equals(selectedSourceId) && bbyinEnabled) return bbyinClient;
+        if (antbywClient.id().equals(selectedSourceId) && antbywEnabled) return antbywClient;
         List<ComicSource> enabled = enabledBuiltinSources();
         if (enabled.isEmpty()) return null;
         selectedSourceId = enabled.get(0).id();
@@ -2423,6 +2436,7 @@ public class MainActivity extends Activity {
         if (manbenEnabled) sources.add(manbenClient);
         if (manhuazhanEnabled) sources.add(manhuazhanClient);
         if (bbyinEnabled) sources.add(bbyinClient);
+        if (antbywEnabled) sources.add(antbywClient);
         return sources;
     }
 
@@ -2440,6 +2454,7 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(manbenClient.id() + ":")) return manbenClient;
         if (comicId != null && comicId.startsWith(manhuazhanClient.id() + ":")) return manhuazhanClient;
         if (comicId != null && comicId.startsWith(bbyinClient.id() + ":")) return bbyinClient;
+        if (comicId != null && comicId.startsWith(antbywClient.id() + ":")) return antbywClient;
         return sourceClient;
     }
 
@@ -2461,6 +2476,7 @@ public class MainActivity extends Activity {
         if (manbenClient.id().equals(sourceId)) return manbenClient;
         if (manhuazhanClient.id().equals(sourceId)) return manhuazhanClient;
         if (bbyinClient.id().equals(sourceId)) return bbyinClient;
+        if (antbywClient.id().equals(sourceId)) return antbywClient;
         return sourceClient;
     }
 
@@ -3212,6 +3228,7 @@ public class MainActivity extends Activity {
         if (imageUrl != null && (imageUrl.contains(manbenConfig.domain) || imageUrl.contains("cdndm5.com"))) {
             return TextUtils.isEmpty(pageReferer) ? manbenConfig.referer : pageReferer;
         }
+        if (imageUrl != null && imageUrl.contains("antbyw.com")) return antbywConfig.referer;
         return baoziConfig.referer;
     }
 
@@ -3466,6 +3483,7 @@ public class MainActivity extends Activity {
         if (manbenEnabled) names.add(manbenClient.name());
         if (manhuazhanEnabled) names.add(manhuazhanClient.name());
         if (bbyinEnabled) names.add(bbyinClient.name());
+        if (antbywEnabled) names.add(antbywClient.name());
         return names;
     }
 
@@ -3481,6 +3499,7 @@ public class MainActivity extends Activity {
         if (manbenClient.id().equals(selectedSourceId)) return manbenClient.name();
         if (manhuazhanClient.id().equals(selectedSourceId)) return manhuazhanClient.name();
         if (bbyinClient.id().equals(selectedSourceId)) return bbyinClient.name();
+        if (antbywClient.id().equals(selectedSourceId)) return antbywClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(selectedSourceId)) return item.name;
         }
@@ -3499,6 +3518,7 @@ public class MainActivity extends Activity {
         if (manbenClient.name().equals(name)) return manbenClient.id();
         if (manhuazhanClient.name().equals(name)) return manhuazhanClient.id();
         if (bbyinClient.name().equals(name)) return bbyinClient.id();
+        if (antbywClient.name().equals(name)) return antbywClient.id();
         for (ComicModels.Source item : customSources) {
             if (item.name.equals(name)) return item.id;
         }
@@ -3603,6 +3623,12 @@ public class MainActivity extends Activity {
             grid.addView(searchTagColumn(categories, true));
             return grid;
         }
+        if (antbywClient.id().equals(selectedSourceId)) {
+            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
+            grid.addView(searchTagRow(Arrays.asList("上架时间", "更新时间", "阅读量", "收藏量"), false), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+            grid.addView(searchTagColumn(categories, true));
+            return grid;
+        }
         if (manhuaguiClient.id().equals(selectedSourceId)) {
             List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
             grid.addView(searchTagColumn(categories, true), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
@@ -3649,6 +3675,9 @@ public class MainActivity extends Activity {
                 || (bbyinClient != null && bbyinClient.id().equals(selectedSourceId))) {
             return ALL_TAG.equals(value) ? "all" : value;
         }
+        if (antbywClient != null && antbywClient.id().equals(selectedSourceId)) {
+            return ALL_TAG.equals(value) ? "all" : value;
+        }
         if ("韩漫".equals(value)) return "kr";
         if ("热门".equals(value)) return "hots";
         if ("日漫".equals(value)) return "jp";
@@ -3674,6 +3703,13 @@ public class MainActivity extends Activity {
     }
 
     private String codeForState(String value) {
+        if (antbywClient != null && antbywClient.id().equals(selectedSourceId)) {
+            if ("上架时间".equals(value)) return "all";
+            if ("更新时间".equals(value)) return "edittime";
+            if ("阅读量".equals(value)) return "views";
+            if ("收藏量".equals(value)) return "favores";
+            return "all";
+        }
         if ("\u8fde\u8f7d".equals(value) || "\u8fde\u8f7d\u4e2d".equals(value)) return "serial";
         if ("\u5b8c\u7ed3".equals(value) || "\u5df2\u5b8c\u7ed3".equals(value) || "\u5df2\u5b8c\u6210".equals(value)) return "pub";
         if ("连载".equals(value)) return "serial";
@@ -4507,6 +4543,7 @@ public class MainActivity extends Activity {
         sources.put(manbenConfig.withEnabled(manbenEnabled).toJson());
         sources.put(manhuazhanConfig.withEnabled(manhuazhanEnabled).toJson());
         sources.put(bbyinConfig.withEnabled(bbyinEnabled).toJson());
+        sources.put(antbywConfig.withEnabled(antbywEnabled).toJson());
         root.put("sources", sources);
         JSONArray custom = new JSONArray();
         for (ComicModels.Source item : customSources) {
@@ -4568,6 +4605,9 @@ public class MainActivity extends Activity {
                 } else if (bbyinConfig.id.equals(id)) {
                     bbyinConfig = SourceConfig.fromJson(item, SourceConfig.bbyin(true));
                     bbyinEnabled = bbyinConfig.enabled;
+                } else if (antbywConfig.id.equals(id)) {
+                    antbywConfig = SourceConfig.fromJson(item, SourceConfig.antbyw(true));
+                    antbywEnabled = antbywConfig.enabled;
                 }
             }
         }
@@ -4587,6 +4627,7 @@ public class MainActivity extends Activity {
                 if (manbenConfig.id.equals(id)) manbenEnabled = item.optBoolean("enabled", true);
                 if (manhuazhanConfig.id.equals(id)) manhuazhanEnabled = item.optBoolean("enabled", true);
                 if (bbyinConfig.id.equals(id)) bbyinEnabled = item.optBoolean("enabled", true);
+                if (antbywConfig.id.equals(id)) antbywEnabled = item.optBoolean("enabled", true);
             }
         }
         rebuildSourceClients();
@@ -4635,6 +4676,7 @@ public class MainActivity extends Activity {
         manbenClient = new ManbenComicSource(manbenConfig.withEnabled(manbenEnabled));
         manhuazhanClient = new FiveUmComicSource(manhuazhanConfig.withEnabled(manhuazhanEnabled));
         bbyinClient = new FiveUmComicSource(bbyinConfig.withEnabled(bbyinEnabled));
+        antbywClient = new AntbywComicSource(antbywConfig.withEnabled(antbywEnabled));
     }
 
     private String readHistoryText() {
@@ -4661,6 +4703,7 @@ public class MainActivity extends Activity {
         manbenEnabled = prefs.getBoolean("source.manben.enabled", true);
         manhuazhanEnabled = prefs.getBoolean("source.manhuazhan.enabled", true);
         bbyinEnabled = prefs.getBoolean("source.bbyin.enabled", true);
+        antbywEnabled = prefs.getBoolean("source.antbyw.enabled", true);
         restoreSourceConfigs(prefs.getString("source.configs", ""));
         rebuildSourceClients();
         chapterDesc = prefs.getBoolean("chapter.desc", false);
@@ -4746,6 +4789,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.manben.enabled", manbenEnabled);
         editor.putBoolean("source.manhuazhan.enabled", manhuazhanEnabled);
         editor.putBoolean("source.bbyin.enabled", bbyinEnabled);
+        editor.putBoolean("source.antbyw.enabled", antbywEnabled);
         editor.putString("source.configs", encodeSourceConfigs());
         editor.putBoolean("chapter.desc", chapterDesc);
         editor.putInt("theme.mode", themeMode);
@@ -4795,6 +4839,7 @@ public class MainActivity extends Activity {
             manbenConfig = SourceConfig.manben(manbenEnabled);
             manhuazhanConfig = SourceConfig.manhuazhan(manhuazhanEnabled);
             bbyinConfig = SourceConfig.bbyin(bbyinEnabled);
+            antbywConfig = SourceConfig.antbyw(antbywEnabled);
             return;
         }
         try {
@@ -4836,6 +4881,9 @@ public class MainActivity extends Activity {
                 } else if (SourceConfig.bbyin(true).id.equals(id)) {
                     bbyinConfig = SourceConfig.fromJson(item, SourceConfig.bbyin(bbyinEnabled));
                     bbyinEnabled = bbyinConfig.enabled;
+                } else if (SourceConfig.antbyw(true).id.equals(id)) {
+                    antbywConfig = SourceConfig.fromJson(item, SourceConfig.antbyw(antbywEnabled));
+                    antbywEnabled = antbywConfig.enabled;
                 }
             }
         } catch (JSONException ignored) {
@@ -4850,6 +4898,7 @@ public class MainActivity extends Activity {
             manbenConfig = SourceConfig.manben(manbenEnabled);
             manhuazhanConfig = SourceConfig.manhuazhan(manhuazhanEnabled);
             bbyinConfig = SourceConfig.bbyin(bbyinEnabled);
+            antbywConfig = SourceConfig.antbyw(antbywEnabled);
         }
     }
 
@@ -4867,6 +4916,7 @@ public class MainActivity extends Activity {
             array.put(manbenConfig.withEnabled(manbenEnabled).toJson());
             array.put(manhuazhanConfig.withEnabled(manhuazhanEnabled).toJson());
             array.put(bbyinConfig.withEnabled(bbyinEnabled).toJson());
+            array.put(antbywConfig.withEnabled(antbywEnabled).toJson());
             return array.toString();
         } catch (JSONException ignored) {
             return "[]";
