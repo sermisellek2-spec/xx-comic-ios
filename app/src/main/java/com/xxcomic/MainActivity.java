@@ -18,6 +18,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -73,6 +74,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,6 +118,11 @@ public class MainActivity extends Activity {
     private static final int IMPORT_SOURCES_REQUEST = 1001;
     private static final int EXPORT_SOURCES_REQUEST = 1002;
     private static final int EXPORT_LOGS_REQUEST = 1003;
+    private static final int INSTALL_PACKAGES_REQUEST = 1004;
+    private static final String UPDATE_METADATA_URL = "https://weifeng.cloud/xx-comic/releases/android-release.json";
+    private static final String UPDATE_APK_URL = "https://weifeng.cloud/xx-comic/releases/xx-comic.apk";
+    private static final String UPDATE_APK_FILE_NAME = "xx-comic.apk";
+    private static final String APK_MIME_TYPE = "application/vnd.android.package-archive";
     private static final String IMAGE_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private final Handler main = new Handler(Looper.getMainLooper());
     // 按模块拆分线程池，互不阻塞：搜索中切到收藏页，封面图走 imageIo 不被搜索阻塞
@@ -236,6 +243,8 @@ public class MainActivity extends Activity {
     private boolean standaloneSearchResultsMode = false;
     private boolean globalSearchLoading = false;
     private boolean activityDestroyed = false;
+    private boolean updateRunning = false;
+    private File pendingUpdateApk;
     private boolean pageLoading = false;
     private Runnable pageLoadingBackAction;
     private Runnable detailBackAction;
@@ -347,6 +356,14 @@ public class MainActivity extends Activity {
             writeExportSourceConfig(data.getData());
         } else if (requestCode == EXPORT_LOGS_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             writeExportLogs(data.getData());
+        } else if (requestCode == INSTALL_PACKAGES_REQUEST && pendingUpdateApk != null) {
+            if (canInstallPackages()) {
+                openPackageInstaller(pendingUpdateApk);
+            } else {
+                updateRunning = false;
+                pendingUpdateApk = null;
+                showInfo("无法安装更新", "需要允许 XX Comic 安装未知应用。");
+            }
         }
     }
 
@@ -909,7 +926,9 @@ public class MainActivity extends Activity {
         group.addView(UIHelpers.divider(this));
         group.addView(menuItemWithIcon(R.drawable.ic_lightning, "错误日志", errorLogSummary(), () -> showErrorLogs()));
         group.addView(UIHelpers.divider(this));
-        group.addView(menuItemWithIcon(R.drawable.ic_profile, "关于 App", "1.0.3", () -> showInfo("关于 App", "XX Comic 已接入多个漫画站源，支持搜索、详情、阅读图片和本地缓存。")));
+        group.addView(menuItemWithIcon(R.drawable.ic_auto, "版本更新", installedVersionLabel(), this::checkForUpdate));
+        group.addView(UIHelpers.divider(this));
+        group.addView(menuItemWithIcon(R.drawable.ic_profile, "关于 App", BuildConfig.VERSION_NAME, () -> showInfo("关于 App", "XX Comic 已接入多个漫画站源，支持搜索、详情、阅读图片和本地缓存。")));
         page.addView(group);
     }
 
@@ -4011,6 +4030,220 @@ public class MainActivity extends Activity {
 
     private void showInfo(String title, String message) {
         styledDialog(title, message, "知道了", null, null, null);
+    }
+
+    private String installedVersionLabel() {
+        return BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")";
+    }
+
+    private void checkForUpdate() {
+        if (updateRunning) {
+            showToast("正在处理版本更新");
+            return;
+        }
+        updateRunning = true;
+        showToast("正在检查更新");
+        miscIo.execute(() -> {
+            try {
+                AppRelease release = fetchAppRelease();
+                postMainIfAlive(() -> {
+                    updateRunning = false;
+                    boolean same = BuildConfig.VERSION_NAME.equals(release.versionName)
+                            && BuildConfig.VERSION_CODE == release.versionCode;
+                    if (same) {
+                        styledDialog(
+                                "当前已是最新版本",
+                                "服务器安装包与当前版本一致，是否强制重新安装？",
+                                "强制更新",
+                                () -> startUpdateDownload(release),
+                                "取消",
+                                null).show();
+                    } else {
+                        startUpdateDownload(release);
+                    }
+                });
+            } catch (Exception error) {
+                postUpdateFailure("检查更新失败", error);
+            }
+        });
+    }
+
+    private AppRelease fetchAppRelease() throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) new URL(UPDATE_METADATA_URL).openConnection();
+        connection.setInstanceFollowRedirects(true);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(15000);
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("User-Agent", IMAGE_USER_AGENT);
+        try {
+            int code = connection.getResponseCode();
+            if (code < 200 || code >= 300) throw new IOException("HTTP " + code);
+            JSONObject object;
+            try (InputStream stream = connection.getInputStream()) {
+                object = new JSONObject(new String(readAllBytes(stream), "UTF-8"));
+            }
+            String versionName = object.optString("versionName", "");
+            int versionCode = object.optInt("versionCode", 0);
+            long size = object.optLong("size", 0L);
+            String sha256 = object.optString("sha256", "").toLowerCase(Locale.US);
+            if (!versionName.matches("[0-9]+(?:\\.[0-9]+){2}")
+                    || versionCode < 1
+                    || size < 1L
+                    || !sha256.matches("[0-9a-f]{64}")) {
+                throw new IOException("更新元数据无效");
+            }
+            return new AppRelease(versionName, versionCode, size, sha256);
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    private void startUpdateDownload(AppRelease release) {
+        if (updateRunning) {
+            showToast("正在处理版本更新");
+            return;
+        }
+        updateRunning = true;
+        final AlertDialog progressDialog = styledDialog(
+                "正在下载更新",
+                "准备下载 " + release.versionName + " (" + release.versionCode + ")",
+                null,
+                null,
+                null,
+                null);
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        miscIo.execute(() -> {
+            try {
+                File apk = downloadAndVerifyUpdate(release, progress -> postMainIfAlive(() -> {
+                    progressDialog.setMessage("已下载 " + progress + "%");
+                }));
+                postMainIfAlive(() -> {
+                    progressDialog.dismiss();
+                    installUpdate(apk);
+                });
+            } catch (Exception error) {
+                postMainIfAlive(progressDialog::dismiss);
+                postUpdateFailure("下载更新失败", error);
+            }
+        });
+    }
+
+    private File downloadAndVerifyUpdate(AppRelease release, UpdateProgress listener) throws Exception {
+        File directory = new File(getCacheDir(), "app-update");
+        if (!directory.exists() && !directory.mkdirs()) throw new IOException("无法创建更新缓存");
+        File apk = new File(directory, UPDATE_APK_FILE_NAME);
+        File part = new File(directory, UPDATE_APK_FILE_NAME + ".part");
+        if (part.exists() && !part.delete()) throw new IOException("无法清理旧下载");
+        HttpURLConnection connection = (HttpURLConnection) new URL(UPDATE_APK_URL).openConnection();
+        connection.setInstanceFollowRedirects(true);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(30000);
+        connection.setRequestProperty("Accept", APK_MIME_TYPE);
+        connection.setRequestProperty("User-Agent", IMAGE_USER_AGENT);
+        try {
+            int code = connection.getResponseCode();
+            if (code < 200 || code >= 300) throw new IOException("HTTP " + code);
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            long total = 0L;
+            int reported = -1;
+            try (InputStream input = connection.getInputStream(); FileOutputStream output = new FileOutputStream(part)) {
+                byte[] buffer = new byte[32768];
+                int read;
+                while ((read = input.read(buffer)) != -1) {
+                    if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("下载已取消");
+                    output.write(buffer, 0, read);
+                    digest.update(buffer, 0, read);
+                    total += read;
+                    int percent = (int) Math.min(100L, total * 100L / release.size);
+                    if (percent != reported) {
+                        reported = percent;
+                        listener.onProgress(percent);
+                    }
+                }
+                output.getFD().sync();
+            }
+            String actualHash = hex(digest.digest());
+            if (total != release.size || !actualHash.equals(release.sha256)) {
+                throw new IOException("安装包校验失败");
+            }
+            if (apk.exists() && !apk.delete()) throw new IOException("无法替换旧安装包");
+            if (!part.renameTo(apk)) throw new IOException("无法保存安装包");
+            return apk;
+        } catch (Exception error) {
+            part.delete();
+            throw error;
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    private void installUpdate(File apk) {
+        pendingUpdateApk = apk;
+        if (!canInstallPackages()) {
+            try {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:" + getPackageName()));
+                startActivityForResult(intent, INSTALL_PACKAGES_REQUEST);
+            } catch (Exception error) {
+                updateRunning = false;
+                pendingUpdateApk = null;
+                showInfo("无法安装更新", clean(error.getMessage(), "无法打开安装权限设置"));
+            }
+            return;
+        }
+        openPackageInstaller(apk);
+    }
+
+    private boolean canInstallPackages() {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.O || getPackageManager().canRequestPackageInstalls();
+    }
+
+    private void openPackageInstaller(File apk) {
+        try {
+            Uri uri = Uri.parse("content://" + getPackageName() + ".updates/" + UPDATE_APK_FILE_NAME);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, APK_MIME_TYPE);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(intent);
+        } catch (Exception error) {
+            showInfo("无法安装更新", clean(error.getMessage(), "无法打开系统安装程序"));
+        } finally {
+            updateRunning = false;
+            pendingUpdateApk = null;
+        }
+    }
+
+    private void postUpdateFailure(String title, Exception error) {
+        postMainIfAlive(() -> {
+            updateRunning = false;
+            appendErrorLog(title, error);
+            showInfo(title, clean(error.getMessage(), "请检查网络后重试"));
+        });
+    }
+
+    private String hex(byte[] bytes) {
+        StringBuilder result = new StringBuilder(bytes.length * 2);
+        for (byte value : bytes) result.append(String.format(Locale.US, "%02x", value & 0xff));
+        return result.toString();
+    }
+
+    private interface UpdateProgress {
+        void onProgress(int percent);
+    }
+
+    private static final class AppRelease {
+        final String versionName;
+        final int versionCode;
+        final long size;
+        final String sha256;
+
+        AppRelease(String versionName, int versionCode, long size, String sha256) {
+            this.versionName = versionName;
+            this.versionCode = versionCode;
+            this.size = size;
+            this.sha256 = sha256;
+        }
     }
 
     /** 统一 AlertDialog 样式：背景用 CARD，标题 INK_1，正文 INK_2，确定按钮 ACCENT，取消按钮 TEXT3 */
