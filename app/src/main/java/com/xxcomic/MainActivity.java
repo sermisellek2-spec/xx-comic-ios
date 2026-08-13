@@ -245,6 +245,8 @@ public class MainActivity extends Activity {
     private boolean standaloneSearchVisible = false;
     private boolean historyVisible = false;
     private boolean standaloneSearchResultsMode = false;
+    private boolean sourceManagementVisible = false;
+    private boolean globalSearchMode = false;
     private boolean globalSearchLoading = false;
     private boolean activityDestroyed = false;
     private boolean updateRunning = false;
@@ -429,7 +431,12 @@ public class MainActivity extends Activity {
         }
         if (historyVisible && TextUtils.isEmpty(activeDetailId)) {
             historyVisible = false;
-            showTab(3);
+            showTab(2);
+            return true;
+        }
+        if (sourceManagementVisible) {
+            sourceManagementVisible = false;
+            showTab(2);
             return true;
         }
         if (readerVisible && !TextUtils.isEmpty(activeDetailId)) {
@@ -503,6 +510,14 @@ public class MainActivity extends Activity {
     }
 
     private void rerenderCurrentScreen() {
+        if (sourceManagementVisible) {
+            showSourceManagement();
+            return;
+        }
+        if (historyVisible && TextUtils.isEmpty(activeDetailId)) {
+            showHistory();
+            return;
+        }
         if (standaloneSearchVisible) {
             showStandaloneSearch(standaloneSearchResultsMode);
             return;
@@ -598,6 +613,7 @@ public class MainActivity extends Activity {
         activeDetailId = "";
         detailBackAction = null;
         historyVisible = false;
+        sourceManagementVisible = false;
         standaloneSearchVisible = false;
         standaloneSearchResultsMode = false;
         readerVisible = false;
@@ -608,10 +624,9 @@ public class MainActivity extends Activity {
 
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(UIHelpers.dp(this, 20), UIHelpers.dp(this, 16), UIHelpers.dp(this, 20), UIHelpers.dp(this, 72));
+        page.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 12), UIHelpers.dp(this, 16), UIHelpers.dp(this, 68));
 
-        // 站源页和我的页内容较多，用 ScrollView 包裹以支持滚动
-        if (tab == 2 || tab == 3) {
+        if (tab == 2) {
             ScrollView scroll = new ScrollView(this);
             scroll.setBackgroundColor(UIHelpers.BG);
             tuneScroll(scroll);
@@ -623,24 +638,87 @@ public class MainActivity extends Activity {
 
         if (tab == 0) renderFavorites(page);
         if (tab == 1) renderSearch(page);
-        if (tab == 2) renderSources(page);
-        if (tab == 3) renderProfile(page);
-        shell.addView(makeBottomNav(), UIHelpers.frame(-1, UIHelpers.dp(this, 64), Gravity.BOTTOM, UIHelpers.dp(this, 8), 0, UIHelpers.dp(this, 8), 0));
+        if (tab == 2) renderSettings(page);
+        shell.addView(makeBottomNav(), UIHelpers.frame(-1, UIHelpers.dp(this, 60), Gravity.BOTTOM, 0, 0, 0, 0));
         if (tab == 1 && previousTab != 1 && sourceCategories.isEmpty()) loadSourceCategories();
-        scheduleDefaultSearchLoad();
+        if (!globalSearchMode) scheduleDefaultSearchLoad();
+    }
+
+    private void renderSettings(LinearLayout page) {
+        addTitle(page, "设置", "本地");
+        page.addView(sectionText("阅读与外观"));
+        LinearLayout appearance = UIHelpers.card(this);
+        appearance.setPadding(0, 0, 0, 0);
+        appearance.addView(menuItemWithIcon(themeIcon(), "主题模式", themeModeLabel(), this::showThemeDrawer));
+        appearance.addView(UIHelpers.divider(this));
+        appearance.addView(menuItemWithIcon(R.drawable.ic_chevron_left, "左右手模式", readerLeftHand ? "左手" : "右手", this::showHandModeDrawer));
+        appearance.addView(UIHelpers.divider(this));
+        appearance.addView(menuItemWithIcon(R.drawable.ic_history, "阅读历史", progress.size() + " 条", this::showHistory));
+        page.addView(appearance);
+
+        page.addView(sectionText("站源与本地数据"));
+        LinearLayout local = UIHelpers.card(this);
+        local.setPadding(0, 0, 0, 0);
+        local.addView(menuItemWithIcon(R.drawable.ic_source, "站源管理", enabledBuiltinSources().size() + " 个开启", this::showSourceManagement));
+        local.addView(UIHelpers.divider(this));
+        local.addView(menuItemWithIcon(R.drawable.ic_trash, "缓存清理", cacheSize, this::clearAppCache));
+        local.addView(UIHelpers.divider(this));
+        local.addView(menuItemWithIcon(R.drawable.ic_lightning, "错误日志", errorLogSummary(), this::showErrorLogs));
+        page.addView(local);
+
+        page.addView(sectionText("App"));
+        LinearLayout app = UIHelpers.card(this);
+        app.setPadding(0, 0, 0, 0);
+        app.addView(menuItemWithIcon(R.drawable.ic_auto, "版本更新", installedVersionLabel(), this::checkForUpdate));
+        app.addView(UIHelpers.divider(this));
+        app.addView(menuItemWithIcon(R.drawable.ic_profile, "关于 App", BuildConfig.VERSION_NAME,
+                () -> showInfo("关于 App", "XX Comic 无需登录，收藏、历史与设置只保存在本机。")));
+        page.addView(app);
+    }
+
+    private void showSourceManagement() {
+        enterScreen();
+        sourceManagementVisible = true;
+        root.removeAllViews();
+        ScrollView scroll = new ScrollView(this);
+        tuneScroll(scroll);
+        scroll.setBackgroundColor(UIHelpers.BG);
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 12), UIHelpers.dp(this, 16), UIHelpers.dp(this, 24));
+        scroll.addView(page, UIHelpers.matchWrap());
+        renderSources(page);
+        root.addView(scroll, UIHelpers.match());
     }
 
     private void renderSearch(LinearLayout page) {
-        EditText input = UIHelpers.searchBox(this, "搜索漫画名称或作者", true);
+        addTitle(page, "发现", null);
+        LinearLayout searchBar = new LinearLayout(this);
+        searchBar.setGravity(Gravity.CENTER_VERTICAL);
+        searchBar.setPadding(UIHelpers.dp(this, 4), 0, UIHelpers.dp(this, 4), 0);
+        searchBar.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 8), UIHelpers.BORDER));
+        EditText input = UIHelpers.searchBox(this, globalSearchMode ? "搜索全部站源" : "搜索" + selectedSourceName(), true);
+        input.setBackgroundColor(Color.TRANSPARENT);
         bindingSearchText = true;
-        input.setText(searchQuery);
+        input.setText(globalSearchMode ? globalSearchQuery : searchQuery);
         input.setSelection(input.getText().length());
         bindingSearchText = false;
         input.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
         input.setSingleLine(true);
         input.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                searchQuery = v.getText().toString().trim();
+                String keyword = v.getText().toString().trim();
+                if (globalSearchMode) {
+                    globalSearchQuery = keyword;
+                    if (!keyword.isEmpty()) {
+                        addSearchHistory(keyword);
+                        startGlobalSearch(keyword);
+                    } else {
+                        showTab(1);
+                    }
+                    return true;
+                }
+                searchQuery = keyword;
                 selectedRegion = "all";
                 selectedState = "all";
                 searchResults.clear();
@@ -660,14 +738,30 @@ public class MainActivity extends Activity {
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override public void afterTextChanged(Editable s) {
                 if (bindingSearchText) return;
-                searchQuery = s.toString();
+                if (globalSearchMode) globalSearchQuery = s.toString();
+                else searchQuery = s.toString();
             }
         });
-        page.addView(input, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 42)));
-        TextView filterTrigger = UIHelpers.chip(this, "▾ " + selectedSourceName() + " · " + currentFilterLabel(), true);
-        filterTrigger.setOnClickListener(v -> showFilterDrawer());
-        page.addView(filterTrigger, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 10)));
-        page.addView(sectionTitle("搜索结果"));
+        searchBar.addView(input, new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 42), 1));
+        searchBar.addView(searchModeButton(), new LinearLayout.LayoutParams(UIHelpers.dp(this, 52), UIHelpers.dp(this, 38)));
+        page.addView(searchBar, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+
+        if (globalSearchMode) {
+            renderGlobalDiscovery(page);
+            return;
+        }
+
+        HorizontalScrollView filterScroll = new HorizontalScrollView(this);
+        filterScroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout filters = new LinearLayout(this);
+        filters.setOrientation(LinearLayout.HORIZONTAL);
+        filters.addView(filterTextButton(selectedSourceName(), 0), UIHelpers.marginRight(-2, UIHelpers.dp(this, 14)));
+        filters.addView(filterTextButton("题材", 1), UIHelpers.marginRight(-2, UIHelpers.dp(this, 14)));
+        filters.addView(filterTextButton("地区", 2), UIHelpers.marginRight(-2, UIHelpers.dp(this, 14)));
+        filters.addView(filterTextButton("状态", 3));
+        filterScroll.addView(filters, UIHelpers.wrap());
+        page.addView(filterScroll, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
+        page.addView(sectionTitle(selectedSourceName() + " · " + (TextUtils.isEmpty(searchQuery.trim()) ? "全部漫画" : "搜索结果")));
 
         PullRefreshScrollView scroll = new PullRefreshScrollView(this);
         searchScroll = scroll;
@@ -700,7 +794,7 @@ public class MainActivity extends Activity {
         }
 
         if (selectedSource() == null) {
-            content.addView(emptyState(R.drawable.ic_source, "还没有启用站源", "去站源页打开一个漫画来源吧", "去启用", () -> showTab(2)));
+            content.addView(emptyState(R.drawable.ic_source, "还没有启用站源", "去设置里打开一个漫画来源", "去设置", () -> showTab(2)));
             return;
         }
         if (searchResults.isEmpty()) {
@@ -727,6 +821,63 @@ public class MainActivity extends Activity {
         renderSearchPagingFooter(content);
     }
 
+    private TextView searchModeButton() {
+        TextView mode = UIHelpers.text(this, globalSearchMode ? "全站" : "单站", 12, UIHelpers.ACCENT_DARK, Typeface.BOLD);
+        mode.setGravity(Gravity.CENTER);
+        mode.setBackgroundColor(Color.TRANSPARENT);
+        mode.setOnClickListener(v -> {
+            globalSearchMode = !globalSearchMode;
+            enterScreen();
+            globalSearchGeneration++;
+            globalSearchLoading = false;
+            showTab(1, false);
+        });
+        return mode;
+    }
+
+    private TextView filterTextButton(String label, int drawerTab) {
+        TextView button = UIHelpers.text(this, label + "  ▾", 12, UIHelpers.TEXT2, Typeface.BOLD);
+        button.setGravity(Gravity.CENTER_VERTICAL);
+        button.setPadding(UIHelpers.dp(this, 2), UIHelpers.dp(this, 7), UIHelpers.dp(this, 2), UIHelpers.dp(this, 7));
+        button.setBackgroundColor(Color.TRANSPARENT);
+        button.setOnClickListener(v -> showFilterDrawer(drawerTab));
+        return button;
+    }
+
+    private void renderGlobalDiscovery(LinearLayout page) {
+        ScrollView scroll = new ScrollView(this);
+        tuneScroll(scroll);
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(content, UIHelpers.matchWrap());
+        page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        if (TextUtils.isEmpty(globalSearchQuery.trim())) {
+            renderSearchHistory(content);
+            return;
+        }
+        List<ComicSource> sources = enabledBuiltinSources();
+        ensureSelectedGlobalSearchSource(sources);
+        if (sources.isEmpty()) {
+            content.addView(emptyState(R.drawable.ic_source, "没有可用站源", "去设置里开启站源", "去设置", () -> showTab(2)));
+            return;
+        }
+        globalSearchTabsScroller = globalSearchSourceTabs(sources);
+        content.addView(globalSearchTabsScroller, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        LinearLayout heading = new LinearLayout(this);
+        heading.setGravity(Gravity.CENTER_VERTICAL);
+        heading.addView(sectionTitle("搜索结果"), UIHelpers.weight(1));
+        globalSearchStatusView = UIHelpers.text(this, "", 11, UIHelpers.TEXT3, Typeface.NORMAL);
+        heading.addView(globalSearchStatusView);
+        content.addView(heading, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        globalSearchResultsContainer = new LinearLayout(this);
+        globalSearchResultsContainer.setOrientation(LinearLayout.VERTICAL);
+        globalSearchContent = globalSearchResultsContainer;
+        content.addView(globalSearchResultsContainer);
+        refreshGlobalSearchTabs();
+        refreshGlobalSearchResults();
+        updateGlobalSearchStatus();
+    }
+
     private void appendSearchResults(List<ComicModels.ComicSummary> list) {
         if (searchResultsContent == null) {
             showTab(1);
@@ -737,18 +888,16 @@ public class MainActivity extends Activity {
     }
 
     private void appendSearchRows(LinearLayout content, List<ComicModels.ComicSummary> items) {
-        for (int i = 0; i < items.size(); i += 2) {
+        for (int i = 0; i < items.size(); i += 3) {
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
-            row.addView(resultCard(items.get(i)), UIHelpers.weight(1));
-            if (i + 1 < items.size()) {
-                row.addView(UIHelpers.space(this, UIHelpers.dp(this, 12), 1));
-                row.addView(resultCard(items.get(i + 1)), UIHelpers.weight(1));
-            } else {
-                row.addView(UIHelpers.space(this, UIHelpers.dp(this, 12), 1));
-                row.addView(new View(this), UIHelpers.weight(1));
+            for (int column = 0; column < 3; column++) {
+                int index = i + column;
+                if (index < items.size()) row.addView(resultCard(items.get(index)), UIHelpers.weight(1));
+                else row.addView(new View(this), UIHelpers.weight(1));
+                if (column < 2) row.addView(UIHelpers.space(this, UIHelpers.dp(this, 9), 1));
             }
-            content.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 14)));
+            content.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 12)));
         }
     }
 
@@ -783,13 +932,7 @@ public class MainActivity extends Activity {
         searchPagingFooter = null;
     }
     private void renderFavorites(LinearLayout page) {
-        addTitle(page, "我的收藏", null);
-        EditText input = UIHelpers.searchBox(this, "搜索漫画名称或作者", true);
-        input.setFocusable(false);
-        input.setText("");
-        input.setSingleLine(true);
-        input.setOnClickListener(v -> showStandaloneSearch(false));
-        page.addView(input, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 42)));
+        addTitle(page, "书架", favorites.size() + " 本");
         ScrollView scroll = new ScrollView(this);
         tuneScroll(scroll);
         LinearLayout content = new LinearLayout(this);
@@ -797,20 +940,116 @@ public class MainActivity extends Activity {
         scroll.addView(content, UIHelpers.matchWrap());
         page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         if (favorites.isEmpty()) {
-            content.addView(emptyState(R.drawable.ic_bookshelf, "书架还空着", "等你把第一本放进来", "去搜索", () -> showTab(1)));
+            content.addView(emptyState(R.drawable.ic_bookshelf, "书架还空着", "去发现收藏喜欢的漫画", "去发现", () -> showTab(1)));
             return;
         }
-        for (String id : filterFavorites()) {
-            content.addView(favoriteRow(id));
+        List<String> visible = filterFavorites();
+        String continueId = null;
+        long latestRead = Long.MIN_VALUE;
+        for (String id : visible) {
+            long readAt = lastViewedAt.containsKey(id) ? lastViewedAt.get(id) : Long.MIN_VALUE;
+            if (readAt > latestRead) {
+                latestRead = readAt;
+                continueId = id;
+            }
         }
+        if (continueId != null && progress.containsKey(continueId)) {
+            content.addView(sectionTitle("继续阅读"), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+            content.addView(continueReadingRow(continueId), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 14)));
+        }
+        content.addView(sectionTitle("全部收藏"), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        for (int i = 0; i < visible.size(); i += 3) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            for (int column = 0; column < 3; column++) {
+                int index = i + column;
+                if (index < visible.size()) row.addView(favoriteGridItem(visible.get(index)), UIHelpers.weight(1));
+                else row.addView(new View(this), UIHelpers.weight(1));
+                if (column < 2) row.addView(UIHelpers.space(this, UIHelpers.dp(this, 9), 1));
+            }
+            content.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 14)));
+        }
+    }
+
+    private View continueReadingRow(String id) {
+        ComicModels.ComicDetail detail = details.get(id);
+        ComicModels.ComicSummary summary = summaries.get(id);
+        String title = detail != null ? detail.summary.title : summary != null ? summary.title : id;
+        String cover = detail != null ? detail.summary.coverUrl : summary != null ? summary.coverUrl : "";
+        LinearLayout row = UIHelpers.card(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(coverFrame(cover, 48, 64, isRetiredComic(id)));
+        LinearLayout copy = new LinearLayout(this);
+        copy.setOrientation(LinearLayout.VERTICAL);
+        copy.setPadding(UIHelpers.dp(this, 10), 0, 0, 0);
+        copy.addView(UIHelpers.text(this, title, 15, UIHelpers.TEXT, Typeface.BOLD));
+        copy.addView(UIHelpers.text(this, "第 " + (savedChapter(id) + 1) + " 话 · 继续阅读", 12, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 5)));
+        row.addView(copy, UIHelpers.weight(1));
+        row.setOnClickListener(v -> showDetailThenRead(id));
+        return row;
+    }
+
+    private View favoriteGridItem(String id) {
+        ComicModels.ComicDetail detail = details.get(id);
+        ComicModels.ComicSummary summary = summaries.get(id);
+        String title = detail != null ? detail.summary.title : summary != null ? summary.title : id;
+        String cover = detail != null ? detail.summary.coverUrl : summary != null ? summary.coverUrl : "";
+        LinearLayout item = new LinearLayout(this);
+        item.setOrientation(LinearLayout.VERTICAL);
+        FrameLayout coverWrap = coverFrame(cover, -1, 154, isRetiredComic(id));
+        item.addView(coverWrap, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 154)));
+        TextView titleView = UIHelpers.text(this, title, 13, UIHelpers.TEXT, Typeface.BOLD);
+        titleView.setSingleLine(true);
+        titleView.setEllipsize(TextUtils.TruncateAt.END);
+        item.addView(titleView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 6)));
+        item.setOnClickListener(v -> showDetail(id));
+        item.setOnLongClickListener(v -> {
+            showFavoriteDeleteOverlay(coverWrap, id);
+            return true;
+        });
+        return item;
+    }
+
+    private void showFavoriteDeleteOverlay(FrameLayout coverWrap, String id) {
+        Object tag = coverWrap.getTag();
+        if (tag instanceof View) {
+            coverWrap.removeView((View) tag);
+            coverWrap.setTag(null);
+            return;
+        }
+        FrameLayout overlay = new FrameLayout(this);
+        overlay.setBackgroundColor(Color.argb(165, 20, 43, 62));
+        ImageView trash = UIHelpers.vectorIconButton(this, R.drawable.ic_trash, Color.WHITE, 13);
+        trash.setBackground(UIHelpers.round(UIHelpers.DANGER, UIHelpers.dp(this, 24), Color.TRANSPARENT));
+        trash.setContentDescription("删除收藏");
+        trash.setOnClickListener(v -> styledDialog("删除收藏", "确认删除《" + clean(summaries.containsKey(id) ? summaries.get(id).title : id, "这本漫画") + "》吗？",
+                "删除", () -> deleteFavorite(id), "取消", null));
+        overlay.addView(trash, UIHelpers.frame(UIHelpers.dp(this, 48), UIHelpers.dp(this, 48), Gravity.CENTER, 0, 0, 0, 0));
+        overlay.setOnClickListener(v -> {
+            coverWrap.removeView(overlay);
+            coverWrap.setTag(null);
+        });
+        coverWrap.addView(overlay, UIHelpers.match());
+        coverWrap.setTag(overlay);
     }
 
     private void renderSources(LinearLayout page) {
         addTitle(page, "站源管理", null);
-        TextView add = UIHelpers.chip(this, "+ 添加", true);
-        add.setOnClickListener(v -> showAddSourceDialog());
-        page.addView(add, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 10)));
-        add.setVisibility(View.GONE);
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        Button check = UIHelpers.secondaryButton(this, "检测可用性");
+        check.setOnClickListener(v -> healthCheck());
+        Button importBtn = UIHelpers.secondaryButton(this, "导入");
+        importBtn.setOnClickListener(v -> openImportSourceConfig());
+        Button export = UIHelpers.secondaryButton(this, "导出");
+        export.setOnClickListener(v -> exportSourceConfig());
+        actions.addView(check, UIHelpers.buttonWeight(this, 1.4f));
+        actions.addView(UIHelpers.space(this, UIHelpers.dp(this, 6), 1));
+        actions.addView(importBtn, UIHelpers.buttonWeight(this, 1));
+        actions.addView(UIHelpers.space(this, UIHelpers.dp(this, 6), 1));
+        actions.addView(export, UIHelpers.buttonWeight(this, 1));
+        page.addView(actions, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 12)));
         LinearLayout enabledSources = new LinearLayout(this);
         enabledSources.setOrientation(LinearLayout.VERTICAL);
         LinearLayout disabledSources = new LinearLayout(this);
@@ -819,103 +1058,106 @@ public class MainActivity extends Activity {
             sourceEnabled = !sourceEnabled;
             baoziConfig = baoziConfig.withEnabled(sourceEnabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         addSourceCard(enabledSources, disabledSources, aikanEnabled, sourceCard(aikanConfig.name, aikanConfig.domain, aikanEnabled, () -> {
             aikanEnabled = !aikanEnabled;
             aikanConfig = aikanConfig.withEnabled(aikanEnabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         addSourceCard(enabledSources, disabledSources, gmhEnabled, sourceCard(gmhConfig.name, gmhConfig.domain, gmhEnabled, () -> {
             gmhEnabled = !gmhEnabled;
             gmhConfig = gmhConfig.withEnabled(gmhEnabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         addSourceCard(enabledSources, disabledSources, mkzhanEnabled, sourceCard(mkzhanConfig.name, mkzhanConfig.domain, mkzhanEnabled, () -> {
             mkzhanEnabled = !mkzhanEnabled;
             mkzhanConfig = mkzhanConfig.withEnabled(mkzhanEnabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         addSourceCard(enabledSources, disabledSources, hiperdexEnabled, sourceCard(hiperdexConfig.name, hiperdexConfig.domain, hiperdexEnabled, () -> {
             hiperdexEnabled = !hiperdexEnabled;
             hiperdexConfig = hiperdexConfig.withEnabled(hiperdexEnabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         addSourceCard(enabledSources, disabledSources, manhuaguiEnabled, sourceCard(manhuaguiConfig.name, manhuaguiConfig.domain, manhuaguiEnabled, () -> {
             manhuaguiEnabled = !manhuaguiEnabled;
             manhuaguiConfig = manhuaguiConfig.withEnabled(manhuaguiEnabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         addSourceCard(enabledSources, disabledSources, hanman18Enabled, sourceCard(hanman18Config.name, hanman18Config.domain, hanman18Enabled, () -> {
             hanman18Enabled = !hanman18Enabled;
             hanman18Config = hanman18Config.withEnabled(hanman18Enabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         addSourceCard(enabledSources, disabledSources, d5d6Enabled, sourceCard(d5d6Config.name, d5d6Config.domain, d5d6Enabled, () -> {
             d5d6Enabled = !d5d6Enabled;
             d5d6Config = d5d6Config.withEnabled(d5d6Enabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         addSourceCard(enabledSources, disabledSources, manbenEnabled, sourceCard(manbenConfig.name, manbenConfig.domain, manbenEnabled, () -> {
             manbenEnabled = !manbenEnabled;
             manbenConfig = manbenConfig.withEnabled(manbenEnabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         addSourceCard(enabledSources, disabledSources, manhuazhanEnabled, sourceCard(manhuazhanConfig.name, manhuazhanConfig.domain, manhuazhanEnabled, () -> {
             manhuazhanEnabled = !manhuazhanEnabled;
             manhuazhanConfig = manhuazhanConfig.withEnabled(manhuazhanEnabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         addSourceCard(enabledSources, disabledSources, bbyinEnabled, sourceCard(bbyinConfig.name, bbyinConfig.domain, bbyinEnabled, () -> {
             bbyinEnabled = !bbyinEnabled;
             bbyinConfig = bbyinConfig.withEnabled(bbyinEnabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         addSourceCard(enabledSources, disabledSources, antbywEnabled, sourceCard(antbywConfig.name, antbywConfig.domain, antbywEnabled, () -> {
             antbywEnabled = !antbywEnabled;
             antbywConfig = antbywConfig.withEnabled(antbywEnabled);
             rebuildSourceClients();
-            saveLocalState();
-            showTab(2);
+            finishSourceToggle();
         }));
         page.addView(enabledSources);
         page.addView(disabledSources);
-        LinearLayout ioButtons = new LinearLayout(this);
-        ioButtons.setOrientation(LinearLayout.HORIZONTAL);
-        Button export = UIHelpers.primaryButton(this, "导出站源配置");
-        export.setOnClickListener(v -> exportSourceConfig());
-        Button importBtn = UIHelpers.secondaryButton(this, "导入配置");
-        importBtn.setOnClickListener(v -> openImportSourceConfig());
-        ioButtons.addView(export, UIHelpers.buttonWeight(this, 1));
-        ioButtons.addView(UIHelpers.space(this, UIHelpers.dp(this, 10), 1));
-        ioButtons.addView(importBtn, UIHelpers.buttonWeight(this, 1));
-        page.addView(ioButtons, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
-        ioButtons.setVisibility(View.GONE);
-        Button check = UIHelpers.secondaryButton(this, "检测站源可用性");
-        check.setOnClickListener(v -> healthCheck());
-        page.addView(check, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
-        check.setVisibility(View.GONE);
+    }
+
+    private void finishSourceToggle() {
+        List<ComicSource> enabled = enabledBuiltinSources();
+        boolean selectedStillEnabled = false;
+        for (ComicSource source : enabled) {
+            if (source.id().equals(selectedSourceId)) {
+                selectedStillEnabled = true;
+                break;
+            }
+        }
+        if (!selectedStillEnabled) {
+            searchGeneration++;
+            searchLoading = false;
+            searchAppending = false;
+            finishSearchPullRefresh();
+            clearSearchAppendFailure();
+            removeSearchPagingFooter();
+            selectedSourceId = enabled.isEmpty() ? "" : enabled.get(0).id();
+            searchQuery = "";
+            selectedRegion = "all";
+            selectedState = "all";
+            selectedRegionLabel = ALL_TAG;
+            selectedStateLabel = ALL_TAG;
+            sourceCategories.clear();
+            searchResults.clear();
+            resetSearchPaging();
+        }
+        saveLocalState();
+        showSourceManagement();
     }
 
     private void addSourceCard(LinearLayout enabledSources, LinearLayout disabledSources, boolean enabled, View card) {
@@ -946,7 +1188,7 @@ public class MainActivity extends Activity {
     private void toggleReaderHand() {
         readerLeftHand = !readerLeftHand;
         saveLocalState();
-        showToast(readerLeftHand ? "已切换到左手模式：点左=下一章，点右=上一章" : "已切换到右手模式：点左=上一章，点右=下一章");
+        showRemToast(readerLeftHand ? "已切换到左手模式" : "已切换到右手模式");
         if (readerVisible) {
             ComicModels.ComicDetail detail = details.get(activeDetailId);
             if (detail != null && !detail.chapters.isEmpty()) {
@@ -1014,6 +1256,66 @@ public class MainActivity extends Activity {
         applyThemeAndSystemBars();
         scheduleThemeSwitch();
         rerenderCurrentScreen();
+    }
+
+    private void showThemeDrawer() {
+        showChoiceDrawer("选择主题", new String[]{"跟随系统", "浅色", "深色"}, themeMode, selected -> {
+            themeMode = selected;
+            saveLocalState();
+            applyThemeAndSystemBars();
+            scheduleThemeSwitch();
+            rerenderCurrentScreen();
+            main.post(() -> showRemToast("主题已应用"));
+        });
+    }
+
+    private void showHandModeDrawer() {
+        showChoiceDrawer("阅读触控方向", new String[]{"右手模式", "左手模式"}, readerLeftHand ? 1 : 0, selected -> {
+            readerLeftHand = selected == 1;
+            saveLocalState();
+            rerenderCurrentScreen();
+            main.post(() -> showRemToast(readerLeftHand ? "已切换到左手模式" : "已切换到右手模式"));
+        });
+    }
+
+    private void showChoiceDrawer(String title, String[] labels, int selected, ChoiceAction onSelect) {
+        FrameLayout overlay = new FrameLayout(this);
+        View backdrop = new View(this);
+        backdrop.setBackgroundColor(Color.argb(145, 10, 24, 37));
+        overlay.addView(backdrop, UIHelpers.match());
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 14), UIHelpers.dp(this, 16), UIHelpers.dp(this, 20));
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setColor(UIHelpers.CARD);
+        float radius = UIHelpers.dp(this, 8);
+        bg.setCornerRadii(new float[]{radius, radius, radius, radius, 0, 0, 0, 0});
+        panel.setBackground(bg);
+        panel.addView(UIHelpers.text(this, title, 17, UIHelpers.TEXT, Typeface.BOLD), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 10)));
+        PopupWindow popup = new PopupWindow(overlay, -1, -1, true);
+        popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popup.setOnDismissListener(() -> {
+            if (activePopup == popup) activePopup = null;
+        });
+        for (int i = 0; i < labels.length; i++) {
+            final int index = i;
+            TextView row = UIHelpers.text(this, labels[i] + (i == selected ? "  ✓" : ""), 15,
+                    i == selected ? UIHelpers.ACCENT_DARK : UIHelpers.TEXT, i == selected ? Typeface.BOLD : Typeface.NORMAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 13), UIHelpers.dp(this, 4), UIHelpers.dp(this, 13));
+            row.setOnClickListener(v -> {
+                popup.dismiss();
+                onSelect.run(index);
+            });
+            panel.addView(row);
+            if (i < labels.length - 1) panel.addView(UIHelpers.divider(this));
+        }
+        overlay.addView(panel, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+        backdrop.setOnClickListener(v -> popup.dismiss());
+        activePopup = popup;
+        popup.showAtLocation(root, Gravity.CENTER, 0, 0);
+        panel.setTranslationY(UIHelpers.dp(this, 260));
+        panel.animate().translationY(0).setDuration(200).start();
     }
 
     private void showStandaloneSearch(boolean resultsMode) {
@@ -1146,12 +1448,13 @@ public class MainActivity extends Activity {
                 globalSearchResultsContainer.addView(globalSearchLoadingView);
                 return;
             }
-            globalSearchResultsContainer.addView(emptyState(R.drawable.ic_magnifier, "这个站源暂无结果", "切换其他站源看看", "返回搜索", () -> showStandaloneSearch(false)));
+            globalSearchResultsContainer.addView(emptyState(R.drawable.ic_magnifier, "这个站源暂无结果", "切换其他站源看看", "清空搜索", () -> {
+                globalSearchQuery = "";
+                showTab(1);
+            }));
             return;
         }
-        for (ComicModels.ComicSummary item : new ArrayList<>(selectedResults)) {
-            globalSearchResultsContainer.addView(globalResultRow(item));
-        }
+        appendSearchRows(globalSearchResultsContainer, new ArrayList<>(selectedResults));
     }
 
     private void renderSearchHistory(LinearLayout content) {
@@ -1163,7 +1466,8 @@ public class MainActivity extends Activity {
         clear.setOnClickListener(v -> {
             globalSearchHistory.clear();
             saveLocalState();
-            showStandaloneSearch(false);
+            globalSearchQuery = "";
+            showTab(1);
         });
         row.addView(clear);
         content.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 12)));
@@ -1337,23 +1641,18 @@ public class MainActivity extends Activity {
     }
 
     private LinearLayout resultCard(ComicModels.ComicSummary comic) {
-        LinearLayout item = UIHelpers.surfaceCard(this);
+        LinearLayout item = new LinearLayout(this);
         item.setOrientation(LinearLayout.VERTICAL);
-        item.setPadding(UIHelpers.dp(this, 10), UIHelpers.dp(this, 10), UIHelpers.dp(this, 10), UIHelpers.dp(this, 10));
         item.setOnClickListener(v -> {
             if (searchScroll != null) pendingSearchScrollY = searchScroll.getScrollY();
             showDetail(comic.comicId);
         });
-        item.addView(coverFrame(comic.coverUrl, -1, 202));
-        TextView title = UIHelpers.text(this, comic.title, 14, UIHelpers.TEXT, Typeface.NORMAL);
+        item.addView(coverFrame(comic.coverUrl, -1, 154), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 154)));
+        TextView title = UIHelpers.text(this, comic.title, 13, UIHelpers.TEXT, Typeface.NORMAL);
         title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        title.setSingleLine(true);
+        title.setMaxLines(2);
         title.setEllipsize(TextUtils.TruncateAt.END);
-        item.addView(title, UIHelpers.marginTop(-1, UIHelpers.dp(this, 7)));
-        TextView sub = UIHelpers.text(this, clean(comic.subtitle, sourceNameForId(comic.sourceId)), 12, UIHelpers.TEXT3, Typeface.NORMAL);
-        sub.setSingleLine(true);
-        sub.setEllipsize(TextUtils.TruncateAt.END);
-        item.addView(sub, UIHelpers.marginTop(-1, UIHelpers.dp(this, 3)));
+        item.addView(title, UIHelpers.marginTop(-1, UIHelpers.dp(this, 6)));
         return item;
     }
 
@@ -1508,40 +1807,27 @@ public class MainActivity extends Activity {
     }
 
     private LinearLayout sourceCard(String name, String domain, boolean enabled, Runnable toggle) {
-        // 直接创建 LinearLayout，不使用 UIHelpers.card()，确保背景明确为白色
         LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(UIHelpers.dp(this, 14), UIHelpers.dp(this, 14), UIHelpers.dp(this, 14), UIHelpers.dp(this, 14));
-        card.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 12), UIHelpers.BORDER));
-        card.setElevation(UIHelpers.dp(this, 1));
-        card.setLayoutParams(UIHelpers.marginBottom(-1, UIHelpers.dp(this, 12)));
-        // 卡片本身不可点击，只有开关可点击
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(UIHelpers.dp(this, 10), UIHelpers.dp(this, 9), UIHelpers.dp(this, 10), UIHelpers.dp(this, 9));
+        card.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 8), UIHelpers.BORDER_SOFT));
+        card.setElevation(0);
+        card.setLayoutParams(UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
         card.setClickable(false);
         card.setFocusable(false);
 
-        LinearLayout top = new LinearLayout(this);
-        top.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 48), UIHelpers.dp(this, 48));
-        logoParams.setMargins(0, 0, UIHelpers.dp(this, 12), 0);
-        top.addView(sourceLogo(name), logoParams);
+        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 36), UIHelpers.dp(this, 36));
+        logoParams.setMargins(0, 0, UIHelpers.dp(this, 10), 0);
+        card.addView(sourceLogo(name), logoParams);
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
-        TextView sourceTitle = UIHelpers.text(this, name, 16, UIHelpers.TEXT, Typeface.NORMAL);
+        TextView sourceTitle = UIHelpers.text(this, name, 14, UIHelpers.TEXT, Typeface.NORMAL);
         sourceTitle.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         info.addView(sourceTitle);
-        info.addView(UIHelpers.text(this, domain, 12, UIHelpers.TEXT2, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 3)));
-        top.addView(info, UIHelpers.weight(1));
-        top.addView(sourceSwitch(enabled, toggle), new LinearLayout.LayoutParams(UIHelpers.dp(this, 50), UIHelpers.dp(this, 28)));
-        card.addView(top);
-
-        LinearLayout status = new LinearLayout(this);
-        status.setGravity(Gravity.CENTER_VERTICAL);
-        // 修复：使用明确的尺寸而非 WRAP_CONTENT，确保 statusDot 可见
-        LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 8), UIHelpers.dp(this, 8));
-        dotParams.setMargins(0, 0, UIHelpers.dp(this, 8), 0);
-        status.addView(statusDot(enabled), dotParams);
-        status.addView(UIHelpers.text(this, enabled ? "已启用" : "已停用", 11, UIHelpers.TEXT2, Typeface.NORMAL));
-        card.addView(status, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
+        info.addView(UIHelpers.text(this, domain + " · " + (enabled ? "已启用" : "已停用"), 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
+        card.addView(info, UIHelpers.weight(1));
+        card.addView(sourceSwitch(enabled, toggle), new LinearLayout.LayoutParams(UIHelpers.dp(this, 50), UIHelpers.dp(this, 28)));
 
         return card;
     }
@@ -1590,7 +1876,7 @@ public class MainActivity extends Activity {
                         if (!isCurrentLoading(loadingGeneration)) return;
                         pageLoading = false;
                         pageLoadingBackAction = null;
-                        showError("详情加载失败", error, detailBackAction);
+                        showError("详情加载失败", error, () -> showDetail(comicId));
                     });
                 }
             }));
@@ -1611,14 +1897,10 @@ public class MainActivity extends Activity {
         boolean cacheOnly = isRetiredComic(detail.summary.comicId);
         addBlurredHeroCover(hero, detail.summary.coverUrl, detail.summary.title, cacheOnly);
         content.addView(hero, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, DETAIL_HERO_DP)));
-        ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, Color.WHITE, 10);
-        back.setBackground(UIHelpers.round(Color.argb(90, 0, 0, 0), UIHelpers.dp(this, 22), Color.TRANSPARENT));
-        back.setOnClickListener(v -> navigateBack());
-        hero.addView(back, UIHelpers.frame(UIHelpers.dp(this, 44), UIHelpers.dp(this, 44), Gravity.TOP | Gravity.LEFT, UIHelpers.dp(this, 14), UIHelpers.dp(this, 18), 0, 0));
 
         LinearLayout body = new LinearLayout(this);
         body.setOrientation(LinearLayout.VERTICAL);
-        body.setPadding(UIHelpers.dp(this, 18), 0, UIHelpers.dp(this, 18), UIHelpers.dp(this, 92));
+        body.setPadding(UIHelpers.dp(this, 16), 0, UIHelpers.dp(this, 16), UIHelpers.dp(this, 82));
         content.addView(body, UIHelpers.matchWrap());
 
         LinearLayout info = UIHelpers.card(this);
@@ -1641,19 +1923,23 @@ public class MainActivity extends Activity {
         info.addView(UIHelpers.text(this, clean(detail.description, "暂无简介"), 13, UIHelpers.TEXT2, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
         body.addView(info);
 
-        LinearLayout buttons = new LinearLayout(this);
-        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        body.addView(chapterEntry(detail), UIHelpers.marginTop(-1, UIHelpers.dp(this, 10)));
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 8), UIHelpers.dp(this, 16), UIHelpers.dp(this, 10));
+        actions.setBackgroundColor(UIHelpers.CARD);
         Button fav = UIHelpers.softButton(this, favorites.contains(detail.summary.comicId) ? "取消收藏" : "收藏");
         fav.setOnClickListener(v -> toggleFavorite(detail));
-        Button read = UIHelpers.brandButton(this, savedChapter(detail.summary.comicId) > 0 ? "继续阅读" : "开始阅读");
-        read.setTypeface(Typeface.SERIF);
+        int saved = savedChapter(detail.summary.comicId);
+        String chapterLabel = !detail.chapters.isEmpty() && saved < detail.chapters.size()
+                ? detail.chapters.get(saved).title : "";
+        Button read = UIHelpers.primaryButton(this, saved > 0 ? "继续阅读 · " + chapterLabel : "开始阅读");
         read.setOnClickListener(v -> ensureChaptersThen(detail, loaded -> showReader(loaded, savedChapter(loaded.summary.comicId))));
-        buttons.addView(fav, UIHelpers.buttonWeight(this, 1));
-        buttons.addView(UIHelpers.space(this, UIHelpers.dp(this, 10), 1));
-        buttons.addView(read, UIHelpers.buttonWeight(this, 1));
-        body.addView(buttons, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
-
-        body.addView(chapterEntry(detail), UIHelpers.marginTop(-1, UIHelpers.dp(this, 14)));
+        actions.addView(fav, new LinearLayout.LayoutParams(UIHelpers.dp(this, 78), UIHelpers.dp(this, 44)));
+        actions.addView(UIHelpers.space(this, UIHelpers.dp(this, 8), 1));
+        actions.addView(read, new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 44), 1));
+        root.addView(actions, UIHelpers.frame(-1, UIHelpers.dp(this, 62), Gravity.BOTTOM, 0, 0, 0, 0));
         refreshCachedComicOnce(detail);
     }
 
@@ -1767,7 +2053,7 @@ public class MainActivity extends Activity {
                     boolean expectedCancellation = isExpectedTaskCancellation(error);
                     main.post(() -> {
                         if (expectedCancellation || !isCurrentReaderRequest(generation, comicId, chapterUrl, detail)) return;
-                        showError("章节加载失败", error, () -> showDetail(comicId));
+                        showError("章节加载失败", error, () -> showReader(detail, chapterIndex));
                     });
                 }
             }));
@@ -1826,9 +2112,6 @@ public class MainActivity extends Activity {
         top.setPadding(UIHelpers.dp(this, 14), 0, UIHelpers.dp(this, 14), 0);
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.setBackgroundColor(UIHelpers.DARK_BAR);
-        ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, UIHelpers.READER_TEXT, 8);
-        back.setOnClickListener(v -> navigateBack());
-        top.addView(back, new LinearLayout.LayoutParams(UIHelpers.dp(this, 42), -1));
         TextView name = UIHelpers.text(this, detail.chapters.get(readerChapterIndex).title, 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
         name.setTypeface(Typeface.SERIF);
         name.setGravity(Gravity.CENTER);
@@ -2177,7 +2460,7 @@ public class MainActivity extends Activity {
                         if (currentTab == 1 && searchResultsContent != null) renderSearchPagingFooter(searchResultsContent);
                         showToast("加载更多失败");
                     } else {
-                        showError("加载失败", error);
+                        showError("加载失败", error, () -> loadSearchPage(keyword, page, false, categoryMode));
                     }
                 });
             }
@@ -2226,7 +2509,7 @@ public class MainActivity extends Activity {
         globalSearchFailedSources = 0;
         globalSearchLoadingView = null;
         globalSearchLoading = true;
-        showStandaloneSearch(true);
+        showTab(1);
         runGlobalSearch(globalSearchQuery);
     }
 
@@ -2251,7 +2534,7 @@ public class MainActivity extends Activity {
             main.post(() -> {
                 if (generation != globalSearchGeneration) return;
                 globalSearchLoading = false;
-                if (standaloneSearchVisible) showStandaloneSearch(true);
+                if (currentTab == 1 && globalSearchMode) showTab(1, false);
             });
             return;
         }
@@ -2345,7 +2628,7 @@ public class MainActivity extends Activity {
             persistComicCachesAsync();
             updateGlobalSearchStatus();
             // 全部完成时若列表仍为空，刷新以显示空状态（移除 loading 动画）
-            if (standaloneSearchVisible && globalSearchAllResultsEmpty()) {
+            if (currentTab == 1 && globalSearchMode && globalSearchAllResultsEmpty()) {
                 refreshGlobalSearchTabs();
                 refreshGlobalSearchResults();
             }
@@ -2353,7 +2636,7 @@ public class MainActivity extends Activity {
     }
 
     private void refreshGlobalSearchSourceState(String sourceId) {
-        if (!standaloneSearchVisible || !standaloneSearchResultsMode) return;
+        if (currentTab != 1 || !globalSearchMode) return;
         refreshGlobalSearchTabs();
         if (sourceId.equals(selectedGlobalSearchSourceId)) refreshGlobalSearchResults();
     }
@@ -2554,10 +2837,37 @@ public class MainActivity extends Activity {
     private void switchChapter(ComicModels.ComicDetail detail, int delta) {
         int next = readerChapterIndex + delta;
         if (next < 0 || next >= detail.chapters.size()) {
-            showToast(delta > 0 ? "已经是最后一章" : "已经是第一章");
+            showReaderBoundaryHint(delta > 0 ? "已经是最后一章" : "已经是第一章");
             return;
         }
         showReader(detail, next);
+    }
+
+    private void showReaderBoundaryHint(String message) {
+        showReaderHint(R.drawable.rem_reader_boundary, message);
+    }
+
+    private void showReaderResumeHint() {
+        showReaderHint(R.drawable.rem_reader_resume, "已恢复上次阅读位置");
+    }
+
+    private void showReaderHint(int imageRes, String message) {
+        if (root == null) return;
+        LinearLayout hint = new LinearLayout(this);
+        hint.setOrientation(LinearLayout.HORIZONTAL);
+        hint.setGravity(Gravity.CENTER_VERTICAL);
+        hint.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 5), UIHelpers.dp(this, 12), UIHelpers.dp(this, 5));
+        hint.setBackground(UIHelpers.round(Color.argb(235, 29, 48, 66), UIHelpers.dp(this, 8), Color.argb(80, 180, 224, 255)));
+        ImageView art = new ImageView(this);
+        art.setImageResource(imageRes);
+        art.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        hint.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(this, 34), UIHelpers.dp(this, 34)));
+        hint.addView(UIHelpers.text(this, message, 12, Color.WHITE, Typeface.BOLD), UIHelpers.marginRight(-2, UIHelpers.dp(this, 0)));
+        FrameLayout.LayoutParams lp = UIHelpers.frame(-2, UIHelpers.dp(this, 46), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0, 0, UIHelpers.dp(this, 52));
+        root.addView(hint, lp);
+        main.postDelayed(() -> {
+            if (hint.getParent() == root) root.removeView(hint);
+        }, 1800L);
     }
 
     private void normalizeChaptersOldestFirst(List<ComicModels.Chapter> chapters) {
@@ -2603,6 +2913,10 @@ public class MainActivity extends Activity {
 
     private interface DetailAction {
         void run(ComicModels.ComicDetail detail);
+    }
+
+    private interface ChoiceAction {
+        void run(int selected);
     }
 
     private void ensureChaptersThen(ComicModels.ComicDetail detail, DetailAction action) {
@@ -2660,23 +2974,16 @@ public class MainActivity extends Activity {
     }
 
     private void showChapterDrawer(ComicModels.ComicDetail detail) {
-        if (detail.chapters.isEmpty()) {
-            ensureChaptersThen(detail, loaded -> {
-                showDetail(loaded.summary.comicId);
-                main.post(() -> showChapterDrawer(loaded));
-            });
-            return;
-        }
         chapterDesc = false;
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 16), UIHelpers.dp(this, 16), UIHelpers.dp(this, 16));
         panel.setBackgroundColor(UIHelpers.CARD);
 
-        LinearLayout header = chapterDrawerHeader(detail.chapters.size());
+        LinearLayout headerHost = new LinearLayout(this);
+        headerHost.setOrientation(LinearLayout.VERTICAL);
+        panel.addView(headerHost, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
         TextView order = UIHelpers.chip(this, chapterDesc ? "倒序" : "正序", true);
-        header.addView(order);
-        panel.addView(header, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 10)));
 
         ScrollView scroll = new ScrollView(this);
         LinearLayout list = new LinearLayout(this);
@@ -2691,10 +2998,15 @@ public class MainActivity extends Activity {
             if (activePopup == popup) activePopup = null;
         });
 
+        final ComicModels.ComicDetail[] current = {detail};
         Runnable fill = () -> {
+            headerHost.removeAllViews();
+            LinearLayout header = chapterDrawerHeader(current[0].chapters.size());
+            header.addView(order);
+            headerHost.addView(header);
             list.removeAllViews();
-            List<Integer> orderIndexes = DataHelpers.chapterOrder(chapterDesc, detail.chapters.size());
-            fillChapterRows(list, popup, detail, orderIndexes, 0);
+            List<Integer> orderIndexes = DataHelpers.chapterOrder(chapterDesc, current[0].chapters.size());
+            fillChapterRows(list, popup, current[0], orderIndexes, 0);
         };
         order.setOnClickListener(v -> {
             chapterDesc = !chapterDesc;
@@ -2704,7 +3016,40 @@ public class MainActivity extends Activity {
         });
         activePopup = popup;
         popup.showAtLocation(root, Gravity.RIGHT, 0, 0);
-        fill.run();
+        if (!detail.chapters.isEmpty()) {
+            fill.run();
+            return;
+        }
+        headerHost.addView(chapterDrawerHeader(0));
+        Runnable[] load = new Runnable[1];
+        load[0] = () -> {
+            list.removeAllViews();
+            list.addView(remState(R.drawable.rem_loading, "正在解析章节目录", "可以先关闭抽屉", "", null));
+            track(detailIo.submit(() -> {
+                try {
+                    List<ComicModels.Chapter> chapters = sourceForDetail(detail).chapters(detail.summary.comicId);
+                    if (chapters.isEmpty()) throw new IOException("暂无可用章节");
+                    normalizeChaptersOldestFirst(chapters);
+                    ComicModels.ComicDetail loaded = withChapters(detail, chapters);
+                    main.post(() -> {
+                        if (activePopup != popup || !popup.isShowing()) return;
+                        details.put(detail.summary.comicId, loaded);
+                        persistComicCachesAsync();
+                        current[0] = loaded;
+                        fill.run();
+                    });
+                } catch (Exception error) {
+                    boolean expectedCancellation = isExpectedTaskCancellation(error);
+                    main.post(() -> {
+                        if (expectedCancellation || activePopup != popup || !popup.isShowing()) return;
+                        appendErrorLog("目录解析失败", error);
+                        list.removeAllViews();
+                        list.addView(remState(R.drawable.rem_error, "目录解析失败", "请稍后再试", "重试", load[0]));
+                    });
+                }
+            }));
+        };
+        load[0].run();
     }
 
     private void fillChapterRows(LinearLayout list, PopupWindow popup, ComicModels.ComicDetail detail, List<Integer> orderIndexes, int start) {
@@ -2781,8 +3126,8 @@ public class MainActivity extends Activity {
         favorites.remove(id);
         favoriteAt.remove(id);
         saveLocalState();
-        showToast("已删除收藏");
         showTab(0);
+        main.post(() -> showRemToast("已删除收藏"));
     }
 
     private void removeDuplicateFavorites(ComicModels.ComicDetail detail) {
@@ -2935,12 +3280,13 @@ public class MainActivity extends Activity {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.CENTER);
-        View block = new View(this);
-        block.setBackground(UIHelpers.round(Color.rgb(42, 42, 46), UIHelpers.dp(this, 8), Color.TRANSPARENT));
-        box.addView(block, new LinearLayout.LayoutParams(UIHelpers.dp(this, 170), UIHelpers.dp(this, 226)));
+        ImageView art = new ImageView(this);
+        art.setImageResource(message.contains("没有") ? R.drawable.rem_error : R.drawable.rem_loading);
+        art.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        box.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(this, 142), UIHelpers.dp(this, 142)));
         TextView text = UIHelpers.text(this, message, 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
         text.setGravity(Gravity.CENTER);
-        box.addView(text, UIHelpers.marginTop(-1, UIHelpers.dp(this, 16)));
+        box.addView(text, UIHelpers.marginTop(-1, UIHelpers.dp(this, 6)));
         return box;
     }
 
@@ -3260,6 +3606,10 @@ public class MainActivity extends Activity {
     }
 
     private void showFilterDrawer() {
+        showFilterDrawer(1);
+    }
+
+    private void showFilterDrawer(int initialTab) {
         int screenWidth = getResources().getDisplayMetrics().widthPixels;
         int panelWidth = Math.min(screenWidth - UIHelpers.dp(this, 56), UIHelpers.dp(this, 320));
 
@@ -3280,7 +3630,7 @@ public class MainActivity extends Activity {
         panel.setOrientation(LinearLayout.VERTICAL);
         android.graphics.drawable.GradientDrawable panelBg = new android.graphics.drawable.GradientDrawable();
         panelBg.setColor(UIHelpers.CARD);
-        float r = UIHelpers.dp(this, 22);
+        float r = UIHelpers.dp(this, 8);
         panelBg.setCornerRadii(new float[]{r, r, 0, 0, 0, 0, r, r});
         panel.setBackground(panelBg);
         panel.setPadding(UIHelpers.dp(this, 18), UIHelpers.dp(this, 14), UIHelpers.dp(this, 18), UIHelpers.dp(this, 16));
@@ -3298,16 +3648,13 @@ public class MainActivity extends Activity {
 
         LinearLayout tabs = new LinearLayout(this);
         tabs.setOrientation(LinearLayout.HORIZONTAL);
-        TextView tabSource = UIHelpers.text(this, "站源", 14, UIHelpers.TEXT2, Typeface.NORMAL);
-        TextView tabCategory = UIHelpers.text(this, "分类", 14, UIHelpers.TEXT2, Typeface.NORMAL);
-        tabSource.setGravity(Gravity.CENTER);
-        tabCategory.setGravity(Gravity.CENTER);
-        tabSource.setPadding(0, UIHelpers.dp(this, 10), 0, UIHelpers.dp(this, 10));
-        tabCategory.setPadding(0, UIHelpers.dp(this, 10), 0, UIHelpers.dp(this, 10));
-        tabSource.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 12), UIHelpers.BORDER_SOFT));
-        tabCategory.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 12), UIHelpers.BORDER_SOFT));
-        tabs.addView(tabSource, UIHelpers.weight(1));
-        tabs.addView(tabCategory, UIHelpers.weight(1));
+        TextView tabTopic = filterDrawerTab("题材");
+        TextView tabRegion = filterDrawerTab("地区");
+        TextView tabState = filterDrawerTab("状态");
+        tabs.addView(tabTopic, UIHelpers.weight(1));
+        tabs.addView(tabRegion, UIHelpers.weight(1));
+        tabs.addView(tabState, UIHelpers.weight(1));
+        tabs.setVisibility(initialTab == 0 ? View.GONE : View.VISIBLE);
         panel.addView(tabs, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
 
         ScrollView contentScroll = new ScrollView(this);
@@ -3346,15 +3693,14 @@ public class MainActivity extends Activity {
         close.setOnClickListener(v -> popup.dismiss());
         backdrop.setOnClickListener(v -> popup.dismiss());
 
-        final int[] filterTab = {1};
+        final int[] filterTab = {initialTab};
         final Runnable[] fill = new Runnable[1];
         fill[0] = () -> {
             content.removeAllViews();
             boolean sourceTab = filterTab[0] == 0;
-            tabSource.setTextColor(sourceTab ? UIHelpers.ACCENT : UIHelpers.TEXT2);
-            tabCategory.setTextColor(!sourceTab ? UIHelpers.ACCENT : UIHelpers.TEXT2);
-            tabSource.setTypeface(Typeface.create("sans-serif-medium", sourceTab ? Typeface.BOLD : Typeface.NORMAL));
-            tabCategory.setTypeface(Typeface.create("sans-serif-medium", !sourceTab ? Typeface.BOLD : Typeface.NORMAL));
+            updateFilterDrawerTab(tabTopic, filterTab[0] == 1);
+            updateFilterDrawerTab(tabRegion, filterTab[0] == 2);
+            updateFilterDrawerTab(tabState, filterTab[0] == 3);
             if (sourceTab) {
                 filterDrawerAction = null;
                 for (String name : enabledSourceNames()) {
@@ -3386,19 +3732,26 @@ public class MainActivity extends Activity {
                 }
             } else {
                 filterDrawerAction = () -> fill[0].run();
-                content.addView(searchTagGrid(searchTags()));
+                if (filterTab[0] == 1) {
+                    content.addView(searchTagColumn(topicFilterValues(), true));
+                } else if (filterTab[0] == 2) {
+                    content.addView(searchTagColumn(regionFilterValues(), true));
+                } else {
+                    content.addView(searchTagColumn(stateFilterValues(), false));
+                }
             }
         };
-        tabSource.setOnClickListener(v -> { filterTab[0] = 0; fill[0].run(); });
-        tabCategory.setOnClickListener(v -> { filterTab[0] = 1; fill[0].run(); });
+        tabTopic.setOnClickListener(v -> { filterTab[0] = 1; fill[0].run(); });
+        tabRegion.setOnClickListener(v -> { filterTab[0] = 2; fill[0].run(); });
+        tabState.setOnClickListener(v -> { filterTab[0] = 3; fill[0].run(); });
         confirm.setOnClickListener(v -> {
             confirmed[0] = true;
             boolean sourceChanged = !selectedSourceId.equals(origSourceId);
-            searchQuery = "";
+            String keyword = searchQuery.trim();
             searchResults.clear();
             showTab(1);
             if (sourceChanged) loadSourceCategories();
-            loadCategory();
+            if (TextUtils.isEmpty(keyword)) loadCategory(); else runSearch(keyword);
             popup.dismiss();
         });
 
@@ -3409,6 +3762,19 @@ public class MainActivity extends Activity {
         panel.animate().translationX(0).setDuration(220).start();
         backdrop.setAlpha(0f);
         backdrop.animate().alpha(1f).setDuration(220).start();
+    }
+
+    private TextView filterDrawerTab(String label) {
+        TextView tab = UIHelpers.text(this, label, 13, UIHelpers.TEXT2, Typeface.NORMAL);
+        tab.setGravity(Gravity.CENTER);
+        tab.setPadding(0, UIHelpers.dp(this, 9), 0, UIHelpers.dp(this, 9));
+        tab.setBackgroundColor(Color.TRANSPARENT);
+        return tab;
+    }
+
+    private void updateFilterDrawerTab(TextView tab, boolean selected) {
+        tab.setTextColor(selected ? UIHelpers.ACCENT_DARK : UIHelpers.TEXT3);
+        tab.setTypeface(Typeface.create("sans-serif-medium", selected ? Typeface.BOLD : Typeface.NORMAL));
     }
 
     private TextView sourceDropdown() {
@@ -3742,12 +4108,96 @@ public class MainActivity extends Activity {
         return values;
     }
 
+    private List<String> topicFilterValues() {
+        if (hanman18Client.id().equals(selectedSourceId)) {
+            return Arrays.asList(ALL_TAG, "受欢迎的");
+        }
+        if (manbenClient.id().equals(selectedSourceId)) {
+            List<String> values = new ArrayList<>();
+            values.add(ALL_TAG);
+            for (String category : sourceCategories) {
+                if (!TextUtils.isEmpty(category) && !ALL_TAG.equals(category)
+                        && !category.startsWith("地区·") && !values.contains(category)) {
+                    values.add(category);
+                }
+            }
+            return values;
+        }
+        if (gmhClient.id().equals(selectedSourceId)
+                || hiperdexClient.id().equals(selectedSourceId)
+                || manhuazhanClient.id().equals(selectedSourceId)
+                || bbyinClient.id().equals(selectedSourceId)
+                || antbywClient.id().equals(selectedSourceId)) {
+            return searchTags();
+        }
+        if (d5d6Client.id().equals(selectedSourceId)) {
+            List<String> values = new ArrayList<>();
+            values.add(ALL_TAG);
+            for (String category : sourceCategories) {
+                if (!TextUtils.isEmpty(category) && !isD5d6RegionCategory(category) && !values.contains(category)) {
+                    values.add(category);
+                }
+            }
+            return values;
+        }
+        return Collections.singletonList(ALL_TAG);
+    }
+
+    private List<String> regionFilterValues() {
+        if (sourceClient.id().equals(selectedSourceId)) {
+            return Arrays.asList(ALL_TAG, "国漫", "日本", "韩国", "欧美");
+        }
+        if (manhuaguiClient.id().equals(selectedSourceId)) {
+            return searchTags();
+        }
+        if (d5d6Client.id().equals(selectedSourceId)) {
+            List<String> values = new ArrayList<>();
+            values.add(ALL_TAG);
+            for (String category : sourceCategories) {
+                if (!TextUtils.isEmpty(category) && isD5d6RegionCategory(category) && !values.contains(category)) {
+                    values.add(category);
+                }
+            }
+            return values;
+        }
+        if (manbenClient.id().equals(selectedSourceId)) {
+            List<String> values = new ArrayList<>();
+            values.add(ALL_TAG);
+            for (String category : sourceCategories) {
+                if (!TextUtils.isEmpty(category) && category.startsWith("地区·") && !values.contains(category)) {
+                    values.add(category);
+                }
+            }
+            return values;
+        }
+        return Collections.singletonList(ALL_TAG);
+    }
+
+    private boolean isD5d6RegionCategory(String category) {
+        return Arrays.asList("大陆", "日本", "韩国", "欧美", "港台").contains(category);
+    }
+
+    private List<String> stateFilterValues() {
+        if (mkzhanClient.id().equals(selectedSourceId)) return mkzhanFilterLabels();
+        if (antbywClient.id().equals(selectedSourceId)) {
+            return Arrays.asList("上架时间", "更新时间", "阅读量", "收藏量");
+        }
+        if (sourceClient.id().equals(selectedSourceId)
+                || aikanClient.id().equals(selectedSourceId)
+                || manhuaguiClient.id().equals(selectedSourceId)
+                || d5d6Client.id().equals(selectedSourceId)
+                || manbenClient.id().equals(selectedSourceId)) {
+            return Arrays.asList(ALL_TAG, "连载中", "已完结");
+        }
+        return Collections.singletonList(ALL_TAG);
+    }
+
     private LinearLayout makeBottomNav() {
         LinearLayout wrap = new LinearLayout(this);
         // 圆角顶背景（仅上方两角圆角），无 elevation 无描边
         android.graphics.drawable.GradientDrawable navBg = new android.graphics.drawable.GradientDrawable();
         navBg.setColor(UIHelpers.CARD);
-        float r = UIHelpers.dp(this, 22);
+        float r = UIHelpers.dp(this, 8);
         navBg.setCornerRadii(new float[]{r, r, r, r, 0, 0, 0, 0});
         wrap.setBackground(navBg);
         wrap.setOrientation(LinearLayout.VERTICAL);
@@ -3756,9 +4206,9 @@ public class MainActivity extends Activity {
         tabs.setOrientation(LinearLayout.HORIZONTAL);
         tabs.setGravity(Gravity.CENTER_VERTICAL);
         wrap.addView(tabs, new LinearLayout.LayoutParams(-1, -1));
-        int[] iconRes = { R.drawable.ic_favorite, R.drawable.ic_search_nav, R.drawable.ic_source, R.drawable.ic_profile };
-        int[] iconResSelected = { R.drawable.ic_favorite_fill, R.drawable.ic_search_nav, R.drawable.ic_source, R.drawable.ic_profile };
-        String[] labels = {"收藏", "搜索", "站源", "我的"};
+        int[] iconRes = { R.drawable.ic_bookshelf, R.drawable.ic_search_nav, R.drawable.ic_profile };
+        int[] iconResSelected = { R.drawable.ic_bookshelf, R.drawable.ic_search_nav, R.drawable.ic_profile };
+        String[] labels = {"书架", "发现", "设置"};
         for (int i = 0; i < labels.length; i++) {
             final int index = i;
             boolean selected = i == currentTab;
@@ -3800,11 +4250,14 @@ public class MainActivity extends Activity {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.addView(UIHelpers.text(this, title, 24, UIHelpers.TEXT, Typeface.BOLD), UIHelpers.weight(1));
         if (badge != null) row.addView(UIHelpers.chip(this, badge, true));
-        if (currentTab == 2) {
-            ImageView menu = UIHelpers.vectorIconButton(this, R.drawable.ic_menu, UIHelpers.TEXT, 8);
-            menu.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 18), UIHelpers.BORDER));
-            menu.setOnClickListener(v -> showSourceMenu(menu));
-            row.addView(menu, new LinearLayout.LayoutParams(UIHelpers.dp(this, 42), UIHelpers.dp(this, 38)));
+        if ("书架".equals(title) || "发现".equals(title)) {
+            ImageView theme = new ImageView(this);
+            theme.setImageResource(R.drawable.rem_reader_resume);
+            theme.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            theme.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 16), Color.TRANSPARENT));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(UIHelpers.dp(this, 30), UIHelpers.dp(this, 30));
+            lp.leftMargin = UIHelpers.dp(this, 8);
+            row.addView(theme, lp);
         }
         page.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 14)));
     }
@@ -3843,44 +4296,44 @@ public class MainActivity extends Activity {
     }
 
     private View emptyState(int iconRes, String title, String desc, String action, Runnable onClick) {
-        return UIHelpers.emptyState(this, iconRes, title, desc, action, onClick);
+        return remState(R.drawable.rem_empty, title, desc, action, onClick);
     }
 
     private View loadingState(String title, String desc) {
+        return remState(R.drawable.rem_loading, title, desc, "", null);
+    }
+
+    private View remState(int imageRes, String title, String desc, String action, Runnable onClick) {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.CENTER);
         box.setLayoutParams(new LinearLayout.LayoutParams(-1, -2));
-        box.setPadding(0, UIHelpers.dp(this, 8), 0, 0);
-        box.setMinimumHeight(UIHelpers.dp(this, 330));
+        box.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 16), UIHelpers.dp(this, 16), UIHelpers.dp(this, 16));
+        box.setMinimumHeight(UIHelpers.dp(this, 280));
 
-        com.facebook.shimmer.ShimmerFrameLayout shimmer = UIHelpers.shimmerFrame(this);
-        LinearLayout skeletonBox = new LinearLayout(this);
-        skeletonBox.setOrientation(LinearLayout.VERTICAL);
-        for (int i = 0; i < 5; i++) {
-            View skel = UIHelpers.skeletonCard(this, "list");
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-            lp.topMargin = i == 0 ? 0 : UIHelpers.dp(this, 12);
-            skeletonBox.addView(skel, lp);
-        }
-        shimmer.addView(skeletonBox);
-        box.addView(shimmer, new LinearLayout.LayoutParams(-1, -2));
+        ImageView art = new ImageView(this);
+        art.setImageResource(imageRes);
+        art.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        box.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(this, 142), UIHelpers.dp(this, 142)));
 
-        TextView titleView = UIHelpers.text(this, title, 17, UIHelpers.TEXT2, Typeface.BOLD);
+        TextView titleView = UIHelpers.text(this, title, 16, UIHelpers.TEXT, Typeface.BOLD);
         titleView.setGravity(Gravity.CENTER);
-        titleView.setVisibility(View.GONE);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(-1, -2);
-        titleParams.setMargins(0, UIHelpers.dp(this, 16), 0, 0);
+        titleParams.setMargins(0, UIHelpers.dp(this, 6), 0, 0);
         box.addView(titleView, titleParams);
 
         TextView description = UIHelpers.text(this, desc, 13, UIHelpers.TEXT3, Typeface.NORMAL);
         description.setGravity(Gravity.CENTER);
         description.setMaxLines(2);
         description.setEllipsize(TextUtils.TruncateAt.END);
-        description.setVisibility(View.GONE);
         LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(-1, -2);
-        descParams.setMargins(0, UIHelpers.dp(this, 8), 0, 0);
+        descParams.setMargins(0, UIHelpers.dp(this, 5), 0, 0);
         box.addView(description, descParams);
+        if (!TextUtils.isEmpty(action) && onClick != null) {
+            Button button = UIHelpers.primaryButton(this, action);
+            button.setOnClickListener(v -> onClick.run());
+            box.addView(button, UIHelpers.marginTop(UIHelpers.dp(this, 132), UIHelpers.dp(this, 12), -2, UIHelpers.dp(this, 38)));
+        }
         return box;
     }
 
@@ -3935,21 +4388,9 @@ public class MainActivity extends Activity {
         appendErrorLog(title, error);
         pageLoading = false;
         root.removeAllViews();
-        LinearLayout box = new LinearLayout(this);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setGravity(Gravity.CENTER);
-        box.setPadding(UIHelpers.dp(this, 20), 0, UIHelpers.dp(this, 20), 0);
-        box.setBackgroundColor(UIHelpers.BG);
-        box.addView(UIHelpers.text(this, title, 18, UIHelpers.TEXT, Typeface.BOLD));
-        TextView msg = UIHelpers.text(this, error == null ? "未知错误" : clean(error.getMessage(), error.getClass().getSimpleName()), 13, UIHelpers.TEXT2, Typeface.NORMAL);
-        msg.setGravity(Gravity.CENTER);
-        box.addView(msg, UIHelpers.marginTop(-1, UIHelpers.dp(this, 10)));
-        Button back = UIHelpers.secondaryButton(this, "返回");
-        back.setOnClickListener(v -> {
-            if (backAction != null) backAction.run(); else showTab(currentTab);
-        });
-        box.addView(back, UIHelpers.marginTop(UIHelpers.dp(this, 110), UIHelpers.dp(this, 16), -2, UIHelpers.dp(this, 42)));
-        root.addView(box, UIHelpers.match());
+        String message = error == null ? "请稍后重试" : clean(error.getMessage(), "请稍后重试");
+        root.addView(remState(R.drawable.rem_error, title, message, "重试",
+                backAction == null ? () -> showTab(currentTab) : backAction), UIHelpers.match());
     }
 
     private List<ComicModels.ComicSummary> filterResults() {
@@ -4025,6 +4466,7 @@ public class MainActivity extends Activity {
     private void restoreReaderPosition(ListView list, int savedPosition) {
         int count = list.getCount();
         if (count <= 0 || savedPosition <= 0) return;
+        list.post(this::showReaderResumeHint);
         if (savedPosition == READER_POSITION_SCALE) {
             list.setSelection(count - 1);
             list.post(() -> alignReaderBottom(list));
@@ -4061,7 +4503,32 @@ public class MainActivity extends Activity {
     }
 
     private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        showRemToast(message);
+    }
+
+    private void showRemToast(String message) {
+        if (root == null) {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        LinearLayout hint = new LinearLayout(this);
+        hint.setOrientation(LinearLayout.HORIZONTAL);
+        hint.setGravity(Gravity.CENTER_VERTICAL);
+        hint.setPadding(UIHelpers.dp(this, 7), UIHelpers.dp(this, 5), UIHelpers.dp(this, 12), UIHelpers.dp(this, 5));
+        hint.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 8), UIHelpers.BORDER));
+        hint.setElevation(UIHelpers.dp(this, 3));
+        ImageView art = new ImageView(this);
+        art.setImageResource(R.drawable.rem_reader_boundary);
+        art.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        hint.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(this, 32), UIHelpers.dp(this, 32)));
+        TextView label = UIHelpers.text(this, message, 12, UIHelpers.TEXT, Typeface.BOLD);
+        LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(-2, -2);
+        labelLp.leftMargin = UIHelpers.dp(this, 7);
+        hint.addView(label, labelLp);
+        root.addView(hint, UIHelpers.frame(-2, UIHelpers.dp(this, 44), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0, 0, UIHelpers.dp(this, 72)));
+        main.postDelayed(() -> {
+            if (hint.getParent() == root) root.removeView(hint);
+        }, 1600L);
     }
 
     private void showInfo(String title, String message) {
@@ -4380,8 +4847,8 @@ public class MainActivity extends Activity {
 
     private void clearErrorLogs() {
         getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().remove(ERROR_LOGS_KEY).apply();
-        showToast("错误日志已清理");
-        showTab(3);
+        showTab(2);
+        main.post(() -> showRemToast("错误日志已清理"));
     }
 
     private void exportErrorLogs() {
@@ -4434,7 +4901,7 @@ public class MainActivity extends Activity {
                     if (!url.isEmpty()) {
                         customSources.add(new ComicModels.Source("custom_" + System.currentTimeMillis(), url, "", url, false, true));
                         saveLocalState();
-                        showTab(2);
+                        showSourceManagement();
                     }
                 })
                 .setNegativeButton("取消", null)
@@ -4515,8 +4982,8 @@ public class MainActivity extends Activity {
                     selectedState = "all";
                     sourceCategories.clear();
                     searchResults.clear();
-                    showToast("站源配置已导入");
-                    showTab(2);
+                    showSourceManagement();
+                    showRemToast("站源配置已导入");
                     loadSourceCategories();
                     loadDefaultCategory();
                 });
@@ -5221,18 +5688,11 @@ public class MainActivity extends Activity {
         content.setPadding(UIHelpers.dp(this, 20), UIHelpers.dp(this, 12), UIHelpers.dp(this, 20), UIHelpers.dp(this, 24));
         scroll.addView(content, UIHelpers.matchWrap());
 
-        FrameLayout topBar = new FrameLayout(this);
+        LinearLayout topBar = new LinearLayout(this);
+        topBar.setGravity(Gravity.CENTER_VERTICAL);
         topBar.setBackgroundColor(UIHelpers.BG);
-        ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, UIHelpers.TEXT, 10);
-        back.setOnClickListener(v -> navigateBack());
-        topBar.addView(back, UIHelpers.frame(UIHelpers.dp(this, 44), UIHelpers.dp(this, 48), Gravity.CENTER_VERTICAL | Gravity.LEFT, UIHelpers.dp(this, 4), 0, 0, 0));
-        TextView title = new TextView(this);
-        title.setText("阅读历史");
-        title.setTypeface(Typeface.SERIF);
-        title.setTextSize(13);
-        title.setTextColor(UIHelpers.TEXT);
-        title.setGravity(Gravity.CENTER);
-        topBar.addView(title, UIHelpers.frame(-2, -2, Gravity.CENTER, 0, 0, 0, 0));
+        TextView title = UIHelpers.text(this, "阅读历史", 22, UIHelpers.TEXT, Typeface.BOLD);
+        topBar.addView(title, UIHelpers.weight(1));
         boolean hasAny = !progress.isEmpty();
         if (hasAny) {
             TextView clear = new TextView(this);
@@ -5250,7 +5710,7 @@ public class MainActivity extends Activity {
                     showHistory();
                 }, "取消", null);
             });
-            topBar.addView(clear, UIHelpers.frame(-2, -2, Gravity.CENTER_VERTICAL | Gravity.RIGHT, 0, 0, UIHelpers.dp(this, 4), 0));
+            topBar.addView(clear);
         }
         content.addView(topBar, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 48)));
 
@@ -5358,8 +5818,8 @@ public class MainActivity extends Activity {
         chapters.clear();
         searchResults.clear();
         persistComicCachesAsync();
-        showToast("缓存已清理，收藏数据已保留");
-        showTab(3);
+        showTab(2);
+        main.post(() -> showRemToast("缓存已清理，收藏数据已保留"));
     }
 
     private void deleteFiles(File file) {

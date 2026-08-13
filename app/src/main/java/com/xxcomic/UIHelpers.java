@@ -31,32 +31,32 @@ public final class UIHelpers {
     private UIHelpers() {
     }
 
-    public static int BG = Color.rgb(254, 252, 248);
-    public static int SURFACE = Color.rgb(248, 245, 238);
-    public static int CARD = Color.rgb(255, 252, 246);
-    public static int CARD_SOFT = Color.rgb(248, 245, 238);
-    public static int TEXT = Color.rgb(26, 28, 30);
-    public static int TEXT2 = Color.rgb(74, 77, 82);
-    public static int TEXT3 = Color.rgb(139, 142, 148);
-    public static int TEXT4 = Color.rgb(180, 183, 189);
-    public static int BORDER = Color.rgb(232, 227, 215);
-    public static int BORDER_SOFT = Color.rgb(241, 236, 223);
-    public static int ACCENT = Color.rgb(26, 28, 30);
+    public static int BG = Color.rgb(241, 249, 254);
+    public static int SURFACE = Color.rgb(227, 243, 252);
+    public static int CARD = Color.rgb(255, 255, 255);
+    public static int CARD_SOFT = Color.rgb(243, 249, 255);
+    public static int TEXT = Color.rgb(20, 40, 58);
+    public static int TEXT2 = Color.rgb(76, 105, 127);
+    public static int TEXT3 = Color.rgb(108, 132, 152);
+    public static int TEXT4 = Color.rgb(177, 193, 208);
+    public static int BORDER = Color.rgb(207, 229, 243);
+    public static int BORDER_SOFT = Color.rgb(225, 239, 250);
+    public static int ACCENT = Color.rgb(43, 152, 217);
     public static int ON_ACCENT = Color.rgb(255, 255, 255);
-    public static int ACCENT_SOFT = Color.rgb(241, 236, 223);
-    public static int BRAND = Color.rgb(217, 119, 6);
-    public static int PLACEHOLDER = Color.rgb(237, 231, 217);
-    public static int READER_TEXT = Color.rgb(232, 228, 220);
-    public static int ACCENT_LIGHT = Color.rgb(241, 236, 223);
-    public static int ACCENT_DARK = Color.rgb(26, 28, 30);
-    public static int GREEN = Color.rgb(91, 140, 90);
-    public static int GREEN_LIGHT = Color.rgb(229, 247, 239);
+    public static int ACCENT_SOFT = Color.rgb(226, 243, 255);
+    public static int BRAND = Color.rgb(43, 152, 217);
+    public static int PLACEHOLDER = Color.rgb(224, 239, 250);
+    public static int READER_TEXT = Color.rgb(235, 246, 255);
+    public static int ACCENT_LIGHT = Color.rgb(226, 243, 255);
+    public static int ACCENT_DARK = Color.rgb(22, 123, 185);
+    public static int GREEN = Color.rgb(68, 161, 133);
+    public static int GREEN_LIGHT = Color.rgb(226, 247, 240);
     public static int DANGER = Color.rgb(200, 69, 69);
-    public static int STATUS_SERIAL = Color.rgb(91, 140, 90);
-    public static int STATUS_COMPLETE = Color.rgb(139, 142, 148);
-    public static int STATUS_NEW = Color.rgb(194, 65, 12);
-    public static int DARK = Color.rgb(22, 22, 25);
-    public static int DARK_BAR = Color.rgb(14, 14, 17);
+    public static int STATUS_SERIAL = Color.rgb(68, 161, 133);
+    public static int STATUS_COMPLETE = Color.rgb(133, 153, 173);
+    public static int STATUS_NEW = Color.rgb(86, 166, 229);
+    public static int DARK = Color.rgb(16, 24, 34);
+    public static int DARK_BAR = Color.rgb(10, 17, 26);
     private static boolean nightTheme = false;
 
     public static boolean applyAutoTheme() {
@@ -95,62 +95,62 @@ public final class UIHelpers {
 
     private static void applyDayTheme() {
         nightTheme = false;
-        BG = Color.rgb(254, 252, 248);
-        SURFACE = Color.rgb(248, 245, 238);
-        CARD = Color.rgb(255, 252, 246);
-        CARD_SOFT = Color.rgb(248, 245, 238);
-        TEXT = Color.rgb(26, 28, 30);
-        TEXT2 = Color.rgb(74, 77, 82);
-        TEXT3 = Color.rgb(139, 142, 148);
-        TEXT4 = Color.rgb(180, 183, 189);
-        BORDER = Color.rgb(232, 227, 215);
-        BORDER_SOFT = Color.rgb(241, 236, 223);
-        ACCENT = Color.rgb(26, 28, 30);
+        BG = Color.rgb(241, 249, 254);
+        SURFACE = Color.rgb(227, 243, 252);
+        CARD = Color.rgb(255, 255, 255);
+        CARD_SOFT = Color.rgb(243, 249, 255);
+        TEXT = Color.rgb(20, 40, 58);
+        TEXT2 = Color.rgb(76, 105, 127);
+        TEXT3 = Color.rgb(108, 132, 152);
+        TEXT4 = Color.rgb(177, 193, 208);
+        BORDER = Color.rgb(207, 229, 243);
+        BORDER_SOFT = Color.rgb(225, 239, 250);
+        ACCENT = Color.rgb(43, 152, 217);
         ON_ACCENT = Color.rgb(255, 255, 255);
-        BRAND = Color.rgb(217, 119, 6);
-        PLACEHOLDER = Color.rgb(237, 231, 217);
-        READER_TEXT = Color.rgb(232, 228, 220);
-        ACCENT_LIGHT = Color.rgb(241, 236, 223);
-        ACCENT_SOFT = Color.rgb(241, 236, 223);
-        ACCENT_DARK = Color.rgb(26, 28, 30);
-        GREEN = Color.rgb(91, 140, 90);
-        GREEN_LIGHT = Color.rgb(229, 247, 239);
+        BRAND = Color.rgb(43, 152, 217);
+        PLACEHOLDER = Color.rgb(224, 239, 250);
+        READER_TEXT = Color.rgb(235, 246, 255);
+        ACCENT_LIGHT = Color.rgb(226, 243, 255);
+        ACCENT_SOFT = Color.rgb(226, 243, 255);
+        ACCENT_DARK = Color.rgb(22, 123, 185);
+        GREEN = Color.rgb(68, 161, 133);
+        GREEN_LIGHT = Color.rgb(226, 247, 240);
         DANGER = Color.rgb(200, 69, 69);
-        STATUS_SERIAL = Color.rgb(91, 140, 90);
-        STATUS_COMPLETE = Color.rgb(139, 142, 148);
-        STATUS_NEW = Color.rgb(194, 65, 12);
-        DARK = Color.rgb(22, 22, 25);
-        DARK_BAR = Color.rgb(14, 14, 17);
+        STATUS_SERIAL = Color.rgb(68, 161, 133);
+        STATUS_COMPLETE = Color.rgb(133, 153, 173);
+        STATUS_NEW = Color.rgb(86, 166, 229);
+        DARK = Color.rgb(16, 24, 34);
+        DARK_BAR = Color.rgb(10, 17, 26);
     }
 
     private static void applyNightTheme() {
         nightTheme = true;
-        BG = Color.rgb(21, 21, 26);
-        SURFACE = Color.rgb(28, 28, 34);
-        CARD = Color.rgb(34, 34, 42);
-        CARD_SOFT = Color.rgb(31, 31, 38);
-        TEXT = Color.rgb(232, 228, 220);
-        TEXT2 = Color.rgb(184, 180, 172);
-        TEXT3 = Color.rgb(132, 130, 124);
-        TEXT4 = Color.rgb(92, 90, 86);
-        BORDER = Color.rgb(45, 45, 52);
-        BORDER_SOFT = Color.rgb(38, 38, 44);
-        ACCENT = Color.rgb(232, 228, 220);
-        ON_ACCENT = Color.rgb(21, 21, 26);
-        BRAND = Color.rgb(245, 158, 11);
-        PLACEHOLDER = Color.rgb(58, 54, 50);
-        READER_TEXT = Color.rgb(232, 228, 220);
-        ACCENT_LIGHT = Color.rgb(45, 45, 52);
-        ACCENT_SOFT = Color.rgb(45, 45, 52);
-        ACCENT_DARK = Color.rgb(232, 228, 220);
-        GREEN = Color.rgb(91, 140, 90);
-        GREEN_LIGHT = Color.rgb(24, 58, 42);
+        BG = Color.rgb(18, 27, 38);
+        SURFACE = Color.rgb(24, 38, 53);
+        CARD = Color.rgb(29, 45, 62);
+        CARD_SOFT = Color.rgb(26, 41, 57);
+        TEXT = Color.rgb(232, 244, 253);
+        TEXT2 = Color.rgb(184, 207, 225);
+        TEXT3 = Color.rgb(128, 158, 183);
+        TEXT4 = Color.rgb(82, 110, 135);
+        BORDER = Color.rgb(47, 70, 91);
+        BORDER_SOFT = Color.rgb(37, 57, 76);
+        ACCENT = Color.rgb(106, 184, 243);
+        ON_ACCENT = Color.rgb(10, 24, 37);
+        BRAND = Color.rgb(106, 184, 243);
+        PLACEHOLDER = Color.rgb(42, 63, 82);
+        READER_TEXT = Color.rgb(235, 246, 255);
+        ACCENT_LIGHT = Color.rgb(37, 63, 84);
+        ACCENT_SOFT = Color.rgb(37, 63, 84);
+        ACCENT_DARK = Color.rgb(180, 224, 255);
+        GREEN = Color.rgb(91, 190, 157);
+        GREEN_LIGHT = Color.rgb(25, 63, 55);
         DANGER = Color.rgb(200, 69, 69);
-        STATUS_SERIAL = Color.rgb(91, 140, 90);
-        STATUS_COMPLETE = Color.rgb(132, 130, 124);
-        STATUS_NEW = Color.rgb(224, 123, 57);
-        DARK = Color.rgb(15, 15, 18);
-        DARK_BAR = Color.rgb(8, 8, 11);
+        STATUS_SERIAL = Color.rgb(91, 190, 157);
+        STATUS_COMPLETE = Color.rgb(128, 158, 183);
+        STATUS_NEW = Color.rgb(106, 184, 243);
+        DARK = Color.rgb(12, 19, 28);
+        DARK_BAR = Color.rgb(7, 13, 20);
     }
 
     public static TextView text(Activity ctx, String value, int sp, int color, int style) {
@@ -369,10 +369,10 @@ public final class UIHelpers {
     public static LinearLayout surfaceCard(Activity ctx) {
         LinearLayout card = new LinearLayout(ctx);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(ctx, 14), dp(ctx, 14), dp(ctx, 14), dp(ctx, 14));
-        card.setBackground(round(CARD, dp(ctx, 12), Color.TRANSPARENT));
-        card.setElevation(dp(ctx, 1));
-        LinearLayout.LayoutParams lp = marginBottom(-1, dp(ctx, 12));
+        card.setPadding(dp(ctx, 12), dp(ctx, 11), dp(ctx, 12), dp(ctx, 11));
+        card.setBackground(round(CARD, dp(ctx, 8), BORDER_SOFT));
+        card.setElevation(0);
+        LinearLayout.LayoutParams lp = marginBottom(-1, dp(ctx, 10));
         card.setLayoutParams(lp);
         return card;
     }
@@ -385,7 +385,7 @@ public final class UIHelpers {
         button.setTextColor(fg);
         button.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         boolean outlined = bg == Color.WHITE || bg == SURFACE || bg == CARD || bg == ACCENT_LIGHT || bg == ACCENT_SOFT;
-        button.setBackground(round(bg, dp(ctx, 12), outlined ? BORDER : Color.TRANSPARENT));
+        button.setBackground(round(bg, dp(ctx, 8), outlined ? BORDER : Color.TRANSPARENT));
         button.setGravity(Gravity.CENTER);
         button.setMinHeight(0);
         button.setMinimumHeight(0);
@@ -421,8 +421,9 @@ public final class UIHelpers {
         TextView chip = text(ctx, value, 12, selected ? ON_ACCENT : TEXT3, Typeface.NORMAL);
         chip.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         chip.setGravity(Gravity.CENTER);
-        chip.setPadding(dp(ctx, 14), dp(ctx, 7), dp(ctx, 14), dp(ctx, 7));
-        chip.setBackground(round(selected ? ACCENT : SURFACE, dp(ctx, 12), Color.TRANSPARENT));
+        chip.setPadding(dp(ctx, 11), dp(ctx, 6), dp(ctx, 11), dp(ctx, 6));
+        chip.setBackground(round(selected ? ACCENT_SOFT : Color.TRANSPARENT, dp(ctx, 6), Color.TRANSPARENT));
+        chip.setTextColor(selected ? ACCENT_DARK : TEXT3);
         return chip;
     }
 

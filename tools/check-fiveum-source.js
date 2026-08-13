@@ -171,7 +171,7 @@ assert(!source.includes("String descriptionBlock"), "detail description survives
 assert(/if\s*\(page\s*>\s*1\)\s*return\s+new\s+ArrayList/.test(source), "search does not paginate");
 assert(/SourceConfig\s+manhuazhan\(boolean enabled\)/.test(config), "manhuazhan config");
 assert(/SourceConfig\s+bbyin\(boolean enabled\)/.test(config), "bbyin config");
-assert(/newFixedThreadPool\(11\)/.test(main), "search pool matches eleven active sources");
+assert(/newFixedThreadPool\(12\)/.test(main), "search pool matches twelve active sources");
 assert(/SourceConfig\.manhuazhan/.test(main) && /SourceConfig\.bbyin/.test(main), "both source configs registered");
 assert(/ComicSource\s+manhuazhanClient/.test(main) && /ComicSource\s+bbyinClient/.test(main), "both source clients declared");
 assert(/boolean\s+manhuazhanEnabled\s*=\s*true/.test(main) && /boolean\s+bbyinEnabled\s*=\s*true/.test(main), "both sources default enabled");

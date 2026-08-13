@@ -86,10 +86,10 @@ check("stale chapter callbacks return before UI work", (ensureChapters.match(/if
 check("stale chapter success cannot update caches", ensureChapters.indexOf("if (!isCurrentLoading(loadingGeneration)) return;")
   < ensureChapters.indexOf("details.put(detail.summary.comicId, loaded);"));
 
-check("full-site search toolbar uses navigateBack", /back\.setOnClickListener\(v -> navigateBack\(\)\)/.test(standaloneSearch));
-check("detail toolbar uses navigateBack", /back\.setOnClickListener\(v -> navigateBack\(\)\)/.test(showDetail));
-check("reader toolbar uses navigateBack", /back\.setOnClickListener\(v -> navigateBack\(\)\)/.test(renderReader));
-check("history toolbar uses navigateBack", /back\.setOnClickListener\(v -> navigateBack\(\)\)/.test(showHistory));
+check("edge gesture routes through navigateBack", /rightFromLeft[\s\S]*?leftFromRight[\s\S]*?navigateBack\(\)/.test(source));
+check("detail has no visible back control", !showDetail.includes("R.drawable.ic_back"));
+check("reader has no visible back control", !renderReader.includes("R.drawable.ic_back"));
+check("history has no visible back control", !showHistory.includes("R.drawable.ic_back"));
 const sourcePreselect = filterDrawer.slice(filterDrawer.indexOf("row.setOnClickListener"), filterDrawer.indexOf("content.addView(row)", filterDrawer.indexOf("row.setOnClickListener")));
 check("source preselection invalidates search generation", /searchGeneration\+\+/.test(sourcePreselect));
 check("source preselection clears search loading", /searchLoading\s*=\s*false;[\s\S]*?searchAppending\s*=\s*false;/.test(sourcePreselect));
