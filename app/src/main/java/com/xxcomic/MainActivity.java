@@ -2,6 +2,7 @@ package com.xxcomic;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -101,7 +102,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MainActivity extends Activity {
     private static final String PREFS_NAME = "xx-comic";
     private static final String ALL_TAG = "全部";
-    private static final int DETAIL_HERO_DP = 128;
+    private static final int DETAIL_HERO_DP = 174;
+    private static final int DETAIL_HERO_MAX_DP = 270;
     private static final int CHAPTER_DRAWER_BATCH_SIZE = 40;
     private static final long READER_PROGRESS_ANIM_MS = 30L;
     private static final int READER_POSITION_SCALE = 10000;
@@ -1896,7 +1898,13 @@ public class MainActivity extends Activity {
         hero.setBackgroundColor(UIHelpers.SURFACE);
         boolean cacheOnly = isRetiredComic(detail.summary.comicId);
         addBlurredHeroCover(hero, detail.summary.coverUrl, detail.summary.title, cacheOnly);
-        content.addView(hero, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, DETAIL_HERO_DP)));
+        FrameLayout heroCover = coverFrame(detail.summary.coverUrl, 124, 190, cacheOnly);
+        heroCover.setElevation(UIHelpers.dp(this, 4));
+        FrameLayout.LayoutParams heroCoverParams = UIHelpers.frame(UIHelpers.dp(this, 124), UIHelpers.dp(this, 190), Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0, 0, 0);
+        hero.addView(heroCover, heroCoverParams);
+        LinearLayout.LayoutParams heroParams = new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, DETAIL_HERO_DP));
+        content.addView(hero, heroParams);
+        installDetailHeroStretch(scroll, hero, heroParams);
 
         LinearLayout body = new LinearLayout(this);
         body.setOrientation(LinearLayout.VERTICAL);
@@ -1908,7 +1916,6 @@ public class MainActivity extends Activity {
         info.setLayoutParams(infoParams);
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.HORIZONTAL);
-        top.addView(coverFrame(detail.summary.coverUrl, 92, 124, cacheOnly));
         LinearLayout text = new LinearLayout(this);
         text.setOrientation(LinearLayout.VERTICAL);
         text.setPadding(UIHelpers.dp(this, 12), 0, 0, 0);
@@ -1927,16 +1934,23 @@ public class MainActivity extends Activity {
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
         actions.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 8), UIHelpers.dp(this, 16), UIHelpers.dp(this, 10));
         actions.setBackgroundColor(UIHelpers.CARD);
-        Button fav = UIHelpers.softButton(this, favorites.contains(detail.summary.comicId) ? "取消收藏" : "收藏");
+        ImageView fav = UIHelpers.vectorIconButton(this,
+                favorites.contains(detail.summary.comicId) ? R.drawable.ic_favorite_fill : R.drawable.ic_favorite,
+                favorites.contains(detail.summary.comicId) ? UIHelpers.DANGER : UIHelpers.ACCENT_DARK, 10);
+        fav.setContentDescription(favorites.contains(detail.summary.comicId) ? "取消收藏" : "收藏");
+        fav.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 8), UIHelpers.BORDER));
         fav.setOnClickListener(v -> toggleFavorite(detail));
-        int saved = savedChapter(detail.summary.comicId);
-        String chapterLabel = !detail.chapters.isEmpty() && saved < detail.chapters.size()
-                ? detail.chapters.get(saved).title : "";
-        Button read = UIHelpers.primaryButton(this, saved > 0 ? "继续阅读 · " + chapterLabel : "开始阅读");
+        Button read = UIHelpers.primaryButton(this, detailReadLabel(detail));
+        read.setGravity(Gravity.CENTER);
+        read.setSingleLine(false);
+        read.setMaxLines(2);
+        read.setEllipsize(TextUtils.TruncateAt.END);
+        read.setLineSpacing(0f, 0.92f);
         read.setOnClickListener(v -> ensureChaptersThen(detail, loaded -> showReader(loaded, savedChapter(loaded.summary.comicId))));
-        actions.addView(fav, new LinearLayout.LayoutParams(UIHelpers.dp(this, 78), UIHelpers.dp(this, 44)));
+        actions.addView(fav, new LinearLayout.LayoutParams(UIHelpers.dp(this, 44), UIHelpers.dp(this, 44)));
         actions.addView(UIHelpers.space(this, UIHelpers.dp(this, 8), 1));
         actions.addView(read, new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 44), 1));
         root.addView(actions, UIHelpers.frame(-1, UIHelpers.dp(this, 62), Gravity.BOTTOM, 0, 0, 0, 0));
@@ -2974,16 +2988,23 @@ public class MainActivity extends Activity {
     }
 
     private void showChapterDrawer(ComicModels.ComicDetail detail) {
-        chapterDesc = false;
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 16), UIHelpers.dp(this, 16), UIHelpers.dp(this, 16));
         panel.setBackgroundColor(UIHelpers.CARD);
 
-        LinearLayout headerHost = new LinearLayout(this);
-        headerHost.setOrientation(LinearLayout.VERTICAL);
-        panel.addView(headerHost, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setPadding(0, 0, 0, UIHelpers.dp(this, 8));
+        panel.addView(header, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        LinearLayout titleHost = new LinearLayout(this);
+        titleHost.setOrientation(LinearLayout.VERTICAL);
+        header.addView(titleHost, UIHelpers.weight(1));
         TextView order = UIHelpers.chip(this, chapterDesc ? "倒序" : "正序", true);
+        LinearLayout orderHost = new LinearLayout(this);
+        orderHost.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
+        orderHost.addView(order, UIHelpers.wrap());
+        header.addView(orderHost, new LinearLayout.LayoutParams(UIHelpers.dp(this, 72), UIHelpers.dp(this, 40)));
 
         ScrollView scroll = new ScrollView(this);
         LinearLayout list = new LinearLayout(this);
@@ -2999,14 +3020,14 @@ public class MainActivity extends Activity {
         });
 
         final ComicModels.ComicDetail[] current = {detail};
+        final int[] renderGeneration = {0};
         Runnable fill = () -> {
-            headerHost.removeAllViews();
-            LinearLayout header = chapterDrawerHeader(current[0].chapters.size());
-            header.addView(order);
-            headerHost.addView(header);
+            int generation = ++renderGeneration[0];
+            titleHost.removeAllViews();
+            titleHost.addView(chapterDrawerTitle(current[0].chapters.size()));
             list.removeAllViews();
             List<Integer> orderIndexes = DataHelpers.chapterOrder(chapterDesc, current[0].chapters.size());
-            fillChapterRows(list, popup, current[0], orderIndexes, 0);
+            fillChapterRows(list, popup, current[0], orderIndexes, 0, generation, renderGeneration);
         };
         order.setOnClickListener(v -> {
             chapterDesc = !chapterDesc;
@@ -3020,7 +3041,7 @@ public class MainActivity extends Activity {
             fill.run();
             return;
         }
-        headerHost.addView(chapterDrawerHeader(0));
+        titleHost.addView(chapterDrawerTitle(0));
         Runnable[] load = new Runnable[1];
         load[0] = () -> {
             list.removeAllViews();
@@ -3052,7 +3073,9 @@ public class MainActivity extends Activity {
         load[0].run();
     }
 
-    private void fillChapterRows(LinearLayout list, PopupWindow popup, ComicModels.ComicDetail detail, List<Integer> orderIndexes, int start) {
+    private void fillChapterRows(LinearLayout list, PopupWindow popup, ComicModels.ComicDetail detail,
+                                 List<Integer> orderIndexes, int start, int generation, int[] renderGeneration) {
+        if (generation != renderGeneration[0] || activePopup != popup || !popup.isShowing()) return;
         int endIndex = Math.min(start + CHAPTER_DRAWER_BATCH_SIZE, orderIndexes.size());
         for (int i = start; i < endIndex; i++) {
                 int chapterIndex = orderIndexes.get(i);
@@ -3067,19 +3090,62 @@ public class MainActivity extends Activity {
                 if (i < orderIndexes.size() - 1) list.addView(UIHelpers.divider(this));
         }
         if (endIndex < orderIndexes.size() && activePopup == popup) {
-            main.postDelayed(() -> fillChapterRows(list, popup, detail, orderIndexes, endIndex), 16);
+            main.postDelayed(() -> fillChapterRows(list, popup, detail, orderIndexes, endIndex, generation, renderGeneration), 16);
         }
     }
 
-    private LinearLayout chapterDrawerHeader(int count) {
-        LinearLayout header = new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
+    private LinearLayout chapterDrawerTitle(int count) {
         LinearLayout text = new LinearLayout(this);
         text.setOrientation(LinearLayout.VERTICAL);
         text.addView(UIHelpers.text(this, "章节目录", 18, UIHelpers.TEXT, Typeface.BOLD));
         text.addView(UIHelpers.text(this, count + " 章", 12, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 3)));
-        header.addView(text, UIHelpers.weight(1));
-        return header;
+        return text;
+    }
+
+    private String detailReadLabel(ComicModels.ComicDetail detail) {
+        boolean hasHistory = lastViewedAt.containsKey(detail.summary.comicId);
+        int saved = Math.max(0, savedChapter(detail.summary.comicId));
+        if (!hasHistory) return "开始阅读";
+        if (!detail.chapters.isEmpty() && saved < detail.chapters.size()) {
+            return "继续阅读\n" + detail.chapters.get(saved).title;
+        }
+        return "继续阅读\n上次阅读位置";
+    }
+
+    private void installDetailHeroStretch(ScrollView scroll, View hero, LinearLayout.LayoutParams params) {
+        final int baseHeight = UIHelpers.dp(this, DETAIL_HERO_DP);
+        final int maxHeight = UIHelpers.dp(this, DETAIL_HERO_MAX_DP);
+        final float[] downY = {0f};
+        final int[] stretchedHeight = {baseHeight};
+        scroll.setOnTouchListener((view, event) -> {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                downY[0] = event.getRawY();
+                return false;
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_MOVE && scroll.getScrollY() == 0) {
+                float pull = event.getRawY() - downY[0];
+                if (pull > 0f) {
+                    stretchedHeight[0] = Math.min(maxHeight, baseHeight + Math.round(pull * 0.55f));
+                    params.height = stretchedHeight[0];
+                    hero.setLayoutParams(params);
+                    return true;
+                }
+            }
+            if ((event.getActionMasked() == MotionEvent.ACTION_UP || event.getActionMasked() == MotionEvent.ACTION_CANCEL)
+                    && stretchedHeight[0] != baseHeight) {
+                final int fromHeight = stretchedHeight[0];
+                ValueAnimator animator = ValueAnimator.ofInt(fromHeight, baseHeight);
+                animator.setDuration(180L);
+                animator.addUpdateListener(value -> {
+                    params.height = (Integer) value.getAnimatedValue();
+                    hero.setLayoutParams(params);
+                });
+                animator.start();
+                stretchedHeight[0] = baseHeight;
+                return true;
+            }
+            return false;
+        });
     }
 
     private View chapterDrawerRow(String title, String end, boolean current) {
