@@ -39,7 +39,7 @@ check("keyboard search triggers the active search mode",
 check("global empty query shows recent search and results hide it",
   main.includes("renderSearchHistory") && main.includes("globalSearchQuery.isEmpty()"));
 check("global source row remains horizontally scrollable", main.includes("globalSearchSourceTabs"));
-check("filters render in three columns", /searchTagColumn[\s\S]*?final int columns = 3;/.test(main));
+check("filters render in three columns", /filterOptionColumn[\s\S]*?final int columns = 3;/.test(main));
 
 check("bookshelf deletion starts from long press", main.includes("setOnLongClickListener") && main.includes("showFavoriteDeleteOverlay"));
 check("bookshelf deletion uses the trash icon", main.includes("R.drawable.ic_trash"));
@@ -80,8 +80,8 @@ check("detail has no visible back button", detail && !detail.includes("R.drawabl
 check("history has no visible back button", history && !history.includes("R.drawable.ic_back"));
 check("chapter catalog remains an async right drawer", main.includes("showChapterDrawer") && main.includes("ensureChaptersThen"));
 
-check("release version is 1.0.18", gradle.includes('versionName "1.0.18"'));
-check("release code is 18", gradle.includes("versionCode 18"));
+check("release version is 1.0.20", gradle.includes('versionName "1.0.20"'));
+check("release code is 20", gradle.includes("versionCode 20"));
 
 if (failed) process.exit(1);
 console.log("Rem visual contract holds.");

@@ -119,22 +119,10 @@ public class BaoziComicSource implements ComicSource {
         if (page > 1) {
             String api = config.route("categoryApi");
             if (!api.isEmpty()) {
-                return parseApiCards(fetch(absolute(api
-                        .replace("{region}", safeRegion)
-                        .replace("{state}", safeState)
-                        .replace("{type}", "all")
-                        .replace("{filter}", "*")
-                        .replace("{page}", String.valueOf(page)))));
+                return parseApiCards(fetch(buildCategoryUrl(api, "all", safeRegion, safeState, "*", page)));
             }
         }
-        String path = config.route("category")
-                .replace("{region}", safeRegion)
-                .replace("{state}", safeState)
-                .replace("{type}", "all")
-                .replace("{filter}", "*")
-                .replace("{page}", String.valueOf(page))
-                .replace("{pageQuery}", page > 1 ? "&page=" + page : "");
-        return parseCards(fetch(absolute(path)));
+        return parseCards(fetch(buildCategoryUrl(config.route("category"), "all", safeRegion, safeState, "*", page)));
     }
 
     @Override
@@ -145,12 +133,48 @@ public class BaoziComicSource implements ComicSource {
         String filter = SourceFilters.value(filters, "filter", "*");
         String route = page > 1 && !TextUtils.isEmpty(config.route("categoryApi"))
                 ? config.route("categoryApi") : config.route("category");
+        String body = fetch(buildCategoryUrl(route, type, region, state, filter, page));
+        return page > 1 && route.equals(config.route("categoryApi")) ? parseApiCards(body) : parseCards(body);
+    }
+
+    private String buildCategoryUrl(String route, String type, String region, String state, String filter, int page) {
         String path = route.replace("{region}", region).replace("{state}", state)
                 .replace("{type}", type).replace("{filter}", filter)
                 .replace("{page}", String.valueOf(page))
                 .replace("{pageQuery}", page > 1 ? "&page=" + page : "");
-        String body = fetch(absolute(path));
-        return page > 1 && route.equals(config.route("categoryApi")) ? parseApiCards(body) : parseCards(body);
+        return withCategoryFilters(absolute(path), type, region, state, filter, page);
+    }
+
+    static String withCategoryFilters(String url, String type, String region, String state, String filter, int page) {
+        int fragmentStart = url.indexOf('#');
+        String fragment = fragmentStart >= 0 ? url.substring(fragmentStart) : "";
+        String withoutFragment = fragmentStart >= 0 ? url.substring(0, fragmentStart) : url;
+        int queryStart = withoutFragment.indexOf('?');
+        String base = queryStart >= 0 ? withoutFragment.substring(0, queryStart) : withoutFragment;
+        String query = queryStart >= 0 ? withoutFragment.substring(queryStart + 1) : "";
+        List<String> parts = new ArrayList<>();
+        if (!query.isEmpty()) {
+            for (String part : query.split("&")) {
+                if (part.isEmpty()) continue;
+                int separator = part.indexOf('=');
+                String key = separator >= 0 ? part.substring(0, separator) : part;
+                if (!"type".equals(key) && !"region".equals(key) && !"state".equals(key)
+                        && !"filter".equals(key) && !"page".equals(key)) {
+                    parts.add(part);
+                }
+            }
+        }
+        parts.add("type=" + type);
+        parts.add("region=" + region);
+        parts.add("state=" + state);
+        parts.add("filter=" + filter);
+        if (page > 1) parts.add("page=" + page);
+        StringBuilder result = new StringBuilder(base).append('?');
+        for (int i = 0; i < parts.size(); i++) {
+            if (i > 0) result.append('&');
+            result.append(parts.get(i));
+        }
+        return result.append(fragment).toString();
     }
 
     private String safeRegion(String value) {
