@@ -2257,7 +2257,8 @@ public class MainActivity extends Activity {
                     boolean expectedCancellation = isExpectedTaskCancellation(error);
                     main.post(() -> {
                         if (expectedCancellation || !isCurrentReaderRequest(generation, comicId, chapterUrl, detail)) return;
-                        showError("章节加载失败", error, () -> showReader(detail, chapterIndex));
+                        appendErrorLog("章节加载失败", error);
+                        showReaderError(detail, "加载失败了", "阅读位置已经保留", () -> showReader(detail, chapterIndex));
                     });
                 }
             }));
@@ -2293,12 +2294,47 @@ public class MainActivity extends Activity {
         shell.setOrientation(LinearLayout.VERTICAL);
         shell.setBackgroundColor(UIHelpers.DARK);
         root.addView(shell, UIHelpers.match());
-        TextView top = UIHelpers.text(this, detail.summary.title, 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
-        top.setGravity(Gravity.CENTER);
+        shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 43)));
+        String savedMessage = readerPositions.containsKey(readerPositionKey(detail.summary.comicId,
+                detail.chapters.get(readerChapterIndex))) ? "阅读位置已保存" : "蕾姆正在整理页面";
+        shell.addView(readerState(R.drawable.rem_loading, "正在加载第 " + (readerChapterIndex + 1) + " 话",
+                savedMessage, "", null, true), new LinearLayout.LayoutParams(-1, 0, 1));
+        shell.addView(readerProgressBar(readerChapterIndex + 1, Math.max(1, detail.chapters.size())), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 2)));
+    }
+
+    private void showReaderError(ComicModels.ComicDetail detail, String title, String desc, Runnable retry) {
+        root.removeAllViews();
+        readerVisible = true;
+        applyReaderSystemBars();
+        LinearLayout shell = new LinearLayout(this);
+        shell.setOrientation(LinearLayout.VERTICAL);
+        shell.setBackgroundColor(UIHelpers.DARK);
+        root.addView(shell, UIHelpers.match());
+        shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 43)));
+        shell.addView(readerState(R.drawable.rem_error, title, desc, "重试", retry, false), new LinearLayout.LayoutParams(-1, 0, 1));
+        shell.addView(readerProgressBar(readerChapterIndex + 1, Math.max(1, detail.chapters.size())), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 2)));
+    }
+
+    private LinearLayout readerToolbar(ComicModels.ComicDetail detail) {
+        LinearLayout top = new LinearLayout(this);
+        top.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 12), 0);
+        top.setGravity(Gravity.CENTER_VERTICAL);
         top.setBackgroundColor(UIHelpers.DARK_BAR);
-        shell.addView(top, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 56)));
-        shell.addView(readerSkeletonState("正在解析本章图片"), new LinearLayout.LayoutParams(-1, 0, 1));
-        shell.addView(readerProgressBar(readerChapterIndex + 1, Math.max(1, detail.chapters.size())), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 1)));
+        TextView name = UIHelpers.text(this, detail.chapters.get(readerChapterIndex).title, 12,
+                UIHelpers.READER_TEXT, Typeface.NORMAL);
+        name.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        name.setGravity(Gravity.CENTER_VERTICAL);
+        name.setIncludeFontPadding(false);
+        name.setSingleLine(true);
+        name.setEllipsize(TextUtils.TruncateAt.END);
+        top.addView(name, UIHelpers.weight(1));
+        ImageView toc = UIHelpers.vectorIconButton(this, R.drawable.ic_chapter_list, UIHelpers.READER_TEXT, 4);
+        toc.setContentDescription("章节目录");
+        toc.setClickable(true);
+        toc.setFocusable(true);
+        toc.setOnClickListener(v -> showChapterDrawer(detail));
+        top.addView(toc, new LinearLayout.LayoutParams(UIHelpers.dp(this, 28), UIHelpers.dp(this, 28)));
+        return top;
     }
 
     private void renderReader(ComicModels.ComicDetail detail, ComicModels.ChapterPage page) {
@@ -2312,22 +2348,8 @@ public class MainActivity extends Activity {
         shell.setBackgroundColor(UIHelpers.DARK);
         root.addView(shell, UIHelpers.match());
 
-        LinearLayout top = new LinearLayout(this);
-        top.setPadding(UIHelpers.dp(this, 14), 0, UIHelpers.dp(this, 14), 0);
-        top.setGravity(Gravity.CENTER_VERTICAL);
-        top.setBackgroundColor(UIHelpers.DARK_BAR);
-        TextView name = UIHelpers.text(this, detail.chapters.get(readerChapterIndex).title, 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
-        name.setTypeface(Typeface.SERIF);
-        name.setGravity(Gravity.CENTER);
-        name.setSingleLine(true);
-        name.setEllipsize(TextUtils.TruncateAt.END);
-        top.addView(name, UIHelpers.weight(1));
-        TextView toc = UIHelpers.text(this, "目录", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
-        toc.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        toc.setGravity(Gravity.CENTER);
-        toc.setOnClickListener(v -> showChapterDrawer(detail));
-        top.addView(toc, new LinearLayout.LayoutParams(UIHelpers.dp(this, 48), -1));
-        shell.addView(top, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 56)));
+        LinearLayout top = readerToolbar(detail);
+        shell.addView(top, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 43)));
         readerTopBar = top;
         top.setVisibility(readerFullscreen ? View.GONE : View.VISIBLE);
 
@@ -2350,6 +2372,7 @@ public class MainActivity extends Activity {
         String positionKey = readerPositionKey(detail.summary.comicId, activeChapter);
         int savedPosition = readerPositions.containsKey(positionKey) ? readerPositions.get(positionKey) : 0;
         final boolean[] restoringPosition = {savedPosition > 0};
+        final TextView[] readerCount = {null};
         list.setAdapter(new BaseAdapter() {
             @Override
             public int getCount() {
@@ -2379,7 +2402,8 @@ public class MainActivity extends Activity {
                 Future<?> previous = readerImageFutures.remove(image);
                 if (previous != null && !previous.isDone()) previous.cancel(true);
                 String imageUrl = getItem(position);
-                image.setImageDrawable(null);
+                image.setImageResource(R.drawable.rem_loading);
+                image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
                 image.setTag(imageUrl);
                 image.setLayoutParams(new AbsListView.LayoutParams(-1, placeholderHeight));
                 Future<?> future = loadReaderImage(image, imageUrl, chapterUrl, generation, comicId,
@@ -2397,6 +2421,11 @@ public class MainActivity extends Activity {
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                 if (!restoringPosition[0]) saveReaderPosition(list, positionKey);
+                if (readerCount[0] != null && totalItemCount > 0) {
+                    int currentPage = Math.max(1, Math.min(totalItemCount, firstVisibleItem + 1));
+                    int percent = Math.max(1, Math.min(100, Math.round(currentPage * 100f / totalItemCount)));
+                    readerCount[0].setText(currentPage + " / " + totalItemCount + " 张 · 本章 " + percent + "%");
+                }
                 if (visibleItemCount > 0) {
                     prefetchReaderImages(imageUrls, firstVisibleItem + visibleItemCount,
                             chapterUrl, generation, comicId, cacheOnly);
@@ -2421,23 +2450,26 @@ public class MainActivity extends Activity {
                 Math.max(0, list.getLastVisiblePosition() + 1), chapterUrl, generation, comicId, cacheOnly));
         FrameLayout readerContent = new FrameLayout(this);
         readerContent.addView(list, UIHelpers.match());
-        View empty = readerSkeletonState("本章解析失败，请稍后再试");
+        View empty = readerState(R.drawable.rem_error, "这一章没有解析出来", "再试一次吧", "重试",
+                () -> showReader(detail, readerChapterIndex), false);
         readerContent.addView(empty, UIHelpers.match());
         list.setEmptyView(empty);
         shell.addView(readerContent, new LinearLayout.LayoutParams(-1, 0, 1));
-        shell.addView(readerProgressBar(readerChapterIndex + 1, detail.chapters.size()), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 1)));
+        shell.addView(readerProgressBar(readerChapterIndex + 1, detail.chapters.size()), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 2)));
 
         LinearLayout bottom = new LinearLayout(this);
         bottom.setGravity(Gravity.CENTER_VERTICAL);
-        bottom.setPadding(UIHelpers.dp(this, 14), 0, UIHelpers.dp(this, 14), 0);
+        bottom.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 12), 0);
         bottom.setBackgroundColor(UIHelpers.DARK_BAR);
         bottom.setVisibility(readerFullscreen ? View.GONE : View.VISIBLE);
         readerBottomBar = bottom;
 
         // 全面手势模式：底部仅显示页数，翻章靠左右点按
-        TextView count = UIHelpers.text(this, page.imageUrls.size() + " 张图", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
-        count.setTypeface(Typeface.MONOSPACE);
+        TextView count = UIHelpers.text(this, "1 / " + page.imageUrls.size() + " 张 · 本章 1%", 11, UIHelpers.READER_TEXT, Typeface.NORMAL);
+        count.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         count.setGravity(Gravity.CENTER);
+        count.setIncludeFontPadding(false);
+        readerCount[0] = count;
         bottom.addView(count, new LinearLayout.LayoutParams(-1, -2));
         shell.addView(bottom, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 36)));
     }
@@ -3048,26 +3080,40 @@ public class MainActivity extends Activity {
     }
 
     private void showReaderBoundaryHint(String message) {
-        showReaderHint(R.drawable.rem_reader_boundary, message);
+        showReaderHint(R.drawable.rem_reader_boundary, message, "轻轻翻到边界啦");
     }
 
-    private void showReaderResumeHint() {
-        showReaderHint(R.drawable.rem_reader_resume, "已恢复上次阅读位置");
+    private void showReaderResumeHint(int savedPosition) {
+        int percent = Math.max(1, Math.min(100, Math.round(savedPosition * 100f / READER_POSITION_SCALE)));
+        showReaderHint(R.drawable.rem_reader_resume, "已回到 " + percent + "%", "上次阅读位置");
     }
 
-    private void showReaderHint(int imageRes, String message) {
+    private void showReaderHint(int imageRes, String message, String desc) {
         if (root == null) return;
         LinearLayout hint = new LinearLayout(this);
         hint.setOrientation(LinearLayout.HORIZONTAL);
         hint.setGravity(Gravity.CENTER_VERTICAL);
         hint.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 5), UIHelpers.dp(this, 12), UIHelpers.dp(this, 5));
-        hint.setBackground(UIHelpers.round(Color.argb(235, 29, 48, 66), UIHelpers.dp(this, 8), Color.argb(80, 180, 224, 255)));
+        hint.setMinimumHeight(UIHelpers.dp(this, 48));
+        hint.setBackground(UIHelpers.round(Color.argb(238, 29, 48, 66), UIHelpers.dp(this, 8), Color.argb(80, 180, 224, 255)));
         ImageView art = new ImageView(this);
         art.setImageResource(imageRes);
         art.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        hint.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(this, 34), UIHelpers.dp(this, 34)));
-        hint.addView(UIHelpers.text(this, message, 12, Color.WHITE, Typeface.BOLD), UIHelpers.marginRight(-2, UIHelpers.dp(this, 0)));
-        FrameLayout.LayoutParams lp = UIHelpers.frame(-2, UIHelpers.dp(this, 46), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0, 0, UIHelpers.dp(this, 52));
+        hint.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(this, 38), UIHelpers.dp(this, 38)));
+        LinearLayout copy = new LinearLayout(this);
+        copy.setOrientation(LinearLayout.VERTICAL);
+        TextView title = UIHelpers.text(this, message, 10, Color.WHITE, Typeface.BOLD);
+        title.setIncludeFontPadding(false);
+        copy.addView(title);
+        if (!TextUtils.isEmpty(desc)) {
+            TextView subtitle = UIHelpers.text(this, desc, 8, Color.argb(195, 235, 246, 255), Typeface.NORMAL);
+            subtitle.setIncludeFontPadding(false);
+            copy.addView(subtitle, UIHelpers.marginTop(-1, UIHelpers.dp(this, 3)));
+        }
+        LinearLayout.LayoutParams copyParams = new LinearLayout.LayoutParams(-2, -2);
+        copyParams.leftMargin = UIHelpers.dp(this, 8);
+        hint.addView(copy, copyParams);
+        FrameLayout.LayoutParams lp = UIHelpers.frame(-2, UIHelpers.dp(this, 48), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0, 0, UIHelpers.dp(this, 52));
         root.addView(hint, lp);
         main.postDelayed(() -> {
             if (hint.getParent() == root) root.removeView(hint);
@@ -3576,16 +3622,42 @@ public class MainActivity extends Activity {
     }
 
     private View readerSkeletonState(String message) {
+        return readerState(message.contains("失败") ? R.drawable.rem_error : R.drawable.rem_loading,
+                message, "", "", null, false);
+    }
+
+    private View readerState(int imageRes, String title, String desc, String action,
+                             Runnable onClick, boolean loading) {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.CENTER);
         ImageView art = new ImageView(this);
-        art.setImageResource(message.contains("失败") ? R.drawable.rem_error : R.drawable.rem_loading);
+        art.setImageResource(imageRes);
         art.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        box.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(this, 142), UIHelpers.dp(this, 142)));
-        TextView text = UIHelpers.text(this, message, 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
-        text.setGravity(Gravity.CENTER);
-        box.addView(text, UIHelpers.marginTop(-1, UIHelpers.dp(this, 6)));
+        box.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(this, 126), UIHelpers.dp(this, 126)));
+        TextView titleView = UIHelpers.text(this, title, 14, UIHelpers.READER_TEXT, Typeface.BOLD);
+        titleView.setGravity(Gravity.CENTER);
+        titleView.setIncludeFontPadding(false);
+        box.addView(titleView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8)));
+        if (!TextUtils.isEmpty(desc)) {
+            TextView description = UIHelpers.text(this, desc, 10, Color.argb(190, 235, 246, 255), Typeface.NORMAL);
+            description.setGravity(Gravity.CENTER);
+            description.setIncludeFontPadding(false);
+            box.addView(description, UIHelpers.marginTop(-1, UIHelpers.dp(this, 5)));
+        }
+        if (loading) {
+            View pulse = new View(this);
+            pulse.setBackground(UIHelpers.round(UIHelpers.ACCENT, UIHelpers.dp(this, 2), Color.TRANSPARENT));
+            box.addView(pulse, UIHelpers.marginTop(UIHelpers.dp(this, 78), UIHelpers.dp(this, 22), UIHelpers.dp(this, 78), UIHelpers.dp(this, 2)));
+        } else if (!TextUtils.isEmpty(action) && onClick != null) {
+            TextView retry = UIHelpers.text(this, action, 11, UIHelpers.ACCENT_LIGHT, Typeface.BOLD);
+            retry.setGravity(Gravity.CENTER);
+            retry.setIncludeFontPadding(false);
+            retry.setPadding(UIHelpers.dp(this, 15), UIHelpers.dp(this, 7), UIHelpers.dp(this, 15), UIHelpers.dp(this, 7));
+            retry.setBackground(UIHelpers.round(Color.argb(34, 133, 202, 245), UIHelpers.dp(this, 6), Color.TRANSPARENT));
+            retry.setOnClickListener(v -> onClick.run());
+            box.addView(retry, UIHelpers.marginTop(-2, UIHelpers.dp(this, 18), -2, -2));
+        }
         return box;
     }
 
@@ -3676,7 +3748,8 @@ public class MainActivity extends Activity {
                         main.post(() -> {
                             if (activityDestroyed || !TextUtils.equals(imageUrl, (String) target.getTag())
                                     || !isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
-                            target.setImageDrawable(new ColorDrawable(UIHelpers.BORDER_SOFT));
+                            target.setImageResource(R.drawable.rem_error);
+                            target.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
                         });
                         return;
                     }
@@ -3693,6 +3766,7 @@ public class MainActivity extends Activity {
                     params.height = Math.max(1, Math.round(readerContentWidth()
                             * loaded.getHeight() / (float) Math.max(1, loaded.getWidth())));
                     target.setLayoutParams(params);
+                    target.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     target.setImageBitmap(loaded);
                     if (restoringPosition[0] && savedPosition == READER_POSITION_SCALE) {
                         list.post(() -> {
@@ -3711,7 +3785,8 @@ public class MainActivity extends Activity {
                 main.post(() -> {
                     if (activityDestroyed || !TextUtils.equals(imageUrl, (String) target.getTag())
                             || !isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
-                    target.setImageDrawable(new ColorDrawable(UIHelpers.BORDER_SOFT));
+                    target.setImageResource(R.drawable.rem_error);
+                    target.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
                 });
             }
         });
@@ -4869,7 +4944,7 @@ public class MainActivity extends Activity {
     private void restoreReaderPosition(ListView list, int savedPosition) {
         int count = list.getCount();
         if (count <= 0 || savedPosition <= 0) return;
-        list.post(this::showReaderResumeHint);
+        list.post(() -> showReaderResumeHint(savedPosition));
         if (savedPosition == READER_POSITION_SCALE) {
             list.setSelection(count - 1);
             list.post(() -> alignReaderBottom(list));
