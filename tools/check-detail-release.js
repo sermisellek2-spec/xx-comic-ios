@@ -35,13 +35,13 @@ check("detail viewport keeps one content background", detail.includes("scroll.se
 check("detail read copy is centered", readButton.includes("titleView.setGravity(Gravity.CENTER)") && readButton.includes("subtitleView.setGravity(Gravity.CENTER)"));
 check("drawer preserves the saved ordering choice", !drawer.includes("chapterDesc = false;"));
 check("drawer cancels stale batched rows after reordering", drawer.includes("int[] renderGeneration"));
-check("drawer header keeps the sort button in its fixed host", drawer.includes("header.addView(orderHost") && drawer.includes("titleHost"));
+check("drawer tools keep the sort button in its fixed host", drawer.includes("drawerTools.addView(orderHost") && drawer.includes("titleHost"));
 check("drawer sort is lightweight and closable", drawer.includes("order.setBackgroundColor(Color.TRANSPARENT)") && drawer.includes("R.drawable.ic_close"));
 check("drawer header and tools use separate aligned rows", drawer.includes("drawerTools") && drawer.includes("panel.addView(drawerTools"));
-check("drawer chapter rows use compact alignment", drawer.includes("setMinimumHeight(UIHelpers.dp(this, 37))") && drawer.includes("setPadding(UIHelpers.dp(this, 2), 0, UIHelpers.dp(this, 2), 0)"));
+check("drawer chapter rows use compact alignment", source.includes("setMinimumHeight(UIHelpers.dp(this, 37))") && source.includes("setPadding(UIHelpers.dp(this, 2), 0, UIHelpers.dp(this, 2), 0)"));
 check("background detail refresh does not displace an open drawer", source.includes("activePopup == null || !activePopup.isShowing()"));
 check("updates try COS before the server fallback", source.includes("apk/xx-comic/xx-comic.bin") && source.includes("UPDATE_APK_URLS") && updateDownload.includes("for (String updateUrl : UPDATE_APK_URLS)"));
 check("update fallback preserves cancellation and checksum verification", updateDownload.includes("isExpectedTaskCancellation(error)") && updateDownload.includes("actualHash.equals(release.sha256)"));
-check("release version is 1.0.14", gradle.includes('versionName "1.0.14"') && gradle.includes("versionCode 14"));
+check("release version is 1.0.15", gradle.includes('versionName "1.0.15"') && gradle.includes("versionCode 15"));
 
 console.log("detail release contracts hold");

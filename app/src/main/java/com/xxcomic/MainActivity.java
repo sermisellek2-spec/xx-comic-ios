@@ -250,6 +250,8 @@ public class MainActivity extends Activity {
     private int searchPage = 1;
     private boolean standaloneSearchVisible = false;
     private boolean historyVisible = false;
+    private FrameLayout activeFavoriteDeleteCover;
+    private View activeFavoriteDeleteOverlay;
     private boolean standaloneSearchResultsMode = false;
     private boolean sourceManagementVisible = false;
     private String settingsScene = "";
@@ -450,9 +452,18 @@ public class MainActivity extends Activity {
             activePopup = null;
             return true;
         }
+        if (activeFavoriteDeleteOverlay != null) {
+            if (activeFavoriteDeleteCover != null && activeFavoriteDeleteOverlay.getParent() == activeFavoriteDeleteCover) {
+                activeFavoriteDeleteCover.removeView(activeFavoriteDeleteOverlay);
+                activeFavoriteDeleteCover.setTag(null);
+            }
+            activeFavoriteDeleteCover = null;
+            activeFavoriteDeleteOverlay = null;
+            return true;
+        }
         if (historyVisible && TextUtils.isEmpty(activeDetailId)) {
             historyVisible = false;
-            showTab(2);
+            showTab(currentTab);
             return true;
         }
         if (sourceManagementVisible) {
@@ -672,6 +683,8 @@ public class MainActivity extends Activity {
         activeDetailId = "";
         detailBackAction = null;
         historyVisible = false;
+        activeFavoriteDeleteCover = null;
+        activeFavoriteDeleteOverlay = null;
         sourceManagementVisible = false;
         settingsScene = "";
         activeErrorLog = "";
@@ -998,32 +1011,37 @@ public class MainActivity extends Activity {
         searchPagingFooter = null;
     }
     private void renderFavorites(LinearLayout page) {
-        addTitle(page, "书架", favorites.size() + " 本");
+        addBookshelfTitle(page);
         ScrollView scroll = new ScrollView(this);
         tuneScroll(scroll);
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         scroll.addView(content, UIHelpers.matchWrap());
         page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-        if (favorites.isEmpty()) {
-            content.addView(emptyState(R.drawable.ic_bookshelf, "书架还空着", "去发现收藏喜欢的漫画", "去发现", () -> showTab(1)));
-            return;
-        }
         List<String> visible = filterFavorites();
         String continueId = null;
         long latestRead = Long.MIN_VALUE;
-        for (String id : visible) {
+        for (String id : progress.keySet()) {
             long readAt = lastViewedAt.containsKey(id) ? lastViewedAt.get(id) : Long.MIN_VALUE;
             if (readAt > latestRead) {
                 latestRead = readAt;
                 continueId = id;
             }
         }
-        if (continueId != null && progress.containsKey(continueId)) {
-            content.addView(sectionTitle("继续阅读"), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
-            content.addView(continueReadingRow(continueId), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 14)));
+        if (continueId == null && !progress.isEmpty()) continueId = progress.keySet().iterator().next();
+        if (favorites.isEmpty() && continueId == null) {
+            content.addView(bookshelfEmptyState(false));
+            return;
         }
-        content.addView(sectionTitle("全部收藏"), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        if (continueId != null) {
+            content.addView(bookshelfSectionHeader("接着看", "阅读历史 ›", this::showHistory));
+            content.addView(continueReadingRow(continueId));
+        }
+        content.addView(bookshelfSectionHeader("全部收藏", visible.isEmpty() ? "0 本" : "最近使用排序", null));
+        if (visible.isEmpty()) {
+            content.addView(bookshelfEmptyState(true));
+            return;
+        }
         for (int i = 0; i < visible.size(); i += 3) {
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
@@ -1031,29 +1049,109 @@ public class MainActivity extends Activity {
                 int index = i + column;
                 if (index < visible.size()) row.addView(favoriteGridItem(visible.get(index)), UIHelpers.weight(1));
                 else row.addView(new View(this), UIHelpers.weight(1));
-                if (column < 2) row.addView(UIHelpers.space(this, UIHelpers.dp(this, 9), 1));
+                if (column < 2) row.addView(UIHelpers.space(this, UIHelpers.dp(this, 5), 1));
             }
-            content.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 14)));
+            content.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 10)));
         }
+    }
+
+    private void addBookshelfTitle(LinearLayout page) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        TextView title = UIHelpers.text(this, "书架", 24, UIHelpers.TEXT, Typeface.BOLD);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        row.addView(title, UIHelpers.weight(1));
+        row.addView(UIHelpers.text(this, favorites.size() + " 本", 12, UIHelpers.TEXT3, Typeface.NORMAL));
+        ImageView rem = new ImageView(this);
+        rem.setImageResource(R.drawable.rem_reader_resume);
+        rem.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        rem.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 12), UIHelpers.BORDER));
+        rem.setClipToOutline(true);
+        rem.setContentDescription("蕾姆主题");
+        LinearLayout.LayoutParams remParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 23), UIHelpers.dp(this, 23));
+        remParams.leftMargin = UIHelpers.dp(this, 8);
+        row.addView(rem, remParams);
+        page.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
+    }
+
+    private View bookshelfSectionHeader(String title, String end, Runnable endAction) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(UIHelpers.dp(this, 36));
+        TextView titleView = UIHelpers.text(this, title, 16, UIHelpers.TEXT, Typeface.BOLD);
+        titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        row.addView(titleView, UIHelpers.weight(1));
+        TextView endView = UIHelpers.text(this, end, 12, endAction == null ? UIHelpers.TEXT3 : UIHelpers.ACCENT, Typeface.NORMAL);
+        endView.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
+        endView.setPadding(UIHelpers.dp(this, 8), 0, 0, 0);
+        if (endAction != null) {
+            endView.setContentDescription("打开阅读历史");
+            endView.setOnClickListener(v -> endAction.run());
+        }
+        row.addView(endView, new LinearLayout.LayoutParams(-2, -1));
+        return row;
     }
 
     private View continueReadingRow(String id) {
         ComicModels.ComicDetail detail = details.get(id);
         ComicModels.ComicSummary summary = summaries.get(id);
         String title = detail != null ? detail.summary.title : summary != null ? summary.title : id;
-        String cover = detail != null ? detail.summary.coverUrl : summary != null ? summary.coverUrl : "";
-        LinearLayout row = UIHelpers.card(this);
+        LinearLayout strip = new LinearLayout(this);
+        strip.setOrientation(LinearLayout.VERTICAL);
+        strip.addView(UIHelpers.divider(this));
+        LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.addView(coverFrame(cover, 48, 64, isRetiredComic(id)));
+        row.setPadding(UIHelpers.dp(this, 1), 0, UIHelpers.dp(this, 1), 0);
+        ImageView rem = new ImageView(this);
+        rem.setImageResource(R.drawable.rem_reader_resume);
+        rem.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        rem.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 17), Color.TRANSPARENT));
+        rem.setClipToOutline(true);
+        rem.setContentDescription("蕾姆提示继续阅读");
+        row.addView(rem, new LinearLayout.LayoutParams(UIHelpers.dp(this, 34), UIHelpers.dp(this, 34)));
         LinearLayout copy = new LinearLayout(this);
         copy.setOrientation(LinearLayout.VERTICAL);
         copy.setPadding(UIHelpers.dp(this, 10), 0, 0, 0);
-        copy.addView(UIHelpers.text(this, title, 15, UIHelpers.TEXT, Typeface.BOLD));
-        copy.addView(UIHelpers.text(this, "第 " + (savedChapter(id) + 1) + " 话 · 继续阅读", 12, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 5)));
+        TextView titleView = UIHelpers.text(this, title, 15, UIHelpers.TEXT, Typeface.BOLD);
+        titleView.setSingleLine(true);
+        titleView.setEllipsize(TextUtils.TruncateAt.END);
+        copy.addView(titleView);
+        copy.addView(UIHelpers.text(this, "上次看到 · 第 " + (savedChapter(id) + 1) + " 话", 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
         row.addView(copy, UIHelpers.weight(1));
+        TextView resume = UIHelpers.text(this, "续读 ›", 12, UIHelpers.ACCENT, Typeface.BOLD);
+        resume.setGravity(Gravity.CENTER);
+        resume.setPadding(UIHelpers.dp(this, 8), 0, UIHelpers.dp(this, 2), 0);
+        resume.setContentDescription("继续阅读");
+        resume.setOnClickListener(v -> showDetailThenRead(id));
+        row.addView(resume, new LinearLayout.LayoutParams(-2, -1));
         row.setOnClickListener(v -> showDetailThenRead(id));
-        return row;
+        strip.addView(row, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 50)));
+        strip.addView(UIHelpers.divider(this));
+        return strip;
+    }
+
+    private View bookshelfEmptyState(boolean compact) {
+        LinearLayout state = new LinearLayout(this);
+        state.setOrientation(LinearLayout.VERTICAL);
+        state.setGravity(Gravity.CENTER);
+        state.setMinimumHeight(UIHelpers.dp(this, compact ? 190 : 330));
+        ImageView art = new ImageView(this);
+        art.setImageResource(R.drawable.rem_empty);
+        art.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        art.setContentDescription("蕾姆提示书架为空");
+        int artSize = UIHelpers.dp(this, compact ? 54 : 78);
+        state.addView(art, new LinearLayout.LayoutParams(artSize, artSize));
+        TextView title = UIHelpers.text(this, "书架还空着", 17, UIHelpers.TEXT, Typeface.BOLD);
+        state.addView(title, UIHelpers.marginTop(-2, UIHelpers.dp(this, 10)));
+        String description = compact ? "去发现页收藏喜欢的漫画" : "收藏的漫画和阅读进度都会保存在本机";
+        TextView descriptionView = UIHelpers.text(this, description, 12, UIHelpers.TEXT3, Typeface.NORMAL);
+        descriptionView.setGravity(Gravity.CENTER);
+        state.addView(descriptionView, UIHelpers.marginTop(-2, UIHelpers.dp(this, 5)));
+        Button discover = UIHelpers.primaryButton(this, "去发现");
+        discover.setOnClickListener(v -> showTab(1));
+        state.addView(discover, UIHelpers.marginTop(UIHelpers.dp(this, 92), UIHelpers.dp(this, 10), -2, UIHelpers.dp(this, 38)));
+        return state;
     }
 
     private View favoriteGridItem(String id) {
@@ -1063,12 +1161,17 @@ public class MainActivity extends Activity {
         String cover = detail != null ? detail.summary.coverUrl : summary != null ? summary.coverUrl : "";
         LinearLayout item = new LinearLayout(this);
         item.setOrientation(LinearLayout.VERTICAL);
-        FrameLayout coverWrap = coverFrame(cover, -1, 154, isRetiredComic(id));
-        item.addView(coverWrap, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 154)));
+        int coverHeight = Math.min(154, Math.round((getResources().getDisplayMetrics().widthPixels
+                / getResources().getDisplayMetrics().density - 42f) / 3f * 4f / 3f));
+        FrameLayout coverWrap = coverFrame(cover, -1, coverHeight, isRetiredComic(id));
+        coverWrap.setBackground(UIHelpers.round(UIHelpers.PLACEHOLDER, UIHelpers.dp(this, 4), Color.TRANSPARENT));
+        coverWrap.setClipToOutline(true);
+        item.addView(coverWrap, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, coverHeight)));
         TextView titleView = UIHelpers.text(this, title, 13, UIHelpers.TEXT, Typeface.BOLD);
-        titleView.setSingleLine(true);
+        titleView.setMaxLines(2);
         titleView.setEllipsize(TextUtils.TruncateAt.END);
-        item.addView(titleView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 6)));
+        titleView.setMinHeight(UIHelpers.dp(this, 34));
+        item.addView(titleView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 4)));
         item.setOnClickListener(v -> showDetail(id));
         item.setOnLongClickListener(v -> {
             showFavoriteDeleteOverlay(coverWrap, id);
@@ -1082,22 +1185,32 @@ public class MainActivity extends Activity {
         if (tag instanceof View) {
             coverWrap.removeView((View) tag);
             coverWrap.setTag(null);
+            activeFavoriteDeleteCover = null;
+            activeFavoriteDeleteOverlay = null;
             return;
+        }
+        if (activeFavoriteDeleteCover != null && activeFavoriteDeleteOverlay != null
+                && activeFavoriteDeleteOverlay.getParent() == activeFavoriteDeleteCover) {
+            activeFavoriteDeleteCover.removeView(activeFavoriteDeleteOverlay);
+            activeFavoriteDeleteCover.setTag(null);
         }
         FrameLayout overlay = new FrameLayout(this);
         overlay.setBackgroundColor(Color.argb(165, 20, 43, 62));
         ImageView trash = UIHelpers.vectorIconButton(this, R.drawable.ic_trash, Color.WHITE, 13);
         trash.setBackground(UIHelpers.round(UIHelpers.DANGER, UIHelpers.dp(this, 24), Color.TRANSPARENT));
         trash.setContentDescription("删除收藏");
-        trash.setOnClickListener(v -> styledDialog("删除收藏", "确认删除《" + clean(summaries.containsKey(id) ? summaries.get(id).title : id, "这本漫画") + "》吗？",
-                "删除", () -> deleteFavorite(id), "取消", null));
+        trash.setOnClickListener(v -> deleteFavoriteWithUndo(id));
         overlay.addView(trash, UIHelpers.frame(UIHelpers.dp(this, 48), UIHelpers.dp(this, 48), Gravity.CENTER, 0, 0, 0, 0));
         overlay.setOnClickListener(v -> {
             coverWrap.removeView(overlay);
             coverWrap.setTag(null);
+            activeFavoriteDeleteCover = null;
+            activeFavoriteDeleteOverlay = null;
         });
         coverWrap.addView(overlay, UIHelpers.match());
         coverWrap.setTag(overlay);
+        activeFavoriteDeleteCover = coverWrap;
+        activeFavoriteDeleteOverlay = overlay;
     }
 
     private void renderSources(LinearLayout page) {
@@ -3496,6 +3609,47 @@ public class MainActivity extends Activity {
         saveLocalState();
         showTab(0);
         main.post(() -> showRemToast("已删除收藏"));
+    }
+
+    private void deleteFavoriteWithUndo(String id) {
+        int oldIndex = favorites.indexOf(id);
+        Long oldFavoriteAt = favoriteAt.get(id);
+        ComicModels.ComicSummary summary = summaries.get(id);
+        String title = clean(summary == null ? "" : summary.title, "这本漫画");
+        favorites.remove(id);
+        favoriteAt.remove(id);
+        saveLocalState();
+        showTab(0);
+        showFavoriteUndo(id, oldIndex, oldFavoriteAt, title);
+    }
+
+    private void showFavoriteUndo(String id, int oldIndex, Long oldFavoriteAt, String title) {
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 8), 0);
+        bar.setBackground(UIHelpers.round(Color.rgb(36, 68, 93), UIHelpers.dp(this, 5), Color.TRANSPARENT));
+        bar.setElevation(UIHelpers.dp(this, 4));
+        TextView message = UIHelpers.text(this, "已移出《" + title + "》", 12, Color.WHITE, Typeface.NORMAL);
+        message.setSingleLine(true);
+        message.setEllipsize(TextUtils.TruncateAt.END);
+        bar.addView(message, UIHelpers.weight(1));
+        TextView undo = UIHelpers.text(this, "撤销", 12, Color.rgb(134, 210, 255), Typeface.BOLD);
+        undo.setGravity(Gravity.CENTER);
+        undo.setPadding(UIHelpers.dp(this, 10), 0, UIHelpers.dp(this, 4), 0);
+        undo.setOnClickListener(v -> {
+            if (!favorites.contains(id)) {
+                favorites.add(Math.max(0, Math.min(oldIndex, favorites.size())), id);
+                favoriteAt.put(id, oldFavoriteAt == null ? System.currentTimeMillis() : oldFavoriteAt);
+                saveLocalState();
+            }
+            showTab(0);
+        });
+        bar.addView(undo, new LinearLayout.LayoutParams(-2, -1));
+        root.addView(bar, UIHelpers.frame(-1, UIHelpers.dp(this, 46), Gravity.BOTTOM, UIHelpers.dp(this, 13), 0,
+                UIHelpers.dp(this, 13), UIHelpers.dp(this, 70)));
+        main.postDelayed(() -> {
+            if (bar.getParent() == root) root.removeView(bar);
+        }, 3200L);
     }
 
     private void removeDuplicateFavorites(ComicModels.ComicDetail detail) {

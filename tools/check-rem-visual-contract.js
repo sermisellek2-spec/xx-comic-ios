@@ -41,9 +41,21 @@ check("global empty query shows recent search and results hide it",
 check("global source row remains horizontally scrollable", main.includes("globalSearchSourceTabs"));
 check("filters render in three columns", /searchTagColumn[\s\S]*?final int columns = 3;/.test(main));
 
-const favorites = block(main, "private View favorite", "private ");
 check("bookshelf deletion starts from long press", main.includes("setOnLongClickListener") && main.includes("showFavoriteDeleteOverlay"));
 check("bookshelf deletion uses the trash icon", main.includes("R.drawable.ic_trash"));
+const bookshelf = block(main, "private void renderFavorites", "private void renderSources");
+check("bookshelf uses the approved Rem header and resume art",
+  bookshelf.includes("R.drawable.rem_reader_resume") && bookshelf.includes("23") && bookshelf.includes("34"));
+check("bookshelf resume strip links to full reading history",
+  bookshelf.includes('"接着看"') && bookshelf.includes('"阅读历史 ›"') && bookshelf.includes("showHistory"));
+check("bookshelf empty state uses Rem art",
+  bookshelf.includes("R.drawable.rem_empty") && bookshelf.includes("78"));
+check("bookshelf grid stays at three columns without progress bars",
+  bookshelf.includes("column < 3") && !bookshelf.includes("ProgressBar"));
+check("bookshelf deletion offers a short undo action",
+  main.includes("showFavoriteUndo") && main.includes('"撤销"'));
+check("reading history returns to its source tab",
+  /historyVisible[\s\S]*?showTab\(currentTab\)/.test(main));
 
 check("all five Rem state resources are used", [
   "R.drawable.rem_loading",
@@ -68,8 +80,8 @@ check("detail has no visible back button", detail && !detail.includes("R.drawabl
 check("history has no visible back button", history && !history.includes("R.drawable.ic_back"));
 check("chapter catalog remains an async right drawer", main.includes("showChapterDrawer") && main.includes("ensureChaptersThen"));
 
-check("release version is 1.0.14", gradle.includes('versionName "1.0.14"'));
-check("release code is 14", gradle.includes("versionCode 14"));
+check("release version is 1.0.15", gradle.includes('versionName "1.0.15"'));
+check("release code is 15", gradle.includes("versionCode 15"));
 
 if (failed) process.exit(1);
 console.log("Rem visual contract holds.");
