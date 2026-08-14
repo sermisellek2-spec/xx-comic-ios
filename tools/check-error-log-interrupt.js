@@ -12,7 +12,8 @@ function check(name, condition) {
 
 check(
   "error log text supports native select and copy",
-  source.includes("messageView.setTextIsSelectable(true)")
+  source.includes("code.setTextIsSelectable(true)") &&
+    source.includes("clipboard.setPrimaryClip")
 );
 check(
   "cancelled image requests are ignored",

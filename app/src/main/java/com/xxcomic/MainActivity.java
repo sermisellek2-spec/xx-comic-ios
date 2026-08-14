@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -133,6 +135,7 @@ public class MainActivity extends Activity {
     private final ExecutorService detailIo = Executors.newFixedThreadPool(2);
     private final ExecutorService imageIo = Executors.newFixedThreadPool(4);
     private final ExecutorService readerPrefetchIo = Executors.newFixedThreadPool(2);
+    private final ExecutorService sourceHealthIo = Executors.newFixedThreadPool(1);
     private final ExecutorService miscIo = Executors.newFixedThreadPool(1);
     private final ScheduledExecutorService scheduledIo = Executors.newScheduledThreadPool(1);
     // 内存级封面缓存：切 Tab 重建结果列表时同步命中，避免 imageIo 被其他站源的网络加载
@@ -248,11 +251,23 @@ public class MainActivity extends Activity {
     private boolean historyVisible = false;
     private boolean standaloneSearchResultsMode = false;
     private boolean sourceManagementVisible = false;
+    private String settingsScene = "";
+    private String activeErrorLog = "";
+    private List<String> sourceHealthRows = new ArrayList<>();
+    private boolean settingsSceneBackToSources = false;
     private boolean globalSearchMode = false;
     private boolean globalSearchLoading = false;
     private boolean activityDestroyed = false;
     private boolean updateRunning = false;
     private File pendingUpdateApk;
+    private AppRelease availableUpdateRelease;
+    private Future<?> updateFuture;
+    private Future<?> sourceHealthFuture;
+    private ProgressBar settingsUpdateProgressBar;
+    private TextView settingsUpdateProgressText;
+    private TextView settingsUpdateProgressMeta;
+    private int updateGeneration = 0;
+    private int sourceHealthGeneration = 0;
     private boolean pageLoading = false;
     private Runnable pageLoadingBackAction;
     private Runnable detailBackAction;
@@ -331,6 +346,8 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         activityDestroyed = true;
+        cancelUpdateDownload();
+        cancelSourceHealthCheck();
         main.removeCallbacks(themeSwitchRunnable);
         main.removeCallbacks(persistReaderPositionRunnable);
         for (Future<?> f : currentScreenFutures) {
@@ -351,6 +368,7 @@ public class MainActivity extends Activity {
         detailIo.shutdownNow();
         imageIo.shutdownNow();
         readerPrefetchIo.shutdownNow();
+        sourceHealthIo.shutdownNow();
         miscIo.shutdown();
         scheduledIo.shutdownNow();
     }
@@ -441,6 +459,21 @@ public class MainActivity extends Activity {
             showTab(2);
             return true;
         }
+        if (!TextUtils.isEmpty(settingsScene)) {
+            if (settingsScene.startsWith("update-")) cancelUpdateDownload();
+            if (settingsScene.startsWith("health-")) cancelSourceHealthCheck();
+            if ("error-detail".equals(settingsScene)) {
+                showErrorLogs();
+            } else if (settingsSceneBackToSources) {
+                settingsScene = "";
+                settingsSceneBackToSources = false;
+                showSourceManagement();
+            } else {
+                settingsScene = "";
+                showTab(2);
+            }
+            return true;
+        }
         if (readerVisible && !TextUtils.isEmpty(activeDetailId)) {
             showDetail(activeDetailId);
             return true;
@@ -512,6 +545,10 @@ public class MainActivity extends Activity {
     }
 
     private void rerenderCurrentScreen() {
+        if (!TextUtils.isEmpty(settingsScene)) {
+            rerenderSettingsScene();
+            return;
+        }
         if (sourceManagementVisible) {
             showSourceManagement();
             return;
@@ -540,6 +577,24 @@ public class MainActivity extends Activity {
             return;
         }
         showTab(currentTab);
+    }
+
+    private void rerenderSettingsScene() {
+        switch (settingsScene) {
+            case "cache": showCacheCleanup(); break;
+            case "cache-loading": showCacheCleanupLoading(); break;
+            case "errors": showErrorLogs(); break;
+            case "error-detail": showErrorLogDetail(activeErrorLog); break;
+            case "about": showAboutApp(); break;
+            case "health-loading": showSourceHealthLoading(); break;
+            case "health-results": showSourceHealthResults(); break;
+            case "update-loading": showUpdateLoading(); break;
+            case "update-available": showUpdateAvailable(availableUpdateRelease); break;
+            case "update-download": showUpdateDownload(availableUpdateRelease, settingsUpdateProgressBar == null ? 0 : settingsUpdateProgressBar.getProgress()); break;
+            case "update-latest": showUpdateLatest(); break;
+            case "update-error": showUpdateFailure(); break;
+            default: showTab(2); break;
+        }
     }
 
     /** 切屏：cancel 上一屏所有未完成的 Future（排队中的不再执行，运行中的收到 interrupt） */
@@ -610,12 +665,17 @@ public class MainActivity extends Activity {
     private void showTab(int tab, boolean cancelTasks) {
         int previousTab = currentTab;
         if (cancelTasks) enterScreen();
+        if (settingsScene.startsWith("health-")) cancelSourceHealthCheck();
         applyThemeAndSystemBars();
         currentTab = tab;
         activeDetailId = "";
         detailBackAction = null;
         historyVisible = false;
         sourceManagementVisible = false;
+        settingsScene = "";
+        activeErrorLog = "";
+        settingsSceneBackToSources = false;
+        updateGeneration++;
         standaloneSearchVisible = false;
         standaloneSearchResultsMode = false;
         readerVisible = false;
@@ -647,39 +707,44 @@ public class MainActivity extends Activity {
     }
 
     private void renderSettings(LinearLayout page) {
-        addTitle(page, "设置", "本地");
-        page.addView(sectionText("阅读与外观"));
-        LinearLayout appearance = UIHelpers.card(this);
+        settingsHeader(page, "设置", "XX Comic · 本地");
+        TextView localNote = UIHelpers.text(this, "无需登录，数据只保存在本机", 12, UIHelpers.TEXT3, Typeface.NORMAL);
+        page.addView(localNote, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        page.addView(settingsSectionText("阅读与外观"));
+        LinearLayout appearance = settingsList();
         appearance.setPadding(0, 0, 0, 0);
-        appearance.addView(menuItemWithIcon(themeIcon(), "主题模式", themeModeLabel(), this::showThemeDrawer));
+        appearance.addView(settingsMenuItem(themeIcon(), "主题模式", "跟随系统、浅色或深色", themeModeLabel(), this::showThemeDrawer));
         appearance.addView(UIHelpers.divider(this));
-        appearance.addView(menuItemWithIcon(R.drawable.ic_chevron_left, "左右手模式", readerLeftHand ? "左手" : "右手", this::showHandModeDrawer));
+        appearance.addView(settingsMenuItem(R.drawable.ic_chevron_left, "左右手模式", "切换阅读页左右触控区",
+                readerLeftHand ? "左手" : "右手", this::showHandModeDrawer));
         appearance.addView(UIHelpers.divider(this));
-        appearance.addView(menuItemWithIcon(R.drawable.ic_history, "阅读历史", progress.size() + " 条", this::showHistory));
+        appearance.addView(settingsMenuItem(R.drawable.ic_history, "阅读历史", "章节与阅读位置", progress.size() + " 条", this::showHistory));
         page.addView(appearance);
 
-        page.addView(sectionText("站源与本地数据"));
-        LinearLayout local = UIHelpers.card(this);
+        page.addView(settingsSectionText("站源与本地数据"));
+        LinearLayout local = settingsList();
         local.setPadding(0, 0, 0, 0);
-        local.addView(menuItemWithIcon(R.drawable.ic_source, "站源管理", enabledBuiltinSources().size() + " 个开启", this::showSourceManagement));
+        local.addView(settingsMenuItem(R.drawable.ic_source, "站源管理", "启停、导入导出与检测",
+                enabledBuiltinSources().size() + " 个开启", this::showSourceManagement));
         local.addView(UIHelpers.divider(this));
-        local.addView(menuItemWithIcon(R.drawable.ic_trash, "缓存清理", cacheSize, this::clearAppCache));
+        local.addView(settingsMenuItem(R.drawable.ic_trash, "缓存清理", "保留收藏与阅读历史", cacheSize, this::showCacheCleanup));
         local.addView(UIHelpers.divider(this));
-        local.addView(menuItemWithIcon(R.drawable.ic_lightning, "错误日志", errorLogSummary(), this::showErrorLogs));
+        local.addView(settingsMenuItem(R.drawable.ic_lightning, "错误日志", "只保存在本机", errorLogSummary(), this::showErrorLogs));
         page.addView(local);
 
-        page.addView(sectionText("App"));
-        LinearLayout app = UIHelpers.card(this);
+        page.addView(settingsSectionText("App"));
+        LinearLayout app = settingsList();
         app.setPadding(0, 0, 0, 0);
-        app.addView(menuItemWithIcon(R.drawable.ic_auto, "版本更新", installedVersionLabel(), this::checkForUpdate));
+        app.addView(settingsMenuItem(R.drawable.ic_auto, "版本更新", "", installedVersionLabel(), this::checkForUpdate));
         app.addView(UIHelpers.divider(this));
-        app.addView(menuItemWithIcon(R.drawable.ic_profile, "关于 App", BuildConfig.VERSION_NAME,
-                () -> showInfo("关于 App", "XX Comic 无需登录，收藏、历史与设置只保存在本机。")));
+        app.addView(settingsMenuItem(R.drawable.ic_profile, "关于 App", "", BuildConfig.VERSION_NAME, this::showAboutApp));
         page.addView(app);
     }
 
     private void showSourceManagement() {
         enterScreen();
+        settingsScene = "";
+        settingsSceneBackToSources = false;
         sourceManagementVisible = true;
         root.removeAllViews();
         ScrollView scroll = new ScrollView(this);
@@ -1037,21 +1102,7 @@ public class MainActivity extends Activity {
     }
 
     private void renderSources(LinearLayout page) {
-        addTitle(page, "站源管理", null);
-        LinearLayout actions = new LinearLayout(this);
-        actions.setOrientation(LinearLayout.HORIZONTAL);
-        Button check = UIHelpers.secondaryButton(this, "检测可用性");
-        check.setOnClickListener(v -> healthCheck());
-        Button importBtn = UIHelpers.secondaryButton(this, "导入");
-        importBtn.setOnClickListener(v -> openImportSourceConfig());
-        Button export = UIHelpers.secondaryButton(this, "导出");
-        export.setOnClickListener(v -> exportSourceConfig());
-        actions.addView(check, UIHelpers.buttonWeight(this, 1.4f));
-        actions.addView(UIHelpers.space(this, UIHelpers.dp(this, 6), 1));
-        actions.addView(importBtn, UIHelpers.buttonWeight(this, 1));
-        actions.addView(UIHelpers.space(this, UIHelpers.dp(this, 6), 1));
-        actions.addView(export, UIHelpers.buttonWeight(this, 1));
-        page.addView(actions, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 12)));
+        settingsHeader(page, "站源管理", enabledBuiltinSources().size() + " 个开启", sourceOverflowButton());
         LinearLayout enabledSources = new LinearLayout(this);
         enabledSources.setOrientation(LinearLayout.VERTICAL);
         LinearLayout disabledSources = new LinearLayout(this);
@@ -1128,8 +1179,20 @@ public class MainActivity extends Activity {
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        page.addView(enabledSources);
-        page.addView(disabledSources);
+        LinearLayout sourceList = settingsList();
+        sourceList.setPadding(0, 0, 0, 0);
+        appendSourceRows(sourceList, enabledSources);
+        appendSourceRows(sourceList, disabledSources);
+        page.addView(sourceList);
+    }
+
+    private void appendSourceRows(LinearLayout target, LinearLayout rows) {
+        while (rows.getChildCount() > 0) {
+            View row = rows.getChildAt(0);
+            rows.removeViewAt(0);
+            if (target.getChildCount() > 0) target.addView(UIHelpers.divider(this));
+            target.addView(row);
+        }
     }
 
     private void finishSourceToggle() {
@@ -1261,23 +1324,140 @@ public class MainActivity extends Activity {
     }
 
     private void showThemeDrawer() {
-        showChoiceDrawer("选择主题", new String[]{"跟随系统", "浅色", "深色"}, themeMode, selected -> {
-            themeMode = selected;
-            saveLocalState();
-            applyThemeAndSystemBars();
-            scheduleThemeSwitch();
-            rerenderCurrentScreen();
-            main.post(() -> showRemToast("主题已应用"));
-        });
+        LinearLayout choices = new LinearLayout(this);
+        choices.setOrientation(LinearLayout.HORIZONTAL);
+        choices.setPadding(0, UIHelpers.dp(this, 8), 0, 0);
+        String[] labels = {"跟随系统", "浅色", "深色"};
+        for (int i = 0; i < labels.length; i++) {
+            final int selected = i;
+            choices.addView(themeChoice(labels[i], i, themeMode == i, () -> {
+                if (activePopup != null) activePopup.dismiss();
+                themeMode = selected;
+                saveLocalState();
+                applyThemeAndSystemBars();
+                scheduleThemeSwitch();
+                rerenderCurrentScreen();
+                main.post(() -> showRemToast("主题已应用"));
+            }), UIHelpers.weight(1));
+            if (i < labels.length - 1) choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 6), 1));
+        }
+        showSettingsSheet("选择主题", choices);
     }
 
     private void showHandModeDrawer() {
-        showChoiceDrawer("阅读触控方向", new String[]{"右手模式", "左手模式"}, readerLeftHand ? 1 : 0, selected -> {
-            readerLeftHand = selected == 1;
-            saveLocalState();
-            rerenderCurrentScreen();
-            main.post(() -> showRemToast(readerLeftHand ? "已切换到左手模式" : "已切换到右手模式"));
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout map = new LinearLayout(this);
+        map.setOrientation(LinearLayout.HORIZONTAL);
+        map.setPadding(0, UIHelpers.dp(this, 8), 0, 0);
+        map.addView(handZone("上一章", readerLeftHand), UIHelpers.weight(1));
+        map.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
+        map.addView(handZone("显示控制", false), UIHelpers.weight(.8f));
+        map.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
+        map.addView(handZone("下一章", !readerLeftHand), UIHelpers.weight(1));
+        content.addView(map, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 88)));
+
+        LinearLayout choices = new LinearLayout(this);
+        choices.setOrientation(LinearLayout.HORIZONTAL);
+        choices.setPadding(0, UIHelpers.dp(this, 8), 0, 0);
+        choices.addView(handChoice("左手模式", readerLeftHand, () -> applyHandMode(true)), UIHelpers.weight(1));
+        choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 6), 1));
+        choices.addView(handChoice("右手模式", !readerLeftHand, () -> applyHandMode(false)), UIHelpers.weight(1));
+        content.addView(choices, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 36)));
+        showSettingsSheet("阅读触控方向", content);
+    }
+
+    private void applyHandMode(boolean leftHand) {
+        if (activePopup != null) activePopup.dismiss();
+        readerLeftHand = leftHand;
+        saveLocalState();
+        rerenderCurrentScreen();
+        main.post(() -> showRemToast(readerLeftHand ? "已切换到左手模式" : "已切换到右手模式"));
+    }
+
+    private View themeChoice(String label, int mode, boolean selected, Runnable onClick) {
+        LinearLayout choice = new LinearLayout(this);
+        choice.setOrientation(LinearLayout.VERTICAL);
+        choice.setGravity(Gravity.CENTER);
+        choice.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 6), UIHelpers.dp(this, 4), UIHelpers.dp(this, 5));
+        choice.setMinimumHeight(UIHelpers.dp(this, 70));
+        choice.setBackground(UIHelpers.round(selected ? UIHelpers.ACCENT_SOFT : UIHelpers.BG, UIHelpers.dp(this, 7),
+                selected ? UIHelpers.ACCENT : UIHelpers.BORDER));
+        choice.setOnClickListener(v -> onClick.run());
+        choice.addView(themeSwatch(mode), new LinearLayout.LayoutParams(UIHelpers.dp(this, 36), UIHelpers.dp(this, 20)));
+        TextView labelView = UIHelpers.text(this, label, 11, selected ? UIHelpers.ACCENT : UIHelpers.TEXT3, Typeface.NORMAL);
+        labelView.setGravity(Gravity.CENTER);
+        choice.addView(labelView, UIHelpers.marginTop(-2, UIHelpers.dp(this, 4)));
+        return choice;
+    }
+
+    private View themeSwatch(int mode) {
+        FrameLayout swatch = new FrameLayout(this);
+        swatch.setBackground(UIHelpers.round(mode == 2 ? Color.rgb(21, 38, 54) : Color.rgb(247, 251, 255), UIHelpers.dp(this, 4), UIHelpers.BORDER));
+        if (mode == 0) {
+            View dark = new View(this);
+            dark.setBackgroundColor(Color.rgb(21, 38, 54));
+            swatch.addView(dark, UIHelpers.frame(UIHelpers.dp(this, 18), -1, Gravity.RIGHT, 0, 0, 0, 0));
+        }
+        return swatch;
+    }
+
+    private View handZone(String label, boolean selected) {
+        TextView zone = UIHelpers.text(this, label, 11, selected ? UIHelpers.ACCENT : UIHelpers.TEXT3, Typeface.NORMAL);
+        zone.setGravity(Gravity.CENTER);
+        zone.setBackground(UIHelpers.round(selected ? UIHelpers.ACCENT_SOFT : UIHelpers.BG, UIHelpers.dp(this, 6),
+                selected ? UIHelpers.ACCENT : UIHelpers.BORDER));
+        return zone;
+    }
+
+    private View handChoice(String label, boolean selected, Runnable onClick) {
+        TextView choice = UIHelpers.text(this, label, 12, selected ? UIHelpers.ON_ACCENT : UIHelpers.TEXT3, Typeface.NORMAL);
+        choice.setGravity(Gravity.CENTER);
+        choice.setBackground(UIHelpers.round(selected ? UIHelpers.ACCENT : UIHelpers.BG, UIHelpers.dp(this, 6),
+                selected ? UIHelpers.ACCENT : UIHelpers.BORDER));
+        choice.setOnClickListener(v -> onClick.run());
+        return choice;
+    }
+
+    private PopupWindow showSettingsSheet(String title, View content) {
+        FrameLayout overlay = new FrameLayout(this);
+        View backdrop = new View(this);
+        backdrop.setBackgroundColor(Color.argb(145, 10, 24, 37));
+        overlay.addView(backdrop, UIHelpers.match());
+
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 12), UIHelpers.dp(this, 12), UIHelpers.dp(this, 16));
+        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
+        background.setColor(UIHelpers.CARD);
+        float radius = UIHelpers.dp(this, 14);
+        background.setCornerRadii(new float[]{radius, radius, radius, radius, 0, 0, 0, 0});
+        panel.setBackground(background);
+
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        TextView label = UIHelpers.text(this, title, 16, UIHelpers.TEXT, Typeface.BOLD);
+        label.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        header.addView(label, UIHelpers.weight(1));
+        ImageView close = UIHelpers.vectorIconButton(this, R.drawable.ic_close, UIHelpers.TEXT3, 5);
+        close.setBackground(UIHelpers.round(UIHelpers.CARD_SOFT, UIHelpers.dp(this, 10), Color.TRANSPARENT));
+        header.addView(close, new LinearLayout.LayoutParams(UIHelpers.dp(this, 24), UIHelpers.dp(this, 24)));
+        panel.addView(header, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 28)));
+        panel.addView(content);
+
+        PopupWindow popup = new PopupWindow(overlay, -1, -1, true);
+        popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popup.setOnDismissListener(() -> {
+            if (activePopup == popup) activePopup = null;
         });
+        close.setOnClickListener(v -> popup.dismiss());
+        backdrop.setOnClickListener(v -> popup.dismiss());
+        overlay.addView(panel, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+        activePopup = popup;
+        popup.showAtLocation(root, Gravity.CENTER, 0, 0);
+        panel.setTranslationY(UIHelpers.dp(this, 220));
+        panel.animate().translationY(0).setDuration(200).start();
+        return popup;
     }
 
     private void showChoiceDrawer(String title, String[] labels, int selected, ChoiceAction onSelect) {
@@ -1812,24 +1992,22 @@ public class MainActivity extends Activity {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.HORIZONTAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setPadding(UIHelpers.dp(this, 10), UIHelpers.dp(this, 9), UIHelpers.dp(this, 10), UIHelpers.dp(this, 9));
-        card.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 8), UIHelpers.BORDER_SOFT));
-        card.setElevation(0);
-        card.setLayoutParams(UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        card.setPadding(UIHelpers.dp(this, 9), UIHelpers.dp(this, 6), UIHelpers.dp(this, 9), UIHelpers.dp(this, 6));
+        card.setMinimumHeight(UIHelpers.dp(this, 45));
+        card.setAlpha(enabled ? 1f : .58f);
         card.setClickable(false);
         card.setFocusable(false);
 
-        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 36), UIHelpers.dp(this, 36));
-        logoParams.setMargins(0, 0, UIHelpers.dp(this, 10), 0);
+        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 28), UIHelpers.dp(this, 28));
+        logoParams.setMargins(0, 0, UIHelpers.dp(this, 9), 0);
         card.addView(sourceLogo(name), logoParams);
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
         TextView sourceTitle = UIHelpers.text(this, name, 14, UIHelpers.TEXT, Typeface.NORMAL);
         sourceTitle.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         info.addView(sourceTitle);
-        info.addView(UIHelpers.text(this, domain + " · " + (enabled ? "已启用" : "已停用"), 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
         card.addView(info, UIHelpers.weight(1));
-        card.addView(sourceSwitch(enabled, toggle), new LinearLayout.LayoutParams(UIHelpers.dp(this, 50), UIHelpers.dp(this, 28)));
+        card.addView(sourceSwitch(enabled, toggle), new LinearLayout.LayoutParams(UIHelpers.dp(this, 42), UIHelpers.dp(this, 26)));
 
         return card;
     }
@@ -4311,6 +4489,101 @@ public class MainActivity extends Activity {
         return text;
     }
 
+    private void settingsHeader(LinearLayout page, String title, String meta) {
+        settingsHeader(page, title, meta, null);
+    }
+
+    private void settingsHeader(LinearLayout page, String title, String meta, View trailing) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        TextView titleView = UIHelpers.text(this, title, 20, UIHelpers.TEXT, Typeface.BOLD);
+        titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        row.addView(titleView, UIHelpers.weight(1));
+        if (!TextUtils.isEmpty(meta)) {
+            TextView metaView = UIHelpers.text(this, meta, 12, UIHelpers.TEXT3, Typeface.NORMAL);
+            LinearLayout.LayoutParams metaParams = new LinearLayout.LayoutParams(-2, -2);
+            if (trailing != null) metaParams.rightMargin = UIHelpers.dp(this, 8);
+            row.addView(metaView, metaParams);
+        }
+        if (trailing != null) {
+            ViewGroup.LayoutParams currentParams = trailing.getLayoutParams();
+            LinearLayout.LayoutParams trailingParams = currentParams instanceof LinearLayout.LayoutParams
+                    ? (LinearLayout.LayoutParams) currentParams
+                    : new LinearLayout.LayoutParams(UIHelpers.dp(this, 32), UIHelpers.dp(this, 32));
+            row.addView(trailing, trailingParams);
+        }
+        page.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 5)));
+    }
+
+    private TextView settingsSectionText(String value) {
+        TextView text = UIHelpers.text(this, value, 12, UIHelpers.TEXT3, Typeface.NORMAL);
+        text.setPadding(UIHelpers.dp(this, 2), UIHelpers.dp(this, 10), UIHelpers.dp(this, 2), UIHelpers.dp(this, 5));
+        return text;
+    }
+
+    private LinearLayout settingsList() {
+        LinearLayout list = UIHelpers.card(this);
+        list.setPadding(0, 0, 0, 0);
+        return list;
+    }
+
+    private View settingsMenuItem(int iconRes, String title, String subtitle, String end, Runnable onClick) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(UIHelpers.dp(this, TextUtils.isEmpty(subtitle) ? 46 : 56));
+        row.setPadding(UIHelpers.dp(this, 9), UIHelpers.dp(this, 6), UIHelpers.dp(this, 9), UIHelpers.dp(this, 6));
+        row.setClickable(true);
+        row.setFocusable(true);
+        row.setOnClickListener(v -> onClick.run());
+
+        FrameLayout iconHost = new FrameLayout(this);
+        iconHost.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 6), Color.TRANSPARENT));
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(iconRes);
+        icon.setImageTintList(android.content.res.ColorStateList.valueOf(UIHelpers.ACCENT));
+        icon.setPadding(UIHelpers.dp(this, 5), UIHelpers.dp(this, 5), UIHelpers.dp(this, 5), UIHelpers.dp(this, 5));
+        iconHost.addView(icon, UIHelpers.match());
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 28), UIHelpers.dp(this, 28));
+        iconParams.rightMargin = UIHelpers.dp(this, 9);
+        row.addView(iconHost, iconParams);
+
+        LinearLayout copy = new LinearLayout(this);
+        copy.setOrientation(LinearLayout.VERTICAL);
+        TextView titleView = UIHelpers.text(this, title, 14, UIHelpers.TEXT, Typeface.NORMAL);
+        titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        copy.addView(titleView);
+        if (!TextUtils.isEmpty(subtitle)) {
+            TextView subtitleView = UIHelpers.text(this, subtitle, 11, UIHelpers.TEXT3, Typeface.NORMAL);
+            subtitleView.setSingleLine(true);
+            subtitleView.setEllipsize(TextUtils.TruncateAt.END);
+            copy.addView(subtitleView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 1)));
+        }
+        row.addView(copy, UIHelpers.weight(1));
+        if (!TextUtils.isEmpty(end)) {
+            TextView endView = UIHelpers.text(this, end, 12, UIHelpers.TEXT3, Typeface.NORMAL);
+            endView.setSingleLine(true);
+            endView.setEllipsize(TextUtils.TruncateAt.END);
+            endView.setMaxWidth(UIHelpers.dp(this, 82));
+            row.addView(endView);
+        }
+        ImageView chevron = new ImageView(this);
+        chevron.setImageResource(R.drawable.ic_chevron_right);
+        chevron.setImageTintList(android.content.res.ColorStateList.valueOf(UIHelpers.TEXT3));
+        LinearLayout.LayoutParams chevronParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 16), UIHelpers.dp(this, 16));
+        chevronParams.leftMargin = UIHelpers.dp(this, 4);
+        row.addView(chevron, chevronParams);
+        return row;
+    }
+
+    private View sourceOverflowButton() {
+        TextView button = UIHelpers.text(this, "⋮", 24, UIHelpers.ACCENT, Typeface.BOLD);
+        button.setGravity(Gravity.CENTER);
+        button.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 8), Color.TRANSPARENT));
+        button.setContentDescription("站源更多操作");
+        button.setOnClickListener(v -> showSourceMenu());
+        return button;
+    }
+
     private void addTitle(LinearLayout page, String title, String badge) {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -4334,31 +4607,40 @@ public class MainActivity extends Activity {
         return item;
     }
 
-    private void showSourceMenu(View anchor) {
-        LinearLayout panel = UIHelpers.card(this);
-        panel.setPadding(0, UIHelpers.dp(this, 6), 0, UIHelpers.dp(this, 6));
-        PopupWindow popup = new PopupWindow(panel, UIHelpers.dp(this, 190), -2, true);
-        popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popup.setOutsideTouchable(true);
-        popup.setOnDismissListener(() -> {
-            if (activePopup == popup) activePopup = null;
-        });
-        panel.addView(menuItem("导出配置", "", () -> {
-            popup.dismiss();
-            exportSourceConfig();
-        }));
-        panel.addView(UIHelpers.divider(this));
-        panel.addView(menuItem("导入配置", "", () -> {
-            popup.dismiss();
+    private void showSourceMenu() {
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.VERTICAL);
+        final PopupWindow[] popup = new PopupWindow[1];
+        actions.addView(settingsSheetAction(R.drawable.ic_source, "导入", () -> {
+            popup[0].dismiss();
             openImportSourceConfig();
         }));
-        panel.addView(UIHelpers.divider(this));
-        panel.addView(menuItem("检测可用性", "", () -> {
-            popup.dismiss();
+        actions.addView(UIHelpers.divider(this));
+        actions.addView(settingsSheetAction(R.drawable.ic_auto, "导出", () -> {
+            popup[0].dismiss();
+            exportSourceConfig();
+        }));
+        actions.addView(UIHelpers.divider(this));
+        actions.addView(settingsSheetAction(R.drawable.ic_lightning, "检测可用性", () -> {
+            popup[0].dismiss();
             healthCheck();
         }));
-        activePopup = popup;
-        popup.showAsDropDown(anchor, -UIHelpers.dp(this, 148), UIHelpers.dp(this, 6));
+        popup[0] = showSettingsSheet("站源操作", actions);
+    }
+
+    private View settingsSheetAction(int iconRes, String title, Runnable onClick) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(UIHelpers.dp(this, 42));
+        row.setPadding(UIHelpers.dp(this, 4), 0, UIHelpers.dp(this, 4), 0);
+        ImageView icon = UIHelpers.vectorIconButton(this, iconRes, UIHelpers.ACCENT, 4);
+        row.addView(icon, new LinearLayout.LayoutParams(UIHelpers.dp(this, 24), UIHelpers.dp(this, 24)));
+        TextView label = UIHelpers.text(this, title, 14, UIHelpers.TEXT, Typeface.NORMAL);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(-2, -2);
+        labelParams.leftMargin = UIHelpers.dp(this, 8);
+        row.addView(label, labelParams);
+        row.setOnClickListener(v -> onClick.run());
+        return row;
     }
 
     private View emptyState(int iconRes, String title, String desc, String action, Runnable onClick) {
@@ -4597,6 +4879,124 @@ public class MainActivity extends Activity {
         }, 1600L);
     }
 
+    private LinearLayout settingsScenePage(String scene, String title, String meta) {
+        enterScreen();
+        applyThemeAndSystemBars();
+        settingsScene = scene;
+        settingsSceneBackToSources = false;
+        sourceManagementVisible = false;
+        historyVisible = false;
+        root.removeAllViews();
+        ScrollView scroll = new ScrollView(this);
+        tuneScroll(scroll);
+        scroll.setBackgroundColor(UIHelpers.BG);
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 12), UIHelpers.dp(this, 16), UIHelpers.dp(this, 24));
+        settingsHeader(page, title, meta);
+        scroll.addView(page, UIHelpers.matchWrap());
+        root.addView(scroll, UIHelpers.match());
+        return page;
+    }
+
+    private LinearLayout settingsInfoRow(int iconRes, String title, String subtitle, String end) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(UIHelpers.dp(this, 9), UIHelpers.dp(this, 7), UIHelpers.dp(this, 9), UIHelpers.dp(this, 7));
+        row.setMinimumHeight(UIHelpers.dp(this, 52));
+        FrameLayout iconHost = new FrameLayout(this);
+        iconHost.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 6), Color.TRANSPARENT));
+        ImageView icon = UIHelpers.vectorIconButton(this, iconRes, UIHelpers.ACCENT, 5);
+        iconHost.addView(icon, UIHelpers.match());
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 28), UIHelpers.dp(this, 28));
+        iconParams.rightMargin = UIHelpers.dp(this, 9);
+        row.addView(iconHost, iconParams);
+        LinearLayout copy = new LinearLayout(this);
+        copy.setOrientation(LinearLayout.VERTICAL);
+        TextView titleView = UIHelpers.text(this, title, 14, UIHelpers.TEXT, Typeface.NORMAL);
+        titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        copy.addView(titleView);
+        if (!TextUtils.isEmpty(subtitle)) copy.addView(UIHelpers.text(this, subtitle, 11, UIHelpers.TEXT3, Typeface.NORMAL));
+        row.addView(copy, UIHelpers.weight(1));
+        if (!TextUtils.isEmpty(end)) row.addView(UIHelpers.text(this, end, 12, UIHelpers.TEXT3, Typeface.NORMAL));
+        return row;
+    }
+
+    private LinearLayout settingsBottomActions(String secondary, Runnable secondaryAction, String primary, Runnable primaryAction) {
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setPadding(0, UIHelpers.dp(this, 18), 0, 0);
+        if (!TextUtils.isEmpty(secondary)) {
+            Button button = UIHelpers.secondaryButton(this, secondary);
+            button.setOnClickListener(v -> secondaryAction.run());
+            actions.addView(button, UIHelpers.buttonWeight(this, 1));
+            actions.addView(UIHelpers.space(this, UIHelpers.dp(this, 8), 1));
+        }
+        Button button = UIHelpers.primaryButton(this, primary);
+        button.setOnClickListener(v -> primaryAction.run());
+        actions.addView(button, UIHelpers.buttonWeight(this, 1));
+        return actions;
+    }
+
+    private void showCacheCleanup() {
+        LinearLayout page = settingsScenePage("cache", "缓存清理", cacheSize);
+        page.addView(settingsSectionText("将被清理"));
+        LinearLayout clear = settingsList();
+        clear.addView(settingsInfoRow(R.drawable.ic_bookshelf, "漫画图片缓存", "下次阅读时重新获取", cacheSize));
+        clear.addView(UIHelpers.divider(this));
+        clear.addView(settingsInfoRow(R.drawable.ic_source, "页面解析缓存", "不会删除站源配置", "清理"));
+        page.addView(clear);
+        page.addView(settingsSectionText("始终保留"));
+        LinearLayout keep = settingsList();
+        keep.addView(settingsInfoRow(R.drawable.ic_history, "书架收藏、历史与进度", "", "保留"));
+        page.addView(keep);
+        page.addView(settingsBottomActions("取消", () -> showTab(2), "确认清理", () -> {
+            showCacheCleanupLoading();
+            main.post(this::clearAppCache);
+        }));
+    }
+
+    private void showCacheCleanupLoading() {
+        LinearLayout page = settingsScenePage("cache-loading", "缓存清理", "处理中");
+        page.addView(remState(R.drawable.rem_loading, "正在清理", "收藏与阅读记录会保留", "", null));
+    }
+
+    private void showAboutApp() {
+        LinearLayout page = settingsScenePage("about", "关于 App", BuildConfig.VERSION_NAME);
+        ImageView mark = new ImageView(this);
+        mark.setImageResource(R.drawable.rem_reader_resume);
+        mark.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        mark.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 16), Color.TRANSPARENT));
+        LinearLayout.LayoutParams markParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 68), UIHelpers.dp(this, 68));
+        markParams.gravity = Gravity.CENTER_HORIZONTAL;
+        markParams.topMargin = UIHelpers.dp(this, 16);
+        page.addView(mark, markParams);
+        TextView name = UIHelpers.text(this, "XX Comic", 18, UIHelpers.TEXT, Typeface.BOLD);
+        name.setGravity(Gravity.CENTER);
+        page.addView(name, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8), -1, -2));
+        TextView desc = UIHelpers.text(this, "多站源漫画浏览与本地阅读工具\n收藏、历史和设置均保存在本机", 12, UIHelpers.TEXT3, Typeface.NORMAL);
+        desc.setGravity(Gravity.CENTER);
+        page.addView(desc, UIHelpers.marginTop(-1, UIHelpers.dp(this, 5), -1, -2));
+        page.addView(settingsSectionText("本地信息"));
+        LinearLayout list = settingsList();
+        list.addView(settingsPlainRow("版本", installedVersionLabel()));
+        list.addView(UIHelpers.divider(this));
+        list.addView(settingsPlainRow("数据说明", "仅本地"));
+        list.addView(UIHelpers.divider(this));
+        list.addView(settingsPlainRow("已接入站源", "12 个"));
+        page.addView(list);
+    }
+
+    private View settingsPlainRow(String title, String end) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(UIHelpers.dp(this, 10), 0, UIHelpers.dp(this, 10), 0);
+        row.setMinimumHeight(UIHelpers.dp(this, 44));
+        row.addView(UIHelpers.text(this, title, 14, UIHelpers.TEXT, Typeface.NORMAL), UIHelpers.weight(1));
+        row.addView(UIHelpers.text(this, end, 12, UIHelpers.TEXT3, Typeface.NORMAL));
+        return row;
+    }
+
     private void showInfo(String title, String message) {
         styledDialog(title, message, "知道了", null, null, null);
     }
@@ -4611,30 +5011,64 @@ public class MainActivity extends Activity {
             return;
         }
         updateRunning = true;
-        showToast("正在检查更新");
-        miscIo.execute(() -> {
+        int generation = ++updateGeneration;
+        showUpdateLoading();
+        updateFuture = miscIo.submit(() -> {
             try {
                 AppRelease release = fetchAppRelease();
                 postMainIfAlive(() -> {
+                    if (generation != updateGeneration) return;
                     updateRunning = false;
+                    availableUpdateRelease = release;
                     boolean same = BuildConfig.VERSION_NAME.equals(release.versionName)
                             && BuildConfig.VERSION_CODE == release.versionCode;
                     if (same) {
-                        styledDialog(
-                                "当前已是最新版本",
-                                "服务器安装包与当前版本一致，是否强制重新安装？",
-                                "强制更新",
-                                () -> startUpdateDownload(release),
-                                "取消",
-                                null).show();
+                        showUpdateLatest();
                     } else {
-                        startUpdateDownload(release);
+                        showUpdateAvailable(release);
                     }
                 });
             } catch (Exception error) {
-                postUpdateFailure("检查更新失败", error);
+                postUpdateFailure("检查更新失败", error, generation);
             }
         });
+    }
+
+    private void showUpdateLoading() {
+        LinearLayout page = settingsScenePage("update-loading", "版本更新", "当前 " + BuildConfig.VERSION_NAME);
+        page.addView(remState(R.drawable.rem_loading, "正在检查更新", "很快就好", "", null));
+    }
+
+    private void showUpdateAvailable(AppRelease release) {
+        if (release == null) {
+            checkForUpdate();
+            return;
+        }
+        availableUpdateRelease = release;
+        LinearLayout page = settingsScenePage("update-available", "版本更新", "发现新版本");
+        LinearLayout card = settingsList();
+        card.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 11), UIHelpers.dp(this, 12), UIHelpers.dp(this, 11));
+        TextView title = UIHelpers.text(this, "XX Comic " + release.versionName, 17, UIHelpers.TEXT, Typeface.BOLD);
+        card.addView(title);
+        card.addView(UIHelpers.text(this, "当前版本 " + BuildConfig.VERSION_NAME + " · " + formatBytes(release.size), 12,
+                UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 4)));
+        TextView note = UIHelpers.text(this, "包含最新的界面优化与稳定性修复", 13, UIHelpers.TEXT2, Typeface.NORMAL);
+        card.addView(note, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
+        page.addView(card);
+        page.addView(settingsBottomActions("稍后", () -> showTab(2), "下载更新", () -> startUpdateDownload(release)));
+    }
+
+    private void showUpdateLatest() {
+        LinearLayout page = settingsScenePage("update-latest", "版本更新", "当前 " + BuildConfig.VERSION_NAME);
+        page.addView(remState(R.drawable.rem_reader_resume, "已经是最新版本", "XX Comic " + BuildConfig.VERSION_NAME, "", null));
+        page.addView(settingsBottomActions("", null, "重新安装", () -> {
+            if (availableUpdateRelease != null) startUpdateDownload(availableUpdateRelease);
+        }));
+    }
+
+    private void showUpdateFailure() {
+        LinearLayout page = settingsScenePage("update-error", "版本更新", "检查失败");
+        page.addView(remState(R.drawable.rem_error, "没检查到新版本", "稍后再试", "重试", this::checkForUpdate));
     }
 
     private AppRelease fetchAppRelease() throws Exception {
@@ -4673,29 +5107,76 @@ public class MainActivity extends Activity {
             return;
         }
         updateRunning = true;
-        final AlertDialog progressDialog = styledDialog(
-                "正在下载更新",
-                "准备下载 " + release.versionName + " (" + release.versionCode + ")",
-                null,
-                null,
-                null,
-                null);
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-        miscIo.execute(() -> {
+        int generation = ++updateGeneration;
+        availableUpdateRelease = release;
+        showUpdateDownload(release, 0);
+        updateFuture = miscIo.submit(() -> {
             try {
                 File apk = downloadAndVerifyUpdate(release, progress -> postMainIfAlive(() -> {
-                    progressDialog.setMessage("已下载 " + progress + "%");
+                    if (generation != updateGeneration) return;
+                    if (!"update-download".equals(settingsScene)) return;
+                    if (settingsUpdateProgressBar != null) settingsUpdateProgressBar.setProgress(progress);
+                    if (settingsUpdateProgressText != null) settingsUpdateProgressText.setText(progress + "%");
+                    if (settingsUpdateProgressMeta != null) settingsUpdateProgressMeta.setText("已下载 " + progress + "% · " + formatBytes(release.size));
                 }));
                 postMainIfAlive(() -> {
-                    progressDialog.dismiss();
+                    if (generation != updateGeneration) return;
                     installUpdate(apk);
                 });
             } catch (Exception error) {
-                postMainIfAlive(progressDialog::dismiss);
-                postUpdateFailure("下载更新失败", error);
+                if (generation != updateGeneration) return;
+                if (isExpectedTaskCancellation(error)) {
+                    postMainIfAlive(() -> {
+                        updateRunning = false;
+                        showTab(2);
+                    });
+                    return;
+                }
+                postUpdateFailure("下载更新失败", error, generation);
             }
         });
+    }
+
+    private void showUpdateDownload(AppRelease release, int progress) {
+        if (release == null) return;
+        LinearLayout page = settingsScenePage("update-download", "正在下载更新", progress + "%");
+        ImageView art = new ImageView(this);
+        art.setImageResource(R.drawable.rem_loading);
+        art.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        LinearLayout.LayoutParams artParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 132), UIHelpers.dp(this, 132));
+        artParams.gravity = Gravity.CENTER_HORIZONTAL;
+        artParams.topMargin = UIHelpers.dp(this, 18);
+        page.addView(art, artParams);
+        TextView title = UIHelpers.text(this, "下载中", 16, UIHelpers.TEXT, Typeface.BOLD);
+        title.setGravity(Gravity.CENTER);
+        page.addView(title);
+        settingsUpdateProgressMeta = UIHelpers.text(this, "已下载 " + progress + "% · " + formatBytes(release.size), 12, UIHelpers.TEXT3, Typeface.NORMAL);
+        settingsUpdateProgressMeta.setGravity(Gravity.CENTER);
+        page.addView(settingsUpdateProgressMeta, UIHelpers.marginTop(-1, UIHelpers.dp(this, 4), -1, -2));
+        settingsUpdateProgressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        settingsUpdateProgressBar.setMax(100);
+        settingsUpdateProgressBar.setProgress(progress);
+        settingsUpdateProgressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(UIHelpers.ACCENT));
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 6));
+        progressParams.setMargins(UIHelpers.dp(this, 20), UIHelpers.dp(this, 16), UIHelpers.dp(this, 20), 0);
+        page.addView(settingsUpdateProgressBar, progressParams);
+        settingsUpdateProgressText = UIHelpers.text(this, progress + "%", 12, UIHelpers.TEXT3, Typeface.NORMAL);
+        settingsUpdateProgressText.setGravity(Gravity.CENTER);
+        page.addView(settingsUpdateProgressText, UIHelpers.marginTop(-1, UIHelpers.dp(this, 5), -1, -2));
+        page.addView(settingsBottomActions("", null, "取消下载", () -> {
+            cancelUpdateDownload();
+            showTab(2);
+        }));
+    }
+
+    private void cancelUpdateDownload() {
+        updateGeneration++;
+        if (updateFuture != null) updateFuture.cancel(true);
+        updateFuture = null;
+        updateRunning = false;
+        settingsUpdateProgressBar = null;
+        settingsUpdateProgressText = null;
+        settingsUpdateProgressMeta = null;
     }
 
     private File downloadAndVerifyUpdate(AppRelease release, UpdateProgress listener) throws Exception {
@@ -4783,11 +5264,12 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void postUpdateFailure(String title, Exception error) {
+    private void postUpdateFailure(String title, Exception error, int generation) {
         postMainIfAlive(() -> {
+            if (generation != updateGeneration) return;
             updateRunning = false;
             appendErrorLog(title, error);
-            showInfo(title, clean(error.getMessage(), "请检查网络后重试"));
+            showUpdateFailure();
         });
     }
 
@@ -4855,20 +5337,83 @@ public class MainActivity extends Activity {
 
     private void showErrorLogs() {
         String logs = errorLogText();
-        AlertDialog dialog = styledDialog(
-            "错误日志",
-            TextUtils.isEmpty(logs) ? "暂无错误日志。" : logs,
-            "导出", () -> exportErrorLogs(),
-            "清理", () -> clearErrorLogs());
-        // 补充第三个"关闭"按钮
-        dialog.setButton(AlertDialog.BUTTON_NEUTRAL, "关闭", (d, w) -> d.dismiss());
-        android.widget.Button neu = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
-        if (neu != null) neu.setTextColor(UIHelpers.TEXT3);
-        TextView messageView = (TextView) dialog.findViewById(android.R.id.message);
-        if (messageView != null) {
-            messageView.setTextIsSelectable(true);
-            messageView.setLongClickable(true);
+        activeErrorLog = "";
+        String[] entries = TextUtils.isEmpty(logs) ? new String[0] : logs.split("\\n\\n");
+        LinearLayout page = settingsScenePage("errors", "错误日志", entries.length + " 条 · 导出 · 清理");
+        if (entries.length == 0) {
+            page.addView(remState(R.drawable.rem_empty, "这里很干净", "暂时没有错误日志", "", null));
+            return;
         }
+        LinearLayout list = settingsList();
+        for (int i = 0; i < entries.length; i++) {
+            String entry = entries[i];
+            String[] lines = entry.split("\\n", 3);
+            String header = lines.length > 0 ? clean(lines[0], "错误日志") : "错误日志";
+            String detail = lines.length > 1 ? clean(lines[1], "查看详细信息") : "查看详细信息";
+            LinearLayout row = settingsErrorRow(header, detail, () -> showErrorLogDetail(entry));
+            list.addView(row);
+            if (i < entries.length - 1) list.addView(UIHelpers.divider(this));
+        }
+        page.addView(list);
+        TextView note = UIHelpers.text(this, "日志只保存在本机，导出时调用系统文件选择器。", 11, UIHelpers.TEXT3, Typeface.NORMAL);
+        page.addView(note, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8), -1, -2));
+        page.addView(settingsBottomActions("清理", this::confirmClearErrorLogs, "导出", this::exportErrorLogs));
+    }
+
+    private LinearLayout settingsErrorRow(String title, String detail, Runnable onClick) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 7), UIHelpers.dp(this, 8), UIHelpers.dp(this, 7));
+        row.setMinimumHeight(UIHelpers.dp(this, 54));
+        FrameLayout mark = new FrameLayout(this);
+        mark.setBackground(UIHelpers.round(UIHelpers.isNightTheme() ? Color.rgb(70, 39, 53) : Color.rgb(255, 240, 244), UIHelpers.dp(this, 6), Color.TRANSPARENT));
+        ImageView icon = UIHelpers.vectorIconButton(this, R.drawable.ic_lightning, UIHelpers.DANGER, 5);
+        mark.addView(icon, UIHelpers.match());
+        LinearLayout.LayoutParams markParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 28), UIHelpers.dp(this, 28));
+        markParams.rightMargin = UIHelpers.dp(this, 9);
+        row.addView(mark, markParams);
+        LinearLayout copy = new LinearLayout(this);
+        copy.setOrientation(LinearLayout.VERTICAL);
+        TextView titleView = UIHelpers.text(this, title, 13, UIHelpers.TEXT, Typeface.NORMAL);
+        titleView.setMaxLines(1);
+        titleView.setEllipsize(TextUtils.TruncateAt.END);
+        copy.addView(titleView);
+        TextView detailView = UIHelpers.text(this, detail, 11, UIHelpers.TEXT3, Typeface.NORMAL);
+        detailView.setMaxLines(1);
+        detailView.setEllipsize(TextUtils.TruncateAt.END);
+        copy.addView(detailView);
+        row.addView(copy, UIHelpers.weight(1));
+        TextView action = UIHelpers.text(this, "查看", 12, UIHelpers.ACCENT, Typeface.NORMAL);
+        row.addView(action);
+        row.setOnClickListener(v -> onClick.run());
+        return row;
+    }
+
+    private void showErrorLogDetail(String entry) {
+        activeErrorLog = entry;
+        LinearLayout page = settingsScenePage("error-detail", "错误日志", "详细信息");
+        String[] lines = entry.split("\\n", 2);
+        page.addView(settingsSectionText(lines.length > 0 ? clean(lines[0], "日志详情") : "日志详情"));
+        TextView code = UIHelpers.text(this, entry, 11, UIHelpers.TEXT3, Typeface.NORMAL);
+        code.setTypeface(Typeface.MONOSPACE);
+        code.setTextIsSelectable(true);
+        code.setLongClickable(true);
+        code.setPadding(UIHelpers.dp(this, 10), UIHelpers.dp(this, 10), UIHelpers.dp(this, 10), UIHelpers.dp(this, 10));
+        code.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 7), UIHelpers.BORDER));
+        page.addView(code);
+        TextView note = UIHelpers.text(this, "可长按复制。日志不会自动发送给任何服务器。", 11, UIHelpers.TEXT3, Typeface.NORMAL);
+        page.addView(note, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8), -1, -2));
+        page.addView(settingsBottomActions("复制", () -> copyErrorLog(entry), "导出日志", this::exportErrorLogs));
+    }
+
+    private void copyErrorLog(String entry) {
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (clipboard != null) clipboard.setPrimaryClip(ClipData.newPlainText("XX Comic 错误日志", entry));
+        showRemToast("日志已复制");
+    }
+
+    private void confirmClearErrorLogs() {
+        styledDialog("清空错误日志", "所有本地错误记录都会移除。", "清空", this::clearErrorLogs, "取消", null);
     }
 
     private String errorLogSummary() {
@@ -5185,15 +5730,85 @@ public class MainActivity extends Activity {
     }
 
     private void healthCheck() {
-        miscIo.execute(() -> {
+        settingsSceneBackToSources = true;
+        sourceHealthRows = new ArrayList<>();
+        cancelSourceHealthCheck();
+        int generation = sourceHealthGeneration;
+        showSourceHealthLoading();
+        sourceHealthFuture = sourceHealthIo.submit(() -> {
             List<String> rows = new ArrayList<>();
             for (ComicSource client : enabledBuiltinSources()) {
+                if (Thread.currentThread().isInterrupted()) return;
                 boolean ok = client.healthCheck();
-                rows.add(client.name() + (ok ? " 可用" : " 暂不可用"));
+                if (Thread.currentThread().isInterrupted()) return;
+                rows.add(client.name() + "\u001f" + (ok ? "可用" : "不可用"));
             }
-            if (rows.isEmpty()) rows.add("当前没有启用站源");
-            postMainIfAlive(() -> showInfo("站源检测", TextUtils.join("\n", rows)));
+            addDisabledSourceHealthRows(rows);
+            postMainIfAlive(() -> {
+                if (generation != sourceHealthGeneration) return;
+                sourceHealthFuture = null;
+                sourceHealthRows = rows;
+                showSourceHealthResults();
+            });
         });
+    }
+
+    private void cancelSourceHealthCheck() {
+        sourceHealthGeneration++;
+        if (sourceHealthFuture != null) sourceHealthFuture.cancel(true);
+        sourceHealthFuture = null;
+    }
+
+    private void addDisabledSourceHealthRows(List<String> rows) {
+        if (!sourceEnabled) rows.add(baoziConfig.name + "\u001f已关闭");
+        if (!aikanEnabled) rows.add(aikanConfig.name + "\u001f已关闭");
+        if (!gmhEnabled) rows.add(gmhConfig.name + "\u001f已关闭");
+        if (!mkzhanEnabled) rows.add(mkzhanConfig.name + "\u001f已关闭");
+        if (!hiperdexEnabled) rows.add(hiperdexConfig.name + "\u001f已关闭");
+        if (!manhuaguiEnabled) rows.add(manhuaguiConfig.name + "\u001f已关闭");
+        if (!hanman18Enabled) rows.add(hanman18Config.name + "\u001f已关闭");
+        if (!d5d6Enabled) rows.add(d5d6Config.name + "\u001f已关闭");
+        if (!manbenEnabled) rows.add(manbenConfig.name + "\u001f已关闭");
+        if (!manhuazhanEnabled) rows.add(manhuazhanConfig.name + "\u001f已关闭");
+        if (!bbyinEnabled) rows.add(bbyinConfig.name + "\u001f已关闭");
+        if (!antbywEnabled) rows.add(antbywConfig.name + "\u001f已关闭");
+    }
+
+    private void showSourceHealthLoading() {
+        LinearLayout page = settingsScenePage("health-loading", "检测可用性", "正在检测");
+        settingsSceneBackToSources = true;
+        page.addView(remState(R.drawable.rem_loading, "正在检测站源", "稍等一下", "", null));
+    }
+
+    private void showSourceHealthResults() {
+        LinearLayout page = settingsScenePage("health-results", "检测可用性", sourceHealthRows.size() + " 个已完成");
+        settingsSceneBackToSources = true;
+        LinearLayout list = settingsList();
+        for (int i = 0; i < sourceHealthRows.size(); i++) {
+            String[] parts = sourceHealthRows.get(i).split("\\u001f", 2);
+            String name = parts.length > 0 ? parts[0] : "站源";
+            String status = parts.length > 1 ? parts[1] : "不可用";
+            list.addView(sourceHealthRow(name, status));
+            if (i < sourceHealthRows.size() - 1) list.addView(UIHelpers.divider(this));
+        }
+        page.addView(list);
+        page.addView(settingsBottomActions("", null, "完成", () -> {
+            settingsSceneBackToSources = false;
+            showSourceManagement();
+        }));
+    }
+
+    private View sourceHealthRow(String name, String status) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(UIHelpers.dp(this, 9), 0, UIHelpers.dp(this, 9), 0);
+        row.setMinimumHeight(UIHelpers.dp(this, 42));
+        row.addView(UIHelpers.text(this, name, 13, UIHelpers.TEXT, Typeface.NORMAL), UIHelpers.weight(1));
+        int color = "可用".equals(status) ? UIHelpers.GREEN : "已关闭".equals(status) ? UIHelpers.TEXT3 : UIHelpers.DANGER;
+        TextView statusView = UIHelpers.text(this, status, 12, color, Typeface.NORMAL);
+        statusView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        row.addView(statusView);
+        return row;
     }
 
     private void rebuildSourceClients() {
@@ -5751,22 +6366,14 @@ public class MainActivity extends Activity {
         scroll.setBackgroundColor(UIHelpers.BG);
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(UIHelpers.dp(this, 20), UIHelpers.dp(this, 12), UIHelpers.dp(this, 20), UIHelpers.dp(this, 24));
+        content.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 12), UIHelpers.dp(this, 16), UIHelpers.dp(this, 24));
         scroll.addView(content, UIHelpers.matchWrap());
 
-        LinearLayout topBar = new LinearLayout(this);
-        topBar.setGravity(Gravity.CENTER_VERTICAL);
-        topBar.setBackgroundColor(UIHelpers.BG);
-        TextView title = UIHelpers.text(this, "阅读历史", 22, UIHelpers.TEXT, Typeface.BOLD);
-        topBar.addView(title, UIHelpers.weight(1));
         boolean hasAny = !progress.isEmpty();
         if (hasAny) {
-            TextView clear = new TextView(this);
-            clear.setText("清空");
-            clear.setTextSize(13);
-            clear.setTextColor(UIHelpers.TEXT3);
+            TextView clear = UIHelpers.text(this, "清空", 12, UIHelpers.TEXT3, Typeface.NORMAL);
             clear.setGravity(Gravity.CENTER);
-            clear.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 12), UIHelpers.dp(this, 16), UIHelpers.dp(this, 12));
+            clear.setLayoutParams(new LinearLayout.LayoutParams(UIHelpers.dp(this, 44), UIHelpers.dp(this, 32)));
             clear.setOnClickListener(v -> {
                 styledDialog("清空阅读历史", "将清除所有阅读进度记录，收藏不会受影响。", "清空", () -> {
                     progress.clear();
@@ -5776,19 +6383,26 @@ public class MainActivity extends Activity {
                     showHistory();
                 }, "取消", null);
             });
-            topBar.addView(clear);
+            settingsHeader(content, "阅读历史", progress.size() + " 条", clear);
+        } else {
+            settingsHeader(content, "阅读历史", "0 条");
         }
-        content.addView(topBar, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 48)));
 
         if (progress.isEmpty()) {
             content.addView(emptyState(R.drawable.ic_history, "还没有阅读记录", "翻开一本，故事从这里开始", "去搜索", () -> showTab(1)));
         } else {
             List<Map.Entry<String, Long>> entries = new ArrayList<>(lastViewedAt.entrySet());
             Collections.sort(entries, (a, b) -> Long.compare(b.getValue(), a.getValue()));
+            LinearLayout list = settingsList();
+            int visible = 0;
             for (Map.Entry<String, Long> entry : entries) {
                 if (!progress.containsKey(entry.getKey())) continue;
-                content.addView(historyRow(entry.getKey(), entry.getValue()));
+                if (visible++ > 0) list.addView(UIHelpers.divider(this));
+                list.addView(historyRow(entry.getKey(), entry.getValue()));
             }
+            content.addView(list);
+            TextView note = UIHelpers.text(this, "删除记录不会移除书架收藏，也不会清理漫画缓存。", 11, UIHelpers.TEXT3, Typeface.NORMAL);
+            content.addView(note, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8), -1, -2));
         }
         root.addView(scroll, UIHelpers.match());
     }
@@ -5797,10 +6411,8 @@ public class MainActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 12), UIHelpers.dp(this, 4), UIHelpers.dp(this, 12));
-        row.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 12), Color.TRANSPARENT));
-        row.setElevation(UIHelpers.dp(this, 1));
-        UIHelpers.tapFeedback(row);
+        row.setPadding(UIHelpers.dp(this, 7), UIHelpers.dp(this, 6), UIHelpers.dp(this, 7), UIHelpers.dp(this, 6));
+        row.setMinimumHeight(UIHelpers.dp(this, 56));
         ComicModels.ComicSummary summary = summaries.get(comicId);
         ComicModels.ComicDetail detail = details.get(comicId);
         boolean orphaned = summary == null;
@@ -5809,31 +6421,22 @@ public class MainActivity extends Activity {
         if (orphaned) {
             cover = UIHelpers.coverPlaceholder(this, "");
         } else if (!TextUtils.isEmpty(summary.coverUrl)) {
-            cover = coverFrame(summary.coverUrl, 80, 107, isRetiredComic(comicId));
+            cover = coverFrame(summary.coverUrl, 32, 43, isRetiredComic(comicId));
         } else {
             cover = UIHelpers.coverPlaceholder(this, summary.title);
         }
-        coverWrap.addView(cover, new FrameLayout.LayoutParams(UIHelpers.dp(this, 80), UIHelpers.dp(this, 107)));
-        if (!orphaned && detail != null && !TextUtils.isEmpty(detail.status)) {
-            UIHelpers.StatusDotView dot = new UIHelpers.StatusDotView(this);
-            dot.setStatus(detail.status);
-            FrameLayout.LayoutParams dotLp = new FrameLayout.LayoutParams(UIHelpers.dp(this, 16), UIHelpers.dp(this, 16), Gravity.BOTTOM | Gravity.END);
-            dotLp.rightMargin = UIHelpers.dp(this, 6);
-            dotLp.bottomMargin = UIHelpers.dp(this, 6);
-            coverWrap.addView(dot, dotLp);
-        }
-        row.addView(coverWrap, new LinearLayout.LayoutParams(UIHelpers.dp(this, 80), UIHelpers.dp(this, 107)));
+        coverWrap.addView(cover, new FrameLayout.LayoutParams(UIHelpers.dp(this, 32), UIHelpers.dp(this, 43)));
+        row.addView(coverWrap, new LinearLayout.LayoutParams(UIHelpers.dp(this, 32), UIHelpers.dp(this, 43)));
 
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
-        info.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 12), 0);
+        info.setPadding(UIHelpers.dp(this, 8), 0, UIHelpers.dp(this, 8), 0);
         TextView titleView = new TextView(this);
         titleView.setText(orphaned ? "已清除的漫画" : summary.title);
-        titleView.setTextSize(16);
+        titleView.setTextSize(14);
         titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        titleView.setLetterSpacing(-0.02f);
         titleView.setTextColor(orphaned ? UIHelpers.TEXT3 : UIHelpers.TEXT);
-        titleView.setMaxLines(2);
+        titleView.setMaxLines(1);
         titleView.setEllipsize(TextUtils.TruncateAt.END);
         info.addView(titleView);
         int chapterIdx = progress.getOrDefault(comicId, 0);
@@ -5845,16 +6448,17 @@ public class MainActivity extends Activity {
         } else {
             chapterText = "上次看到 第 " + (chapterIdx + 1) + " 章";
         }
-        info.addView(UIHelpers.text(this, chapterText, 12, UIHelpers.TEXT2, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 6)));
-        info.addView(UIHelpers.text(this, DataHelpers.formatRelative(viewedAt), 12, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 4)));
+        info.addView(UIHelpers.text(this, chapterText + " · " + DataHelpers.formatRelative(viewedAt), 11, UIHelpers.TEXT3, Typeface.NORMAL),
+                UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
         row.addView(info, UIHelpers.weight(1));
 
         ImageView close = new ImageView(this);
-        close.setImageResource(R.drawable.ic_close);
+        close.setImageResource(R.drawable.ic_trash);
         close.setImageTintList(android.content.res.ColorStateList.valueOf(UIHelpers.TEXT3));
-        close.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 12), UIHelpers.dp(this, 12), UIHelpers.dp(this, 12));
+        close.setPadding(UIHelpers.dp(this, 7), UIHelpers.dp(this, 7), UIHelpers.dp(this, 7), UIHelpers.dp(this, 7));
         close.setOnClickListener(v -> {
-            styledDialog("删除这条记录", "将移除该漫画的阅读进度。", "删除", () -> {
+            String title = orphaned ? "这条记录" : summary.title;
+            styledDialog("删除这条记录？", "只移除《" + title + "》的阅读位置，书架收藏保持不变。", "删除", () -> {
                 progress.remove(comicId);
                 removeReaderPositions(comicId);
                 lastViewedAt.remove(comicId);
@@ -5862,13 +6466,11 @@ public class MainActivity extends Activity {
                 showHistory();
             }, "取消", null);
         });
-        row.addView(close, new LinearLayout.LayoutParams(UIHelpers.dp(this, 44), UIHelpers.dp(this, 44)));
+        row.addView(close, new LinearLayout.LayoutParams(UIHelpers.dp(this, 30), UIHelpers.dp(this, 30)));
 
         if (!orphaned) {
             row.setOnClickListener(v -> showDetail(comicId));
         }
-        LinearLayout.LayoutParams lp = UIHelpers.marginBottom(-1, UIHelpers.dp(this, 12));
-        row.setLayoutParams(lp);
         return row;
     }
 

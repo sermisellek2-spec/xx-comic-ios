@@ -102,7 +102,7 @@ check(
   "detail or reader can bypass cache-only mode when source id is empty",
 );
 check(
-  source.includes("coverFrame(summary.coverUrl, 80, 107, isRetiredComic(comicId))"),
+  /coverFrame\(summary\.coverUrl,\s*\d+,\s*\d+,\s*isRetiredComic\(comicId\)\)/.test(source),
   "history cover can bypass cache-only mode when source id is empty",
 );
 

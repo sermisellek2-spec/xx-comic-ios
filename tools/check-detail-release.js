@@ -26,6 +26,6 @@ check("hero stretch does not move the cover independently", !source.includes("co
 check("drawer preserves the saved ordering choice", !drawer.includes("chapterDesc = false;"));
 check("drawer cancels stale batched rows after reordering", drawer.includes("int[] renderGeneration"));
 check("drawer header keeps the sort button in its fixed host", drawer.includes("header.addView(orderHost") && drawer.includes("titleHost"));
-check("release version is 1.0.7", gradle.includes('versionName "1.0.7"') && gradle.includes("versionCode 7"));
+check("release version is 1.0.8", gradle.includes('versionName "1.0.8"') && gradle.includes("versionCode 8"));
 
 console.log("detail release contracts hold");
