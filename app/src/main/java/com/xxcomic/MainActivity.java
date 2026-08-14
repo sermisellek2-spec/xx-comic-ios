@@ -707,9 +707,7 @@ public class MainActivity extends Activity {
     }
 
     private void renderSettings(LinearLayout page) {
-        settingsHeader(page, "设置", "XX Comic · 本地");
-        TextView localNote = UIHelpers.text(this, "无需登录，数据只保存在本机", 12, UIHelpers.TEXT3, Typeface.NORMAL);
-        page.addView(localNote, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        addTitle(page, "设置", null);
         page.addView(settingsSectionText("阅读与外观"));
         LinearLayout appearance = settingsList();
         appearance.setPadding(0, 0, 0, 0);
@@ -1347,23 +1345,30 @@ public class MainActivity extends Activity {
     private void showHandModeDrawer() {
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
+
         LinearLayout map = new LinearLayout(this);
         map.setOrientation(LinearLayout.HORIZONTAL);
-        map.setPadding(0, UIHelpers.dp(this, 8), 0, 0);
-        map.addView(handZone("上一章", readerLeftHand), UIHelpers.weight(1));
+        map.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
+        map.setBackground(UIHelpers.round(UIHelpers.CARD_SOFT, UIHelpers.dp(this, 8), UIHelpers.BORDER));
+        map.addView(handZone(readerLeftHand ? "下一章" : "上一章", readerLeftHand),
+                new LinearLayout.LayoutParams(0, -1, 1));
         map.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
-        map.addView(handZone("显示控制", false), UIHelpers.weight(.8f));
+        map.addView(handZone("显示控制", false), new LinearLayout.LayoutParams(0, -1, .9f));
         map.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
-        map.addView(handZone("下一章", !readerLeftHand), UIHelpers.weight(1));
-        content.addView(map, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 88)));
+        map.addView(handZone(readerLeftHand ? "上一章" : "下一章", !readerLeftHand),
+                new LinearLayout.LayoutParams(0, -1, 1));
+        content.addView(map, UIHelpers.marginTop(-1, UIHelpers.dp(this, 10), -1, UIHelpers.dp(this, 66)));
 
         LinearLayout choices = new LinearLayout(this);
         choices.setOrientation(LinearLayout.HORIZONTAL);
-        choices.setPadding(0, UIHelpers.dp(this, 8), 0, 0);
-        choices.addView(handChoice("左手模式", readerLeftHand, () -> applyHandMode(true)), UIHelpers.weight(1));
-        choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 6), 1));
-        choices.addView(handChoice("右手模式", !readerLeftHand, () -> applyHandMode(false)), UIHelpers.weight(1));
-        content.addView(choices, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 36)));
+        choices.setPadding(UIHelpers.dp(this, 3), UIHelpers.dp(this, 3), UIHelpers.dp(this, 3), UIHelpers.dp(this, 3));
+        choices.setBackground(UIHelpers.round(UIHelpers.CARD_SOFT, UIHelpers.dp(this, 8), Color.TRANSPARENT));
+        choices.addView(handChoice("左手模式", readerLeftHand, () -> applyHandMode(true)),
+                new LinearLayout.LayoutParams(0, -1, 1));
+        choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 3), 1));
+        choices.addView(handChoice("右手模式", !readerLeftHand, () -> applyHandMode(false)),
+                new LinearLayout.LayoutParams(0, -1, 1));
+        content.addView(choices, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8), -1, UIHelpers.dp(this, 40)));
         showSettingsSheet("阅读触控方向", content);
     }
 
@@ -1372,7 +1377,7 @@ public class MainActivity extends Activity {
         readerLeftHand = leftHand;
         saveLocalState();
         rerenderCurrentScreen();
-        main.post(() -> showRemToast(readerLeftHand ? "已切换到左手模式" : "已切换到右手模式"));
+        main.post(() -> showRemToast(readerLeftHand ? "左侧下一章 · 右侧上一章" : "左侧上一章 · 右侧下一章"));
     }
 
     private View themeChoice(String label, int mode, boolean selected, Runnable onClick) {
@@ -1405,16 +1410,18 @@ public class MainActivity extends Activity {
     private View handZone(String label, boolean selected) {
         TextView zone = UIHelpers.text(this, label, 11, selected ? UIHelpers.ACCENT : UIHelpers.TEXT3, Typeface.NORMAL);
         zone.setGravity(Gravity.CENTER);
-        zone.setBackground(UIHelpers.round(selected ? UIHelpers.ACCENT_SOFT : UIHelpers.BG, UIHelpers.dp(this, 6),
-                selected ? UIHelpers.ACCENT : UIHelpers.BORDER));
+        zone.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        zone.setBackground(UIHelpers.round(selected ? UIHelpers.ACCENT_SOFT : Color.TRANSPARENT,
+                UIHelpers.dp(this, 6), Color.TRANSPARENT));
         return zone;
     }
 
     private View handChoice(String label, boolean selected, Runnable onClick) {
-        TextView choice = UIHelpers.text(this, label, 12, selected ? UIHelpers.ON_ACCENT : UIHelpers.TEXT3, Typeface.NORMAL);
+        TextView choice = UIHelpers.text(this, label, 12, selected ? UIHelpers.ON_ACCENT : UIHelpers.TEXT2, Typeface.NORMAL);
         choice.setGravity(Gravity.CENTER);
-        choice.setBackground(UIHelpers.round(selected ? UIHelpers.ACCENT : UIHelpers.BG, UIHelpers.dp(this, 6),
-                selected ? UIHelpers.ACCENT : UIHelpers.BORDER));
+        choice.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        choice.setBackground(UIHelpers.round(selected ? UIHelpers.ACCENT : Color.TRANSPARENT,
+                UIHelpers.dp(this, 6), Color.TRANSPARENT));
         choice.setOnClickListener(v -> onClick.run());
         return choice;
     }

@@ -26,8 +26,8 @@ const logs = block("private void showErrorLogs", "private String errorLogSummary
 const updates = block("private void checkForUpdate", "private AppRelease fetchAppRelease");
 const health = block("private void healthCheck", "private void rebuildSourceClients");
 
-check("settings uses the compact design header", settings.includes("settingsHeader(page, \"设置\", \"XX Comic · 本地\")"));
-check("settings keeps the local-only note", settings.includes("无需登录，数据只保存在本机"));
+check("settings uses the same clean title as bookshelf and discovery", settings.includes("addTitle(page, \"设置\", null)")
+  && !settings.includes("XX Comic · 本地") && !settings.includes("无需登录，数据只保存在本机"));
 check("settings rows include approved supporting copy", [
   "跟随系统、浅色或深色",
   "切换阅读页左右触控区",
@@ -38,8 +38,8 @@ check("settings rows include approved supporting copy", [
 ].every((text) => settings.includes(text)));
 check("theme uses three visual choices", theme.includes("themeChoice") && theme.includes("跟随系统")
   && theme.includes("浅色") && theme.includes("深色"));
-check("hand preference uses the three-zone preview", theme.includes("上一章")
-  && theme.includes("显示控制") && theme.includes("下一章"));
+check("hand preference preview matches the real reader mapping", theme.includes('readerLeftHand ? "下一章" : "上一章"')
+  && theme.includes('readerLeftHand ? "上一章" : "下一章"') && theme.includes("显示控制"));
 check("source page uses an overflow action sheet", sources.includes("sourceOverflowButton")
   && sourceMenu.includes("导入") && sourceMenu.includes("导出") && sourceMenu.includes("检测可用性"));
 check("source rows preserve direct enable switches", main.includes("sourceSwitch")
