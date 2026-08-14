@@ -771,7 +771,7 @@ public class MainActivity extends Activity {
     }
 
     private void renderSearch(LinearLayout page) {
-        addTitle(page, "发现", null);
+        addDiscoveryTitle(page);
         LinearLayout searchBar = new LinearLayout(this);
         searchBar.setGravity(Gravity.CENTER_VERTICAL);
         searchBar.setPadding(UIHelpers.dp(this, 4), 0, UIHelpers.dp(this, 4), 0);
@@ -834,7 +834,6 @@ public class MainActivity extends Activity {
         filterScroll.setHorizontalScrollBarEnabled(false);
         LinearLayout filters = new LinearLayout(this);
         filters.setOrientation(LinearLayout.HORIZONTAL);
-        filters.addView(filterTextButton(selectedSourceName(), 0), UIHelpers.marginRight(-2, UIHelpers.dp(this, 14)));
         filters.addView(filterTextButton("题材", 1), UIHelpers.marginRight(-2, UIHelpers.dp(this, 14)));
         filters.addView(filterTextButton("地区", 2), UIHelpers.marginRight(-2, UIHelpers.dp(this, 14)));
         filters.addView(filterTextButton("状态", 3));
@@ -898,6 +897,24 @@ public class MainActivity extends Activity {
         }
         appendSearchRows(content, visible);
         renderSearchPagingFooter(content);
+    }
+
+    private void addDiscoveryTitle(LinearLayout page) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(UIHelpers.text(this, "发现", 24, UIHelpers.TEXT, Typeface.BOLD), UIHelpers.weight(1));
+        if (!globalSearchMode) {
+            TextView source = UIHelpers.text(this, selectedSourceName() + "  ▾", 12, UIHelpers.ACCENT_DARK, Typeface.BOLD);
+            source.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
+            source.setSingleLine(true);
+            source.setEllipsize(TextUtils.TruncateAt.END);
+            source.setMaxWidth(UIHelpers.dp(this, 150));
+            source.setPadding(UIHelpers.dp(this, 8), 0, 0, 0);
+            source.setBackgroundColor(Color.TRANSPARENT);
+            source.setOnClickListener(v -> showFilterDrawer(0));
+            row.addView(source, new LinearLayout.LayoutParams(-2, UIHelpers.dp(this, 36)));
+        }
+        page.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 14)));
     }
 
     private TextView searchModeButton() {
@@ -1762,8 +1779,8 @@ public class MainActivity extends Activity {
     private void renderSearchHistory(LinearLayout content) {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.addView(UIHelpers.text(this, "搜索记录", 18, UIHelpers.TEXT, Typeface.BOLD), UIHelpers.weight(1));
-        TextView clear = UIHelpers.text(this, "清空", 13, UIHelpers.TEXT2, Typeface.NORMAL);
+        row.addView(UIHelpers.text(this, "搜索记录", 16, UIHelpers.TEXT, Typeface.BOLD), UIHelpers.weight(1));
+        TextView clear = UIHelpers.text(this, "清空", 12, UIHelpers.TEXT2, Typeface.NORMAL);
         clear.setGravity(Gravity.CENTER);
         clear.setOnClickListener(v -> {
             globalSearchHistory.clear();
@@ -1772,7 +1789,7 @@ public class MainActivity extends Activity {
             showTab(1);
         });
         row.addView(clear);
-        content.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 12)));
+        content.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
         if (globalSearchHistory.isEmpty()) {
             content.addView(emptyState(R.drawable.ic_history, "暂无搜索记录", "输入关键词后按键盘搜索", "", () -> {}));
             return;
@@ -1781,23 +1798,43 @@ public class MainActivity extends Activity {
         chips.setOrientation(LinearLayout.VERTICAL);
         LinearLayout line = new LinearLayout(this);
         line.setOrientation(LinearLayout.HORIZONTAL);
-        int count = 0;
+        int availableWidth = getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 32);
+        int gap = UIHelpers.dp(this, 6);
+        int usedWidth = 0;
         for (String keyword : globalSearchHistory) {
-            TextView chip = UIHelpers.chip(this, keyword, false);
+            TextView chip = searchHistoryChip(keyword);
             chip.setOnClickListener(v -> {
                 globalSearchQuery = keyword;
                 startGlobalSearch(keyword);
             });
-            line.addView(chip, UIHelpers.marginRight(-2, UIHelpers.dp(this, 10)));
-            count++;
-            if (count % 3 == 0) {
-                chips.addView(line, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 10)));
+            chip.measure(
+                    View.MeasureSpec.makeMeasureSpec(availableWidth, View.MeasureSpec.AT_MOST),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            int chipWidth = Math.min(chip.getMeasuredWidth(), availableWidth);
+            if (usedWidth > 0 && usedWidth + gap + chipWidth > availableWidth) {
+                chips.addView(line, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
                 line = new LinearLayout(this);
                 line.setOrientation(LinearLayout.HORIZONTAL);
+                usedWidth = 0;
             }
+            LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(-2, UIHelpers.dp(this, 30));
+            if (usedWidth > 0) chipParams.leftMargin = gap;
+            line.addView(chip, chipParams);
+            usedWidth += (usedWidth > 0 ? gap : 0) + chipWidth;
         }
         if (line.getChildCount() > 0) chips.addView(line);
         content.addView(chips);
+    }
+
+    private TextView searchHistoryChip(String keyword) {
+        TextView chip = UIHelpers.text(this, keyword, 12, UIHelpers.ACCENT_DARK, Typeface.NORMAL);
+        chip.setGravity(Gravity.CENTER);
+        chip.setSingleLine(true);
+        chip.setEllipsize(TextUtils.TruncateAt.END);
+        chip.setMaxWidth(UIHelpers.dp(this, 180));
+        chip.setPadding(UIHelpers.dp(this, 9), 0, UIHelpers.dp(this, 9), 0);
+        chip.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 4), Color.TRANSPARENT));
+        return chip;
     }
 
     private void renderGlobalSearchResults(LinearLayout content) {
@@ -4160,18 +4197,18 @@ public class MainActivity extends Activity {
         float r = UIHelpers.dp(this, 8);
         panelBg.setCornerRadii(new float[]{r, r, 0, 0, 0, 0, r, r});
         panel.setBackground(panelBg);
-        panel.setPadding(UIHelpers.dp(this, 18), UIHelpers.dp(this, 14), UIHelpers.dp(this, 18), UIHelpers.dp(this, 16));
+        panel.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 10), UIHelpers.dp(this, 12), UIHelpers.dp(this, 12));
         overlay.addView(panel, new FrameLayout.LayoutParams(panelWidth, -1, Gravity.RIGHT));
 
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.addView(UIHelpers.text(this, "筛选", 18, UIHelpers.TEXT, Typeface.BOLD), UIHelpers.weight(1));
-        TextView close = UIHelpers.text(this, "✕", 18, UIHelpers.TEXT2, Typeface.NORMAL);
-        close.setPadding(UIHelpers.dp(this, 14), UIHelpers.dp(this, 6), UIHelpers.dp(this, 14), UIHelpers.dp(this, 6));
-        close.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 18), UIHelpers.BORDER_SOFT));
+        header.addView(UIHelpers.text(this, "筛选", 17, UIHelpers.TEXT, Typeface.BOLD), UIHelpers.weight(1));
+        TextView close = UIHelpers.text(this, "✕", 17, UIHelpers.TEXT2, Typeface.NORMAL);
+        close.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 4), UIHelpers.dp(this, 8), UIHelpers.dp(this, 4));
+        close.setBackgroundColor(Color.TRANSPARENT);
         header.addView(close);
-        panel.addView(header, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 12)));
+        panel.addView(header, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
 
         LinearLayout tabs = new LinearLayout(this);
         tabs.setOrientation(LinearLayout.HORIZONTAL);
@@ -4182,7 +4219,7 @@ public class MainActivity extends Activity {
         tabs.addView(tabRegion, UIHelpers.weight(1));
         tabs.addView(tabState, UIHelpers.weight(1));
         tabs.setVisibility(initialTab == 0 ? View.GONE : View.VISIBLE);
-        panel.addView(tabs, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        panel.addView(tabs, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
 
         ScrollView contentScroll = new ScrollView(this);
         LinearLayout content = new LinearLayout(this);
@@ -4193,11 +4230,11 @@ public class MainActivity extends Activity {
         Button confirm = UIHelpers.brandButton(this, "\u786e\u8ba4\u641c\u7d22");
         confirm.setTextSize(15);
         confirm.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        confirm.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 8), UIHelpers.dp(this, 16), UIHelpers.dp(this, 8));
-        confirm.setMinHeight(UIHelpers.dp(this, 48));
-        confirm.setMinimumHeight(UIHelpers.dp(this, 48));
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 48));
-        confirmLp.topMargin = UIHelpers.dp(this, 12);
+        confirm.setPadding(UIHelpers.dp(this, 14), UIHelpers.dp(this, 6), UIHelpers.dp(this, 14), UIHelpers.dp(this, 6));
+        confirm.setMinHeight(UIHelpers.dp(this, 44));
+        confirm.setMinimumHeight(UIHelpers.dp(this, 44));
+        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 44));
+        confirmLp.topMargin = UIHelpers.dp(this, 10);
         panel.addView(confirm, confirmLp);
 
         PopupWindow popup = new PopupWindow(overlay, -1, -1, true);
@@ -4230,11 +4267,17 @@ public class MainActivity extends Activity {
             updateFilterDrawerTab(tabState, filterTab[0] == 3);
             if (sourceTab) {
                 filterDrawerAction = null;
+                content.addView(UIHelpers.text(this, "已启用站源", 12, UIHelpers.TEXT3, Typeface.NORMAL),
+                        UIHelpers.marginBottom(-1, UIHelpers.dp(this, 4)));
                 for (String name : enabledSourceNames()) {
                     String sid = sourceIdForName(name);
                     boolean sel = sid.equals(selectedSourceId);
-                    TextView row = UIHelpers.text(this, name, 15, sel ? UIHelpers.ACCENT : UIHelpers.TEXT, sel ? Typeface.BOLD : Typeface.NORMAL);
-                    row.setPadding(0, UIHelpers.dp(this, 13), 0, UIHelpers.dp(this, 13));
+                    LinearLayout row = new LinearLayout(this);
+                    row.setGravity(Gravity.CENTER_VERTICAL);
+                    row.setMinimumHeight(UIHelpers.dp(this, 40));
+                    row.addView(UIHelpers.text(this, name, 14, sel ? UIHelpers.ACCENT : UIHelpers.TEXT,
+                            sel ? Typeface.BOLD : Typeface.NORMAL), UIHelpers.weight(1));
+                    if (sel) row.addView(UIHelpers.text(this, "✓", 14, UIHelpers.ACCENT, Typeface.BOLD));
                     row.setOnClickListener(v -> {
                         if (!TextUtils.equals(selectedSourceId, sid)) {
                             searchGeneration++;
@@ -4292,9 +4335,9 @@ public class MainActivity extends Activity {
     }
 
     private TextView filterDrawerTab(String label) {
-        TextView tab = UIHelpers.text(this, label, 13, UIHelpers.TEXT2, Typeface.NORMAL);
+        TextView tab = UIHelpers.text(this, label, 12, UIHelpers.TEXT2, Typeface.NORMAL);
         tab.setGravity(Gravity.CENTER);
-        tab.setPadding(0, UIHelpers.dp(this, 9), 0, UIHelpers.dp(this, 9));
+        tab.setPadding(0, UIHelpers.dp(this, 7), 0, UIHelpers.dp(this, 7));
         tab.setBackgroundColor(Color.TRANSPARENT);
         return tab;
     }
@@ -4302,6 +4345,15 @@ public class MainActivity extends Activity {
     private void updateFilterDrawerTab(TextView tab, boolean selected) {
         tab.setTextColor(selected ? UIHelpers.ACCENT_DARK : UIHelpers.TEXT3);
         tab.setTypeface(Typeface.create("sans-serif-medium", selected ? Typeface.BOLD : Typeface.NORMAL));
+        if (selected) {
+            ColorDrawable underline = new ColorDrawable(UIHelpers.ACCENT);
+            underline.setBounds(0, 0, UIHelpers.dp(this, 18), UIHelpers.dp(this, 2));
+            tab.setCompoundDrawables(null, null, null, underline);
+            tab.setCompoundDrawablePadding(UIHelpers.dp(this, 4));
+        } else {
+            tab.setCompoundDrawables(null, null, null, null);
+            tab.setCompoundDrawablePadding(0);
+        }
     }
 
     private TextView sourceDropdown() {
@@ -4448,8 +4500,8 @@ public class MainActivity extends Activity {
         column.setOrientation(LinearLayout.VERTICAL);
         if (values == null || values.isEmpty()) return column;
         final int columns = 3;
-        final int cellHeight = UIHelpers.dp(this, 34);
-        final int cellGap = UIHelpers.dp(this, 8);
+        final int cellHeight = UIHelpers.dp(this, 32);
+        final int cellGap = UIHelpers.dp(this, 6);
         LinearLayout row = null;
         for (int i = 0; i < values.size(); i++) {
             if (i % columns == 0) {
@@ -4496,7 +4548,7 @@ public class MainActivity extends Activity {
         chip.setPadding(UIHelpers.dp(this, 6), 0, UIHelpers.dp(this, 6), 0);
         chip.setBackground(UIHelpers.round(
                 selected ? UIHelpers.ACCENT : UIHelpers.SURFACE,
-                UIHelpers.dp(this, 10),
+                UIHelpers.dp(this, 6),
                 selected ? Color.TRANSPARENT : UIHelpers.BORDER_SOFT));
         return chip;
     }
@@ -4872,7 +4924,7 @@ public class MainActivity extends Activity {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.addView(UIHelpers.text(this, title, 24, UIHelpers.TEXT, Typeface.BOLD), UIHelpers.weight(1));
         if (badge != null) row.addView(UIHelpers.chip(this, badge, true));
-        if ("书架".equals(title) || "发现".equals(title)) {
+        if ("书架".equals(title)) {
             ImageView theme = new ImageView(this);
             theme.setImageResource(R.drawable.rem_reader_resume);
             theme.setScaleType(ImageView.ScaleType.CENTER_CROP);
