@@ -1096,6 +1096,7 @@ public class MainActivity extends Activity {
         ComicModels.ComicDetail detail = details.get(id);
         ComicModels.ComicSummary summary = summaries.get(id);
         String title = detail != null ? detail.summary.title : summary != null ? summary.title : id;
+        String cover = detail != null ? detail.summary.coverUrl : summary != null ? summary.coverUrl : "";
         LinearLayout strip = new LinearLayout(this);
         strip.setOrientation(LinearLayout.VERTICAL);
         strip.addView(UIHelpers.divider(this));
@@ -1103,13 +1104,11 @@ public class MainActivity extends Activity {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(UIHelpers.dp(this, 1), 0, UIHelpers.dp(this, 1), 0);
-        ImageView rem = new ImageView(this);
-        rem.setImageResource(R.drawable.rem_reader_resume);
-        rem.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        rem.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 17), Color.TRANSPARENT));
-        rem.setClipToOutline(true);
-        rem.setContentDescription("蕾姆提示继续阅读");
-        row.addView(rem, new LinearLayout.LayoutParams(UIHelpers.dp(this, 34), UIHelpers.dp(this, 34)));
+        ImageView coverView = coverView(cover, 34, 34, isRetiredComic(id));
+        coverView.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 17), Color.TRANSPARENT));
+        coverView.setClipToOutline(true);
+        coverView.setContentDescription(title + "封面");
+        row.addView(coverView, new LinearLayout.LayoutParams(UIHelpers.dp(this, 34), UIHelpers.dp(this, 34)));
         LinearLayout copy = new LinearLayout(this);
         copy.setOrientation(LinearLayout.VERTICAL);
         copy.setPadding(UIHelpers.dp(this, 10), 0, 0, 0);
