@@ -19,6 +19,7 @@ const detail = between("private void showDetail", "private void refreshCachedCom
 const drawer = between("private void showChapterDrawer", "private void fillChapterRows");
 const readButton = between("private View detailReadButton", "private void installDetailHeroStretch");
 const heroCover = between("private void addDetailHeroCover", "private String chapterNumber");
+const updateDownload = between("private File downloadAndVerifyUpdate", "private void installUpdate");
 
 check("detail read action follows persisted reading state", detail.includes("detailReadButton(detail)"));
 check("first chapter history remains a continue action", source.includes("lastViewedAt.containsKey(detail.summary.comicId)"));
@@ -36,7 +37,11 @@ check("drawer preserves the saved ordering choice", !drawer.includes("chapterDes
 check("drawer cancels stale batched rows after reordering", drawer.includes("int[] renderGeneration"));
 check("drawer header keeps the sort button in its fixed host", drawer.includes("header.addView(orderHost") && drawer.includes("titleHost"));
 check("drawer sort is lightweight and closable", drawer.includes("order.setBackgroundColor(Color.TRANSPARENT)") && drawer.includes("R.drawable.ic_close"));
+check("drawer header and tools use separate aligned rows", drawer.includes("drawerTools") && drawer.includes("panel.addView(drawerTools"));
+check("drawer chapter rows use compact alignment", drawer.includes("setMinimumHeight(UIHelpers.dp(this, 37))") && drawer.includes("setPadding(UIHelpers.dp(this, 2), 0, UIHelpers.dp(this, 2), 0)"));
 check("background detail refresh does not displace an open drawer", source.includes("activePopup == null || !activePopup.isShowing()"));
-check("release version is 1.0.11", gradle.includes('versionName "1.0.11"') && gradle.includes("versionCode 11"));
+check("updates try COS before the server fallback", source.includes("apk/xx-comic/xx-comic.bin") && source.includes("UPDATE_APK_URLS") && updateDownload.includes("for (String updateUrl : UPDATE_APK_URLS)"));
+check("update fallback preserves cancellation and checksum verification", updateDownload.includes("isExpectedTaskCancellation(error)") && updateDownload.includes("actualHash.equals(release.sha256)"));
+check("release version is 1.0.12", gradle.includes('versionName "1.0.12"') && gradle.includes("versionCode 12"));
 
 console.log("detail release contracts hold");

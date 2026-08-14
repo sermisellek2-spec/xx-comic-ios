@@ -123,6 +123,10 @@ public class MainActivity extends Activity {
     private static final int INSTALL_PACKAGES_REQUEST = 1004;
     private static final String UPDATE_METADATA_URL = "https://weifeng.cloud/xx-comic/releases/android-release.json";
     private static final String UPDATE_APK_URL = "https://weifeng.cloud/xx-comic/releases/xx-comic.apk";
+    private static final String[] UPDATE_APK_URLS = {
+            "https://xx-1321588235.cos.ap-guangzhou.myqcloud.com/apk/xx-comic/xx-comic.bin",
+            UPDATE_APK_URL
+    };
     private static final String UPDATE_APK_FILE_NAME = "xx-comic.apk";
     private static final String APK_MIME_TYPE = "application/vnd.android.package-archive";
     private static final String IMAGE_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -3180,23 +3184,36 @@ public class MainActivity extends Activity {
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setPadding(0, 0, 0, UIHelpers.dp(this, 8));
-        panel.addView(header, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        header.setMinimumHeight(UIHelpers.dp(this, 43));
+        panel.addView(header, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 43)));
         LinearLayout titleHost = new LinearLayout(this);
         titleHost.setOrientation(LinearLayout.VERTICAL);
         header.addView(titleHost, UIHelpers.weight(1));
+        ImageView close = UIHelpers.vectorIconButton(this, R.drawable.ic_close, UIHelpers.TEXT2, 6);
+        close.setContentDescription("关闭目录");
+        header.addView(close, new LinearLayout.LayoutParams(UIHelpers.dp(this, 34), UIHelpers.dp(this, 34)));
+
+        panel.addView(UIHelpers.divider(this));
+        LinearLayout drawerTools = new LinearLayout(this);
+        drawerTools.setGravity(Gravity.CENTER_VERTICAL);
+        drawerTools.setMinimumHeight(UIHelpers.dp(this, 39));
+        TextView drawerSource = UIHelpers.text(this, sourceNameForId(detail.summary.sourceId), 11, UIHelpers.TEXT3, Typeface.NORMAL);
+        drawerSource.setSingleLine(true);
+        drawerSource.setEllipsize(TextUtils.TruncateAt.END);
+        drawerTools.addView(drawerSource, UIHelpers.weight(1));
         TextView order = UIHelpers.text(this, chapterDesc ? "倒序" : "正序", 11, UIHelpers.ACCENT, Typeface.BOLD);
         order.setGravity(Gravity.CENTER);
         order.setPadding(UIHelpers.dp(this, 4), 0, UIHelpers.dp(this, 4), 0);
         order.setBackgroundColor(Color.TRANSPARENT);
-        order.setVisibility(detail.chapters.isEmpty() ? View.GONE : View.VISIBLE);
         LinearLayout orderHost = new LinearLayout(this);
         orderHost.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
         orderHost.addView(order, UIHelpers.wrap());
-        header.addView(orderHost, new LinearLayout.LayoutParams(UIHelpers.dp(this, 54), UIHelpers.dp(this, 40)));
-        ImageView close = UIHelpers.vectorIconButton(this, R.drawable.ic_close, UIHelpers.TEXT2, 6);
-        close.setContentDescription("关闭目录");
-        header.addView(close, new LinearLayout.LayoutParams(UIHelpers.dp(this, 34), UIHelpers.dp(this, 34)));
+        drawerTools.addView(orderHost, new LinearLayout.LayoutParams(UIHelpers.dp(this, 54), UIHelpers.dp(this, 39)));
+        drawerTools.setVisibility(detail.chapters.isEmpty() ? View.GONE : View.VISIBLE);
+        panel.addView(drawerTools, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 39)));
+        View drawerToolsDivider = UIHelpers.divider(this);
+        drawerToolsDivider.setVisibility(detail.chapters.isEmpty() ? View.GONE : View.VISIBLE);
+        panel.addView(drawerToolsDivider);
 
         ScrollView scroll = new ScrollView(this);
         LinearLayout list = new LinearLayout(this);
@@ -3218,7 +3235,9 @@ public class MainActivity extends Activity {
             int generation = ++renderGeneration[0];
             titleHost.removeAllViews();
             titleHost.addView(chapterDrawerTitle(current[0].chapters.size()));
-            order.setVisibility(current[0].chapters.isEmpty() ? View.GONE : View.VISIBLE);
+            int toolsVisibility = current[0].chapters.isEmpty() ? View.GONE : View.VISIBLE;
+            drawerTools.setVisibility(toolsVisibility);
+            drawerToolsDivider.setVisibility(toolsVisibility);
             list.removeAllViews();
             List<Integer> orderIndexes = DataHelpers.chapterOrder(chapterDesc, current[0].chapters.size());
             fillChapterRows(list, popup, current[0], orderIndexes, 0, generation, renderGeneration);
@@ -3383,12 +3402,15 @@ public class MainActivity extends Activity {
     private View chapterDrawerRow(String title, String end, boolean current) {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, UIHelpers.dp(this, 14), 0, UIHelpers.dp(this, 14));
+        row.setMinimumHeight(UIHelpers.dp(this, 37));
+        row.setPadding(UIHelpers.dp(this, 2), 0, UIHelpers.dp(this, 2), 0);
+        if (current) row.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 5), Color.TRANSPARENT));
         TextView name = UIHelpers.text(this, title, 14, current ? UIHelpers.TEXT3 : UIHelpers.TEXT, Typeface.NORMAL);
+        name.setGravity(Gravity.CENTER_VERTICAL);
         name.setSingleLine(true);
         name.setEllipsize(TextUtils.TruncateAt.END);
         row.addView(name, UIHelpers.weight(1));
-        row.addView(chapterNumberView(end, current));
+        row.addView(chapterNumberView(end, current), new LinearLayout.LayoutParams(UIHelpers.dp(this, 32), -2));
         return row;
     }
 
@@ -5221,8 +5243,27 @@ public class MainActivity extends Activity {
         if (!directory.exists() && !directory.mkdirs()) throw new IOException("无法创建更新缓存");
         File apk = new File(directory, UPDATE_APK_FILE_NAME);
         File part = new File(directory, UPDATE_APK_FILE_NAME + ".part");
-        if (part.exists() && !part.delete()) throw new IOException("无法清理旧下载");
-        HttpURLConnection connection = (HttpURLConnection) new URL(UPDATE_APK_URL).openConnection();
+        Exception lastError = null;
+        for (String updateUrl : UPDATE_APK_URLS) {
+            if (part.exists() && !part.delete()) throw new IOException("无法清理旧下载");
+            try {
+                downloadAndVerifyUpdateFromUrl(updateUrl, release, part, listener);
+                if (apk.exists() && !apk.delete()) throw new IOException("无法替换旧安装包");
+                if (!part.renameTo(apk)) throw new IOException("无法保存安装包");
+                return apk;
+            } catch (Exception error) {
+                if (isExpectedTaskCancellation(error)) throw error;
+                lastError = error;
+                part.delete();
+            }
+        }
+        if (lastError != null) throw lastError;
+        throw new IOException("没有可用的更新地址");
+    }
+
+    private void downloadAndVerifyUpdateFromUrl(String updateUrl, AppRelease release,
+                                                 File part, UpdateProgress listener) throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) new URL(updateUrl).openConnection();
         connection.setInstanceFollowRedirects(true);
         connection.setConnectTimeout(10000);
         connection.setReadTimeout(30000);
@@ -5254,12 +5295,6 @@ public class MainActivity extends Activity {
             if (total != release.size || !actualHash.equals(release.sha256)) {
                 throw new IOException("安装包校验失败");
             }
-            if (apk.exists() && !apk.delete()) throw new IOException("无法替换旧安装包");
-            if (!part.renameTo(apk)) throw new IOException("无法保存安装包");
-            return apk;
-        } catch (Exception error) {
-            part.delete();
-            throw error;
         } finally {
             connection.disconnect();
         }
