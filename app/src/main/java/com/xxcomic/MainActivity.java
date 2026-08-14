@@ -2070,7 +2070,7 @@ public class MainActivity extends Activity {
         root.removeAllViews();
         ScrollView scroll = new ScrollView(this);
         tuneScroll(scroll);
-        scroll.setBackgroundColor(UIHelpers.BG);
+        scroll.setBackgroundColor(UIHelpers.CARD);
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         scroll.addView(content, UIHelpers.matchWrap());
@@ -3323,10 +3323,14 @@ public class MainActivity extends Activity {
             }
         }
         TextView titleView = UIHelpers.text(this, title, 13, UIHelpers.ON_ACCENT, Typeface.BOLD);
+        titleView.setGravity(Gravity.CENTER);
+        titleView.setIncludeFontPadding(false);
         titleView.setSingleLine(true);
         titleView.setEllipsize(TextUtils.TruncateAt.END);
         button.addView(titleView);
         TextView subtitleView = UIHelpers.text(this, subtitle, 10, UIHelpers.ON_ACCENT, Typeface.NORMAL);
+        subtitleView.setGravity(Gravity.CENTER);
+        subtitleView.setIncludeFontPadding(false);
         subtitleView.setAlpha(.84f);
         subtitleView.setSingleLine(true);
         subtitleView.setEllipsize(TextUtils.TruncateAt.END);
@@ -3497,9 +3501,6 @@ public class MainActivity extends Activity {
         cover.setScaleType(TextUtils.isEmpty(coverUrl) ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER_CROP);
         if (!TextUtils.isEmpty(coverUrl)) loadImage(cover, coverUrl, "", cacheOnly);
         hero.addView(cover, UIHelpers.match());
-        View shade = new View(this);
-        shade.setBackgroundColor(Color.argb(28, 14, 67, 99));
-        hero.addView(shade, UIHelpers.frame(-1, UIHelpers.dp(this, 66), Gravity.BOTTOM, 0, 0, 0, 0));
     }
 
     private String chapterNumber(int index, int total) {

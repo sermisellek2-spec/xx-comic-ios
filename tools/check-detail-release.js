@@ -17,21 +17,26 @@ function check(name, condition) {
 
 const detail = between("private void showDetail", "private void refreshCachedComicOnce");
 const drawer = between("private void showChapterDrawer", "private void fillChapterRows");
+const readButton = between("private View detailReadButton", "private void installDetailHeroStretch");
+const heroCover = between("private void addDetailHeroCover", "private String chapterNumber");
 
 check("detail read action follows persisted reading state", detail.includes("detailReadButton(detail)"));
 check("first chapter history remains a continue action", source.includes("lastViewedAt.containsKey(detail.summary.comicId)"));
 check("detail actions share one centered baseline", detail.includes("actions.setGravity(Gravity.CENTER_VERTICAL)"));
 check("detail exposes a pull-to-expand hero", detail.includes("installDetailHeroStretch("));
 check("detail uses a flat full-width hero", detail.includes("addDetailHeroCover(") && !detail.includes("addBlurredHeroCover("));
+check("detail hero has no lower color veil", !heroCover.includes("View shade") && !heroCover.includes("Color.argb("));
 check("detail uses the approved favorite artwork", detail.includes("R.drawable.rem_in_bookshelf") && detail.includes("R.drawable.rem_not_in_bookshelf"));
 check("detail fallback artwork exists", assets.every((name) => fs.existsSync("app/src/main/res/drawable-nodpi/" + name)));
 check("hero can reveal the full cover", source.includes("DETAIL_HERO_MAX_DP = 390"));
 check("hero stretch does not move the cover independently", !source.includes("coverParams.topMargin"));
+check("detail viewport keeps one content background", detail.includes("scroll.setBackgroundColor(UIHelpers.CARD)"));
+check("detail read copy is centered", readButton.includes("titleView.setGravity(Gravity.CENTER)") && readButton.includes("subtitleView.setGravity(Gravity.CENTER)"));
 check("drawer preserves the saved ordering choice", !drawer.includes("chapterDesc = false;"));
 check("drawer cancels stale batched rows after reordering", drawer.includes("int[] renderGeneration"));
 check("drawer header keeps the sort button in its fixed host", drawer.includes("header.addView(orderHost") && drawer.includes("titleHost"));
 check("drawer sort is lightweight and closable", drawer.includes("order.setBackgroundColor(Color.TRANSPARENT)") && drawer.includes("R.drawable.ic_close"));
 check("background detail refresh does not displace an open drawer", source.includes("activePopup == null || !activePopup.isShowing()"));
-check("release version is 1.0.10", gradle.includes('versionName "1.0.10"') && gradle.includes("versionCode 10"));
+check("release version is 1.0.11", gradle.includes('versionName "1.0.11"') && gradle.includes("versionCode 11"));
 
 console.log("detail release contracts hold");
