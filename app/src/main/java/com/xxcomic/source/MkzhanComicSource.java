@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,8 +71,48 @@ public class MkzhanComicSource implements ComicSource {
     }
 
     @Override
+    public List<ComicModels.FilterGroup> filterGroups() throws IOException {
+        String html = fetch(categoryUrl("all", 1));
+        List<ComicModels.FilterGroup> groups = new ArrayList<>();
+        Matcher sections = Pattern.compile("<div[^>]*class=[\"'][^\"']*\\bcate-col\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)(?=<div[^>]*class=[\"'][^\"']*\\bcate-col\\b|</div>\\s*</div>)", Pattern.CASE_INSENSITIVE).matcher(html);
+        while (sections.find()) {
+            String block = sections.group(1);
+            String label = clean(first(block, "<p[^>]*class=[\"'][^\"']*\\bcate-title\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)</p>")).replace("：", "");
+            String key = "题材".equals(label) ? "theme_id"
+                    : "进度".equals(label) ? "finish"
+                    : "受众".equals(label) ? "audience"
+                    : "版权".equals(label) ? "copyright" : "";
+            if (TextUtils.isEmpty(key)) continue;
+            List<ComicModels.FilterOption> options = new ArrayList<>();
+            Matcher links = Pattern.compile("<a[^>]*href=[\"']([^\"']*)[\"'][^>]*>([\\s\\S]*?)</a>", Pattern.CASE_INSENSITIVE).matcher(block);
+            while (links.find()) {
+                String optionLabel = clean(links.group(2));
+                String value = queryValue(decode(links.group(1)), key);
+                if (TextUtils.isEmpty(value)) value = "all";
+                if (!TextUtils.isEmpty(optionLabel)) options.add(new ComicModels.FilterOption(optionLabel, value));
+            }
+            if (!options.isEmpty()) groups.add(new ComicModels.FilterGroup(key, label, options));
+        }
+        if (groups.isEmpty()) throw new IOException(config.name + " 分类解析失败");
+        return groups;
+    }
+
+    @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
         return parseCards(fetch(categoryUrl(state, page)));
+    }
+
+    @Override
+    public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
+        StringBuilder query = new StringBuilder("is_free=1");
+        for (String key : new String[]{"theme_id", "finish", "audience", "copyright"}) {
+            String value = SourceFilters.value(filters, key, "all");
+            if (!"all".equals(value)) query.append('&').append(key).append('=').append(value);
+        }
+        if (page > 1) query.append("&page=").append(page);
+        String path = config.route("category").replace("{query}", "?" + query)
+                .replace("{page}", String.valueOf(page)).replace("{pagePath}", "");
+        return parseCards(fetch(absolute(path)));
     }
 
     @Override
@@ -199,6 +240,11 @@ public class MkzhanComicSource implements ComicSource {
     private String filterQuery(String value) {
         if (TextUtils.isEmpty(value) || "all".equals(value)) return "";
         return config.filter("filter." + value);
+    }
+
+    private String queryValue(String href, String key) {
+        Matcher matcher = Pattern.compile("[?&]" + Pattern.quote(key) + "=([^&#]+)", Pattern.CASE_INSENSITIVE).matcher(href == null ? "" : href);
+        return matcher.find() ? matcher.group(1) : "";
     }
 
     private String fetch(String url) throws IOException {

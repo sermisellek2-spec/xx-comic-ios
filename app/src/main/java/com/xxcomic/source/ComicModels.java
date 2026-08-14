@@ -25,6 +25,28 @@ public final class ComicModels {
         }
     }
 
+    public static final class FilterOption {
+        public final String label;
+        public final String value;
+
+        public FilterOption(String label, String value) {
+            this.label = label;
+            this.value = value;
+        }
+    }
+
+    public static final class FilterGroup {
+        public final String key;
+        public final String label;
+        public final List<FilterOption> options;
+
+        public FilterGroup(String key, String label, List<FilterOption> options) {
+            this.key = key;
+            this.label = label;
+            this.options = options == null ? new ArrayList<>() : options;
+        }
+    }
+
     public static final class ComicDetail {
         public final ComicSummary summary;
         public final String author;

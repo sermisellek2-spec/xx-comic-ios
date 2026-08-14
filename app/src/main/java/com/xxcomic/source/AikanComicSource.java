@@ -14,7 +14,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,8 +73,35 @@ public class AikanComicSource implements ComicSource {
     }
 
     @Override
+    public List<ComicModels.FilterGroup> filterGroups() throws IOException {
+        String html = fetch(categoryUrl("all", 1));
+        LinkedHashMap<String, String> topics = new LinkedHashMap<>();
+        Matcher matcher = Pattern.compile("<a[^>]+href=[\"']([^\"']*/category/tags/\\d+)[\"'][^>]*>([\\s\\S]*?)</a>", Pattern.CASE_INSENSITIVE).matcher(html);
+        while (matcher.find()) {
+            String label = clean(matcher.group(2));
+            if (!TextUtils.isEmpty(label) && !topics.containsKey(label)) topics.put(label, decode(matcher.group(1)).replaceAll("/+$", ""));
+        }
+        if (topics.isEmpty()) throw new IOException(config.name + " 分类解析失败");
+        List<ComicModels.FilterGroup> groups = new ArrayList<>();
+        groups.add(SourceFilters.group("category", "题材", topics));
+        groups.add(SourceFilters.group("state", "状态",
+                "全部", "all", "连载", "1", "完结", "2"));
+        return groups;
+    }
+
+    @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
         return parseCards(fetch(categoryUrl(state, page)));
+    }
+
+    @Override
+    public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
+        String root = SourceFilters.value(filters, "category", "all");
+        if ("all".equals(root)) root = "/category";
+        String state = SourceFilters.value(filters, "state", "all");
+        if (!"all".equals(state)) root += "/finish/" + state;
+        if (page > 1) root += "/page/" + page;
+        return parseCards(fetch(absolute(root)));
     }
 
     @Override

@@ -42,8 +42,8 @@ public class SourceConfig {
         try {
             routes.put("latest", "/list/new{pagePath}");
             routes.put("search", "/search?q={keyword}");
-            routes.put("category", "/classify?type=all&region={region}&state={state}&filter=all{pageQuery}");
-            routes.put("categoryApi", "/api/bzmhq/amp_comic_list?type=all&region={region}&state={state}&filter=*&page={page}&limit=36&language=cn&__amp_source_origin=https%3A%2F%2Fcn.bzmgcn.com");
+            routes.put("category", "/classify?type={type}&region={region}&state={state}&filter={filter}{pageQuery}");
+            routes.put("categoryApi", "/api/bzmhq/amp_comic_list?type={type}&region={region}&state={state}&filter={filter}&page={page}&limit=36&language=cn&__amp_source_origin=https%3A%2F%2Fcn.bzmgcn.com");
             routes.put("detail", "/comic/{comicId}");
             routes.put("chapter", "{chapterUrl}");
             filters.put("region.cn", "cn");

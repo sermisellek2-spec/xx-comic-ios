@@ -83,12 +83,64 @@ public class AntbywComicSource implements ComicSource {
     }
 
     @Override
+    public List<ComicModels.FilterGroup> filterGroups() throws IOException {
+        String html = fetch(absolute(config.route("categoryIndex")));
+        List<ComicModels.FilterGroup> groups = new ArrayList<>();
+        Matcher sections = Pattern.compile(
+                "<strong[^>]*>([^<]+)</strong>([\\s\\S]*?)(?=<div[^>]*class=[\"'][^\"']*\\bcl\\b|</div>\\s*</div>)",
+                Pattern.CASE_INSENSITIVE).matcher(html);
+        while (sections.find()) {
+            String siteLabel = clean(sections.group(1));
+            String label = "分类".equals(siteLabel) ? "题材" : "首字母".equals(siteLabel) ? "字母" : siteLabel;
+            String key = "分类".equals(siteLabel) ? "category_id"
+                    : "进度".equals(siteLabel) ? "jindu"
+                    : "地区".equals(siteLabel) ? "region"
+                    : "首字母".equals(siteLabel) ? "letter"
+                    : "年份".equals(siteLabel) ? "search_age"
+                    : "受众".equals(siteLabel) ? "shouzhong" : "";
+            if (TextUtils.isEmpty(key)) continue;
+            List<ComicModels.FilterOption> options = new ArrayList<>();
+            Matcher links = Pattern.compile("<a[^>]*data-field=[\"']" + Pattern.quote(key) + "[\"'][^>]*>[\\s\\S]*?</a>", Pattern.CASE_INSENSITIVE)
+                    .matcher(sections.group(2));
+            while (links.find()) {
+                String tag = links.group();
+                String optionLabel = clean(first(tag, ">([\\s\\S]*?)</a>"));
+                String value = attr(tag, "data-value");
+                if ("empty".equals(value)) value = "all";
+                if (!TextUtils.isEmpty(optionLabel) && !TextUtils.isEmpty(value)) {
+                    options.add(new ComicModels.FilterOption(optionLabel, value));
+                }
+            }
+            if (!options.isEmpty()) groups.add(new ComicModels.FilterGroup(key, label, options));
+        }
+        groups.add(SourceFilters.group("sort", "排序",
+                "上架时间", "addtime:asc", "更新时间", "edittime:desc",
+                "阅读量", "views:desc", "收藏量", "favores:desc"));
+        if (groups.size() == 1) throw new IOException(config.name + " 分类解析失败");
+        return groups;
+    }
+
+    @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
         StringBuilder url = new StringBuilder(absolute(config.route("category")));
         String categoryId = categoryId(region);
         if (!TextUtils.isEmpty(categoryId)) url.append("&category_id=").append(categoryId);
         String orderField = "all".equals(state) || TextUtils.isEmpty(state) ? "addtime" : state;
         url.append("&odfie=").append(orderField).append("&order=desc&page=").append(Math.max(1, page));
+        return parseCards(fetch(url.toString()));
+    }
+
+    @Override
+    public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
+        StringBuilder url = new StringBuilder(absolute(config.route("category")));
+        for (String key : new String[]{"category_id", "jindu", "region", "letter", "search_age", "shouzhong"}) {
+            String value = SourceFilters.value(filters, key, "all");
+            if (!"all".equals(value)) url.append('&').append(key).append('=').append(value);
+        }
+        String[] order = SourceFilters.value(filters, "sort", "addtime:asc").split(":", 2);
+        url.append("&odfie=").append(order[0])
+                .append("&order=").append(order.length > 1 ? order[1] : "desc")
+                .append("&page=").append(Math.max(1, page));
         return parseCards(fetch(url.toString()));
     }
 

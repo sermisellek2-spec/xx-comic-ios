@@ -69,8 +69,30 @@ public class D5d6ComicSource implements ComicSource {
     }
 
     @Override
+    public List<ComicModels.FilterGroup> filterGroups() throws IOException {
+        parseCategoryIndex(fetch(absolute(config.route("categoryIndex"))));
+        if (categorySlugs.isEmpty()) throw new IOException(config.name + " 分类解析失败");
+        List<ComicModels.FilterGroup> groups = new ArrayList<>();
+        groups.add(SourceFilters.group("category", "题材", categorySlugs));
+        groups.add(SourceFilters.group("state", "状态",
+                "全部", "all", "连载中", "serial", "已完成", "pub"));
+        return groups;
+    }
+
+    @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
         return parseCards(fetch(categoryUrl(region, state, page)));
+    }
+
+    @Override
+    public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
+        String slug = SourceFilters.value(filters, "category", "jiujiuquanbu");
+        if ("all".equals(slug)) slug = "jiujiuquanbu";
+        String state = SourceFilters.value(filters, "state", "all");
+        return parseCards(fetch(absolute(config.route("category")
+                .replace("{slug}", slug)
+                .replace("{finish}", finishId(state))
+                .replace("{page}", String.valueOf(Math.max(1, page))))));
     }
 
     @Override

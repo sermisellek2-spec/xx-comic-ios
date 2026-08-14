@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -95,11 +96,22 @@ public class Hanman18ComicSource implements ComicSource {
     }
 
     @Override
+    public List<ComicModels.FilterGroup> filterGroups() {
+        return Collections.singletonList(SourceFilters.group("audience", "受众",
+                "全部", "all", "受欢迎的", "popular"));
+    }
+
+    @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
         if ("popular".equals(region)) {
             return page <= 1 ? parsePopular(fetch(absolute(config.route("home")))) : new ArrayList<>();
         }
         return latest(page);
+    }
+
+    @Override
+    public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
+        return category(SourceFilters.value(filters, "audience", "all"), "all", page);
     }
 
     // "受欢迎的" carousel on the home page: <h5>受欢迎的</h5> ... <div class="story_item"> cards.

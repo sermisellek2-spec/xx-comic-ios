@@ -3,6 +3,7 @@ package com.xxcomic.source;
 import android.net.Uri;
 import android.os.Build;
 import android.text.Html;
+import android.text.TextUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -19,6 +20,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -90,6 +92,27 @@ public class BaoziComicSource implements ComicSource {
     }
 
     @Override
+    public List<ComicModels.FilterGroup> filterGroups() {
+        List<ComicModels.FilterGroup> groups = new ArrayList<>();
+        groups.add(SourceFilters.group("region", "地区",
+                "全部", "all", "国漫", "cn", "日本", "jp", "韩国", "kr", "欧美", "en"));
+        groups.add(SourceFilters.group("state", "状态",
+                "全部", "all", "连载中", "serial", "已完结", "pub"));
+        groups.add(SourceFilters.group("type", "题材",
+                "全部", "all", "恋爱", "lianai", "纯爱", "chunai", "古风", "gufeng",
+                "异能", "yineng", "悬疑", "xuanyi", "剧情", "juqing", "科幻", "kehuan",
+                "奇幻", "qihuan", "玄幻", "xuanhuan", "穿越", "chuanyue", "冒险", "mouxian",
+                "推理", "tuili", "武侠", "wuxia", "格斗", "gedou", "战争", "zhanzheng",
+                "热血", "rexie", "搞笑", "gaoxiao", "大女主", "danuzhu", "都市", "dushi",
+                "总裁", "zongcai", "后宫", "hougong", "日常", "richang", "韩漫", "hanman",
+                "少年", "shaonian", "其它", "qita"));
+        groups.add(SourceFilters.group("filter", "字母",
+                "全部", "*", "ABCD", "ABCD", "EFGH", "EFGH", "IJKL", "IJKL",
+                "MNOP", "MNOP", "QRST", "QRST", "UVW", "UVW", "XYZ", "XYZ", "0-9", "0-9"));
+        return groups;
+    }
+
+    @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
         String safeRegion = safeRegion(region);
         String safeState = safeState(state);
@@ -99,15 +122,35 @@ public class BaoziComicSource implements ComicSource {
                 return parseApiCards(fetch(absolute(api
                         .replace("{region}", safeRegion)
                         .replace("{state}", safeState)
+                        .replace("{type}", "all")
+                        .replace("{filter}", "*")
                         .replace("{page}", String.valueOf(page)))));
             }
         }
         String path = config.route("category")
                 .replace("{region}", safeRegion)
                 .replace("{state}", safeState)
+                .replace("{type}", "all")
+                .replace("{filter}", "*")
                 .replace("{page}", String.valueOf(page))
                 .replace("{pageQuery}", page > 1 ? "&page=" + page : "");
         return parseCards(fetch(absolute(path)));
+    }
+
+    @Override
+    public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
+        String region = SourceFilters.value(filters, "region", "all");
+        String state = SourceFilters.value(filters, "state", "all");
+        String type = SourceFilters.value(filters, "type", "all");
+        String filter = SourceFilters.value(filters, "filter", "*");
+        String route = page > 1 && !TextUtils.isEmpty(config.route("categoryApi"))
+                ? config.route("categoryApi") : config.route("category");
+        String path = route.replace("{region}", region).replace("{state}", state)
+                .replace("{type}", type).replace("{filter}", filter)
+                .replace("{page}", String.valueOf(page))
+                .replace("{pageQuery}", page > 1 ? "&page=" + page : "");
+        String body = fetch(absolute(path));
+        return page > 1 && route.equals(config.route("categoryApi")) ? parseApiCards(body) : parseCards(body);
     }
 
     private String safeRegion(String value) {

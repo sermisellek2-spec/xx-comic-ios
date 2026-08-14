@@ -74,8 +74,30 @@ public class FiveUmComicSource implements ComicSource {
     }
 
     @Override
+    public List<ComicModels.FilterGroup> filterGroups() throws IOException {
+        Map<String, String> parsed = parseCategoryPaths(fetch(absolute(config.route("categoryIndex"))));
+        if (parsed.isEmpty()) throw new IOException(config.name + " 分类解析失败：缺少漫画类型标签");
+        categoryPaths = Collections.unmodifiableMap(parsed);
+        List<ComicModels.FilterGroup> groups = new ArrayList<>();
+        groups.add(SourceFilters.group("category", "题材", parsed));
+        groups.add(SourceFilters.group("state", "状态",
+                "全部", "all", "连载中", "1", "已完结", "2"));
+        return groups;
+    }
+
+    @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
         String root = categoryPath(region);
+        if (page > 1) root += "/page/" + page;
+        return parseCards(fetch(absolute(root)));
+    }
+
+    @Override
+    public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
+        String root = SourceFilters.value(filters, "category", "all");
+        if ("all".equals(root)) root = "/category";
+        String state = SourceFilters.value(filters, "state", "all");
+        if (!"all".equals(state)) root += "/finish/" + state;
         if (page > 1) root += "/page/" + page;
         return parseCards(fetch(absolute(root)));
     }

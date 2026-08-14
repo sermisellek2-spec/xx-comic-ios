@@ -66,6 +66,13 @@ public class HiperdexComicSource implements ComicSource {
     }
 
     @Override
+    public List<ComicModels.FilterGroup> filterGroups() {
+        return Arrays.asList(SourceFilters.group("region", "题材",
+                "全部", "all", "Manhwa", "manhwa", "Webtoon", "webtoon",
+                "Romance", "romance", "Drama", "drama"));
+    }
+
+    @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
         String genre = genreFor(region, state);
         String path = config.route("category")

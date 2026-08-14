@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,8 +74,50 @@ public class ManhuaguiComicSource implements ComicSource {
     }
 
     @Override
+    public List<ComicModels.FilterGroup> filterGroups() throws IOException {
+        String html = fetch(absolute(config.route("category").replaceAll("\\{[^}]*\\}", "").replaceAll("/+$", "")));
+        List<ComicModels.FilterGroup> groups = new ArrayList<>();
+        String[][] definitions = {
+                {"area", "region", "地区"}, {"genre", "genre", "剧情"}, {"age", "audience", "受众"},
+                {"year", "year", "年份"}, {"letter", "letter", "字母"}, {"status", "state", "状态"}
+        };
+        for (String[] definition : definitions) {
+            String block = first(html, "<div[^>]*class=[\"'][^\"']*\\bfilter\\b[^\"']*\\b" + definition[0] + "\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)</div>");
+            LinkedHashMap<String, String> values = new LinkedHashMap<>();
+            Matcher links = Pattern.compile("<a[^>]+href=[\"']([^\"']*/list(?:/[^\"']*)?)[\"'][^>]*>([\\s\\S]*?)</a>", Pattern.CASE_INSENSITIVE).matcher(block);
+            while (links.find()) {
+                String label = clean(links.group(2));
+                String path = decode(links.group(1));
+                Matcher slug = Pattern.compile("/list/([^/]+)/?", Pattern.CASE_INSENSITIVE).matcher(path);
+                String value = slug.find() ? slug.group(1) : "all";
+                if (!TextUtils.isEmpty(label) && !"全部".equals(label)) values.put(label, value);
+            }
+            if (!values.isEmpty()) groups.add(SourceFilters.group(definition[1], definition[2], values));
+        }
+        if (groups.isEmpty()) throw new IOException(config.name + " 分类解析失败");
+        return groups;
+    }
+
+    @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
         return parseCards(fetch(categoryUrl(region, state, page)));
+    }
+
+    @Override
+    public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
+        StringBuilder segment = new StringBuilder();
+        for (String key : new String[]{"region", "genre", "audience", "year", "letter", "state"}) {
+            String value = SourceFilters.value(filters, key, "all");
+            if (!"all".equals(value)) {
+                if (segment.length() > 0) segment.append('-');
+                segment.append(value);
+            }
+        }
+        String base = config.route("category").replaceAll("\\{[^}]*\\}", "").replaceAll("/+$", "");
+        StringBuilder path = new StringBuilder(base);
+        if (segment.length() > 0) path.append('/').append(segment);
+        if (page > 1) path.append("/index_p").append(page).append(".html");
+        return parseCards(fetch(absolute(path.toString())));
     }
 
     @Override

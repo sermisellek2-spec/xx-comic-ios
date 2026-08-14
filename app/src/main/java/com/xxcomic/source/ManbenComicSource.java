@@ -80,8 +80,46 @@ public class ManbenComicSource implements ComicSource {
     }
 
     @Override
+    public List<ComicModels.FilterGroup> filterGroups() throws IOException {
+        String html = fetchGet(absolute(config.route("categoryIndex")), config.referer);
+        List<ComicModels.FilterGroup> groups = new ArrayList<>();
+        Matcher sections = Pattern.compile("<li>\\s*<div[^>]*class=[\"']title[\"'][^>]*>([\\s\\S]*?)</div>\\s*<div[^>]*class=[\"']list[\"'][^>]*>([\\s\\S]*?)</div>\\s*</li>", Pattern.CASE_INSENSITIVE).matcher(html);
+        while (sections.find()) {
+            String label = clean(sections.group(1));
+            String key = "进度".equals(label) ? "state"
+                    : "标签".equals(label) ? "tag"
+                    : "受众".equals(label) ? "audience"
+                    : "地区".equals(label) ? "region"
+                    : "字母".equals(label) ? "letter" : "";
+            if (TextUtils.isEmpty(key)) continue;
+            List<ComicModels.FilterOption> options = new ArrayList<>();
+            Matcher links = Pattern.compile("<a[^>]*onclick=([\"'])([\\s\\S]*?)\\1[^>]*>([\\s\\S]*?)</a>", Pattern.CASE_INSENSITIVE).matcher(sections.group(2));
+            while (links.find()) {
+                String optionLabel = clean(links.group(3));
+                Matcher valueMatch = Pattern.compile("tagClick\\(\\s*\\d+\\s*,\\s*['\"]?([^,'\")\\s]+)", Pattern.CASE_INSENSITIVE).matcher(links.group(2));
+                String value = valueMatch.find() ? valueMatch.group(1) : "all";
+                if (!TextUtils.isEmpty(optionLabel)) options.add(new ComicModels.FilterOption(optionLabel, value));
+            }
+            if (!options.isEmpty()) groups.add(new ComicModels.FilterGroup(key, label, options));
+        }
+        if (groups.isEmpty()) throw new IOException(config.name + " 分类解析失败");
+        return groups;
+    }
+
+    @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
         return fetchCategory(region, state, page);
+    }
+
+    @Override
+    public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
+        Map<String, String> body = categoryBody("all", "all", page);
+        putFilter(body, "tst", SourceFilters.value(filters, "state", "all"));
+        putFilter(body, "tagid", SourceFilters.value(filters, "tag", "all"));
+        putFilter(body, "tgroup", SourceFilters.value(filters, "audience", "all"));
+        putFilter(body, "tarea", SourceFilters.value(filters, "region", "all"));
+        putFilter(body, "tnm", SourceFilters.value(filters, "letter", "all"));
+        return parseCategoryJson(fetchPost(absolute(config.route("category")), body, config.referer));
     }
 
     @Override
@@ -271,6 +309,10 @@ public class ManbenComicSource implements ComicSource {
         String value = paramValue.substring(colon + 1).trim();
         if (TextUtils.isEmpty(key) || TextUtils.isEmpty(value)) return;
         body.put(key, value);
+    }
+
+    private void putFilter(Map<String, String> body, String key, String value) {
+        body.put(key, "all".equals(value) ? ("tnm".equals(key) ? "" : "0") : value);
     }
 
     private List<ComicModels.ComicSummary> parseCategoryJson(String json) throws IOException {

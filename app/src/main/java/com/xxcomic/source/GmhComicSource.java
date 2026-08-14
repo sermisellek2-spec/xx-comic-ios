@@ -17,6 +17,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -73,8 +74,36 @@ public class GmhComicSource implements ComicSource {
     }
 
     @Override
+    public List<ComicModels.FilterGroup> filterGroups() throws IOException {
+        String html = fetch(categoryUrl("all", 1));
+        LinkedHashMap<String, String> genres = new LinkedHashMap<>();
+        LinkedHashMap<String, String> tags = new LinkedHashMap<>();
+        Matcher links = Pattern.compile("<a[^>]+href=[\"']/(manga-(genre|tag)/([^/\"']+))[\"'][^>]*>[\\s\\S]*?<button[^>]*>([\\s\\S]*?)</button>[\\s\\S]*?</a>", Pattern.CASE_INSENSITIVE).matcher(html);
+        while (links.find()) {
+            String label = clean(links.group(4)).replaceFirst("^#", "");
+            if (TextUtils.isEmpty(label)) continue;
+            ("genre".equalsIgnoreCase(links.group(2)) ? genres : tags).put(label, links.group(3));
+        }
+        if (genres.isEmpty() || tags.isEmpty()) throw new IOException(config.name + " 分类解析失败");
+        List<ComicModels.FilterGroup> groups = new ArrayList<>();
+        groups.add(SourceFilters.group("genre", "漫画类型", genres));
+        groups.add(SourceFilters.group("tag", "热门标签", tags));
+        return groups;
+    }
+
+    @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
         return parseCards(fetch(categoryUrl(region, page)));
+    }
+
+    @Override
+    public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
+        String tag = SourceFilters.value(filters, "tag", "all");
+        String genre = SourceFilters.value(filters, "genre", "all");
+        String path = !"all".equals(tag) ? "/manga-tag/" + tag
+                : !"all".equals(genre) ? "/manga-genre/" + genre : "/manga";
+        if (page > 1) path += "/page/" + page;
+        return parseCards(fetch(absolute(path)));
     }
 
     @Override

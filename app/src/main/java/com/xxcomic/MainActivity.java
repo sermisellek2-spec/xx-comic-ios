@@ -195,7 +195,7 @@ public class MainActivity extends Activity {
     private final Set<String> readerPrefetching = new HashSet<>();
     private final Map<String, DetailAction> pendingRefreshActions = new HashMap<>();
     private final List<String> favorites = new ArrayList<>();
-    private final List<String> sourceCategories = new ArrayList<>();
+    private final List<ComicModels.FilterGroup> sourceFilterGroups = new ArrayList<>();
     private final List<ComicModels.Source> customSources = new ArrayList<>();
     private final Map<String, Integer> progress = new HashMap<>();
     private final Map<String, Integer> readerPositions = new HashMap<>();
@@ -209,10 +209,8 @@ public class MainActivity extends Activity {
     private String favoriteQuery = "";
     private String globalSearchQuery = "";
     private String selectedSourceId = "baozimh";
-    private String selectedRegion = "all";
-    private String selectedState = "all";
-    private String selectedRegionLabel = ALL_TAG;
-    private String selectedStateLabel = ALL_TAG;
+    private final Map<String, String> selectedFilters = new LinkedHashMap<>();
+    private final Map<String, String> selectedFilterLabels = new LinkedHashMap<>();
     private Runnable filterDrawerAction;
     private boolean sourceEnabled = true;
     private boolean aikanEnabled = true;
@@ -727,7 +725,7 @@ public class MainActivity extends Activity {
         if (tab == 1) renderSearch(page);
         if (tab == 2) renderSettings(page);
         shell.addView(makeBottomNav(), UIHelpers.frame(-1, UIHelpers.dp(this, 60), Gravity.BOTTOM, 0, 0, 0, 0));
-        if (tab == 1 && previousTab != 1 && sourceCategories.isEmpty()) loadSourceCategories();
+        if (tab == 1 && previousTab != 1 && sourceFilterGroups.isEmpty()) loadSourceCategories();
         if (!globalSearchMode) scheduleDefaultSearchLoad();
     }
 
@@ -809,8 +807,7 @@ public class MainActivity extends Activity {
                     return true;
                 }
                 searchQuery = keyword;
-                selectedRegion = "all";
-                selectedState = "all";
+                resetCategoryFilters();
                 searchResults.clear();
                 resetSearchPaging();
                 showTab(1);
@@ -845,11 +842,15 @@ public class MainActivity extends Activity {
         filterScroll.setHorizontalScrollBarEnabled(false);
         LinearLayout filters = new LinearLayout(this);
         filters.setOrientation(LinearLayout.HORIZONTAL);
-        filters.addView(filterTextButton("题材", 1), UIHelpers.marginRight(-2, UIHelpers.dp(this, 14)));
-        filters.addView(filterTextButton("地区", 2), UIHelpers.marginRight(-2, UIHelpers.dp(this, 14)));
-        filters.addView(filterTextButton("状态", 3));
+        for (int i = 0; i < sourceFilterGroups.size(); i++) {
+            ComicModels.FilterGroup group = sourceFilterGroups.get(i);
+            filters.addView(filterTextButton(group.label, i + 1),
+                    UIHelpers.marginRight(-2, i == sourceFilterGroups.size() - 1 ? 0 : UIHelpers.dp(this, 14)));
+        }
         filterScroll.addView(filters, UIHelpers.wrap());
-        page.addView(filterScroll, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
+        if (!sourceFilterGroups.isEmpty()) {
+            page.addView(filterScroll, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
+        }
         page.addView(sectionTitle(selectedSourceName() + " · " + (TextUtils.isEmpty(searchQuery.trim()) ? "全部漫画" : "搜索结果")));
 
         PullRefreshScrollView scroll = new PullRefreshScrollView(this);
@@ -900,8 +901,7 @@ public class MainActivity extends Activity {
         List<ComicModels.ComicSummary> visible = filterResults();
         if (visible.isEmpty()) {
             content.addView(emptyState(R.drawable.ic_magnifier, "没找到这本漫画", "换个关键词，或清空题材筛选再试", "清空筛选", () -> {
-                selectedRegion = "all";
-                selectedState = "all";
+                resetCategoryFilters();
                 showTab(1);
             }));
             return;
@@ -1352,11 +1352,8 @@ public class MainActivity extends Activity {
             removeSearchPagingFooter();
             selectedSourceId = enabled.isEmpty() ? "" : enabled.get(0).id();
             searchQuery = "";
-            selectedRegion = "all";
-            selectedState = "all";
-            selectedRegionLabel = ALL_TAG;
-            selectedStateLabel = ALL_TAG;
-            sourceCategories.clear();
+            resetCategoryFilters();
+            sourceFilterGroups.clear();
             searchResults.clear();
             resetSearchPaging();
         }
@@ -2832,8 +2829,7 @@ public class MainActivity extends Activity {
             return;
         }
         String requestSourceId = requestClient.id();
-        String requestRegion = selectedRegion;
-        String requestState = selectedState;
+        Map<String, String> requestFilters = new LinkedHashMap<>(selectedFilters);
         int generation = ++searchGeneration;
         clearSearchAppendFailure();
         if (pullRefresh) {
@@ -2851,7 +2847,7 @@ public class MainActivity extends Activity {
         track(searchIo.submit(() -> {
             try {
                 List<ComicModels.ComicSummary> list = categoryMode
-                        ? requestClient.category(requestRegion, requestState, page)
+                        ? requestClient.category(requestFilters, page)
                         : requestClient.search(keyword == null ? "" : keyword.trim(), page);
                 main.post(() -> {
                     if (generation != searchGeneration) return;
@@ -3253,11 +3249,12 @@ public class MainActivity extends Activity {
         String sourceId = client.id();
         track(searchIo.submit(() -> {
             try {
-                List<String> list = client.categories();
+                List<ComicModels.FilterGroup> list = client.filterGroups();
                 main.post(() -> {
                     if (generation != categoryGeneration || !TextUtils.equals(sourceId, selectedSourceId)) return;
-                    sourceCategories.clear();
-                    sourceCategories.addAll(list);
+                    sourceFilterGroups.clear();
+                    sourceFilterGroups.addAll(list);
+                    normalizeSelectedFilters();
                     if (filterDrawerAction != null) {
                         filterDrawerAction.run();
                     } else if (currentTab == 1) {
@@ -4215,10 +4212,20 @@ public class MainActivity extends Activity {
         }
     }
 
-    private String currentFilterLabel() {
-        if (!"all".equals(selectedRegion) && !TextUtils.isEmpty(selectedRegion)) return selectedRegionLabel;
-        if (!"all".equals(selectedState) && !TextUtils.isEmpty(selectedState)) return selectedStateLabel;
-        return ALL_TAG;
+    private void resetCategoryFilters() {
+        selectedFilters.clear();
+        selectedFilterLabels.clear();
+    }
+
+    private void normalizeSelectedFilters() {
+        Set<String> keys = new HashSet<>();
+        for (ComicModels.FilterGroup group : sourceFilterGroups) keys.add(group.key);
+        selectedFilters.keySet().retainAll(keys);
+        selectedFilterLabels.keySet().retainAll(keys);
+        for (ComicModels.FilterGroup group : sourceFilterGroups) {
+            if (!selectedFilters.containsKey(group.key)) selectedFilters.put(group.key, "all");
+            if (!selectedFilterLabels.containsKey(group.key)) selectedFilterLabels.put(group.key, ALL_TAG);
+        }
     }
 
     private View dividerLine() {
@@ -4237,11 +4244,9 @@ public class MainActivity extends Activity {
         int panelWidth = Math.min(screenWidth - UIHelpers.dp(this, 56), UIHelpers.dp(this, 320));
 
         final String origSourceId = selectedSourceId;
-        final String origRegion = selectedRegion;
-        final String origState = selectedState;
-        final String origRegionLabel = selectedRegionLabel;
-        final String origStateLabel = selectedStateLabel;
-        final List<String> origSourceCategories = new ArrayList<>(sourceCategories);
+        final Map<String, String> origFilters = new LinkedHashMap<>(selectedFilters);
+        final Map<String, String> origFilterLabels = new LinkedHashMap<>(selectedFilterLabels);
+        final List<ComicModels.FilterGroup> origFilterGroups = new ArrayList<>(sourceFilterGroups);
         final boolean[] confirmed = {false};
 
         FrameLayout overlay = new FrameLayout(this);
@@ -4269,16 +4274,12 @@ public class MainActivity extends Activity {
         header.addView(close);
         panel.addView(header, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
 
+        HorizontalScrollView tabsScroll = new HorizontalScrollView(this);
+        tabsScroll.setHorizontalScrollBarEnabled(false);
         LinearLayout tabs = new LinearLayout(this);
         tabs.setOrientation(LinearLayout.HORIZONTAL);
-        TextView tabTopic = filterDrawerTab("题材");
-        TextView tabRegion = filterDrawerTab("地区");
-        TextView tabState = filterDrawerTab("状态");
-        tabs.addView(tabTopic, UIHelpers.weight(1));
-        tabs.addView(tabRegion, UIHelpers.weight(1));
-        tabs.addView(tabState, UIHelpers.weight(1));
-        tabs.setVisibility(initialTab == 0 ? View.GONE : View.VISIBLE);
-        panel.addView(tabs, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
+        tabsScroll.addView(tabs, UIHelpers.wrap());
+        panel.addView(tabsScroll, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
 
         ScrollView contentScroll = new ScrollView(this);
         LinearLayout content = new LinearLayout(this);
@@ -4303,14 +4304,14 @@ public class MainActivity extends Activity {
             filterDrawerAction = null;
             if (!confirmed[0]) {
                 selectedSourceId = origSourceId;
-                selectedRegion = origRegion;
-                selectedState = origState;
-                selectedRegionLabel = origRegionLabel;
-                selectedStateLabel = origStateLabel;
+                selectedFilters.clear();
+                selectedFilters.putAll(origFilters);
+                selectedFilterLabels.clear();
+                selectedFilterLabels.putAll(origFilterLabels);
                 categoryGeneration++;
-                sourceCategories.clear();
-                sourceCategories.addAll(origSourceCategories);
-                if (sourceCategories.isEmpty()) loadSourceCategories();
+                sourceFilterGroups.clear();
+                sourceFilterGroups.addAll(origFilterGroups);
+                if (sourceFilterGroups.isEmpty()) loadSourceCategories();
             }
         });
         close.setOnClickListener(v -> popup.dismiss());
@@ -4321,9 +4322,8 @@ public class MainActivity extends Activity {
         fill[0] = () -> {
             content.removeAllViews();
             boolean sourceTab = filterTab[0] == 0;
-            updateFilterDrawerTab(tabTopic, filterTab[0] == 1);
-            updateFilterDrawerTab(tabRegion, filterTab[0] == 2);
-            updateFilterDrawerTab(tabState, filterTab[0] == 3);
+            tabs.removeAllViews();
+            tabsScroll.setVisibility(sourceTab ? View.GONE : View.VISIBLE);
             if (sourceTab) {
                 filterDrawerAction = null;
                 content.addView(UIHelpers.text(this, "已启用站源", 12, UIHelpers.TEXT3, Typeface.NORMAL),
@@ -4347,11 +4347,8 @@ public class MainActivity extends Activity {
                             removeSearchPagingFooter();
                         }
                         selectedSourceId = sid;
-                        selectedRegion = "all";
-                        selectedState = "all";
-                        selectedRegionLabel = ALL_TAG;
-                        selectedStateLabel = ALL_TAG;
-                        sourceCategories.clear();
+                        resetCategoryFilters();
+                        sourceFilterGroups.clear();
                         loadSourceCategories();
                         filterTab[0] = 1;
                         fill[0].run();
@@ -4361,18 +4358,25 @@ public class MainActivity extends Activity {
                 }
             } else {
                 filterDrawerAction = () -> fill[0].run();
-                if (filterTab[0] == 1) {
-                    content.addView(searchTagColumn(topicFilterValues(), true));
-                } else if (filterTab[0] == 2) {
-                    content.addView(searchTagColumn(regionFilterValues(), true));
-                } else {
-                    content.addView(searchTagColumn(stateFilterValues(), false));
+                if (sourceFilterGroups.isEmpty()) {
+                    content.addView(loadingState("正在读取分类", "请稍等"));
+                    return;
                 }
+                if (filterTab[0] < 1 || filterTab[0] > sourceFilterGroups.size()) filterTab[0] = 1;
+                for (int i = 0; i < sourceFilterGroups.size(); i++) {
+                    final int tabIndex = i + 1;
+                    TextView tab = filterDrawerTab(sourceFilterGroups.get(i).label);
+                    updateFilterDrawerTab(tab, filterTab[0] == tabIndex);
+                    tab.setOnClickListener(v -> {
+                        filterTab[0] = tabIndex;
+                        fill[0].run();
+                    });
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(UIHelpers.dp(this, 72), -2);
+                    tabs.addView(tab, lp);
+                }
+                content.addView(filterOptionColumn(sourceFilterGroups.get(filterTab[0] - 1)));
             }
         };
-        tabTopic.setOnClickListener(v -> { filterTab[0] = 1; fill[0].run(); });
-        tabRegion.setOnClickListener(v -> { filterTab[0] = 2; fill[0].run(); });
-        tabState.setOnClickListener(v -> { filterTab[0] = 3; fill[0].run(); });
         confirm.setOnClickListener(v -> {
             confirmed[0] = true;
             boolean sourceChanged = !selectedSourceId.equals(origSourceId);
@@ -4433,11 +4437,8 @@ public class MainActivity extends Activity {
                 .setTitle("选择站源")
                 .setItems(items, (dialog, which) -> {
                     selectedSourceId = sourceIdForName(items[which]);
-                    selectedRegion = "all";
-                    selectedState = "all";
-                    selectedRegionLabel = ALL_TAG;
-                    selectedStateLabel = ALL_TAG;
-                    sourceCategories.clear();
+                    resetCategoryFilters();
+                    sourceFilterGroups.clear();
                     searchResults.clear();
                     showTab(1);
                     loadSourceCategories();
@@ -4529,58 +4530,33 @@ public class MainActivity extends Activity {
         return sourceClient.id();
     }
 
-    private HorizontalScrollView searchTagRow(List<String> values, boolean regionRow) {
-        HorizontalScrollView scroll = new HorizontalScrollView(this);
-        scroll.setHorizontalScrollBarEnabled(false);
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(UIHelpers.dp(this, 1), UIHelpers.dp(this, 2), UIHelpers.dp(this, 1), UIHelpers.dp(this, 2));
-        for (String value : values) {
-            boolean selected = regionRow ? codeForRegion(value).equals(selectedRegion) : codeForState(value).equals(selectedState);
-            TextView chip = UIHelpers.chip(this, value, selected);
-            chip.setOnClickListener(v -> {
-                if (regionRow) {
-                    selectedRegion = codeForRegion(value);
-                    selectedRegionLabel = value;
-                } else {
-                    selectedState = codeForState(value);
-                    selectedStateLabel = value;
-                }
-                if (filterDrawerAction != null) filterDrawerAction.run();
-            });
-            row.addView(chip, UIHelpers.marginRight(-2, UIHelpers.dp(this, 14)));
-        }
-        scroll.addView(row, UIHelpers.wrap());
-        return scroll;
-    }
-
-    private LinearLayout searchTagColumn(List<String> values, boolean regionRow) {
+    private LinearLayout filterOptionColumn(ComicModels.FilterGroup group) {
         LinearLayout column = new LinearLayout(this);
         column.setOrientation(LinearLayout.VERTICAL);
-        if (values == null || values.isEmpty()) return column;
+        if (group == null || group.options.isEmpty()) return column;
         final int columns = 3;
         final int cellHeight = UIHelpers.dp(this, 32);
         final int cellGap = UIHelpers.dp(this, 6);
         LinearLayout row = null;
-        for (int i = 0; i < values.size(); i++) {
+        for (int i = 0; i < group.options.size(); i++) {
             if (i % columns == 0) {
                 row = new LinearLayout(this);
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 column.addView(row, UIHelpers.marginBottom(-1, cellGap));
             }
-            String value = values.get(i);
-            boolean selected = regionRow ? codeForRegion(value).equals(selectedRegion) : codeForState(value).equals(selectedState);
-            TextView chip = filterGridChip(value, selected);
+            ComicModels.FilterOption option = group.options.get(i);
+            boolean selected = option.value.equals(selectedFilters.get(group.key));
+            TextView chip = filterGridChip(option.label, selected);
             chip.setSingleLine(true);
             chip.setEllipsize(TextUtils.TruncateAt.END);
             chip.setGravity(Gravity.CENTER);
             chip.setOnClickListener(v -> {
-                if (regionRow) {
-                    selectedRegion = codeForRegion(value);
-                    selectedRegionLabel = value;
-                } else {
-                    selectedState = codeForState(value);
-                    selectedStateLabel = value;
+                selectedFilters.put(group.key, option.value);
+                selectedFilterLabels.put(group.key, option.label);
+                if (gmhClient.id().equals(selectedSourceId) && !"all".equals(option.value)) {
+                    String otherKey = "genre".equals(group.key) ? "tag" : "genre";
+                    selectedFilters.put(otherKey, "all");
+                    selectedFilterLabels.put(otherKey, ALL_TAG);
                 }
                 if (filterDrawerAction != null) filterDrawerAction.run();
             });
@@ -4588,7 +4564,7 @@ public class MainActivity extends Activity {
             if (i % columns != columns - 1) lp.rightMargin = cellGap;
             row.addView(chip, lp);
         }
-        int remainder = values.size() % columns;
+        int remainder = group.options.size() % columns;
         if (remainder != 0 && column.getChildCount() > 0) {
             LinearLayout lastRow = (LinearLayout) column.getChildAt(column.getChildCount() - 1);
             for (int i = remainder; i < columns; i++) {
@@ -4611,225 +4587,6 @@ public class MainActivity extends Activity {
                 selected ? Color.TRANSPARENT : UIHelpers.BORDER_SOFT));
         return chip;
     }
-    private LinearLayout searchTagGrid(List<String> values) {
-        LinearLayout grid = new LinearLayout(this);
-        grid.setOrientation(LinearLayout.VERTICAL);
-        if (mkzhanClient.id().equals(selectedSourceId)) {
-            grid.addView(searchTagRow(mkzhanFilterLabels(), false));
-            return grid;
-        }
-        if (hanman18Client.id().equals(selectedSourceId)) {
-            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "受欢迎的"), true));
-            return grid;
-        }
-        if (manhuazhanClient.id().equals(selectedSourceId) || bbyinClient.id().equals(selectedSourceId)) {
-            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
-            grid.addView(searchTagColumn(categories, true));
-            return grid;
-        }
-        if (antbywClient.id().equals(selectedSourceId)) {
-            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
-            grid.addView(searchTagRow(Arrays.asList("上架时间", "更新时间", "阅读量", "收藏量"), false), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
-            grid.addView(searchTagColumn(categories, true));
-            return grid;
-        }
-        if (manhuaguiClient.id().equals(selectedSourceId)) {
-            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
-            grid.addView(searchTagColumn(categories, true), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
-            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "\u8fde\u8f7d", "\u5b8c\u7ed3"), false));
-            return grid;
-        }
-        if (hiperdexClient.id().equals(selectedSourceId)) {
-            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
-            grid.addView(searchTagColumn(categories, true));
-            return grid;
-        }
-        if (aikanClient.id().equals(selectedSourceId)) {
-            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "连载中", "已完结"), false));
-            return grid;
-        }
-        if (d5d6Client.id().equals(selectedSourceId)) {
-            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
-            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "\u8fde\u8f7d\u4e2d", "\u5df2\u5b8c\u6210"), false), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
-            grid.addView(searchTagColumn(categories, true));
-            return grid;
-        }
-        if (manbenClient.id().equals(selectedSourceId)) {
-            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
-            grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "\u8fde\u8f7d\u4e2d", "\u5df2\u5b8c\u6210"), false), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
-            grid.addView(searchTagColumn(categories, true));
-            return grid;
-        }
-        if (gmhClient.id().equals(selectedSourceId)) {
-            List<String> categories = values == null || values.isEmpty() ? Arrays.asList(ALL_TAG) : values;
-            grid.addView(searchTagColumn(categories, true));
-            return grid;
-        }
-        grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "国漫", "日本", "韩国", "欧美"), true), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
-        grid.addView(searchTagRow(Arrays.asList(ALL_TAG, "连载中", "已完结"), false));
-        return grid;
-    }
-
-    private List<String> mkzhanFilterLabels() {
-        return Arrays.asList(ALL_TAG, "连载", "完结", "免费", "付费", "VIP");
-    }
-
-    private String codeForRegion(String value) {
-        if ((manhuazhanClient != null && manhuazhanClient.id().equals(selectedSourceId))
-                || (bbyinClient != null && bbyinClient.id().equals(selectedSourceId))) {
-            return ALL_TAG.equals(value) ? "all" : value;
-        }
-        if (antbywClient != null && antbywClient.id().equals(selectedSourceId)) {
-            return ALL_TAG.equals(value) ? "all" : value;
-        }
-        if ("韩漫".equals(value)) return "kr";
-        if ("热门".equals(value)) return "hots";
-        if ("日漫".equals(value)) return "jp";
-        if ("国漫".equals(value)) return "cn";
-        if ("日本".equals(value)) return "jp";
-        if ("韩国".equals(value)) return "kr";
-        if ("欧美".equals(value)) return "en";
-        if ("内地".equals(value)) return "cn";
-        if ("港台".equals(value)) return "hk";
-        if ("其它".equals(value)) return "other";
-        if ("Manhwa".equals(value)) return "manhwa";
-        if ("Webtoon".equals(value)) return "webtoon";
-        if ("Romance".equals(value)) return "romance";
-        if ("Drama".equals(value)) return "drama";
-        if ("受欢迎的".equals(value)) return "popular";
-        if ("大陆".equals(value)) return "cn";
-        if ("日本".equals(value)) return "jp";
-        if ("韩国".equals(value)) return "kr";
-        if ("欧美".equals(value)) return "en";
-        if (d5d6Client != null && d5d6Client.id().equals(selectedSourceId) && !ALL_TAG.equals(value)) return value;
-        if (manbenClient != null && manbenClient.id().equals(selectedSourceId) && !ALL_TAG.equals(value)) return value;
-        return "all";
-    }
-
-    private String codeForState(String value) {
-        if (antbywClient != null && antbywClient.id().equals(selectedSourceId)) {
-            if ("上架时间".equals(value)) return "all";
-            if ("更新时间".equals(value)) return "edittime";
-            if ("阅读量".equals(value)) return "views";
-            if ("收藏量".equals(value)) return "favores";
-            return "all";
-        }
-        if ("\u8fde\u8f7d".equals(value) || "\u8fde\u8f7d\u4e2d".equals(value)) return "serial";
-        if ("\u5b8c\u7ed3".equals(value) || "\u5df2\u5b8c\u7ed3".equals(value) || "\u5df2\u5b8c\u6210".equals(value)) return "pub";
-        if ("连载".equals(value)) return "serial";
-        if ("完结".equals(value)) return "pub";
-        if ("免费".equals(value)) return "free";
-        if ("付费".equals(value)) return "fee";
-        if ("VIP".equals(value)) return "vip";
-        if ("连载中".equals(value)) return "serial";
-        if ("已完结".equals(value)) return "pub";
-        if ("连载中".equals(value)) return "serial";
-        if ("已完成".equals(value)) return "pub";
-        if ("\u5df2\u5b8c\u6210".equals(value)) return "pub";
-        return "all";
-    }
-
-    private List<String> searchTags() {
-        List<String> values = new ArrayList<>();
-        values.add(ALL_TAG);
-        if (!sourceCategories.isEmpty()) {
-            for (String category : sourceCategories) {
-                if (!TextUtils.isEmpty(category) && !values.contains(category)) values.add(category);
-            }
-        } else {
-            for (ComicModels.ComicSummary item : searchResults) {
-                for (String tag : item.tags) {
-                    if (!TextUtils.isEmpty(tag) && !values.contains(tag) && values.size() < 12) values.add(tag);
-                }
-            }
-        }
-        return values;
-    }
-
-    private List<String> topicFilterValues() {
-        if (hanman18Client.id().equals(selectedSourceId)) {
-            return Arrays.asList(ALL_TAG, "受欢迎的");
-        }
-        if (manbenClient.id().equals(selectedSourceId)) {
-            List<String> values = new ArrayList<>();
-            values.add(ALL_TAG);
-            for (String category : sourceCategories) {
-                if (!TextUtils.isEmpty(category) && !ALL_TAG.equals(category)
-                        && !category.startsWith("地区·") && !values.contains(category)) {
-                    values.add(category);
-                }
-            }
-            return values;
-        }
-        if (gmhClient.id().equals(selectedSourceId)
-                || hiperdexClient.id().equals(selectedSourceId)
-                || manhuazhanClient.id().equals(selectedSourceId)
-                || bbyinClient.id().equals(selectedSourceId)
-                || antbywClient.id().equals(selectedSourceId)) {
-            return searchTags();
-        }
-        if (d5d6Client.id().equals(selectedSourceId)) {
-            List<String> values = new ArrayList<>();
-            values.add(ALL_TAG);
-            for (String category : sourceCategories) {
-                if (!TextUtils.isEmpty(category) && !isD5d6RegionCategory(category) && !values.contains(category)) {
-                    values.add(category);
-                }
-            }
-            return values;
-        }
-        return Collections.singletonList(ALL_TAG);
-    }
-
-    private List<String> regionFilterValues() {
-        if (sourceClient.id().equals(selectedSourceId)) {
-            return Arrays.asList(ALL_TAG, "国漫", "日本", "韩国", "欧美");
-        }
-        if (manhuaguiClient.id().equals(selectedSourceId)) {
-            return searchTags();
-        }
-        if (d5d6Client.id().equals(selectedSourceId)) {
-            List<String> values = new ArrayList<>();
-            values.add(ALL_TAG);
-            for (String category : sourceCategories) {
-                if (!TextUtils.isEmpty(category) && isD5d6RegionCategory(category) && !values.contains(category)) {
-                    values.add(category);
-                }
-            }
-            return values;
-        }
-        if (manbenClient.id().equals(selectedSourceId)) {
-            List<String> values = new ArrayList<>();
-            values.add(ALL_TAG);
-            for (String category : sourceCategories) {
-                if (!TextUtils.isEmpty(category) && category.startsWith("地区·") && !values.contains(category)) {
-                    values.add(category);
-                }
-            }
-            return values;
-        }
-        return Collections.singletonList(ALL_TAG);
-    }
-
-    private boolean isD5d6RegionCategory(String category) {
-        return Arrays.asList("大陆", "日本", "韩国", "欧美", "港台").contains(category);
-    }
-
-    private List<String> stateFilterValues() {
-        if (mkzhanClient.id().equals(selectedSourceId)) return mkzhanFilterLabels();
-        if (antbywClient.id().equals(selectedSourceId)) {
-            return Arrays.asList("上架时间", "更新时间", "阅读量", "收藏量");
-        }
-        if (sourceClient.id().equals(selectedSourceId)
-                || aikanClient.id().equals(selectedSourceId)
-                || manhuaguiClient.id().equals(selectedSourceId)
-                || d5d6Client.id().equals(selectedSourceId)
-                || manbenClient.id().equals(selectedSourceId)) {
-            return Arrays.asList(ALL_TAG, "连载中", "已完结");
-        }
-        return Collections.singletonList(ALL_TAG);
-    }
-
     private LinearLayout makeBottomNav() {
         LinearLayout wrap = new LinearLayout(this);
         // 圆角顶背景（仅上方两角圆角），无 elevation 无描边
@@ -6000,9 +5757,8 @@ public class MainActivity extends Activity {
                 applySourceConfigJson(new JSONObject(json));
                 saveLocalState();
                 postMainIfAlive(() -> {
-                    selectedRegion = "all";
-                    selectedState = "all";
-                    sourceCategories.clear();
+                    resetCategoryFilters();
+                    sourceFilterGroups.clear();
                     searchResults.clear();
                     showSourceManagement();
                     showRemToast("站源配置已导入");
