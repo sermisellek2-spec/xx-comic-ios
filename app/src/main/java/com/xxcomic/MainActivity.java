@@ -105,6 +105,8 @@ public class MainActivity extends Activity {
     private static final int DETAIL_HERO_MAX_DP = 390;
     private static final int CHAPTER_DRAWER_BATCH_SIZE = 40;
     private static final long READER_PROGRESS_ANIM_MS = 30L;
+    private static final long READER_CHROME_ANIM_MS = 180L;
+    private static final int READER_CHROME_SHIFT_DP = 6;
     private static final int READER_POSITION_SCALE = 10000;
     private static final long READER_POSITION_SAVE_DELAY_MS = 250L;
     private static final long READER_MAX_DECODE_PIXELS = 8000000L;
@@ -309,6 +311,7 @@ public class MainActivity extends Activity {
     private boolean searchCategoryToggling;
     private View readerTopBar;
     private View readerBottomBar;
+    private View readerProgressView;
     private boolean nightThemeApplied = false;
     private final Runnable themeSwitchRunnable = new Runnable() {
         @Override public void run() {
@@ -530,11 +533,19 @@ public class MainActivity extends Activity {
     }
 
     private void applyReaderSystemBars() {
+        applyReaderSystemBars(false);
+    }
+
+    private void applyReaderSystemBars(boolean stableLayout) {
         getWindow().setStatusBarColor(UIHelpers.DARK);
         getWindow().setNavigationBarColor(UIHelpers.DARK);
-        int flags = 0;
+        int flags = stableLayout
+                ? View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                : 0;
         if (readerFullscreen) {
-            flags = View.SYSTEM_UI_FLAG_FULLSCREEN
+            flags |= View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -2491,16 +2502,13 @@ public class MainActivity extends Activity {
         readerVisible = true;
         readerTopBar = null;
         readerBottomBar = null;
-        applyReaderSystemBars();
-        LinearLayout shell = new LinearLayout(this);
-        shell.setOrientation(LinearLayout.VERTICAL);
+        readerProgressView = null;
+        applyReaderSystemBars(true);
+        FrameLayout shell = new FrameLayout(this);
         shell.setBackgroundColor(UIHelpers.DARK);
         root.addView(shell, UIHelpers.match());
 
         LinearLayout top = readerToolbar(detail);
-        shell.addView(top, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 43)));
-        readerTopBar = top;
-        top.setVisibility(readerFullscreen ? View.GONE : View.VISIBLE);
 
         ComicModels.Chapter activeChapter = detail.chapters.get(readerChapterIndex);
         int generation = readerGeneration;
@@ -2603,15 +2611,23 @@ public class MainActivity extends Activity {
                 () -> showReader(detail, readerChapterIndex), false);
         readerContent.addView(empty, UIHelpers.match());
         list.setEmptyView(empty);
-        shell.addView(readerContent, new LinearLayout.LayoutParams(-1, 0, 1));
-        shell.addView(readerProgressBar(readerChapterIndex + 1, detail.chapters.size()), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 2)));
+        shell.addView(readerContent, UIHelpers.match());
+
+        View chapterProgress = readerProgressBar(readerChapterIndex + 1, detail.chapters.size());
+        readerProgressView = chapterProgress;
+        chapterProgress.setTranslationY(readerFullscreen ? 0f : -readerChromeBottomOffset());
+        shell.addView(chapterProgress, new FrameLayout.LayoutParams(-1, UIHelpers.dp(this, 2), Gravity.BOTTOM));
+
+        FrameLayout.LayoutParams topParams = new FrameLayout.LayoutParams(-1, UIHelpers.dp(this, 43), Gravity.TOP);
+        topParams.topMargin = systemBarInset("status_bar_height");
+        shell.addView(top, topParams);
+        readerTopBar = top;
+        prepareReaderChrome(top, true);
 
         LinearLayout bottom = new LinearLayout(this);
         bottom.setGravity(Gravity.CENTER_VERTICAL);
         bottom.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 12), 0);
         bottom.setBackgroundColor(UIHelpers.DARK_BAR);
-        bottom.setVisibility(readerFullscreen ? View.GONE : View.VISIBLE);
-        readerBottomBar = bottom;
 
         // 全面手势模式：底部仅显示页数，翻章靠左右点按
         TextView count = UIHelpers.text(this, "1 / " + page.imageUrls.size() + " 张 · 本章 1%", 11, UIHelpers.READER_TEXT, Typeface.NORMAL);
@@ -2620,7 +2636,11 @@ public class MainActivity extends Activity {
         count.setIncludeFontPadding(false);
         readerCount[0] = count;
         bottom.addView(count, new LinearLayout.LayoutParams(-1, -2));
-        shell.addView(bottom, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 36)));
+        FrameLayout.LayoutParams bottomParams = new FrameLayout.LayoutParams(-1, UIHelpers.dp(this, 36), Gravity.BOTTOM);
+        bottomParams.bottomMargin = systemBarInset("navigation_bar_height");
+        shell.addView(bottom, bottomParams);
+        readerBottomBar = bottom;
+        prepareReaderChrome(bottom, false);
     }
 
     private boolean handleReaderTap(MotionEvent event, ComicModels.ComicDetail detail, ComicModels.ChapterPage page) {
@@ -2653,9 +2673,48 @@ public class MainActivity extends Activity {
 
     private void toggleReaderFullscreen() {
         readerFullscreen = !readerFullscreen;
-        if (readerTopBar != null) readerTopBar.setVisibility(readerFullscreen ? View.GONE : View.VISIBLE);
-        if (readerBottomBar != null) readerBottomBar.setVisibility(readerFullscreen ? View.GONE : View.VISIBLE);
-        applyReaderSystemBars();
+        applyReaderSystemBars(true);
+        animateReaderChrome(readerTopBar, true);
+        animateReaderChrome(readerBottomBar, false);
+        if (readerProgressView != null) {
+            readerProgressView.animate().cancel();
+            readerProgressView.animate()
+                    .translationY(readerFullscreen ? 0f : -readerChromeBottomOffset())
+                    .setDuration(READER_CHROME_ANIM_MS)
+                    .start();
+        }
+    }
+
+    private void prepareReaderChrome(View view, boolean top) {
+        float shift = UIHelpers.dp(this, READER_CHROME_SHIFT_DP) * (top ? -1f : 1f);
+        view.setAlpha(readerFullscreen ? 0f : 1f);
+        view.setTranslationY(readerFullscreen ? shift : 0f);
+        view.setVisibility(readerFullscreen ? View.INVISIBLE : View.VISIBLE);
+    }
+
+    private void animateReaderChrome(View view, boolean top) {
+        if (view == null) return;
+        boolean hide = readerFullscreen;
+        float shift = UIHelpers.dp(this, READER_CHROME_SHIFT_DP) * (top ? -1f : 1f);
+        view.animate().cancel();
+        if (!hide) view.setVisibility(View.VISIBLE);
+        view.animate()
+                .alpha(hide ? 0f : 1f)
+                .translationY(hide ? shift : 0f)
+                .setDuration(READER_CHROME_ANIM_MS)
+                .withEndAction(() -> {
+                    if (readerFullscreen) view.setVisibility(View.INVISIBLE);
+                })
+                .start();
+    }
+
+    private int readerChromeBottomOffset() {
+        return systemBarInset("navigation_bar_height") + UIHelpers.dp(this, 36);
+    }
+
+    private int systemBarInset(String name) {
+        int resource = getResources().getIdentifier(name, "dimen", "android");
+        return resource == 0 ? 0 : getResources().getDimensionPixelSize(resource);
     }
 
     private void runSearch(String keyword) {
