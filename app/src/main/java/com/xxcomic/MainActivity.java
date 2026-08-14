@@ -3221,7 +3221,7 @@ public class MainActivity extends Activity {
         scroll.addView(list, UIHelpers.matchWrap());
         panel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
 
-        PopupWindow popup = new PopupWindow(panel, Math.round(getResources().getDisplayMetrics().widthPixels * .86f), -1, true);
+        PopupWindow popup = new PopupWindow(panel, Math.round(getResources().getDisplayMetrics().widthPixels * .76f), -1, true);
         popup.setBackgroundDrawable(new ColorDrawable(UIHelpers.CARD));
         popup.setOutsideTouchable(true);
         popup.setElevation(UIHelpers.dp(this, 14));
