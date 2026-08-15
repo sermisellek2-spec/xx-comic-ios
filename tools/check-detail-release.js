@@ -42,6 +42,6 @@ check("drawer chapter rows use compact alignment", source.includes("setMinimumHe
 check("background detail refresh does not displace an open drawer", source.includes("activePopup == null || !activePopup.isShowing()"));
 check("updates try COS before the server fallback", source.includes("apk/xx-comic/xx-comic.bin") && source.includes("UPDATE_APK_URLS") && updateDownload.includes("for (String updateUrl : UPDATE_APK_URLS)"));
 check("update fallback preserves cancellation and checksum verification", updateDownload.includes("isExpectedTaskCancellation(error)") && updateDownload.includes("actualHash.equals(release.sha256)"));
-check("release version is 1.0.25", gradle.includes('versionName "1.0.25"') && gradle.includes("versionCode 25"));
+check("release version is 1.0.26", gradle.includes('versionName "1.0.26"') && gradle.includes("versionCode 26"));
 
 console.log("detail release contracts hold");

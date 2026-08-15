@@ -38,24 +38,11 @@ public class Mh18ComicSource implements ComicSource {
     private static final Pattern IMAGE_PATTERN = Pattern.compile("<img\\b[^>]*>", Pattern.CASE_INSENSITIVE);
     private static final Pattern TAG_LINK_PATTERN = Pattern.compile(
             "<a[^>]+href=[\"']/manga-tag/[^\"']+[\"'][^>]*>([\\s\\S]*?)</a>", Pattern.CASE_INSENSITIVE);
-    private static final Clearance DEFAULT_CLEARANCE = new Clearance("", DESKTOP_USER_AGENT);
-
     private final SourceConfig config;
     private final BrowserSession browserSession;
 
-    public static final class Clearance {
-        public final String cookie;
-        public final String userAgent;
-
-        public Clearance(String cookie, String userAgent) {
-            this.cookie = cookie == null ? "" : cookie;
-            this.userAgent = userAgent == null ? "" : userAgent;
-        }
-    }
-
     public interface BrowserSession {
-        Clearance current();
-        Clearance resolve(String url, Clearance rejected) throws IOException;
+        String fetch(String url) throws IOException;
     }
 
     private static final class CloudflareChallengeException extends IOException {
@@ -192,19 +179,10 @@ public class Mh18ComicSource implements ComicSource {
 
     @Override
     public boolean healthCheck() {
-        HttpURLConnection connection = null;
         try {
-            connection = (HttpURLConnection) new URL(config.baseUrl + "/manga").openConnection();
-            connection.setRequestMethod("HEAD");
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
-            applyRequestHeaders(connection, currentClearance(), true);
-            int code = connection.getResponseCode();
-            return code >= 200 && code < 400;
+            return !TextUtils.isEmpty(fetch(config.baseUrl + "/manga"));
         } catch (IOException ignored) {
             return false;
-        } finally {
-            if (connection != null) connection.disconnect();
         }
     }
 
@@ -322,23 +300,16 @@ public class Mh18ComicSource implements ComicSource {
     }
 
     private String fetch(String url) throws IOException {
-        Clearance clearance = currentClearance();
-        try {
-            return fetchOnce(url, clearance);
-        } catch (CloudflareChallengeException challenge) {
-            if (browserSession == null || !isMainSite(url)) throw challenge;
-            Clearance resolved = browserSession.resolve(config.baseUrl + "/manga", clearance);
-            if (resolved == null) throw new IOException("18漫画验证未完成");
-            return fetchOnce(url, resolved);
-        }
+        if (browserSession != null && isMainSite(url)) return browserSession.fetch(url);
+        return fetchOnce(url);
     }
 
-    private String fetchOnce(String url, Clearance clearance) throws IOException {
+    private String fetchOnce(String url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setInstanceFollowRedirects(true);
         connection.setConnectTimeout(10000);
         connection.setReadTimeout(15000);
-        applyRequestHeaders(connection, clearance, isMainSite(url));
+        applyRequestHeaders(connection);
         try {
             int code = connection.getResponseCode();
             if (code == 403 && "challenge".equalsIgnoreCase(connection.getHeaderField("Cf-Mitigated"))) {
@@ -357,20 +328,9 @@ public class Mh18ComicSource implements ComicSource {
         }
     }
 
-    private Clearance currentClearance() {
-        Clearance current = browserSession == null ? null : browserSession.current();
-        return current == null ? DEFAULT_CLEARANCE : current;
-    }
-
-    private void applyRequestHeaders(HttpURLConnection connection, Clearance clearance, boolean includeCookie) {
-        String userAgent = clearance == null ? "" : clearance.userAgent;
-        connection.setRequestProperty("User-Agent", TextUtils.isEmpty(userAgent)
-                ? DESKTOP_USER_AGENT : userAgent.replace("\r", "").replace("\n", ""));
+    private void applyRequestHeaders(HttpURLConnection connection) {
+        connection.setRequestProperty("User-Agent", DESKTOP_USER_AGENT);
         connection.setRequestProperty("Referer", config.referer);
-        String cookie = clearance == null ? "" : clearance.cookie;
-        if (includeCookie && !TextUtils.isEmpty(cookie)) {
-            connection.setRequestProperty("Cookie", cookie.replace("\r", "").replace("\n", ""));
-        }
     }
 
     private boolean isMainSite(String url) {
