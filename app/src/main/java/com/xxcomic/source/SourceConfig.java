@@ -1,7 +1,5 @@
 package com.xxcomic.source;
 
-import android.text.TextUtils;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,7 +24,7 @@ public class SourceConfig {
         this.name = name;
         this.domain = domain;
         this.baseUrl = baseUrl;
-        this.referer = TextUtils.isEmpty(referer) ? baseUrl + "/" : referer;
+        this.referer = isEmpty(referer) ? baseUrl + "/" : referer;
         this.latestPath = latestPath;
         this.searchPath = searchPath;
         this.categoryPath = categoryPath;
@@ -263,6 +261,12 @@ public class SourceConfig {
         return new SourceConfig("antbyw", "tapmanga搬运", "www.antbyw.com", "https://www.antbyw.com", "https://www.antbyw.com/", "", "", "", "", enabled, routes, new JSONObject());
     }
 
+    public static SourceConfig cuimh(boolean enabled) {
+        return new SourceConfig("cuimh", "催漫画", "www.cuimh.com", "https://www.cuimh.com", "https://www.cuimh.com/",
+                "/category{pagePath}", "", "/category{filterPath}{pagePath}", "/{comicId}", enabled,
+                new JSONObject(), new JSONObject());
+    }
+
     private static SourceConfig fiveUm(String id, String name, String domain, String baseUrl, boolean enabled) {
         JSONObject routes = new JSONObject();
         try {
@@ -314,7 +318,7 @@ public class SourceConfig {
 
     public String route(String key) {
         String value = routes.optString(key);
-        if (!TextUtils.isEmpty(value)) return value;
+        if (!isEmpty(value)) return value;
         if ("latest".equals(key)) return latestPath;
         if ("search".equals(key)) return searchPath;
         if ("category".equals(key)) return categoryPath;
@@ -330,6 +334,10 @@ public class SourceConfig {
         if (value == null) return "";
         while (value.endsWith("/") && value.length() > 8) value = value.substring(0, value.length() - 1);
         return value;
+    }
+
+    private static boolean isEmpty(String value) {
+        return value == null || value.isEmpty();
     }
 
     private static JSONObject mergeObject(JSONObject defaults, JSONObject overrides) {

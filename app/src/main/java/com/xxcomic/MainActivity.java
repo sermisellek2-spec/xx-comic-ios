@@ -48,6 +48,7 @@ import com.xxcomic.source.AntbywComicSource;
 import com.xxcomic.source.AikanComicSource;
 import com.xxcomic.source.ComicModels;
 import com.xxcomic.source.ComicSource;
+import com.xxcomic.source.CuimhComicSource;
 import com.xxcomic.source.D5d6ComicSource;
 import com.xxcomic.source.FiveUmComicSource;
 import com.xxcomic.source.ManbenComicSource;
@@ -168,6 +169,7 @@ public class MainActivity extends Activity {
     private ComicSource manhuazhanClient;
     private ComicSource bbyinClient;
     private ComicSource antbywClient;
+    private ComicSource cuimhClient;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
     private SourceConfig aikanConfig = SourceConfig.aikan(true);
     private SourceConfig gmhConfig = SourceConfig.gmh(true);
@@ -180,6 +182,7 @@ public class MainActivity extends Activity {
     private SourceConfig manhuazhanConfig = SourceConfig.manhuazhan(true);
     private SourceConfig bbyinConfig = SourceConfig.bbyin(true);
     private SourceConfig antbywConfig = SourceConfig.antbyw(true);
+    private SourceConfig cuimhConfig = SourceConfig.cuimh(true);
     private final List<ComicModels.ComicSummary> searchResults = new ArrayList<>();
     private final List<ComicModels.ComicSummary> globalSearchResults = new ArrayList<>();
     private final List<String> globalSearchHistory = new ArrayList<>();
@@ -224,6 +227,7 @@ public class MainActivity extends Activity {
     private boolean manhuazhanEnabled = true;
     private boolean bbyinEnabled = true;
     private boolean antbywEnabled = true;
+    private boolean cuimhEnabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
     private boolean readerLeftHand = false;
@@ -962,7 +966,7 @@ public class MainActivity extends Activity {
             renderSearchHistory(content);
             return;
         }
-        List<ComicSource> sources = enabledBuiltinSources();
+        List<ComicSource> sources = enabledSearchSources();
         ensureSelectedGlobalSearchSource(sources);
         if (sources.isEmpty()) {
             content.addView(emptyState(R.drawable.ic_source, "没有可用站源", "去设置里开启站源", "去设置", () -> showTab(2)));
@@ -1315,6 +1319,12 @@ public class MainActivity extends Activity {
         addSourceCard(enabledSources, disabledSources, antbywEnabled, sourceCard(antbywConfig.name, antbywConfig.domain, antbywEnabled, () -> {
             antbywEnabled = !antbywEnabled;
             antbywConfig = antbywConfig.withEnabled(antbywEnabled);
+            rebuildSourceClients();
+            finishSourceToggle();
+        }));
+        addSourceCard(enabledSources, disabledSources, cuimhEnabled, sourceCard(cuimhConfig.name, cuimhConfig.domain, cuimhEnabled, () -> {
+            cuimhEnabled = !cuimhEnabled;
+            cuimhConfig = cuimhConfig.withEnabled(cuimhEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
@@ -1704,7 +1714,7 @@ public class MainActivity extends Activity {
             return;
         }
         // 结果模式：创建持久容器，Tab 行和结果列表分离
-        List<ComicSource> sources = enabledBuiltinSources();
+        List<ComicSource> sources = enabledSearchSources();
         ensureSelectedGlobalSearchSource(sources);
         if (sources.isEmpty()) {
             content.addView(emptyState(R.drawable.ic_source, "没有可用站源", "先去站源页打开一个吧", "返回搜索", () -> showStandaloneSearch(false)));
@@ -1734,7 +1744,7 @@ public class MainActivity extends Activity {
         } else {
             tabs.removeAllViews();
         }
-        List<ComicSource> sources = enabledBuiltinSources();
+        List<ComicSource> sources = enabledSearchSources();
         for (ComicSource source : sources) {
             String sourceId = source.id();
             boolean selected = sourceId.equals(selectedGlobalSearchSourceId);
@@ -1875,7 +1885,7 @@ public class MainActivity extends Activity {
 
     /** 在列表底部追加/更新状态文字（N/M 完成 · K 失败） */
     private void renderGlobalSearchResultsTabbed(LinearLayout content) {
-        List<ComicSource> sources = enabledBuiltinSources();
+        List<ComicSource> sources = enabledSearchSources();
         ensureSelectedGlobalSearchSource(sources);
         if (sources.isEmpty()) {
             content.addView(emptyState(R.drawable.ic_source, "没有可用站源", "先去站源页打开一个吧", "返回搜索", () -> showStandaloneSearch(false)));
@@ -2828,6 +2838,13 @@ public class MainActivity extends Activity {
             if (pullRefresh) finishSearchPullRefresh();
             return;
         }
+        if (!categoryMode && !requestClient.supportsSearch()) {
+            searchLoading = false;
+            searchAppending = false;
+            if (pullRefresh) finishSearchPullRefresh();
+            showRemToast(requestClient.name() + "暂不支持搜索");
+            return;
+        }
         String requestSourceId = requestClient.id();
         Map<String, String> requestFilters = new LinkedHashMap<>(selectedFilters);
         int generation = ++searchGeneration;
@@ -2938,7 +2955,7 @@ public class MainActivity extends Activity {
         globalSearchShownIdsBySource.clear();
         globalSearchFailedSourceIds.clear();
         globalSearchCompletedSourceIds.clear();
-        List<ComicSource> clients = enabledBuiltinSources();
+        List<ComicSource> clients = enabledSearchSources();
         selectedGlobalSearchSourceId = clients.isEmpty() ? "" : clients.get(0).id();
         for (ComicSource client : clients) {
             globalSearchResultsBySource.put(client.id(), new ArrayList<>());
@@ -2963,7 +2980,7 @@ public class MainActivity extends Activity {
      */
     private void runGlobalSearch(String keyword) {
         final int generation = ++globalSearchGeneration;
-        final List<ComicSource> clients = enabledBuiltinSources();
+        final List<ComicSource> clients = enabledSearchSources();
         globalSearchTotalSources = clients.size();
         globalSearchCompletedSources = 0;
         globalSearchFailedSources = 0;
@@ -3121,6 +3138,7 @@ public class MainActivity extends Activity {
         if (manhuazhanClient.id().equals(sourceId)) return manhuazhanClient.name();
         if (bbyinClient.id().equals(sourceId)) return bbyinClient.name();
         if (antbywClient.id().equals(sourceId)) return antbywClient.name();
+        if (cuimhClient.id().equals(sourceId)) return cuimhClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(sourceId)) return item.name;
         }
@@ -3140,6 +3158,7 @@ public class MainActivity extends Activity {
         if (manhuazhanClient.id().equals(selectedSourceId) && manhuazhanEnabled) return manhuazhanClient;
         if (bbyinClient.id().equals(selectedSourceId) && bbyinEnabled) return bbyinClient;
         if (antbywClient.id().equals(selectedSourceId) && antbywEnabled) return antbywClient;
+        if (cuimhClient.id().equals(selectedSourceId) && cuimhEnabled) return cuimhClient;
         List<ComicSource> enabled = enabledBuiltinSources();
         if (enabled.isEmpty()) return null;
         selectedSourceId = enabled.get(0).id();
@@ -3160,6 +3179,15 @@ public class MainActivity extends Activity {
         if (manhuazhanEnabled) sources.add(manhuazhanClient);
         if (bbyinEnabled) sources.add(bbyinClient);
         if (antbywEnabled) sources.add(antbywClient);
+        if (cuimhEnabled) sources.add(cuimhClient);
+        return sources;
+    }
+
+    private List<ComicSource> enabledSearchSources() {
+        List<ComicSource> sources = new ArrayList<>();
+        for (ComicSource source : enabledBuiltinSources()) {
+            if (source.supportsSearch()) sources.add(source);
+        }
         return sources;
     }
 
@@ -3178,6 +3206,7 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(manhuazhanClient.id() + ":")) return manhuazhanClient;
         if (comicId != null && comicId.startsWith(bbyinClient.id() + ":")) return bbyinClient;
         if (comicId != null && comicId.startsWith(antbywClient.id() + ":")) return antbywClient;
+        if (comicId != null && comicId.startsWith(cuimhClient.id() + ":")) return cuimhClient;
         return sourceClient;
     }
 
@@ -3200,6 +3229,7 @@ public class MainActivity extends Activity {
         if (manhuazhanClient.id().equals(sourceId)) return manhuazhanClient;
         if (bbyinClient.id().equals(sourceId)) return bbyinClient;
         if (antbywClient.id().equals(sourceId)) return antbywClient;
+        if (cuimhClient.id().equals(sourceId)) return cuimhClient;
         return sourceClient;
     }
 
@@ -4195,6 +4225,9 @@ public class MainActivity extends Activity {
             return TextUtils.isEmpty(pageReferer) ? manbenConfig.referer : pageReferer;
         }
         if (imageUrl != null && imageUrl.contains("antbyw.com")) return antbywConfig.referer;
+        if (imageUrl != null && (imageUrl.contains(cuimhConfig.domain) || imageUrl.contains("baipiaoguai.org"))) {
+            return TextUtils.isEmpty(pageReferer) ? cuimhConfig.referer : pageReferer;
+        }
         return baoziConfig.referer;
     }
 
@@ -4489,6 +4522,7 @@ public class MainActivity extends Activity {
         if (manhuazhanEnabled) names.add(manhuazhanClient.name());
         if (bbyinEnabled) names.add(bbyinClient.name());
         if (antbywEnabled) names.add(antbywClient.name());
+        if (cuimhEnabled) names.add(cuimhClient.name());
         return names;
     }
 
@@ -4505,6 +4539,7 @@ public class MainActivity extends Activity {
         if (manhuazhanClient.id().equals(selectedSourceId)) return manhuazhanClient.name();
         if (bbyinClient.id().equals(selectedSourceId)) return bbyinClient.name();
         if (antbywClient.id().equals(selectedSourceId)) return antbywClient.name();
+        if (cuimhClient.id().equals(selectedSourceId)) return cuimhClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(selectedSourceId)) return item.name;
         }
@@ -4524,6 +4559,7 @@ public class MainActivity extends Activity {
         if (manhuazhanClient.name().equals(name)) return manhuazhanClient.id();
         if (bbyinClient.name().equals(name)) return bbyinClient.id();
         if (antbywClient.name().equals(name)) return antbywClient.id();
+        if (cuimhClient.name().equals(name)) return cuimhClient.id();
         for (ComicModels.Source item : customSources) {
             if (item.name.equals(name)) return item.id;
         }
@@ -5789,6 +5825,7 @@ public class MainActivity extends Activity {
         sources.put(manhuazhanConfig.withEnabled(manhuazhanEnabled).toJson());
         sources.put(bbyinConfig.withEnabled(bbyinEnabled).toJson());
         sources.put(antbywConfig.withEnabled(antbywEnabled).toJson());
+        sources.put(cuimhConfig.withEnabled(cuimhEnabled).toJson());
         root.put("sources", sources);
         JSONArray custom = new JSONArray();
         for (ComicModels.Source item : customSources) {
@@ -5853,6 +5890,9 @@ public class MainActivity extends Activity {
                 } else if (antbywConfig.id.equals(id)) {
                     antbywConfig = SourceConfig.fromJson(item, SourceConfig.antbyw(true));
                     antbywEnabled = antbywConfig.enabled;
+                } else if (cuimhConfig.id.equals(id)) {
+                    cuimhConfig = SourceConfig.fromJson(item, SourceConfig.cuimh(true));
+                    cuimhEnabled = cuimhConfig.enabled;
                 }
             }
         }
@@ -5873,6 +5913,7 @@ public class MainActivity extends Activity {
                 if (manhuazhanConfig.id.equals(id)) manhuazhanEnabled = item.optBoolean("enabled", true);
                 if (bbyinConfig.id.equals(id)) bbyinEnabled = item.optBoolean("enabled", true);
                 if (antbywConfig.id.equals(id)) antbywEnabled = item.optBoolean("enabled", true);
+                if (cuimhConfig.id.equals(id)) cuimhEnabled = item.optBoolean("enabled", true);
             }
         }
         rebuildSourceClients();
@@ -5939,6 +5980,7 @@ public class MainActivity extends Activity {
         if (!manhuazhanEnabled) rows.add(manhuazhanConfig.name + "\u001f已关闭");
         if (!bbyinEnabled) rows.add(bbyinConfig.name + "\u001f已关闭");
         if (!antbywEnabled) rows.add(antbywConfig.name + "\u001f已关闭");
+        if (!cuimhEnabled) rows.add(cuimhConfig.name + "\u001f已关闭");
     }
 
     private void showSourceHealthLoading() {
@@ -5992,6 +6034,7 @@ public class MainActivity extends Activity {
         manhuazhanClient = new FiveUmComicSource(manhuazhanConfig.withEnabled(manhuazhanEnabled));
         bbyinClient = new FiveUmComicSource(bbyinConfig.withEnabled(bbyinEnabled));
         antbywClient = new AntbywComicSource(antbywConfig.withEnabled(antbywEnabled));
+        cuimhClient = new CuimhComicSource(cuimhConfig.withEnabled(cuimhEnabled));
     }
 
     private String readHistoryText() {
@@ -6019,6 +6062,7 @@ public class MainActivity extends Activity {
         manhuazhanEnabled = prefs.getBoolean("source.manhuazhan.enabled", true);
         bbyinEnabled = prefs.getBoolean("source.bbyin.enabled", true);
         antbywEnabled = prefs.getBoolean("source.antbyw.enabled", true);
+        cuimhEnabled = prefs.getBoolean("source.cuimh.enabled", true);
         restoreSourceConfigs(prefs.getString("source.configs", ""));
         rebuildSourceClients();
         chapterDesc = prefs.getBoolean("chapter.desc", false);
@@ -6105,6 +6149,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.manhuazhan.enabled", manhuazhanEnabled);
         editor.putBoolean("source.bbyin.enabled", bbyinEnabled);
         editor.putBoolean("source.antbyw.enabled", antbywEnabled);
+        editor.putBoolean("source.cuimh.enabled", cuimhEnabled);
         editor.putString("source.configs", encodeSourceConfigs());
         editor.putBoolean("chapter.desc", chapterDesc);
         editor.putInt("theme.mode", themeMode);
@@ -6155,6 +6200,7 @@ public class MainActivity extends Activity {
             manhuazhanConfig = SourceConfig.manhuazhan(manhuazhanEnabled);
             bbyinConfig = SourceConfig.bbyin(bbyinEnabled);
             antbywConfig = SourceConfig.antbyw(antbywEnabled);
+            cuimhConfig = SourceConfig.cuimh(cuimhEnabled);
             return;
         }
         try {
@@ -6199,6 +6245,9 @@ public class MainActivity extends Activity {
                 } else if (SourceConfig.antbyw(true).id.equals(id)) {
                     antbywConfig = SourceConfig.fromJson(item, SourceConfig.antbyw(antbywEnabled));
                     antbywEnabled = antbywConfig.enabled;
+                } else if (SourceConfig.cuimh(true).id.equals(id)) {
+                    cuimhConfig = SourceConfig.fromJson(item, SourceConfig.cuimh(cuimhEnabled));
+                    cuimhEnabled = cuimhConfig.enabled;
                 }
             }
         } catch (JSONException ignored) {
@@ -6214,6 +6263,7 @@ public class MainActivity extends Activity {
             manhuazhanConfig = SourceConfig.manhuazhan(manhuazhanEnabled);
             bbyinConfig = SourceConfig.bbyin(bbyinEnabled);
             antbywConfig = SourceConfig.antbyw(antbywEnabled);
+            cuimhConfig = SourceConfig.cuimh(cuimhEnabled);
         }
     }
 
@@ -6232,6 +6282,7 @@ public class MainActivity extends Activity {
             array.put(manhuazhanConfig.withEnabled(manhuazhanEnabled).toJson());
             array.put(bbyinConfig.withEnabled(bbyinEnabled).toJson());
             array.put(antbywConfig.withEnabled(antbywEnabled).toJson());
+            array.put(cuimhConfig.withEnabled(cuimhEnabled).toJson());
             return array.toString();
         } catch (JSONException ignored) {
             return "[]";

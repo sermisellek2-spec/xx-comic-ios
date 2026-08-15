@@ -16,6 +16,10 @@ public interface ComicSource {
 
     List<ComicModels.ComicSummary> search(String keyword, int page) throws IOException;
 
+    default boolean supportsSearch() {
+        return true;
+    }
+
     List<String> categories() throws IOException;
 
     default List<ComicModels.FilterGroup> filterGroups() throws IOException {
