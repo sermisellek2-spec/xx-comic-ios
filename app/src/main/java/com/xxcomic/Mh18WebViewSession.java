@@ -18,6 +18,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -116,27 +117,34 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
 
-        LinearLayout page = new LinearLayout(activity);
-        page.setOrientation(LinearLayout.VERTICAL);
-        page.setBackgroundColor(UIHelpers.CARD);
-
-        LinearLayout header = new LinearLayout(activity);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setPadding(UIHelpers.dp(activity, 16), 0, UIHelpers.dp(activity, 14), 0);
-        header.setBackgroundColor(UIHelpers.CARD);
-        TextView title = UIHelpers.text(activity, "18漫画 · 安全验证", 16, UIHelpers.TEXT, Typeface.BOLD);
-        header.addView(title, new LinearLayout.LayoutParams(0, UIHelpers.dp(activity, 54), 1));
-        ProgressBar progress = new ProgressBar(activity, null, android.R.attr.progressBarStyleSmall);
-        progress.setIndeterminateTintList(ColorStateList.valueOf(UIHelpers.ACCENT));
-        header.addView(progress, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 22), UIHelpers.dp(activity, 22)));
-        TextView status = UIHelpers.text(activity, "正在连接", 12, UIHelpers.TEXT3, Typeface.NORMAL);
-        status.setGravity(Gravity.CENTER_VERTICAL);
-        status.setPadding(UIHelpers.dp(activity, 8), 0, 0, 0);
-        header.addView(status, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, UIHelpers.dp(activity, 54)));
-        page.addView(header, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, UIHelpers.dp(activity, 54)));
+        FrameLayout page = new FrameLayout(activity);
+        page.setBackgroundColor(Color.TRANSPARENT);
 
         WebView browser = new WebView(activity);
-        browser.setBackgroundColor(Color.WHITE);
+        browser.setAlpha(0.01f);
+        browser.setBackgroundColor(Color.TRANSPARENT);
+        page.addView(browser, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        LinearLayout statusCard = new LinearLayout(activity);
+        statusCard.setGravity(Gravity.CENTER_VERTICAL);
+        statusCard.setPadding(UIHelpers.dp(activity, 18), UIHelpers.dp(activity, 14),
+                UIHelpers.dp(activity, 18), UIHelpers.dp(activity, 14));
+        statusCard.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 10), UIHelpers.BORDER_SOFT));
+        ProgressBar progress = new ProgressBar(activity, null, android.R.attr.progressBarStyleSmall);
+        progress.setIndeterminateTintList(ColorStateList.valueOf(UIHelpers.ACCENT));
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
+                UIHelpers.dp(activity, 22), UIHelpers.dp(activity, 22));
+        progressParams.rightMargin = UIHelpers.dp(activity, 12);
+        statusCard.addView(progress, progressParams);
+        TextView status = UIHelpers.text(activity, "正在验证", 14, UIHelpers.TEXT, Typeface.BOLD);
+        status.setGravity(Gravity.CENTER_VERTICAL);
+        statusCard.addView(status, new LinearLayout.LayoutParams(
+                UIHelpers.dp(activity, 78), UIHelpers.dp(activity, 24)));
+        FrameLayout.LayoutParams statusParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER);
+        page.addView(statusCard, statusParams);
+
         WebSettings settings = browser.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -149,13 +157,13 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
             public void onPageStarted(WebView view, String pageUrl, android.graphics.Bitmap favicon) {
                 attempt.navigation++;
                 status.setText("正在验证");
+                progress.setVisibility(android.view.View.VISIBLE);
             }
 
             @Override
             public void onPageFinished(WebView view, String pageUrl) {
                 int navigation = attempt.navigation;
-                status.setText("正在确认");
-                inspectClearance(attempt, view, status, navigation);
+                inspectClearance(attempt, view, status, progress, navigation);
             }
 
             @Override
@@ -165,8 +173,6 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
                 }
             }
         });
-        page.addView(browser, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-
         Dialog verificationDialog = new Dialog(activity);
         verificationDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         verificationDialog.setContentView(page);
@@ -183,21 +189,23 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
         if (window != null) {
             window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             window.setBackgroundDrawableResource(android.R.color.transparent);
-            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-            window.setStatusBarColor(UIHelpers.CARD);
-            window.setNavigationBarColor(UIHelpers.CARD);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            WindowManager.LayoutParams params = window.getAttributes();
+            params.dimAmount = 0.16f;
+            window.setAttributes(params);
         }
         browser.loadUrl(url);
     }
 
-    private void inspectClearance(Attempt attempt, WebView browser, TextView status, int navigation) {
-        if (attempt.completed || navigation != attempt.navigation) return;
+    private void inspectClearance(Attempt attempt, WebView browser, TextView status,
+                                  ProgressBar progress, int navigation) {
+        if (attempt.completed || attempt.finishing || navigation != attempt.navigation) return;
         if (System.currentTimeMillis() - attempt.startedAt >= TIMEOUT_MS) {
             complete(attempt, null, "18漫画验证超时");
             return;
         }
         browser.evaluateJavascript("document.title", encodedTitle -> {
-            if (attempt.completed || navigation != attempt.navigation) return;
+            if (attempt.completed || attempt.finishing || navigation != attempt.navigation) return;
             String title = decodeJavascriptString(encodedTitle).toLowerCase(Locale.US);
             String cookie = CookieManager.getInstance().getCookie(VERIFY_URL);
             boolean challenge = title.contains("just a moment")
@@ -206,11 +214,15 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
                     || title.contains("请稍候");
             if (!TextUtils.isEmpty(cookie) && cookie.contains("cf_clearance=") && !challenge) {
                 CookieManager.getInstance().flush();
-                complete(attempt, new Mh18ComicSource.Clearance(cookie, browser.getSettings().getUserAgentString()), "");
+                attempt.finishing = true;
+                status.setText("验证完成");
+                progress.setVisibility(android.view.View.INVISIBLE);
+                browser.postDelayed(() -> complete(attempt, new Mh18ComicSource.Clearance(
+                        cookie, browser.getSettings().getUserAgentString()), ""), 550L);
                 return;
             }
-            status.setText(challenge ? "请完成验证" : "等待验证结果");
-            browser.postDelayed(() -> inspectClearance(attempt, browser, status, navigation), POLL_DELAY_MS);
+            status.setText("正在验证");
+            browser.postDelayed(() -> inspectClearance(attempt, browser, status, progress, navigation), POLL_DELAY_MS);
         });
     }
 
@@ -261,6 +273,7 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
         final CountDownLatch latch = new CountDownLatch(1);
         final long startedAt = System.currentTimeMillis();
         volatile boolean completed;
+        volatile boolean finishing;
         volatile Mh18ComicSource.Clearance result;
         volatile String error = "";
         int navigation;

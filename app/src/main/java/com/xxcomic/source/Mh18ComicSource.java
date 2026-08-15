@@ -3,7 +3,6 @@ package com.xxcomic.source;
 import android.os.Build;
 import android.text.Html;
 import android.text.TextUtils;
-import android.util.Base64;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -16,7 +15,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -35,17 +33,15 @@ public class Mh18ComicSource implements ComicSource {
     private static final Pattern META_PATTERN = Pattern.compile(
             "<meta[^>]+(?:property|name)=\"([^\"]+)\"[^>]+content=\"([^\"]*)\"",
             Pattern.CASE_INSENSITIVE);
-    private static final String GMH_IMAGE_PREFIX = "J7r";
-    private static final String GMH_IMAGE_SUFFIX = "nQ";
-    private static final String GMH_MARKER_ONE = "kD";
-    private static final String GMH_MARKER_TWO = "W4s";
-    private static final String GMH_SOURCE_ALPHABET = "_-9876543210abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private static final String GMH_TARGET_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    private static final Pattern SCRIPT_PATTERN = Pattern.compile("<script\\b([^>]*)>([\\s\\S]*?)</script>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern ANCHOR_PATTERN = Pattern.compile("<a\\b[^>]*>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern IMAGE_PATTERN = Pattern.compile("<img\\b[^>]*>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TAG_LINK_PATTERN = Pattern.compile(
+            "<a[^>]+href=[\"']/manga-tag/[^\"']+[\"'][^>]*>([\\s\\S]*?)</a>", Pattern.CASE_INSENSITIVE);
     private static final Clearance DEFAULT_CLEARANCE = new Clearance("", DESKTOP_USER_AGENT);
+
     private final SourceConfig config;
     private final BrowserSession browserSession;
-    private final Map<String, String> midCache = new HashMap<>();
-    private final Map<String, JSONObject> mangaCache = new HashMap<>();
 
     public static final class Clearance {
         public final String cookie;
@@ -98,7 +94,7 @@ public class Mh18ComicSource implements ComicSource {
 
     @Override
     public List<String> categories() {
-        return Arrays.asList("韩漫", "热门", "国漫", "日漫");
+        return Arrays.asList("韩漫", "真人写真", "日漫", "AI写真", "热门漫画");
     }
 
     @Override
@@ -137,73 +133,61 @@ public class Mh18ComicSource implements ComicSource {
     @Override
     public ComicModels.ComicDetail detail(String comicId) throws IOException {
         String rawId = rawComicId(comicId);
-        String html = fetchDetailHtml(rawId);
-        String mid = midFor(rawId, html);
-        JSONObject data = TextUtils.isEmpty(mid) ? null : mangaData(mid);
-        String title = data == null ? clean(meta(html, "og:title").replace("-18漫畫 - 18漫畫", "")) : data.optString("title");
-        String cover = data == null ? meta(html, "og:image") : data.optString("cover");
-        String description = data == null ? meta(html, "description") : data.optString("desc");
-        String status = "";
-        if (data != null) status = "1".equals(data.optString("status")) ? "连载中" : "已完结";
-        List<String> tags = new ArrayList<>();
-        ComicModels.ComicSummary summary = new ComicModels.ComicSummary(SOURCE_ID, PREFIX + rawId, clean(title), cleanUrl(cover), "", tags);
-        return new ComicModels.ComicDetail(summary, "", status, clean(description), "", new ArrayList<ComicModels.Chapter>());
+        String html = fetch(absolute(config.route("detail").replace("{comicId}", rawId)));
+        JSONObject data = structuredData(html, "ComicSeries");
+        String title = clean(data.optString("name"));
+        if (TextUtils.isEmpty(title)) title = clean(meta(html, "og:title").replaceFirst("-18漫畫\\s*-?\\s*18漫畫$", ""));
+        String cover = jsonString(data.opt("image"));
+        if (TextUtils.isEmpty(cover)) cover = meta(html, "og:image");
+        String description = clean(data.optString("description"));
+        if (TextUtils.isEmpty(description)) description = meta(html, "description");
+        String status = clean(data.optString("creativeWorkStatus"))
+                .replace("連載中", "连载中").replace("完結", "已完结");
+        String latestChapter = "";
+        JSONObject latest = data.optJSONObject("hasPart");
+        if (latest != null) latestChapter = clean(latest.optString("name"));
+        List<String> tags = jsonStrings(data.opt("genre"));
+        if (tags.isEmpty()) tags.addAll(parseTags(html));
+        ComicModels.ComicSummary summary = new ComicModels.ComicSummary(
+                SOURCE_ID, PREFIX + rawId, title, cleanUrl(cover), "", tags);
+        return new ComicModels.ComicDetail(summary, parseAuthors(data.opt("author")), status,
+                description, latestChapter, new ArrayList<ComicModels.Chapter>());
     }
 
     @Override
     public List<ComicModels.Chapter> chapters(String comicId) throws IOException {
         String rawId = rawComicId(comicId);
-        String mid = midFor(rawId, null);
-        JSONObject data = mangaData(mid);
-        JSONArray array = data.optJSONArray("chapters");
+        String html = fetch(absolute("/chapterlist/" + rawId));
         List<ComicModels.Chapter> chapters = new ArrayList<>();
-        List<ComicModels.Chapter> visibleChapters = new ArrayList<>();
-        if (array == null) return chapters;
-        for (int i = 0; i < array.length(); i++) {
-            JSONObject item = array.optJSONObject(i);
-            if (item == null) continue;
-            JSONObject attrs = item.optJSONObject("attributes");
-            if (attrs == null) continue;
-            String title = clean(attrs.optString("title"));
-            String slug = attrs.optString("slug");
-            String id = item.optString("id");
-            if (TextUtils.isEmpty(id) || TextUtils.isEmpty(slug) || TextUtils.isEmpty(title)) continue;
-            ComicModels.Chapter chapter = new ComicModels.Chapter(id, title, absolute(config.route("chapter").replace("{comicId}", rawId).replace("{chapterSlug}", slug)), 0, attrs.optInt("order", i));
-            chapters.add(chapter);
-            if (attrs.optInt("isAd", 0) == 0) visibleChapters.add(chapter);
+        Set<String> seen = new LinkedHashSet<>();
+        Matcher anchors = ANCHOR_PATTERN.matcher(html);
+        while (anchors.find()) {
+            String tag = anchors.group();
+            String href = attribute(tag, "href");
+            if (!href.matches("(?:https?://[^/]+)?/manga/" + Pattern.quote(rawId) + "/[^/?#]+") || !seen.add(href)) continue;
+            String chapterId = attribute(tag, "data-cs");
+            String title = clean(attribute(tag, "data-ct"));
+            if (TextUtils.isEmpty(chapterId) || TextUtils.isEmpty(title)) continue;
+            chapters.add(new ComicModels.Chapter(chapterId, title, absolute(href), 0, chapters.size()));
         }
-        return visibleChapters.isEmpty() ? chapters : visibleChapters;
+        if (chapters.isEmpty()) throw new IOException("18漫画目录解析失败");
+        return chapters;
     }
 
     @Override
     public ComicModels.ChapterPage chapter(String chapterUrl) throws IOException {
-        String rawComicId = rawComicId(chapterUrl);
-        String chapterSlug = rawChapterSlug(chapterUrl);
-        String mid = midFor(rawComicId, null);
-        JSONObject data = mangaData(mid);
-        JSONArray chapterArray = data.optJSONArray("chapters");
-        String chapterId = "";
-        String title = "";
-        if (chapterArray != null) {
-            for (int i = 0; i < chapterArray.length(); i++) {
-                JSONObject item = chapterArray.optJSONObject(i);
-                JSONObject attrs = item == null ? null : item.optJSONObject("attributes");
-                if (attrs != null && chapterSlug.equals(attrs.optString("slug"))) {
-                    chapterId = item.optString("id");
-                    title = attrs.optString("title");
-                    break;
-                }
-            }
+        String html = fetch(absolute(chapterUrl));
+        String contentTag = tagWithAttribute(html, "id", "chapterContent");
+        String mangaId = attribute(contentTag, "data-ms");
+        String chapterId = attribute(contentTag, "data-cs");
+        String title = clean(attribute(contentTag, "data-ct"));
+        if (!mangaId.matches("\\d+") || !chapterId.matches("\\d+")) {
+            throw new IOException("18漫画章节参数解析失败");
         }
-        List<String> images = new ArrayList<>();
-        if (!TextUtils.isEmpty(chapterId)) {
-            JSONObject info = chapterInfo(mid, chapterId).optJSONObject("info");
-            if (info != null) {
-                title = clean(info.optString("title", title));
-                images.addAll(decodeChapterImages(info.optJSONObject("images")));
-            }
-        }
-        return new ComicModels.ChapterPage(chapterUrl, clean(title), images, "");
+        String content = fetch(config.baseUrl + "/chapter/getcontent?m=" + mangaId + "&c=" + chapterId);
+        List<String> images = parseChapterImages(content);
+        if (images.isEmpty()) throw new IOException("18漫画正文图片解析失败");
+        return new ComicModels.ChapterPage(chapterUrl, title, images, "");
     }
 
     @Override
@@ -232,10 +216,10 @@ public class Mh18ComicSource implements ComicSource {
             String href = decode(matcher.group(1));
             String rawId = rawComicId(href);
             if (TextUtils.isEmpty(rawId) || !seen.add(rawId)) continue;
-            String cover = cleanUrl(matcher.group(2));
             String title = clean(matcher.group(3));
             if (title.matches("[a-z0-9\\-]+")) title = rawId.replace('-', ' ');
-            list.add(new ComicModels.ComicSummary(SOURCE_ID, PREFIX + rawId, title, cover, "", new ArrayList<String>()));
+            list.add(new ComicModels.ComicSummary(SOURCE_ID, PREFIX + rawId, title,
+                    cleanUrl(matcher.group(2)), "", new ArrayList<String>()));
         }
         return list;
     }
@@ -249,122 +233,92 @@ public class Mh18ComicSource implements ComicSource {
         return absolute(path);
     }
 
-    private JSONObject mangaData(String mid) throws IOException {
-        if (TextUtils.isEmpty(mid)) return new JSONObject();
-        JSONObject cached = mangaCache.get(mid);
-        if (cached != null) return cached;
-        try {
-            String json = fetch(config.route("mangaApi").replace("{mid}", mid));
-            JSONObject root = new JSONObject(json);
-            JSONObject data = root.optJSONObject("data");
-            JSONObject result = data == null ? new JSONObject() : data;
-            String slug = result.optString("slug");
-            if (!TextUtils.isEmpty(slug)) midCache.put(slug, mid);
-            mangaCache.put(mid, result);
-            return result;
-        } catch (Exception error) {
-            throw new IOException("18漫画详情解析失败", error);
+    private JSONObject structuredData(String html, String type) {
+        Matcher scripts = SCRIPT_PATTERN.matcher(html == null ? "" : html);
+        while (scripts.find()) {
+            if (!"application/ld+json".equalsIgnoreCase(attribute(scripts.group(1), "type"))) continue;
+            try {
+                JSONObject object = new JSONObject(scripts.group(2).trim());
+                if (type.equalsIgnoreCase(object.optString("@type"))) return object;
+            } catch (Exception ignored) {
+            }
         }
+        return new JSONObject();
     }
 
-    private JSONObject chapterInfo(String mid, String chapterId) throws IOException {
-        try {
-            String json = fetch(config.route("chapterApi").replace("{mid}", mid).replace("{chapterId}", chapterId));
-            JSONObject data = new JSONObject(json).optJSONObject("data");
-            return data == null ? new JSONObject() : data;
-        } catch (Exception error) {
-            throw new IOException("18漫画章节解析失败", error);
+    private String parseAuthors(Object value) {
+        List<String> authors = new ArrayList<>();
+        if (value instanceof JSONArray) {
+            JSONArray array = (JSONArray) value;
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject author = array.optJSONObject(i);
+                String name = author == null ? clean(array.optString(i)) : clean(author.optString("name"));
+                if (!TextUtils.isEmpty(name)) authors.add(name);
+            }
+        } else if (value instanceof JSONObject) {
+            String name = clean(((JSONObject) value).optString("name"));
+            if (!TextUtils.isEmpty(name)) authors.add(name);
+        } else if (value != null) {
+            String name = clean(String.valueOf(value));
+            if (!TextUtils.isEmpty(name)) authors.add(name);
         }
+        return TextUtils.join(" / ", authors);
     }
 
-    private String fetchDetailHtml(String rawId) throws IOException {
-        String html = fetch(absolute(config.route("detail").replace("{comicId}", rawId)));
-        String mid = first(html, "data-mid=\"(\\d+)\"");
-        if (!TextUtils.isEmpty(mid)) midCache.put(rawId, mid);
-        return html;
+    private List<String> jsonStrings(Object value) {
+        List<String> values = new ArrayList<>();
+        if (value instanceof JSONArray) {
+            JSONArray array = (JSONArray) value;
+            for (int i = 0; i < array.length(); i++) {
+                String item = clean(array.optString(i));
+                if (!TextUtils.isEmpty(item)) values.add(item);
+            }
+        } else if (value != null) {
+            String item = clean(String.valueOf(value));
+            if (!TextUtils.isEmpty(item)) values.add(item);
+        }
+        return values;
     }
 
-    private String midFor(String rawId, String html) throws IOException {
-        String cached = midCache.get(rawId);
-        if (!TextUtils.isEmpty(cached)) return cached;
-        String sourceHtml = html == null ? fetchDetailHtml(rawId) : html;
-        String mid = first(sourceHtml, "data-mid=\"(\\d+)\"");
-        if (!TextUtils.isEmpty(mid)) midCache.put(rawId, mid);
-        return mid;
+    private List<String> parseTags(String html) {
+        List<String> tags = new ArrayList<>();
+        Matcher matcher = TAG_LINK_PATTERN.matcher(html == null ? "" : html);
+        while (matcher.find()) {
+            String tag = clean(matcher.group(1)).replaceFirst("^#", "");
+            if (!TextUtils.isEmpty(tag) && !tags.contains(tag)) tags.add(tag);
+        }
+        return tags;
     }
 
-    private List<String> decodeChapterImages(JSONObject imagesObject) throws IOException {
+    private List<String> parseChapterImages(String html) {
         List<String> images = new ArrayList<>();
-        if (imagesObject == null) return images;
-        JSONArray plain = imagesObject.optJSONArray("images");
-        if (plain != null) {
-            for (int i = 0; i < plain.length(); i++) addImageUrl(images, imagesObject, plain.opt(i));
-            return images;
+        Matcher matcher = IMAGE_PATTERN.matcher(html == null ? "" : html);
+        while (matcher.find()) {
+            String tag = matcher.group();
+            if (!clean(attribute(tag, "alt")).matches("^\\d+\\s.*")) continue;
+            String url = attribute(tag, "data-src");
+            if (TextUtils.isEmpty(url)) url = attribute(tag, "src");
+            url = cleanUrl(url);
+            if ((url.startsWith("http://") || url.startsWith("https://")) && !images.contains(url)) images.add(url);
         }
-        String encrypted = imagesObject.optString("images");
-        if (TextUtils.isEmpty(encrypted)) return images;
-        try {
-            JSONArray decoded = new JSONArray(decodeEncryptedImages(encrypted));
-            for (int i = 0; i < decoded.length(); i++) addImageUrl(images, imagesObject, decoded.opt(i));
-            return images;
-        } catch (Exception error) {
-            throw new IOException("18漫画图片解密失败", error);
-        }
+        return images;
     }
 
-    private void addImageUrl(List<String> images, JSONObject imagesObject, Object item) {
-        String url = "";
-        if (item instanceof JSONObject) url = ((JSONObject) item).optString("url");
-        else if (item != null) url = String.valueOf(item);
-        url = cleanUrl(url);
-        if (TextUtils.isEmpty(url)) return;
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            String host = cleanUrl(imagesObject.optString("host"));
-            if (TextUtils.isEmpty(host)) host = hostForLine(imagesObject.optInt("line", 1));
-            url = host + (url.startsWith("/") ? url : "/" + url);
-        }
-        if (!images.contains(url)) images.add(url);
+    private String tagWithAttribute(String html, String name, String value) {
+        Matcher tags = Pattern.compile("<[^>]+>", Pattern.CASE_INSENSITIVE).matcher(html == null ? "" : html);
+        while (tags.find()) if (value.equals(attribute(tags.group(), name))) return tags.group();
+        return "";
     }
 
-    private String hostForLine(int line) {
-        if (line == 2) return "https://f40-1-4.g-mh.online";
-        return "https://t40-1-4.g-mh.online";
+    private String attribute(String tag, String name) {
+        Matcher matcher = Pattern.compile("\\b" + Pattern.quote(name) + "\\s*=\\s*([\"'])([\\s\\S]*?)\\1", Pattern.CASE_INSENSITIVE)
+                .matcher(tag == null ? "" : tag);
+        return matcher.find() ? decode(matcher.group(2)) : "";
     }
 
-    private String decodeEncryptedImages(String encrypted) throws Exception {
-        if (!encrypted.startsWith(GMH_IMAGE_PREFIX) || !encrypted.endsWith(GMH_IMAGE_SUFFIX)) {
-            throw new IllegalArgumentException("bad boundary");
-        }
-        String body = encrypted.substring(GMH_IMAGE_PREFIX.length(), encrypted.length() - GMH_IMAGE_SUFFIX.length());
-        int payloadLength = body.length() - GMH_MARKER_ONE.length() - GMH_MARKER_TWO.length();
-        int tailLength = payloadLength / 3;
-        int headLength = (payloadLength - tailLength) / 2;
-        int middleLength = payloadLength - tailLength - headLength;
-        int markerOneStart = headLength;
-        int middleStart = markerOneStart + GMH_MARKER_ONE.length();
-        int markerTwoStart = middleStart + middleLength;
-        int tailStart = markerTwoStart + GMH_MARKER_TWO.length();
-        if (!GMH_MARKER_ONE.equals(body.substring(markerOneStart, middleStart))
-                || !GMH_MARKER_TWO.equals(body.substring(markerTwoStart, tailStart))) {
-            throw new IllegalArgumentException("bad markers");
-        }
-        String head = body.substring(0, headLength);
-        String middle = body.substring(middleStart, markerTwoStart);
-        String tail = body.substring(tailStart);
-        String mixed = tail + head + middle;
-        StringBuilder restored = new StringBuilder(mixed.length());
-        for (int i = 0, index = 0; i < mixed.length(); i += 7, index++) {
-            String chunk = mixed.substring(i, Math.min(i + 7, mixed.length()));
-            restored.append(index % 2 == 0 ? chunk : new StringBuilder(chunk).reverse().toString());
-        }
-        StringBuilder base64Url = new StringBuilder(restored.length());
-        for (int i = 0; i < restored.length(); i++) {
-            int position = GMH_SOURCE_ALPHABET.indexOf(restored.charAt(i));
-            if (position < 0) throw new IllegalArgumentException("bad alphabet");
-            base64Url.append(GMH_TARGET_ALPHABET.charAt(position));
-        }
-        byte[] decoded = Base64.decode(base64Url.toString(), Base64.URL_SAFE | Base64.NO_WRAP);
-        return new String(decoded, "UTF-8");
+    private String jsonString(Object value) {
+        if (value instanceof JSONObject) return clean(((JSONObject) value).optString("url"));
+        return value == null ? "" : clean(String.valueOf(value));
     }
 
     private String fetch(String url) throws IOException {
@@ -430,11 +384,6 @@ public class Mh18ComicSource implements ComicSource {
         }
     }
 
-    private String first(String html, String pattern) {
-        Matcher matcher = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE).matcher(html == null ? "" : html);
-        return matcher.find() ? clean(matcher.group(1)) : "";
-    }
-
     private String meta(String html, String key) {
         Matcher matcher = META_PATTERN.matcher(html == null ? "" : html);
         while (matcher.find()) if (key.equals(matcher.group(1))) return clean(matcher.group(2));
@@ -449,14 +398,6 @@ public class Mh18ComicSource implements ComicSource {
         int slash = value.indexOf('/');
         if (slash >= 0) value = value.substring(0, slash);
         return value.trim();
-    }
-
-    private String rawChapterSlug(String value) {
-        if (value == null) return "";
-        int query = value.indexOf('?');
-        if (query >= 0) value = value.substring(0, query);
-        int slash = value.lastIndexOf('/');
-        return slash >= 0 ? value.substring(slash + 1).trim() : value.trim();
     }
 
     private String absolute(String url) {
@@ -480,8 +421,6 @@ public class Mh18ComicSource implements ComicSource {
     }
 
     private String cleanUrl(String value) {
-        String decoded = decode(value).replace("\\/", "/");
-        int amp = decoded.indexOf("&");
-        return amp > 0 ? decoded.substring(0, amp) : decoded;
+        return decode(value).replace("\\/", "/").trim();
     }
 }

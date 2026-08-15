@@ -4233,7 +4233,7 @@ public class MainActivity extends Activity {
             return TextUtils.isEmpty(pageReferer) ? manhuazhanConfig.referer : pageReferer;
         }
         if (imageUrl != null && (imageUrl.contains(aikanConfig.domain) || imageUrl.contains("qrqrs.com"))) return aikanConfig.referer;
-        if (imageUrl != null && imageUrl.contains(mh18Config.domain)) {
+        if (imageUrl != null && (imageUrl.contains(mh18Config.domain) || imageUrl.contains("mangabuddy.in"))) {
             return TextUtils.isEmpty(pageReferer) ? mh18Config.referer : pageReferer;
         }
         if (imageUrl != null && (imageUrl.contains(gmhConfig.domain) || imageUrl.contains("g-mh.online") || imageUrl.contains("6wm.top"))) {

@@ -104,12 +104,13 @@ public class SourceConfig {
             routes.put("category", "/manga{genrePath}{pagePath}");
             routes.put("detail", "/manga/{comicId}");
             routes.put("chapter", "/manga/{comicId}/{chapterSlug}");
-            routes.put("mangaApi", "https://v2.apikk.top/api/v2/manga/get?mid={mid}&mode=all");
-            routes.put("chapterApi", "https://v2.apikk.top/api/v2/chapter/getinfo?m={mid}&c={chapterId}");
-            filters.put("genre.kr", "kr");
+            filters.put("genre.kr", "hanman");
             filters.put("genre.hots", "hots");
-            filters.put("genre.cn", "cn");
-            filters.put("genre.jp", "jp");
+            filters.put("genre.jp", "riman");
+            filters.put("genre.hanman", "hanman");
+            filters.put("genre.zhenrenxiezhen", "zhenrenxiezhen");
+            filters.put("genre.riman", "riman");
+            filters.put("genre.aixiezhen", "aixiezhen");
             filters.put("genre.all", "");
         } catch (JSONException ignored) {
         }
