@@ -41,10 +41,6 @@ public class Mh18ComicSource implements ComicSource {
     private final SourceConfig config;
     private final BrowserSession browserSession;
 
-    public interface BrowserSession {
-        String fetch(String url) throws IOException;
-    }
-
     private static final class CloudflareChallengeException extends IOException {
         CloudflareChallengeException() {
             super("18漫画需要浏览器验证");

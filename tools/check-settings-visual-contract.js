@@ -43,7 +43,7 @@ check("hand preference preview matches the real reader mapping", theme.includes(
 check("source page uses an overflow action sheet", sources.includes("sourceOverflowButton")
   && sourceMenu.includes("导入") && sourceMenu.includes("导出") && sourceMenu.includes("检测可用性"));
 check("source rows preserve direct enable switches", main.includes("sourceSwitch")
-  && (sources.match(/finishSourceToggle\(\);/g) || []).length === 13);
+  && (sources.match(/finishSourceToggle\(\);/g) || []).length === 14);
 check("cache page separates cleared and retained data", cache.includes("将被清理")
   && cache.includes("始终保留") && cache.includes("确认清理"));
 check("error logs use list and detail scenes", logs.includes("showErrorLogDetail")

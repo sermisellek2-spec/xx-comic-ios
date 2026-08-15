@@ -1,7 +1,6 @@
 package com.xxcomic;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -11,8 +10,6 @@ import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -24,7 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.xxcomic.source.Mh18ComicSource;
+import com.xxcomic.source.BrowserSession;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -35,18 +32,19 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
-    private static final String VERIFY_URL = "https://18mh.org/manga";
+final class CloudflareWebViewSession implements BrowserSession {
     private static final String BRIDGE_NAME = "XXComicBridge";
     private static final long TIMEOUT_MS = 180000L;
     private static final long POLL_DELAY_MS = 800L;
 
     private final Activity activity;
     private final Handler main;
+    private final String sourceName;
+    private final String verifyUrl;
     private final Object requestLock = new Object();
     private final AtomicInteger requestSequence = new AtomicInteger();
     private volatile boolean shutdown;
-    private Dialog dialog;
+    private FrameLayout host;
     private WebView webView;
     private View statusCard;
     private ProgressBar progress;
@@ -54,37 +52,38 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
     private FetchRequest activeRequest;
     private int navigation;
     private boolean browserReady;
-    private boolean closingViews;
 
-    Mh18WebViewSession(Activity activity, Handler main) {
+    CloudflareWebViewSession(Activity activity, Handler main, String sourceName, String verifyUrl) {
         this.activity = activity;
         this.main = main;
+        this.sourceName = sourceName;
+        this.verifyUrl = verifyUrl;
     }
 
     @Override
     public String fetch(String url) throws IOException {
         if (Looper.myLooper() == Looper.getMainLooper()) {
-            throw new IOException("18漫画请求不能阻塞主线程");
+            throw new IOException(sourceName + "请求不能阻塞主线程");
         }
         synchronized (requestLock) {
-            if (shutdown) throw new IOException("18漫画浏览器会话已停止");
+            if (shutdown) throw new IOException(sourceName + "浏览器会话已停止");
             FetchRequest request = new FetchRequest(
                     Integer.toString(requestSequence.incrementAndGet()), url);
             main.post(() -> startRequest(request));
             try {
                 if (!request.latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                     request.cancelled = true;
-                    main.post(() -> complete(request, null, "18漫画请求超时"));
-                    throw new IOException("18漫画请求超时");
+                    main.post(() -> complete(request, null, sourceName + "请求超时"));
+                    throw new IOException(sourceName + "请求超时");
                 }
             } catch (InterruptedException interrupted) {
                 request.cancelled = true;
-                main.post(() -> complete(request, null, "18漫画请求已取消"));
+                main.post(() -> complete(request, null, sourceName + "请求已取消"));
                 Thread.currentThread().interrupt();
-                throw new IOException("18漫画请求已取消", interrupted);
+                throw new IOException(sourceName + "请求已取消", interrupted);
             }
             if (!TextUtils.isEmpty(request.error)) throw new IOException(request.error);
-            if (request.result == null) throw new IOException("18漫画请求未完成");
+            if (request.result == null) throw new IOException(sourceName + "请求未完成");
             return request.result;
         }
     }
@@ -92,7 +91,7 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
     void shutdown() {
         shutdown = true;
         Runnable close = () -> {
-            if (activeRequest != null) complete(activeRequest, null, "18漫画浏览器会话已停止");
+            if (activeRequest != null) complete(activeRequest, null, sourceName + "浏览器会话已停止");
             closeViews();
         };
         if (Looper.myLooper() == Looper.getMainLooper()) close.run();
@@ -101,12 +100,12 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
 
     private void startRequest(FetchRequest request) {
         if (request.cancelled) return;
-        if (shutdown || activity.isFinishing()) {
-            complete(request, null, "18漫画浏览器会话无法打开");
+        if (shutdown || activity.isFinishing() || activity.isDestroyed()) {
+            complete(request, null, sourceName + "浏览器会话无法打开");
             return;
         }
         if (activeRequest != null && !activeRequest.completed) {
-            complete(request, null, "18漫画浏览器会话正忙");
+            complete(request, null, sourceName + "浏览器会话正忙");
             return;
         }
         activeRequest = request;
@@ -115,19 +114,24 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
             if (browserReady) executeFetch(request);
             else beginVerification(request);
         } catch (Exception error) {
-            complete(request, null, "18漫画浏览器会话启动失败");
+            complete(request, null, sourceName + "浏览器会话启动失败");
         }
     }
 
     private void ensureViews() {
-        if (webView != null && dialog != null && dialog.isShowing()) return;
+        if (webView != null && host != null && host.getParent() != null) return;
+        ViewGroup content = activity.findViewById(android.R.id.content);
+        if (content == null) throw new IllegalStateException("Missing activity content view");
 
         FrameLayout page = new FrameLayout(activity);
         page.setBackgroundColor(Color.TRANSPARENT);
+        page.setClickable(false);
+        page.setFocusable(false);
 
         WebView browser = new WebView(activity);
         browser.setAlpha(0.01f);
         browser.setBackgroundColor(Color.TRANSPARENT);
+        browser.setClickable(false);
         page.addView(browser, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -172,36 +176,20 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
             @Override
             public void onPageFinished(WebView view, String url) {
                 FetchRequest request = activeRequest;
-                if (request != null && request.verifying) {
-                    inspectVerification(request, view, navigation);
-                }
+                if (request != null && request.verifying) inspectVerification(request, view, navigation);
             }
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 FetchRequest active = activeRequest;
                 if (active != null && active.verifying && request != null && request.isForMainFrame()) {
-                    complete(active, null, "18漫画验证页面加载失败");
+                    complete(active, null, sourceName + "验证页面加载失败");
                 }
             }
         });
 
-        Dialog sessionDialog = new Dialog(activity);
-        sessionDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        sessionDialog.setContentView(page);
-        sessionDialog.setCancelable(true);
-        sessionDialog.setCanceledOnTouchOutside(false);
-        sessionDialog.setOnCancelListener(ignored -> {
-            if (activeRequest != null) complete(activeRequest, null, "18漫画验证已取消");
-        });
-        sessionDialog.setOnDismissListener(ignored -> {
-            if (!closingViews && !shutdown) releaseDismissedViews();
-        });
-        sessionDialog.show();
-        Window window = sessionDialog.getWindow();
-        if (window != null) window.setBackgroundDrawableResource(android.R.color.transparent);
-
-        dialog = sessionDialog;
+        content.addView(page, backgroundLayoutParams());
+        host = page;
         webView = browser;
         statusCard = card;
         progress = spinner;
@@ -209,28 +197,27 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
     }
 
     private void beginVerification(FetchRequest request) {
-        if (request.cancelled || request.completed || activeRequest != request) return;
+        if (!isActive(request)) return;
         if (request.verificationAttempts >= 1) {
             browserReady = false;
-            complete(request, null, "18漫画验证后仍被拦截");
+            complete(request, null, sourceName + "验证后仍被拦截");
             return;
         }
         request.verificationAttempts++;
         request.verifying = true;
         browserReady = false;
-        showVerificationWindow();
-        webView.loadUrl(VERIFY_URL);
+        showVerificationView();
+        webView.loadUrl(verifyUrl);
     }
 
     private void inspectVerification(FetchRequest request, WebView browser, int expectedNavigation) {
         if (!isActive(request) || !request.verifying || expectedNavigation != navigation) return;
         if (System.currentTimeMillis() - request.startedAt >= TIMEOUT_MS) {
-            complete(request, null, "18漫画验证超时");
+            complete(request, null, sourceName + "验证超时");
             return;
         }
         String script = "(function(){return JSON.stringify({"
-                + "title:document.title||'',"
-                + "text:(document.body&&document.body.innerText||'').slice(0,2400),"
+                + "title:document.title||'',text:(document.body&&document.body.innerText||'').slice(0,2400),"
                 + "ready:document.readyState||'',url:location.href||''});})()";
         browser.evaluateJavascript(script, encoded -> {
             if (!isActive(request) || !request.verifying || expectedNavigation != navigation) return;
@@ -254,18 +241,18 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
                 showVerifiedState();
                 browser.postDelayed(() -> {
                     if (!isActive(request)) return;
-                    showBackgroundWindow();
+                    showBackgroundView();
                     executeFetch(request);
                 }, 550L);
             } catch (Exception error) {
-                complete(request, null, "18漫画验证结果解析失败");
+                complete(request, null, sourceName + "验证结果解析失败");
             }
         });
     }
 
     private void executeFetch(FetchRequest request) {
         if (!isActive(request)) return;
-        showBackgroundWindow();
+        showBackgroundView();
         String script = "(function(){var id=" + JSONObject.quote(request.id)
                 + ",url=" + JSONObject.quote(request.url) + ";"
                 + "fetch(url,{credentials:'include',redirect:'follow',headers:{Accept:'text/html,application/json;q=0.9,*/*;q=0.8'}})"
@@ -282,9 +269,8 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
         if (request == null || !request.id.equals(id) || !isActive(request)) return;
         try {
             JSONObject response = new JSONObject(payload == null ? "" : payload);
-            String error = response.optString("error");
-            if (!TextUtils.isEmpty(error)) {
-                complete(request, null, "18漫画浏览器请求失败");
+            if (!TextUtils.isEmpty(response.optString("error"))) {
+                complete(request, null, sourceName + "浏览器请求失败");
                 return;
             }
             int statusCode = response.optInt("status", 0);
@@ -295,19 +281,18 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
                 return;
             }
             if (statusCode < 200 || statusCode >= 400) {
-                complete(request, null, "18漫画请求失败：HTTP " + statusCode);
+                complete(request, null, sourceName + "请求失败：HTTP " + statusCode);
                 return;
             }
             complete(request, body, "");
         } catch (Exception error) {
-            complete(request, null, "18漫画浏览器响应解析失败");
+            complete(request, null, sourceName + "浏览器响应解析失败");
         }
     }
 
     private boolean isChallenge(String url, String title, String body, int statusCode, String mitigated) {
-        String content = ((url == null ? "" : url) + " "
-                + (title == null ? "" : title) + " "
-                + (body == null ? "" : body)).toLowerCase(Locale.US);
+        String content = ((url == null ? "" : url) + " " + (title == null ? "" : title)
+                + " " + (body == null ? "" : body)).toLowerCase(Locale.US);
         return (statusCode == 403 && "challenge".equalsIgnoreCase(mitigated))
                 || content.contains("/cdn-cgi/challenge-platform")
                 || content.contains("cf-chl-")
@@ -326,39 +311,35 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
                 && activeRequest == request && !shutdown;
     }
 
-    private void showVerificationWindow() {
-        if (dialog == null) return;
-        dialog.setCancelable(true);
+    private void showVerificationView() {
+        if (host == null) return;
+        host.setLayoutParams(verificationLayoutParams());
+        host.setBackgroundColor(Color.argb(42, 18, 39, 56));
+        host.setClickable(true);
+        host.setFocusable(true);
+        if (webView != null) webView.setClickable(true);
         if (statusCard != null) statusCard.setVisibility(View.VISIBLE);
         showVerifyingState();
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-        WindowManager.LayoutParams params = window.getAttributes();
-        params.width = ViewGroup.LayoutParams.MATCH_PARENT;
-        params.height = ViewGroup.LayoutParams.MATCH_PARENT;
-        params.gravity = Gravity.CENTER;
-        params.dimAmount = 0.16f;
-        window.setAttributes(params);
+        host.bringToFront();
     }
 
-    private void showBackgroundWindow() {
-        if (dialog == null) return;
-        dialog.setCancelable(false);
+    private void showBackgroundView() {
+        if (host == null) return;
+        host.setLayoutParams(backgroundLayoutParams());
+        host.setBackgroundColor(Color.TRANSPARENT);
+        host.setClickable(false);
+        host.setFocusable(false);
+        if (webView != null) webView.setClickable(false);
         if (statusCard != null) statusCard.setVisibility(View.GONE);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-        window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
-        WindowManager.LayoutParams params = window.getAttributes();
-        params.width = 1;
-        params.height = 1;
-        params.gravity = Gravity.TOP | Gravity.START;
-        params.dimAmount = 0f;
-        window.setAttributes(params);
+    }
+
+    private FrameLayout.LayoutParams verificationLayoutParams() {
+        return new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER);
+    }
+
+    private FrameLayout.LayoutParams backgroundLayoutParams() {
+        return new FrameLayout.LayoutParams(1, 1, Gravity.TOP | Gravity.START);
     }
 
     private void showVerifyingState() {
@@ -386,44 +367,28 @@ final class Mh18WebViewSession implements Mh18ComicSource.BrowserSession {
         request.result = result;
         request.error = error == null ? "" : error;
         if (activeRequest == request) activeRequest = null;
-        if (!shutdown && webView != null) showBackgroundWindow();
+        if (!shutdown && webView != null) showBackgroundView();
         request.latch.countDown();
-    }
-
-    private void releaseDismissedViews() {
-        WebView browser = webView;
-        webView = null;
-        dialog = null;
-        statusCard = null;
-        progress = null;
-        status = null;
-        browserReady = false;
-        if (browser != null) {
-            browser.stopLoading();
-            browser.removeJavascriptInterface(BRIDGE_NAME);
-            browser.removeAllViews();
-            browser.destroy();
-        }
     }
 
     private void closeViews() {
         WebView browser = webView;
-        Dialog sessionDialog = dialog;
+        FrameLayout page = host;
         webView = null;
-        dialog = null;
+        host = null;
         statusCard = null;
         progress = null;
         status = null;
         browserReady = false;
-        closingViews = true;
+        if (page != null && page.getParent() instanceof ViewGroup) {
+            ((ViewGroup) page.getParent()).removeView(page);
+        }
         if (browser != null) {
             browser.stopLoading();
             browser.removeJavascriptInterface(BRIDGE_NAME);
             browser.removeAllViews();
             browser.destroy();
         }
-        if (sessionDialog != null && sessionDialog.isShowing()) sessionDialog.dismiss();
-        closingViews = false;
     }
 
     private final class FetchBridge {

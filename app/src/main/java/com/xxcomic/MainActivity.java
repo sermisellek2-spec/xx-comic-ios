@@ -10,7 +10,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
@@ -54,6 +56,7 @@ import com.xxcomic.source.FiveUmComicSource;
 import com.xxcomic.source.ManbenComicSource;
 import com.xxcomic.source.GmhComicSource;
 import com.xxcomic.source.Mh18ComicSource;
+import com.xxcomic.source.JmComicSource;
 import com.xxcomic.source.HiperdexComicSource;
 import com.xxcomic.source.ManhuaguiComicSource;
 import com.xxcomic.source.Hanman18ComicSource;
@@ -99,6 +102,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends Activity {
     private static final String PREFS_NAME = "xx-comic";
@@ -162,6 +167,7 @@ public class MainActivity extends Activity {
     private ComicSource aikanClient;
     private ComicSource gmhClient;
     private ComicSource mh18Client;
+    private ComicSource jmcomicClient;
     private ComicSource mkzhanClient;
     private ComicSource hiperdexClient;
     private ComicSource manhuaguiClient;
@@ -172,11 +178,13 @@ public class MainActivity extends Activity {
     private ComicSource bbyinClient;
     private ComicSource antbywClient;
     private ComicSource cuimhClient;
-    private Mh18WebViewSession mh18WebViewSession;
+    private CloudflareWebViewSession mh18BrowserSession;
+    private CloudflareWebViewSession jmcomicBrowserSession;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
     private SourceConfig aikanConfig = SourceConfig.aikan(true);
     private SourceConfig gmhConfig = SourceConfig.gmh(true);
     private SourceConfig mh18Config = SourceConfig.mh18(true);
+    private SourceConfig jmcomicConfig = SourceConfig.jmcomic(true);
     private SourceConfig mkzhanConfig = SourceConfig.mkzhan(true);
     private SourceConfig hiperdexConfig = SourceConfig.hiperdex(true);
     private SourceConfig manhuaguiConfig = SourceConfig.manhuagui(true);
@@ -223,6 +231,7 @@ public class MainActivity extends Activity {
     private boolean aikanEnabled = true;
     private boolean gmhEnabled = true;
     private boolean mh18Enabled = true;
+    private boolean jmcomicEnabled = true;
     private boolean mkzhanEnabled = true;
     private boolean hiperdexEnabled = true;
     private boolean manhuaguiEnabled = true;
@@ -334,7 +343,10 @@ public class MainActivity extends Activity {
         applyThemeAndSystemBars();
         root = new FrameLayout(this);
         setContentView(root);
-        mh18WebViewSession = new Mh18WebViewSession(this, main);
+        mh18BrowserSession = new CloudflareWebViewSession(
+                this, main, mh18Config.name, mh18Config.baseUrl + "/manga");
+        jmcomicBrowserSession = new CloudflareWebViewSession(
+                this, main, jmcomicConfig.name, jmcomicConfig.baseUrl + "/theme/");
         rebuildSourceClients();
         restoreLocalState();
         applyThemeAndSystemBars();
@@ -358,7 +370,8 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        if (mh18WebViewSession != null) mh18WebViewSession.shutdown();
+        if (mh18BrowserSession != null) mh18BrowserSession.shutdown();
+        if (jmcomicBrowserSession != null) jmcomicBrowserSession.shutdown();
         super.onDestroy();
         activityDestroyed = true;
         cancelUpdateDownload();
@@ -1278,6 +1291,12 @@ public class MainActivity extends Activity {
         addSourceCard(enabledSources, disabledSources, mh18Enabled, sourceCard(mh18Config.name, mh18Config.domain, mh18Enabled, () -> {
             mh18Enabled = !mh18Enabled;
             mh18Config = mh18Config.withEnabled(mh18Enabled);
+            rebuildSourceClients();
+            finishSourceToggle();
+        }));
+        addSourceCard(enabledSources, disabledSources, jmcomicEnabled, sourceCard(jmcomicConfig.name, jmcomicConfig.domain, jmcomicEnabled, () -> {
+            jmcomicEnabled = !jmcomicEnabled;
+            jmcomicConfig = jmcomicConfig.withEnabled(jmcomicEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
@@ -3145,6 +3164,7 @@ public class MainActivity extends Activity {
         if (aikanClient.id().equals(sourceId)) return aikanClient.name();
         if (gmhClient.id().equals(sourceId)) return gmhClient.name();
         if (mh18Client.id().equals(sourceId)) return mh18Client.name();
+        if (jmcomicClient.id().equals(sourceId)) return jmcomicClient.name();
         if (mkzhanClient.id().equals(sourceId)) return mkzhanClient.name();
         if (hiperdexClient.id().equals(sourceId)) return hiperdexClient.name();
         if (manhuaguiClient.id().equals(sourceId)) return manhuaguiClient.name();
@@ -3166,6 +3186,7 @@ public class MainActivity extends Activity {
         if (aikanClient.id().equals(selectedSourceId) && aikanEnabled) return aikanClient;
         if (gmhClient.id().equals(selectedSourceId) && gmhEnabled) return gmhClient;
         if (mh18Client.id().equals(selectedSourceId) && mh18Enabled) return mh18Client;
+        if (jmcomicClient.id().equals(selectedSourceId) && jmcomicEnabled) return jmcomicClient;
         if (mkzhanClient.id().equals(selectedSourceId) && mkzhanEnabled) return mkzhanClient;
         if (hiperdexClient.id().equals(selectedSourceId) && hiperdexEnabled) return hiperdexClient;
         if (manhuaguiClient.id().equals(selectedSourceId) && manhuaguiEnabled) return manhuaguiClient;
@@ -3188,6 +3209,7 @@ public class MainActivity extends Activity {
         if (aikanEnabled) sources.add(aikanClient);
         if (gmhEnabled) sources.add(gmhClient);
         if (mh18Enabled) sources.add(mh18Client);
+        if (jmcomicEnabled) sources.add(jmcomicClient);
         if (mkzhanEnabled) sources.add(mkzhanClient);
         if (hiperdexEnabled) sources.add(hiperdexClient);
         if (manhuaguiEnabled) sources.add(manhuaguiClient);
@@ -3216,6 +3238,7 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(aikanClient.id() + ":")) return aikanClient;
         if (comicId != null && comicId.startsWith(gmhClient.id() + ":")) return gmhClient;
         if (comicId != null && comicId.startsWith(mh18Client.id() + ":")) return mh18Client;
+        if (comicId != null && comicId.startsWith(jmcomicClient.id() + ":")) return jmcomicClient;
         if (comicId != null && comicId.startsWith(mkzhanClient.id() + ":")) return mkzhanClient;
         if (comicId != null && comicId.startsWith(hiperdexClient.id() + ":")) return hiperdexClient;
         if (comicId != null && comicId.startsWith(manhuaguiClient.id() + ":")) return manhuaguiClient;
@@ -3240,6 +3263,7 @@ public class MainActivity extends Activity {
         if (aikanClient.id().equals(sourceId)) return aikanClient;
         if (gmhClient.id().equals(sourceId)) return gmhClient;
         if (mh18Client.id().equals(sourceId)) return mh18Client;
+        if (jmcomicClient.id().equals(sourceId)) return jmcomicClient;
         if (mkzhanClient.id().equals(sourceId)) return mkzhanClient;
         if (hiperdexClient.id().equals(sourceId)) return hiperdexClient;
         if (manhuaguiClient.id().equals(sourceId)) return manhuaguiClient;
@@ -4037,7 +4061,7 @@ public class MainActivity extends Activity {
             try {
                 File cached = imageCacheFile(imageUrl);
                 long[] cachedIdentity = captureImageCacheIdentity(cached);
-                Bitmap bitmap = cachedIdentity != null ? decodeReaderImage(cached, readerContentWidth()) : null;
+                Bitmap bitmap = cachedIdentity != null ? decodeReaderImage(cached, readerContentWidth(), imageUrl) : null;
                 if (bitmap == null) {
                     deleteImageCacheIfUnchanged(cached, cachedIdentity);
                     if (!ensureReaderImageCached(imageUrl, chapterUrl, cacheOnly)) {
@@ -4049,7 +4073,7 @@ public class MainActivity extends Activity {
                         });
                         return;
                     }
-                    bitmap = decodeReaderImage(cached, readerContentWidth());
+                    bitmap = decodeReaderImage(cached, readerContentWidth(), imageUrl);
                 } else {
                     cached.setLastModified(System.currentTimeMillis());
                 }
@@ -4095,7 +4119,7 @@ public class MainActivity extends Activity {
         return TextUtils.equals(detail.chapters.get(readerChapterIndex).url, chapterUrl);
     }
 
-    private Bitmap decodeReaderImage(File file, int targetWidth) {
+    private Bitmap decodeReaderImage(File file, int targetWidth, String imageUrl) {
         BitmapFactory.Options bounds = new BitmapFactory.Options();
         bounds.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(file.getAbsolutePath(), bounds);
@@ -4114,7 +4138,57 @@ public class MainActivity extends Activity {
         }
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = (int) sampleSize;
-        return BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+        return restoreJmReaderImage(bitmap, imageUrl);
+    }
+
+    private Bitmap restoreJmReaderImage(Bitmap source, String imageUrl) {
+        if (source == null || TextUtils.isEmpty(imageUrl)) return source;
+        Matcher path = Pattern.compile(
+                "https?://cdn-msp[^/]*\\.18comic\\.vip/media/photos/(\\d+)/([^/?#]+)",
+                Pattern.CASE_INSENSITIVE).matcher(imageUrl);
+        Matcher scramble = Pattern.compile("[?&]scramble_id=(\\d+)").matcher(imageUrl);
+        if (!path.find() || !scramble.find()) return source;
+        long aid;
+        long scrambleId;
+        try {
+            aid = Long.parseLong(path.group(1));
+            scrambleId = Long.parseLong(scramble.group(1));
+        } catch (NumberFormatException ignored) {
+            return source;
+        }
+        int slices = jmScrambleSlices(aid, scrambleId, path.group(2));
+        if (slices <= 1 || source.getHeight() < slices) return source;
+        Bitmap.Config config = source.getConfig();
+        if (config == null || config == Bitmap.Config.HARDWARE) config = Bitmap.Config.ARGB_8888;
+        Bitmap restored = Bitmap.createBitmap(source.getWidth(), source.getHeight(), config);
+        Canvas canvas = new Canvas(restored);
+        int move = source.getHeight() / slices;
+        int remainder = source.getHeight() % slices;
+        for (int i = 0; i < slices; i++) {
+            int height = move + (i == 0 ? remainder : 0);
+            int sourceY = source.getHeight() - move * (i + 1) - (i == 0 ? remainder : 0);
+            int targetY = move * i;
+            canvas.drawBitmap(source,
+                    new Rect(0, sourceY, source.getWidth(), sourceY + height),
+                    new Rect(0, targetY, source.getWidth(), targetY + height), null);
+        }
+        source.recycle();
+        return restored;
+    }
+
+    private int jmScrambleSlices(long aid, long scrambleId, String fileName) {
+        if (aid < scrambleId) return 0;
+        if (aid < 268850L) return 10;
+        try {
+            byte[] digest = MessageDigest.getInstance("MD5")
+                    .digest((aid + fileName).getBytes("UTF-8"));
+            int lastNibble = digest[digest.length - 1] & 0x0f;
+            int divisor = aid > 421926L ? 8 : 10;
+            return lastNibble % divisor * 2 + 2;
+        } catch (Exception ignored) {
+            return 0;
+        }
     }
 
     private int readerContentWidth() {
@@ -4233,6 +4307,9 @@ public class MainActivity extends Activity {
             return TextUtils.isEmpty(pageReferer) ? manhuazhanConfig.referer : pageReferer;
         }
         if (imageUrl != null && (imageUrl.contains(aikanConfig.domain) || imageUrl.contains("qrqrs.com"))) return aikanConfig.referer;
+        if (imageUrl != null && imageUrl.contains(jmcomicConfig.domain)) {
+            return TextUtils.isEmpty(pageReferer) ? jmcomicConfig.referer : pageReferer;
+        }
         if (imageUrl != null && (imageUrl.contains(mh18Config.domain) || imageUrl.contains("mangabuddy.in"))) {
             return TextUtils.isEmpty(pageReferer) ? mh18Config.referer : pageReferer;
         }
@@ -4539,6 +4616,7 @@ public class MainActivity extends Activity {
         if (aikanEnabled) names.add(aikanClient.name());
         if (gmhEnabled) names.add(gmhClient.name());
         if (mh18Enabled) names.add(mh18Client.name());
+        if (jmcomicEnabled) names.add(jmcomicClient.name());
         if (mkzhanEnabled) names.add(mkzhanClient.name());
         if (hiperdexEnabled) names.add(hiperdexClient.name());
         if (manhuaguiEnabled) names.add(manhuaguiClient.name());
@@ -4557,6 +4635,7 @@ public class MainActivity extends Activity {
         if (aikanClient.id().equals(selectedSourceId)) return aikanClient.name();
         if (gmhClient.id().equals(selectedSourceId)) return gmhClient.name();
         if (mh18Client.id().equals(selectedSourceId)) return mh18Client.name();
+        if (jmcomicClient.id().equals(selectedSourceId)) return jmcomicClient.name();
         if (mkzhanClient.id().equals(selectedSourceId)) return mkzhanClient.name();
         if (hiperdexClient.id().equals(selectedSourceId)) return hiperdexClient.name();
         if (manhuaguiClient.id().equals(selectedSourceId)) return manhuaguiClient.name();
@@ -4578,6 +4657,7 @@ public class MainActivity extends Activity {
         if (aikanClient.name().equals(name)) return aikanClient.id();
         if (gmhClient.name().equals(name)) return gmhClient.id();
         if (mh18Client.name().equals(name)) return mh18Client.id();
+        if (jmcomicClient.name().equals(name)) return jmcomicClient.id();
         if (mkzhanClient.name().equals(name)) return mkzhanClient.id();
         if (hiperdexClient.name().equals(name)) return hiperdexClient.id();
         if (manhuaguiClient.name().equals(name)) return manhuaguiClient.id();
@@ -4617,11 +4697,15 @@ public class MainActivity extends Activity {
             chip.setOnClickListener(v -> {
                 selectedFilters.put(group.key, option.value);
                 selectedFilterLabels.put(group.key, option.label);
-                if ((gmhClient.id().equals(selectedSourceId) || mh18Client.id().equals(selectedSourceId))
+                if ((gmhClient.id().equals(selectedSourceId) || mh18Client.id().equals(selectedSourceId)
+                        || jmcomicClient.id().equals(selectedSourceId))
                         && !"all".equals(option.value)) {
-                    String otherKey = "genre".equals(group.key) ? "tag" : "genre";
-                    selectedFilters.put(otherKey, "all");
-                    selectedFilterLabels.put(otherKey, ALL_TAG);
+                    for (ComicModels.FilterGroup other : sourceFilterGroups) {
+                        if (!other.key.equals(group.key)) {
+                            selectedFilters.put(other.key, "all");
+                            selectedFilterLabels.put(other.key, ALL_TAG);
+                        }
+                    }
                 }
                 if (filterDrawerAction != null) filterDrawerAction.run();
             });
@@ -5846,6 +5930,7 @@ public class MainActivity extends Activity {
         sources.put(aikanConfig.withEnabled(aikanEnabled).toJson());
         sources.put(gmhConfig.withEnabled(gmhEnabled).toJson());
         sources.put(mh18Config.withEnabled(mh18Enabled).toJson());
+        sources.put(jmcomicConfig.withEnabled(jmcomicEnabled).toJson());
         sources.put(mkzhanConfig.withEnabled(mkzhanEnabled).toJson());
         sources.put(hiperdexConfig.withEnabled(hiperdexEnabled).toJson());
         sources.put(manhuaguiConfig.withEnabled(manhuaguiEnabled).toJson());
@@ -5895,6 +5980,9 @@ public class MainActivity extends Activity {
                 } else if (mh18Config.id.equals(id)) {
                     mh18Config = SourceConfig.fromJson(item, SourceConfig.mh18(true));
                     mh18Enabled = mh18Config.enabled;
+                } else if (jmcomicConfig.id.equals(id)) {
+                    jmcomicConfig = SourceConfig.fromJson(item, SourceConfig.jmcomic(true));
+                    jmcomicEnabled = jmcomicConfig.enabled;
                 } else if (mkzhanConfig.id.equals(id)) {
                     mkzhanConfig = SourceConfig.fromJson(item, SourceConfig.mkzhan(true));
                     mkzhanConfig = normalizeMkzhanConfig(mkzhanConfig);
@@ -5938,6 +6026,7 @@ public class MainActivity extends Activity {
                 if (aikanConfig.id.equals(id)) aikanEnabled = item.optBoolean("enabled", true);
                 if (gmhConfig.id.equals(id)) gmhEnabled = item.optBoolean("enabled", true);
                 if (mh18Config.id.equals(id)) mh18Enabled = item.optBoolean("enabled", true);
+                if (jmcomicConfig.id.equals(id)) jmcomicEnabled = item.optBoolean("enabled", true);
                 if (mkzhanConfig.id.equals(id)) mkzhanEnabled = item.optBoolean("enabled", true);
                 if (hiperdexConfig.id.equals(id)) hiperdexEnabled = item.optBoolean("enabled", true);
                 if (manhuaguiConfig.id.equals(id)) manhuaguiEnabled = item.optBoolean("enabled", true);
@@ -6006,6 +6095,7 @@ public class MainActivity extends Activity {
         if (!aikanEnabled) rows.add(aikanConfig.name + "\u001f已关闭");
         if (!gmhEnabled) rows.add(gmhConfig.name + "\u001f已关闭");
         if (!mh18Enabled) rows.add(mh18Config.name + "\u001f已关闭");
+        if (!jmcomicEnabled) rows.add(jmcomicConfig.name + "\u001f已关闭");
         if (!mkzhanEnabled) rows.add(mkzhanConfig.name + "\u001f已关闭");
         if (!hiperdexEnabled) rows.add(hiperdexConfig.name + "\u001f已关闭");
         if (!manhuaguiEnabled) rows.add(manhuaguiConfig.name + "\u001f已关闭");
@@ -6060,7 +6150,8 @@ public class MainActivity extends Activity {
         mhua5Client = new Mhua5ComicSource();
         aikanClient = new AikanComicSource(aikanConfig.withEnabled(aikanEnabled));
         gmhClient = new GmhComicSource(gmhConfig.withEnabled(gmhEnabled));
-        mh18Client = new Mh18ComicSource(mh18Config.withEnabled(mh18Enabled), mh18WebViewSession);
+        mh18Client = new Mh18ComicSource(mh18Config.withEnabled(mh18Enabled), mh18BrowserSession);
+        jmcomicClient = new JmComicSource(jmcomicConfig.withEnabled(jmcomicEnabled), jmcomicBrowserSession);
         mkzhanClient = new MkzhanComicSource(mkzhanConfig.withEnabled(mkzhanEnabled));
         hiperdexClient = new HiperdexComicSource(hiperdexConfig.withEnabled(hiperdexEnabled));
         manhuaguiClient = new ManhuaguiComicSource(manhuaguiConfig.withEnabled(manhuaguiEnabled));
@@ -6090,6 +6181,7 @@ public class MainActivity extends Activity {
         aikanEnabled = prefs.getBoolean("source.aikan.enabled", true);
         gmhEnabled = prefs.getBoolean("source.gmh.enabled", true);
         mh18Enabled = prefs.getBoolean("source.mh18.enabled", true);
+        jmcomicEnabled = prefs.getBoolean("source.jmcomic.enabled", true);
         mkzhanEnabled = prefs.getBoolean("source.mkzhan.enabled", true);
         hiperdexEnabled = prefs.getBoolean("source.hiperdex.enabled", true);
         manhuaguiEnabled = prefs.getBoolean("source.manhuagui.enabled", true);
@@ -6178,6 +6270,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.aikan.enabled", aikanEnabled);
         editor.putBoolean("source.gmh.enabled", gmhEnabled);
         editor.putBoolean("source.mh18.enabled", mh18Enabled);
+        editor.putBoolean("source.jmcomic.enabled", jmcomicEnabled);
         editor.putBoolean("source.mkzhan.enabled", mkzhanEnabled);
         editor.putBoolean("source.hiperdex.enabled", hiperdexEnabled);
         editor.putBoolean("source.manhuagui.enabled", manhuaguiEnabled);
@@ -6230,6 +6323,7 @@ public class MainActivity extends Activity {
             aikanConfig = SourceConfig.aikan(aikanEnabled);
             gmhConfig = SourceConfig.gmh(gmhEnabled);
             mh18Config = SourceConfig.mh18(mh18Enabled);
+            jmcomicConfig = SourceConfig.jmcomic(jmcomicEnabled);
             mkzhanConfig = SourceConfig.mkzhan(mkzhanEnabled);
             hiperdexConfig = SourceConfig.hiperdex(hiperdexEnabled);
             manhuaguiConfig = SourceConfig.manhuagui(manhuaguiEnabled);
@@ -6259,6 +6353,9 @@ public class MainActivity extends Activity {
                 } else if (SourceConfig.mh18(true).id.equals(id)) {
                     mh18Config = SourceConfig.fromJson(item, SourceConfig.mh18(mh18Enabled));
                     mh18Enabled = mh18Config.enabled;
+                } else if (SourceConfig.jmcomic(true).id.equals(id)) {
+                    jmcomicConfig = SourceConfig.fromJson(item, SourceConfig.jmcomic(jmcomicEnabled));
+                    jmcomicEnabled = jmcomicConfig.enabled;
                 } else if (SourceConfig.mkzhan(true).id.equals(id)) {
                     mkzhanConfig = SourceConfig.fromJson(item, SourceConfig.mkzhan(mkzhanEnabled));
                     mkzhanConfig = normalizeMkzhanConfig(mkzhanConfig);
@@ -6297,6 +6394,7 @@ public class MainActivity extends Activity {
             aikanConfig = SourceConfig.aikan(aikanEnabled);
             gmhConfig = SourceConfig.gmh(gmhEnabled);
             mh18Config = SourceConfig.mh18(mh18Enabled);
+            jmcomicConfig = SourceConfig.jmcomic(jmcomicEnabled);
             mkzhanConfig = SourceConfig.mkzhan(mkzhanEnabled);
             hiperdexConfig = SourceConfig.hiperdex(hiperdexEnabled);
             manhuaguiConfig = SourceConfig.manhuagui(manhuaguiEnabled);
@@ -6317,6 +6415,7 @@ public class MainActivity extends Activity {
             array.put(aikanConfig.withEnabled(aikanEnabled).toJson());
             array.put(gmhConfig.withEnabled(gmhEnabled).toJson());
             array.put(mh18Config.withEnabled(mh18Enabled).toJson());
+            array.put(jmcomicConfig.withEnabled(jmcomicEnabled).toJson());
             array.put(mkzhanConfig.withEnabled(mkzhanEnabled).toJson());
             array.put(hiperdexConfig.withEnabled(hiperdexEnabled).toJson());
             array.put(manhuaguiConfig.withEnabled(manhuaguiEnabled).toJson());

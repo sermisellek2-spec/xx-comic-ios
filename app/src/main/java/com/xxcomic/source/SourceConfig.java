@@ -117,6 +117,20 @@ public class SourceConfig {
         return new SourceConfig("mh18", "18漫画", "18mh.org", "https://18mh.org", "https://18mh.org/", "", "", "", "", enabled, routes, filters);
     }
 
+    public static SourceConfig jmcomic(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        try {
+            routes.put("latest", "/albums?o=mr");
+            routes.put("search", "/search/photos?main_tag=0&search_query={keyword}");
+            routes.put("categoryIndex", "/theme/");
+            routes.put("detail", "/album/{comicId}");
+            routes.put("chapter", "/photo/{chapterId}");
+        } catch (JSONException ignored) {
+        }
+        return new SourceConfig("jmcomic", "禁漫天堂", "18comic.vip", "https://18comic.vip",
+                "https://18comic.vip/", "", "", "", "", enabled, routes, new JSONObject());
+    }
+
     public static SourceConfig mkzhan(boolean enabled) {
         JSONObject routes = new JSONObject();
         JSONObject filters = new JSONObject();
