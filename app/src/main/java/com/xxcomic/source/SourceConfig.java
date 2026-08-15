@@ -95,6 +95,27 @@ public class SourceConfig {
         return new SourceConfig("gmh", "G社漫画", "m.g-mh.org", "https://m.g-mh.org", "https://m.g-mh.org/", "", "", "", "", enabled, routes, filters);
     }
 
+    public static SourceConfig mh18(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        JSONObject filters = new JSONObject();
+        try {
+            routes.put("latest", "/manga{pagePath}");
+            routes.put("search", "/s/{keyword}");
+            routes.put("category", "/manga{genrePath}{pagePath}");
+            routes.put("detail", "/manga/{comicId}");
+            routes.put("chapter", "/manga/{comicId}/{chapterSlug}");
+            routes.put("mangaApi", "https://v2.apikk.top/api/v2/manga/get?mid={mid}&mode=all");
+            routes.put("chapterApi", "https://v2.apikk.top/api/v2/chapter/getinfo?m={mid}&c={chapterId}");
+            filters.put("genre.kr", "kr");
+            filters.put("genre.hots", "hots");
+            filters.put("genre.cn", "cn");
+            filters.put("genre.jp", "jp");
+            filters.put("genre.all", "");
+        } catch (JSONException ignored) {
+        }
+        return new SourceConfig("mh18", "18漫画", "18mh.org", "https://18mh.org", "https://18mh.org/", "", "", "", "", enabled, routes, filters);
+    }
+
     public static SourceConfig mkzhan(boolean enabled) {
         JSONObject routes = new JSONObject();
         JSONObject filters = new JSONObject();

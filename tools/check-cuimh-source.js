@@ -27,7 +27,7 @@ check("Cuimh paces requests and cools down after 403", source.includes("MIN_REQU
 check("detail refresh reuses chapters returned with metadata", main.includes("freshDetail.chapters.isEmpty()")
   && main.includes("if (!loaded.chapters.isEmpty()) refreshedComicIds.add(comicId)"));
 check("filter confirm only reloads missing categories", main.includes("sourceChanged && sourceFilterGroups.isEmpty()"));
-check("release version is 1.0.22", gradle.includes('versionName "1.0.22"')
-  && gradle.includes("versionCode 22"));
+check("release version is 1.0.23", gradle.includes('versionName "1.0.23"')
+  && gradle.includes("versionCode 23"));
 
 console.log("Cuimh source contract holds.");

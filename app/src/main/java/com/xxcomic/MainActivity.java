@@ -53,6 +53,7 @@ import com.xxcomic.source.D5d6ComicSource;
 import com.xxcomic.source.FiveUmComicSource;
 import com.xxcomic.source.ManbenComicSource;
 import com.xxcomic.source.GmhComicSource;
+import com.xxcomic.source.Mh18ComicSource;
 import com.xxcomic.source.HiperdexComicSource;
 import com.xxcomic.source.ManhuaguiComicSource;
 import com.xxcomic.source.Hanman18ComicSource;
@@ -160,6 +161,7 @@ public class MainActivity extends Activity {
     private ComicSource mhua5Client;
     private ComicSource aikanClient;
     private ComicSource gmhClient;
+    private ComicSource mh18Client;
     private ComicSource mkzhanClient;
     private ComicSource hiperdexClient;
     private ComicSource manhuaguiClient;
@@ -173,6 +175,7 @@ public class MainActivity extends Activity {
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
     private SourceConfig aikanConfig = SourceConfig.aikan(true);
     private SourceConfig gmhConfig = SourceConfig.gmh(true);
+    private SourceConfig mh18Config = SourceConfig.mh18(true);
     private SourceConfig mkzhanConfig = SourceConfig.mkzhan(true);
     private SourceConfig hiperdexConfig = SourceConfig.hiperdex(true);
     private SourceConfig manhuaguiConfig = SourceConfig.manhuagui(true);
@@ -218,6 +221,7 @@ public class MainActivity extends Activity {
     private boolean sourceEnabled = true;
     private boolean aikanEnabled = true;
     private boolean gmhEnabled = true;
+    private boolean mh18Enabled = true;
     private boolean mkzhanEnabled = true;
     private boolean hiperdexEnabled = true;
     private boolean manhuaguiEnabled = true;
@@ -1265,6 +1269,12 @@ public class MainActivity extends Activity {
         addSourceCard(enabledSources, disabledSources, gmhEnabled, sourceCard(gmhConfig.name, gmhConfig.domain, gmhEnabled, () -> {
             gmhEnabled = !gmhEnabled;
             gmhConfig = gmhConfig.withEnabled(gmhEnabled);
+            rebuildSourceClients();
+            finishSourceToggle();
+        }));
+        addSourceCard(enabledSources, disabledSources, mh18Enabled, sourceCard(mh18Config.name, mh18Config.domain, mh18Enabled, () -> {
+            mh18Enabled = !mh18Enabled;
+            mh18Config = mh18Config.withEnabled(mh18Enabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
@@ -3131,6 +3141,7 @@ public class MainActivity extends Activity {
         if (mhua5Client.id().equals(sourceId)) return mhua5Client.name();
         if (aikanClient.id().equals(sourceId)) return aikanClient.name();
         if (gmhClient.id().equals(sourceId)) return gmhClient.name();
+        if (mh18Client.id().equals(sourceId)) return mh18Client.name();
         if (mkzhanClient.id().equals(sourceId)) return mkzhanClient.name();
         if (hiperdexClient.id().equals(sourceId)) return hiperdexClient.name();
         if (manhuaguiClient.id().equals(sourceId)) return manhuaguiClient.name();
@@ -3151,6 +3162,7 @@ public class MainActivity extends Activity {
         if (sourceClient.id().equals(selectedSourceId) && sourceEnabled) return sourceClient;
         if (aikanClient.id().equals(selectedSourceId) && aikanEnabled) return aikanClient;
         if (gmhClient.id().equals(selectedSourceId) && gmhEnabled) return gmhClient;
+        if (mh18Client.id().equals(selectedSourceId) && mh18Enabled) return mh18Client;
         if (mkzhanClient.id().equals(selectedSourceId) && mkzhanEnabled) return mkzhanClient;
         if (hiperdexClient.id().equals(selectedSourceId) && hiperdexEnabled) return hiperdexClient;
         if (manhuaguiClient.id().equals(selectedSourceId) && manhuaguiEnabled) return manhuaguiClient;
@@ -3172,6 +3184,7 @@ public class MainActivity extends Activity {
         if (sourceEnabled) sources.add(sourceClient);
         if (aikanEnabled) sources.add(aikanClient);
         if (gmhEnabled) sources.add(gmhClient);
+        if (mh18Enabled) sources.add(mh18Client);
         if (mkzhanEnabled) sources.add(mkzhanClient);
         if (hiperdexEnabled) sources.add(hiperdexClient);
         if (manhuaguiEnabled) sources.add(manhuaguiClient);
@@ -3199,6 +3212,7 @@ public class MainActivity extends Activity {
         if (summary != null) return sourceForId(summary.sourceId);
         if (comicId != null && comicId.startsWith(aikanClient.id() + ":")) return aikanClient;
         if (comicId != null && comicId.startsWith(gmhClient.id() + ":")) return gmhClient;
+        if (comicId != null && comicId.startsWith(mh18Client.id() + ":")) return mh18Client;
         if (comicId != null && comicId.startsWith(mkzhanClient.id() + ":")) return mkzhanClient;
         if (comicId != null && comicId.startsWith(hiperdexClient.id() + ":")) return hiperdexClient;
         if (comicId != null && comicId.startsWith(manhuaguiClient.id() + ":")) return manhuaguiClient;
@@ -3222,6 +3236,7 @@ public class MainActivity extends Activity {
         if (mhua5Client.id().equals(sourceId)) return mhua5Client;
         if (aikanClient.id().equals(sourceId)) return aikanClient;
         if (gmhClient.id().equals(sourceId)) return gmhClient;
+        if (mh18Client.id().equals(sourceId)) return mh18Client;
         if (mkzhanClient.id().equals(sourceId)) return mkzhanClient;
         if (hiperdexClient.id().equals(sourceId)) return hiperdexClient;
         if (manhuaguiClient.id().equals(sourceId)) return manhuaguiClient;
@@ -4215,7 +4230,12 @@ public class MainActivity extends Activity {
             return TextUtils.isEmpty(pageReferer) ? manhuazhanConfig.referer : pageReferer;
         }
         if (imageUrl != null && (imageUrl.contains(aikanConfig.domain) || imageUrl.contains("qrqrs.com"))) return aikanConfig.referer;
-        if (imageUrl != null && (imageUrl.contains(gmhConfig.domain) || imageUrl.contains("g-mh.online") || imageUrl.contains("6wm.top"))) return gmhConfig.referer;
+        if (imageUrl != null && imageUrl.contains(mh18Config.domain)) {
+            return TextUtils.isEmpty(pageReferer) ? mh18Config.referer : pageReferer;
+        }
+        if (imageUrl != null && (imageUrl.contains(gmhConfig.domain) || imageUrl.contains("g-mh.online") || imageUrl.contains("6wm.top"))) {
+            return TextUtils.isEmpty(pageReferer) ? gmhConfig.referer : pageReferer;
+        }
         if (imageUrl != null && (imageUrl.contains(mkzhanConfig.domain) || imageUrl.contains("mkzcdn.com"))) return mkzhanConfig.referer;
         if (imageUrl != null && (imageUrl.contains(hiperdexConfig.domain) || imageUrl.contains("r2d2storage.com"))) return hiperdexConfig.referer;
         if (imageUrl != null && (imageUrl.contains(manhuaguiConfig.domain) || imageUrl.contains("mhgui.com") || imageUrl.contains("hamreus.com"))) {
@@ -4515,6 +4535,7 @@ public class MainActivity extends Activity {
         if (sourceEnabled) names.add(sourceClient.name());
         if (aikanEnabled) names.add(aikanClient.name());
         if (gmhEnabled) names.add(gmhClient.name());
+        if (mh18Enabled) names.add(mh18Client.name());
         if (mkzhanEnabled) names.add(mkzhanClient.name());
         if (hiperdexEnabled) names.add(hiperdexClient.name());
         if (manhuaguiEnabled) names.add(manhuaguiClient.name());
@@ -4532,6 +4553,7 @@ public class MainActivity extends Activity {
         if (sourceClient.id().equals(selectedSourceId)) return sourceClient.name();
         if (aikanClient.id().equals(selectedSourceId)) return aikanClient.name();
         if (gmhClient.id().equals(selectedSourceId)) return gmhClient.name();
+        if (mh18Client.id().equals(selectedSourceId)) return mh18Client.name();
         if (mkzhanClient.id().equals(selectedSourceId)) return mkzhanClient.name();
         if (hiperdexClient.id().equals(selectedSourceId)) return hiperdexClient.name();
         if (manhuaguiClient.id().equals(selectedSourceId)) return manhuaguiClient.name();
@@ -4552,6 +4574,7 @@ public class MainActivity extends Activity {
         if (sourceClient.name().equals(name)) return sourceClient.id();
         if (aikanClient.name().equals(name)) return aikanClient.id();
         if (gmhClient.name().equals(name)) return gmhClient.id();
+        if (mh18Client.name().equals(name)) return mh18Client.id();
         if (mkzhanClient.name().equals(name)) return mkzhanClient.id();
         if (hiperdexClient.name().equals(name)) return hiperdexClient.id();
         if (manhuaguiClient.name().equals(name)) return manhuaguiClient.id();
@@ -4591,7 +4614,8 @@ public class MainActivity extends Activity {
             chip.setOnClickListener(v -> {
                 selectedFilters.put(group.key, option.value);
                 selectedFilterLabels.put(group.key, option.label);
-                if (gmhClient.id().equals(selectedSourceId) && !"all".equals(option.value)) {
+                if ((gmhClient.id().equals(selectedSourceId) || mh18Client.id().equals(selectedSourceId))
+                        && !"all".equals(option.value)) {
                     String otherKey = "genre".equals(group.key) ? "tag" : "genre";
                     selectedFilters.put(otherKey, "all");
                     selectedFilterLabels.put(otherKey, ALL_TAG);
@@ -5818,6 +5842,7 @@ public class MainActivity extends Activity {
         sources.put(baoziConfig.withEnabled(sourceEnabled).toJson());
         sources.put(aikanConfig.withEnabled(aikanEnabled).toJson());
         sources.put(gmhConfig.withEnabled(gmhEnabled).toJson());
+        sources.put(mh18Config.withEnabled(mh18Enabled).toJson());
         sources.put(mkzhanConfig.withEnabled(mkzhanEnabled).toJson());
         sources.put(hiperdexConfig.withEnabled(hiperdexEnabled).toJson());
         sources.put(manhuaguiConfig.withEnabled(manhuaguiEnabled).toJson());
@@ -5864,6 +5889,9 @@ public class MainActivity extends Activity {
                 } else if (gmhConfig.id.equals(id)) {
                     gmhConfig = SourceConfig.fromJson(item, SourceConfig.gmh(true));
                     gmhEnabled = gmhConfig.enabled;
+                } else if (mh18Config.id.equals(id)) {
+                    mh18Config = SourceConfig.fromJson(item, SourceConfig.mh18(true));
+                    mh18Enabled = mh18Config.enabled;
                 } else if (mkzhanConfig.id.equals(id)) {
                     mkzhanConfig = SourceConfig.fromJson(item, SourceConfig.mkzhan(true));
                     mkzhanConfig = normalizeMkzhanConfig(mkzhanConfig);
@@ -5906,6 +5934,7 @@ public class MainActivity extends Activity {
                 if (baoziConfig.id.equals(id)) sourceEnabled = item.optBoolean("enabled", true);
                 if (aikanConfig.id.equals(id)) aikanEnabled = item.optBoolean("enabled", true);
                 if (gmhConfig.id.equals(id)) gmhEnabled = item.optBoolean("enabled", true);
+                if (mh18Config.id.equals(id)) mh18Enabled = item.optBoolean("enabled", true);
                 if (mkzhanConfig.id.equals(id)) mkzhanEnabled = item.optBoolean("enabled", true);
                 if (hiperdexConfig.id.equals(id)) hiperdexEnabled = item.optBoolean("enabled", true);
                 if (manhuaguiConfig.id.equals(id)) manhuaguiEnabled = item.optBoolean("enabled", true);
@@ -5973,6 +6002,7 @@ public class MainActivity extends Activity {
         if (!sourceEnabled) rows.add(baoziConfig.name + "\u001f已关闭");
         if (!aikanEnabled) rows.add(aikanConfig.name + "\u001f已关闭");
         if (!gmhEnabled) rows.add(gmhConfig.name + "\u001f已关闭");
+        if (!mh18Enabled) rows.add(mh18Config.name + "\u001f已关闭");
         if (!mkzhanEnabled) rows.add(mkzhanConfig.name + "\u001f已关闭");
         if (!hiperdexEnabled) rows.add(hiperdexConfig.name + "\u001f已关闭");
         if (!manhuaguiEnabled) rows.add(manhuaguiConfig.name + "\u001f已关闭");
@@ -6027,6 +6057,7 @@ public class MainActivity extends Activity {
         mhua5Client = new Mhua5ComicSource();
         aikanClient = new AikanComicSource(aikanConfig.withEnabled(aikanEnabled));
         gmhClient = new GmhComicSource(gmhConfig.withEnabled(gmhEnabled));
+        mh18Client = new Mh18ComicSource(mh18Config.withEnabled(mh18Enabled));
         mkzhanClient = new MkzhanComicSource(mkzhanConfig.withEnabled(mkzhanEnabled));
         hiperdexClient = new HiperdexComicSource(hiperdexConfig.withEnabled(hiperdexEnabled));
         manhuaguiClient = new ManhuaguiComicSource(manhuaguiConfig.withEnabled(manhuaguiEnabled));
@@ -6055,6 +6086,7 @@ public class MainActivity extends Activity {
         sourceEnabled = prefs.getBoolean("source.baozi.enabled", true);
         aikanEnabled = prefs.getBoolean("source.aikan.enabled", true);
         gmhEnabled = prefs.getBoolean("source.gmh.enabled", true);
+        mh18Enabled = prefs.getBoolean("source.mh18.enabled", true);
         mkzhanEnabled = prefs.getBoolean("source.mkzhan.enabled", true);
         hiperdexEnabled = prefs.getBoolean("source.hiperdex.enabled", true);
         manhuaguiEnabled = prefs.getBoolean("source.manhuagui.enabled", true);
@@ -6142,6 +6174,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.baozi.enabled", sourceEnabled);
         editor.putBoolean("source.aikan.enabled", aikanEnabled);
         editor.putBoolean("source.gmh.enabled", gmhEnabled);
+        editor.putBoolean("source.mh18.enabled", mh18Enabled);
         editor.putBoolean("source.mkzhan.enabled", mkzhanEnabled);
         editor.putBoolean("source.hiperdex.enabled", hiperdexEnabled);
         editor.putBoolean("source.manhuagui.enabled", manhuaguiEnabled);
@@ -6193,6 +6226,7 @@ public class MainActivity extends Activity {
             baoziConfig = SourceConfig.baozi(sourceEnabled);
             aikanConfig = SourceConfig.aikan(aikanEnabled);
             gmhConfig = SourceConfig.gmh(gmhEnabled);
+            mh18Config = SourceConfig.mh18(mh18Enabled);
             mkzhanConfig = SourceConfig.mkzhan(mkzhanEnabled);
             hiperdexConfig = SourceConfig.hiperdex(hiperdexEnabled);
             manhuaguiConfig = SourceConfig.manhuagui(manhuaguiEnabled);
@@ -6219,6 +6253,9 @@ public class MainActivity extends Activity {
                 } else if (SourceConfig.gmh(true).id.equals(id)) {
                     gmhConfig = SourceConfig.fromJson(item, SourceConfig.gmh(gmhEnabled));
                     gmhEnabled = gmhConfig.enabled;
+                } else if (SourceConfig.mh18(true).id.equals(id)) {
+                    mh18Config = SourceConfig.fromJson(item, SourceConfig.mh18(mh18Enabled));
+                    mh18Enabled = mh18Config.enabled;
                 } else if (SourceConfig.mkzhan(true).id.equals(id)) {
                     mkzhanConfig = SourceConfig.fromJson(item, SourceConfig.mkzhan(mkzhanEnabled));
                     mkzhanConfig = normalizeMkzhanConfig(mkzhanConfig);
@@ -6256,6 +6293,7 @@ public class MainActivity extends Activity {
             baoziConfig = SourceConfig.baozi(sourceEnabled);
             aikanConfig = SourceConfig.aikan(aikanEnabled);
             gmhConfig = SourceConfig.gmh(gmhEnabled);
+            mh18Config = SourceConfig.mh18(mh18Enabled);
             mkzhanConfig = SourceConfig.mkzhan(mkzhanEnabled);
             hiperdexConfig = SourceConfig.hiperdex(hiperdexEnabled);
             manhuaguiConfig = SourceConfig.manhuagui(manhuaguiEnabled);
@@ -6275,6 +6313,7 @@ public class MainActivity extends Activity {
             array.put(baoziConfig.withEnabled(sourceEnabled).toJson());
             array.put(aikanConfig.withEnabled(aikanEnabled).toJson());
             array.put(gmhConfig.withEnabled(gmhEnabled).toJson());
+            array.put(mh18Config.withEnabled(mh18Enabled).toJson());
             array.put(mkzhanConfig.withEnabled(mkzhanEnabled).toJson());
             array.put(hiperdexConfig.withEnabled(hiperdexEnabled).toJson());
             array.put(manhuaguiConfig.withEnabled(manhuaguiEnabled).toJson());
