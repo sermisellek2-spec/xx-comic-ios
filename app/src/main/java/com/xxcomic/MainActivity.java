@@ -172,6 +172,7 @@ public class MainActivity extends Activity {
     private ComicSource bbyinClient;
     private ComicSource antbywClient;
     private ComicSource cuimhClient;
+    private Mh18WebViewSession mh18WebViewSession;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
     private SourceConfig aikanConfig = SourceConfig.aikan(true);
     private SourceConfig gmhConfig = SourceConfig.gmh(true);
@@ -333,6 +334,7 @@ public class MainActivity extends Activity {
         applyThemeAndSystemBars();
         root = new FrameLayout(this);
         setContentView(root);
+        mh18WebViewSession = new Mh18WebViewSession(this, main);
         rebuildSourceClients();
         restoreLocalState();
         applyThemeAndSystemBars();
@@ -356,6 +358,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (mh18WebViewSession != null) mh18WebViewSession.shutdown();
         super.onDestroy();
         activityDestroyed = true;
         cancelUpdateDownload();
@@ -6057,7 +6060,7 @@ public class MainActivity extends Activity {
         mhua5Client = new Mhua5ComicSource();
         aikanClient = new AikanComicSource(aikanConfig.withEnabled(aikanEnabled));
         gmhClient = new GmhComicSource(gmhConfig.withEnabled(gmhEnabled));
-        mh18Client = new Mh18ComicSource(mh18Config.withEnabled(mh18Enabled));
+        mh18Client = new Mh18ComicSource(mh18Config.withEnabled(mh18Enabled), mh18WebViewSession);
         mkzhanClient = new MkzhanComicSource(mkzhanConfig.withEnabled(mkzhanEnabled));
         hiperdexClient = new HiperdexComicSource(hiperdexConfig.withEnabled(hiperdexEnabled));
         manhuaguiClient = new ManhuaguiComicSource(manhuaguiConfig.withEnabled(manhuaguiEnabled));

@@ -41,16 +41,44 @@ public class Mh18ComicSource implements ComicSource {
     private static final String GMH_MARKER_TWO = "W4s";
     private static final String GMH_SOURCE_ALPHABET = "_-9876543210abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final String GMH_TARGET_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    private static final Clearance DEFAULT_CLEARANCE = new Clearance("", DESKTOP_USER_AGENT);
     private final SourceConfig config;
+    private final BrowserSession browserSession;
     private final Map<String, String> midCache = new HashMap<>();
     private final Map<String, JSONObject> mangaCache = new HashMap<>();
 
+    public static final class Clearance {
+        public final String cookie;
+        public final String userAgent;
+
+        public Clearance(String cookie, String userAgent) {
+            this.cookie = cookie == null ? "" : cookie;
+            this.userAgent = userAgent == null ? "" : userAgent;
+        }
+    }
+
+    public interface BrowserSession {
+        Clearance current();
+        Clearance resolve(String url, Clearance rejected) throws IOException;
+    }
+
+    private static final class CloudflareChallengeException extends IOException {
+        CloudflareChallengeException() {
+            super("18漫画需要浏览器验证");
+        }
+    }
+
     public Mh18ComicSource() {
-        this(SourceConfig.mh18(true));
+        this(SourceConfig.mh18(true), null);
     }
 
     public Mh18ComicSource(SourceConfig config) {
+        this(config, null);
+    }
+
+    public Mh18ComicSource(SourceConfig config, BrowserSession browserSession) {
         this.config = config == null ? SourceConfig.mh18(true) : config;
+        this.browserSession = browserSession;
     }
 
     @Override public String id() { return SOURCE_ID; }
@@ -186,6 +214,7 @@ public class Mh18ComicSource implements ComicSource {
             connection.setRequestMethod("HEAD");
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
+            applyRequestHeaders(connection, currentClearance(), true);
             int code = connection.getResponseCode();
             return code >= 200 && code < 400;
         } catch (IOException ignored) {
@@ -339,19 +368,65 @@ public class Mh18ComicSource implements ComicSource {
     }
 
     private String fetch(String url) throws IOException {
+        Clearance clearance = currentClearance();
+        try {
+            return fetchOnce(url, clearance);
+        } catch (CloudflareChallengeException challenge) {
+            if (browserSession == null || !isMainSite(url)) throw challenge;
+            Clearance resolved = browserSession.resolve(config.baseUrl + "/manga", clearance);
+            if (resolved == null) throw new IOException("18漫画验证未完成");
+            return fetchOnce(url, resolved);
+        }
+    }
+
+    private String fetchOnce(String url, Clearance clearance) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setInstanceFollowRedirects(true);
         connection.setConnectTimeout(10000);
         connection.setReadTimeout(15000);
-        connection.setRequestProperty("User-Agent", DESKTOP_USER_AGENT);
-        connection.setRequestProperty("Referer", config.referer);
-        try (InputStream stream = connection.getInputStream()) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
-            StringBuilder builder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) builder.append(line).append('\n');
-            return builder.toString();
+        applyRequestHeaders(connection, clearance, isMainSite(url));
+        try {
+            int code = connection.getResponseCode();
+            if (code == 403 && "challenge".equalsIgnoreCase(connection.getHeaderField("Cf-Mitigated"))) {
+                throw new CloudflareChallengeException();
+            }
+            if (code < 200 || code >= 400) throw new IOException("18漫画请求失败：HTTP " + code);
+            try (InputStream stream = connection.getInputStream()) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
+                StringBuilder builder = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) builder.append(line).append('\n');
+                return builder.toString();
+            }
         } finally {
             connection.disconnect();
+        }
+    }
+
+    private Clearance currentClearance() {
+        Clearance current = browserSession == null ? null : browserSession.current();
+        return current == null ? DEFAULT_CLEARANCE : current;
+    }
+
+    private void applyRequestHeaders(HttpURLConnection connection, Clearance clearance, boolean includeCookie) {
+        String userAgent = clearance == null ? "" : clearance.userAgent;
+        connection.setRequestProperty("User-Agent", TextUtils.isEmpty(userAgent)
+                ? DESKTOP_USER_AGENT : userAgent.replace("\r", "").replace("\n", ""));
+        connection.setRequestProperty("Referer", config.referer);
+        String cookie = clearance == null ? "" : clearance.cookie;
+        if (includeCookie && !TextUtils.isEmpty(cookie)) {
+            connection.setRequestProperty("Cookie", cookie.replace("\r", "").replace("\n", ""));
+        }
+    }
+
+    private boolean isMainSite(String url) {
+        try {
+            String host = new URL(url).getHost();
+            return config.domain.equalsIgnoreCase(host)
+                    || (host != null && host.toLowerCase(java.util.Locale.US)
+                    .endsWith("." + config.domain.toLowerCase(java.util.Locale.US)));
+        } catch (Exception ignored) {
+            return false;
         }
     }
 
@@ -410,4 +485,3 @@ public class Mh18ComicSource implements ComicSource {
         return amp > 0 ? decoded.substring(0, amp) : decoded;
     }
 }
-
