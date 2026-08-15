@@ -2222,6 +2222,7 @@ public class MainActivity extends Activity {
                         pageLoading = false;
                         pageLoadingBackAction = null;
                         details.put(comicId, loaded);
+                        if (!loaded.chapters.isEmpty()) refreshedComicIds.add(comicId);
                         summaries.put(comicId, loaded.summary);
                         persistComicCachesAsync();
                         showDetail(comicId);
@@ -2321,7 +2322,8 @@ public class MainActivity extends Activity {
         detailIo.submit(() -> {
             try {
                 ComicModels.ComicDetail freshDetail = client.detail(comicId);
-                List<ComicModels.Chapter> loadedChapters = client.chapters(comicId);
+                List<ComicModels.Chapter> loadedChapters = freshDetail.chapters.isEmpty()
+                        ? client.chapters(comicId) : freshDetail.chapters;
                 if (loadedChapters.isEmpty()) {
                     main.post(() -> {
                         if (activityDestroyed) return;
@@ -4416,7 +4418,7 @@ public class MainActivity extends Activity {
             String keyword = searchQuery.trim();
             searchResults.clear();
             showTab(1);
-            if (sourceChanged) loadSourceCategories();
+            if (sourceChanged && sourceFilterGroups.isEmpty()) loadSourceCategories();
             if (TextUtils.isEmpty(keyword)) loadCategory(); else runSearch(keyword);
             popup.dismiss();
         });

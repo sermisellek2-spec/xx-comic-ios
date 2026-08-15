@@ -30,6 +30,10 @@ public class CuimhComicSource implements ComicSource {
     private static final String IMAGE_BASE_URL = "https://img1.baipiaoguai.org";
     private static final String AES_KEY = "9S8$vJnU2ANeSRoF";
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    private static final long CATEGORY_CACHE_TTL_MS = 5 * 60 * 1000L;
+    private static final long MIN_REQUEST_INTERVAL_MS = 1000L;
+    private static final long FORBIDDEN_COOLDOWN_MS = 30 * 60 * 1000L;
+    private static final int CATEGORY_CACHE_LIMIT = 8;
     private static final Pattern LIST_PATTERN = Pattern.compile(
             "<div[^>]*class=[\"'][^\"']*\\bcy_list_mh\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)</div>",
             Pattern.CASE_INSENSITIVE);
@@ -50,6 +54,15 @@ public class CuimhComicSource implements ComicSource {
     };
 
     private final SourceConfig config;
+    private final Map<String, CachedDocument> categoryDocuments = new LinkedHashMap<String, CachedDocument>(
+            CATEGORY_CACHE_LIMIT, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, CachedDocument> eldest) {
+            return size() > CATEGORY_CACHE_LIMIT;
+        }
+    };
+    private long lastRequestStartedAtMs;
+    private long forbiddenUntilMs;
 
     public CuimhComicSource() {
         this(SourceConfig.cuimh(true));
@@ -66,7 +79,7 @@ public class CuimhComicSource implements ComicSource {
 
     @Override
     public List<ComicModels.ComicSummary> latest(int page) throws IOException {
-        return parseCards(fetch(absolute(buildCategoryPath(null, page))));
+        return parseCards(fetchCategoryDocument(buildCategoryPath(null, page)));
     }
 
     @Override
@@ -87,25 +100,28 @@ public class CuimhComicSource implements ComicSource {
 
     @Override
     public List<ComicModels.FilterGroup> filterGroups() throws IOException {
-        List<ComicModels.FilterGroup> groups = parseFilterGroups(fetch(absolute("/category/")));
+        List<ComicModels.FilterGroup> groups = parseFilterGroups(fetchCategoryDocument("/category/"));
         if (groups.isEmpty()) throw new IOException(config.name + "分类解析失败");
         return groups;
     }
 
     @Override
     public List<ComicModels.ComicSummary> category(String region, String state, int page) throws IOException {
-        return parseCards(fetch(absolute(buildCategoryPath(null, page))));
+        return parseCards(fetchCategoryDocument(buildCategoryPath(null, page)));
     }
 
     @Override
     public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
-        return parseCards(fetch(absolute(buildCategoryPath(filters, page))));
+        return parseCards(fetchCategoryDocument(buildCategoryPath(filters, page)));
     }
 
     @Override
     public ComicModels.ComicDetail detail(String comicId) throws IOException {
         String rawId = rawComicId(comicId);
-        return parseDetail(rawId, fetch(absolute(config.route("detail").replace("{comicId}", rawId))));
+        String html = fetch(absolute(config.route("detail").replace("{comicId}", rawId)));
+        ComicModels.ComicDetail detail = parseDetail(rawId, html);
+        return new ComicModels.ComicDetail(detail.summary, detail.author, detail.status,
+                detail.description, detail.latestChapter, parseChapters(html));
     }
 
     @Override
@@ -269,7 +285,35 @@ public class CuimhComicSource implements ComicSource {
         }
     }
 
+    private String fetchCategoryDocument(String path) throws IOException {
+        String url = absolute(path);
+        if (url.equals(absolute("/category"))) url = absolute("/category/");
+        return fetch(url, true);
+    }
+
     private String fetch(String url) throws IOException {
+        return fetch(url, false);
+    }
+
+    private synchronized String fetch(String url, boolean cacheable) throws IOException {
+        long now = System.currentTimeMillis();
+        if (now < forbiddenUntilMs) {
+            throw new IOException(config.name + "暂时访问受限，请稍后再试");
+        }
+        if (cacheable) {
+            CachedDocument cached = categoryDocuments.get(url);
+            if (cached != null && now - cached.savedAtMs < CATEGORY_CACHE_TTL_MS) return cached.html;
+            categoryDocuments.remove(url);
+        }
+        long waitMs = MIN_REQUEST_INTERVAL_MS - (now - lastRequestStartedAtMs);
+        if (waitMs > 0) {
+            try {
+                Thread.sleep(waitMs);
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
+                throw new IOException(config.name + "请求已取消", error);
+            }
+        }
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setInstanceFollowRedirects(true);
         connection.setConnectTimeout(10000);
@@ -278,13 +322,30 @@ public class CuimhComicSource implements ComicSource {
         connection.setRequestProperty("Referer", config.referer);
         connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
         try {
+            lastRequestStartedAtMs = System.currentTimeMillis();
             int code = connection.getResponseCode();
+            if (code == HttpURLConnection.HTTP_FORBIDDEN) {
+                forbiddenUntilMs = System.currentTimeMillis() + FORBIDDEN_COOLDOWN_MS;
+            }
             if (code < 200 || code >= 400) throw new IOException(config.name + " HTTP " + code + ": " + url);
             try (InputStream stream = connection.getInputStream()) {
-                return new String(readAllBytes(stream), StandardCharsets.UTF_8);
+                String html = new String(readAllBytes(stream), StandardCharsets.UTF_8);
+                forbiddenUntilMs = 0L;
+                if (cacheable) categoryDocuments.put(url, new CachedDocument(html, System.currentTimeMillis()));
+                return html;
             }
         } finally {
             connection.disconnect();
+        }
+    }
+
+    private static final class CachedDocument {
+        final String html;
+        final long savedAtMs;
+
+        CachedDocument(String html, long savedAtMs) {
+            this.html = html;
+            this.savedAtMs = savedAtMs;
         }
     }
 

@@ -1,11 +1,23 @@
 package com.xxcomic.source;
 
 import org.junit.Test;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -104,6 +116,157 @@ public class CuimhComicSourceTest {
             fail("search should fail explicitly");
         } catch (IOException error) {
             assertTrue(error.getMessage().contains("不支持搜索"));
+        }
+    }
+
+    @Test
+    public void reusesDefaultCategoryDocument() throws Exception {
+        AtomicInteger requests = new AtomicInteger();
+        try (LocalServer server = new LocalServer(200, categoryHtml(), requests, null)) {
+            CuimhComicSource source = new CuimhComicSource(localConfig(server));
+
+            assertEquals(1, source.filterGroups().size());
+            assertEquals(1, source.category(Collections.emptyMap(), 1).size());
+            assertEquals(1, requests.get());
+            server.assertHealthy();
+        }
+    }
+
+    @Test
+    public void detailIncludesChaptersFromSameDocument() throws Exception {
+        AtomicInteger requests = new AtomicInteger();
+        try (LocalServer server = new LocalServer(200, detailHtml(), requests, null)) {
+            CuimhComicSource source = new CuimhComicSource(localConfig(server));
+
+            ComicModels.ComicDetail detail = source.detail("demo");
+
+            assertEquals(1, detail.chapters.size());
+            assertEquals(1, requests.get());
+            server.assertHealthy();
+        }
+    }
+
+    @Test
+    public void rejectsRequestsLocallyDuringForbiddenCooldown() throws Exception {
+        AtomicInteger requests = new AtomicInteger();
+        try (LocalServer server = new LocalServer(403, "", requests, null)) {
+            CuimhComicSource source = new CuimhComicSource(localConfig(server));
+
+            expectIOException(() -> source.latest(1));
+            expectIOException(() -> source.latest(1));
+
+            assertEquals(1, requests.get());
+            server.assertHealthy();
+        }
+    }
+
+    @Test
+    public void spacesUncachedOriginRequests() throws Exception {
+        AtomicInteger requests = new AtomicInteger();
+        List<Long> requestTimes = Collections.synchronizedList(new ArrayList<>());
+        try (LocalServer server = new LocalServer(200, categoryHtml(), requests, requestTimes)) {
+            CuimhComicSource source = new CuimhComicSource(localConfig(server));
+            Map<String, String> first = new HashMap<>();
+            first.put("subject", "/tags/2572");
+            Map<String, String> second = new HashMap<>();
+            second.put("subject", "/tags/2573");
+
+            source.category(first, 1);
+            source.category(second, 1);
+
+            assertEquals(2, requestTimes.size());
+            assertTrue(requestTimes.get(1) - requestTimes.get(0) >= 900L);
+            server.assertHealthy();
+        }
+    }
+
+    private interface ThrowingRunnable {
+        void run() throws IOException;
+    }
+
+    private static void expectIOException(ThrowingRunnable action) throws Exception {
+        try {
+            action.run();
+            fail("expected IOException");
+        } catch (IOException expected) {
+            assertTrue(expected.getMessage().contains("催漫画"));
+        }
+    }
+
+    private static SourceConfig localConfig(LocalServer server) {
+        String baseUrl = "http://127.0.0.1:" + server.port();
+        return new SourceConfig("cuimh", "催漫画", "127.0.0.1", baseUrl, baseUrl + "/",
+                "/category{pagePath}", "", "/category{filterPath}{pagePath}", "/{comicId}",
+                true, new JSONObject(), new JSONObject()) {
+            @Override
+            public String route(String key) {
+                if ("detail".equals(key)) return "/{comicId}";
+                return "";
+            }
+        };
+    }
+
+    private static String categoryHtml() {
+        return filter("分类", "全部", "/category/", "国产漫画", "/category/list/1")
+                + "<div class=\"cy_list_mh\"><ul>"
+                + "<li><a href=\"/demo\" class=\"pic\"><img src=\"https://img.test/cover.webp\" alt=\"测试漫画\"></a></li>"
+                + "<li class=\"title\"><a href=\"/demo\">测试漫画</a></li>"
+                + "</ul></div>";
+    }
+
+    private static String detailHtml() {
+        return "<div class=\"cy_title\"><h1>测试漫画</h1></div>"
+                + "<li class=\"chapter__item\"><a href=\"/100-1.html\"><p>第1话</p></a></li>";
+    }
+
+    private static final class LocalServer implements AutoCloseable {
+        private final ServerSocket server;
+        private final Thread thread;
+        private final AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        LocalServer(int status, String body, AtomicInteger requests, List<Long> requestTimes) throws IOException {
+            server = new ServerSocket(0, 8, InetAddress.getByName("127.0.0.1"));
+            byte[] response = body.getBytes(StandardCharsets.UTF_8);
+            thread = new Thread(() -> {
+                while (!server.isClosed()) {
+                    try (Socket socket = server.accept()) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                                socket.getInputStream(), StandardCharsets.US_ASCII));
+                        String line;
+                        while ((line = reader.readLine()) != null && !line.isEmpty()) {
+                        }
+                        requests.incrementAndGet();
+                        if (requestTimes != null) requestTimes.add(System.currentTimeMillis());
+                        String reason = status == 403 ? "Forbidden" : "OK";
+                        String headers = "HTTP/1.1 " + status + " " + reason + "\r\n"
+                                + "Content-Type: text/html; charset=utf-8\r\n"
+                                + "Content-Length: " + response.length + "\r\n"
+                                + "Connection: close\r\n\r\n";
+                        OutputStream output = socket.getOutputStream();
+                        output.write(headers.getBytes(StandardCharsets.US_ASCII));
+                        output.write(response);
+                        output.flush();
+                    } catch (IOException error) {
+                        if (!server.isClosed()) failure.compareAndSet(null, error);
+                    }
+                }
+            }, "cuimh-test-server");
+            thread.setDaemon(true);
+            thread.start();
+        }
+
+        int port() {
+            return server.getLocalPort();
+        }
+
+        void assertHealthy() {
+            if (failure.get() != null) throw new AssertionError(failure.get());
+        }
+
+        @Override
+        public void close() throws Exception {
+            server.close();
+            thread.join(1000L);
         }
     }
 

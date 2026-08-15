@@ -20,7 +20,14 @@ check("Cuimh explicitly disables keyword search", source.includes("boolean suppo
   && main.includes("if (source.supportsSearch()) sources.add(source)"));
 check("Cuimh chapter images use page referer", main.includes('imageUrl.contains("baipiaoguai.org")')
   && main.includes("TextUtils.isEmpty(pageReferer) ? cuimhConfig.referer : pageReferer"));
-check("release version is 1.0.21", gradle.includes('versionName "1.0.21"')
-  && gradle.includes("versionCode 21"));
+check("Cuimh reuses catalog and detail documents", source.includes("fetchCategoryDocument")
+  && source.includes("parseChapters(html)"));
+check("Cuimh paces requests and cools down after 403", source.includes("MIN_REQUEST_INTERVAL_MS")
+  && source.includes("FORBIDDEN_COOLDOWN_MS") && source.includes("HTTP_FORBIDDEN"));
+check("detail refresh reuses chapters returned with metadata", main.includes("freshDetail.chapters.isEmpty()")
+  && main.includes("if (!loaded.chapters.isEmpty()) refreshedComicIds.add(comicId)"));
+check("filter confirm only reloads missing categories", main.includes("sourceChanged && sourceFilterGroups.isEmpty()"));
+check("release version is 1.0.22", gradle.includes('versionName "1.0.22"')
+  && gradle.includes("versionCode 22"));
 
 console.log("Cuimh source contract holds.");
