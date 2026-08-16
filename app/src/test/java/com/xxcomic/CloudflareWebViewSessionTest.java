@@ -2,10 +2,35 @@ package com.xxcomic;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class CloudflareWebViewSessionTest {
+    @Test
+    public void completeNormalPageIsCaptured() {
+        assertEquals(CloudflareWebViewSession.PageAction.CAPTURE,
+                CloudflareWebViewSession.pageAction(false, false, true));
+    }
+
+    @Test
+    public void firstChallengeShowsVerification() {
+        assertEquals(CloudflareWebViewSession.PageAction.SHOW_VERIFICATION,
+                CloudflareWebViewSession.pageAction(false, true, true));
+    }
+
+    @Test
+    public void activeChallengeKeepsVerifyingWithoutAnotherPrompt() {
+        assertEquals(CloudflareWebViewSession.PageAction.KEEP_VERIFYING,
+                CloudflareWebViewSession.pageAction(true, true, true));
+    }
+
+    @Test
+    public void completedPageAfterChallengeIsCaptured() {
+        assertEquals(CloudflareWebViewSession.PageAction.CAPTURE,
+                CloudflareWebViewSession.pageAction(true, false, true));
+    }
+
     @Test
     public void normalPageWithCloudflarePrecursorIsNotAChallenge() {
         String html = "<html><head><title>全部漫画-18漫画</title>"

@@ -40,7 +40,6 @@ final class CloudflareWebViewSession implements BrowserSession {
     private final Activity activity;
     private final Handler main;
     private final String sourceName;
-    private final String verifyUrl;
     private final Object requestLock = new Object();
     private final AtomicInteger requestSequence = new AtomicInteger();
     private volatile boolean shutdown;
@@ -51,13 +50,11 @@ final class CloudflareWebViewSession implements BrowserSession {
     private TextView status;
     private FetchRequest activeRequest;
     private int navigation;
-    private boolean browserReady;
 
-    CloudflareWebViewSession(Activity activity, Handler main, String sourceName, String verifyUrl) {
+    CloudflareWebViewSession(Activity activity, Handler main, String sourceName) {
         this.activity = activity;
         this.main = main;
         this.sourceName = sourceName;
-        this.verifyUrl = verifyUrl;
     }
 
     @Override
@@ -111,8 +108,8 @@ final class CloudflareWebViewSession implements BrowserSession {
         activeRequest = request;
         try {
             ensureViews();
-            if (browserReady) executeFetch(request);
-            else beginVerification(request);
+            showBackgroundView();
+            webView.loadUrl(request.url);
         } catch (Exception error) {
             complete(request, null, sourceName + "浏览器会话启动失败");
         }
@@ -168,7 +165,6 @@ final class CloudflareWebViewSession implements BrowserSession {
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 navigation++;
-                browserReady = false;
                 FetchRequest request = activeRequest;
                 if (request != null && request.verifying) showVerifyingState();
             }
@@ -176,14 +172,14 @@ final class CloudflareWebViewSession implements BrowserSession {
             @Override
             public void onPageFinished(WebView view, String url) {
                 FetchRequest request = activeRequest;
-                if (request != null && request.verifying) inspectVerification(request, view, navigation);
+                if (request != null) inspectPage(request, view, navigation);
             }
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 FetchRequest active = activeRequest;
-                if (active != null && active.verifying && request != null && request.isForMainFrame()) {
-                    complete(active, null, sourceName + "验证页面加载失败");
+                if (active != null && request != null && request.isForMainFrame()) {
+                    complete(active, null, sourceName + "页面加载失败");
                 }
             }
         });
@@ -196,72 +192,56 @@ final class CloudflareWebViewSession implements BrowserSession {
         status = label;
     }
 
-    private void beginVerification(FetchRequest request) {
-        if (!isActive(request)) return;
-        if (request.verificationAttempts >= 1) {
-            browserReady = false;
-            complete(request, null, sourceName + "验证后仍被拦截");
-            return;
-        }
-        request.verificationAttempts++;
-        request.verifying = true;
-        browserReady = false;
-        showVerificationView();
-        webView.loadUrl(verifyUrl);
-    }
-
-    private void inspectVerification(FetchRequest request, WebView browser, int expectedNavigation) {
-        if (!isActive(request) || !request.verifying || expectedNavigation != navigation) return;
+    private void inspectPage(FetchRequest request, WebView browser, int expectedNavigation) {
+        if (!isActive(request) || expectedNavigation != navigation) return;
         if (System.currentTimeMillis() - request.startedAt >= TIMEOUT_MS) {
-            complete(request, null, sourceName + "验证超时");
+            complete(request, null, sourceName + "请求超时");
             return;
         }
         String script = "(function(){return JSON.stringify({"
                 + "title:document.title||'',text:(document.body&&document.body.innerText||'').slice(0,2400),"
                 + "ready:document.readyState||'',url:location.href||''});})()";
         browser.evaluateJavascript(script, encoded -> {
-            if (!isActive(request) || !request.verifying || expectedNavigation != navigation) return;
+            if (!isActive(request) || expectedNavigation != navigation) return;
             try {
                 JSONObject page = new JSONObject(decodeJavascriptString(encoded));
-                if (isChallenge(page.optString("url"), page.optString("title"),
-                        page.optString("text"), 0, "")) {
+                boolean challenge = isChallenge(page.optString("url"), page.optString("title"),
+                        page.optString("text"), 0, "");
+                boolean ready = "complete".equalsIgnoreCase(page.optString("ready"));
+                PageAction action = pageAction(request.verifying, challenge, ready);
+                if (action == PageAction.SHOW_VERIFICATION) {
+                    request.verifying = true;
+                    showVerificationView();
+                } else if (action == PageAction.KEEP_VERIFYING) {
                     showVerifyingState();
-                    browser.postDelayed(() -> inspectVerification(
-                            request, browser, expectedNavigation), POLL_DELAY_MS);
+                } else if (action == PageAction.CAPTURE) {
+                    android.webkit.CookieManager.getInstance().flush();
+                    if (request.verifying) {
+                        showVerifiedState();
+                        browser.postDelayed(() -> captureCurrentPage(
+                                request, browser, expectedNavigation), 550L);
+                    } else {
+                        captureCurrentPage(request, browser, expectedNavigation);
+                    }
                     return;
                 }
-                if (!"complete".equalsIgnoreCase(page.optString("ready"))) {
-                    browser.postDelayed(() -> inspectVerification(
-                            request, browser, expectedNavigation), POLL_DELAY_MS);
-                    return;
-                }
-                android.webkit.CookieManager.getInstance().flush();
-                request.verifying = false;
-                browserReady = true;
-                showVerifiedState();
-                browser.postDelayed(() -> {
-                    if (!isActive(request)) return;
-                    showBackgroundView();
-                    executeFetch(request);
-                }, 550L);
+                browser.postDelayed(() -> inspectPage(
+                        request, browser, expectedNavigation), POLL_DELAY_MS);
             } catch (Exception error) {
-                complete(request, null, sourceName + "验证结果解析失败");
+                complete(request, null, sourceName + "页面结果解析失败");
             }
         });
     }
 
-    private void executeFetch(FetchRequest request) {
-        if (!isActive(request)) return;
+    private void captureCurrentPage(FetchRequest request, WebView browser, int expectedNavigation) {
+        if (!isActive(request) || expectedNavigation != navigation) return;
+        request.verifying = false;
         showBackgroundView();
-        String script = "(function(){var id=" + JSONObject.quote(request.id)
-                + ",url=" + JSONObject.quote(request.url) + ";"
-                + "fetch(url,{credentials:'include',redirect:'follow',headers:{Accept:'text/html,application/json;q=0.9,*/*;q=0.8'}})"
-                + ".then(function(r){return r.text().then(function(body){"
-                + "window." + BRIDGE_NAME + ".onFetchResult(id,JSON.stringify({status:r.status,url:r.url||url,"
-                + "mitigated:r.headers.get('cf-mitigated')||'',body:body}));});})"
-                + ".catch(function(e){window." + BRIDGE_NAME
-                + ".onFetchResult(id,JSON.stringify({error:String(e)}));});})();";
-        webView.evaluateJavascript(script, null);
+        String script = "(function(){var id=" + JSONObject.quote(request.id) + ";try{window."
+                + BRIDGE_NAME + ".onFetchResult(id,JSON.stringify({url:location.href||'',body:"
+                + "document.documentElement.outerHTML||''}));}catch(e){window." + BRIDGE_NAME
+                + ".onFetchResult(id,JSON.stringify({error:String(e)}));}})();";
+        browser.evaluateJavascript(script, null);
     }
 
     private void handleFetchResult(String id, String payload) {
@@ -273,15 +253,9 @@ final class CloudflareWebViewSession implements BrowserSession {
                 complete(request, null, sourceName + "浏览器请求失败");
                 return;
             }
-            int statusCode = response.optInt("status", 0);
             String body = response.optString("body", "");
-            if (isChallenge(response.optString("url"), "", body, statusCode,
-                    response.optString("mitigated"))) {
-                beginVerification(request);
-                return;
-            }
-            if (statusCode < 200 || statusCode >= 400) {
-                complete(request, null, sourceName + "请求失败：HTTP " + statusCode);
+            if (TextUtils.isEmpty(body)) {
+                complete(request, null, sourceName + "页面内容为空");
                 return;
             }
             complete(request, body, "");
@@ -305,6 +279,20 @@ final class CloudflareWebViewSession implements BrowserSession {
                 || content.contains("请稍候")
                 || content.contains("正在验证")
                 || content.contains("安全验证");
+    }
+
+    enum PageAction {
+        WAIT,
+        SHOW_VERIFICATION,
+        KEEP_VERIFYING,
+        CAPTURE
+    }
+
+    static PageAction pageAction(boolean verifying, boolean challenge, boolean ready) {
+        if (challenge) {
+            return verifying ? PageAction.KEEP_VERIFYING : PageAction.SHOW_VERIFICATION;
+        }
+        return ready ? PageAction.CAPTURE : PageAction.WAIT;
     }
 
     private boolean isActive(FetchRequest request) {
@@ -380,7 +368,6 @@ final class CloudflareWebViewSession implements BrowserSession {
         statusCard = null;
         progress = null;
         status = null;
-        browserReady = false;
         if (page != null && page.getParent() instanceof ViewGroup) {
             ((ViewGroup) page.getParent()).removeView(page);
         }
@@ -409,7 +396,6 @@ final class CloudflareWebViewSession implements BrowserSession {
         volatile String result;
         volatile String error = "";
         boolean verifying;
-        int verificationAttempts;
 
         FetchRequest(String id, String url) {
             this.id = id;
