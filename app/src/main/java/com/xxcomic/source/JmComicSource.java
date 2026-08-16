@@ -29,6 +29,12 @@ public class JmComicSource implements ComicSource {
             "<a\\b([^>]*href\\s*=\\s*([\"'])([^\"']*/album/(\\d+)[^\"']*)\\2[^>]*)>([\\s\\S]*?)</a>",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern ANCHOR = Pattern.compile("<a\\b([^>]*)>([\\s\\S]*?)</a>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern THEME_SECTION = Pattern.compile(
+            "<div\\b[^>]*class\\s*=\\s*[\"'][^\"']*\\brow\\b[^\"']*[\"'][^>]*>\\s*"
+                    + "<h4[^>]*>([\\s\\S]*?)</h4>\\s*"
+                    + "<ul\\b[^>]*class\\s*=\\s*[\"'][^\"']*\\bbtn-toolbar\\b[^\"']*\\bbtnmg\\b[^\"']*[\"'][^>]*>"
+                    + "([\\s\\S]*?)</ul>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern IMAGE_TAG = Pattern.compile("<img\\b[^>]*>", Pattern.CASE_INSENSITIVE);
     private final SourceConfig config;
     private final BrowserSession browserSession;
 
@@ -67,29 +73,32 @@ public class JmComicSource implements ComicSource {
 
     @Override
     public List<ComicModels.FilterGroup> filterGroups() throws IOException {
-        String html = fetch(absolute(config.route("categoryIndex")));
+        List<ComicModels.FilterGroup> groups = parseFilterGroups(
+                fetch(absolute(config.route("categoryIndex"))), config.baseUrl);
+        if (groups.isEmpty()) throw new IOException(config.name + " 分类解析失败");
+        return groups;
+    }
+
+    static List<ComicModels.FilterGroup> parseFilterGroups(String html, String baseUrl) {
         List<ComicModels.FilterGroup> groups = new ArrayList<>();
-        Matcher sections = Pattern.compile(
-                "<h4[^>]*>([\\s\\S]*?)</h4>\\s*<ul[^>]*>([\\s\\S]*?)</ul>",
-                Pattern.CASE_INSENSITIVE).matcher(html);
+        Matcher sections = THEME_SECTION.matcher(html == null ? "" : html);
         int index = 0;
         while (sections.find()) {
-            String label = clean(sections.group(1));
+            String label = normalizeThemeLabel(cleanMarkup(sections.group(1)));
             List<ComicModels.FilterOption> options = new ArrayList<>();
             options.add(new ComicModels.FilterOption("全部", "all"));
             Set<String> seen = new LinkedHashSet<>();
             Matcher links = ANCHOR.matcher(sections.group(2));
             while (links.find()) {
-                String href = decode(attribute(links.group(1), "href"));
-                if (!isCatalogPath(href) || !seen.add(href)) continue;
-                String optionLabel = clean(links.group(2));
-                if (!TextUtils.isEmpty(optionLabel)) options.add(new ComicModels.FilterOption(optionLabel, href));
+                String href = decode(attribute(links.group(1), "href")).trim();
+                if (!isCatalogPath(href, baseUrl) || !seen.add(href)) continue;
+                String optionLabel = cleanMarkup(links.group(2));
+                if (!optionLabel.isEmpty()) options.add(new ComicModels.FilterOption(optionLabel, href));
             }
-            if (!TextUtils.isEmpty(label) && options.size() > 1) {
+            if (!label.isEmpty() && options.size() > 1) {
                 groups.add(new ComicModels.FilterGroup("theme_" + index++, label, options));
             }
         }
-        if (groups.isEmpty()) throw new IOException(config.name + " 分类解析失败");
         return groups;
     }
 
@@ -119,9 +128,7 @@ public class JmComicSource implements ComicSource {
         String html = fetch(absolute(config.route("detail").replace("{comicId}", rawId)));
         String title = clean(first(html, "<[^>]+id=[\"']book-name[\"'][^>]*>([\\s\\S]*?)</[^>]+>"));
         if (TextUtils.isEmpty(title)) title = clean(meta(html, "og:title"));
-        String coverTag = firstRaw(html, "<img[^>]+itemprop=[\"']image[\"'][^>]*>");
-        String cover = imageUrl(coverTag);
-        if (TextUtils.isEmpty(cover)) cover = meta(html, "og:image");
+        String cover = parseCover(html, rawId);
         String description = clean(first(html, "<h2[^>]*>\\s*敘述\\s*[:：]([\\s\\S]*?)</h2>"));
         if (TextUtils.isEmpty(description)) description = clean(meta(html, "description"));
         String scope = detailScope(html);
@@ -253,10 +260,10 @@ public class JmComicSource implements ComicSource {
         return result;
     }
 
-    private String imageUrl(String tag) {
+    private static String imageUrl(String tag) {
         String url = attribute(tag, "data-original");
-        if (TextUtils.isEmpty(url)) url = attribute(tag, "data-src");
-        if (TextUtils.isEmpty(url)) url = attribute(tag, "src");
+        if (url.isEmpty()) url = attribute(tag, "data-src");
+        if (url.isEmpty()) url = attribute(tag, "src");
         return decode(url).trim();
     }
 
@@ -266,11 +273,45 @@ public class JmComicSource implements ComicSource {
     }
 
     private boolean isCatalogPath(String value) {
-        if (TextUtils.isEmpty(value) || "all".equals(value)) return false;
+        return isCatalogPath(value, config.baseUrl);
+    }
+
+    private static boolean isCatalogPath(String value, String baseUrl) {
+        if (value == null || value.trim().isEmpty() || "all".equals(value)) return false;
         String path = decode(value).trim();
         return path.startsWith("/search/photos") || path.startsWith("/albums")
-                || path.startsWith(config.baseUrl + "/search/photos")
-                || path.startsWith(config.baseUrl + "/albums");
+                || path.startsWith(baseUrl + "/search/photos")
+                || path.startsWith(baseUrl + "/albums");
+    }
+
+    static String parseCover(String html, String rawId) {
+        String fallback = "";
+        Matcher images = IMAGE_TAG.matcher(html == null ? "" : html);
+        Pattern albumImage = Pattern.compile("/media/albums/" + Pattern.quote(rawId)
+                + "(?:[._/?#-]|$)", Pattern.CASE_INSENSITIVE);
+        while (images.find()) {
+            String tag = images.group();
+            String url = imageUrl(tag);
+            if (!albumImage.matcher(url).find()) continue;
+            if ("album_photo_cover".equals(attribute(tag, "id"))) return url;
+            if (fallback.isEmpty()) fallback = url;
+        }
+        return fallback;
+    }
+
+    private static String normalizeThemeLabel(String value) {
+        if (value.contains("熱門成人主題") || value.contains("热门成人主题")) return "热门";
+        if (value.contains("類別") || value.contains("类别")) return "类别";
+        if (value.contains("漫畫排行榜") || value.contains("漫画排行榜")) return "排行榜";
+        if (value.contains("主題A漫") || value.contains("主题A漫")) return "主题";
+        if (value.contains("角色") && value.contains("扮演")) return "角色";
+        if (value.toUpperCase(java.util.Locale.US).contains("PLAY")) return "特殊";
+        return value;
+    }
+
+    private static String cleanMarkup(String value) {
+        return decode(value == null ? "" : value.replaceAll("<[^>]+>", " "))
+                .replaceAll("\\s+", " ").trim();
     }
 
     private String rawComicId(String value) {
@@ -335,7 +376,7 @@ public class JmComicSource implements ComicSource {
         return matcher.find() ? matcher.group() : "";
     }
 
-    private String attribute(String tag, String name) {
+    private static String attribute(String tag, String name) {
         Matcher matcher = Pattern.compile("\\b" + Pattern.quote(name)
                 + "\\s*=\\s*([\"'])([\\s\\S]*?)\\1", Pattern.CASE_INSENSITIVE).matcher(tag == null ? "" : tag);
         return matcher.find() ? decode(matcher.group(2)) : "";
@@ -357,7 +398,7 @@ public class JmComicSource implements ComicSource {
         return Html.fromHtml(value).toString().replaceAll("\\s+", " ").trim();
     }
 
-    private String decode(String value) {
+    private static String decode(String value) {
         return value == null ? "" : value.replace("&amp;", "&").replace("&quot;", "\"")
                 .replace("&#39;", "'").replace("&nbsp;", " ");
     }

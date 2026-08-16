@@ -4163,18 +4163,27 @@ public class MainActivity extends Activity {
         if (config == null || config == Bitmap.Config.HARDWARE) config = Bitmap.Config.ARGB_8888;
         Bitmap restored = Bitmap.createBitmap(source.getWidth(), source.getHeight(), config);
         Canvas canvas = new Canvas(restored);
-        int move = source.getHeight() / slices;
-        int remainder = source.getHeight() % slices;
-        for (int i = 0; i < slices; i++) {
-            int height = move + (i == 0 ? remainder : 0);
-            int sourceY = source.getHeight() - move * (i + 1) - (i == 0 ? remainder : 0);
-            int targetY = move * i;
+        for (int[] bound : jmSliceBounds(source.getHeight(), slices)) {
             canvas.drawBitmap(source,
-                    new Rect(0, sourceY, source.getWidth(), sourceY + height),
-                    new Rect(0, targetY, source.getWidth(), targetY + height), null);
+                    new Rect(0, bound[0], source.getWidth(), bound[1]),
+                    new Rect(0, bound[2], source.getWidth(), bound[3]), null);
         }
         source.recycle();
         return restored;
+    }
+
+    static int[][] jmSliceBounds(int height, int slices) {
+        int[][] bounds = new int[slices][4];
+        int move = height / slices;
+        int remainder = height % slices;
+        int targetY = 0;
+        for (int i = 0; i < slices; i++) {
+            int sliceHeight = move + (i == 0 ? remainder : 0);
+            int sourceY = height - targetY - sliceHeight;
+            bounds[i] = new int[]{sourceY, sourceY + sliceHeight, targetY, targetY + sliceHeight};
+            targetY += sliceHeight;
+        }
+        return bounds;
     }
 
     private int jmScrambleSlices(long aid, long scrambleId, String fileName) {

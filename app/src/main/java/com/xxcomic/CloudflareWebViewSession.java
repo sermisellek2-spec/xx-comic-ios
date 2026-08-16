@@ -290,12 +290,13 @@ final class CloudflareWebViewSession implements BrowserSession {
         }
     }
 
-    private boolean isChallenge(String url, String title, String body, int statusCode, String mitigated) {
+    static boolean isChallenge(String url, String title, String body, int statusCode, String mitigated) {
         String content = ((url == null ? "" : url) + " " + (title == null ? "" : title)
                 + " " + (body == null ? "" : body)).toLowerCase(Locale.US);
         return (statusCode == 403 && "challenge".equalsIgnoreCase(mitigated))
-                || content.contains("/cdn-cgi/challenge-platform")
-                || content.contains("cf-chl-")
+                || content.contains("/orchestrate/chl_page/")
+                || content.contains("cf-chl-widget")
+                || content.contains("cf-turnstile-response")
                 || content.contains("just a moment")
                 || content.contains("attention required")
                 || content.contains("checking your browser")
