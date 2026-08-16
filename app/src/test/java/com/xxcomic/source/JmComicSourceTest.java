@@ -84,6 +84,13 @@ public class JmComicSourceTest {
         source.latest(1);
     }
 
+    @Test(expected = java.io.IOException.class)
+    public void defaultCategoryRejectsACompletedPageWithoutCatalogCards() throws Exception {
+        JmComicSource source = new JmComicSource(SourceConfig.jmcomic(true),
+                url -> "<html><title>禁漫天堂</title><body>广告</body></html>");
+        source.category(java.util.Collections.emptyMap(), 1);
+    }
+
     @Test
     public void coverIgnoresAdvertAndUsesCurrentAlbumCover() {
         String html = "<img itemprop=\"image\" src=\"https://cdn.test/static/resources/ad.gif\">"

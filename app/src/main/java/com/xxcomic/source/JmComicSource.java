@@ -116,15 +116,18 @@ public class JmComicSource implements ComicSource {
     @Override
     public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
         String path = config.route("latest");
+        boolean filtered = false;
         if (filters != null) {
             for (Map.Entry<String, String> item : filters.entrySet()) {
                 if (item.getKey().startsWith("theme_") && isCatalogPath(item.getValue())) {
                     path = item.getValue();
+                    filtered = true;
                     break;
                 }
             }
         }
-        return parseCards(fetch(pageUrl(absolute(path), page)));
+        String html = fetch(pageUrl(absolute(path), page));
+        return filtered ? parseCards(html) : requireCatalogCards(html);
     }
 
     @Override

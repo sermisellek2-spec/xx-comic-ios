@@ -261,6 +261,7 @@ public class MainActivity extends Activity {
     private float searchPullStartY = -1f;
     private float searchPullDistance = 0f;
     private boolean searchHasMore = true;
+    private boolean sourceCategoriesFailed = false;
     private boolean searchAppendFailed = false;
     private String searchAppendFailedKeyword = "";
     private int searchAppendFailedPage = -1;
@@ -750,7 +751,8 @@ public class MainActivity extends Activity {
         if (tab == 1) renderSearch(page);
         if (tab == 2) renderSettings(page);
         shell.addView(makeBottomNav(), UIHelpers.frame(-1, UIHelpers.dp(this, 60), Gravity.BOTTOM, 0, 0, 0, 0));
-        if (tab == 1 && previousTab != 1 && sourceFilterGroups.isEmpty()) loadSourceCategories();
+        if (tab == 1 && previousTab != 1 && sourceFilterGroups.isEmpty()
+                && !categoriesFollowInitialList(selectedSourceId)) loadSourceCategories();
         if (!globalSearchMode) scheduleDefaultSearchLoad();
     }
 
@@ -875,6 +877,19 @@ public class MainActivity extends Activity {
         filterScroll.addView(filters, UIHelpers.wrap());
         if (!sourceFilterGroups.isEmpty()) {
             page.addView(filterScroll, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
+        }
+        if (sourceCategoriesFailed && categoriesFollowInitialList(selectedSourceId)) {
+            TextView retryCategories = UIHelpers.text(
+                    this, "分类加载失败，重试", 12, UIHelpers.ACCENT, Typeface.BOLD);
+            retryCategories.setGravity(Gravity.CENTER_VERTICAL);
+            retryCategories.setBackgroundColor(Color.TRANSPARENT);
+            retryCategories.setOnClickListener(v -> {
+                sourceCategoriesFailed = false;
+                showTab(1, false);
+                loadSourceCategories();
+            });
+            page.addView(retryCategories,
+                    UIHelpers.marginBottom(-2, UIHelpers.dp(this, 6)));
         }
         page.addView(sectionTitle(selectedSourceName() + " · " + (TextUtils.isEmpty(searchQuery.trim()) ? "全部漫画" : "搜索结果")));
 
@@ -1395,6 +1410,7 @@ public class MainActivity extends Activity {
             clearSearchAppendFailure();
             removeSearchPagingFooter();
             selectedSourceId = enabled.isEmpty() ? "" : enabled.get(0).id();
+            sourceCategoriesFailed = false;
             searchQuery = "";
             resetCategoryFilters();
             sourceFilterGroups.clear();
@@ -2251,6 +2267,10 @@ public class MainActivity extends Activity {
         return "mh18".equals(sourceId) || "jmcomic".equals(sourceId);
     }
 
+    static boolean categoriesFollowInitialList(String sourceId) {
+        return "jmcomic".equals(sourceId);
+    }
+
     private void verifyProtectedSource(String sourceId) {
         if (!supportsManualVerification(sourceId) || !verifyingProtectedSourceIds.add(sourceId)) return;
         ComicSource client = sourceForId(sourceId);
@@ -2962,6 +2982,8 @@ public class MainActivity extends Activity {
                 main.post(() -> {
                     if (generation != searchGeneration) return;
                     if (!TextUtils.equals(requestSourceId, selectedSourceId)) return;
+                    boolean loadCategoriesAfterList = categoriesFollowInitialList(requestSourceId)
+                            && categoryMode && page == 1 && !append && sourceFilterGroups.isEmpty();
                     List<ComicModels.ComicSummary> additions = append
                             ? newSearchItems(searchResults, list) : new ArrayList<>(list);
                     if (!append) searchResults.clear();
@@ -2980,6 +3002,7 @@ public class MainActivity extends Activity {
                             showTab(1, false);
                         }
                     }
+                    if (loadCategoriesAfterList) loadSourceCategories();
                     persistComicCachesAsync();
                 });
             } catch (Exception error) {
@@ -3265,6 +3288,7 @@ public class MainActivity extends Activity {
         List<ComicSource> enabled = enabledBuiltinSources();
         if (enabled.isEmpty()) return null;
         selectedSourceId = enabled.get(0).id();
+        sourceCategoriesFailed = false;
         return enabled.get(0);
     }
 
@@ -3401,6 +3425,7 @@ public class MainActivity extends Activity {
     private void loadSourceCategories() {
         ComicSource client = selectedSource();
         if (client == null) return;
+        sourceCategoriesFailed = false;
         int generation = ++categoryGeneration;
         String sourceId = client.id();
         track(searchIo.submit(() -> {
@@ -3408,6 +3433,7 @@ public class MainActivity extends Activity {
                 List<ComicModels.FilterGroup> list = client.filterGroups();
                 main.post(() -> {
                     if (generation != categoryGeneration || !TextUtils.equals(sourceId, selectedSourceId)) return;
+                    sourceCategoriesFailed = false;
                     sourceFilterGroups.clear();
                     sourceFilterGroups.addAll(list);
                     normalizeSelectedFilters();
@@ -3417,7 +3443,13 @@ public class MainActivity extends Activity {
                         showTab(1, false);
                     }
                 });
-            } catch (Exception ignored) {
+            } catch (Exception error) {
+                main.post(() -> {
+                    if (generation != categoryGeneration || !TextUtils.equals(sourceId, selectedSourceId)) return;
+                    sourceCategoriesFailed = true;
+                    appendErrorLog("分类加载失败", error);
+                    if (currentTab == 1) showTab(1, false);
+                });
             }
         }));
     }
@@ -4477,6 +4509,7 @@ public class MainActivity extends Activity {
         final Map<String, String> origFilters = new LinkedHashMap<>(selectedFilters);
         final Map<String, String> origFilterLabels = new LinkedHashMap<>(selectedFilterLabels);
         final List<ComicModels.FilterGroup> origFilterGroups = new ArrayList<>(sourceFilterGroups);
+        final boolean origCategoriesFailed = sourceCategoriesFailed;
         final boolean[] confirmed = {false};
 
         FrameLayout overlay = new FrameLayout(this);
@@ -4541,7 +4574,8 @@ public class MainActivity extends Activity {
                 categoryGeneration++;
                 sourceFilterGroups.clear();
                 sourceFilterGroups.addAll(origFilterGroups);
-                if (sourceFilterGroups.isEmpty()) loadSourceCategories();
+                sourceCategoriesFailed = origCategoriesFailed;
+                if (sourceFilterGroups.isEmpty() && !sourceCategoriesFailed) loadSourceCategories();
             }
         });
         close.setOnClickListener(v -> popup.dismiss());
@@ -4579,8 +4613,13 @@ public class MainActivity extends Activity {
                         selectedSourceId = sid;
                         resetCategoryFilters();
                         sourceFilterGroups.clear();
-                        loadSourceCategories();
-                        filterTab[0] = 1;
+                        sourceCategoriesFailed = false;
+                        if (categoriesFollowInitialList(sid)) {
+                            filterTab[0] = 0;
+                        } else {
+                            loadSourceCategories();
+                            filterTab[0] = 1;
+                        }
                         fill[0].run();
                     });
                     content.addView(row);
@@ -4613,7 +4652,8 @@ public class MainActivity extends Activity {
             String keyword = searchQuery.trim();
             searchResults.clear();
             showTab(1);
-            if (sourceChanged && sourceFilterGroups.isEmpty()) loadSourceCategories();
+            if (sourceChanged && !categoriesFollowInitialList(selectedSourceId)
+                    && sourceFilterGroups.isEmpty()) loadSourceCategories();
             if (TextUtils.isEmpty(keyword)) loadCategory(); else runSearch(keyword);
             popup.dismiss();
         });
@@ -4669,9 +4709,10 @@ public class MainActivity extends Activity {
                     selectedSourceId = sourceIdForName(items[which]);
                     resetCategoryFilters();
                     sourceFilterGroups.clear();
+                    sourceCategoriesFailed = false;
                     searchResults.clear();
                     showTab(1);
-                    loadSourceCategories();
+                    if (!categoriesFollowInitialList(selectedSourceId)) loadSourceCategories();
                     loadDefaultCategory();
                 })
                 .create();
@@ -6003,10 +6044,11 @@ public class MainActivity extends Activity {
                 postMainIfAlive(() -> {
                     resetCategoryFilters();
                     sourceFilterGroups.clear();
+                    sourceCategoriesFailed = false;
                     searchResults.clear();
                     showSourceManagement();
                     showRemToast("站源配置已导入");
-                    loadSourceCategories();
+                    if (!categoriesFollowInitialList(selectedSourceId)) loadSourceCategories();
                     loadDefaultCategory();
                 });
             } catch (Exception error) {

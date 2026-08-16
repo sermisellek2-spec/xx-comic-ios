@@ -28,5 +28,13 @@ check("protected requests remain single active navigation",
 check("manual verification keeps useful failure classes",
   main.includes('" 验证超时"') && main.includes('" 页面验证失败"')
   && main.includes('" 连接失败，请检查 VPN"'));
+check("jmcomic defers categories until the first list",
+  main.includes('return "jmcomic".equals(sourceId);')
+  && main.includes("if (loadCategoriesAfterList) loadSourceCategories()"));
+check("category failures are visible and retryable",
+  main.includes('appendErrorLog("分类加载失败", error)')
+  && main.includes('"分类加载失败，重试"'));
+check("category failure never clears catalog results",
+  !/catch \(Exception error\)[\s\S]{0,500}分类加载失败[\s\S]{0,300}searchResults\.clear\(\)/.test(main));
 
 console.log("JMComic bootstrap contract holds.");

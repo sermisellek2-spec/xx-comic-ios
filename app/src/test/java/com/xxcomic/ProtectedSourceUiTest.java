@@ -24,4 +24,11 @@ public class ProtectedSourceUiTest {
         assertFalse(MainActivity.supportsManualVerification("hanman18"));
         assertFalse(MainActivity.supportsManualVerification("manhuagui"));
     }
+
+    @Test
+    public void jmcomicCategoriesWaitForTheFirstCatalogPage() {
+        assertTrue(MainActivity.categoriesFollowInitialList("jmcomic"));
+        assertFalse(MainActivity.categoriesFollowInitialList("mh18"));
+        assertFalse(MainActivity.categoriesFollowInitialList("baozimh"));
+    }
 }
