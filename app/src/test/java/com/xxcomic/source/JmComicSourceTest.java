@@ -92,6 +92,14 @@ public class JmComicSourceTest {
     }
 
     @Test
+    public void laterDefaultCategoryPageCanBeEmpty() throws Exception {
+        JmComicSource source = new JmComicSource(SourceConfig.jmcomic(true),
+                url -> "<html><title>禁漫天堂</title><body>没有更多了</body></html>");
+
+        assertTrue(source.category(java.util.Collections.emptyMap(), 2).isEmpty());
+    }
+
+    @Test
     public void coverIgnoresAdvertAndUsesCurrentAlbumCover() {
         String html = "<img itemprop=\"image\" src=\"https://cdn.test/static/resources/ad.gif\">"
                 + "<img id=\"album_photo_cover\" data-original=\"https://cdn-msp.18comic.vip/media/albums/1236835.jpg?t=1\">"

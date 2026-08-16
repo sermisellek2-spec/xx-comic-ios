@@ -127,7 +127,7 @@ public class JmComicSource implements ComicSource {
             }
         }
         String html = fetch(pageUrl(absolute(path), page));
-        return filtered ? parseCards(html) : requireCatalogCards(html);
+        return !filtered && page == 1 ? requireCatalogCards(html) : parseCards(html);
     }
 
     @Override
