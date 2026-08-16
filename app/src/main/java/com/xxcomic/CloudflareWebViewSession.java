@@ -38,6 +38,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     private static final String BRIDGE_NAME = "XXComicBridge";
     private static final long TIMEOUT_MS = 180000L;
     private static final long POLL_DELAY_MS = 800L;
+    private static final long INTERACTIVE_DELAY_MS = 1200L;
 
     private final Activity activity;
     private final Handler main;
@@ -72,8 +73,9 @@ final class CloudflareWebViewSession implements BrowserSession {
             try {
                 if (!request.latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                     request.cancelled = true;
-                    main.post(() -> complete(request, null, sourceName + "请求超时"));
-                    throw new IOException(sourceName + "请求超时");
+                    String error = timeoutError(request);
+                    main.post(() -> complete(request, null, error));
+                    throw new IOException(error);
                 }
             } catch (InterruptedException interrupted) {
                 request.cancelled = true;
@@ -161,8 +163,11 @@ final class CloudflareWebViewSession implements BrowserSession {
         label.setGravity(Gravity.CENTER_VERTICAL);
         card.addView(label, new LinearLayout.LayoutParams(
                 UIHelpers.dp(activity, 78), UIHelpers.dp(activity, 24)));
-        page.addView(card, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        FrameLayout.LayoutParams statusParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        statusParams.topMargin = UIHelpers.dp(activity, 18);
+        page.addView(card, statusParams);
 
         WebSettings settings = browser.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -180,8 +185,11 @@ final class CloudflareWebViewSession implements BrowserSession {
                 navigation++;
                 FetchRequest request = activeRequest;
                 if (request != null) {
+                    request.currentUrl = url == null ? "" : url;
                     request.statusCode = 0;
                     request.mitigated = "";
+                    request.challengeDom = false;
+                    request.pageReady = false;
                     if (request.verifying) showVerifyingState();
                 }
             }
@@ -229,7 +237,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     private void inspectPage(FetchRequest request, WebView browser, int expectedNavigation) {
         if (!isActive(request) || expectedNavigation != navigation) return;
         if (System.currentTimeMillis() - request.startedAt >= TIMEOUT_MS) {
-            complete(request, null, sourceName + "请求超时");
+            complete(request, null, timeoutError(request));
             return;
         }
         String script = "(function(){return JSON.stringify({"
@@ -242,20 +250,28 @@ final class CloudflareWebViewSession implements BrowserSession {
                 JSONObject page = new JSONObject(decodeJavascriptString(encoded));
                 boolean challenge = isChallenge(page.optString("url"), page.optString("title"),
                         page.optString("text") + " " + page.optString("html"),
-                        request.statusCode, request.mitigated);
+                        request.statusCode, request.mitigated, request.verifying);
                 boolean ready = "complete".equalsIgnoreCase(page.optString("ready"));
+                request.currentUrl = page.optString("url");
+                request.challengeDom = challenge;
+                request.pageReady = ready;
                 PageAction action = pageAction(request.verifying, challenge, ready, request.statusCode);
                 if (action == PageAction.SHOW_VERIFICATION) {
                     request.verifying = true;
-                    showVerificationView();
+                    showVerificationView(false);
+                    browser.postDelayed(() -> {
+                        if (isActive(request) && request.verifying) showVerificationView(true);
+                    }, INTERACTIVE_DELAY_MS);
                 } else if (action == PageAction.KEEP_VERIFYING) {
                     showVerifyingState();
                 } else if (action == PageAction.FAIL) {
-                    complete(request, null, sourceName + "请求失败：HTTP " + request.statusCode);
+                    complete(request, null, sourceName + "请求失败：HTTP "
+                            + request.statusCode + requestDiagnostic(request));
                     return;
                 } else if (action == PageAction.CAPTURE) {
                     if (!isExpectedPage(request.url, page.optString("url"))) {
-                        complete(request, null, sourceName + "页面跳转异常");
+                        complete(request, null, sourceName + "页面跳转异常"
+                                + requestDiagnostic(request));
                         return;
                     }
                     android.webkit.CookieManager.getInstance().flush();
@@ -311,11 +327,12 @@ final class CloudflareWebViewSession implements BrowserSession {
         }
     }
 
-    static boolean isChallenge(String url, String title, String body, int statusCode, String mitigated) {
+    static boolean isChallenge(String url, String title, String body, int statusCode,
+                               String mitigated, boolean verifying) {
         String content = ((url == null ? "" : url) + " " + (title == null ? "" : title)
                 + " " + (body == null ? "" : body)).toLowerCase(Locale.US);
-        return (statusCode == 403 && "challenge".equalsIgnoreCase(mitigated))
-                || content.contains("/orchestrate/chl_page/")
+        boolean responseChallenge = statusCode == 403 && "challenge".equalsIgnoreCase(mitigated);
+        boolean domChallenge = content.contains("/orchestrate/chl_page/")
                 || content.contains("cf-chl-widget")
                 || content.contains("cf-turnstile-response")
                 || content.contains("just a moment")
@@ -326,6 +343,7 @@ final class CloudflareWebViewSession implements BrowserSession {
                 || content.contains("请稍候")
                 || content.contains("正在验证")
                 || content.contains("安全验证");
+        return domChallenge || (!verifying && responseChallenge);
     }
 
     enum PageAction {
@@ -377,13 +395,16 @@ final class CloudflareWebViewSession implements BrowserSession {
                 && activeRequest == request && !shutdown;
     }
 
-    private void showVerificationView() {
+    private void showVerificationView(boolean interactive) {
         if (host == null) return;
         host.setLayoutParams(verificationLayoutParams());
         host.setBackgroundColor(Color.argb(42, 18, 39, 56));
         host.setClickable(true);
         host.setFocusable(true);
-        if (webView != null) webView.setClickable(true);
+        if (webView != null) {
+            webView.setAlpha(interactive ? 1f : 0.01f);
+            webView.setClickable(interactive);
+        }
         if (statusCard != null) statusCard.setVisibility(View.VISIBLE);
         showVerifyingState();
         host.bringToFront();
@@ -395,7 +416,10 @@ final class CloudflareWebViewSession implements BrowserSession {
         host.setBackgroundColor(Color.TRANSPARENT);
         host.setClickable(false);
         host.setFocusable(false);
-        if (webView != null) webView.setClickable(false);
+        if (webView != null) {
+            webView.setAlpha(0.01f);
+            webView.setClickable(false);
+        }
         if (statusCard != null) statusCard.setVisibility(View.GONE);
     }
 
@@ -416,6 +440,17 @@ final class CloudflareWebViewSession implements BrowserSession {
     private void showVerifiedState() {
         if (status != null) status.setText("验证完成");
         if (progress != null) progress.setVisibility(View.INVISIBLE);
+    }
+
+    private String requestDiagnostic(FetchRequest request) {
+        return " [url=" + request.currentUrl + ", status=" + request.statusCode
+                + ", verifying=" + request.verifying + ", challenge="
+                + request.challengeDom + ", ready=" + request.pageReady + "]";
+    }
+
+    private String timeoutError(FetchRequest request) {
+        return sourceName + (request.verifying ? "验证超时" : "请求超时")
+                + requestDiagnostic(request);
     }
 
     private String decodeJavascriptString(String encoded) {
@@ -472,6 +507,9 @@ final class CloudflareWebViewSession implements BrowserSession {
         volatile boolean completed;
         volatile String result;
         volatile String error = "";
+        volatile String currentUrl = "";
+        volatile boolean challengeDom;
+        volatile boolean pageReady;
         boolean verifying;
         int statusCode;
         String mitigated = "";

@@ -44,7 +44,7 @@ public class CloudflareWebViewSessionTest {
                 + "</head><body><main>全部漫画</main></body></html>";
 
         assertFalse(CloudflareWebViewSession.isChallenge(
-                "https://18mh.org/manga", "全部漫画-18漫画", html, 200, ""));
+                "https://18mh.org/manga", "全部漫画-18漫画", html, 200, "", false));
     }
 
     @Test
@@ -53,7 +53,23 @@ public class CloudflareWebViewSessionTest {
                 + "<input id=\"cf-chl-widget-test_response\">";
 
         assertTrue(CloudflareWebViewSession.isChallenge(
-                "https://18mh.org/manga", "请稍候…", html, 200, ""));
+                "https://18mh.org/manga", "请稍候…", html, 200, "", false));
+    }
+
+    @Test
+    public void verifiedBusinessDomIgnoresTheOldChallengeResponse() {
+        assertFalse(CloudflareWebViewSession.isChallenge(
+                "https://18comic.vip/albums?o=mr&page=1",
+                "最新的 Comics - 禁漫天堂",
+                "<a href='/album/123'><img src='cover.jpg'></a>",
+                403, "challenge", true));
+    }
+
+    @Test
+    public void firstChallengeResponseStillStartsVerification() {
+        assertTrue(CloudflareWebViewSession.isChallenge(
+                "https://18comic.vip/albums?o=mr&page=1",
+                "Just a moment...", "", 403, "challenge", false));
     }
 
     @Test
