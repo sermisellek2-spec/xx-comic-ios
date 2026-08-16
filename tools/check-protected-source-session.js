@@ -4,6 +4,10 @@ const source = fs.readFileSync(
   "app/src/main/java/com/xxcomic/CloudflareWebViewSession.java",
   "utf8",
 );
+const main = fs.readFileSync(
+  "app/src/main/java/com/xxcomic/MainActivity.java",
+  "utf8",
+);
 
 function check(name, condition) {
   if (!condition) throw new Error("FAIL " + name);
@@ -15,5 +19,17 @@ check("captures the current DOM", source.includes("document.documentElement.oute
 check("challenge inspection includes DOM markers", source.includes("html:(document.documentElement.outerHTML||'').slice(0,12000)")
   && source.includes('page.optString("html")'));
 check("does not issue a second fetch", !source.includes("fetch(url"));
+check("one persistent browser session exists per protected source",
+  (main.match(/new CloudflareWebViewSession\(/g) || []).length === 2
+  && main.includes("CloudflareWebViewSession mh18BrowserSession")
+  && main.includes("CloudflareWebViewSession jmcomicBrowserSession")
+  && source.includes("CookieManager.getInstance()") && source.includes("flush()"));
+check("session page cache can be cleared", source.includes("void clearCache()")
+  && source.includes("webView.clearCache(true)")
+  && source.includes("webView.clearHistory()"));
+check("app cache clear removes protected credentials", main.includes("removeAllCookies")
+  && main.includes("WebStorage.getInstance().deleteAllData()")
+  && main.includes("mh18BrowserSession.clearCache()")
+  && main.includes("jmcomicBrowserSession.clearCache()"));
 
 console.log("Protected source session contract holds.");

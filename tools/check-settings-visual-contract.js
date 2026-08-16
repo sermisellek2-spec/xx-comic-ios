@@ -43,9 +43,17 @@ check("hand preference preview matches the real reader mapping", theme.includes(
 check("source page uses an overflow action sheet", sources.includes("sourceOverflowButton")
   && sourceMenu.includes("导入") && sourceMenu.includes("导出") && sourceMenu.includes("检测可用性"));
 check("source rows preserve direct enable switches", main.includes("sourceSwitch")
-  && (sources.match(/finishSourceToggle\(\);/g) || []).length === 14);
+  && (sources.match(/finishSourceToggle\(\);/g) || []).length === 15);
+check("vpn sources use one explicit lightweight marker", main.includes("requiresVpn(config.id)")
+  && main.includes('UIHelpers.text(this, "VPN", 10'));
+check("only protected sources expose manual verification", main.includes("supportsManualVerification(config.id)")
+  && main.includes('UIHelpers.text(this, "验证", 12')
+  && main.includes("verifyProtectedSource(config.id)"));
+check("manual verification stays source scoped", main.includes("ComicSource client = sourceForId(sourceId)")
+  && main.includes("client.latest(1)") && main.includes("verifyingProtectedSourceIds.add(sourceId)")
+  && !main.includes("removeAllCookies(null)"));
 check("cache page separates cleared and retained data", cache.includes("将被清理")
-  && cache.includes("始终保留") && cache.includes("确认清理"));
+  && cache.includes("页面解析与验证缓存") && cache.includes("始终保留") && cache.includes("确认清理"));
 check("error logs use list and detail scenes", logs.includes("showErrorLogDetail")
   && logs.includes("settingsErrorRow") && logs.includes("copyErrorLog"));
 check("update uses dedicated visual states", updates.includes("showUpdateLoading")

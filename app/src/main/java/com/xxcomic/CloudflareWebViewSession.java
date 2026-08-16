@@ -97,6 +97,17 @@ final class CloudflareWebViewSession implements BrowserSession {
         else main.post(close);
     }
 
+    void clearCache() {
+        Runnable clear = () -> {
+            if (webView == null) return;
+            webView.clearCache(true);
+            webView.clearHistory();
+            webView.clearFormData();
+        };
+        if (Looper.myLooper() == Looper.getMainLooper()) clear.run();
+        else main.post(clear);
+    }
+
     private void startRequest(FetchRequest request) {
         if (request.cancelled) return;
         if (shutdown || activity.isFinishing() || activity.isDestroyed()) {
@@ -333,7 +344,7 @@ final class CloudflareWebViewSession implements BrowserSession {
         if (challenge) {
             return verifying ? PageAction.KEEP_VERIFYING : PageAction.SHOW_VERIFICATION;
         }
-        if (statusCode >= 400) return PageAction.FAIL;
+        if (statusCode >= 400 && !verifying) return PageAction.FAIL;
         return ready ? PageAction.CAPTURE : PageAction.WAIT;
     }
 

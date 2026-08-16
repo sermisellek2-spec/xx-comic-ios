@@ -32,6 +32,12 @@ public class CloudflareWebViewSessionTest {
     }
 
     @Test
+    public void completedVerificationIgnoresChallengeResponseStatus() {
+        assertEquals(CloudflareWebViewSession.PageAction.CAPTURE,
+                CloudflareWebViewSession.pageAction(true, false, true, 403));
+    }
+
+    @Test
     public void normalPageWithCloudflarePrecursorIsNotAChallenge() {
         String html = "<html><head><title>全部漫画-18漫画</title>"
                 + "<script src=\"/cdn-cgi/challenge-platform/scripts/precursor/main.js\"></script>"

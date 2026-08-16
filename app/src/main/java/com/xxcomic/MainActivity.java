@@ -208,6 +208,7 @@ public class MainActivity extends Activity {
     private final Set<String> refreshedComicIds = new HashSet<>();
     private final Set<String> refreshingComicIds = new HashSet<>();
     private final Set<String> readerPrefetching = new HashSet<>();
+    private final Set<String> verifyingProtectedSourceIds = new HashSet<>();
     private final Map<String, DetailAction> pendingRefreshActions = new HashMap<>();
     private final List<String> favorites = new ArrayList<>();
     private final List<ComicModels.FilterGroup> sourceFilterGroups = new ArrayList<>();
@@ -1271,91 +1272,91 @@ public class MainActivity extends Activity {
         enabledSources.setOrientation(LinearLayout.VERTICAL);
         LinearLayout disabledSources = new LinearLayout(this);
         disabledSources.setOrientation(LinearLayout.VERTICAL);
-        addSourceCard(enabledSources, disabledSources, sourceEnabled, sourceCard(baoziConfig.name, baoziConfig.domain, sourceEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, sourceEnabled, sourceCard(baoziConfig, sourceEnabled, () -> {
             sourceEnabled = !sourceEnabled;
             baoziConfig = baoziConfig.withEnabled(sourceEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, aikanEnabled, sourceCard(aikanConfig.name, aikanConfig.domain, aikanEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, aikanEnabled, sourceCard(aikanConfig, aikanEnabled, () -> {
             aikanEnabled = !aikanEnabled;
             aikanConfig = aikanConfig.withEnabled(aikanEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, gmhEnabled, sourceCard(gmhConfig.name, gmhConfig.domain, gmhEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, gmhEnabled, sourceCard(gmhConfig, gmhEnabled, () -> {
             gmhEnabled = !gmhEnabled;
             gmhConfig = gmhConfig.withEnabled(gmhEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, mh18Enabled, sourceCard(mh18Config.name, mh18Config.domain, mh18Enabled, () -> {
+        addSourceCard(enabledSources, disabledSources, mh18Enabled, sourceCard(mh18Config, mh18Enabled, () -> {
             mh18Enabled = !mh18Enabled;
             mh18Config = mh18Config.withEnabled(mh18Enabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, jmcomicEnabled, sourceCard(jmcomicConfig.name, jmcomicConfig.domain, jmcomicEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, jmcomicEnabled, sourceCard(jmcomicConfig, jmcomicEnabled, () -> {
             jmcomicEnabled = !jmcomicEnabled;
             jmcomicConfig = jmcomicConfig.withEnabled(jmcomicEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, mkzhanEnabled, sourceCard(mkzhanConfig.name, mkzhanConfig.domain, mkzhanEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, mkzhanEnabled, sourceCard(mkzhanConfig, mkzhanEnabled, () -> {
             mkzhanEnabled = !mkzhanEnabled;
             mkzhanConfig = mkzhanConfig.withEnabled(mkzhanEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, hiperdexEnabled, sourceCard(hiperdexConfig.name, hiperdexConfig.domain, hiperdexEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, hiperdexEnabled, sourceCard(hiperdexConfig, hiperdexEnabled, () -> {
             hiperdexEnabled = !hiperdexEnabled;
             hiperdexConfig = hiperdexConfig.withEnabled(hiperdexEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, manhuaguiEnabled, sourceCard(manhuaguiConfig.name, manhuaguiConfig.domain, manhuaguiEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, manhuaguiEnabled, sourceCard(manhuaguiConfig, manhuaguiEnabled, () -> {
             manhuaguiEnabled = !manhuaguiEnabled;
             manhuaguiConfig = manhuaguiConfig.withEnabled(manhuaguiEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, hanman18Enabled, sourceCard(hanman18Config.name, hanman18Config.domain, hanman18Enabled, () -> {
+        addSourceCard(enabledSources, disabledSources, hanman18Enabled, sourceCard(hanman18Config, hanman18Enabled, () -> {
             hanman18Enabled = !hanman18Enabled;
             hanman18Config = hanman18Config.withEnabled(hanman18Enabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, d5d6Enabled, sourceCard(d5d6Config.name, d5d6Config.domain, d5d6Enabled, () -> {
+        addSourceCard(enabledSources, disabledSources, d5d6Enabled, sourceCard(d5d6Config, d5d6Enabled, () -> {
             d5d6Enabled = !d5d6Enabled;
             d5d6Config = d5d6Config.withEnabled(d5d6Enabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, manbenEnabled, sourceCard(manbenConfig.name, manbenConfig.domain, manbenEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, manbenEnabled, sourceCard(manbenConfig, manbenEnabled, () -> {
             manbenEnabled = !manbenEnabled;
             manbenConfig = manbenConfig.withEnabled(manbenEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, manhuazhanEnabled, sourceCard(manhuazhanConfig.name, manhuazhanConfig.domain, manhuazhanEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, manhuazhanEnabled, sourceCard(manhuazhanConfig, manhuazhanEnabled, () -> {
             manhuazhanEnabled = !manhuazhanEnabled;
             manhuazhanConfig = manhuazhanConfig.withEnabled(manhuazhanEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, bbyinEnabled, sourceCard(bbyinConfig.name, bbyinConfig.domain, bbyinEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, bbyinEnabled, sourceCard(bbyinConfig, bbyinEnabled, () -> {
             bbyinEnabled = !bbyinEnabled;
             bbyinConfig = bbyinConfig.withEnabled(bbyinEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, antbywEnabled, sourceCard(antbywConfig.name, antbywConfig.domain, antbywEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, antbywEnabled, sourceCard(antbywConfig, antbywEnabled, () -> {
             antbywEnabled = !antbywEnabled;
             antbywConfig = antbywConfig.withEnabled(antbywEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, cuimhEnabled, sourceCard(cuimhConfig.name, cuimhConfig.domain, cuimhEnabled, () -> {
+        addSourceCard(enabledSources, disabledSources, cuimhEnabled, sourceCard(cuimhConfig, cuimhEnabled, () -> {
             cuimhEnabled = !cuimhEnabled;
             cuimhConfig = cuimhConfig.withEnabled(cuimhEnabled);
             rebuildSourceClients();
@@ -2196,7 +2197,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private LinearLayout sourceCard(String name, String domain, boolean enabled, Runnable toggle) {
+    private LinearLayout sourceCard(SourceConfig config, boolean enabled, Runnable toggle) {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.HORIZONTAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
@@ -2208,16 +2209,65 @@ public class MainActivity extends Activity {
 
         LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 28), UIHelpers.dp(this, 28));
         logoParams.setMargins(0, 0, UIHelpers.dp(this, 9), 0);
-        card.addView(sourceLogo(name), logoParams);
+        card.addView(sourceLogo(config.name), logoParams);
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
-        TextView sourceTitle = UIHelpers.text(this, name, 14, UIHelpers.TEXT, Typeface.NORMAL);
+        LinearLayout titleRow = new LinearLayout(this);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView sourceTitle = UIHelpers.text(this, config.name, 14, UIHelpers.TEXT, Typeface.NORMAL);
         sourceTitle.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        info.addView(sourceTitle);
+        titleRow.addView(sourceTitle);
+        if (requiresVpn(config.id)) {
+            TextView vpn = UIHelpers.text(this, "VPN", 10, UIHelpers.ACCENT, Typeface.BOLD);
+            LinearLayout.LayoutParams vpnParams = new LinearLayout.LayoutParams(-2, -2);
+            vpnParams.leftMargin = UIHelpers.dp(this, 7);
+            titleRow.addView(vpn, vpnParams);
+        }
+        info.addView(titleRow);
         card.addView(info, UIHelpers.weight(1));
+        if (supportsManualVerification(config.id)) {
+            TextView verify = UIHelpers.text(this, "验证", 12, UIHelpers.ACCENT, Typeface.BOLD);
+            verify.setGravity(Gravity.CENTER);
+            verify.setMinWidth(UIHelpers.dp(this, 44));
+            verify.setMinHeight(UIHelpers.dp(this, 32));
+            verify.setContentDescription("验证" + config.name);
+            verify.setOnClickListener(v -> verifyProtectedSource(config.id));
+            LinearLayout.LayoutParams verifyParams = new LinearLayout.LayoutParams(-2, UIHelpers.dp(this, 32));
+            verifyParams.rightMargin = UIHelpers.dp(this, 4);
+            card.addView(verify, verifyParams);
+        }
         card.addView(sourceSwitch(enabled, toggle), new LinearLayout.LayoutParams(UIHelpers.dp(this, 42), UIHelpers.dp(this, 26)));
 
         return card;
+    }
+
+    static boolean requiresVpn(String sourceId) {
+        return "mh18".equals(sourceId) || "jmcomic".equals(sourceId)
+                || "hiperdex".equals(sourceId) || "hanman18".equals(sourceId)
+                || "manhuagui".equals(sourceId);
+    }
+
+    static boolean supportsManualVerification(String sourceId) {
+        return "mh18".equals(sourceId) || "jmcomic".equals(sourceId);
+    }
+
+    private void verifyProtectedSource(String sourceId) {
+        if (!supportsManualVerification(sourceId) || !verifyingProtectedSourceIds.add(sourceId)) return;
+        ComicSource client = sourceForId(sourceId);
+        showRemToast(client.name() + " 正在验证");
+        sourceHealthIo.submit(() -> {
+            boolean verified;
+            try {
+                verified = !client.latest(1).isEmpty();
+            } catch (Exception ignored) {
+                verified = false;
+            }
+            boolean result = verified;
+            postMainIfAlive(() -> {
+                verifyingProtectedSourceIds.remove(sourceId);
+                showRemToast(client.name() + (result ? " 验证完成" : " 验证失败，请检查 VPN"));
+            });
+        });
     }
 
     private void showDetail(String comicId) {
@@ -5284,7 +5334,7 @@ public class MainActivity extends Activity {
         LinearLayout clear = settingsList();
         clear.addView(settingsInfoRow(R.drawable.ic_bookshelf, "漫画图片缓存", "下次阅读时重新获取", cacheSize));
         clear.addView(UIHelpers.divider(this));
-        clear.addView(settingsInfoRow(R.drawable.ic_source, "页面解析缓存", "不会删除站源配置", "清理"));
+        clear.addView(settingsInfoRow(R.drawable.ic_source, "页面解析与验证缓存", "不会删除站源配置", "清理"));
         page.addView(clear);
         page.addView(settingsSectionText("始终保留"));
         LinearLayout keep = settingsList();
@@ -6872,6 +6922,11 @@ public class MainActivity extends Activity {
     }
 
     private void clearAppCache() {
+        if (mh18BrowserSession != null) mh18BrowserSession.clearCache();
+        if (jmcomicBrowserSession != null) jmcomicBrowserSession.clearCache();
+        android.webkit.WebStorage.getInstance().deleteAllData();
+        android.webkit.CookieManager cookies = android.webkit.CookieManager.getInstance();
+        cookies.removeAllCookies(ignored -> cookies.flush());
         synchronized (imageCacheLock) {
             deleteFiles(new File(getCacheDir(), "images"));
             imageCacheBytes = 0L;

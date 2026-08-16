@@ -13,7 +13,7 @@ function check(name, condition) {
 check("Cuimh config is built in", config.includes('new SourceConfig("cuimh", "催漫画"'));
 check("Cuimh is enabled and rebuilt", main.includes("private boolean cuimhEnabled = true;")
   && main.includes("new CuimhComicSource(cuimhConfig.withEnabled(cuimhEnabled))"));
-check("Cuimh participates in source management", main.includes("sourceCard(cuimhConfig.name, cuimhConfig.domain"));
+check("Cuimh participates in source management", main.includes("sourceCard(cuimhConfig, cuimhEnabled"));
 check("Cuimh persists through preferences and exports", main.includes('"source.cuimh.enabled"')
   && main.includes("sources.put(cuimhConfig.withEnabled(cuimhEnabled).toJson())"));
 check("Cuimh explicitly disables keyword search", source.includes("boolean supportsSearch() { return false; }")
@@ -27,7 +27,7 @@ check("Cuimh paces requests and cools down after 403", source.includes("MIN_REQU
 check("detail refresh preserves chapters without eager directory fetch", main.includes("mergeRefreshedDetail(detail, freshDetail)")
   && main.includes("new ArrayList<>(cached.chapters)") && main.includes("refreshedComicIds.add(comicId)"));
 check("filter confirm only reloads missing categories", main.includes("sourceChanged && sourceFilterGroups.isEmpty()"));
-check("release version is 1.0.30", gradle.includes('versionName "1.0.30"')
-  && gradle.includes("versionCode 30"));
+check("release version is 1.0.31", gradle.includes('versionName "1.0.31"')
+  && gradle.includes("versionCode 31"));
 
 console.log("Cuimh source contract holds.");
