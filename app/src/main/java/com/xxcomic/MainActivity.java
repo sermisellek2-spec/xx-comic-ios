@@ -167,7 +167,7 @@ public class MainActivity extends Activity {
     private ComicSource aikanClient;
     private ComicSource gmhClient;
     private ComicSource mh18Client;
-    private ComicSource jmcomicClient;
+    private JmComicSource jmcomicClient;
     private ComicSource mkzhanClient;
     private ComicSource hiperdexClient;
     private ComicSource manhuaguiClient;
@@ -2256,16 +2256,25 @@ public class MainActivity extends Activity {
         ComicSource client = sourceForId(sourceId);
         showRemToast(client.name() + " 正在验证");
         sourceHealthIo.submit(() -> {
-            boolean verified;
+            String resultMessage;
             try {
-                verified = !client.latest(1).isEmpty();
-            } catch (Exception ignored) {
-                verified = false;
+                if ("jmcomic".equals(sourceId)) {
+                    jmcomicClient.verifyAccess();
+                    resultMessage = client.name() + " 验证完成";
+                } else {
+                    resultMessage = client.name() + (!client.latest(1).isEmpty()
+                            ? " 验证完成" : " 验证失败");
+                }
+            } catch (Exception error) {
+                String reason = clean(error.getMessage(), "连接失败");
+                resultMessage = client.name() + (reason.contains("超时")
+                        ? " 验证超时" : reason.contains("页面") || reason.contains("解析")
+                        ? " 页面验证失败" : " 连接失败，请检查 VPN");
             }
-            boolean result = verified;
+            String message = resultMessage;
             postMainIfAlive(() -> {
                 verifyingProtectedSourceIds.remove(sourceId);
-                showRemToast(client.name() + (result ? " 验证完成" : " 验证失败，请检查 VPN"));
+                showRemToast(message);
             });
         });
     }
