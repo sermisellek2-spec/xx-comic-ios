@@ -53,7 +53,12 @@ public class JmComicSource implements ComicSource {
 
     @Override
     public List<ComicModels.ComicSummary> latest(int page) throws IOException {
-        return parseCards(fetch(pageUrl(absolute(config.route("latest")), page)));
+        return requireCatalogCards(fetch(pageUrl(absolute(config.route("latest")), page)));
+    }
+
+    public void verifyAccess() throws IOException {
+        String html = fetch(pageUrl(absolute(config.route("latest")), 1));
+        if (!hasCatalogMarker(html)) throw new IOException(config.name + " 页面未就绪");
     }
 
     @Override
@@ -223,12 +228,26 @@ public class JmComicSource implements ComicSource {
             String rawId = cards.group(4);
             if (!seen.add(rawId)) continue;
             String imageTag = firstRaw(cards.group(5), "<img\\b[^>]*>");
-            String title = clean(attribute(imageTag, "title"));
-            if (TextUtils.isEmpty(title)) title = clean(attribute(imageTag, "alt"));
-            if (TextUtils.isEmpty(title)) continue;
+            String title = cleanMarkup(attribute(imageTag, "title"));
+            if (title.isEmpty()) title = cleanMarkup(attribute(imageTag, "alt"));
+            if (title.isEmpty()) continue;
             result.add(new ComicModels.ComicSummary(SOURCE_ID, PREFIX + rawId, title,
                     absolute(imageUrl(imageTag)), "", new ArrayList<String>()));
         }
+        return result;
+    }
+
+    static boolean hasCatalogMarker(String html) {
+        Matcher links = ALBUM_LINK.matcher(html == null ? "" : html);
+        while (links.find()) {
+            if (IMAGE_TAG.matcher(links.group(5)).find()) return true;
+        }
+        return false;
+    }
+
+    private List<ComicModels.ComicSummary> requireCatalogCards(String html) throws IOException {
+        List<ComicModels.ComicSummary> result = parseCards(html);
+        if (result.isEmpty()) throw new IOException(config.name + " 漫画列表解析失败");
         return result;
     }
 
@@ -416,7 +435,7 @@ public class JmComicSource implements ComicSource {
     }
 
     private String absolute(String value) {
-        if (TextUtils.isEmpty(value)) return "";
+        if (value == null || value.isEmpty()) return "";
         String url = decode(value).trim();
         if (url.startsWith("http://") || url.startsWith("https://")) return url;
         if (url.startsWith("//")) return "https:" + url;

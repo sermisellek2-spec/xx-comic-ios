@@ -12,7 +12,10 @@ public class JmComicSourceTest {
     public void parsesOnlyRealThemeRowsAndNormalizesLabels() {
         String html = "<div class=\"modal\"><h4>登录</h4><ul><li>广告</li></ul></div>"
                 + row("熱門成人主題", "/search/photos?search_query=完結", "完結")
-                + row("類別", "/albums?o=mr", "最新A漫")
+                + "<div class=\"row\"><h4>類別</h4><ul class=\"btn-toolbar btnmg\">"
+                + "<li><a href=\"/albums?o=mr\">最新A漫</a></li>"
+                + "<li><a href=\"/albums/another/sub/cosplay\">Cosplay</a></li>"
+                + "<li><a href=\"/blog_library/\">书库</a></li></ul></div>"
                 + row("漫畫排行榜", "/albums?o=mv", "總排行")
                 + row("主題A漫", "/search/photos?search_query=純愛", "純愛")
                 + row("角色 / 扮演", "/search/photos?search_query=御姐", "御姐")
@@ -30,6 +33,55 @@ public class JmComicSourceTest {
         assertEquals("角色", groups.get(4).label);
         assertEquals("特殊", groups.get(5).label);
         assertEquals("其他", groups.get(6).label);
+        assertTrue(groups.get(1).options.stream()
+                .anyMatch(option -> option.value.contains("/albums/another/sub/cosplay")));
+        assertTrue(groups.stream().flatMap(group -> group.options.stream())
+                .noneMatch(option -> option.value.contains("blog_library")));
+    }
+
+    @Test
+    public void currentCatalogCardsParseFromSlugLinksAndSrcCovers() throws Exception {
+        String html = "<a href=\"/album/209225\"><img src=\"/paper_box.svg\"></a>"
+                + "<a href=\"/album/1462132/current-title\">"
+                + "<img src=\"https://cdn-msp3.18comic.vip/media/albums/1462132_3x4.jpg?u=1\" "
+                + "title=\"漫画甲\" alt=\"漫画甲\"></a>"
+                + "<a href=\"/album/1247117/second-title\">"
+                + "<img data-original=\"https://cdn-msp3.18comic.vip/media/albums/1247117_3x4.jpg\" "
+                + "alt=\"漫画乙\"></a>"
+                + "<a href=\"/advert/1\"><img title=\"广告\"></a>";
+        BrowserSession session = url -> html;
+        JmComicSource source = new JmComicSource(SourceConfig.jmcomic(true), session);
+
+        List<ComicModels.ComicSummary> result = source.latest(1);
+
+        assertEquals(2, result.size());
+        assertEquals("jmcomic:1462132", result.get(0).comicId);
+        assertEquals("漫画甲", result.get(0).title);
+        assertEquals("https://cdn-msp3.18comic.vip/media/albums/1247117_3x4.jpg",
+                result.get(1).coverUrl);
+    }
+
+    @Test
+    public void verificationProbeChecksBusinessPageWithoutParsingCards() throws Exception {
+        java.util.concurrent.atomic.AtomicReference<String> requested =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        BrowserSession session = url -> {
+            requested.set(url);
+            return "<html><a href=\"/album/123/title\"><img src=\"cover.jpg\"></a></html>";
+        };
+        JmComicSource source = new JmComicSource(SourceConfig.jmcomic(true), session);
+
+        source.verifyAccess();
+
+        assertTrue(requested.get().contains("/albums?o=mr"));
+        assertTrue(requested.get().contains("page=1"));
+    }
+
+    @Test(expected = java.io.IOException.class)
+    public void latestRejectsACompletedPageWithoutCatalogCards() throws Exception {
+        JmComicSource source = new JmComicSource(SourceConfig.jmcomic(true),
+                url -> "<html><title>禁漫天堂</title><body>广告</body></html>");
+        source.latest(1);
     }
 
     @Test
