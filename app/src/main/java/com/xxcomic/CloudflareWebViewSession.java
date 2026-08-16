@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -27,6 +28,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -166,7 +168,11 @@ final class CloudflareWebViewSession implements BrowserSession {
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 navigation++;
                 FetchRequest request = activeRequest;
-                if (request != null && request.verifying) showVerifyingState();
+                if (request != null) {
+                    request.statusCode = 0;
+                    request.mitigated = "";
+                    if (request.verifying) showVerifyingState();
+                }
             }
 
             @Override
@@ -180,6 +186,23 @@ final class CloudflareWebViewSession implements BrowserSession {
                 FetchRequest active = activeRequest;
                 if (active != null && request != null && request.isForMainFrame()) {
                     complete(active, null, sourceName + "页面加载失败");
+                }
+            }
+
+            @Override
+            public void onReceivedHttpError(WebView view, WebResourceRequest request,
+                                            WebResourceResponse response) {
+                FetchRequest active = activeRequest;
+                if (active == null || request == null || !request.isForMainFrame() || response == null) return;
+                active.statusCode = response.getStatusCode();
+                java.util.Map<String, String> headers = response.getResponseHeaders();
+                if (headers != null) {
+                    for (java.util.Map.Entry<String, String> header : headers.entrySet()) {
+                        if ("cf-mitigated".equalsIgnoreCase(header.getKey())) {
+                            active.mitigated = header.getValue();
+                            break;
+                        }
+                    }
                 }
             }
         });
@@ -200,21 +223,30 @@ final class CloudflareWebViewSession implements BrowserSession {
         }
         String script = "(function(){return JSON.stringify({"
                 + "title:document.title||'',text:(document.body&&document.body.innerText||'').slice(0,2400),"
+                + "html:(document.documentElement.outerHTML||'').slice(0,12000),"
                 + "ready:document.readyState||'',url:location.href||''});})()";
         browser.evaluateJavascript(script, encoded -> {
             if (!isActive(request) || expectedNavigation != navigation) return;
             try {
                 JSONObject page = new JSONObject(decodeJavascriptString(encoded));
                 boolean challenge = isChallenge(page.optString("url"), page.optString("title"),
-                        page.optString("text"), 0, "");
+                        page.optString("text") + " " + page.optString("html"),
+                        request.statusCode, request.mitigated);
                 boolean ready = "complete".equalsIgnoreCase(page.optString("ready"));
-                PageAction action = pageAction(request.verifying, challenge, ready);
+                PageAction action = pageAction(request.verifying, challenge, ready, request.statusCode);
                 if (action == PageAction.SHOW_VERIFICATION) {
                     request.verifying = true;
                     showVerificationView();
                 } else if (action == PageAction.KEEP_VERIFYING) {
                     showVerifyingState();
+                } else if (action == PageAction.FAIL) {
+                    complete(request, null, sourceName + "请求失败：HTTP " + request.statusCode);
+                    return;
                 } else if (action == PageAction.CAPTURE) {
+                    if (!isExpectedPage(request.url, page.optString("url"))) {
+                        complete(request, null, sourceName + "页面跳转异常");
+                        return;
+                    }
                     android.webkit.CookieManager.getInstance().flush();
                     if (request.verifying) {
                         showVerifiedState();
@@ -254,6 +286,10 @@ final class CloudflareWebViewSession implements BrowserSession {
                 return;
             }
             String body = response.optString("body", "");
+            if (!isExpectedPage(request.url, response.optString("url", ""))) {
+                complete(request, null, sourceName + "页面跳转异常");
+                return;
+            }
             if (TextUtils.isEmpty(body)) {
                 complete(request, null, sourceName + "页面内容为空");
                 return;
@@ -285,14 +321,44 @@ final class CloudflareWebViewSession implements BrowserSession {
         WAIT,
         SHOW_VERIFICATION,
         KEEP_VERIFYING,
-        CAPTURE
+        CAPTURE,
+        FAIL
     }
 
     static PageAction pageAction(boolean verifying, boolean challenge, boolean ready) {
+        return pageAction(verifying, challenge, ready, 0);
+    }
+
+    static PageAction pageAction(boolean verifying, boolean challenge, boolean ready, int statusCode) {
         if (challenge) {
             return verifying ? PageAction.KEEP_VERIFYING : PageAction.SHOW_VERIFICATION;
         }
+        if (statusCode >= 400) return PageAction.FAIL;
         return ready ? PageAction.CAPTURE : PageAction.WAIT;
+    }
+
+    static boolean isExpectedPage(String requested, String actual) {
+        try {
+            URL expected = new URL(requested);
+            URL received = new URL(actual);
+            String expectedHost = expected.getHost().toLowerCase(Locale.US);
+            String receivedHost = received.getHost().toLowerCase(Locale.US);
+            boolean sameHost = expectedHost.equals(receivedHost)
+                    || expectedHost.endsWith("." + receivedHost)
+                    || receivedHost.endsWith("." + expectedHost);
+            if (!sameHost || !expected.getProtocol().equalsIgnoreCase(received.getProtocol())) return false;
+            String expectedPath = normalizedPath(expected.getPath());
+            String receivedPath = normalizedPath(received.getPath());
+            return expectedPath.equals(receivedPath) || receivedPath.startsWith(expectedPath + "/");
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private static String normalizedPath(String value) {
+        String path = value == null || value.isEmpty() ? "/" : value;
+        while (path.length() > 1 && path.endsWith("/")) path = path.substring(0, path.length() - 1);
+        return path;
     }
 
     private boolean isActive(FetchRequest request) {
@@ -396,6 +462,8 @@ final class CloudflareWebViewSession implements BrowserSession {
         volatile String result;
         volatile String error = "";
         boolean verifying;
+        int statusCode;
+        String mitigated = "";
 
         FetchRequest(String id, String url) {
             this.id = id;

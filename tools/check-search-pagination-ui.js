@@ -16,13 +16,12 @@ if (!src.includes("private View searchPagingFooter;")) fail("search paging foote
 if (!src.includes("private void appendSearchResults")) fail("append helper missing");
 if (block.includes("pendingSearchScrollY = searchScroll.getScrollY()")) fail("append path still saves scroll for full tab rebuild");
 if (!block.includes("if (append && searchResultsContent != null)")) fail("append success path missing local-content guard");
-if (!block.includes("appendSearchResults(list);")) fail("append success path missing local append call");
+if (!block.includes("appendSearchResults(additions);")) fail("append success path missing deduplicated local append call");
 if (!block.includes("ComicSource requestClient = selectedSource();")) fail("search request client snapshot missing");
 if (!block.includes("String requestSourceId = requestClient.id();")) fail("search request source snapshot missing");
-if (!block.includes("String requestRegion = selectedRegion;")) fail("search request region snapshot missing");
-if (!block.includes("String requestState = selectedState;")) fail("search request state snapshot missing");
-if (!block.includes("requestClient.category(requestRegion, requestState, page)")) fail("category worker does not use filter snapshots");
-if (block.includes("client.category(selectedRegion, selectedState, page)")) fail("category worker reads mutable filters");
+if (!block.includes("Map<String, String> requestFilters = new LinkedHashMap<>(selectedFilters);")) fail("search request filter snapshot missing");
+if (!block.includes("requestClient.category(requestFilters, page)")) fail("category worker does not use filter snapshot");
+if (block.includes("requestClient.category(selectedFilters, page)")) fail("category worker reads mutable filters");
 if (!block.includes("!TextUtils.equals(requestSourceId, selectedSourceId)")) fail("search callback source guard missing");
 const filterDrawer = src.slice(src.indexOf("private void showFilterDrawer"), src.indexOf("private TextView sourceDropdown"));
 const sourcePreselect = filterDrawer.slice(filterDrawer.indexOf("row.setOnClickListener"), filterDrawer.indexOf("content.addView(row)", filterDrawer.indexOf("row.setOnClickListener")));
@@ -38,7 +37,7 @@ if (!src.includes("private LinearLayout searchAppendFailedContent")) fail("faile
 if (!block.includes("clearSearchAppendFailure()")) fail("append success does not clear failure state");
 if (!block.includes("searchAppendFailed = true")) fail("append failure does not set failure state");
 if (block.indexOf("clearSearchAppendFailure()") > block.indexOf("if (append)")) fail("request start does not clear failure state");
-if (!block.includes("searchHasMore = !list.isEmpty()")) fail("empty page must still stop pagination");
+if (!block.includes("searchHasMore = !list.isEmpty() && (!append || !additions.isEmpty())")) fail("empty or repeated page must stop pagination");
 if (!block.includes("if (append)")) fail("append error branch missing");
 const appendError = block.slice(block.indexOf("if (append) {", block.indexOf("catch (Exception error)")));
 if (appendError.includes("searchHasMore =")) fail("append failure must not change searchHasMore");

@@ -6,6 +6,17 @@ import static org.junit.Assert.assertEquals;
 
 public class JmImageSlicesTest {
     @Test
+    public void officialScrambleFormulaUsesHexCharacterAndFilenameWithoutExtension() {
+        assertEquals(4, MainActivity.jmScrambleSlices(1114754L, 220980L, "00010.webp"));
+        assertEquals(4, MainActivity.jmScrambleSlices(1114754L, 220980L, "00010.jpg"));
+    }
+
+    @Test
+    public void imagesBeforeScrambleThresholdStayUntouched() {
+        assertEquals(0, MainActivity.jmScrambleSlices(100L, 101L, "00001.webp"));
+    }
+
+    @Test
     public void sliceBoundsCoverSourceAndTargetWithoutOverlap() {
         int[][] bounds = MainActivity.jmSliceBounds(1499, 14);
 

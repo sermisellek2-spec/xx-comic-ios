@@ -6,6 +6,7 @@ import android.text.TextUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,9 +30,6 @@ public class Mh18ComicSource implements ComicSource {
     private static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private static final Pattern CARD_PATTERN = Pattern.compile(
             "<a[^>]+href=\"([^\"]*?/manga/[^\"]+)\"[\\s\\S]{0,900}?<img[^>]+(?:src|data-src)=\"([^\"]+)\"[\\s\\S]{0,900}?<h3[^>]*class=\"[^\"]*cardtitle[^\"]*\"[^>]*>([\\s\\S]*?)</h3>",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern META_PATTERN = Pattern.compile(
-            "<meta[^>]+(?:property|name)=\"([^\"]+)\"[^>]+content=\"([^\"]*)\"",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern SCRIPT_PATTERN = Pattern.compile("<script\\b([^>]*)>([\\s\\S]*?)</script>", Pattern.CASE_INSENSITIVE);
     private static final Pattern ANCHOR_PATTERN = Pattern.compile("<a\\b[^>]*>", Pattern.CASE_INSENSITIVE);
@@ -71,8 +69,12 @@ public class Mh18ComicSource implements ComicSource {
 
     @Override
     public List<ComicModels.ComicSummary> search(String keyword, int page) throws IOException {
+        return parseCards(fetch(absolute(searchPath(keyword, page))));
+    }
+
+    static String searchPath(String keyword, int page) throws IOException {
         String encoded = java.net.URLEncoder.encode(keyword == null ? "" : keyword.trim(), "UTF-8");
-        return parseCards(fetch(absolute(config.route("search").replace("{keyword}", encoded))));
+        return "/s/" + encoded + (page > 1 ? "/page/" + page : "");
     }
 
     @Override
@@ -207,17 +209,45 @@ public class Mh18ComicSource implements ComicSource {
         return absolute(path);
     }
 
-    private JSONObject structuredData(String html, String type) {
+    static JSONObject structuredData(String html, String type) {
         Matcher scripts = SCRIPT_PATTERN.matcher(html == null ? "" : html);
         while (scripts.find()) {
             if (!"application/ld+json".equalsIgnoreCase(attribute(scripts.group(1), "type"))) continue;
             try {
-                JSONObject object = new JSONObject(scripts.group(2).trim());
-                if (type.equalsIgnoreCase(object.optString("@type"))) return object;
+                JSONObject object = findStructuredObject(
+                        new JSONTokener(scripts.group(2).trim()).nextValue(), type);
+                if (object != null) return object;
             } catch (Exception ignored) {
             }
         }
         return new JSONObject();
+    }
+
+    private static JSONObject findStructuredObject(Object value, String type) {
+        if (value instanceof JSONObject) {
+            JSONObject object = (JSONObject) value;
+            if (matchesStructuredType(object.opt("@type"), type)) return object;
+            JSONObject nested = findStructuredObject(object.opt("@graph"), type);
+            if (nested != null) return nested;
+        } else if (value instanceof JSONArray) {
+            JSONArray array = (JSONArray) value;
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject nested = findStructuredObject(array.opt(i), type);
+                if (nested != null) return nested;
+            }
+        }
+        return null;
+    }
+
+    private static boolean matchesStructuredType(Object value, String type) {
+        if (value instanceof JSONArray) {
+            JSONArray types = (JSONArray) value;
+            for (int i = 0; i < types.length(); i++) {
+                if (type.equalsIgnoreCase(types.optString(i))) return true;
+            }
+            return false;
+        }
+        return value != null && type.equalsIgnoreCase(String.valueOf(value));
     }
 
     private String parseAuthors(Object value) {
@@ -264,15 +294,14 @@ public class Mh18ComicSource implements ComicSource {
         return tags;
     }
 
-    private List<String> parseChapterImages(String html) {
+    static List<String> parseChapterImages(String html) {
         List<String> images = new ArrayList<>();
         Matcher matcher = IMAGE_PATTERN.matcher(html == null ? "" : html);
         while (matcher.find()) {
             String tag = matcher.group();
-            if (!clean(attribute(tag, "alt")).matches("^\\d+\\s.*")) continue;
             String url = attribute(tag, "data-src");
-            if (TextUtils.isEmpty(url)) url = attribute(tag, "src");
-            url = cleanUrl(url);
+            if (url.isEmpty()) url = attribute(tag, "src");
+            url = decode(url).replace("\\/", "/").trim();
             if ((url.startsWith("http://") || url.startsWith("https://")) && !images.contains(url)) images.add(url);
         }
         return images;
@@ -284,7 +313,7 @@ public class Mh18ComicSource implements ComicSource {
         return "";
     }
 
-    private String attribute(String tag, String name) {
+    private static String attribute(String tag, String name) {
         Matcher matcher = Pattern.compile("\\b" + Pattern.quote(name) + "\\s*=\\s*([\"'])([\\s\\S]*?)\\1", Pattern.CASE_INSENSITIVE)
                 .matcher(tag == null ? "" : tag);
         return matcher.find() ? decode(matcher.group(2)) : "";
@@ -341,8 +370,17 @@ public class Mh18ComicSource implements ComicSource {
     }
 
     private String meta(String html, String key) {
-        Matcher matcher = META_PATTERN.matcher(html == null ? "" : html);
-        while (matcher.find()) if (key.equals(matcher.group(1))) return clean(matcher.group(2));
+        return clean(metaValue(html, key));
+    }
+
+    static String metaValue(String html, String key) {
+        Matcher tags = Pattern.compile("<meta\\b[^>]*>", Pattern.CASE_INSENSITIVE).matcher(html == null ? "" : html);
+        while (tags.find()) {
+            String tag = tags.group();
+            if (key.equalsIgnoreCase(attribute(tag, "property")) || key.equalsIgnoreCase(attribute(tag, "name"))) {
+                return decode(attribute(tag, "content")).trim();
+            }
+        }
         return "";
     }
 
@@ -372,7 +410,7 @@ public class Mh18ComicSource implements ComicSource {
         return Html.fromHtml(value).toString().replaceAll("\\s+", " ").trim();
     }
 
-    private String decode(String value) {
+    private static String decode(String value) {
         return value == null ? "" : value.replace("&amp;", "&").replace("&quot;", "\"");
     }
 

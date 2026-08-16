@@ -24,10 +24,10 @@ check("Cuimh reuses catalog and detail documents", source.includes("fetchCategor
   && source.includes("parseChapters(html)"));
 check("Cuimh paces requests and cools down after 403", source.includes("MIN_REQUEST_INTERVAL_MS")
   && source.includes("FORBIDDEN_COOLDOWN_MS") && source.includes("HTTP_FORBIDDEN"));
-check("detail refresh reuses chapters returned with metadata", main.includes("freshDetail.chapters.isEmpty()")
-  && main.includes("if (!loaded.chapters.isEmpty()) refreshedComicIds.add(comicId)"));
+check("detail refresh preserves chapters without eager directory fetch", main.includes("mergeRefreshedDetail(detail, freshDetail)")
+  && main.includes("new ArrayList<>(cached.chapters)") && main.includes("refreshedComicIds.add(comicId)"));
 check("filter confirm only reloads missing categories", main.includes("sourceChanged && sourceFilterGroups.isEmpty()"));
-check("release version is 1.0.29", gradle.includes('versionName "1.0.29"')
-  && gradle.includes("versionCode 29"));
+check("release version is 1.0.30", gradle.includes('versionName "1.0.30"')
+  && gradle.includes("versionCode 30"));
 
 console.log("Cuimh source contract holds.");

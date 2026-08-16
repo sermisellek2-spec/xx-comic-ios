@@ -36,7 +36,7 @@ check("reader error retries the current chapter",
 check("filter confirm preserves the current keyword", !/searchQuery\s*=\s*"";/.test(filterDrawer));
 check("filter confirm reruns keyword search", /if \(TextUtils\.isEmpty\(keyword\)\) loadCategory\(\); else runSearch\(keyword\);/.test(filterDrawer));
 check("source toggles use one reconciliation path",
-  (sourceToggle.match(/finishSourceToggle\(\);/g) || []).length === 14);
+  (sourceToggle.match(/finishSourceToggle\(\);/g) || []).length === 15);
 check("source reconciliation clears stale single-site results", /private void finishSourceToggle\(\)[\s\S]*?searchResults\.clear\(\)/.test(source));
 check("source reconciliation invalidates stale requests", /private void finishSourceToggle\(\)[\s\S]*?searchGeneration\+\+/.test(source));
 check("theme rerender preserves source management", /sourceManagementVisible[\s\S]*?showSourceManagement\(\)/.test(rerender));

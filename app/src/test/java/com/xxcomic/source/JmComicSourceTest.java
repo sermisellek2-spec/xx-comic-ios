@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class JmComicSourceTest {
     @Test
@@ -39,6 +40,44 @@ public class JmComicSourceTest {
 
         assertEquals("https://cdn-msp.18comic.vip/media/albums/1236835.jpg?t=1",
                 JmComicSource.parseCover(html, "1236835"));
+    }
+
+    @Test
+    public void chaptersOnlyComeFromEpisodeAndNeverUseRecommendations() {
+        String html = "<a href=\"/photo/999\"><h3 class=\"h2_series\">推荐漫画</h3></a>"
+                + "<div class=\"episode\"><ul>"
+                + "<a href=\"/photo/1114754\" data-album=\"1114754\" data-index=\"0\">"
+                + "<li><h3 class=\"h2_series\">第1话 美丽新世界</h3></li></a>"
+                + "<a href=\"/photo/390215\" data-album=\"390215\" data-index=\"1\">"
+                + "<li><h3 class=\"h2_series\">第2话 3</h3></li></a>"
+                + "</ul></div>"
+                + "<a href=\"/photo/888\" data-album=\"888\"><h3 class=\"h2_series\">猜你喜欢</h3></a>";
+
+        List<ComicModels.Chapter> chapters = JmComicSource.parseChapters(
+                html, "https://18comic.vip");
+
+        assertEquals(2, chapters.size());
+        assertEquals("1114754", chapters.get(0).chapterId);
+        assertEquals("https://18comic.vip/photo/390215", chapters.get(1).url);
+    }
+
+    @Test
+    public void missingEpisodeDoesNotFabricateAChapter() {
+        assertTrue(JmComicSource.parseChapters(
+                "<a href=\"/photo/999\">推荐漫画</a>", "https://18comic.vip").isEmpty());
+    }
+
+    @Test
+    public void chapterImagesParseWithoutDependingOnTrailingSemicolon() throws Exception {
+        String html = "<script>var aid = 1114754; var scramble_id = 220980;"
+                + "window.reader={cdnImgHost:'https://cdn-msp2.18comic.vip'};"
+                + "var page_arr = [\"00010.webp\",\"00031.webp\"]</script>";
+
+        List<String> images = JmComicSource.parseChapterImages(html);
+
+        assertEquals(2, images.size());
+        assertEquals("https://cdn-msp2.18comic.vip/media/photos/1114754/00010.webp?scramble_id=220980",
+                images.get(0));
     }
 
     private static String row(String label, String href, String option) {

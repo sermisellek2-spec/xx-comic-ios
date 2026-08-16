@@ -146,27 +146,28 @@ public class JmComicSource implements ComicSource {
     public List<ComicModels.Chapter> chapters(String comicId) throws IOException {
         String rawId = rawComicId(comicId);
         String html = fetch(absolute(config.route("detail").replace("{comicId}", rawId)));
+        List<ComicModels.Chapter> result = parseChapters(html, config.baseUrl);
+        if (result.isEmpty()) throw new IOException(config.name + " 目录解析失败");
+        return result;
+    }
+
+    static List<ComicModels.Chapter> parseChapters(String html, String baseUrl) {
         List<ComicModels.Chapter> result = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
-        Matcher links = ANCHOR.matcher(html);
+        Matcher links = ANCHOR.matcher(episodeScope(html));
         while (links.find()) {
             String href = decode(attribute(links.group(1), "href"));
             Matcher id = Pattern.compile("(?:https?://[^/]+)?/photo/(\\d+)", Pattern.CASE_INSENSITIVE).matcher(href);
             if (!id.find()) continue;
             String chapterId = id.group(1);
             String dataAlbum = attribute(links.group(1), "data-album");
-            if (!TextUtils.isEmpty(dataAlbum) && !chapterId.equals(dataAlbum)) continue;
-            String title = clean(first(links.group(2),
+            if (dataAlbum.isEmpty() || !chapterId.equals(dataAlbum)) continue;
+            String title = cleanMarkup(firstValue(links.group(2),
                     "<h3[^>]*class=[\"'][^\"']*h2_series[^\"']*[\"'][^>]*>([\\s\\S]*?)</h3>"));
-            if (TextUtils.isEmpty(title)) title = clean(links.group(2));
-            if (TextUtils.isEmpty(title) || !seen.add(chapterId)) continue;
-            result.add(new ComicModels.Chapter(chapterId, title, absolute(href), 0, result.size()));
+            if (title.isEmpty() || !seen.add(chapterId)) continue;
+            result.add(new ComicModels.Chapter(chapterId, title,
+                    absolute(baseUrl, href), 0, result.size()));
         }
-        if (result.isEmpty() && rawId.matches("\\d+")) {
-            result.add(new ComicModels.Chapter(rawId, "第1话",
-                    absolute(config.route("chapter").replace("{chapterId}", rawId)), 0, 0));
-        }
-        if (result.isEmpty()) throw new IOException(config.name + " 目录解析失败");
         return result;
     }
 
@@ -174,31 +175,35 @@ public class JmComicSource implements ComicSource {
     public ComicModels.ChapterPage chapter(String chapterUrl) throws IOException {
         String url = absolute(chapterUrl);
         String html = fetch(url);
+        List<String> images = parseChapterImages(html);
+        if (images.isEmpty()) throw new IOException(config.name + " 正文图片解析失败");
+        String title = clean(first(html,
+                "<h3[^>]*class=[\"'][^\"']*h2_series[^\"']*[\"'][^>]*>([\\s\\S]*?)</h3>"));
+        return new ComicModels.ChapterPage(url, title, images, "");
+    }
+
+    static List<String> parseChapterImages(String html) throws IOException {
         String aid = first(html, "(?:var\\s+)?aid\\s*=\\s*(\\d+)");
         String scrambleId = first(html, "(?:var\\s+)?scramble_id\\s*=\\s*(\\d+)");
         String cdnHost = decode(first(html, "cdnImgHost\\s*:\\s*[\"']([^\"']+)[\"']"));
-        String pageArray = first(html, "(?:var\\s+)?page_arr\\s*=\\s*(\\[[\\s\\S]*?\\])\\s*;");
-        if (!aid.matches("\\d+") || !scrambleId.matches("\\d+")
-                || TextUtils.isEmpty(cdnHost) || TextUtils.isEmpty(pageArray)) {
-            throw new IOException(config.name + " 正文参数解析失败");
+        String pageArray = first(html, "(?:var\\s+)?page_arr\\s*=\\s*(\\[[\\s\\S]*?\\])\\s*;?");
+        if (!aid.matches("\\d+") || !scrambleId.matches("\\d+") || cdnHost.isEmpty() || pageArray.isEmpty()) {
+            throw new IOException("正文参数解析失败");
         }
         List<String> images = new ArrayList<>();
         try {
             JSONArray pages = new JSONArray(pageArray);
             for (int i = 0; i < pages.length(); i++) {
                 String fileName = pages.optString(i).trim();
-                if (TextUtils.isEmpty(fileName)) continue;
+                if (fileName.isEmpty()) continue;
                 String image = fileName.startsWith("http://") || fileName.startsWith("https://")
                         ? fileName : trimSlash(cdnHost) + "/media/photos/" + aid + "/" + fileName;
                 images.add(image + (image.contains("?") ? "&" : "?") + "scramble_id=" + scrambleId);
             }
         } catch (Exception error) {
-            throw new IOException(config.name + " 图片列表解析失败", error);
+            throw new IOException("图片列表解析失败", error);
         }
-        if (images.isEmpty()) throw new IOException(config.name + " 正文图片解析失败");
-        String title = clean(first(html,
-                "<h3[^>]*class=[\"'][^\"']*h2_series[^\"']*[\"'][^>]*>([\\s\\S]*?)</h3>"));
-        return new ComicModels.ChapterPage(url, title, images, "");
+        return images;
     }
 
     @Override
@@ -233,6 +238,34 @@ public class JmComicSource implements ComicSource {
         int end = html.indexOf("class=\"episode\"", start);
         if (end < 0) end = Math.min(html.length(), start + 50000);
         return html.substring(start, end);
+    }
+
+    private static String episodeScope(String html) {
+        String source = html == null ? "" : html;
+        Matcher opening = Pattern.compile("<div\\b[^>]*class\\s*=\\s*([\"'])[^\"']*\\bepisode\\b[^\"']*\\1[^>]*>",
+                Pattern.CASE_INSENSITIVE).matcher(source);
+        if (!opening.find()) return "";
+        Matcher tags = Pattern.compile("</?div\\b[^>]*>", Pattern.CASE_INSENSITIVE).matcher(source);
+        tags.region(opening.start(), source.length());
+        int depth = 0;
+        while (tags.find()) {
+            if (tags.group().startsWith("</")) depth--;
+            else depth++;
+            if (depth == 0) return source.substring(opening.end(), tags.start());
+        }
+        return source.substring(opening.end());
+    }
+
+    private static String firstValue(String html, String pattern) {
+        Matcher matcher = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE).matcher(html == null ? "" : html);
+        return matcher.find() ? matcher.group(1) : "";
+    }
+
+    private static String absolute(String baseUrl, String value) {
+        String url = decode(value).trim();
+        if (url.startsWith("http://") || url.startsWith("https://")) return url;
+        if (url.startsWith("//")) return "https:" + url;
+        return baseUrl + (url.startsWith("/") ? url : "/" + url);
     }
 
     private List<String> linkTexts(String html, String hrefToken) {
@@ -366,7 +399,7 @@ public class JmComicSource implements ComicSource {
         return "";
     }
 
-    private String first(String html, String pattern) {
+    private static String first(String html, String pattern) {
         Matcher matcher = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE).matcher(html == null ? "" : html);
         return matcher.find() ? matcher.group(1) : "";
     }
@@ -403,7 +436,7 @@ public class JmComicSource implements ComicSource {
                 .replace("&#39;", "'").replace("&nbsp;", " ");
     }
 
-    private String trimSlash(String value) {
+    private static String trimSlash(String value) {
         String result = value == null ? "" : value.trim();
         while (result.endsWith("/")) result = result.substring(0, result.length() - 1);
         return result;

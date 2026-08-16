@@ -34,8 +34,9 @@ check("refresh is skipped after one process attempt", /refreshedComicIds\.contai
 check("same comic refresh is deduplicated", /refreshingComicIds\.contains\(comicId\)/.test(refresh));
 check("refresh marks in-flight before worker submit", refresh.indexOf("refreshingComicIds.add(comicId)") < refresh.indexOf("detailIo.submit"));
 check("refresh fetches detail", /client\.detail\(comicId\)/.test(refresh));
-check("refresh fetches chapters through ComicSource", /client\.chapters\(comicId\)/.test(refresh));
-check("empty automatic chapter refresh does not create a detail replacement", /loadedChapters\.isEmpty\(\)[\s\S]*?finishComicRefresh\(comicId, null\)[\s\S]*?return;/.test(refresh));
+check("refresh leaves chapter loading to the drawer", !/client\.chapters\(comicId\)/.test(refresh));
+check("metadata refresh preserves cached chapters", /mergeRefreshedDetail\(detail, freshDetail\)/.test(refresh)
+  && /new ArrayList<>\(cached\.chapters\)/.test(source));
 check("fresh detail chapters are never an empty-directory fallback", !/detail\.chapters/.test(withChapters));
 check("refresh completion updates ids on main", /main\.post\(\(\)\s*->[\s\S]*?finishComicRefresh\(comicId, loaded\)/.test(refresh) && /refreshingComicIds\.remove\(comicId\)[\s\S]*?refreshedComicIds\.add\(comicId\)/.test(finishRefresh));
 check("destroyed activity ignores refresh callbacks", (refresh.match(/if \(activityDestroyed\) return;/g) || []).length >= 2);

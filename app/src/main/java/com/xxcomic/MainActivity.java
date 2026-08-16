@@ -887,7 +887,8 @@ public class MainActivity extends Activity {
         scroll.addView(content, UIHelpers.matchWrap());
         scroll.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
             View child = scroll.getChildAt(0);
-            if (child != null && scrollY + scroll.getHeight() >= child.getHeight() - UIHelpers.dp(this, 120)) {
+            if (child != null && shouldLoadNextSearchPage(scrollY, oldScrollY,
+                    scroll.getHeight(), child.getHeight(), UIHelpers.dp(this, 120))) {
                 loadNextSearchPage();
             }
         });
@@ -2254,7 +2255,7 @@ public class MainActivity extends Activity {
                         pageLoading = false;
                         pageLoadingBackAction = null;
                         details.put(comicId, loaded);
-                        if (!loaded.chapters.isEmpty()) refreshedComicIds.add(comicId);
+                        refreshedComicIds.add(comicId);
                         summaries.put(comicId, loaded.summary);
                         persistComicCachesAsync();
                         showDetail(comicId);
@@ -2351,19 +2352,10 @@ public class MainActivity extends Activity {
         if (refreshedComicIds.contains(comicId) || refreshingComicIds.contains(comicId)) return;
         refreshingComicIds.add(comicId);
         ComicSource client = sourceForDetail(detail);
-        detailIo.submit(() -> {
+        track(detailIo.submit(() -> {
             try {
                 ComicModels.ComicDetail freshDetail = client.detail(comicId);
-                List<ComicModels.Chapter> loadedChapters = freshDetail.chapters.isEmpty()
-                        ? client.chapters(comicId) : freshDetail.chapters;
-                if (loadedChapters.isEmpty()) {
-                    main.post(() -> {
-                        if (activityDestroyed) return;
-                        finishComicRefresh(comicId, null);
-                    });
-                    return;
-                }
-                ComicModels.ComicDetail loaded = withChapters(freshDetail, loadedChapters);
+                ComicModels.ComicDetail loaded = mergeRefreshedDetail(detail, freshDetail);
                 main.post(() -> {
                     if (activityDestroyed) return;
                     finishComicRefresh(comicId, loaded);
@@ -2374,7 +2366,15 @@ public class MainActivity extends Activity {
                     finishComicRefresh(comicId, null);
                 });
             }
-        });
+        }));
+    }
+
+    static ComicModels.ComicDetail mergeRefreshedDetail(
+            ComicModels.ComicDetail cached, ComicModels.ComicDetail fresh) {
+        List<ComicModels.Chapter> resolved = fresh.chapters.isEmpty()
+                ? new ArrayList<>(cached.chapters) : new ArrayList<>(fresh.chapters);
+        return new ComicModels.ComicDetail(fresh.summary, fresh.author, fresh.status,
+                fresh.description, fresh.latestChapter, resolved);
     }
 
     private void finishComicRefresh(String comicId, ComicModels.ComicDetail loaded) {
@@ -2903,18 +2903,20 @@ public class MainActivity extends Activity {
                 main.post(() -> {
                     if (generation != searchGeneration) return;
                     if (!TextUtils.equals(requestSourceId, selectedSourceId)) return;
+                    List<ComicModels.ComicSummary> additions = append
+                            ? newSearchItems(searchResults, list) : new ArrayList<>(list);
                     if (!append) searchResults.clear();
-                    searchResults.addAll(list);
-                    for (ComicModels.ComicSummary item : list) summaries.put(item.comicId, item);
+                    searchResults.addAll(additions);
+                    for (ComicModels.ComicSummary item : additions) summaries.put(item.comicId, item);
                     searchPage = page;
-                    searchHasMore = !list.isEmpty();
+                    searchHasMore = !list.isEmpty() && (!append || !additions.isEmpty());
                     clearSearchAppendFailure();
                     searchLoading = false;
                     searchAppending = false;
                     if (pullRefresh) finishSearchPullRefresh();
                     if (currentTab == 1) {
                         if (append && searchResultsContent != null) {
-                            appendSearchResults(list);
+                            appendSearchResults(additions);
                         } else {
                             showTab(1, false);
                         }
@@ -3091,7 +3093,7 @@ public class MainActivity extends Activity {
                     }
                 });
             }));
-            // 10s 超时守护（非阻塞调度，不占 io 线程）
+            // 受保护站源给浏览器验证留足时间，其他站源保持快速超时。
             final Future<?> f = future;
             scheduledIo.schedule(() -> {
                 if (f.isDone()) return;
@@ -3107,8 +3109,12 @@ public class MainActivity extends Activity {
                         onGlobalSearchSourceDone(generation);
                     }
                 });
-            }, 10, TimeUnit.SECONDS);
+            }, globalSearchTimeoutSeconds(client.id()), TimeUnit.SECONDS);
         }
+    }
+
+    static long globalSearchTimeoutSeconds(String sourceId) {
+        return "mh18".equals(sourceId) || "jmcomic".equals(sourceId) ? 185L : 10L;
     }
 
     /** 单个站源完成时的统一收尾（计数、状态、关闭 loading） */
@@ -3221,6 +3227,23 @@ public class MainActivity extends Activity {
         if (antbywEnabled) sources.add(antbywClient);
         if (cuimhEnabled) sources.add(cuimhClient);
         return sources;
+    }
+
+    static boolean shouldLoadNextSearchPage(int scrollY, int oldScrollY, int viewportHeight,
+                                            int contentHeight, int threshold) {
+        return scrollY > oldScrollY && scrollY > 0
+                && scrollY + viewportHeight >= contentHeight - threshold;
+    }
+
+    static List<ComicModels.ComicSummary> newSearchItems(
+            List<ComicModels.ComicSummary> existing, List<ComicModels.ComicSummary> page) {
+        Set<String> seen = new HashSet<>();
+        for (ComicModels.ComicSummary item : existing) seen.add(item.comicId);
+        List<ComicModels.ComicSummary> additions = new ArrayList<>();
+        for (ComicModels.ComicSummary item : page) {
+            if (seen.add(item.comicId)) additions.add(item);
+        }
+        return additions;
     }
 
     private List<ComicSource> enabledSearchSources() {
@@ -4186,15 +4209,19 @@ public class MainActivity extends Activity {
         return bounds;
     }
 
-    private int jmScrambleSlices(long aid, long scrambleId, String fileName) {
+    static int jmScrambleSlices(long aid, long scrambleId, String fileName) {
         if (aid < scrambleId) return 0;
         if (aid < 268850L) return 10;
         try {
+            String baseName = fileName == null ? "" : fileName;
+            int extension = baseName.lastIndexOf('.');
+            if (extension > 0) baseName = baseName.substring(0, extension);
             byte[] digest = MessageDigest.getInstance("MD5")
-                    .digest((aid + fileName).getBytes("UTF-8"));
-            int lastNibble = digest[digest.length - 1] & 0x0f;
-            int divisor = aid > 421926L ? 8 : 10;
-            return lastNibble % divisor * 2 + 2;
+                    .digest((aid + baseName).getBytes("UTF-8"));
+            StringBuilder hex = new StringBuilder(digest.length * 2);
+            for (byte value : digest) hex.append(String.format(Locale.US, "%02x", value & 0xff));
+            int divisor = aid >= 421926L ? 8 : 10;
+            return hex.charAt(hex.length() - 1) % divisor * 2 + 2;
         } catch (Exception ignored) {
             return 0;
         }
