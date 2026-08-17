@@ -67,6 +67,13 @@ public class Mh18ComicSource implements ComicSource {
         return parseCards(fetch(categoryUrl("all", page)));
     }
 
+    public void verifyAccess() throws IOException {
+        String html = fetchInteractive(config.baseUrl + "/manga");
+        if (!CARD_PATTERN.matcher(html == null ? "" : html).find()) {
+            throw new IOException(config.name + " 页面未就绪");
+        }
+    }
+
     @Override
     public List<ComicModels.ComicSummary> search(String keyword, int page) throws IOException {
         return parseCards(fetch(absolute(searchPath(keyword, page))));
@@ -322,6 +329,11 @@ public class Mh18ComicSource implements ComicSource {
     private String jsonString(Object value) {
         if (value instanceof JSONObject) return clean(((JSONObject) value).optString("url"));
         return value == null ? "" : clean(String.valueOf(value));
+    }
+
+    private String fetchInteractive(String url) throws IOException {
+        if (browserSession != null && isMainSite(url)) return browserSession.fetchInteractive(url);
+        return fetch(url);
     }
 
     private String fetch(String url) throws IOException {

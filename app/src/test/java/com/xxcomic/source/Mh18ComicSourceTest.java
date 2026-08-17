@@ -6,6 +6,7 @@ import org.json.JSONObject;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class Mh18ComicSourceTest {
     @Test
@@ -42,5 +43,26 @@ public class Mh18ComicSourceTest {
 
         assertEquals(2, images.size());
         assertEquals("https://img.18mh.org/upload/2.webp", images.get(1));
+    }
+
+    @Test
+    public void verificationProbeUsesInteractiveBrowserFetch() throws Exception {
+        java.util.concurrent.atomic.AtomicBoolean interactive =
+                new java.util.concurrent.atomic.AtomicBoolean();
+        BrowserSession session = new BrowserSession() {
+            @Override public String fetch(String url) throws java.io.IOException {
+                throw new java.io.IOException("silent fetch should not run");
+            }
+
+            @Override public String fetchInteractive(String url) {
+                interactive.set(true);
+                return "<a href=\"/manga/demo\"><img src=\"cover.jpg\">"
+                        + "<h3 class=\"cardtitle\">测试漫画</h3></a>";
+            }
+        };
+
+        new Mh18ComicSource(SourceConfig.mh18(true), session).verifyAccess();
+
+        assertTrue(interactive.get());
     }
 }

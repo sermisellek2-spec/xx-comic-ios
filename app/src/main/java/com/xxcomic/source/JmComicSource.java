@@ -59,7 +59,7 @@ public class JmComicSource implements ComicSource {
     }
 
     public void verifyAccess() throws IOException {
-        String html = fetch(pageUrl(absolute(config.route("latest")), 1));
+        String html = fetchInteractive(pageUrl(absolute(config.route("latest")), 1));
         if (!hasCatalogMarker(html)) throw new IOException(config.name + " 页面未就绪");
     }
 
@@ -388,6 +388,11 @@ public class JmComicSource implements ComicSource {
         if (value.startsWith(PREFIX)) value = value.substring(PREFIX.length());
         Matcher matcher = Pattern.compile("(?:/album/)?(\\d+)").matcher(value);
         return matcher.find() ? matcher.group(1) : "";
+    }
+
+    private String fetchInteractive(String url) throws IOException {
+        if (browserSession != null && isMainSite(url)) return browserSession.fetchInteractive(url);
+        return fetch(url);
     }
 
     private String fetch(String url) throws IOException {

@@ -166,7 +166,7 @@ public class MainActivity extends Activity {
     private ComicSource mhua5Client;
     private ComicSource aikanClient;
     private ComicSource gmhClient;
-    private ComicSource mh18Client;
+    private Mh18ComicSource mh18Client;
     private JmComicSource jmcomicClient;
     private ComicSource mkzhanClient;
     private ComicSource hiperdexClient;
@@ -2281,9 +2281,11 @@ public class MainActivity extends Activity {
                 if ("jmcomic".equals(sourceId)) {
                     jmcomicClient.verifyAccess();
                     resultMessage = client.name() + " 验证完成";
+                } else if ("mh18".equals(sourceId)) {
+                    mh18Client.verifyAccess();
+                    resultMessage = client.name() + " 验证完成";
                 } else {
-                    resultMessage = client.name() + (!client.latest(1).isEmpty()
-                            ? " 验证完成" : " 验证失败");
+                    resultMessage = client.name() + " 验证失败";
                 }
             } catch (Exception error) {
                 String reason = clean(error.getMessage(), "连接失败");

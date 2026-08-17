@@ -132,6 +132,26 @@ public class JmComicSourceTest {
         assertTrue(requested.get().contains("page=1"));
     }
 
+    @Test
+    public void verificationProbeUsesInteractiveBrowserFetch() throws Exception {
+        java.util.concurrent.atomic.AtomicBoolean interactive =
+                new java.util.concurrent.atomic.AtomicBoolean();
+        BrowserSession session = new BrowserSession() {
+            @Override public String fetch(String url) throws java.io.IOException {
+                throw new java.io.IOException("silent fetch should not run");
+            }
+
+            @Override public String fetchInteractive(String url) {
+                interactive.set(true);
+                return "<a href='/album/123/title'><img src='cover.jpg'></a>";
+            }
+        };
+
+        new JmComicSource(SourceConfig.jmcomic(true), session).verifyAccess();
+
+        assertTrue(interactive.get());
+    }
+
     @Test(expected = java.io.IOException.class)
     public void latestRejectsACompletedPageWithoutCatalogCards() throws Exception {
         JmComicSource source = new JmComicSource(SourceConfig.jmcomic(true),
