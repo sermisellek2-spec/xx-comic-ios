@@ -8,6 +8,10 @@ const main = fs.readFileSync(
   "app/src/main/java/com/xxcomic/MainActivity.java",
   "utf8",
 );
+const mh18Session = main.slice(
+  main.indexOf("mh18BrowserSession = new CloudflareWebViewSession("),
+  main.indexOf("jmcomicBrowserSession = new CloudflareWebViewSession("),
+);
 const navigationCapture = source.slice(
   source.indexOf("private void captureCurrentPage"),
   source.indexOf("private String browserContextScript"),
@@ -25,6 +29,8 @@ check("challenge inspection includes DOM markers", source.includes("html:(docume
 check("navigation capture does not issue a second fetch",
   !navigationCapture.includes("fetch(")
   && source.includes("fetchWithBrowserContext(url, deadline)"));
+check("18mh uses the HTTP-first hybrid session",
+  mh18Session.includes("mh18Config.name, true, this::showRemToast"));
 check("one persistent browser session exists per protected source",
   (main.match(/new CloudflareWebViewSession\(/g) || []).length === 2
   && main.includes("CloudflareWebViewSession mh18BrowserSession")
