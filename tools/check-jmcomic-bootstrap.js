@@ -58,7 +58,7 @@ check("jmcomic opts into cookie-backed http",
   && session.includes("fetchHttp(url, deadline)")
   && session.includes('setRequestProperty("Cookie", cookie)')
   && session.includes("HttpAction.OPEN_BROWSER"));
-check("mh18 keeps its current browser-only path",
-  main.includes("mh18Config.name, false"));
+check("mh18 also uses cookie-backed http",
+  main.includes("mh18Config.name, true"));
 
 console.log("JMComic bootstrap contract holds.");
