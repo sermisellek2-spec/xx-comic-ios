@@ -191,10 +191,21 @@ public class Mh18ComicSource implements ComicSource {
         if (!mangaId.matches("\\d+") || !chapterId.matches("\\d+")) {
             throw new IOException("18漫画章节参数解析失败");
         }
-        String content = fetch(config.baseUrl + "/chapter/getcontent?m=" + mangaId + "&c=" + chapterId);
+        String content = fetch(chapterApiUrl(html, config.domain));
         List<String> images = parseChapterImages(content);
         if (images.isEmpty()) throw new IOException("18漫画正文图片解析失败");
         return new ComicModels.ChapterPage(chapterUrl, title, images, "");
+    }
+
+    static String chapterApiUrl(String html, String domain) throws IOException {
+        String holder = tagWithAttribute(html, "id", "chapterContent");
+        String mangaId = attribute(holder, "data-ms");
+        String chapterId = attribute(holder, "data-cs");
+        if (!mangaId.matches("\\d+") || !chapterId.matches("\\d+")) {
+            throw new IOException("18漫画章节参数解析失败");
+        }
+        return trustedApiBase(holder, domain, "18漫画章节参数解析失败")
+                + "/chapter/getcontent?m=" + mangaId + "&c=" + chapterId;
     }
 
     @Override

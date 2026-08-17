@@ -85,6 +85,34 @@ public class Mh18ComicSourceTest {
     }
 
     @Test
+    public void chapterUsesTheApiDeclaredByTheChapterPage() throws Exception {
+        String chapter = "<div id='chapterContent' data-ms='28' data-cs='33999' "
+                + "data-ct='第1話' data-host='https://api.18mh.org'></div>";
+
+        assertEquals("https://api.18mh.org/chapter/getcontent?m=28&c=33999",
+                Mh18ComicSource.chapterApiUrl(chapter, "18mh.org"));
+        List<String> images = Mh18ComicSource.parseChapterImages(
+                "<img data-src='https://s3.mangabuddy.in/0.webp'>"
+                        + "<img src='data:image/gif;base64,transparent'>"
+                        + "<img src='https://s3.mangabuddy.in/1.webp'>");
+        assertEquals(2, images.size());
+        assertEquals("https://s3.mangabuddy.in/1.webp", images.get(1));
+    }
+
+    @Test
+    public void chapterRejectsAnApiHostOutside18mh() throws Exception {
+        try {
+            Mh18ComicSource.chapterApiUrl(
+                    "<div id='chapterContent' data-ms='28' data-cs='33999' "
+                            + "data-host='https://evil.example'></div>",
+                    "18mh.org");
+            fail("untrusted API host must be rejected");
+        } catch (IOException error) {
+            assertTrue(error.getMessage().contains("章节参数解析失败"));
+        }
+    }
+
+    @Test
     public void verificationProbeUsesInteractiveBrowserFetch() throws Exception {
         java.util.concurrent.atomic.AtomicBoolean interactive =
                 new java.util.concurrent.atomic.AtomicBoolean();
