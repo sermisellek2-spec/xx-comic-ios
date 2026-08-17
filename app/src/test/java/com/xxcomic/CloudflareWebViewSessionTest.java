@@ -202,6 +202,17 @@ public class CloudflareWebViewSessionTest {
     }
 
     @Test
+    public void nativeFingerprintUsesTheActualWebViewUserAgent() {
+        String nativeAgent = "Mozilla/5.0 Chrome/139.0.0.0 Mobile";
+        assertEquals(nativeAgent, CloudflareWebViewSession.selectedUserAgent(
+                true, nativeAgent));
+        assertFalse(nativeAgent.equals(CloudflareWebViewSession.selectedUserAgent(
+                false, nativeAgent)));
+        assertFalse(CloudflareWebViewSession.selectedUserAgent(
+                true, "").isEmpty());
+    }
+
+    @Test
     public void clearanceCookieIsReadWithoutMatchingOtherCookies() {
         assertEquals("fresh-token", CloudflareWebViewSession.cookieValue(
                 "session=one; cf_clearance=fresh-token; other=two", "cf_clearance"));

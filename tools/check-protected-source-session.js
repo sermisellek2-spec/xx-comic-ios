@@ -33,8 +33,14 @@ check("navigation capture does not issue a second fetch",
   !navigationCapture.includes("fetch(")
   && source.includes("fetchWithBrowserContext(url, deadline)"));
 check("only 18mh uses the full viewport hybrid session",
-  mh18Session.includes("mh18Config.name, true, true, true, this::showRemToast")
+  mh18Session.includes("mh18Config.name, true, true, true, true, this::showRemToast")
   && jmcomicSession.includes("jmcomicConfig.name, true, this::showRemToast")
+  && !jmcomicSession.includes("jmcomicConfig.name, true, true"));
+check("only 18mh keeps the native WebView fingerprint",
+  source.includes("useNativeUserAgent ? WebSettings.getDefaultUserAgent(activity)")
+  && source.includes("if (!useNativeUserAgent) settings.setUserAgentString(userAgent)")
+  && source.includes('connection.setRequestProperty("User-Agent", userAgent)')
+  && mh18Session.includes("mh18Config.name, true, true, true, true, this::showRemToast")
   && !jmcomicSession.includes("jmcomicConfig.name, true, true"));
 check("18mh challenge stays visible until the target page is ready",
   source.includes("automaticInteractiveFallback")

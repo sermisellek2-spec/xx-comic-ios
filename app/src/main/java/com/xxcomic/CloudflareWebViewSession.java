@@ -68,6 +68,8 @@ final class CloudflareWebViewSession implements BrowserSession {
     private final boolean preferHttp;
     private final boolean fullViewportBackground;
     private final boolean automaticInteractiveFallback;
+    private final boolean useNativeUserAgent;
+    private final String userAgent;
     private final VerificationStatusListener verificationStatus;
     private final Semaphore requestLock = new Semaphore(1, true);
     private final AtomicInteger requestSequence = new AtomicInteger();
@@ -84,19 +86,20 @@ final class CloudflareWebViewSession implements BrowserSession {
     CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
                              boolean preferHttp,
                              VerificationStatusListener verificationStatus) {
-        this(activity, main, sourceName, preferHttp, false, false, verificationStatus);
-    }
-
-    CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
-                             boolean preferHttp, boolean fullViewportBackground,
-                             VerificationStatusListener verificationStatus) {
-        this(activity, main, sourceName, preferHttp, fullViewportBackground, false,
+        this(activity, main, sourceName, preferHttp, false, false, false,
                 verificationStatus);
     }
 
     CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
                              boolean preferHttp, boolean fullViewportBackground,
-                             boolean automaticInteractiveFallback,
+                             VerificationStatusListener verificationStatus) {
+        this(activity, main, sourceName, preferHttp, fullViewportBackground, false, false,
+                verificationStatus);
+    }
+
+    CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
+                             boolean preferHttp, boolean fullViewportBackground,
+                             boolean automaticInteractiveFallback, boolean useNativeUserAgent,
                              VerificationStatusListener verificationStatus) {
         this.activity = activity;
         this.main = main;
@@ -104,6 +107,9 @@ final class CloudflareWebViewSession implements BrowserSession {
         this.preferHttp = preferHttp;
         this.fullViewportBackground = fullViewportBackground;
         this.automaticInteractiveFallback = automaticInteractiveFallback;
+        this.useNativeUserAgent = useNativeUserAgent;
+        this.userAgent = selectedUserAgent(useNativeUserAgent,
+                useNativeUserAgent ? WebSettings.getDefaultUserAgent(activity) : "");
         this.verificationStatus = verificationStatus;
     }
 
@@ -113,6 +119,11 @@ final class CloudflareWebViewSession implements BrowserSession {
 
     static long interactiveDelayMs() {
         return INTERACTIVE_DELAY_MS;
+    }
+
+    static String selectedUserAgent(boolean useNativeUserAgent, String nativeUserAgent) {
+        return useNativeUserAgent && nativeUserAgent != null && !nativeUserAgent.trim().isEmpty()
+                ? nativeUserAgent : USER_AGENT;
     }
 
     static long requestTimeoutMs() {
@@ -286,7 +297,7 @@ final class CloudflareWebViewSession implements BrowserSession {
             connection.setInstanceFollowRedirects(true);
             connection.setConnectTimeout(remainingTimeout(deadline, CONNECT_TIMEOUT_MS));
             connection.setReadTimeout(remainingTimeout(deadline, READ_TIMEOUT_MS));
-            connection.setRequestProperty("User-Agent", USER_AGENT);
+            connection.setRequestProperty("User-Agent", userAgent);
             connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
             String cookie = android.webkit.CookieManager.getInstance().getCookie(url);
             if (!TextUtils.isEmpty(cookie)) connection.setRequestProperty("Cookie", cookie);
@@ -428,7 +439,7 @@ final class CloudflareWebViewSession implements BrowserSession {
         page.addView(card, statusParams);
 
         WebSettings settings = browser.getSettings();
-        settings.setUserAgentString(USER_AGENT);
+        if (!useNativeUserAgent) settings.setUserAgentString(userAgent);
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
