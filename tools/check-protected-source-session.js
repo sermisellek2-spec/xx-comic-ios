@@ -24,7 +24,7 @@ check("challenge inspection includes DOM markers", source.includes("html:(docume
   && source.includes('page.optString("html")'));
 check("navigation capture does not issue a second fetch",
   !navigationCapture.includes("fetch(")
-  && source.includes("fetchWithBrowserContext(url)"));
+  && source.includes("fetchWithBrowserContext(url, deadline)"));
 check("one persistent browser session exists per protected source",
   (main.match(/new CloudflareWebViewSession\(/g) || []).length === 2
   && main.includes("CloudflareWebViewSession mh18BrowserSession")
