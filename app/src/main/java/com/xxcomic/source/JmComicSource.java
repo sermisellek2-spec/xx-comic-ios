@@ -36,6 +36,9 @@ public class JmComicSource implements ComicSource {
     private static final Pattern IMAGE_TAG = Pattern.compile("<img\\b[^>]*>", Pattern.CASE_INSENSITIVE);
     private final SourceConfig config;
     private final BrowserSession browserSession;
+    private List<ComicModels.FilterGroup> filterGroupsCache;
+    private String detailPageId = "";
+    private String detailPageHtml = "";
 
     public JmComicSource() {
         this(SourceConfig.jmcomic(true), null);
@@ -76,11 +79,13 @@ public class JmComicSource implements ComicSource {
     }
 
     @Override
-    public List<ComicModels.FilterGroup> filterGroups() throws IOException {
+    public synchronized List<ComicModels.FilterGroup> filterGroups() throws IOException {
+        if (filterGroupsCache != null) return new ArrayList<>(filterGroupsCache);
         List<ComicModels.FilterGroup> groups = parseFilterGroups(
                 fetch(absolute(config.route("categoryIndex"))), config.baseUrl);
         if (groups.isEmpty()) throw new IOException(config.name + " 分类解析失败");
-        return groups;
+        filterGroupsCache = new ArrayList<>(groups);
+        return new ArrayList<>(filterGroupsCache);
     }
 
     static List<ComicModels.FilterGroup> parseFilterGroups(String html, String baseUrl) {
@@ -132,7 +137,7 @@ public class JmComicSource implements ComicSource {
     @Override
     public ComicModels.ComicDetail detail(String comicId) throws IOException {
         String rawId = rawComicId(comicId);
-        String html = fetch(absolute(config.route("detail").replace("{comicId}", rawId)));
+        String html = detailPage(rawId);
         String title = clean(first(html, "<[^>]+id=[\"']book-name[\"'][^>]*>([\\s\\S]*?)</[^>]+>"));
         if (TextUtils.isEmpty(title)) title = clean(meta(html, "og:title"));
         String cover = parseCover(html, rawId);
@@ -152,10 +157,20 @@ public class JmComicSource implements ComicSource {
     @Override
     public List<ComicModels.Chapter> chapters(String comicId) throws IOException {
         String rawId = rawComicId(comicId);
-        String html = fetch(absolute(config.route("detail").replace("{comicId}", rawId)));
+        String html = detailPage(rawId);
         List<ComicModels.Chapter> result = parseChapters(html, config.baseUrl);
         if (result.isEmpty()) throw new IOException(config.name + " 目录解析失败");
         return result;
+    }
+
+    private synchronized String detailPage(String rawId) throws IOException {
+        if (rawId.equals(detailPageId) && !detailPageHtml.isEmpty()) return detailPageHtml;
+        String html = fetch(absolute(config.route("detail").replace("{comicId}", rawId)));
+        if (html != null && !html.isEmpty()) {
+            detailPageId = rawId;
+            detailPageHtml = html;
+        }
+        return html;
     }
 
     static List<ComicModels.Chapter> parseChapters(String html, String baseUrl) {

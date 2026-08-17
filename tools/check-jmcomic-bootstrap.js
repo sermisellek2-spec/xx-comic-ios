@@ -28,6 +28,18 @@ check("old challenge response is ignored after verification",
 check("protected requests remain single active navigation",
   session.includes("synchronized (requestLock)")
   && session.includes("activeRequest != null && !activeRequest.completed"));
+check("verified browser context uses same-origin fetch",
+  session.includes("fetchWithBrowserContext(url)")
+  && session.includes('credentials:\\"include\\"')
+  && session.includes('cache:\\"no-store\\"')
+  && session.includes('redirect:\\"follow\\"'));
+check("ready browser context skips repeated http probes",
+  session.includes("browserContextReady")
+  && session.indexOf("fetchWithBrowserContext(url)")
+      < session.indexOf("fetchHttp(url)"));
+check("context challenge performs one navigation fallback",
+  session.includes("browserContextReady = false")
+  && session.includes("fetchWithBrowser(url)"));
 check("manual verification keeps useful failure classes",
   main.includes('" 验证超时"') && main.includes('" 页面验证失败"')
   && main.includes('" 连接失败，请检查 VPN"'));

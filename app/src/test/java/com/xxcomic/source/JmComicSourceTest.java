@@ -9,6 +9,43 @@ import static org.junit.Assert.assertTrue;
 
 public class JmComicSourceTest {
     @Test
+    public void successfulCategoryGroupsAreReused() throws Exception {
+        java.util.concurrent.atomic.AtomicInteger requests =
+                new java.util.concurrent.atomic.AtomicInteger();
+        BrowserSession session = url -> {
+            requests.incrementAndGet();
+            return row("類別", "/albums?o=mr", "最新A漫");
+        };
+        JmComicSource source = new JmComicSource(SourceConfig.jmcomic(true), session);
+
+        assertEquals(1, source.filterGroups().size());
+        assertEquals(1, source.filterGroups().size());
+        assertEquals(1, requests.get());
+    }
+
+    @Test
+    public void detailAndDirectoryReuseOneAlbumDocument() throws Exception {
+        java.util.concurrent.atomic.AtomicInteger requests =
+                new java.util.concurrent.atomic.AtomicInteger();
+        String html = "<h1 id=\"book-name\">漫画甲</h1>"
+                + "<img id=\"album_photo_cover\" src=\"/media/albums/123.jpg\">"
+                + "<div class=\"episode\"><a href=\"/photo/456\" data-album=\"456\">"
+                + "<h3 class=\"h2_series\">第1话</h3></a></div>";
+        JmComicSource source = new JmComicSource(SourceConfig.jmcomic(true), url -> {
+            requests.incrementAndGet();
+            return html;
+        });
+
+        try {
+            source.detail("jmcomic:123");
+        } catch (RuntimeException androidStub) {
+            assertTrue(androidStub.getMessage().contains("not mocked"));
+        }
+        assertEquals(1, source.chapters("jmcomic:123").size());
+        assertEquals(1, requests.get());
+    }
+
+    @Test
     public void parsesOnlyRealThemeRowsAndNormalizesLabels() {
         String html = "<div class=\"modal\"><h4>登录</h4><ul><li>广告</li></ul></div>"
                 + row("熱門成人主題", "/search/photos?search_query=完結", "完結")

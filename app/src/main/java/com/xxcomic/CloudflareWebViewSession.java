@@ -65,6 +65,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     private TextView status;
     private FetchRequest activeRequest;
     private int navigation;
+    private volatile boolean browserContextReady;
 
     CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
                              boolean preferHttp,
@@ -91,7 +92,18 @@ final class CloudflareWebViewSession implements BrowserSession {
         }
         synchronized (requestLock) {
             if (shutdown) throw new IOException(sourceName + "浏览器会话已停止");
-            if (preferHttp) {
+            RequestTransport transport = requestTransport(preferHttp, browserContextReady);
+            if (transport == RequestTransport.BROWSER_CONTEXT) {
+                try {
+                    return fetchWithBrowserContext(url);
+                } catch (ContextChallengeException challenge) {
+                    browserContextReady = false;
+                    String body = fetchWithBrowser(url);
+                    browserContextReady = true;
+                    return body;
+                }
+            }
+            if (transport == RequestTransport.HTTP) {
                 HttpFetch response = fetchHttp(url);
                 HttpAction action = httpAction(
                         response.statusCode, response.mitigated, response.body);
@@ -100,14 +112,38 @@ final class CloudflareWebViewSession implements BrowserSession {
                     throw new IOException(sourceName + " HTTP " + response.statusCode);
                 }
             }
-            return fetchWithBrowser(url);
+            String body = fetchWithBrowser(url);
+            if (preferHttp) browserContextReady = true;
+            return body;
         }
+    }
+
+    enum RequestTransport {
+        HTTP,
+        BROWSER_CONTEXT,
+        BROWSER_NAVIGATION
+    }
+
+    static RequestTransport requestTransport(boolean preferHttp, boolean browserContextReady) {
+        if (!preferHttp) return RequestTransport.BROWSER_NAVIGATION;
+        return browserContextReady ? RequestTransport.BROWSER_CONTEXT : RequestTransport.HTTP;
     }
 
     private String fetchWithBrowser(String url) throws IOException {
         FetchRequest request = new FetchRequest(
-                Integer.toString(requestSequence.incrementAndGet()), url);
+                Integer.toString(requestSequence.incrementAndGet()), url, false);
         main.post(() -> startRequest(request));
+        return awaitRequest(request);
+    }
+
+    private String fetchWithBrowserContext(String url) throws IOException {
+        FetchRequest request = new FetchRequest(
+                Integer.toString(requestSequence.incrementAndGet()), url, true);
+        main.post(() -> startRequest(request));
+        return awaitRequest(request);
+    }
+
+    private String awaitRequest(FetchRequest request) throws IOException {
         try {
             if (!request.latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 request.cancelled = true;
@@ -121,6 +157,7 @@ final class CloudflareWebViewSession implements BrowserSession {
             Thread.currentThread().interrupt();
             throw new IOException(sourceName + "请求已取消", interrupted);
         }
+        if (request.contextChallenge) throw new ContextChallengeException();
         if (!TextUtils.isEmpty(request.error)) throw new IOException(request.error);
         if (request.result == null) throw new IOException(sourceName + "请求未完成");
         return request.result;
@@ -179,6 +216,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     }
 
     void clearCache() {
+        browserContextReady = false;
         Runnable clear = () -> {
             if (webView == null) return;
             webView.clearCache(true);
@@ -203,7 +241,11 @@ final class CloudflareWebViewSession implements BrowserSession {
         try {
             ensureViews();
             showBackgroundView();
-            webView.loadUrl(request.url);
+            if (request.browserContext) {
+                webView.evaluateJavascript(browserContextScript(request), null);
+            } else {
+                webView.loadUrl(request.url);
+            }
         } catch (Exception error) {
             complete(request, null, sourceName + "浏览器会话启动失败");
         }
@@ -385,6 +427,19 @@ final class CloudflareWebViewSession implements BrowserSession {
         browser.evaluateJavascript(script, null);
     }
 
+    private String browserContextScript(FetchRequest request) {
+        String id = JSONObject.quote(request.id);
+        String url = JSONObject.quote(request.url);
+        return "(function(){var id=" + id + ",url=" + url + ";try{fetch(url,{"
+                + "credentials:\"include\",cache:\"no-store\",redirect:\"follow\"})"
+                + ".then(function(response){return response.text().then(function(body){window."
+                + BRIDGE_NAME + ".onFetchResult(id,JSON.stringify({url:response.url||url,status:"
+                + "response.status||0,mitigated:response.headers.get('cf-mitigated')||'',body:body||''}));});})"
+                + ".catch(function(error){window." + BRIDGE_NAME
+                + ".onFetchResult(id,JSON.stringify({error:String(error)}));});}catch(error){window."
+                + BRIDGE_NAME + ".onFetchResult(id,JSON.stringify({error:String(error)}));}})();";
+    }
+
     private void handleFetchResult(String id, String payload) {
         FetchRequest request = activeRequest;
         if (request == null || !request.id.equals(id) || !isActive(request)) return;
@@ -395,6 +450,20 @@ final class CloudflareWebViewSession implements BrowserSession {
                 return;
             }
             String body = response.optString("body", "");
+            if (request.browserContext) {
+                request.statusCode = response.optInt("status", 0);
+                request.mitigated = response.optString("mitigated", "");
+                HttpAction action = httpAction(request.statusCode, request.mitigated, body);
+                if (action == HttpAction.OPEN_BROWSER) {
+                    request.contextChallenge = true;
+                    complete(request, null, "");
+                    return;
+                }
+                if (action == HttpAction.FAIL) {
+                    complete(request, null, sourceName + " HTTP " + request.statusCode);
+                    return;
+                }
+            }
             if (!isExpectedPage(request.url, response.optString("url", ""))) {
                 complete(request, null, sourceName + "页面跳转异常");
                 return;
@@ -575,6 +644,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     }
 
     private void closeViews() {
+        browserContextReady = false;
         WebView browser = webView;
         FrameLayout page = host;
         webView = null;
@@ -603,6 +673,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     private static final class FetchRequest {
         final String id;
         final String url;
+        final boolean browserContext;
         final CountDownLatch latch = new CountDownLatch(1);
         final long startedAt = System.currentTimeMillis();
         volatile boolean cancelled;
@@ -612,14 +683,19 @@ final class CloudflareWebViewSession implements BrowserSession {
         volatile String currentUrl = "";
         volatile boolean challengeDom;
         volatile boolean pageReady;
+        volatile boolean contextChallenge;
         boolean verifying;
         int statusCode;
         String mitigated = "";
 
-        FetchRequest(String id, String url) {
+        FetchRequest(String id, String url, boolean browserContext) {
             this.id = id;
             this.url = url;
+            this.browserContext = browserContext;
         }
+    }
+
+    private static final class ContextChallengeException extends IOException {
     }
 
     private static final class HttpFetch {

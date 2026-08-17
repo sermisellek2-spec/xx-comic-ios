@@ -8,6 +8,24 @@ import static org.junit.Assert.assertTrue;
 
 public class CloudflareWebViewSessionTest {
     @Test
+    public void readyBrowserContextSkipsRepeatedHttpProbe() {
+        assertEquals(CloudflareWebViewSession.RequestTransport.BROWSER_CONTEXT,
+                CloudflareWebViewSession.requestTransport(true, true));
+    }
+
+    @Test
+    public void freshPreferredHttpSessionProbesHttp() {
+        assertEquals(CloudflareWebViewSession.RequestTransport.HTTP,
+                CloudflareWebViewSession.requestTransport(true, false));
+    }
+
+    @Test
+    public void browserOnlySourceKeepsNavigation() {
+        assertEquals(CloudflareWebViewSession.RequestTransport.BROWSER_NAVIGATION,
+                CloudflareWebViewSession.requestTransport(false, false));
+    }
+
+    @Test
     public void completeNormalPageIsCaptured() {
         assertEquals(CloudflareWebViewSession.PageAction.CAPTURE,
                 CloudflareWebViewSession.pageAction(false, false, true));
