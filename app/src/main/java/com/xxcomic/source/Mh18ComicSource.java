@@ -69,9 +69,13 @@ public class Mh18ComicSource implements ComicSource {
 
     public void verifyAccess() throws IOException {
         String html = fetchInteractive(config.baseUrl + "/manga");
-        if (!CARD_PATTERN.matcher(html == null ? "" : html).find()) {
+        if (!hasCatalogMarker(html)) {
             throw new IOException(config.name + " 页面未就绪");
         }
+    }
+
+    public static boolean hasCatalogMarker(String html) {
+        return CARD_PATTERN.matcher(html == null ? "" : html).find();
     }
 
     @Override

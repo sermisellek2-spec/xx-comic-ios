@@ -7,10 +7,18 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class Mh18ComicSourceTest {
+    @Test
+    public void catalogMarkerRequiresAn18mhComicCard() {
+        assertTrue(Mh18ComicSource.hasCatalogMarker(
+                "<a href=\"/manga/hero/1\"><img src=\"a.jpg\"><h3 class=\"cardtitle\">Hero</h3></a>"));
+        assertFalse(Mh18ComicSource.hasCatalogMarker("<title>Just a moment...</title>"));
+    }
+
     @Test
     public void searchUsesRequestedPage() throws Exception {
         assertEquals("/s/%E6%B5%8B%E8%AF%95/page/2",

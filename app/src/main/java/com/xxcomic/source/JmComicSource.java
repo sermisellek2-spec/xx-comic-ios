@@ -276,7 +276,7 @@ public class JmComicSource implements ComicSource {
         return result;
     }
 
-    static boolean hasCatalogMarker(String html) {
+    public static boolean hasCatalogMarker(String html) {
         Matcher links = ALBUM_LINK.matcher(html == null ? "" : html);
         while (links.find()) {
             if (IMAGE_TAG.matcher(links.group(5)).find()) return true;

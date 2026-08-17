@@ -5,9 +5,17 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class JmComicSourceTest {
+    @Test
+    public void catalogMarkerRequiresAJmcomicAlbumCard() {
+        assertTrue(JmComicSource.hasCatalogMarker(
+                "<a href='/album/123/title'><img title='Title' src='cover.jpg'></a>"));
+        assertFalse(JmComicSource.hasCatalogMarker("<div class='btnmg'>shell only</div>"));
+    }
+
     @Test
     public void successfulCategoryGroupsAreReused() throws Exception {
         java.util.concurrent.atomic.AtomicInteger requests =
