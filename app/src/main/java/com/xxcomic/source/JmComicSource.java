@@ -190,6 +190,28 @@ public class JmComicSource implements ComicSource {
             result.add(new ComicModels.Chapter(chapterId, title,
                     absolute(baseUrl, href), 0, result.size()));
         }
+        if (!result.isEmpty()) return result;
+        String readBlock = firstValue(html,
+                "<div\\b[^>]*class\\s*=\\s*[\"'][^\"']*\\bread-block\\b[^\"']*[\"'][^>]*>"
+                        + "([\\s\\S]{0,6000}?)</div>");
+        Matcher directLinks = ANCHOR.matcher(readBlock);
+        while (directLinks.find()) {
+            String href = decode(attribute(directLinks.group(1), "href")).trim();
+            String label = cleanMarkup(directLinks.group(2));
+            if (href.contains("read_mode=")) continue;
+            boolean directRead = label.contains("开始阅读") || label.contains("開始閱讀")
+                    || label.contains("继续阅读") || label.contains("繼續閱讀")
+                    || label.contains("續看");
+            if (!directRead) continue;
+            Matcher id = Pattern.compile(
+                    "(?:https?://[^/]+)?/photo/(\\d+)/?(?:[?#].*)?$",
+                    Pattern.CASE_INSENSITIVE).matcher(href);
+            if (!id.find()) continue;
+            String chapterId = id.group(1);
+            result.add(new ComicModels.Chapter(chapterId, "第1话",
+                    absolute(baseUrl, "/photo/" + chapterId), 0, 0));
+            break;
+        }
         return result;
     }
 

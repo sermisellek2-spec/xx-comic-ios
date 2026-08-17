@@ -210,6 +210,22 @@ public class JmComicSourceTest {
     }
 
     @Test
+    public void albumWithoutEpisodeUsesTrustedDirectReadButton() {
+        String html = "<div class=\"read-block\"><span>详情</span>"
+                + "<a class=\"btn reading\" href=\"/photo/1432767\">開始閱讀</a>"
+                + "<a href=\"/photo/1432767?read_mode=read-by-page\">分頁閱讀</a></div>"
+                + "<section class=\"recommend\"><a href=\"/photo/999\">猜你喜欢</a></section>";
+
+        List<ComicModels.Chapter> chapters = JmComicSource.parseChapters(
+                html, "https://18comic.vip");
+
+        assertEquals(1, chapters.size());
+        assertEquals("1432767", chapters.get(0).chapterId);
+        assertEquals("第1话", chapters.get(0).title);
+        assertEquals("https://18comic.vip/photo/1432767", chapters.get(0).url);
+    }
+
+    @Test
     public void chapterImagesParseWithoutDependingOnTrailingSemicolon() throws Exception {
         String html = "<script>var aid = 1114754; var scramble_id = 220980;"
                 + "window.reader={cdnImgHost:'https://cdn-msp2.18comic.vip'};"
