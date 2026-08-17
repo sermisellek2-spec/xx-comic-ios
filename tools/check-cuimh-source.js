@@ -29,7 +29,7 @@ check("detail refresh preserves chapters without eager directory fetch", main.in
 check("filter confirm only reloads missing categories",
   main.includes("sourceChanged && !categoriesFollowInitialList(selectedSourceId)")
   && main.includes("&& sourceFilterGroups.isEmpty()) loadSourceCategories();"));
-check("release version is 1.0.33", gradle.includes('versionName "1.0.33"')
-  && gradle.includes("versionCode 33"));
+check("release version is 1.0.34", gradle.includes('versionName "1.0.34"')
+  && gradle.includes("versionCode 34"));
 
 console.log("Cuimh source contract holds.");
