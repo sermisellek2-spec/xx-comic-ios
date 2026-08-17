@@ -149,7 +149,22 @@ public class Mh18ComicSource implements ComicSource {
     @Override
     public List<ComicModels.Chapter> chapters(String comicId) throws IOException {
         String rawId = rawComicId(comicId);
-        String html = fetch(absolute("/chapterlist/" + rawId));
+        String catalog = fetch(absolute("/chapterlist/" + rawId));
+        String html = fetch(catalogApiUrl(catalog, config.domain));
+        List<ComicModels.Chapter> chapters = parseChapters(html, rawId, config.baseUrl);
+        if (chapters.isEmpty()) throw new IOException("18漫画目录解析失败");
+        return chapters;
+    }
+
+    static String catalogApiUrl(String html, String domain) throws IOException {
+        String holder = tagWithAttribute(html, "id", "allchapters");
+        String mangaId = attribute(holder, "data-mid");
+        if (!mangaId.matches("\\d+")) throw new IOException("18漫画目录参数解析失败");
+        return trustedApiBase(holder, domain, "18漫画目录参数解析失败")
+                + "/manga/get?mid=" + mangaId + "&mode=all";
+    }
+
+    static List<ComicModels.Chapter> parseChapters(String html, String rawId, String baseUrl) {
         List<ComicModels.Chapter> chapters = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
         Matcher anchors = ANCHOR_PATTERN.matcher(html);
@@ -158,11 +173,11 @@ public class Mh18ComicSource implements ComicSource {
             String href = attribute(tag, "href");
             if (!href.matches("(?:https?://[^/]+)?/manga/" + Pattern.quote(rawId) + "/[^/?#]+") || !seen.add(href)) continue;
             String chapterId = attribute(tag, "data-cs");
-            String title = clean(attribute(tag, "data-ct"));
-            if (TextUtils.isEmpty(chapterId) || TextUtils.isEmpty(title)) continue;
-            chapters.add(new ComicModels.Chapter(chapterId, title, absolute(href), 0, chapters.size()));
+            String title = cleanAttribute(attribute(tag, "data-ct"));
+            if (chapterId.isEmpty() || title.isEmpty()) continue;
+            chapters.add(new ComicModels.Chapter(chapterId, title,
+                    joinUrl(baseUrl, href), 0, chapters.size()));
         }
-        if (chapters.isEmpty()) throw new IOException("18漫画目录解析失败");
         return chapters;
     }
 
@@ -314,10 +329,38 @@ public class Mh18ComicSource implements ComicSource {
         return images;
     }
 
-    private String tagWithAttribute(String html, String name, String value) {
+    private static String tagWithAttribute(String html, String name, String value) {
         Matcher tags = Pattern.compile("<[^>]+>", Pattern.CASE_INSENSITIVE).matcher(html == null ? "" : html);
         while (tags.find()) if (value.equals(attribute(tags.group(), name))) return tags.group();
         return "";
+    }
+
+    private static String trustedApiBase(String tag, String domain,
+                                         String errorMessage) throws IOException {
+        try {
+            URL url = new URL(attribute(tag, "data-host"));
+            String host = url.getHost().toLowerCase(java.util.Locale.US);
+            String root = domain == null ? "" : domain.toLowerCase(java.util.Locale.US);
+            boolean trusted = host.equals(root) || host.endsWith("." + root);
+            boolean defaultPort = url.getPort() == -1 || url.getPort() == 443;
+            if (!"https".equalsIgnoreCase(url.getProtocol()) || !trusted || !defaultPort) {
+                throw new IllegalArgumentException();
+            }
+            return "https://" + host;
+        } catch (Exception error) {
+            throw new IOException(errorMessage, error);
+        }
+    }
+
+    private static String cleanAttribute(String value) {
+        return decode(value).replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim();
+    }
+
+    private static String joinUrl(String baseUrl, String value) {
+        if (value.startsWith("http://") || value.startsWith("https://")) return value;
+        if (value.startsWith("//")) return "https:" + value;
+        String root = baseUrl == null ? "" : baseUrl.replaceAll("/+$", "");
+        return root + (value.startsWith("/") ? value : "/" + value);
     }
 
     private static String attribute(String tag, String name) {
