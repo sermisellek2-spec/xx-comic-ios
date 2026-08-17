@@ -90,4 +90,26 @@ public class CloudflareWebViewSessionTest {
         assertEquals(CloudflareWebViewSession.PageAction.SHOW_VERIFICATION,
                 CloudflareWebViewSession.pageAction(false, true, true, 403));
     }
+
+    @Test
+    public void successfulBusinessHttpResponseReturnsWithoutBrowser() {
+        assertEquals(CloudflareWebViewSession.HttpAction.RETURN_BODY,
+                CloudflareWebViewSession.httpAction(
+                        200, "", "<a href='/album/123'><img title='漫画'></a>"));
+    }
+
+    @Test
+    public void cloudflareHttpChallengeFallsBackToBrowser() {
+        assertEquals(CloudflareWebViewSession.HttpAction.OPEN_BROWSER,
+                CloudflareWebViewSession.httpAction(
+                        403, "challenge", "<title>Just a moment...</title>"));
+    }
+
+    @Test
+    public void ordinaryHttpErrorsNeverOpenVerification() {
+        assertEquals(CloudflareWebViewSession.HttpAction.FAIL,
+                CloudflareWebViewSession.httpAction(403, "", "Forbidden"));
+        assertEquals(CloudflareWebViewSession.HttpAction.FAIL,
+                CloudflareWebViewSession.httpAction(500, "", "Server error"));
+    }
 }

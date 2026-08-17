@@ -354,6 +354,20 @@ final class CloudflareWebViewSession implements BrowserSession {
         FAIL
     }
 
+    enum HttpAction {
+        RETURN_BODY,
+        OPEN_BROWSER,
+        FAIL
+    }
+
+    static HttpAction httpAction(int statusCode, String mitigated, String body) {
+        if (isChallenge("", "", body, statusCode, mitigated, false)) {
+            return HttpAction.OPEN_BROWSER;
+        }
+        return statusCode >= 200 && statusCode < 400
+                ? HttpAction.RETURN_BODY : HttpAction.FAIL;
+    }
+
     static PageAction pageAction(boolean verifying, boolean challenge, boolean ready) {
         return pageAction(verifying, challenge, ready, 0);
     }
