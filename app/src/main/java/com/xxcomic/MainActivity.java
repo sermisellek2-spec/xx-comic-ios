@@ -346,7 +346,7 @@ public class MainActivity extends Activity {
         root = new FrameLayout(this);
         setContentView(root);
         mh18BrowserSession = new CloudflareWebViewSession(
-                this, main, mh18Config.name, true, this::showRemToast);
+                this, main, mh18Config.name, true, true, this::showRemToast);
         jmcomicBrowserSession = new CloudflareWebViewSession(
                 this, main, jmcomicConfig.name, true, this::showRemToast);
         rebuildSourceClients();
@@ -2268,7 +2268,7 @@ public class MainActivity extends Activity {
     }
 
     static boolean categoriesFollowInitialList(String sourceId) {
-        return "jmcomic".equals(sourceId);
+        return "mh18".equals(sourceId) || "jmcomic".equals(sourceId);
     }
 
     private void verifyProtectedSource(String sourceId) {

@@ -20,6 +20,12 @@ public class CloudflareWebViewSessionTest {
     }
 
     @Test
+    public void backgroundViewportIsOptInForMh18Only() {
+        assertEquals(-1, CloudflareWebViewSession.backgroundExtent(true));
+        assertEquals(1, CloudflareWebViewSession.backgroundExtent(false));
+    }
+
+    @Test
     public void browserOnlySourceKeepsNavigation() {
         assertEquals(CloudflareWebViewSession.RequestTransport.BROWSER_NAVIGATION,
                 CloudflareWebViewSession.requestTransport(false, false));

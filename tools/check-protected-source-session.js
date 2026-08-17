@@ -12,6 +12,10 @@ const mh18Session = main.slice(
   main.indexOf("mh18BrowserSession = new CloudflareWebViewSession("),
   main.indexOf("jmcomicBrowserSession = new CloudflareWebViewSession("),
 );
+const jmcomicSession = main.slice(
+  main.indexOf("jmcomicBrowserSession = new CloudflareWebViewSession("),
+  main.indexOf("rebuildSourceClients();"),
+);
 const navigationCapture = source.slice(
   source.indexOf("private void captureCurrentPage"),
   source.indexOf("private String browserContextScript"),
@@ -29,8 +33,10 @@ check("challenge inspection includes DOM markers", source.includes("html:(docume
 check("navigation capture does not issue a second fetch",
   !navigationCapture.includes("fetch(")
   && source.includes("fetchWithBrowserContext(url, deadline)"));
-check("18mh uses the HTTP-first hybrid session",
-  mh18Session.includes("mh18Config.name, true, this::showRemToast"));
+check("only 18mh uses the full viewport hybrid session",
+  mh18Session.includes("mh18Config.name, true, true, this::showRemToast")
+  && jmcomicSession.includes("jmcomicConfig.name, true, this::showRemToast")
+  && !jmcomicSession.includes("jmcomicConfig.name, true, true"));
 check("one persistent browser session exists per protected source",
   (main.match(/new CloudflareWebViewSession\(/g) || []).length === 2
   && main.includes("CloudflareWebViewSession mh18BrowserSession")

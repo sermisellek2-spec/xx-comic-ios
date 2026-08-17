@@ -26,9 +26,9 @@ public class ProtectedSourceUiTest {
     }
 
     @Test
-    public void jmcomicCategoriesWaitForTheFirstCatalogPage() {
+    public void protectedCategoriesWaitForTheFirstCatalogPage() {
         assertTrue(MainActivity.categoriesFollowInitialList("jmcomic"));
-        assertFalse(MainActivity.categoriesFollowInitialList("mh18"));
+        assertTrue(MainActivity.categoriesFollowInitialList("mh18"));
         assertFalse(MainActivity.categoriesFollowInitialList("baozimh"));
     }
 }

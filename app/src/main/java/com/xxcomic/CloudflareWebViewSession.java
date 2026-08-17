@@ -66,6 +66,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     private final Handler main;
     private final String sourceName;
     private final boolean preferHttp;
+    private final boolean fullViewportBackground;
     private final VerificationStatusListener verificationStatus;
     private final Semaphore requestLock = new Semaphore(1, true);
     private final AtomicInteger requestSequence = new AtomicInteger();
@@ -82,10 +83,17 @@ final class CloudflareWebViewSession implements BrowserSession {
     CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
                              boolean preferHttp,
                              VerificationStatusListener verificationStatus) {
+        this(activity, main, sourceName, preferHttp, false, verificationStatus);
+    }
+
+    CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
+                             boolean preferHttp, boolean fullViewportBackground,
+                             VerificationStatusListener verificationStatus) {
         this.activity = activity;
         this.main = main;
         this.sourceName = sourceName;
         this.preferHttp = preferHttp;
+        this.fullViewportBackground = fullViewportBackground;
         this.verificationStatus = verificationStatus;
     }
 
@@ -115,6 +123,10 @@ final class CloudflareWebViewSession implements BrowserSession {
 
     static boolean shouldShowInteractive(boolean interactiveAllowed, boolean verifying) {
         return interactiveAllowed && verifying;
+    }
+
+    static int backgroundExtent(boolean fullViewport) {
+        return fullViewport ? ViewGroup.LayoutParams.MATCH_PARENT : 1;
     }
 
     @Override
@@ -653,6 +665,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     private void showVerificationView(boolean interactive) {
         if (host == null) return;
         host.setLayoutParams(verificationLayoutParams());
+        host.setTranslationX(0f);
         host.setBackgroundColor(Color.argb(42, 18, 39, 56));
         host.setClickable(true);
         host.setFocusable(true);
@@ -668,6 +681,8 @@ final class CloudflareWebViewSession implements BrowserSession {
     private void showBackgroundView() {
         if (host == null) return;
         host.setLayoutParams(backgroundLayoutParams());
+        host.setTranslationX(fullViewportBackground
+                ? activity.getResources().getDisplayMetrics().widthPixels + 1f : 0f);
         host.setBackgroundColor(Color.TRANSPARENT);
         host.setClickable(false);
         host.setFocusable(false);
@@ -684,7 +699,8 @@ final class CloudflareWebViewSession implements BrowserSession {
     }
 
     private FrameLayout.LayoutParams backgroundLayoutParams() {
-        return new FrameLayout.LayoutParams(1, 1, Gravity.TOP | Gravity.START);
+        int extent = backgroundExtent(fullViewportBackground);
+        return new FrameLayout.LayoutParams(extent, extent, Gravity.TOP | Gravity.START);
     }
 
     private void showVerifyingState() {
