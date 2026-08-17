@@ -15,6 +15,14 @@ public class Mh18WebViewSessionTest {
     }
 
     @Test
+    public void verifiedContentRequestsStayInTheBrowserNetworkContext() {
+        assertEquals(Mh18WebViewSession.RequestTransport.HTTP,
+                Mh18WebViewSession.requestTransport(false));
+        assertEquals(Mh18WebViewSession.RequestTransport.BROWSER_CONTEXT,
+                Mh18WebViewSession.requestTransport(true));
+    }
+
+    @Test
     public void cloudflareHttpChallengeRequiresExplicitVerification() {
         assertEquals(Mh18WebViewSession.HttpAction.VERIFICATION_REQUIRED,
                 Mh18WebViewSession.httpAction(

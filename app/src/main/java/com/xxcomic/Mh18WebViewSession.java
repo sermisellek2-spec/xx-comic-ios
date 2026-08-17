@@ -10,8 +10,11 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.Window;
+import android.webkit.JavascriptInterface;
 import android.webkit.CookieManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -19,6 +22,7 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -37,6 +41,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -45,8 +50,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 final class Mh18WebViewSession implements BrowserSession {
+    private static final String BRIDGE_NAME = "Mh18FetchBridge";
     private static final String PREFS_NAME = "mh18_verification";
     private static final String VERIFIED_AT_KEY = "verified_at";
     private static final long TIMEOUT_MS = 120000L;
@@ -70,8 +77,13 @@ final class Mh18WebViewSession implements BrowserSession {
     private final VerificationStatusListener verificationStatus;
     private final VerificationRetryListener verificationRetry;
     private final Semaphore requestLock = new Semaphore(1, true);
+    private final AtomicInteger browserRequestSequence = new AtomicInteger();
+    private final Map<String, BrowserFetchTask> browserFetchTasks = new HashMap<>();
     private volatile boolean shutdown;
+    private volatile boolean browserContextReady;
     private InteractiveRequest activeRequest;
+    private FrameLayout browserHost;
+    private WebView browserContext;
 
     Mh18WebViewSession(Activity activity, Handler main, String sourceName,
                        VerificationStatusListener verificationStatus) {
@@ -123,10 +135,13 @@ final class Mh18WebViewSession implements BrowserSession {
             acquired = requestLock.tryAcquire(TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (!acquired) throw new IOException(sourceName + "请求超时");
             if (shutdown) throw new IOException(sourceName + "浏览器会话已停止");
-            HttpFetch response = fetchHttp(url);
+            HttpFetch response = requestTransport(browserContextReady)
+                    == RequestTransport.BROWSER_CONTEXT
+                    ? fetchWithBrowserContext(url) : fetchHttp(url);
             HttpAction action = httpAction(
                     response.statusCode, response.mitigated, response.body);
             if (action == HttpAction.VERIFICATION_REQUIRED) {
+                browserContextReady = false;
                 throw new VerificationRequiredException(sourceName + "需要验证");
             }
             if (action == HttpAction.FAIL) {
@@ -187,6 +202,25 @@ final class Mh18WebViewSession implements BrowserSession {
         } finally {
             connection.disconnect();
         }
+    }
+
+    private HttpFetch fetchWithBrowserContext(String url) throws IOException {
+        BrowserFetchTask task = new BrowserFetchTask(
+                Integer.toString(browserRequestSequence.incrementAndGet()), url, null);
+        main.post(() -> beginBrowserFetch(browserContext, task));
+        try {
+            if (!task.latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                main.post(() -> cancelBrowserFetch(task));
+                throw new IOException(sourceName + "请求超时");
+            }
+        } catch (InterruptedException interrupted) {
+            main.post(() -> cancelBrowserFetch(task));
+            Thread.currentThread().interrupt();
+            throw new IOException(sourceName + "请求已取消", interrupted);
+        }
+        if (task.failure != null) throw task.failure;
+        if (task.response == null) throw new IOException(sourceName + "浏览器请求未完成");
+        return task.response;
     }
 
     private void persistResponseCookies(String url, Map<String, List<String>> headers) {
@@ -304,6 +338,7 @@ final class Mh18WebViewSession implements BrowserSession {
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
         cookies.setAcceptThirdPartyCookies(browser, true);
+        browser.addJavascriptInterface(new BrowserFetchBridge(), BRIDGE_NAME);
 
         browser.setWebViewClient(new WebViewClient() {
             @Override
@@ -311,6 +346,7 @@ final class Mh18WebViewSession implements BrowserSession {
                                       android.graphics.Bitmap favicon) {
                 if (!isActive(request)) return;
                 request.navigation++;
+                cancelProbe(request);
                 request.probeRunning = false;
                 request.inspecting = false;
                 cancelInspection(request);
@@ -416,7 +452,7 @@ final class Mh18WebViewSession implements BrowserSession {
         InteractiveAction action = interactiveAction(
                 response.statusCode, response.mitigated, response.body);
         if (action == InteractiveAction.COMPLETE) {
-            completeVerification(request, response.body);
+            completeVerification(request, response.body, false);
         } else if (action == InteractiveAction.OPEN_BROWSER) {
             loadInteractive(request);
         } else {
@@ -496,16 +532,12 @@ final class Mh18WebViewSession implements BrowserSession {
         cancelInspection(request);
         setStatus(request, "正在确认验证结果");
         CookieManager.getInstance().flush();
-        HTTP_EXECUTOR.execute(() -> {
-            try {
-                HttpFetch response = fetchHttp(request.url);
-                main.post(() -> finishProbe(
-                        request, attempt, navigation, browserCatalog, response, null));
-            } catch (IOException error) {
-                main.post(() -> finishProbe(
-                        request, attempt, navigation, browserCatalog, null, error));
-            }
-        });
+        BrowserFetchTask task = new BrowserFetchTask(
+                Integer.toString(browserRequestSequence.incrementAndGet()), request.url,
+                (response, failure) -> finishProbe(
+                        request, attempt, navigation, browserCatalog, response, failure));
+        request.probeTask = task;
+        beginBrowserFetch(request.webView, task);
     }
 
     private void finishProbe(InteractiveRequest request, int attempt, int navigation,
@@ -514,6 +546,7 @@ final class Mh18WebViewSession implements BrowserSession {
         if (!probeCanComplete(isActiveAttempt(request, attempt), request.probeRunning,
                 request.stopped, navigation, request.navigation)) return;
         request.probeRunning = false;
+        request.probeTask = null;
         if (failure != null) {
             stopAttempt(request, "网络确认失败，请重试");
             return;
@@ -534,13 +567,16 @@ final class Mh18WebViewSession implements BrowserSession {
             return;
         }
 
-        completeVerification(request, response.body);
+        completeVerification(request, response.body, true);
     }
 
-    private void completeVerification(InteractiveRequest request, String result) {
+    private void completeVerification(InteractiveRequest request, String result,
+                                      boolean retainBrowser) {
         activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .edit().putLong(VERIFIED_AT_KEY, System.currentTimeMillis()).apply();
         request.succeeded = true;
+        request.retainBrowser = retainBrowser;
+        if (retainBrowser) browserContextReady = true;
         request.reload.setEnabled(false);
         request.close.setEnabled(false);
         setStatus(request, "验证完成");
@@ -555,6 +591,7 @@ final class Mh18WebViewSession implements BrowserSession {
     private void stopAttempt(InteractiveRequest request, String message) {
         if (!isActive(request) || request.succeeded) return;
         request.preflightRunning = false;
+        cancelProbe(request);
         request.probeRunning = false;
         request.inspecting = false;
         request.stopped = true;
@@ -577,6 +614,7 @@ final class Mh18WebViewSession implements BrowserSession {
                 finishRequest(request, null,
                         new IOException(sourceName + "浏览器会话已停止"));
             }
+            closeBrowserContext();
         };
         if (Looper.myLooper() == Looper.getMainLooper()) close.run();
         else main.post(close);
@@ -591,6 +629,7 @@ final class Mh18WebViewSession implements BrowserSession {
                 finishRequest(request, null,
                         new IOException(sourceName + "验证状态已清除"));
             }
+            closeBrowserContext();
         };
         if (Looper.myLooper() == Looper.getMainLooper()) clear.run();
         else main.post(clear);
@@ -602,6 +641,7 @@ final class Mh18WebViewSession implements BrowserSession {
         request.completed = true;
         request.result = result;
         request.failure = failure;
+        cancelProbe(request);
         cancelInspection(request);
         if (request.timeout != null) main.removeCallbacks(request.timeout);
         if (activeRequest == request) activeRequest = null;
@@ -611,12 +651,134 @@ final class Mh18WebViewSession implements BrowserSession {
         request.webView = null;
         request.dialog = null;
         if (dialog != null && dialog.isShowing()) dialog.dismiss();
-        if (browser != null) {
+        if (browser != null && request.succeeded && request.retainBrowser) {
+            retainBrowserContext(browser);
+        } else if (browser != null) {
             browser.stopLoading();
+            browser.removeJavascriptInterface(BRIDGE_NAME);
             browser.removeAllViews();
             browser.destroy();
         }
         request.latch.countDown();
+    }
+
+    private void beginBrowserFetch(WebView browser, BrowserFetchTask task) {
+        if (task.completed) return;
+        if (shutdown || browser == null) {
+            completeBrowserFetch(task, null,
+                    new VerificationRequiredException(sourceName + "需要验证"));
+            return;
+        }
+        browserFetchTasks.put(task.id, task);
+        browser.evaluateJavascript(browserFetchScript(task), null);
+    }
+
+    private String browserFetchScript(BrowserFetchTask task) {
+        String id = JSONObject.quote(task.id);
+        String url = JSONObject.quote(task.url);
+        return "(function(){var id=" + id + ",url=" + url + ";try{fetch(url,{"
+                + "credentials:'include',cache:'no-store',redirect:'follow'})"
+                + ".then(function(response){return response.text().then(function(body){window."
+                + BRIDGE_NAME + ".onFetchResult(id,JSON.stringify({url:response.url||url,status:"
+                + "response.status||0,mitigated:response.headers.get('cf-mitigated')||'',"
+                + "body:body||''}));});})"
+                + ".catch(function(error){window." + BRIDGE_NAME
+                + ".onFetchResult(id,JSON.stringify({error:String(error)}));});}catch(error){window."
+                + BRIDGE_NAME + ".onFetchResult(id,JSON.stringify({error:String(error)}));}})();";
+    }
+
+    private void handleBrowserFetchResult(String id, String payload) {
+        BrowserFetchTask task = browserFetchTasks.get(id);
+        if (task == null || task.completed) return;
+        try {
+            JSONObject response = new JSONObject(payload == null ? "" : payload);
+            if (!TextUtils.isEmpty(response.optString("error"))) {
+                completeBrowserFetch(task, null,
+                        new IOException(sourceName + "浏览器请求失败"));
+                return;
+            }
+            String actualUrl = response.optString("url", "");
+            if (!sameSite(task.url, actualUrl)) {
+                completeBrowserFetch(task, null,
+                        new IOException(sourceName + "页面跳转异常"));
+                return;
+            }
+            completeBrowserFetch(task, new HttpFetch(
+                    response.optInt("status", 0), response.optString("mitigated", ""),
+                    response.optString("body", "")), null);
+        } catch (Exception error) {
+            completeBrowserFetch(task, null,
+                    new IOException(sourceName + "浏览器响应解析失败", error));
+        }
+    }
+
+    private void completeBrowserFetch(BrowserFetchTask task, HttpFetch response,
+                                      IOException failure) {
+        if (task.completed) return;
+        task.completed = true;
+        task.response = response;
+        task.failure = failure;
+        browserFetchTasks.remove(task.id);
+        if (task.callback != null) task.callback.onComplete(response, failure);
+        task.latch.countDown();
+    }
+
+    private void cancelBrowserFetch(BrowserFetchTask task) {
+        if (task == null || task.completed) return;
+        task.completed = true;
+        browserFetchTasks.remove(task.id);
+        task.latch.countDown();
+    }
+
+    private void cancelProbe(InteractiveRequest request) {
+        if (request.probeTask == null) return;
+        cancelBrowserFetch(request.probeTask);
+        request.probeTask = null;
+    }
+
+    private void retainBrowserContext(WebView browser) {
+        closeBrowserContext();
+        ViewParent parent = browser.getParent();
+        if (parent instanceof ViewGroup) ((ViewGroup) parent).removeView(browser);
+        FrameLayout host = new FrameLayout(activity);
+        host.setClickable(false);
+        host.setFocusable(false);
+        browser.setVisibility(View.VISIBLE);
+        browser.setAlpha(0.01f);
+        browser.setClickable(false);
+        host.addView(browser, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        ViewGroup content = activity.findViewById(android.R.id.content);
+        if (content == null) {
+            browser.removeJavascriptInterface(BRIDGE_NAME);
+            browser.destroy();
+            browserContextReady = false;
+            return;
+        }
+        content.addView(host, new FrameLayout.LayoutParams(1, 1, Gravity.TOP | Gravity.START));
+        browserHost = host;
+        browserContext = browser;
+        browserContextReady = true;
+    }
+
+    private void closeBrowserContext() {
+        browserContextReady = false;
+        for (BrowserFetchTask task : new java.util.ArrayList<>(browserFetchTasks.values())) {
+            completeBrowserFetch(task, null, new IOException(sourceName + "浏览器会话已停止"));
+        }
+        WebView browser = browserContext;
+        FrameLayout host = browserHost;
+        browserContext = null;
+        browserHost = null;
+        if (host != null && host.getParent() instanceof ViewGroup) {
+            ((ViewGroup) host.getParent()).removeView(host);
+        }
+        if (browser != null) {
+            browser.stopLoading();
+            browser.removeJavascriptInterface(BRIDGE_NAME);
+            browser.removeAllViews();
+            browser.destroy();
+        }
     }
 
     private boolean isActive(InteractiveRequest request) {
@@ -666,6 +828,16 @@ final class Mh18WebViewSession implements BrowserSession {
         RETURN_BODY,
         VERIFICATION_REQUIRED,
         FAIL
+    }
+
+    enum RequestTransport {
+        HTTP,
+        BROWSER_CONTEXT
+    }
+
+    static RequestTransport requestTransport(boolean browserContextReady) {
+        return browserContextReady
+                ? RequestTransport.BROWSER_CONTEXT : RequestTransport.HTTP;
     }
 
     enum InteractiveAction {
@@ -783,6 +955,7 @@ final class Mh18WebViewSession implements BrowserSession {
         ImageView close;
         Runnable timeout;
         Runnable inspection;
+        BrowserFetchTask probeTask;
         int attempt;
         int navigation;
         int statusCode;
@@ -792,9 +965,37 @@ final class Mh18WebViewSession implements BrowserSession {
         boolean inspecting;
         boolean stopped;
         boolean succeeded;
+        boolean retainBrowser;
 
         InteractiveRequest(String url) {
             this.url = url;
+        }
+    }
+
+    private interface BrowserFetchCallback {
+        void onComplete(HttpFetch response, IOException failure);
+    }
+
+    private static final class BrowserFetchTask {
+        final String id;
+        final String url;
+        final BrowserFetchCallback callback;
+        final CountDownLatch latch = new CountDownLatch(1);
+        volatile HttpFetch response;
+        volatile IOException failure;
+        volatile boolean completed;
+
+        BrowserFetchTask(String id, String url, BrowserFetchCallback callback) {
+            this.id = id;
+            this.url = url;
+            this.callback = callback;
+        }
+    }
+
+    private final class BrowserFetchBridge {
+        @JavascriptInterface
+        public void onFetchResult(String id, String payload) {
+            main.post(() -> handleBrowserFetchResult(id, payload));
         }
     }
 

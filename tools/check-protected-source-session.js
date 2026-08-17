@@ -38,13 +38,17 @@ check("both sessions use the fixed Chrome 124 fingerprint",
     && !source.includes("WebSettings.getDefaultUserAgent")));
 check("both sessions own their request locks",
   sessions.every(source => source.includes("new Semaphore(1, true)")));
-check("18mh ordinary fetch is cached-http-only",
+check("18mh ordinary fetch reuses only an explicitly verified browser context",
   mh18.includes("public String fetch(String url) throws IOException")
-  && mh18.includes("HttpFetch response = fetchHttp(url)")
+  && mh18.includes("? fetchWithBrowserContext(url) : fetchHttp(url)")
+  && mh18.includes("requestTransport(browserContextReady)")
+  && mh18.includes("fetchWithBrowserContext(url)")
   && mh18.includes("new VerificationRequiredException")
-  && !mh18.includes("fetchWithBrowserContext")
   && !mh18.includes("AUTOMATIC_INTERACTIVE_FALLBACK")
-  && !mh18.includes("browserContextReady"));
+  && !mh18.slice(
+    mh18.indexOf("public String fetch(String url) throws IOException"),
+    mh18.indexOf("public String fetchInteractive(String url) throws IOException"),
+  ).includes("loadInteractive("));
 check("jmcomic ordinary fetch is cached-http-only",
   jmcomic.includes("public String fetch(String url) throws IOException")
   && jmcomic.includes("HttpFetch response = fetchHttp(url)")
@@ -76,10 +80,11 @@ const interactiveFetch = mh18.slice(
 check("18mh manual verification opens without waiting for content requests",
   !interactiveFetch.includes("requestLock.tryAcquire")
   && interactiveFetch.includes("main.post(() -> startInteractive(request))"));
-check("18mh verification requires browser and cached catalog markers",
+check("18mh verification requires browser and same-context catalog markers",
   mh18.includes("Mh18ComicSource.hasCatalogMarker(html)")
   && mh18.includes("Mh18ComicSource.hasCatalogMarker(response.body)")
   && mh18.includes("verificationComplete(browserCatalog, probeCatalog)")
+  && mh18.includes("beginBrowserFetch(request.webView, task)")
   && mh18.includes('putLong(VERIFIED_AT_KEY, System.currentTimeMillis())'));
 check("jmcomic verification requires browser and cached catalog markers",
   jmcomic.includes("JmComicSource.hasCatalogMarker(html)")
@@ -135,6 +140,7 @@ check("18mh challenge and incomplete catalog pages keep polling",
   && inspectPage.includes("scheduleInspection(request"));
 check("18mh final probe keeps the original request timeout",
   !beginProbe.includes("removeCallbacks(request.timeout)")
+  && !beginProbe.includes("fetchHttp(request.url)")
   && scheduleTimeout.includes("shouldStopForTimeout(")
   && scheduleTimeout.includes("remainingRequestMs(request.deadline"));
 const cancelInteractive = mh18.slice(
@@ -169,11 +175,18 @@ check("18mh cache clear is source-local and ends its active request",
   mh18ClearCache.includes("remove(VERIFIED_AT_KEY)")
   && mh18ClearCache.includes("InteractiveRequest request = activeRequest")
   && mh18ClearCache.includes("finishRequest(request")
+  && mh18ClearCache.includes("closeBrowserContext()")
   && !mh18ClearCache.includes("new WebView(")
   && !mh18ClearCache.includes(".clearCache(")
   && !mh18ClearCache.includes(".clearHistory(")
   && !mh18ClearCache.includes(".clearFormData(")
   && !mh18ClearCache.toLowerCase().includes("jmcomic"));
+check("18mh keeps a non-interactive context only after browser verification",
+  mh18.includes("request.retainBrowser = retainBrowser")
+  && mh18.includes("retainBrowserContext(browser)")
+  && mh18.includes("new FrameLayout.LayoutParams(1, 1, Gravity.TOP | Gravity.START)")
+  && mh18.includes("browser.setClickable(false)")
+  && mh18.includes("browser.removeJavascriptInterface(BRIDGE_NAME)"));
 const jmcomicClearCache = jmcomic.slice(
   jmcomic.indexOf("void clearCache()"),
   jmcomic.indexOf("private void finishRequest"),
