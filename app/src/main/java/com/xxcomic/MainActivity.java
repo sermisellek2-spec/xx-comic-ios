@@ -2268,7 +2268,8 @@ public class MainActivity extends Activity {
     }
 
     static boolean categoriesFollowInitialList(String sourceId) {
-        return "mh18".equals(sourceId) || "jmcomic".equals(sourceId);
+        if ("mh18".equals(sourceId)) return true;
+        return "jmcomic".equals(sourceId);
     }
 
     private void verifyProtectedSource(String sourceId) {
