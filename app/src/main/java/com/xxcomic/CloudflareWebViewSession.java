@@ -44,7 +44,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     private static final String BRIDGE_NAME = "XXComicBridge";
     private static final long TIMEOUT_MS = 180000L;
     private static final long POLL_DELAY_MS = 800L;
-    private static final long INTERACTIVE_DELAY_MS = 1200L;
+    private static final long INTERACTIVE_DELAY_MS = 4000L;
     private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14) "
             + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
     private static final int CONNECT_TIMEOUT_MS = 10000;
@@ -54,6 +54,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     private final Handler main;
     private final String sourceName;
     private final boolean preferHttp;
+    private final VerificationStatusListener verificationStatus;
     private final Object requestLock = new Object();
     private final AtomicInteger requestSequence = new AtomicInteger();
     private volatile boolean shutdown;
@@ -66,11 +67,21 @@ final class CloudflareWebViewSession implements BrowserSession {
     private int navigation;
 
     CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
-                             boolean preferHttp) {
+                             boolean preferHttp,
+                             VerificationStatusListener verificationStatus) {
         this.activity = activity;
         this.main = main;
         this.sourceName = sourceName;
         this.preferHttp = preferHttp;
+        this.verificationStatus = verificationStatus;
+    }
+
+    interface VerificationStatusListener {
+        void onStatus(String message);
+    }
+
+    static long interactiveDelayMs() {
+        return INTERACTIVE_DELAY_MS;
     }
 
     @Override
@@ -327,7 +338,8 @@ final class CloudflareWebViewSession implements BrowserSession {
                 PageAction action = pageAction(request.verifying, challenge, ready, request.statusCode);
                 if (action == PageAction.SHOW_VERIFICATION) {
                     request.verifying = true;
-                    showVerificationView(false);
+                    notifyVerification("正在验证");
+                    showBackgroundView();
                     browser.postDelayed(() -> {
                         if (isActive(request) && request.verifying) showVerificationView(true);
                     }, INTERACTIVE_DELAY_MS);
@@ -345,9 +357,10 @@ final class CloudflareWebViewSession implements BrowserSession {
                     }
                     android.webkit.CookieManager.getInstance().flush();
                     if (request.verifying) {
+                        notifyVerification("验证完成");
                         showVerifiedState();
                         browser.postDelayed(() -> captureCurrentPage(
-                                request, browser, expectedNavigation), 550L);
+                                request, browser, expectedNavigation), 300L);
                     } else {
                         captureCurrentPage(request, browser, expectedNavigation);
                     }
@@ -523,6 +536,12 @@ final class CloudflareWebViewSession implements BrowserSession {
     private void showVerifiedState() {
         if (status != null) status.setText("验证完成");
         if (progress != null) progress.setVisibility(View.INVISIBLE);
+    }
+
+    private void notifyVerification(String message) {
+        if (verificationStatus != null) {
+            verificationStatus.onStatus(sourceName + " " + message);
+        }
     }
 
     private String requestDiagnostic(FetchRequest request) {

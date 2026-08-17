@@ -112,4 +112,9 @@ public class CloudflareWebViewSessionTest {
         assertEquals(CloudflareWebViewSession.HttpAction.FAIL,
                 CloudflareWebViewSession.httpAction(500, "", "Server error"));
     }
+
+    @Test
+    public void interactiveVerificationWaitsForAutomaticChallengeToFinish() {
+        assertEquals(4000L, CloudflareWebViewSession.interactiveDelayMs());
+    }
 }

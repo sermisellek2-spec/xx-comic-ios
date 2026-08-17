@@ -16,10 +16,13 @@ function check(name, condition) {
 
 check("jmcomic uses its dedicated access probe",
   main.includes("jmcomicClient.verifyAccess()"));
-check("verification webview becomes visible only during challenge",
-  session.includes("showVerificationView(false)")
-  && session.includes("showVerificationView(true)")
-  && session.includes("interactive ? 1f : 0.01f"));
+check("automatic verification stays lightweight before interaction",
+  session.includes("INTERACTIVE_DELAY_MS = 4000L")
+  && session.includes('notifyVerification("正在验证")')
+  && session.includes("showBackgroundView()")
+  && session.includes("showVerificationView(true)"));
+check("verification status uses the themed app toast",
+  main.includes("this::showRemToast"));
 check("old challenge response is ignored after verification",
   session.includes("!verifying && responseChallenge"));
 check("protected requests remain single active navigation",
