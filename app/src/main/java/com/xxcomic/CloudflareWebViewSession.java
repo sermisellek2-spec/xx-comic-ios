@@ -27,9 +27,15 @@ import com.xxcomic.source.BrowserSession;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,10 +45,15 @@ final class CloudflareWebViewSession implements BrowserSession {
     private static final long TIMEOUT_MS = 180000L;
     private static final long POLL_DELAY_MS = 800L;
     private static final long INTERACTIVE_DELAY_MS = 1200L;
+    private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14) "
+            + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
+    private static final int CONNECT_TIMEOUT_MS = 10000;
+    private static final int READ_TIMEOUT_MS = 25000;
 
     private final Activity activity;
     private final Handler main;
     private final String sourceName;
+    private final boolean preferHttp;
     private final Object requestLock = new Object();
     private final AtomicInteger requestSequence = new AtomicInteger();
     private volatile boolean shutdown;
@@ -54,10 +65,12 @@ final class CloudflareWebViewSession implements BrowserSession {
     private FetchRequest activeRequest;
     private int navigation;
 
-    CloudflareWebViewSession(Activity activity, Handler main, String sourceName) {
+    CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
+                             boolean preferHttp) {
         this.activity = activity;
         this.main = main;
         this.sourceName = sourceName;
+        this.preferHttp = preferHttp;
     }
 
     @Override
@@ -67,25 +80,80 @@ final class CloudflareWebViewSession implements BrowserSession {
         }
         synchronized (requestLock) {
             if (shutdown) throw new IOException(sourceName + "浏览器会话已停止");
-            FetchRequest request = new FetchRequest(
-                    Integer.toString(requestSequence.incrementAndGet()), url);
-            main.post(() -> startRequest(request));
-            try {
-                if (!request.latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                    request.cancelled = true;
-                    String error = timeoutError(request);
-                    main.post(() -> complete(request, null, error));
-                    throw new IOException(error);
+            if (preferHttp) {
+                HttpFetch response = fetchHttp(url);
+                HttpAction action = httpAction(
+                        response.statusCode, response.mitigated, response.body);
+                if (action == HttpAction.RETURN_BODY) return response.body;
+                if (action == HttpAction.FAIL) {
+                    throw new IOException(sourceName + " HTTP " + response.statusCode);
                 }
-            } catch (InterruptedException interrupted) {
-                request.cancelled = true;
-                main.post(() -> complete(request, null, sourceName + "请求已取消"));
-                Thread.currentThread().interrupt();
-                throw new IOException(sourceName + "请求已取消", interrupted);
             }
-            if (!TextUtils.isEmpty(request.error)) throw new IOException(request.error);
-            if (request.result == null) throw new IOException(sourceName + "请求未完成");
-            return request.result;
+            return fetchWithBrowser(url);
+        }
+    }
+
+    private String fetchWithBrowser(String url) throws IOException {
+        FetchRequest request = new FetchRequest(
+                Integer.toString(requestSequence.incrementAndGet()), url);
+        main.post(() -> startRequest(request));
+        try {
+            if (!request.latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                request.cancelled = true;
+                String error = timeoutError(request);
+                main.post(() -> complete(request, null, error));
+                throw new IOException(error);
+            }
+        } catch (InterruptedException interrupted) {
+            request.cancelled = true;
+            main.post(() -> complete(request, null, sourceName + "请求已取消"));
+            Thread.currentThread().interrupt();
+            throw new IOException(sourceName + "请求已取消", interrupted);
+        }
+        if (!TextUtils.isEmpty(request.error)) throw new IOException(request.error);
+        if (request.result == null) throw new IOException(sourceName + "请求未完成");
+        return request.result;
+    }
+
+    private HttpFetch fetchHttp(String url) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setInstanceFollowRedirects(true);
+        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
+        connection.setReadTimeout(READ_TIMEOUT_MS);
+        connection.setRequestProperty("User-Agent", USER_AGENT);
+        connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
+        String cookie = android.webkit.CookieManager.getInstance().getCookie(url);
+        if (!TextUtils.isEmpty(cookie)) connection.setRequestProperty("Cookie", cookie);
+        try {
+            int statusCode = connection.getResponseCode();
+            persistResponseCookies(url, connection.getHeaderFields());
+            InputStream stream = statusCode >= 400
+                    ? connection.getErrorStream() : connection.getInputStream();
+            return new HttpFetch(statusCode,
+                    connection.getHeaderField("cf-mitigated"), readBody(stream));
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    private void persistResponseCookies(String url, Map<String, List<String>> headers) {
+        if (headers == null) return;
+        android.webkit.CookieManager manager = android.webkit.CookieManager.getInstance();
+        for (Map.Entry<String, List<String>> header : headers.entrySet()) {
+            if (header.getKey() == null
+                    || !"Set-Cookie".equalsIgnoreCase(header.getKey())) continue;
+            for (String value : header.getValue()) manager.setCookie(url, value);
+        }
+        manager.flush();
+    }
+
+    private static String readBody(InputStream stream) throws IOException {
+        if (stream == null) return "";
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"))) {
+            StringBuilder body = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) body.append(line).append('\n');
+            return body.toString();
         }
     }
 
@@ -170,6 +238,7 @@ final class CloudflareWebViewSession implements BrowserSession {
         page.addView(card, statusParams);
 
         WebSettings settings = browser.getSettings();
+        settings.setUserAgentString(USER_AGENT);
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
@@ -531,6 +600,18 @@ final class CloudflareWebViewSession implements BrowserSession {
         FetchRequest(String id, String url) {
             this.id = id;
             this.url = url;
+        }
+    }
+
+    private static final class HttpFetch {
+        final int statusCode;
+        final String mitigated;
+        final String body;
+
+        HttpFetch(int statusCode, String mitigated, String body) {
+            this.statusCode = statusCode;
+            this.mitigated = mitigated == null ? "" : mitigated;
+            this.body = body == null ? "" : body;
         }
     }
 }

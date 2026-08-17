@@ -36,5 +36,12 @@ check("category failures are visible and retryable",
   && main.includes('"分类加载失败，重试"'));
 check("category failure never clears catalog results",
   !/catch \(Exception error\)[\s\S]{0,500}分类加载失败[\s\S]{0,300}searchResults\.clear\(\)/.test(main));
+check("jmcomic opts into cookie-backed http",
+  main.includes("jmcomicConfig.name, true")
+  && session.includes("fetchHttp(url)")
+  && session.includes('setRequestProperty("Cookie", cookie)')
+  && session.includes("HttpAction.OPEN_BROWSER"));
+check("mh18 keeps its current browser-only path",
+  main.includes("mh18Config.name, false"));
 
 console.log("JMComic bootstrap contract holds.");
