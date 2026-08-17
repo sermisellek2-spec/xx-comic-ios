@@ -31,4 +31,13 @@ public class ProtectedSourceUiTest {
         assertTrue(MainActivity.categoriesFollowInitialList("mh18"));
         assertFalse(MainActivity.categoriesFollowInitialList("baozimh"));
     }
+
+    @Test
+    public void successfulManualVerificationReloadsOnlyVisibleJmcomicCatalog() {
+        assertTrue(MainActivity.shouldReloadAfterProtectedVerification("jmcomic", 1, "jmcomic", false));
+        assertFalse(MainActivity.shouldReloadAfterProtectedVerification("jmcomic", 1, "jmcomic", true));
+        assertFalse(MainActivity.shouldReloadAfterProtectedVerification("jmcomic", 2, "jmcomic", false));
+        assertFalse(MainActivity.shouldReloadAfterProtectedVerification("jmcomic", 1, "baozimh", false));
+        assertFalse(MainActivity.shouldReloadAfterProtectedVerification("mh18", 1, "mh18", false));
+    }
 }

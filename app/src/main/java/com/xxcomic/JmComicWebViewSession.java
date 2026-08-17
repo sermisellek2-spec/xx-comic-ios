@@ -32,6 +32,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
@@ -53,6 +54,10 @@ final class JmComicWebViewSession implements BrowserSession {
     private static final long INTERACTIVE_DELAY_MS = 4000L;
     private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14) "
             + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
+    private static final String JM_CREDENTIAL_PREFS = "jmcomic.browser.credentials";
+    private static final String CREDENTIAL_FINGERPRINT_KEY = "fingerprint";
+    private static final String CREDENTIAL_FINGERPRINT_VERSION = "chrome124-v1";
+    private static final String JM_ORIGIN = "https://18comic.vip";
     private static final int CONNECT_TIMEOUT_MS = 10000;
     private static final int READ_TIMEOUT_MS = 25000;
     private static final boolean PREFER_HTTP = true;
@@ -81,6 +86,7 @@ final class JmComicWebViewSession implements BrowserSession {
     private FetchRequest activeRequest;
     private int navigation;
     private volatile boolean browserContextReady;
+    private volatile boolean interactiveTakeoverRequested;
 
     JmComicWebViewSession(Activity activity, Handler main, String sourceName,
                           VerificationStatusListener verificationStatus) {
@@ -89,6 +95,7 @@ final class JmComicWebViewSession implements BrowserSession {
         this.sourceName = sourceName;
         this.userAgent = fixedUserAgent();
         this.verificationStatus = verificationStatus;
+        migrateCredentialFingerprint();
     }
 
     interface VerificationStatusListener {
@@ -101,6 +108,16 @@ final class JmComicWebViewSession implements BrowserSession {
 
     static String fixedUserAgent() {
         return USER_AGENT;
+    }
+
+    static boolean requiresCredentialReset(String storedFingerprint, String currentFingerprint) {
+        return currentFingerprint != null
+                && !currentFingerprint.equals(storedFingerprint == null ? "" : storedFingerprint);
+    }
+
+    static boolean shouldCancelForInteractiveTakeover(boolean interactiveAllowed,
+                                                      boolean takeoverRequested) {
+        return takeoverRequested && !interactiveAllowed;
     }
 
     static long requestTimeoutMs() {
@@ -161,13 +178,20 @@ final class JmComicWebViewSession implements BrowserSession {
 
     @Override
     public String fetchInteractive(String url) throws IOException {
-        return fetch(url, true);
+        interactiveTakeoverRequested = true;
+        cancelActiveAutomaticRequest();
+        try {
+            return fetch(url, true);
+        } finally {
+            interactiveTakeoverRequested = false;
+        }
     }
 
     private String fetch(String url, boolean interactiveAllowed) throws IOException {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             throw new IOException(sourceName + "请求不能阻塞主线程");
         }
+        cancelIfInteractiveTakeover(interactiveAllowed);
         long deadline = requestDeadlineMs(SystemClock.elapsedRealtime());
         boolean allowInteractive = allowsInteractiveChallenge(
                 interactiveAllowed, AUTOMATIC_INTERACTIVE_FALLBACK);
@@ -178,6 +202,7 @@ final class JmComicWebViewSession implements BrowserSession {
                 throw new IOException(sourceName + "请求超时");
             }
             acquired = true;
+            cancelIfInteractiveTakeover(interactiveAllowed);
             if (shutdown) throw new IOException(sourceName + "浏览器会话已停止");
             RequestTransport transport = requestTransport(PREFER_HTTP, browserContextReady);
             if (transport == RequestTransport.BROWSER_CONTEXT) {
@@ -192,6 +217,7 @@ final class JmComicWebViewSession implements BrowserSession {
             }
             if (transport == RequestTransport.HTTP) {
                 HttpFetch response = fetchHttp(url, deadline);
+                cancelIfInteractiveTakeover(interactiveAllowed);
                 HttpAction action = httpAction(
                         response.statusCode, response.mitigated, response.body);
                 if (action == HttpAction.RETURN_BODY) return response.body;
@@ -252,6 +278,7 @@ final class JmComicWebViewSession implements BrowserSession {
             Thread.currentThread().interrupt();
             throw new IOException(sourceName + "请求已取消", interrupted);
         }
+        if (request.cancelledByTakeover) throw new InterruptedIOException("thread interrupted");
         if (request.contextChallenge) throw new ContextChallengeException();
         if (!TextUtils.isEmpty(request.error)) throw new IOException(request.error);
         if (request.result == null) throw new IOException(sourceName + "请求未完成");
@@ -351,8 +378,75 @@ final class JmComicWebViewSession implements BrowserSession {
         else main.post(clear);
     }
 
+    private void migrateCredentialFingerprint() {
+        android.content.SharedPreferences preferences = activity.getSharedPreferences(
+                JM_CREDENTIAL_PREFS, Activity.MODE_PRIVATE);
+        String stored = preferences.getString(CREDENTIAL_FINGERPRINT_KEY, "");
+        if (!requiresCredentialReset(stored, CREDENTIAL_FINGERPRINT_VERSION)) return;
+        browserContextReady = false;
+        expireDomainCookies(JM_ORIGIN);
+        android.webkit.WebStorage.getInstance().deleteOrigin(JM_ORIGIN);
+        preferences.edit().putString(
+                CREDENTIAL_FINGERPRINT_KEY, CREDENTIAL_FINGERPRINT_VERSION).commit();
+    }
+
+    private void expireDomainCookies(String origin) {
+        android.webkit.CookieManager manager = android.webkit.CookieManager.getInstance();
+        java.util.LinkedHashSet<String> names = new java.util.LinkedHashSet<>();
+        String cookies = manager.getCookie(origin);
+        if (cookies != null) {
+            for (String cookie : cookies.split(";")) {
+                int separator = cookie.indexOf('=');
+                if (separator > 0) names.add(cookie.substring(0, separator).trim());
+            }
+        }
+        names.add("cf_clearance");
+        names.add("__cf_bm");
+        String host;
+        try {
+            host = new URL(origin).getHost();
+        } catch (Exception ignored) {
+            return;
+        }
+        for (String name : names) {
+            String expired = name + "=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; "
+                    + "Max-Age=0; Path=/; Secure";
+            manager.setCookie(origin, expired);
+            manager.setCookie(origin, expired + "; Domain=." + host);
+        }
+        manager.flush();
+    }
+
+    private void cancelActiveAutomaticRequest() {
+        Runnable cancel = () -> {
+            FetchRequest request = activeRequest;
+            if (request == null || !shouldCancelForInteractiveTakeover(
+                    request.interactiveAllowed, interactiveTakeoverRequested)) return;
+            request.cancelledByTakeover = true;
+            request.cancelled = true;
+            if (webView != null) webView.stopLoading();
+            complete(request, null, "");
+        };
+        if (Looper.myLooper() == Looper.getMainLooper()) cancel.run();
+        else main.post(cancel);
+    }
+
+    private void cancelIfInteractiveTakeover(boolean interactiveAllowed)
+            throws InterruptedIOException {
+        if (shouldCancelForInteractiveTakeover(
+                interactiveAllowed, interactiveTakeoverRequested)) {
+            throw new InterruptedIOException("thread interrupted");
+        }
+    }
+
     private void startRequest(FetchRequest request) {
         if (request.cancelled) return;
+        if (shouldCancelForInteractiveTakeover(
+                request.interactiveAllowed, interactiveTakeoverRequested)) {
+            request.cancelledByTakeover = true;
+            complete(request, null, "");
+            return;
+        }
         if (shutdown || activity.isFinishing() || activity.isDestroyed()) {
             complete(request, null, sourceName + "浏览器会话无法打开");
             return;
@@ -835,6 +929,7 @@ final class JmComicWebViewSession implements BrowserSession {
         volatile boolean challengeDom;
         volatile boolean pageReady;
         volatile boolean contextChallenge;
+        volatile boolean cancelledByTakeover;
         boolean verifying;
         boolean interactiveVisible;
         int statusCode;

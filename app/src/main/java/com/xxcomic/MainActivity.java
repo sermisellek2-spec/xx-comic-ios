@@ -2272,19 +2272,29 @@ public class MainActivity extends Activity {
         return "jmcomic".equals(sourceId);
     }
 
+    static boolean shouldReloadAfterProtectedVerification(String sourceId, int currentTab,
+                                                           String selectedSourceId,
+                                                           boolean globalSearchMode) {
+        return "jmcomic".equals(sourceId) && currentTab == 1
+                && "jmcomic".equals(selectedSourceId) && !globalSearchMode;
+    }
+
     private void verifyProtectedSource(String sourceId) {
         if (!supportsManualVerification(sourceId) || !verifyingProtectedSourceIds.add(sourceId)) return;
         ComicSource client = sourceForId(sourceId);
         showRemToast(client.name() + " 正在验证");
         sourceHealthIo.submit(() -> {
             String resultMessage;
+            boolean verified = false;
             try {
                 if ("jmcomic".equals(sourceId)) {
                     jmcomicClient.verifyAccess();
                     resultMessage = client.name() + " 验证完成";
+                    verified = true;
                 } else if ("mh18".equals(sourceId)) {
                     mh18Client.verifyAccess();
                     resultMessage = client.name() + " 验证完成";
+                    verified = true;
                 } else {
                     resultMessage = client.name() + " 验证失败";
                 }
@@ -2295,9 +2305,15 @@ public class MainActivity extends Activity {
                         ? " 页面验证失败" : " 连接失败，请检查 VPN");
             }
             String message = resultMessage;
+            boolean verificationSucceeded = verified;
             postMainIfAlive(() -> {
                 verifyingProtectedSourceIds.remove(sourceId);
                 showRemToast(message);
+                if (verificationSucceeded && shouldReloadAfterProtectedVerification(
+                        sourceId, currentTab, selectedSourceId, globalSearchMode)) {
+                    resetSearchPaging();
+                    loadSearchPage(searchQuery, 1, false, TextUtils.isEmpty(searchQuery.trim()));
+                }
             });
         });
     }

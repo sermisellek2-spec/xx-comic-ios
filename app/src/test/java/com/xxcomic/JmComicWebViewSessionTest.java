@@ -8,6 +8,20 @@ import static org.junit.Assert.assertTrue;
 
 public class JmComicWebViewSessionTest {
     @Test
+    public void credentialsResetOnlyWhenFingerprintVersionChanges() {
+        assertTrue(JmComicWebViewSession.requiresCredentialReset("", "chrome124-v1"));
+        assertTrue(JmComicWebViewSession.requiresCredentialReset("native-webview", "chrome124-v1"));
+        assertFalse(JmComicWebViewSession.requiresCredentialReset("chrome124-v1", "chrome124-v1"));
+    }
+
+    @Test
+    public void interactiveTakeoverCancelsOnlyAutomaticRequests() {
+        assertTrue(JmComicWebViewSession.shouldCancelForInteractiveTakeover(false, true));
+        assertFalse(JmComicWebViewSession.shouldCancelForInteractiveTakeover(true, true));
+        assertFalse(JmComicWebViewSession.shouldCancelForInteractiveTakeover(false, false));
+    }
+
+    @Test
     public void readyBrowserContextSkipsRepeatedHttpProbe() {
         assertEquals(JmComicWebViewSession.RequestTransport.BROWSER_CONTEXT,
                 JmComicWebViewSession.requestTransport(true, true));

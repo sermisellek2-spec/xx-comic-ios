@@ -8,6 +8,10 @@ const session = fs.readFileSync(
   "app/src/main/java/com/xxcomic/JmComicWebViewSession.java",
   "utf8",
 );
+const mh18Session = fs.readFileSync(
+  "app/src/main/java/com/xxcomic/Mh18WebViewSession.java",
+  "utf8",
+);
 
 function check(name, condition) {
   if (!condition) throw new Error("FAIL " + name);
@@ -23,6 +27,18 @@ check("automatic verification never expands the website",
 check("settings verification keeps an explicit interactive path",
   main.includes("jmcomicClient.verifyAccess()")
   && main.includes("mh18Client.verifyAccess()"));
+check("jmcomic owns its Chrome 124 credential migration",
+  session.includes("JM_CREDENTIAL_PREFS")
+  && session.includes("migrateCredentialFingerprint()")
+  && session.includes("expireDomainCookies(")
+  && !mh18Session.includes("JM_CREDENTIAL_PREFS"));
+check("manual jmcomic verification takes over automatic work",
+  session.includes("interactiveTakeoverRequested")
+  && session.includes("cancelActiveAutomaticRequest()")
+  && session.includes("shouldCancelForInteractiveTakeover("));
+check("successful manual verification reloads only the visible jmcomic catalog",
+  main.includes("shouldReloadAfterProtectedVerification(")
+  && main.includes("loadSearchPage(searchQuery, 1, false"));
 check("verification status uses the themed app toast",
   main.includes("this::showRemToast"));
 check("old challenge response is ignored after verification",
