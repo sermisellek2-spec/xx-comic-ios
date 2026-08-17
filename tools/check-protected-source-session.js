@@ -72,6 +72,27 @@ check("18mh verification exposes manual retry and typed cancellation",
   mh18.includes("interface VerificationRetryListener")
   && mh18.includes("verificationRetry.onRetry()")
   && mh18.includes("new VerificationCancelledException"));
+const retryInteractive = mh18.slice(
+  mh18.indexOf("private void retryInteractive"),
+  mh18.indexOf("private void scheduleTimeout"),
+);
+check("18mh reload ends the old request before delegating retry",
+  mh18.includes("reload.setOnClickListener(ignored -> retryInteractive(request))")
+  && retryInteractive.includes("finishRequest(request")
+  && retryInteractive.includes("new VerificationCancelledException")
+  && retryInteractive.indexOf("finishRequest(request")
+    < retryInteractive.indexOf("verificationRetry.onRetry()")
+  && (mh18.match(/verificationRetry\.onRetry\(\)/g) || []).length === 1
+  && !retryInteractive.includes("loadUrl("));
+check("18mh initial load is not an automatic retry loop",
+  (mh18.match(/loadInteractive\(request\)/g) || []).length === 1);
+const cancelInteractive = mh18.slice(
+  mh18.indexOf("private void cancelInteractive"),
+  mh18.indexOf("void shutdown()"),
+);
+check("18mh close surfaces typed cancellation",
+  cancelInteractive.includes("finishRequest(request")
+  && cancelInteractive.includes("new VerificationCancelledException"));
 const pageStarted = mh18.slice(
   mh18.indexOf("public void onPageStarted"),
   mh18.indexOf("public void onPageFinished"),
@@ -89,12 +110,30 @@ check("challenge inspection includes DOM markers",
   && mh18.includes('page.optString("html")')
   && jmcomic.includes("html:(document.documentElement.outerHTML||'').slice(0,12000)")
   && jmcomic.includes('page.optString("html")'));
-check("session page caches can be cleared",
-  sessions.every(source => source.includes("void clearCache()")
-    && source.includes("webView.clearCache(true)")
-    && source.includes("webView.clearHistory()"))
-  && mh18.includes("remove(VERIFIED_AT_KEY)")
-  && mh18.includes("request == null ? new WebView(activity) : request.webView"));
+const mh18ClearCache = mh18.slice(
+  mh18.indexOf("void clearCache()"),
+  mh18.indexOf("private void finishRequest"),
+);
+check("18mh cache clear is source-local and ends its active request",
+  mh18ClearCache.includes("remove(VERIFIED_AT_KEY)")
+  && mh18ClearCache.includes("InteractiveRequest request = activeRequest")
+  && mh18ClearCache.includes("finishRequest(request")
+  && !mh18ClearCache.includes("new WebView(")
+  && !mh18ClearCache.includes(".clearCache(")
+  && !mh18ClearCache.includes(".clearHistory(")
+  && !mh18ClearCache.includes(".clearFormData(")
+  && !mh18ClearCache.toLowerCase().includes("jmcomic"));
+check("jmcomic keeps its independent cache implementation",
+  jmcomic.includes("void clearCache()")
+  && jmcomic.includes("webView.clearCache(true)")
+  && jmcomic.includes("webView.clearHistory()"));
+check("18mh request, preferences, and retry remain isolated",
+  mh18.includes('PREFS_NAME = "mh18_verification"')
+  && mh18.includes("private InteractiveRequest activeRequest")
+  && mh18.includes("private final VerificationRetryListener verificationRetry")
+  && !mh18.toLowerCase().includes("jmcomic"));
+check("main keeps task-2 constructor compatibility",
+  main.includes("this, main, mh18Config.name, this::showRemToast);"));
 check("app cache clear removes both protected credentials",
   main.includes("removeAllCookies")
   && main.includes("WebStorage.getInstance().deleteAllData()")

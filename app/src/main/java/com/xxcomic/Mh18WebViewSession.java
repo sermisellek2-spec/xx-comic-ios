@@ -222,7 +222,7 @@ final class Mh18WebViewSession implements BrowserSession {
         try {
             createDialog(request);
             notifyVerification("正在验证");
-            reload(request, false);
+            loadInteractive(request);
         } catch (Exception error) {
             finishRequest(request, null, new IOException(sourceName + "验证窗口无法打开", error));
         }
@@ -360,20 +360,26 @@ final class Mh18WebViewSession implements BrowserSession {
                 }
             }
         });
-        reload.setOnClickListener(ignored -> reload(request, true));
+        reload.setOnClickListener(ignored -> retryInteractive(request));
         close.setOnClickListener(ignored -> cancelInteractive(request));
     }
 
-    private void reload(InteractiveRequest request, boolean userInitiated) {
+    private void loadInteractive(InteractiveRequest request) {
         if (!isActive(request) || request.succeeded) return;
         request.attempt++;
         request.navigation = 0;
         request.probeRunning = false;
         request.stopped = false;
-        if (userInitiated) verificationRetry.onRetry();
         setStatus(request, "正在加载验证页");
         scheduleTimeout(request, request.attempt);
         request.webView.loadUrl(request.url);
+    }
+
+    private void retryInteractive(InteractiveRequest request) {
+        if (!isActive(request) || request.succeeded) return;
+        finishRequest(request, null,
+                new VerificationCancelledException(sourceName + "验证已取消"));
+        verificationRetry.onRetry();
     }
 
     private void scheduleTimeout(InteractiveRequest request, int attempt) {
@@ -510,18 +516,10 @@ final class Mh18WebViewSession implements BrowserSession {
                 .edit().remove(VERIFIED_AT_KEY).apply();
         Runnable clear = () -> {
             InteractiveRequest request = activeRequest;
-            WebView webView = request == null ? new WebView(activity) : request.webView;
-            if (webView != null) {
-                webView.clearCache(true);
-                webView.clearHistory();
-                webView.clearFormData();
+            if (request != null) {
+                finishRequest(request, null,
+                        new IOException(sourceName + "验证状态已清除"));
             }
-            if (request == null) {
-                webView.destroy();
-                return;
-            }
-            finishRequest(request, null,
-                    new IOException(sourceName + "验证状态已清除"));
         };
         if (Looper.myLooper() == Looper.getMainLooper()) clear.run();
         else main.post(clear);
