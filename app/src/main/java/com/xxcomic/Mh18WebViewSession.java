@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.ViewGroup;
@@ -50,6 +51,7 @@ final class Mh18WebViewSession implements BrowserSession {
     private static final String VERIFIED_AT_KEY = "verified_at";
     private static final long TIMEOUT_MS = 120000L;
     private static final long SUCCESS_DELAY_MS = 600L;
+    private static final long INSPECTION_DELAY_MS = 600L;
     private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14) "
             + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
     private static final int CONNECT_TIMEOUT_MS = 10000;
@@ -221,8 +223,9 @@ final class Mh18WebViewSession implements BrowserSession {
         activeRequest = request;
         try {
             createDialog(request);
-            notifyVerification("正在验证");
-            loadInteractive(request);
+            notifyVerification("正在检查站点");
+            scheduleTimeout(request);
+            beginPreflight(request);
         } catch (Exception error) {
             finishRequest(request, null, new IOException(sourceName + "验证窗口无法打开", error));
         }
@@ -240,7 +243,7 @@ final class Mh18WebViewSession implements BrowserSession {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         TextView status = UIHelpers.text(
-                activity, "正在打开验证页", 12, UIHelpers.TEXT2,
+                activity, "正在检查站点", 12, UIHelpers.TEXT2,
                 android.graphics.Typeface.NORMAL);
         LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -249,6 +252,7 @@ final class Mh18WebViewSession implements BrowserSession {
         root.addView(status, statusParams);
 
         WebView browser = new WebView(activity);
+        browser.setVisibility(android.view.View.GONE);
         root.addView(browser, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
@@ -281,8 +285,7 @@ final class Mh18WebViewSession implements BrowserSession {
         if (window != null) {
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             int width = activity.getResources().getDisplayMetrics().widthPixels;
-            int height = activity.getResources().getDisplayMetrics().heightPixels;
-            window.setLayout(width * 9 / 10, height * 7 / 10);
+            window.setLayout(width * 9 / 10, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
 
         request.dialog = dialog;
@@ -309,6 +312,8 @@ final class Mh18WebViewSession implements BrowserSession {
                 if (!isActive(request)) return;
                 request.navigation++;
                 request.probeRunning = false;
+                request.inspecting = false;
+                cancelInspection(request);
                 if (request.stopped) {
                     view.stopLoading();
                     return;
@@ -329,8 +334,8 @@ final class Mh18WebViewSession implements BrowserSession {
             public boolean shouldOverrideUrlLoading(WebView view,
                                                     WebResourceRequest navigation) {
                 if (navigation != null && navigation.isForMainFrame()
-                        && !sameSite(request.url, navigation.getUrl().toString())) {
-                    stopAttempt(request, "页面不正确，请重新加载");
+                        && shouldBlockNavigation(
+                                request.url, navigation.getUrl().toString())) {
                     return true;
                 }
                 return false;
@@ -370,8 +375,14 @@ final class Mh18WebViewSession implements BrowserSession {
         request.navigation = 0;
         request.probeRunning = false;
         request.stopped = false;
+        request.webView.setVisibility(android.view.View.VISIBLE);
+        Window window = request.dialog == null ? null : request.dialog.getWindow();
+        if (window != null) {
+            int width = activity.getResources().getDisplayMetrics().widthPixels;
+            int height = activity.getResources().getDisplayMetrics().heightPixels;
+            window.setLayout(width * 9 / 10, height * 7 / 10);
+        }
         setStatus(request, "正在加载验证页");
-        scheduleTimeout(request, request.attempt);
         request.webView.loadUrl(request.url);
     }
 
@@ -382,41 +393,77 @@ final class Mh18WebViewSession implements BrowserSession {
         verificationRetry.onRetry();
     }
 
-    private void scheduleTimeout(InteractiveRequest request, int attempt) {
+    private void beginPreflight(InteractiveRequest request) {
+        request.preflightRunning = true;
+        HTTP_EXECUTOR.execute(() -> {
+            try {
+                HttpFetch response = fetchHttp(request.url);
+                main.post(() -> finishPreflight(request, response, null));
+            } catch (IOException error) {
+                main.post(() -> finishPreflight(request, null, error));
+            }
+        });
+    }
+
+    private void finishPreflight(InteractiveRequest request, HttpFetch response,
+                                 IOException failure) {
+        if (!isActive(request) || !request.preflightRunning || request.stopped) return;
+        request.preflightRunning = false;
+        if (failure != null) {
+            stopAttempt(request, "站点检查失败，请重试");
+            return;
+        }
+        InteractiveAction action = interactiveAction(
+                response.statusCode, response.mitigated, response.body);
+        if (action == InteractiveAction.COMPLETE) {
+            completeVerification(request, response.body);
+        } else if (action == InteractiveAction.OPEN_BROWSER) {
+            loadInteractive(request);
+        } else {
+            stopAttempt(request, "站点检查失败，请重试");
+        }
+    }
+
+    private void scheduleTimeout(InteractiveRequest request) {
         if (request.timeout != null) main.removeCallbacks(request.timeout);
         request.timeout = () -> {
-            if (!isActive(request) || request.attempt != attempt
-                    || request.probeRunning || request.succeeded) return;
-            request.webView.stopLoading();
+            if (!shouldStopForTimeout(
+                    isActive(request), request.succeeded)) return;
+            if (request.webView != null) request.webView.stopLoading();
             stopAttempt(request, "验证超时，请重试");
         };
-        main.postDelayed(request.timeout, TIMEOUT_MS);
+        long remaining = remainingRequestMs(request.deadline, SystemClock.elapsedRealtime());
+        if (remaining == 0L) request.timeout.run();
+        else main.postDelayed(request.timeout, remaining);
     }
 
     private void inspectPage(InteractiveRequest request, int attempt, int navigation) {
         if (!isActiveAttempt(request, attempt) || request.navigation != navigation
-                || request.probeRunning || request.stopped) return;
+                || request.probeRunning || request.inspecting || request.stopped) return;
+        cancelInspection(request);
+        request.inspecting = true;
         String script = "(function(){return JSON.stringify({url:location.href||'',"
                 + "title:document.title||'',html:document.documentElement.outerHTML||''});})()";
         request.webView.evaluateJavascript(script, encoded -> {
+            request.inspecting = false;
             if (!isActiveAttempt(request, attempt) || request.navigation != navigation
                     || request.probeRunning || request.stopped) return;
             try {
                 JSONObject page = new JSONObject(decodeJavascriptString(encoded));
                 String actualUrl = page.optString("url");
                 String html = page.optString("html");
-                if (isChallenge(actualUrl, page.optString("title"), html,
-                        request.statusCode, request.mitigated)) {
-                    setStatus(request, "请完成安全验证");
-                    return;
-                }
-                if (!isExpectedPage(request.url, actualUrl)) {
-                    stopAttempt(request, "页面不正确，请重新加载");
-                    return;
-                }
+                boolean challenge = isChallenge(actualUrl, page.optString("title"), html,
+                        request.statusCode, request.mitigated);
+                boolean expectedPage = isExpectedPage(request.url, actualUrl);
                 boolean browserCatalog = Mh18ComicSource.hasCatalogMarker(html);
-                if (!browserCatalog) {
-                    stopAttempt(request, "页面未就绪，请重新加载");
+                PageAction action = pageAction(challenge, expectedPage, browserCatalog);
+                if (action == PageAction.WAIT) {
+                    setStatus(request, "请完成安全验证");
+                    scheduleInspection(request, attempt, navigation);
+                    return;
+                }
+                if (action == PageAction.FAIL) {
+                    stopAttempt(request, "页面不正确，请重新加载");
                     return;
                 }
                 beginProbe(request, attempt, navigation, browserCatalog);
@@ -426,10 +473,27 @@ final class Mh18WebViewSession implements BrowserSession {
         });
     }
 
+    private void scheduleInspection(InteractiveRequest request, int attempt, int navigation) {
+        if (!isActiveAttempt(request, attempt) || request.navigation != navigation
+                || request.probeRunning || request.stopped) return;
+        cancelInspection(request);
+        request.inspection = () -> {
+            request.inspection = null;
+            inspectPage(request, attempt, navigation);
+        };
+        main.postDelayed(request.inspection, INSPECTION_DELAY_MS);
+    }
+
+    private void cancelInspection(InteractiveRequest request) {
+        if (request.inspection == null) return;
+        main.removeCallbacks(request.inspection);
+        request.inspection = null;
+    }
+
     private void beginProbe(InteractiveRequest request, int attempt, int navigation,
                             boolean browserCatalog) {
         request.probeRunning = true;
-        if (request.timeout != null) main.removeCallbacks(request.timeout);
+        cancelInspection(request);
         setStatus(request, "正在确认验证结果");
         CookieManager.getInstance().flush();
         HTTP_EXECUTOR.execute(() -> {
@@ -470,6 +534,10 @@ final class Mh18WebViewSession implements BrowserSession {
             return;
         }
 
+        completeVerification(request, response.body);
+    }
+
+    private void completeVerification(InteractiveRequest request, String result) {
         activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .edit().putLong(VERIFIED_AT_KEY, System.currentTimeMillis()).apply();
         request.succeeded = true;
@@ -479,15 +547,18 @@ final class Mh18WebViewSession implements BrowserSession {
         notifyVerification("验证完成");
         main.postDelayed(() -> {
             if (isActive(request) && request.succeeded) {
-                finishRequest(request, response.body, null);
+                finishRequest(request, result, null);
             }
         }, SUCCESS_DELAY_MS);
     }
 
     private void stopAttempt(InteractiveRequest request, String message) {
         if (!isActive(request) || request.succeeded) return;
+        request.preflightRunning = false;
         request.probeRunning = false;
+        request.inspecting = false;
         request.stopped = true;
+        cancelInspection(request);
         if (request.timeout != null) main.removeCallbacks(request.timeout);
         setStatus(request, message);
     }
@@ -531,6 +602,7 @@ final class Mh18WebViewSession implements BrowserSession {
         request.completed = true;
         request.result = result;
         request.failure = failure;
+        cancelInspection(request);
         if (request.timeout != null) main.removeCallbacks(request.timeout);
         if (activeRequest == request) activeRequest = null;
 
@@ -596,6 +668,39 @@ final class Mh18WebViewSession implements BrowserSession {
         FAIL
     }
 
+    enum InteractiveAction {
+        COMPLETE,
+        OPEN_BROWSER,
+        FAIL
+    }
+
+    enum PageAction {
+        WAIT,
+        PROBE,
+        FAIL
+    }
+
+    static InteractiveAction interactiveAction(int statusCode, String mitigated, String body) {
+        HttpAction action = httpAction(statusCode, mitigated, body);
+        if (action == HttpAction.VERIFICATION_REQUIRED) return InteractiveAction.OPEN_BROWSER;
+        if (action == HttpAction.FAIL || !Mh18ComicSource.hasCatalogMarker(body)) {
+            return InteractiveAction.FAIL;
+        }
+        return InteractiveAction.COMPLETE;
+    }
+
+    static PageAction pageAction(boolean challenge, boolean expectedPage,
+                                 boolean browserCatalog) {
+        if (expectedPage && browserCatalog) return PageAction.PROBE;
+        if (challenge) return PageAction.WAIT;
+        if (!expectedPage) return PageAction.FAIL;
+        return PageAction.WAIT;
+    }
+
+    static boolean shouldStopForTimeout(boolean active, boolean succeeded) {
+        return active && !succeeded;
+    }
+
     static HttpAction httpAction(int statusCode, String mitigated, String body) {
         if (isChallenge("", "", body, statusCode, mitigated)) {
             return HttpAction.VERIFICATION_REQUIRED;
@@ -635,6 +740,10 @@ final class Mh18WebViewSession implements BrowserSession {
         }
     }
 
+    static boolean shouldBlockNavigation(String requested, String actual) {
+        return !sameSite(requested, actual);
+    }
+
     private static boolean sameSite(String requested, String actual) {
         try {
             return sameSite(new URL(requested), new URL(actual));
@@ -663,6 +772,7 @@ final class Mh18WebViewSession implements BrowserSession {
     private static final class InteractiveRequest {
         final String url;
         final CountDownLatch latch = new CountDownLatch(1);
+        final long deadline = requestDeadlineMs(SystemClock.elapsedRealtime());
         volatile String result;
         volatile IOException failure;
         volatile boolean completed;
@@ -672,11 +782,14 @@ final class Mh18WebViewSession implements BrowserSession {
         TextView reload;
         ImageView close;
         Runnable timeout;
+        Runnable inspection;
         int attempt;
         int navigation;
         int statusCode;
         String mitigated = "";
         boolean probeRunning;
+        boolean preflightRunning;
+        boolean inspecting;
         boolean stopped;
         boolean succeeded;
 

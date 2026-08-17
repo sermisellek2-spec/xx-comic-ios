@@ -104,6 +104,39 @@ check("18mh reload ends the old request before delegating retry",
   && !retryInteractive.includes("loadUrl("));
 check("18mh initial load is not an automatic retry loop",
   (mh18.match(/loadInteractive\(request\)/g) || []).length === 1);
+const startInteractive = mh18.slice(
+  mh18.indexOf("private void startInteractive"),
+  mh18.indexOf("private void createDialog"),
+);
+check("18mh manual verification starts with a cached credential preflight",
+  startInteractive.includes("beginPreflight(request)")
+  && !startInteractive.includes("loadInteractive(request)"));
+const overrideNavigation = mh18.slice(
+  mh18.indexOf("public boolean shouldOverrideUrlLoading"),
+  mh18.indexOf("public void onReceivedError"),
+);
+check("18mh external navigation is blocked without stopping verification",
+  overrideNavigation.includes("shouldBlockNavigation(")
+  && !overrideNavigation.includes("stopAttempt("));
+const inspectPage = mh18.slice(
+  mh18.indexOf("private void inspectPage"),
+  mh18.indexOf("private void beginProbe"),
+);
+const beginProbe = mh18.slice(
+  mh18.indexOf("private void beginProbe"),
+  mh18.indexOf("private void finishProbe"),
+);
+const scheduleTimeout = mh18.slice(
+  mh18.indexOf("private void scheduleTimeout"),
+  mh18.indexOf("private void inspectPage"),
+);
+check("18mh challenge and incomplete catalog pages keep polling",
+  inspectPage.includes("pageAction(")
+  && inspectPage.includes("scheduleInspection(request"));
+check("18mh final probe keeps the original request timeout",
+  !beginProbe.includes("removeCallbacks(request.timeout)")
+  && scheduleTimeout.includes("shouldStopForTimeout(")
+  && scheduleTimeout.includes("remainingRequestMs(request.deadline"));
 const cancelInteractive = mh18.slice(
   mh18.indexOf("private void cancelInteractive"),
   mh18.indexOf("void shutdown()"),

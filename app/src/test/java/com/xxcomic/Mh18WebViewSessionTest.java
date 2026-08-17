@@ -25,6 +25,20 @@ public class Mh18WebViewSessionTest {
     }
 
     @Test
+    public void interactivePreflightReusesAValidCatalogAndOpensOnlyForChallenge() {
+        String catalog = "<a href=\"/manga/demo\"><img src=\"cover.jpg\">"
+                + "<h3 class=\"cardtitle\">漫画</h3></a>";
+
+        assertEquals(Mh18WebViewSession.InteractiveAction.COMPLETE,
+                Mh18WebViewSession.interactiveAction(200, "", catalog));
+        assertEquals(Mh18WebViewSession.InteractiveAction.OPEN_BROWSER,
+                Mh18WebViewSession.interactiveAction(
+                        403, "challenge", "<title>Just a moment...</title>"));
+        assertEquals(Mh18WebViewSession.InteractiveAction.FAIL,
+                Mh18WebViewSession.interactiveAction(200, "", "<main>not ready</main>"));
+    }
+
+    @Test
     public void ordinaryHttpErrorsRemainFailures() {
         assertEquals(Mh18WebViewSession.HttpAction.FAIL,
                 Mh18WebViewSession.httpAction(403, "", "Forbidden"));
@@ -75,6 +89,37 @@ public class Mh18WebViewSessionTest {
                 "https://18mh.org/manga", "https://18mh.org/"));
         assertFalse(Mh18WebViewSession.isExpectedPage(
                 "https://18mh.org/manga", "https://example.com/manga"));
+    }
+
+    @Test
+    public void externalNavigationIsBlockedWithoutRejectingThe18mhSite() {
+        assertTrue(Mh18WebViewSession.shouldBlockNavigation(
+                "https://18mh.org/manga", "https://ads.example/redirect"));
+        assertFalse(Mh18WebViewSession.shouldBlockNavigation(
+                "https://18mh.org/manga", "https://www.18mh.org/manga"));
+        assertFalse(Mh18WebViewSession.shouldBlockNavigation(
+                "https://18mh.org/manga", "https://18mh.org/manga?__cf_chl_rt_tk=token"));
+    }
+
+    @Test
+    public void pageInspectionWaitsForChallengeAndIncompleteBusinessDom() {
+        assertEquals(Mh18WebViewSession.PageAction.WAIT,
+                Mh18WebViewSession.pageAction(true, false, false));
+        assertEquals(Mh18WebViewSession.PageAction.WAIT,
+                Mh18WebViewSession.pageAction(false, true, false));
+        assertEquals(Mh18WebViewSession.PageAction.PROBE,
+                Mh18WebViewSession.pageAction(false, true, true));
+        assertEquals(Mh18WebViewSession.PageAction.PROBE,
+                Mh18WebViewSession.pageAction(true, true, true));
+        assertEquals(Mh18WebViewSession.PageAction.FAIL,
+                Mh18WebViewSession.pageAction(false, false, false));
+    }
+
+    @Test
+    public void requestTimeoutRemainsTerminalWhileProbeIsRunning() {
+        assertTrue(Mh18WebViewSession.shouldStopForTimeout(true, false));
+        assertFalse(Mh18WebViewSession.shouldStopForTimeout(false, false));
+        assertFalse(Mh18WebViewSession.shouldStopForTimeout(true, true));
     }
 
     @Test
