@@ -15,74 +15,55 @@ public class JmComicWebViewSessionTest {
     }
 
     @Test
-    public void interactiveTakeoverCancelsOnlyAutomaticRequests() {
-        assertTrue(JmComicWebViewSession.shouldCancelForInteractiveTakeover(false, true));
-        assertFalse(JmComicWebViewSession.shouldCancelForInteractiveTakeover(true, true));
-        assertFalse(JmComicWebViewSession.shouldCancelForInteractiveTakeover(false, false));
+    public void successfulBusinessHttpResponseReturnsWithoutBrowser() {
+        assertEquals(JmComicWebViewSession.HttpAction.RETURN_BODY,
+                JmComicWebViewSession.httpAction(
+                        200, "", "<a href='/album/123/title'><img title='漫画' src='cover.jpg'></a>"));
     }
 
     @Test
-    public void readyBrowserContextSkipsRepeatedHttpProbe() {
-        assertEquals(JmComicWebViewSession.RequestTransport.BROWSER_CONTEXT,
-                JmComicWebViewSession.requestTransport(true, true));
+    public void cloudflareHttpChallengeRequiresExplicitVerification() {
+        assertEquals(JmComicWebViewSession.HttpAction.VERIFICATION_REQUIRED,
+                JmComicWebViewSession.httpAction(
+                        403, "challenge", "<title>Just a moment...</title>"));
+        assertEquals(JmComicWebViewSession.HttpAction.VERIFICATION_REQUIRED,
+                JmComicWebViewSession.httpAction(
+                        200, "", "<div class='cf-turnstile-response'>Checking your browser</div>"));
     }
 
     @Test
-    public void freshPreferredHttpSessionProbesHttp() {
-        assertEquals(JmComicWebViewSession.RequestTransport.HTTP,
-                JmComicWebViewSession.requestTransport(true, false));
+    public void ordinaryHttpErrorsRemainFailures() {
+        assertEquals(JmComicWebViewSession.HttpAction.FAIL,
+                JmComicWebViewSession.httpAction(403, "", "Forbidden"));
+        assertEquals(JmComicWebViewSession.HttpAction.FAIL,
+                JmComicWebViewSession.httpAction(500, "", "Server error"));
     }
 
     @Test
-    public void backgroundViewportIsOptInForMh18Only() {
-        assertEquals(-1, JmComicWebViewSession.backgroundExtent(true));
-        assertEquals(1, JmComicWebViewSession.backgroundExtent(false));
+    public void verificationRequiresCatalogInBrowserAndCachedProbe() {
+        assertTrue(JmComicWebViewSession.verificationComplete(true, true));
+        assertFalse(JmComicWebViewSession.verificationComplete(true, false));
+        assertFalse(JmComicWebViewSession.verificationComplete(false, true));
+        assertFalse(JmComicWebViewSession.verificationComplete(false, false));
     }
 
     @Test
-    public void browserOnlySourceKeepsNavigation() {
-        assertEquals(JmComicWebViewSession.RequestTransport.BROWSER_NAVIGATION,
-                JmComicWebViewSession.requestTransport(false, false));
-    }
-
-    @Test
-    public void completeNormalPageIsCaptured() {
-        assertEquals(JmComicWebViewSession.PageAction.CAPTURE,
-                JmComicWebViewSession.pageAction(false, false, true));
-    }
-
-    @Test
-    public void firstChallengeShowsVerification() {
-        assertEquals(JmComicWebViewSession.PageAction.SHOW_VERIFICATION,
-                JmComicWebViewSession.pageAction(false, true, true));
-    }
-
-    @Test
-    public void activeChallengeKeepsVerifyingWithoutAnotherPrompt() {
-        assertEquals(JmComicWebViewSession.PageAction.KEEP_VERIFYING,
-                JmComicWebViewSession.pageAction(true, true, true));
-    }
-
-    @Test
-    public void completedPageAfterChallengeIsCaptured() {
-        assertEquals(JmComicWebViewSession.PageAction.CAPTURE,
-                JmComicWebViewSession.pageAction(true, false, true));
-    }
-
-    @Test
-    public void completedVerificationIgnoresChallengeResponseStatus() {
-        assertEquals(JmComicWebViewSession.PageAction.CAPTURE,
-                JmComicWebViewSession.pageAction(true, false, true, 403));
+    public void probeCompletionRequiresTheCapturedNavigationToRemainCurrent() {
+        assertTrue(JmComicWebViewSession.probeCanComplete(true, true, false, 3, 3));
+        assertFalse(JmComicWebViewSession.probeCanComplete(true, true, false, 3, 4));
+        assertFalse(JmComicWebViewSession.probeCanComplete(true, true, true, 3, 3));
+        assertFalse(JmComicWebViewSession.probeCanComplete(false, true, false, 3, 3));
     }
 
     @Test
     public void normalPageWithCloudflarePrecursorIsNotAChallenge() {
-        String html = "<html><head><title>全部漫画-18漫画</title>"
+        String html = "<html><head><title>最新的 Comics - 禁漫天堂</title>"
                 + "<script src=\"/cdn-cgi/challenge-platform/scripts/precursor/main.js\"></script>"
-                + "</head><body><main>全部漫画</main></body></html>";
+                + "</head><body><a href='/album/123/title'><img title='漫画'></a></body></html>";
 
         assertFalse(JmComicWebViewSession.isChallenge(
-                "https://18mh.org/manga", "全部漫画-18漫画", html, 200, "", false));
+                "https://18comic.vip/albums?o=mr&page=1",
+                "最新的 Comics - 禁漫天堂", html, 200, ""));
     }
 
     @Test
@@ -91,143 +72,32 @@ public class JmComicWebViewSessionTest {
                 + "<input id=\"cf-chl-widget-test_response\">";
 
         assertTrue(JmComicWebViewSession.isChallenge(
-                "https://18mh.org/manga", "请稍候…", html, 200, "", false));
+                "https://18comic.vip/albums?o=mr&page=1", "请稍候", html, 200, ""));
     }
 
     @Test
-    public void verifiedBusinessDomIgnoresTheOldChallengeResponse() {
-        assertFalse(JmComicWebViewSession.isChallenge(
-                "https://18comic.vip/albums?o=mr&page=1",
-                "最新的 Comics - 禁漫天堂",
-                "<a href='/album/123'><img src='cover.jpg'></a>",
-                403, "challenge", true));
-    }
-
-    @Test
-    public void firstChallengeResponseStillStartsVerification() {
-        assertTrue(JmComicWebViewSession.isChallenge(
-                "https://18comic.vip/albums?o=mr&page=1",
-                "Just a moment...", "", 403, "challenge", false));
-    }
-
-    @Test
-    public void finalPageMustMatchRequestedHostAndPath() {
+    public void finalAlbumsPageMustMatchRequestedSiteAndPath() {
         assertTrue(JmComicWebViewSession.isExpectedPage(
-                "https://18comic.vip/search/photos?search_query=test&page=2",
-                "https://18comic.vip/search/photos?page=2&search_query=test"));
+                "https://18comic.vip/albums?o=mr&page=1",
+                "https://18comic.vip/albums?page=1&o=mr"));
         assertFalse(JmComicWebViewSession.isExpectedPage(
-                "https://18comic.vip/album/1114754", "https://18comic.vip/albums?o=mr"));
+                "https://18comic.vip/albums?o=mr&page=1",
+                "https://18comic.vip/album/123/title"));
         assertFalse(JmComicWebViewSession.isExpectedPage(
-                "https://18comic.vip/album/1114754", "https://example.com/album/1114754"));
+                "https://18comic.vip/albums?o=mr&page=1",
+                "https://example.com/albums?o=mr&page=1"));
     }
 
     @Test
-    public void nonChallengeHttpErrorFailsInsteadOfCapturingErrorHtml() {
-        assertEquals(JmComicWebViewSession.PageAction.FAIL,
-                JmComicWebViewSession.pageAction(false, false, true, 404));
-        assertEquals(JmComicWebViewSession.PageAction.SHOW_VERIFICATION,
-                JmComicWebViewSession.pageAction(false, true, true, 403));
-    }
-
-    @Test
-    public void successfulBusinessHttpResponseReturnsWithoutBrowser() {
-        assertEquals(JmComicWebViewSession.HttpAction.RETURN_BODY,
-                JmComicWebViewSession.httpAction(
-                        200, "", "<a href='/album/123'><img title='漫画'></a>"));
-    }
-
-    @Test
-    public void cloudflareHttpChallengeFallsBackToBrowser() {
-        assertEquals(JmComicWebViewSession.HttpAction.OPEN_BROWSER,
-                JmComicWebViewSession.httpAction(
-                        403, "challenge", "<title>Just a moment...</title>"));
-    }
-
-    @Test
-    public void ordinaryHttpErrorsNeverOpenVerification() {
-        assertEquals(JmComicWebViewSession.HttpAction.FAIL,
-                JmComicWebViewSession.httpAction(403, "", "Forbidden"));
-        assertEquals(JmComicWebViewSession.HttpAction.FAIL,
-                JmComicWebViewSession.httpAction(500, "", "Server error"));
-    }
-
-    @Test
-    public void interactiveVerificationWaitsForAutomaticChallengeToFinish() {
-        assertEquals(4000L, JmComicWebViewSession.interactiveDelayMs());
+    public void fixedFingerprintUsesChrome124ForHttpAndWebView() {
+        assertTrue(JmComicWebViewSession.fixedUserAgent().contains("Chrome/124.0.0.0"));
     }
 
     @Test
     public void protectedRequestTimeoutIsTwoMinutes() {
         assertEquals(120000L, JmComicWebViewSession.requestTimeoutMs());
-    }
-
-    @Test
-    public void requestDeadlineIsSharedAcrossTransportPhases() {
-        long deadline = JmComicWebViewSession.requestDeadlineMs(1000L);
-
-        assertEquals(121000L, deadline);
-        assertEquals(90000L, JmComicWebViewSession.remainingRequestMs(deadline, 31000L));
-        assertEquals(0L, JmComicWebViewSession.remainingRequestMs(deadline, 121001L));
-    }
-
-    @Test
-    public void httpWatchdogUsesTheRemainingRequestBudget() {
-        assertEquals(1000L, JmComicWebViewSession.httpWatchdogDelayMs(121000L, 120000L));
-        assertEquals(0L, JmComicWebViewSession.httpWatchdogDelayMs(121000L, 121001L));
-    }
-
-    @Test
-    public void automaticVerificationOnlyBecomesInteractiveWhenSessionOptsIn() {
-        assertFalse(JmComicWebViewSession.allowsInteractiveChallenge(false, false));
-        assertTrue(JmComicWebViewSession.allowsInteractiveChallenge(false, true));
-        assertTrue(JmComicWebViewSession.allowsInteractiveChallenge(true, false));
-    }
-
-    @Test
-    public void manualVerificationOnlyShowsWhileChallengeIsActive() {
-        assertTrue(JmComicWebViewSession.shouldShowInteractive(true, true));
-        assertFalse(JmComicWebViewSession.shouldShowInteractive(true, false));
-    }
-
-    @Test
-    public void completedTurnstileHandsVisibleVerificationBackToTheApp() {
-        assertTrue(JmComicWebViewSession.shouldHandOffInteractive(
-                false, true, true, "", ""));
-        assertFalse(JmComicWebViewSession.shouldHandOffInteractive(
-                false, false, true, "", ""));
-    }
-
-    @Test
-    public void newClearanceHandsVisibleVerificationBackToTheApp() {
-        assertTrue(JmComicWebViewSession.shouldHandOffInteractive(
-                false, true, false, "expired", "fresh"));
-        assertFalse(JmComicWebViewSession.shouldHandOffInteractive(
-                false, true, false, "same", "same"));
-        assertFalse(JmComicWebViewSession.shouldHandOffInteractive(
-                false, true, false, "", ""));
-    }
-
-    @Test
-    public void strictCompletionKeepsVerificationVisibleUntilTheTargetPageIsReady() {
-        assertFalse(JmComicWebViewSession.shouldHandOffInteractive(
-                true, true, true, "", ""));
-        assertFalse(JmComicWebViewSession.shouldHandOffInteractive(
-                true, true, false, "expired", "fresh"));
-    }
-
-    @Test
-    public void fixedFingerprintUsesChrome124ForHttpAndWebView() {
-        String selected = JmComicWebViewSession.fixedUserAgent();
-
-        assertTrue(selected.contains("Chrome/124.0.0.0"));
-        assertEquals(selected, JmComicWebViewSession.fixedUserAgent());
-    }
-
-    @Test
-    public void clearanceCookieIsReadWithoutMatchingOtherCookies() {
-        assertEquals("fresh-token", JmComicWebViewSession.cookieValue(
-                "session=one; cf_clearance=fresh-token; other=two", "cf_clearance"));
-        assertEquals("", JmComicWebViewSession.cookieValue(
-                "session=one; other=two", "cf_clearance"));
+        assertEquals(121000L, JmComicWebViewSession.requestDeadlineMs(1000L));
+        assertEquals(90000L, JmComicWebViewSession.remainingRequestMs(121000L, 31000L));
+        assertEquals(0L, JmComicWebViewSession.remainingRequestMs(121000L, 121001L));
     }
 }

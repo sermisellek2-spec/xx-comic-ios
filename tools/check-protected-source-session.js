@@ -45,6 +45,13 @@ check("18mh ordinary fetch is cached-http-only",
   && !mh18.includes("fetchWithBrowserContext")
   && !mh18.includes("AUTOMATIC_INTERACTIVE_FALLBACK")
   && !mh18.includes("browserContextReady"));
+check("jmcomic ordinary fetch is cached-http-only",
+  jmcomic.includes("public String fetch(String url) throws IOException")
+  && jmcomic.includes("HttpFetch response = fetchHttp(url)")
+  && jmcomic.includes("new VerificationRequiredException")
+  && !jmcomic.includes("fetchWithBrowserContext")
+  && !jmcomic.includes("AUTOMATIC_INTERACTIVE_FALLBACK")
+  && !jmcomic.includes("browserContextReady"));
 check("18mh challenge response returns before reading its body",
   mh18.indexOf("if (statusCode == 403") > 0
   && mh18.indexOf("if (statusCode == 403")
@@ -56,6 +63,12 @@ check("18mh browser is explicit and compact",
   && mh18.includes("UIHelpers.round(UIHelpers.CARD")
   && mh18.includes("UIHelpers.vectorIconButton")
   && mh18.includes('reload.setText("重新加载")'));
+check("jmcomic browser is explicit and compact",
+  jmcomic.includes("public String fetchInteractive(String url) throws IOException")
+  && jmcomic.includes("Dialog dialog = new Dialog(activity)")
+  && jmcomic.includes("window.setLayout(width * 9 / 10, height * 7 / 10)")
+  && jmcomic.includes("UIHelpers.round(UIHelpers.CARD")
+  && jmcomic.includes("UIHelpers.vectorIconButton"));
 const interactiveFetch = mh18.slice(
   mh18.indexOf("public String fetchInteractive"),
   mh18.indexOf("private void requireWorkerThread"),
@@ -68,6 +81,11 @@ check("18mh verification requires browser and cached catalog markers",
   && mh18.includes("Mh18ComicSource.hasCatalogMarker(response.body)")
   && mh18.includes("verificationComplete(browserCatalog, probeCatalog)")
   && mh18.includes('putLong(VERIFIED_AT_KEY, System.currentTimeMillis())'));
+check("jmcomic verification requires browser and cached catalog markers",
+  jmcomic.includes("JmComicSource.hasCatalogMarker(html)")
+  && jmcomic.includes("JmComicSource.hasCatalogMarker(response.body)")
+  && jmcomic.includes("verificationComplete(browserCatalog, probeCatalog)")
+  && jmcomic.includes('putLong(VERIFIED_AT_KEY, System.currentTimeMillis())'));
 check("18mh verification exposes manual retry and typed cancellation",
   mh18.includes("interface VerificationRetryListener")
   && mh18.includes("verificationRetry.onRetry()")
@@ -108,7 +126,7 @@ check("18mh failures wait for manual reload",
 check("challenge inspection includes DOM markers",
   mh18.includes("document.documentElement.outerHTML||''")
   && mh18.includes('page.optString("html")')
-  && jmcomic.includes("html:(document.documentElement.outerHTML||'').slice(0,12000)")
+  && jmcomic.includes("document.documentElement.outerHTML||''")
   && jmcomic.includes('page.optString("html")'));
 const mh18ClearCache = mh18.slice(
   mh18.indexOf("void clearCache()"),
@@ -123,15 +141,28 @@ check("18mh cache clear is source-local and ends its active request",
   && !mh18ClearCache.includes(".clearHistory(")
   && !mh18ClearCache.includes(".clearFormData(")
   && !mh18ClearCache.toLowerCase().includes("jmcomic"));
-check("jmcomic keeps its independent cache implementation",
-  jmcomic.includes("void clearCache()")
-  && jmcomic.includes("webView.clearCache(true)")
-  && jmcomic.includes("webView.clearHistory()"));
+const jmcomicClearCache = jmcomic.slice(
+  jmcomic.indexOf("void clearCache()"),
+  jmcomic.indexOf("private void finishRequest"),
+);
+check("jmcomic cache clear is source-local and ends its active request",
+  jmcomicClearCache.includes("remove(VERIFIED_AT_KEY)")
+  && jmcomicClearCache.includes("InteractiveRequest request = activeRequest")
+  && jmcomicClearCache.includes("finishRequest(request")
+  && !jmcomicClearCache.includes("new WebView(")
+  && !jmcomicClearCache.includes(".clearCache(")
+  && !jmcomicClearCache.toLowerCase().includes("mh18"));
 check("18mh request, preferences, and retry remain isolated",
   mh18.includes('PREFS_NAME = "mh18_verification"')
   && mh18.includes("private InteractiveRequest activeRequest")
   && mh18.includes("private final VerificationRetryListener verificationRetry")
   && !mh18.toLowerCase().includes("jmcomic"));
+check("jmcomic request, preferences, and retry remain isolated",
+  jmcomic.includes('PREFS_NAME = "jmcomic_verification"')
+  && jmcomic.includes("private InteractiveRequest activeRequest")
+  && jmcomic.includes("private final VerificationRetryListener verificationRetry")
+  && jmcomic.includes('JM_ORIGIN = "https://18comic.vip"')
+  && !jmcomic.toLowerCase().includes("mh18"));
 check("main keeps task-2 constructor compatibility",
   main.includes("this, main, mh18Config.name, this::showRemToast);"));
 check("app cache clear removes both protected credentials",

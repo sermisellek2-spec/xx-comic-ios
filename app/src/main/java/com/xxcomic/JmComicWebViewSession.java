@@ -1,29 +1,31 @@
 package com.xxcomic;
 
 import android.app.Activity;
-import android.content.res.ColorStateList;
+import android.app.Dialog;
+import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.Gravity;
-import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.JavascriptInterface;
+import android.view.Window;
+import android.webkit.CookieManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.xxcomic.source.BrowserSession;
+import com.xxcomic.source.JmComicSource;
+import com.xxcomic.source.VerificationCancelledException;
+import com.xxcomic.source.VerificationRequiredException;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -32,40 +34,33 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 final class JmComicWebViewSession implements BrowserSession {
-    private static final String BRIDGE_NAME = "XXComicJmBridge";
-    private static final long TIMEOUT_MS = 120000L;
-    private static final long POLL_DELAY_MS = 800L;
-    private static final long INTERACTIVE_DELAY_MS = 4000L;
-    private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14) "
-            + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
+    private static final String PREFS_NAME = "jmcomic_verification";
+    private static final String VERIFIED_AT_KEY = "verified_at";
     private static final String JM_CREDENTIAL_PREFS = "jmcomic.browser.credentials";
     private static final String CREDENTIAL_FINGERPRINT_KEY = "fingerprint";
     private static final String CREDENTIAL_FINGERPRINT_VERSION = "chrome124-v1";
     private static final String JM_ORIGIN = "https://18comic.vip";
+    private static final long TIMEOUT_MS = 120000L;
+    private static final long SUCCESS_DELAY_MS = 600L;
+    private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14) "
+            + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
     private static final int CONNECT_TIMEOUT_MS = 10000;
     private static final int READ_TIMEOUT_MS = 25000;
-    private static final boolean PREFER_HTTP = true;
-    private static final boolean FULL_VIEWPORT_BACKGROUND = false;
-    private static final boolean AUTOMATIC_INTERACTIVE_FALLBACK = false;
-    private static final ScheduledExecutorService HTTP_TIMEOUTS =
-            Executors.newSingleThreadScheduledExecutor(runnable -> {
-                Thread thread = new Thread(runnable, "JmComicHttpTimeout");
+    private static final ExecutorService HTTP_EXECUTOR =
+            Executors.newSingleThreadExecutor(runnable -> {
+                Thread thread = new Thread(runnable, "JmComicVerificationProbe");
                 thread.setDaemon(true);
                 return thread;
             });
@@ -75,26 +70,27 @@ final class JmComicWebViewSession implements BrowserSession {
     private final String sourceName;
     private final String userAgent;
     private final VerificationStatusListener verificationStatus;
+    private final VerificationRetryListener verificationRetry;
     private final Semaphore requestLock = new Semaphore(1, true);
-    private final AtomicInteger requestSequence = new AtomicInteger();
     private volatile boolean shutdown;
-    private FrameLayout host;
-    private WebView webView;
-    private View statusCard;
-    private ProgressBar progress;
-    private TextView status;
-    private FetchRequest activeRequest;
-    private int navigation;
-    private volatile boolean browserContextReady;
-    private volatile boolean interactiveTakeoverRequested;
+    private InteractiveRequest activeRequest;
 
     JmComicWebViewSession(Activity activity, Handler main, String sourceName,
                           VerificationStatusListener verificationStatus) {
+        this(activity, main, sourceName, verificationStatus, () -> {
+        });
+    }
+
+    JmComicWebViewSession(Activity activity, Handler main, String sourceName,
+                          VerificationStatusListener verificationStatus,
+                          VerificationRetryListener verificationRetry) {
         this.activity = activity;
         this.main = main;
         this.sourceName = sourceName;
         this.userAgent = fixedUserAgent();
         this.verificationStatus = verificationStatus;
+        this.verificationRetry = verificationRetry == null ? () -> {
+        } : verificationRetry;
         migrateCredentialFingerprint();
     }
 
@@ -102,22 +98,12 @@ final class JmComicWebViewSession implements BrowserSession {
         void onStatus(String message);
     }
 
-    static long interactiveDelayMs() {
-        return INTERACTIVE_DELAY_MS;
+    interface VerificationRetryListener {
+        void onRetry();
     }
 
     static String fixedUserAgent() {
         return USER_AGENT;
-    }
-
-    static boolean requiresCredentialReset(String storedFingerprint, String currentFingerprint) {
-        return currentFingerprint != null
-                && !currentFingerprint.equals(storedFingerprint == null ? "" : storedFingerprint);
-    }
-
-    static boolean shouldCancelForInteractiveTakeover(boolean interactiveAllowed,
-                                                      boolean takeoverRequested) {
-        return takeoverRequested && !interactiveAllowed;
     }
 
     static long requestTimeoutMs() {
@@ -132,102 +118,29 @@ final class JmComicWebViewSession implements BrowserSession {
         return Math.max(0L, deadline - now);
     }
 
-    static long httpWatchdogDelayMs(long deadline, long now) {
-        return remainingRequestMs(deadline, now);
-    }
-
-    static boolean shouldShowInteractive(boolean interactiveAllowed, boolean verifying) {
-        return interactiveAllowed && verifying;
-    }
-
-    static boolean allowsInteractiveChallenge(boolean explicitlyAllowed,
-                                              boolean automaticInteractiveFallback) {
-        return explicitlyAllowed || automaticInteractiveFallback;
-    }
-
-    static boolean shouldHandOffInteractive(boolean keepVisibleUntilPageReady,
-                                            boolean interactiveVisible,
-                                            boolean turnstileSolved,
-                                            String clearanceBefore,
-                                            String clearanceNow) {
-        if (keepVisibleUntilPageReady) return false;
-        boolean clearanceChanged = clearanceNow != null && !clearanceNow.isEmpty()
-                && !clearanceNow.equals(clearanceBefore == null ? "" : clearanceBefore);
-        return interactiveVisible && (turnstileSolved || clearanceChanged);
-    }
-
-    static String cookieValue(String cookies, String name) {
-        if (cookies == null || name == null || name.isEmpty()) return "";
-        for (String cookie : cookies.split(";")) {
-            int separator = cookie.indexOf('=');
-            if (separator > 0 && name.equals(cookie.substring(0, separator).trim())) {
-                return cookie.substring(separator + 1).trim();
-            }
-        }
-        return "";
-    }
-
-    static int backgroundExtent(boolean fullViewport) {
-        return fullViewport ? ViewGroup.LayoutParams.MATCH_PARENT : 1;
+    static boolean requiresCredentialReset(String storedFingerprint, String currentFingerprint) {
+        return currentFingerprint != null
+                && !currentFingerprint.equals(storedFingerprint == null ? "" : storedFingerprint);
     }
 
     @Override
     public String fetch(String url) throws IOException {
-        return fetch(url, false);
-    }
-
-    @Override
-    public String fetchInteractive(String url) throws IOException {
-        interactiveTakeoverRequested = true;
-        cancelActiveAutomaticRequest();
-        try {
-            return fetch(url, true);
-        } finally {
-            interactiveTakeoverRequested = false;
-        }
-    }
-
-    private String fetch(String url, boolean interactiveAllowed) throws IOException {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            throw new IOException(sourceName + "请求不能阻塞主线程");
-        }
-        cancelIfInteractiveTakeover(interactiveAllowed);
-        long deadline = requestDeadlineMs(SystemClock.elapsedRealtime());
-        boolean allowInteractive = allowsInteractiveChallenge(
-                interactiveAllowed, AUTOMATIC_INTERACTIVE_FALLBACK);
+        requireWorkerThread();
         boolean acquired = false;
         try {
-            long lockWait = remainingRequestMs(deadline, SystemClock.elapsedRealtime());
-            if (lockWait == 0L || !requestLock.tryAcquire(lockWait, TimeUnit.MILLISECONDS)) {
-                throw new IOException(sourceName + "请求超时");
-            }
-            acquired = true;
-            cancelIfInteractiveTakeover(interactiveAllowed);
+            acquired = requestLock.tryAcquire(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            if (!acquired) throw new IOException(sourceName + "请求超时");
             if (shutdown) throw new IOException(sourceName + "浏览器会话已停止");
-            RequestTransport transport = requestTransport(PREFER_HTTP, browserContextReady);
-            if (transport == RequestTransport.BROWSER_CONTEXT) {
-                try {
-                    return fetchWithBrowserContext(url, deadline);
-                } catch (ContextChallengeException challenge) {
-                    browserContextReady = false;
-                    String body = fetchWithBrowser(url, allowInteractive, deadline);
-                    browserContextReady = true;
-                    return body;
-                }
+            HttpFetch response = fetchHttp(url);
+            HttpAction action = httpAction(
+                    response.statusCode, response.mitigated, response.body);
+            if (action == HttpAction.VERIFICATION_REQUIRED) {
+                throw new VerificationRequiredException(sourceName + "需要验证");
             }
-            if (transport == RequestTransport.HTTP) {
-                HttpFetch response = fetchHttp(url, deadline);
-                cancelIfInteractiveTakeover(interactiveAllowed);
-                HttpAction action = httpAction(
-                        response.statusCode, response.mitigated, response.body);
-                if (action == HttpAction.RETURN_BODY) return response.body;
-                if (action == HttpAction.FAIL) {
-                    throw new IOException(sourceName + " HTTP " + response.statusCode);
-                }
+            if (action == HttpAction.FAIL) {
+                throw new IOException(sourceName + "请求失败：HTTP " + response.statusCode);
             }
-            String body = fetchWithBrowser(url, allowInteractive, deadline);
-            if (PREFER_HTTP) browserContextReady = true;
-            return body;
+            return response.body;
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
             throw new IOException(sourceName + "请求已取消", interrupted);
@@ -236,154 +149,29 @@ final class JmComicWebViewSession implements BrowserSession {
         }
     }
 
-    enum RequestTransport {
-        HTTP,
-        BROWSER_CONTEXT,
-        BROWSER_NAVIGATION
-    }
-
-    static RequestTransport requestTransport(boolean preferHttp, boolean browserContextReady) {
-        if (!preferHttp) return RequestTransport.BROWSER_NAVIGATION;
-        return browserContextReady ? RequestTransport.BROWSER_CONTEXT : RequestTransport.HTTP;
-    }
-
-    private String fetchWithBrowser(String url, boolean interactiveAllowed,
-                                    long deadline) throws IOException {
-        FetchRequest request = new FetchRequest(
-                Integer.toString(requestSequence.incrementAndGet()), url, false,
-                interactiveAllowed, deadline);
-        main.post(() -> startRequest(request));
-        return awaitRequest(request);
-    }
-
-    private String fetchWithBrowserContext(String url, long deadline) throws IOException {
-        FetchRequest request = new FetchRequest(
-                Integer.toString(requestSequence.incrementAndGet()), url, true, false, deadline);
-        main.post(() -> startRequest(request));
-        return awaitRequest(request);
-    }
-
-    private String awaitRequest(FetchRequest request) throws IOException {
+    @Override
+    public String fetchInteractive(String url) throws IOException {
+        requireWorkerThread();
+        if (shutdown) throw new IOException(sourceName + "浏览器会话已停止");
+        InteractiveRequest request = new InteractiveRequest(url);
+        main.post(() -> startInteractive(request));
         try {
-            long wait = remainingRequestMs(request.deadline, SystemClock.elapsedRealtime());
-            if (wait == 0L || !request.latch.await(wait, TimeUnit.MILLISECONDS)) {
-                request.cancelled = true;
-                String error = timeoutError(request);
-                main.post(() -> complete(request, null, error));
-                throw new IOException(error);
-            }
+            request.latch.await();
         } catch (InterruptedException interrupted) {
-            request.cancelled = true;
-            main.post(() -> complete(request, null, sourceName + "请求已取消"));
+            main.post(() -> cancelInteractive(request));
             Thread.currentThread().interrupt();
-            throw new IOException(sourceName + "请求已取消", interrupted);
+            throw new VerificationCancelledException(sourceName + "验证已取消");
         }
-        if (request.cancelledByTakeover) throw new InterruptedIOException("thread interrupted");
-        if (request.contextChallenge) throw new ContextChallengeException();
-        if (!TextUtils.isEmpty(request.error)) throw new IOException(request.error);
-        if (request.result == null) throw new IOException(sourceName + "请求未完成");
+        if (request.failure != null) throw request.failure;
+        if (request.result == null) throw new IOException(sourceName + "验证未完成");
         return request.result;
-    }
-
-    private HttpFetch fetchHttp(String url, long deadline) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        long watchdogDelay = httpWatchdogDelayMs(deadline, SystemClock.elapsedRealtime());
-        if (watchdogDelay == 0L) {
-            connection.disconnect();
-            throw new IOException(sourceName + "请求超时");
-        }
-        AtomicBoolean timedOut = new AtomicBoolean();
-        ScheduledFuture<?> watchdog = HTTP_TIMEOUTS.schedule(() -> {
-            timedOut.set(true);
-            connection.disconnect();
-        }, watchdogDelay, TimeUnit.MILLISECONDS);
-        try {
-            connection.setInstanceFollowRedirects(true);
-            connection.setConnectTimeout(remainingTimeout(deadline, CONNECT_TIMEOUT_MS));
-            connection.setReadTimeout(remainingTimeout(deadline, READ_TIMEOUT_MS));
-            connection.setRequestProperty("User-Agent", userAgent);
-            connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
-            String cookie = android.webkit.CookieManager.getInstance().getCookie(url);
-            if (!TextUtils.isEmpty(cookie)) connection.setRequestProperty("Cookie", cookie);
-            int statusCode = connection.getResponseCode();
-            connection.setReadTimeout(remainingTimeout(deadline, READ_TIMEOUT_MS));
-            persistResponseCookies(url, connection.getHeaderFields());
-            InputStream stream = statusCode >= 400
-                    ? connection.getErrorStream() : connection.getInputStream();
-            return new HttpFetch(statusCode,
-                    connection.getHeaderField("cf-mitigated"), readBody(stream, deadline));
-        } catch (IOException error) {
-            if (timedOut.get() || httpWatchdogDelayMs(
-                    deadline, SystemClock.elapsedRealtime()) == 0L) {
-                throw new IOException(sourceName + "请求超时", error);
-            }
-            throw error;
-        } finally {
-            watchdog.cancel(false);
-            connection.disconnect();
-        }
-    }
-
-    private int remainingTimeout(long deadline, int maximum) throws IOException {
-        long remaining = remainingRequestMs(deadline, SystemClock.elapsedRealtime());
-        if (remaining == 0L) throw new IOException(sourceName + "请求超时");
-        return (int) Math.min(maximum, remaining);
-    }
-
-    private void persistResponseCookies(String url, Map<String, List<String>> headers) {
-        if (headers == null) return;
-        android.webkit.CookieManager manager = android.webkit.CookieManager.getInstance();
-        for (Map.Entry<String, List<String>> header : headers.entrySet()) {
-            if (header.getKey() == null
-                    || !"Set-Cookie".equalsIgnoreCase(header.getKey())) continue;
-            for (String value : header.getValue()) manager.setCookie(url, value);
-        }
-        manager.flush();
-    }
-
-    private String readBody(InputStream stream, long deadline) throws IOException {
-        if (stream == null) return "";
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"))) {
-            StringBuilder body = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (remainingRequestMs(deadline, SystemClock.elapsedRealtime()) == 0L) {
-                    throw new IOException(sourceName + "请求超时");
-                }
-                body.append(line).append('\n');
-            }
-            return body.toString();
-        }
-    }
-
-    void shutdown() {
-        shutdown = true;
-        Runnable close = () -> {
-            if (activeRequest != null) complete(activeRequest, null, sourceName + "浏览器会话已停止");
-            closeViews();
-        };
-        if (Looper.myLooper() == Looper.getMainLooper()) close.run();
-        else main.post(close);
-    }
-
-    void clearCache() {
-        browserContextReady = false;
-        Runnable clear = () -> {
-            if (webView == null) return;
-            webView.clearCache(true);
-            webView.clearHistory();
-            webView.clearFormData();
-        };
-        if (Looper.myLooper() == Looper.getMainLooper()) clear.run();
-        else main.post(clear);
     }
 
     private void migrateCredentialFingerprint() {
         android.content.SharedPreferences preferences = activity.getSharedPreferences(
-                JM_CREDENTIAL_PREFS, Activity.MODE_PRIVATE);
+                JM_CREDENTIAL_PREFS, Context.MODE_PRIVATE);
         String stored = preferences.getString(CREDENTIAL_FINGERPRINT_KEY, "");
         if (!requiresCredentialReset(stored, CREDENTIAL_FINGERPRINT_VERSION)) return;
-        browserContextReady = false;
         expireDomainCookies(JM_ORIGIN);
         android.webkit.WebStorage.getInstance().deleteOrigin(JM_ORIGIN);
         preferences.edit().putString(
@@ -391,7 +179,7 @@ final class JmComicWebViewSession implements BrowserSession {
     }
 
     private void expireDomainCookies(String origin) {
-        android.webkit.CookieManager manager = android.webkit.CookieManager.getInstance();
+        CookieManager manager = CookieManager.getInstance();
         java.util.LinkedHashSet<String> names = new java.util.LinkedHashSet<>();
         String cookies = manager.getCookie(origin);
         if (cookies != null) {
@@ -417,97 +205,138 @@ final class JmComicWebViewSession implements BrowserSession {
         manager.flush();
     }
 
-    private void cancelActiveAutomaticRequest() {
-        Runnable cancel = () -> {
-            FetchRequest request = activeRequest;
-            if (request == null || !shouldCancelForInteractiveTakeover(
-                    request.interactiveAllowed, interactiveTakeoverRequested)) return;
-            request.cancelledByTakeover = true;
-            request.cancelled = true;
-            if (webView != null) webView.stopLoading();
-            complete(request, null, "");
-        };
-        if (Looper.myLooper() == Looper.getMainLooper()) cancel.run();
-        else main.post(cancel);
-    }
-
-    private void cancelIfInteractiveTakeover(boolean interactiveAllowed)
-            throws InterruptedIOException {
-        if (shouldCancelForInteractiveTakeover(
-                interactiveAllowed, interactiveTakeoverRequested)) {
-            throw new InterruptedIOException("thread interrupted");
+    private void requireWorkerThread() throws IOException {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            throw new IOException(sourceName + "请求不能阻塞主线程");
         }
     }
 
-    private void startRequest(FetchRequest request) {
-        if (request.cancelled) return;
-        if (shouldCancelForInteractiveTakeover(
-                request.interactiveAllowed, interactiveTakeoverRequested)) {
-            request.cancelledByTakeover = true;
-            complete(request, null, "");
-            return;
+    private HttpFetch fetchHttp(String url) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        try {
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
+            connection.setReadTimeout(READ_TIMEOUT_MS);
+            connection.setRequestProperty("User-Agent", userAgent);
+            connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
+            String cookie = CookieManager.getInstance().getCookie(url);
+            if (!TextUtils.isEmpty(cookie)) connection.setRequestProperty("Cookie", cookie);
+            int statusCode = connection.getResponseCode();
+            String mitigated = connection.getHeaderField("cf-mitigated");
+            persistResponseCookies(url, connection.getHeaderFields());
+            if (statusCode == 403 && "challenge".equalsIgnoreCase(mitigated)) {
+                return new HttpFetch(statusCode, mitigated, "");
+            }
+            InputStream stream = statusCode >= 400
+                    ? connection.getErrorStream() : connection.getInputStream();
+            return new HttpFetch(statusCode, mitigated, readBody(stream));
+        } finally {
+            connection.disconnect();
         }
+    }
+
+    private void persistResponseCookies(String url, Map<String, List<String>> headers) {
+        if (headers == null) return;
+        CookieManager manager = CookieManager.getInstance();
+        for (Map.Entry<String, List<String>> header : headers.entrySet()) {
+            if (header.getKey() == null
+                    || !"Set-Cookie".equalsIgnoreCase(header.getKey())) continue;
+            for (String value : header.getValue()) manager.setCookie(url, value);
+        }
+        manager.flush();
+    }
+
+    private String readBody(InputStream stream) throws IOException {
+        if (stream == null) return "";
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(stream, "UTF-8"))) {
+            StringBuilder body = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) body.append(line).append('\n');
+            return body.toString();
+        }
+    }
+
+    private void startInteractive(InteractiveRequest request) {
         if (shutdown || activity.isFinishing() || activity.isDestroyed()) {
-            complete(request, null, sourceName + "浏览器会话无法打开");
+            finishRequest(request, null, new IOException(sourceName + "验证窗口无法打开"));
             return;
         }
         if (activeRequest != null && !activeRequest.completed) {
-            complete(request, null, sourceName + "浏览器会话正忙");
+            finishRequest(request, null, new IOException(sourceName + "验证窗口正忙"));
             return;
         }
         activeRequest = request;
         try {
-            ensureViews();
-            showBackgroundView();
-            request.clearanceBefore = clearanceCookie(request.url);
-            if (request.browserContext) {
-                webView.evaluateJavascript(browserContextScript(request), null);
-            } else {
-                webView.loadUrl(request.url);
-            }
+            createDialog(request);
+            notifyVerification("正在验证");
+            loadInteractive(request);
         } catch (Exception error) {
-            complete(request, null, sourceName + "浏览器会话启动失败");
+            finishRequest(request, null, new IOException(sourceName + "验证窗口无法打开", error));
         }
     }
 
-    private void ensureViews() {
-        if (webView != null && host != null && host.getParent() != null) return;
-        ViewGroup content = activity.findViewById(android.R.id.content);
-        if (content == null) throw new IllegalStateException("Missing activity content view");
+    private void createDialog(InteractiveRequest request) {
+        LinearLayout root = new LinearLayout(activity);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(12), dp(10), dp(12), dp(10));
+        root.setBackground(UIHelpers.round(UIHelpers.CARD, dp(8), UIHelpers.BORDER_SOFT));
 
-        FrameLayout page = new FrameLayout(activity);
-        page.setBackgroundColor(Color.TRANSPARENT);
-        page.setClickable(false);
-        page.setFocusable(false);
+        TextView source = UIHelpers.text(
+                activity, sourceName, 15, UIHelpers.TEXT, android.graphics.Typeface.BOLD);
+        root.addView(source, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView status = UIHelpers.text(
+                activity, "正在打开验证页", 12, UIHelpers.TEXT2,
+                android.graphics.Typeface.NORMAL);
+        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        statusParams.topMargin = dp(2);
+        statusParams.bottomMargin = dp(8);
+        root.addView(status, statusParams);
 
         WebView browser = new WebView(activity);
-        browser.setAlpha(0.01f);
-        browser.setBackgroundColor(Color.TRANSPARENT);
-        browser.setClickable(false);
-        page.addView(browser, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        root.addView(browser, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        LinearLayout card = new LinearLayout(activity);
-        card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setPadding(UIHelpers.dp(activity, 18), UIHelpers.dp(activity, 14),
-                UIHelpers.dp(activity, 18), UIHelpers.dp(activity, 14));
-        card.setBackground(UIHelpers.round(
-                UIHelpers.CARD, UIHelpers.dp(activity, 10), UIHelpers.BORDER_SOFT));
-        ProgressBar spinner = new ProgressBar(activity, null, android.R.attr.progressBarStyleSmall);
-        spinner.setIndeterminateTintList(ColorStateList.valueOf(UIHelpers.ACCENT));
-        LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(
-                UIHelpers.dp(activity, 22), UIHelpers.dp(activity, 22));
-        spinnerParams.rightMargin = UIHelpers.dp(activity, 12);
-        card.addView(spinner, spinnerParams);
-        TextView label = UIHelpers.text(activity, "正在验证", 14, UIHelpers.TEXT, Typeface.BOLD);
-        label.setGravity(Gravity.CENTER_VERTICAL);
-        card.addView(label, new LinearLayout.LayoutParams(
-                UIHelpers.dp(activity, 78), UIHelpers.dp(activity, 24)));
-        FrameLayout.LayoutParams statusParams = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        statusParams.topMargin = UIHelpers.dp(activity, 18);
-        page.addView(card, statusParams);
+        LinearLayout controls = new LinearLayout(activity);
+        controls.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        TextView reload = UIHelpers.text(activity, "重新加载", 12,
+                UIHelpers.ACCENT, android.graphics.Typeface.BOLD);
+        reload.setGravity(Gravity.CENTER);
+        reload.setBackground(UIHelpers.round(
+                UIHelpers.ACCENT_LIGHT, dp(6), UIHelpers.BORDER_SOFT));
+        ImageView close = UIHelpers.vectorIconButton(
+                activity, R.drawable.ic_close, UIHelpers.TEXT2, 6);
+        close.setContentDescription("关闭验证");
+        controls.addView(reload, new LinearLayout.LayoutParams(dp(88), dp(34)));
+        LinearLayout.LayoutParams closeParams = new LinearLayout.LayoutParams(dp(34), dp(34));
+        closeParams.leftMargin = dp(6);
+        controls.addView(close, closeParams);
+        LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        controlsParams.topMargin = dp(6);
+        root.addView(controls, controlsParams);
+
+        Dialog dialog = new Dialog(activity);
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.setContentView(root);
+        dialog.show();
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            int width = activity.getResources().getDisplayMetrics().widthPixels;
+            int height = activity.getResources().getDisplayMetrics().heightPixels;
+            window.setLayout(width * 9 / 10, height * 7 / 10);
+        }
+
+        request.dialog = dialog;
+        request.webView = browser;
+        request.status = status;
+        request.reload = reload;
+        request.close = close;
 
         WebSettings settings = browser.getSettings();
         settings.setUserAgentString(userAgent);
@@ -516,334 +345,266 @@ final class JmComicWebViewSession implements BrowserSession {
         settings.setDatabaseEnabled(true);
         settings.setLoadsImagesAutomatically(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        android.webkit.CookieManager cookies = android.webkit.CookieManager.getInstance();
+        CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
         cookies.setAcceptThirdPartyCookies(browser, true);
-        browser.addJavascriptInterface(new FetchBridge(), BRIDGE_NAME);
+
         browser.setWebViewClient(new WebViewClient() {
             @Override
-            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
-                navigation++;
-                FetchRequest request = activeRequest;
-                if (request != null) {
-                    request.currentUrl = url == null ? "" : url;
-                    request.statusCode = 0;
-                    request.mitigated = "";
-                    request.challengeDom = false;
-                    request.pageReady = false;
-                    if (request.verifying) showVerifyingState();
+            public void onPageStarted(WebView view, String url,
+                                      android.graphics.Bitmap favicon) {
+                if (!isActive(request)) return;
+                request.navigation++;
+                request.probeRunning = false;
+                if (request.stopped) {
+                    view.stopLoading();
+                    return;
                 }
+                request.statusCode = 0;
+                request.mitigated = "";
+                setStatus(request, "正在加载验证页");
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                FetchRequest request = activeRequest;
-                if (request != null) inspectPage(request, view, navigation);
-            }
-
-            @Override
-            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                FetchRequest active = activeRequest;
-                if (active != null && request != null && request.isForMainFrame()) {
-                    complete(active, null, sourceName + "页面加载失败");
+                if (isActive(request)) {
+                    inspectPage(request, request.attempt, request.navigation);
                 }
             }
 
             @Override
-            public void onReceivedHttpError(WebView view, WebResourceRequest request,
+            public boolean shouldOverrideUrlLoading(WebView view,
+                                                    WebResourceRequest navigation) {
+                if (navigation != null && navigation.isForMainFrame()
+                        && !sameSite(request.url, navigation.getUrl().toString())) {
+                    stopAttempt(request, "页面不正确，请重新加载");
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest failed,
+                                        WebResourceError error) {
+                if (failed != null && failed.isForMainFrame()) {
+                    stopAttempt(request, "网络加载失败，请重试");
+                }
+            }
+
+            @Override
+            public void onReceivedHttpError(WebView view, WebResourceRequest failed,
                                             WebResourceResponse response) {
-                FetchRequest active = activeRequest;
-                if (active == null || request == null || !request.isForMainFrame() || response == null) return;
-                active.statusCode = response.getStatusCode();
-                java.util.Map<String, String> headers = response.getResponseHeaders();
-                if (headers != null) {
-                    for (java.util.Map.Entry<String, String> header : headers.entrySet()) {
-                        if ("cf-mitigated".equalsIgnoreCase(header.getKey())) {
-                            active.mitigated = header.getValue();
-                            break;
-                        }
+                if (!isActive(request) || failed == null || !failed.isForMainFrame()
+                        || response == null) return;
+                request.statusCode = response.getStatusCode();
+                Map<String, String> headers = response.getResponseHeaders();
+                if (headers == null) return;
+                for (Map.Entry<String, String> header : headers.entrySet()) {
+                    if ("cf-mitigated".equalsIgnoreCase(header.getKey())) {
+                        request.mitigated = header.getValue();
+                        break;
                     }
                 }
             }
         });
-
-        content.addView(page, backgroundLayoutParams());
-        host = page;
-        webView = browser;
-        statusCard = card;
-        progress = spinner;
-        status = label;
+        reload.setOnClickListener(ignored -> retryInteractive(request));
+        close.setOnClickListener(ignored -> cancelInteractive(request));
     }
 
-    private void inspectPage(FetchRequest request, WebView browser, int expectedNavigation) {
-        if (!isActive(request) || expectedNavigation != navigation) return;
-        if (remainingRequestMs(request.deadline, SystemClock.elapsedRealtime()) == 0L) {
-            complete(request, null, timeoutError(request));
-            return;
-        }
-        String script = "(function(){return JSON.stringify({"
-                + "title:document.title||'',text:(document.body&&document.body.innerText||'').slice(0,2400),"
-                + "html:(document.documentElement.outerHTML||'').slice(0,12000),"
-                + "turnstileSolved:!!((document.querySelector('[name=\"cf-turnstile-response\"]')||{}).value),"
-                + "ready:document.readyState||'',url:location.href||''});})()";
-        browser.evaluateJavascript(script, encoded -> {
-            if (!isActive(request) || expectedNavigation != navigation) return;
+    private void loadInteractive(InteractiveRequest request) {
+        if (!isActive(request) || request.succeeded) return;
+        request.attempt++;
+        request.navigation = 0;
+        request.probeRunning = false;
+        request.stopped = false;
+        setStatus(request, "正在加载验证页");
+        scheduleTimeout(request, request.attempt);
+        request.webView.loadUrl(request.url);
+    }
+
+    private void retryInteractive(InteractiveRequest request) {
+        if (!isActive(request) || request.succeeded) return;
+        finishRequest(request, null,
+                new VerificationCancelledException(sourceName + "验证已取消"));
+        verificationRetry.onRetry();
+    }
+
+    private void scheduleTimeout(InteractiveRequest request, int attempt) {
+        if (request.timeout != null) main.removeCallbacks(request.timeout);
+        request.timeout = () -> {
+            if (!isActive(request) || request.attempt != attempt
+                    || request.probeRunning || request.succeeded) return;
+            request.webView.stopLoading();
+            stopAttempt(request, "验证超时，请重试");
+        };
+        main.postDelayed(request.timeout, TIMEOUT_MS);
+    }
+
+    private void inspectPage(InteractiveRequest request, int attempt, int navigation) {
+        if (!isActiveAttempt(request, attempt) || request.navigation != navigation
+                || request.probeRunning || request.stopped) return;
+        String script = "(function(){return JSON.stringify({url:location.href||'',"
+                + "title:document.title||'',html:document.documentElement.outerHTML||''});})()";
+        request.webView.evaluateJavascript(script, encoded -> {
+            if (!isActiveAttempt(request, attempt) || request.navigation != navigation
+                    || request.probeRunning || request.stopped) return;
             try {
                 JSONObject page = new JSONObject(decodeJavascriptString(encoded));
-                boolean challenge = isChallenge(page.optString("url"), page.optString("title"),
-                        page.optString("text") + " " + page.optString("html"),
-                        request.statusCode, request.mitigated, request.verifying);
-                boolean ready = "complete".equalsIgnoreCase(page.optString("ready"));
-                boolean turnstileSolved = page.optBoolean("turnstileSolved");
-                request.currentUrl = page.optString("url");
-                request.challengeDom = challenge;
-                request.pageReady = ready;
-                String clearanceNow = clearanceCookie(request.url);
-                if (shouldHandOffInteractive(AUTOMATIC_INTERACTIVE_FALLBACK,
-                        request.interactiveVisible, turnstileSolved,
-                        request.clearanceBefore, clearanceNow)) {
-                    request.interactiveVisible = false;
-                    showBackgroundView();
-                }
-                PageAction action = pageAction(request.verifying, challenge, ready, request.statusCode);
-                if (action == PageAction.SHOW_VERIFICATION) {
-                    request.verifying = true;
-                    notifyVerification("正在验证");
-                    showBackgroundView();
-                    if (request.interactiveAllowed) {
-                        browser.postDelayed(() -> {
-                            if (isActive(request) && shouldShowInteractive(
-                                    request.interactiveAllowed, request.verifying)) {
-                                request.interactiveVisible = true;
-                                showVerificationView(true);
-                            }
-                        }, INTERACTIVE_DELAY_MS);
-                    }
-                } else if (action == PageAction.KEEP_VERIFYING) {
-                    showVerifyingState();
-                } else if (action == PageAction.FAIL) {
-                    complete(request, null, sourceName + "请求失败：HTTP "
-                            + request.statusCode + requestDiagnostic(request));
-                    return;
-                } else if (action == PageAction.CAPTURE) {
-                    if (!isExpectedPage(request.url, page.optString("url"))) {
-                        complete(request, null, sourceName + "页面跳转异常"
-                                + requestDiagnostic(request));
-                        return;
-                    }
-                    android.webkit.CookieManager.getInstance().flush();
-                    if (request.verifying) {
-                        notifyVerification("验证完成");
-                        if (AUTOMATIC_INTERACTIVE_FALLBACK) showBackgroundView();
-                        else showVerifiedState();
-                        browser.postDelayed(() -> captureCurrentPage(
-                                request, browser, expectedNavigation), 300L);
-                    } else {
-                        captureCurrentPage(request, browser, expectedNavigation);
-                    }
+                String actualUrl = page.optString("url");
+                String html = page.optString("html");
+                if (isChallenge(actualUrl, page.optString("title"), html,
+                        request.statusCode, request.mitigated)) {
+                    setStatus(request, "请完成安全验证");
                     return;
                 }
-                browser.postDelayed(() -> inspectPage(
-                        request, browser, expectedNavigation), POLL_DELAY_MS);
+                if (!isExpectedPage(request.url, actualUrl)) {
+                    stopAttempt(request, "页面不正确，请重新加载");
+                    return;
+                }
+                boolean browserCatalog = JmComicSource.hasCatalogMarker(html);
+                if (!browserCatalog) {
+                    stopAttempt(request, "页面未就绪，请重新加载");
+                    return;
+                }
+                beginProbe(request, attempt, navigation, browserCatalog);
             } catch (Exception error) {
-                complete(request, null, sourceName + "页面结果解析失败");
+                stopAttempt(request, "页面读取失败，请重试");
             }
         });
     }
 
-    private void captureCurrentPage(FetchRequest request, WebView browser, int expectedNavigation) {
-        if (!isActive(request) || expectedNavigation != navigation) return;
-        request.verifying = false;
-        showBackgroundView();
-        String script = "(function(){var id=" + JSONObject.quote(request.id) + ";try{window."
-                + BRIDGE_NAME + ".onFetchResult(id,JSON.stringify({url:location.href||'',body:"
-                + "document.documentElement.outerHTML||''}));}catch(e){window." + BRIDGE_NAME
-                + ".onFetchResult(id,JSON.stringify({error:String(e)}));}})();";
-        browser.evaluateJavascript(script, null);
-    }
-
-    private String browserContextScript(FetchRequest request) {
-        String id = JSONObject.quote(request.id);
-        String url = JSONObject.quote(request.url);
-        return "(function(){var id=" + id + ",url=" + url + ";try{fetch(url,{"
-                + "credentials:\"include\",cache:\"no-store\",redirect:\"follow\"})"
-                + ".then(function(response){return response.text().then(function(body){window."
-                + BRIDGE_NAME + ".onFetchResult(id,JSON.stringify({url:response.url||url,status:"
-                + "response.status||0,mitigated:response.headers.get('cf-mitigated')||'',body:body||''}));});})"
-                + ".catch(function(error){window." + BRIDGE_NAME
-                + ".onFetchResult(id,JSON.stringify({error:String(error)}));});}catch(error){window."
-                + BRIDGE_NAME + ".onFetchResult(id,JSON.stringify({error:String(error)}));}})();";
-    }
-
-    private void handleFetchResult(String id, String payload) {
-        FetchRequest request = activeRequest;
-        if (request == null || !request.id.equals(id) || !isActive(request)) return;
-        try {
-            JSONObject response = new JSONObject(payload == null ? "" : payload);
-            if (!TextUtils.isEmpty(response.optString("error"))) {
-                complete(request, null, sourceName + "浏览器请求失败");
-                return;
+    private void beginProbe(InteractiveRequest request, int attempt, int navigation,
+                            boolean browserCatalog) {
+        request.probeRunning = true;
+        if (request.timeout != null) main.removeCallbacks(request.timeout);
+        setStatus(request, "正在确认验证结果");
+        CookieManager.getInstance().flush();
+        HTTP_EXECUTOR.execute(() -> {
+            try {
+                HttpFetch response = fetchHttp(request.url);
+                main.post(() -> finishProbe(
+                        request, attempt, navigation, browserCatalog, response, null));
+            } catch (IOException error) {
+                main.post(() -> finishProbe(
+                        request, attempt, navigation, browserCatalog, null, error));
             }
-            String body = response.optString("body", "");
-            if (request.browserContext) {
-                request.statusCode = response.optInt("status", 0);
-                request.mitigated = response.optString("mitigated", "");
-                HttpAction action = httpAction(request.statusCode, request.mitigated, body);
-                if (action == HttpAction.OPEN_BROWSER) {
-                    request.contextChallenge = true;
-                    complete(request, null, "");
-                    return;
-                }
-                if (action == HttpAction.FAIL) {
-                    complete(request, null, sourceName + " HTTP " + request.statusCode);
-                    return;
-                }
+        });
+    }
+
+    private void finishProbe(InteractiveRequest request, int attempt, int navigation,
+                             boolean browserCatalog, HttpFetch response,
+                             IOException failure) {
+        if (!probeCanComplete(isActiveAttempt(request, attempt), request.probeRunning,
+                request.stopped, navigation, request.navigation)) return;
+        request.probeRunning = false;
+        if (failure != null) {
+            stopAttempt(request, "网络确认失败，请重试");
+            return;
+        }
+        HttpAction action = httpAction(
+                response.statusCode, response.mitigated, response.body);
+        if (action == HttpAction.VERIFICATION_REQUIRED) {
+            stopAttempt(request, "验证尚未生效，请重试");
+            return;
+        }
+        if (action == HttpAction.FAIL) {
+            stopAttempt(request, "确认请求失败，请重试");
+            return;
+        }
+        boolean probeCatalog = JmComicSource.hasCatalogMarker(response.body);
+        if (!verificationComplete(browserCatalog, probeCatalog)) {
+            stopAttempt(request, "页面确认失败，请重试");
+            return;
+        }
+
+        activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit().putLong(VERIFIED_AT_KEY, System.currentTimeMillis()).apply();
+        request.succeeded = true;
+        request.reload.setEnabled(false);
+        request.close.setEnabled(false);
+        setStatus(request, "验证完成");
+        notifyVerification("验证完成");
+        main.postDelayed(() -> {
+            if (isActive(request) && request.succeeded) {
+                finishRequest(request, response.body, null);
             }
-            if (!isExpectedPage(request.url, response.optString("url", ""))) {
-                complete(request, null, sourceName + "页面跳转异常");
-                return;
+        }, SUCCESS_DELAY_MS);
+    }
+
+    private void stopAttempt(InteractiveRequest request, String message) {
+        if (!isActive(request) || request.succeeded) return;
+        request.probeRunning = false;
+        request.stopped = true;
+        if (request.timeout != null) main.removeCallbacks(request.timeout);
+        setStatus(request, message);
+    }
+
+    private void cancelInteractive(InteractiveRequest request) {
+        if (!isActive(request) || request.succeeded) return;
+        finishRequest(request, null,
+                new VerificationCancelledException(sourceName + "验证已取消"));
+    }
+
+    void shutdown() {
+        shutdown = true;
+        Runnable close = () -> {
+            InteractiveRequest request = activeRequest;
+            if (request != null) {
+                finishRequest(request, null,
+                        new IOException(sourceName + "浏览器会话已停止"));
             }
-            if (TextUtils.isEmpty(body)) {
-                complete(request, null, sourceName + "页面内容为空");
-                return;
+        };
+        if (Looper.myLooper() == Looper.getMainLooper()) close.run();
+        else main.post(close);
+    }
+
+    void clearCache() {
+        activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit().remove(VERIFIED_AT_KEY).apply();
+        Runnable clear = () -> {
+            InteractiveRequest request = activeRequest;
+            if (request != null) {
+                finishRequest(request, null,
+                        new IOException(sourceName + "验证状态已清除"));
             }
-            complete(request, body, "");
-        } catch (Exception error) {
-            complete(request, null, sourceName + "浏览器响应解析失败");
+        };
+        if (Looper.myLooper() == Looper.getMainLooper()) clear.run();
+        else main.post(clear);
+    }
+
+    private void finishRequest(InteractiveRequest request, String result,
+                               IOException failure) {
+        if (request.completed) return;
+        request.completed = true;
+        request.result = result;
+        request.failure = failure;
+        if (request.timeout != null) main.removeCallbacks(request.timeout);
+        if (activeRequest == request) activeRequest = null;
+
+        WebView browser = request.webView;
+        Dialog dialog = request.dialog;
+        request.webView = null;
+        request.dialog = null;
+        if (dialog != null && dialog.isShowing()) dialog.dismiss();
+        if (browser != null) {
+            browser.stopLoading();
+            browser.removeAllViews();
+            browser.destroy();
         }
+        request.latch.countDown();
     }
 
-    static boolean isChallenge(String url, String title, String body, int statusCode,
-                               String mitigated, boolean verifying) {
-        String content = ((url == null ? "" : url) + " " + (title == null ? "" : title)
-                + " " + (body == null ? "" : body)).toLowerCase(Locale.US);
-        boolean responseChallenge = statusCode == 403 && "challenge".equalsIgnoreCase(mitigated);
-        boolean domChallenge = content.contains("/orchestrate/chl_page/")
-                || content.contains("cf-chl-widget")
-                || content.contains("cf-turnstile-response")
-                || content.contains("just a moment")
-                || content.contains("attention required")
-                || content.contains("checking your browser")
-                || content.contains("performing security verification")
-                || content.contains("verify you are human")
-                || content.contains("请稍候")
-                || content.contains("正在验证")
-                || content.contains("安全验证");
-        return domChallenge || (!verifying && responseChallenge);
-    }
-
-    enum PageAction {
-        WAIT,
-        SHOW_VERIFICATION,
-        KEEP_VERIFYING,
-        CAPTURE,
-        FAIL
-    }
-
-    enum HttpAction {
-        RETURN_BODY,
-        OPEN_BROWSER,
-        FAIL
-    }
-
-    static HttpAction httpAction(int statusCode, String mitigated, String body) {
-        if (isChallenge("", "", body, statusCode, mitigated, false)) {
-            return HttpAction.OPEN_BROWSER;
-        }
-        return statusCode >= 200 && statusCode < 400
-                ? HttpAction.RETURN_BODY : HttpAction.FAIL;
-    }
-
-    static PageAction pageAction(boolean verifying, boolean challenge, boolean ready) {
-        return pageAction(verifying, challenge, ready, 0);
-    }
-
-    static PageAction pageAction(boolean verifying, boolean challenge, boolean ready, int statusCode) {
-        if (challenge) {
-            return verifying ? PageAction.KEEP_VERIFYING : PageAction.SHOW_VERIFICATION;
-        }
-        if (statusCode >= 400 && !verifying) return PageAction.FAIL;
-        return ready ? PageAction.CAPTURE : PageAction.WAIT;
-    }
-
-    static boolean isExpectedPage(String requested, String actual) {
-        try {
-            URL expected = new URL(requested);
-            URL received = new URL(actual);
-            String expectedHost = expected.getHost().toLowerCase(Locale.US);
-            String receivedHost = received.getHost().toLowerCase(Locale.US);
-            boolean sameHost = expectedHost.equals(receivedHost)
-                    || expectedHost.endsWith("." + receivedHost)
-                    || receivedHost.endsWith("." + expectedHost);
-            if (!sameHost || !expected.getProtocol().equalsIgnoreCase(received.getProtocol())) return false;
-            String expectedPath = normalizedPath(expected.getPath());
-            String receivedPath = normalizedPath(received.getPath());
-            return expectedPath.equals(receivedPath) || receivedPath.startsWith(expectedPath + "/");
-        } catch (Exception ignored) {
-            return false;
-        }
-    }
-
-    private static String normalizedPath(String value) {
-        String path = value == null || value.isEmpty() ? "/" : value;
-        while (path.length() > 1 && path.endsWith("/")) path = path.substring(0, path.length() - 1);
-        return path;
-    }
-
-    private boolean isActive(FetchRequest request) {
-        return request != null && !request.cancelled && !request.completed
+    private boolean isActive(InteractiveRequest request) {
+        return request != null && !request.completed
                 && activeRequest == request && !shutdown;
     }
 
-    private void showVerificationView(boolean interactive) {
-        if (host == null) return;
-        host.setLayoutParams(verificationLayoutParams());
-        host.setTranslationX(0f);
-        host.setBackgroundColor(Color.argb(42, 18, 39, 56));
-        host.setClickable(true);
-        host.setFocusable(true);
-        if (webView != null) {
-            webView.setAlpha(interactive ? 1f : 0.01f);
-            webView.setClickable(interactive);
-        }
-        if (statusCard != null) statusCard.setVisibility(View.VISIBLE);
-        showVerifyingState();
-        host.bringToFront();
+    private boolean isActiveAttempt(InteractiveRequest request, int attempt) {
+        return isActive(request) && request.attempt == attempt;
     }
 
-    private void showBackgroundView() {
-        if (host == null) return;
-        host.setLayoutParams(backgroundLayoutParams());
-        host.setTranslationX(FULL_VIEWPORT_BACKGROUND
-                ? activity.getResources().getDisplayMetrics().widthPixels + 1f : 0f);
-        host.setBackgroundColor(Color.TRANSPARENT);
-        host.setClickable(false);
-        host.setFocusable(false);
-        if (webView != null) {
-            webView.setAlpha(0.01f);
-            webView.setClickable(false);
-        }
-        if (statusCard != null) statusCard.setVisibility(View.GONE);
-    }
-
-    private FrameLayout.LayoutParams verificationLayoutParams() {
-        return new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER);
-    }
-
-    private FrameLayout.LayoutParams backgroundLayoutParams() {
-        int extent = backgroundExtent(FULL_VIEWPORT_BACKGROUND);
-        return new FrameLayout.LayoutParams(extent, extent, Gravity.TOP | Gravity.START);
-    }
-
-    private void showVerifyingState() {
-        if (status != null) status.setText("正在验证");
-        if (progress != null) progress.setVisibility(View.VISIBLE);
-    }
-
-    private void showVerifiedState() {
-        if (status != null) status.setText("验证完成");
-        if (progress != null) progress.setVisibility(View.INVISIBLE);
+    private void setStatus(InteractiveRequest request, String message) {
+        if (request.status != null) request.status.setText(message);
     }
 
     private void notifyVerification(String message) {
@@ -852,20 +613,8 @@ final class JmComicWebViewSession implements BrowserSession {
         }
     }
 
-    private String clearanceCookie(String url) {
-        return cookieValue(android.webkit.CookieManager.getInstance().getCookie(url),
-                "cf_clearance");
-    }
-
-    private String requestDiagnostic(FetchRequest request) {
-        return " [url=" + request.currentUrl + ", status=" + request.statusCode
-                + ", verifying=" + request.verifying + ", challenge="
-                + request.challengeDom + ", ready=" + request.pageReady + "]";
-    }
-
-    private String timeoutError(FetchRequest request) {
-        return sourceName + (request.verifying ? "验证超时" : "请求超时")
-                + requestDiagnostic(request);
+    private int dp(int value) {
+        return UIHelpers.dp(activity, value);
     }
 
     private String decodeJavascriptString(String encoded) {
@@ -877,76 +626,110 @@ final class JmComicWebViewSession implements BrowserSession {
         }
     }
 
-    private void complete(FetchRequest request, String result, String error) {
-        if (request == null || request.completed) return;
-        request.completed = true;
-        request.result = result;
-        request.error = error == null ? "" : error;
-        if (activeRequest == request) activeRequest = null;
-        if (!shutdown && webView != null) showBackgroundView();
-        request.latch.countDown();
+    static boolean verificationComplete(boolean browserCatalog, boolean probeCatalog) {
+        return browserCatalog && probeCatalog;
     }
 
-    private void closeViews() {
-        browserContextReady = false;
-        WebView browser = webView;
-        FrameLayout page = host;
-        webView = null;
-        host = null;
-        statusCard = null;
-        progress = null;
-        status = null;
-        if (page != null && page.getParent() instanceof ViewGroup) {
-            ((ViewGroup) page.getParent()).removeView(page);
+    static boolean probeCanComplete(boolean activeAttempt, boolean probeRunning,
+                                    boolean stopped, int capturedNavigation,
+                                    int currentNavigation) {
+        return activeAttempt && probeRunning && !stopped
+                && capturedNavigation == currentNavigation;
+    }
+
+    enum HttpAction {
+        RETURN_BODY,
+        VERIFICATION_REQUIRED,
+        FAIL
+    }
+
+    static HttpAction httpAction(int statusCode, String mitigated, String body) {
+        if (isChallenge("", "", body, statusCode, mitigated)) {
+            return HttpAction.VERIFICATION_REQUIRED;
         }
-        if (browser != null) {
-            browser.stopLoading();
-            browser.removeJavascriptInterface(BRIDGE_NAME);
-            browser.removeAllViews();
-            browser.destroy();
+        return statusCode >= 200 && statusCode < 400
+                ? HttpAction.RETURN_BODY : HttpAction.FAIL;
+    }
+
+    static boolean isChallenge(String url, String title, String body, int statusCode,
+                               String mitigated) {
+        String content = ((url == null ? "" : url) + " "
+                + (title == null ? "" : title) + " "
+                + (body == null ? "" : body)).toLowerCase(Locale.US);
+        return statusCode == 403 && "challenge".equalsIgnoreCase(mitigated)
+                || content.contains("/orchestrate/chl_page/")
+                || content.contains("cf-chl-widget")
+                || content.contains("cf-turnstile-response")
+                || content.contains("just a moment")
+                || content.contains("attention required")
+                || content.contains("checking your browser")
+                || content.contains("performing security verification")
+                || content.contains("verify you are human")
+                || content.contains("请稍候")
+                || content.contains("正在验证")
+                || content.contains("安全验证");
+    }
+
+    static boolean isExpectedPage(String requested, String actual) {
+        try {
+            URL expected = new URL(requested);
+            URL received = new URL(actual);
+            return sameSite(expected, received)
+                    && "/albums".equals(normalizedPath(received.getPath()))
+                    && "/albums".equals(normalizedPath(expected.getPath()));
+        } catch (Exception ignored) {
+            return false;
         }
     }
 
-    private final class FetchBridge {
-        @JavascriptInterface
-        public void onFetchResult(String id, String payload) {
-            main.post(() -> handleFetchResult(id, payload));
+    private static boolean sameSite(String requested, String actual) {
+        try {
+            return sameSite(new URL(requested), new URL(actual));
+        } catch (Exception ignored) {
+            return false;
         }
     }
 
-    private static final class FetchRequest {
-        final String id;
+    private static boolean sameSite(URL expected, URL received) {
+        String expectedHost = expected.getHost().toLowerCase(Locale.US);
+        String receivedHost = received.getHost().toLowerCase(Locale.US);
+        boolean sameHost = expectedHost.equals(receivedHost)
+                || expectedHost.endsWith("." + receivedHost)
+                || receivedHost.endsWith("." + expectedHost);
+        return sameHost && expected.getProtocol().equalsIgnoreCase(received.getProtocol());
+    }
+
+    private static String normalizedPath(String value) {
+        String path = value == null || value.isEmpty() ? "/" : value;
+        while (path.length() > 1 && path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        return path;
+    }
+
+    private static final class InteractiveRequest {
         final String url;
-        final boolean browserContext;
-        final boolean interactiveAllowed;
-        final long deadline;
         final CountDownLatch latch = new CountDownLatch(1);
-        volatile boolean cancelled;
-        volatile boolean completed;
         volatile String result;
-        volatile String error = "";
-        volatile String currentUrl = "";
-        volatile boolean challengeDom;
-        volatile boolean pageReady;
-        volatile boolean contextChallenge;
-        volatile boolean cancelledByTakeover;
-        boolean verifying;
-        boolean interactiveVisible;
+        volatile IOException failure;
+        volatile boolean completed;
+        Dialog dialog;
+        WebView webView;
+        TextView status;
+        TextView reload;
+        ImageView close;
+        Runnable timeout;
+        int attempt;
+        int navigation;
         int statusCode;
         String mitigated = "";
-        String clearanceBefore = "";
+        boolean probeRunning;
+        boolean stopped;
+        boolean succeeded;
 
-        FetchRequest(String id, String url, boolean browserContext,
-                     boolean interactiveAllowed, long deadline) {
-            this.id = id;
+        InteractiveRequest(String url) {
             this.url = url;
-            this.browserContext = browserContext;
-            this.interactiveAllowed = interactiveAllowed;
-            this.deadline = deadline;
         }
-    }
-
-    private static final class ContextChallengeException extends IOException {
     }
 
     private static final class HttpFetch {
