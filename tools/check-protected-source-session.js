@@ -1,63 +1,61 @@
 const fs = require("fs");
 
-const source = fs.readFileSync(
-  "app/src/main/java/com/xxcomic/CloudflareWebViewSession.java",
+const mh18 = fs.readFileSync(
+  "app/src/main/java/com/xxcomic/Mh18WebViewSession.java",
   "utf8",
 );
+const jmcomic = fs.readFileSync(
+  "app/src/main/java/com/xxcomic/JmComicWebViewSession.java",
+  "utf8",
+);
+const sessions = [mh18, jmcomic];
 const main = fs.readFileSync(
   "app/src/main/java/com/xxcomic/MainActivity.java",
   "utf8",
 );
-const mh18Session = main.slice(
-  main.indexOf("mh18BrowserSession = new CloudflareWebViewSession("),
-  main.indexOf("jmcomicBrowserSession = new CloudflareWebViewSession("),
-);
-const jmcomicSession = main.slice(
-  main.indexOf("jmcomicBrowserSession = new CloudflareWebViewSession("),
-  main.indexOf("rebuildSourceClients();"),
-);
-const navigationCapture = source.slice(
-  source.indexOf("private void captureCurrentPage"),
-  source.indexOf("private String browserContextScript"),
-);
+
 function check(name, condition) {
   if (!condition) throw new Error("FAIL " + name);
   console.log("PASS " + name);
 }
 
-check("loads the requested URL directly", source.includes("webView.loadUrl(request.url)"));
-check("captures the current DOM", source.includes("document.documentElement.outerHTML"));
-check("challenge inspection includes DOM markers", source.includes("html:(document.documentElement.outerHTML||'').slice(0,12000)")
-  && source.includes('page.optString("html")'));
-check("navigation capture does not issue a second fetch",
-  !navigationCapture.includes("fetch(")
-  && source.includes("fetchWithBrowserContext(url, deadline)"));
-check("only 18mh uses the full viewport hybrid session",
-  mh18Session.includes("mh18Config.name, true, true, true, true, this::showRemToast")
-  && jmcomicSession.includes("jmcomicConfig.name, true, this::showRemToast")
-  && !jmcomicSession.includes("jmcomicConfig.name, true, true"));
-check("only 18mh keeps the native WebView fingerprint",
-  source.includes("useNativeUserAgent ? WebSettings.getDefaultUserAgent(activity)")
-  && source.includes("if (!useNativeUserAgent) settings.setUserAgentString(userAgent)")
-  && source.includes('connection.setRequestProperty("User-Agent", userAgent)')
-  && mh18Session.includes("mh18Config.name, true, true, true, true, this::showRemToast")
-  && !jmcomicSession.includes("jmcomicConfig.name, true, true"));
-check("18mh challenge stays visible until the target page is ready",
-  source.includes("automaticInteractiveFallback")
-  && source.includes("cf-turnstile-response")
-  && source.includes("shouldHandOffInteractive")
-  && source.includes("shouldHandOffInteractive(automaticInteractiveFallback")
-  && source.includes("if (keepVisibleUntilPageReady) return false")
-  && !source.includes("showCompletingBehindApp"));
-check("one persistent browser session exists per protected source",
-  (main.match(/new CloudflareWebViewSession\(/g) || []).length === 2
-  && main.includes("CloudflareWebViewSession mh18BrowserSession")
-  && main.includes("CloudflareWebViewSession jmcomicBrowserSession")
-  && source.includes("CookieManager.getInstance()") && source.includes("flush()"));
-check("session page cache can be cleared", source.includes("void clearCache()")
-  && source.includes("webView.clearCache(true)")
-  && source.includes("webView.clearHistory()"));
-check("app cache clear removes protected credentials", main.includes("removeAllCookies")
+check("protected sources use independent implementations",
+  !fs.existsSync("app/src/main/java/com/xxcomic/CloudflareWebViewSession.java")
+  && mh18.includes("final class Mh18WebViewSession implements BrowserSession")
+  && jmcomic.includes("final class JmComicWebViewSession implements BrowserSession")
+  && !mh18.includes("JmComicWebViewSession")
+  && !jmcomic.includes("Mh18WebViewSession"));
+check("main owns one concrete session per source",
+  main.includes("Mh18WebViewSession mh18BrowserSession")
+  && main.includes("JmComicWebViewSession jmcomicBrowserSession")
+  && main.includes("new Mh18WebViewSession(")
+  && main.includes("new JmComicWebViewSession("));
+check("both sessions use their native WebView fingerprint",
+  sessions.every(source => source.includes("WebSettings.getDefaultUserAgent(activity)")
+    && source.includes('connection.setRequestProperty("User-Agent", userAgent)')
+    && !source.includes("settings.setUserAgentString")));
+check("both sessions own their request and browser state",
+  sessions.every(source => source.includes("new Semaphore(1, true)")
+    && source.includes("private FetchRequest activeRequest")
+    && source.includes("private volatile boolean browserContextReady")));
+check("both sessions load and capture their requested page",
+  sessions.every(source => source.includes("webView.loadUrl(request.url)")
+    && source.includes("document.documentElement.outerHTML")
+    && source.includes("fetchWithBrowserContext(url, deadline)")));
+check("18mh retains its visible fallback without changing jmcomic",
+  mh18.includes("AUTOMATIC_INTERACTIVE_FALLBACK = true")
+  && mh18.includes("FULL_VIEWPORT_BACKGROUND = true")
+  && jmcomic.includes("AUTOMATIC_INTERACTIVE_FALLBACK = false")
+  && jmcomic.includes("FULL_VIEWPORT_BACKGROUND = false"));
+check("challenge inspection includes DOM markers",
+  sessions.every(source => source.includes("html:(document.documentElement.outerHTML||'').slice(0,12000)")
+    && source.includes('page.optString("html")')));
+check("session page caches can be cleared",
+  sessions.every(source => source.includes("void clearCache()")
+    && source.includes("webView.clearCache(true)")
+    && source.includes("webView.clearHistory()")));
+check("app cache clear removes both protected credentials",
+  main.includes("removeAllCookies")
   && main.includes("WebStorage.getInstance().deleteAllData()")
   && main.includes("mh18BrowserSession.clearCache()")
   && main.includes("jmcomicBrowserSession.clearCache()"));

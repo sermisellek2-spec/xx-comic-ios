@@ -46,8 +46,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-final class CloudflareWebViewSession implements BrowserSession {
-    private static final String BRIDGE_NAME = "XXComicBridge";
+final class Mh18WebViewSession implements BrowserSession {
+    private static final String BRIDGE_NAME = "XXComicMh18Bridge";
     private static final long TIMEOUT_MS = 120000L;
     private static final long POLL_DELAY_MS = 800L;
     private static final long INTERACTIVE_DELAY_MS = 4000L;
@@ -55,9 +55,12 @@ final class CloudflareWebViewSession implements BrowserSession {
             + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
     private static final int CONNECT_TIMEOUT_MS = 10000;
     private static final int READ_TIMEOUT_MS = 25000;
+    private static final boolean PREFER_HTTP = true;
+    private static final boolean FULL_VIEWPORT_BACKGROUND = true;
+    private static final boolean AUTOMATIC_INTERACTIVE_FALLBACK = true;
     private static final ScheduledExecutorService HTTP_TIMEOUTS =
             Executors.newSingleThreadScheduledExecutor(runnable -> {
-                Thread thread = new Thread(runnable, "XXComicHttpTimeout");
+                Thread thread = new Thread(runnable, "Mh18HttpTimeout");
                 thread.setDaemon(true);
                 return thread;
             });
@@ -65,10 +68,6 @@ final class CloudflareWebViewSession implements BrowserSession {
     private final Activity activity;
     private final Handler main;
     private final String sourceName;
-    private final boolean preferHttp;
-    private final boolean fullViewportBackground;
-    private final boolean automaticInteractiveFallback;
-    private final boolean useNativeUserAgent;
     private final String userAgent;
     private final VerificationStatusListener verificationStatus;
     private final Semaphore requestLock = new Semaphore(1, true);
@@ -83,33 +82,12 @@ final class CloudflareWebViewSession implements BrowserSession {
     private int navigation;
     private volatile boolean browserContextReady;
 
-    CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
-                             boolean preferHttp,
-                             VerificationStatusListener verificationStatus) {
-        this(activity, main, sourceName, preferHttp, false, false, false,
-                verificationStatus);
-    }
-
-    CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
-                             boolean preferHttp, boolean fullViewportBackground,
-                             VerificationStatusListener verificationStatus) {
-        this(activity, main, sourceName, preferHttp, fullViewportBackground, false, false,
-                verificationStatus);
-    }
-
-    CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
-                             boolean preferHttp, boolean fullViewportBackground,
-                             boolean automaticInteractiveFallback, boolean useNativeUserAgent,
-                             VerificationStatusListener verificationStatus) {
+    Mh18WebViewSession(Activity activity, Handler main, String sourceName,
+                       VerificationStatusListener verificationStatus) {
         this.activity = activity;
         this.main = main;
         this.sourceName = sourceName;
-        this.preferHttp = preferHttp;
-        this.fullViewportBackground = fullViewportBackground;
-        this.automaticInteractiveFallback = automaticInteractiveFallback;
-        this.useNativeUserAgent = useNativeUserAgent;
-        this.userAgent = selectedUserAgent(useNativeUserAgent,
-                useNativeUserAgent ? WebSettings.getDefaultUserAgent(activity) : "");
+        this.userAgent = selectedUserAgent(WebSettings.getDefaultUserAgent(activity));
         this.verificationStatus = verificationStatus;
     }
 
@@ -121,8 +99,8 @@ final class CloudflareWebViewSession implements BrowserSession {
         return INTERACTIVE_DELAY_MS;
     }
 
-    static String selectedUserAgent(boolean useNativeUserAgent, String nativeUserAgent) {
-        return useNativeUserAgent && nativeUserAgent != null && !nativeUserAgent.trim().isEmpty()
+    static String selectedUserAgent(String nativeUserAgent) {
+        return nativeUserAgent != null && !nativeUserAgent.trim().isEmpty()
                 ? nativeUserAgent : USER_AGENT;
     }
 
@@ -193,7 +171,7 @@ final class CloudflareWebViewSession implements BrowserSession {
         }
         long deadline = requestDeadlineMs(SystemClock.elapsedRealtime());
         boolean allowInteractive = allowsInteractiveChallenge(
-                interactiveAllowed, automaticInteractiveFallback);
+                interactiveAllowed, AUTOMATIC_INTERACTIVE_FALLBACK);
         boolean acquired = false;
         try {
             long lockWait = remainingRequestMs(deadline, SystemClock.elapsedRealtime());
@@ -202,7 +180,7 @@ final class CloudflareWebViewSession implements BrowserSession {
             }
             acquired = true;
             if (shutdown) throw new IOException(sourceName + "浏览器会话已停止");
-            RequestTransport transport = requestTransport(preferHttp, browserContextReady);
+            RequestTransport transport = requestTransport(PREFER_HTTP, browserContextReady);
             if (transport == RequestTransport.BROWSER_CONTEXT) {
                 try {
                     return fetchWithBrowserContext(url, deadline);
@@ -223,7 +201,7 @@ final class CloudflareWebViewSession implements BrowserSession {
                 }
             }
             String body = fetchWithBrowser(url, allowInteractive, deadline);
-            if (preferHttp) browserContextReady = true;
+            if (PREFER_HTTP) browserContextReady = true;
             return body;
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
@@ -439,7 +417,6 @@ final class CloudflareWebViewSession implements BrowserSession {
         page.addView(card, statusParams);
 
         WebSettings settings = browser.getSettings();
-        if (!useNativeUserAgent) settings.setUserAgentString(userAgent);
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
@@ -528,7 +505,7 @@ final class CloudflareWebViewSession implements BrowserSession {
                 request.challengeDom = challenge;
                 request.pageReady = ready;
                 String clearanceNow = clearanceCookie(request.url);
-                if (shouldHandOffInteractive(automaticInteractiveFallback,
+                if (shouldHandOffInteractive(AUTOMATIC_INTERACTIVE_FALLBACK,
                         request.interactiveVisible, turnstileSolved,
                         request.clearanceBefore, clearanceNow)) {
                     request.interactiveVisible = false;
@@ -563,7 +540,7 @@ final class CloudflareWebViewSession implements BrowserSession {
                     android.webkit.CookieManager.getInstance().flush();
                     if (request.verifying) {
                         notifyVerification("验证完成");
-                        if (automaticInteractiveFallback) showBackgroundView();
+                        if (AUTOMATIC_INTERACTIVE_FALLBACK) showBackgroundView();
                         else showVerifiedState();
                         browser.postDelayed(() -> captureCurrentPage(
                                 request, browser, expectedNavigation), 300L);
@@ -743,7 +720,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     private void showBackgroundView() {
         if (host == null) return;
         host.setLayoutParams(backgroundLayoutParams());
-        host.setTranslationX(fullViewportBackground
+        host.setTranslationX(FULL_VIEWPORT_BACKGROUND
                 ? activity.getResources().getDisplayMetrics().widthPixels + 1f : 0f);
         host.setBackgroundColor(Color.TRANSPARENT);
         host.setClickable(false);
@@ -761,7 +738,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     }
 
     private FrameLayout.LayoutParams backgroundLayoutParams() {
-        int extent = backgroundExtent(fullViewportBackground);
+        int extent = backgroundExtent(FULL_VIEWPORT_BACKGROUND);
         return new FrameLayout.LayoutParams(extent, extent, Gravity.TOP | Gravity.START);
     }
 

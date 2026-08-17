@@ -5,7 +5,7 @@ const main = fs.readFileSync(
   "utf8",
 );
 const session = fs.readFileSync(
-  "app/src/main/java/com/xxcomic/CloudflareWebViewSession.java",
+  "app/src/main/java/com/xxcomic/JmComicWebViewSession.java",
   "utf8",
 );
 
@@ -41,7 +41,7 @@ check("ready browser context skips repeated http probes",
       < session.indexOf("fetchHttp(url, deadline)"));
 check("context challenge performs one navigation fallback",
   session.includes("browserContextReady = false")
-  && session.includes("fetchWithBrowser(url, interactiveAllowed, deadline)"));
+  && session.includes("fetchWithBrowser(url, allowInteractive, deadline)"));
 check("manual verification keeps useful failure classes",
   main.includes('" 验证超时"') && main.includes('" 页面验证失败"')
   && main.includes('" 连接失败，请检查 VPN"'));
@@ -54,11 +54,11 @@ check("category failures are visible and retryable",
 check("category failure never clears catalog results",
   !/catch \(Exception error\)[\s\S]{0,500}分类加载失败[\s\S]{0,300}searchResults\.clear\(\)/.test(main));
 check("jmcomic opts into cookie-backed http",
-  main.includes("jmcomicConfig.name, true")
+  main.includes("new JmComicWebViewSession(")
   && session.includes("fetchHttp(url, deadline)")
   && session.includes('setRequestProperty("Cookie", cookie)')
   && session.includes("HttpAction.OPEN_BROWSER"));
 check("mh18 also uses cookie-backed http",
-  main.includes("mh18Config.name, true"));
+  main.includes("new Mh18WebViewSession("));
 
 console.log("JMComic bootstrap contract holds.");

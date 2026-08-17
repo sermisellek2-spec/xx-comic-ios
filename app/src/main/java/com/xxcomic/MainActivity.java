@@ -178,8 +178,8 @@ public class MainActivity extends Activity {
     private ComicSource bbyinClient;
     private ComicSource antbywClient;
     private ComicSource cuimhClient;
-    private CloudflareWebViewSession mh18BrowserSession;
-    private CloudflareWebViewSession jmcomicBrowserSession;
+    private Mh18WebViewSession mh18BrowserSession;
+    private JmComicWebViewSession jmcomicBrowserSession;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
     private SourceConfig aikanConfig = SourceConfig.aikan(true);
     private SourceConfig gmhConfig = SourceConfig.gmh(true);
@@ -345,10 +345,10 @@ public class MainActivity extends Activity {
         applyThemeAndSystemBars();
         root = new FrameLayout(this);
         setContentView(root);
-        mh18BrowserSession = new CloudflareWebViewSession(
-                this, main, mh18Config.name, true, true, true, true, this::showRemToast);
-        jmcomicBrowserSession = new CloudflareWebViewSession(
-                this, main, jmcomicConfig.name, true, this::showRemToast);
+        mh18BrowserSession = new Mh18WebViewSession(
+                this, main, mh18Config.name, this::showRemToast);
+        jmcomicBrowserSession = new JmComicWebViewSession(
+                this, main, jmcomicConfig.name, this::showRemToast);
         rebuildSourceClients();
         restoreLocalState();
         applyThemeAndSystemBars();
