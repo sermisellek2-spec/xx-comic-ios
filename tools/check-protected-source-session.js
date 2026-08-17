@@ -163,8 +163,18 @@ check("jmcomic request, preferences, and retry remain isolated",
   && jmcomic.includes("private final VerificationRetryListener verificationRetry")
   && jmcomic.includes('JM_ORIGIN = "https://18comic.vip"')
   && !jmcomic.toLowerCase().includes("mh18"));
-check("main keeps task-2 constructor compatibility",
-  main.includes("this, main, mh18Config.name, this::showRemToast);"));
+check("main wires isolated manual retry callbacks",
+  main.includes("this, main, mh18Config.name, null,")
+  && main.includes('requestProtectedSourceRetry("mh18")')
+  && main.includes("this, main, jmcomicConfig.name, null,")
+  && main.includes('requestProtectedSourceRetry("jmcomic")'));
+check("content screens never start protected verification",
+  main.includes("shouldOfferSourceVerification")
+  && main.includes("verificationRequiredState(String sourceId)")
+  && main.includes('"去验证", this::showSourceManagement')
+  && main.includes("globalSearchVerificationRequiredSourceIds")
+  && main.includes("searchAppendVerificationRequired")
+  && !main.includes("shouldReloadAfterProtectedVerification"));
 check("app cache clear removes both protected credentials",
   main.includes("removeAllCookies")
   && main.includes("WebStorage.getInstance().deleteAllData()")

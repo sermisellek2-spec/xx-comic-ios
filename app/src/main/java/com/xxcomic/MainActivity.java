@@ -63,6 +63,8 @@ import com.xxcomic.source.Hanman18ComicSource;
 import com.xxcomic.source.MkzhanComicSource;
 import com.xxcomic.source.Mhua5ComicSource;
 import com.xxcomic.source.SourceConfig;
+import com.xxcomic.source.VerificationCancelledException;
+import com.xxcomic.source.VerificationRequiredException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -201,6 +203,7 @@ public class MainActivity extends Activity {
     private final Map<String, List<ComicModels.ComicSummary>> globalSearchResultsBySource = new LinkedHashMap<>();
     private final Map<String, Set<String>> globalSearchShownIdsBySource = new HashMap<>();
     private final Set<String> globalSearchFailedSourceIds = new HashSet<>();
+    private final Set<String> globalSearchVerificationRequiredSourceIds = new HashSet<>();
     private final Set<String> globalSearchCompletedSourceIds = new HashSet<>();
     private final Map<String, ComicModels.ComicSummary> summaries = new LinkedHashMap<>();
     private final Map<String, ComicModels.ComicDetail> details = new HashMap<>();
@@ -209,6 +212,7 @@ public class MainActivity extends Activity {
     private final Set<String> refreshingComicIds = new HashSet<>();
     private final Set<String> readerPrefetching = new HashSet<>();
     private final Set<String> verifyingProtectedSourceIds = new HashSet<>();
+    private final Set<String> retryProtectedSourceIds = new HashSet<>();
     private final Map<String, DetailAction> pendingRefreshActions = new HashMap<>();
     private final List<String> favorites = new ArrayList<>();
     private final List<ComicModels.FilterGroup> sourceFilterGroups = new ArrayList<>();
@@ -263,6 +267,7 @@ public class MainActivity extends Activity {
     private boolean searchHasMore = true;
     private boolean sourceCategoriesFailed = false;
     private boolean searchAppendFailed = false;
+    private boolean searchAppendVerificationRequired = false;
     private String searchAppendFailedKeyword = "";
     private int searchAppendFailedPage = -1;
     private boolean searchAppendFailedCategoryMode = false;
@@ -346,9 +351,11 @@ public class MainActivity extends Activity {
         root = new FrameLayout(this);
         setContentView(root);
         mh18BrowserSession = new Mh18WebViewSession(
-                this, main, mh18Config.name, this::showRemToast);
+                this, main, mh18Config.name, null,
+                () -> requestProtectedSourceRetry("mh18"));
         jmcomicBrowserSession = new JmComicWebViewSession(
-                this, main, jmcomicConfig.name, this::showRemToast);
+                this, main, jmcomicConfig.name, null,
+                () -> requestProtectedSourceRetry("jmcomic"));
         rebuildSourceClients();
         restoreLocalState();
         applyThemeAndSystemBars();
@@ -1051,7 +1058,13 @@ public class MainActivity extends Activity {
 
     private void renderSearchPagingFooter(LinearLayout content) {
         removeSearchPagingFooter();
-        if (searchAppendFailed) {
+        if (searchAppendVerificationRequired) {
+            TextView verify = UIHelpers.text(
+                    this, "验证已失效 · 去验证", 12, UIHelpers.ACCENT, Typeface.NORMAL);
+            verify.setGravity(Gravity.CENTER);
+            verify.setOnClickListener(v -> showSourceManagement());
+            searchPagingFooter = verify;
+        } else if (searchAppendFailed) {
             TextView retry = UIHelpers.text(this, "加载失败，点击重试", 12, UIHelpers.ACCENT, Typeface.NORMAL);
             retry.setGravity(Gravity.CENTER);
             retry.setOnClickListener(v -> {
@@ -1828,6 +1841,11 @@ public class MainActivity extends Activity {
         globalSearchLoadingView = null;
         List<ComicModels.ComicSummary> selectedResults = globalResultsForSource(selectedGlobalSearchSourceId);
         if (selectedResults.isEmpty()) {
+            if (globalSearchVerificationRequiredSourceIds.contains(selectedGlobalSearchSourceId)) {
+                globalSearchResultsContainer.addView(
+                        verificationRequiredState(selectedGlobalSearchSourceId));
+                return;
+            }
             if (globalSearchLoading
                     && !globalSearchFailedSourceIds.contains(selectedGlobalSearchSourceId)
                     && !globalSearchCompletedSourceIds.contains(selectedGlobalSearchSourceId)) {
@@ -1944,6 +1962,11 @@ public class MainActivity extends Activity {
         content.addView(globalSearchSourceTabs(sources), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 12)));
         List<ComicModels.ComicSummary> selectedResults = globalResultsForSource(selectedGlobalSearchSourceId);
         if (selectedResults.isEmpty()) {
+            if (globalSearchVerificationRequiredSourceIds.contains(selectedGlobalSearchSourceId)) {
+                content.addView(verificationRequiredState(selectedGlobalSearchSourceId));
+                ensureStatusView(content);
+                return;
+            }
             if (globalSearchLoading
                     && !globalSearchFailedSourceIds.contains(selectedGlobalSearchSourceId)
                     && !globalSearchCompletedSourceIds.contains(selectedGlobalSearchSourceId)) {
@@ -2267,52 +2290,41 @@ public class MainActivity extends Activity {
         return "mh18".equals(sourceId) || "jmcomic".equals(sourceId);
     }
 
+    static boolean shouldOfferSourceVerification(String sourceId, boolean verificationRequired) {
+        return verificationRequired && supportsManualVerification(sourceId);
+    }
+
     static boolean categoriesFollowInitialList(String sourceId) {
         if ("mh18".equals(sourceId)) return true;
         return "jmcomic".equals(sourceId);
     }
 
-    static boolean shouldReloadAfterProtectedVerification(String sourceId, int currentTab,
-                                                           String selectedSourceId,
-                                                           boolean globalSearchMode) {
-        return "jmcomic".equals(sourceId) && currentTab == 1
-                && "jmcomic".equals(selectedSourceId) && !globalSearchMode;
+    private void requestProtectedSourceRetry(String sourceId) {
+        if (supportsManualVerification(sourceId)) retryProtectedSourceIds.add(sourceId);
     }
 
     private void verifyProtectedSource(String sourceId) {
         if (!supportsManualVerification(sourceId) || !verifyingProtectedSourceIds.add(sourceId)) return;
-        ComicSource client = sourceForId(sourceId);
-        showRemToast(client.name() + " 正在验证");
         sourceHealthIo.submit(() -> {
-            String resultMessage;
-            boolean verified = false;
+            Exception failure = null;
             try {
                 if ("jmcomic".equals(sourceId)) {
                     jmcomicClient.verifyAccess();
-                    resultMessage = client.name() + " 验证完成";
-                    verified = true;
                 } else if ("mh18".equals(sourceId)) {
                     mh18Client.verifyAccess();
-                    resultMessage = client.name() + " 验证完成";
-                    verified = true;
-                } else {
-                    resultMessage = client.name() + " 验证失败";
                 }
             } catch (Exception error) {
-                String reason = clean(error.getMessage(), "连接失败");
-                resultMessage = client.name() + (reason.contains("超时")
-                        ? " 验证超时" : reason.contains("页面") || reason.contains("解析")
-                        ? " 页面验证失败" : " 连接失败，请检查 VPN");
+                failure = error;
             }
-            String message = resultMessage;
-            boolean verificationSucceeded = verified;
+            Exception verificationFailure = failure;
             postMainIfAlive(() -> {
                 verifyingProtectedSourceIds.remove(sourceId);
-                showRemToast(message);
-                if (verificationSucceeded && shouldReloadAfterProtectedVerification(
-                        sourceId, currentTab, selectedSourceId, globalSearchMode)) {
-                    resetSearchPaging();
-                    loadSearchPage(searchQuery, 1, false, TextUtils.isEmpty(searchQuery.trim()));
+                boolean retry = retryProtectedSourceIds.remove(sourceId);
+                if (retry) {
+                    verifyProtectedSource(sourceId);
+                } else if (verificationFailure != null
+                        && !(verificationFailure instanceof VerificationCancelledException)) {
+                    showRemToast(sourceNameForId(sourceId) + " 验证未完成");
                 }
             });
         });
@@ -2343,10 +2355,11 @@ public class MainActivity extends Activity {
         ComicModels.ComicDetail detail = details.get(comicId);
         if (detail == null) {
             int loadingGeneration = showPageLoading("正在加载详情...", "正在获取漫画信息。", detailBackAction);
+            ComicSource requestClient = sourceForComicId(comicId);
+            String requestSourceId = requestClient.id();
             track(detailIo.submit(() -> {
                 try {
-                    ComicSource client = sourceForComicId(comicId);
-                    ComicModels.ComicDetail loaded = client.detail(comicId);
+                    ComicModels.ComicDetail loaded = requestClient.detail(comicId);
                     loadImageToCache(loaded.summary.coverUrl);
                     main.post(() -> {
                         if (!isCurrentLoading(loadingGeneration)) return;
@@ -2363,7 +2376,12 @@ public class MainActivity extends Activity {
                         if (!isCurrentLoading(loadingGeneration)) return;
                         pageLoading = false;
                         pageLoadingBackAction = null;
-                        showError("详情加载失败", error, () -> showDetail(comicId));
+                        if (shouldOfferSourceVerification(
+                                requestSourceId, isVerificationRequired(error))) {
+                            showVerificationRequired(requestSourceId);
+                        } else {
+                            showError("详情加载失败", error, () -> showDetail(comicId));
+                        }
                     });
                 }
             }));
@@ -2554,10 +2572,17 @@ public class MainActivity extends Activity {
                     });
                 } catch (Exception error) {
                     boolean expectedCancellation = isExpectedTaskCancellation(error);
+                    boolean verificationRequired = isVerificationRequired(error);
                     main.post(() -> {
                         if (expectedCancellation || !isCurrentReaderRequest(generation, comicId, chapterUrl, detail)) return;
-                        appendErrorLog("章节加载失败", error);
-                        showReaderError(detail, "加载失败了", "阅读位置已经保留", () -> showReader(detail, chapterIndex));
+                        if (shouldOfferSourceVerification(
+                                detail.summary.sourceId, verificationRequired)) {
+                            showReaderVerificationRequired(detail);
+                        } else {
+                            appendErrorLog("章节加载失败", error);
+                            showReaderError(detail, "加载失败了", "阅读位置已经保留",
+                                    () -> showReader(detail, chapterIndex));
+                        }
                     });
                 }
             }));
@@ -3025,6 +3050,7 @@ public class MainActivity extends Activity {
                     persistComicCachesAsync();
                 });
             } catch (Exception error) {
+                boolean verificationRequired = isVerificationRequired(error);
                 main.post(() -> {
                     if (generation != searchGeneration) return;
                     if (!TextUtils.equals(requestSourceId, selectedSourceId)) return;
@@ -3036,7 +3062,19 @@ public class MainActivity extends Activity {
                     }
                     searchLoading = false;
                     searchAppending = false;
-                    if (pullRefresh) {
+                    if (shouldOfferSourceVerification(requestSourceId, verificationRequired)) {
+                        if (pullRefresh) finishSearchPullRefresh();
+                        if (append || pullRefresh) {
+                            searchAppendVerificationRequired = true;
+                            searchAppendFailedGeneration = generation;
+                            searchAppendFailedContent = searchResultsContent;
+                            if (currentTab == 1 && searchResultsContent != null) {
+                                renderSearchPagingFooter(searchResultsContent);
+                            }
+                        } else {
+                            showVerificationRequired(requestSourceId);
+                        }
+                    } else if (pullRefresh) {
                         finishSearchPullRefresh();
                         appendErrorLog("\u641c\u7d22\u5237\u65b0\u5931\u8d25", error);
                         if (currentTab == 1 && searchResultsContent != null) {
@@ -3063,6 +3101,7 @@ public class MainActivity extends Activity {
 
     private void loadNextSearchPage() {
         if (searchLoading || searchAppending || searchRefreshing || searchAppendFailed
+                || searchAppendVerificationRequired
                 || !searchHasMore || currentTab != 1 || standaloneSearchVisible) return;
         loadSearchPage(searchQuery, searchPage + 1, true, TextUtils.isEmpty(searchQuery.trim()));
     }
@@ -3077,6 +3116,7 @@ public class MainActivity extends Activity {
 
     private void clearSearchAppendFailure() {
         searchAppendFailed = false;
+        searchAppendVerificationRequired = false;
         searchAppendFailedKeyword = "";
         searchAppendFailedPage = -1;
         searchAppendFailedCategoryMode = false;
@@ -3091,6 +3131,7 @@ public class MainActivity extends Activity {
         globalSearchResultsBySource.clear();
         globalSearchShownIdsBySource.clear();
         globalSearchFailedSourceIds.clear();
+        globalSearchVerificationRequiredSourceIds.clear();
         globalSearchCompletedSourceIds.clear();
         List<ComicSource> clients = enabledSearchSources();
         selectedGlobalSearchSourceId = clients.isEmpty() ? "" : clients.get(0).id();
@@ -3140,14 +3181,17 @@ public class MainActivity extends Activity {
             Future<?> future = track(searchIo.submit(() -> {
                 List<ComicModels.ComicSummary> partial = new ArrayList<>();
                 boolean failed = false;
+                boolean verificationRequired = false;
                 try {
                     List<ComicModels.ComicSummary> got = client.search(query, 1);
                     if (got != null) partial = got;
                 } catch (Exception e) {
                     failed = true;
+                    verificationRequired = isVerificationRequired(e);
                 }
                 final List<ComicModels.ComicSummary> result = partial;
                 final boolean isFailed = failed;
+                final boolean needsVerification = verificationRequired;
                 main.post(() -> {
                     if (generation != globalSearchGeneration) return;
                     String sourceId = client.id();
@@ -3160,7 +3204,11 @@ public class MainActivity extends Activity {
                     if (counted.compareAndSet(false, true)) {
                         if (isFailed) {
                             globalSearchFailedSources++;
-                            globalSearchFailedSourceIds.add(sourceId);
+                            if (shouldOfferSourceVerification(sourceId, needsVerification)) {
+                                globalSearchVerificationRequiredSourceIds.add(sourceId);
+                            } else {
+                                globalSearchFailedSourceIds.add(sourceId);
+                            }
                         }
                         globalSearchCompletedSourceIds.add(sourceId);
                         globalSearchCompletedSources++;
@@ -3194,7 +3242,6 @@ public class MainActivity extends Activity {
                     }
                 });
             }));
-            // 受保护站源给浏览器验证留足时间，其他站源保持快速超时。
             final Future<?> f = future;
             scheduledIo.schedule(() -> {
                 if (f.isDone()) return;
@@ -3215,7 +3262,7 @@ public class MainActivity extends Activity {
     }
 
     static long globalSearchTimeoutSeconds(String sourceId) {
-        return "mh18".equals(sourceId) || "jmcomic".equals(sourceId) ? 185L : 10L;
+        return 10L;
     }
 
     /** 单个站源完成时的统一收尾（计数、状态、关闭 loading） */
@@ -3463,11 +3510,16 @@ public class MainActivity extends Activity {
                     }
                 });
             } catch (Exception error) {
+                boolean verificationRequired = isVerificationRequired(error);
                 main.post(() -> {
                     if (generation != categoryGeneration || !TextUtils.equals(sourceId, selectedSourceId)) return;
                     sourceCategoriesFailed = true;
-                    appendErrorLog("分类加载失败", error);
-                    if (currentTab == 1) showTab(1, false);
+                    if (shouldOfferSourceVerification(sourceId, verificationRequired)) {
+                        showVerificationRequired(sourceId);
+                    } else {
+                        appendErrorLog("分类加载失败", error);
+                        if (currentTab == 1) showTab(1, false);
+                    }
                 });
             }
         }));
@@ -3622,13 +3674,20 @@ public class MainActivity extends Activity {
                 });
             } catch (Exception error) {
                 boolean expectedCancellation = isExpectedTaskCancellation(error);
+                boolean verificationRequired = isVerificationRequired(error);
                 main.post(() -> {
                     if (expectedCancellation || !isCurrentLoading(loadingGeneration)) return;
                     pageLoading = false;
                     pageLoadingBackAction = null;
-                    appendErrorLog("目录加载失败", error);
-                    showDetail(detail.summary.comicId);
-                    styledDialog("目录加载失败", clean(error.getMessage(), "请稍后重试。"), "重试", () -> ensureChaptersThen(detail, action), "取消", null);
+                    if (shouldOfferSourceVerification(
+                            detail.summary.sourceId, verificationRequired)) {
+                        showVerificationRequired(detail.summary.sourceId);
+                    } else {
+                        appendErrorLog("目录加载失败", error);
+                        showDetail(detail.summary.comicId);
+                        styledDialog("目录加载失败", clean(error.getMessage(), "请稍后重试。"),
+                                "重试", () -> ensureChaptersThen(detail, action), "取消", null);
+                    }
                 });
             }
         }));
@@ -3741,11 +3800,18 @@ public class MainActivity extends Activity {
                     });
                 } catch (Exception error) {
                     boolean expectedCancellation = isExpectedTaskCancellation(error);
+                    boolean verificationRequired = isVerificationRequired(error);
                     main.post(() -> {
                         if (expectedCancellation || activePopup != popup || !popup.isShowing()) return;
-                        appendErrorLog("目录解析失败", error);
                         list.removeAllViews();
-                        list.addView(remState(R.drawable.rem_error, "目录解析失败", "请稍后再试", "重试", load[0]));
+                        if (shouldOfferSourceVerification(
+                                detail.summary.sourceId, verificationRequired)) {
+                            list.addView(verificationRequiredState(detail.summary.sourceId));
+                        } else {
+                            appendErrorLog("目录解析失败", error);
+                            list.addView(remState(R.drawable.rem_error,
+                                    "目录解析失败", "请稍后再试", "重试", load[0]));
+                        }
                     });
                 }
             }));
@@ -5104,6 +5170,44 @@ public class MainActivity extends Activity {
 
     private View loadingState(String title, String desc) {
         return remState(R.drawable.rem_loading, title, desc, "", null);
+    }
+
+    private View verificationRequiredState(String sourceId) {
+        return remState(R.drawable.rem_error, sourceNameForId(sourceId) + "需要验证",
+                "请先完成站点验证", "去验证", this::showSourceManagement);
+    }
+
+    private void showVerificationRequired(String sourceId) {
+        pageLoading = false;
+        pageLoadingBackAction = null;
+        if (activePopup != null && activePopup.isShowing()) activePopup.dismiss();
+        root.removeAllViews();
+        root.addView(verificationRequiredState(sourceId), UIHelpers.match());
+    }
+
+    private void showReaderVerificationRequired(ComicModels.ComicDetail detail) {
+        root.removeAllViews();
+        readerVisible = true;
+        applyReaderSystemBars();
+        LinearLayout shell = new LinearLayout(this);
+        shell.setOrientation(LinearLayout.VERTICAL);
+        shell.setBackgroundColor(UIHelpers.DARK);
+        root.addView(shell, UIHelpers.match());
+        shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(
+                -1, UIHelpers.dp(this, 43)));
+        shell.addView(readerState(R.drawable.rem_error,
+                sourceNameForId(detail.summary.sourceId) + "需要验证",
+                "请先完成站点验证", "去验证", this::showSourceManagement, false),
+                new LinearLayout.LayoutParams(-1, 0, 1));
+    }
+
+    private boolean isVerificationRequired(Throwable error) {
+        Throwable current = error;
+        while (current != null) {
+            if (current instanceof VerificationRequiredException) return true;
+            current = current.getCause();
+        }
+        return false;
     }
 
     private View remState(int imageRes, String title, String desc, String action, Runnable onClick) {

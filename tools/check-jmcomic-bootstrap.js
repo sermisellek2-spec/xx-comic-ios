@@ -40,17 +40,24 @@ check("jmcomic verification requires browser and cached catalog markers",
   session.includes("JmComicSource.hasCatalogMarker(html)")
   && session.includes("JmComicSource.hasCatalogMarker(response.body)")
   && session.includes("verificationComplete(browserCatalog, probeCatalog)"));
-check("successful manual verification reloads only the visible jmcomic catalog",
-  main.includes("shouldReloadAfterProtectedVerification(")
-  && main.includes("loadSearchPage(searchQuery, 1, false"));
-check("verification status uses the themed app toast",
-  main.includes("this::showRemToast"));
+check("verification completion stays in source management",
+  !main.includes("shouldReloadAfterProtectedVerification(")
+  && !main.includes("loadSearchPage(searchQuery, 1, false"));
+check("verification status stays inside each compact dialog",
+  main.includes("this, main, jmcomicConfig.name, null,")
+  && session.includes('setStatus(request, "验证完成")'));
 check("protected requests remain single active navigation",
   session.includes("requestLock.tryAcquire")
   && session.includes("activeRequest != null && !activeRequest.completed"));
-check("manual verification keeps useful failure classes",
-  main.includes('" 验证超时"') && main.includes('" 页面验证失败"')
-  && main.includes('" 连接失败，请检查 VPN"'));
+check("manual cancellation is silent and retry is source-local",
+  main.includes("instanceof VerificationCancelledException")
+  && main.includes('requestProtectedSourceRetry("jmcomic")')
+  && main.includes('requestProtectedSourceRetry("mh18")'));
+check("content failures route back to source management",
+  main.includes("verificationRequiredState(String sourceId)")
+  && main.includes("globalSearchVerificationRequiredSourceIds")
+  && main.includes("searchAppendVerificationRequired")
+  && main.includes("return 10L;"));
 check("jmcomic defers categories until the first list",
   main.includes('return "jmcomic".equals(sourceId);')
   && main.includes("if (loadCategoriesAfterList) loadSourceCategories()"));

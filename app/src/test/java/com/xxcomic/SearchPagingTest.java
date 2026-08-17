@@ -39,9 +39,9 @@ public class SearchPagingTest {
     }
 
     @Test
-    public void protectedSourcesUseBrowserSessionTimeoutDuringGlobalSearch() {
-        assertEquals(185L, MainActivity.globalSearchTimeoutSeconds("mh18"));
-        assertEquals(185L, MainActivity.globalSearchTimeoutSeconds("jmcomic"));
+    public void protectedSourcesUseNormalTimeoutDuringGlobalSearch() {
+        assertEquals(10L, MainActivity.globalSearchTimeoutSeconds("mh18"));
+        assertEquals(10L, MainActivity.globalSearchTimeoutSeconds("jmcomic"));
         assertEquals(10L, MainActivity.globalSearchTimeoutSeconds("baozi"));
     }
 
