@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
@@ -37,25 +38,36 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 final class CloudflareWebViewSession implements BrowserSession {
     private static final String BRIDGE_NAME = "XXComicBridge";
-    private static final long TIMEOUT_MS = 180000L;
+    private static final long TIMEOUT_MS = 120000L;
     private static final long POLL_DELAY_MS = 800L;
     private static final long INTERACTIVE_DELAY_MS = 4000L;
     private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14) "
             + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
     private static final int CONNECT_TIMEOUT_MS = 10000;
     private static final int READ_TIMEOUT_MS = 25000;
+    private static final ScheduledExecutorService HTTP_TIMEOUTS =
+            Executors.newSingleThreadScheduledExecutor(runnable -> {
+                Thread thread = new Thread(runnable, "XXComicHttpTimeout");
+                thread.setDaemon(true);
+                return thread;
+            });
 
     private final Activity activity;
     private final Handler main;
     private final String sourceName;
     private final boolean preferHttp;
     private final VerificationStatusListener verificationStatus;
-    private final Object requestLock = new Object();
+    private final Semaphore requestLock = new Semaphore(1, true);
     private final AtomicInteger requestSequence = new AtomicInteger();
     private volatile boolean shutdown;
     private FrameLayout host;
@@ -85,26 +97,62 @@ final class CloudflareWebViewSession implements BrowserSession {
         return INTERACTIVE_DELAY_MS;
     }
 
+    static long requestTimeoutMs() {
+        return TIMEOUT_MS;
+    }
+
+    static long requestDeadlineMs(long startedAt) {
+        return startedAt + TIMEOUT_MS;
+    }
+
+    static long remainingRequestMs(long deadline, long now) {
+        return Math.max(0L, deadline - now);
+    }
+
+    static long httpWatchdogDelayMs(long deadline, long now) {
+        return remainingRequestMs(deadline, now);
+    }
+
+    static boolean shouldShowInteractive(boolean interactiveAllowed, boolean verifying) {
+        return interactiveAllowed && verifying;
+    }
+
     @Override
     public String fetch(String url) throws IOException {
+        return fetch(url, false);
+    }
+
+    @Override
+    public String fetchInteractive(String url) throws IOException {
+        return fetch(url, true);
+    }
+
+    private String fetch(String url, boolean interactiveAllowed) throws IOException {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             throw new IOException(sourceName + "请求不能阻塞主线程");
         }
-        synchronized (requestLock) {
+        long deadline = requestDeadlineMs(SystemClock.elapsedRealtime());
+        boolean acquired = false;
+        try {
+            long lockWait = remainingRequestMs(deadline, SystemClock.elapsedRealtime());
+            if (lockWait == 0L || !requestLock.tryAcquire(lockWait, TimeUnit.MILLISECONDS)) {
+                throw new IOException(sourceName + "请求超时");
+            }
+            acquired = true;
             if (shutdown) throw new IOException(sourceName + "浏览器会话已停止");
             RequestTransport transport = requestTransport(preferHttp, browserContextReady);
             if (transport == RequestTransport.BROWSER_CONTEXT) {
                 try {
-                    return fetchWithBrowserContext(url);
+                    return fetchWithBrowserContext(url, deadline);
                 } catch (ContextChallengeException challenge) {
                     browserContextReady = false;
-                    String body = fetchWithBrowser(url);
+                    String body = fetchWithBrowser(url, interactiveAllowed, deadline);
                     browserContextReady = true;
                     return body;
                 }
             }
             if (transport == RequestTransport.HTTP) {
-                HttpFetch response = fetchHttp(url);
+                HttpFetch response = fetchHttp(url, deadline);
                 HttpAction action = httpAction(
                         response.statusCode, response.mitigated, response.body);
                 if (action == HttpAction.RETURN_BODY) return response.body;
@@ -112,9 +160,14 @@ final class CloudflareWebViewSession implements BrowserSession {
                     throw new IOException(sourceName + " HTTP " + response.statusCode);
                 }
             }
-            String body = fetchWithBrowser(url);
+            String body = fetchWithBrowser(url, interactiveAllowed, deadline);
             if (preferHttp) browserContextReady = true;
             return body;
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new IOException(sourceName + "请求已取消", interrupted);
+        } finally {
+            if (acquired) requestLock.release();
         }
     }
 
@@ -129,23 +182,26 @@ final class CloudflareWebViewSession implements BrowserSession {
         return browserContextReady ? RequestTransport.BROWSER_CONTEXT : RequestTransport.HTTP;
     }
 
-    private String fetchWithBrowser(String url) throws IOException {
+    private String fetchWithBrowser(String url, boolean interactiveAllowed,
+                                    long deadline) throws IOException {
         FetchRequest request = new FetchRequest(
-                Integer.toString(requestSequence.incrementAndGet()), url, false);
+                Integer.toString(requestSequence.incrementAndGet()), url, false,
+                interactiveAllowed, deadline);
         main.post(() -> startRequest(request));
         return awaitRequest(request);
     }
 
-    private String fetchWithBrowserContext(String url) throws IOException {
+    private String fetchWithBrowserContext(String url, long deadline) throws IOException {
         FetchRequest request = new FetchRequest(
-                Integer.toString(requestSequence.incrementAndGet()), url, true);
+                Integer.toString(requestSequence.incrementAndGet()), url, true, false, deadline);
         main.post(() -> startRequest(request));
         return awaitRequest(request);
     }
 
     private String awaitRequest(FetchRequest request) throws IOException {
         try {
-            if (!request.latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            long wait = remainingRequestMs(request.deadline, SystemClock.elapsedRealtime());
+            if (wait == 0L || !request.latch.await(wait, TimeUnit.MILLISECONDS)) {
                 request.cancelled = true;
                 String error = timeoutError(request);
                 main.post(() -> complete(request, null, error));
@@ -163,25 +219,49 @@ final class CloudflareWebViewSession implements BrowserSession {
         return request.result;
     }
 
-    private HttpFetch fetchHttp(String url) throws IOException {
+    private HttpFetch fetchHttp(String url, long deadline) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        connection.setInstanceFollowRedirects(true);
-        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-        connection.setReadTimeout(READ_TIMEOUT_MS);
-        connection.setRequestProperty("User-Agent", USER_AGENT);
-        connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
-        String cookie = android.webkit.CookieManager.getInstance().getCookie(url);
-        if (!TextUtils.isEmpty(cookie)) connection.setRequestProperty("Cookie", cookie);
+        long watchdogDelay = httpWatchdogDelayMs(deadline, SystemClock.elapsedRealtime());
+        if (watchdogDelay == 0L) {
+            connection.disconnect();
+            throw new IOException(sourceName + "请求超时");
+        }
+        AtomicBoolean timedOut = new AtomicBoolean();
+        ScheduledFuture<?> watchdog = HTTP_TIMEOUTS.schedule(() -> {
+            timedOut.set(true);
+            connection.disconnect();
+        }, watchdogDelay, TimeUnit.MILLISECONDS);
         try {
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(remainingTimeout(deadline, CONNECT_TIMEOUT_MS));
+            connection.setReadTimeout(remainingTimeout(deadline, READ_TIMEOUT_MS));
+            connection.setRequestProperty("User-Agent", USER_AGENT);
+            connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
+            String cookie = android.webkit.CookieManager.getInstance().getCookie(url);
+            if (!TextUtils.isEmpty(cookie)) connection.setRequestProperty("Cookie", cookie);
             int statusCode = connection.getResponseCode();
+            connection.setReadTimeout(remainingTimeout(deadline, READ_TIMEOUT_MS));
             persistResponseCookies(url, connection.getHeaderFields());
             InputStream stream = statusCode >= 400
                     ? connection.getErrorStream() : connection.getInputStream();
             return new HttpFetch(statusCode,
-                    connection.getHeaderField("cf-mitigated"), readBody(stream));
+                    connection.getHeaderField("cf-mitigated"), readBody(stream, deadline));
+        } catch (IOException error) {
+            if (timedOut.get() || httpWatchdogDelayMs(
+                    deadline, SystemClock.elapsedRealtime()) == 0L) {
+                throw new IOException(sourceName + "请求超时", error);
+            }
+            throw error;
         } finally {
+            watchdog.cancel(false);
             connection.disconnect();
         }
+    }
+
+    private int remainingTimeout(long deadline, int maximum) throws IOException {
+        long remaining = remainingRequestMs(deadline, SystemClock.elapsedRealtime());
+        if (remaining == 0L) throw new IOException(sourceName + "请求超时");
+        return (int) Math.min(maximum, remaining);
     }
 
     private void persistResponseCookies(String url, Map<String, List<String>> headers) {
@@ -195,12 +275,17 @@ final class CloudflareWebViewSession implements BrowserSession {
         manager.flush();
     }
 
-    private static String readBody(InputStream stream) throws IOException {
+    private String readBody(InputStream stream, long deadline) throws IOException {
         if (stream == null) return "";
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"))) {
             StringBuilder body = new StringBuilder();
             String line;
-            while ((line = reader.readLine()) != null) body.append(line).append('\n');
+            while ((line = reader.readLine()) != null) {
+                if (remainingRequestMs(deadline, SystemClock.elapsedRealtime()) == 0L) {
+                    throw new IOException(sourceName + "请求超时");
+                }
+                body.append(line).append('\n');
+            }
             return body.toString();
         }
     }
@@ -358,7 +443,7 @@ final class CloudflareWebViewSession implements BrowserSession {
 
     private void inspectPage(FetchRequest request, WebView browser, int expectedNavigation) {
         if (!isActive(request) || expectedNavigation != navigation) return;
-        if (System.currentTimeMillis() - request.startedAt >= TIMEOUT_MS) {
+        if (remainingRequestMs(request.deadline, SystemClock.elapsedRealtime()) == 0L) {
             complete(request, null, timeoutError(request));
             return;
         }
@@ -382,9 +467,14 @@ final class CloudflareWebViewSession implements BrowserSession {
                     request.verifying = true;
                     notifyVerification("正在验证");
                     showBackgroundView();
-                    browser.postDelayed(() -> {
-                        if (isActive(request) && request.verifying) showVerificationView(true);
-                    }, INTERACTIVE_DELAY_MS);
+                    if (request.interactiveAllowed) {
+                        browser.postDelayed(() -> {
+                            if (isActive(request) && shouldShowInteractive(
+                                    request.interactiveAllowed, request.verifying)) {
+                                showVerificationView(true);
+                            }
+                        }, INTERACTIVE_DELAY_MS);
+                    }
                 } else if (action == PageAction.KEEP_VERIFYING) {
                     showVerifyingState();
                 } else if (action == PageAction.FAIL) {
@@ -674,8 +764,9 @@ final class CloudflareWebViewSession implements BrowserSession {
         final String id;
         final String url;
         final boolean browserContext;
+        final boolean interactiveAllowed;
+        final long deadline;
         final CountDownLatch latch = new CountDownLatch(1);
-        final long startedAt = System.currentTimeMillis();
         volatile boolean cancelled;
         volatile boolean completed;
         volatile String result;
@@ -688,10 +779,13 @@ final class CloudflareWebViewSession implements BrowserSession {
         int statusCode;
         String mitigated = "";
 
-        FetchRequest(String id, String url, boolean browserContext) {
+        FetchRequest(String id, String url, boolean browserContext,
+                     boolean interactiveAllowed, long deadline) {
             this.id = id;
             this.url = url;
             this.browserContext = browserContext;
+            this.interactiveAllowed = interactiveAllowed;
+            this.deadline = deadline;
         }
     }
 

@@ -135,4 +135,35 @@ public class CloudflareWebViewSessionTest {
     public void interactiveVerificationWaitsForAutomaticChallengeToFinish() {
         assertEquals(4000L, CloudflareWebViewSession.interactiveDelayMs());
     }
+
+    @Test
+    public void protectedRequestTimeoutIsTwoMinutes() {
+        assertEquals(120000L, CloudflareWebViewSession.requestTimeoutMs());
+    }
+
+    @Test
+    public void requestDeadlineIsSharedAcrossTransportPhases() {
+        long deadline = CloudflareWebViewSession.requestDeadlineMs(1000L);
+
+        assertEquals(121000L, deadline);
+        assertEquals(90000L, CloudflareWebViewSession.remainingRequestMs(deadline, 31000L));
+        assertEquals(0L, CloudflareWebViewSession.remainingRequestMs(deadline, 121001L));
+    }
+
+    @Test
+    public void httpWatchdogUsesTheRemainingRequestBudget() {
+        assertEquals(1000L, CloudflareWebViewSession.httpWatchdogDelayMs(121000L, 120000L));
+        assertEquals(0L, CloudflareWebViewSession.httpWatchdogDelayMs(121000L, 121001L));
+    }
+
+    @Test
+    public void automaticVerificationNeverBecomesInteractive() {
+        assertFalse(CloudflareWebViewSession.shouldShowInteractive(false, true));
+    }
+
+    @Test
+    public void manualVerificationOnlyShowsWhileChallengeIsActive() {
+        assertTrue(CloudflareWebViewSession.shouldShowInteractive(true, true));
+        assertFalse(CloudflareWebViewSession.shouldShowInteractive(true, false));
+    }
 }
