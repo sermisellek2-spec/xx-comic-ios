@@ -26,8 +26,10 @@ check("Cuimh paces requests and cools down after 403", source.includes("MIN_REQU
   && source.includes("FORBIDDEN_COOLDOWN_MS") && source.includes("HTTP_FORBIDDEN"));
 check("detail refresh preserves chapters without eager directory fetch", main.includes("mergeRefreshedDetail(detail, freshDetail)")
   && main.includes("new ArrayList<>(cached.chapters)") && main.includes("refreshedComicIds.add(comicId)"));
-check("filter confirm only reloads missing categories", main.includes("sourceChanged && sourceFilterGroups.isEmpty()"));
-check("release version is 1.0.31", gradle.includes('versionName "1.0.31"')
-  && gradle.includes("versionCode 31"));
+check("filter confirm only reloads missing categories",
+  main.includes("sourceChanged && !categoriesFollowInitialList(selectedSourceId)")
+  && main.includes("&& sourceFilterGroups.isEmpty()) loadSourceCategories();"));
+check("release version is 1.0.33", gradle.includes('versionName "1.0.33"')
+  && gradle.includes("versionCode 33"));
 
 console.log("Cuimh source contract holds.");
