@@ -30,9 +30,8 @@ public class JmComicSource implements ComicSource {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern ANCHOR = Pattern.compile("<a\\b([^>]*)>([\\s\\S]*?)</a>", Pattern.CASE_INSENSITIVE);
     private static final Pattern THEME_SECTION = Pattern.compile(
-            "<div\\b[^>]*class\\s*=\\s*[\"'][^\"']*\\brow\\b[^\"']*[\"'][^>]*>\\s*"
-                    + "<h4[^>]*>([\\s\\S]*?)</h4>\\s*"
-                    + "<ul\\b[^>]*class\\s*=\\s*[\"'][^\"']*\\bbtn-toolbar\\b[^\"']*\\bbtnmg\\b[^\"']*[\"'][^>]*>"
+            "<h4[^>]*>([\\s\\S]*?)</h4>(?:(?!<h4\\b)[\\s\\S]){0,1600}?"
+                    + "<ul\\b[^>]*class\\s*=\\s*[\"'][^\"']*\\bbtnmg\\b[^\"']*[\"'][^>]*>"
                     + "([\\s\\S]*?)</ul>", Pattern.CASE_INSENSITIVE);
     private static final Pattern IMAGE_TAG = Pattern.compile("<img\\b[^>]*>", Pattern.CASE_INSENSITIVE);
     private final SourceConfig config;

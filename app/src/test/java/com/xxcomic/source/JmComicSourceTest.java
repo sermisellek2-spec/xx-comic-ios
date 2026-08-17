@@ -40,6 +40,24 @@ public class JmComicSourceTest {
     }
 
     @Test
+    public void categoryGroupsDoNotDependOnTheOuterRowWrapper() {
+        String html = "<section class=\"theme-block\"><header><h4>熱門成人主題</h4></header>"
+                + "<div><ul class=\"btnmg compact btn-toolbar\">"
+                + "<li><a href=\"/search/photos?search_query=完結\">完結</a></li>"
+                + "</ul></div></section>"
+                + "<article><h4>類別</h4><div><ul class=\"btn-toolbar x btnmg\">"
+                + "<li><a href=\"/albums?o=mr\">最新A漫</a></li>"
+                + "</ul></div></article>";
+
+        List<ComicModels.FilterGroup> groups = JmComicSource.parseFilterGroups(
+                html, "https://18comic.vip");
+
+        assertEquals(2, groups.size());
+        assertEquals("热门", groups.get(0).label);
+        assertEquals("类别", groups.get(1).label);
+    }
+
+    @Test
     public void currentCatalogCardsParseFromSlugLinksAndSrcCovers() throws Exception {
         String html = "<a href=\"/album/209225\"><img src=\"/paper_box.svg\"></a>"
                 + "<a href=\"/album/1462132/current-title\">"
