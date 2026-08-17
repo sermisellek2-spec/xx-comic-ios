@@ -67,6 +67,7 @@ final class CloudflareWebViewSession implements BrowserSession {
     private final String sourceName;
     private final boolean preferHttp;
     private final boolean fullViewportBackground;
+    private final boolean automaticInteractiveFallback;
     private final VerificationStatusListener verificationStatus;
     private final Semaphore requestLock = new Semaphore(1, true);
     private final AtomicInteger requestSequence = new AtomicInteger();
@@ -83,17 +84,26 @@ final class CloudflareWebViewSession implements BrowserSession {
     CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
                              boolean preferHttp,
                              VerificationStatusListener verificationStatus) {
-        this(activity, main, sourceName, preferHttp, false, verificationStatus);
+        this(activity, main, sourceName, preferHttp, false, false, verificationStatus);
     }
 
     CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
                              boolean preferHttp, boolean fullViewportBackground,
+                             VerificationStatusListener verificationStatus) {
+        this(activity, main, sourceName, preferHttp, fullViewportBackground, false,
+                verificationStatus);
+    }
+
+    CloudflareWebViewSession(Activity activity, Handler main, String sourceName,
+                             boolean preferHttp, boolean fullViewportBackground,
+                             boolean automaticInteractiveFallback,
                              VerificationStatusListener verificationStatus) {
         this.activity = activity;
         this.main = main;
         this.sourceName = sourceName;
         this.preferHttp = preferHttp;
         this.fullViewportBackground = fullViewportBackground;
+        this.automaticInteractiveFallback = automaticInteractiveFallback;
         this.verificationStatus = verificationStatus;
     }
 
@@ -125,6 +135,31 @@ final class CloudflareWebViewSession implements BrowserSession {
         return interactiveAllowed && verifying;
     }
 
+    static boolean allowsInteractiveChallenge(boolean explicitlyAllowed,
+                                              boolean automaticInteractiveFallback) {
+        return explicitlyAllowed || automaticInteractiveFallback;
+    }
+
+    static boolean shouldDismissInteractive(boolean interactiveVisible,
+                                            boolean turnstileSolved,
+                                            String clearanceBefore,
+                                            String clearanceNow) {
+        boolean clearanceChanged = clearanceNow != null && !clearanceNow.isEmpty()
+                && !clearanceNow.equals(clearanceBefore == null ? "" : clearanceBefore);
+        return interactiveVisible && (turnstileSolved || clearanceChanged);
+    }
+
+    static String cookieValue(String cookies, String name) {
+        if (cookies == null || name == null || name.isEmpty()) return "";
+        for (String cookie : cookies.split(";")) {
+            int separator = cookie.indexOf('=');
+            if (separator > 0 && name.equals(cookie.substring(0, separator).trim())) {
+                return cookie.substring(separator + 1).trim();
+            }
+        }
+        return "";
+    }
+
     static int backgroundExtent(boolean fullViewport) {
         return fullViewport ? ViewGroup.LayoutParams.MATCH_PARENT : 1;
     }
@@ -144,6 +179,8 @@ final class CloudflareWebViewSession implements BrowserSession {
             throw new IOException(sourceName + "请求不能阻塞主线程");
         }
         long deadline = requestDeadlineMs(SystemClock.elapsedRealtime());
+        boolean allowInteractive = allowsInteractiveChallenge(
+                interactiveAllowed, automaticInteractiveFallback);
         boolean acquired = false;
         try {
             long lockWait = remainingRequestMs(deadline, SystemClock.elapsedRealtime());
@@ -158,7 +195,7 @@ final class CloudflareWebViewSession implements BrowserSession {
                     return fetchWithBrowserContext(url, deadline);
                 } catch (ContextChallengeException challenge) {
                     browserContextReady = false;
-                    String body = fetchWithBrowser(url, interactiveAllowed, deadline);
+                    String body = fetchWithBrowser(url, allowInteractive, deadline);
                     browserContextReady = true;
                     return body;
                 }
@@ -172,7 +209,7 @@ final class CloudflareWebViewSession implements BrowserSession {
                     throw new IOException(sourceName + " HTTP " + response.statusCode);
                 }
             }
-            String body = fetchWithBrowser(url, interactiveAllowed, deadline);
+            String body = fetchWithBrowser(url, allowInteractive, deadline);
             if (preferHttp) browserContextReady = true;
             return body;
         } catch (InterruptedException interrupted) {
@@ -338,6 +375,7 @@ final class CloudflareWebViewSession implements BrowserSession {
         try {
             ensureViews();
             showBackgroundView();
+            request.clearanceBefore = clearanceCookie(request.url);
             if (request.browserContext) {
                 webView.evaluateJavascript(browserContextScript(request), null);
             } else {
@@ -462,6 +500,7 @@ final class CloudflareWebViewSession implements BrowserSession {
         String script = "(function(){return JSON.stringify({"
                 + "title:document.title||'',text:(document.body&&document.body.innerText||'').slice(0,2400),"
                 + "html:(document.documentElement.outerHTML||'').slice(0,12000),"
+                + "turnstileSolved:!!((document.querySelector('[name=\"cf-turnstile-response\"]')||{}).value),"
                 + "ready:document.readyState||'',url:location.href||''});})()";
         browser.evaluateJavascript(script, encoded -> {
             if (!isActive(request) || expectedNavigation != navigation) return;
@@ -471,9 +510,16 @@ final class CloudflareWebViewSession implements BrowserSession {
                         page.optString("text") + " " + page.optString("html"),
                         request.statusCode, request.mitigated, request.verifying);
                 boolean ready = "complete".equalsIgnoreCase(page.optString("ready"));
+                boolean turnstileSolved = page.optBoolean("turnstileSolved");
                 request.currentUrl = page.optString("url");
                 request.challengeDom = challenge;
                 request.pageReady = ready;
+                String clearanceNow = clearanceCookie(request.url);
+                if (shouldDismissInteractive(request.interactiveVisible, turnstileSolved,
+                        request.clearanceBefore, clearanceNow)) {
+                    request.interactiveVisible = false;
+                    showBackgroundView();
+                }
                 PageAction action = pageAction(request.verifying, challenge, ready, request.statusCode);
                 if (action == PageAction.SHOW_VERIFICATION) {
                     request.verifying = true;
@@ -483,6 +529,7 @@ final class CloudflareWebViewSession implements BrowserSession {
                         browser.postDelayed(() -> {
                             if (isActive(request) && shouldShowInteractive(
                                     request.interactiveAllowed, request.verifying)) {
+                                request.interactiveVisible = true;
                                 showVerificationView(true);
                             }
                         }, INTERACTIVE_DELAY_MS);
@@ -502,7 +549,8 @@ final class CloudflareWebViewSession implements BrowserSession {
                     android.webkit.CookieManager.getInstance().flush();
                     if (request.verifying) {
                         notifyVerification("验证完成");
-                        showVerifiedState();
+                        if (automaticInteractiveFallback) showBackgroundView();
+                        else showVerifiedState();
                         browser.postDelayed(() -> captureCurrentPage(
                                 request, browser, expectedNavigation), 300L);
                     } else {
@@ -719,6 +767,11 @@ final class CloudflareWebViewSession implements BrowserSession {
         }
     }
 
+    private String clearanceCookie(String url) {
+        return cookieValue(android.webkit.CookieManager.getInstance().getCookie(url),
+                "cf_clearance");
+    }
+
     private String requestDiagnostic(FetchRequest request) {
         return " [url=" + request.currentUrl + ", status=" + request.statusCode
                 + ", verifying=" + request.verifying + ", challenge="
@@ -792,8 +845,10 @@ final class CloudflareWebViewSession implements BrowserSession {
         volatile boolean pageReady;
         volatile boolean contextChallenge;
         boolean verifying;
+        boolean interactiveVisible;
         int statusCode;
         String mitigated = "";
+        String clearanceBefore = "";
 
         FetchRequest(String id, String url, boolean browserContext,
                      boolean interactiveAllowed, long deadline) {

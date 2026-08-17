@@ -346,7 +346,7 @@ public class MainActivity extends Activity {
         root = new FrameLayout(this);
         setContentView(root);
         mh18BrowserSession = new CloudflareWebViewSession(
-                this, main, mh18Config.name, true, true, this::showRemToast);
+                this, main, mh18Config.name, true, true, true, this::showRemToast);
         jmcomicBrowserSession = new CloudflareWebViewSession(
                 this, main, jmcomicConfig.name, true, this::showRemToast);
         rebuildSourceClients();

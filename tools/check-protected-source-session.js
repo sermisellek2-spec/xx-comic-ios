@@ -34,9 +34,14 @@ check("navigation capture does not issue a second fetch",
   !navigationCapture.includes("fetch(")
   && source.includes("fetchWithBrowserContext(url, deadline)"));
 check("only 18mh uses the full viewport hybrid session",
-  mh18Session.includes("mh18Config.name, true, true, this::showRemToast")
+  mh18Session.includes("mh18Config.name, true, true, true, this::showRemToast")
   && jmcomicSession.includes("jmcomicConfig.name, true, this::showRemToast")
   && !jmcomicSession.includes("jmcomicConfig.name, true, true"));
+check("18mh challenge can hand off to the user and return to background",
+  source.includes("automaticInteractiveFallback")
+  && source.includes("cf-turnstile-response")
+  && source.includes("shouldDismissInteractive")
+  && source.includes("showBackgroundView()"));
 check("one persistent browser session exists per protected source",
   (main.match(/new CloudflareWebViewSession\(/g) || []).length === 2
   && main.includes("CloudflareWebViewSession mh18BrowserSession")

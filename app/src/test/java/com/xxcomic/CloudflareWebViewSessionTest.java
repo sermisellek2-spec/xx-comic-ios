@@ -163,13 +163,41 @@ public class CloudflareWebViewSessionTest {
     }
 
     @Test
-    public void automaticVerificationNeverBecomesInteractive() {
-        assertFalse(CloudflareWebViewSession.shouldShowInteractive(false, true));
+    public void automaticVerificationOnlyBecomesInteractiveWhenSessionOptsIn() {
+        assertFalse(CloudflareWebViewSession.allowsInteractiveChallenge(false, false));
+        assertTrue(CloudflareWebViewSession.allowsInteractiveChallenge(false, true));
+        assertTrue(CloudflareWebViewSession.allowsInteractiveChallenge(true, false));
     }
 
     @Test
     public void manualVerificationOnlyShowsWhileChallengeIsActive() {
         assertTrue(CloudflareWebViewSession.shouldShowInteractive(true, true));
         assertFalse(CloudflareWebViewSession.shouldShowInteractive(true, false));
+    }
+
+    @Test
+    public void completedTurnstileDismissesVisibleVerification() {
+        assertTrue(CloudflareWebViewSession.shouldDismissInteractive(
+                true, true, "", ""));
+        assertFalse(CloudflareWebViewSession.shouldDismissInteractive(
+                false, true, "", ""));
+    }
+
+    @Test
+    public void newClearanceDismissesVisibleVerification() {
+        assertTrue(CloudflareWebViewSession.shouldDismissInteractive(
+                true, false, "expired", "fresh"));
+        assertFalse(CloudflareWebViewSession.shouldDismissInteractive(
+                true, false, "same", "same"));
+        assertFalse(CloudflareWebViewSession.shouldDismissInteractive(
+                true, false, "", ""));
+    }
+
+    @Test
+    public void clearanceCookieIsReadWithoutMatchingOtherCookies() {
+        assertEquals("fresh-token", CloudflareWebViewSession.cookieValue(
+                "session=one; cf_clearance=fresh-token; other=two", "cf_clearance"));
+        assertEquals("", CloudflareWebViewSession.cookieValue(
+                "session=one; other=two", "cf_clearance"));
     }
 }
