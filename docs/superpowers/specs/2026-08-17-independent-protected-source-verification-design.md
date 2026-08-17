@@ -2,8 +2,8 @@
 
 ## Goal
 
-Restore automatic Cloudflare verification for 18mh and JMComic by using each
-device's native Android WebView fingerprint, while preventing verification
+Restore the known-good Cloudflare verification behavior for 18mh and JMComic by
+using the fixed Android 14 / Chrome 124 fingerprint from release 1.0.35, while preventing verification
 changes for either source from affecting the other.
 
 ## Architecture
@@ -20,8 +20,8 @@ sessions and the process cookie store.
 
 ## Behavior
 
-- Both implementations derive the HTTP user agent from the native WebView user
-  agent so the HTTP and WebView fingerprints remain aligned.
+- Both implementations explicitly apply the same fixed Chrome 124 user agent to
+  HTTP and WebView requests so their fingerprints remain aligned.
 - Ordinary content requests first try HTTP and then open that source's own
   hidden WebView when Cloudflare returns a challenge.
 - Existing verified browser context is reused only inside the same source
@@ -35,6 +35,6 @@ sessions and the process cookie store.
 
 ## Verification
 
-Unit tests lock native user-agent selection and independent class ownership.
+Unit tests lock fixed Chrome 124 user-agent selection and independent class ownership.
 Static source contracts lock distinct MainActivity fields and constructors.
 The Android unit suite and release build must pass before publishing.

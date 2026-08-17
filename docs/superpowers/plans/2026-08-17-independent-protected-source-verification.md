@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Give 18mh and JMComic separate native-fingerprint verification implementations.
+**Goal:** Give 18mh and JMComic separate fixed Chrome 124 verification implementations.
 
 **Architecture:** Split the current shared Cloudflare WebView session into two source-owned classes. Preserve the existing `BrowserSession` contract and source behavior while removing all cross-source verification implementation sharing.
 
@@ -15,7 +15,7 @@
 **Files:**
 - Create: `app/src/test/java/com/xxcomic/ProtectedSourceSessionIsolationTest.java`
 
-- [ ] Add a test that references two independent session classes and verifies both select the native WebView user agent.
+- [ ] Add a test that references two independent session classes and verifies both select the fixed Chrome 124 user agent.
 - [ ] Run `gradlew.bat testDebugUnitTest --tests com.xxcomic.ProtectedSourceSessionIsolationTest` and confirm compilation fails because the classes do not exist.
 
 ### Task 2: Split the implementations
@@ -28,7 +28,7 @@
 - Modify: `app/src/test/java/com/xxcomic/CloudflareWebViewSessionTest.java`
 - Modify: `tools/check-protected-source-session.js`
 
-- [ ] Give each class its own WebView, request state, native user agent, challenge flow, and browser-context cache.
+- [ ] Give each class its own WebView, request state, fixed user agent, challenge flow, and browser-context cache.
 - [ ] Wire each comic source to its own concrete session type.
 - [ ] Move session behavior coverage to the source-specific implementations.
 - [ ] Update the static contract to reject the removed shared class.
@@ -41,7 +41,7 @@
 - Modify: version assertions under `tools/`
 - Create: release metadata and upload helpers under `release/`
 
-- [ ] Increment the Android release to `1.0.42 (42)`.
+- [ ] Increment the Android release to `1.0.43 (43)`.
 - [ ] Run the complete unit suite, contract checks, and release APK build.
 - [ ] Commit and push `master`.
 - [ ] Upload the APK and metadata to the existing server fallback and COS key.

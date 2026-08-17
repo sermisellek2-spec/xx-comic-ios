@@ -202,10 +202,11 @@ public class Mh18WebViewSessionTest {
     }
 
     @Test
-    public void nativeFingerprintUsesTheActualWebViewUserAgent() {
-        String nativeAgent = "Mozilla/5.0 Chrome/139.0.0.0 Mobile";
-        assertEquals(nativeAgent, Mh18WebViewSession.selectedUserAgent(nativeAgent));
-        assertFalse(Mh18WebViewSession.selectedUserAgent("").isEmpty());
+    public void fixedFingerprintUsesChrome124ForHttpAndWebView() {
+        String selected = Mh18WebViewSession.fixedUserAgent();
+
+        assertTrue(selected.contains("Chrome/124.0.0.0"));
+        assertEquals(selected, Mh18WebViewSession.fixedUserAgent());
     }
 
     @Test

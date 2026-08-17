@@ -87,7 +87,7 @@ final class JmComicWebViewSession implements BrowserSession {
         this.activity = activity;
         this.main = main;
         this.sourceName = sourceName;
-        this.userAgent = selectedUserAgent(WebSettings.getDefaultUserAgent(activity));
+        this.userAgent = fixedUserAgent();
         this.verificationStatus = verificationStatus;
     }
 
@@ -99,9 +99,8 @@ final class JmComicWebViewSession implements BrowserSession {
         return INTERACTIVE_DELAY_MS;
     }
 
-    static String selectedUserAgent(String nativeUserAgent) {
-        return nativeUserAgent != null && !nativeUserAgent.trim().isEmpty()
-                ? nativeUserAgent : USER_AGENT;
+    static String fixedUserAgent() {
+        return USER_AGENT;
     }
 
     static long requestTimeoutMs() {
@@ -417,6 +416,7 @@ final class JmComicWebViewSession implements BrowserSession {
         page.addView(card, statusParams);
 
         WebSettings settings = browser.getSettings();
+        settings.setUserAgentString(userAgent);
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);

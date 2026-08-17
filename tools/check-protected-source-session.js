@@ -30,10 +30,12 @@ check("main owns one concrete session per source",
   && main.includes("JmComicWebViewSession jmcomicBrowserSession")
   && main.includes("new Mh18WebViewSession(")
   && main.includes("new JmComicWebViewSession("));
-check("both sessions use their native WebView fingerprint",
-  sessions.every(source => source.includes("WebSettings.getDefaultUserAgent(activity)")
+check("both sessions use the fixed Chrome 124 fingerprint",
+  sessions.every(source => source.includes("Chrome/124.0.0.0")
+    && source.includes("fixedUserAgent()")
     && source.includes('connection.setRequestProperty("User-Agent", userAgent)')
-    && !source.includes("settings.setUserAgentString")));
+    && source.includes("settings.setUserAgentString(userAgent)")
+    && !source.includes("WebSettings.getDefaultUserAgent")));
 check("both sessions own their request and browser state",
   sessions.every(source => source.includes("new Semaphore(1, true)")
     && source.includes("private FetchRequest activeRequest")
