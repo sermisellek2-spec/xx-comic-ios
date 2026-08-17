@@ -178,19 +178,27 @@ public class CloudflareWebViewSessionTest {
     @Test
     public void completedTurnstileHandsVisibleVerificationBackToTheApp() {
         assertTrue(CloudflareWebViewSession.shouldHandOffInteractive(
-                true, true, "", ""));
+                false, true, true, "", ""));
         assertFalse(CloudflareWebViewSession.shouldHandOffInteractive(
-                false, true, "", ""));
+                false, false, true, "", ""));
     }
 
     @Test
     public void newClearanceHandsVisibleVerificationBackToTheApp() {
         assertTrue(CloudflareWebViewSession.shouldHandOffInteractive(
-                true, false, "expired", "fresh"));
+                false, true, false, "expired", "fresh"));
         assertFalse(CloudflareWebViewSession.shouldHandOffInteractive(
-                true, false, "same", "same"));
+                false, true, false, "same", "same"));
         assertFalse(CloudflareWebViewSession.shouldHandOffInteractive(
-                true, false, "", ""));
+                false, true, false, "", ""));
+    }
+
+    @Test
+    public void strictCompletionKeepsVerificationVisibleUntilTheTargetPageIsReady() {
+        assertFalse(CloudflareWebViewSession.shouldHandOffInteractive(
+                true, true, true, "", ""));
+        assertFalse(CloudflareWebViewSession.shouldHandOffInteractive(
+                true, true, false, "expired", "fresh"));
     }
 
     @Test

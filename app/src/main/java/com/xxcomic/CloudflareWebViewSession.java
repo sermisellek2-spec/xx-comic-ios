@@ -74,7 +74,6 @@ final class CloudflareWebViewSession implements BrowserSession {
     private volatile boolean shutdown;
     private FrameLayout host;
     private WebView webView;
-    private View foregroundContent;
     private View statusCard;
     private ProgressBar progress;
     private TextView status;
@@ -141,10 +140,12 @@ final class CloudflareWebViewSession implements BrowserSession {
         return explicitlyAllowed || automaticInteractiveFallback;
     }
 
-    static boolean shouldHandOffInteractive(boolean interactiveVisible,
+    static boolean shouldHandOffInteractive(boolean keepVisibleUntilPageReady,
+                                            boolean interactiveVisible,
                                             boolean turnstileSolved,
                                             String clearanceBefore,
                                             String clearanceNow) {
+        if (keepVisibleUntilPageReady) return false;
         boolean clearanceChanged = clearanceNow != null && !clearanceNow.isEmpty()
                 && !clearanceNow.equals(clearanceBefore == null ? "" : clearanceBefore);
         return interactiveVisible && (turnstileSolved || clearanceChanged);
@@ -391,9 +392,6 @@ final class CloudflareWebViewSession implements BrowserSession {
         if (webView != null && host != null && host.getParent() != null) return;
         ViewGroup content = activity.findViewById(android.R.id.content);
         if (content == null) throw new IllegalStateException("Missing activity content view");
-        if (foregroundContent == null && content.getChildCount() > 0) {
-            foregroundContent = content.getChildAt(0);
-        }
 
         FrameLayout page = new FrameLayout(activity);
         page.setBackgroundColor(Color.TRANSPARENT);
@@ -519,15 +517,11 @@ final class CloudflareWebViewSession implements BrowserSession {
                 request.challengeDom = challenge;
                 request.pageReady = ready;
                 String clearanceNow = clearanceCookie(request.url);
-                if (shouldHandOffInteractive(request.interactiveVisible, turnstileSolved,
+                if (shouldHandOffInteractive(automaticInteractiveFallback,
+                        request.interactiveVisible, turnstileSolved,
                         request.clearanceBefore, clearanceNow)) {
                     request.interactiveVisible = false;
-                    if (automaticInteractiveFallback) {
-                        notifyVerification("正在完成验证");
-                        showCompletingBehindApp();
-                    } else {
-                        showBackgroundView();
-                    }
+                    showBackgroundView();
                 }
                 PageAction action = pageAction(request.verifying, challenge, ready, request.statusCode);
                 if (action == PageAction.SHOW_VERIFICATION) {
@@ -750,21 +744,6 @@ final class CloudflareWebViewSession implements BrowserSession {
         if (statusCard != null) statusCard.setVisibility(View.GONE);
     }
 
-    private void showCompletingBehindApp() {
-        if (host == null) return;
-        host.setLayoutParams(verificationLayoutParams());
-        host.setTranslationX(0f);
-        host.setBackgroundColor(Color.TRANSPARENT);
-        host.setClickable(false);
-        host.setFocusable(false);
-        if (webView != null) {
-            webView.setAlpha(1f);
-            webView.setClickable(false);
-        }
-        if (statusCard != null) statusCard.setVisibility(View.GONE);
-        if (foregroundContent != null) foregroundContent.bringToFront();
-    }
-
     private FrameLayout.LayoutParams verificationLayoutParams() {
         return new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER);
@@ -832,7 +811,6 @@ final class CloudflareWebViewSession implements BrowserSession {
         FrameLayout page = host;
         webView = null;
         host = null;
-        foregroundContent = null;
         statusCard = null;
         progress = null;
         status = null;
