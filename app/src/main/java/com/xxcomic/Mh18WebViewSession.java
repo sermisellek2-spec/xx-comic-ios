@@ -863,8 +863,8 @@ final class Mh18WebViewSession implements BrowserSession {
 
     static PageAction pageAction(boolean challenge, boolean expectedPage,
                                  boolean browserCatalog) {
-        if (expectedPage && browserCatalog) return PageAction.PROBE;
         if (challenge) return PageAction.WAIT;
+        if (expectedPage && browserCatalog) return PageAction.PROBE;
         if (!expectedPage) return PageAction.FAIL;
         return PageAction.WAIT;
     }

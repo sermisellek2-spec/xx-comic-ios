@@ -115,10 +115,10 @@ public class Mh18WebViewSessionTest {
                 Mh18WebViewSession.pageAction(true, false, false));
         assertEquals(Mh18WebViewSession.PageAction.WAIT,
                 Mh18WebViewSession.pageAction(false, true, false));
+        assertEquals(Mh18WebViewSession.PageAction.WAIT,
+                Mh18WebViewSession.pageAction(true, true, true));
         assertEquals(Mh18WebViewSession.PageAction.PROBE,
                 Mh18WebViewSession.pageAction(false, true, true));
-        assertEquals(Mh18WebViewSession.PageAction.PROBE,
-                Mh18WebViewSession.pageAction(true, true, true));
         assertEquals(Mh18WebViewSession.PageAction.FAIL,
                 Mh18WebViewSession.pageAction(false, false, false));
     }
