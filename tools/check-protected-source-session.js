@@ -20,6 +20,10 @@ const navigationCapture = source.slice(
   source.indexOf("private void captureCurrentPage"),
   source.indexOf("private String browserContextScript"),
 );
+const completingView = source.slice(
+  source.indexOf("private void showCompletingBehindApp"),
+  source.indexOf("private FrameLayout.LayoutParams verificationLayoutParams"),
+);
 
 function check(name, condition) {
   if (!condition) throw new Error("FAIL " + name);
@@ -37,11 +41,17 @@ check("only 18mh uses the full viewport hybrid session",
   mh18Session.includes("mh18Config.name, true, true, true, this::showRemToast")
   && jmcomicSession.includes("jmcomicConfig.name, true, this::showRemToast")
   && !jmcomicSession.includes("jmcomicConfig.name, true, true"));
-check("18mh challenge can hand off to the user and return to background",
+check("18mh challenge can hand off and continue behind the app",
   source.includes("automaticInteractiveFallback")
   && source.includes("cf-turnstile-response")
-  && source.includes("shouldDismissInteractive")
-  && source.includes("showBackgroundView()"));
+  && source.includes("shouldHandOffInteractive")
+  && source.includes("showCompletingBehindApp()"));
+check("submitted 18mh challenge stays active behind the app",
+  completingView.includes("host.setLayoutParams(verificationLayoutParams())")
+  && completingView.includes("host.setTranslationX(0f)")
+  && completingView.includes("webView.setAlpha(1f)")
+  && completingView.includes("foregroundContent.bringToFront()")
+  && !completingView.includes("showBackgroundView()"));
 check("one persistent browser session exists per protected source",
   (main.match(/new CloudflareWebViewSession\(/g) || []).length === 2
   && main.includes("CloudflareWebViewSession mh18BrowserSession")
