@@ -55,6 +55,6 @@ check("reader chrome travels fully off canvas", readerChrome.includes("translati
 check("reader scrolling can enter immersive mode", source.includes("setReaderFullscreen(true, true)"));
 check("latest-version scene has no reinstall action", latestUpdate && !latestUpdate.includes("settingsBottomActions")
   && !latestUpdate.includes("startUpdateDownload"));
-check("release version is 2.0.0", gradle.includes('versionName "2.0.0"') && gradle.includes("versionCode 200"));
+check("release version is 2.0.1", gradle.includes('versionName "2.0.1"') && gradle.includes("versionCode 201"));
 
 console.log("detail release contracts hold");

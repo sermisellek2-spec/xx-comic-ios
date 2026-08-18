@@ -49,6 +49,9 @@ if (!java.includes("showTransientHint(hint")) fail("transient host is not used")
 if (!java.includes("errorLogsOverflowButton")
     || !java.includes("导出全部日志")
     || !java.includes("清空错误日志")) fail("error log actions are not grouped in the overflow menu");
+if (!java.includes("cacheOverflowButton")
+    || !java.includes("清理全部缓存")
+    || !java.includes("重新计算大小")) fail("cache actions are not grouped in the overflow menu");
 
 if (failed) process.exit(1);
 pass("dialog and toast contracts hold");

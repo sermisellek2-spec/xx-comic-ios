@@ -5309,7 +5309,8 @@ public class MainActivity extends Activity {
     }
 
     private void showCacheCleanup() {
-        LinearLayout page = settingsScenePage("cache", "缓存清理", cacheSize);
+        View menuBtn = cacheOverflowButton();
+        LinearLayout page = settingsScenePage("cache", "缓存清理", cacheSize, menuBtn);
         page.addView(settingsSectionText("将被清理"));
         LinearLayout clear = settingsList();
         clear.addView(settingsInfoRow(R.drawable.ic_bookshelf, "漫画图片缓存", "下次阅读时重新获取", cacheSize));
@@ -5320,10 +5321,40 @@ public class MainActivity extends Activity {
         LinearLayout keep = settingsList();
         keep.addView(settingsInfoRow(R.drawable.ic_history, "书架收藏、历史与进度", "", "保留"));
         page.addView(keep);
-        page.addView(settingsBottomActions("取消", () -> showTab(2), "确认清理", () -> {
+    }
+
+    private View cacheOverflowButton() {
+        TextView button = UIHelpers.text(this, "⋮", 24, UIHelpers.ACCENT, Typeface.BOLD);
+        button.setGravity(Gravity.CENTER);
+        button.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 8), Color.TRANSPARENT));
+        button.setContentDescription("缓存更多操作");
+        button.setOnClickListener(v -> showCacheMenu());
+        return button;
+    }
+
+    private void showCacheMenu() {
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.VERTICAL);
+        final PopupWindow[] popup = new PopupWindow[1];
+        actions.addView(settingsSheetAction(R.drawable.ic_trash, "清理全部缓存", () -> {
+            popup[0].dismiss();
+            confirmClearAppCache();
+        }));
+        actions.addView(UIHelpers.divider(this));
+        actions.addView(settingsSheetAction(R.drawable.ic_auto, "重新计算大小", () -> {
+            popup[0].dismiss();
+            updateCacheSize();
+            showRemSuccessToast("缓存大小已更新");
+            main.postDelayed(this::showCacheCleanup, 200L);
+        }));
+        popup[0] = showSettingsSheet("缓存操作", actions);
+    }
+
+    private void confirmClearAppCache() {
+        showRemDialog(R.drawable.rem_empty, "清理缓存", "将清理漫画图片与解析缓存，书架与阅读记录会始终保留。", "立即清理", () -> {
             showCacheCleanupLoading();
             main.post(this::clearAppCache);
-        }));
+        }, "取消", null);
     }
 
     private void showCacheCleanupLoading() {
