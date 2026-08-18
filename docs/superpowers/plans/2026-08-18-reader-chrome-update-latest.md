@@ -59,10 +59,10 @@ Run `node tools/check-detail-release.js`, `node tools/check-cuimh-source.js`, `n
 
 Require package `com.xxcomic`, version `1.0.52 (52)`, a valid v1/v2 signature, and matching local metadata.
 
-- [ ] **Step 3: Commit and push scoped source changes**
+- [x] **Step 3: Commit and push scoped source changes**
 
 Stage only the Java, Gradle, contract, and plan files. Exclude `.gradle/`, `.gradle-codex/`, `app/build/`, and `release/`; commit on `master` and push without force.
 
-- [ ] **Step 4: Publish and verify COS plus server fallback**
+- [x] **Step 4: Publish and verify COS plus server fallback**
 
 Upload the exact APK to `apk/xx-comic/xx-comic.bin`, update the server fallback APK and metadata, then download all public artifacts and compare size and SHA-256 with the local release artifact.
