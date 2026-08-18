@@ -5246,6 +5246,10 @@ public class MainActivity extends Activity {
     }
 
     private LinearLayout settingsScenePage(String scene, String title, String meta) {
+        return settingsScenePage(scene, title, meta, null);
+    }
+
+    private LinearLayout settingsScenePage(String scene, String title, String meta, View trailing) {
         enterScreen();
         applyThemeAndSystemBars();
         settingsScene = scene;
@@ -5259,7 +5263,7 @@ public class MainActivity extends Activity {
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
         page.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 12), UIHelpers.dp(this, 16), UIHelpers.dp(this, 24));
-        settingsHeader(page, title, meta);
+        settingsHeader(page, title, meta, trailing);
         scroll.addView(page, UIHelpers.matchWrap());
         root.addView(scroll, UIHelpers.match());
         return page;
@@ -5739,7 +5743,8 @@ public class MainActivity extends Activity {
         String logs = errorLogText();
         activeErrorLog = "";
         String[] entries = TextUtils.isEmpty(logs) ? new String[0] : logs.split("\\n\\n");
-        LinearLayout page = settingsScenePage("errors", "错误日志", entries.length + " 条 · 导出 · 清理");
+        View menuBtn = errorLogsOverflowButton();
+        LinearLayout page = settingsScenePage("errors", "错误日志", entries.length + " 条", menuBtn);
         if (entries.length == 0) {
             page.addView(remState(R.drawable.rem_empty, "这里很干净", "暂时没有错误日志", "", null));
             return;
@@ -5757,7 +5762,41 @@ public class MainActivity extends Activity {
         page.addView(list);
         TextView note = UIHelpers.text(this, "日志只保存在本机，导出时调用系统文件选择器。", 11, UIHelpers.TEXT3, Typeface.NORMAL);
         page.addView(note, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8), -1, -2));
-        page.addView(settingsBottomActions("清理", this::confirmClearErrorLogs, "导出", this::exportErrorLogs));
+    }
+
+    private View errorLogsOverflowButton() {
+        TextView button = UIHelpers.text(this, "⋮", 24, UIHelpers.ACCENT, Typeface.BOLD);
+        button.setGravity(Gravity.CENTER);
+        button.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 8), Color.TRANSPARENT));
+        button.setContentDescription("日志更多操作");
+        button.setOnClickListener(v -> showErrorLogsMenu());
+        return button;
+    }
+
+    private void showErrorLogsMenu() {
+        String logs = errorLogText();
+        boolean hasLogs = !TextUtils.isEmpty(logs);
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.VERTICAL);
+        final PopupWindow[] popup = new PopupWindow[1];
+        actions.addView(settingsSheetAction(R.drawable.ic_auto, "导出全部日志", () -> {
+            popup[0].dismiss();
+            if (hasLogs) {
+                exportErrorLogs();
+            } else {
+                showRemErrorToast("当前暂无错误日志可导出");
+            }
+        }));
+        actions.addView(UIHelpers.divider(this));
+        actions.addView(settingsSheetAction(R.drawable.ic_trash, "清空错误日志", () -> {
+            popup[0].dismiss();
+            if (hasLogs) {
+                confirmClearErrorLogs();
+            } else {
+                showRemErrorToast("当前暂无错误日志可清空");
+            }
+        }));
+        popup[0] = showSettingsSheet("日志操作", actions);
     }
 
     private LinearLayout settingsErrorRow(String title, String detail, Runnable onClick) {
