@@ -2452,8 +2452,8 @@ public class MainActivity extends Activity {
         list.setCacheColorHint(UIHelpers.DARK);
         list.setDivider(null);
         list.setSelector(new ColorDrawable(Color.TRANSPARENT));
-        list.setPadding(UIHelpers.dp(this, 4), topBarHeight + UIHelpers.dp(this, 4),
-                UIHelpers.dp(this, 4), bottomBarHeight + UIHelpers.dp(this, 4));
+        list.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4),
+                UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
         list.setClipToPadding(false);
         list.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         String positionKey = readerPositionKey(detail.summary.comicId, activeChapter);
