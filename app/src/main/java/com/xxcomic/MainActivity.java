@@ -1,11 +1,11 @@
 package com.xxcomic;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.animation.ValueAnimator;
-import android.content.Context;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -15,8 +15,9 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
-import android.os.Build;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -26,11 +27,12 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.MotionEvent;
-import android.view.ViewConfiguration;
-import android.view.inputmethod.EditorInfo;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.inputmethod.EditorInfo;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -43,6 +45,7 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
+import android.widget.Space;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -115,8 +118,7 @@ public class MainActivity extends Activity {
     private static final int DETAIL_HERO_MAX_DP = 390;
     private static final int CHAPTER_DRAWER_BATCH_SIZE = 40;
     private static final long READER_PROGRESS_ANIM_MS = 30L;
-    private static final long READER_CHROME_ANIM_MS = 320L;
-    private static final int READER_CHROME_SHIFT_DP = 6;
+    private static final long READER_CHROME_ANIM_MS = 260L;
     private static final int READER_POSITION_SCALE = 10000;
     private static final long READER_POSITION_SAVE_DELAY_MS = 250L;
     private static final long READER_MAX_DECODE_PIXELS = 8000000L;
@@ -568,25 +570,18 @@ public class MainActivity extends Activity {
     }
 
     private void applyReaderSystemBars() {
-        applyReaderSystemBars(false);
+        applyReaderSystemBars(true);
     }
 
     private void applyReaderSystemBars(boolean stableLayout) {
-        getWindow().setStatusBarColor(UIHelpers.DARK);
-        getWindow().setNavigationBarColor(UIHelpers.DARK);
-        int flags = stableLayout
-                ? View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                : 0;
-        if (readerFullscreen) {
-            flags |= View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-        }
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        int flags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
         getWindow().getDecorView().setSystemUiVisibility(flags);
     }
 
@@ -2278,6 +2273,7 @@ public class MainActivity extends Activity {
             return;
         }
         readerVisible = true;
+        readerFullscreen = true;
         activeDetailId = detail.summary.comicId;
         readerChapterIndex = Math.max(0, Math.min(chapterIndex, detail.chapters.size() - 1));
         ComicModels.Chapter chapter = detail.chapters.get(readerChapterIndex);
@@ -2351,7 +2347,8 @@ public class MainActivity extends Activity {
         shell.setOrientation(LinearLayout.VERTICAL);
         shell.setBackgroundColor(UIHelpers.DARK);
         root.addView(shell, UIHelpers.match());
-        shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 43)));
+        int topHeight = systemBarInset("status_bar_height") + UIHelpers.dp(this, 44);
+        shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, topHeight));
         String savedMessage = readerPositions.containsKey(readerPositionKey(detail.summary.comicId,
                 detail.chapters.get(readerChapterIndex))) ? "阅读位置已保存" : "蕾姆正在整理页面";
         shell.addView(readerState(R.drawable.rem_loading, "正在加载第 " + (readerChapterIndex + 1) + " 话",
@@ -2367,24 +2364,53 @@ public class MainActivity extends Activity {
         shell.setOrientation(LinearLayout.VERTICAL);
         shell.setBackgroundColor(UIHelpers.DARK);
         root.addView(shell, UIHelpers.match());
-        shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 43)));
+        int topHeight = systemBarInset("status_bar_height") + UIHelpers.dp(this, 44);
+        shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, topHeight));
         shell.addView(readerState(R.drawable.rem_error, title, desc, "重试", retry, false), new LinearLayout.LayoutParams(-1, 0, 1));
         shell.addView(readerProgressBar(readerChapterIndex + 1, Math.max(1, detail.chapters.size())), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 2)));
     }
 
     private LinearLayout readerToolbar(ComicModels.ComicDetail detail) {
+        int statusBarHeight = systemBarInset("status_bar_height");
         LinearLayout top = new LinearLayout(this);
-        top.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 12), 0);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.setPadding(UIHelpers.dp(this, 12), statusBarHeight, UIHelpers.dp(this, 12), 0);
         top.setGravity(Gravity.CENTER_VERTICAL);
-        top.setBackgroundColor(UIHelpers.DARK_BAR);
-        TextView name = UIHelpers.text(this, detail.chapters.get(readerChapterIndex).title, 12,
-                UIHelpers.READER_TEXT, Typeface.NORMAL);
+        top.setClickable(true);
+        GradientDrawable bg = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0xF20C1420, 0xEB0C1420, 0xD80C1420}
+        );
+        top.setBackground(bg);
+
+        ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, UIHelpers.READER_TEXT, 4);
+        back.setContentDescription("返回");
+        back.setClickable(true);
+        back.setFocusable(true);
+        back.setOnClickListener(v -> {
+            if (!TextUtils.isEmpty(activeDetailId)) {
+                showDetail(activeDetailId);
+            } else {
+                onBackPressed();
+            }
+        });
+        top.addView(back, new LinearLayout.LayoutParams(UIHelpers.dp(this, 28), UIHelpers.dp(this, 28)));
+
+        Space space = new Space(this);
+        top.addView(space, new LinearLayout.LayoutParams(UIHelpers.dp(this, 8), 1));
+
+        String titleText = detail.chapters.get(readerChapterIndex).title;
+        if (!TextUtils.isEmpty(detail.summary.title)) {
+            titleText = detail.summary.title + " · " + titleText;
+        }
+        TextView name = UIHelpers.text(this, titleText, 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
         name.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         name.setGravity(Gravity.CENTER_VERTICAL);
         name.setIncludeFontPadding(false);
         name.setSingleLine(true);
         name.setEllipsize(TextUtils.TruncateAt.END);
         top.addView(name, UIHelpers.weight(1));
+
         ImageView toc = UIHelpers.vectorIconButton(this, R.drawable.ic_chapter_list, UIHelpers.READER_TEXT, 4);
         toc.setContentDescription("章节目录");
         toc.setClickable(true);
@@ -2405,6 +2431,11 @@ public class MainActivity extends Activity {
         shell.setBackgroundColor(UIHelpers.DARK);
         root.addView(shell, UIHelpers.match());
 
+        int statusBarHeight = systemBarInset("status_bar_height");
+        int navBarHeight = systemBarInset("navigation_bar_height");
+        int topBarHeight = statusBarHeight + UIHelpers.dp(this, 44);
+        int bottomBarHeight = navBarHeight + UIHelpers.dp(this, 40);
+
         LinearLayout top = readerToolbar(detail);
 
         ComicModels.Chapter activeChapter = detail.chapters.get(readerChapterIndex);
@@ -2421,8 +2452,10 @@ public class MainActivity extends Activity {
         list.setCacheColorHint(UIHelpers.DARK);
         list.setDivider(null);
         list.setSelector(new ColorDrawable(Color.TRANSPARENT));
-        list.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
+        list.setPadding(UIHelpers.dp(this, 4), topBarHeight + UIHelpers.dp(this, 4),
+                UIHelpers.dp(this, 4), bottomBarHeight + UIHelpers.dp(this, 4));
         list.setClipToPadding(false);
+        list.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         String positionKey = readerPositionKey(detail.summary.comicId, activeChapter);
         int savedPosition = readerPositions.containsKey(positionKey) ? readerPositions.get(positionKey) : 0;
         final boolean[] restoringPosition = {savedPosition > 0};
@@ -2470,6 +2503,12 @@ public class MainActivity extends Activity {
         list.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL
+                        || scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING) {
+                    if (!readerFullscreen) {
+                        setReaderFullscreen(true, true);
+                    }
+                }
             }
 
             @Override
@@ -2487,8 +2526,25 @@ public class MainActivity extends Activity {
             }
         });
         list.setOnTouchListener((v, event) -> {
-            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) restoringPosition[0] = false;
-            return handleReaderTap(event, detail, page);
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                restoringPosition[0] = false;
+                readerDownX = event.getRawX();
+                readerDownY = event.getRawY();
+                readerDownAt = System.currentTimeMillis();
+                return false;
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+                float dy = Math.abs(event.getRawY() - readerDownY);
+                float dx = Math.abs(event.getRawX() - readerDownX);
+                if ((dy > UIHelpers.dp(MainActivity.this, 8) || dx > UIHelpers.dp(MainActivity.this, 8)) && !readerFullscreen) {
+                    setReaderFullscreen(true, true);
+                }
+                return false;
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+                return handleReaderTap(event, detail, page);
+            }
+            return false;
         });
         list.addOnLayoutChangeListener((v, left, topEdge, right, bottomEdge,
                                         oldLeft, oldTop, oldRight, oldBottom) -> {
@@ -2513,32 +2569,34 @@ public class MainActivity extends Activity {
         View chapterProgress = readerProgressBar(readerChapterIndex + 1, detail.chapters.size());
         readerProgressView = chapterProgress;
         chapterProgress.setAlpha(readerFullscreen ? 1f : 0f);
-        chapterProgress.setTranslationY(readerFullscreen ? 0f : -readerChromeBottomOffset());
         shell.addView(chapterProgress, new FrameLayout.LayoutParams(-1, UIHelpers.dp(this, 2), Gravity.BOTTOM));
 
-        FrameLayout.LayoutParams topParams = new FrameLayout.LayoutParams(-1, UIHelpers.dp(this, 43), Gravity.TOP);
-        topParams.topMargin = systemBarInset("status_bar_height");
+        FrameLayout.LayoutParams topParams = new FrameLayout.LayoutParams(-1, topBarHeight, Gravity.TOP);
         shell.addView(top, topParams);
         readerTopBar = top;
-        prepareReaderChrome(top, true);
 
         LinearLayout bottom = new LinearLayout(this);
-        bottom.setGravity(Gravity.CENTER_VERTICAL);
-        bottom.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 12), 0);
-        bottom.setBackgroundColor(UIHelpers.DARK_BAR);
+        bottom.setOrientation(LinearLayout.VERTICAL);
+        bottom.setGravity(Gravity.CENTER);
+        bottom.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 12), navBarHeight);
+        bottom.setClickable(true);
+        GradientDrawable bottomBg = new GradientDrawable(
+                GradientDrawable.Orientation.BOTTOM_TOP,
+                new int[]{0xF20C1420, 0xEB0C1420, 0xD80C1420}
+        );
+        bottom.setBackground(bottomBg);
 
-        // 全面手势模式：底部仅显示页数，翻章靠左右点按
-        TextView count = UIHelpers.text(this, "1 / " + page.imageUrls.size() + " 张 · 本章 1%", 11, UIHelpers.READER_TEXT, Typeface.NORMAL);
+        TextView count = UIHelpers.text(this, "1 / " + page.imageUrls.size() + " 张 · 本章 1%", 12, UIHelpers.READER_TEXT, Typeface.NORMAL);
         count.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         count.setGravity(Gravity.CENTER);
         count.setIncludeFontPadding(false);
         readerCount[0] = count;
-        bottom.addView(count, new LinearLayout.LayoutParams(-1, -2));
-        FrameLayout.LayoutParams bottomParams = new FrameLayout.LayoutParams(-1, UIHelpers.dp(this, 36), Gravity.BOTTOM);
-        bottomParams.bottomMargin = systemBarInset("navigation_bar_height");
+        bottom.addView(count, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 40)));
+        FrameLayout.LayoutParams bottomParams = new FrameLayout.LayoutParams(-1, bottomBarHeight, Gravity.BOTTOM);
         shell.addView(bottom, bottomParams);
         readerBottomBar = bottom;
-        prepareReaderChrome(bottom, false);
+
+        setReaderFullscreen(readerFullscreen, false);
     }
 
     private boolean handleReaderTap(MotionEvent event, ComicModels.ComicDetail detail, ComicModels.ChapterPage page) {
@@ -2570,49 +2628,95 @@ public class MainActivity extends Activity {
     }
 
     private void toggleReaderFullscreen() {
-        readerFullscreen = !readerFullscreen;
-        applyReaderSystemBars(true);
-        animateReaderChrome(readerTopBar, true);
-        animateReaderChrome(readerBottomBar, false);
+        setReaderFullscreen(!readerFullscreen, true);
+    }
+
+    private void setReaderFullscreen(boolean fullscreen, boolean animated) {
+        readerFullscreen = fullscreen;
+        if (readerTopBar == null || readerBottomBar == null) return;
+
+        int topHeight = readerTopBar.getHeight();
+        if (topHeight <= 0) {
+            topHeight = systemBarInset("status_bar_height") + UIHelpers.dp(this, 44);
+        }
+        int bottomHeight = readerBottomBar.getHeight();
+        if (bottomHeight <= 0) {
+            bottomHeight = systemBarInset("navigation_bar_height") + UIHelpers.dp(this, 40);
+        }
+
+        if (!animated) {
+            readerTopBar.animate().cancel();
+            readerBottomBar.animate().cancel();
+            if (readerProgressView != null) readerProgressView.animate().cancel();
+
+            readerTopBar.setAlpha(readerFullscreen ? 0f : 1f);
+            readerTopBar.setTranslationY(readerFullscreen ? -topHeight : 0f);
+            readerTopBar.setVisibility(readerFullscreen ? View.INVISIBLE : View.VISIBLE);
+
+            readerBottomBar.setAlpha(readerFullscreen ? 0f : 1f);
+            readerBottomBar.setTranslationY(readerFullscreen ? bottomHeight : 0f);
+            readerBottomBar.setVisibility(readerFullscreen ? View.INVISIBLE : View.VISIBLE);
+
+            if (readerProgressView != null) {
+                readerProgressView.setAlpha(readerFullscreen ? 1f : 0f);
+                readerProgressView.setVisibility(View.VISIBLE);
+            }
+            return;
+        }
+
+        long duration = READER_CHROME_ANIM_MS;
+        android.view.animation.Interpolator interpolator = readerFullscreen
+                ? new AccelerateInterpolator(1.6f)
+                : new DecelerateInterpolator(1.6f);
+
+        readerTopBar.animate().cancel();
+        if (!readerFullscreen) {
+            readerTopBar.setVisibility(View.VISIBLE);
+        }
+        readerTopBar.animate()
+                .alpha(readerFullscreen ? 0f : 1f)
+                .translationY(readerFullscreen ? -topHeight : 0f)
+                .setDuration(duration)
+                .setInterpolator(interpolator)
+                .withLayer()
+                .withEndAction(() -> {
+                    if (readerFullscreen && readerTopBar != null) {
+                        readerTopBar.setVisibility(View.INVISIBLE);
+                    }
+                })
+                .start();
+
+        readerBottomBar.animate().cancel();
+        if (!readerFullscreen) {
+            readerBottomBar.setVisibility(View.VISIBLE);
+        }
+        readerBottomBar.animate()
+                .alpha(readerFullscreen ? 0f : 1f)
+                .translationY(readerFullscreen ? bottomHeight : 0f)
+                .setDuration(duration)
+                .setInterpolator(interpolator)
+                .withLayer()
+                .withEndAction(() -> {
+                    if (readerFullscreen && readerBottomBar != null) {
+                        readerBottomBar.setVisibility(View.INVISIBLE);
+                    }
+                })
+                .start();
+
         if (readerProgressView != null) {
             readerProgressView.animate().cancel();
+            readerProgressView.setVisibility(View.VISIBLE);
             readerProgressView.animate()
                     .alpha(readerFullscreen ? 1f : 0f)
-                    .translationY(readerFullscreen ? 0f : -readerChromeBottomOffset())
-                    .setDuration(READER_CHROME_ANIM_MS)
-                    .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .setDuration(duration)
+                    .setInterpolator(interpolator)
                     .withLayer()
                     .start();
         }
     }
 
-    private void prepareReaderChrome(View view, boolean top) {
-        float shift = UIHelpers.dp(this, READER_CHROME_SHIFT_DP) * (top ? -1f : 1f);
-        view.setAlpha(readerFullscreen ? 0f : 1f);
-        view.setTranslationY(readerFullscreen ? shift : 0f);
-        view.setVisibility(readerFullscreen ? View.INVISIBLE : View.VISIBLE);
-    }
-
-    private void animateReaderChrome(View view, boolean top) {
-        if (view == null) return;
-        boolean hide = readerFullscreen;
-        float shift = UIHelpers.dp(this, READER_CHROME_SHIFT_DP) * (top ? -1f : 1f);
-        view.animate().cancel();
-        if (!hide) view.setVisibility(View.VISIBLE);
-        view.animate()
-                .alpha(hide ? 0f : 1f)
-                .translationY(hide ? shift : 0f)
-                .setDuration(READER_CHROME_ANIM_MS)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .withLayer()
-                .withEndAction(() -> {
-                    if (readerFullscreen) view.setVisibility(View.INVISIBLE);
-                })
-                .start();
-    }
-
     private int readerChromeBottomOffset() {
-        return systemBarInset("navigation_bar_height") + UIHelpers.dp(this, 36);
+        return systemBarInset("navigation_bar_height") + UIHelpers.dp(this, 40);
     }
 
     private int systemBarInset(String name) {
@@ -4870,8 +4974,8 @@ public class MainActivity extends Activity {
         shell.setOrientation(LinearLayout.VERTICAL);
         shell.setBackgroundColor(UIHelpers.DARK);
         root.addView(shell, UIHelpers.match());
-        shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(
-                -1, UIHelpers.dp(this, 43)));
+        int topHeight = systemBarInset("status_bar_height") + UIHelpers.dp(this, 44);
+        shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, topHeight));
         shell.addView(readerState(R.drawable.rem_error,
                 sourceNameForId(detail.summary.sourceId) + "需要验证",
                 "请先完成站点验证", "去验证", this::showSourceManagement, false),

@@ -44,14 +44,17 @@ check("drawer chapter rows use compact alignment", source.includes("setMinimumHe
 check("background detail refresh does not displace an open drawer", source.includes("activePopup == null || !activePopup.isShowing()"));
 check("updates try COS before the server fallback", source.includes("apk/xx-comic/xx-comic.bin") && source.includes("UPDATE_APK_URLS") && updateDownload.includes("for (String updateUrl : UPDATE_APK_URLS)"));
 check("update fallback preserves cancellation and checksum verification", updateDownload.includes("isExpectedTaskCancellation(error)") && updateDownload.includes("actualHash.equals(release.sha256)"));
-check("reader chrome uses a gentle ease in/out", readerChrome.includes("AccelerateDecelerateInterpolator")
-  && readerChrome.includes("setInterpolator(new AccelerateDecelerateInterpolator())"));
-check("reader chrome keeps the softened animation duration", source.includes("READER_CHROME_ANIM_MS = 320L"));
+check("reader chrome uses directional easing", readerChrome.includes("new AccelerateInterpolator(1.6f)")
+  && readerChrome.includes("new DecelerateInterpolator(1.6f)"));
+check("reader chrome keeps the responsive animation duration", source.includes("READER_CHROME_ANIM_MS = 260L"));
 check("reader chrome animates on a hardware layer", readerChrome.includes("withLayer()"));
 check("reader progress fades with the reader chrome", source.includes("chapterProgress.setAlpha(readerFullscreen ? 1f : 0f)")
   && readerChrome.includes(".alpha(readerFullscreen ? 1f : 0f)"));
+check("reader chrome travels fully off canvas", readerChrome.includes("translationY(readerFullscreen ? -topHeight : 0f)")
+  && readerChrome.includes("translationY(readerFullscreen ? bottomHeight : 0f)"));
+check("reader scrolling can enter immersive mode", source.includes("setReaderFullscreen(true, true)"));
 check("latest-version scene has no reinstall action", latestUpdate && !latestUpdate.includes("settingsBottomActions")
   && !latestUpdate.includes("startUpdateDownload"));
-check("release version is 1.0.53", gradle.includes('versionName "1.0.53"') && gradle.includes("versionCode 53"));
+check("release version is 1.0.54", gradle.includes('versionName "1.0.54"') && gradle.includes("versionCode 54"));
 
 console.log("detail release contracts hold");
