@@ -1,5 +1,7 @@
 package com.xxcomic;
 
+import android.webkit.WebSettings;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -136,6 +138,12 @@ public class Mh18WebViewSessionTest {
                 Mh18WebViewSession.probeAction(Mh18WebViewSession.HttpAction.RETURN_BODY));
         assertEquals(Mh18WebViewSession.ProbeAction.FAIL,
                 Mh18WebViewSession.probeAction(Mh18WebViewSession.HttpAction.FAIL));
+    }
+
+    @Test
+    public void verificationPageAlwaysBypassesStaleDocumentCache() {
+        assertEquals(WebSettings.LOAD_NO_CACHE,
+                Mh18WebViewSession.verificationCacheMode());
     }
 
     @Test

@@ -60,6 +60,10 @@ check("18mh challenge response returns before reading its body",
   mh18.indexOf("if (statusCode == 403") > 0
   && mh18.indexOf("if (statusCode == 403")
     < mh18.indexOf("InputStream stream = statusCode >= 400"));
+check("18mh verification bypasses stale WebView documents",
+  mh18.includes("verificationCacheMode()")
+  && mh18.includes("settings.setCacheMode(verificationCacheMode())")
+  && mh18.includes("WebSettings.LOAD_NO_CACHE"));
 check("18mh browser is explicit and compact",
   mh18.includes("public String fetchInteractive(String url) throws IOException")
   && mh18.includes("Dialog dialog = new Dialog(activity)")

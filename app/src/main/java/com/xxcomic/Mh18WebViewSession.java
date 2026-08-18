@@ -116,6 +116,10 @@ final class Mh18WebViewSession implements BrowserSession {
         return USER_AGENT;
     }
 
+    static int verificationCacheMode() {
+        return WebSettings.LOAD_NO_CACHE;
+    }
+
     static long requestTimeoutMs() {
         return TIMEOUT_MS;
     }
@@ -331,6 +335,7 @@ final class Mh18WebViewSession implements BrowserSession {
 
         WebSettings settings = browser.getSettings();
         settings.setUserAgentString(userAgent);
+        settings.setCacheMode(verificationCacheMode());
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
