@@ -108,7 +108,16 @@ check("18mh reload ends the old request before delegating retry",
   && (mh18.match(/verificationRetry\.onRetry\(\)/g) || []).length === 1
   && !retryInteractive.includes("loadUrl("));
 check("18mh initial load is not an automatic retry loop",
-  (mh18.match(/loadInteractive\(request\)/g) || []).length === 1);
+  (mh18.match(/loadInteractive\(request\)/g) || []).length >= 2
+  && !mh18.slice(
+    mh18.indexOf("private void startInteractive"),
+    mh18.indexOf("private void createDialog"),
+  ).includes("loadInteractive(request)"));
+check("18mh probe challenges refresh the visible verification page",
+  mh18.includes("enum ProbeAction")
+  && mh18.includes("ProbeAction.RELOAD")
+  && mh18.includes("MAX_PROBE_RECOVERIES")
+  && mh18.includes("isCloudflareChallengeNavigation"));
 const startInteractive = mh18.slice(
   mh18.indexOf("private void startInteractive"),
   mh18.indexOf("private void createDialog"),

@@ -110,6 +110,35 @@ public class Mh18WebViewSessionTest {
     }
 
     @Test
+    public void cloudflareChallengeNavigationsRemainVisibleToWebView() {
+        assertFalse(Mh18WebViewSession.shouldBlockNavigation(
+                "https://18mh.org/manga",
+                "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/turnstile"));
+        assertFalse(Mh18WebViewSession.shouldBlockNavigation(
+                "https://18mh.org/manga",
+                "https://18mh.org/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1"));
+    }
+
+    @Test
+    public void modernCloudflareMarkupIsRecognizedBeforeWidgetLoads() {
+        String html = "<script>window._cf_chl_opt={cType:'managed'};</script>"
+                + "<div id='challenge-error-text'>Enable JavaScript and cookies to continue</div>";
+
+        assertTrue(Mh18WebViewSession.isChallenge(
+                "https://18mh.org/manga", "Just a moment...", html, 403, "challenge"));
+    }
+
+    @Test
+    public void challengeProbeRequestsReloadInsteadOfStoppingVerification() {
+        assertEquals(Mh18WebViewSession.ProbeAction.RELOAD,
+                Mh18WebViewSession.probeAction(Mh18WebViewSession.HttpAction.VERIFICATION_REQUIRED));
+        assertEquals(Mh18WebViewSession.ProbeAction.COMPLETE,
+                Mh18WebViewSession.probeAction(Mh18WebViewSession.HttpAction.RETURN_BODY));
+        assertEquals(Mh18WebViewSession.ProbeAction.FAIL,
+                Mh18WebViewSession.probeAction(Mh18WebViewSession.HttpAction.FAIL));
+    }
+
+    @Test
     public void pageInspectionWaitsForChallengeAndIncompleteBusinessDom() {
         assertEquals(Mh18WebViewSession.PageAction.WAIT,
                 Mh18WebViewSession.pageAction(true, false, false));

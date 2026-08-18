@@ -59,6 +59,7 @@ final class Mh18WebViewSession implements BrowserSession {
     private static final long TIMEOUT_MS = 120000L;
     private static final long SUCCESS_DELAY_MS = 600L;
     private static final long INSPECTION_DELAY_MS = 600L;
+    private static final int MAX_PROBE_RECOVERIES = 2;
     private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14) "
             + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
     private static final int CONNECT_TIMEOUT_MS = 10000;
@@ -553,11 +554,18 @@ final class Mh18WebViewSession implements BrowserSession {
         }
         HttpAction action = httpAction(
                 response.statusCode, response.mitigated, response.body);
-        if (action == HttpAction.VERIFICATION_REQUIRED) {
-            stopAttempt(request, "验证尚未生效，请重试");
+        ProbeAction probeAction = probeAction(action);
+        if (probeAction == ProbeAction.RELOAD) {
+            if (request.probeRecoveries < MAX_PROBE_RECOVERIES) {
+                request.probeRecoveries++;
+                setStatus(request, "验证状态已更新，正在刷新验证页");
+                loadInteractive(request);
+            } else {
+                stopAttempt(request, "验证尚未生效，请重试");
+            }
             return;
         }
-        if (action == HttpAction.FAIL) {
+        if (probeAction == ProbeAction.FAIL) {
             stopAttempt(request, "确认请求失败，请重试");
             return;
         }
@@ -852,6 +860,12 @@ final class Mh18WebViewSession implements BrowserSession {
         FAIL
     }
 
+    enum ProbeAction {
+        COMPLETE,
+        RELOAD,
+        FAIL
+    }
+
     static InteractiveAction interactiveAction(int statusCode, String mitigated, String body) {
         HttpAction action = httpAction(statusCode, mitigated, body);
         if (action == HttpAction.VERIFICATION_REQUIRED) return InteractiveAction.OPEN_BROWSER;
@@ -867,6 +881,12 @@ final class Mh18WebViewSession implements BrowserSession {
         if (expectedPage && browserCatalog) return PageAction.PROBE;
         if (!expectedPage) return PageAction.FAIL;
         return PageAction.WAIT;
+    }
+
+    static ProbeAction probeAction(HttpAction action) {
+        if (action == HttpAction.VERIFICATION_REQUIRED) return ProbeAction.RELOAD;
+        if (action == HttpAction.FAIL) return ProbeAction.FAIL;
+        return ProbeAction.COMPLETE;
     }
 
     static boolean shouldStopForTimeout(boolean active, boolean succeeded) {
@@ -888,6 +908,8 @@ final class Mh18WebViewSession implements BrowserSession {
                 + (body == null ? "" : body)).toLowerCase(Locale.US);
         return statusCode == 403 && "challenge".equalsIgnoreCase(mitigated)
                 || content.contains("/orchestrate/chl_page/")
+                || content.contains("_cf_chl_opt")
+                || content.contains("challenge-error-text")
                 || content.contains("cf-chl-widget")
                 || content.contains("cf-turnstile-response")
                 || content.contains("just a moment")
@@ -913,7 +935,21 @@ final class Mh18WebViewSession implements BrowserSession {
     }
 
     static boolean shouldBlockNavigation(String requested, String actual) {
-        return !sameSite(requested, actual);
+        return !sameSite(requested, actual) && !isCloudflareChallengeNavigation(actual);
+    }
+
+    private static boolean isCloudflareChallengeNavigation(String actual) {
+        try {
+            URL url = new URL(actual);
+            String host = url.getHost().toLowerCase(Locale.US);
+            String path = normalizedPath(url.getPath());
+            boolean challengeHost = host.equals("challenges.cloudflare.com")
+                    || host.endsWith(".challenges.cloudflare.com");
+            return challengeHost && (path.startsWith("/cdn-cgi/challenge-platform/")
+                    || path.startsWith("/turnstile/"));
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private static boolean sameSite(String requested, String actual) {
@@ -966,6 +1002,7 @@ final class Mh18WebViewSession implements BrowserSession {
         boolean stopped;
         boolean succeeded;
         boolean retainBrowser;
+        int probeRecoveries;
 
         InteractiveRequest(String url) {
             this.url = url;
