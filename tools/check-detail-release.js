@@ -20,6 +20,8 @@ const drawer = between("private void showChapterDrawer", "private void fillChapt
 const readButton = between("private View detailReadButton", "private void installDetailHeroStretch");
 const heroCover = between("private void addDetailHeroCover", "private String chapterNumber");
 const updateDownload = between("private File downloadAndVerifyUpdate", "private void installUpdate");
+const readerChrome = between("private void toggleReaderFullscreen", "private int readerChromeBottomOffset");
+const latestUpdate = between("private void showUpdateLatest", "private void showUpdateFailure");
 
 check("detail read action follows persisted reading state", detail.includes("detailReadButton(detail)"));
 check("first chapter history remains a continue action", source.includes("lastViewedAt.containsKey(detail.summary.comicId)"));
@@ -42,6 +44,11 @@ check("drawer chapter rows use compact alignment", source.includes("setMinimumHe
 check("background detail refresh does not displace an open drawer", source.includes("activePopup == null || !activePopup.isShowing()"));
 check("updates try COS before the server fallback", source.includes("apk/xx-comic/xx-comic.bin") && source.includes("UPDATE_APK_URLS") && updateDownload.includes("for (String updateUrl : UPDATE_APK_URLS)"));
 check("update fallback preserves cancellation and checksum verification", updateDownload.includes("isExpectedTaskCancellation(error)") && updateDownload.includes("actualHash.equals(release.sha256)"));
-check("release version is 1.0.51", gradle.includes('versionName "1.0.51"') && gradle.includes("versionCode 51"));
+check("reader chrome uses a gentle ease in/out", readerChrome.includes("AccelerateDecelerateInterpolator")
+  && readerChrome.includes("setInterpolator(new AccelerateDecelerateInterpolator())"));
+check("reader chrome keeps the softened animation duration", source.includes("READER_CHROME_ANIM_MS = 280L"));
+check("latest-version scene has no reinstall action", latestUpdate && !latestUpdate.includes("settingsBottomActions")
+  && !latestUpdate.includes("startUpdateDownload"));
+check("release version is 1.0.52", gradle.includes('versionName "1.0.52"') && gradle.includes("versionCode 52"));
 
 console.log("detail release contracts hold");

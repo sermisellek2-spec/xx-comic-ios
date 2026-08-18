@@ -30,6 +30,7 @@ import android.view.ViewConfiguration;
 import android.view.inputmethod.EditorInfo;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -114,7 +115,7 @@ public class MainActivity extends Activity {
     private static final int DETAIL_HERO_MAX_DP = 390;
     private static final int CHAPTER_DRAWER_BATCH_SIZE = 40;
     private static final long READER_PROGRESS_ANIM_MS = 30L;
-    private static final long READER_CHROME_ANIM_MS = 180L;
+    private static final long READER_CHROME_ANIM_MS = 280L;
     private static final int READER_CHROME_SHIFT_DP = 6;
     private static final int READER_POSITION_SCALE = 10000;
     private static final long READER_POSITION_SAVE_DELAY_MS = 250L;
@@ -2577,6 +2578,7 @@ public class MainActivity extends Activity {
             readerProgressView.animate()
                     .translationY(readerFullscreen ? 0f : -readerChromeBottomOffset())
                     .setDuration(READER_CHROME_ANIM_MS)
+                    .setInterpolator(new AccelerateDecelerateInterpolator())
                     .start();
         }
     }
@@ -2598,6 +2600,7 @@ public class MainActivity extends Activity {
                 .alpha(hide ? 0f : 1f)
                 .translationY(hide ? shift : 0f)
                 .setDuration(READER_CHROME_ANIM_MS)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
                 .withEndAction(() -> {
                     if (readerFullscreen) view.setVisibility(View.INVISIBLE);
                 })
@@ -5319,9 +5322,6 @@ public class MainActivity extends Activity {
     private void showUpdateLatest() {
         LinearLayout page = settingsScenePage("update-latest", "版本更新", "当前 " + BuildConfig.VERSION_NAME);
         page.addView(remState(R.drawable.rem_reader_resume, "已经是最新版本", "XX Comic " + BuildConfig.VERSION_NAME, "", null));
-        page.addView(settingsBottomActions("", null, "重新安装", () -> {
-            if (availableUpdateRelease != null) startUpdateDownload(availableUpdateRelease);
-        }));
     }
 
     private void showUpdateFailure() {
