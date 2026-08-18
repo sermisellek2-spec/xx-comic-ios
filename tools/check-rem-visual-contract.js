@@ -89,8 +89,8 @@ check("detail has no visible back button", detail && !detail.includes("R.drawabl
 check("history has no visible back button", history && !history.includes("R.drawable.ic_back"));
 check("chapter catalog remains an async right drawer", main.includes("showChapterDrawer") && main.includes("ensureChaptersThen"));
 
-check("release version is 2.0.1", gradle.includes('versionName "2.0.1"'));
-check("release code is 201", gradle.includes("versionCode 201"));
+check("release version is 2.0.2", gradle.includes('versionName "2.0.2"'));
+check("release code is 202", gradle.includes("versionCode 202"));
 
 if (failed) process.exit(1);
 console.log("Rem visual contract holds.");

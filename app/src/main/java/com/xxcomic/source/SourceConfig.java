@@ -303,6 +303,20 @@ public class SourceConfig {
                 new JSONObject(), new JSONObject());
     }
 
+    public static SourceConfig liumanhua(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        try {
+            routes.put("latest", "/category");
+            routes.put("categoryIndex", "/category");
+            routes.put("category", "/category{filterPath}{pagePath}");
+            routes.put("detail", "/{comicId}");
+            routes.put("chapter", "{chapterUrl}");
+        } catch (JSONException ignored) {
+        }
+        return new SourceConfig("liumanhua", "六漫画", "www.liumanhua.com", "https://www.liumanhua.com", "https://www.liumanhua.com/",
+                "/category", "", "/category{filterPath}{pagePath}", "/{comicId}", enabled, routes, new JSONObject());
+    }
+
     private static SourceConfig fiveUm(String id, String name, String domain, String baseUrl, boolean enabled) {
         JSONObject routes = new JSONObject();
         try {

@@ -66,6 +66,7 @@ import com.xxcomic.source.ManhuaguiComicSource;
 import com.xxcomic.source.Hanman18ComicSource;
 import com.xxcomic.source.MkzhanComicSource;
 import com.xxcomic.source.Mhua5ComicSource;
+import com.xxcomic.source.LiumanhuaComicSource;
 import com.xxcomic.source.SourceConfig;
 import com.xxcomic.source.VerificationCancelledException;
 import com.xxcomic.source.VerificationRequiredException;
@@ -183,6 +184,7 @@ public class MainActivity extends Activity {
     private ComicSource bbyinClient;
     private ComicSource antbywClient;
     private ComicSource cuimhClient;
+    private ComicSource liumanhuaClient;
     private Mh18WebViewSession mh18BrowserSession;
     private JmComicWebViewSession jmcomicBrowserSession;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
@@ -200,6 +202,7 @@ public class MainActivity extends Activity {
     private SourceConfig bbyinConfig = SourceConfig.bbyin(true);
     private SourceConfig antbywConfig = SourceConfig.antbyw(true);
     private SourceConfig cuimhConfig = SourceConfig.cuimh(true);
+    private SourceConfig liumanhuaConfig = SourceConfig.liumanhua(true);
     private final List<ComicModels.ComicSummary> searchResults = new ArrayList<>();
     private final List<ComicModels.ComicSummary> globalSearchResults = new ArrayList<>();
     private final List<String> globalSearchHistory = new ArrayList<>();
@@ -250,6 +253,7 @@ public class MainActivity extends Activity {
     private boolean bbyinEnabled = true;
     private boolean antbywEnabled = true;
     private boolean cuimhEnabled = true;
+    private boolean liumanhuaEnabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
     private boolean readerLeftHand = false;
@@ -1387,6 +1391,12 @@ public class MainActivity extends Activity {
         addSourceCard(enabledSources, disabledSources, cuimhEnabled, sourceCard(cuimhConfig, cuimhEnabled, () -> {
             cuimhEnabled = !cuimhEnabled;
             cuimhConfig = cuimhConfig.withEnabled(cuimhEnabled);
+            rebuildSourceClients();
+            finishSourceToggle();
+        }));
+        addSourceCard(enabledSources, disabledSources, liumanhuaEnabled, sourceCard(liumanhuaConfig, liumanhuaEnabled, () -> {
+            liumanhuaEnabled = !liumanhuaEnabled;
+            liumanhuaConfig = liumanhuaConfig.withEnabled(liumanhuaEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
@@ -3169,6 +3179,7 @@ public class MainActivity extends Activity {
         if (bbyinClient.id().equals(sourceId)) return bbyinClient.name();
         if (antbywClient.id().equals(sourceId)) return antbywClient.name();
         if (cuimhClient.id().equals(sourceId)) return cuimhClient.name();
+        if (liumanhuaClient.id().equals(sourceId)) return liumanhuaClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(sourceId)) return item.name;
         }
@@ -3191,6 +3202,7 @@ public class MainActivity extends Activity {
         if (bbyinClient.id().equals(selectedSourceId) && bbyinEnabled) return bbyinClient;
         if (antbywClient.id().equals(selectedSourceId) && antbywEnabled) return antbywClient;
         if (cuimhClient.id().equals(selectedSourceId) && cuimhEnabled) return cuimhClient;
+        if (liumanhuaClient.id().equals(selectedSourceId) && liumanhuaEnabled) return liumanhuaClient;
         List<ComicSource> enabled = enabledBuiltinSources();
         if (enabled.isEmpty()) return null;
         selectedSourceId = enabled.get(0).id();
@@ -3215,6 +3227,7 @@ public class MainActivity extends Activity {
         if (bbyinEnabled) sources.add(bbyinClient);
         if (antbywEnabled) sources.add(antbywClient);
         if (cuimhEnabled) sources.add(cuimhClient);
+        if (liumanhuaEnabled) sources.add(liumanhuaClient);
         return sources;
     }
 
@@ -3261,6 +3274,7 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(bbyinClient.id() + ":")) return bbyinClient;
         if (comicId != null && comicId.startsWith(antbywClient.id() + ":")) return antbywClient;
         if (comicId != null && comicId.startsWith(cuimhClient.id() + ":")) return cuimhClient;
+        if (comicId != null && comicId.startsWith(liumanhuaClient.id() + ":")) return liumanhuaClient;
         return sourceClient;
     }
 
@@ -3286,6 +3300,7 @@ public class MainActivity extends Activity {
         if (bbyinClient.id().equals(sourceId)) return bbyinClient;
         if (antbywClient.id().equals(sourceId)) return antbywClient;
         if (cuimhClient.id().equals(sourceId)) return cuimhClient;
+        if (liumanhuaClient.id().equals(sourceId)) return liumanhuaClient;
         return sourceClient;
     }
 
@@ -4377,6 +4392,9 @@ public class MainActivity extends Activity {
         if (imageUrl != null && (imageUrl.contains(cuimhConfig.domain) || imageUrl.contains("baipiaoguai.org"))) {
             return TextUtils.isEmpty(pageReferer) ? cuimhConfig.referer : pageReferer;
         }
+        if (imageUrl != null && imageUrl.contains("s2.bzcdn.net")) {
+            return TextUtils.isEmpty(pageReferer) ? liumanhuaConfig.referer : pageReferer;
+        }
         return baoziConfig.referer;
     }
 
@@ -4626,6 +4644,7 @@ public class MainActivity extends Activity {
         if (bbyinEnabled) names.add(bbyinClient.name());
         if (antbywEnabled) names.add(antbywClient.name());
         if (cuimhEnabled) names.add(cuimhClient.name());
+        if (liumanhuaEnabled) names.add(liumanhuaClient.name());
         return names;
     }
 
@@ -4645,6 +4664,7 @@ public class MainActivity extends Activity {
         if (bbyinClient.id().equals(selectedSourceId)) return bbyinClient.name();
         if (antbywClient.id().equals(selectedSourceId)) return antbywClient.name();
         if (cuimhClient.id().equals(selectedSourceId)) return cuimhClient.name();
+        if (liumanhuaClient.id().equals(selectedSourceId)) return liumanhuaClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(selectedSourceId)) return item.name;
         }
@@ -4667,6 +4687,7 @@ public class MainActivity extends Activity {
         if (bbyinClient.name().equals(name)) return bbyinClient.id();
         if (antbywClient.name().equals(name)) return antbywClient.id();
         if (cuimhClient.name().equals(name)) return cuimhClient.id();
+        if (liumanhuaClient.name().equals(name)) return liumanhuaClient.id();
         for (ComicModels.Source item : customSources) {
             if (item.name.equals(name)) return item.id;
         }
@@ -6050,6 +6071,7 @@ public class MainActivity extends Activity {
         sources.put(bbyinConfig.withEnabled(bbyinEnabled).toJson());
         sources.put(antbywConfig.withEnabled(antbywEnabled).toJson());
         sources.put(cuimhConfig.withEnabled(cuimhEnabled).toJson());
+        sources.put(liumanhuaConfig.withEnabled(liumanhuaEnabled).toJson());
         root.put("sources", sources);
         JSONArray custom = new JSONArray();
         for (ComicModels.Source item : customSources) {
@@ -6123,6 +6145,9 @@ public class MainActivity extends Activity {
                 } else if (cuimhConfig.id.equals(id)) {
                     cuimhConfig = SourceConfig.fromJson(item, SourceConfig.cuimh(true));
                     cuimhEnabled = cuimhConfig.enabled;
+                } else if (liumanhuaConfig.id.equals(id)) {
+                    liumanhuaConfig = SourceConfig.fromJson(item, SourceConfig.liumanhua(true));
+                    liumanhuaEnabled = liumanhuaConfig.enabled;
                 }
             }
         }
@@ -6146,6 +6171,7 @@ public class MainActivity extends Activity {
                 if (bbyinConfig.id.equals(id)) bbyinEnabled = item.optBoolean("enabled", true);
                 if (antbywConfig.id.equals(id)) antbywEnabled = item.optBoolean("enabled", true);
                 if (cuimhConfig.id.equals(id)) cuimhEnabled = item.optBoolean("enabled", true);
+                if (liumanhuaConfig.id.equals(id)) liumanhuaEnabled = item.optBoolean("enabled", true);
             }
         }
         rebuildSourceClients();
@@ -6215,6 +6241,7 @@ public class MainActivity extends Activity {
         if (!bbyinEnabled) rows.add(bbyinConfig.name + "\u001f已关闭");
         if (!antbywEnabled) rows.add(antbywConfig.name + "\u001f已关闭");
         if (!cuimhEnabled) rows.add(cuimhConfig.name + "\u001f已关闭");
+        if (!liumanhuaEnabled) rows.add(liumanhuaConfig.name + "\u001f已关闭");
     }
 
     private void showSourceHealthLoading() {
@@ -6271,6 +6298,7 @@ public class MainActivity extends Activity {
         bbyinClient = new FiveUmComicSource(bbyinConfig.withEnabled(bbyinEnabled));
         antbywClient = new AntbywComicSource(antbywConfig.withEnabled(antbywEnabled));
         cuimhClient = new CuimhComicSource(cuimhConfig.withEnabled(cuimhEnabled));
+        liumanhuaClient = new LiumanhuaComicSource(liumanhuaConfig.withEnabled(liumanhuaEnabled));
     }
 
     private String readHistoryText() {
@@ -6301,6 +6329,7 @@ public class MainActivity extends Activity {
         bbyinEnabled = prefs.getBoolean("source.bbyin.enabled", true);
         antbywEnabled = prefs.getBoolean("source.antbyw.enabled", true);
         cuimhEnabled = prefs.getBoolean("source.cuimh.enabled", true);
+        liumanhuaEnabled = prefs.getBoolean("source.liumanhua.enabled", true);
         restoreSourceConfigs(prefs.getString("source.configs", ""));
         rebuildSourceClients();
         chapterDesc = prefs.getBoolean("chapter.desc", false);
@@ -6390,6 +6419,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.bbyin.enabled", bbyinEnabled);
         editor.putBoolean("source.antbyw.enabled", antbywEnabled);
         editor.putBoolean("source.cuimh.enabled", cuimhEnabled);
+        editor.putBoolean("source.liumanhua.enabled", liumanhuaEnabled);
         editor.putString("source.configs", encodeSourceConfigs());
         editor.putBoolean("chapter.desc", chapterDesc);
         editor.putInt("theme.mode", themeMode);
@@ -6443,6 +6473,7 @@ public class MainActivity extends Activity {
             bbyinConfig = SourceConfig.bbyin(bbyinEnabled);
             antbywConfig = SourceConfig.antbyw(antbywEnabled);
             cuimhConfig = SourceConfig.cuimh(cuimhEnabled);
+            liumanhuaConfig = SourceConfig.liumanhua(liumanhuaEnabled);
             return;
         }
         try {
@@ -6496,6 +6527,9 @@ public class MainActivity extends Activity {
                 } else if (SourceConfig.cuimh(true).id.equals(id)) {
                     cuimhConfig = SourceConfig.fromJson(item, SourceConfig.cuimh(cuimhEnabled));
                     cuimhEnabled = cuimhConfig.enabled;
+                } else if (SourceConfig.liumanhua(true).id.equals(id)) {
+                    liumanhuaConfig = SourceConfig.fromJson(item, SourceConfig.liumanhua(liumanhuaEnabled));
+                    liumanhuaEnabled = liumanhuaConfig.enabled;
                 }
             }
         } catch (JSONException ignored) {
@@ -6514,6 +6548,7 @@ public class MainActivity extends Activity {
             bbyinConfig = SourceConfig.bbyin(bbyinEnabled);
             antbywConfig = SourceConfig.antbyw(antbywEnabled);
             cuimhConfig = SourceConfig.cuimh(cuimhEnabled);
+            liumanhuaConfig = SourceConfig.liumanhua(liumanhuaEnabled);
         }
     }
 
@@ -6535,6 +6570,7 @@ public class MainActivity extends Activity {
             array.put(bbyinConfig.withEnabled(bbyinEnabled).toJson());
             array.put(antbywConfig.withEnabled(antbywEnabled).toJson());
             array.put(cuimhConfig.withEnabled(cuimhEnabled).toJson());
+            array.put(liumanhuaConfig.withEnabled(liumanhuaEnabled).toJson());
             return array.toString();
         } catch (JSONException ignored) {
             return "[]";
