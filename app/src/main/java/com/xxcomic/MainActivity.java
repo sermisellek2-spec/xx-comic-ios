@@ -115,7 +115,7 @@ public class MainActivity extends Activity {
     private static final int DETAIL_HERO_MAX_DP = 390;
     private static final int CHAPTER_DRAWER_BATCH_SIZE = 40;
     private static final long READER_PROGRESS_ANIM_MS = 30L;
-    private static final long READER_CHROME_ANIM_MS = 280L;
+    private static final long READER_CHROME_ANIM_MS = 320L;
     private static final int READER_CHROME_SHIFT_DP = 6;
     private static final int READER_POSITION_SCALE = 10000;
     private static final long READER_POSITION_SAVE_DELAY_MS = 250L;
@@ -2512,6 +2512,7 @@ public class MainActivity extends Activity {
 
         View chapterProgress = readerProgressBar(readerChapterIndex + 1, detail.chapters.size());
         readerProgressView = chapterProgress;
+        chapterProgress.setAlpha(readerFullscreen ? 1f : 0f);
         chapterProgress.setTranslationY(readerFullscreen ? 0f : -readerChromeBottomOffset());
         shell.addView(chapterProgress, new FrameLayout.LayoutParams(-1, UIHelpers.dp(this, 2), Gravity.BOTTOM));
 
@@ -2576,9 +2577,11 @@ public class MainActivity extends Activity {
         if (readerProgressView != null) {
             readerProgressView.animate().cancel();
             readerProgressView.animate()
+                    .alpha(readerFullscreen ? 1f : 0f)
                     .translationY(readerFullscreen ? 0f : -readerChromeBottomOffset())
                     .setDuration(READER_CHROME_ANIM_MS)
                     .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .withLayer()
                     .start();
         }
     }
@@ -2601,6 +2604,7 @@ public class MainActivity extends Activity {
                 .translationY(hide ? shift : 0f)
                 .setDuration(READER_CHROME_ANIM_MS)
                 .setInterpolator(new AccelerateDecelerateInterpolator())
+                .withLayer()
                 .withEndAction(() -> {
                     if (readerFullscreen) view.setVisibility(View.INVISIBLE);
                 })

@@ -46,9 +46,12 @@ check("updates try COS before the server fallback", source.includes("apk/xx-comi
 check("update fallback preserves cancellation and checksum verification", updateDownload.includes("isExpectedTaskCancellation(error)") && updateDownload.includes("actualHash.equals(release.sha256)"));
 check("reader chrome uses a gentle ease in/out", readerChrome.includes("AccelerateDecelerateInterpolator")
   && readerChrome.includes("setInterpolator(new AccelerateDecelerateInterpolator())"));
-check("reader chrome keeps the softened animation duration", source.includes("READER_CHROME_ANIM_MS = 280L"));
+check("reader chrome keeps the softened animation duration", source.includes("READER_CHROME_ANIM_MS = 320L"));
+check("reader chrome animates on a hardware layer", readerChrome.includes("withLayer()"));
+check("reader progress fades with the reader chrome", source.includes("chapterProgress.setAlpha(readerFullscreen ? 1f : 0f)")
+  && readerChrome.includes(".alpha(readerFullscreen ? 1f : 0f)"));
 check("latest-version scene has no reinstall action", latestUpdate && !latestUpdate.includes("settingsBottomActions")
   && !latestUpdate.includes("startUpdateDownload"));
-check("release version is 1.0.52", gradle.includes('versionName "1.0.52"') && gradle.includes("versionCode 52"));
+check("release version is 1.0.53", gradle.includes('versionName "1.0.53"') && gradle.includes("versionCode 53"));
 
 console.log("detail release contracts hold");
