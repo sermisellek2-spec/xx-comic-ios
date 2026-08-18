@@ -70,6 +70,15 @@ check("reader restore uses Rem resume prompt", /restoreReaderPosition[\s\S]*?sho
 
 const sources = block(main, "private void renderSources", "private void addSourceCard");
 check("source management has no add-source entry", sources && !sources.includes("showAddSourceDialog") && !sources.includes("+ 添加"));
+const deadUiMethods = [
+  "private void renderProfile(", "private View menuItemWithIcon(", "private void cycleThemeMode(",
+  "private void toggleReaderHand(", "private View favoriteRow(", "private void deleteFavorite(",
+  "private void showChoiceDrawer(", "private interface ChoiceAction", "private TextView sourceDropdown(",
+  "private void showSourceChooser(", "private void showAddSourceDialog(",
+  "private static class SwipeToDeleteLayout",
+];
+check("unreachable legacy UI methods are removed",
+  deadUiMethods.every((method) => !main.includes(method)));
 check("source management keeps the four approved functions", [
   "healthCheck", "openImportSourceConfig", "exportSourceConfig", "sourceSwitch",
 ].every((value) => main.includes(value)));
@@ -80,8 +89,8 @@ check("detail has no visible back button", detail && !detail.includes("R.drawabl
 check("history has no visible back button", history && !history.includes("R.drawable.ic_back"));
 check("chapter catalog remains an async right drawer", main.includes("showChapterDrawer") && main.includes("ensureChaptersThen"));
 
-check("release version is 1.0.50", gradle.includes('versionName "1.0.50"'));
-check("release code is 50", gradle.includes("versionCode 50"));
+check("release version is 1.0.51", gradle.includes('versionName "1.0.51"'));
+check("release code is 51", gradle.includes("versionCode 51"));
 
 if (failed) process.exit(1);
 console.log("Rem visual contract holds.");

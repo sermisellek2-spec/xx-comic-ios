@@ -25,20 +25,17 @@ function block(start, end) {
 const discovery = block("private void renderSearch", "private TextView searchModeButton");
 const title = block("private void addDiscoveryTitle", "private TextView searchModeButton");
 const history = block("private void renderSearchHistory", "private void renderGlobalSearchResults");
-const drawer = block("private void showFilterDrawer", "private TextView sourceDropdown");
-const grid = block("private LinearLayout searchTagColumn", "private TextView filterGridChip");
-const chip = block("private TextView filterGridChip", "private LinearLayout searchTagGrid");
+const drawer = block("private void showFilterDrawer", "private TextView filterDrawerTab");
+const grid = block("private LinearLayout filterOptionColumn", "private TextView filterGridChip");
+const chip = block("private TextView filterGridChip", "private LinearLayout makeBottomNav");
 
 check("discovery uses its finalized title row", discovery.includes("addDiscoveryTitle(page)"));
 check("single-site title shows the current source", title.includes("!globalSearchMode") && title.includes("selectedSourceName()"));
 check("title source action opens the source drawer", title.includes("showFilterDrawer(0)"));
 check("title source action stays borderless", title.includes("Color.TRANSPARENT") && !title.includes("UIHelpers.chip"));
 check("lower filter row no longer duplicates source selection", !discovery.includes("filterTextButton(selectedSourceName(), 0)"));
-check("lower filter row keeps topic region and state", [
-  'filterTextButton("题材", 1)',
-  'filterTextButton("地区", 2)',
-  'filterTextButton("状态", 3)',
-].every((value) => discovery.includes(value)));
+check("lower filter row follows source-defined groups",
+  discovery.includes("sourceFilterGroups") && discovery.includes("filterTextButton(group.label, i + 1)"));
 
 check("recent searches wrap by measured natural width", history.includes("availableWidth") && history.includes("chip.measure("));
 check("recent searches are not forced into triples", !history.includes("count % 3"));

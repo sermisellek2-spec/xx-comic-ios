@@ -24,5 +24,15 @@ if (!menu.includes("exportSourceConfig") || !menu.includes("openImportSourceConf
 if (!manifest.includes('android:windowSoftInputMode="adjustNothing"')) fail("manifest adjustNothing missing");
 if (manifest.includes('android:windowSoftInputMode="adjustResize"')) fail("manifest still uses adjustResize");
 if (java.includes("SOFT_INPUT_ADJUST_NOTHING")) fail("Java redundantly overrides adjustNothing");
-if (!java.includes("showAddSourceDialog") || !java.includes("customSources")) fail("underlying custom source data flow removed");
+const deadUiMethods = [
+  "private void renderProfile(", "private View menuItemWithIcon(", "private void cycleThemeMode(",
+  "private void toggleReaderHand(", "private View favoriteRow(", "private void deleteFavorite(",
+  "private void showChoiceDrawer(", "private interface ChoiceAction", "private TextView sourceDropdown(",
+  "private void showSourceChooser(", "private void showAddSourceDialog(",
+  "private static class SwipeToDeleteLayout",
+];
+for (const method of deadUiMethods) {
+  if (java.includes(method)) fail(`dead UI method remains: ${method}`);
+}
+if (!java.includes("customSources")) fail("underlying custom source data flow removed");
 pass("main interaction contracts hold");

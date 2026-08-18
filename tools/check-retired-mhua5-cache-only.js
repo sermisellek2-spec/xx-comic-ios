@@ -58,7 +58,7 @@ check(
   "reader rows do not receive cache-only state",
 );
 check(
-  source.includes("coverFrame(cover, 86, 116, isRetiredComic(id))"),
+  source.includes("coverFrame(cover, -1, coverHeight, isRetiredComic(id))"),
   "favorite cover can still use network",
 );
 check(

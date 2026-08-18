@@ -80,7 +80,7 @@ if (!next.includes("searchRefreshing")) fail("pagination is not blocked during r
 const reset = method("private void resetSearchPaging", "private void clearSearchAppendFailure");
 if (!reset.includes("finishSearchPullRefresh()")) fail("new searches do not finish an old pull refresh");
 
-const drawer = method("private void showFilterDrawer", "private TextView sourceDropdown");
+const drawer = method("private void showFilterDrawer", "private TextView filterDrawerTab");
 const sourceChange = drawer.slice(drawer.indexOf("if (!TextUtils.equals(selectedSourceId, sid))"));
 if (!sourceChange.includes("finishSearchPullRefresh()")) fail("source changes do not finish an old pull refresh");
 

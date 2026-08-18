@@ -30,7 +30,7 @@ const showPageLoading = method("private int showPageLoading", "private boolean i
 const showHistory = method("private void showHistory", "private View historyRow");
 const cacheWriter = method("private void writeComicCacheSnapshots", "private JSONObject summaryToJson");
 const postMainIfAlive = method("private void postMainIfAlive", "private void clearErrorLogs");
-const writeExportLogs = method("private void writeExportLogs", "private void showAddSourceDialog");
+const writeExportLogs = method("private void writeExportLogs", "private void exportSourceConfig");
 const writeExportSourceConfig = method("private void writeExportSourceConfig", "private void openImportSourceConfig");
 const importSourceConfig = method("private void importSourceConfig", "private JSONObject sourceConfigJson");
 const healthCheck = method("private void healthCheck", "private void rebuildSourceClients");
@@ -77,9 +77,9 @@ check("draining cache snapshots only calculate size", /updateCacheSize\(false\)/
 check("chapter loading returns to detail", /showPageLoading\([^;]+\(\)\s*->\s*showDetail\(detail\.summary\.comicId\)/s.test(ensureChapters));
 check("loading success clears the action", /pageLoadingBackAction\s*=\s*null[\s\S]*?showDetail\(comicId\)/.test(showDetail));
 check("detail loading failure clears the action", /catch \(Exception error\)[\s\S]*?pageLoadingBackAction\s*=\s*null/.test(showDetail));
-check("empty chapter response restores detail before dialog", /loadedChapters\.isEmpty\(\)[\s\S]*?showDetail\(detail\.summary\.comicId\)[\s\S]*?styledDialog\(/.test(ensureChapters));
+check("empty chapter response restores detail before dialog", /loadedChapters\.isEmpty\(\)[\s\S]*?showDetail\(detail\.summary\.comicId\)[\s\S]*?showRemDialog\(/.test(ensureChapters));
 check("empty chapter response retries the same action", /loadedChapters\.isEmpty\(\)[\s\S]*?\(\)\s*->\s*ensureChaptersThen\(detail, action\)/.test(ensureChapters));
-check("chapter exception restores detail before dialog", /catch \(Exception error\)[\s\S]*?showDetail\(detail\.summary\.comicId\)[\s\S]*?styledDialog\(/.test(ensureChapters));
+check("chapter exception restores detail before dialog", /catch \(Exception error\)[\s\S]*?showDetail\(detail\.summary\.comicId\)[\s\S]*?showRemDialog\(/.test(ensureChapters));
 check("chapter exception retries the same action", /catch \(Exception error\)[\s\S]*?\(\)\s*->\s*ensureChaptersThen\(detail, action\)/.test(ensureChapters));
 check("stale chapter callbacks return before UI work", (ensureChapters.match(/if \(!isCurrentLoading\(loadingGeneration\)\) return;/g) || []).length >= 2
   && /if \(expectedCancellation \|\| !isCurrentLoading\(loadingGeneration\)\) return;/.test(ensureChapters));

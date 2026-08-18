@@ -19,7 +19,7 @@ function block(start, end) {
 
 const settings = block("private void renderSettings", "private void showSourceManagement");
 const sources = block("private void renderSources", "private void addSourceCard");
-const theme = block("private void showThemeDrawer", "private void showChoiceDrawer");
+const theme = block("private void showThemeDrawer", "private View themeChoice");
 const sourceMenu = block("private void showSourceMenu", "private View emptyState");
 const cache = block("private void showCacheCleanup", "private void showAboutApp");
 const logs = block("private void showErrorLogs", "private String errorLogSummary");
@@ -49,8 +49,9 @@ check("vpn sources use one explicit lightweight marker", main.includes("requires
 check("only protected sources expose manual verification", main.includes("supportsManualVerification(config.id)")
   && main.includes('UIHelpers.text(this, "验证", 12')
   && main.includes("verifyProtectedSource(config.id)"));
-check("manual verification stays source scoped", main.includes("ComicSource client = sourceForId(sourceId)")
-  && main.includes("client.latest(1)") && main.includes("verifyingProtectedSourceIds.add(sourceId)")
+check("manual verification stays source scoped", main.includes('"jmcomic".equals(sourceId)')
+  && main.includes('"mh18".equals(sourceId)') && main.includes("jmcomicClient.verifyAccess()")
+  && main.includes("mh18Client.verifyAccess()") && main.includes("verifyingProtectedSourceIds.add(sourceId)")
   && !main.includes("removeAllCookies(null)"));
 check("cache page separates cleared and retained data", cache.includes("将被清理")
   && cache.includes("页面解析与验证缓存") && cache.includes("始终保留") && cache.includes("确认清理"));

@@ -12,7 +12,7 @@ const loadSourceCategories = source.slice(
 );
 const filterDrawer = source.slice(
   source.indexOf("private void showFilterDrawer"),
-  source.indexOf("private TextView sourceDropdown")
+  source.indexOf("private TextView filterDrawerTab")
 );
 
 function check(name, condition) {
@@ -28,13 +28,13 @@ check(
   /if \(generation\s*!=\s*categoryGeneration\s*\|\|\s*!TextUtils\.equals\(sourceId, selectedSourceId\)\) return;/.test(loadSourceCategories)
 );
 const guard = loadSourceCategories.indexOf("generation != categoryGeneration");
-check("category guard precedes clear", guard >= 0 && guard < loadSourceCategories.indexOf("sourceCategories.clear()"));
-check("category guard precedes add", guard >= 0 && guard < loadSourceCategories.indexOf("sourceCategories.addAll(list)"));
-check("filter drawer snapshots categories", /List<String> origSourceCategories\s*=\s*new ArrayList<>\(sourceCategories\);/.test(filterDrawer));
+check("category guard precedes clear", guard >= 0 && guard < loadSourceCategories.indexOf("sourceFilterGroups.clear()"));
+check("category guard precedes add", guard >= 0 && guard < loadSourceCategories.indexOf("sourceFilterGroups.addAll(list)"));
+check("filter drawer snapshots categories", /List<ComicModels\.FilterGroup> origFilterGroups\s*=\s*new ArrayList<>\(sourceFilterGroups\);/.test(filterDrawer));
 const dismiss = filterDrawer.slice(filterDrawer.indexOf("popup.setOnDismissListener"), filterDrawer.indexOf("close.setOnClickListener"));
 check("filter cancel invalidates draft category request", dismiss.includes("categoryGeneration++"));
-check("filter cancel clears draft categories", dismiss.includes("sourceCategories.clear();"));
-check("filter cancel restores original categories", dismiss.includes("sourceCategories.addAll(origSourceCategories);"));
-check("filter cancel reloads missing original categories", /if \(sourceCategories\.isEmpty\(\)\) loadSourceCategories\(\);/.test(dismiss));
+check("filter cancel clears draft categories", dismiss.includes("sourceFilterGroups.clear();"));
+check("filter cancel restores original categories", dismiss.includes("sourceFilterGroups.addAll(origFilterGroups);"));
+check("filter cancel reloads missing original categories", /if \(sourceFilterGroups\.isEmpty\(\) && !sourceCategoriesFailed\) loadSourceCategories\(\);/.test(dismiss));
 
 console.log("source category generation ok");

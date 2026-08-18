@@ -29,7 +29,7 @@ check("in-flight refresh ids exist", /Set<String>\s+refreshingComicIds\s*=\s*new
 check("one pending user action can wait for each refresh", /Map<String, DetailAction>\s+pendingRefreshActions\s*=\s*new HashMap/.test(source));
 check("activity destruction state exists", /boolean\s+activityDestroyed/.test(source));
 check("cached detail renders before refresh starts", showDetail.indexOf("root.removeAllViews()") < showDetail.indexOf("refreshCachedComicOnce(detail)"));
-check("uncached detail does not wait for the chapter directory", /client\.detail\(comicId\)/.test(initialLoad) && !/client\.chapters\(comicId\)/.test(initialLoad));
+check("uncached detail does not wait for the chapter directory", /requestClient\.detail\(comicId\)/.test(initialLoad) && !/requestClient\.chapters\(comicId\)/.test(initialLoad));
 check("refresh is skipped after one process attempt", /refreshedComicIds\.contains\(comicId\)/.test(refresh));
 check("same comic refresh is deduplicated", /refreshingComicIds\.contains\(comicId\)/.test(refresh));
 check("refresh marks in-flight before worker submit", refresh.indexOf("refreshingComicIds.add(comicId)") < refresh.indexOf("detailIo.submit"));
@@ -48,6 +48,6 @@ check("waiting action is registered without another worker request", /pendingRef
 check("failed or empty automatic refresh falls through to explicit chapter loading", /ensureChaptersThen\(detail, action\)/.test(waitForRefresh));
 check("refresh clears in-flight state before resuming the user action", finishRefresh.indexOf("refreshingComicIds.remove(comicId)") < finishRefresh.indexOf("pendingAction.run"));
 check("pending user action suppresses automatic detail redraw", /if \(pendingAction != null\)\s*\{[\s\S]*?pendingAction\.run[\s\S]*?return;[\s\S]*?\}[\s\S]*?showDetail\(comicId\)/.test(finishRefresh));
-check("explicit chapter retry still performs a request", /styledDialog\([\s\S]*?ensureChaptersThen\(detail, action\)/.test(source));
+check("explicit chapter retry still performs a request", /showRemDialog\([\s\S]*?ensureChaptersThen\(detail, action\)/.test(source));
 
 console.log("comic cache refresh ok");

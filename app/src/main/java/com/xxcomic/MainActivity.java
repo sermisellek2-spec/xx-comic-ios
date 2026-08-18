@@ -335,6 +335,8 @@ public class MainActivity extends Activity {
     private View readerTopBar;
     private View readerBottomBar;
     private View readerProgressView;
+    private View activeTransientHint;
+    private Runnable transientHintDismiss;
     private boolean nightThemeApplied = false;
     private final Runnable themeSwitchRunnable = new Runnable() {
         @Override public void run() {
@@ -379,6 +381,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        dismissTransientHint();
         if (mh18BrowserSession != null) mh18BrowserSession.shutdown();
         if (jmcomicBrowserSession != null) jmcomicBrowserSession.shutdown();
         super.onDestroy();
@@ -653,6 +656,7 @@ public class MainActivity extends Activity {
 
     /** 切屏：cancel 上一屏所有未完成的 Future（排队中的不再执行，运行中的收到 interrupt） */
     private void enterScreen() {
+        dismissTransientHint();
         if (pageLoading) {
             pageLoading = false;
             pageLoadingBackAction = null;
@@ -1438,98 +1442,16 @@ public class MainActivity extends Activity {
         (enabled ? enabledSources : disabledSources).addView(card);
     }
 
-    private void renderProfile(LinearLayout page) {
-        addTitle(page, "我的", null);
-        LinearLayout group = UIHelpers.card(this);
-        group.addView(menuItemWithIcon(R.drawable.ic_history, "阅读历史", "", () -> showHistory()));
-        group.addView(UIHelpers.divider(this));
-        group.addView(menuItemWithIcon(themeIcon(), "主题模式", themeModeLabel(), () -> cycleThemeMode()));
-        group.addView(UIHelpers.divider(this));
-        group.addView(menuItemWithIcon(R.drawable.ic_chevron_left, "左右手模式", readerLeftHand ? "左手" : "右手", () -> toggleReaderHand()));
-        group.addView(UIHelpers.divider(this));
-        group.addView(menuItemWithIcon(R.drawable.ic_trash, "缓存清理", cacheSize, () -> {
-            clearAppCache();
-        }));
-        group.addView(UIHelpers.divider(this));
-        group.addView(menuItemWithIcon(R.drawable.ic_lightning, "错误日志", errorLogSummary(), () -> showErrorLogs()));
-        group.addView(UIHelpers.divider(this));
-        group.addView(menuItemWithIcon(R.drawable.ic_auto, "版本更新", installedVersionLabel(), this::checkForUpdate));
-        group.addView(UIHelpers.divider(this));
-        group.addView(menuItemWithIcon(R.drawable.ic_profile, "关于 App", BuildConfig.VERSION_NAME, () -> showInfo("关于 App", "XX Comic 已接入多个漫画站源，支持搜索、详情、阅读图片和本地缓存。")));
-        page.addView(group);
-    }
-
-    private void toggleReaderHand() {
-        readerLeftHand = !readerLeftHand;
-        saveLocalState();
-        showRemToast(readerLeftHand ? "已切换到左手模式" : "已切换到右手模式");
-        if (readerVisible) {
-            ComicModels.ComicDetail detail = details.get(activeDetailId);
-            if (detail != null && !detail.chapters.isEmpty()) {
-                showReader(detail, readerChapterIndex);
-            }
-        } else {
-            rerenderCurrentScreen();
-        }
-    }
-
     private int themeIcon() {
         if (themeMode == 1) return R.drawable.ic_sun;
         if (themeMode == 2) return R.drawable.ic_moon;
         return R.drawable.ic_auto;
     }
 
-    private View menuItemWithIcon(int iconRes, String title, String end, Runnable onClick) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        int padH = UIHelpers.dp(this, 16);
-        int padV = UIHelpers.dp(this, 14);
-        row.setPadding(padH, padV, padH, padV);
-        row.setMinimumHeight(UIHelpers.dp(this, 50));
-        row.setClickable(true);
-        row.setFocusable(true);
-        row.setOnClickListener(v -> onClick.run());
-        try {
-            ImageView icon = new ImageView(this);
-            icon.setImageResource(iconRes);
-            icon.setImageTintList(android.content.res.ColorStateList.valueOf(UIHelpers.TEXT3));
-            row.addView(icon, new LinearLayout.LayoutParams(UIHelpers.dp(this, 22), UIHelpers.dp(this, 22)));
-        } catch (Exception ignored) { }
-        TextView titleView = UIHelpers.text(this, title, 15, UIHelpers.TEXT, Typeface.NORMAL);
-        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(-2, -2);
-        tlp.leftMargin = UIHelpers.dp(this, 14);
-        row.addView(titleView, tlp);
-        View spacer = new View(this);
-        row.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
-        if (!TextUtils.isEmpty(end)) {
-            TextView endView = UIHelpers.text(this, end, 12, UIHelpers.TEXT3, Typeface.NORMAL);
-            row.addView(endView, new LinearLayout.LayoutParams(-2, -2));
-        }
-        try {
-            ImageView chev = new ImageView(this);
-            chev.setImageResource(R.drawable.ic_chevron_right);
-            chev.setImageTintList(android.content.res.ColorStateList.valueOf(UIHelpers.TEXT3));
-            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(UIHelpers.dp(this, 16), UIHelpers.dp(this, 16));
-            clp.leftMargin = UIHelpers.dp(this, 6);
-            row.addView(chev, clp);
-        } catch (Exception ignored) { }
-        row.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        return row;
-    }
-
     private String themeModeLabel() {
         if (themeMode == 1) return "白天";
         if (themeMode == 2) return "黑夜";
         return "自动";
-    }
-
-    private void cycleThemeMode() {
-        themeMode = (themeMode + 1) % 3;
-        saveLocalState();
-        applyThemeAndSystemBars();
-        scheduleThemeSwitch();
-        rerenderCurrentScreen();
     }
 
     private void showThemeDrawer() {
@@ -1546,7 +1468,7 @@ public class MainActivity extends Activity {
                 applyThemeAndSystemBars();
                 scheduleThemeSwitch();
                 rerenderCurrentScreen();
-                main.post(() -> showRemToast("主题已应用"));
+                main.post(() -> showRemSuccessToast("主题已应用"));
             }), UIHelpers.weight(1));
             if (i < labels.length - 1) choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 6), 1));
         }
@@ -1588,7 +1510,7 @@ public class MainActivity extends Activity {
         readerLeftHand = leftHand;
         saveLocalState();
         rerenderCurrentScreen();
-        main.post(() -> showRemToast(readerLeftHand ? "左侧下一章 · 右侧上一章" : "左侧上一章 · 右侧下一章"));
+        main.post(() -> showRemSuccessToast(readerLeftHand ? "左侧下一章 · 右侧上一章" : "左侧上一章 · 右侧下一章"));
     }
 
     private View themeChoice(String label, int mode, boolean selected, Runnable onClick) {
@@ -1676,46 +1598,6 @@ public class MainActivity extends Activity {
         panel.setTranslationY(UIHelpers.dp(this, 220));
         panel.animate().translationY(0).setDuration(200).start();
         return popup;
-    }
-
-    private void showChoiceDrawer(String title, String[] labels, int selected, ChoiceAction onSelect) {
-        FrameLayout overlay = new FrameLayout(this);
-        View backdrop = new View(this);
-        backdrop.setBackgroundColor(Color.argb(145, 10, 24, 37));
-        overlay.addView(backdrop, UIHelpers.match());
-        LinearLayout panel = new LinearLayout(this);
-        panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 14), UIHelpers.dp(this, 16), UIHelpers.dp(this, 20));
-        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-        bg.setColor(UIHelpers.CARD);
-        float radius = UIHelpers.dp(this, 8);
-        bg.setCornerRadii(new float[]{radius, radius, radius, radius, 0, 0, 0, 0});
-        panel.setBackground(bg);
-        panel.addView(UIHelpers.text(this, title, 17, UIHelpers.TEXT, Typeface.BOLD), UIHelpers.marginBottom(-1, UIHelpers.dp(this, 10)));
-        PopupWindow popup = new PopupWindow(overlay, -1, -1, true);
-        popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popup.setOnDismissListener(() -> {
-            if (activePopup == popup) activePopup = null;
-        });
-        for (int i = 0; i < labels.length; i++) {
-            final int index = i;
-            TextView row = UIHelpers.text(this, labels[i] + (i == selected ? "  ✓" : ""), 15,
-                    i == selected ? UIHelpers.ACCENT_DARK : UIHelpers.TEXT, i == selected ? Typeface.BOLD : Typeface.NORMAL);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 13), UIHelpers.dp(this, 4), UIHelpers.dp(this, 13));
-            row.setOnClickListener(v -> {
-                popup.dismiss();
-                onSelect.run(index);
-            });
-            panel.addView(row);
-            if (i < labels.length - 1) panel.addView(UIHelpers.divider(this));
-        }
-        overlay.addView(panel, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
-        backdrop.setOnClickListener(v -> popup.dismiss());
-        activePopup = popup;
-        popup.showAtLocation(root, Gravity.CENTER, 0, 0);
-        panel.setTranslationY(UIHelpers.dp(this, 260));
-        panel.animate().translationY(0).setDuration(200).start();
     }
 
     private void showStandaloneSearch(boolean resultsMode) {
@@ -2086,156 +1968,6 @@ public class MainActivity extends Activity {
         return item;
     }
 
-    private View favoriteRow(String id) {
-        ComicModels.ComicDetail detail = details.get(id);
-        ComicModels.ComicSummary summary = summaries.get(id);
-        String title = detail != null ? detail.summary.title : summary != null ? summary.title : id;
-        String cover = detail != null ? detail.summary.coverUrl : summary != null ? summary.coverUrl : "";
-        String latest = detail != null ? detail.latestChapter : summary != null ? summary.subtitle : "";
-        // 内容卡片
-        LinearLayout contentCard = UIHelpers.card(this);
-        contentCard.setOrientation(LinearLayout.HORIZONTAL);
-        contentCard.addView(coverFrame(cover, 86, 116, isRetiredComic(id)));
-        LinearLayout info = new LinearLayout(this);
-        info.setOrientation(LinearLayout.VERTICAL);
-        info.setPadding(UIHelpers.dp(this, 12), 0, 0, 0);
-        TextView titleView = UIHelpers.text(this, title, 16, UIHelpers.TEXT, Typeface.NORMAL);
-        titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        titleView.setSingleLine(true);
-        titleView.setEllipsize(TextUtils.TruncateAt.END);
-        info.addView(titleView);
-        String sourceName = detail != null ? sourceNameForId(detail.summary.sourceId) : summary != null ? sourceNameForId(summary.sourceId) : sourceNameForId(sourceForComicId(id).id());
-        info.addView(UIHelpers.text(this, sourceName + " · " + clean(latest, "未知章节"), 12, UIHelpers.TEXT2, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 6)));
-        info.addView(UIHelpers.text(this, "上次看到：第 " + (savedChapter(id) + 1) + " 章", 12, UIHelpers.TEXT2, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 8)));
-        Button button = UIHelpers.brandButton(this, "继续阅读");
-        button.setTypeface(Typeface.SERIF);
-        button.setOnClickListener(v -> showDetailThenRead(id));
-        info.addView(button, UIHelpers.marginTop(UIHelpers.dp(this, 96), UIHelpers.dp(this, 8), -2, UIHelpers.dp(this, 40)));
-        contentCard.addView(info, UIHelpers.weight(1));
-        contentCard.setOnClickListener(v -> showDetail(id));
-
-        // 外层 SwipeToDeleteLayout：delete 层在下，content 在上，自定义手势处理
-        int deleteWidth = UIHelpers.dp(this, 80);
-        SwipeToDeleteLayout wrapper = new SwipeToDeleteLayout(this, contentCard, deleteWidth, () -> showDetail(id));
-        wrapper.setLayoutParams(UIHelpers.marginBottom(-1, UIHelpers.dp(this, 12)));
-        // delete 层
-        LinearLayout deleteLayer = new LinearLayout(this);
-        deleteLayer.setOrientation(LinearLayout.HORIZONTAL);
-        deleteLayer.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
-        deleteLayer.setBackground(UIHelpers.round(UIHelpers.DANGER, UIHelpers.dp(this, 12), Color.TRANSPARENT));
-        ImageView trashIcon = new ImageView(this);
-        trashIcon.setImageResource(R.drawable.ic_trash);
-        trashIcon.setImageTintList(android.content.res.ColorStateList.valueOf(Color.WHITE));
-        int pad = UIHelpers.dp(this, 22);
-        trashIcon.setPadding(pad, pad, pad, pad);
-        deleteLayer.addView(trashIcon, new LinearLayout.LayoutParams(deleteWidth, -1));
-        trashIcon.setOnClickListener(v -> styledDialog("删除收藏", "确认删除这条收藏吗？", "删除", () -> deleteFavorite(id), "取消", null));
-        wrapper.addView(deleteLayer, new FrameLayout.LayoutParams(-1, -1));
-        wrapper.addView(contentCard, new FrameLayout.LayoutParams(-1, -1));
-        return wrapper;
-    }
-
-    /** 自定义 FrameLayout：onInterceptTouchEvent 阶段判定方向，横向拦截处理滑动，纵向放行给 ScrollView */
-    private static class SwipeToDeleteLayout extends FrameLayout {
-        private final View contentCard;
-        private final int deleteWidth;
-        private final Runnable onTap;
-        private final int touchSlop;
-        private float startX, startY;
-        private boolean swiping = false;
-        private boolean revealed = false;
-
-        public SwipeToDeleteLayout(Context ctx, View contentCard, int deleteWidth, Runnable onTap) {
-            super(ctx);
-            this.contentCard = contentCard;
-            this.deleteWidth = deleteWidth;
-            this.onTap = onTap;
-            this.touchSlop = ViewConfiguration.get(ctx).getScaledTouchSlop();
-        }
-
-        @Override
-        public boolean onInterceptTouchEvent(MotionEvent event) {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    startX = event.getRawX();
-                    startY = event.getRawY();
-                    swiping = false;
-                    // 阻止父级 ScrollView 在 MOVE 时拦截，直到本控件确定方向
-                    if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(true);
-                    return false;
-                case MotionEvent.ACTION_MOVE: {
-                    float dx = event.getRawX() - startX;
-                    float dy = event.getRawY() - startY;
-                    // 横向占优 → 进入滑动模式并拦截
-                    if (Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy) * 1.2f) {
-                        swiping = true;
-                        return true;
-                    }
-                    // 纵向占优 → 放行给 ScrollView
-                    if (Math.abs(dy) > touchSlop && Math.abs(dy) > Math.abs(dx) * 1.2f) {
-                        if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
-                        swiping = false;
-                        return false;
-                    }
-                    return false;
-                }
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
-                    return false;
-            }
-            return false;
-        }
-
-        @Override
-        public boolean onTouchEvent(MotionEvent event) {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    return true;
-                case MotionEvent.ACTION_MOVE: {
-                    if (!swiping) return false;
-                    float dx = event.getRawX() - startX;
-                    float base = revealed ? -deleteWidth : 0f;
-                    float target = Math.max(-deleteWidth, Math.min(0f, base + dx));
-                    contentCard.setTranslationX(target);
-                    return true;
-                }
-                case MotionEvent.ACTION_UP: {
-                    if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
-                    if (swiping) {
-                        float current = contentCard.getTranslationX();
-                        if (current < -deleteWidth / 2f) {
-                            contentCard.animate().translationX(-deleteWidth).setDuration(180).start();
-                            revealed = true;
-                        } else {
-                            contentCard.animate().translationX(0).setDuration(180).start();
-                            revealed = false;
-                        }
-                        return true;
-                    }
-                    // 无滑动 → 视为点击（交由 contentCard.OnClickListener 处理，这里不消费）
-                    if (Math.abs(event.getRawX() - startX) < touchSlop && Math.abs(event.getRawY() - startY) < touchSlop) {
-                        if (revealed) {
-                            contentCard.animate().translationX(0).setDuration(180).start();
-                            revealed = false;
-                        } else {
-                            contentCard.performClick();
-                        }
-                    }
-                    return false;
-                }
-                case MotionEvent.ACTION_CANCEL:
-                    if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
-                    if (swiping) {
-                        contentCard.animate().translationX(revealed ? -deleteWidth : 0).setDuration(180).start();
-                        return true;
-                    }
-                    return false;
-            }
-            return false;
-        }
-    }
-
     private LinearLayout sourceCard(SourceConfig config, boolean enabled, Runnable toggle) {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.HORIZONTAL);
@@ -2324,7 +2056,7 @@ public class MainActivity extends Activity {
                     verifyProtectedSource(sourceId);
                 } else if (verificationFailure != null
                         && !(verificationFailure instanceof VerificationCancelledException)) {
-                    showRemToast(sourceNameForId(sourceId) + " 验证未完成");
+                    showRemErrorToast(sourceNameForId(sourceId) + " 验证未完成");
                 }
             });
         });
@@ -2999,7 +2731,7 @@ public class MainActivity extends Activity {
             searchLoading = false;
             searchAppending = false;
             if (pullRefresh) finishSearchPullRefresh();
-            showRemToast(requestClient.name() + "暂不支持搜索");
+            showRemErrorToast(requestClient.name() + "暂不支持搜索");
             return;
         }
         String requestSourceId = requestClient.id();
@@ -3578,10 +3310,35 @@ public class MainActivity extends Activity {
         copyParams.leftMargin = UIHelpers.dp(this, 8);
         hint.addView(copy, copyParams);
         FrameLayout.LayoutParams lp = UIHelpers.frame(-2, UIHelpers.dp(this, 48), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0, 0, UIHelpers.dp(this, 52));
-        root.addView(hint, lp);
-        main.postDelayed(() -> {
-            if (hint.getParent() == root) root.removeView(hint);
-        }, 1800L);
+        showTransientHint(hint, lp, 1800L);
+    }
+
+    private void dismissTransientHint() {
+        if (transientHintDismiss != null) main.removeCallbacks(transientHintDismiss);
+        if (root != null && activeTransientHint != null
+                && activeTransientHint.getParent() == root) {
+            root.removeView(activeTransientHint);
+        }
+        activeTransientHint = null;
+        transientHintDismiss = null;
+    }
+
+    private void showTransientHint(View hint, FrameLayout.LayoutParams params, long durationMs) {
+        if (root == null || hint == null) return;
+        dismissTransientHint();
+        activeTransientHint = hint;
+        root.addView(hint, params);
+        hint.setAlpha(0f);
+        hint.setTranslationY(UIHelpers.dp(this, 6));
+        hint.animate().alpha(1f).translationY(0f).setDuration(140L).start();
+        transientHintDismiss = () -> {
+            if (activeTransientHint != hint) return;
+            hint.animate().alpha(0f).translationY(UIHelpers.dp(this, 4))
+                    .setDuration(120L).withEndAction(() -> {
+                        if (activeTransientHint == hint) dismissTransientHint();
+                    }).start();
+        };
+        main.postDelayed(transientHintDismiss, durationMs);
     }
 
     private void normalizeChaptersOldestFirst(List<ComicModels.Chapter> chapters) {
@@ -3628,10 +3385,6 @@ public class MainActivity extends Activity {
         void run(ComicModels.ComicDetail detail);
     }
 
-    private interface ChoiceAction {
-        void run(int selected);
-    }
-
     private void ensureChaptersThen(ComicModels.ComicDetail detail, DetailAction action) {
         if (refreshingComicIds.contains(detail.summary.comicId)) {
             waitForComicRefresh(detail, action);
@@ -3652,7 +3405,7 @@ public class MainActivity extends Activity {
                         pageLoading = false;
                         pageLoadingBackAction = null;
                         showDetail(detail.summary.comicId);
-                        styledDialog("暂无章节", "未找到该漫画的章节目录，可能暂无可用章节或站源暂未收录。", "重试", () -> ensureChaptersThen(detail, action), "取消", null);
+                        showRemDialog(R.drawable.rem_empty, "暂无章节", "未找到该漫画的章节目录，可能暂无可用章节或站源暂未收录。", "重试", () -> ensureChaptersThen(detail, action), "取消", null);
                     });
                     return;
                 }
@@ -3685,7 +3438,7 @@ public class MainActivity extends Activity {
                     } else {
                         appendErrorLog("目录加载失败", error);
                         showDetail(detail.summary.comicId);
-                        styledDialog("目录加载失败", clean(error.getMessage(), "请稍后重试。"),
+                        showRemDialog(R.drawable.rem_error, "目录加载失败", clean(error.getMessage(), "请稍后重试。"),
                                 "重试", () -> ensureChaptersThen(detail, action), "取消", null);
                     }
                 });
@@ -3965,15 +3718,7 @@ public class MainActivity extends Activity {
         }
         saveLocalState();
         showDetail(id);
-        main.post(() -> showRemToast(R.drawable.rem_empty, message));
-    }
-
-    private void deleteFavorite(String id) {
-        favorites.remove(id);
-        favoriteAt.remove(id);
-        saveLocalState();
-        showTab(0);
-        main.post(() -> showRemToast("已删除收藏"));
+        main.post(() -> showRemSuccessToast(message));
     }
 
     private void deleteFavoriteWithUndo(String id) {
@@ -3989,31 +3734,13 @@ public class MainActivity extends Activity {
     }
 
     private void showFavoriteUndo(String id, int oldIndex, Long oldFavoriteAt, String title) {
-        LinearLayout bar = new LinearLayout(this);
-        bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 8), 0);
-        bar.setBackground(UIHelpers.round(Color.rgb(36, 68, 93), UIHelpers.dp(this, 5), Color.TRANSPARENT));
-        bar.setElevation(UIHelpers.dp(this, 4));
-        TextView message = UIHelpers.text(this, "已移出《" + title + "》", 12, Color.WHITE, Typeface.NORMAL);
-        message.setSingleLine(true);
-        message.setEllipsize(TextUtils.TruncateAt.END);
-        bar.addView(message, UIHelpers.weight(1));
-        TextView undo = UIHelpers.text(this, "撤销", 12, Color.rgb(134, 210, 255), Typeface.BOLD);
-        undo.setGravity(Gravity.CENTER);
-        undo.setPadding(UIHelpers.dp(this, 10), 0, UIHelpers.dp(this, 4), 0);
-        undo.setOnClickListener(v -> {
+        showRemToast(R.drawable.rem_empty, "已移出《" + title + "》", "撤销", () -> {
             if (!favorites.contains(id)) {
                 favorites.add(Math.max(0, Math.min(oldIndex, favorites.size())), id);
                 favoriteAt.put(id, oldFavoriteAt == null ? System.currentTimeMillis() : oldFavoriteAt);
                 saveLocalState();
             }
             showTab(0);
-        });
-        bar.addView(undo, new LinearLayout.LayoutParams(-2, -1));
-        root.addView(bar, UIHelpers.frame(-1, UIHelpers.dp(this, 46), Gravity.BOTTOM, UIHelpers.dp(this, 13), 0,
-                UIHelpers.dp(this, 13), UIHelpers.dp(this, 70)));
-        main.postDelayed(() -> {
-            if (bar.getParent() == root) root.removeView(bar);
         }, 3200L);
     }
 
@@ -4774,63 +4501,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    private TextView sourceDropdown() {
-        String name = selectedSourceName();
-        TextView view = UIHelpers.chip(this, "▾ " + name, true);
-        view.setOnClickListener(v -> showSourceChooser());
-        return view;
-    }
-
-    private void showSourceChooser() {
-        List<String> names = enabledSourceNames();
-        if (names.isEmpty()) {
-            showToast("当前没有启用站源");
-            return;
-        }
-        String[] items = names.toArray(new String[0]);
-        AlertDialog listDialog = new AlertDialog.Builder(this)
-                .setTitle("选择站源")
-                .setItems(items, (dialog, which) -> {
-                    selectedSourceId = sourceIdForName(items[which]);
-                    resetCategoryFilters();
-                    sourceFilterGroups.clear();
-                    sourceCategoriesFailed = false;
-                    searchResults.clear();
-                    showTab(1);
-                    if (!categoriesFollowInitialList(selectedSourceId)) loadSourceCategories();
-                    loadDefaultCategory();
-                })
-                .create();
-        listDialog.setOnShowListener(d -> {
-            if (listDialog.getWindow() != null) {
-                listDialog.getWindow().setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 16), Color.TRANSPARENT));
-            }
-            TextView titleView = (TextView) listDialog.findViewById(android.R.id.title);
-            if (titleView != null) {
-                titleView.setTextColor(UIHelpers.TEXT);
-                titleView.setTextSize(17);
-                titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-            }
-            ListView listView = listDialog.getListView();
-            if (listView != null) {
-                listView.setDivider(new ColorDrawable(UIHelpers.BORDER));
-                listView.setDividerHeight(1);
-                android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items) {
-                    @Override
-                    public View getView(int position, View convertView, ViewGroup parent) {
-                        TextView tv = (TextView) super.getView(position, convertView, parent);
-                        tv.setTextColor(UIHelpers.TEXT);
-                        tv.setTextSize(15);
-                        tv.setPadding(UIHelpers.dp(MainActivity.this, 20), UIHelpers.dp(MainActivity.this, 14), UIHelpers.dp(MainActivity.this, 20), UIHelpers.dp(MainActivity.this, 14));
-                        return tv;
-                    }
-                };
-                listView.setAdapter(adapter);
-            }
-        });
-        listDialog.show();
-    }
-
     private List<String> enabledSourceNames() {
         List<String> names = new ArrayList<>();
         if (sourceEnabled) names.add(sourceClient.name());
@@ -5418,6 +5088,19 @@ public class MainActivity extends Activity {
     }
 
     private void showRemToast(int imageRes, String message) {
+        showRemToast(imageRes, message, "", null, 1600L);
+    }
+
+    private void showRemSuccessToast(String message) {
+        showRemToast(R.drawable.rem_reader_resume, message);
+    }
+
+    private void showRemErrorToast(String message) {
+        showRemToast(R.drawable.rem_error, message);
+    }
+
+    private void showRemToast(int imageRes, String message, String actionText,
+                              Runnable action, long durationMs) {
         if (root == null) {
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
             return;
@@ -5433,13 +5116,25 @@ public class MainActivity extends Activity {
         art.setScaleType(ImageView.ScaleType.FIT_CENTER);
         hint.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(this, 32), UIHelpers.dp(this, 32)));
         TextView label = UIHelpers.text(this, message, 12, UIHelpers.TEXT, Typeface.BOLD);
-        LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(-2, -2);
+        label.setMaxLines(2);
+        label.setEllipsize(TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(0, -2, 1f);
         labelLp.leftMargin = UIHelpers.dp(this, 7);
         hint.addView(label, labelLp);
-        root.addView(hint, UIHelpers.frame(-2, UIHelpers.dp(this, 44), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0, 0, UIHelpers.dp(this, 72)));
-        main.postDelayed(() -> {
-            if (hint.getParent() == root) root.removeView(hint);
-        }, 1600L);
+        if (!TextUtils.isEmpty(actionText) && action != null) {
+            TextView actionView = UIHelpers.text(this, actionText, 12, UIHelpers.ACCENT, Typeface.BOLD);
+            actionView.setGravity(Gravity.CENTER);
+            actionView.setPadding(UIHelpers.dp(this, 10), 0, 0, 0);
+            actionView.setOnClickListener(view -> {
+                dismissTransientHint();
+                action.run();
+            });
+            hint.addView(actionView, new LinearLayout.LayoutParams(-2, -1));
+        }
+        int width = Math.min(getResources().getDisplayMetrics().widthPixels
+                - UIHelpers.dp(this, 32), UIHelpers.dp(this, 340));
+        showTransientHint(hint, UIHelpers.frame(width, -2,
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0, 0, UIHelpers.dp(this, 72)), durationMs);
     }
 
     private LinearLayout settingsScenePage(String scene, String title, String meta) {
@@ -5561,7 +5256,7 @@ public class MainActivity extends Activity {
     }
 
     private void showInfo(String title, String message) {
-        styledDialog(title, message, "知道了", null, null, null);
+        showRemDialog(R.drawable.rem_error, title, message, "知道了", null, null, null);
     }
 
     private String installedVersionLabel() {
@@ -5873,38 +5568,62 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** 统一 AlertDialog 样式：背景用 CARD，标题 INK_1，正文 INK_2，确定按钮 ACCENT，取消按钮 TEXT3 */
-    private AlertDialog styledDialog(String title, String message, String positiveText, Runnable positiveAction, String negativeText, Runnable negativeAction) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        if (title != null) builder.setTitle(title);
-        if (message != null) builder.setMessage(message);
-        if (positiveText != null) builder.setPositiveButton(positiveText, (d, w) -> { if (positiveAction != null) positiveAction.run(); });
-        if (negativeText != null) builder.setNegativeButton(negativeText, (d, w) -> { if (negativeAction != null) negativeAction.run(); });
+    private AlertDialog showRemDialog(int imageRes, String title, String message,
+                                      String positiveText, Runnable positiveAction,
+                                      String negativeText, Runnable negativeAction) {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.HORIZONTAL);
+        content.setGravity(Gravity.TOP);
+        content.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 16),
+                UIHelpers.dp(this, 16), UIHelpers.dp(this, 10));
+
+        ImageView art = new ImageView(this);
+        art.setImageResource(imageRes);
+        art.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        content.addView(art, new LinearLayout.LayoutParams(
+                UIHelpers.dp(this, 56), UIHelpers.dp(this, 56)));
+
+        LinearLayout copy = new LinearLayout(this);
+        copy.setOrientation(LinearLayout.VERTICAL);
+        copy.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 2), 0, 0);
+        TextView titleView = UIHelpers.text(this, title, 17, UIHelpers.TEXT, Typeface.BOLD);
+        titleView.setMaxLines(2);
+        titleView.setEllipsize(TextUtils.TruncateAt.END);
+        copy.addView(titleView);
+        TextView messageView = UIHelpers.text(this, message, 13, UIHelpers.TEXT2, Typeface.NORMAL);
+        messageView.setMaxLines(3);
+        messageView.setEllipsize(TextUtils.TruncateAt.END);
+        copy.addView(messageView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 5)));
+        content.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this).setView(content);
+        if (!TextUtils.isEmpty(positiveText)) {
+            builder.setPositiveButton(positiveText,
+                    (dialog, which) -> { if (positiveAction != null) positiveAction.run(); });
+        }
+        if (!TextUtils.isEmpty(negativeText)) {
+            builder.setNegativeButton(negativeText,
+                    (dialog, which) -> { if (negativeAction != null) negativeAction.run(); });
+        }
         AlertDialog dialog = builder.create();
-        dialog.setOnShowListener(d -> {
-            if (dialog.getWindow() != null) {
-                dialog.getWindow().setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 16), Color.TRANSPARENT));
+        dialog.setOnShowListener(ignored -> {
+            android.view.Window window = dialog.getWindow();
+            if (window != null) {
+                window.setBackgroundDrawable(UIHelpers.round(
+                        UIHelpers.CARD, UIHelpers.dp(this, 8), Color.TRANSPARENT));
+                int width = Math.min(getResources().getDisplayMetrics().widthPixels
+                        - UIHelpers.dp(this, 40), UIHelpers.dp(this, 328));
+                window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
             }
-            TextView titleView = (TextView) dialog.findViewById(android.R.id.title);
-            if (titleView != null) {
-                titleView.setTextColor(UIHelpers.TEXT);
-                titleView.setTextSize(17);
-                titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            android.widget.Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            if (positive != null) {
+                positive.setTextColor(UIHelpers.ACCENT);
+                positive.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             }
-            TextView messageView = (TextView) dialog.findViewById(android.R.id.message);
-            if (messageView != null) {
-                messageView.setTextColor(UIHelpers.TEXT2);
-                messageView.setTextSize(14);
-            }
-            android.widget.Button pos = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            if (pos != null) {
-                pos.setTextColor(UIHelpers.ACCENT);
-                pos.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-            }
-            android.widget.Button neg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-            if (neg != null) {
-                neg.setTextColor(UIHelpers.TEXT3);
-                neg.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            android.widget.Button negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            if (negative != null) {
+                negative.setTextColor(UIHelpers.TEXT3);
+                negative.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             }
         });
         dialog.show();
@@ -5985,11 +5704,11 @@ public class MainActivity extends Activity {
     private void copyErrorLog(String entry) {
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (clipboard != null) clipboard.setPrimaryClip(ClipData.newPlainText("XX Comic 错误日志", entry));
-        showRemToast("日志已复制");
+        showRemSuccessToast("日志已复制");
     }
 
     private void confirmClearErrorLogs() {
-        styledDialog("清空错误日志", "所有本地错误记录都会移除。", "清空", this::clearErrorLogs, "取消", null);
+        showRemDialog(R.drawable.rem_empty, "清空错误日志", "所有本地错误记录都会移除。", "清空", this::clearErrorLogs, "取消", null);
     }
 
     private String errorLogSummary() {
@@ -6035,7 +5754,7 @@ public class MainActivity extends Activity {
     private void clearErrorLogs() {
         getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().remove(ERROR_LOGS_KEY).apply();
         showTab(2);
-        main.post(() -> showRemToast("错误日志已清理"));
+        main.post(() -> showRemSuccessToast("错误日志已清理"));
     }
 
     private void exportErrorLogs() {
@@ -6070,51 +5789,6 @@ public class MainActivity extends Activity {
                 postMainIfAlive(() -> showInfo("导出失败", clean(error.getMessage(), "无法写入日志文件")));
             }
         });
-    }
-
-    private void showAddSourceDialog() {
-        EditText input = new EditText(this);
-        input.setHint("https://example.com");
-        input.setHintTextColor(UIHelpers.TEXT3);
-        input.setTextColor(UIHelpers.TEXT);
-        input.setTextSize(14);
-        input.setSingleLine(true);
-        input.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 12), UIHelpers.dp(this, 16), UIHelpers.dp(this, 12));
-        AlertDialog addDialog = new AlertDialog.Builder(this)
-                .setTitle("添加自定义站源")
-                .setView(input)
-                .setPositiveButton("添加", (dialog, which) -> {
-                    String url = input.getText().toString().trim();
-                    if (!url.isEmpty()) {
-                        customSources.add(new ComicModels.Source("custom_" + System.currentTimeMillis(), url, "", url, false, true));
-                        saveLocalState();
-                        showSourceManagement();
-                    }
-                })
-                .setNegativeButton("取消", null)
-                .create();
-        addDialog.setOnShowListener(d -> {
-            if (addDialog.getWindow() != null) {
-                addDialog.getWindow().setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 16), Color.TRANSPARENT));
-            }
-            TextView titleView = (TextView) addDialog.findViewById(android.R.id.title);
-            if (titleView != null) {
-                titleView.setTextColor(UIHelpers.TEXT);
-                titleView.setTextSize(17);
-                titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-            }
-            android.widget.Button pos = addDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            if (pos != null) {
-                pos.setTextColor(UIHelpers.ACCENT);
-                pos.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-            }
-            android.widget.Button neg = addDialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-            if (neg != null) {
-                neg.setTextColor(UIHelpers.TEXT3);
-                neg.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-            }
-        });
-        addDialog.show();
     }
 
     private void exportSourceConfig() {
@@ -6170,7 +5844,7 @@ public class MainActivity extends Activity {
                     sourceCategoriesFailed = false;
                     searchResults.clear();
                     showSourceManagement();
-                    showRemToast("站源配置已导入");
+                    showRemSuccessToast("站源配置已导入");
                     if (!categoriesFollowInitialList(selectedSourceId)) loadSourceCategories();
                     loadDefaultCategory();
                 });
@@ -6996,7 +6670,7 @@ public class MainActivity extends Activity {
             clear.setGravity(Gravity.CENTER);
             clear.setLayoutParams(new LinearLayout.LayoutParams(UIHelpers.dp(this, 44), UIHelpers.dp(this, 32)));
             clear.setOnClickListener(v -> {
-                styledDialog("清空阅读历史", "将清除所有阅读进度记录，收藏不会受影响。", "清空", () -> {
+                showRemDialog(R.drawable.rem_empty, "清空阅读历史", "将清除所有阅读进度记录，收藏不会受影响。", "清空", () -> {
                     progress.clear();
                     readerPositions.clear();
                     lastViewedAt.clear();
@@ -7079,7 +6753,7 @@ public class MainActivity extends Activity {
         close.setPadding(UIHelpers.dp(this, 7), UIHelpers.dp(this, 7), UIHelpers.dp(this, 7), UIHelpers.dp(this, 7));
         close.setOnClickListener(v -> {
             String title = orphaned ? "这条记录" : summary.title;
-            styledDialog("删除这条记录？", "只移除《" + title + "》的阅读位置，书架收藏保持不变。", "删除", () -> {
+            showRemDialog(R.drawable.rem_empty, "删除这条记录？", "只移除《" + title + "》的阅读位置，书架收藏保持不变。", "删除", () -> {
                 progress.remove(comicId);
                 removeReaderPositions(comicId);
                 lastViewedAt.remove(comicId);
@@ -7113,7 +6787,7 @@ public class MainActivity extends Activity {
         searchResults.clear();
         persistComicCachesAsync();
         showTab(2);
-        main.post(() -> showRemToast("缓存已清理，收藏数据已保留"));
+        main.post(() -> showRemSuccessToast("缓存已清理，收藏数据已保留"));
     }
 
     private void deleteFiles(File file) {
