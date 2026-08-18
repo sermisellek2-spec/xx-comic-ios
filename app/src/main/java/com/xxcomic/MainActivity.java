@@ -2347,7 +2347,7 @@ public class MainActivity extends Activity {
         shell.setOrientation(LinearLayout.VERTICAL);
         shell.setBackgroundColor(UIHelpers.DARK);
         root.addView(shell, UIHelpers.match());
-        int topHeight = systemBarInset("status_bar_height") + UIHelpers.dp(this, 44);
+        int topHeight = UIHelpers.dp(this, 42);
         shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, topHeight));
         String savedMessage = readerPositions.containsKey(readerPositionKey(detail.summary.comicId,
                 detail.chapters.get(readerChapterIndex))) ? "阅读位置已保存" : "蕾姆正在整理页面";
@@ -2364,22 +2364,21 @@ public class MainActivity extends Activity {
         shell.setOrientation(LinearLayout.VERTICAL);
         shell.setBackgroundColor(UIHelpers.DARK);
         root.addView(shell, UIHelpers.match());
-        int topHeight = systemBarInset("status_bar_height") + UIHelpers.dp(this, 44);
+        int topHeight = UIHelpers.dp(this, 42);
         shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, topHeight));
         shell.addView(readerState(R.drawable.rem_error, title, desc, "重试", retry, false), new LinearLayout.LayoutParams(-1, 0, 1));
         shell.addView(readerProgressBar(readerChapterIndex + 1, Math.max(1, detail.chapters.size())), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 2)));
     }
 
     private LinearLayout readerToolbar(ComicModels.ComicDetail detail) {
-        int statusBarHeight = systemBarInset("status_bar_height");
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.HORIZONTAL);
-        top.setPadding(UIHelpers.dp(this, 12), statusBarHeight, UIHelpers.dp(this, 12), 0);
+        top.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 12), 0);
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.setClickable(true);
         GradientDrawable bg = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{0xF20C1420, 0xEB0C1420, 0xD80C1420}
+                new int[]{0xF00C1420, 0xD80C1420}
         );
         top.setBackground(bg);
 
@@ -2431,10 +2430,8 @@ public class MainActivity extends Activity {
         shell.setBackgroundColor(UIHelpers.DARK);
         root.addView(shell, UIHelpers.match());
 
-        int statusBarHeight = systemBarInset("status_bar_height");
-        int navBarHeight = systemBarInset("navigation_bar_height");
-        int topBarHeight = statusBarHeight + UIHelpers.dp(this, 44);
-        int bottomBarHeight = navBarHeight + UIHelpers.dp(this, 40);
+        int topBarHeight = UIHelpers.dp(this, 42);
+        int bottomBarHeight = UIHelpers.dp(this, 36);
 
         LinearLayout top = readerToolbar(detail);
 
@@ -2578,11 +2575,11 @@ public class MainActivity extends Activity {
         LinearLayout bottom = new LinearLayout(this);
         bottom.setOrientation(LinearLayout.VERTICAL);
         bottom.setGravity(Gravity.CENTER);
-        bottom.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 12), navBarHeight);
+        bottom.setPadding(UIHelpers.dp(this, 12), 0, UIHelpers.dp(this, 12), 0);
         bottom.setClickable(true);
         GradientDrawable bottomBg = new GradientDrawable(
                 GradientDrawable.Orientation.BOTTOM_TOP,
-                new int[]{0xF20C1420, 0xEB0C1420, 0xD80C1420}
+                new int[]{0xF00C1420, 0xD80C1420}
         );
         bottom.setBackground(bottomBg);
 
@@ -2591,7 +2588,7 @@ public class MainActivity extends Activity {
         count.setGravity(Gravity.CENTER);
         count.setIncludeFontPadding(false);
         readerCount[0] = count;
-        bottom.addView(count, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 40)));
+        bottom.addView(count, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 36)));
         FrameLayout.LayoutParams bottomParams = new FrameLayout.LayoutParams(-1, bottomBarHeight, Gravity.BOTTOM);
         shell.addView(bottom, bottomParams);
         readerBottomBar = bottom;
@@ -2637,11 +2634,11 @@ public class MainActivity extends Activity {
 
         int topHeight = readerTopBar.getHeight();
         if (topHeight <= 0) {
-            topHeight = systemBarInset("status_bar_height") + UIHelpers.dp(this, 44);
+            topHeight = UIHelpers.dp(this, 42);
         }
         int bottomHeight = readerBottomBar.getHeight();
         if (bottomHeight <= 0) {
-            bottomHeight = systemBarInset("navigation_bar_height") + UIHelpers.dp(this, 40);
+            bottomHeight = UIHelpers.dp(this, 36);
         }
 
         if (!animated) {
@@ -2716,7 +2713,7 @@ public class MainActivity extends Activity {
     }
 
     private int readerChromeBottomOffset() {
-        return systemBarInset("navigation_bar_height") + UIHelpers.dp(this, 40);
+        return UIHelpers.dp(this, 36);
     }
 
     private int systemBarInset(String name) {
@@ -4974,7 +4971,7 @@ public class MainActivity extends Activity {
         shell.setOrientation(LinearLayout.VERTICAL);
         shell.setBackgroundColor(UIHelpers.DARK);
         root.addView(shell, UIHelpers.match());
-        int topHeight = systemBarInset("status_bar_height") + UIHelpers.dp(this, 44);
+        int topHeight = UIHelpers.dp(this, 42);
         shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, topHeight));
         shell.addView(readerState(R.drawable.rem_error,
                 sourceNameForId(detail.summary.sourceId) + "需要验证",
