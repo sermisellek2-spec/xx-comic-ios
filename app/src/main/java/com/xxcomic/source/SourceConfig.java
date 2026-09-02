@@ -57,21 +57,18 @@ public class SourceConfig {
         return new SourceConfig("baozimh", "包子漫画", "cn.bzmgcn.com", "https://cn.bzmgcn.com", "https://cn.bzmgcn.com/", "", "", "", "", enabled, routes, filters);
     }
 
-    public static SourceConfig aikan(boolean enabled) {
+    public static SourceConfig mh160(boolean enabled) {
         JSONObject routes = new JSONObject();
         JSONObject filters = new JSONObject();
         try {
-            routes.put("latest", "/category{pagePath}");
-            routes.put("search", "/index.php/search?key={keyword}{pageQuery}");
-            routes.put("category", "/category{finishPath}{pagePath}");
-            routes.put("detail", "/youbooks/{comicId}.html");
-            routes.put("chapter", "/chook/{chapterId}");
-            filters.put("finish.serial", "1");
-            filters.put("finish.pub", "2");
-            filters.put("finish.all", "");
+            routes.put("latest", "/kanmanhua/all/{pagePath}");
+            routes.put("search", "/statics/searchelxt1e1.aspx?key={keyword}{pageQuery}");
+            routes.put("category", "/kanmanhua/{filterPath}{pagePath}");
+            routes.put("detail", "/kanmanhua/{comicId}/");
+            routes.put("chapter", "{chapterUrl}");
         } catch (JSONException ignored) {
         }
-        return new SourceConfig("aikan", "爱看漫画", "www.0592cr.com", "https://www.0592cr.com", "https://www.0592cr.com/", "", "", "", "", enabled, routes, filters);
+        return new SourceConfig("mh160", "漫画160", "www.mh160mh.com", "https://www.mh160mh.com", "https://www.mh160mh.com/", "", "", "", "", enabled, routes, filters);
     }
 
     public static SourceConfig gmh(boolean enabled) {

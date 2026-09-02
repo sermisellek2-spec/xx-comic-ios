@@ -16,7 +16,7 @@
 
 - 包子漫画：`https://cn.bzmgcn.com`
 - 漫画屋：`https://www.mhua5.com`
-- 爱看漫画：`https://www.0592cr.com`
+- 漫画160：`https://www.mh160mh.com`
 - G社漫画：`https://m.g-mh.org`
 
 站源搜索、分类、详情、目录和章节解析配置集中在代码内的站源配置中；导出的 JSON 会携带当前站源配置，方便其他用户导入后直接使用。

@@ -51,7 +51,7 @@ import android.widget.Toast;
 
 import com.xxcomic.source.BaoziComicSource;
 import com.xxcomic.source.AntbywComicSource;
-import com.xxcomic.source.AikanComicSource;
+import com.xxcomic.source.Mh160ComicSource;
 import com.xxcomic.source.ComicModels;
 import com.xxcomic.source.ComicSource;
 import com.xxcomic.source.CuimhComicSource;
@@ -170,7 +170,7 @@ public class MainActivity extends Activity {
     private List<Future<?>> currentImageFutures = new ArrayList<>();
     private ComicSource sourceClient;
     private ComicSource mhua5Client;
-    private ComicSource aikanClient;
+    private ComicSource mh160Client;
     private ComicSource gmhClient;
     private Mh18ComicSource mh18Client;
     private JmComicSource jmcomicClient;
@@ -188,7 +188,7 @@ public class MainActivity extends Activity {
     private Mh18WebViewSession mh18BrowserSession;
     private JmComicWebViewSession jmcomicBrowserSession;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
-    private SourceConfig aikanConfig = SourceConfig.aikan(true);
+    private SourceConfig mh160Config = SourceConfig.mh160(true);
     private SourceConfig gmhConfig = SourceConfig.gmh(true);
     private SourceConfig mh18Config = SourceConfig.mh18(true);
     private SourceConfig jmcomicConfig = SourceConfig.jmcomic(true);
@@ -239,7 +239,7 @@ public class MainActivity extends Activity {
     private final Map<String, String> selectedFilterLabels = new LinkedHashMap<>();
     private Runnable filterDrawerAction;
     private boolean sourceEnabled = true;
-    private boolean aikanEnabled = true;
+    private boolean mh160Enabled = true;
     private boolean gmhEnabled = true;
     private boolean mh18Enabled = true;
     private boolean jmcomicEnabled = true;
@@ -1310,9 +1310,9 @@ public class MainActivity extends Activity {
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, aikanEnabled, sourceCard(aikanConfig, aikanEnabled, () -> {
-            aikanEnabled = !aikanEnabled;
-            aikanConfig = aikanConfig.withEnabled(aikanEnabled);
+        addSourceCard(enabledSources, disabledSources, mh160Enabled, sourceCard(mh160Config, mh160Enabled, () -> {
+            mh160Enabled = !mh160Enabled;
+            mh160Config = mh160Config.withEnabled(mh160Enabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
@@ -3165,7 +3165,7 @@ public class MainActivity extends Activity {
     private String sourceNameForId(String sourceId) {
         if (sourceClient.id().equals(sourceId)) return sourceClient.name();
         if (mhua5Client.id().equals(sourceId)) return mhua5Client.name();
-        if (aikanClient.id().equals(sourceId)) return aikanClient.name();
+        if (mh160Client.id().equals(sourceId)) return mh160Client.name();
         if (gmhClient.id().equals(sourceId)) return gmhClient.name();
         if (mh18Client.id().equals(sourceId)) return mh18Client.name();
         if (jmcomicClient.id().equals(sourceId)) return jmcomicClient.name();
@@ -3188,7 +3188,7 @@ public class MainActivity extends Activity {
 
     private ComicSource selectedSource() {
         if (sourceClient.id().equals(selectedSourceId) && sourceEnabled) return sourceClient;
-        if (aikanClient.id().equals(selectedSourceId) && aikanEnabled) return aikanClient;
+        if (mh160Client.id().equals(selectedSourceId) && mh160Enabled) return mh160Client;
         if (gmhClient.id().equals(selectedSourceId) && gmhEnabled) return gmhClient;
         if (mh18Client.id().equals(selectedSourceId) && mh18Enabled) return mh18Client;
         if (jmcomicClient.id().equals(selectedSourceId) && jmcomicEnabled) return jmcomicClient;
@@ -3213,7 +3213,7 @@ public class MainActivity extends Activity {
     private List<ComicSource> enabledBuiltinSources() {
         List<ComicSource> sources = new ArrayList<>();
         if (sourceEnabled) sources.add(sourceClient);
-        if (aikanEnabled) sources.add(aikanClient);
+        if (mh160Enabled) sources.add(mh160Client);
         if (gmhEnabled) sources.add(gmhClient);
         if (mh18Enabled) sources.add(mh18Client);
         if (jmcomicEnabled) sources.add(jmcomicClient);
@@ -3260,7 +3260,7 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(mhua5Client.id() + ":")) return mhua5Client;
         ComicModels.ComicSummary summary = summaries.get(comicId);
         if (summary != null) return sourceForId(summary.sourceId);
-        if (comicId != null && comicId.startsWith(aikanClient.id() + ":")) return aikanClient;
+        if (comicId != null && comicId.startsWith(mh160Client.id() + ":")) return mh160Client;
         if (comicId != null && comicId.startsWith(gmhClient.id() + ":")) return gmhClient;
         if (comicId != null && comicId.startsWith(mh18Client.id() + ":")) return mh18Client;
         if (comicId != null && comicId.startsWith(jmcomicClient.id() + ":")) return jmcomicClient;
@@ -3286,7 +3286,7 @@ public class MainActivity extends Activity {
 
     private ComicSource sourceForId(String sourceId) {
         if (mhua5Client.id().equals(sourceId)) return mhua5Client;
-        if (aikanClient.id().equals(sourceId)) return aikanClient;
+        if (mh160Client.id().equals(sourceId)) return mh160Client;
         if (gmhClient.id().equals(sourceId)) return gmhClient;
         if (mh18Client.id().equals(sourceId)) return mh18Client;
         if (jmcomicClient.id().equals(sourceId)) return jmcomicClient;
@@ -4368,7 +4368,10 @@ public class MainActivity extends Activity {
         if (isFiveUmImage(imageUrl)) {
             return TextUtils.isEmpty(pageReferer) ? manhuazhanConfig.referer : pageReferer;
         }
-        if (imageUrl != null && (imageUrl.contains(aikanConfig.domain) || imageUrl.contains("qrqrs.com"))) return aikanConfig.referer;
+        if (imageUrl != null && (imageUrl.contains(mh160Config.domain)
+                || imageUrl.contains("miyeye.cn") || imageUrl.contains("tgmhfc.uk"))) {
+            return TextUtils.isEmpty(pageReferer) ? mh160Config.referer : pageReferer;
+        }
         if (imageUrl != null && imageUrl.contains(jmcomicConfig.domain)) {
             return TextUtils.isEmpty(pageReferer) ? jmcomicConfig.referer : pageReferer;
         }
@@ -4630,7 +4633,7 @@ public class MainActivity extends Activity {
     private List<String> enabledSourceNames() {
         List<String> names = new ArrayList<>();
         if (sourceEnabled) names.add(sourceClient.name());
-        if (aikanEnabled) names.add(aikanClient.name());
+        if (mh160Enabled) names.add(mh160Client.name());
         if (gmhEnabled) names.add(gmhClient.name());
         if (mh18Enabled) names.add(mh18Client.name());
         if (jmcomicEnabled) names.add(jmcomicClient.name());
@@ -4650,7 +4653,7 @@ public class MainActivity extends Activity {
 
     private String selectedSourceName() {
         if (sourceClient.id().equals(selectedSourceId)) return sourceClient.name();
-        if (aikanClient.id().equals(selectedSourceId)) return aikanClient.name();
+        if (mh160Client.id().equals(selectedSourceId)) return mh160Client.name();
         if (gmhClient.id().equals(selectedSourceId)) return gmhClient.name();
         if (mh18Client.id().equals(selectedSourceId)) return mh18Client.name();
         if (jmcomicClient.id().equals(selectedSourceId)) return jmcomicClient.name();
@@ -4673,7 +4676,7 @@ public class MainActivity extends Activity {
 
     private String sourceIdForName(String name) {
         if (sourceClient.name().equals(name)) return sourceClient.id();
-        if (aikanClient.name().equals(name)) return aikanClient.id();
+        if (mh160Client.name().equals(name)) return mh160Client.id();
         if (gmhClient.name().equals(name)) return gmhClient.id();
         if (mh18Client.name().equals(name)) return mh18Client.id();
         if (jmcomicClient.name().equals(name)) return jmcomicClient.id();
@@ -4717,7 +4720,8 @@ public class MainActivity extends Activity {
             chip.setOnClickListener(v -> {
                 selectedFilters.put(group.key, option.value);
                 selectedFilterLabels.put(group.key, option.label);
-                if ((gmhClient.id().equals(selectedSourceId) || mh18Client.id().equals(selectedSourceId)
+                if ((mh160Client.id().equals(selectedSourceId) || gmhClient.id().equals(selectedSourceId)
+                        || mh18Client.id().equals(selectedSourceId)
                         || jmcomicClient.id().equals(selectedSourceId))
                         && !"all".equals(option.value)) {
                     for (ComicModels.FilterGroup other : sourceFilterGroups) {
@@ -6057,7 +6061,7 @@ public class MainActivity extends Activity {
         root.put("exportedAt", System.currentTimeMillis());
         JSONArray sources = new JSONArray();
         sources.put(baoziConfig.withEnabled(sourceEnabled).toJson());
-        sources.put(aikanConfig.withEnabled(aikanEnabled).toJson());
+        sources.put(mh160Config.withEnabled(mh160Enabled).toJson());
         sources.put(gmhConfig.withEnabled(gmhEnabled).toJson());
         sources.put(mh18Config.withEnabled(mh18Enabled).toJson());
         sources.put(jmcomicConfig.withEnabled(jmcomicEnabled).toJson());
@@ -6102,9 +6106,9 @@ public class MainActivity extends Activity {
                 if (baoziConfig.id.equals(id)) {
                     baoziConfig = SourceConfig.fromJson(item, SourceConfig.baozi(true));
                     sourceEnabled = baoziConfig.enabled;
-                } else if (aikanConfig.id.equals(id)) {
-                    aikanConfig = SourceConfig.fromJson(item, SourceConfig.aikan(true));
-                    aikanEnabled = aikanConfig.enabled;
+                } else if (mh160Config.id.equals(id)) {
+                    mh160Config = SourceConfig.fromJson(item, SourceConfig.mh160(true));
+                    mh160Enabled = mh160Config.enabled;
                 } else if (gmhConfig.id.equals(id)) {
                     gmhConfig = SourceConfig.fromJson(item, SourceConfig.gmh(true));
                     gmhEnabled = gmhConfig.enabled;
@@ -6157,7 +6161,7 @@ public class MainActivity extends Activity {
                 JSONObject item = builtins.getJSONObject(i);
                 String id = item.optString("id");
                 if (baoziConfig.id.equals(id)) sourceEnabled = item.optBoolean("enabled", true);
-                if (aikanConfig.id.equals(id)) aikanEnabled = item.optBoolean("enabled", true);
+                if (mh160Config.id.equals(id)) mh160Enabled = item.optBoolean("enabled", true);
                 if (gmhConfig.id.equals(id)) gmhEnabled = item.optBoolean("enabled", true);
                 if (mh18Config.id.equals(id)) mh18Enabled = item.optBoolean("enabled", true);
                 if (jmcomicConfig.id.equals(id)) jmcomicEnabled = item.optBoolean("enabled", true);
@@ -6227,7 +6231,7 @@ public class MainActivity extends Activity {
 
     private void addDisabledSourceHealthRows(List<String> rows) {
         if (!sourceEnabled) rows.add(baoziConfig.name + "\u001f已关闭");
-        if (!aikanEnabled) rows.add(aikanConfig.name + "\u001f已关闭");
+        if (!mh160Enabled) rows.add(mh160Config.name + "\u001f已关闭");
         if (!gmhEnabled) rows.add(gmhConfig.name + "\u001f已关闭");
         if (!mh18Enabled) rows.add(mh18Config.name + "\u001f已关闭");
         if (!jmcomicEnabled) rows.add(jmcomicConfig.name + "\u001f已关闭");
@@ -6284,7 +6288,7 @@ public class MainActivity extends Activity {
     private void rebuildSourceClients() {
         sourceClient = new BaoziComicSource(baoziConfig.withEnabled(sourceEnabled));
         mhua5Client = new Mhua5ComicSource();
-        aikanClient = new AikanComicSource(aikanConfig.withEnabled(aikanEnabled));
+        mh160Client = new Mh160ComicSource(mh160Config.withEnabled(mh160Enabled));
         gmhClient = new GmhComicSource(gmhConfig.withEnabled(gmhEnabled));
         mh18Client = new Mh18ComicSource(mh18Config.withEnabled(mh18Enabled), mh18BrowserSession);
         jmcomicClient = new JmComicSource(jmcomicConfig.withEnabled(jmcomicEnabled), jmcomicBrowserSession);
@@ -6315,7 +6319,7 @@ public class MainActivity extends Activity {
     private void restoreLocalState() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         sourceEnabled = prefs.getBoolean("source.baozi.enabled", true);
-        aikanEnabled = prefs.getBoolean("source.aikan.enabled", true);
+        mh160Enabled = prefs.getBoolean("source.mh160.enabled", true);
         gmhEnabled = prefs.getBoolean("source.gmh.enabled", true);
         mh18Enabled = prefs.getBoolean("source.mh18.enabled", true);
         jmcomicEnabled = prefs.getBoolean("source.jmcomic.enabled", true);
@@ -6405,7 +6409,7 @@ public class MainActivity extends Activity {
     private void saveLocalState() {
         SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
         editor.putBoolean("source.baozi.enabled", sourceEnabled);
-        editor.putBoolean("source.aikan.enabled", aikanEnabled);
+        editor.putBoolean("source.mh160.enabled", mh160Enabled);
         editor.putBoolean("source.gmh.enabled", gmhEnabled);
         editor.putBoolean("source.mh18.enabled", mh18Enabled);
         editor.putBoolean("source.jmcomic.enabled", jmcomicEnabled);
@@ -6459,7 +6463,7 @@ public class MainActivity extends Activity {
     private void restoreSourceConfigs(String value) {
         if (TextUtils.isEmpty(value)) {
             baoziConfig = SourceConfig.baozi(sourceEnabled);
-            aikanConfig = SourceConfig.aikan(aikanEnabled);
+            mh160Config = SourceConfig.mh160(mh160Enabled);
             gmhConfig = SourceConfig.gmh(gmhEnabled);
             mh18Config = SourceConfig.mh18(mh18Enabled);
             jmcomicConfig = SourceConfig.jmcomic(jmcomicEnabled);
@@ -6484,9 +6488,9 @@ public class MainActivity extends Activity {
                 if (SourceConfig.baozi(true).id.equals(id)) {
                     baoziConfig = SourceConfig.fromJson(item, SourceConfig.baozi(sourceEnabled));
                     sourceEnabled = baoziConfig.enabled;
-                } else if (SourceConfig.aikan(true).id.equals(id)) {
-                    aikanConfig = SourceConfig.fromJson(item, SourceConfig.aikan(aikanEnabled));
-                    aikanEnabled = aikanConfig.enabled;
+                } else if (SourceConfig.mh160(true).id.equals(id)) {
+                    mh160Config = SourceConfig.fromJson(item, SourceConfig.mh160(mh160Enabled));
+                    mh160Enabled = mh160Config.enabled;
                 } else if (SourceConfig.gmh(true).id.equals(id)) {
                     gmhConfig = SourceConfig.fromJson(item, SourceConfig.gmh(gmhEnabled));
                     gmhEnabled = gmhConfig.enabled;
@@ -6534,7 +6538,7 @@ public class MainActivity extends Activity {
             }
         } catch (JSONException ignored) {
             baoziConfig = SourceConfig.baozi(sourceEnabled);
-            aikanConfig = SourceConfig.aikan(aikanEnabled);
+            mh160Config = SourceConfig.mh160(mh160Enabled);
             gmhConfig = SourceConfig.gmh(gmhEnabled);
             mh18Config = SourceConfig.mh18(mh18Enabled);
             jmcomicConfig = SourceConfig.jmcomic(jmcomicEnabled);
@@ -6556,7 +6560,7 @@ public class MainActivity extends Activity {
         try {
             JSONArray array = new JSONArray();
             array.put(baoziConfig.withEnabled(sourceEnabled).toJson());
-            array.put(aikanConfig.withEnabled(aikanEnabled).toJson());
+            array.put(mh160Config.withEnabled(mh160Enabled).toJson());
             array.put(gmhConfig.withEnabled(gmhEnabled).toJson());
             array.put(mh18Config.withEnabled(mh18Enabled).toJson());
             array.put(jmcomicConfig.withEnabled(jmcomicEnabled).toJson());
