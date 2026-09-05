@@ -205,6 +205,7 @@ public final class Mh160ComicSource implements ComicSource {
             Matcher direct = Pattern.compile("href=[\\\"']([^\\\"']*/kanmanhua/" + Pattern.quote(comicId) + "/[^\\\"']+\\.html)[\\\"']", Pattern.CASE_INSENSITIVE).matcher(value(html));
             if (direct.find()) { String url = absoluteDefault(direct.group(1)); result.add(new ComicModels.Chapter(chapterIdFromUrl(url), "在线阅读", url, 0, 0)); }
         }
+        java.util.Collections.reverse(result);
         return result;
     }
 

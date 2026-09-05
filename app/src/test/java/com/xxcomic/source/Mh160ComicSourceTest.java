@@ -103,6 +103,22 @@ public class Mh160ComicSourceTest {
     }
 
     @Test
+    public void returnsCatalogOldestFirstForReaderNavigation() {
+        String html = "<div class=\"cy_plist\"><ul>"
+                + "<li><a href=\"/kanmanhua/4974/103.html\"><p>第3话</p></a></li>"
+                + "<li><a href=\"/kanmanhua/4974/102.html\"><p>第2话</p></a></li>"
+                + "<li><a href=\"/kanmanhua/4974/101.html\"><p>第1话</p></a></li>"
+                + "</ul></div>";
+
+        List<ComicModels.Chapter> chapters = Mh160ComicSource.parseChapters(html, "4974");
+
+        assertEquals("第1话", chapters.get(0).title);
+        assertEquals("101", chapters.get(0).chapterId);
+        assertEquals("第3话", chapters.get(2).title);
+        assertEquals("103", chapters.get(2).chapterId);
+    }
+
+    @Test
     public void decodesOnlyReaderImagesFromPayload() {
         String payload = java.util.Base64.getEncoder().encodeToString(
                 ("/mh160tuku/c/comic/0001.jpg$qingtiandy$/mh160tuku/c/comic/0002.jpg")
