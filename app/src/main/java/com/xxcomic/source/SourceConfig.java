@@ -41,7 +41,7 @@ public class SourceConfig {
             routes.put("latest", "/list/new{pagePath}");
             routes.put("search", "/search?q={keyword}");
             routes.put("category", "/classify?type={type}&region={region}&state={state}&filter={filter}{pageQuery}");
-            routes.put("categoryApi", "/api/bzmhq/amp_comic_list?type={type}&region={region}&state={state}&filter={filter}&page={page}&limit=36&language=cn&__amp_source_origin=https%3A%2F%2Fcn.bzmgcn.com");
+            routes.put("categoryApi", "/api/bzmhq/amp_comic_list?type={type}&region={region}&state={state}&filter={filter}&page={page}&limit=36&language=cn&__amp_source_origin=https%3A%2F%2Fwww.twmanga.com");
             routes.put("detail", "/comic/{comicId}");
             routes.put("chapter", "{chapterUrl}");
             filters.put("region.cn", "cn");
@@ -54,7 +54,7 @@ public class SourceConfig {
             filters.put("state.all", "all");
         } catch (JSONException ignored) {
         }
-        return new SourceConfig("baozimh", "包子漫画", "cn.bzmgcn.com", "https://cn.bzmgcn.com", "https://cn.bzmgcn.com/", "", "", "", "", enabled, routes, filters);
+        return new SourceConfig("baozimh", "包子漫画", "www.twmanga.com", "https://www.twmanga.com", "https://www.twmanga.com/", "", "", "", "", enabled, routes, filters);
     }
 
     public static SourceConfig mh160(boolean enabled) {
@@ -348,12 +348,30 @@ public class SourceConfig {
     public static SourceConfig fromJson(JSONObject object, SourceConfig fallback) {
         JSONObject routes = mergeObject(fallback.routes, object.optJSONObject("routes"));
         JSONObject filters = mergeObject(fallback.filters, object.optJSONObject("filters"));
+        String baseUrl = trimSlash(object.optString("baseUrl", fallback.baseUrl));
+        String domain = object.optString("domain", fallback.domain);
+        String referer = object.optString("referer", fallback.referer);
+        if ("baozimh".equals(fallback.id) && !baseUrl.equals(migrateBaoziUrl(baseUrl))) {
+            baseUrl = migrateBaoziUrl(baseUrl);
+            if ("cn.bzmgcn.com".equals(domain) || "www.baozimh.com".equals(domain)) domain = "www.twmanga.com";
+            referer = migrateBaoziUrl(referer);
+            Iterator<String> keys = routes.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                try {
+                    routes.put(key, migrateBaoziUrl(routes.getString(key))
+                            .replace("https%3A%2F%2Fcn.bzmgcn.com", "https%3A%2F%2Fwww.twmanga.com")
+                            .replace("https%3A%2F%2Fwww.baozimh.com", "https%3A%2F%2Fwww.twmanga.com"));
+                } catch (JSONException ignored) {
+                }
+            }
+        }
         return new SourceConfig(
                 object.optString("id", fallback.id),
                 object.optString("name", fallback.name),
-                object.optString("domain", fallback.domain),
-                trimSlash(object.optString("baseUrl", fallback.baseUrl)),
-                object.optString("referer", fallback.referer),
+                domain,
+                baseUrl,
+                referer,
                 object.optString("latestPath", fallback.latestPath),
                 object.optString("searchPath", fallback.searchPath),
                 object.optString("categoryPath", fallback.categoryPath),
@@ -361,6 +379,12 @@ public class SourceConfig {
                 object.optBoolean("enabled", fallback.enabled),
                 routes,
                 filters);
+    }
+
+    static String migrateBaoziUrl(String url) {
+        // Routes can contain unresolved placeholders, so replace only the known URL authority.
+        return url.replaceFirst("^(?:https?:)?//(?:cn\\.bzmgcn\\.com|www\\.baozimh\\.com)(?=[/:?#]|$)",
+                "https://www.twmanga.com");
     }
 
     public String route(String key) {

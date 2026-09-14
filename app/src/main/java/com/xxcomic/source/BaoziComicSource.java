@@ -27,7 +27,6 @@ import java.util.regex.Pattern;
 
 public class BaoziComicSource implements ComicSource {
     private static final String SOURCE_ID = "baozimh";
-    private static final String BASE_URL = "https://cn.bzmgcn.com";
     private static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private static final Pattern CARD_PATTERN = Pattern.compile(
             "<div class=\"comics-card[\\s\\S]*?<a href=\"([^\"]+)\" title=\"([^\"]+)\"[\\s\\S]*?src=\"([^\"]+)\"[\\s\\S]*?<small class=\"tags text-truncate\">([\\s\\S]*?)</small>",
@@ -365,6 +364,7 @@ public class BaoziComicSource implements ComicSource {
     }
 
     private String absolute(String url) {
+        url = SourceConfig.migrateBaoziUrl(url);
         if (url.startsWith("http://") || url.startsWith("https://")) return url;
         if (url.startsWith("//")) return "https:" + url;
         if (url.startsWith("/")) return config.baseUrl + url;
@@ -409,6 +409,6 @@ public class BaoziComicSource implements ComicSource {
     private String coverUrl(String topicImg) {
         if (topicImg == null || topicImg.isEmpty()) return "";
         if (topicImg.startsWith("http://") || topicImg.startsWith("https://")) return topicImg;
-        return "https://static-tw.bzmgcn.com/cover/" + topicImg + "?w=285&h=375&q=100";
+        return "https://static-tw.baozimh.com/cover/" + topicImg + "?w=285&h=375&q=100";
     }
 }
