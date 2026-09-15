@@ -67,6 +67,7 @@ import com.xxcomic.source.Hanman18ComicSource;
 import com.xxcomic.source.MkzhanComicSource;
 import com.xxcomic.source.Mhua5ComicSource;
 import com.xxcomic.source.LiumanhuaComicSource;
+import com.xxcomic.source.CopyMangaComicSource;
 import com.xxcomic.source.SourceConfig;
 import com.xxcomic.source.VerificationCancelledException;
 import com.xxcomic.source.VerificationRequiredException;
@@ -185,6 +186,7 @@ public class MainActivity extends Activity {
     private ComicSource antbywClient;
     private ComicSource cuimhClient;
     private ComicSource liumanhuaClient;
+    private ComicSource copy4000Client;
     private Mh18WebViewSession mh18BrowserSession;
     private JmComicWebViewSession jmcomicBrowserSession;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
@@ -203,6 +205,7 @@ public class MainActivity extends Activity {
     private SourceConfig antbywConfig = SourceConfig.antbyw(true);
     private SourceConfig cuimhConfig = SourceConfig.cuimh(true);
     private SourceConfig liumanhuaConfig = SourceConfig.liumanhua(true);
+    private SourceConfig copy4000Config = SourceConfig.copy4000(true);
     private final List<ComicModels.ComicSummary> searchResults = new ArrayList<>();
     private final List<ComicModels.ComicSummary> globalSearchResults = new ArrayList<>();
     private final List<String> globalSearchHistory = new ArrayList<>();
@@ -254,6 +257,7 @@ public class MainActivity extends Activity {
     private boolean antbywEnabled = true;
     private boolean cuimhEnabled = true;
     private boolean liumanhuaEnabled = true;
+    private boolean copy4000Enabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
     private boolean readerLeftHand = false;
@@ -1401,6 +1405,12 @@ public class MainActivity extends Activity {
         addSourceCard(enabledSources, disabledSources, liumanhuaEnabled, sourceCard(liumanhuaConfig, liumanhuaEnabled, () -> {
             liumanhuaEnabled = !liumanhuaEnabled;
             liumanhuaConfig = liumanhuaConfig.withEnabled(liumanhuaEnabled);
+            rebuildSourceClients();
+            finishSourceToggle();
+        }));
+        addSourceCard(enabledSources, disabledSources, copy4000Enabled, sourceCard(copy4000Config, copy4000Enabled, () -> {
+            copy4000Enabled = !copy4000Enabled;
+            copy4000Config = copy4000Config.withEnabled(copy4000Enabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
@@ -3225,6 +3235,7 @@ public class MainActivity extends Activity {
         if (antbywClient.id().equals(sourceId)) return antbywClient.name();
         if (cuimhClient.id().equals(sourceId)) return cuimhClient.name();
         if (liumanhuaClient.id().equals(sourceId)) return liumanhuaClient.name();
+        if (copy4000Client.id().equals(sourceId)) return copy4000Client.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(sourceId)) return item.name;
         }
@@ -3248,6 +3259,7 @@ public class MainActivity extends Activity {
         if (antbywClient.id().equals(selectedSourceId) && antbywEnabled) return antbywClient;
         if (cuimhClient.id().equals(selectedSourceId) && cuimhEnabled) return cuimhClient;
         if (liumanhuaClient.id().equals(selectedSourceId) && liumanhuaEnabled) return liumanhuaClient;
+        if (copy4000Client.id().equals(selectedSourceId) && copy4000Enabled) return copy4000Client;
         List<ComicSource> enabled = enabledBuiltinSources();
         if (enabled.isEmpty()) return null;
         selectedSourceId = enabled.get(0).id();
@@ -3273,6 +3285,7 @@ public class MainActivity extends Activity {
         if (antbywEnabled) sources.add(antbywClient);
         if (cuimhEnabled) sources.add(cuimhClient);
         if (liumanhuaEnabled) sources.add(liumanhuaClient);
+        if (copy4000Enabled) sources.add(copy4000Client);
         return sources;
     }
 
@@ -3320,6 +3333,7 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(antbywClient.id() + ":")) return antbywClient;
         if (comicId != null && comicId.startsWith(cuimhClient.id() + ":")) return cuimhClient;
         if (comicId != null && comicId.startsWith(liumanhuaClient.id() + ":")) return liumanhuaClient;
+        if (comicId != null && comicId.startsWith(copy4000Client.id() + ":")) return copy4000Client;
         return sourceClient;
     }
 
@@ -3346,6 +3360,7 @@ public class MainActivity extends Activity {
         if (antbywClient.id().equals(sourceId)) return antbywClient;
         if (cuimhClient.id().equals(sourceId)) return cuimhClient;
         if (liumanhuaClient.id().equals(sourceId)) return liumanhuaClient;
+        if (copy4000Client.id().equals(sourceId)) return copy4000Client;
         return sourceClient;
     }
 
@@ -3511,6 +3526,9 @@ public class MainActivity extends Activity {
 
     private void normalizeChaptersOldestFirst(List<ComicModels.Chapter> chapters) {
         if (chapters == null || chapters.size() < 2) return;
+        // CopyManga already supplies the group order; a final extra chapter may have a lower number.
+        String firstUrl = chapters.get(0).url;
+        if (firstUrl != null && firstUrl.startsWith(copy4000Config.baseUrl + "/comic/") && firstUrl.contains("/chapter/")) return;
         Long first = extractChapterNumber(chapters.get(0).title);
         Long last = extractChapterNumber(chapters.get(chapters.size() - 1).title);
         if (first == null || last == null) return;
@@ -4440,6 +4458,9 @@ public class MainActivity extends Activity {
         if (imageUrl != null && (imageUrl.contains(cuimhConfig.domain) || imageUrl.contains("baipiaoguai.org"))) {
             return TextUtils.isEmpty(pageReferer) ? cuimhConfig.referer : pageReferer;
         }
+        if (CopyMangaComicSource.usesImageHost(imageUrl)) {
+            return TextUtils.isEmpty(pageReferer) ? copy4000Config.referer : pageReferer;
+        }
         if (imageUrl != null && imageUrl.contains("s2.bzcdn.net")) {
             return TextUtils.isEmpty(pageReferer) ? liumanhuaConfig.referer : pageReferer;
         }
@@ -4693,6 +4714,7 @@ public class MainActivity extends Activity {
         if (antbywEnabled) names.add(antbywClient.name());
         if (cuimhEnabled) names.add(cuimhClient.name());
         if (liumanhuaEnabled) names.add(liumanhuaClient.name());
+        if (copy4000Enabled) names.add(copy4000Client.name());
         return names;
     }
 
@@ -4713,6 +4735,7 @@ public class MainActivity extends Activity {
         if (antbywClient.id().equals(selectedSourceId)) return antbywClient.name();
         if (cuimhClient.id().equals(selectedSourceId)) return cuimhClient.name();
         if (liumanhuaClient.id().equals(selectedSourceId)) return liumanhuaClient.name();
+        if (copy4000Client.id().equals(selectedSourceId)) return copy4000Client.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(selectedSourceId)) return item.name;
         }
@@ -4736,6 +4759,7 @@ public class MainActivity extends Activity {
         if (antbywClient.name().equals(name)) return antbywClient.id();
         if (cuimhClient.name().equals(name)) return cuimhClient.id();
         if (liumanhuaClient.name().equals(name)) return liumanhuaClient.id();
+        if (copy4000Client.name().equals(name)) return copy4000Client.id();
         for (ComicModels.Source item : customSources) {
             if (item.name.equals(name)) return item.id;
         }
@@ -6121,6 +6145,7 @@ public class MainActivity extends Activity {
         sources.put(antbywConfig.withEnabled(antbywEnabled).toJson());
         sources.put(cuimhConfig.withEnabled(cuimhEnabled).toJson());
         sources.put(liumanhuaConfig.withEnabled(liumanhuaEnabled).toJson());
+        sources.put(copy4000Config.withEnabled(copy4000Enabled).toJson());
         root.put("sources", sources);
         JSONArray custom = new JSONArray();
         for (ComicModels.Source item : customSources) {
@@ -6197,6 +6222,9 @@ public class MainActivity extends Activity {
                 } else if (liumanhuaConfig.id.equals(id)) {
                     liumanhuaConfig = SourceConfig.fromJson(item, SourceConfig.liumanhua(true));
                     liumanhuaEnabled = liumanhuaConfig.enabled;
+                } else if (copy4000Config.id.equals(id)) {
+                    copy4000Config = SourceConfig.fromJson(item, SourceConfig.copy4000(true));
+                    copy4000Enabled = copy4000Config.enabled;
                 }
             }
         }
@@ -6221,6 +6249,7 @@ public class MainActivity extends Activity {
                 if (antbywConfig.id.equals(id)) antbywEnabled = item.optBoolean("enabled", true);
                 if (cuimhConfig.id.equals(id)) cuimhEnabled = item.optBoolean("enabled", true);
                 if (liumanhuaConfig.id.equals(id)) liumanhuaEnabled = item.optBoolean("enabled", true);
+                if (copy4000Config.id.equals(id)) copy4000Enabled = item.optBoolean("enabled", true);
             }
         }
         rebuildSourceClients();
@@ -6291,6 +6320,7 @@ public class MainActivity extends Activity {
         if (!antbywEnabled) rows.add(antbywConfig.name + "\u001f已关闭");
         if (!cuimhEnabled) rows.add(cuimhConfig.name + "\u001f已关闭");
         if (!liumanhuaEnabled) rows.add(liumanhuaConfig.name + "\u001f已关闭");
+        if (!copy4000Enabled) rows.add(copy4000Config.name + "\u001f已关闭");
     }
 
     private void showSourceHealthLoading() {
@@ -6348,6 +6378,7 @@ public class MainActivity extends Activity {
         antbywClient = new AntbywComicSource(antbywConfig.withEnabled(antbywEnabled));
         cuimhClient = new CuimhComicSource(cuimhConfig.withEnabled(cuimhEnabled));
         liumanhuaClient = new LiumanhuaComicSource(liumanhuaConfig.withEnabled(liumanhuaEnabled));
+        copy4000Client = new CopyMangaComicSource(copy4000Config.withEnabled(copy4000Enabled));
     }
 
     private String readHistoryText() {
@@ -6379,6 +6410,7 @@ public class MainActivity extends Activity {
         antbywEnabled = prefs.getBoolean("source.antbyw.enabled", true);
         cuimhEnabled = prefs.getBoolean("source.cuimh.enabled", true);
         liumanhuaEnabled = prefs.getBoolean("source.liumanhua.enabled", true);
+        copy4000Enabled = prefs.getBoolean("source.copy4000.enabled", true);
         restoreSourceConfigs(prefs.getString("source.configs", ""));
         rebuildSourceClients();
         chapterDesc = prefs.getBoolean("chapter.desc", false);
@@ -6470,6 +6502,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.antbyw.enabled", antbywEnabled);
         editor.putBoolean("source.cuimh.enabled", cuimhEnabled);
         editor.putBoolean("source.liumanhua.enabled", liumanhuaEnabled);
+        editor.putBoolean("source.copy4000.enabled", copy4000Enabled);
         editor.putString("source.configs", encodeSourceConfigs());
         editor.putBoolean("chapter.desc", chapterDesc);
         editor.putInt("theme.mode", themeMode);
@@ -6525,6 +6558,7 @@ public class MainActivity extends Activity {
             antbywConfig = SourceConfig.antbyw(antbywEnabled);
             cuimhConfig = SourceConfig.cuimh(cuimhEnabled);
             liumanhuaConfig = SourceConfig.liumanhua(liumanhuaEnabled);
+            copy4000Config = SourceConfig.copy4000(copy4000Enabled);
             return;
         }
         try {
@@ -6581,6 +6615,9 @@ public class MainActivity extends Activity {
                 } else if (SourceConfig.liumanhua(true).id.equals(id)) {
                     liumanhuaConfig = SourceConfig.fromJson(item, SourceConfig.liumanhua(liumanhuaEnabled));
                     liumanhuaEnabled = liumanhuaConfig.enabled;
+                } else if (SourceConfig.copy4000(true).id.equals(id)) {
+                    copy4000Config = SourceConfig.fromJson(item, SourceConfig.copy4000(copy4000Enabled));
+                    copy4000Enabled = copy4000Config.enabled;
                 }
             }
         } catch (JSONException ignored) {
@@ -6600,6 +6637,7 @@ public class MainActivity extends Activity {
             antbywConfig = SourceConfig.antbyw(antbywEnabled);
             cuimhConfig = SourceConfig.cuimh(cuimhEnabled);
             liumanhuaConfig = SourceConfig.liumanhua(liumanhuaEnabled);
+            copy4000Config = SourceConfig.copy4000(copy4000Enabled);
         }
     }
 
@@ -6622,6 +6660,7 @@ public class MainActivity extends Activity {
             array.put(antbywConfig.withEnabled(antbywEnabled).toJson());
             array.put(cuimhConfig.withEnabled(cuimhEnabled).toJson());
             array.put(liumanhuaConfig.withEnabled(liumanhuaEnabled).toJson());
+            array.put(copy4000Config.withEnabled(copy4000Enabled).toJson());
             return array.toString();
         } catch (JSONException ignored) {
             return "[]";

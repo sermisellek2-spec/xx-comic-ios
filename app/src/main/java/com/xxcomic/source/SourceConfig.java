@@ -300,6 +300,20 @@ public class SourceConfig {
                 new JSONObject(), new JSONObject());
     }
 
+    public static SourceConfig copy4000(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        try {
+            routes.put("search", "/api/kb/web/searchci/comics?offset={offset}&platform=2&limit={limit}&q={keyword}&q_type=");
+            routes.put("categoryIndex", "/filter");
+            routes.put("category", "/comics?limit={limit}&offset={offset}&ordering={ordering}{filters}");
+            routes.put("detail", "/comic/{comicId}");
+            routes.put("chapters", "/comicdetail/{comicId}/chapters");
+            routes.put("chapter", "{chapterUrl}");
+        } catch (JSONException ignored) { }
+        return new SourceConfig("copy4000", "拷贝漫画", "www.copy4000.com", "https://www.copy4000.com", "https://www.copy4000.com/",
+                "", "", "", "", enabled, routes, new JSONObject());
+    }
+
     public static SourceConfig liumanhua(boolean enabled) {
         JSONObject routes = new JSONObject();
         try {

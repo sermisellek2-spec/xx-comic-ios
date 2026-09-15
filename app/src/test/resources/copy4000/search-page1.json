@@ -1,0 +1,227 @@
+{
+  "code": 200,
+  "message": "请求成功",
+  "results": {
+    "list": [
+      {
+        "name": "海物語",
+        "alias": "海物语,海物語,海物语",
+        "path_word": "haiwuyu",
+        "cover": "https://sh.mangafunb.fun/h/haiwuyu/cover/1651007627.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "葛城彰",
+            "alias": "葛城彰",
+            "path_word": "gechengzhang"
+          }
+        ],
+        "popular": 3059,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "海色進行曲",
+        "alias": "海色行进曲,海色進行曲,海色进行曲",
+        "path_word": "haisejinxingqu",
+        "cover": "https://sh.mangafunb.fun/h/haisejinxingqu/cover/1651127111.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "ミナミト",
+            "alias": null,
+            "path_word": "minamito"
+          }
+        ],
+        "popular": 31817,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "海街日記",
+        "alias": "海街diary,海街diary,海街日记",
+        "path_word": "haijiediary",
+        "cover": "https://sh.mangafunb.fun/h/haijiediary/cover/1651080213.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "吉田秋生",
+            "alias": "吉田秋生",
+            "path_word": "jtqs"
+          }
+        ],
+        "popular": 5695,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "旅海繪坊",
+        "alias": "旅海繪坊,旅海绘坊",
+        "path_word": "lvhaihuifang",
+        "cover": "https://sl.mangafunb.fun/l/lvhaihuifang/cover/1651130418.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "森永ミキ",
+            "alias": null,
+            "path_word": "symiki"
+          }
+        ],
+        "popular": 10637,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "海",
+        "alias": "海",
+        "path_word": "haihiuchidana",
+        "cover": "https://sh.mangafunb.fun/h/haihiuchidana/cover/1666004963.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "ひうち棚",
+            "alias": null,
+            "path_word": "hiuchidana"
+          }
+        ],
+        "popular": 1358,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "NO.1海童",
+        "alias": "NO.1海童,NO.1海童獸,NO.1海童,NO.1海童",
+        "path_word": "noyihaitong",
+        "cover": "https://sn.mangafunb.fun/n/noyihaitong/cover/1651129422.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "鸣海网夜",
+            "alias": null,
+            "path_word": "minghaiwangye"
+          }
+        ],
+        "popular": 684,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "鳴海老師有點妖氣",
+        "alias": "鳴海先生有點妖氣,鸣海先生有点妖气,鸣海老师有点妖气",
+        "path_word": "minghaixianshengyoudianyaoqi",
+        "cover": "https://sm.mangafunb.fun/m/minghaixianshengyoudianyaoqi/cover/1651159469.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "西贺スオミ",
+            "alias": null,
+            "path_word": "xihesuomi"
+          }
+        ],
+        "popular": 11934,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "海虎Ⅰ",
+        "alias": "海虎无限",
+        "path_word": "haihu1",
+        "cover": "https://sh.mangafunb.fun/h/haihu1/cover/1651561219.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "邓志辉",
+            "alias": null,
+            "path_word": "dengzhihui"
+          }
+        ],
+        "popular": 536942,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "七海游俠",
+        "alias": "七海游俠,七海游侠",
+        "path_word": "qihaiyouxia",
+        "cover": "https://sq.mangafunb.fun/q/qihaiyouxia/cover/1651174468.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "岩泉舞",
+            "alias": null,
+            "path_word": "yanquanwu"
+          }
+        ],
+        "popular": 673,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "悲傷之海",
+        "alias": "悲傷之海,悲伤之海",
+        "path_word": "beishangzhihai",
+        "cover": "https://sb.mangafunb.fun/b/beishangzhihai/cover/1651175262.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "IDW",
+            "alias": "IDW",
+            "path_word": "idw"
+          }
+        ],
+        "popular": 2721,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "平和之海",
+        "alias": "平和之海,平和之海",
+        "path_word": "pinghezhihai",
+        "cover": "https://sp.mangafunb.fun/p/pinghezhihai/cover/1651029824.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "失笑工房 (カペラ)",
+            "alias": "失笑工房 (カペラ)",
+            "path_word": "sxgfkbr"
+          }
+        ],
+        "popular": 534,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "人魚之海",
+        "alias": "人魚之海,人鱼之海",
+        "path_word": "renyuzhihai",
+        "cover": "https://sr.mangafunb.fun/r/renyuzhihai/cover/1651165325.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "柿內こよる",
+            "alias": "柿内こよる",
+            "path_word": "shileikoyoru"
+          }
+        ],
+        "popular": 923,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      }
+    ],
+    "total": 625,
+    "limit": 12,
+    "offset": 0
+  }
+}
