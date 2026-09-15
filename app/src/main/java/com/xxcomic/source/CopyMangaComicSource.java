@@ -5,9 +5,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -30,6 +35,8 @@ import java.util.regex.Pattern;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 
 /** Web API/HTML adapter. No page JavaScript is executed and no empty reader is cached as success. */
 public class CopyMangaComicSource implements ComicSource {
@@ -38,6 +45,7 @@ public class CopyMangaComicSource implements ComicSource {
     private static final Pattern LINKS = Pattern.compile("<a\\b([^>]*)>([\\s\\S]*?)</a>", Pattern.CASE_INSENSITIVE);
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
     private final SourceConfig config;
+    private volatile String workingApiOrigin;
 
     public CopyMangaComicSource() { this(SourceConfig.copy4000(true)); }
     public CopyMangaComicSource(SourceConfig config) { this.config = config == null ? SourceConfig.copy4000(true) : config; }
@@ -361,13 +369,72 @@ public class CopyMangaComicSource implements ComicSource {
     }
 
     protected String fetchApi(String url) throws IOException {
-        return request(url, true);
+        URL original = new URL(url);
+        String primary = origin(original);
+        String builtIn = origin(new URL(SourceConfig.copy4000(true).route("apiBaseUrl")));
+        // An explicitly configured API host or absolute route stays on that host.
+        if (!primary.equals(builtIn)) return request(url, true);
+        Set<String> available = new LinkedHashSet<>();
+        available.add(primary);
+        String fallbacks = config.routes.has("apiFallbackUrls") ? config.route("apiFallbackUrls")
+                : SourceConfig.copy4000(true).route("apiFallbackUrls");
+        for (String value : fallbacks.split(",")) {
+            if (value.trim().isEmpty()) continue;
+            URL fallback = new URL(value.trim());
+            if (!"https".equalsIgnoreCase(fallback.getProtocol()) || fallback.getUserInfo() != null
+                    || fallback.getQuery() != null || fallback.getRef() != null
+                    || (!fallback.getPath().isEmpty() && !"/".equals(fallback.getPath())))
+                throw new IOException("拷贝漫画备用 API 必须为 HTTPS 域名地址");
+            available.add(origin(fallback));
+            if (available.size() == 3) break;
+        }
+        List<String> attempts = new ArrayList<>(available);
+        String preferred = workingApiOrigin;
+        if (preferred != null && attempts.remove(preferred)) attempts.add(0, preferred);
+        List<IOException> failures = new ArrayList<>();
+        List<String> triedHosts = new ArrayList<>();
+        for (String candidate : attempts) {
+            if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("拷贝漫画请求已取消");
+            triedHosts.add(new URL(candidate).getHost());
+            try {
+                String body = request(candidate + original.getFile(), true);
+                // Do not prefer a line that only returned HTML or null placeholder data.
+                if (success(body).optJSONObject("results") != null) workingApiOrigin = candidate;
+                return body;
+            } catch (IOException e) {
+                IOException contextual = new IOException("拷贝漫画 API " + new URL(candidate).getHost()
+                        + "：" + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+                if (!isConnectionFailure(e)) throw contextual;
+                failures.add(contextual);
+            }
+        }
+        IOException error = new IOException("拷贝漫画 API 网络连接失败（已尝试 " + join(triedHosts)
+                + "），请切换网络后重试", failures.get(failures.size() - 1));
+        for (int i = 0; i < failures.size() - 1; i++) error.addSuppressed(failures.get(i));
+        throw error;
     }
 
-    private String request(String url, boolean api) throws IOException {
+    private static String origin(URL url) {
+        int port = url.getPort();
+        return url.getProtocol().toLowerCase(java.util.Locale.ROOT) + "://"
+                + url.getHost().toLowerCase(java.util.Locale.ROOT)
+                + (port < 0 || port == url.getDefaultPort() ? "" : ":" + port);
+    }
+
+    static boolean isConnectionFailure(IOException error) {
+        if (Thread.currentThread().isInterrupted()) return false;
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause instanceof java.security.cert.CertificateException || cause instanceof SSLPeerUnverifiedException)
+                return false;
+        }
+        return error instanceof SocketException || error instanceof SocketTimeoutException
+                || error instanceof UnknownHostException || error instanceof EOFException || error instanceof SSLException;
+    }
+
+    protected String request(String url, boolean api) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        connection.setConnectTimeout(15000);
-        connection.setReadTimeout(20000);
+        connection.setConnectTimeout(api ? 8000 : 15000);
+        connection.setReadTimeout(api ? 12000 : 20000);
         connection.setRequestProperty("User-Agent", api ? "COPY/3.0.9" : USER_AGENT);
         // Java's default Accept prefers HTML, making the search API return its browsable UI.
         connection.setRequestProperty("Accept", api ? "application/json" : "application/json, text/html;q=0.9, */*;q=0.8");

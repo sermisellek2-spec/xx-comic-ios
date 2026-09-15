@@ -304,6 +304,7 @@ public class SourceConfig {
         JSONObject routes = new JSONObject();
         try {
             routes.put("apiBaseUrl", "https://api.manga2026.xyz");
+            routes.put("apiFallbackUrls", "https://mapi.elfgjfghkk.club,https://mapi.fgjfghkkcenter.club");
             routes.put("apiDetail", "/api/v3/comic2/{comicId}?platform=3");
             routes.put("apiChapters", "/api/v3/comic/{comicId}/group/{group}/chapters?limit=100&offset={offset}");
             routes.put("apiChapter", "/api/v3/comic/{comicId}/chapter/{chapterId}?platform=3");

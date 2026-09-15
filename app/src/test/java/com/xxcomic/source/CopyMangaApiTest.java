@@ -71,9 +71,10 @@ public class CopyMangaApiTest {
     @Test public void readerUsesOriginalArrayOrderAndCompatibleSavedUrl() throws Exception {
         JSONObject saved = SourceConfig.copy4000(true).toJson();
         JSONObject routes = saved.getJSONObject("routes");
-        for (String key : new String[]{"apiBaseUrl", "apiDetail", "apiChapters", "apiChapter"}) routes.remove(key);
+        for (String key : new String[]{"apiBaseUrl", "apiFallbackUrls", "apiDetail", "apiChapters", "apiChapter"}) routes.remove(key);
         SourceConfig restored = SourceConfig.fromJson(saved, SourceConfig.copy4000(true));
         assertEquals("https://api.manga2026.xyz", restored.route("apiBaseUrl"));
+        assertTrue(restored.route("apiFallbackUrls").contains("mapi.elfgjfghkk.club"));
         List<String> urls = new ArrayList<>();
         CopyMangaComicSource source = new CopyMangaComicSource(restored) {
             @Override protected String fetchApi(String url) throws IOException { urls.add(url); return fixture("api-reader.json"); }
