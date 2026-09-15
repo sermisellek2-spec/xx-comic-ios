@@ -262,6 +262,7 @@ public class MainActivity extends Activity {
     private int themeMode = 0;
     private boolean readerLeftHand = false;
     private boolean readerButtonMode = false;
+    private int readerPageMode = 0; // 0 touch edge, 1 buttons, 2 horizontal swipe
     private String cacheSize = "42.6 MB";
     private int searchGeneration = 0;
     private int readerGeneration = 0;
@@ -783,7 +784,7 @@ public class MainActivity extends Activity {
                 readerLeftHand ? "左手" : "右手", this::showHandModeDrawer));
         appearance.addView(UIHelpers.divider(this));
         appearance.addView(settingsMenuItem(R.drawable.ic_chevron_left, "翻页方式", "触碰翻页或按钮翻页",
-                readerButtonMode ? "按钮模式" : "触碰模式", this::showPageModeDrawer));
+                readerPageMode == 1 ? "按钮模式" : readerPageMode == 2 ? "滑动模式" : "触碰模式", this::showPageModeDrawer));
         appearance.addView(UIHelpers.divider(this));
         appearance.addView(settingsMenuItem(R.drawable.ic_history, "阅读历史", "章节与阅读位置", progress.size() + " 条", this::showHistory));
         page.addView(appearance);
@@ -1529,19 +1530,22 @@ public class MainActivity extends Activity {
         LinearLayout choices = new LinearLayout(this);
         choices.setOrientation(LinearLayout.HORIZONTAL);
         choices.setPadding(UIHelpers.dp(this, 3), UIHelpers.dp(this, 3), UIHelpers.dp(this, 3), UIHelpers.dp(this, 3));
-        choices.addView(handChoice("触碰模式", !readerButtonMode, () -> applyPageMode(false)), new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 44), 1));
+        choices.addView(handChoice("触碰模式", readerPageMode == 0, () -> applyPageMode(0)), new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 44), 1));
         choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
-        choices.addView(handChoice("按钮模式", readerButtonMode, () -> applyPageMode(true)), new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 44), 1));
+        choices.addView(handChoice("按钮模式", readerPageMode == 1, () -> applyPageMode(1)), new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 44), 1));
+        choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
+        choices.addView(handChoice("滑动模式", readerPageMode == 2, () -> applyPageMode(2)), new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 44), 1));
         showSettingsSheet("阅读翻页方式", choices);
     }
 
-    private void applyPageMode(boolean buttonMode) {
+    private void applyPageMode(int mode) {
         if (activePopup != null) activePopup.dismiss();
-        readerButtonMode = buttonMode;
+        readerPageMode = mode;
+        readerButtonMode = mode == 1;
         saveLocalState();
         if (readerVisible && !TextUtils.isEmpty(activeDetailId)) showDetail(activeDetailId);
         else rerenderSettingsScene();
-        main.post(() -> showRemSuccessToast(readerButtonMode ? "已切换为按钮模式" : "已切换为触碰模式"));
+        main.post(() -> showRemSuccessToast(mode == 1 ? "已切换为按钮模式" : mode == 2 ? "已切换为滑动模式" : "已切换为触碰模式"));
     }
 
     private void applyHandMode(boolean leftHand) {
@@ -2576,13 +2580,20 @@ public class MainActivity extends Activity {
             if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
                 float dy = Math.abs(event.getRawY() - readerDownY);
                 float dx = Math.abs(event.getRawX() - readerDownX);
+                if (readerPageMode == 2 && dx > dy && dx > UIHelpers.dp(MainActivity.this, 8)) {
+                    float drag = event.getRawX() - readerDownX;
+                    v.setTranslationX(Math.max(-UIHelpers.dp(MainActivity.this, 110), Math.min(UIHelpers.dp(MainActivity.this, 110), drag * .28f)));
+                    return true;
+                }
                 if ((dy > UIHelpers.dp(MainActivity.this, 8) || dx > UIHelpers.dp(MainActivity.this, 8)) && !readerFullscreen) {
                     setReaderFullscreen(true, true);
                 }
                 return false;
             }
             if (event.getActionMasked() == MotionEvent.ACTION_UP) {
-                return handleReaderTap(event, detail, page);
+                boolean handled = handleReaderTap(event, detail, page);
+                v.animate().translationX(0f).setDuration(220L).start();
+                return handled;
             }
             return false;
         });
@@ -2675,12 +2686,19 @@ public class MainActivity extends Activity {
         float y = event.getRawY();
         float moveX = Math.abs(x - readerDownX);
         float moveY = Math.abs(y - readerDownY);
+        boolean swipe = readerPageMode == 2 && moveX > UIHelpers.dp(this, 72) && moveX > moveY * 1.35f
+                && System.currentTimeMillis() - readerDownAt < 1200L;
+        if (swipe) {
+            boolean next = readerLeftHand ? x > readerDownX : x < readerDownX;
+            switchChapter(detail, next ? 1 : -1);
+            return true;
+        }
         boolean tap = moveX < UIHelpers.dp(this, 10) && moveY < UIHelpers.dp(this, 10) && System.currentTimeMillis() - readerDownAt < 300L;
         boolean activeY = y > height * 0.25f && y < height * 0.75f;
         if (!tap || !activeY) return false;
         boolean leftSide = x < width * 0.28f;
         boolean rightSide = x > width * 0.72f;
-        if (!readerButtonMode && (leftSide || rightSide)) {
+        if (readerPageMode == 0 && (leftSide || rightSide)) {
             boolean wantPrev = readerLeftHand ? rightSide : leftSide;
             switchChapter(detail, wantPrev ? -1 : 1);
         } else {
@@ -6417,6 +6435,7 @@ public class MainActivity extends Activity {
         themeMode = prefs.getInt("theme.mode", 0);
         readerLeftHand = prefs.getBoolean("reader.left.hand", false);
         readerButtonMode = prefs.getBoolean("reader.button.mode", false);
+        readerPageMode = prefs.getInt("reader.page.mode", readerButtonMode ? 1 : 0);
         cacheSize = prefs.getString("cache.size", cacheSize);
         restoreStringList(globalSearchHistory, prefs.getString("global.search.history", ""));
         favorites.clear();
@@ -6508,6 +6527,7 @@ public class MainActivity extends Activity {
         editor.putInt("theme.mode", themeMode);
         editor.putBoolean("reader.left.hand", readerLeftHand);
         editor.putBoolean("reader.button.mode", readerButtonMode);
+        editor.putInt("reader.page.mode", readerPageMode);
         editor.putString("cache.size", cacheSize);
         editor.putString("favorites", TextUtils.join(",", favorites));
         editor.putString("global.search.history", TextUtils.join("\n", globalSearchHistory));
