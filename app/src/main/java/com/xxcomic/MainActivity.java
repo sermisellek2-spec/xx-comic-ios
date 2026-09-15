@@ -49,6 +49,10 @@ import android.widget.Space;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.xxcomic.reader.PagedReaderView;
+import com.xxcomic.reader.ReaderPosition;
+import com.xxcomic.reader.ReaderNavigation;
+
 import com.xxcomic.source.BaoziComicSource;
 import com.xxcomic.source.AntbywComicSource;
 import com.xxcomic.source.Mh160ComicSource;
@@ -260,6 +264,16 @@ public class MainActivity extends Activity {
     private boolean copy4000Enabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
+    private int readerLayoutMode = 0; // 0 continuous, 1 single image
+    private PagedReaderView readerPager;
+    private ListView readerList;
+    private boolean[] readerRestoringPosition;
+    private TextView readerPreviousButton, readerNextButton;
+    private String readerSettingsComicId = "";
+    private int readerSettingsChapterIndex;
+    private String readerEntryChapterUrl = "";
+    private int readerEntryTarget = 0; // 0 resume, 1 first image, -1 last image
+    private final Map<String, ReaderPosition> readerImagePositions = new HashMap<>();
     private boolean readerLeftHand = false;
     private boolean readerButtonMode = false;
     private int readerPageMode = 0; // 0 touch edge, 1 buttons, 2 horizontal swipe
@@ -364,6 +378,8 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         applyThemeAndSystemBars();
         root = new FrameLayout(this);
+        // The pager opts into RTL for left-hand swipes; keep the app's existing layout direction.
+        root.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
         setContentView(root);
         mh18BrowserSession = new Mh18WebViewSession(
                 this, main, mh18Config.name, null,
@@ -389,11 +405,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        captureReaderPosition();
         saveLocalState();
     }
 
     @Override
     protected void onDestroy() {
+        releaseReaderViews();
         dismissTransientHint();
         if (mh18BrowserSession != null) mh18BrowserSession.shutdown();
         if (jmcomicBrowserSession != null) jmcomicBrowserSession.shutdown();
@@ -522,6 +540,13 @@ public class MainActivity extends Activity {
             return true;
         }
         if (!TextUtils.isEmpty(settingsScene)) {
+            if ("reader".equals(settingsScene) && !TextUtils.isEmpty(readerSettingsComicId)) {
+                ComicModels.ComicDetail saved = details.get(readerSettingsComicId);
+                settingsScene = "";
+                readerSettingsComicId = "";
+                if (saved != null) showReader(saved, readerSettingsChapterIndex); else showTab(2);
+                return true;
+            }
             if (settingsScene.startsWith("update-")) cancelUpdateDownload();
             if (settingsScene.startsWith("health-")) cancelSourceHealthCheck();
             if ("error-detail".equals(settingsScene)) {
@@ -644,6 +669,7 @@ public class MainActivity extends Activity {
 
     private void rerenderSettingsScene() {
         switch (settingsScene) {
+            case "reader": showReaderSettings(); break;
             case "cache": showCacheCleanup(); break;
             case "cache-loading": showCacheCleanupLoading(); break;
             case "errors": showErrorLogs(); break;
@@ -662,6 +688,7 @@ public class MainActivity extends Activity {
 
     /** 切屏：cancel 上一屏所有未完成的 Future（排队中的不再执行，运行中的收到 interrupt） */
     private void enterScreen() {
+        releaseReaderViews();
         dismissTransientHint();
         if (pageLoading) {
             pageLoading = false;
@@ -780,11 +807,8 @@ public class MainActivity extends Activity {
         appearance.setPadding(0, 0, 0, 0);
         appearance.addView(settingsMenuItem(themeIcon(), "主题模式", "跟随系统、浅色或深色", themeModeLabel(), this::showThemeDrawer));
         appearance.addView(UIHelpers.divider(this));
-        appearance.addView(settingsMenuItem(R.drawable.ic_chevron_left, "左右手模式", "切换阅读页左右触控区",
-                readerLeftHand ? "左手" : "右手", this::showHandModeDrawer));
-        appearance.addView(UIHelpers.divider(this));
-        appearance.addView(settingsMenuItem(R.drawable.ic_chevron_left, "翻页方式", "触碰翻页或按钮翻页",
-                readerPageMode == 1 ? "按钮模式" : readerPageMode == 2 ? "滑动模式" : "触碰模式", this::showPageModeDrawer));
+        appearance.addView(settingsMenuItem(R.drawable.ic_auto, "阅读模式", "条漫或单页 · 翻页方式 · 左右手",
+                readerLayoutMode == 1 ? "单页（日漫）" : "条漫", this::showReaderSettings));
         appearance.addView(UIHelpers.divider(this));
         appearance.addView(settingsMenuItem(R.drawable.ic_history, "阅读历史", "章节与阅读位置", progress.size() + " 条", this::showHistory));
         page.addView(appearance);
@@ -1496,64 +1520,52 @@ public class MainActivity extends Activity {
         showSettingsSheet("选择主题", choices);
     }
 
-    private void showHandModeDrawer() {
-        LinearLayout content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
+    private void showReaderSettings() {
+        if (readerVisible) {
+            readerSettingsComicId = activeDetailId;
+            readerSettingsChapterIndex = readerChapterIndex;
+        } else if (!"reader".equals(settingsScene)) {
+            readerSettingsComicId = "";
+        }
+        LinearLayout page = settingsScenePage("reader", "阅读模式", "排列方式与操作习惯");
+        readerVisible = false;
+        addReaderChoices(page, "阅读模式", new String[]{"条漫", "单页（日漫）"}, readerLayoutMode, value -> {
+            readerLayoutMode = value;
+            saveLocalState();
+            showReaderSettings();
+        });
+        page.addView(settingsSectionText(readerLayoutMode == 0 ? "连续上下滚动，横向操作切换章节" : "一页一图，读到首尾再切换章节；双击或双指缩放"));
+        addReaderChoices(page, "翻页方式", new String[]{"触碰", "按钮", "滑动"}, readerPageMode, value -> {
+            readerPageMode = value;
+            readerButtonMode = value == 1;
+            saveLocalState();
+            showReaderSettings();
+        });
+        page.addView(settingsSectionText(readerPageMode == 0 ? "点击左右区域翻动，中间区域显示控制栏"
+                : readerPageMode == 1 ? "通过底部按钮翻动，中间区域显示控制栏" : "横向滑动翻动，中间区域显示控制栏"));
+        addReaderChoices(page, "左右手模式", new String[]{"左手", "右手"}, readerLeftHand ? 0 : 1, value -> {
+            readerLeftHand = value == 0;
+            saveLocalState();
+            showReaderSettings();
+        });
+        page.addView(settingsSectionText(readerLeftHand ? "左侧点击 / 向右滑：下一项；按钮按文字操作"
+                : "右侧点击 / 向左滑：下一项；按钮按文字操作"));
+    }
 
-        LinearLayout map = new LinearLayout(this);
-        map.setOrientation(LinearLayout.HORIZONTAL);
-        map.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
-        map.setBackground(UIHelpers.round(UIHelpers.CARD_SOFT, UIHelpers.dp(this, 8), UIHelpers.BORDER));
-        map.addView(handZone(readerLeftHand ? "下一章" : "上一章", readerLeftHand),
-                new LinearLayout.LayoutParams(0, -1, 1));
-        map.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
-        map.addView(handZone("显示控制", false), new LinearLayout.LayoutParams(0, -1, .9f));
-        map.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
-        map.addView(handZone(readerLeftHand ? "上一章" : "下一章", !readerLeftHand),
-                new LinearLayout.LayoutParams(0, -1, 1));
-        content.addView(map, UIHelpers.marginTop(-1, UIHelpers.dp(this, 10), -1, UIHelpers.dp(this, 66)));
+    private interface ReaderSettingAction { void select(int value); }
 
-        LinearLayout choices = new LinearLayout(this);
+    private void addReaderChoices(LinearLayout page, String title, String[] labels, int selected, ReaderSettingAction action) {
+        page.addView(settingsSectionText(title));
+        LinearLayout choices = settingsList();
         choices.setOrientation(LinearLayout.HORIZONTAL);
-        choices.setPadding(UIHelpers.dp(this, 3), UIHelpers.dp(this, 3), UIHelpers.dp(this, 3), UIHelpers.dp(this, 3));
-        choices.setBackground(UIHelpers.round(UIHelpers.CARD_SOFT, UIHelpers.dp(this, 8), Color.TRANSPARENT));
-        choices.addView(handChoice("左手模式", readerLeftHand, () -> applyHandMode(true)),
-                new LinearLayout.LayoutParams(0, -1, 1));
-        choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 3), 1));
-        choices.addView(handChoice("右手模式", !readerLeftHand, () -> applyHandMode(false)),
-                new LinearLayout.LayoutParams(0, -1, 1));
-        content.addView(choices, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8), -1, UIHelpers.dp(this, 40)));
-        showSettingsSheet("阅读触控方向", content);
-    }
-
-    private void showPageModeDrawer() {
-        LinearLayout choices = new LinearLayout(this);
-        choices.setOrientation(LinearLayout.HORIZONTAL);
-        choices.setPadding(UIHelpers.dp(this, 3), UIHelpers.dp(this, 3), UIHelpers.dp(this, 3), UIHelpers.dp(this, 3));
-        choices.addView(handChoice("触碰模式", readerPageMode == 0, () -> applyPageMode(0)), new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 44), 1));
-        choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
-        choices.addView(handChoice("按钮模式", readerPageMode == 1, () -> applyPageMode(1)), new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 44), 1));
-        choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
-        choices.addView(handChoice("滑动模式", readerPageMode == 2, () -> applyPageMode(2)), new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 44), 1));
-        showSettingsSheet("阅读翻页方式", choices);
-    }
-
-    private void applyPageMode(int mode) {
-        if (activePopup != null) activePopup.dismiss();
-        readerPageMode = mode;
-        readerButtonMode = mode == 1;
-        saveLocalState();
-        if (readerVisible && !TextUtils.isEmpty(activeDetailId)) showDetail(activeDetailId);
-        else rerenderSettingsScene();
-        main.post(() -> showRemSuccessToast(mode == 1 ? "已切换为按钮模式" : mode == 2 ? "已切换为滑动模式" : "已切换为触碰模式"));
-    }
-
-    private void applyHandMode(boolean leftHand) {
-        if (activePopup != null) activePopup.dismiss();
-        readerLeftHand = leftHand;
-        saveLocalState();
-        rerenderCurrentScreen();
-        main.post(() -> showRemSuccessToast(readerLeftHand ? "左侧下一章 · 右侧上一章" : "左侧上一章 · 右侧下一章"));
+        choices.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
+        for (int i = 0; i < labels.length; i++) {
+            final int value = i;
+            if (i > 0) choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
+            choices.addView(handChoice(labels[i], selected == i, () -> action.select(value)),
+                    new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 48), 1));
+        }
+        page.addView(choices);
     }
 
     private View themeChoice(String label, int mode, boolean selected, Runnable onClick) {
@@ -2327,6 +2339,10 @@ public class MainActivity extends Activity {
         int generation = readerGeneration;
         String comicId = detail.summary.comicId;
         String chapterUrl = chapter.url;
+        if (!TextUtils.equals(readerEntryChapterUrl, chapterUrl)) {
+            readerEntryChapterUrl = "";
+            readerEntryTarget = 0;
+        }
         ComicModels.ChapterPage cached = chapters.get(chapter.url);
         if (isEmptyChapterPage(cached)) {
             chapters.remove(chapter.url);
@@ -2463,10 +2479,18 @@ public class MainActivity extends Activity {
         toc.setFocusable(true);
         toc.setOnClickListener(v -> showChapterDrawer(detail));
         top.addView(toc, new LinearLayout.LayoutParams(UIHelpers.dp(this, 28), UIHelpers.dp(this, 28)));
+        ImageView readingSettings = UIHelpers.vectorIconButton(this, R.drawable.ic_auto, UIHelpers.READER_TEXT, 4);
+        readingSettings.setContentDescription("阅读设置");
+        readingSettings.setOnClickListener(v -> showReaderSettings());
+        top.addView(readingSettings, new LinearLayout.LayoutParams(UIHelpers.dp(this, 36), UIHelpers.dp(this, 32)));
         return top;
     }
 
     private void renderReader(ComicModels.ComicDetail detail, ComicModels.ChapterPage page) {
+        releaseReaderViews();
+        readerGeneration++;
+        cancelCurrentImageTasks();
+        readerPrefetching.clear();
         root.removeAllViews();
         readerVisible = true;
         readerTopBar = null;
@@ -2487,137 +2511,183 @@ public class MainActivity extends Activity {
         String comicId = detail.summary.comicId;
         String chapterUrl = activeChapter.url;
         boolean cacheOnly = isRetiredComic(detail.summary.comicId);
-        int contentWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
-        int placeholderHeight = Math.max(1, contentWidth * 4 / 3);
-        List<String> imageUrls = new ArrayList<>(page.imageUrls);
-        Map<ImageView, Future<?>> readerImageFutures = new HashMap<>();
-        ListView list = new ListView(this);
-        list.setBackgroundColor(UIHelpers.DARK);
-        list.setCacheColorHint(UIHelpers.DARK);
-        list.setDivider(null);
-        list.setSelector(new ColorDrawable(Color.TRANSPARENT));
-        list.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4),
-                UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
-        list.setClipToPadding(false);
-        list.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-        String positionKey = readerPositionKey(detail.summary.comicId, activeChapter);
-        int savedPosition = readerPositions.containsKey(positionKey) ? readerPositions.get(positionKey) : 0;
-        final boolean[] restoringPosition = {savedPosition > 0};
         final TextView[] readerCount = {null};
-        list.setAdapter(new BaseAdapter() {
-            @Override
-            public int getCount() {
-                return imageUrls.size();
-            }
-
-            @Override
-            public String getItem(int position) {
-                return imageUrls.get(position);
-            }
-
-            @Override
-            public long getItemId(int position) {
-                return position;
-            }
-
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                ImageView image;
-                if (convertView instanceof ImageView) {
-                    image = (ImageView) convertView;
-                } else {
-                    image = new ImageView(MainActivity.this);
-                    image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    image.setBackgroundColor(UIHelpers.DARK);
+        readerPreviousButton = null;
+        readerNextButton = null;
+        String entryKey = readerPositionKey(detail.summary.comicId, activeChapter);
+        if (TextUtils.equals(readerEntryChapterUrl, chapterUrl) && readerEntryTarget != 0) {
+            int target = readerEntryTarget < 0 ? Math.max(0, page.imageUrls.size() - 1) : 0;
+            ReaderPosition entry = new ReaderPosition(target, 0, readerEntryTarget < 0);
+            readerImagePositions.put(entryKey, entry);
+            readerPositions.put(entryKey, entry.legacyProgress(page.imageUrls.size()));
+            readerEntryChapterUrl = "";
+            readerEntryTarget = 0;
+        }
+        if (readerLayoutMode == 0) {
+            int contentWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
+            int placeholderHeight = Math.max(1, contentWidth * 4 / 3);
+            List<String> imageUrls = new ArrayList<>(page.imageUrls);
+            Map<ImageView, Future<?>> readerImageFutures = new HashMap<>();
+            ListView list = new ListView(this);
+            readerList = list;
+            list.setBackgroundColor(UIHelpers.DARK);
+            list.setCacheColorHint(UIHelpers.DARK);
+            list.setDivider(null);
+            list.setSelector(new ColorDrawable(Color.TRANSPARENT));
+            list.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4),
+                    UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
+            list.setClipToPadding(false);
+            list.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+            String positionKey = readerPositionKey(detail.summary.comicId, activeChapter);
+            int savedPosition = readerPositions.containsKey(positionKey) ? readerPositions.get(positionKey) : 0;
+            list.setTag(positionKey);
+            final boolean[] restoringPosition = {savedPosition > 0 || readerImagePositions.containsKey(positionKey)};
+            readerRestoringPosition = restoringPosition;
+            list.setAdapter(new BaseAdapter() {
+                @Override
+                public int getCount() {
+                    return imageUrls.size();
                 }
-                Future<?> previous = readerImageFutures.remove(image);
-                if (previous != null && !previous.isDone()) previous.cancel(true);
-                String imageUrl = getItem(position);
-                image.setImageResource(R.drawable.rem_loading);
-                image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                image.setTag(imageUrl);
-                image.setLayoutParams(new AbsListView.LayoutParams(-1, placeholderHeight));
-                Future<?> future = loadReaderImage(image, imageUrl, chapterUrl, generation, comicId,
-                        list, restoringPosition, savedPosition, cacheOnly);
-                if (future != null) readerImageFutures.put(image, future);
-                return image;
-            }
-        });
 
-        list.setOnScrollListener(new AbsListView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL
-                        || scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING) {
-                    if (!readerFullscreen) {
-                        setReaderFullscreen(true, true);
+                @Override
+                public String getItem(int position) {
+                    return imageUrls.get(position);
+                }
+
+                @Override
+                public long getItemId(int position) {
+                    return position;
+                }
+
+                @Override
+                public View getView(int position, View convertView, ViewGroup parent) {
+                    ImageView image;
+                    if (convertView instanceof ImageView) {
+                        image = (ImageView) convertView;
+                    } else {
+                        image = new ImageView(MainActivity.this);
+                        image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        image.setBackgroundColor(UIHelpers.DARK);
+                    }
+                    Future<?> previous = readerImageFutures.remove(image);
+                    if (previous != null && !previous.isDone()) previous.cancel(true);
+                    String imageUrl = getItem(position);
+                    image.setImageResource(R.drawable.rem_loading);
+                    image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                    image.setTag(imageUrl);
+                    image.setLayoutParams(new AbsListView.LayoutParams(-1, placeholderHeight));
+                    Future<?> future = loadReaderImage(image, imageUrl, chapterUrl, generation, comicId,
+                            list, restoringPosition, savedPosition, cacheOnly);
+                    if (future != null) readerImageFutures.put(image, future);
+                    return image;
+                }
+            });
+
+            list.setOnScrollListener(new AbsListView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(AbsListView view, int scrollState) {
+                    if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL
+                            || scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING) {
+                        if (!readerFullscreen) {
+                            setReaderFullscreen(true, true);
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (!restoringPosition[0]) saveReaderPosition(list, positionKey);
-                if (readerCount[0] != null && totalItemCount > 0) {
-                    int currentPage = Math.max(1, Math.min(totalItemCount, firstVisibleItem + 1));
-                    int percent = Math.max(1, Math.min(100, Math.round(currentPage * 100f / totalItemCount)));
-                    readerCount[0].setText(currentPage + " / " + totalItemCount + " 张 · 本章 " + percent + "%");
+                @Override
+                public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                    if (generation != readerGeneration || readerList != list) return;
+                    if (!restoringPosition[0]) saveReaderPosition(list, positionKey);
+                    if (readerCount[0] != null && totalItemCount > 0) {
+                        int currentPage = Math.max(1, Math.min(totalItemCount, firstVisibleItem + 1));
+                        int percent = Math.max(1, Math.min(100, Math.round(currentPage * 100f / totalItemCount)));
+                        readerCount[0].setText(currentPage + " / " + totalItemCount + " 张 · 本章 " + percent + "%");
+                    }
+                    if (visibleItemCount > 0) {
+                        prefetchReaderImages(imageUrls, firstVisibleItem + visibleItemCount,
+                                chapterUrl, generation, comicId, cacheOnly);
+                    }
                 }
-                if (visibleItemCount > 0) {
-                    prefetchReaderImages(imageUrls, firstVisibleItem + visibleItemCount,
-                            chapterUrl, generation, comicId, cacheOnly);
-                }
-            }
-        });
-        list.setOnTouchListener((v, event) -> {
-            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-                restoringPosition[0] = false;
-                readerDownX = event.getRawX();
-                readerDownY = event.getRawY();
-                readerDownAt = System.currentTimeMillis();
-                return false;
-            }
-            if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
-                float dy = Math.abs(event.getRawY() - readerDownY);
-                float dx = Math.abs(event.getRawX() - readerDownX);
-                if (readerPageMode == 2 && dx > dy && dx > UIHelpers.dp(MainActivity.this, 8)) {
-                    float drag = event.getRawX() - readerDownX;
-                    v.setTranslationX(Math.max(-UIHelpers.dp(MainActivity.this, 110), Math.min(UIHelpers.dp(MainActivity.this, 110), drag * .28f)));
-                    return true;
-                }
-                if ((dy > UIHelpers.dp(MainActivity.this, 8) || dx > UIHelpers.dp(MainActivity.this, 8)) && !readerFullscreen) {
-                    setReaderFullscreen(true, true);
-                }
-                return false;
-            }
-            if (event.getActionMasked() == MotionEvent.ACTION_UP) {
-                boolean handled = handleReaderTap(event, detail, page);
-                v.animate().translationX(0f).setDuration(220L).start();
-                return handled;
-            }
-            return false;
-        });
-        list.addOnLayoutChangeListener((v, left, topEdge, right, bottomEdge,
-                                        oldLeft, oldTop, oldRight, oldBottom) -> {
-            if (restoringPosition[0] && savedPosition == READER_POSITION_SCALE) alignReaderBottom(list);
-        });
-        if (savedPosition > 0) {
-            list.post(() -> {
-                restoreReaderPosition(list, savedPosition);
-                if (savedPosition < READER_POSITION_SCALE) list.post(() -> restoringPosition[0] = false);
             });
+            list.setOnTouchListener((v, event) -> {
+                if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                    restoringPosition[0] = false;
+                    readerDownX = event.getRawX();
+                    readerDownY = event.getRawY();
+                    readerDownAt = System.currentTimeMillis();
+                    return false;
+                }
+                if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+                    float dy = Math.abs(event.getRawY() - readerDownY);
+                    float dx = Math.abs(event.getRawX() - readerDownX);
+                    if (readerPageMode == 2 && dx > dy && dx > UIHelpers.dp(MainActivity.this, 8)) {
+                        float drag = event.getRawX() - readerDownX;
+                        v.setTranslationX(Math.max(-UIHelpers.dp(MainActivity.this, 110), Math.min(UIHelpers.dp(MainActivity.this, 110), drag * .28f)));
+                        return true;
+                    }
+                    if ((dy > UIHelpers.dp(MainActivity.this, 8) || dx > UIHelpers.dp(MainActivity.this, 8)) && !readerFullscreen) {
+                        setReaderFullscreen(true, true);
+                    }
+                    return false;
+                }
+                if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+                    boolean handled = handleReaderTap(event, detail, page);
+                    v.animate().translationX(0f).setDuration(220L).start();
+                    return handled;
+                }
+                return false;
+            });
+            list.addOnLayoutChangeListener((v, left, topEdge, right, bottomEdge,
+                                            oldLeft, oldTop, oldRight, oldBottom) -> {
+                if (restoringPosition[0] && savedPosition == READER_POSITION_SCALE) alignReaderBottom(list);
+            });
+            if (restoringPosition[0]) list.post(() -> {
+                if (readerList == list) restoreReaderPosition(list, savedPosition);
+            });
+            list.post(() -> prefetchReaderImages(imageUrls,
+                    Math.max(0, list.getLastVisiblePosition() + 1), chapterUrl, generation, comicId, cacheOnly));
+            FrameLayout readerContent = new FrameLayout(this);
+            FrameLayout.LayoutParams listParams = new FrameLayout.LayoutParams(-1, -1);
+            listParams.bottomMargin = readerButtonMode ? UIHelpers.dp(this, 52) : 0;
+            readerContent.addView(list, listParams);
+            View empty = readerState(R.drawable.rem_error, "这一章没有解析出来", "再试一次吧", "重试",
+                    () -> showReader(detail, readerChapterIndex), false);
+            readerContent.addView(empty, UIHelpers.match());
+            list.setEmptyView(empty);
+            shell.addView(readerContent, UIHelpers.match());
+        } else {
+            FrameLayout content = new FrameLayout(this);
+            FrameLayout.LayoutParams contentParams = new FrameLayout.LayoutParams(-1, -1);
+            contentParams.bottomMargin = readerButtonMode ? UIHelpers.dp(this, 52) : 0;
+            shell.addView(content, contentParams);
+            if (page.imageUrls.isEmpty()) {
+                content.addView(readerState(R.drawable.rem_error, "这一章没有解析出来", "再试一次吧", "重试",
+                        () -> showReader(detail, readerChapterIndex), false), UIHelpers.match());
+            } else {
+                ReaderPosition position = readerImagePositions.get(entryKey);
+                if (position == null) position = ReaderPosition.fromLegacy(readerPositions.containsKey(entryKey) ? readerPositions.get(entryKey) : 0, page.imageUrls.size());
+                int initial = position.indexFor(page.imageUrls.size());
+                readerImagePositions.put(entryKey, position);
+                readerPager = new PagedReaderView(this, page.imageUrls, initial, readerPageMode, readerLeftHand,
+                        (image, imageUrl) -> {
+                            image.setImageResource(R.drawable.rem_loading);
+                            return loadReaderImage(image, imageUrl, chapterUrl, generation, comicId, null, new boolean[]{false}, 0, cacheOnly);
+                        }, new PagedReaderView.Listener() {
+                    @Override public void onPageChanged(int index) {
+                        if (!isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
+                        recordPagedPosition(entryKey, index, page.imageUrls.size());
+                        if (readerCount[0] != null) readerCount[0].setText((index + 1) + " / " + page.imageUrls.size() + " 页");
+                        updateReaderButtons(detail, page);
+                        prefetchReaderImages(page.imageUrls, index + 1, chapterUrl, generation, comicId, cacheOnly);
+                    }
+                    @Override public void onNavigate(int delta) { navigateReader(detail, page, delta); }
+                    @Override public void onToggleControls() { toggleReaderFullscreen(); }
+                    @Override public void onInteraction() { if (!readerFullscreen) setReaderFullscreen(true, true); }
+                });
+                content.addView(readerPager, UIHelpers.match());
+                prefetchReaderImages(page.imageUrls, initial + 1, chapterUrl, generation, comicId, cacheOnly);
+            }
         }
-        list.post(() -> prefetchReaderImages(imageUrls,
-                Math.max(0, list.getLastVisiblePosition() + 1), chapterUrl, generation, comicId, cacheOnly));
-        FrameLayout readerContent = new FrameLayout(this);
-        FrameLayout.LayoutParams listParams = new FrameLayout.LayoutParams(-1, -1);
-        listParams.bottomMargin = readerButtonMode ? UIHelpers.dp(this, 52) : 0;
-        readerContent.addView(list, listParams);
-        View empty = readerState(R.drawable.rem_error, "这一章没有解析出来", "再试一次吧", "重试",
-                () -> showReader(detail, readerChapterIndex), false);
-        readerContent.addView(empty, UIHelpers.match());
-        list.setEmptyView(empty);
-        shell.addView(readerContent, UIHelpers.match());
 
         if (readerButtonMode) {
             LinearLayout chapterButtons = new LinearLayout(this);
@@ -2625,13 +2695,13 @@ public class MainActivity extends Activity {
             chapterButtons.setGravity(Gravity.CENTER);
             chapterButtons.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 4), UIHelpers.dp(this, 12), UIHelpers.dp(this, 4));
             chapterButtons.setBackgroundColor(0xF00C1420);
-            TextView previous = UIHelpers.text(this, "上一章", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
-            TextView next = UIHelpers.text(this, "下一章", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
+            TextView previous = UIHelpers.text(this, readerLayoutMode == 1 ? "上一页" : "上一章", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
+            TextView next = UIHelpers.text(this, readerLayoutMode == 1 ? "下一页" : "下一章", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
             previous.setGravity(Gravity.CENTER); next.setGravity(Gravity.CENTER);
-            previous.setEnabled(readerChapterIndex > 0); next.setEnabled(readerChapterIndex + 1 < detail.chapters.size());
-            previous.setAlpha(previous.isEnabled() ? 1f : .35f); next.setAlpha(next.isEnabled() ? 1f : .35f);
-            previous.setOnClickListener(v -> { if (readerChapterIndex > 0) switchChapter(detail, -1); });
-            next.setOnClickListener(v -> { if (readerChapterIndex + 1 < detail.chapters.size()) switchChapter(detail, 1); });
+            readerPreviousButton = previous; readerNextButton = next;
+            updateReaderButtons(detail, page);
+            previous.setOnClickListener(v -> navigateReader(detail, page, -1));
+            next.setOnClickListener(v -> navigateReader(detail, page, 1));
             chapterButtons.addView(previous, new LinearLayout.LayoutParams(0, -1, 1));
             chapterButtons.addView(UIHelpers.space(this, UIHelpers.dp(this, 8), 1));
             chapterButtons.addView(next, new LinearLayout.LayoutParams(0, -1, 1));
@@ -2663,6 +2733,7 @@ public class MainActivity extends Activity {
         count.setGravity(Gravity.CENTER);
         count.setIncludeFontPadding(false);
         readerCount[0] = count;
+        if (readerLayoutMode == 1) count.setText((page.imageUrls.isEmpty() ? 0 : readerPager.currentPage() + 1) + " / " + page.imageUrls.size() + " 页");
         bottom.addView(count, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 36)));
         FrameLayout.LayoutParams bottomParams = new FrameLayout.LayoutParams(-1, bottomBarHeight, Gravity.BOTTOM);
         if (readerButtonMode) bottomParams.bottomMargin = UIHelpers.dp(this, 52);
@@ -2689,8 +2760,7 @@ public class MainActivity extends Activity {
         boolean swipe = readerPageMode == 2 && moveX > UIHelpers.dp(this, 72) && moveX > moveY * 1.35f
                 && System.currentTimeMillis() - readerDownAt < 1200L;
         if (swipe) {
-            boolean next = readerLeftHand ? x > readerDownX : x < readerDownX;
-            switchChapter(detail, next ? 1 : -1);
+            navigateReader(detail, page, ReaderNavigation.swipeDelta(x - readerDownX, readerLeftHand));
             return true;
         }
         boolean tap = moveX < UIHelpers.dp(this, 10) && moveY < UIHelpers.dp(this, 10) && System.currentTimeMillis() - readerDownAt < 300L;
@@ -2699,8 +2769,7 @@ public class MainActivity extends Activity {
         boolean leftSide = x < width * 0.28f;
         boolean rightSide = x > width * 0.72f;
         if (readerPageMode == 0 && (leftSide || rightSide)) {
-            boolean wantPrev = readerLeftHand ? rightSide : leftSide;
-            switchChapter(detail, wantPrev ? -1 : 1);
+            navigateReader(detail, page, ReaderNavigation.tapDelta(leftSide, readerLeftHand));
         } else {
             toggleReaderFullscreen();
         }
@@ -2709,6 +2778,74 @@ public class MainActivity extends Activity {
 
     private void toggleReaderFullscreen() {
         setReaderFullscreen(!readerFullscreen, true);
+    }
+
+    private void navigateReader(ComicModels.ComicDetail detail, ComicModels.ChapterPage page, int delta) {
+        if (readerLayoutMode == 0) {
+            switchChapter(detail, delta);
+            return;
+        }
+        if (readerPager == null || page.imageUrls.isEmpty()) return;
+        int current = readerPager.currentPage();
+        if (!ReaderNavigation.crossesChapter(current, page.imageUrls.size(), delta)) {
+            readerPager.moveTo(current + delta);
+            return;
+        }
+        int next = readerChapterIndex + delta;
+        if (next < 0 || next >= detail.chapters.size()) {
+            showReaderBoundaryHint(delta > 0 ? "已经是最后一章" : "已经是第一章");
+            return;
+        }
+        readerEntryChapterUrl = detail.chapters.get(next).url;
+        readerEntryTarget = delta > 0 ? 1 : -1;
+        switchChapter(detail, delta);
+    }
+
+    private void updateReaderButtons(ComicModels.ComicDetail detail, ComicModels.ChapterPage page) {
+        if (readerPreviousButton == null || readerNextButton == null) return;
+        boolean previous = readerChapterIndex > 0;
+        boolean next = readerChapterIndex + 1 < detail.chapters.size();
+        if (readerLayoutMode == 1) {
+            previous = !page.imageUrls.isEmpty() && (previous || (readerPager != null && readerPager.currentPage() > 0));
+            next = !page.imageUrls.isEmpty() && (next || (readerPager != null && readerPager.currentPage() + 1 < page.imageUrls.size()));
+        }
+        readerPreviousButton.setEnabled(previous);
+        readerNextButton.setEnabled(next);
+        readerPreviousButton.setAlpha(previous ? 1f : .35f);
+        readerNextButton.setAlpha(next ? 1f : .35f);
+    }
+
+    private void recordPagedPosition(String key, int index, int count) {
+        ReaderPosition position = readerImagePositions.get(key);
+        if (position == null || position.imageIndex != index) position = new ReaderPosition(index, 0, index == count - 1);
+        readerImagePositions.put(key, position);
+        readerPositions.put(key, position.legacyProgress(count));
+        main.removeCallbacks(persistReaderPositionRunnable);
+        main.postDelayed(persistReaderPositionRunnable, READER_POSITION_SAVE_DELAY_MS);
+    }
+
+    private void captureReaderPosition() {
+        if (readerList != null && (readerRestoringPosition == null || !readerRestoringPosition[0])) {
+            saveReaderPosition(readerList, (String) readerList.getTag());
+        }
+        if (readerPager != null) {
+            ComicModels.ComicDetail detail = details.get(activeDetailId);
+            if (detail != null && readerChapterIndex >= 0 && readerChapterIndex < detail.chapters.size()) {
+                ComicModels.Chapter chapter = detail.chapters.get(readerChapterIndex);
+                ComicModels.ChapterPage page = chapters.get(chapter.url);
+                if (page != null && !page.imageUrls.isEmpty()) recordPagedPosition(readerPositionKey(activeDetailId, chapter), readerPager.currentPage(), page.imageUrls.size());
+            }
+        }
+    }
+
+    private void releaseReaderViews() {
+        captureReaderPosition();
+        readerList = null;
+        readerRestoringPosition = null;
+        if (readerPager != null) readerPager.release();
+        readerPager = null;
+        readerPreviousButton = null;
+        readerNextButton = null;
     }
 
     private void setReaderFullscreen(boolean fullscreen, boolean animated) {
@@ -4213,12 +4350,26 @@ public class MainActivity extends Activity {
                     if (activityDestroyed || !TextUtils.equals(imageUrl, (String) target.getTag())
                             || !isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
                     ViewGroup.LayoutParams params = target.getLayoutParams();
-                    params.height = Math.max(1, Math.round(readerContentWidth()
-                            * loaded.getHeight() / (float) Math.max(1, loaded.getWidth())));
-                    target.setLayoutParams(params);
+                    if (list != null) {
+                        params.height = Math.max(1, Math.round(readerContentWidth()
+                                * loaded.getHeight() / (float) Math.max(1, loaded.getWidth())));
+                        target.setLayoutParams(params);
+                    }
                     target.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     target.setImageBitmap(loaded);
-                    if (restoringPosition[0] && savedPosition == READER_POSITION_SCALE) {
+                    if (list != null && restoringPosition[0] && savedPosition < READER_POSITION_SCALE) {
+                        list.post(() -> {
+                            ReaderPosition exact = readerImagePositions.get((String) list.getTag());
+                            int expected = exact == null ? ReaderPosition.fromLegacy(savedPosition, list.getCount()).imageIndex : exact.indexFor(list.getCount());
+                            if (readerList == list && restoringPosition[0] && list.getFirstVisiblePosition() == expected
+                                    && target == list.getChildAt(0) && TextUtils.equals(imageUrl, (String) target.getTag())
+                                    && isCurrentReaderImageRequest(generation, comicId, chapterUrl)) {
+                                restoreReaderPosition(list, savedPosition);
+                                restoringPosition[0] = false;
+                            }
+                        });
+                    }
+                    if (list != null && restoringPosition[0] && savedPosition == READER_POSITION_SCALE) {
                         list.post(() -> {
                             if (!activityDestroyed && restoringPosition[0]
                                     && savedPosition == READER_POSITION_SCALE
@@ -5255,6 +5406,7 @@ public class MainActivity extends Activity {
         } else {
             position = (int) Math.round((firstVisible + offset) * READER_POSITION_SCALE / count);
         }
+        readerImagePositions.put(positionKey, new ReaderPosition(firstVisible, offset, position == READER_POSITION_SCALE));
         readerPositions.put(positionKey, Math.max(0, Math.min(READER_POSITION_SCALE, position)));
         main.removeCallbacks(persistReaderPositionRunnable);
         main.postDelayed(persistReaderPositionRunnable, READER_POSITION_SAVE_DELAY_MS);
@@ -5262,18 +5414,21 @@ public class MainActivity extends Activity {
 
     private void restoreReaderPosition(ListView list, int savedPosition) {
         int count = list.getCount();
-        if (count <= 0 || savedPosition <= 0) return;
+        if (count <= 0) return;
         list.post(() -> showReaderResumeHint(savedPosition));
         if (savedPosition == READER_POSITION_SCALE) {
             list.setSelection(count - 1);
             list.post(() -> alignReaderBottom(list));
             return;
         }
-        int clamped = Math.max(0, Math.min(READER_POSITION_SCALE, savedPosition));
-        double row = clamped * (double) count / READER_POSITION_SCALE;
-        int index = Math.max(0, Math.min(count - 1, (int) Math.floor(row)));
-        int rowHeight = Math.max(1, readerContentWidth() * 4 / 3);
-        int top = -(int) Math.round((row - Math.floor(row)) * rowHeight);
+        ReaderPosition exact = readerImagePositions.get((String) list.getTag());
+        if (exact == null) exact = ReaderPosition.fromLegacy(savedPosition, count);
+        int index = exact.indexFor(count);
+        View first = list.getChildAt(0);
+        // A decoded image may have new layout params before its next measurement.
+        int rowHeight = first != null && list.getFirstVisiblePosition() == index
+                ? Math.max(1, first.getLayoutParams().height) : Math.max(1, readerContentWidth() * 4 / 3);
+        int top = -(int) Math.round(exact.offset * rowHeight) - list.getPaddingTop();
         list.setSelectionFromTop(index, top);
     }
 
@@ -5296,6 +5451,9 @@ public class MainActivity extends Activity {
         String prefix = comicId + "\u001f";
         for (String key : new ArrayList<>(readerPositions.keySet())) {
             if (key.startsWith(prefix)) readerPositions.remove(key);
+        }
+        for (String key : new ArrayList<>(readerImagePositions.keySet())) {
+            if (key.startsWith(prefix)) readerImagePositions.remove(key);
         }
     }
 
@@ -6435,7 +6593,19 @@ public class MainActivity extends Activity {
         themeMode = prefs.getInt("theme.mode", 0);
         readerLeftHand = prefs.getBoolean("reader.left.hand", false);
         readerButtonMode = prefs.getBoolean("reader.button.mode", false);
-        readerPageMode = prefs.getInt("reader.page.mode", readerButtonMode ? 1 : 0);
+        readerPageMode = Math.max(0, Math.min(2, prefs.getInt("reader.page.mode", readerButtonMode ? 1 : 0)));
+        readerButtonMode = readerPageMode == 1;
+        readerLayoutMode = prefs.getInt("reader.layout.mode", 0) == 1 ? 1 : 0;
+        readerImagePositions.clear();
+        try {
+            JSONObject savedImages = new JSONObject(prefs.getString("reader.image.positions", "{}"));
+            java.util.Iterator<String> imageKeys = savedImages.keys();
+            while (imageKeys.hasNext()) {
+                String key = imageKeys.next();
+                JSONObject value = savedImages.optJSONObject(key);
+                if (value != null) readerImagePositions.put(key, new ReaderPosition(value.optInt("index", 0), value.optDouble("offset", 0), value.optBoolean("end", false)));
+            }
+        } catch (JSONException ignored) { }
         cacheSize = prefs.getString("cache.size", cacheSize);
         restoreStringList(globalSearchHistory, prefs.getString("global.search.history", ""));
         favorites.clear();
@@ -6528,6 +6698,15 @@ public class MainActivity extends Activity {
         editor.putBoolean("reader.left.hand", readerLeftHand);
         editor.putBoolean("reader.button.mode", readerButtonMode);
         editor.putInt("reader.page.mode", readerPageMode);
+        editor.putInt("reader.layout.mode", readerLayoutMode);
+        JSONObject savedImages = new JSONObject();
+        try {
+            for (Map.Entry<String, ReaderPosition> item : readerImagePositions.entrySet()) {
+                ReaderPosition value = item.getValue();
+                savedImages.put(item.getKey(), new JSONObject().put("index", value.imageIndex).put("offset", value.offset).put("end", value.atEnd));
+            }
+        } catch (JSONException ignored) { }
+        editor.putString("reader.image.positions", savedImages.toString());
         editor.putString("cache.size", cacheSize);
         editor.putString("favorites", TextUtils.join(",", favorites));
         editor.putString("global.search.history", TextUtils.join("\n", globalSearchHistory));
@@ -6994,6 +7173,7 @@ public class MainActivity extends Activity {
                 showRemDialog(R.drawable.rem_empty, "清空阅读历史", "将清除所有阅读进度记录，收藏不会受影响。", "清空", () -> {
                     progress.clear();
                     readerPositions.clear();
+                    readerImagePositions.clear();
                     lastViewedAt.clear();
                     saveLocalState();
                     showHistory();

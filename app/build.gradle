@@ -10,6 +10,7 @@ android {
         targetSdk 34
         versionCode 208
         versionName "2.0.8"
+        testInstrumentationRunner "com.xxcomic.ReaderInstrumentation"
     }
 
     buildTypes {
@@ -24,6 +25,9 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 dependencies {
+    // Compatible with the project's AGP 7.4 / D8 toolchain.
+    implementation "androidx.viewpager2:viewpager2:1.0.0"
+    implementation "androidx.recyclerview:recyclerview:1.2.1"
     implementation "com.facebook.shimmer:shimmer:0.5.0"
     implementation "com.belerweb:pinyin4j:2.5.1"
     testImplementation "junit:junit:4.13.2"
