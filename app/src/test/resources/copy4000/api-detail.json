@@ -1,0 +1,83 @@
+{
+  "code": 200,
+  "message": "请求成功",
+  "results": {
+    "is_lock": false,
+    "is_login": false,
+    "is_mobile_bind": false,
+    "is_vip": false,
+    "comic": {
+      "uuid": "d55d0f14-6979-11ed-a96e-024352452ce0",
+      "b_404": false,
+      "b_hidden": false,
+      "ban": 0,
+      "name": "八角籠的帝王",
+      "alias": "八角笼的帝王,格鬥之王,格斗之王",
+      "path_word": "bajiaolongdediwang",
+      "close_comment": false,
+      "close_roast": false,
+      "free_type": {
+        "display": "免費",
+        "value": 1
+      },
+      "restrict": {
+        "value": 0,
+        "display": "一般向(免費)"
+      },
+      "reclass": {
+        "value": 1,
+        "display": "漫畫Manga"
+      },
+      "females": [],
+      "males": [],
+      "clubs": [],
+      "seo_baidu": "八角籠的帝王",
+      "region": {
+        "value": 1,
+        "display": "韓國"
+      },
+      "status": {
+        "value": 1,
+        "display": "已完結"
+      },
+      "author": [
+        {
+          "name": "peeleep",
+          "path_word": "peeleep"
+        },
+        {
+          "name": "GOPUBI",
+          "path_word": "GOPUBI"
+        }
+      ],
+      "theme": [
+        {
+          "name": "格鬥",
+          "path_word": "gedou"
+        },
+        {
+          "name": "热血",
+          "path_word": "rexue"
+        }
+      ],
+      "parodies": [],
+      "brief": "頹廢青年化身天才選手！\r\n熱血征服格鬥八角籠！\r\n憑借天生的反應能力揚名於世的體育界希望之星——輝成，在高中時因受傷而放棄運動,靠兼職謀生。可是，一場格鬥賽場的熱氣激發出了他的鬥志！他決定走上格鬥選手的路。因他的登場格鬥界的歷史將被改寫！",
+      "datetime_updated": "2026-09-15",
+      "cover": "https://sb.mangafunb.fun/b/bajiaolongdediwang/cover/1669020751.jfif.328x422.jpg",
+      "last_chapter": {
+        "uuid": "0e3db9ee-b0b9-11f1-809b-fa163e02432f",
+        "name": "第192話"
+      },
+      "popular": 11096,
+      "channel": null
+    },
+    "popular": 11096,
+    "groups": {
+      "default": {
+        "path_word": "default",
+        "count": 189,
+        "name": "默認"
+      }
+    }
+  }
+}

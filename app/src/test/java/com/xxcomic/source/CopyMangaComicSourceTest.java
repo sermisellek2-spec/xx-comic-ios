@@ -145,6 +145,10 @@ public class CopyMangaComicSourceTest {
         assertFalse(config.enabled);
         final List<String> urls = new ArrayList<>();
         CopyMangaComicSource fake = new CopyMangaComicSource(config) {
+            @Override protected String fetchApi(String url) throws IOException {
+                urls.add(url);
+                return "{\"code\":200,\"results\":null}";
+            }
             @Override protected String fetch(String url) throws IOException {
                 urls.add(url);
                 if (url.contains("/searchci/")) return "{\"code\":200,\"results\":{\"list\":[]}}";
@@ -154,7 +158,7 @@ public class CopyMangaComicSourceTest {
         fake.search("海 & 空", 3);
         assertEquals("https://mirror.test/api/kb/web/searchci/comics?offset=24&platform=2&limit=12&q=%E6%B5%B7%20%26%20%E7%A9%BA&q_type=", urls.get(0));
         assertThrows(IOException.class, () -> fake.chapter("https://www.copy4000.com/comic/a/chapter/b"));
-        assertEquals("https://mirror.test/comic/a/chapter/b", urls.get(1));
+        assertEquals("https://api.manga2026.xyz/api/v3/comic/a/chapter/b?platform=3", urls.get(1));
     }
 
     @Test public void recognizesCdnByHostBoundary() {

@@ -106,20 +106,110 @@ public class CopyMangaComicSource implements ComicSource {
 
     @Override public List<ComicModels.Chapter> chapters(String comicId) throws IOException {
         String rawId = rawId(comicId);
-        String html = fetch(absolute(config.route("detail").replace("{comicId}", encode(rawId))));
-        String key = variable(html, "ccz");
-        JSONObject envelope = success(fetch(absolute(config.route("chapters").replace("{comicId}", encode(rawId)))));
-        Object payload = envelope.opt("results");
-        if (!(payload instanceof String)) throw new IOException("拷贝漫画目录响应格式错误");
-        return parseChapters(rawId, decrypt((String) payload, key));
+        JSONObject detail = apiResults(fetchApi(apiUrl("apiDetail").replace("{comicId}", encode(rawId))));
+        checkComic(detail, rawId);
+        JSONObject groups = detail.optJSONObject("groups");
+        if (groups == null) throw new IOException("拷贝漫画目录缺少分组");
+        List<ComicModels.Chapter> result = new ArrayList<>();
+        Set<String> seen = new LinkedHashSet<>();
+        Iterator<String> keys = groups.keys();
+        int section = 0;
+        while (keys.hasNext()) {
+            String groupKey = keys.next();
+            JSONObject group = groups.optJSONObject(groupKey);
+            if (group == null) throw new IOException("拷贝漫画目录分组格式错误");
+            String groupId = string(group, "path_word");
+            if (groupId.isEmpty()) groupId = groupKey;
+            int offset = 0;
+            boolean complete = false;
+            for (int page = 0; page < 1000; page++) {
+                String url = apiUrl("apiChapters").replace("{comicId}", encode(rawId))
+                        .replace("{group}", encode(groupId)).replace("{offset}", String.valueOf(offset));
+                JSONObject data = apiResults(fetchApi(url));
+                JSONArray list = data.optJSONArray("list");
+                int total = data.optInt("total", -1);
+                if (list == null || total < 0 || data.optInt("offset", -1) != offset)
+                    throw new IOException("拷贝漫画目录分页响应错误");
+                if (list.length() == 0) {
+                    if (offset < total) throw new IOException("拷贝漫画目录未完整返回，请重试");
+                    complete = true;
+                    break;
+                }
+                int before = result.size();
+                for (int i = 0; i < list.length(); i++) {
+                    JSONObject item = list.optJSONObject(i);
+                    if (item == null || !rawId.equals(string(item, "comic_path_word"))
+                            || !groupId.equals(string(item, "group_path_word")))
+                        throw new IOException("拷贝漫画目录与漫画或分组不匹配");
+                    String chapterId = string(item, "uuid"), title = string(item, "name");
+                    if (chapterId.isEmpty() || title.isEmpty()) throw new IOException("拷贝漫画目录项缺少标识或标题");
+                    if (seen.add(chapterId)) result.add(new ComicModels.Chapter(chapterId, title,
+                            absolute("/comic/" + encode(rawId) + "/chapter/" + encode(chapterId)), section, offset + i));
+                }
+                if (result.size() == before) throw new IOException("拷贝漫画目录重复返回同一页，请重试");
+                offset += list.length();
+                if (offset >= total) { complete = true; break; }
+            }
+            if (!complete) throw new IOException("拷贝漫画目录页数超出限制");
+            section++;
+        }
+        if (result.isEmpty()) throw new IOException("拷贝漫画返回空目录，请稍后重试或检查站点访问状态");
+        return result;
     }
 
     @Override public ComicModels.ChapterPage chapter(String chapterUrl) throws IOException {
         // Rebase saved links when the configured source domain changes.
-        String path = first(chapterUrl, "(/comic/[^/?#]+/chapter/[^/?#]+)");
-        if (path.isEmpty()) throw new IOException("拷贝漫画章节地址无效");
-        String url = absolute(path);
-        return parseReader(url, fetch(url));
+        Matcher match = Pattern.compile("/comic/([^/?#]+)/chapter/([^/?#]+)(?:[?#].*)?$").matcher(chapterUrl == null ? "" : chapterUrl);
+        if (!match.find()) throw new IOException("拷贝漫画章节地址无效");
+        String rawId, chapterId;
+        try {
+            rawId = rawId(URLDecoder.decode(match.group(1), "UTF-8"));
+            chapterId = URLDecoder.decode(match.group(2), "UTF-8");
+        } catch (IllegalArgumentException e) { throw new IOException("拷贝漫画章节地址编码错误", e); }
+        String url = absolute("/comic/" + encode(rawId) + "/chapter/" + encode(chapterId));
+        String response = fetchApi(apiUrl("apiChapter").replace("{comicId}", encode(rawId)).replace("{chapterId}", encode(chapterId)));
+        return parseApiReader(url, rawId, chapterId, response);
+    }
+
+    ComicModels.ChapterPage parseApiReader(String url, String rawId, String chapterId, String response) throws IOException {
+        JSONObject data = apiResults(response);
+        checkComic(data, rawId);
+        JSONObject chapter = data.optJSONObject("chapter");
+        if (chapter == null || !chapterId.equals(string(chapter, "uuid")) || !rawId.equals(string(chapter, "comic_path_word")))
+            throw new IOException("拷贝漫画阅读数据与章节不匹配");
+        JSONArray contents = chapter.optJSONArray("contents");
+        if (contents == null || contents.length() == 0 || chapter.optInt("size", -1) != contents.length())
+            throw new IOException("拷贝漫画章节图片未完整返回，请重试");
+        List<String> images = new ArrayList<>();
+        for (int i = 0; i < contents.length(); i++) {
+            JSONObject item = contents.optJSONObject(i);
+            String image = item == null ? "" : string(item, "url");
+            if (!image.startsWith("https://") && !image.startsWith("http://")) throw new IOException("拷贝漫画图片地址无效");
+            images.add(image);
+        }
+        return new ComicModels.ChapterPage(url, string(chapter, "name"), images, "");
+    }
+
+    private String apiUrl(String route) throws IOException {
+        String base = config.route("apiBaseUrl");
+        if (base.isEmpty()) base = SourceConfig.copy4000(true).route("apiBaseUrl");
+        String path = config.route(route);
+        if (path.isEmpty()) path = SourceConfig.copy4000(true).route(route);
+        if (path.startsWith("https://") || path.startsWith("http://")) return path;
+        if (!base.startsWith("https://") && !base.startsWith("http://")) throw new IOException("拷贝漫画 API 地址无效");
+        return base.replaceAll("/+$", "") + path;
+    }
+
+    private static JSONObject apiResults(String response) throws IOException {
+        JSONObject data = success(response).optJSONObject("results");
+        if (data == null) throw new IOException("拷贝漫画接口未返回有效数据，请重试");
+        if (data.optBoolean("is_lock", false)) throw new IOException("拷贝漫画当前内容不可访问");
+        return data;
+    }
+
+    private static void checkComic(JSONObject data, String rawId) throws IOException {
+        JSONObject comic = data.optJSONObject("comic");
+        if (comic == null || !rawId.equals(string(comic, "path_word"))) throw new IOException("拷贝漫画响应与漫画标识不匹配");
     }
 
     @Override public boolean healthCheck() {
@@ -267,12 +357,26 @@ public class CopyMangaComicSource implements ComicSource {
 
     /** Single bounded request, without the webpage's dnts header (which returned empty directories). */
     protected String fetch(String url) throws IOException {
+        return request(url, false);
+    }
+
+    protected String fetchApi(String url) throws IOException {
+        return request(url, true);
+    }
+
+    private String request(String url, boolean api) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setConnectTimeout(15000);
         connection.setReadTimeout(20000);
-        connection.setRequestProperty("User-Agent", USER_AGENT);
+        connection.setRequestProperty("User-Agent", api ? "COPY/3.0.9" : USER_AGENT);
         // Java's default Accept prefers HTML, making the search API return its browsable UI.
-        connection.setRequestProperty("Accept", "application/json, text/html;q=0.9, */*;q=0.8");
+        connection.setRequestProperty("Accept", api ? "application/json" : "application/json, text/html;q=0.9, */*;q=0.8");
+        if (api) {
+            connection.setRequestProperty("platform", "3");
+            connection.setRequestProperty("version", "3.0.9");
+            connection.setRequestProperty("region", "1");
+            connection.setRequestProperty("webp", "1");
+        }
         connection.setRequestProperty("Referer", config.referer);
         try {
             int status = connection.getResponseCode();

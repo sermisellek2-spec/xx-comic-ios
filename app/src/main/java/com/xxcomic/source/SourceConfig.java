@@ -303,6 +303,10 @@ public class SourceConfig {
     public static SourceConfig copy4000(boolean enabled) {
         JSONObject routes = new JSONObject();
         try {
+            routes.put("apiBaseUrl", "https://api.manga2026.xyz");
+            routes.put("apiDetail", "/api/v3/comic2/{comicId}?platform=3");
+            routes.put("apiChapters", "/api/v3/comic/{comicId}/group/{group}/chapters?limit=100&offset={offset}");
+            routes.put("apiChapter", "/api/v3/comic/{comicId}/chapter/{chapterId}?platform=3");
             routes.put("search", "/api/kb/web/searchci/comics?offset={offset}&platform=2&limit={limit}&q={keyword}&q_type=");
             routes.put("categoryIndex", "/filter");
             routes.put("category", "/comics?limit={limit}&offset={offset}&ordering={ordering}{filters}");
