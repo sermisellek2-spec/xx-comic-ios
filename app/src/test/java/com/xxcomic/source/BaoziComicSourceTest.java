@@ -8,6 +8,18 @@ import org.json.JSONObject;
 
 public class BaoziComicSourceTest {
     @Test
+    public void persistedTwmangaSourceMigratesRequestOriginAndReferer() throws Exception {
+        JSONObject saved = new JSONObject().put("baseUrl", "https://www.twmanga.com")
+                .put("domain", "www.twmanga.com").put("referer", "https://www.twmanga.com/")
+                .put("routes", new JSONObject().put("categoryApi",
+                        "/api/bzmhq/amp_comic_list?__amp_source_origin=https%3A%2F%2Fwww.twmanga.com"));
+        SourceConfig restored = SourceConfig.fromJson(saved, SourceConfig.baozi(true));
+        assertEquals("https://cn.dzmanga.com", restored.baseUrl);
+        assertEquals("cn.dzmanga.com", restored.domain);
+        assertEquals("https://cn.dzmanga.com/", restored.referer);
+        assertEquals("/api/bzmhq/amp_comic_list?__amp_source_origin=https%3A%2F%2Fcn.dzmanga.com", restored.route("categoryApi"));
+    }
+    @Test
     public void paginatedCoverUsesTheSitesCurrentImageHost() throws Exception {
         BaoziComicSource source = new BaoziComicSource();
         java.lang.reflect.Method coverUrl = BaoziComicSource.class.getDeclaredMethod("coverUrl", String.class);
@@ -22,7 +34,7 @@ public class BaoziComicSourceTest {
         BaoziComicSource source = new BaoziComicSource();
         java.lang.reflect.Method absolute = BaoziComicSource.class.getDeclaredMethod("absolute", String.class);
         absolute.setAccessible(true);
-        assertEquals("https://www.twmanga.com/comic/chapter/test/0_1.html?q=%E6%AD%A6&x=1",
+        assertEquals("https://cn.dzmanga.com/comic/chapter/test/0_1.html?q=%E6%AD%A6&x=1",
                 absolute.invoke(source, "https://www.baozimh.com/comic/chapter/test/0_1.html?q=%E6%AD%A6&x=1"));
         assertEquals("https://cn.bzmgcn.com.example/comic/test", absolute.invoke(source,
                 "https://cn.bzmgcn.com.example/comic/test"));
@@ -44,11 +56,11 @@ public class BaoziComicSourceTest {
 
         SourceConfig restored = SourceConfig.fromJson(saved, SourceConfig.baozi(true));
 
-        assertEquals("https://www.twmanga.com", restored.baseUrl);
-        assertEquals("www.twmanga.com", restored.domain);
-        assertEquals("https://www.twmanga.com/", restored.referer);
-        assertEquals("https://www.twmanga.com/search?q={keyword}", restored.route("search"));
-        assertEquals("/api/bzmhq/amp_comic_list?limit=36&__amp_source_origin=https%3A%2F%2Fwww.twmanga.com", restored.route("categoryApi"));
+        assertEquals("https://cn.dzmanga.com", restored.baseUrl);
+        assertEquals("cn.dzmanga.com", restored.domain);
+        assertEquals("https://cn.dzmanga.com/", restored.referer);
+        assertEquals("https://cn.dzmanga.com/search?q={keyword}", restored.route("search"));
+        assertEquals("/api/bzmhq/amp_comic_list?limit=36&__amp_source_origin=https%3A%2F%2Fcn.dzmanga.com", restored.route("categoryApi"));
         assertEquals("My Baozi", restored.name);
         assertEquals("custom", restored.filter("region.cn"));
         assertFalse(restored.enabled);

@@ -321,24 +321,52 @@ public class BaoziComicSource implements ComicSource {
     }
 
     private String fetch(String url, int redirects) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        connection.setInstanceFollowRedirects(false);
-        connection.setConnectTimeout(10000);
-        connection.setReadTimeout(15000);
-        connection.setRequestProperty("User-Agent", DESKTOP_USER_AGENT);
-        connection.setRequestProperty("Referer", config.referer);
-        int code = connection.getResponseCode();
-        if (code >= 300 && code < 400 && redirects < 5) {
-            String location = connection.getHeaderField("Location");
-            connection.disconnect();
-            if (location != null && !location.isEmpty()) return fetch(absolute(location), redirects + 1);
+        for (int attempt = 0; ; attempt++) {
+            if (Thread.currentThread().isInterrupted()) throw new java.io.InterruptedIOException("包子漫画请求已取消");
+            try {
+                return fetchOnce(url, redirects);
+            } catch (java.net.SocketException e) {
+                if (attempt >= 2) throw new IOException("包子漫画连接中断 [host=" + new URL(url).getHost() + "]", e);
+                try {
+                    Thread.sleep(350L * (attempt + 1));
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw new java.io.InterruptedIOException("包子漫画请求已取消");
+                }
+            }
         }
-        try (InputStream stream = connection.getInputStream()) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
-            StringBuilder builder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) builder.append(line).append('\n');
-            return builder.toString();
+    }
+
+    private String fetchOnce(String url, int redirects) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        try {
+            connection.setInstanceFollowRedirects(false);
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(15000);
+            connection.setRequestProperty("User-Agent", DESKTOP_USER_AGENT);
+            connection.setRequestProperty("Referer", config.referer);
+            connection.setRequestProperty("Connection", "close");
+            int code = connection.getResponseCode();
+            if (code >= 300 && code < 400 && redirects < 5) {
+                String location = connection.getHeaderField("Location");
+                connection.disconnect();
+                if (location != null && !location.isEmpty()) {
+                    URL target = new URL(new URL(url), location);
+                    if ("https".equals(new URL(url).getProtocol()) && !"https".equals(target.getProtocol())) {
+                        throw new IOException("包子漫画拒绝不安全的重定向");
+                    }
+                    return fetchOnce(target.toString(), redirects + 1);
+                }
+            }
+            try (InputStream stream = connection.getInputStream()) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
+                StringBuilder builder = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) builder.append(line).append('\n');
+                return builder.toString();
+            }
+        } catch (javax.net.ssl.SSLHandshakeException e) {
+            throw new IOException("包子漫画安全连接失败 [host=" + connection.getURL().getHost() + "]: " + e.getMessage(), e);
         } finally {
             connection.disconnect();
         }
