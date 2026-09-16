@@ -31,17 +31,25 @@ public final class ReaderInstrumentation extends Instrumentation {
     private boolean immersionOnly;
     private boolean startupOnly;
     private boolean manwaOnly;
+    private boolean sourceOrderOnly;
     @Override public void onCreate(Bundle arguments) {
         super.onCreate(arguments);
         immersionOnly = arguments != null && "true".equals(arguments.getString("immersionOnly"));
         startupOnly = arguments != null && "true".equals(arguments.getString("startupOnly"));
         manwaOnly = arguments != null && "true".equals(arguments.getString("manwaOnly"));
+        sourceOrderOnly = arguments != null && "true".equals(arguments.getString("sourceOrderOnly"));
         start();
     }
     @Override public void onStart() {
         Bundle result = new Bundle();
         try {
             activity = (MainActivity) startActivitySync(new Intent(getTargetContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            if (sourceOrderOnly) {
+                testSourceOrder();
+                result.putString("stream", "PASS: " + checks + " source order device checks\n");
+                finish(-1, result);
+                return;
+            }
             if (manwaOnly) {
                 testManwaSource();
                 result.putString("stream", "PASS: " + checks + " Manwa live source/device checks\n");
@@ -313,6 +321,116 @@ public final class ReaderInstrumentation extends Instrumentation {
             if(i<steps)SystemClock.sleep(duration/steps);
         }
     }
+    @SuppressWarnings("unchecked")
+    private void testSourceOrder() throws Exception {
+        final org.json.JSONObject[] backup = {null};
+        onMain(() -> backup[0] = (org.json.JSONObject) call("sourceConfigJson"));
+        try {
+            onMain(() -> { set("sourceEnabled", true); call("rebuildSourceClients"); call("resetSourceOrder"); });
+            settle();
+            List<String> original = new ArrayList<>((List<String>)get("sourceOrder"));
+            String selected = (String)get("selectedSourceId");
+            SourceOrderList list = (SourceOrderList)findSourceList(activity.getWindow().getDecorView());
+            check(list != null && list.getAdapter().getItemCount() == original.size(), "all sources appear in draggable list");
+            final float[] point = new float[3];
+            onMain(() -> {
+                View first = list.getLayoutManager().findViewByPosition(0);
+                View third = list.getLayoutManager().findViewByPosition(2);
+                point[0] = UIHelpers.dp(activity, 20);
+                point[1] = (first.getTop() + first.getBottom()) / 2f;
+                // Cross the target row's boundary before ACTION_UP, as ItemTouchHelper requires.
+                point[2] = (third.getTop() + third.getBottom()) / 2f + UIHelpers.dp(activity, 12);
+            });
+            long down = SystemClock.uptimeMillis();
+            for (int i = 0; i <= 24; i++) {
+                final int step = i;
+                onMain(() -> {
+                    MotionEvent event = MotionEvent.obtain(down, SystemClock.uptimeMillis(),
+                            step == 0 ? MotionEvent.ACTION_DOWN : step == 24 ? MotionEvent.ACTION_UP : MotionEvent.ACTION_MOVE,
+                            point[0], point[1] + (point[2] - point[1]) * step / 24f, 0);
+                    list.dispatchTouchEvent(event); event.recycle();
+                });
+                SystemClock.sleep(30);
+            }
+            settle();
+            List<String> expected = new ArrayList<>(original);
+            expected.add(2, expected.remove(0));
+            screenshot("source-order-drag.png");
+            check(expected.equals(get("sourceOrder")), "handle drag changes order without toggling: expected="
+                    + expected + " actual=" + get("sourceOrder") + " coordinates=" + Arrays.toString(point));
+            check((boolean)get("sourceEnabled"), "drag preserves source enable switch");
+            check(selected.equals(get("selectedSourceId")), "drag preserves selected source ID");
+            onMain(() -> call("restoreLocalState"));
+            check(expected.equals(get("sourceOrder")), "order survives preference reload");
+            ActivityMonitor sourceMonitor = addMonitor(MainActivity.class.getName(), null, false);
+            onMain(() -> activity.recreate());
+            MainActivity restored = (MainActivity)waitForMonitorWithTimeout(sourceMonitor, 10000);
+            removeMonitor(sourceMonitor);
+            check(restored != null, "activity recreates after sorting");
+            activity = restored;
+            settle();
+            check(expected.equals(get("sourceOrder")), "recreated activity restores saved order");
+            final List<String>[] menu = new List[]{null};
+            final List<com.xxcomic.source.ComicSource>[] enabled = new List[]{null};
+            final List<com.xxcomic.source.ComicSource>[] search = new List[]{null};
+            onMain(() -> {
+                menu[0] = (List<String>)call("enabledSourceNames");
+                enabled[0] = (List<com.xxcomic.source.ComicSource>)call("enabledBuiltinSources");
+                search[0] = (List<com.xxcomic.source.ComicSource>)call("enabledSearchSources");
+            });
+            List<String> names = new ArrayList<>(), ids = new ArrayList<>();
+            for (com.xxcomic.source.ComicSource source : enabled[0]) { names.add(source.name()); ids.add(source.id()); }
+            check(names.equals(menu[0]), "source switch menu shares enabled order");
+            check(ids.equals(SourceOrder.normalize(expected, ids)), "enabled source list follows dragged order");
+            ids.clear(); for (com.xxcomic.source.ComicSource source : search[0]) ids.add(source.id());
+            check(ids.equals(SourceOrder.normalize(expected, ids)), "global search source tabs share order");
+            onMain(() -> call("showSourceManagement"));
+            settle();
+            onMain(() -> {
+                ViewGroup row = activity.getWindow().getDecorView().findViewWithTag("source-row:" + original.get(0));
+                ViewGroup line = (ViewGroup)row.getChildAt(0);
+                ViewGroup body = (ViewGroup)line.getChildAt(1);
+                ViewGroup card = (ViewGroup)body.getChildAt(0);
+                card.getChildAt(card.getChildCount() - 1).performClick();
+            });
+            settle();
+            check(!(boolean)get("sourceEnabled"), "switch still disables the dragged source");
+            check(expected.equals(get("sourceOrder")), "disabled source keeps its position");
+            onMain(() -> {
+                ViewGroup row = activity.getWindow().getDecorView().findViewWithTag("source-row:" + original.get(0));
+                ViewGroup line = (ViewGroup)row.getChildAt(0);
+                ViewGroup body = (ViewGroup)line.getChildAt(1);
+                ViewGroup card = (ViewGroup)body.getChildAt(0);
+                card.getChildAt(card.getChildCount() - 1).performClick();
+            });
+            settle();
+            check((boolean)get("sourceEnabled") && expected.equals(get("sourceOrder")), "re-enabled source keeps position");
+            final org.json.JSONObject[] exported = {null};
+            onMain(() -> exported[0] = (org.json.JSONObject)call("sourceConfigJson"));
+            check(SourceOrder.decode(exported[0].getJSONArray("sourceOrder").toString()).equals(expected), "export includes source order");
+            onMain(() -> { call("resetSourceOrder"); call("applySourceConfigJson", exported[0]); });
+            check(expected.equals(get("sourceOrder")), "import restores source order");
+            exported[0].remove("sourceOrder");
+            onMain(() -> call("applySourceConfigJson", exported[0]));
+            check(expected.equals(get("sourceOrder")), "legacy import preserves local order");
+            onMain(() -> call("resetSourceOrder"));
+            check(original.equals(get("sourceOrder")), "reset restores default order");
+            onMain(() -> { call("saveSourceOrder", expected); call("showSourceManagement"); });
+            settle(); screenshot("source-order.png");
+        } finally {
+            onMain(() -> { call("applySourceConfigJson", backup[0]); call("saveLocalState"); });
+        }
+    }
+
+    private View findSourceList(View view) {
+        if (view instanceof SourceOrderList) return view;
+        if (view instanceof ViewGroup) for (int i = 0; i < ((ViewGroup)view).getChildCount(); i++) {
+            View found = findSourceList(((ViewGroup)view).getChildAt(i));
+            if (found != null) return found;
+        }
+        return null;
+    }
+
     private void clickText(String text) throws Exception {
         onMain(() -> {View v=findText(activity.getWindow().getDecorView(),text); if(v==null)throw new AssertionError(text); while(!v.isClickable())v=(View)v.getParent(); v.performClick();}); settle();
     }

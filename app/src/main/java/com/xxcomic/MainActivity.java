@@ -388,6 +388,7 @@ public class MainActivity extends Activity {
     private FrameLayout activeFavoriteDeleteCover;
     private View activeFavoriteDeleteOverlay;
     private boolean standaloneSearchResultsMode = false;
+    private volatile List<String> sourceOrder = Collections.emptyList();
     private boolean sourceManagementVisible = false;
     private String settingsScene = "";
     private String activeErrorLog = "";
@@ -979,7 +980,7 @@ public class MainActivity extends Activity {
         page.addView(settingsSectionText("站源与本地数据"));
         LinearLayout local = settingsList();
         local.setPadding(0, 0, 0, 0);
-        local.addView(settingsMenuItem(R.drawable.ic_source, "站源管理", "启停、导入导出与检测",
+        local.addView(settingsMenuItem(R.drawable.ic_source, "站源管理", "拖动排序、启停与导入导出",
                 enabledBuiltinSources().size() + " 个开启", this::showSourceManagement));
         local.addView(UIHelpers.divider(this));
         local.addView(settingsMenuItem(R.drawable.ic_trash, "缓存清理", "保留收藏与阅读历史", cacheSize, this::showCacheCleanup));
@@ -1002,15 +1003,12 @@ public class MainActivity extends Activity {
         settingsSceneBackToSources = false;
         sourceManagementVisible = true;
         root.removeAllViews();
-        ScrollView scroll = new ScrollView(this);
-        tuneScroll(scroll);
-        scroll.setBackgroundColor(UIHelpers.BG);
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
+        page.setBackgroundColor(UIHelpers.BG);
         page.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 12), UIHelpers.dp(this, 16), UIHelpers.dp(this, 24));
-        scroll.addView(page, UIHelpers.matchWrap());
         renderSources(page);
-        root.addView(scroll, UIHelpers.match());
+        root.addView(page, UIHelpers.match());
     }
 
     private void renderSearch(LinearLayout page) {
@@ -1508,132 +1506,120 @@ public class MainActivity extends Activity {
 
     private void renderSources(LinearLayout page) {
         settingsHeader(page, "站源管理", enabledBuiltinSources().size() + " 个开启", sourceOverflowButton());
-        LinearLayout enabledSources = new LinearLayout(this);
-        enabledSources.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout disabledSources = new LinearLayout(this);
-        disabledSources.setOrientation(LinearLayout.VERTICAL);
-        addSourceCard(enabledSources, disabledSources, sourceEnabled, sourceCard(baoziConfig, sourceEnabled, () -> {
+        List<SourceOrderList.Row> rows = new ArrayList<>();
+        addSourceCard(rows, baoziConfig.id, () -> sourceCard(baoziConfig, sourceEnabled, () -> {
             sourceEnabled = !sourceEnabled;
             baoziConfig = baoziConfig.withEnabled(sourceEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, mh160Enabled, sourceCard(mh160Config, mh160Enabled, () -> {
+        addSourceCard(rows, mh160Config.id, () -> sourceCard(mh160Config, mh160Enabled, () -> {
             mh160Enabled = !mh160Enabled;
             mh160Config = mh160Config.withEnabled(mh160Enabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, gmhEnabled, sourceCard(gmhConfig, gmhEnabled, () -> {
+        addSourceCard(rows, gmhConfig.id, () -> sourceCard(gmhConfig, gmhEnabled, () -> {
             gmhEnabled = !gmhEnabled;
             gmhConfig = gmhConfig.withEnabled(gmhEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, mh18Enabled, sourceCard(mh18Config, mh18Enabled, () -> {
+        addSourceCard(rows, mh18Config.id, () -> sourceCard(mh18Config, mh18Enabled, () -> {
             mh18Enabled = !mh18Enabled;
             mh18Config = mh18Config.withEnabled(mh18Enabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, jmcomicEnabled, sourceCard(jmcomicConfig, jmcomicEnabled, () -> {
+        addSourceCard(rows, jmcomicConfig.id, () -> sourceCard(jmcomicConfig, jmcomicEnabled, () -> {
             jmcomicEnabled = !jmcomicEnabled;
             jmcomicConfig = jmcomicConfig.withEnabled(jmcomicEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, mkzhanEnabled, sourceCard(mkzhanConfig, mkzhanEnabled, () -> {
+        addSourceCard(rows, mkzhanConfig.id, () -> sourceCard(mkzhanConfig, mkzhanEnabled, () -> {
             mkzhanEnabled = !mkzhanEnabled;
             mkzhanConfig = mkzhanConfig.withEnabled(mkzhanEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, hiperdexEnabled, sourceCard(hiperdexConfig, hiperdexEnabled, () -> {
+        addSourceCard(rows, hiperdexConfig.id, () -> sourceCard(hiperdexConfig, hiperdexEnabled, () -> {
             hiperdexEnabled = !hiperdexEnabled;
             hiperdexConfig = hiperdexConfig.withEnabled(hiperdexEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, manhuaguiEnabled, sourceCard(manhuaguiConfig, manhuaguiEnabled, () -> {
+        addSourceCard(rows, manhuaguiConfig.id, () -> sourceCard(manhuaguiConfig, manhuaguiEnabled, () -> {
             manhuaguiEnabled = !manhuaguiEnabled;
             manhuaguiConfig = manhuaguiConfig.withEnabled(manhuaguiEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, hanman18Enabled, sourceCard(hanman18Config, hanman18Enabled, () -> {
+        addSourceCard(rows, hanman18Config.id, () -> sourceCard(hanman18Config, hanman18Enabled, () -> {
             hanman18Enabled = !hanman18Enabled;
             hanman18Config = hanman18Config.withEnabled(hanman18Enabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, d5d6Enabled, sourceCard(d5d6Config, d5d6Enabled, () -> {
+        addSourceCard(rows, d5d6Config.id, () -> sourceCard(d5d6Config, d5d6Enabled, () -> {
             d5d6Enabled = !d5d6Enabled;
             d5d6Config = d5d6Config.withEnabled(d5d6Enabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, manbenEnabled, sourceCard(manbenConfig, manbenEnabled, () -> {
+        addSourceCard(rows, manbenConfig.id, () -> sourceCard(manbenConfig, manbenEnabled, () -> {
             manbenEnabled = !manbenEnabled;
             manbenConfig = manbenConfig.withEnabled(manbenEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, manhuazhanEnabled, sourceCard(manhuazhanConfig, manhuazhanEnabled, () -> {
+        addSourceCard(rows, manhuazhanConfig.id, () -> sourceCard(manhuazhanConfig, manhuazhanEnabled, () -> {
             manhuazhanEnabled = !manhuazhanEnabled;
             manhuazhanConfig = manhuazhanConfig.withEnabled(manhuazhanEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, bbyinEnabled, sourceCard(bbyinConfig, bbyinEnabled, () -> {
+        addSourceCard(rows, bbyinConfig.id, () -> sourceCard(bbyinConfig, bbyinEnabled, () -> {
             bbyinEnabled = !bbyinEnabled;
             bbyinConfig = bbyinConfig.withEnabled(bbyinEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, antbywEnabled, sourceCard(antbywConfig, antbywEnabled, () -> {
+        addSourceCard(rows, antbywConfig.id, () -> sourceCard(antbywConfig, antbywEnabled, () -> {
             antbywEnabled = !antbywEnabled;
             antbywConfig = antbywConfig.withEnabled(antbywEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, cuimhEnabled, sourceCard(cuimhConfig, cuimhEnabled, () -> {
+        addSourceCard(rows, cuimhConfig.id, () -> sourceCard(cuimhConfig, cuimhEnabled, () -> {
             cuimhEnabled = !cuimhEnabled;
             cuimhConfig = cuimhConfig.withEnabled(cuimhEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, liumanhuaEnabled, sourceCard(liumanhuaConfig, liumanhuaEnabled, () -> {
+        addSourceCard(rows, liumanhuaConfig.id, () -> sourceCard(liumanhuaConfig, liumanhuaEnabled, () -> {
             liumanhuaEnabled = !liumanhuaEnabled;
             liumanhuaConfig = liumanhuaConfig.withEnabled(liumanhuaEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, copy4000Enabled, sourceCard(copy4000Config, copy4000Enabled, () -> {
+        addSourceCard(rows, copy4000Config.id, () -> sourceCard(copy4000Config, copy4000Enabled, () -> {
             copy4000Enabled = !copy4000Enabled;
             copy4000Config = copy4000Config.withEnabled(copy4000Enabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        addSourceCard(enabledSources, disabledSources, manwaEnabled, sourceCard(manwaConfig, manwaEnabled, () -> {
+        addSourceCard(rows, manwaConfig.id, () -> sourceCard(manwaConfig, manwaEnabled, () -> {
             manwaEnabled = !manwaEnabled;
             manwaConfig = manwaConfig.withEnabled(manwaEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
-        LinearLayout sourceList = settingsList();
-        sourceList.setPadding(0, 0, 0, 0);
-        appendSourceRows(sourceList, enabledSources);
-        appendSourceRows(sourceList, disabledSources);
-        page.addView(sourceList);
-    }
-
-    private void appendSourceRows(LinearLayout target, LinearLayout rows) {
-        while (rows.getChildCount() > 0) {
-            View row = rows.getChildAt(0);
-            rows.removeViewAt(0);
-            if (target.getChildCount() > 0) target.addView(UIHelpers.divider(this));
-            target.addView(row);
-        }
+        TextView hint = UIHelpers.text(this, "按住左侧手柄拖动，排序同步到搜索", 11, UIHelpers.TEXT3, Typeface.NORMAL);
+        page.addView(hint, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 8)));
+        SourceOrderList list = new SourceOrderList(this,
+                SourceOrder.apply(rows, sourceOrder, row -> row.id), this::saveSourceOrder);
+        page.addView(list, new LinearLayout.LayoutParams(-1, 0, 1));
     }
 
     private void finishSourceToggle() {
@@ -1664,8 +1650,28 @@ public class MainActivity extends Activity {
         showSourceManagement();
     }
 
-    private void addSourceCard(LinearLayout enabledSources, LinearLayout disabledSources, boolean enabled, View card) {
-        (enabled ? enabledSources : disabledSources).addView(card);
+    private void addSourceCard(List<SourceOrderList.Row> rows, String id, SourceOrderList.Factory factory) {
+        rows.add(new SourceOrderList.Row(id, factory));
+    }
+
+    private List<String> defaultSourceOrder() {
+        return Arrays.asList(baoziConfig.id, mh160Config.id, gmhConfig.id,
+                mh18Config.id, jmcomicConfig.id, mkzhanConfig.id, hiperdexConfig.id,
+                manhuaguiConfig.id, hanman18Config.id, d5d6Config.id, manbenConfig.id,
+                manhuazhanConfig.id, bbyinConfig.id, antbywConfig.id, cuimhConfig.id,
+                liumanhuaConfig.id, copy4000Config.id, manwaConfig.id);
+    }
+
+    private void saveSourceOrder(List<String> ids) {
+        sourceOrder = SourceOrder.normalize(ids, defaultSourceOrder());
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                .putString("source.order", new JSONArray(sourceOrder).toString()).apply();
+    }
+
+    private void resetSourceOrder() {
+        saveSourceOrder(defaultSourceOrder());
+        showSourceManagement();
+        showRemSuccessToast("已恢复默认排序");
     }
 
     private int themeIcon() {
@@ -4010,7 +4016,7 @@ public class MainActivity extends Activity {
         if (liumanhuaEnabled) sources.add(liumanhuaClient);
         if (copy4000Enabled) sources.add(copy4000Client);
         if (manwaEnabled) sources.add(manwaClient);
-        return sources;
+        return SourceOrder.apply(sources, sourceOrder, ComicSource::id);
     }
 
     static boolean shouldLoadNextSearchPage(int scrollY, int oldScrollY, int viewportHeight,
@@ -5497,24 +5503,7 @@ public class MainActivity extends Activity {
 
     private List<String> enabledSourceNames() {
         List<String> names = new ArrayList<>();
-        if (sourceEnabled) names.add(sourceClient.name());
-        if (mh160Enabled) names.add(mh160Client.name());
-        if (gmhEnabled) names.add(gmhClient.name());
-        if (mh18Enabled) names.add(mh18Client.name());
-        if (jmcomicEnabled) names.add(jmcomicClient.name());
-        if (mkzhanEnabled) names.add(mkzhanClient.name());
-        if (hiperdexEnabled) names.add(hiperdexClient.name());
-        if (manhuaguiEnabled) names.add(manhuaguiClient.name());
-        if (hanman18Enabled) names.add(hanman18Client.name());
-        if (d5d6Enabled) names.add(d5d6Client.name());
-        if (manbenEnabled) names.add(manbenClient.name());
-        if (manhuazhanEnabled) names.add(manhuazhanClient.name());
-        if (bbyinEnabled) names.add(bbyinClient.name());
-        if (antbywEnabled) names.add(antbywClient.name());
-        if (cuimhEnabled) names.add(cuimhClient.name());
-        if (liumanhuaEnabled) names.add(liumanhuaClient.name());
-        if (copy4000Enabled) names.add(copy4000Client.name());
-        if (manwaEnabled) names.add(manwaClient.name());
+        for (ComicSource source : enabledBuiltinSources()) names.add(source.name());
         return names;
     }
 
@@ -5819,6 +5808,11 @@ public class MainActivity extends Activity {
         actions.addView(settingsSheetAction(R.drawable.ic_lightning, "检测可用性", () -> {
             popup[0].dismiss();
             healthCheck();
+        }));
+        actions.addView(UIHelpers.divider(this));
+        actions.addView(settingsSheetAction(R.drawable.ic_source, "恢复默认排序", () -> {
+            popup[0].dismiss();
+            resetSourceOrder();
         }));
         popup[0] = showSettingsSheet("站源操作", actions);
     }
@@ -6983,6 +6977,7 @@ public class MainActivity extends Activity {
         root.put("schema", "xx-comic.sources");
         root.put("version", 2);
         root.put("exportedAt", System.currentTimeMillis());
+        root.put("sourceOrder", new JSONArray(SourceOrder.normalize(sourceOrder, defaultSourceOrder())));
         JSONArray sources = new JSONArray();
         sources.put(baoziConfig.withEnabled(sourceEnabled).toJson());
         sources.put(mh160Config.withEnabled(mh160Enabled).toJson());
@@ -7087,6 +7082,8 @@ public class MainActivity extends Activity {
                 }
             }
         }
+        JSONArray importedOrder = root.optJSONArray("sourceOrder");
+        if (importedOrder != null) saveSourceOrder(SourceOrder.decode(importedOrder.toString()));
         JSONArray builtins = root.optJSONArray("builtins");
         if (builtins != null) {
             for (int i = 0; i < builtins.length(); i++) {
@@ -7275,6 +7272,7 @@ public class MainActivity extends Activity {
         copy4000Enabled = prefs.getBoolean("source.copy4000.enabled", true);
         manwaEnabled = prefs.getBoolean("source.manwa.enabled", true);
         restoreSourceConfigs(prefs.getString("source.configs", ""));
+        sourceOrder = SourceOrder.normalize(SourceOrder.decode(prefs.getString("source.order", "[]")), defaultSourceOrder());
         rebuildSourceClients();
         chapterDesc = prefs.getBoolean("chapter.desc", false);
         themeMode = prefs.getInt("theme.mode", 0);
@@ -7385,6 +7383,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.copy4000.enabled", copy4000Enabled);
         editor.putBoolean("source.manwa.enabled", manwaEnabled);
         editor.putString("source.configs", encodeSourceConfigs());
+        editor.putString("source.order", new JSONArray(sourceOrder).toString());
         editor.putBoolean("chapter.desc", chapterDesc);
         editor.putInt("theme.mode", themeMode);
         editor.putBoolean("reader.left.hand", readerLeftHand);
