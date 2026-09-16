@@ -294,12 +294,19 @@ public class GmhComicSource implements ComicSource {
             if (TextUtils.isEmpty(host)) host = hostForLine(imagesObject.optInt("line", 1));
             url = host + (url.startsWith("/") ? url : "/" + url);
         }
+        url = migrateImageUrl(url);
         if (!images.contains(url)) images.add(url);
     }
 
+    public static String migrateImageUrl(String url) {
+        if (url == null) return null;
+        return url.replaceFirst("^https://f40-1-4\\.g-mh\\.online(?=[/?#]|$)", "https://c-nd2-1.6wm.top")
+                .replaceFirst("^https://t40-1-4\\.g-mh\\.online(?=[/?#]|$)", "https://c-nd3-1.6wm.top");
+    }
+
     private String hostForLine(int line) {
-        if (line == 2) return "https://f40-1-4.g-mh.online";
-        return "https://t40-1-4.g-mh.online";
+        if (line == 2) return "https://c-nd2-1.6wm.top";
+        return "https://c-nd3-1.6wm.top";
     }
 
     private String decodeEncryptedImages(String encrypted) throws Exception {

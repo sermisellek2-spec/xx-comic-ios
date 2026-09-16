@@ -41,3 +41,7 @@ Thumbs.db
 
 # Local Git worktrees
 .worktrees/
+
+# Local Gradle cache and release directory
+.gradle-codex/
+release/

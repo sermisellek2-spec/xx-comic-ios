@@ -1,11 +1,35 @@
-<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Retain platform defaults for every other source. -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="false">cn.dzmanga.com</domain>
+        <domain includeSubdomains="false">s1.bzcdn.net</domain>
+        <domain includeSubdomains="false">s2.bzcdn.net</domain>
         <trust-anchors>
             <certificates src="system" />
             <certificates src="@raw/sectigo_root_r46" />
+        </trust-anchors>
+    </domain-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">manhua.5um.net</domain>
+        <domain includeSubdomains="true">6wm.top</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/isrg_root_x1" />
+            <certificates src="@raw/isrg_root_x2" />
+        </trust-anchors>
+    </domain-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">baipiaoguai.org</domain>
+        <domain includeSubdomains="true">antbyw.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/gts_root_r4" />
+        </trust-anchors>
+    </domain-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">cdndm5.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/go_daddy_root_certificate_authority___g2" />
         </trust-anchors>
     </domain-config>
 </network-security-config>

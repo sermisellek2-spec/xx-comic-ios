@@ -4744,10 +4744,7 @@ public class MainActivity extends Activity {
                     if (isCurrentReaderImageRequest(generation, comicId, chapterUrl)) {
                         ensureReaderImageCached(imageUrl, chapterUrl, cacheOnly);
                     }
-                } catch (Exception error) {
-                    if (!isExpectedTaskCancellation(error)) {
-                        appendErrorLog("\u9605\u8bfb\u56fe\u7247\u9884\u52a0\u8f7d\u5931\u8d25", error);
-                    }
+                } catch (Exception ignored) {
                 } finally {
                     main.post(() -> readerPrefetching.remove(key));
                 }
@@ -4769,10 +4766,7 @@ public class MainActivity extends Activity {
                     if (isCurrentReaderImageRequest(generation, comicId, chapterUrl)) {
                         ensureReaderImageCached(imageUrl, chapterUrl, cacheOnly);
                     }
-                } catch (Exception error) {
-                    if (!isExpectedTaskCancellation(error)) {
-                        appendErrorLog("\u9605\u8bfb\u56fe\u7247\u9884\u52a0\u8f7d\u5931\u8d25", error);
-                    }
+                } catch (Exception ignored) {
                 } finally {
                     main.post(() -> readerPrefetching.remove(key));
                 }
@@ -4791,7 +4785,7 @@ public class MainActivity extends Activity {
         if (cacheOnly) return false;
         HttpURLConnection connection = null;
         try {
-            connection = (HttpURLConnection) new URL(imageUrl).openConnection();
+            connection = (HttpURLConnection) new URL(GmhComicSource.migrateImageUrl(imageUrl)).openConnection();
             connection.setInstanceFollowRedirects(true);
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(30000);
@@ -4878,7 +4872,6 @@ public class MainActivity extends Activity {
                 });
             } catch (Exception error) {
                 if (isExpectedTaskCancellation(error)) return;
-                appendErrorLog("图片加载失败", error);
                 main.post(() -> {
                     if (activityDestroyed || !TextUtils.equals(imageUrl, (String) target.getTag())
                             || !isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
@@ -5044,7 +5037,6 @@ public class MainActivity extends Activity {
                 }
             } catch (Exception error) {
                 if (isExpectedTaskCancellation(error)) return;
-                appendErrorLog("图片加载失败", error);
                 main.post(() -> target.setImageResource(R.drawable.rem_no_image));
             } finally {
                 if (connection != null) connection.disconnect();

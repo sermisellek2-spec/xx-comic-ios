@@ -15,6 +15,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -149,14 +150,7 @@ public class ManbenComicSource implements ComicSource {
         if (TextUtils.isEmpty(cover)) cover = absolute(cleanUrl(meta(html, "og:image")));
         if (TextUtils.isEmpty(cover)) cover = absolute(imageUrlFromTag(firstRaw(infoHtml, "<img[^>]+(?:alt|title)=[\"'][^\"']*" + Pattern.quote(title) + "[^\"']*[\"'][^>]*>")));
         // author: <a class="avatar">踏雪动漫</a>
-        String author = "";
-        Matcher avatar = Pattern.compile(
-                "<a\\b(?:(?:\"[^\"]*\")|(?:'[^']*')|[^>])*\\bclass\\s*=\\s*[\"'][^\"']*\\bavatar\\b[^\"']*[\"'](?:(?:\"[^\"]*\")|(?:'[^']*')|[^>])*>",
-                Pattern.CASE_INSENSITIVE).matcher(infoHtml);
-        if (avatar.find()) {
-            int authorEnd = infoHtml.indexOf("</a>", avatar.end());
-            if (authorEnd >= avatar.end()) author = clean(infoHtml.substring(avatar.end(), authorEnd));
-        }
+        String author = clean(authorHtml(infoHtml));
         if (TextUtils.isEmpty(author)) author = clean(first(infoHtml, "作\\s*者[：:]?\\s*<a[^>]*>([\\s\\S]*?)</a>"));
         // status: 状  态：连载中
         String status = clean(first(infoHtml, "状\\s*态[：:]?\\s*([^<]+)"));
@@ -501,6 +495,23 @@ public class ManbenComicSource implements ComicSource {
         }
         if (groups.isEmpty() && block.contains("/m")) groups.add(block);
         return groups;
+    }
+
+    static String authorHtml(String infoHtml) {
+        Matcher avatar = Pattern.compile(
+                "<a\\b(?:[^\"'>]++|\"[^\"]*\"|'[^']*')*+>",
+                Pattern.CASE_INSENSITIVE).matcher(infoHtml);
+        while (avatar.find()) {
+            Matcher attributes = Pattern.compile("\\s([\\w:-]+)\\s*=\\s*([\"'])(.*?)\\2",
+                    Pattern.DOTALL).matcher(avatar.group());
+            while (attributes.find()) {
+                if (!"class".equalsIgnoreCase(attributes.group(1))
+                        || !Arrays.asList(attributes.group(3).split("\\s+")).contains("avatar")) continue;
+                int authorEnd = infoHtml.indexOf("</a>", avatar.end());
+                if (authorEnd >= avatar.end()) return infoHtml.substring(avatar.end(), authorEnd);
+            }
+        }
+        return "";
     }
 
     private String elementContentById(String html, String idValue) {
