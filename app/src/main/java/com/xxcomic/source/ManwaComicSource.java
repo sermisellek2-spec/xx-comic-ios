@@ -32,6 +32,7 @@ public class ManwaComicSource implements ComicSource {
     private static final String ID = "manwa";
     private static final String UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private static final String[] TAGS = {"热血", "玄幻", "恋爱", "冒险", "古风", "都市", "穿越", "奇幻", "搞笑", "少男", "战斗", "重生", "逆袭", "爆笑", "少年", "后宫", "系统", "BL", "韩漫", "完整版", "19r", "台版"};
+    private static final String[] TAG_SLUGS = {"hotblooded", "xuanhuan", "romance", "adventure", "historical", "urban", "transmigration", "fantasy", "comedy", "shounen", "action", "rebirth", "counterattack", "hilarious", "youth", "harem", "system", "bl", "manhwa", "fullversion", "19plus", "taiwanver"};
     private final SourceConfig config;
 
     public ManwaComicSource() { this(SourceConfig.manwa(true)); }
@@ -81,7 +82,15 @@ public class ManwaComicSource implements ComicSource {
     }
 
     @Override public List<ComicModels.ComicSummary> category(Map<String, String> filters, int page) throws IOException {
-        return parseCards(request(absolute(config.route("category")), categoryBody(filters, page), config.referer));
+        String tag = value(filters, "tag", "");
+        String suffix = "";
+        if (!tag.isEmpty()) {
+            int index = Arrays.asList(TAGS).indexOf(tag);
+            if (index < 0) throw new IOException("漫蛙题材不支持，请重新选择");
+            suffix = "/" + TAG_SLUGS[index];
+        }
+        // The website selects genres from the URL; comic.tag alone is ignored.
+        return parseCards(request(absolute(config.route("category") + suffix), categoryBody(filters, page), absolute("/cate" + suffix)));
     }
 
     static JSONObject categoryBody(Map<String, String> filters, int page) throws IOException {
@@ -229,6 +238,9 @@ public class ManwaComicSource implements ComicSource {
                 connection.setDoOutput(true);
                 connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
                 connection.setRequestProperty("Origin", config.baseUrl);
+                // Type filtering uses a request-local cookie, including 0 to reset to all.
+                JSONObject comic = body.optJSONObject("comic");
+                if (comic != null) connection.setRequestProperty("Cookie", "typeId=" + comic.optInt("typeId", 0));
                 byte[] bytes = body.toString().getBytes(StandardCharsets.UTF_8);
                 connection.setFixedLengthStreamingMode(bytes.length);
                 try (OutputStream output = connection.getOutputStream()) { output.write(bytes); }

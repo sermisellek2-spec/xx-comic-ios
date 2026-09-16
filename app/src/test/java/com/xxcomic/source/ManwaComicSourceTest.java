@@ -16,6 +16,78 @@ import static org.junit.Assert.*;
 public class ManwaComicSourceTest {
     private static final String CHAPTER = "https://manwace.cc/comic/163037/2161449";
 
+    @Test public void categoryUsesTagPathAndResetRemovesItWithoutLosingPagination() throws Exception {
+        Fake source = new Fake();
+        Map<String, String> filters = new LinkedHashMap<>();
+        filters.put("tag", "冒险"); filters.put("region", "3"); filters.put("state", "1");
+        source.category(filters, 2);
+        assertEquals("https://manwace.cc/api/cate/adventure", source.urls.get(0));
+        assertEquals(2, source.body.getJSONObject("page").getInt("page"));
+        assertEquals(3, source.body.getJSONObject("comic").getInt("areaId"));
+        assertEquals(1, source.body.getJSONObject("comic").getInt("status"));
+        filters.put("tag", "all");
+        source.category(filters, 1);
+        assertEquals("https://manwace.cc/api/cate", source.urls.get(1));
+    }
+
+    @Test public void everyDisplayedTagUsesItsWebsiteSlug() throws Exception {
+        String[] slugs = {"hotblooded", "xuanhuan", "romance", "adventure", "historical", "urban", "transmigration",
+                "fantasy", "comedy", "shounen", "action", "rebirth", "counterattack", "hilarious", "youth",
+                "harem", "system", "bl", "manhwa", "fullversion", "19plus", "taiwanver"};
+        Fake source = new Fake();
+        List<ComicModels.FilterOption> options = source.filterGroups().get(2).options;
+        assertEquals(slugs.length + 1, options.size());
+        for (int i = 0; i < slugs.length; i++) {
+            source.category(Collections.singletonMap("tag", options.get(i + 1).value), 1);
+            assertEquals("https://manwace.cc/api/cate/" + slugs[i], source.urls.get(i));
+        }
+    }
+
+    @Test public void realTransportSendsTypeCookiePerRequestAndDoesNotLeakToSearch() throws Exception {
+        java.net.ServerSocket server = new java.net.ServerSocket(0, 3, java.net.InetAddress.getByName("127.0.0.1"));
+        server.setSoTimeout(5000);
+        List<String> cookies = new java.util.concurrent.CopyOnWriteArrayList<>();
+        java.util.concurrent.FutureTask<Void> serve = new java.util.concurrent.FutureTask<>(() -> {
+            for (int i = 0; i < 3; i++) {
+                try (java.net.Socket socket = server.accept()) {
+                    socket.setSoTimeout(5000);
+                    java.io.BufferedReader input = new java.io.BufferedReader(new java.io.InputStreamReader(
+                            socket.getInputStream(), java.nio.charset.StandardCharsets.UTF_8));
+                    String line, cookie = "null";
+                    int length = 0;
+                    while ((line = input.readLine()) != null && !line.isEmpty()) {
+                        if (line.toLowerCase(java.util.Locale.ROOT).startsWith("cookie:")) cookie = line.substring(7).trim();
+                        if (line.toLowerCase(java.util.Locale.ROOT).startsWith("content-length:")) length = Integer.parseInt(line.substring(15).trim());
+                    }
+                    for (int j = 0; j < length; j++) if (input.read() == -1) throw new IOException("Truncated request");
+                    cookies.add(cookie);
+                    byte[] body = "{\"code\":200,\"data\":{\"list\":[]}}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    java.io.OutputStream output = socket.getOutputStream();
+                    output.write(("HTTP/1.1 200 OK\r\nContent-Length: " + body.length + "\r\nConnection: close\r\n\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    output.write(body);
+                    output.flush();
+                }
+            }
+            return null;
+        });
+        Thread worker = new Thread(serve, "manwa-test-http");
+        worker.setDaemon(true);
+        worker.start();
+        try {
+            SourceConfig original = SourceConfig.manwa(true);
+            String base = "http://127.0.0.1:" + server.getLocalPort();
+            ManwaComicSource source = new ManwaComicSource(new SourceConfig("manwa", "漫蛙", "127.0.0.1",
+                    base, base + "/", "", "", "", "", true, original.routes, original.filters));
+            source.category(Collections.singletonMap("type", "2"), 1);
+            source.category(Collections.singletonMap("type", "all"), 1);
+            source.search("漫画", 1);
+            serve.get(5, java.util.concurrent.TimeUnit.SECONDS);
+            assertEquals("typeId=2", cookies.get(0));
+            assertEquals("typeId=0", cookies.get(1));
+            assertEquals("null", cookies.get(2));
+        } finally { server.close(); worker.join(5000); }
+    }
+
     @Test public void searchEncodesKeywordAndUsesRealMangaTypeAndPage() throws Exception {
         Fake source = new Fake();
         List<ComicModels.ComicSummary> result = source.search("  史莱姆 & A  ", 2);
@@ -172,7 +244,7 @@ public class ManwaComicSourceTest {
             urls.add(url); body = requestBody;
             assertTrue(referer.startsWith("https://manwace.cc/"));
             if (url.contains("/api/search")) return fixture("search.json");
-            if (url.endsWith("/api/cate")) return fixture("cate.json");
+            if (url.contains("/api/cate")) return fixture("cate.json");
             if (url.endsWith("/chapters")) return directory == null ? fixture("chapters.json") : directory;
             if (url.contains("/chapter/info/")) return fixture("chapter-info.json");
             if (url.contains("/image/")) return images == null ? fixture("images.json") : images.get(imageIndex++);
