@@ -28,12 +28,31 @@ public final class ReaderInstrumentation extends Instrumentation {
     private MainActivity activity;
     private ComicDetail detail;
     private int checks;
-    @Override public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
+    private boolean immersionOnly;
+    private boolean startupOnly;
+    @Override public void onCreate(Bundle arguments) {
+        super.onCreate(arguments);
+        immersionOnly = arguments != null && "true".equals(arguments.getString("immersionOnly"));
+        startupOnly = arguments != null && "true".equals(arguments.getString("startupOnly"));
+        start();
+    }
     @Override public void onStart() {
         Bundle result = new Bundle();
         try {
             activity = (MainActivity) startActivitySync(new Intent(getTargetContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             seed();
+            if (startupOnly) {
+                testStartupPromptLifecycle();
+                result.putString("stream", "PASS: " + checks + " startup prompt device checks\n");
+                finish(-1, result);
+                return;
+            }
+            if (immersionOnly) {
+                testImmersion();
+                result.putString("stream", "PASS: " + checks + " immersion device checks\n");
+                finish(-1, result);
+                return;
+            }
             for (int mode = 0; mode < 3; mode++) for (boolean left : new boolean[]{false, true}) {
                 configure(1, mode, left);
                 navigateGesture(mode, left);
@@ -97,6 +116,88 @@ public final class ReaderInstrumentation extends Instrumentation {
         } catch(Throwable e) {
             result.putString("stream", "FAIL after " + checks + " checks: " + android.util.Log.getStackTraceString(e));
             finish(0, result);
+        }
+    }
+    private void testStartupPromptLifecycle() throws Exception {
+        com.xxcomic.update.AppUpdateChecker checker=com.xxcomic.update.AppUpdateChecker.getInstance();
+        com.xxcomic.update.AppRelease soft=new com.xxcomic.update.AppRelease("2.0.99",299,100,
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","soft","测试说明");
+        com.xxcomic.update.AppRelease prompt=new com.xxcomic.update.AppRelease("2.0.99",299,100,
+                soft.sha256,"prompt","可取消的更新提示");
+        // Wait for the real startup request to finish before injecting the offline fixture.
+        long deadline=SystemClock.uptimeMillis()+30000;
+        Field completed=checker.getClass().getDeclaredField("startupCompleted");completed.setAccessible(true);
+        while(!(boolean)completed.get(checker) && SystemClock.uptimeMillis()<deadline)SystemClock.sleep(100);
+        check((boolean)completed.get(checker),"initial check completed");
+        com.xxcomic.update.AppUpdateChecker.StartupCheckCallback callback=
+                (com.xxcomic.update.AppUpdateChecker.StartupCheckCallback)get("startupUpdateCallback");
+        callback.onStartupCheckFinished(soft);settle();
+        check(get("activeUpdateDialog")==null,"soft update stays silent");
+        sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_HOME);settle();
+        callback.onStartupCheckFinished(prompt);settle();
+        check(get("activeUpdateDialog")==null,"background result cannot show dialog");
+        check(get("pendingPromptRelease")!=null,"background result retained");
+        getTargetContext().startActivity(new Intent(getTargetContext(),MainActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));settle();
+        check(get("activeUpdateDialog")!=null && ((android.app.AlertDialog)get("activeUpdateDialog")).isShowing(),"foreground displays pending prompt");
+        onMain(() -> ((android.app.AlertDialog)get("activeUpdateDialog")).getButton(-2).performClick());settle();
+        check(checker.isSessionPromptDismissed(),"cancel acknowledges prompt for session");
+        onMain(() -> call("tryShowUpdatePrompt",prompt));settle();
+        check(get("activeUpdateDialog")==null,"cancelled prompt cannot return");
+        Field dismissed=checker.getClass().getDeclaredField("sessionPromptDismissed");dismissed.setAccessible(true);
+        Field cached=checker.getClass().getDeclaredField("cachedRelease");cached.setAccessible(true);
+        onMain(() -> {dismissed.set(checker,false);cached.set(checker,prompt);call("tryShowUpdatePrompt",prompt);});settle();
+        check(get("activeUpdateDialog")!=null,"second fixture prompt displayed");
+        ActivityMonitor monitor=addMonitor(MainActivity.class.getName(),null,false);
+        onMain(() -> activity.recreate());
+        android.app.Activity replacement=waitForMonitorWithTimeout(monitor,10000);removeMonitor(monitor);
+        check(replacement instanceof MainActivity,"activity recreated");activity=(MainActivity)replacement;settle();
+        check(get("activeUpdateDialog")!=null && ((android.app.AlertDialog)get("activeUpdateDialog")).isShowing(),"prompt survives activity recreation");
+        onMain(() -> ((android.app.AlertDialog)get("activeUpdateDialog")).cancel());settle();
+        check(checker.isSessionPromptDismissed(),"back or outside cancellation acknowledges prompt");
+    }
+    private void testImmersion() throws Exception {
+        onMain(() -> {
+            activity.getSharedPreferences("xx-comic",0).edit().remove("reader.fully.immersive").commit();
+            call("restoreLocalState");
+        });
+        check(!(boolean)get("readerFullyImmersive"), "upgrade defaults to normal");
+        for(int layout=0;layout<2;layout++) for(int display=0;display<2;display++) {
+            final int screenMode=display;
+            onMain(() -> {set("readerFullyImmersive",false);set("readerDisplayMode",screenMode);});
+            configure(layout,1,false);
+            onMain(() -> call("setReaderFullscreen",true,false));
+            check(((View)get("readerOverlayBadge")).getVisibility()==View.VISIBLE,"normal badge visible");
+            if(layout==1){onMain(() -> pager().moveTo(1));settle();}
+            onMain(() -> call("showReaderSettings"));settle();
+            check(findText(activity.getWindow().getDecorView(),"沉浸模式")!=null,"immersion settings section");
+            clickText("完全沉浸");
+            check(activity.getSharedPreferences("xx-comic",0).getBoolean("reader.fully.immersive",false),"choice persisted");
+            onMain(() -> activity.onBackPressed());settle();
+            check((int)get("readerChapterIndex")==0,"chapter preserved");
+            if(layout==1)check(pager().currentPage()==1,"image preserved");
+            check(((View)get("readerOverlayBadge")).getVisibility()==View.GONE,"immersive badge gone");
+            onMain(() -> call("setReaderFullscreen",false,true));settle();
+            check(((View)get("readerTopBar")).getVisibility()==View.VISIBLE,"controls remain accessible");
+            onMain(() -> {call("setReaderFullscreen",true,true);call("refreshReaderOverlayBadge");});settle();
+            check(((View)get("readerOverlayBadge")).getVisibility()==View.GONE,"animation and data refresh keep badge hidden");
+            onMain(() -> {call("showReader",detail,1);call("onResume");});settle();
+            check(((View)get("readerOverlayBadge")).getVisibility()==View.GONE,"chapter change and resume keep badge hidden");
+            onMain(() -> {
+                call("saveLocalState");set("readerFullyImmersive",false);call("restoreLocalState");
+            });
+            check((boolean)get("readerFullyImmersive"),"saved preference reloads");
+            onMain(() -> call("showReaderSettings"));settle();
+            // The page also has a display-mode option named 普通模式; choose within the immersion section.
+            onMain(() -> {
+                View choice=findText(activity.getWindow().getDecorView(),"完全沉浸");
+                ViewGroup row=(ViewGroup)choice.getParent();
+                View normal=findText(row,"普通模式");
+                while(!normal.isClickable())normal=(View)normal.getParent();normal.performClick();
+            });settle();
+            onMain(() -> activity.onBackPressed());settle();
+            onMain(() -> call("setReaderFullscreen",true,false));
+            check(((View)get("readerOverlayBadge")).getVisibility()==View.VISIBLE,"normal restores badge");
         }
     }
     private void seed() throws Exception {

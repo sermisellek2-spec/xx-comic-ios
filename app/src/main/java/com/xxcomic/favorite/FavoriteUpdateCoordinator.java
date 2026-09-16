@@ -70,12 +70,14 @@ public final class FavoriteUpdateCoordinator {
     private static final class CheckTask {
         final String comicId;
         final ComicSource client;
-        final SourceResolver resolver;
+        final int visitEpoch;
+        final int favoriteEpoch;
 
-        CheckTask(String comicId, ComicSource client, SourceResolver resolver) {
+        CheckTask(String comicId, ComicSource client, int visitEpoch, int favoriteEpoch) {
             this.comicId = comicId;
             this.client = client;
-            this.resolver = resolver;
+            this.visitEpoch = visitEpoch;
+            this.favoriteEpoch = favoriteEpoch;
         }
     }
 
@@ -114,7 +116,7 @@ public final class FavoriteUpdateCoordinator {
 
     public void startStartupCheck(List<String> favoriteSnapshot, SourceResolver resolver,
                                   Map<String, ComicModels.ComicDetail> cachedDetails) {
-        if (favoriteSnapshot == null || favoriteSnapshot.isEmpty() || resolver == null) {
+        if (favoriteSnapshot == null || resolver == null) {
             return;
         }
         synchronized (lock) {
@@ -146,7 +148,7 @@ public final class FavoriteUpdateCoordinator {
                 if (client == null) {
                     continue;
                 }
-                taskQueue.add(new CheckTask(comicId, client, resolver));
+                taskQueue.add(new CheckTask(comicId, client, getVisitEpoch(comicId), getFavoriteEpoch(comicId)));
             }
             dispatchNextTasksLocked();
         }
@@ -159,6 +161,10 @@ public final class FavoriteUpdateCoordinator {
         Iterator<CheckTask> it = taskQueue.iterator();
         while (it.hasNext() && runningCount < 2) {
             CheckTask task = it.next();
+            if (getFavoriteEpoch(task.comicId) != task.favoriteEpoch) {
+                it.remove();
+                continue;
+            }
             String sourceId = task.client.id();
             if (!runningSources.contains(sourceId)) {
                 it.remove();
@@ -172,8 +178,8 @@ public final class FavoriteUpdateCoordinator {
     private void executeTask(CheckTask task) {
         final String comicId = task.comicId;
         final ComicSource client = task.client;
-        final int startVisitEpoch = getVisitEpoch(comicId);
-        final int startFavoriteEpoch = getFavoriteEpoch(comicId);
+        final int startVisitEpoch = task.visitEpoch;
+        final int startFavoriteEpoch = task.favoriteEpoch;
 
         executor.submit(() -> {
             FavoriteRevision newRev = null;
@@ -240,8 +246,8 @@ public final class FavoriteUpdateCoordinator {
 
     public void onUserEnterDetail(String comicId) {
         if (isEmpty(comicId)) return;
-        visitEpochs.compute(comicId, (k, v) -> v == null ? 1 : v + 1);
         synchronized (lock) {
+            visitEpochs.compute(comicId, (k, v) -> v == null ? 1 : v + 1);
             FavoriteUpdateState state = states.get(comicId);
             if (state != null) {
                 state.pendingUpdate = false;
@@ -256,8 +262,9 @@ public final class FavoriteUpdateCoordinator {
 
     public void onFavoriteAdded(String comicId, ComicModels.ComicDetail detail) {
         if (isEmpty(comicId)) return;
-        favoriteEpochs.compute(comicId, (k, v) -> v == null ? 1 : v + 1);
         synchronized (lock) {
+            favoriteEpochs.compute(comicId, (k, v) -> v == null ? 1 : v + 1);
+            checkedInSession.remove(comicId);
             FavoriteRevision rev = detail != null ? FavoriteRevision.fromDetail(detail) : null;
             String sourceId = detail != null && detail.summary != null ? detail.summary.sourceId : "";
             FavoriteUpdateState state = new FavoriteUpdateState(sourceId, comicId, false, rev, rev);
@@ -268,8 +275,11 @@ public final class FavoriteUpdateCoordinator {
 
     public void onFavoriteRemoved(String comicId) {
         if (isEmpty(comicId)) return;
-        favoriteEpochs.compute(comicId, (k, v) -> v == null ? 1 : v + 1);
         synchronized (lock) {
+            favoriteEpochs.compute(comicId, (k, v) -> v == null ? 1 : v + 1);
+            for (int i = taskQueue.size() - 1; i >= 0; i--) {
+                if (comicId.equals(taskQueue.get(i).comicId)) taskQueue.remove(i);
+            }
             states.remove(comicId);
             checkedInSession.remove(comicId);
             persistStatesLocked();
@@ -287,11 +297,15 @@ public final class FavoriteUpdateCoordinator {
                 Map.Entry<String, FavoriteUpdateState> entry = it.next();
                 if (!favSet.contains(entry.getKey())) {
                     it.remove();
+                    favoriteEpochs.compute(entry.getKey(), (k, v) -> v == null ? 1 : v + 1);
                     checkedInSession.remove(entry.getKey());
                     changed = true;
                 }
             }
             if (changed) {
+                for (int i = taskQueue.size() - 1; i >= 0; i--) {
+                    if (!favSet.contains(taskQueue.get(i).comicId)) taskQueue.remove(i);
+                }
                 persistStatesLocked();
             }
         }
@@ -318,7 +332,8 @@ public final class FavoriteUpdateCoordinator {
                 listener = badgeChangeListener;
             }
             if (listener != null) {
-                listener.onBadgeChanged(comicId, visible);
+                // A queued UI callback may arrive after a visit/removal. Render current state.
+                listener.onBadgeChanged(comicId, shouldShowBadge(comicId));
             }
         };
         if (mainHandler != null) {

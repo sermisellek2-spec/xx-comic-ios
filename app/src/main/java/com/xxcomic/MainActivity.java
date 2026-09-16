@@ -251,6 +251,13 @@ public class MainActivity extends Activity {
     private AlertDialog activeUpdateDialog = null;
     private AlertDialog activeRemDialog = null;
     private AppRelease pendingPromptRelease = null;
+    private boolean activityResumed = false;
+    private final AppUpdateChecker.StartupCheckCallback startupUpdateCallback = release ->
+            postMainIfAlive(() -> {
+                if (release == null || !release.hasNewVersion(BuildConfig.VERSION_CODE)) return;
+                availableUpdateRelease = release;
+                if (release.isPromptMode()) tryShowUpdatePrompt(release);
+            });
 
     private FrameLayout root;
     private int currentTab = 1;
@@ -289,6 +296,7 @@ public class MainActivity extends Activity {
     private SeekBar readerSeekBar;
     private boolean readerSeeking = false;
     private TextView readerOverlayBadge;
+    private boolean readerFullyImmersive = false;
     private final android.util.LruCache<String, Bitmap> readerBitmapCache =
             new android.util.LruCache<String, Bitmap>((int) (Runtime.getRuntime().maxMemory() / 6)) {
                 @Override
@@ -463,7 +471,8 @@ public class MainActivity extends Activity {
         scheduleThemeSwitch();
         showTab(0);
         FavoriteUpdateCoordinator.getInstance().setBadgeChangeListener((comicId, visible) -> {
-            postMainIfAlive(() -> updateFavoriteBadge(comicId, visible));
+            postMainIfAlive(() -> updateFavoriteBadge(comicId,
+                    FavoriteUpdateCoordinator.getInstance().shouldShowBadge(comicId)));
         });
         triggerStartupChecks();
     }
@@ -471,6 +480,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        activityResumed = true;
         boolean themeChanged = refreshThemeIfChanged();
         scheduleThemeSwitch();
         if (themeChanged && root != null) rerenderCurrentScreen();
@@ -488,10 +498,17 @@ public class MainActivity extends Activity {
         if (hasFocus && readerVisible) {
             applyReaderSystemBars();
         }
+        if (hasFocus) checkPendingUpdatePrompt();
     }
 
     @Override
     protected void onPause() {
+        activityResumed = false;
+        if (activeUpdateDialog != null && activeUpdateDialog.isShowing()) {
+            pendingPromptRelease = availableUpdateRelease;
+            activeUpdateDialog.dismiss();
+            activeUpdateDialog = null;
+        }
         super.onPause();
         unregisterReaderBatteryReceiver();
         main.removeCallbacks(readerTimeUpdateRunnable);
@@ -501,6 +518,8 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        activityResumed = false;
+        AppUpdateChecker.getInstance().detachStartupCallback(startupUpdateCallback);
         FavoriteUpdateCoordinator.getInstance().setBadgeChangeListener(null);
         if (activeUpdateDialog != null && activeUpdateDialog.isShowing()) {
             activeUpdateDialog.dismiss();
@@ -1709,6 +1728,14 @@ public class MainActivity extends Activity {
         page.addView(settingsSectionText(readerDisplayMode == 1
                 ? "黑白高对比优化，纯黑背景降低灰阶，适合墨水屏设备"
                 : "彩色原图展示，适合常规手机与平板屏幕"));
+        addReaderChoices(page, "沉浸模式", new String[]{"普通模式", "完全沉浸"}, readerFullyImmersive ? 1 : 0, value -> {
+            readerFullyImmersive = value == 1;
+            saveLocalState();
+            showReaderSettings();
+        });
+        page.addView(settingsSectionText(readerFullyImmersive
+                ? "隐藏右下角的章节、页码、时间和电量，仍可点击呼出控制栏"
+                : "保持显示右下角的阅读信息"));
     }
 
     private interface ReaderSettingAction { void select(int value); }
@@ -3172,9 +3199,8 @@ public class MainActivity extends Activity {
         FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
         badgeParams.rightMargin = UIHelpers.dp(this, 10);
         badgeParams.bottomMargin = UIHelpers.dp(this, readerButtonMode ? 60 : 8);
-        overlayBadge.setAlpha(readerFullscreen ? 1f : 0f);
-        overlayBadge.setVisibility(readerFullscreen ? View.VISIBLE : View.INVISIBLE);
         shell.addView(overlayBadge, badgeParams);
+        updateReaderOverlayVisibility(false);
 
         setReaderFullscreen(readerFullscreen, false);
     }
@@ -3325,6 +3351,7 @@ public class MainActivity extends Activity {
     private void setReaderFullscreen(boolean fullscreen, boolean animated) {
         readerFullscreen = fullscreen;
         if (readerDisplayMode == 1) animated = false;
+        updateReaderOverlayVisibility(animated);
         if (readerTopBar == null || readerBottomBar == null) return;
 
         int topHeight = readerTopBar.getHeight();
@@ -3366,11 +3393,6 @@ public class MainActivity extends Activity {
                 readerProgressView.setVisibility(View.VISIBLE);
             }
 
-            if (readerOverlayBadge != null) {
-                readerOverlayBadge.animate().cancel();
-                readerOverlayBadge.setAlpha(readerFullscreen ? 1f : 0f);
-                readerOverlayBadge.setVisibility(readerFullscreen ? View.VISIBLE : View.INVISIBLE);
-            }
             return;
         }
 
@@ -3436,23 +3458,33 @@ public class MainActivity extends Activity {
                     .start();
         }
 
-        if (readerOverlayBadge != null) {
-            readerOverlayBadge.animate().cancel();
-            if (readerFullscreen) {
-                readerOverlayBadge.setVisibility(View.VISIBLE);
-            }
-            readerOverlayBadge.animate()
-                    .alpha(readerFullscreen ? 1f : 0f)
-                    .setDuration(duration)
-                    .setInterpolator(interpolator)
-                    .withLayer()
-                    .withEndAction(() -> {
-                        if (!readerFullscreen && readerOverlayBadge != null) {
-                            readerOverlayBadge.setVisibility(View.INVISIBLE);
-                        }
-                    })
-                    .start();
+    }
+
+    private void updateReaderOverlayVisibility(boolean animated) {
+        final TextView badge = readerOverlayBadge;
+        if (badge == null) return;
+        badge.animate().cancel();
+        if (readerFullyImmersive) {
+            badge.setAlpha(0f);
+            badge.setVisibility(View.GONE);
+            return;
         }
+        final boolean show = readerFullscreen;
+        if (!animated) {
+            badge.setAlpha(show ? 1f : 0f);
+            badge.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+            return;
+        }
+        if (show) badge.setVisibility(View.VISIBLE);
+        badge.animate().alpha(show ? 1f : 0f)
+                .setDuration(READER_CHROME_ANIM_MS)
+                .setInterpolator(show ? new AccelerateInterpolator(1.6f) : new DecelerateInterpolator(1.6f))
+                .withLayer()
+                .withEndAction(() -> {
+                    if (readerOverlayBadge != badge) return;
+                    badge.setVisibility(readerFullyImmersive ? View.GONE
+                            : readerFullscreen ? View.VISIBLE : View.INVISIBLE);
+                }).start();
     }
 
     private int readerChromeBottomOffset() {
@@ -6239,6 +6271,8 @@ public class MainActivity extends Activity {
             return;
         }
         updateRunning = true;
+        pendingPromptRelease = null;
+        AppUpdateChecker.getInstance().markSessionPromptDismissed();
         int generation = ++updateGeneration;
         showUpdateLoading();
         AppUpdateChecker.getInstance().triggerManualCheck(miscIo, UPDATE_METADATA_URL, IMAGE_USER_AGENT,
@@ -6315,16 +6349,7 @@ public class MainActivity extends Activity {
 
     private void triggerStartupChecks() {
         AppUpdateChecker.getInstance().triggerStartupCheck(miscIo, UPDATE_METADATA_URL, IMAGE_USER_AGENT,
-                BuildConfig.VERSION_CODE, release -> {
-                    postMainIfAlive(() -> {
-                        if (release == null) return;
-                        if (!release.hasNewVersion(BuildConfig.VERSION_CODE)) return;
-                        availableUpdateRelease = release;
-                        if (release.isPromptMode()) {
-                            tryShowUpdatePrompt(release);
-                        }
-                    });
-                });
+                BuildConfig.VERSION_CODE, startupUpdateCallback);
 
         List<String> favoriteSnapshot = new ArrayList<>(favorites);
         FavoriteUpdateCoordinator.getInstance().startStartupCheck(favoriteSnapshot,
@@ -6352,6 +6377,10 @@ public class MainActivity extends Activity {
     }
 
     private void checkPendingUpdatePrompt() {
+        if (AppUpdateChecker.getInstance().isSessionPromptDismissed()) {
+            pendingPromptRelease = null;
+            return;
+        }
         if (pendingPromptRelease == null) return;
         if (!canShowUpdateDialogNow()) return;
         final AppRelease release = pendingPromptRelease;
@@ -6370,7 +6399,8 @@ public class MainActivity extends Activity {
     }
 
     private boolean canShowUpdateDialogNow() {
-        if (isFinishing() || isDestroyed()) return false;
+        if (!activityResumed || !hasWindowFocus() || isFinishing() || isDestroyed()) return false;
+        if (!verifyingProtectedSourceIds.isEmpty()) return false;
         if (AppUpdateChecker.getInstance().isSessionPromptDismissed()) return false;
         if (activeUpdateDialog != null && activeUpdateDialog.isShowing()) return false;
         if (activeRemDialog != null && activeRemDialog.isShowing()) return false;
@@ -7201,6 +7231,7 @@ public class MainActivity extends Activity {
         readerPageMode = Math.max(0, Math.min(2, prefs.getInt("reader.page.mode", readerButtonMode ? 1 : 0)));
         readerButtonMode = readerPageMode == 1;
         readerLayoutMode = prefs.getInt("reader.layout.mode", 0) == 1 ? 1 : 0;
+        readerFullyImmersive = prefs.getBoolean("reader.fully.immersive", false);
         readerDisplayMode = prefs.getInt("reader.display.mode", 0) == 1 ? 1 : 0;
         readerImagePositions.clear();
         try {
@@ -7307,6 +7338,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("reader.button.mode", readerButtonMode);
         editor.putInt("reader.page.mode", readerPageMode);
         editor.putInt("reader.layout.mode", readerLayoutMode);
+        editor.putBoolean("reader.fully.immersive", readerFullyImmersive);
         editor.putInt("reader.display.mode", readerDisplayMode);
         JSONObject savedImages = new JSONObject();
         try {

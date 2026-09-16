@@ -28,24 +28,16 @@ public final class AppUpdateChecker {
         void onManualCheckFailure(Exception error);
     }
 
-    private static final class CheckRequest {
-        final StartupCheckCallback startupCallback;
-        final ManualCheckCallback manualCallback;
-
-        CheckRequest(StartupCheckCallback startupCallback, ManualCheckCallback manualCallback) {
-            this.startupCallback = startupCallback;
-            this.manualCallback = manualCallback;
-        }
-    }
-
     private final Object lock = new Object();
     private boolean sessionStarted = false;
+    private boolean startupCompleted = false;
     private boolean sessionPromptDismissed = false;
+    private StartupCheckCallback startupCallback;
     private AppRelease cachedRelease = null;
     private Future<?> inFlightFuture = null;
-    private final List<CheckRequest> listeners = new ArrayList<>();
+    private final List<ManualCheckCallback> manualListeners = new ArrayList<>();
 
-    private AppUpdateChecker() {
+    AppUpdateChecker() {
     }
 
     public boolean isSessionPromptDismissed() {
@@ -69,28 +61,41 @@ public final class AppUpdateChecker {
     public boolean triggerStartupCheck(ExecutorService executor, String metadataUrl,
                                        String userAgent, int currentVersionCode,
                                        StartupCheckCallback callback) {
+        AppRelease replay = null;
+        boolean deliverReplay = false;
         synchronized (lock) {
+            // Each Activity subscribes to the process-owned result without starting a new request.
+            startupCallback = callback;
             if (sessionStarted) {
-                return false;
+                deliverReplay = startupCompleted && !sessionPromptDismissed;
+                replay = cachedRelease;
+            } else {
+                sessionStarted = true;
+                executeIfNeededLocked(executor, metadataUrl, userAgent);
+                return true;
             }
-            sessionStarted = true;
-            CheckRequest req = new CheckRequest(callback, null);
-            attachOrExecuteLocked(executor, metadataUrl, userAgent, req);
-            return true;
+        }
+        if (deliverReplay && callback != null) callback.onStartupCheckFinished(replay);
+        return false;
+    }
+
+    public void detachStartupCallback(StartupCheckCallback callback) {
+        synchronized (lock) {
+            if (startupCallback == callback) startupCallback = null;
         }
     }
 
     public void triggerManualCheck(ExecutorService executor, String metadataUrl,
                                   String userAgent, ManualCheckCallback callback) {
         synchronized (lock) {
-            CheckRequest req = new CheckRequest(null, callback);
-            attachOrExecuteLocked(executor, metadataUrl, userAgent, req);
+            // Manual presentation supersedes any pending automatic prompt for this session.
+            sessionPromptDismissed = true;
+            manualListeners.add(callback);
+            executeIfNeededLocked(executor, metadataUrl, userAgent);
         }
     }
 
-    private void attachOrExecuteLocked(ExecutorService executor, String metadataUrl,
-                                       String userAgent, CheckRequest request) {
-        listeners.add(request);
+    private void executeIfNeededLocked(ExecutorService executor, String metadataUrl, String userAgent) {
         if (inFlightFuture != null && !inFlightFuture.isDone() && !inFlightFuture.isCancelled()) {
             // Already checking, join the running request
             return;
@@ -104,35 +109,22 @@ public final class AppUpdateChecker {
                 error = e;
             }
 
-            List<CheckRequest> targets;
-            boolean hasManualListener = false;
+            List<ManualCheckCallback> targets;
+            StartupCheckCallback startupTarget;
             synchronized (lock) {
                 cachedRelease = result;
-                targets = new ArrayList<>(listeners);
-                listeners.clear();
+                startupCompleted = sessionStarted;
+                targets = new ArrayList<>(manualListeners);
+                manualListeners.clear();
                 inFlightFuture = null;
-                for (CheckRequest req : targets) {
-                    if (req.manualCallback != null) {
-                        hasManualListener = true;
-                        break;
-                    }
-                }
+                startupTarget = sessionPromptDismissed ? null : startupCallback;
             }
 
-            for (CheckRequest req : targets) {
-                if (req.manualCallback != null) {
-                    if (error != null) {
-                        req.manualCallback.onManualCheckFailure(error);
-                    } else {
-                        req.manualCallback.onManualCheckSuccess(result);
-                    }
-                } else if (req.startupCallback != null) {
-                    // If a manual check joined and took over result display, suppress startup callback
-                    if (!hasManualListener) {
-                        req.startupCallback.onStartupCheckFinished(error != null ? null : result);
-                    }
-                }
+            for (ManualCheckCallback target : targets) {
+                if (error != null) target.onManualCheckFailure(error);
+                else target.onManualCheckSuccess(result);
             }
+            if (startupTarget != null) startupTarget.onStartupCheckFinished(result);
         });
     }
 
