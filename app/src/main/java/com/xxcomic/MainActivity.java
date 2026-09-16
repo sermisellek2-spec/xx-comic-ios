@@ -64,6 +64,7 @@ import com.xxcomic.source.AntbywComicSource;
 import com.xxcomic.source.Mh160ComicSource;
 import com.xxcomic.source.ComicModels;
 import com.xxcomic.source.ComicSource;
+import com.xxcomic.source.DetailSourceSearch;
 import com.xxcomic.source.CuimhComicSource;
 import com.xxcomic.source.D5d6ComicSource;
 import com.xxcomic.source.FiveUmComicSource;
@@ -165,6 +166,15 @@ public class MainActivity extends Activity {
     private static final String APK_MIME_TYPE = "application/vnd.android.package-archive";
     private static final String IMAGE_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private final Handler main = new Handler(Looper.getMainLooper());
+    private final DetailSourceSearch detailSourceSearch = new DetailSourceSearch(main::post);
+    private TextView detailSourceEntry;
+    private SourceSwitchSheet detailSourceSheet;
+    private boolean detailSourcesLoading;
+    private List<ComicModels.ComicSummary> detailSourceOptions = new ArrayList<>();
+    private String pendingDetailSourceId = "";
+    private int detailSwitchGeneration;
+    private Future<?> detailSwitchTask;
+    private Runnable detailSwitchTimeout;
     // 按模块拆分线程池，互不阻塞：搜索中切到收藏页，封面图走 imageIo 不被搜索阻塞
     private final ExecutorService searchIo = Executors.newFixedThreadPool(12);
     private final ExecutorService detailIo = Executors.newFixedThreadPool(2);
@@ -524,6 +534,9 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (detailSourceSheet != null) detailSourceSheet.dismissImmediately();
+        detailSourceSearch.close();
+        if (detailSwitchTimeout != null) main.removeCallbacks(detailSwitchTimeout);
         activityResumed = false;
         AppUpdateChecker.getInstance().detachStartupCallback(startupUpdateCallback);
         FavoriteUpdateCoordinator.getInstance().setBadgeChangeListener(null);
@@ -851,6 +864,19 @@ public class MainActivity extends Activity {
 
     /** 切屏：cancel 上一屏所有未完成的 Future（排队中的不再执行，运行中的收到 interrupt） */
     private void enterScreen() {
+        enterScreen(false);
+    }
+
+    private void enterScreen(boolean keepDetailSearch) {
+        if (!keepDetailSearch) detailSourceSearch.detach();
+        if (detailSourceSheet != null) detailSourceSheet.dismissImmediately();
+        detailSourceEntry = null;
+        detailSwitchGeneration++;
+        pendingDetailSourceId = "";
+        if (detailSwitchTask != null) detailSwitchTask.cancel(true);
+        detailSwitchTask = null;
+        if (detailSwitchTimeout != null) main.removeCallbacks(detailSwitchTimeout);
+        detailSwitchTimeout = null;
         releaseReaderViews();
         dismissTransientHint();
         if (pageLoading) {
@@ -2380,7 +2406,7 @@ public class MainActivity extends Activity {
                 }
             };
         }
-        enterScreen();
+        enterScreen(true);
         applyThemeAndSystemBars();
         activeDetailId = comicId;
         readerVisible = false;
@@ -2451,10 +2477,16 @@ public class MainActivity extends Activity {
         detailTitle.setMaxLines(2);
         detailTitle.setEllipsize(TextUtils.TruncateAt.END);
         titleRow.addView(detailTitle, UIHelpers.weight(1));
-        TextView source = UIHelpers.text(this, sourceNameForId(detail.summary.sourceId), 11, UIHelpers.ACCENT, Typeface.NORMAL);
+        TextView source = UIHelpers.text(this, sourceNameForId(detail.summary.sourceId) + " ⇄", 12, UIHelpers.ACCENT, Typeface.NORMAL);
         source.setSingleLine(true);
-        source.setPadding(UIHelpers.dp(this, 7), UIHelpers.dp(this, 3), UIHelpers.dp(this, 7), UIHelpers.dp(this, 3));
-        source.setBackground(UIHelpers.round(UIHelpers.ACCENT_LIGHT, UIHelpers.dp(this, 5), UIHelpers.BORDER));
+        source.setMaxWidth(UIHelpers.dp(this, 160));
+        source.setEllipsize(TextUtils.TruncateAt.END);
+        source.setGravity(Gravity.CENTER);
+        source.setMinHeight(UIHelpers.dp(this, 44));
+        source.setPadding(UIHelpers.dp(this, 10), 0, 0, 0);
+        source.setContentDescription("切换站源，当前" + sourceNameForId(detail.summary.sourceId));
+        source.setOnClickListener(v -> showDetailSourceSheet());
+        detailSourceEntry = source;
         titleRow.addView(source);
         body.addView(titleRow);
 
@@ -2468,6 +2500,16 @@ public class MainActivity extends Activity {
         metaParams.leftMargin = UIHelpers.dp(this, 7);
         byline.addView(meta, metaParams);
         body.addView(byline, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8)));
+        detailSourceOptions = Collections.singletonList(detail.summary);
+        detailSourcesLoading = true;
+        renderDetailSourceOptions();
+        detailSourceSearch.start(detail.summary, enabledSearchSources(), (items, loading) -> {
+            if (activityDestroyed || detailSourceEntry != source || readerVisible
+                    || !TextUtils.equals(activeDetailId, comicId)) return;
+            detailSourceOptions = items;
+            detailSourcesLoading = loading;
+            renderDetailSourceOptions();
+        });
         if (!detail.summary.tags.isEmpty()) {
             body.addView(detailTagRow(detail.summary.tags), UIHelpers.marginTop(-1, UIHelpers.dp(this, 10)));
         }
@@ -2493,6 +2535,89 @@ public class MainActivity extends Activity {
         actions.addView(detailReadButton(detail), new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 44), 1));
         root.addView(actions, UIHelpers.frame(-1, UIHelpers.dp(this, 62), Gravity.BOTTOM, 0, 0, 0, 0));
         refreshCachedComicOnce(detail);
+    }
+
+    private void renderDetailSourceOptions() {
+        if (detailSourceEntry == null) return;
+        ComicModels.ComicDetail current = details.get(activeDetailId);
+        if (current != null) {
+            detailSourceEntry.setText(TextUtils.isEmpty(pendingDetailSourceId)
+                    ? sourceNameForId(current.summary.sourceId) + " ⇄"
+                    : "切换中…");
+        }
+        if (detailSourceSheet != null && detailSourceSheet.isShowing()) {
+            detailSourceSheet.update(detailSourceOptions, activeDetailId, pendingDetailSourceId, detailSourcesLoading);
+        }
+    }
+
+    private void showDetailSourceSheet() {
+        if (detailSourceEntry == null || (detailSourceSheet != null && detailSourceSheet.isShowing())) return;
+        if (activePopup != null) activePopup.dismiss();
+        SourceSwitchSheet sheet = new SourceSwitchSheet(this, root,
+                comic -> coverFrame(comic.coverUrl, 48, 66), this::sourceNameForId, this::switchDetailSource);
+        detailSourceSheet = sheet;
+        activePopup = sheet;
+        sheet.setOnDismissListener(() -> {
+            if (detailSourceSheet == sheet) detailSourceSheet = null;
+            if (activePopup == sheet) activePopup = null;
+            checkPendingUpdatePrompt();
+        });
+        sheet.update(detailSourceOptions, activeDetailId, pendingDetailSourceId, detailSourcesLoading);
+        sheet.show(root);
+    }
+
+    private void switchDetailSource(ComicModels.ComicSummary target) {
+        if (TextUtils.equals(activeDetailId, target.comicId)
+                || TextUtils.equals(pendingDetailSourceId, target.sourceId)) return;
+        final String originalId = activeDetailId;
+        final int token = ++detailSwitchGeneration;
+        if (detailSwitchTask != null) detailSwitchTask.cancel(true);
+        if (detailSwitchTimeout != null) main.removeCallbacks(detailSwitchTimeout);
+        pendingDetailSourceId = target.sourceId;
+        renderDetailSourceOptions();
+        ComicModels.ComicDetail cached = details.get(target.comicId);
+        if (cached != null) {
+            summaries.put(target.comicId, cached.summary);
+            openComicDetail(target.comicId);
+            return;
+        }
+        ComicSource client = sourceForId(target.sourceId);
+        detailSwitchTimeout = () -> {
+            if (token != detailSwitchGeneration) return;
+            detailSwitchGeneration++;
+            if (detailSwitchTask != null) detailSwitchTask.cancel(true);
+            pendingDetailSourceId = "";
+            renderDetailSourceOptions();
+            showRemErrorToast("这个站源有点慢，请重试");
+        };
+        main.postDelayed(detailSwitchTimeout, 20000);
+        detailSwitchTask = track(detailIo.submit(() -> {
+            try {
+                ComicModels.ComicDetail loaded = client.detail(target.comicId);
+                if (loaded == null || loaded.summary == null
+                        || !target.sourceId.equals(loaded.summary.sourceId)
+                        || !target.comicId.equals(loaded.summary.comicId)) throw new IOException("详情不匹配");
+                main.post(() -> {
+                    if (activityDestroyed || token != detailSwitchGeneration
+                            || !TextUtils.equals(originalId, activeDetailId)) return;
+                    details.put(target.comicId, loaded);
+                    summaries.put(target.comicId, loaded.summary);
+                    refreshedComicIds.add(target.comicId);
+                    persistComicCachesAsync();
+                    openComicDetail(target.comicId);
+                });
+            } catch (Exception error) {
+                main.post(() -> {
+                    if (activityDestroyed || token != detailSwitchGeneration
+                            || !TextUtils.equals(originalId, activeDetailId)) return;
+                    main.removeCallbacks(detailSwitchTimeout);
+                    pendingDetailSourceId = "";
+                    renderDetailSourceOptions();
+                    showRemErrorToast(isVerificationRequired(error)
+                            ? "请先到站源管理验证" : "切换失败，请重试");
+                });
+            }
+        }));
     }
 
     private void refreshCachedComicOnce(ComicModels.ComicDetail detail) {
@@ -2540,6 +2665,7 @@ public class MainActivity extends Activity {
             return;
         }
         if (loaded != null && TextUtils.equals(activeDetailId, comicId) && !readerVisible
+                && TextUtils.isEmpty(pendingDetailSourceId)
                 && (activePopup == null || !activePopup.isShowing())) showDetail(comicId);
     }
 
