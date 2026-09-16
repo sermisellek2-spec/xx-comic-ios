@@ -319,6 +319,23 @@ public class SourceConfig {
                 "", "", "", "", enabled, routes, new JSONObject());
     }
 
+    public static SourceConfig manwa(boolean enabled) {
+        JSONObject routes = new JSONObject();
+        try {
+            routes.put("search", "/api/search?type=mh&page={page}&pageSize=20&keyword={keyword}");
+            routes.put("category", "/api/cate");
+            routes.put("detail", "/comic/{comicId}");
+            routes.put("chapters", "/api/comic/{comicId}/chapters");
+            routes.put("chapterInfo", "/api/comic/chapter/info/{chapterId}");
+            routes.put("images", "/api/comic/image/{chapterId}?page={page}&page_size=100&image_source={imageSource}");
+            routes.put("imageSource", "https://tu.mwzu.cc");
+            // Public image format key published by the site's BaseUtil, not an account credential.
+            routes.put("imageKey", "0B6666A0-BB59-1381-B746-a0E4C9AC");
+        } catch (JSONException ignored) { }
+        return new SourceConfig("manwa", "漫蛙", "manwace.cc", "https://manwace.cc", "https://manwace.cc/",
+                "", "", "", "", enabled, routes, new JSONObject());
+    }
+
     public static SourceConfig liumanhua(boolean enabled) {
         JSONObject routes = new JSONObject();
         try {

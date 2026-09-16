@@ -78,6 +78,8 @@ import com.xxcomic.source.MkzhanComicSource;
 import com.xxcomic.source.Mhua5ComicSource;
 import com.xxcomic.source.LiumanhuaComicSource;
 import com.xxcomic.source.CopyMangaComicSource;
+import com.xxcomic.source.ManwaComicSource;
+import com.xxcomic.source.ManwaImageDecoder;
 import com.xxcomic.source.SourceConfig;
 import com.xxcomic.source.VerificationCancelledException;
 import com.xxcomic.source.VerificationRequiredException;
@@ -203,6 +205,7 @@ public class MainActivity extends Activity {
     private ComicSource cuimhClient;
     private ComicSource liumanhuaClient;
     private ComicSource copy4000Client;
+    private ComicSource manwaClient;
     private Mh18WebViewSession mh18BrowserSession;
     private JmComicWebViewSession jmcomicBrowserSession;
     private SourceConfig baoziConfig = SourceConfig.baozi(true);
@@ -222,6 +225,7 @@ public class MainActivity extends Activity {
     private SourceConfig cuimhConfig = SourceConfig.cuimh(true);
     private SourceConfig liumanhuaConfig = SourceConfig.liumanhua(true);
     private SourceConfig copy4000Config = SourceConfig.copy4000(true);
+    private SourceConfig manwaConfig = SourceConfig.manwa(true);
     private final List<ComicModels.ComicSummary> searchResults = new ArrayList<>();
     private final List<ComicModels.ComicSummary> globalSearchResults = new ArrayList<>();
     private final List<String> globalSearchHistory = new ArrayList<>();
@@ -285,6 +289,7 @@ public class MainActivity extends Activity {
     private boolean cuimhEnabled = true;
     private boolean liumanhuaEnabled = true;
     private boolean copy4000Enabled = true;
+    private boolean manwaEnabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
     private int readerLayoutMode = 0; // 0 continuous, 1 single image
@@ -1606,6 +1611,12 @@ public class MainActivity extends Activity {
         addSourceCard(enabledSources, disabledSources, copy4000Enabled, sourceCard(copy4000Config, copy4000Enabled, () -> {
             copy4000Enabled = !copy4000Enabled;
             copy4000Config = copy4000Config.withEnabled(copy4000Enabled);
+            rebuildSourceClients();
+            finishSourceToggle();
+        }));
+        addSourceCard(enabledSources, disabledSources, manwaEnabled, sourceCard(manwaConfig, manwaEnabled, () -> {
+            manwaEnabled = !manwaEnabled;
+            manwaConfig = manwaConfig.withEnabled(manwaEnabled);
             rebuildSourceClients();
             finishSourceToggle();
         }));
@@ -3946,6 +3957,7 @@ public class MainActivity extends Activity {
         if (cuimhClient.id().equals(sourceId)) return cuimhClient.name();
         if (liumanhuaClient.id().equals(sourceId)) return liumanhuaClient.name();
         if (copy4000Client.id().equals(sourceId)) return copy4000Client.name();
+        if (manwaClient.id().equals(sourceId)) return manwaClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(sourceId)) return item.name;
         }
@@ -3970,6 +3982,7 @@ public class MainActivity extends Activity {
         if (cuimhClient.id().equals(selectedSourceId) && cuimhEnabled) return cuimhClient;
         if (liumanhuaClient.id().equals(selectedSourceId) && liumanhuaEnabled) return liumanhuaClient;
         if (copy4000Client.id().equals(selectedSourceId) && copy4000Enabled) return copy4000Client;
+        if (manwaClient.id().equals(selectedSourceId) && manwaEnabled) return manwaClient;
         List<ComicSource> enabled = enabledBuiltinSources();
         if (enabled.isEmpty()) return null;
         selectedSourceId = enabled.get(0).id();
@@ -3996,6 +4009,7 @@ public class MainActivity extends Activity {
         if (cuimhEnabled) sources.add(cuimhClient);
         if (liumanhuaEnabled) sources.add(liumanhuaClient);
         if (copy4000Enabled) sources.add(copy4000Client);
+        if (manwaEnabled) sources.add(manwaClient);
         return sources;
     }
 
@@ -4044,6 +4058,7 @@ public class MainActivity extends Activity {
         if (comicId != null && comicId.startsWith(cuimhClient.id() + ":")) return cuimhClient;
         if (comicId != null && comicId.startsWith(liumanhuaClient.id() + ":")) return liumanhuaClient;
         if (comicId != null && comicId.startsWith(copy4000Client.id() + ":")) return copy4000Client;
+        if (comicId != null && comicId.startsWith(manwaClient.id() + ":")) return manwaClient;
         return sourceClient;
     }
 
@@ -4071,6 +4086,7 @@ public class MainActivity extends Activity {
         if (cuimhClient.id().equals(sourceId)) return cuimhClient;
         if (liumanhuaClient.id().equals(sourceId)) return liumanhuaClient;
         if (copy4000Client.id().equals(sourceId)) return copy4000Client;
+        if (manwaClient.id().equals(sourceId)) return manwaClient;
         return sourceClient;
     }
 
@@ -4240,6 +4256,8 @@ public class MainActivity extends Activity {
         // CopyManga already supplies the group order; a final extra chapter may have a lower number.
         String firstUrl = chapters.get(0).url;
         if (firstUrl != null && firstUrl.startsWith(copy4000Config.baseUrl + "/comic/") && firstUrl.contains("/chapter/")) return;
+        // Manwa supplies explicit sortId order, including bonus chapters with fractional positions.
+        if (firstUrl != null && firstUrl.startsWith(manwaConfig.baseUrl + "/comic/")) return;
         Long first = extractChapterNumber(chapters.get(0).title);
         Long last = extractChapterNumber(chapters.get(chapters.size() - 1).title);
         if (first == null || last == null) return;
@@ -4896,7 +4914,9 @@ public class MainActivity extends Activity {
             }
             requireImageContentType(imageUrl, connection.getContentType());
             try (InputStream stream = connection.getInputStream()) {
-                writeReaderImageCache(cached, stream);
+                try (InputStream decoded = decodeSourceImage(imageUrl, stream)) {
+                    writeReaderImageCache(cached, decoded);
+                }
             }
         } finally {
             if (connection != null) connection.disconnect();
@@ -5124,7 +5144,10 @@ public class MainActivity extends Activity {
                 String contentType = clean(connection.getContentType(), "");
                 requireImageContentType(imageUrl, contentType);
                 try (InputStream stream = connection.getInputStream()) {
-                    byte[] bytes = readAllBytes(stream);
+                    byte[] bytes;
+                    try (InputStream decoded = decodeSourceImage(imageUrl, stream)) {
+                        bytes = readAllBytes(decoded);
+                    }
                     Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     if (bitmap != null) {
                         writeImageCache(cached, bytes);
@@ -5160,7 +5183,9 @@ public class MainActivity extends Activity {
                 applyImageHeaders(connection, refererForImage(imageUrl));
                 requireImageContentType(imageUrl, connection.getContentType());
                 try (InputStream stream = connection.getInputStream()) {
-                    writeImageCache(cached, readAllBytes(stream));
+                    try (InputStream decoded = decodeSourceImage(imageUrl, stream)) {
+                        writeImageCache(cached, readAllBytes(decoded));
+                    }
                 }
                 updateCacheSize();
             } catch (Exception ignored) {
@@ -5168,6 +5193,11 @@ public class MainActivity extends Activity {
                 if (connection != null) connection.disconnect();
             }
         });
+    }
+
+    private InputStream decodeSourceImage(String imageUrl, InputStream stream) throws IOException {
+        return ManwaImageDecoder.usesImageHost(imageUrl)
+                ? ManwaImageDecoder.open(stream, manwaConfig.route("imageKey")) : stream;
     }
 
     private void applyImageHeaders(HttpURLConnection connection, String referer) {
@@ -5215,6 +5245,9 @@ public class MainActivity extends Activity {
         if (imageUrl != null && (imageUrl.contains(cuimhConfig.domain) || imageUrl.contains("baipiaoguai.org"))) {
             return TextUtils.isEmpty(pageReferer) ? cuimhConfig.referer : pageReferer;
         }
+        if (ManwaImageDecoder.usesImageHost(imageUrl)) {
+            return TextUtils.isEmpty(pageReferer) ? manwaConfig.referer : pageReferer;
+        }
         if (CopyMangaComicSource.usesImageHost(imageUrl)) {
             return TextUtils.isEmpty(pageReferer) ? copy4000Config.referer : pageReferer;
         }
@@ -5251,6 +5284,14 @@ public class MainActivity extends Activity {
         for (ComicModels.FilterGroup group : sourceFilterGroups) {
             if (!selectedFilters.containsKey(group.key)) selectedFilters.put(group.key, "all");
             if (!selectedFilterLabels.containsKey(group.key)) selectedFilterLabels.put(group.key, ALL_TAG);
+            if (manwaClient.id().equals(selectedSourceId)) {
+                for (ComicModels.FilterOption option : group.options) {
+                    if (option.value.equals(selectedFilters.get(group.key))) {
+                        selectedFilterLabels.put(group.key, option.label);
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -5473,6 +5514,7 @@ public class MainActivity extends Activity {
         if (cuimhEnabled) names.add(cuimhClient.name());
         if (liumanhuaEnabled) names.add(liumanhuaClient.name());
         if (copy4000Enabled) names.add(copy4000Client.name());
+        if (manwaEnabled) names.add(manwaClient.name());
         return names;
     }
 
@@ -5494,6 +5536,7 @@ public class MainActivity extends Activity {
         if (cuimhClient.id().equals(selectedSourceId)) return cuimhClient.name();
         if (liumanhuaClient.id().equals(selectedSourceId)) return liumanhuaClient.name();
         if (copy4000Client.id().equals(selectedSourceId)) return copy4000Client.name();
+        if (manwaClient.id().equals(selectedSourceId)) return manwaClient.name();
         for (ComicModels.Source item : customSources) {
             if (item.id.equals(selectedSourceId)) return item.name;
         }
@@ -5518,6 +5561,7 @@ public class MainActivity extends Activity {
         if (cuimhClient.name().equals(name)) return cuimhClient.id();
         if (liumanhuaClient.name().equals(name)) return liumanhuaClient.id();
         if (copy4000Client.name().equals(name)) return copy4000Client.id();
+        if (manwaClient.name().equals(name)) return manwaClient.id();
         for (ComicModels.Source item : customSources) {
             if (item.name.equals(name)) return item.id;
         }
@@ -6957,6 +7001,7 @@ public class MainActivity extends Activity {
         sources.put(cuimhConfig.withEnabled(cuimhEnabled).toJson());
         sources.put(liumanhuaConfig.withEnabled(liumanhuaEnabled).toJson());
         sources.put(copy4000Config.withEnabled(copy4000Enabled).toJson());
+        sources.put(manwaConfig.withEnabled(manwaEnabled).toJson());
         root.put("sources", sources);
         JSONArray custom = new JSONArray();
         for (ComicModels.Source item : customSources) {
@@ -7036,6 +7081,9 @@ public class MainActivity extends Activity {
                 } else if (copy4000Config.id.equals(id)) {
                     copy4000Config = SourceConfig.fromJson(item, SourceConfig.copy4000(true));
                     copy4000Enabled = copy4000Config.enabled;
+                } else if (manwaConfig.id.equals(id)) {
+                    manwaConfig = SourceConfig.fromJson(item, SourceConfig.manwa(true));
+                    manwaEnabled = manwaConfig.enabled;
                 }
             }
         }
@@ -7061,6 +7109,7 @@ public class MainActivity extends Activity {
                 if (cuimhConfig.id.equals(id)) cuimhEnabled = item.optBoolean("enabled", true);
                 if (liumanhuaConfig.id.equals(id)) liumanhuaEnabled = item.optBoolean("enabled", true);
                 if (copy4000Config.id.equals(id)) copy4000Enabled = item.optBoolean("enabled", true);
+                if (manwaConfig.id.equals(id)) manwaEnabled = item.optBoolean("enabled", true);
             }
         }
         rebuildSourceClients();
@@ -7132,6 +7181,7 @@ public class MainActivity extends Activity {
         if (!cuimhEnabled) rows.add(cuimhConfig.name + "\u001f已关闭");
         if (!liumanhuaEnabled) rows.add(liumanhuaConfig.name + "\u001f已关闭");
         if (!copy4000Enabled) rows.add(copy4000Config.name + "\u001f已关闭");
+        if (!manwaEnabled) rows.add(manwaConfig.name + "\u001f已关闭");
     }
 
     private void showSourceHealthLoading() {
@@ -7190,6 +7240,7 @@ public class MainActivity extends Activity {
         cuimhClient = new CuimhComicSource(cuimhConfig.withEnabled(cuimhEnabled));
         liumanhuaClient = new LiumanhuaComicSource(liumanhuaConfig.withEnabled(liumanhuaEnabled));
         copy4000Client = new CopyMangaComicSource(copy4000Config.withEnabled(copy4000Enabled));
+        manwaClient = new ManwaComicSource(manwaConfig.withEnabled(manwaEnabled));
     }
 
     private String readHistoryText() {
@@ -7222,6 +7273,7 @@ public class MainActivity extends Activity {
         cuimhEnabled = prefs.getBoolean("source.cuimh.enabled", true);
         liumanhuaEnabled = prefs.getBoolean("source.liumanhua.enabled", true);
         copy4000Enabled = prefs.getBoolean("source.copy4000.enabled", true);
+        manwaEnabled = prefs.getBoolean("source.manwa.enabled", true);
         restoreSourceConfigs(prefs.getString("source.configs", ""));
         rebuildSourceClients();
         chapterDesc = prefs.getBoolean("chapter.desc", false);
@@ -7331,6 +7383,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("source.cuimh.enabled", cuimhEnabled);
         editor.putBoolean("source.liumanhua.enabled", liumanhuaEnabled);
         editor.putBoolean("source.copy4000.enabled", copy4000Enabled);
+        editor.putBoolean("source.manwa.enabled", manwaEnabled);
         editor.putString("source.configs", encodeSourceConfigs());
         editor.putBoolean("chapter.desc", chapterDesc);
         editor.putInt("theme.mode", themeMode);
@@ -7399,6 +7452,7 @@ public class MainActivity extends Activity {
             cuimhConfig = SourceConfig.cuimh(cuimhEnabled);
             liumanhuaConfig = SourceConfig.liumanhua(liumanhuaEnabled);
             copy4000Config = SourceConfig.copy4000(copy4000Enabled);
+            manwaConfig = SourceConfig.manwa(manwaEnabled);
             return;
         }
         try {
@@ -7458,6 +7512,9 @@ public class MainActivity extends Activity {
                 } else if (SourceConfig.copy4000(true).id.equals(id)) {
                     copy4000Config = SourceConfig.fromJson(item, SourceConfig.copy4000(copy4000Enabled));
                     copy4000Enabled = copy4000Config.enabled;
+                } else if (SourceConfig.manwa(true).id.equals(id)) {
+                    manwaConfig = SourceConfig.fromJson(item, SourceConfig.manwa(manwaEnabled));
+                    manwaEnabled = manwaConfig.enabled;
                 }
             }
         } catch (JSONException ignored) {
@@ -7478,6 +7535,7 @@ public class MainActivity extends Activity {
             cuimhConfig = SourceConfig.cuimh(cuimhEnabled);
             liumanhuaConfig = SourceConfig.liumanhua(liumanhuaEnabled);
             copy4000Config = SourceConfig.copy4000(copy4000Enabled);
+            manwaConfig = SourceConfig.manwa(manwaEnabled);
         }
     }
 
@@ -7501,6 +7559,7 @@ public class MainActivity extends Activity {
             array.put(cuimhConfig.withEnabled(cuimhEnabled).toJson());
             array.put(liumanhuaConfig.withEnabled(liumanhuaEnabled).toJson());
             array.put(copy4000Config.withEnabled(copy4000Enabled).toJson());
+            array.put(manwaConfig.withEnabled(manwaEnabled).toJson());
             return array.toString();
         } catch (JSONException ignored) {
             return "[]";

@@ -1,0 +1,20 @@
+{
+  "code": 200,
+  "msg": "获取成功",
+  "data": {
+    "list": [
+      {
+        "id": 2161449,
+        "title": "第01话",
+        "comicId": 163037,
+        "isVip": false,
+        "coin": 0,
+        "sortId": 1.0,
+        "picCount": 38,
+        "editTime": 1789499933,
+        "createTime": 1789499933,
+        "auditStatus": 2
+      }
+    ]
+  }
+}

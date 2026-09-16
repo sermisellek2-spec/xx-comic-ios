@@ -30,16 +30,24 @@ public final class ReaderInstrumentation extends Instrumentation {
     private int checks;
     private boolean immersionOnly;
     private boolean startupOnly;
+    private boolean manwaOnly;
     @Override public void onCreate(Bundle arguments) {
         super.onCreate(arguments);
         immersionOnly = arguments != null && "true".equals(arguments.getString("immersionOnly"));
         startupOnly = arguments != null && "true".equals(arguments.getString("startupOnly"));
+        manwaOnly = arguments != null && "true".equals(arguments.getString("manwaOnly"));
         start();
     }
     @Override public void onStart() {
         Bundle result = new Bundle();
         try {
             activity = (MainActivity) startActivitySync(new Intent(getTargetContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            if (manwaOnly) {
+                testManwaSource();
+                result.putString("stream", "PASS: " + checks + " Manwa live source/device checks\n");
+                finish(-1, result);
+                return;
+            }
             seed();
             if (startupOnly) {
                 testStartupPromptLifecycle();
@@ -200,6 +208,62 @@ public final class ReaderInstrumentation extends Instrumentation {
             check(((View)get("readerOverlayBadge")).getVisibility()==View.VISIBLE,"normal restores badge");
         }
     }
+    /** Opt-in live smoke test: -e manwaOnly true. Ordinary regression runs stay offline. */
+    private void testManwaSource() throws Exception {
+        com.xxcomic.source.ComicSource source = (com.xxcomic.source.ComicSource)get("manwaClient");
+        check("manwa".equals(source.id()), "source registered");
+        onMain(() -> {
+            set("selectedSourceId", "manwa");
+            check(call("selectedSource") == source, "selected source resolver");
+        });
+        check(call("sourceForComicId", "manwa:163037") == source, "favorite/history namespace resolver");
+        check(((List)call("enabledBuiltinSources")).contains(source), "global search registration");
+        check("漫蛙".equals(call("sourceNameForId", "manwa")), "display name registration");
+        check(source.search("史莱姆", 1).size() == 20, "Android HTTPS search");
+        check(source.latest(2).size() == 36, "Android HTTPS category POST page 2");
+        ComicDetail metadata = source.detail("manwa:163037");
+        List<Chapter> directory = source.chapters("manwa:163037");
+        detail = new ComicDetail(metadata.summary, metadata.author, metadata.status, metadata.description, metadata.latestChapter, directory);
+        check(directory.size() == 1 && !metadata.author.isEmpty(), "Android detail and directory");
+        ChapterPage chapter = source.chapter(directory.get(0).url);
+        check(chapter.imageUrls.size() == 38, "Android full image list");
+        String first = chapter.imageUrls.get(0);
+        call("ensureReaderImageCached", first, directory.get(0).url, false);
+        File cached = (File)call("imageCacheFile", first);
+        Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(cached.getAbsolutePath());
+        check(bitmap != null && bitmap.getWidth() == 800, "encrypted WebP decoded and cached on Android");
+        bitmap.recycle();
+        check((boolean)call("ensureReaderImageCached", first, directory.get(0).url, true), "offline reader cache available");
+        android.widget.ImageView cover = new android.widget.ImageView(activity);
+        onMain(() -> call("loadImage", cover, metadata.summary.coverUrl, "", false));
+        File coverFile = (File)call("imageCacheFile", metadata.summary.coverUrl);
+        long deadline = SystemClock.uptimeMillis() + 30000;
+        while (!coverFile.exists() && SystemClock.uptimeMillis() < deadline) SystemClock.sleep(100);
+        Bitmap coverBitmap = android.graphics.BitmapFactory.decodeFile(coverFile.getAbsolutePath());
+        check(coverBitmap != null && coverBitmap.getWidth() > 0, "encrypted cover cache path");
+        coverBitmap.recycle();
+        onMain(() -> {
+            ((Map)get("details")).put(detail.summary.comicId, detail);
+            ((Map)get("chapters")).put(directory.get(0).url, chapter);
+        });
+        configure(0, 1, false);
+        check(get("readerList") != null, "continuous mode opens Manwa");
+        configure(1, 1, false);
+        check(pager().currentPage() == 0, "single image mode opens Manwa");
+        screenshot("manwa-reader.png");
+        onMain(() -> {
+            call("releaseReaderViews");
+            set("manwaEnabled", false);
+            String configs = (String)call("encodeSourceConfigs");
+            call("restoreSourceConfigs", configs);
+            call("rebuildSourceClients");
+            check(!(boolean)get("manwaEnabled"), "disabled state round trip");
+            check(!((List)call("enabledBuiltinSources")).contains(get("manwaClient")), "disabled source excluded from global search");
+            set("manwaEnabled", true);
+            call("rebuildSourceClients");
+        });
+    }
+
     private void seed() throws Exception {
         List<Chapter> list = new ArrayList<>();
         for(int c=0;c<2;c++) list.add(new Chapter("fixture-"+c,"测试章节 "+(c+1),"https://reader.invalid/chapter/"+c,0,c));
