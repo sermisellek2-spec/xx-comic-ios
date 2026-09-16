@@ -82,6 +82,12 @@ import com.xxcomic.source.SourceConfig;
 import com.xxcomic.source.VerificationCancelledException;
 import com.xxcomic.source.VerificationRequiredException;
 
+import com.xxcomic.favorite.FavoriteStarBadgeView;
+import com.xxcomic.favorite.FavoriteUpdateCoordinator;
+import com.xxcomic.update.AppRelease;
+import com.xxcomic.update.AppUpdateChecker;
+import com.xxcomic.update.RemUpdateDialog;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -241,6 +247,10 @@ public class MainActivity extends Activity {
     private final Map<String, Long> favoriteAt = new HashMap<>();
     private final Map<String, Long> lastViewedAt = new HashMap<>();
     private final Runnable persistReaderPositionRunnable = this::saveLocalState;
+    private final Map<String, View> favoriteBadgeViews = new HashMap<>();
+    private AlertDialog activeUpdateDialog = null;
+    private AlertDialog activeRemDialog = null;
+    private AppRelease pendingPromptRelease = null;
 
     private FrameLayout root;
     private int currentTab = 1;
@@ -452,6 +462,10 @@ public class MainActivity extends Activity {
         applyThemeAndSystemBars();
         scheduleThemeSwitch();
         showTab(0);
+        FavoriteUpdateCoordinator.getInstance().setBadgeChangeListener((comicId, visible) -> {
+            postMainIfAlive(() -> updateFavoriteBadge(comicId, visible));
+        });
+        triggerStartupChecks();
     }
 
     @Override
@@ -465,6 +479,7 @@ public class MainActivity extends Activity {
             registerReaderBatteryReceiver();
             main.post(readerTimeUpdateRunnable);
         }
+        checkPendingUpdatePrompt();
     }
 
     @Override
@@ -486,6 +501,15 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        FavoriteUpdateCoordinator.getInstance().setBadgeChangeListener(null);
+        if (activeUpdateDialog != null && activeUpdateDialog.isShowing()) {
+            activeUpdateDialog.dismiss();
+            activeUpdateDialog = null;
+        }
+        if (activeRemDialog != null && activeRemDialog.isShowing()) {
+            activeRemDialog.dismiss();
+            activeRemDialog = null;
+        }
         releaseReaderViews();
         dismissTransientHint();
         if (mh18BrowserSession != null) mh18BrowserSession.shutdown();
@@ -912,6 +936,7 @@ public class MainActivity extends Activity {
         if (tab == 1 && previousTab != 1 && sourceFilterGroups.isEmpty()
                 && !categoriesFollowInitialList(selectedSourceId)) loadSourceCategories();
         if (!globalSearchMode) scheduleDefaultSearchLoad();
+        checkPendingUpdatePrompt();
     }
 
     private void renderSettings(LinearLayout page) {
@@ -1398,13 +1423,25 @@ public class MainActivity extends Activity {
         FrameLayout coverWrap = coverFrame(cover, -1, coverHeight, isRetiredComic(id));
         coverWrap.setBackground(UIHelpers.round(UIHelpers.PLACEHOLDER, UIHelpers.dp(this, 4), Color.TRANSPARENT));
         coverWrap.setClipToOutline(true);
+
+        FavoriteStarBadgeView star = new FavoriteStarBadgeView(this);
+        boolean showStar = FavoriteUpdateCoordinator.getInstance().shouldShowBadge(id);
+        star.setVisibility(showStar ? View.VISIBLE : View.GONE);
+        FrameLayout.LayoutParams starParams = new FrameLayout.LayoutParams(
+                UIHelpers.dp(this, 13), UIHelpers.dp(this, 13));
+        starParams.gravity = Gravity.TOP | Gravity.RIGHT;
+        starParams.topMargin = UIHelpers.dp(this, 3);
+        starParams.rightMargin = UIHelpers.dp(this, 3);
+        coverWrap.addView(star, starParams);
+        favoriteBadgeViews.put(id, star);
+
         item.addView(coverWrap, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, coverHeight)));
         TextView titleView = UIHelpers.text(this, title, 13, UIHelpers.TEXT, Typeface.BOLD);
         titleView.setMaxLines(2);
         titleView.setEllipsize(TextUtils.TruncateAt.END);
         titleView.setMinHeight(UIHelpers.dp(this, 34));
         item.addView(titleView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 4)));
-        item.setOnClickListener(v -> showDetail(id));
+        item.setOnClickListener(v -> openComicDetail(id));
         item.setOnLongClickListener(v -> {
             showFavoriteDeleteOverlay(coverWrap, id);
             return true;
@@ -1766,6 +1803,7 @@ public class MainActivity extends Activity {
         popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popup.setOnDismissListener(() -> {
             if (activePopup == popup) activePopup = null;
+            checkPendingUpdatePrompt();
         });
         close.setOnClickListener(v -> popup.dismiss());
         backdrop.setOnClickListener(v -> popup.dismiss());
@@ -2113,7 +2151,7 @@ public class MainActivity extends Activity {
     private LinearLayout globalResultRow(ComicModels.ComicSummary item) {
         LinearLayout row = UIHelpers.card(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setOnClickListener(v -> showDetail(item.comicId));
+        row.setOnClickListener(v -> openComicDetail(item.comicId));
         row.addView(coverFrame(item.coverUrl, 72, 96));
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
@@ -2134,7 +2172,7 @@ public class MainActivity extends Activity {
         item.setOrientation(LinearLayout.VERTICAL);
         item.setOnClickListener(v -> {
             if (searchScroll != null) pendingSearchScrollY = searchScroll.getScrollY();
-            showDetail(comic.comicId);
+            openComicDetail(comic.comicId);
         });
         item.addView(coverFrame(comic.coverUrl, -1, 154), new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 154)));
         TextView title = UIHelpers.text(this, comic.title, 13, UIHelpers.TEXT, Typeface.NORMAL);
@@ -2258,7 +2296,26 @@ public class MainActivity extends Activity {
                 showTab(currentTab);
             }
         };
+        openComicDetail(comicId);
+    }
+
+    private void openComicDetail(String comicId) {
+        onUserOpenComicDetail(comicId);
         showDetail(comicId);
+    }
+
+    private void onUserOpenComicDetail(String comicId) {
+        if (!TextUtils.isEmpty(comicId)) {
+            FavoriteUpdateCoordinator.getInstance().onUserEnterDetail(comicId);
+            updateFavoriteBadge(comicId, false);
+        }
+    }
+
+    private void updateFavoriteBadge(String comicId, boolean visible) {
+        View badge = favoriteBadgeViews.get(comicId);
+        if (badge != null) {
+            badge.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void showDetail(String comicId) {
@@ -4062,12 +4119,13 @@ public class MainActivity extends Activity {
     }
 
     private void showDetailThenRead(String id) {
+        onUserOpenComicDetail(id);
         ComicModels.ComicDetail detail = details.get(id);
         if (detail != null) {
             ensureChaptersThen(detail, loaded -> showReader(loaded, savedChapter(id)));
             return;
         }
-        showDetail(id);
+        openComicDetail(id);
     }
 
     private void switchChapter(ComicModels.ComicDetail detail, int delta) {
@@ -4304,6 +4362,7 @@ public class MainActivity extends Activity {
         popup.setElevation(UIHelpers.dp(this, 14));
         popup.setOnDismissListener(() -> {
             if (activePopup == popup) activePopup = null;
+            checkPendingUpdatePrompt();
         });
 
         final ComicModels.ComicDetail[] current = {detail};
@@ -4511,6 +4570,8 @@ public class MainActivity extends Activity {
         if (favorites.contains(id)) {
             favorites.remove(id);
             favoriteAt.remove(id);
+            FavoriteUpdateCoordinator.getInstance().onFavoriteRemoved(id);
+            updateFavoriteBadge(id, false);
             message = "已移出书架";
         } else {
             removeDuplicateFavorites(detail);
@@ -4520,6 +4581,7 @@ public class MainActivity extends Activity {
             details.put(id, detail);
             summaries.put(id, detail.summary);
             persistComicCachesAsync();
+            FavoriteUpdateCoordinator.getInstance().onFavoriteAdded(id, detail);
             if (!isRetiredComic(detail.summary.comicId)) loadImageToCache(detail.summary.coverUrl);
             message = "已放进书架";
         }
@@ -4535,6 +4597,8 @@ public class MainActivity extends Activity {
         String title = clean(summary == null ? "" : summary.title, "这本漫画");
         favorites.remove(id);
         favoriteAt.remove(id);
+        FavoriteUpdateCoordinator.getInstance().onFavoriteRemoved(id);
+        updateFavoriteBadge(id, false);
         saveLocalState();
         showTab(0);
         showFavoriteUndo(id, oldIndex, oldFavoriteAt, title);
@@ -4545,6 +4609,7 @@ public class MainActivity extends Activity {
             if (!favorites.contains(id)) {
                 favorites.add(Math.max(0, Math.min(oldIndex, favorites.size())), id);
                 favoriteAt.put(id, oldFavoriteAt == null ? System.currentTimeMillis() : oldFavoriteAt);
+                FavoriteUpdateCoordinator.getInstance().onFavoriteAdded(id, details.get(id));
                 saveLocalState();
             }
             showTab(0);
@@ -4562,6 +4627,8 @@ public class MainActivity extends Activity {
             if (target.equals(normalizedComicTitle(oldTitle))) {
                 favorites.remove(oldId);
                 favoriteAt.remove(oldId);
+                FavoriteUpdateCoordinator.getInstance().onFavoriteRemoved(oldId);
+                updateFavoriteBadge(oldId, false);
             }
         }
     }
@@ -5229,6 +5296,7 @@ public class MainActivity extends Activity {
         popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popup.setOnDismissListener(() -> {
             if (activePopup == popup) activePopup = null;
+            checkPendingUpdatePrompt();
             filterDrawerAction = null;
             if (!confirmed[0]) {
                 selectedSourceId = origSourceId;
@@ -6173,25 +6241,27 @@ public class MainActivity extends Activity {
         updateRunning = true;
         int generation = ++updateGeneration;
         showUpdateLoading();
-        updateFuture = miscIo.submit(() -> {
-            try {
-                AppRelease release = fetchAppRelease();
-                postMainIfAlive(() -> {
-                    if (generation != updateGeneration) return;
-                    updateRunning = false;
-                    availableUpdateRelease = release;
-                    boolean same = BuildConfig.VERSION_NAME.equals(release.versionName)
-                            && BuildConfig.VERSION_CODE == release.versionCode;
-                    if (same) {
-                        showUpdateLatest();
-                    } else {
-                        showUpdateAvailable(release);
+        AppUpdateChecker.getInstance().triggerManualCheck(miscIo, UPDATE_METADATA_URL, IMAGE_USER_AGENT,
+                new AppUpdateChecker.ManualCheckCallback() {
+                    @Override
+                    public void onManualCheckSuccess(AppRelease release) {
+                        postMainIfAlive(() -> {
+                            if (generation != updateGeneration) return;
+                            updateRunning = false;
+                            availableUpdateRelease = release;
+                            if (release != null && release.hasNewVersion(BuildConfig.VERSION_CODE)) {
+                                showUpdateAvailable(release);
+                            } else {
+                                showUpdateLatest();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onManualCheckFailure(Exception error) {
+                        postUpdateFailure("检查更新失败", error, generation);
                     }
                 });
-            } catch (Exception error) {
-                postUpdateFailure("检查更新失败", error, generation);
-            }
-        });
     }
 
     private void showUpdateLoading() {
@@ -6212,7 +6282,10 @@ public class MainActivity extends Activity {
         card.addView(title);
         card.addView(UIHelpers.text(this, "当前版本 " + BuildConfig.VERSION_NAME + " · " + formatBytes(release.size), 12,
                 UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 4)));
-        TextView note = UIHelpers.text(this, "包含最新的界面优化与稳定性修复", 13, UIHelpers.TEXT2, Typeface.NORMAL);
+        String noteText = TextUtils.isEmpty(release.releaseNotes)
+                ? "包含最新的界面优化与稳定性修复"
+                : release.releaseNotes;
+        TextView note = UIHelpers.text(this, noteText, 13, UIHelpers.TEXT2, Typeface.NORMAL);
         card.addView(note, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
         page.addView(card);
         page.addView(settingsBottomActions("稍后", () -> showTab(2), "下载更新", () -> startUpdateDownload(release)));
@@ -6229,33 +6302,83 @@ public class MainActivity extends Activity {
     }
 
     private AppRelease fetchAppRelease() throws Exception {
-        HttpURLConnection connection = (HttpURLConnection) new URL(UPDATE_METADATA_URL).openConnection();
-        connection.setInstanceFollowRedirects(true);
-        connection.setConnectTimeout(10000);
-        connection.setReadTimeout(15000);
-        connection.setRequestProperty("Accept", "application/json");
-        connection.setRequestProperty("User-Agent", IMAGE_USER_AGENT);
-        try {
-            int code = connection.getResponseCode();
-            if (code < 200 || code >= 300) throw new IOException("HTTP " + code);
-            JSONObject object;
-            try (InputStream stream = connection.getInputStream()) {
-                object = new JSONObject(new String(readAllBytes(stream), "UTF-8"));
-            }
-            String versionName = object.optString("versionName", "");
-            int versionCode = object.optInt("versionCode", 0);
-            long size = object.optLong("size", 0L);
-            String sha256 = object.optString("sha256", "").toLowerCase(Locale.US);
-            if (!versionName.matches("[0-9]+(?:\\.[0-9]+){2}")
-                    || versionCode < 1
-                    || size < 1L
-                    || !sha256.matches("[0-9a-f]{64}")) {
-                throw new IOException("更新元数据无效");
-            }
-            return new AppRelease(versionName, versionCode, size, sha256);
-        } finally {
-            connection.disconnect();
+        return AppUpdateChecker.fetchAppRelease(UPDATE_METADATA_URL, IMAGE_USER_AGENT);
+    }
+
+    private boolean isSourceEnabled(String sourceId) {
+        if (TextUtils.isEmpty(sourceId)) return false;
+        for (ComicSource s : enabledBuiltinSources()) {
+            if (s.id().equals(sourceId)) return true;
         }
+        return false;
+    }
+
+    private void triggerStartupChecks() {
+        AppUpdateChecker.getInstance().triggerStartupCheck(miscIo, UPDATE_METADATA_URL, IMAGE_USER_AGENT,
+                BuildConfig.VERSION_CODE, release -> {
+                    postMainIfAlive(() -> {
+                        if (release == null) return;
+                        if (!release.hasNewVersion(BuildConfig.VERSION_CODE)) return;
+                        availableUpdateRelease = release;
+                        if (release.isPromptMode()) {
+                            tryShowUpdatePrompt(release);
+                        }
+                    });
+                });
+
+        List<String> favoriteSnapshot = new ArrayList<>(favorites);
+        FavoriteUpdateCoordinator.getInstance().startStartupCheck(favoriteSnapshot,
+                new FavoriteUpdateCoordinator.SourceResolver() {
+                    @Override
+                    public ComicSource resolveSource(String comicId) {
+                        return sourceForComicId(comicId);
+                    }
+
+                    @Override
+                    public boolean isSourceAvailable(String comicId) {
+                        if (isRetiredComic(comicId)) return false;
+                        ComicSource src = sourceForComicId(comicId);
+                        if (src == null) return false;
+                        if (isRetiredSource(src.id())) return false;
+                        return isSourceEnabled(src.id());
+                    }
+                }, details);
+    }
+
+    private void tryShowUpdatePrompt(AppRelease release) {
+        if (release == null) return;
+        pendingPromptRelease = release;
+        checkPendingUpdatePrompt();
+    }
+
+    private void checkPendingUpdatePrompt() {
+        if (pendingPromptRelease == null) return;
+        if (!canShowUpdateDialogNow()) return;
+        final AppRelease release = pendingPromptRelease;
+        pendingPromptRelease = null;
+        activeUpdateDialog = RemUpdateDialog.show(this, release,
+                installedVersionLabel(), formatBytes(release.size),
+                () -> {
+                    activeUpdateDialog = null;
+                    AppUpdateChecker.getInstance().markSessionPromptDismissed();
+                    startUpdateDownload(release);
+                },
+                () -> {
+                    activeUpdateDialog = null;
+                    AppUpdateChecker.getInstance().markSessionPromptDismissed();
+                });
+    }
+
+    private boolean canShowUpdateDialogNow() {
+        if (isFinishing() || isDestroyed()) return false;
+        if (AppUpdateChecker.getInstance().isSessionPromptDismissed()) return false;
+        if (activeUpdateDialog != null && activeUpdateDialog.isShowing()) return false;
+        if (activeRemDialog != null && activeRemDialog.isShowing()) return false;
+        if (activePopup != null && activePopup.isShowing()) return false;
+        if (readerVisible) return false;
+        if (updateRunning) return false;
+        if (sourceManagementVisible) return false;
+        return true;
     }
 
     private void startUpdateDownload(AppRelease release) {
@@ -6453,20 +6576,6 @@ public class MainActivity extends Activity {
         void onProgress(int percent);
     }
 
-    private static final class AppRelease {
-        final String versionName;
-        final int versionCode;
-        final long size;
-        final String sha256;
-
-        AppRelease(String versionName, int versionCode, long size, String sha256) {
-            this.versionName = versionName;
-            this.versionCode = versionCode;
-            this.size = size;
-            this.sha256 = sha256;
-        }
-    }
-
     private AlertDialog showRemDialog(int imageRes, String title, String message,
                                       String positiveText, Runnable positiveAction,
                                       String negativeText, Runnable negativeAction) {
@@ -6505,6 +6614,13 @@ public class MainActivity extends Activity {
                     (dialog, which) -> { if (negativeAction != null) negativeAction.run(); });
         }
         AlertDialog dialog = builder.create();
+        activeRemDialog = dialog;
+        dialog.setOnDismissListener(d -> {
+            if (activeRemDialog == dialog) {
+                activeRemDialog = null;
+            }
+            checkPendingUpdatePrompt();
+        });
         dialog.setOnShowListener(ignored -> {
             android.view.Window window = dialog.getWindow();
             if (window != null) {
@@ -7160,6 +7276,8 @@ public class MainActivity extends Activity {
         }
         restoreCustomSources(prefs.getString("custom.sources", ""));
         restoreComicCaches(prefs);
+        FavoriteUpdateCoordinator.getInstance().init(prefs);
+        FavoriteUpdateCoordinator.getInstance().pruneDeletedFavorites(favorites);
         updateCacheSize();
     }
 
@@ -7756,7 +7874,7 @@ public class MainActivity extends Activity {
         row.addView(close, new LinearLayout.LayoutParams(UIHelpers.dp(this, 30), UIHelpers.dp(this, 30)));
 
         if (!orphaned) {
-            row.setOnClickListener(v -> showDetail(comicId));
+            row.setOnClickListener(v -> openComicDetail(comicId));
         }
         return row;
     }

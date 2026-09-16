@@ -341,8 +341,13 @@ public final class UIHelpers {
         return new ViewGroup.LayoutParams(-1, -2);
     }
 
-    public static int dp(Activity ctx, int value) {
+    public static int dp(Context ctx, int value) {
+        if (ctx == null) return value;
         return Math.round(value * ctx.getResources().getDisplayMetrics().density);
+    }
+
+    public static int dp(Activity ctx, int value) {
+        return dp((Context) ctx, value);
     }
 
     public static TextView menuItem(Activity ctx, String title, String end) {
