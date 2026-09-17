@@ -227,4 +227,26 @@ public class LocalStorageManagerTest {
         assertTrue(tmpWritingFile.exists());
         assertFalse(finishedFile.exists());
     }
+
+    @Test
+    public void testExternalFileZeroCopyProtectionDuringDeletion() throws IOException {
+        File externalSource = new File(tempRoot, "user_downloaded_manga.cbz");
+        Files.write(externalSource.toPath(), new byte[]{1, 2, 3, 4, 5});
+        assertTrue(externalSource.exists());
+
+        LocalModels.Book mappedBook = new LocalModels.Book(
+                "external_book", "fp_ext", "External Comic", null,
+                LocalModels.FORMAT_CBZ, LocalModels.SOURCE_TYPE_IMPORT, "external_book",
+                externalSource.getAbsolutePath(), null, 5, 1, 1,
+                LocalModels.STATUS_READY, System.currentTimeMillis(), System.currentTimeMillis()
+        );
+
+        File resolved = storageManager.getBookContentFile(mappedBook);
+        assertEquals(externalSource.getCanonicalPath(), resolved.getCanonicalPath());
+
+        // Deleting the book from bookshelf must NOT delete the user's source file!
+        assertTrue(storageManager.deleteBookFiles(mappedBook));
+        assertTrue("External source file must remain intact after book deletion!", externalSource.exists());
+        assertEquals(5, externalSource.length());
+    }
 }

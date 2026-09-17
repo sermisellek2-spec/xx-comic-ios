@@ -259,6 +259,7 @@ public class LocalContentResolverTest {
     private static class FakeStore implements LocalContentResolver.ContentIndex {
         final java.util.Map<String, LocalModels.Book> books = new java.util.HashMap<>();
         final java.util.Map<String, LocalModels.Page> pages = new java.util.HashMap<>();
+        final java.util.Map<String, LocalModels.Chapter> chapters = new java.util.HashMap<>();
 
         @Override public LocalModels.Page getFirstPage(String bookId) {
             for (LocalModels.Page page : pages.values()) if (bookId.equals(page.bookId)) return page;
@@ -273,6 +274,11 @@ public class LocalContentResolverTest {
         @Override
         public synchronized LocalModels.Page getPage(String pageId) {
             return pages.get(pageId);
+        }
+
+        @Override
+        public synchronized LocalModels.Chapter getChapter(String chapterId) {
+            return chapters.get(chapterId);
         }
     }
 

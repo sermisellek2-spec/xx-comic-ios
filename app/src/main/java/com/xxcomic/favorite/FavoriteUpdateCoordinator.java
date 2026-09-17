@@ -247,7 +247,7 @@ public final class FavoriteUpdateCoordinator {
     public void onUserEnterDetail(String comicId) {
         if (isEmpty(comicId)) return;
         synchronized (lock) {
-            visitEpochs.compute(comicId, (k, v) -> v == null ? 1 : v + 1);
+            visitEpochs.put(comicId, visitEpochs.containsKey(comicId) ? visitEpochs.get(comicId) + 1 : 1);
             FavoriteUpdateState state = states.get(comicId);
             if (state != null) {
                 state.pendingUpdate = false;
@@ -263,7 +263,7 @@ public final class FavoriteUpdateCoordinator {
     public void onFavoriteAdded(String comicId, ComicModels.ComicDetail detail) {
         if (isEmpty(comicId)) return;
         synchronized (lock) {
-            favoriteEpochs.compute(comicId, (k, v) -> v == null ? 1 : v + 1);
+            favoriteEpochs.put(comicId, favoriteEpochs.containsKey(comicId) ? favoriteEpochs.get(comicId) + 1 : 1);
             checkedInSession.remove(comicId);
             FavoriteRevision rev = detail != null ? FavoriteRevision.fromDetail(detail) : null;
             String sourceId = detail != null && detail.summary != null ? detail.summary.sourceId : "";
@@ -276,7 +276,7 @@ public final class FavoriteUpdateCoordinator {
     public void onFavoriteRemoved(String comicId) {
         if (isEmpty(comicId)) return;
         synchronized (lock) {
-            favoriteEpochs.compute(comicId, (k, v) -> v == null ? 1 : v + 1);
+            favoriteEpochs.put(comicId, favoriteEpochs.containsKey(comicId) ? favoriteEpochs.get(comicId) + 1 : 1);
             for (int i = taskQueue.size() - 1; i >= 0; i--) {
                 if (comicId.equals(taskQueue.get(i).comicId)) taskQueue.remove(i);
             }
@@ -297,7 +297,8 @@ public final class FavoriteUpdateCoordinator {
                 Map.Entry<String, FavoriteUpdateState> entry = it.next();
                 if (!favSet.contains(entry.getKey())) {
                     it.remove();
-                    favoriteEpochs.compute(entry.getKey(), (k, v) -> v == null ? 1 : v + 1);
+                    String id = entry.getKey();
+                    favoriteEpochs.put(id, favoriteEpochs.containsKey(id) ? favoriteEpochs.get(id) + 1 : 1);
                     checkedInSession.remove(entry.getKey());
                     changed = true;
                 }

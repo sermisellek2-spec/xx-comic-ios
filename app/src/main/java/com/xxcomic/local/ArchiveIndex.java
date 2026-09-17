@@ -79,11 +79,24 @@ public class ArchiveIndex {
         return indexArchive(archiveFile, bookId, callback, new AndroidImageProbe());
     }
 
-    static ParseResult indexArchive(File archiveFile, String bookId, LocalModels.ImportProgressCallback callback,
-                                   ImageProbe imageProbe) throws IOException {
+    public static ParseResult indexArchive(File archiveFile, String bookId,
+                                           String overrideChapterTitle, int chapterOrderOffset, String chapterEntryPath,
+                                           LocalModels.ImportProgressCallback callback) throws IOException {
         ZipFile zipFile = openZipWithFallbackCharset(archiveFile);
         try {
-            return indexZipFile(zipFile, bookId, callback, imageProbe);
+            return indexZipFile(zipFile, bookId, overrideChapterTitle, chapterOrderOffset, chapterEntryPath, callback, new AndroidImageProbe());
+        } finally {
+            try {
+                zipFile.close();
+            } catch (IOException ignored) {}
+        }
+    }
+
+    static ParseResult indexArchive(File archiveFile, String bookId, LocalModels.ImportProgressCallback callback,
+                                    ImageProbe imageProbe) throws IOException {
+        ZipFile zipFile = openZipWithFallbackCharset(archiveFile);
+        try {
+            return indexZipFile(zipFile, bookId, null, 0, null, callback, imageProbe);
         } finally {
             try {
                 zipFile.close();
@@ -139,8 +152,10 @@ public class ArchiveIndex {
         }
     }
 
-    private static ParseResult indexZipFile(ZipFile zipFile, String bookId, LocalModels.ImportProgressCallback callback,
-                                          ImageProbe imageProbe) throws IOException {
+    private static ParseResult indexZipFile(ZipFile zipFile, String bookId, String overrideChapterTitle,
+                                            int chapterOrderOffset, String chapterEntryPath,
+                                            LocalModels.ImportProgressCallback callback,
+                                            ImageProbe imageProbe) throws IOException {
         Enumeration<? extends ZipEntry> entries = zipFile.entries();
         int count = 0;
         long totalBytes = 0;
@@ -258,12 +273,27 @@ public class ArchiveIndex {
 
         List<LocalModels.Chapter> chapters = new ArrayList<>();
         Map<String, List<LocalModels.Page>> pagesByChapter = new HashMap<>();
-        int chapterOrder = 0;
+        int chapterOrder = chapterOrderOffset;
 
-        if (subFolders.isEmpty()) {
+        if (overrideChapterTitle != null && !overrideChapterTitle.trim().isEmpty()) {
+            String chapterId = LocalModels.buildStableChapterId(bookId, chapterOrder);
+            String chEntry = (chapterEntryPath != null && !chapterEntryPath.isEmpty())
+                    ? chapterEntryPath : "ch_" + chapterOrder;
+            LocalModels.Chapter ch = new LocalModels.Chapter(chapterId, bookId, chapterOrder,
+                    overrideChapterTitle.trim(), chEntry, validList.size());
+            chapters.add(ch);
+
+            List<LocalModels.Page> pageList = new ArrayList<>(validList.size());
+            for (int i = 0; i < validList.size(); i++) {
+                ValidEntry v = validList.get(i);
+                String pageId = LocalModels.buildStablePageId(chapterId, i);
+                pageList.add(new LocalModels.Page(pageId, bookId, chapterId, i, v.rawEntryName, 0, 0, null, v.mimeType));
+            }
+            pagesByChapter.put(chapterId, pageList);
+        } else if (subFolders.isEmpty()) {
             // Flat images: exactly 1 chapter titled "正文"
-            String chapterId = LocalModels.buildStableChapterId(bookId, 0);
-            LocalModels.Chapter ch = new LocalModels.Chapter(chapterId, bookId, 0, "正文", "", rootImages.size());
+            String chapterId = LocalModels.buildStableChapterId(bookId, chapterOrder);
+            LocalModels.Chapter ch = new LocalModels.Chapter(chapterId, bookId, chapterOrder, "正文", "", rootImages.size());
             chapters.add(ch);
 
             List<LocalModels.Page> pageList = new ArrayList<>();

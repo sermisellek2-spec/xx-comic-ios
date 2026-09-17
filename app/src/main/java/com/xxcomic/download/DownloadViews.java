@@ -48,8 +48,27 @@ import static com.xxcomic.download.DownloadModels.*;
 /** Native themed lists; recycled chapter rows keep very large directories responsive. */
 public final class DownloadViews {
     public interface OpenBook { void accept(String bookId); }
+    private static boolean hasNewRevision(Task task,List<com.xxcomic.source.FileResource> files) {
+        if(files==null || task.state!=State.COMPLETED)return false;
+        for(com.xxcomic.source.FileResource f:files)if(f.fileId.equals(task.fileId))
+            return !java.util.Objects.equals(f.revision,task.revision) || !java.util.Objects.equals(f.sha256,task.sha256);
+        return false;
+    }
 
     public static void selection(Activity a, ComicModels.ComicDetail detail, int current, Runnable onAdded) {
+        selection(a,detail,current,onAdded,null,null,null);
+    }
+    public static void fileSelection(Activity a, ComicModels.ComicDetail detail, List<com.xxcomic.source.FileResource> files,
+                                     OpenBook open, Runnable center) {
+        files=new ArrayList<>(files);
+        Collections.sort(files,(left,right)->Integer.compare(left.order,right.order));
+        List<ComicModels.Chapter> volumes=new ArrayList<>();
+        for(com.xxcomic.source.FileResource file:files)volumes.add(new ComicModels.Chapter(file.fileId,file.title,"",file.order,0));
+        selection(a,new ComicModels.ComicDetail(detail.summary,detail.author,detail.status,detail.description,
+                "",volumes),0,center,files,open,center);
+    }
+    private static void selection(Activity a, ComicModels.ComicDetail detail, int current, Runnable onAdded,
+                                  List<com.xxcomic.source.FileResource> files, OpenBook open, Runnable center) {
         DownloadRuntime runtime = DownloadRuntime.get(a);
         Set<String> selected = new LinkedHashSet<>();
         if (!detail.chapters.isEmpty()) {
@@ -96,8 +115,9 @@ public final class DownloadViews {
             @Override public View getView(int i, View recycled, ViewGroup parent) {
                 CheckBox check = recycled instanceof CheckBox ? (CheckBox) recycled : new CheckBox(a);
                 ComicModels.Chapter ch = visible.get(i);
-                Task task = runtime.store.get(key(detail.summary.sourceId, detail.summary.comicId, ch.chapterId));
-                boolean exists = task != null;
+                Task task = runtime.store.get(files==null?key(detail.summary.sourceId, detail.summary.comicId, ch.chapterId)
+                        :fileTaskId(detail.summary.sourceId,detail.summary.comicId,ch.chapterId));
+                boolean exists = task != null && !hasNewRevision(task,files);
                 check.setOnCheckedChangeListener(null);
                 check.setText(ch.title + (exists ? " · " + state(task) : ""));
                 check.setTextSize(13);
@@ -105,13 +125,17 @@ public final class DownloadViews {
                 check.setMinHeight(dp(a, 46));
                 check.setPadding(dp(a, 6), dp(a, 4), dp(a, 6), dp(a, 4));
                 check.setButtonTintList(ColorStateList.valueOf(UIHelpers.ACCENT));
-                check.setEnabled(!exists);
+                check.setOnClickListener(null);
+                check.setEnabled(!exists || files!=null);
                 check.setChecked(!exists && selected.contains(ch.chapterId));
                 check.setOnCheckedChangeListener((button, value) -> {
+                    if(exists)return;
                     if (value) selected.add(ch.chapterId);
                     else selected.remove(ch.chapterId);
                     start.setText("下载选中章节 (" + selected.size() + ")");
                 });
+                if(exists && files!=null)check.setOnClickListener(v->{dialog.dismiss();
+                    if(runtime.library.store.getBook(task.bookId)!=null)open.accept(task.bookId);else center.run();});
                 return check;
             }
         };
@@ -149,7 +173,9 @@ public final class DownloadViews {
         start.setOnClickListener(v -> {
             List<String> ids = new ArrayList<>();
             for (String id : selected) {
-                if (runtime.store.get(key(detail.summary.sourceId, detail.summary.comicId, id)) == null) {
+                Task found=runtime.store.get(files==null?key(detail.summary.sourceId,detail.summary.comicId,id)
+                        :fileTaskId(detail.summary.sourceId,detail.summary.comicId,id));
+                if (found == null || hasNewRevision(found,files)) {
                     ids.add(id);
                 }
             }
@@ -160,7 +186,7 @@ public final class DownloadViews {
             start.setEnabled(false);
             runtime.io.execute(() -> {
                 try {
-                    runtime.enqueue(detail, ids);
+                    if(files==null)runtime.enqueue(detail, ids);else runtime.enqueueFiles(detail,files,ids);
                     a.runOnUiThread(() -> {
                         if (a.isDestroyed()) return;
                         dialog.dismiss();
@@ -334,7 +360,9 @@ public final class DownloadViews {
                     for (String id : next.keySet()) {
                         if (!cached.containsKey(id)) {
                             ComicModels.ComicDetail detail = runtime.store.snapshot(id);
-                            cached.put(id, detail == null ? "离线漫画" : detail.summary.title);
+                            Task first=next.get(id).get(0);
+                            if(detail==null && first.isFileTask)detail=runtime.store.snapshot(bookId(first.sourceId,first.comicId));
+                            cached.put(id, (detail == null ? "离线漫画" : detail.summary.title)+(first.isFileTask?" · "+first.title:""));
                         }
                     }
                     a.runOnUiThread(() -> {
@@ -631,7 +659,7 @@ public final class DownloadViews {
                 title.setEllipsize(TextUtils.TruncateAt.END);
                 textCol.addView(title);
 
-                String badge = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) ? "离线下载" : "本地导入";
+                String badge = LocalModels.isDownload(book) ? "离线下载" : "本地导入";
                 TextView sub = UIHelpers.text(a, badge + " · " + format(book.totalSize), 11, UIHelpers.TEXT3, Typeface.NORMAL);
                 textCol.addView(sub, UIHelpers.marginTop(-1, dp(a, 2)));
                 card.addView(textCol, UIHelpers.weight(1));
@@ -667,7 +695,7 @@ public final class DownloadViews {
                     for (String id : ids) {
                         LocalModels.Book b = runtime.library.store.getBook(id);
                         if (b == null) continue;
-                        boolean ok = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(b.sourceType)
+                        boolean ok = LocalModels.isDownload(b)
                                 ? runtime.deleteBook(id)
                                 : runtime.library.store.deleteBook(id, runtime.library.storage);
                         if (!ok) failures++;
@@ -749,9 +777,9 @@ public final class DownloadViews {
     public static String state(Task t) {
         switch (t.state) {
             case QUEUED: return "等待下载";
-            case RESOLVING: return "读取章节";
+            case RESOLVING: return t.isFileTask?"获取文件":"读取章节";
             case DOWNLOADING: return "下载中";
-            case VERIFYING: return "校验中";
+            case VERIFYING: return t.isFileTask?"校验与解析中":"校验中";
             case COMPLETED: return "已完成";
             case PAUSED_USER: return "已暂停";
             case WAITING_NETWORK: return "等待 Wi-Fi / 网络";
@@ -787,13 +815,7 @@ public final class DownloadViews {
     private static void header(Activity a, LinearLayout page, String title, Runnable back) {
         LinearLayout row = row(a);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(a, 4), 0, dp(a, 8));
-
-        TextView close = UIHelpers.text(a, "‹ 返回", 16, UIHelpers.TEXT, Typeface.BOLD);
-        close.setContentDescription("返回");
-        close.setPadding(dp(a, 4), dp(a, 6), dp(a, 12), dp(a, 6));
-        close.setOnClickListener(v -> back.run());
-        row.addView(close);
+        row.setPadding(0, dp(a, 6), 0, dp(a, 8));
 
         TextView titleView = UIHelpers.text(a, title, 20, UIHelpers.TEXT, Typeface.BOLD);
         titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));

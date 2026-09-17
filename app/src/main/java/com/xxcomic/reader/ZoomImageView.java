@@ -21,6 +21,7 @@ public final class ZoomImageView extends ImageView {
     private final ScaleGestureDetector scales;
     private float zoom = 1f, lastX, lastY;
     private boolean multiTouch;
+    private boolean pinchZoomEnabled = true;
     private Listener listener;
 
     public ZoomImageView(Context context) {
@@ -34,6 +35,7 @@ public final class ZoomImageView extends ImageView {
                 return true;
             }
             @Override public boolean onDoubleTap(MotionEvent e) {
+                if (!pinchZoomEnabled) return true;
                 if (isZoomed()) resetZoom(); else scaleBy(2.5f, e.getX(), e.getY());
                 return true;
             }
@@ -41,14 +43,25 @@ public final class ZoomImageView extends ImageView {
         taps.setIsLongpressEnabled(false);
         scales = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override public boolean onScaleBegin(ScaleGestureDetector detector) {
+                if (!pinchZoomEnabled) return false;
                 getParent().requestDisallowInterceptTouchEvent(true);
                 return true;
             }
             @Override public boolean onScale(ScaleGestureDetector detector) {
+                if (!pinchZoomEnabled) return false;
                 scaleBy(detector.getScaleFactor(), detector.getFocusX(), detector.getFocusY());
                 return true;
             }
         });
+    }
+
+    public void setPinchZoomEnabled(boolean enabled) {
+        this.pinchZoomEnabled = enabled;
+        if (!enabled && isZoomed()) resetZoom();
+    }
+
+    public boolean isPinchZoomEnabled() {
+        return pinchZoomEnabled;
     }
 
     public void setListener(Listener listener) { this.listener = listener; }
@@ -97,11 +110,11 @@ public final class ZoomImageView extends ImageView {
             multiTouch = false;
             lastX = event.getX(); lastY = event.getY();
         }
-        if (event.getPointerCount() > 1) multiTouch = true;
-        if (getParent() != null && (isZoomed() || multiTouch)) getParent().requestDisallowInterceptTouchEvent(true);
-        scales.onTouchEvent(event);
+        if (pinchZoomEnabled && event.getPointerCount() > 1) multiTouch = true;
+        if (getParent() != null && (isZoomed() || (pinchZoomEnabled && multiTouch))) getParent().requestDisallowInterceptTouchEvent(true);
+        if (pinchZoomEnabled) scales.onTouchEvent(event);
         taps.onTouchEvent(event);
-        if (event.getActionMasked() == MotionEvent.ACTION_MOVE && isZoomed() && !scales.isInProgress() && event.getPointerCount() == 1) {
+        if (event.getActionMasked() == MotionEvent.ACTION_MOVE && isZoomed() && (!pinchZoomEnabled || !scales.isInProgress()) && event.getPointerCount() == 1) {
             matrix.postTranslate(event.getX() - lastX, event.getY() - lastY);
             constrain();
         }

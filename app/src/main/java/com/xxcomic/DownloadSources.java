@@ -16,9 +16,26 @@ public final class DownloadSources {
         synchronized (DownloadSources.class) { current = mh18Session.get(); }
         return current != null ? current.fetch(url) : Mh18WebViewSession.fetchCachedForDownload(url);
     }
+    private static final java.util.Map<String, ComicSource> customSources = new java.util.HashMap<>();
+    public static synchronized void registerSource(ComicSource customSource) {
+        if (customSource instanceof FileSourceCapability) customSources.put(customSource.id(), customSource);
+        else throw new IllegalArgumentException("Only optional file sources can be registered here");
+    }
+    public static synchronized void unregisterSource(String id) {
+        if (id != null) customSources.remove(id);
+    }
+
     public final SourceConfig config;
     public final ComicSource source;
     public DownloadSources(Context context, String id) throws IOException {
+        synchronized (DownloadSources.class) {
+            if (customSources.containsKey(id)) {
+                ComicSource cs = customSources.get(id);
+                this.source = cs;
+                this.config = null; // File capabilities resolve their own request descriptors.
+                return;
+            }
+        }
         SourceConfig[] defaults = {SourceConfig.baozi(true), SourceConfig.mh160(true), SourceConfig.gmh(true),
                 SourceConfig.mh18(true), SourceConfig.jmcomic(true), SourceConfig.mkzhan(true), SourceConfig.hiperdex(true),
                 SourceConfig.manhuagui(true), SourceConfig.hanman18(true), SourceConfig.d5d6(true), SourceConfig.manben(true),

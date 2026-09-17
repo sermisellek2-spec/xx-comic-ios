@@ -43,4 +43,11 @@ public class NaturalPathOrderTest {
                 "vol2/ch1/page1.jpg"
         ), paths);
     }
+
+    @Test
+    public void ordersVolumeNamesNaturally() {
+        List<String> volumes = new ArrayList<>(Arrays.asList("卷10", "卷02", "卷01", "卷20", "卷1"));
+        Collections.sort(volumes, new NaturalPathOrder());
+        assertEquals(Arrays.asList("卷1", "卷01", "卷02", "卷10", "卷20"), volumes);
+    }
 }

@@ -16,9 +16,20 @@ public final class LocalModels {
     public static final String FORMAT_FOLDER = "folder";
     public static final String FORMAT_EPUB = "epub";
     public static final String FORMAT_PDF = "pdf";
+    public static final String FORMAT_MOBI = "mobi";
+    public static final String FORMAT_AZW = "azw";
+    public static final String FORMAT_AZW3 = "azw3";
+
+    public static boolean isKindleFormat(String format) {
+        return FORMAT_MOBI.equals(format) || FORMAT_AZW.equals(format) || FORMAT_AZW3.equals(format);
+    }
 
     public static final String SOURCE_TYPE_IMPORT = "import";
     public static final String SOURCE_TYPE_DOWNLOAD = "download";
+    public static final String SOURCE_TYPE_FILE_DOWNLOAD = "file_download";
+    public static boolean isDownload(Book book) {
+        return SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) || SOURCE_TYPE_FILE_DOWNLOAD.equals(book.sourceType);
+    }
 
     public static final class Book implements Serializable {
         private static final long serialVersionUID = 1L;

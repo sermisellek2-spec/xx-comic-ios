@@ -11,11 +11,30 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class Publication implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    private static final Pattern PSEUDO_PAGE_PATTERN = Pattern.compile(
+            "^(?:第\\s*)?\\d+\\s*[页頁]$|^(?:page|p)\\s*#?\\s*\\d+(?:\\.(?:xhtml|html|jpg|jpeg|png))?$|^\\d+$",
+            Pattern.CASE_INSENSITIVE
+    );
+
+    public static boolean isPseudoPageNav(List<NavItem> navList, int spineSize) {
+        if (navList == null || navList.isEmpty()) return false;
+        int pageMatchCount = 0;
+        for (NavItem nav : navList) {
+            String t = nav.title != null ? nav.title.trim() : "";
+            if (PSEUDO_PAGE_PATTERN.matcher(t).matches()) {
+                pageMatchCount++;
+            }
+        }
+        return (pageMatchCount * 2 >= navList.size()) ||
+                (spineSize > 0 && navList.size() >= spineSize * 0.7 && pageMatchCount >= 2);
+    }
 
     public static class ManifestItem implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -133,6 +152,15 @@ public class Publication implements Serializable {
     public ArchiveIndex.ParseResult toParseResult(String bookId, ZipFile zipFile,
                                                   ArchiveIndex.ImageProbe probe,
                                                   LocalModels.ImportProgressCallback callback) throws IOException {
+        return toParseResult(bookId, zipFile, probe, null, 0, null, callback);
+    }
+
+    public ArchiveIndex.ParseResult toParseResult(String bookId, ZipFile zipFile,
+                                                  ArchiveIndex.ImageProbe probe,
+                                                  String overrideChapterTitle,
+                                                  int chapterOrderOffset,
+                                                  String chapterEntryPath,
+                                                  LocalModels.ImportProgressCallback callback) throws IOException {
         if (hasDrm) {
             throw new IOException("该 EPUB 受到 DRM 加密保护，暂不支持阅读");
         }
@@ -143,24 +171,37 @@ public class Publication implements Serializable {
         List<LocalModels.Chapter> chapters = new ArrayList<>();
         Map<String, List<LocalModels.Page>> pagesByChapter = new LinkedHashMap<>();
 
-        List<NavItem> mappedNav = new ArrayList<>();
-        collectNavPoints(navItems, mappedNav);
-        Collections.sort(mappedNav, (a, b) -> Integer.compare(a.spineIndex, b.spineIndex));
-
         List<ChapterBoundary> boundaries = new ArrayList<>();
-        for (NavItem nav : mappedNav) {
-            if (nav.spineIndex >= 0 && nav.spineIndex < spine.size()) {
-                if (boundaries.isEmpty() || boundaries.get(boundaries.size() - 1).startIndex < nav.spineIndex) {
-                    boundaries.add(new ChapterBoundary(nav.title, nav.spineIndex));
+
+        if (overrideChapterTitle != null && !overrideChapterTitle.trim().isEmpty()) {
+            // Explicit chapter title: the whole volume file forms a single chapter
+            boundaries.add(new ChapterBoundary(overrideChapterTitle.trim(), 0));
+        } else {
+            List<NavItem> mappedNav = new ArrayList<>();
+            collectNavPoints(navItems, mappedNav);
+            Collections.sort(mappedNav, (a, b) -> Integer.compare(a.spineIndex, b.spineIndex));
+
+            if (isPseudoPageNav(mappedNav, spine.size())) {
+                // Pseudo-page directory detected (e.g. 第001页, 第002页... in comic EPUB)
+                // Collapse into a single chapter containing all pages
+                String chTitle = (title != null && !title.trim().isEmpty()) ? title.trim() : "全本";
+                boundaries.add(new ChapterBoundary(chTitle, 0));
+            } else {
+                for (NavItem nav : mappedNav) {
+                    if (nav.spineIndex >= 0 && nav.spineIndex < spine.size()) {
+                        if (boundaries.isEmpty() || boundaries.get(boundaries.size() - 1).startIndex < nav.spineIndex) {
+                            boundaries.add(new ChapterBoundary(nav.title, nav.spineIndex));
+                        }
+                    }
+                }
+
+                if (boundaries.isEmpty()) {
+                    String chTitle = (title != null && !title.trim().isEmpty()) ? title.trim() : "全 1 卷";
+                    boundaries.add(new ChapterBoundary(chTitle, 0));
+                } else if (boundaries.get(0).startIndex > 0) {
+                    boundaries.add(0, new ChapterBoundary("封面与序言", 0));
                 }
             }
-        }
-
-        if (boundaries.isEmpty()) {
-            String chTitle = (title != null && !title.trim().isEmpty()) ? title.trim() : "全 1 卷";
-            boundaries.add(new ChapterBoundary(chTitle, 0));
-        } else if (boundaries.get(0).startIndex > 0) {
-            boundaries.add(0, new ChapterBoundary("封面与序言", 0));
         }
 
         int totalPages = 0;
@@ -174,9 +215,12 @@ public class Publication implements Serializable {
             int chapterPageCount = Math.max(0, end - start);
             if (chapterPageCount == 0) continue;
 
-            String chapterId = LocalModels.buildStableChapterId(bookId, chIdx);
+            int effectiveOrder = chapterOrderOffset + chIdx;
+            String chapterId = LocalModels.buildStableChapterId(bookId, effectiveOrder);
+            String chEntry = (chapterEntryPath != null && !chapterEntryPath.isEmpty())
+                    ? chapterEntryPath : "ch_" + effectiveOrder;
             LocalModels.Chapter chapter = new LocalModels.Chapter(
-                    chapterId, bookId, chIdx, boundary.title, "ch_" + chIdx, chapterPageCount);
+                    chapterId, bookId, effectiveOrder, boundary.title, chEntry, chapterPageCount);
             chapters.add(chapter);
 
             List<LocalModels.Page> pageList = new ArrayList<>();

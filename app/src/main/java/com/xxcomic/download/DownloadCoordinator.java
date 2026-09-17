@@ -23,6 +23,27 @@ public final class DownloadCoordinator {
             t.title=ch.title; t.url=ch.url; t.order=i; repository.save(t);
         }
     }
+    public synchronized void enqueueFiles(String source, String comic, List<com.xxcomic.source.FileResource> files, List<String> selected) {
+        Set<String> wanted=new HashSet<>(selected);
+        files=new java.util.ArrayList<>(files);
+        java.util.Collections.sort(files,(a,b)->Integer.compare(a.order,b.order));
+        for(int i=0;i<files.size();i++) {
+            com.xxcomic.source.FileResource f=files.get(i);
+            if(!wanted.contains(f.fileId)) continue;
+            String id=fileTaskId(source,comic,f.fileId);
+            Task existing=repository.get(id);
+            if(existing!=null && (existing.state!=State.COMPLETED ||
+                    (java.util.Objects.equals(existing.revision,f.revision) && java.util.Objects.equals(existing.sha256,f.sha256)))) continue;
+            Task t=new Task(); t.id=id; t.bookId=fileBookId(source,comic,f.fileId);
+            t.sourceId=source; t.comicId=comic; t.chapterId=f.fileId;
+            t.title=f.title; t.url=""; t.order=f.order>=0?f.order:i;
+            t.isFileTask=true; t.fileId=f.fileId; t.revision=f.revision;
+            t.expectedFormat=f.expectedFormat; t.sha256=f.sha256;
+            t.expiresAt=f.expiresAt; t.totalPages=1; t.donePages=0;
+            t.expectedBytes=f.bytes;
+            repository.save(t);
+        }
+    }
     public synchronized Task claim(long now, boolean connected, boolean wifi, boolean wifiOnly) {
         List<Task> tasks=repository.list();
         for(Task t:tasks) if(active(t.state)) return null;

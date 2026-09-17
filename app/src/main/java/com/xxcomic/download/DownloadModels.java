@@ -12,13 +12,29 @@ public final class DownloadModels {
         public long generation;
         public long bytes, nextAttempt;
         public State state=State.QUEUED;
+
+        // Stage 6 file task fields
+        public boolean isFileTask;
+        public String fileId;
+        public String revision="";
+        public String expectedFormat="";
+        public String sha256;
+        public long expiresAt;
+        public long expectedBytes = -1;
+        public int refreshCount;
+
         public Task copy() {
             Task t=new Task();
             t.id=id; t.bookId=bookId; t.sourceId=sourceId; t.comicId=comicId;
             t.chapterId=chapterId; t.title=title; t.url=url; t.error=error;
             t.order=order; t.generation=generation; t.failures=failures;
             t.totalPages=totalPages; t.donePages=donePages; t.bytes=bytes;
-            t.nextAttempt=nextAttempt; t.state=state; return t;
+            t.nextAttempt=nextAttempt; t.state=state;
+            t.isFileTask=isFileTask; t.fileId=fileId; t.revision=revision;
+            t.expectedFormat=expectedFormat; t.sha256=sha256;
+            t.expiresAt=expiresAt; t.refreshCount=refreshCount;
+            t.expectedBytes=expectedBytes;
+            return t;
         }
     }
     public static String key(String... components) {
@@ -36,5 +52,7 @@ public final class DownloadModels {
         } catch(java.security.NoSuchAlgorithmException impossible) { throw new IllegalStateException(impossible); }
     }
     public static String bookId(String source,String comic) { return "local_dl_"+key(source,comic); }
+    public static String fileTaskId(String source,String comic,String file) { return key("file",source,comic,file); }
+    public static String fileBookId(String source,String comic,String file) { return "local_file_"+fileTaskId(source,comic,file); }
     public static boolean active(State state) { return state==State.RESOLVING || state==State.DOWNLOADING || state==State.VERIFYING; }
 }

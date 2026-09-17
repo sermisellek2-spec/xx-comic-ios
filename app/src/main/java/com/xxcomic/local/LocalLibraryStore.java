@@ -101,6 +101,19 @@ public class LocalLibraryStore implements LocalContentResolver.ContentIndex {
         return null;
     }
 
+    public LocalModels.Book findReadyByTitle(String title) {
+        if (title == null || title.trim().isEmpty()) return null;
+        String trimmed = title.trim();
+        SQLiteDatabase db = helper.getReadableDatabase();
+        try (Cursor c = db.query(TABLE_BOOKS, null, "(original_title = ? OR user_title = ?) AND status = ?",
+                new String[]{trimmed, trimmed, LocalModels.STATUS_READY}, null, null, "created_at DESC LIMIT 1")) {
+            if (c != null && c.moveToFirst()) {
+                return readBook(c);
+            }
+        }
+        return null;
+    }
+
     public DeletedFingerprint findDeletedByFingerprint(String fingerprint) {
         if (fingerprint == null) return null;
         SQLiteDatabase db = helper.getReadableDatabase();
@@ -230,6 +243,10 @@ public class LocalLibraryStore implements LocalContentResolver.ContentIndex {
             }
 
             // Insert chapters
+            if (LocalModels.SOURCE_TYPE_FILE_DOWNLOAD.equals(book.sourceType)) {
+                db.delete(TABLE_PAGES, "book_id = ?", new String[]{book.id});
+                db.delete(TABLE_CHAPTERS, "book_id = ?", new String[]{book.id});
+            }
             if (chapters != null) {
                 for (LocalModels.Chapter ch : chapters) {
                     ContentValues cv = new ContentValues();
@@ -280,6 +297,64 @@ public class LocalLibraryStore implements LocalContentResolver.ContentIndex {
         cv.put("updated_at", System.currentTimeMillis());
         int rows = db.update(TABLE_BOOKS, cv, "id = ?", new String[]{bookId});
         return rows > 0;
+    }
+
+    public synchronized void appendChapterToBook(String bookId, LocalModels.Chapter newChapter,
+                                                 List<LocalModels.Page> newPages, long additionalSize) {
+        SQLiteDatabase db = helper.getWritableDatabase();
+        db.beginTransactionNonExclusive();
+        try {
+            LocalModels.Book book = getBook(bookId);
+            if (book == null) throw new IllegalStateException("漫画不存在: " + bookId);
+
+            ContentValues cv = new ContentValues();
+            cv.put("id", newChapter.id);
+            cv.put("book_id", newChapter.bookId);
+            cv.put("order_index", newChapter.orderIndex);
+            cv.put("title", newChapter.title);
+            cv.put("entry_path", newChapter.entryPath);
+            cv.put("page_count", newChapter.pageCount);
+            db.insertWithOnConflict(TABLE_CHAPTERS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+
+            if (newPages != null) {
+                for (LocalModels.Page pg : newPages) {
+                    ContentValues pv = new ContentValues();
+                    pv.put("id", pg.id);
+                    pv.put("book_id", pg.bookId);
+                    pv.put("chapter_id", pg.chapterId);
+                    pv.put("order_index", pg.orderIndex);
+                    pv.put("entry_path", pg.entryPath);
+                    pv.put("width", pg.width);
+                    pv.put("height", pg.height);
+                    pv.put("transformation", pg.transformation);
+                    pv.put("mime_type", pg.mimeType);
+                    db.insertWithOnConflict(TABLE_PAGES, null, pv, SQLiteDatabase.CONFLICT_REPLACE);
+                }
+            }
+
+            List<LocalModels.Chapter> allChapters = getChapters(bookId);
+            NaturalPathOrder naturalOrder = new NaturalPathOrder();
+            Collections.sort(allChapters, (a, b) -> naturalOrder.compare(a.title, b.title));
+            int totalPages = 0;
+            for (int i = 0; i < allChapters.size(); i++) {
+                LocalModels.Chapter ch = allChapters.get(i);
+                totalPages += ch.pageCount;
+                ContentValues ucv = new ContentValues();
+                ucv.put("order_index", i);
+                db.update(TABLE_CHAPTERS, ucv, "id = ?", new String[]{ch.id});
+            }
+
+            ContentValues bv = new ContentValues();
+            bv.put("chapter_count", allChapters.size());
+            bv.put("page_count", totalPages);
+            bv.put("total_size", book.totalSize + additionalSize);
+            bv.put("updated_at", System.currentTimeMillis());
+            db.update(TABLE_BOOKS, bv, "id = ?", new String[]{bookId});
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
     }
 
     public synchronized void publishDownloadedChapter(LocalModels.Book incoming,LocalModels.Chapter chapter,
@@ -387,7 +462,13 @@ public class LocalLibraryStore implements LocalContentResolver.ContentIndex {
             // Failed cleanup records retain ownership of their remaining files for another retry.
             for (LocalModels.Book book : listManagedBooks()) {
                 paths.add(book.relativePath);
+                for (LocalModels.Chapter ch : getChapters(book.id)) {
+                    if (ch.entryPath != null && !ch.entryPath.isEmpty()) {
+                        paths.add(ch.entryPath);
+                    }
+                }
                 covers.add(book.id + ".jpg");
+                if(book.coverPath!=null)covers.add(book.coverPath);
                 ids.add(book.id);
             }
             storageManager.cleanupOrphans(paths, covers);

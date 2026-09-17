@@ -71,6 +71,12 @@ public class LocalStorageManager {
     }
 
     public File getBookContentFile(LocalModels.Book book) throws IOException {
+        if (book == null) throw new IOException("漫画对象为空");
+        if (book.relativePath != null && (book.relativePath.startsWith("/") || book.relativePath.startsWith("\\")
+                || book.relativePath.startsWith("file://") || new File(book.relativePath).isAbsolute())) {
+            String path = book.relativePath.startsWith("file://") ? book.relativePath.substring(7) : book.relativePath;
+            return new File(path);
+        }
         return LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType)
                 ? getDownloadFile(book.relativePath) : getBookImportFile(book.relativePath);
     }
@@ -81,6 +87,14 @@ public class LocalStorageManager {
 
     public File getDerivedDir() {
         return derivedDir;
+    }
+
+    public synchronized File getDerivedBookFile(String bookId, String extension) throws IOException {
+        ensureDirectories();
+        if (bookId == null || bookId.trim().isEmpty()) throw new IOException("Book ID 为空");
+        String safeExt = (extension != null && !extension.isEmpty())
+                ? (extension.startsWith(".") ? extension : "." + extension) : "";
+        return new File(derivedDir, bookId.trim() + safeExt);
     }
 
     public File getCoversDir() {
@@ -108,6 +122,11 @@ public class LocalStorageManager {
 
     public File getBookImportFile(String relativePath) throws IOException {
         if (relativePath == null || relativePath.trim().isEmpty()) throw new IOException("本地漫画文件路径为空");
+        if (relativePath.startsWith("/") || relativePath.startsWith("\\")
+                || relativePath.startsWith("file://") || new File(relativePath).isAbsolute()) {
+            String path = relativePath.startsWith("file://") ? relativePath.substring(7) : relativePath;
+            return new File(path);
+        }
         File file = new File(importsDir, relativePath);
         assertPathInsideRoot(file, importsDir);
         if (file.getCanonicalFile().equals(importsDir.getCanonicalFile())) throw new IOException("本地漫画路径不能是整个书架目录");
@@ -209,10 +228,43 @@ public class LocalStorageManager {
 
     public synchronized boolean deleteBookFiles(LocalModels.Book book) {
         boolean cleaned = clearDerivedPagesForBook(book.id);
-        try { cleaned &= deleteRecursively(getBookContentFile(book)); }
-        catch (IOException | SecurityException error) { cleaned = false; }
+        boolean isImportCopy = book.relativePath != null &&
+                !book.relativePath.startsWith("/") &&
+                !book.relativePath.startsWith("\\") &&
+                !book.relativePath.startsWith("file://") &&
+                !book.relativePath.startsWith("content://") &&
+                !new File(book.relativePath).isAbsolute();
+        if (LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) || isImportCopy) {
+            try { cleaned &= deleteRecursively(getBookContentFile(book)); }
+            catch (IOException | SecurityException error) { cleaned = false; }
+        }
         try { cleaned &= deleteRecursively(getCoverFile(book.id)); }
         catch (IOException | SecurityException error) { cleaned = false; }
+        if(book.coverPath!=null)cleaned &= deleteRecursively(new File(book.coverPath));
+        File[] bookCovers=coversDir.listFiles();
+        if(bookCovers!=null)for(File cover:bookCovers)if(cover.getName().startsWith(book.id+"_"))cleaned &= deleteRecursively(cover);
+        try {
+            if (importsDir.exists()) {
+                File[] files = importsDir.listFiles();
+                if (files != null) {
+                    for (File f : files) {
+                        if (f.getName().startsWith(book.id)) {
+                            deleteRecursively(f);
+                        }
+                    }
+                }
+            }
+            if (derivedDir.exists()) {
+                File[] files = derivedDir.listFiles();
+                if (files != null) {
+                    for (File f : files) {
+                        if (f.getName().startsWith(book.id)) {
+                            deleteRecursively(f);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
         return cleaned;
     }
 

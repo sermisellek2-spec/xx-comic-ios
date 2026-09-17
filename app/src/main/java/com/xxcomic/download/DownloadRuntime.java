@@ -77,6 +77,12 @@ public final class DownloadRuntime {
             queue.enqueue(detail.summary.sourceId,detail.summary.comicId,detail.chapters,selected);
         }
     }
+    public void enqueueFiles(ComicModels.ComicDetail detail,List<FileResource> files,List<String> selected) {
+        synchronized(queue) {
+            store.saveSnapshot(detail);
+            queue.enqueueFiles(detail.summary.sourceId,detail.summary.comicId,files,selected);
+        }
+    }
     public synchronized void kick() {
         if(working || !initialized) return;
         working=true;
@@ -99,6 +105,10 @@ public final class DownloadRuntime {
     }
     private static final class NoSpaceException extends IOException {NoSpaceException(){super("空间不足，请清理后继续");}}
     private void download(Task task) {
+        if (task.isFileTask) {
+            downloadFile(task);
+            return;
+        }
         try {
             check(task);
             DownloadSources adapter=new DownloadSources(context,task.sourceId);
@@ -154,6 +164,75 @@ public final class DownloadRuntime {
                 if(error.getMessage()!=null && error.getMessage().contains("429"))retry=Math.max(retry,60000);
                 queue.failed(task,System.currentTimeMillis(),safeError(error),retry);
             }
+        }
+    }
+    private void downloadFile(Task task) {
+        File target=null,work=null;
+        boolean published=false;
+        try {
+            check(task);
+            DownloadSources adapter=new DownloadSources(context,task.sourceId);
+            if(!(adapter.source instanceof FileSourceCapability))throw new IOException("站源不支持文件下载");
+            work=library.storage.getDownloadFile(task.bookId+"/pending");
+            // One worker owns all file transfers; no old writer can race a resumed task.
+            File part=new File(work,"content.part");
+            task.refreshCount=0;
+            final long[] lastProgress={0};
+            FileDownloadWorker.Result result=new FileDownloadWorker().download(task,(FileSourceCapability)adapter.source,part,
+                    ()->check(task),(bytes,total)->{
+                        long now=android.os.SystemClock.elapsedRealtime();
+                        if(now-lastProgress[0]>=250 || bytes==total){queue.update(task,State.DOWNLOADING,0,1,bytes);lastProgress[0]=now;}
+                    });
+            check(task);queue.update(task,State.VERIFYING,0,1,result.bytes);
+            target=new File(work,task.bookId+"_"+task.generation+"."+result.detectedFormat);
+            synchronized(queue) {synchronized(library.storage) {
+                check(task);
+                if(target.exists() || !part.renameTo(target))throw new IOException("文件保存失败");
+            }}
+            ComicModels.ComicDetail snapshot=store.snapshot(bookId(task.sourceId,task.comicId));
+            String title=(snapshot==null?"":snapshot.summary.title+" · ")+task.title;
+            LocalModels.ImportProgressCallback callback=new LocalModels.ImportProgressCallback() {
+                public void onProgress(long current,long total,String message) { }
+                public boolean isCancelled() {
+                    try {check(task);return false;}catch(IOException error){return true;}
+                }
+            };
+            LocalImporter.PreparedFile prepared=new LocalImporter(context,library.storage,library.store)
+                    .prepareDownloadedFile(target,task.bookId,title,result.detectedFormat,result.hash,work,callback);
+            synchronized(queue) {synchronized(library.storage) {
+                check(task);
+                LocalModels.Book old=library.store.getBook(task.bookId);
+                File destination=library.storage.getBookImportFile(prepared.book.relativePath);
+                if(destination.exists() || !target.renameTo(destination))throw new IOException("本地文件发布失败");
+                target=destination;
+                library.store.commitImport(prepared.book,prepared.index.chapters,prepared.index.pagesByChapter);
+                published=true;
+                // Clear regenerated pages/Kindle representation only after the new index is durable.
+                library.storage.clearDerivedPagesForBook(task.bookId);
+                library.storage.deleteRecursively(library.storage.getDerivedBookFile(task.bookId,".epub"));
+                if(old!=null) {
+                    File previous=library.storage.getBookContentFile(old);
+                    if(!previous.equals(target))library.storage.deleteRecursively(previous);
+                    if(old.coverPath!=null && !old.coverPath.equals(prepared.book.coverPath))library.storage.deleteRecursively(new File(old.coverPath));
+                }
+                Task saved=store.get(task.id).copy();
+                saved.revision=task.revision;saved.sha256=task.sha256;saved.expectedBytes=task.expectedBytes;
+                saved.bytes=result.bytes;saved.donePages=1;saved.totalPages=1;store.save(saved);
+                queue.complete(task);
+                library.storage.deleteRecursively(work);
+            }}
+        } catch(Exception error) {
+            if(error instanceof VerificationRequiredException)queue.waitForVerification(task);
+            else if(error instanceof NoSpaceException || error instanceof SourceImageFetcher.HttpFailure
+                    && (((SourceImageFetcher.HttpFailure)error).status==401 || ((SourceImageFetcher.HttpFailure)error).status==403)) {
+                synchronized(queue){if(queue.isCurrent(task)){queue.pause(task.id);Task t=store.get(task.id).copy();t.error="文件下载需要检查空间或站源权限后重试";store.save(t);}}
+            } else queue.failed(task,System.currentTimeMillis(),safeError(error),error instanceof SourceImageFetcher.HttpFailure?((SourceImageFetcher.HttpFailure)error).retryAfter:0);
+        } finally {
+            if(!published && target!=null)synchronized(library.storage){library.storage.deleteRecursively(target);}
+            synchronized(queue) {synchronized(library.storage) {
+                Task current=store.get(task.id);
+                if(work!=null && (current==null || current.state==State.DELETING || current.state==State.CANCELLED))library.storage.deleteRecursively(work);
+            }}
         }
     }
     private static String safeError(Exception error) {
@@ -249,13 +328,20 @@ public final class DownloadRuntime {
         }
     }
     public void cancel(String id) throws IOException {
-        synchronized(queue) { Task task=store.get(id);if(task==null||task.state==State.COMPLETED)return;queue.cancel(id); }
+        synchronized(queue) {
+            Task task=store.get(id);if(task==null||task.state==State.COMPLETED)return;queue.cancel(id);
+            if(task.isFileTask) {
+                synchronized(library.storage){library.storage.deleteRecursively(library.storage.getDownloadFile(task.bookId));store.remove(id);}
+                return; // A cancelled replacement leaves the previously published volume readable.
+            }
+        }
         // Generation checks prevent an old stream from publishing after deletion.
         deleteChapter(id);
     }
     public void deleteChapter(String id) throws IOException {
         synchronized(queue) { synchronized(library.storage) {
             Task task=store.get(id);if(task==null)return;
+            if(task.isFileTask){if(!deleteBook(task.bookId))throw new IOException("文件未能完全删除，请重试");return;}
             task=task.copy();task.generation=DownloadCoordinator.nextGeneration();task.state=State.DELETING;store.save(task);
             if(!library.storage.deleteRecursively(library.storage.getDownloadFile(task.bookId+"/"+task.id)))throw new IOException("文件未能完全删除，请重试");
             library.store.removeDownloadedChapter(task.bookId,task.id,size(library.storage.getDownloadFile(task.bookId)));
@@ -275,6 +361,7 @@ public final class DownloadRuntime {
                 if(library.store.getBook(bookId)!=null) {
                     if(!library.store.deleteBook(bookId,library.storage))return false;
                 } else if(!library.storage.deleteRecursively(library.storage.getDownloadFile(bookId)))return false;
+                if(!library.storage.deleteRecursively(library.storage.getDownloadFile(bookId)))return false;
                 for(Task t:store.list())if(t.bookId.equals(bookId))store.remove(t.id);
                 return true;
             } catch(Exception error) {return false;}

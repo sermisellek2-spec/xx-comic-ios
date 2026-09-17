@@ -2,13 +2,17 @@ package com.xxcomic.local;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -74,53 +78,10 @@ public class LocalDetailView {
         dim.setBackgroundColor(Color.argb(70, 0, 0, 0));
         hero.addView(dim, new FrameLayout.LayoutParams(-1, -1));
 
-        // Top navigation bar on hero
-        LinearLayout topBar = new LinearLayout(activity);
-        topBar.setOrientation(LinearLayout.HORIZONTAL);
-        topBar.setGravity(Gravity.CENTER_VERTICAL);
-        topBar.setPadding(UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 12), 0);
-
-        TextView backBtn = UIHelpers.text(activity, "‹ 返回", 16, Color.WHITE, Typeface.BOLD);
-        backBtn.setPadding(UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 8));
-        backBtn.setContentDescription("返回书架");
-        backBtn.setOnClickListener(v -> {
-            if (listener != null) listener.onBack();
-        });
-        topBar.addView(backBtn, UIHelpers.weight(1));
-
-        TextView more = UIHelpers.text(activity, "···", 22, Color.WHITE, Typeface.BOLD);
-        more.setGravity(Gravity.CENTER);
-        more.setContentDescription("更多操作");
-        more.setOnClickListener(v -> {
-            LinearLayout menu = new LinearLayout(activity);
-            menu.setOrientation(LinearLayout.VERTICAL);
-            menu.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 8), UIHelpers.BORDER));
-            PopupWindow popup = new PopupWindow(menu, UIHelpers.dp(activity, 140), -2, true);
-            popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            popup.setOutsideTouchable(true);
-            popup.setElevation(UIHelpers.dp(activity, 8));
-            String[] labels = {"重命名", "删除漫画"};
-            for (int i = 0; i < labels.length; i++) {
-                final int action = i;
-                TextView item = UIHelpers.text(activity, labels[i], 14, UIHelpers.TEXT, Typeface.NORMAL);
-                item.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 14), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 14));
-                item.setOnClickListener(clicked -> {
-                    popup.dismiss();
-                    if (action == 0) showRenameDialog(activity, book, store, listener);
-                    else showDeleteDialog(activity, book, store, storageManager, listener);
-                });
-                menu.addView(item, new LinearLayout.LayoutParams(-1, -2));
-            }
-            popup.showAsDropDown(more, 0, 0, Gravity.END);
-        });
-        topBar.addView(more, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 44), UIHelpers.dp(activity, 44)));
-
-        hero.addView(topBar, new FrameLayout.LayoutParams(-1, -2));
-
         // 2. Info Body Card
         LinearLayout body = new LinearLayout(activity);
         body.setOrientation(LinearLayout.VERTICAL);
-        body.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 80));
+        body.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 82));
         body.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 12), Color.TRANSPARENT));
         LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(-1, -2);
         bodyParams.topMargin = -UIHelpers.dp(activity, 16);
@@ -143,36 +104,143 @@ public class LocalDetailView {
 
         body.addView(titleRow);
 
-        // Metadata
-        String metaText = (LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) ? "离线下载 · " : "本地导入 · ") + formatBytes(book.totalSize) + " · 共 " + book.chapterCount + " 话 / " + book.pageCount + " 页";
+        // Metadata: only type + file size
+        String typeLabel = LocalModels.isDownload(book) ? "离线下载" : "本地导入";
+        String metaText = typeLabel + " · " + formatBytes(book.totalSize);
         TextView metaView = UIHelpers.text(activity, metaText, 12, UIHelpers.TEXT2, Typeface.NORMAL);
         body.addView(metaView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 8)));
 
-        // File path info
-        TextView fileInfo = UIHelpers.text(activity, "储存路径: " + book.relativePath, 11, UIHelpers.TEXT3, Typeface.NORMAL);
-        fileInfo.setEllipsize(TextUtils.TruncateAt.MIDDLE);
-        fileInfo.setSingleLine(true);
-        body.addView(fileInfo, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 4)));
-
-        // Reading Action Button
-        final int targetChapter = Math.max(0, Math.min(savedChapterIndex, detail.chapters.size() - 1));
-        String readActionText = hasRead ? "继续阅读 第 " + (targetChapter + 1) + " 话" : "开始阅读";
-        Button readBtn = UIHelpers.primaryButton(activity, readActionText);
-        readBtn.setOnClickListener(v -> {
-            if (listener != null) listener.onRead(book, detail, targetChapter);
-        });
-        body.addView(readBtn, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 14), -1, UIHelpers.dp(activity, 44)));
-
         // Divider
-        body.addView(UIHelpers.divider(activity), UIHelpers.marginTop(-1, UIHelpers.dp(activity, 16)));
+        body.addView(UIHelpers.divider(activity), UIHelpers.marginTop(-1, UIHelpers.dp(activity, 12)));
 
         // 3. Chapter Entry (Opens 76% Drawer)
+        final int targetChapter = Math.max(0, Math.min(savedChapterIndex, detail.chapters.size() - 1));
         View chapterEntryView = buildChapterEntry(activity, root, book, detail, targetChapter, hasRead, (selectedChapter) -> {
             if (listener != null) listener.onRead(book, detail, selectedChapter);
         });
         body.addView(chapterEntryView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 12)));
 
+        // 4. Fixed Bottom Action Bar (Matches online detail style & typography)
+        LinearLayout actions = new LinearLayout(activity);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        actions.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 10));
+        actions.setBackgroundColor(UIHelpers.CARD);
+
+        // Reading Action Button full width (two-line typography matching 图4)
+        LinearLayout readBtn = new LinearLayout(activity);
+        readBtn.setOrientation(LinearLayout.VERTICAL);
+        readBtn.setGravity(Gravity.CENTER);
+        readBtn.setPadding(UIHelpers.dp(activity, 12), 0, UIHelpers.dp(activity, 12), 0);
+        readBtn.setBackground(UIHelpers.round(UIHelpers.ACCENT, UIHelpers.dp(activity, 7), Color.TRANSPARENT));
+
+        String title = hasRead ? "继续阅读" : "开始阅读";
+        String subtitle = hasRead ? "第 " + (targetChapter + 1) + " 话" : "从第 1 话开始";
+
+        TextView titleActionView = UIHelpers.text(activity, title, 13, UIHelpers.ON_ACCENT, Typeface.BOLD);
+        titleActionView.setGravity(Gravity.CENTER);
+        titleActionView.setIncludeFontPadding(false);
+        titleActionView.setSingleLine(true);
+        titleActionView.setEllipsize(TextUtils.TruncateAt.END);
+        readBtn.addView(titleActionView);
+
+        TextView subtitleActionView = UIHelpers.text(activity, subtitle, 10, UIHelpers.ON_ACCENT, Typeface.NORMAL);
+        subtitleActionView.setGravity(Gravity.CENTER);
+        subtitleActionView.setIncludeFontPadding(false);
+        subtitleActionView.setAlpha(.84f);
+        subtitleActionView.setSingleLine(true);
+        subtitleActionView.setEllipsize(TextUtils.TruncateAt.END);
+        readBtn.addView(subtitleActionView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 2)));
+
+        readBtn.setContentDescription(title + "，" + subtitle);
+        readBtn.setOnClickListener(v -> {
+            if (listener != null) listener.onRead(book, detail, targetChapter);
+        });
+        actions.addView(readBtn, new LinearLayout.LayoutParams(-1, UIHelpers.dp(activity, 44)));
+
+        root.addView(actions, UIHelpers.frame(-1, UIHelpers.dp(activity, 62), Gravity.BOTTOM, 0, 0, 0, 0));
+
         return root;
+    }
+
+    public static void showMoreActionSheet(Activity activity, LocalModels.Book book,
+                                           LocalLibraryStore store, LocalStorageManager storageManager,
+                                           Listener listener) {
+        if (activity == null || activity.isFinishing()) return;
+
+        Dialog dialog = new Dialog(activity);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        LinearLayout sheet = new LinearLayout(activity);
+        sheet.setOrientation(LinearLayout.VERTICAL);
+        sheet.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 10), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 20));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(UIHelpers.CARD);
+        float r = UIHelpers.dp(activity, 16);
+        bg.setCornerRadii(new float[]{r, r, r, r, 0, 0, 0, 0});
+        sheet.setBackground(bg);
+
+        // Top drag handle
+        FrameLayout handleHost = new FrameLayout(activity);
+        View handle = new View(activity);
+        handle.setBackground(UIHelpers.round(UIHelpers.BORDER, UIHelpers.dp(activity, 2), Color.TRANSPARENT));
+        handleHost.addView(handle, new FrameLayout.LayoutParams(UIHelpers.dp(activity, 36), UIHelpers.dp(activity, 4), Gravity.CENTER));
+        sheet.addView(handleHost, new LinearLayout.LayoutParams(-1, UIHelpers.dp(activity, 18)));
+
+        // Comic title
+        TextView sheetTitle = UIHelpers.text(activity, book.getDisplayTitle(), 13, UIHelpers.TEXT3, Typeface.NORMAL);
+        sheetTitle.setSingleLine(true);
+        sheetTitle.setEllipsize(TextUtils.TruncateAt.END);
+        sheetTitle.setGravity(Gravity.CENTER);
+        sheetTitle.setPadding(0, UIHelpers.dp(activity, 2), 0, UIHelpers.dp(activity, 12));
+        sheet.addView(sheetTitle);
+
+        sheet.addView(UIHelpers.divider(activity));
+
+        // Action 1: 重命名
+        TextView renameBtn = UIHelpers.text(activity, "重命名", 15, UIHelpers.TEXT, Typeface.NORMAL);
+        renameBtn.setGravity(Gravity.CENTER);
+        renameBtn.setPadding(0, UIHelpers.dp(activity, 14), 0, UIHelpers.dp(activity, 14));
+        renameBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            showRenameDialog(activity, book, store, listener);
+        });
+        sheet.addView(renameBtn, new LinearLayout.LayoutParams(-1, -2));
+
+        sheet.addView(UIHelpers.divider(activity));
+
+        // Action 2: 删除漫画
+        TextView deleteBtn = UIHelpers.text(activity, "删除漫画", 15, UIHelpers.DANGER, Typeface.NORMAL);
+        deleteBtn.setGravity(Gravity.CENTER);
+        deleteBtn.setPadding(0, UIHelpers.dp(activity, 14), 0, UIHelpers.dp(activity, 14));
+        deleteBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            showDeleteDialog(activity, book, store, storageManager, listener);
+        });
+        sheet.addView(deleteBtn, new LinearLayout.LayoutParams(-1, -2));
+
+        sheet.addView(UIHelpers.divider(activity));
+
+        // Action 3: 取消
+        TextView cancelBtn = UIHelpers.text(activity, "取消", 15, UIHelpers.TEXT3, Typeface.NORMAL);
+        cancelBtn.setGravity(Gravity.CENTER);
+        cancelBtn.setPadding(0, UIHelpers.dp(activity, 14), 0, UIHelpers.dp(activity, 14));
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+        sheet.addView(cancelBtn, new LinearLayout.LayoutParams(-1, -2));
+
+        dialog.setContentView(sheet);
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setGravity(Gravity.BOTTOM);
+            window.setWindowAnimations(android.R.style.Animation_InputMethod);
+            window.setDimAmount(0.45f);
+        }
+
+        dialog.show();
     }
 
     private interface OnChapterSelected {
@@ -191,9 +259,12 @@ public class LocalDetailView {
         LinearLayout text = new LinearLayout(activity);
         text.setOrientation(LinearLayout.VERTICAL);
         text.addView(UIHelpers.text(activity, "章节目录", 14, UIHelpers.TEXT, Typeface.BOLD));
-        String sourceTag = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) ? "离线下载"
+        String sourceTag = LocalModels.isDownload(book) ? "离线下载"
                 : (LocalModels.FORMAT_PDF.equals(book.format) ? "PDF 文档"
-                : (LocalModels.FORMAT_EPUB.equals(book.format) ? "EPUB 漫画" : "本地漫画"));
+                : (LocalModels.FORMAT_EPUB.equals(book.format) ? "EPUB 电子书"
+                : (LocalModels.FORMAT_AZW3.equals(book.format) ? "AZW3 电子书"
+                : (LocalModels.FORMAT_AZW.equals(book.format) ? "AZW 电子书"
+                : (LocalModels.FORMAT_MOBI.equals(book.format) ? "MOBI 电子书" : "本地漫画")))));
         String status = detail.chapters.isEmpty() ? "暂无章节" : detail.chapters.size() + " 话 · " + sourceTag;
         text.addView(UIHelpers.text(activity, status, 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(activity, 3)));
         row.addView(text, UIHelpers.weight(1));
@@ -236,9 +307,10 @@ public class LocalDetailView {
         drawerTools.setGravity(Gravity.CENTER_VERTICAL);
         drawerTools.setMinimumHeight(UIHelpers.dp(activity, 39));
 
-        String sourceLabel = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) ? "离线下载"
+        String sourceLabel = LocalModels.isDownload(book) ? "离线下载"
                 : (LocalModels.FORMAT_PDF.equals(book.format) ? "PDF 导入"
-                : (LocalModels.FORMAT_EPUB.equals(book.format) ? "EPUB 导入" : "本地导入"));
+                : (LocalModels.FORMAT_EPUB.equals(book.format) ? "EPUB 导入"
+                : (LocalModels.isKindleFormat(book.format) ? book.format.toUpperCase(Locale.US) + " 导入" : "本地导入")));
         TextView drawerSource = UIHelpers.text(activity, sourceLabel, 11, UIHelpers.TEXT3, Typeface.NORMAL);
         drawerTools.addView(drawerSource, UIHelpers.weight(1));
 
@@ -345,27 +417,54 @@ public class LocalDetailView {
                                          LocalLibraryStore store, Listener listener) {
         if (activity == null || activity.isFinishing()) return;
 
+        Dialog dialog = new Dialog(activity);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
         LinearLayout layout = new LinearLayout(activity);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 16),
-                UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 12));
+        layout.setPadding(UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 20),
+                UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 18));
+        layout.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 16), Color.TRANSPARENT));
+
+        // Header with Rem avatar and title
+        LinearLayout header = new LinearLayout(activity);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+
+        ImageView remIcon = new ImageView(activity);
+        remIcon.setImageResource(R.drawable.rem_reader_resume);
+        remIcon.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        remIcon.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(activity, 18), Color.TRANSPARENT));
+        remIcon.setClipToOutline(true);
+        header.addView(remIcon, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 36), UIHelpers.dp(activity, 36)));
+
+        LinearLayout headerText = new LinearLayout(activity);
+        headerText.setOrientation(LinearLayout.VERTICAL);
+        headerText.setPadding(UIHelpers.dp(activity, 12), 0, 0, 0);
 
         TextView titleView = UIHelpers.text(activity, "重命名漫画", 17, UIHelpers.TEXT, Typeface.BOLD);
-        layout.addView(titleView);
+        headerText.addView(titleView);
 
         TextView subView = UIHelpers.text(activity, "修改在 App 内显示的本地漫画名称", 12, UIHelpers.TEXT3, Typeface.NORMAL);
-        layout.addView(subView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 4)));
+        headerText.addView(subView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 2)));
 
+        header.addView(headerText, UIHelpers.weight(1));
+        layout.addView(header);
+
+        // Input field
         final EditText input = new EditText(activity);
         input.setSingleLine(true);
         input.setText(book.getDisplayTitle());
         input.setSelection(input.getText().length());
         input.setTextColor(UIHelpers.TEXT);
+        input.setTextSize(14);
+        input.setHint("请输入漫画名称");
         input.setHintTextColor(UIHelpers.TEXT3);
         input.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(activity, 8), UIHelpers.BORDER));
-        int pad = UIHelpers.dp(activity, 10);
-        input.setPadding(pad, pad, pad, pad);
-        layout.addView(input, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 14)));
+        int padH = UIHelpers.dp(activity, 12);
+        int padV = UIHelpers.dp(activity, 10);
+        input.setPadding(padH, padV, padH, padV);
+        layout.addView(input, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 16)));
 
         final TextView errorView = UIHelpers.text(activity, "", 11, UIHelpers.DANGER, Typeface.NORMAL);
         errorView.setVisibility(View.GONE);
@@ -381,58 +480,75 @@ public class LocalDetailView {
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
 
-        AlertDialog dialog = new AlertDialog.Builder(activity)
-                .setView(layout)
-                .setPositiveButton("保存", null)
-                .setNegativeButton("取消", null)
-                .create();
+        // Buttons
+        LinearLayout btnRow = new LinearLayout(activity);
+        btnRow.setOrientation(LinearLayout.HORIZONTAL);
+        btnRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        dialog.setOnShowListener(d -> {
-            android.view.Window window = dialog.getWindow();
-            if (window != null) {
-                window.setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 12), Color.TRANSPARENT));
-                int width = Math.min(activity.getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(activity, 40), UIHelpers.dp(activity, 328));
-                window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+        Button cancelBtn = new Button(activity);
+        cancelBtn.setText("取消");
+        cancelBtn.setTextSize(14);
+        cancelBtn.setTextColor(UIHelpers.TEXT2);
+        cancelBtn.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(activity, 8), UIHelpers.BORDER));
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+        btnRow.addView(cancelBtn, new LinearLayout.LayoutParams(0, UIHelpers.dp(activity, 40), 1f));
+
+        btnRow.addView(UIHelpers.space(activity, UIHelpers.dp(activity, 10), 1));
+
+        Button saveBtn = new Button(activity);
+        saveBtn.setText("保存");
+        saveBtn.setTextSize(14);
+        saveBtn.setTypeface(Typeface.DEFAULT_BOLD);
+        saveBtn.setTextColor(Color.WHITE);
+        saveBtn.setBackground(UIHelpers.round(UIHelpers.ACCENT, UIHelpers.dp(activity, 8), Color.TRANSPARENT));
+        saveBtn.setOnClickListener(v -> {
+            String newTitle = input.getText().toString().trim();
+            if (TextUtils.isEmpty(newTitle)) {
+                errorView.setText("漫画名称不能为空");
+                errorView.setVisibility(View.VISIBLE);
+                return;
             }
-            Button pos = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            if (pos != null) {
-                pos.setTextColor(UIHelpers.ACCENT);
-                pos.setOnClickListener(v -> {
-                    String newTitle = input.getText().toString().trim();
-                    if (TextUtils.isEmpty(newTitle)) {
-                        errorView.setText("漫画名称不能为空");
+            saveBtn.setEnabled(false);
+            new Thread(() -> {
+                LocalModels.Book renamed = null;
+                try {
+                    if (store.renameBook(book.id, newTitle)) renamed = store.getBook(book.id);
+                } catch (Exception ignored) { }
+                final LocalModels.Book updated = renamed;
+                activity.runOnUiThread(() -> {
+                    if (activity.isFinishing() || activity.isDestroyed()) return;
+                    saveBtn.setEnabled(true);
+                    if (updated == null) {
+                        errorView.setText("名称保存失败，请重试");
                         errorView.setVisibility(View.VISIBLE);
                         return;
                     }
-                    pos.setEnabled(false);
-                    new Thread(() -> {
-                        LocalModels.Book renamed = null;
-                        try {
-                            if (store.renameBook(book.id, newTitle)) renamed = store.getBook(book.id);
-                        } catch (Exception ignored) { }
-                        final LocalModels.Book updated = renamed;
-                        activity.runOnUiThread(() -> {
-                            if (activity.isFinishing() || activity.isDestroyed()) return;
-                            pos.setEnabled(true);
-                            if (updated == null) {
-                                errorView.setText("名称保存失败，请重试");
-                                errorView.setVisibility(View.VISIBLE);
-                                return;
-                            }
-                            dialog.dismiss();
-                            if (listener != null) {
-                                listener.onBookRenamed(updated);
-                                listener.showToast("已重命名漫画");
-                            }
-                        });
-                    }, "local-rename").start();
+                    dialog.dismiss();
+                    if (listener != null) {
+                        listener.onBookRenamed(updated);
+                        listener.showToast("已重命名漫画");
+                    }
                 });
-            }
-            Button neg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-            if (neg != null) neg.setTextColor(UIHelpers.TEXT3);
+            }, "local-rename").start();
         });
+        btnRow.addView(saveBtn, new LinearLayout.LayoutParams(0, UIHelpers.dp(activity, 40), 1f));
+
+        layout.addView(btnRow, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 18)));
+
+        dialog.setContentView(layout);
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            int width = Math.min(activity.getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(activity, 48), UIHelpers.dp(activity, 320));
+            window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setWindowAnimations(android.R.style.Animation_Dialog);
+            window.setDimAmount(0.45f);
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        }
 
         dialog.show();
+        input.requestFocus();
     }
 
     public static void showDeleteDialog(Activity activity, LocalModels.Book book,
@@ -440,16 +556,23 @@ public class LocalDetailView {
                                          Listener listener) {
         if (activity == null || activity.isFinishing()) return;
 
-        LinearLayout content = new LinearLayout(activity);
-        content.setOrientation(LinearLayout.HORIZONTAL);
-        content.setGravity(Gravity.TOP);
-        content.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16),
-                UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 10));
+        Dialog dialog = new Dialog(activity);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        LinearLayout layout = new LinearLayout(activity);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 20),
+                UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 18));
+        layout.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 16), Color.TRANSPARENT));
+
+        LinearLayout body = new LinearLayout(activity);
+        body.setOrientation(LinearLayout.HORIZONTAL);
+        body.setGravity(Gravity.TOP);
 
         ImageView art = new ImageView(activity);
         art.setImageResource(R.drawable.rem_empty);
         art.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        content.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 56), UIHelpers.dp(activity, 56)));
+        body.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 52), UIHelpers.dp(activity, 52)));
 
         LinearLayout copy = new LinearLayout(activity);
         copy.setOrientation(LinearLayout.VERTICAL);
@@ -458,32 +581,54 @@ public class LocalDetailView {
         TextView titleView = UIHelpers.text(activity, "删除本地漫画？", 17, UIHelpers.TEXT, Typeface.BOLD);
         copy.addView(titleView);
 
-        boolean isDownload = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType);
+        boolean isDownload = LocalModels.isDownload(book);
         String message = isDownload
-                ? "将删除《" + book.getDisplayTitle() + "》的全部离线下载文件并释放 " + formatBytes(book.totalSize) + " 存储空间。\n\n提示：在线收藏与阅读进度已保留，之后仍可在联网时继续阅读。"
+                ? "将删除《" + book.getDisplayTitle() + "》的全部离线下载文件并释放 " + formatBytes(book.totalSize) + " 存储空间。\n\n收藏与阅读记录会保留，再次下载相同内容后可继续阅读。"
                 : "将删除《" + book.getDisplayTitle() + "》在 App 内的副本并释放 " + formatBytes(book.totalSize) + " 存储空间。\n\n提示：您手机上的原始文件不受影响。阅读进度已保留，日后重导可继续阅读。";
         TextView messageView = UIHelpers.text(activity, message, 12, UIHelpers.TEXT2, Typeface.NORMAL);
         copy.addView(messageView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 6)));
-        content.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
+        body.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
 
-        AlertDialog dialog = new AlertDialog.Builder(activity)
-                .setView(content)
-                .setPositiveButton("删除", (d, which) -> executeDelete(activity, book, store, storageManager, listener))
-                .setNegativeButton("取消", null)
-                .create();
+        layout.addView(body);
 
-        dialog.setOnShowListener(d -> {
-            android.view.Window window = dialog.getWindow();
-            if (window != null) {
-                window.setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 12), Color.TRANSPARENT));
-                int width = Math.min(activity.getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(activity, 40), UIHelpers.dp(activity, 328));
-                window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
-            }
-            Button pos = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            if (pos != null) pos.setTextColor(UIHelpers.DANGER);
-            Button neg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-            if (neg != null) neg.setTextColor(UIHelpers.TEXT3);
+        LinearLayout btnRow = new LinearLayout(activity);
+        btnRow.setOrientation(LinearLayout.HORIZONTAL);
+        btnRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        Button cancelBtn = new Button(activity);
+        cancelBtn.setText("取消");
+        cancelBtn.setTextSize(14);
+        cancelBtn.setTextColor(UIHelpers.TEXT2);
+        cancelBtn.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(activity, 8), UIHelpers.BORDER));
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+        btnRow.addView(cancelBtn, new LinearLayout.LayoutParams(0, UIHelpers.dp(activity, 40), 1f));
+
+        btnRow.addView(UIHelpers.space(activity, UIHelpers.dp(activity, 10), 1));
+
+        Button delBtn = new Button(activity);
+        delBtn.setText("确认删除");
+        delBtn.setTextSize(14);
+        delBtn.setTypeface(Typeface.DEFAULT_BOLD);
+        delBtn.setTextColor(Color.WHITE);
+        delBtn.setBackground(UIHelpers.round(UIHelpers.DANGER, UIHelpers.dp(activity, 8), Color.TRANSPARENT));
+        delBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            executeDelete(activity, book, store, storageManager, listener);
         });
+        btnRow.addView(delBtn, new LinearLayout.LayoutParams(0, UIHelpers.dp(activity, 40), 1f));
+
+        layout.addView(btnRow, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 18)));
+
+        dialog.setContentView(layout);
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            int width = Math.min(activity.getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(activity, 48), UIHelpers.dp(activity, 320));
+            window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setWindowAnimations(android.R.style.Animation_Dialog);
+            window.setDimAmount(0.45f);
+        }
 
         dialog.show();
     }
@@ -493,7 +638,7 @@ public class LocalDetailView {
                                       Listener listener) {
         new Thread(() -> {
             boolean deleted;
-            try { deleted = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType)
+            try { deleted = LocalModels.isDownload(book)
                     ? com.xxcomic.download.DownloadRuntime.get(activity).deleteBook(book.id) : store.deleteBook(book.id, storageManager); }
             catch (Exception error) { deleted = false; }
             final boolean success = deleted;
@@ -507,17 +652,23 @@ public class LocalDetailView {
                             listener.onBookDeleted(book);
                         }
                     } else {
-                        // Retention of deleting tombstone allows retry without faking success
-                        LinearLayout content = new LinearLayout(activity);
-                        content.setOrientation(LinearLayout.HORIZONTAL);
-                        content.setGravity(Gravity.TOP);
-                        content.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16),
-                                UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 10));
+                        Dialog retryDialog = new Dialog(activity);
+                        retryDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+                        LinearLayout layout = new LinearLayout(activity);
+                        layout.setOrientation(LinearLayout.VERTICAL);
+                        layout.setPadding(UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 20),
+                                UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 18));
+                        layout.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 16), Color.TRANSPARENT));
+
+                        LinearLayout body = new LinearLayout(activity);
+                        body.setOrientation(LinearLayout.HORIZONTAL);
+                        body.setGravity(Gravity.TOP);
 
                         ImageView art = new ImageView(activity);
                         art.setImageResource(R.drawable.rem_error);
                         art.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        content.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 56), UIHelpers.dp(activity, 56)));
+                        body.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 52), UIHelpers.dp(activity, 52)));
 
                         LinearLayout copy = new LinearLayout(activity);
                         copy.setOrientation(LinearLayout.VERTICAL);
@@ -528,25 +679,48 @@ public class LocalDetailView {
 
                         TextView messageView = UIHelpers.text(activity, "部分漫画文件未能完全清理，建议稍后重试。", 12, UIHelpers.TEXT2, Typeface.NORMAL);
                         copy.addView(messageView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 6)));
-                        content.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
+                        body.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
 
-                        AlertDialog retryDialog = new AlertDialog.Builder(activity)
-                                .setView(content)
-                                .setPositiveButton("重试", (d, w) -> executeDelete(activity, book, store, storageManager, listener))
-                                .setNegativeButton("取消", null)
-                                .create();
-                        retryDialog.setOnShowListener(d -> {
-                            android.view.Window window = retryDialog.getWindow();
-                            if (window != null) {
-                                window.setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 12), Color.TRANSPARENT));
-                                int width = Math.min(activity.getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(activity, 40), UIHelpers.dp(activity, 328));
-                                window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
-                            }
-                            Button pos = retryDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-                            if (pos != null) pos.setTextColor(UIHelpers.ACCENT);
-                            Button neg = retryDialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-                            if (neg != null) neg.setTextColor(UIHelpers.TEXT3);
+                        layout.addView(body);
+
+                        LinearLayout btnRow = new LinearLayout(activity);
+                        btnRow.setOrientation(LinearLayout.HORIZONTAL);
+                        btnRow.setGravity(Gravity.CENTER_VERTICAL);
+
+                        Button cancelBtn = new Button(activity);
+                        cancelBtn.setText("取消");
+                        cancelBtn.setTextSize(14);
+                        cancelBtn.setTextColor(UIHelpers.TEXT2);
+                        cancelBtn.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(activity, 8), UIHelpers.BORDER));
+                        cancelBtn.setOnClickListener(v -> retryDialog.dismiss());
+                        btnRow.addView(cancelBtn, new LinearLayout.LayoutParams(0, UIHelpers.dp(activity, 40), 1f));
+
+                        btnRow.addView(UIHelpers.space(activity, UIHelpers.dp(activity, 10), 1));
+
+                        Button retryBtn = new Button(activity);
+                        retryBtn.setText("重试");
+                        retryBtn.setTextSize(14);
+                        retryBtn.setTypeface(Typeface.DEFAULT_BOLD);
+                        retryBtn.setTextColor(Color.WHITE);
+                        retryBtn.setBackground(UIHelpers.round(UIHelpers.ACCENT, UIHelpers.dp(activity, 8), Color.TRANSPARENT));
+                        retryBtn.setOnClickListener(v -> {
+                            retryDialog.dismiss();
+                            executeDelete(activity, book, store, storageManager, listener);
                         });
+                        btnRow.addView(retryBtn, new LinearLayout.LayoutParams(0, UIHelpers.dp(activity, 40), 1f));
+
+                        layout.addView(btnRow, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 18)));
+
+                        retryDialog.setContentView(layout);
+
+                        Window window = retryDialog.getWindow();
+                        if (window != null) {
+                            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                            int width = Math.min(activity.getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(activity, 48), UIHelpers.dp(activity, 320));
+                            window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+                            window.setWindowAnimations(android.R.style.Animation_Dialog);
+                            window.setDimAmount(0.45f);
+                        }
                         retryDialog.show();
                     }
                 });

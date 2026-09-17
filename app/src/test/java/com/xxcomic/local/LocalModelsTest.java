@@ -41,4 +41,47 @@ public class LocalModelsTest {
         assertEquals(0, page.orderIndex);
         assertEquals("image/jpeg", page.mimeType);
     }
+
+    @Test
+    public void testRecentlyUsedSortingComparator() {
+        LocalModels.Book bookA = new LocalModels.Book("a", "fp_a", "Book A", null,
+                LocalModels.FORMAT_ZIP, LocalModels.SOURCE_TYPE_IMPORT, "prog_a",
+                "/storage/a.zip", null, 100, 1, 10, LocalModels.STATUS_READY, 1000L, 1000L);
+        LocalModels.Book bookB = new LocalModels.Book("b", "fp_b", "Book B", null,
+                LocalModels.FORMAT_ZIP, LocalModels.SOURCE_TYPE_IMPORT, "prog_b",
+                "/storage/b.zip", null, 100, 1, 10, LocalModels.STATUS_READY, 2000L, 2000L);
+        LocalModels.Book bookC = new LocalModels.Book("c", "fp_c", "Book C", null,
+                LocalModels.FORMAT_ZIP, LocalModels.SOURCE_TYPE_IMPORT, "prog_c",
+                "/storage/c.zip", null, 100, 1, 10, LocalModels.STATUS_READY, 500L, 500L);
+
+        java.util.Map<String, Long> lastViewed = new java.util.HashMap<>();
+        // Book C was read at timestamp 5000 (most recent!)
+        lastViewed.put("prog_c", 5000L);
+        // Book A was read at timestamp 1500
+        lastViewed.put("prog_a", 1500L);
+        // Book B has no read history, so its time is createdAt = 2000
+
+        java.util.List<LocalModels.Book> list = new java.util.ArrayList<>(java.util.Arrays.asList(bookA, bookB, bookC));
+        java.util.Collections.sort(list, (left, right) -> {
+            long leftReadTime = 0L;
+            if (left.progressKey != null && lastViewed.containsKey(left.progressKey)) {
+                leftReadTime = Math.max(leftReadTime, lastViewed.get(left.progressKey));
+            }
+            long rightReadTime = 0L;
+            if (right.progressKey != null && lastViewed.containsKey(right.progressKey)) {
+                rightReadTime = Math.max(rightReadTime, lastViewed.get(right.progressKey));
+            }
+            long leftTime = Math.max(left.createdAt, leftReadTime);
+            long rightTime = Math.max(right.createdAt, rightReadTime);
+            if (leftTime != rightTime) {
+                return Long.compare(rightTime, leftTime);
+            }
+            return Long.compare(right.createdAt, left.createdAt);
+        });
+
+        // Expected order: Book C (5000) -> Book B (2000) -> Book A (1500)
+        assertEquals("c", list.get(0).id);
+        assertEquals("b", list.get(1).id);
+        assertEquals("a", list.get(2).id);
+    }
 }

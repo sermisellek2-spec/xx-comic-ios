@@ -24,6 +24,7 @@ public class LocalContentResolver {
         LocalModels.Book getBook(String id);
         LocalModels.Page getPage(String id);
         LocalModels.Page getFirstPage(String bookId);
+        LocalModels.Chapter getChapter(String id);
     }
 
     private final ContentIndex store;
@@ -77,6 +78,7 @@ public class LocalContentResolver {
             throw new IOException("页面所属本地漫画未找到或正在删除中: " + page.bookId);
         }
 
+        LocalModels.Chapter chapter = store.getChapter(page.chapterId);
         if (LocalModels.FORMAT_FOLDER.equals(book.format)) {
             File bookDir = storageManager.getBookContentFile(book);
             File pageFile = new File(bookDir, page.entryPath);
@@ -88,8 +90,42 @@ public class LocalContentResolver {
         } else if (LocalModels.FORMAT_PDF.equals(book.format)) {
             File materialized = materializePage(pageId);
             return new FileInputStream(materialized);
+        } else if (LocalModels.isKindleFormat(book.format)) {
+            File derivedZipFile = storageManager.getDerivedBookFile(book.id, ".epub");
+            if (!derivedZipFile.exists()) {
+                File srcFile = storageManager.getBookContentFile(book);
+                com.xxcomic.ebook.KindlePublicationAdapter.convertMobiToDerivedEpub(srcFile, derivedZipFile, book.id);
+            }
+            if (!derivedZipFile.exists()) {
+                throw new IOException("Kindle 衍生电子书文件缺失且无法重建: " + derivedZipFile.getAbsolutePath());
+            }
+            ZipFile zip = ArchiveIndex.openZipWithFallbackCharset(derivedZipFile);
+            ZipEntry entry = zip.getEntry(page.entryPath);
+            if (entry == null) {
+                try { zip.close(); } catch (IOException ignored) {}
+                throw new IOException("电子书内页面条目未找到: " + page.entryPath);
+            }
+            InputStream entryStream;
+            try { entryStream = zip.getInputStream(entry); }
+            catch (IOException | RuntimeException error) {
+                try { zip.close(); } catch (IOException ignored) { }
+                throw error;
+            }
+            return new FilterInputStream(entryStream) {
+                @Override
+                public void close() throws IOException {
+                    try {
+                        super.close();
+                    } finally {
+                        zip.close();
+                    }
+                }
+            };
         } else {
-            File zipFile = storageManager.getBookImportFile(book.relativePath);
+            String archiveRelativePath = (chapter != null && !TextUtils.isEmpty(chapter.entryPath) &&
+                    (chapter.entryPath.endsWith(".epub") || chapter.entryPath.endsWith(".zip") || chapter.entryPath.endsWith(".cbz")))
+                    ? chapter.entryPath : book.relativePath;
+            File zipFile = storageManager.getBookImportFile(archiveRelativePath);
             if (!zipFile.exists()) {
                 throw new IOException("本地漫画压缩包不存在: " + zipFile.getAbsolutePath());
             }
@@ -171,7 +207,10 @@ public class LocalContentResolver {
         boolean success = false;
         try {
             if (LocalModels.FORMAT_PDF.equals(book.format)) {
-                File pdfFile = storageManager.getBookImportFile(book.relativePath);
+                LocalModels.Chapter chapter = store.getChapter(page.chapterId);
+                String pdfRelativePath = (chapter != null && !TextUtils.isEmpty(chapter.entryPath) && chapter.entryPath.endsWith(".pdf"))
+                        ? chapter.entryPath : book.relativePath;
+                File pdfFile = storageManager.getBookImportFile(pdfRelativePath);
                 if (!pdfFile.exists()) {
                     throw new IOException("本地 PDF 文档不存在: " + pdfFile.getAbsolutePath());
                 }

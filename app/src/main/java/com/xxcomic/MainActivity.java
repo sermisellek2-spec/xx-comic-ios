@@ -32,6 +32,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
@@ -58,6 +59,7 @@ import android.widget.Toast;
 import com.xxcomic.reader.PagedReaderView;
 import com.xxcomic.reader.ReaderPosition;
 import com.xxcomic.reader.ReaderNavigation;
+import com.xxcomic.reader.ReaderSettingsSheet;
 
 import com.xxcomic.source.BaoziComicSource;
 import com.xxcomic.source.AntbywComicSource;
@@ -353,6 +355,7 @@ public class MainActivity extends Activity {
     private boolean readerButtonMode = false;
     private int readerPageMode = 0; // 0 touch edge, 1 buttons, 2 horizontal swipe
     private int readerDisplayMode = 0; // 0 normal, 1 e-ink
+    private boolean readerPinchZoom = true;
     private ColorMatrixColorFilter readerEinkFilter;
 
     private static final int REQUEST_CODE_IMPORT_ARCHIVE = 1001;
@@ -396,6 +399,8 @@ public class MainActivity extends Activity {
     private String readerLocalBookId = "";
     private String localLibraryRecoveryError;
     private final java.util.concurrent.atomic.AtomicBoolean localStoreRecoveryStarted = new java.util.concurrent.atomic.AtomicBoolean(false);
+    private final Set<String> pendingDeleteLocalBookIds = new HashSet<>();
+    private final Map<String, Runnable> pendingLocalDeleteRunnables = new HashMap<>();
 
     private void ensureLocalLibraryRecovery() {
         if (localStoreRecoveryStarted.compareAndSet(false, true)) {
@@ -451,6 +456,10 @@ public class MainActivity extends Activity {
 
     private boolean isLocalComic(String comicId) {
         return comicId != null && comicId.startsWith("local_");
+    }
+    private LocalModels.Book localBookForReading(String id) {
+        LocalModels.Book book=getLocalLibraryStore().getBook(id);
+        return book!=null?book:getLocalLibraryStore().findByProgressKey(id);
     }
 
     private ColorMatrixColorFilter readerEinkColorFilter() {
@@ -669,6 +678,12 @@ public class MainActivity extends Activity {
         dismissTransientHint();
         if (mh18BrowserSession != null) mh18BrowserSession.shutdown();
         if (jmcomicBrowserSession != null) jmcomicBrowserSession.shutdown();
+        for (Runnable r : new ArrayList<>(pendingLocalDeleteRunnables.values())) {
+            main.removeCallbacks(r);
+            r.run();
+        }
+        pendingLocalDeleteRunnables.clear();
+        pendingDeleteLocalBookIds.clear();
         super.onDestroy();
         cancelUpdateDownload();
         cancelSourceHealthCheck();
@@ -885,11 +900,77 @@ public class MainActivity extends Activity {
         return banner;
     }
 
+    private static class PendingImportItem {
+        final Uri uri;
+        final String displayName;
+        final String format;
+        final String comicTitle;
+        final String chapterTitle;
+        final boolean matchedFormat;
+
+        PendingImportItem(Uri uri, String displayName, String format, String comicTitle, String chapterTitle, boolean matchedFormat) {
+            this.uri = uri;
+            this.displayName = displayName;
+            this.format = format;
+            this.comicTitle = comicTitle;
+            this.chapterTitle = chapterTitle;
+            this.matchedFormat = matchedFormat;
+        }
+    }
+
     private void handleImportArchiveUris(List<Uri> uris) {
         if (uris == null || uris.isEmpty()) return;
         if (!canStartLocalImport()) return;
-        final ActiveImportTask task = new ActiveImportTask("正在导入压缩包", false);
-        task.totalItems = uris.size();
+
+        List<PendingImportItem> pendingList = new ArrayList<>();
+        for (int i = 0; i < uris.size(); i++) {
+            Uri uri = uris.get(i);
+            try {
+                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (Exception ignored) {}
+            String displayName = null;
+            try {
+                android.database.Cursor cursor = getContentResolver().query(uri, new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null);
+                if (cursor != null) {
+                    if (cursor.moveToFirst()) {
+                        displayName = cursor.getString(0);
+                    }
+                    cursor.close();
+                }
+            } catch (Exception ignored) {}
+            if (TextUtils.isEmpty(displayName)) {
+                String path = uri.getPath();
+                if (path != null && path.contains("/")) {
+                    displayName = path.substring(path.lastIndexOf('/') + 1);
+                }
+            }
+            if (TextUtils.isEmpty(displayName)) {
+                displayName = "文件 " + (i + 1);
+            }
+
+            String lower = displayName.toLowerCase(Locale.US);
+            String fmt;
+            if (lower.endsWith(".pdf")) fmt = "pdf";
+            else if (lower.endsWith(".epub")) fmt = "epub";
+            else if (lower.endsWith(".azw3")) fmt = "azw3";
+            else if (lower.endsWith(".azw")) fmt = "azw";
+            else if (lower.endsWith(".mobi")) fmt = "mobi";
+            else if (lower.endsWith(".cbz")) fmt = "cbz";
+            else if (lower.endsWith(".zip")) fmt = "zip";
+            else fmt = "unknown";
+
+            String comicTitle = displayName;
+            int dot = displayName.lastIndexOf('.');
+            if (dot > 0) {
+                comicTitle = displayName.substring(0, dot).trim();
+            }
+            pendingList.add(new PendingImportItem(uri, displayName, fmt, comicTitle, "全本", false));
+        }
+
+        final List<PendingImportItem> orderedItems = pendingList;
+
+        final ActiveImportTask task = new ActiveImportTask("正在导入漫画", false);
+        task.totalItems = orderedItems.size();
         task.currentItem = 1;
         task.currentMessage = "准备中...";
         task.showDialogAction = () -> showThemedImportProgressDialog(task);
@@ -904,34 +985,20 @@ public class MainActivity extends Activity {
             List<String> failedReasons = new ArrayList<>();
             LocalImporter importer = new LocalImporter(this, getLocalStorageManager(), getLocalLibraryStore());
 
-            for (int i = 0; i < uris.size(); i++) {
+            for (int i = 0; i < orderedItems.size(); i++) {
                 if (task.cancelled.get()) break;
-                Uri uri = uris.get(i);
+                PendingImportItem item = orderedItems.get(i);
                 final int current = i + 1;
-                final int total = uris.size();
+                final int total = orderedItems.size();
                 task.currentItem = current;
 
-                String uriDisplayName = null;
-                try {
-                    android.database.Cursor cursor = getContentResolver().query(uri, new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null);
-                    if (cursor != null) {
-                        if (cursor.moveToFirst()) {
-                            uriDisplayName = cursor.getString(0);
-                        }
-                        cursor.close();
-                    }
-                } catch (Exception ignored) {}
-                if (TextUtils.isEmpty(uriDisplayName)) {
-                    uriDisplayName = "文件 " + current;
-                }
-                final String displayName = uriDisplayName;
-
-                String initialMsg = "(" + current + "/" + total + ") 正在读取 " + displayName + "...";
+                String initialMsg = "(" + current + "/" + total + ") 正在读取 " + item.displayName + "...";
                 task.currentMessage = initialMsg;
                 updateImportTaskProgress(task, initialMsg);
 
                 try {
-                    importer.importArchiveUri(uri, null, new LocalModels.ImportProgressCallback() {
+                    importer.importArchiveUri(item.uri, item.displayName,
+                            new LocalModels.ImportProgressCallback() {
                         @Override
                         public void onProgress(long currentBytes, long totalBytes, String message) {
                             String msg = "(" + current + "/" + total + ") " + message;
@@ -948,7 +1015,7 @@ public class MainActivity extends Activity {
                 } catch (InterruptedException e) {
                     break;
                 } catch (Exception e) {
-                    failedItems.add(displayName);
+                    failedItems.add(item.displayName);
                     failedReasons.add(clean(e.getMessage(), "解析或导入失败"));
                 }
             }
@@ -973,7 +1040,11 @@ public class MainActivity extends Activity {
                 if (wasCancelled) {
                     showRemSuccessToast("已取消导入" + (finalSuccess > 0 ? "，已完成 " + finalSuccess + " 本" : ""));
                 } else if (finalSuccess > 0 && finalFailedItems.isEmpty()) {
-                    showRemSuccessToast("成功导入 " + finalSuccess + " 本漫画");
+                    if (orderedItems.size() > 1) {
+                        showRemSuccessToast("成功导入 " + finalSuccess + " 本漫画");
+                    } else {
+                        showRemSuccessToast("成功导入《" + orderedItems.get(0).comicTitle + "》");
+                    }
                 } else if (finalSuccess > 0 && !finalFailedItems.isEmpty()) {
                     StringBuilder sb = new StringBuilder();
                     sb.append("已成功导入 ").append(finalSuccess).append(" 本漫画。\n以下 ").append(finalFailedItems.size()).append(" 项导入失败：\n");
@@ -994,6 +1065,9 @@ public class MainActivity extends Activity {
 
     private void handleImportFolderUri(Uri treeUri) {
         if (treeUri == null) return;
+        try {
+            getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (Exception ignored) {}
         if (!canStartLocalImport()) return;
         final ActiveImportTask task = new ActiveImportTask("正在导入文件夹漫画", true);
         task.currentMessage = "正在读取文件夹...";
@@ -1084,8 +1158,8 @@ public class MainActivity extends Activity {
         archiveCard.setOrientation(LinearLayout.VERTICAL);
         archiveCard.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 10), UIHelpers.dp(this, 12), UIHelpers.dp(this, 10));
         archiveCard.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 8), UIHelpers.BORDER));
-        archiveCard.addView(UIHelpers.text(this, "📦 压缩包与电子书 (ZIP / CBZ / EPUB / PDF)", 14, UIHelpers.TEXT, Typeface.BOLD));
-        archiveCard.addView(UIHelpers.text(this, "支持单个或批量导入 .zip / .cbz / .epub / .pdf 文件", 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
+        archiveCard.addView(UIHelpers.text(this, "📦 压缩包与电子书 (ZIP / CBZ / EPUB / PDF / MOBI / AZW)", 14, UIHelpers.TEXT, Typeface.BOLD));
+        archiveCard.addView(UIHelpers.text(this, "支持单个或批量导入 .zip / .cbz / .epub / .pdf / .mobi / .azw / .azw3 文件", 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
         content.addView(archiveCard, UIHelpers.marginTop(-1, UIHelpers.dp(this, 14)));
 
         LinearLayout folderCard = new LinearLayout(this);
@@ -1103,21 +1177,27 @@ public class MainActivity extends Activity {
 
         archiveCard.setOnClickListener(v -> {
             dialog.dismiss();
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("*/*");
-            intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
-                    "application/zip", "application/x-cbz", "application/x-zip-compressed",
-                    "application/epub+zip", "application/pdf", "application/octet-stream"
+            checkStoragePermissionBeforeImport(() -> {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("*/*");
+                intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
+                        "application/zip", "application/x-cbz", "application/x-zip-compressed",
+                        "application/epub+zip", "application/pdf",
+                        "application/x-mobipocket-ebook", "application/vnd.amazon.ebook",
+                        "application/octet-stream"
+                });
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                startActivityForResult(intent, REQUEST_CODE_IMPORT_ARCHIVE);
             });
-            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-            startActivityForResult(intent, REQUEST_CODE_IMPORT_ARCHIVE);
         });
 
         folderCard.setOnClickListener(v -> {
             dialog.dismiss();
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-            startActivityForResult(intent, REQUEST_CODE_IMPORT_FOLDER);
+            checkStoragePermissionBeforeImport(() -> {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                startActivityForResult(intent, REQUEST_CODE_IMPORT_FOLDER);
+            });
         });
 
         dialog.setOnShowListener(d -> {
@@ -1149,6 +1229,35 @@ public class MainActivity extends Activity {
             return false;
         }
         return true;
+    }
+
+    private void checkStoragePermissionBeforeImport(Runnable proceedAction) {
+        if (proceedAction == null) return;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            if (!android.os.Environment.isExternalStorageManager()) {
+                showRemDialog(R.drawable.rem_reader_resume, "建议开启文件权限",
+                        "为直接读取本地漫画文件并不占用重复手机空间（零拷贝），建议开启「所有文件访问权限」。\n开启后将直接映射原文件，不再复制副本。",
+                        "去开启", () -> {
+                            try {
+                                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                                intent.setData(Uri.parse("package:" + getPackageName()));
+                                startActivity(intent);
+                            } catch (Exception e) {
+                                try {
+                                    Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                                    startActivity(intent);
+                                } catch (Exception ignored) {}
+                            }
+                        },
+                        "直接选择", proceedAction);
+                return;
+            }
+        } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 1002);
+            }
+        }
+        proceedAction.run();
     }
 
     private void showDeleteLocalBookDialog(LocalModels.Book book) {
@@ -1584,9 +1693,6 @@ public class MainActivity extends Activity {
         LinearLayout appearance = settingsList();
         appearance.setPadding(0, 0, 0, 0);
         appearance.addView(settingsMenuItem(themeIcon(), "主题模式", "跟随系统、浅色或深色", themeModeLabel(), this::showThemeDrawer));
-        appearance.addView(UIHelpers.divider(this));
-        appearance.addView(settingsMenuItem(R.drawable.ic_read_mode, "阅读模式", "条漫或单页 · 翻页方式 · 左右手 · 页面模式",
-                readerLayoutMode == 1 ? "单页（日漫）" : "条漫", this::showReaderSettings));
         appearance.addView(UIHelpers.divider(this));
         appearance.addView(settingsMenuItem(R.drawable.ic_history, "阅读历史", "章节与阅读位置", progress.size() + " 条", this::showHistory));
         page.addView(appearance);
@@ -2038,7 +2144,7 @@ public class MainActivity extends Activity {
         bookshelfRightActions.removeAllViews();
         int count = (bookshelfTab == 0)
                 ? favorites.size()
-                : (localLibraryReady ? getLocalLibraryStore().getBookCount() : 0);
+                : (localLibraryReady ? Math.max(0, getLocalLibraryStore().getBookCount() - pendingDeleteLocalBookIds.size()) : 0);
         bookshelfRightActions.addView(UIHelpers.text(this, count + " 本", 12, UIHelpers.TEXT3, Typeface.NORMAL));
         ImageView rem = new ImageView(this);
         rem.setImageResource(R.drawable.rem_reader_resume);
@@ -2116,7 +2222,7 @@ public class MainActivity extends Activity {
         long latestRead = Long.MIN_VALUE;
         for (String id : progress.keySet()) {
             LocalModels.Book local = getLocalLibraryStore().findByProgressKey(id);
-            if (local == null) continue;
+            if (local == null || pendingDeleteLocalBookIds.contains(local.id)) continue;
             long readAt = lastViewedAt.containsKey(id) ? lastViewedAt.get(id) : Long.MIN_VALUE;
             if (readAt > latestRead) {
                 latestRead = readAt;
@@ -2126,7 +2232,7 @@ public class MainActivity extends Activity {
         if (continueLocalId == null) {
             for (String id : progress.keySet()) {
                 LocalModels.Book local = getLocalLibraryStore().findByProgressKey(id);
-                if (local != null) {
+                if (local != null && !pendingDeleteLocalBookIds.contains(local.id)) {
                     continueLocalId = local.id;
                     break;
                 }
@@ -2146,6 +2252,8 @@ public class MainActivity extends Activity {
                 continueLocalId,
                 continueChapter,
                 importBanner,
+                pendingDeleteLocalBookIds,
+                lastViewedAt,
                 new LocalLibraryView.Listener() {
                     @Override
                     public void onBookClick(LocalModels.Book book) {
@@ -2153,8 +2261,8 @@ public class MainActivity extends Activity {
                     }
 
                     @Override
-                    public void onBookLongClick(LocalModels.Book book) {
-                        showDeleteLocalBookDialog(book);
+                    public void onDeleteBookWithUndo(LocalModels.Book book) {
+                        deleteLocalBookWithUndo(book);
                     }
 
                     @Override
@@ -2166,8 +2274,60 @@ public class MainActivity extends Activity {
                     public void onResumeRead(LocalModels.Book book) {
                         showDetailThenRead(book.id);
                     }
+
+                    @Override
+                    public void onHistoryClick() {
+                        showHistory();
+                    }
                 }
         );
+    }
+
+    private void deleteLocalBookWithUndo(LocalModels.Book book) {
+        if (book == null) return;
+        final String bookId = book.id;
+        final String title = clean(book.getDisplayTitle(), "本地漫画");
+
+        Runnable existing = pendingLocalDeleteRunnables.remove(bookId);
+        if (existing != null) {
+            main.removeCallbacks(existing);
+        }
+
+        pendingDeleteLocalBookIds.add(bookId);
+        refreshLocalBookshelf();
+
+        final Runnable commitDelete = () -> {
+            pendingLocalDeleteRunnables.remove(bookId);
+            localLibraryIo.submit(() -> {
+                try {
+                    if (LocalModels.isDownload(book)) {
+                        DownloadRuntime.get(this).deleteBook(book.id);
+                    } else {
+                        getLocalLibraryStore().deleteBook(bookId, getLocalStorageManager());
+                    }
+                    details.remove(bookId);
+                    summaries.remove(bookId);
+                } catch (Exception ignored) {
+                } finally {
+                    main.post(() -> {
+                        pendingDeleteLocalBookIds.remove(bookId);
+                        updateBookshelfRightActions();
+                    });
+                }
+            });
+        };
+
+        pendingLocalDeleteRunnables.put(bookId, commitDelete);
+        main.postDelayed(commitDelete, 3500L);
+
+        showRemToast(R.drawable.rem_empty, "已移出《" + title + "》", "撤销", () -> {
+            Runnable r = pendingLocalDeleteRunnables.remove(bookId);
+            if (r != null) {
+                main.removeCallbacks(r);
+            }
+            pendingDeleteLocalBookIds.remove(bookId);
+            refreshLocalBookshelf();
+        }, 3200L);
     }
 
     private void refreshLocalBookshelf() {
@@ -2544,67 +2704,70 @@ public class MainActivity extends Activity {
     }
 
     private void showReaderSettings() {
-        if (readerVisible) {
-            readerSettingsComicId = activeDetailId;
-            readerSettingsChapterIndex = readerChapterIndex;
-        } else if (!"reader".equals(settingsScene)) {
-            readerSettingsComicId = "";
-        }
-        LinearLayout page = settingsScenePage("reader", "阅读模式", "排列方式与操作习惯");
-        readerVisible = false;
-        addReaderChoices(page, "阅读模式", new String[]{"条漫", "单页（日漫）"}, readerLayoutMode, value -> {
-            readerLayoutMode = value;
-            saveLocalState();
-            showReaderSettings();
-        });
-        page.addView(settingsSectionText(readerLayoutMode == 0 ? "连续上下滚动，横向操作切换章节" : "一页一图，读到首尾再切换章节；双击或双指缩放"));
-        addReaderChoices(page, "翻页方式", new String[]{"触碰", "按钮", "滑动"}, readerPageMode, value -> {
-            readerPageMode = value;
-            readerButtonMode = value == 1;
-            saveLocalState();
-            showReaderSettings();
-        });
-        page.addView(settingsSectionText(readerPageMode == 0 ? "点击左右区域翻动，中间区域显示控制栏"
-                : readerPageMode == 1 ? "通过底部按钮翻动，中间区域显示控制栏" : "横向滑动翻动，中间区域显示控制栏"));
-        addReaderChoices(page, "左右手模式", new String[]{"左手", "右手"}, readerLeftHand ? 0 : 1, value -> {
-            readerLeftHand = value == 0;
-            saveLocalState();
-            showReaderSettings();
-        });
-        page.addView(settingsSectionText(readerLeftHand ? "左侧点击 / 向右滑：下一项；按钮按文字操作"
-                : "右侧点击 / 向左滑：下一项；按钮按文字操作"));
-        addReaderChoices(page, "页面模式", new String[]{"普通模式", "墨水屏模式"}, readerDisplayMode, value -> {
-            readerDisplayMode = value;
-            saveLocalState();
-            showReaderSettings();
-        });
-        page.addView(settingsSectionText(readerDisplayMode == 1
-                ? "黑白高对比优化，纯黑背景降低灰阶，适合墨水屏设备"
-                : "彩色原图展示，适合常规手机与平板屏幕"));
-        addReaderChoices(page, "沉浸模式", new String[]{"普通模式", "完全沉浸"}, readerFullyImmersive ? 1 : 0, value -> {
-            readerFullyImmersive = value == 1;
-            saveLocalState();
-            showReaderSettings();
-        });
-        page.addView(settingsSectionText(readerFullyImmersive
-                ? "隐藏右下角的章节、页码、时间和电量，仍可点击呼出控制栏"
-                : "保持显示右下角的阅读信息"));
+        showReaderSettingsDrawer();
     }
 
-    private interface ReaderSettingAction { void select(int value); }
+    private void showReaderSettingsDrawer() {
+        if (!readerVisible) return;
+        int currentMode = ReaderSettingsSheet.toReadingMode(readerLayoutMode, readerLeftHand);
+        ReaderSettingsSheet.show(this, currentMode, readerFullyImmersive, readerDisplayMode == 1, readerPinchZoom,
+                new ReaderSettingsSheet.OnSettingsChangeListener() {
+                    @Override
+                    public void onReadingModeChanged(int mode) {
+                        int newLayoutMode = ReaderSettingsSheet.toLayoutMode(mode);
+                        boolean newLeftHand = ReaderSettingsSheet.toLeftHand(mode);
+                        if (readerLayoutMode == newLayoutMode && readerLeftHand == newLeftHand) {
+                            return;
+                        }
+                        readerLayoutMode = newLayoutMode;
+                        readerLeftHand = newLeftHand;
+                        saveLocalState();
+                        reloadCurrentReaderContent();
+                    }
 
-    private void addReaderChoices(LinearLayout page, String title, String[] labels, int selected, ReaderSettingAction action) {
-        page.addView(settingsSectionText(title));
-        LinearLayout choices = settingsList();
-        choices.setOrientation(LinearLayout.HORIZONTAL);
-        choices.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
-        for (int i = 0; i < labels.length; i++) {
-            final int value = i;
-            if (i > 0) choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 4), 1));
-            choices.addView(handChoice(labels[i], selected == i, () -> action.select(value)),
-                    new LinearLayout.LayoutParams(0, UIHelpers.dp(this, 48), 1));
+                    @Override
+                    public void onHideStatusBadgeChanged(boolean hide) {
+                        readerFullyImmersive = hide;
+                        saveLocalState();
+                        updateReaderOverlayVisibility(false);
+                    }
+
+                    @Override
+                    public void onEinkModeChanged(boolean eink) {
+                        int newDisplayMode = eink ? 1 : 0;
+                        if (readerDisplayMode == newDisplayMode) return;
+                        readerDisplayMode = newDisplayMode;
+                        saveLocalState();
+                        reloadCurrentReaderContent();
+                    }
+
+                    @Override
+                    public void onPinchZoomChanged(boolean enabled) {
+                        readerPinchZoom = enabled;
+                        saveLocalState();
+                        if (readerPager != null) {
+                            readerPager.setPinchZoomEnabled(enabled);
+                        }
+                        if (readerList != null && !enabled) {
+                            readerList.setScaleX(1f);
+                            readerList.setScaleY(1f);
+                        }
+                    }
+                });
+    }
+
+    private void reloadCurrentReaderContent() {
+        if (!readerVisible || TextUtils.isEmpty(activeDetailId)) return;
+        ComicModels.ComicDetail detail = details.get(activeDetailId);
+        if (detail != null && readerChapterIndex >= 0 && readerChapterIndex < detail.chapters.size()) {
+            ComicModels.Chapter activeChapter = detail.chapters.get(readerChapterIndex);
+            ComicModels.ChapterPage page = chapters.get(activeChapter.url);
+            if (page != null && !page.imageUrls.isEmpty()) {
+                renderReader(detail, page);
+            } else {
+                showReader(detail, readerChapterIndex);
+            }
         }
-        page.addView(choices);
     }
 
     private View themeChoice(String label, int mode, boolean selected, Runnable onClick) {
@@ -3230,7 +3393,7 @@ public class MainActivity extends Activity {
         activeDetailId = comicId;
         readerVisible = false;
 
-        LocalModels.Book book = getLocalLibraryStore().getBook(comicId);
+        LocalModels.Book book = localBookForReading(comicId);
         if (book == null || !LocalModels.STATUS_READY.equals(book.status)) {
             showRemDialog(R.drawable.rem_empty, "漫画已移除", "该漫画已从本地书架删除，重新导入该文件后可恢复阅读进度", "返回", () -> {
                 if (detailBackAction != null) {
@@ -3251,7 +3414,7 @@ public class MainActivity extends Activity {
         }
         ComicModels.ComicSummary summary = new ComicModels.ComicSummary(
                 "local",
-                book.id,
+                LocalModels.SOURCE_TYPE_FILE_DOWNLOAD.equals(book.sourceType)?book.progressKey:book.id,
                 book.getDisplayTitle(),
                 LocalContentResolver.buildCoverUrl(book.id),
                 "本地导入",
@@ -3270,6 +3433,9 @@ public class MainActivity extends Activity {
         if (detail == null) { showRemErrorToast("下载目录缺失，请到下载中心重试"); return; }
         details.put(book.id, detail);
         summaries.put(book.id, summary);
+        if(LocalModels.SOURCE_TYPE_FILE_DOWNLOAD.equals(book.sourceType)) {
+            details.put(book.progressKey,detail);summaries.put(book.progressKey,summary);
+        }
         if (LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType)) {
             details.put(book.progressKey, detail);
             summaries.put(book.progressKey, detail.summary);
@@ -3525,20 +3691,23 @@ public class MainActivity extends Activity {
         summary.setLineSpacing(0f, 1.2f);
         body.addView(summary, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
 
-        body.addView(chapterEntry(detail), UIHelpers.marginTop(-1, UIHelpers.dp(this, 10)));
+        boolean fileSource=sourceForId(detail.summary.sourceId) instanceof com.xxcomic.source.FileSourceCapability;
+        if(!fileSource)body.addView(chapterEntry(detail), UIHelpers.marginTop(-1, UIHelpers.dp(this, 10)));
 
         LinearLayout downloadRow = new LinearLayout(this);
         downloadRow.setGravity(Gravity.CENTER_VERTICAL);
         downloadRow.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 8), UIHelpers.dp(this, 10), UIHelpers.dp(this, 8));
         downloadRow.setMinimumHeight(UIHelpers.dp(this, 44));
         downloadRow.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 7), UIHelpers.BORDER));
-        downloadRow.setOnClickListener(v -> ensureChaptersThen(detail, loaded ->
-                DownloadViews.selection(this, loaded, savedChapter(loaded.summary.comicId), () -> {})));
+        downloadRow.setOnClickListener(v -> {
+            if(fileSource)showFileVolumes(detail);
+            else ensureChaptersThen(detail, loaded -> DownloadViews.selection(this, loaded, savedChapter(loaded.summary.comicId), () -> {}));
+        });
 
         ImageView dlIcon = UIHelpers.vectorIconButton(this, R.drawable.ic_download, UIHelpers.ACCENT, 2);
         downloadRow.addView(dlIcon, new LinearLayout.LayoutParams(UIHelpers.dp(this, 20), UIHelpers.dp(this, 20)));
 
-        TextView dlText = UIHelpers.text(this, "下载离线章节", 13, UIHelpers.ACCENT, Typeface.BOLD);
+        TextView dlText = UIHelpers.text(this, fileSource?"文件与分卷":"下载离线章节", 13, UIHelpers.ACCENT, Typeface.BOLD);
         LinearLayout.LayoutParams dlParams = new LinearLayout.LayoutParams(0, -2, 1f);
         dlParams.leftMargin = UIHelpers.dp(this, 8);
         downloadRow.addView(dlText, dlParams);
@@ -4064,6 +4233,17 @@ public class MainActivity extends Activity {
             list.setTag(positionKey);
             final boolean[] restoringPosition = {savedPosition > 0 || readerImagePositions.containsKey(positionKey)};
             readerRestoringPosition = restoringPosition;
+            boolean hasNextChapter = readerChapterIndex + 1 < detail.chapters.size();
+            String nextChapterTitle = hasNextChapter ? "下一章：" + detail.chapters.get(readerChapterIndex + 1).title : "已是最后一章";
+            LinearLayout listFooter = new LinearLayout(this);
+            listFooter.setOrientation(LinearLayout.VERTICAL);
+            listFooter.setGravity(Gravity.CENTER);
+            listFooter.setPadding(0, UIHelpers.dp(this, 24), 0, UIHelpers.dp(this, 40));
+            TextView footerPrompt = UIHelpers.text(this, hasNextChapter ? "—— 继续向下拉，自动进入 " + nextChapterTitle + " ——" : "—— 已到达全书末尾 ——",
+                    12, Color.argb(180, 160, 180, 205), Typeface.NORMAL);
+            footerPrompt.setGravity(Gravity.CENTER);
+            listFooter.addView(footerPrompt);
+            list.addFooterView(listFooter, null, false);
             list.setAdapter(new BaseAdapter() {
                 @Override
                 public int getCount() {
@@ -4169,6 +4349,19 @@ public class MainActivity extends Activity {
                     }
                 }
             });
+            ScaleGestureDetector listScaleDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                private float currentScale = 1.0f;
+                @Override public boolean onScale(ScaleGestureDetector detector) {
+                    if (!readerPinchZoom) return false;
+                    currentScale *= detector.getScaleFactor();
+                    currentScale = Math.max(1.0f, Math.min(3.0f, currentScale));
+                    list.setPivotX(detector.getFocusX());
+                    list.setPivotY(detector.getFocusY());
+                    list.setScaleX(currentScale);
+                    list.setScaleY(currentScale);
+                    return true;
+                }
+            });
             list.setOnTouchListener((v, event) -> {
                 if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
                     restoringPosition[0] = false;
@@ -4176,6 +4369,10 @@ public class MainActivity extends Activity {
                     readerDownY = event.getRawY();
                     readerDownAt = System.currentTimeMillis();
                     return false;
+                }
+                if (readerPinchZoom && event.getPointerCount() > 1) {
+                    listScaleDetector.onTouchEvent(event);
+                    return true;
                 }
                 if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
                     float dy = Math.abs(event.getRawY() - readerDownY);
@@ -4191,6 +4388,31 @@ public class MainActivity extends Activity {
                     return false;
                 }
                 if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+                    float totalDy = event.getRawY() - readerDownY;
+                    long duration = System.currentTimeMillis() - readerDownAt;
+                    if (list.getScaleX() <= 1.05f && duration < 1500) {
+                        if (totalDy < -UIHelpers.dp(MainActivity.this, 36)) {
+                            int lastVisible = list.getLastVisiblePosition();
+                            int total = list.getCount();
+                            if (lastVisible >= total - 1) {
+                                View lastChild = list.getChildAt(list.getChildCount() - 1);
+                                if (lastChild != null && lastChild.getBottom() <= list.getHeight() + UIHelpers.dp(MainActivity.this, 30)) {
+                                    navigateReader(detail, page, 1);
+                                    return true;
+                                }
+                            }
+                        }
+                        if (totalDy > UIHelpers.dp(MainActivity.this, 40)) {
+                            int firstVisible = list.getFirstVisiblePosition();
+                            if (firstVisible == 0) {
+                                View firstChild = list.getChildAt(0);
+                                if (firstChild != null && firstChild.getTop() >= -UIHelpers.dp(MainActivity.this, 20)) {
+                                    navigateReader(detail, page, -1);
+                                    return true;
+                                }
+                            }
+                        }
+                    }
                     boolean handled = handleReaderTap(event, detail, page);
                     v.animate().translationX(0f).setDuration(220L).start();
                     return handled;
@@ -4230,7 +4452,7 @@ public class MainActivity extends Activity {
                 if (position == null) position = ReaderPosition.fromLegacy(readerPositions.containsKey(entryKey) ? readerPositions.get(entryKey) : 0, page.imageUrls.size());
                 int initial = position.indexFor(page.imageUrls.size());
                 readerImagePositions.put(entryKey, position);
-                readerPager = new PagedReaderView(this, page.imageUrls, initial, readerPageMode, readerLeftHand,
+                readerPager = new PagedReaderView(this, page.imageUrls, initial, readerPageMode, readerLeftHand, readerPinchZoom,
                         (image, imageUrl) -> {
                             applyReaderImageDisplayMode(image);
                             Bitmap mem = readerBitmapCache.get(imageUrl);
@@ -4477,9 +4699,9 @@ public class MainActivity extends Activity {
     private boolean isLocalTextBook(String comicId) {
         if (!isLocalComic(comicId) || !localLibraryReady) return false;
         try {
-            LocalModels.Book book = getLocalLibraryStore().getBook(comicId);
-            if (book != null && LocalModels.FORMAT_EPUB.equals(book.format)) {
-                LocalModels.Page firstPage = getLocalLibraryStore().getFirstPage(comicId);
+            LocalModels.Book book = localBookForReading(comicId);
+            if (book != null && (LocalModels.FORMAT_EPUB.equals(book.format) || LocalModels.isKindleFormat(book.format))) {
+                LocalModels.Page firstPage = getLocalLibraryStore().getFirstPage(book.id);
                 if (firstPage != null && firstPage.mimeType != null) {
                     return firstPage.mimeType.contains("xhtml")
                             || firstPage.mimeType.contains("html")
@@ -4493,14 +4715,33 @@ public class MainActivity extends Activity {
     private void renderTextReader(ComicModels.ComicDetail detail, ComicModels.ChapterPage page,
                                   FrameLayout shell, LinearLayout top, int topBarHeight, int bottomBarHeight) {
         String comicId = detail.summary.comicId;
-        LocalModels.Book book = getLocalLibraryStore().getBook(comicId);
+        LocalModels.Book book = localBookForReading(comicId);
         if (book == null) return;
 
         File epubFile;
         com.xxcomic.ebook.TextReaderView textReader = new com.xxcomic.ebook.TextReaderView(this);
         textReaderView = textReader;
         try {
-            epubFile = getLocalStorageManager().getBookImportFile(book.relativePath);
+            if (LocalModels.isKindleFormat(book.format)) {
+                epubFile = getLocalStorageManager().getDerivedBookFile(book.id, ".epub");
+                if (!epubFile.exists()) {
+                    File srcFile = getLocalStorageManager().getBookContentFile(book);
+                    com.xxcomic.ebook.KindlePublicationAdapter.convertMobiToDerivedEpub(srcFile, epubFile, book.id);
+                }
+            } else {
+                String chFilePath = book.relativePath;
+                if (readerChapterIndex >= 0 && readerChapterIndex < detail.chapters.size()) {
+                    String chUrl = detail.chapters.get(readerChapterIndex).url;
+                    if (LocalContentResolver.isLocalChapterUrl(chUrl)) {
+                        String chId = LocalContentResolver.extractId(chUrl, LocalContentResolver.PREFIX_CHAPTER);
+                        LocalModels.Chapter lc = getLocalLibraryStore().getChapter(chId);
+                        if (lc != null && !TextUtils.isEmpty(lc.entryPath) && lc.entryPath.endsWith(".epub")) {
+                            chFilePath = lc.entryPath;
+                        }
+                    }
+                }
+                epubFile = getLocalStorageManager().getBookImportFile(chFilePath);
+            }
             textReader.setEpubFile(epubFile, book.id);
         } catch (Exception error) {
             showRemErrorToast("无法打开电子书文件: " + error.getMessage());
@@ -4715,15 +4956,12 @@ public class MainActivity extends Activity {
     }
 
     private void navigateReader(ComicModels.ComicDetail detail, ComicModels.ChapterPage page, int delta) {
-        if (readerLayoutMode == 0) {
-            switchChapter(detail, delta);
-            return;
-        }
-        if (readerPager == null || page.imageUrls.isEmpty()) return;
-        int current = readerPager.currentPage();
-        if (!ReaderNavigation.crossesChapter(current, page.imageUrls.size(), delta)) {
-            readerPager.moveTo(current + delta);
-            return;
+        if (readerLayoutMode == 1 && readerPager != null && !page.imageUrls.isEmpty()) {
+            int current = readerPager.currentPage();
+            if (!ReaderNavigation.crossesChapter(current, page.imageUrls.size(), delta)) {
+                readerPager.moveTo(current + delta);
+                return;
+            }
         }
         int next = readerChapterIndex + delta;
         if (next < 0 || next >= detail.chapters.size()) {
@@ -5635,7 +5873,7 @@ public class MainActivity extends Activity {
     private void showDetailThenRead(String id) {
         onUserOpenComicDetail(id);
         if (isLocalComic(id) && localLibraryReady) {
-            LocalModels.Book book = getLocalLibraryStore().getBook(id);
+            LocalModels.Book book = localBookForReading(id);
             if (book != null && LocalModels.STATUS_READY.equals(book.status) && LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType)) {
                 ComicModels.ComicDetail downloaded = downloadedDetail(book);
                 if (downloaded == null) { showRemErrorToast("下载目录缺失，请到下载中心重试"); return; }
@@ -5649,7 +5887,7 @@ public class MainActivity extends Activity {
                 showRemSuccessToast("正在整理本地文件，稍等一下哦");
                 return;
             }
-            LocalModels.Book book = getLocalLibraryStore().getBook(id);
+            LocalModels.Book book = localBookForReading(id);
             if (book == null || !LocalModels.STATUS_READY.equals(book.status)) {
                 showRemDialog(R.drawable.rem_empty, "漫画已移除", "该漫画已从本地书架删除", "确定", null);
                 return;
@@ -5661,7 +5899,7 @@ public class MainActivity extends Activity {
             }
             ComicModels.ComicSummary summary = new ComicModels.ComicSummary(
                     "local",
-                    book.id,
+                    LocalModels.SOURCE_TYPE_FILE_DOWNLOAD.equals(book.sourceType)?book.progressKey:book.id,
                     book.getDisplayTitle(),
                     LocalContentResolver.buildCoverUrl(book.id),
                     "本地导入",
@@ -5677,7 +5915,10 @@ public class MainActivity extends Activity {
             );
             details.put(book.id, detail);
             summaries.put(book.id, summary);
-            showReader(detail, savedChapter(id));
+            if(LocalModels.SOURCE_TYPE_FILE_DOWNLOAD.equals(book.sourceType)) {
+                details.put(book.progressKey,detail);summaries.put(book.progressKey,summary);
+            }
+            showReader(detail, savedChapter(book.progressKey));
             return;
         }
         ComicModels.ComicDetail detail = details.get(id);
@@ -6046,6 +6287,23 @@ public class MainActivity extends Activity {
         return text;
     }
 
+    private void showFileVolumes(ComicModels.ComicDetail detail) {
+        ComicSource source=sourceForId(detail.summary.sourceId);
+        if(!(source instanceof com.xxcomic.source.FileSourceCapability))return;
+        showRemSuccessToast("正在获取文件列表…");
+        DownloadRuntime runtime=DownloadRuntime.get(this);
+        runtime.io.execute(()->{
+            try {
+                List<com.xxcomic.source.FileResource> files=((com.xxcomic.source.FileSourceCapability)source).listFiles(detail.summary.comicId);
+                runOnUiThread(()->{
+                    if(activityDestroyed || readerVisible || !TextUtils.equals(activeDetailId,detail.summary.comicId))return;
+                    if(files==null || files.isEmpty()){showRemErrorToast("暂无可下载文件");return;}
+                    DownloadViews.fileSelection(this,detail,files,this::showLocalDetail,this::showDownloadCenter);
+                });
+            } catch(Exception error){runOnUiThread(()->{if(!activityDestroyed && TextUtils.equals(activeDetailId,detail.summary.comicId))showRemErrorToast("文件列表加载失败，点击重试");});}
+        });
+    }
+
     private View detailReadButton(ComicModels.ComicDetail detail) {
         LinearLayout button = new LinearLayout(this);
         button.setOrientation(LinearLayout.VERTICAL);
@@ -6056,6 +6314,17 @@ public class MainActivity extends Activity {
         int saved = Math.max(0, savedChapter(detail.summary.comicId));
         String title = hasHistory ? "继续阅读" : "开始阅读";
         String subtitle = hasHistory ? "第 " + (saved + 1) + " 话" : "从第 1 话开始";
+        boolean fileSource=sourceForId(detail.summary.sourceId) instanceof com.xxcomic.source.FileSourceCapability;
+        if(fileSource) {
+            title="下载后阅读";subtitle="选择文件或分卷";
+            DownloadRuntime runtime=DownloadRuntime.get(this);
+            for(com.xxcomic.download.DownloadModels.Task task:runtime.store.list()) {
+                if(task.isFileTask && task.sourceId.equals(detail.summary.sourceId) && task.comicId.equals(detail.summary.comicId)) {
+                    if(runtime.library.store.getBook(task.bookId)!=null){title="继续阅读";break;}
+                    if(com.xxcomic.download.DownloadModels.active(task.state) || task.state==com.xxcomic.download.DownloadModels.State.QUEUED)title="正在下载";
+                }
+            }
+        }
         if (hasHistory && saved < detail.chapters.size()) {
             Integer position = readerPositions.get(readerPositionKey(detail.summary.comicId, detail.chapters.get(saved)));
             if (position != null && position > 0) {
@@ -6077,8 +6346,10 @@ public class MainActivity extends Activity {
         subtitleView.setEllipsize(TextUtils.TruncateAt.END);
         button.addView(subtitleView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
         button.setContentDescription(title + "，" + subtitle);
-        button.setOnClickListener(v -> ensureChaptersThen(detail, loaded -> showReader(loaded,
-                Math.min(savedChapter(loaded.summary.comicId), loaded.chapters.size() - 1))));
+        button.setOnClickListener(v -> {
+            if(fileSource)showFileVolumes(detail);
+            else ensureChaptersThen(detail, loaded -> showReader(loaded,Math.min(savedChapter(loaded.summary.comicId), loaded.chapters.size() - 1)));
+        });
         return button;
     }
 
@@ -8791,6 +9062,7 @@ public class MainActivity extends Activity {
         readerLayoutMode = prefs.getInt("reader.layout.mode", 0) == 1 ? 1 : 0;
         readerFullyImmersive = prefs.getBoolean("reader.fully.immersive", false);
         readerDisplayMode = prefs.getInt("reader.display.mode", 0) == 1 ? 1 : 0;
+        readerPinchZoom = prefs.getBoolean("reader.pinch.zoom", true);
         readerImagePositions.clear();
         try {
             JSONObject savedImages = new JSONObject(prefs.getString("reader.image.positions", "{}"));
@@ -8900,6 +9172,7 @@ public class MainActivity extends Activity {
         editor.putInt("reader.layout.mode", readerLayoutMode);
         editor.putBoolean("reader.fully.immersive", readerFullyImmersive);
         editor.putInt("reader.display.mode", readerDisplayMode);
+        editor.putBoolean("reader.pinch.zoom", readerPinchZoom);
         JSONObject savedImages = new JSONObject();
         try {
             for (Map.Entry<String, ReaderPosition> item : readerImagePositions.entrySet()) {
@@ -9419,7 +9692,7 @@ public class MainActivity extends Activity {
         ComicModels.ComicSummary summary = summaries.get(comicId);
         ComicModels.ComicDetail detail = details.get(comicId);
         if (summary == null && isLocalComic(comicId)) {
-            LocalModels.Book localBook = getLocalLibraryStore().getBook(comicId);
+            LocalModels.Book localBook = localBookForReading(comicId);
             if (localBook != null) {
                 summary = new ComicModels.ComicSummary(
                         "local",
@@ -9470,7 +9743,7 @@ public class MainActivity extends Activity {
         titleView.setMaxLines(1);
         titleView.setEllipsize(TextUtils.TruncateAt.END);
         info.addView(titleView);
-        int chapterIdx = progress.getOrDefault(comicId, 0);
+        int chapterIdx = progress.containsKey(comicId) ? progress.get(comicId) : 0;
         String chapterText;
         if (chapterIdx == 0) {
             chapterText = "刚开始看";

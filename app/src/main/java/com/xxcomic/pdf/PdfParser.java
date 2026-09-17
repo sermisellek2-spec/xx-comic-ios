@@ -134,6 +134,14 @@ public class PdfParser {
 
     public static ArchiveIndex.ParseResult parse(File pdfFile, String bookId,
                                                 LocalModels.ImportProgressCallback callback) throws IOException {
+        return parse(pdfFile, bookId, "全本", 0, null, callback);
+    }
+
+    public static ArchiveIndex.ParseResult parse(File pdfFile, String bookId,
+                                                String chapterTitle,
+                                                int chapterOrderOffset,
+                                                String chapterEntryPath,
+                                                LocalModels.ImportProgressCallback callback) throws IOException {
         if (!isPdfFile(pdfFile, pdfFile.getName())) {
             throw new IOException("所选文件不是有效的 PDF 文档");
         }
@@ -145,9 +153,12 @@ public class PdfParser {
                 throw new IOException("PDF 文件不包含有效页面");
             }
 
-            String chapterId = LocalModels.buildStableChapterId(bookId, 0);
+            String title = (chapterTitle != null && !chapterTitle.trim().isEmpty()) ? chapterTitle.trim() : "全本";
+            String chEntry = (chapterEntryPath != null && !chapterEntryPath.trim().isEmpty())
+                    ? chapterEntryPath : "page/" + chapterOrderOffset;
+            String chapterId = LocalModels.buildStableChapterId(bookId, chapterOrderOffset);
             LocalModels.Chapter chapter = new LocalModels.Chapter(
-                    chapterId, bookId, 0, "全本", "page/0", pageCount);
+                    chapterId, bookId, chapterOrderOffset, title, chEntry, pageCount);
             List<LocalModels.Chapter> chapters = Collections.singletonList(chapter);
 
             List<LocalModels.Page> pageList = new ArrayList<>(pageCount);

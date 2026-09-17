@@ -26,48 +26,50 @@ public final class PagedReaderView extends FrameLayout {
     private final int inputMode;
     private final boolean leftHand;
     private final Listener listener;
+    private boolean pinchZoomEnabled = true;
     private float downX, downY;
     private long downTime;
     private int downPage;
     private boolean blockedGesture, disposed;
 
     public PagedReaderView(Context context, List<String> images, int initialPage, int inputMode,
-                           boolean leftHand, ImageLoader loader, Listener listener) {
+                           boolean leftHand, boolean pinchZoomEnabled, ImageLoader loader, Listener listener) {
         super(context);
         this.urls = new ArrayList<>(images);
         this.inputMode = inputMode;
         this.leftHand = leftHand;
+        this.pinchZoomEnabled = pinchZoomEnabled;
         this.listener = listener;
         setBackgroundColor(Color.rgb(12, 20, 32));
         pager = new ViewPager2(context);
         pager.setLayoutDirection(leftHand ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
         pager.setOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
-        pager.setUserInputEnabled(inputMode == 2);
+        pager.setUserInputEnabled(inputMode != 1);
         pager.setOffscreenPageLimit(1);
         addView(pager, new FrameLayout.LayoutParams(-1, -1));
         pager.setAdapter(new RecyclerView.Adapter<Holder>() {
             @Override public Holder onCreateViewHolder(ViewGroup parent, int type) {
                 ZoomImageView image = new ZoomImageView(context);
                 image.setLayoutParams(new ViewGroup.LayoutParams(-1, -1));
+                image.setPinchZoomEnabled(PagedReaderView.this.pinchZoomEnabled);
                 Holder holder = new Holder(image);
                 holders.add(holder);
                 image.setListener(new ZoomImageView.Listener() {
                     @Override public void onTap(float x, float y) {
-                        if (disposed || holder.index != currentPage()) return;
+                        if (disposed || holder.getBindingAdapterPosition() != currentPage()) return;
                         if (y < image.getHeight() * .25f || y > image.getHeight() * .75f) return;
                         boolean left = x < image.getWidth() * .28f, right = x > image.getWidth() * .72f;
-                        if (inputMode == 0 && !image.isZoomed() && (left || right)) listener.onNavigate(ReaderNavigation.tapDelta(left, leftHand));
+                        if (inputMode != 1 && !image.isZoomed() && (left || right)) listener.onNavigate(ReaderNavigation.tapDelta(left, leftHand));
                         else listener.onToggleControls();
                     }
                     @Override public void onZoomChanged(boolean zoomed) {
-                        if (!disposed && holder.index == currentPage()) pager.setUserInputEnabled(inputMode == 2 && !zoomed);
+                        if (!disposed && holder.getBindingAdapterPosition() == currentPage()) pager.setUserInputEnabled(inputMode != 1 && !zoomed);
                     }
                 });
                 return holder;
             }
             @Override public void onBindViewHolder(Holder holder, int position) {
                 if (holder.future != null) holder.future.cancel(true);
-                holder.index = position;
                 holder.image.setTag(urls.get(position));
                 holder.image.setContentDescription("第 " + (position + 1) + " / " + urls.size() + " 页");
                 holder.image.setImageDrawable(null);
@@ -75,7 +77,6 @@ public final class PagedReaderView extends FrameLayout {
             }
             @Override public void onViewRecycled(Holder holder) {
                 if (holder.future != null) holder.future.cancel(true);
-                holder.index = -1;
                 holder.image.setTag(null);
                 holder.image.setImageDrawable(null);
             }
@@ -85,15 +86,28 @@ public final class PagedReaderView extends FrameLayout {
         pager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override public void onPageSelected(int position) {
                 if (disposed) return;
-                for (Holder holder : holders) if (holder.index != position) holder.image.resetZoom();
-                pager.setUserInputEnabled(inputMode == 2 && !isZoomed());
+                for (Holder holder : holders) if (holder.getBindingAdapterPosition() != position) holder.image.resetZoom();
+                pager.setUserInputEnabled(inputMode != 1 && !isZoomed());
                 listener.onPageChanged(position);
             }
         });
     }
+
+    public PagedReaderView(Context context, List<String> images, int initialPage, int inputMode,
+                           boolean leftHand, ImageLoader loader, Listener listener) {
+        this(context, images, initialPage, inputMode, leftHand, true, loader, listener);
+    }
+
+    public void setPinchZoomEnabled(boolean enabled) {
+        this.pinchZoomEnabled = enabled;
+        for (Holder holder : holders) {
+            if (holder.image != null) holder.image.setPinchZoomEnabled(enabled);
+        }
+    }
+
     public int currentPage() { return pager.getCurrentItem(); }
     public boolean isZoomed() {
-        for (Holder holder : holders) if (holder.index == currentPage()) return holder.image.isZoomed();
+        for (Holder holder : holders) if (holder.getBindingAdapterPosition() == currentPage()) return holder.image.isZoomed();
         return false;
     }
     public void moveTo(int page) { if (!disposed) pager.setCurrentItem(page, true); }
@@ -116,9 +130,9 @@ public final class PagedReaderView extends FrameLayout {
         float dx = event.getX() - downX, dy = event.getY() - downY;
         if (action == MotionEvent.ACTION_MOVE && (Math.abs(dx) > dp(8) || Math.abs(dy) > dp(8))) listener.onInteraction();
         boolean result = super.dispatchTouchEvent(event);
-        if (action == MotionEvent.ACTION_UP && inputMode == 2 && !blockedGesture && !isZoomed()
-                && Math.abs(dx) > dp(72) && Math.abs(dx) > Math.abs(dy) * 1.35f
-                && event.getEventTime() - downTime < 1200 && currentPage() == downPage) {
+        if (action == MotionEvent.ACTION_UP && inputMode != 1 && !blockedGesture && !isZoomed()
+                && Math.abs(dx) > dp(36) && Math.abs(dx) > Math.abs(dy) * 1.1f
+                && event.getEventTime() - downTime < 1000 && currentPage() == downPage) {
             int delta = ReaderNavigation.swipeDelta(dx, leftHand);
             if (ReaderNavigation.crossesChapter(downPage, urls.size(), delta)) listener.onNavigate(delta);
         }
@@ -128,7 +142,6 @@ public final class PagedReaderView extends FrameLayout {
     private static final class Holder extends RecyclerView.ViewHolder {
         final ZoomImageView image;
         Future<?> future;
-        int index = -1;
         Holder(ZoomImageView image) { super(image); this.image = image; }
     }
 }

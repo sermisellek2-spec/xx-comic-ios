@@ -238,4 +238,78 @@ public class LocalImporterTest {
             assertTrue(e.getMessage().contains("用户取消导入"));
         }
     }
+
+    @Test
+    public void testParseTitleAndChapter() {
+        // Standard space-hyphen-space
+        LocalImporter.ParsedName p1 = LocalImporter.parseTitleAndChapter("狂赌之渊 - 卷02.epub");
+        assertTrue(p1.matchedFormat);
+        assertEquals("狂赌之渊", p1.comicTitle);
+        assertEquals("卷02", p1.chapterTitle);
+
+        // Standard hyphen with PDF
+        LocalImporter.ParsedName p2 = LocalImporter.parseTitleAndChapter("狂赌之渊 - 卷01.pdf");
+        assertTrue(p2.matchedFormat);
+        assertEquals("狂赌之渊", p2.comicTitle);
+        assertEquals("卷01", p2.chapterTitle);
+
+        // Hyphen without surrounding spaces
+        LocalImporter.ParsedName p3 = LocalImporter.parseTitleAndChapter("进击的巨人-第12卷.cbz");
+        assertTrue(p3.matchedFormat);
+        assertEquals("进击的巨人", p3.comicTitle);
+        assertEquals("第12卷", p3.chapterTitle);
+
+        // Em-dash (—)
+        LocalImporter.ParsedName p4 = LocalImporter.parseTitleAndChapter("间谍过家家 — 卷05.epub");
+        assertTrue(p4.matchedFormat);
+        assertEquals("间谍过家家", p4.comicTitle);
+        assertEquals("卷05", p4.chapterTitle);
+
+        // En-dash (–)
+        LocalImporter.ParsedName p5 = LocalImporter.parseTitleAndChapter("电锯人 – 卷01.zip");
+        assertTrue(p5.matchedFormat);
+        assertEquals("电锯人", p5.comicTitle);
+        assertEquals("卷01", p5.chapterTitle);
+
+        // Single file without delimiter
+        LocalImporter.ParsedName p6 = LocalImporter.parseTitleAndChapter("海贼王01.epub");
+        assertFalse(p6.matchedFormat);
+        assertEquals("海贼王01", p6.comicTitle);
+        assertEquals("全本", p6.chapterTitle);
+    }
+
+    @Test
+    public void testPseudoPageNavDetection() {
+        // Pseudo-page list from comic EPUB (like in user screenshot)
+        List<com.xxcomic.ebook.Publication.NavItem> pseudoNav = Arrays.asList(
+                new com.xxcomic.ebook.Publication.NavItem("第001页", "p1.xhtml", 0, null),
+                new com.xxcomic.ebook.Publication.NavItem("第002页", "p2.xhtml", 1, null),
+                new com.xxcomic.ebook.Publication.NavItem("第003页", "p3.xhtml", 2, null),
+                new com.xxcomic.ebook.Publication.NavItem("第004页", "p4.xhtml", 3, null)
+        );
+        assertTrue(com.xxcomic.ebook.Publication.isPseudoPageNav(pseudoNav, 4));
+
+        // Pseudo-page list with "Page X"
+        List<com.xxcomic.ebook.Publication.NavItem> pageNav = Arrays.asList(
+                new com.xxcomic.ebook.Publication.NavItem("Page 1", "p1.xhtml", 0, null),
+                new com.xxcomic.ebook.Publication.NavItem("Page 2", "p2.xhtml", 1, null),
+                new com.xxcomic.ebook.Publication.NavItem("Page 3", "p3.xhtml", 2, null)
+        );
+        assertTrue(com.xxcomic.ebook.Publication.isPseudoPageNav(pageNav, 3));
+
+        // Pseudo-page list with bare numbers
+        List<com.xxcomic.ebook.Publication.NavItem> numNav = Arrays.asList(
+                new com.xxcomic.ebook.Publication.NavItem("001", "p1.xhtml", 0, null),
+                new com.xxcomic.ebook.Publication.NavItem("002", "p2.xhtml", 1, null)
+        );
+        assertTrue(com.xxcomic.ebook.Publication.isPseudoPageNav(numNav, 2));
+
+        // Real chapter list (should NOT be detected as pseudo-page)
+        List<com.xxcomic.ebook.Publication.NavItem> realChapters = Arrays.asList(
+                new com.xxcomic.ebook.Publication.NavItem("第一话：相遇", "c1.xhtml", 0, null),
+                new com.xxcomic.ebook.Publication.NavItem("第二话：羁绊", "c2.xhtml", 20, null),
+                new com.xxcomic.ebook.Publication.NavItem("第三话：决战", "c3.xhtml", 40, null)
+        );
+        assertFalse(com.xxcomic.ebook.Publication.isPseudoPageNav(realChapters, 60));
+    }
 }
