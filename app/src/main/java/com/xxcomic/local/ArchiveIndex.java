@@ -3,6 +3,8 @@ package com.xxcomic.local;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -23,6 +25,7 @@ public class ArchiveIndex {
     public static final int MAX_ENTRIES = 50000;
     public static final long MAX_SINGLE_ENTRY_BYTES = 128L * 1024L * 1024L; // 128 MiB
     public static final long MAX_TOTAL_UNCOMPRESSED_BYTES = 20L * 1024L * 1024L * 1024L; // 20 GiB
+    public static final long MAX_PAGE_BYTES = 32L * 1024L * 1024L; // 32 MiB
 
     public static class ParseResult {
         public final List<LocalModels.Chapter> chapters;
@@ -30,16 +33,27 @@ public class ArchiveIndex {
         public final int totalPages;
         public final long totalUncompressedBytes;
         public final String firstValidPageEntry;
+        public final List<String> candidateCoverEntries;
 
         public ParseResult(List<LocalModels.Chapter> chapters,
                            Map<String, List<LocalModels.Page>> pagesByChapter,
                            int totalPages, long totalUncompressedBytes,
-                           String firstValidPageEntry) {
+                           String firstValidPageEntry,
+                           List<String> candidateCoverEntries) {
             this.chapters = chapters;
             this.pagesByChapter = pagesByChapter;
             this.totalPages = totalPages;
             this.totalUncompressedBytes = totalUncompressedBytes;
             this.firstValidPageEntry = firstValidPageEntry;
+            this.candidateCoverEntries = candidateCoverEntries != null ? candidateCoverEntries : Collections.emptyList();
+        }
+
+        public ParseResult(List<LocalModels.Chapter> chapters,
+                           Map<String, List<LocalModels.Page>> pagesByChapter,
+                           int totalPages, long totalUncompressedBytes,
+                           String firstValidPageEntry) {
+            this(chapters, pagesByChapter, totalPages, totalUncompressedBytes, firstValidPageEntry,
+                    firstValidPageEntry != null ? Collections.singletonList(firstValidPageEntry) : Collections.emptyList());
         }
     }
 
@@ -68,29 +82,49 @@ public class ArchiveIndex {
         }
     }
 
+    public static ZipFile openZipFileCompat(File file, Charset charset) throws IOException {
+        if (charset != null) {
+            try {
+                Constructor<ZipFile> ctor = ZipFile.class.getConstructor(File.class, Charset.class);
+                return ctor.newInstance(file, charset);
+            } catch (NoSuchMethodException ignored) {
+                // Fallback for Android API < 24
+            } catch (InvocationTargetException ite) {
+                Throwable target = ite.getTargetException();
+                if (target instanceof IOException) {
+                    throw (IOException) target;
+                }
+                throw new IOException(target != null ? target.getMessage() : "Failed to open zip file", target);
+            } catch (Throwable ignored) {
+                // Fallback to standard constructor
+            }
+        }
+        return new ZipFile(file);
+    }
+
     public static ZipFile openZipWithFallbackCharset(File file) throws IOException {
         ZipFile zipFile = null;
         try {
-            zipFile = new ZipFile(file, StandardCharsets.UTF_8);
+            zipFile = openZipFileCompat(file, StandardCharsets.UTF_8);
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 entries.nextElement().getName();
             }
             return zipFile;
-        } catch (Exception utf8Error) {
+        } catch (Throwable utf8Error) {
             if (zipFile != null) {
                 try {
                     zipFile.close();
                 } catch (IOException ignored) {}
             }
             try {
-                ZipFile fallbackZip = new ZipFile(file, Charset.forName("GB18030"));
+                ZipFile fallbackZip = openZipFileCompat(file, Charset.forName("GB18030"));
                 Enumeration<? extends ZipEntry> entries = fallbackZip.entries();
                 while (entries.hasMoreElements()) {
                     entries.nextElement().getName();
                 }
                 return fallbackZip;
-            } catch (Exception gbError) {
+            } catch (Throwable gbError) {
                 throw new IOException("无法解析压缩包，UTF-8 与 GB18030 编码均解析失败: " + utf8Error.getMessage(), utf8Error);
             }
         }
@@ -102,6 +136,7 @@ public class ArchiveIndex {
         long totalBytes = 0;
 
         List<RawEntryInfo> candidateEntries = new ArrayList<>();
+        Set<String> seenNormalizedPaths = new HashSet<>();
 
         while (entries.hasMoreElements()) {
             ZipEntry entry = entries.nextElement();
@@ -126,6 +161,11 @@ public class ArchiveIndex {
             String name = entry.getName();
             validateEntryPath(name);
 
+            String norm = normalizePath(name);
+            if (!seenNormalizedPaths.add(norm)) {
+                throw new IOException("压缩包包含重复规范化路径条目: " + norm);
+            }
+
             if (isIgnoredMetadata(name)) continue;
 
             if (hasImageExtension(name)) {
@@ -137,21 +177,24 @@ public class ArchiveIndex {
             throw new IOException("压缩包内没有找到可支持的漫画图片");
         }
 
-        // Verify magic bytes
+        // Verify that entries are actually decodable images (not just truncated signatures)
         List<RawEntryInfo> verifiedEntries = new ArrayList<>();
         Map<String, String> mimeTypes = new HashMap<>();
 
         for (RawEntryInfo item : candidateEntries) {
             ZipEntry entry = zipFile.getEntry(item.name);
             if (entry == null) continue;
-            byte[] header = new byte[16];
+            byte[] header = new byte[4096];
             int readBytes = 0;
             try (InputStream in = zipFile.getInputStream(entry)) {
-                readBytes = in.read(header);
+                int n;
+                while (readBytes < header.length && (n = in.read(header, readBytes, header.length - readBytes)) != -1) {
+                    readBytes += n;
+                }
             } catch (Exception e) {
                 continue;
             }
-            if (readBytes >= 4 && isImageMagic(header, readBytes)) {
+            if (validateImageBytes(header, readBytes, item.size, item.name)) {
                 verifiedEntries.add(item);
                 mimeTypes.put(item.name, detectMimeType(header, readBytes, item.name));
             }
@@ -207,28 +250,28 @@ public class ArchiveIndex {
 
         if (subFolders.isEmpty()) {
             // Flat images: exactly 1 chapter titled "正文"
-            String chapterId = bookId + "_ch_0";
+            String chapterId = LocalModels.buildStableChapterId(bookId, 0);
             LocalModels.Chapter ch = new LocalModels.Chapter(chapterId, bookId, 0, "正文", "", rootImages.size());
             chapters.add(ch);
 
             List<LocalModels.Page> pageList = new ArrayList<>();
             for (int i = 0; i < rootImages.size(); i++) {
                 ValidEntry v = rootImages.get(i);
-                String pageId = chapterId + "_p_" + i;
+                String pageId = LocalModels.buildStablePageId(chapterId, i);
                 pageList.add(new LocalModels.Page(pageId, bookId, chapterId, i, v.rawEntryName, 0, 0, null, v.mimeType));
             }
             pagesByChapter.put(chapterId, pageList);
         } else {
             // If both root images and chapters exist: root images become "未分章"
             if (!rootImages.isEmpty()) {
-                String chapterId = bookId + "_ch_" + (chapterOrder++);
+                String chapterId = LocalModels.buildStableChapterId(bookId, chapterOrder++);
                 LocalModels.Chapter ch = new LocalModels.Chapter(chapterId, bookId, chapters.size(), "未分章", "", rootImages.size());
                 chapters.add(ch);
 
                 List<LocalModels.Page> pageList = new ArrayList<>();
                 for (int i = 0; i < rootImages.size(); i++) {
                     ValidEntry v = rootImages.get(i);
-                    String pageId = chapterId + "_p_" + i;
+                    String pageId = LocalModels.buildStablePageId(chapterId, i);
                     pageList.add(new LocalModels.Page(pageId, bookId, chapterId, i, v.rawEntryName, 0, 0, null, v.mimeType));
                 }
                 pagesByChapter.put(chapterId, pageList);
@@ -240,14 +283,14 @@ public class ArchiveIndex {
 
             for (String folderName : folderNames) {
                 List<ValidEntry> entriesInFolder = subFolders.get(folderName);
-                String chapterId = bookId + "_ch_" + (chapterOrder++);
+                String chapterId = LocalModels.buildStableChapterId(bookId, chapterOrder++);
                 LocalModels.Chapter ch = new LocalModels.Chapter(chapterId, bookId, chapters.size(), folderName, folderName, entriesInFolder.size());
                 chapters.add(ch);
 
                 List<LocalModels.Page> pageList = new ArrayList<>();
                 for (int i = 0; i < entriesInFolder.size(); i++) {
                     ValidEntry v = entriesInFolder.get(i);
-                    String pageId = chapterId + "_p_" + i;
+                    String pageId = LocalModels.buildStablePageId(chapterId, i);
                     pageList.add(new LocalModels.Page(pageId, bookId, chapterId, i, v.rawEntryName, 0, 0, null, v.mimeType));
                 }
                 pagesByChapter.put(chapterId, pageList);
@@ -255,7 +298,11 @@ public class ArchiveIndex {
         }
 
         String firstValidPage = validList.get(0).rawEntryName;
-        return new ParseResult(chapters, pagesByChapter, validList.size(), totalBytes, firstValidPage);
+        List<String> candidateCovers = new ArrayList<>();
+        for (ValidEntry v : validList) {
+            candidateCovers.add(v.rawEntryName);
+        }
+        return new ParseResult(chapters, pagesByChapter, validList.size(), totalBytes, firstValidPage, candidateCovers);
     }
 
     private static String findCommonWrapperPrefix(List<String> paths) {
@@ -315,26 +362,58 @@ public class ArchiveIndex {
                 || lower.endsWith(".gif");
     }
 
-    public static boolean isImageMagic(byte[] header, int length) {
-        if (header == null || length < 4) return false;
+    public static boolean validateImageBytes(byte[] header, int length, long entrySize, String name) {
+        if (header == null || length < 10) return false;
+        if (entrySize > 0 && entrySize < 64) return false;
+
+        // PNG: 89 50 4E 47 0D 0A 1A 0A
+        if ((header[0] & 0xFF) == 0x89 && header[1] == 'P' && header[2] == 'N' && header[3] == 'G') {
+            if (length < 24) return false;
+            // IHDR chunk check: bytes 12..15 should be "IHDR"
+            if (header[12] == 'I' && header[13] == 'H' && header[14] == 'D' && header[15] == 'R') {
+                int width = ((header[16] & 0xFF) << 24) | ((header[17] & 0xFF) << 16) | ((header[18] & 0xFF) << 8) | (header[19] & 0xFF);
+                int height = ((header[20] & 0xFF) << 24) | ((header[21] & 0xFF) << 16) | ((header[22] & 0xFF) << 8) | (header[23] & 0xFF);
+                return width > 0 && height > 0;
+            }
+            return false;
+        }
+
         // JPEG: FF D8 FF
         if ((header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8 && (header[2] & 0xFF) == 0xFF) {
-            return true;
+            int idx = 2;
+            while (idx < length - 8) {
+                if ((header[idx] & 0xFF) == 0xFF) {
+                    int marker = header[idx + 1] & 0xFF;
+                    if (marker == 0xC0 || marker == 0xC1 || marker == 0xC2) {
+                        int h = ((header[idx + 5] & 0xFF) << 8) | (header[idx + 6] & 0xFF);
+                        int w = ((header[idx + 7] & 0xFF) << 8) | (header[idx + 8] & 0xFF);
+                        if (w > 0 && h > 0) return true;
+                    }
+                }
+                idx++;
+            }
+            return entrySize >= 128 || length >= 128;
         }
-        // PNG: 89 50 4E 47
-        if ((header[0] & 0xFF) == 0x89 && header[1] == 'P' && header[2] == 'N' && header[3] == 'G') {
-            return true;
-        }
-        // GIF: GIF8
+
+        // GIF: GIF87a or GIF89a
         if (header[0] == 'G' && header[1] == 'I' && header[2] == 'F' && header[3] == '8') {
-            return true;
+            if (length < 10) return false;
+            int width = (header[6] & 0xFF) | ((header[7] & 0xFF) << 8);
+            int height = (header[8] & 0xFF) | ((header[9] & 0xFF) << 8);
+            return width > 0 && height > 0;
         }
+
         // WebP: RIFF .... WEBP
-        if (length >= 12 && header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F'
+        if (length >= 30 && header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F'
                 && header[8] == 'W' && header[9] == 'E' && header[10] == 'B' && header[11] == 'P') {
             return true;
         }
+
         return false;
+    }
+
+    public static boolean isImageMagic(byte[] header, int length) {
+        return validateImageBytes(header, length, 1024, "");
     }
 
     public static String detectMimeType(byte[] header, int length, String name) {
@@ -360,11 +439,27 @@ public class ArchiveIndex {
         return "image/jpeg";
     }
 
-    private static String normalizePath(String path) {
+    static String normalizePath(String path) {
+        if (path == null) return "";
         String s = path.replace('\\', '/');
-        while (s.startsWith("/")) s = s.substring(1);
-        while (s.endsWith("/")) s = s.substring(0, s.length() - 1);
-        return s;
+        String[] parts = s.split("/+");
+        List<String> normalized = new ArrayList<>();
+        for (String p : parts) {
+            if (p.isEmpty() || p.equals(".")) continue;
+            if (p.equals("..")) {
+                if (!normalized.isEmpty()) {
+                    normalized.remove(normalized.size() - 1);
+                }
+            } else {
+                normalized.add(p);
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < normalized.size(); i++) {
+            if (i > 0) sb.append('/');
+            sb.append(normalized.get(i));
+        }
+        return sb.toString();
     }
 
     private static class RawEntryInfo {

@@ -129,6 +129,19 @@ public final class LocalModels {
         }
     }
 
+    public static String buildStableBookId(String fingerprint) {
+        if (fingerprint == null) return "local_unknown";
+        return "local_" + fingerprint;
+    }
+
+    public static String buildStableChapterId(String bookIdOrProgressKey, int orderIndex) {
+        return bookIdOrProgressKey + "_ch_" + orderIndex;
+    }
+
+    public static String buildStablePageId(String chapterId, int orderIndex) {
+        return chapterId + "_p_" + orderIndex;
+    }
+
     public interface ImportProgressCallback {
         void onProgress(long currentBytes, long totalBytes, String message);
         boolean isCancelled();

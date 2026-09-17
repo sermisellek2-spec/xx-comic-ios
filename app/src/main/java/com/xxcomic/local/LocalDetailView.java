@@ -2,18 +2,18 @@ package com.xxcomic.local;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class LocalDetailView {
+    private static final int CHAPTER_DRAWER_BATCH_SIZE = 40;
+
     public interface Listener {
         void onBack();
         void onRead(LocalModels.Book book, ComicModels.ComicDetail detail, int chapterIndex);
@@ -41,6 +43,7 @@ public class LocalDetailView {
                              LocalLibraryStore store,
                              LocalStorageManager storageManager,
                              int savedChapterIndex,
+                             boolean hasRead,
                              Listener listener) {
         FrameLayout root = new FrameLayout(activity);
         root.setBackgroundColor(UIHelpers.CARD);
@@ -139,9 +142,9 @@ public class LocalDetailView {
         fileInfo.setSingleLine(true);
         body.addView(fileInfo, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 4)));
 
-        // Continue Reading Button
-        int targetChapter = Math.max(0, Math.min(savedChapterIndex, detail.chapters.size() - 1));
-        String readActionText = savedChapterIndex > 0 ? "继续阅读 第 " + (savedChapterIndex + 1) + " 话" : "开始阅读";
+        // Reading Action Button
+        final int targetChapter = Math.max(0, Math.min(savedChapterIndex, detail.chapters.size() - 1));
+        String readActionText = hasRead ? "继续阅读 第 " + (targetChapter + 1) + " 话" : "开始阅读";
         Button readBtn = UIHelpers.primaryButton(activity, readActionText);
         readBtn.setOnClickListener(v -> {
             if (listener != null) listener.onRead(book, detail, targetChapter);
@@ -151,133 +154,327 @@ public class LocalDetailView {
         // Divider
         body.addView(UIHelpers.divider(activity), UIHelpers.marginTop(-1, UIHelpers.dp(activity, 16)));
 
-        // Chapter Directory Section
-        LinearLayout dirHeader = new LinearLayout(activity);
-        dirHeader.setOrientation(LinearLayout.HORIZONTAL);
-        dirHeader.setGravity(Gravity.CENTER_VERTICAL);
-        dirHeader.setMinimumHeight(UIHelpers.dp(activity, 44));
-
-        TextView dirTitle = UIHelpers.text(activity, "章节目录 (" + detail.chapters.size() + ")", 16, UIHelpers.TEXT, Typeface.BOLD);
-        dirHeader.addView(dirTitle, UIHelpers.weight(1));
-
-        final boolean[] desc = new boolean[]{false};
-        TextView sortBtn = UIHelpers.text(activity, "正序 ⇅", 12, UIHelpers.ACCENT, Typeface.NORMAL);
-        sortBtn.setPadding(UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 8));
-        dirHeader.addView(sortBtn);
-        body.addView(dirHeader);
-
-        LinearLayout chapterList = new LinearLayout(activity);
-        chapterList.setOrientation(LinearLayout.VERTICAL);
-        body.addView(chapterList);
-
-        Runnable renderChapters = () -> {
-            chapterList.removeAllViews();
-            List<ComicModels.Chapter> displayChapters = new ArrayList<>(detail.chapters);
-            if (desc[0]) Collections.reverse(displayChapters);
-
-            for (int i = 0; i < displayChapters.size(); i++) {
-                ComicModels.Chapter ch = displayChapters.get(i);
-                int actualIndex = detail.chapters.indexOf(ch);
-                boolean isCurrent = actualIndex == targetChapter;
-
-                LinearLayout row = new LinearLayout(activity);
-                row.setOrientation(LinearLayout.HORIZONTAL);
-                row.setGravity(Gravity.CENTER_VERTICAL);
-                row.setMinimumHeight(UIHelpers.dp(activity, 42));
-                row.setPadding(UIHelpers.dp(activity, 8), 0, UIHelpers.dp(activity, 8), 0);
-                if (isCurrent) {
-                    row.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(activity, 6), Color.TRANSPARENT));
-                }
-
-                TextView chTitle = UIHelpers.text(activity, ch.title, 14,
-                        isCurrent ? UIHelpers.ACCENT : UIHelpers.TEXT,
-                        isCurrent ? Typeface.BOLD : Typeface.NORMAL);
-                row.addView(chTitle, UIHelpers.weight(1));
-
-                if (isCurrent) {
-                    TextView tag = UIHelpers.text(activity, "上次读到", 11, UIHelpers.ACCENT, Typeface.NORMAL);
-                    row.addView(tag);
-                }
-
-                row.setOnClickListener(v -> {
-                    if (listener != null) listener.onRead(book, detail, actualIndex);
-                });
-                chapterList.addView(row);
-                if (i < displayChapters.size() - 1) {
-                    chapterList.addView(UIHelpers.divider(activity));
-                }
-            }
-        };
-
-        sortBtn.setOnClickListener(v -> {
-            desc[0] = !desc[0];
-            sortBtn.setText(desc[0] ? "倒序 ⇅" : "正序 ⇅");
-            renderChapters.run();
+        // 3. Chapter Entry (Opens 76% Drawer)
+        View chapterEntryView = buildChapterEntry(activity, root, detail, targetChapter, hasRead, (selectedChapter) -> {
+            if (listener != null) listener.onRead(book, detail, selectedChapter);
         });
-
-        renderChapters.run();
+        body.addView(chapterEntryView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 12)));
 
         return root;
     }
 
+    private interface OnChapterSelected {
+        void onSelect(int chapterIndex);
+    }
+
+    private static View buildChapterEntry(Activity activity, View rootLocation, ComicModels.ComicDetail detail,
+                                          int targetChapter, boolean hasRead, OnChapterSelected onSelect) {
+        LinearLayout row = new LinearLayout(activity);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 9), UIHelpers.dp(activity, 10), UIHelpers.dp(activity, 9));
+        row.setMinimumHeight(UIHelpers.dp(activity, 54));
+        row.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(activity, 7), UIHelpers.BORDER));
+        row.setOnClickListener(v -> showChapterDrawer(activity, rootLocation, detail, targetChapter, hasRead, onSelect));
+
+        LinearLayout text = new LinearLayout(activity);
+        text.setOrientation(LinearLayout.VERTICAL);
+        text.addView(UIHelpers.text(activity, "章节目录", 14, UIHelpers.TEXT, Typeface.BOLD));
+        String status = detail.chapters.isEmpty() ? "暂无章节" : detail.chapters.size() + " 话 · 本地漫画";
+        text.addView(UIHelpers.text(activity, status, 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(activity, 3)));
+        row.addView(text, UIHelpers.weight(1));
+
+        ImageView action = UIHelpers.vectorIconButton(activity, R.drawable.ic_chevron_right, UIHelpers.TEXT3, 3);
+        row.addView(action, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 24), UIHelpers.dp(activity, 24)));
+        return row;
+    }
+
+    private static void showChapterDrawer(Activity activity, View rootLocation, ComicModels.ComicDetail detail,
+                                         int targetChapter, boolean hasRead, OnChapterSelected onSelect) {
+        if (activity == null || activity.isFinishing()) return;
+
+        LinearLayout panel = new LinearLayout(activity);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 10));
+        panel.setBackgroundColor(UIHelpers.CARD);
+
+        // Header
+        LinearLayout header = new LinearLayout(activity);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setMinimumHeight(UIHelpers.dp(activity, 43));
+        panel.addView(header, new LinearLayout.LayoutParams(-1, UIHelpers.dp(activity, 43)));
+
+        LinearLayout titleHost = new LinearLayout(activity);
+        titleHost.setOrientation(LinearLayout.VERTICAL);
+        titleHost.addView(UIHelpers.text(activity, "章节目录", 16, UIHelpers.TEXT, Typeface.BOLD));
+        titleHost.addView(UIHelpers.text(activity, "共 " + detail.chapters.size() + " 话", 11, UIHelpers.TEXT3, Typeface.NORMAL),
+                UIHelpers.marginTop(-1, UIHelpers.dp(activity, 2)));
+        header.addView(titleHost, UIHelpers.weight(1));
+
+        ImageView close = UIHelpers.vectorIconButton(activity, R.drawable.ic_close, UIHelpers.TEXT2, 6);
+        close.setContentDescription("关闭目录");
+        header.addView(close, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 34), UIHelpers.dp(activity, 34)));
+
+        panel.addView(UIHelpers.divider(activity));
+
+        // Tools (Source tag & Order toggle)
+        LinearLayout drawerTools = new LinearLayout(activity);
+        drawerTools.setGravity(Gravity.CENTER_VERTICAL);
+        drawerTools.setMinimumHeight(UIHelpers.dp(activity, 39));
+
+        TextView drawerSource = UIHelpers.text(activity, "本地导入", 11, UIHelpers.TEXT3, Typeface.NORMAL);
+        drawerTools.addView(drawerSource, UIHelpers.weight(1));
+
+        final boolean[] desc = new boolean[]{false};
+        TextView order = UIHelpers.text(activity, "正序", 11, UIHelpers.ACCENT, Typeface.BOLD);
+        order.setGravity(Gravity.CENTER);
+        order.setPadding(UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 4), UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 4));
+        drawerTools.addView(order);
+        panel.addView(drawerTools, new LinearLayout.LayoutParams(-1, UIHelpers.dp(activity, 39)));
+        panel.addView(UIHelpers.divider(activity));
+
+        ScrollView scroll = new ScrollView(activity);
+        scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout list = new LinearLayout(activity);
+        list.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(list, new FrameLayout.LayoutParams(-1, -2));
+        panel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        int drawerWidth = Math.round(activity.getResources().getDisplayMetrics().widthPixels * 0.76f);
+        PopupWindow popup = new PopupWindow(panel, drawerWidth, -1, true);
+        popup.setBackgroundDrawable(new ColorDrawable(UIHelpers.CARD));
+        popup.setOutsideTouchable(true);
+        popup.setElevation(UIHelpers.dp(activity, 14));
+
+        close.setOnClickListener(v -> popup.dismiss());
+
+        final int[] renderGeneration = {0};
+        Runnable render = () -> {
+            int generation = ++renderGeneration[0];
+            list.removeAllViews();
+            List<Integer> orderIndexes = new ArrayList<>();
+            for (int i = 0; i < detail.chapters.size(); i++) {
+                orderIndexes.add(i);
+            }
+            if (desc[0]) {
+                Collections.reverse(orderIndexes);
+            }
+            fillBatch(activity, list, popup, detail, orderIndexes, 0, generation, renderGeneration, targetChapter, hasRead, onSelect);
+        };
+
+        order.setOnClickListener(v -> {
+            desc[0] = !desc[0];
+            order.setText(desc[0] ? "倒序" : "正序");
+            render.run();
+        });
+
+        render.run();
+        popup.showAtLocation(rootLocation, Gravity.RIGHT, 0, 0);
+    }
+
+    private static void fillBatch(Activity activity, LinearLayout list, PopupWindow popup,
+                                  ComicModels.ComicDetail detail, List<Integer> orderIndexes,
+                                  int start, int generation, int[] renderGeneration,
+                                  int targetChapter, boolean hasRead, OnChapterSelected onSelect) {
+        if (generation != renderGeneration[0] || !popup.isShowing()) return;
+        int endIndex = Math.min(start + CHAPTER_DRAWER_BATCH_SIZE, orderIndexes.size());
+        for (int i = start; i < endIndex; i++) {
+            int chapterIndex = orderIndexes.get(i);
+            ComicModels.Chapter ch = detail.chapters.get(chapterIndex);
+            boolean isCurrent = hasRead && (chapterIndex == targetChapter);
+
+            LinearLayout row = new LinearLayout(activity);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setMinimumHeight(UIHelpers.dp(activity, 38));
+            row.setPadding(UIHelpers.dp(activity, 4), 0, UIHelpers.dp(activity, 4), 0);
+            if (isCurrent) {
+                row.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(activity, 5), Color.TRANSPARENT));
+            }
+
+            TextView name = UIHelpers.text(activity, ch.title, 14, isCurrent ? UIHelpers.ACCENT : UIHelpers.TEXT,
+                    isCurrent ? Typeface.BOLD : Typeface.NORMAL);
+            name.setSingleLine(true);
+            name.setEllipsize(TextUtils.TruncateAt.END);
+            row.addView(name, UIHelpers.weight(1));
+
+            String endText = isCurrent ? "上次读到" : String.valueOf(chapterIndex + 1);
+            TextView numView = UIHelpers.text(activity, endText, 11, isCurrent ? UIHelpers.ACCENT : UIHelpers.TEXT3, Typeface.NORMAL);
+            numView.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+            row.addView(numView);
+
+            row.setOnClickListener(v -> {
+                popup.dismiss();
+                if (onSelect != null) onSelect.onSelect(chapterIndex);
+            });
+
+            list.addView(row);
+            if (i < orderIndexes.size() - 1) {
+                list.addView(UIHelpers.divider(activity));
+            }
+        }
+
+        if (endIndex < orderIndexes.size() && popup.isShowing()) {
+            list.postDelayed(() -> fillBatch(activity, list, popup, detail, orderIndexes, endIndex,
+                    generation, renderGeneration, targetChapter, hasRead, onSelect), 16);
+        }
+    }
+
     public static void showRenameDialog(Activity activity, LocalModels.Book book,
                                          LocalLibraryStore store, Listener listener) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle("重命名漫画");
+        if (activity == null || activity.isFinishing()) return;
+
+        LinearLayout layout = new LinearLayout(activity);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 16),
+                UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 12));
+
+        TextView titleView = UIHelpers.text(activity, "重命名漫画", 17, UIHelpers.TEXT, Typeface.BOLD);
+        layout.addView(titleView);
+
+        TextView subView = UIHelpers.text(activity, "修改在 App 内显示的本地漫画名称", 12, UIHelpers.TEXT3, Typeface.NORMAL);
+        layout.addView(subView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 4)));
 
         final EditText input = new EditText(activity);
         input.setSingleLine(true);
         input.setText(book.getDisplayTitle());
         input.setSelection(input.getText().length());
-        int pad = UIHelpers.dp(activity, 16);
+        input.setTextColor(UIHelpers.TEXT);
+        input.setHintTextColor(UIHelpers.TEXT3);
+        input.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(activity, 8), UIHelpers.BORDER));
+        int pad = UIHelpers.dp(activity, 10);
         input.setPadding(pad, pad, pad, pad);
-        builder.setView(input);
+        layout.addView(input, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 14)));
 
-        builder.setPositiveButton("保存", (dialog, which) -> {
-            String newTitle = input.getText().toString().trim();
-            if (TextUtils.isEmpty(newTitle)) {
-                Toast.makeText(activity, "漫画名称不能为空", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            store.renameBook(book.id, newTitle);
-            LocalModels.Book updated = store.getBook(book.id);
-            if (listener != null && updated != null) {
-                listener.onBookRenamed(updated);
-            }
+        AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setView(layout)
+                .setPositiveButton("保存", null)
+                .setNegativeButton("取消", null)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            Button pos = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            pos.setTextColor(UIHelpers.ACCENT);
+            pos.setOnClickListener(v -> {
+                String newTitle = input.getText().toString().trim();
+                if (TextUtils.isEmpty(newTitle)) {
+                    Toast.makeText(activity, "漫画名称不能为空", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                store.renameBook(book.id, newTitle);
+                LocalModels.Book updated = store.getBook(book.id);
+                dialog.dismiss();
+                if (listener != null && updated != null) {
+                    listener.onBookRenamed(updated);
+                }
+            });
+            Button neg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            neg.setTextColor(UIHelpers.TEXT2);
         });
-        builder.setNegativeButton("取消", null);
-        builder.show();
+
+        dialog.show();
     }
 
     public static void showDeleteDialog(Activity activity, LocalModels.Book book,
                                          LocalLibraryStore store, LocalStorageManager storageManager,
                                          Listener listener) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle("删除本地漫画？");
-        builder.setMessage("将删除该漫画在 App 内的副本并释放 " + formatBytes(book.totalSize) + " 存储空间。\n\n"
-                + "提示：您手机上的原始文件不会受到任何影响。阅读历史与进度已保留，日后重新导入可继续阅读。");
+        if (activity == null || activity.isFinishing()) return;
 
-        builder.setPositiveButton("删除", (dialog, which) -> {
-            // Mark deleting
-            store.markDeleting(book.id);
-            // Delete files
-            try {
-                File bookFile = storageManager.getBookImportFile(book.relativePath);
-                storageManager.deleteRecursively(bookFile);
-            } catch (Exception ignored) {}
-            try {
-                File cover = storageManager.getCoverFile(book.id);
-                if (cover.exists()) cover.delete();
-            } catch (Exception ignored) {}
-            // Complete deletion in db
-            store.completeDeletion(book.id);
-            Toast.makeText(activity, "已删除本地漫画", Toast.LENGTH_SHORT).show();
-            if (listener != null) {
-                listener.onBookDeleted(book);
-            }
+        LinearLayout content = new LinearLayout(activity);
+        content.setOrientation(LinearLayout.HORIZONTAL);
+        content.setGravity(Gravity.TOP);
+        content.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16),
+                UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 10));
+
+        ImageView art = new ImageView(activity);
+        art.setImageResource(R.drawable.rem_empty);
+        art.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        content.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 56), UIHelpers.dp(activity, 56)));
+
+        LinearLayout copy = new LinearLayout(activity);
+        copy.setOrientation(LinearLayout.VERTICAL);
+        copy.setPadding(UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 2), 0, 0);
+
+        TextView titleView = UIHelpers.text(activity, "删除本地漫画？", 17, UIHelpers.TEXT, Typeface.BOLD);
+        copy.addView(titleView);
+
+        String message = "将删除《" + book.getDisplayTitle() + "》在 App 内的副本并释放 " + formatBytes(book.totalSize) + " 存储空间。\n\n"
+                + "提示：您手机上的原始文件不受影响。阅读进度已保留，日后重导可继续阅读。";
+        TextView messageView = UIHelpers.text(activity, message, 12, UIHelpers.TEXT2, Typeface.NORMAL);
+        copy.addView(messageView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 6)));
+        content.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setView(content)
+                .setPositiveButton("删除", (d, which) -> executeDelete(activity, book, store, storageManager, listener))
+                .setNegativeButton("取消", null)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            Button pos = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            pos.setTextColor(UIHelpers.DANGER);
+            Button neg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            neg.setTextColor(UIHelpers.TEXT2);
         });
-        builder.setNegativeButton("取消", null);
-        builder.show();
+
+        dialog.show();
+    }
+
+    private static void executeDelete(Activity activity, LocalModels.Book book,
+                                      LocalLibraryStore store, LocalStorageManager storageManager,
+                                      Listener listener) {
+        // Step 1: Immediately mark deleting in store to stop reads/prefetches
+        store.markDeleting(book.id);
+
+        // Step 2: Perform file deletions in background
+        new Thread(() -> {
+            boolean filesCleaned = true;
+            try {
+                // Delete extracted derived pages
+                storageManager.clearDerivedPagesForBook(book.id);
+            } catch (Exception ignored) {
+                filesCleaned = false;
+            }
+
+            try {
+                // Delete import archive / folder
+                File bookFile = storageManager.getBookImportFile(book.relativePath);
+                if (bookFile.exists()) {
+                    boolean deleted = storageManager.deleteRecursively(bookFile);
+                    if (!deleted && bookFile.exists()) {
+                        filesCleaned = false;
+                    }
+                }
+            } catch (Exception ignored) {
+                filesCleaned = false;
+            }
+
+            try {
+                // Delete cover file
+                File cover = storageManager.getCoverFile(book.id);
+                if (cover.exists()) {
+                    cover.delete();
+                }
+            } catch (Exception ignored) {}
+
+            final boolean success = filesCleaned;
+            activity.runOnUiThread(() -> {
+                if (activity.isFinishing()) return;
+                if (success) {
+                    store.completeDeletion(book.id);
+                    Toast.makeText(activity, "已删除本地漫画", Toast.LENGTH_SHORT).show();
+                    if (listener != null) {
+                        listener.onBookDeleted(book);
+                    }
+                } else {
+                    // Retention of deleting tombstone allows retry without faking success
+                    new AlertDialog.Builder(activity)
+                            .setTitle("删除未完全完成")
+                            .setMessage("部分漫画文件未能完全清理，建议稍后重试。")
+                            .setPositiveButton("重试", (d, w) -> executeDelete(activity, book, store, storageManager, listener))
+                            .setNegativeButton("取消", null)
+                            .show();
+                }
+            });
+        }).start();
     }
 
     private static String formatBytes(long bytes) {

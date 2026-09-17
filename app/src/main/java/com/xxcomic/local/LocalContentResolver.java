@@ -104,6 +104,8 @@ public class LocalContentResolver {
         }
     }
 
+    private final java.util.concurrent.ConcurrentHashMap<String, Object> pageLocks = new java.util.concurrent.ConcurrentHashMap<>();
+
     public File materializePage(String pageId) throws IOException {
         LocalModels.Page page = store.getPage(pageId);
         if (page == null) {
@@ -123,27 +125,47 @@ public class LocalContentResolver {
             }
         }
 
-        File derivedPagesDir = storageManager.getPagesCacheDir();
-        File targetFile = new File(derivedPagesDir, pageId + ".tmp");
-        if (targetFile.exists() && targetFile.length() > 0) {
+        Object lock = pageLocks.computeIfAbsent(pageId, k -> new Object());
+        synchronized (lock) {
+            File derivedPagesDir = storageManager.getPagesCacheDir();
+            File bookCacheDir = new File(derivedPagesDir, book.id);
+            if (!bookCacheDir.exists()) bookCacheDir.mkdirs();
+
+            File targetFile = new File(bookCacheDir, pageId + ".tmp");
+            if (targetFile.exists() && targetFile.length() > 0) {
+                return targetFile;
+            }
+
+            storageManager.enforcePagesCacheLimit(200L * 1024L * 1024L);
+
+            File tempFile = new File(bookCacheDir, pageId + "_" + System.currentTimeMillis() + ".writing");
+            boolean success = false;
+            try (InputStream in = openPage(pageId);
+                 OutputStream out = new FileOutputStream(tempFile)) {
+                byte[] buf = new byte[65536];
+                int len;
+                long totalWritten = 0L;
+                while ((len = in.read(buf)) > 0) {
+                    totalWritten += len;
+                    if (totalWritten > ArchiveIndex.MAX_PAGE_BYTES) {
+                        throw new IOException("单页解压大小超出安全限制（最大 32MiB）: " + pageId);
+                    }
+                    out.write(buf, 0, len);
+                }
+                success = true;
+            } finally {
+                if (!success && tempFile.exists()) {
+                    tempFile.delete();
+                }
+            }
+
+            if (targetFile.exists()) targetFile.delete();
+            if (!tempFile.renameTo(targetFile)) {
+                if (targetFile.exists()) tempFile.delete();
+                else return tempFile;
+            }
             return targetFile;
         }
-
-        File tempFile = new File(derivedPagesDir, pageId + "_" + System.currentTimeMillis() + ".writing");
-        try (InputStream in = openPage(pageId);
-             OutputStream out = new FileOutputStream(tempFile)) {
-            byte[] buf = new byte[65536];
-            int len;
-            while ((len = in.read(buf)) > 0) {
-                out.write(buf, 0, len);
-            }
-        }
-        if (targetFile.exists()) targetFile.delete();
-        if (!tempFile.renameTo(targetFile)) {
-            if (targetFile.exists()) tempFile.delete();
-            else return tempFile;
-        }
-        return targetFile;
     }
 
     public InputStream openCover(String bookId) throws IOException {
@@ -165,36 +187,37 @@ public class LocalContentResolver {
     }
 
     public Bitmap decodeCoverBitmap(String bookId, int targetWidth, int targetHeight) {
+        LocalModels.Book book = store.getBook(bookId);
+        if (book != null && !TextUtils.isEmpty(book.coverPath)) {
+            File coverFile = new File(book.coverPath);
+            if (coverFile.exists() && coverFile.length() > 0) {
+                try {
+                    BitmapFactory.Options bounds = new BitmapFactory.Options();
+                    bounds.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(coverFile.getAbsolutePath(), bounds);
+                    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null;
+
+                    BitmapFactory.Options opts = new BitmapFactory.Options();
+                    opts.inSampleSize = 1;
+                    if (targetWidth > 0 && targetHeight > 0) {
+                        int sample = 1;
+                        while (bounds.outWidth / (sample * 2) >= targetWidth && bounds.outHeight / (sample * 2) >= targetHeight) {
+                            sample *= 2;
+                        }
+                        opts.inSampleSize = sample;
+                    }
+                    return BitmapFactory.decodeFile(coverFile.getAbsolutePath(), opts);
+                } catch (Exception ignored) {
+                    return null;
+                }
+            }
+        }
+
         try (InputStream in = openCover(bookId)) {
             if (in == null) return null;
-            byte[] bytes = readAllBytes(in);
-            BitmapFactory.Options bounds = new BitmapFactory.Options();
-            bounds.inJustDecodeBounds = true;
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.length, bounds);
-            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null;
-
-            BitmapFactory.Options opts = new BitmapFactory.Options();
-            opts.inSampleSize = 1;
-            if (targetWidth > 0 && targetHeight > 0) {
-                int sample = 1;
-                while (bounds.outWidth / (sample * 2) >= targetWidth && bounds.outHeight / (sample * 2) >= targetHeight) {
-                    sample *= 2;
-                }
-                opts.inSampleSize = sample;
-            }
-            return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, opts);
+            return BitmapFactory.decodeStream(new LocalImporter.BoundedInputStream(in, ArchiveIndex.MAX_PAGE_BYTES));
         } catch (Exception ignored) {
             return null;
         }
-    }
-
-    private static byte[] readAllBytes(InputStream in) throws IOException {
-        byte[] buf = new byte[8192];
-        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-        int len;
-        while ((len = in.read(buf)) > 0) {
-            out.write(buf, 0, len);
-        }
-        return out.toByteArray();
     }
 }

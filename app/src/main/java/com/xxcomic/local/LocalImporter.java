@@ -30,9 +30,51 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class LocalImporter {
+    public static final int MAX_FOLDER_DEPTH = 5;
+    public static final int MAX_FOLDER_FILES = 5000;
+    public static final long MAX_SINGLE_FILE_BYTES = 100L * 1024L * 1024L; // 100 MiB
+    public static final long MAX_TOTAL_BYTES = 20L * 1024L * 1024L * 1024L; // 20 GiB
+
     private final Context context;
     private final LocalStorageManager storageManager;
     private final LocalLibraryStore store;
+
+    public static class BoundedInputStream extends InputStream {
+        private final InputStream in;
+        private final long maxBytes;
+        private long readBytes = 0;
+
+        public BoundedInputStream(InputStream in, long maxBytes) {
+            this.in = in;
+            this.maxBytes = maxBytes;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (readBytes >= maxBytes) {
+                throw new IOException("读取大小超过上限: " + maxBytes);
+            }
+            int b = in.read();
+            if (b != -1) readBytes++;
+            return b;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            if (readBytes >= maxBytes) {
+                throw new IOException("读取大小超过上限: " + maxBytes);
+            }
+            int toRead = (int) Math.min((long) len, maxBytes - readBytes);
+            int n = in.read(b, off, toRead);
+            if (n > 0) readBytes += n;
+            return n;
+        }
+
+        @Override
+        public void close() throws IOException {
+            in.close();
+        }
+    }
 
     public LocalImporter(Context context, LocalStorageManager storageManager, LocalLibraryStore store) {
         this.context = context.getApplicationContext();
@@ -47,11 +89,10 @@ public class LocalImporter {
         if (TextUtils.isEmpty(displayName)) {
             displayName = queryDisplayName(resolver, uri);
         }
-        if (TextUtils.isEmpty(displayName)) {
-            displayName = "comic.zip";
-        }
 
         File stagingFile = storageManager.createStagingFile("import_zip_", ".tmp");
+        File targetImportFile = null;
+        File coverTarget = null;
         MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
 
         long bytesCopied = 0L;
@@ -71,13 +112,17 @@ public class LocalImporter {
                     out.write(buffer, 0, len);
                     bytesCopied += len;
 
-                    if (!storageManager.hasSufficientSpace(bytesCopied)) {
+                    if (!storageManager.hasUsableMargin()) {
                         throw new IOException("设备可用存储空间不足（需至少保留 256MiB 空间）");
                     }
                     if (callback != null) {
                         callback.onProgress(bytesCopied, -1L, "正在复制文件: " + formatBytes(bytesCopied));
                     }
                 }
+            }
+
+            if (callback != null && callback.isCancelled()) {
+                throw new InterruptedException("用户取消导入");
             }
 
             String fingerprint = toHexString(sha256.digest());
@@ -89,10 +134,12 @@ public class LocalImporter {
                 return existing;
             }
 
-            // Check if there is a deleted tombstone to restore progressKey & userTitle
+            // Restore stable progressKey & userTitle from tombstone, or create stable id
             LocalLibraryStore.DeletedFingerprint tombstone = store.findDeletedByFingerprint(fingerprint);
-            String bookId = "local_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-            String progressKey = tombstone != null ? tombstone.progressKey : bookId;
+            String progressKey = (tombstone != null && tombstone.progressKey != null)
+                    ? tombstone.progressKey
+                    : LocalModels.buildStableBookId(fingerprint);
+            String bookId = progressKey;
             String userTitle = tombstone != null ? tombstone.userTitle : null;
 
             // Determine title
@@ -103,24 +150,41 @@ public class LocalImporter {
                 originalTitle = originalTitle.trim();
             }
 
+            if (callback != null && callback.isCancelled()) {
+                throw new InterruptedException("用户取消导入");
+            }
+
             if (callback != null) {
                 callback.onProgress(bytesCopied, bytesCopied, "正在解析章节与页面...");
             }
 
             ArchiveIndex.ParseResult parseResult = ArchiveIndex.indexArchive(stagingFile, bookId);
 
-            // Extract cover
+            if (callback != null && callback.isCancelled()) {
+                throw new InterruptedException("用户取消导入");
+            }
+
+            // Extract cover with candidate fallback
             String coverPath = null;
-            File coverTarget = storageManager.getCoverFile(bookId);
-            if (extractArchiveCover(stagingFile, parseResult.firstValidPageEntry, coverTarget)) {
+            coverTarget = storageManager.getCoverFile(bookId);
+            if (extractArchiveCover(stagingFile, parseResult.candidateCoverEntries, coverTarget)) {
                 coverPath = coverTarget.getAbsolutePath();
             }
 
+            if (callback != null && callback.isCancelled()) {
+                throw new InterruptedException("用户取消导入");
+            }
+
             // Move staging file to imports
-            String format = displayName.toLowerCase(Locale.US).endsWith(".cbz") ? LocalModels.FORMAT_CBZ : LocalModels.FORMAT_ZIP;
+            String format = (displayName != null && displayName.toLowerCase(Locale.US).endsWith(".cbz"))
+                    ? LocalModels.FORMAT_CBZ : LocalModels.FORMAT_ZIP;
             String targetFileName = bookId + (LocalModels.FORMAT_CBZ.equals(format) ? ".cbz" : ".zip");
-            File targetImportFile = storageManager.getBookImportFile(targetFileName);
+            targetImportFile = storageManager.getBookImportFile(targetFileName);
             storageManager.promoteStagingToImports(stagingFile, targetImportFile);
+
+            if (callback != null && callback.isCancelled()) {
+                throw new InterruptedException("用户取消导入");
+            }
 
             LocalModels.Book book = new LocalModels.Book(
                     bookId, fingerprint, originalTitle, userTitle, format,
@@ -132,9 +196,16 @@ public class LocalImporter {
 
             store.commitImport(book, parseResult.chapters, parseResult.pagesByChapter);
             return book;
-        } catch (Exception error) {
+        } catch (Throwable error) {
             storageManager.deleteRecursively(stagingFile);
-            throw error;
+            if (targetImportFile != null && targetImportFile.exists()) {
+                storageManager.deleteRecursively(targetImportFile);
+            }
+            if (coverTarget != null && coverTarget.exists()) {
+                coverTarget.delete();
+            }
+            if (error instanceof Exception) throw (Exception) error;
+            throw new IOException(error.getMessage(), error);
         }
     }
 
@@ -148,21 +219,29 @@ public class LocalImporter {
             Uri rootDocUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, rootDocId);
             folderName = queryDisplayName(resolver, rootDocUri);
         }
-        if (TextUtils.isEmpty(folderName)) {
-            folderName = "comic_folder";
-        }
 
         String stagingName = "import_folder_" + System.currentTimeMillis();
         File stagingDir = storageManager.createStagingDirectory(stagingName);
+        File targetImportDir = null;
+        File coverTarget = null;
 
         try {
             long[] bytesCopied = new long[]{0L};
-            copyDocumentTreeNative(treeUri, rootDocId, stagingDir, bytesCopied, callback);
+            int[] fileCount = new int[]{0};
+            copyDocumentTreeNative(treeUri, rootDocId, stagingDir, 0, fileCount, bytesCopied, callback);
+
+            if (callback != null && callback.isCancelled()) {
+                throw new InterruptedException("用户取消导入");
+            }
 
             // Index copied folder
             FolderIndexResult folderResult = indexFolder(stagingDir);
             if (folderResult.validImages.isEmpty()) {
                 throw new IOException("文件夹内没有找到可支持的漫画图片");
+            }
+
+            if (callback != null && callback.isCancelled()) {
+                throw new InterruptedException("用户取消导入");
             }
 
             String fingerprint = computeFolderManifestFingerprint(stagingDir, folderResult.validImages);
@@ -174,15 +253,21 @@ public class LocalImporter {
                 return existing;
             }
 
-            // Check tombstone
+            // Restore stable progressKey & userTitle from tombstone, or create stable id
             LocalLibraryStore.DeletedFingerprint tombstone = store.findDeletedByFingerprint(fingerprint);
-            String bookId = "local_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-            String progressKey = tombstone != null ? tombstone.progressKey : bookId;
+            String progressKey = (tombstone != null && tombstone.progressKey != null)
+                    ? tombstone.progressKey
+                    : LocalModels.buildStableBookId(fingerprint);
+            String bookId = progressKey;
             String userTitle = tombstone != null ? tombstone.userTitle : null;
 
-            String originalTitle = folderName.trim();
+            String originalTitle = folderName != null ? folderName.trim() : "";
             if (TextUtils.isEmpty(originalTitle)) {
                 originalTitle = "未命名漫画 " + store.getNextUnnamedIndex();
+            }
+
+            if (callback != null && callback.isCancelled()) {
+                throw new InterruptedException("用户取消导入");
             }
 
             if (callback != null) {
@@ -191,16 +276,28 @@ public class LocalImporter {
 
             FolderChaptersResult chaptersResult = buildFolderChapters(stagingDir, folderResult.validImages, bookId);
 
-            // Extract cover
+            if (callback != null && callback.isCancelled()) {
+                throw new InterruptedException("用户取消导入");
+            }
+
+            // Extract cover with candidate fallback
             String coverPath = null;
-            File coverTarget = storageManager.getCoverFile(bookId);
-            if (extractFileCover(new File(stagingDir, chaptersResult.firstPageEntry), coverTarget)) {
+            coverTarget = storageManager.getCoverFile(bookId);
+            if (extractFileCover(stagingDir, chaptersResult.candidateCoverEntries, coverTarget)) {
                 coverPath = coverTarget.getAbsolutePath();
             }
 
+            if (callback != null && callback.isCancelled()) {
+                throw new InterruptedException("用户取消导入");
+            }
+
             // Move staging folder to imports
-            File targetImportDir = storageManager.getBookImportFile(bookId);
+            targetImportDir = storageManager.getBookImportFile(bookId);
             storageManager.promoteStagingToImports(stagingDir, targetImportDir);
+
+            if (callback != null && callback.isCancelled()) {
+                throw new InterruptedException("用户取消导入");
+            }
 
             LocalModels.Book book = new LocalModels.Book(
                     bookId, fingerprint, originalTitle, userTitle, LocalModels.FORMAT_FOLDER,
@@ -212,14 +309,36 @@ public class LocalImporter {
 
             store.commitImport(book, chaptersResult.chapters, chaptersResult.pagesByChapter);
             return book;
-        } catch (Exception error) {
+        } catch (Throwable error) {
             storageManager.deleteRecursively(stagingDir);
-            throw error;
+            if (targetImportDir != null && targetImportDir.exists()) {
+                storageManager.deleteRecursively(targetImportDir);
+            }
+            if (coverTarget != null && coverTarget.exists()) {
+                coverTarget.delete();
+            }
+            if (error instanceof Exception) throw (Exception) error;
+            throw new IOException(error.getMessage(), error);
         }
     }
 
-    private void copyDocumentTreeNative(Uri treeUri, String parentDocId, File targetDir, long[] bytesCopied,
+    public static String sanitizeSegmentName(String rawName) {
+        if (rawName == null) return "unnamed";
+        String name = rawName.replace('\\', '/').trim();
+        int lastSlash = name.lastIndexOf('/');
+        if (lastSlash >= 0) {
+            name = name.substring(lastSlash + 1).trim();
+        }
+        if (name.isEmpty() || name.equals(".") || name.equals("..")) {
+            return "unnamed";
+        }
+        return name;
+    }
+
+    private void copyDocumentTreeNative(Uri treeUri, String parentDocId, File targetDir,
+                                        int depth, int[] fileCount, long[] bytesCopied,
                                         LocalModels.ImportProgressCallback callback) throws Exception {
+        if (depth > MAX_FOLDER_DEPTH) return;
         ContentResolver resolver = context.getContentResolver();
         Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parentDocId);
 
@@ -242,24 +361,44 @@ public class LocalImporter {
                 String mimeType = cursor.getString(2);
 
                 if (name == null || ArchiveIndex.isIgnoredMetadata(name)) continue;
+                String cleanName = sanitizeSegmentName(name);
 
                 if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType)) {
-                    File subDir = new File(targetDir, name);
+                    File subDir = new File(targetDir, cleanName);
+                    LocalStorageManager.assertPathInsideRoot(subDir, targetDir);
                     if (!subDir.exists() && !subDir.mkdirs()) {
                         throw new IOException("无法创建目录: " + subDir.getAbsolutePath());
                     }
-                    copyDocumentTreeNative(treeUri, docId, subDir, bytesCopied, callback);
-                } else if (ArchiveIndex.hasImageExtension(name)) {
-                    File targetFile = new File(targetDir, name);
+                    copyDocumentTreeNative(treeUri, docId, subDir, depth + 1, fileCount, bytesCopied, callback);
+                } else if (ArchiveIndex.hasImageExtension(cleanName)) {
+                    fileCount[0]++;
+                    if (fileCount[0] > MAX_FOLDER_FILES) {
+                        throw new IOException("文件夹包含图片数量超过安全上限（最多 " + MAX_FOLDER_FILES + " 张）");
+                    }
+
+                    File targetFile = new File(targetDir, cleanName);
+                    LocalStorageManager.assertPathInsideRoot(targetFile, targetDir);
+
                     Uri fileDocUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId);
                     try (InputStream in = resolver.openInputStream(fileDocUri);
                          OutputStream out = new FileOutputStream(targetFile)) {
                         if (in == null) continue;
+                        long fileWritten = 0L;
                         int len;
                         while ((len = in.read(buf)) > 0) {
+                            if (callback != null && callback.isCancelled()) {
+                                throw new InterruptedException("用户取消导入");
+                            }
+                            fileWritten += len;
+                            if (fileWritten > MAX_SINGLE_FILE_BYTES) {
+                                throw new IOException("单张图片文件大小超出限制（最大 100MiB）: " + cleanName);
+                            }
                             out.write(buf, 0, len);
                             bytesCopied[0] += len;
-                            if (!storageManager.hasSufficientSpace(bytesCopied[0])) {
+                            if (bytesCopied[0] > MAX_TOTAL_BYTES) {
+                                throw new IOException("文件夹解压总大小超出上限（最大 20GiB）");
+                            }
+                            if (!storageManager.hasUsableMargin()) {
                                 throw new IOException("设备可用存储空间不足（需至少保留 256MiB 空间）");
                             }
                         }
@@ -292,13 +431,19 @@ public class LocalImporter {
         }
     }
 
-    public static FolderIndexResult indexFolder(File rootDir) {
+    public static FolderIndexResult indexFolder(File rootDir) throws IOException {
         List<String> found = new ArrayList<>();
-        collectImagesRecursive(rootDir, "", found);
+        collectImagesRecursive(rootDir, "", found, 0);
+        if (found.isEmpty()) {
+            throw new IOException("未找到有效的漫画图片: " + rootDir.getAbsolutePath());
+        }
         return new FolderIndexResult(found);
     }
 
-    private static void collectImagesRecursive(File current, String prefix, List<String> result) {
+    private static void collectImagesRecursive(File current, String prefix, List<String> result, int depth) throws IOException {
+        if (depth > MAX_FOLDER_DEPTH) {
+            throw new IOException("目录层级过深（最多支持 5 层）: " + current.getAbsolutePath());
+        }
         File[] children = current.listFiles();
         if (children == null) return;
         for (File child : children) {
@@ -306,15 +451,17 @@ public class LocalImporter {
             if (ArchiveIndex.isIgnoredMetadata(name)) continue;
             String rel = prefix.isEmpty() ? name : prefix + "/" + name;
             if (child.isDirectory()) {
-                collectImagesRecursive(child, rel, result);
+                collectImagesRecursive(child, rel, result, depth + 1);
             } else if (ArchiveIndex.hasImageExtension(name)) {
-                // Verify magic
-                byte[] header = new byte[16];
+                byte[] header = new byte[4096];
                 int readBytes = 0;
                 try (InputStream in = new FileInputStream(child)) {
-                    readBytes = in.read(header);
+                    int n;
+                    while (readBytes < header.length && (n = in.read(header, readBytes, header.length - readBytes)) != -1) {
+                        readBytes += n;
+                    }
                 } catch (Exception ignored) {}
-                if (readBytes >= 4 && ArchiveIndex.isImageMagic(header, readBytes)) {
+                if (ArchiveIndex.validateImageBytes(header, readBytes, child.length(), name)) {
                     result.add(rel.replace('\\', '/'));
                 }
             }
@@ -349,14 +496,17 @@ public class LocalImporter {
         public final Map<String, List<LocalModels.Page>> pagesByChapter;
         public final int totalPages;
         public final String firstPageEntry;
+        public final List<String> candidateCoverEntries;
 
         public FolderChaptersResult(List<LocalModels.Chapter> chapters,
                                     Map<String, List<LocalModels.Page>> pagesByChapter,
-                                    int totalPages, String firstPageEntry) {
+                                    int totalPages, String firstPageEntry,
+                                    List<String> candidateCoverEntries) {
             this.chapters = chapters;
             this.pagesByChapter = pagesByChapter;
             this.totalPages = totalPages;
             this.firstPageEntry = firstPageEntry;
+            this.candidateCoverEntries = candidateCoverEntries != null ? candidateCoverEntries : Collections.emptyList();
         }
     }
 
@@ -398,27 +548,27 @@ public class LocalImporter {
         int chapterOrder = 0;
 
         if (subFolders.isEmpty()) {
-            String chapterId = bookId + "_ch_0";
+            String chapterId = LocalModels.buildStableChapterId(bookId, 0);
             LocalModels.Chapter ch = new LocalModels.Chapter(chapterId, bookId, 0, "正文", "", rootImages.size());
             chapters.add(ch);
 
             List<LocalModels.Page> pageList = new ArrayList<>();
             for (int i = 0; i < rootImages.size(); i++) {
                 ValidFolderImage v = rootImages.get(i);
-                String pageId = chapterId + "_p_" + i;
+                String pageId = LocalModels.buildStablePageId(chapterId, i);
                 pageList.add(new LocalModels.Page(pageId, bookId, chapterId, i, v.relativePath, 0, 0, null, v.mimeType));
             }
             pagesByChapter.put(chapterId, pageList);
         } else {
             if (!rootImages.isEmpty()) {
-                String chapterId = bookId + "_ch_" + (chapterOrder++);
+                String chapterId = LocalModels.buildStableChapterId(bookId, chapterOrder++);
                 LocalModels.Chapter ch = new LocalModels.Chapter(chapterId, bookId, chapters.size(), "未分章", "", rootImages.size());
                 chapters.add(ch);
 
                 List<LocalModels.Page> pageList = new ArrayList<>();
                 for (int i = 0; i < rootImages.size(); i++) {
                     ValidFolderImage v = rootImages.get(i);
-                    String pageId = chapterId + "_p_" + i;
+                    String pageId = LocalModels.buildStablePageId(chapterId, i);
                     pageList.add(new LocalModels.Page(pageId, bookId, chapterId, i, v.relativePath, 0, 0, null, v.mimeType));
                 }
                 pagesByChapter.put(chapterId, pageList);
@@ -429,21 +579,25 @@ public class LocalImporter {
 
             for (String folderName : folderNames) {
                 List<ValidFolderImage> entriesInFolder = subFolders.get(folderName);
-                String chapterId = bookId + "_ch_" + (chapterOrder++);
+                String chapterId = LocalModels.buildStableChapterId(bookId, chapterOrder++);
                 LocalModels.Chapter ch = new LocalModels.Chapter(chapterId, bookId, chapters.size(), folderName, folderName, entriesInFolder.size());
                 chapters.add(ch);
 
                 List<LocalModels.Page> pageList = new ArrayList<>();
                 for (int i = 0; i < entriesInFolder.size(); i++) {
                     ValidFolderImage v = entriesInFolder.get(i);
-                    String pageId = chapterId + "_p_" + i;
+                    String pageId = LocalModels.buildStablePageId(chapterId, i);
                     pageList.add(new LocalModels.Page(pageId, bookId, chapterId, i, v.relativePath, 0, 0, null, v.mimeType));
                 }
                 pagesByChapter.put(chapterId, pageList);
             }
         }
 
-        return new FolderChaptersResult(chapters, pagesByChapter, list.size(), list.get(0).relativePath);
+        List<String> candidateCovers = new ArrayList<>();
+        for (ValidFolderImage v : list) {
+            candidateCovers.add(v.relativePath);
+        }
+        return new FolderChaptersResult(chapters, pagesByChapter, list.size(), list.get(0).relativePath, candidateCovers);
     }
 
     private static String findCommonFolderWrapper(List<String> paths) {
@@ -475,65 +629,96 @@ public class LocalImporter {
         return currentPrefix;
     }
 
-    private boolean extractArchiveCover(File zipFile, String entryName, File targetCoverFile) {
+    private boolean extractArchiveCover(File zipFile, List<String> candidateEntries, File targetCoverFile) {
+        if (candidateEntries == null || candidateEntries.isEmpty()) return false;
         try (ZipFile zip = ArchiveIndex.openZipWithFallbackCharset(zipFile)) {
-            ZipEntry entry = zip.getEntry(entryName);
-            if (entry == null) return false;
-            try (InputStream in = zip.getInputStream(entry)) {
-                return decodeAndSaveCover(in, targetCoverFile);
+            for (String entryName : candidateEntries) {
+                ZipEntry entry = zip.getEntry(entryName);
+                if (entry == null) continue;
+
+                BitmapFactory.Options bounds = new BitmapFactory.Options();
+                bounds.inJustDecodeBounds = true;
+                try (InputStream in = zip.getInputStream(entry)) {
+                    BitmapFactory.decodeStream(in, null, bounds);
+                } catch (Exception e) {
+                    continue;
+                }
+                if (bounds.outWidth <= 0 || bounds.outHeight <= 0) continue;
+
+                int maxDim = Math.max(bounds.outWidth, bounds.outHeight);
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inSampleSize = 1;
+                while (maxDim / (opts.inSampleSize * 2) >= 600) {
+                    opts.inSampleSize *= 2;
+                }
+
+                Bitmap bitmap = null;
+                try (InputStream in = new BoundedInputStream(zip.getInputStream(entry), ArchiveIndex.MAX_PAGE_BYTES)) {
+                    bitmap = BitmapFactory.decodeStream(in, null, opts);
+                } catch (Exception e) {
+                    continue;
+                }
+                if (bitmap == null) continue;
+
+                File parent = targetCoverFile.getParentFile();
+                if (parent != null && !parent.exists()) parent.mkdirs();
+
+                try (OutputStream out = new FileOutputStream(targetCoverFile)) {
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out);
+                    return true;
+                } catch (Exception e) {
+                    if (targetCoverFile.exists()) targetCoverFile.delete();
+                } finally {
+                    bitmap.recycle();
+                }
             }
-        } catch (Exception e) {
-            return false;
-        }
+        } catch (Exception ignored) {}
+        return false;
     }
 
-    private boolean extractFileCover(File imageFile, File targetCoverFile) {
-        if (!imageFile.exists()) return false;
-        try (InputStream in = new FileInputStream(imageFile)) {
-            return decodeAndSaveCover(in, targetCoverFile);
-        } catch (Exception e) {
-            return false;
-        }
-    }
+    private boolean extractFileCover(File rootDir, List<String> candidatePaths, File targetCoverFile) {
+        if (candidatePaths == null || candidatePaths.isEmpty()) return false;
+        for (String relPath : candidatePaths) {
+            File file = new File(rootDir, relPath);
+            if (!file.exists() || file.length() < 32) continue;
 
-    private boolean decodeAndSaveCover(InputStream in, File targetCoverFile) {
-        try {
             BitmapFactory.Options bounds = new BitmapFactory.Options();
             bounds.inJustDecodeBounds = true;
-            byte[] bytes = readAllBytes(in);
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.length, bounds);
-            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return false;
+            try (InputStream in = new FileInputStream(file)) {
+                BitmapFactory.decodeStream(in, null, bounds);
+            } catch (Exception e) {
+                continue;
+            }
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) continue;
 
-            BitmapFactory.Options opts = new BitmapFactory.Options();
             int maxDim = Math.max(bounds.outWidth, bounds.outHeight);
+            BitmapFactory.Options opts = new BitmapFactory.Options();
             opts.inSampleSize = 1;
             while (maxDim / (opts.inSampleSize * 2) >= 600) {
                 opts.inSampleSize *= 2;
             }
-            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, opts);
-            if (bitmap == null) return false;
+
+            Bitmap bitmap = null;
+            try (InputStream in = new BoundedInputStream(new FileInputStream(file), ArchiveIndex.MAX_PAGE_BYTES)) {
+                bitmap = BitmapFactory.decodeStream(in, null, opts);
+            } catch (Exception e) {
+                continue;
+            }
+            if (bitmap == null) continue;
 
             File parent = targetCoverFile.getParentFile();
             if (parent != null && !parent.exists()) parent.mkdirs();
 
             try (OutputStream out = new FileOutputStream(targetCoverFile)) {
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out);
+                return true;
+            } catch (Exception e) {
+                if (targetCoverFile.exists()) targetCoverFile.delete();
+            } finally {
+                bitmap.recycle();
             }
-            bitmap.recycle();
-            return true;
-        } catch (Exception e) {
-            return false;
         }
-    }
-
-    private static byte[] readAllBytes(InputStream in) throws IOException {
-        byte[] buf = new byte[8192];
-        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-        int len;
-        while ((len = in.read(buf)) > 0) {
-            out.write(buf, 0, len);
-        }
-        return out.toByteArray();
+        return false;
     }
 
     private String queryDisplayName(ContentResolver resolver, Uri uri) {

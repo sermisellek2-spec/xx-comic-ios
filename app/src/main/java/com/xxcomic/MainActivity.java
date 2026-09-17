@@ -661,78 +661,118 @@ public class MainActivity extends Activity {
     }
 
     private void handleImportArchiveUris(List<Uri> uris) {
-        final boolean[] cancelled = new boolean[]{false};
-        AlertDialog progressDialog = new AlertDialog.Builder(this)
+        final java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
+        final AlertDialog[] dialogRef = new AlertDialog[1];
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle("正在导入本地漫画")
                 .setMessage("准备中...")
-                .setNegativeButton("取消", (dialog, which) -> cancelled[0] = true)
-                .setCancelable(false)
-                .show();
+                .setNegativeButton("取消", (dialog, which) -> cancelled.set(true))
+                .setNeutralButton("后台运行", (dialog, which) -> dialog.dismiss())
+                .setCancelable(true);
+        dialogRef[0] = builder.create();
+        dialogRef[0].show();
 
         miscIo.submit(() -> {
             int successCount = 0;
-            String lastError = null;
+            List<String> failedItems = new ArrayList<>();
+            List<String> failedReasons = new ArrayList<>();
             LocalImporter importer = new LocalImporter(this, getLocalStorageManager(), getLocalLibraryStore());
 
             for (int i = 0; i < uris.size(); i++) {
-                if (cancelled[0]) break;
+                if (cancelled.get()) break;
                 Uri uri = uris.get(i);
                 final int current = i + 1;
                 final int total = uris.size();
                 main.post(() -> {
-                    if (progressDialog.isShowing()) {
-                        progressDialog.setMessage("正在处理 (" + current + "/" + total + ")...");
+                    if (dialogRef[0] != null && dialogRef[0].isShowing()) {
+                        dialogRef[0].setMessage("正在处理 (" + current + "/" + total + ")...");
                     }
                 });
 
+                String uriDisplayName = null;
                 try {
-                    LocalModels.Book book = importer.importArchiveUri(uri, null, new LocalModels.ImportProgressCallback() {
+                    android.database.Cursor cursor = getContentResolver().query(uri, new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null);
+                    if (cursor != null) {
+                        if (cursor.moveToFirst()) {
+                            uriDisplayName = cursor.getString(0);
+                        }
+                        cursor.close();
+                    }
+                } catch (Exception ignored) {}
+                if (TextUtils.isEmpty(uriDisplayName)) {
+                    uriDisplayName = "文件 " + current;
+                }
+
+                try {
+                    importer.importArchiveUri(uri, null, new LocalModels.ImportProgressCallback() {
                         @Override
                         public void onProgress(long currentBytes, long totalBytes, String message) {
                             main.post(() -> {
-                                if (progressDialog.isShowing()) {
-                                    progressDialog.setMessage("(" + current + "/" + total + ") " + message);
+                                if (dialogRef[0] != null && dialogRef[0].isShowing()) {
+                                    dialogRef[0].setMessage("(" + current + "/" + total + ") " + message);
                                 }
                             });
                         }
 
                         @Override
                         public boolean isCancelled() {
-                            return cancelled[0];
+                            return cancelled.get();
                         }
                     });
                     successCount++;
                 } catch (InterruptedException e) {
                     break;
                 } catch (Exception e) {
-                    lastError = e.getMessage();
+                    failedItems.add(uriDisplayName);
+                    failedReasons.add(clean(e.getMessage(), "解析或导入失败"));
                 }
             }
 
             final int finalSuccess = successCount;
-            final String finalError = lastError;
+            final boolean wasCancelled = cancelled.get();
+            final List<String> finalFailedItems = new ArrayList<>(failedItems);
+            final List<String> finalFailedReasons = new ArrayList<>(failedReasons);
+
             main.post(() -> {
-                if (progressDialog.isShowing()) {
-                    progressDialog.dismiss();
+                if (isFinishing()) return;
+                if (dialogRef[0] != null && dialogRef[0].isShowing()) {
+                    dialogRef[0].dismiss();
                 }
                 refreshLocalBookshelf();
-                if (finalSuccess > 0) {
+
+                if (wasCancelled) {
+                    showRemSuccessToast("已取消导入" + (finalSuccess > 0 ? "，已完成 " + finalSuccess + " 本" : ""));
+                } else if (finalSuccess > 0 && finalFailedItems.isEmpty()) {
                     showRemSuccessToast("成功导入 " + finalSuccess + " 本漫画");
-                } else if (finalError != null) {
-                    showRemDialog(R.drawable.rem_error, "导入失败", finalError, "确定", null);
+                } else if (finalSuccess > 0 && !finalFailedItems.isEmpty()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("已成功导入 ").append(finalSuccess).append(" 本漫画。\n以下 ").append(finalFailedItems.size()).append(" 项导入失败：\n");
+                    for (int j = 0; j < Math.min(finalFailedItems.size(), 5); j++) {
+                        sb.append("• ").append(finalFailedItems.get(j)).append(": ").append(finalFailedReasons.get(j)).append("\n");
+                    }
+                    if (finalFailedItems.size() > 5) {
+                        sb.append("...等共 ").append(finalFailedItems.size()).append(" 项");
+                    }
+                    showRemDialog(R.drawable.rem_error, "部分漫画导入失败", sb.toString().trim(), "确定", null);
+                } else if (!finalFailedItems.isEmpty()) {
+                    String firstReason = finalFailedReasons.get(0);
+                    showRemDialog(R.drawable.rem_error, "导入失败", "未能导入所选漫画：\n" + firstReason, "确定", null);
                 }
             });
         });
     }
 
     private void handleImportFolderUri(Uri treeUri) {
-        final boolean[] cancelled = new boolean[]{false};
-        AlertDialog progressDialog = new AlertDialog.Builder(this)
+        final java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
+        final AlertDialog[] dialogRef = new AlertDialog[1];
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle("正在导入文件夹漫画")
                 .setMessage("准备中...")
-                .setNegativeButton("取消", (dialog, which) -> cancelled[0] = true)
-                .setCancelable(false)
-                .show();
+                .setNegativeButton("取消", (dialog, which) -> cancelled.set(true))
+                .setNeutralButton("后台运行", (dialog, which) -> dialog.dismiss())
+                .setCancelable(true);
+        dialogRef[0] = builder.create();
+        dialogRef[0].show();
 
         miscIo.submit(() -> {
             LocalImporter importer = new LocalImporter(this, getLocalStorageManager(), getLocalLibraryStore());
@@ -743,15 +783,15 @@ public class MainActivity extends Activity {
                     @Override
                     public void onProgress(long currentBytes, long totalBytes, String message) {
                         main.post(() -> {
-                            if (progressDialog.isShowing()) {
-                                progressDialog.setMessage(message);
+                            if (dialogRef[0] != null && dialogRef[0].isShowing()) {
+                                dialogRef[0].setMessage(message);
                             }
                         });
                     }
 
                     @Override
                     public boolean isCancelled() {
-                        return cancelled[0];
+                        return cancelled.get();
                     }
                 });
                 success = true;
@@ -762,13 +802,17 @@ public class MainActivity extends Activity {
             }
 
             final boolean finalSuccess = success;
+            final boolean wasCancelled = cancelled.get();
             final String finalError = errorMsg;
             main.post(() -> {
-                if (progressDialog.isShowing()) {
-                    progressDialog.dismiss();
+                if (isFinishing()) return;
+                if (dialogRef[0] != null && dialogRef[0].isShowing()) {
+                    dialogRef[0].dismiss();
                 }
                 refreshLocalBookshelf();
-                if (finalSuccess) {
+                if (wasCancelled) {
+                    showRemSuccessToast("已取消文件夹导入");
+                } else if (finalSuccess) {
                     showRemSuccessToast("成功导入文件夹漫画");
                 } else if (finalError != null) {
                     showRemDialog(R.drawable.rem_error, "导入失败", finalError, "确定", null);
@@ -1548,8 +1592,8 @@ public class MainActivity extends Activity {
     private void addBookshelfHeader(LinearLayout page) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setLayoutParams(new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 44)));
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setMinimumHeight(UIHelpers.dp(this, 40));
 
         titleMyBookshelf = new TextView(this);
         titleMyBookshelf.setText("我的书架");
@@ -1600,9 +1644,6 @@ public class MainActivity extends Activity {
         }
         if (localBookshelfView != null) {
             localBookshelfView.setVisibility(newTab == 1 ? View.VISIBLE : View.GONE);
-            if (newTab == 1) {
-                refreshLocalBookshelf();
-            }
         }
         updateBookshelfRightActions();
 
@@ -1788,12 +1829,20 @@ public class MainActivity extends Activity {
 
     private void refreshLocalBookshelf() {
         if (bookshelfContainer != null) {
+            int scrollY = 0;
+            if (localBookshelfView instanceof ScrollView) {
+                scrollY = localBookshelfView.getScrollY();
+            }
             if (localBookshelfView != null) {
                 bookshelfContainer.removeView(localBookshelfView);
             }
             localBookshelfView = buildLocalBookshelfView();
             bookshelfContainer.addView(localBookshelfView, new FrameLayout.LayoutParams(-1, -1));
             localBookshelfView.setVisibility(bookshelfTab == 1 ? View.VISIBLE : View.GONE);
+            if (scrollY > 0 && localBookshelfView instanceof ScrollView) {
+                final int targetY = scrollY;
+                localBookshelfView.post(() -> localBookshelfView.scrollTo(0, targetY));
+            }
         }
         updateBookshelfRightActions();
     }
@@ -2868,6 +2917,7 @@ public class MainActivity extends Activity {
         summaries.put(book.id, summary);
 
         int savedChapter = savedChapter(book.id);
+        boolean hasRead = lastViewedAt.containsKey(book.id);
         root.removeAllViews();
         View localDetailView = LocalDetailView.build(
                 this,
@@ -2876,6 +2926,7 @@ public class MainActivity extends Activity {
                 getLocalLibraryStore(),
                 getLocalStorageManager(),
                 savedChapter,
+                hasRead,
                 new LocalDetailView.Listener() {
                     @Override
                     public void onBack() {
@@ -2903,15 +2954,18 @@ public class MainActivity extends Activity {
                                 "本地导入",
                                 Collections.emptyList()
                         );
-                        details.put(updatedBook.id, new ComicModels.ComicDetail(
+                        ComicModels.ComicDetail updatedDetail = new ComicModels.ComicDetail(
                                 updatedSummary,
                                 "本地",
                                 "已完成",
                                 detail.description,
                                 "",
                                 detail.chapters
-                        ));
+                        );
+                        details.put(updatedBook.id, updatedDetail);
+                        summaries.put(updatedBook.id, updatedSummary);
                         refreshLocalBookshelf();
+                        showLocalDetail(updatedBook.id);
                     }
 
                     @Override
@@ -8732,7 +8786,20 @@ public class MainActivity extends Activity {
         info.setOrientation(LinearLayout.VERTICAL);
         info.setPadding(UIHelpers.dp(this, 8), 0, UIHelpers.dp(this, 8), 0);
         TextView titleView = new TextView(this);
-        titleView.setText(orphaned ? "已清除的漫画" : resolvedSummary.title);
+        if (orphaned) {
+            String titleText = "已清除的漫画";
+            if (isLocalComic(comicId)) {
+                LocalLibraryStore.DeletedFingerprint df = getLocalLibraryStore().findDeletedByProgressKey(comicId);
+                if (df != null && !TextUtils.isEmpty(df.userTitle)) {
+                    titleText = df.userTitle + " [已移除]";
+                } else {
+                    titleText = "本地漫画 [已移除]";
+                }
+            }
+            titleView.setText(titleText);
+        } else {
+            titleView.setText(resolvedSummary.title);
+        }
         titleView.setTextSize(14);
         titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         titleView.setTextColor(orphaned ? UIHelpers.TEXT3 : UIHelpers.TEXT);

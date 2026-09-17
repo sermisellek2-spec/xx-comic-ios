@@ -78,4 +78,95 @@ public class LocalStorageManagerTest {
         LocalStorageManager.assertPathInsideRoot(new File(storageManager.getImportsDir(), "../../outside.txt"),
                 storageManager.getImportsDir());
     }
+
+    @Test
+    public void testUsableMarginChecks() {
+        // hasUsableMargin requires at least 256MiB
+        boolean marginOk = storageManager.hasUsableMargin();
+        long usable = storageManager.getUsableSpace();
+        assertEquals(usable >= LocalStorageManager.MIN_RESERVED_FREE_BYTES, marginOk);
+
+        // hasSufficientSpaceForRemaining(remainingBytes)
+        boolean hasHugeSpace = storageManager.hasSufficientSpaceForRemaining(Long.MAX_VALUE / 2);
+        assertFalse(hasHugeSpace);
+
+        boolean hasZeroRemaining = storageManager.hasSufficientSpaceForRemaining(0);
+        assertEquals(marginOk, hasZeroRemaining);
+    }
+
+    @Test
+    public void testClearDerivedPagesForBook() throws IOException {
+        File pagesDir = storageManager.getPagesCacheDir();
+        File book1Dir = new File(pagesDir, "book_1");
+        File book2Dir = new File(pagesDir, "book_2");
+        book1Dir.mkdirs();
+        book2Dir.mkdirs();
+
+        File p1 = new File(book1Dir, "p1.jpg");
+        File p2 = new File(book2Dir, "p2.jpg");
+        try (FileOutputStream out = new FileOutputStream(p1)) { out.write(1); }
+        try (FileOutputStream out = new FileOutputStream(p2)) { out.write(2); }
+
+        assertTrue(p1.exists());
+        assertTrue(p2.exists());
+
+        storageManager.clearDerivedPagesForBook("book_1");
+
+        assertFalse(p1.exists());
+        assertFalse(book1Dir.exists());
+        assertTrue(p2.exists());
+        assertTrue(book2Dir.exists());
+    }
+
+    @Test
+    public void testEnforcePagesCacheLimit() throws IOException {
+        File pagesDir = storageManager.getPagesCacheDir();
+        File bDir = new File(pagesDir, "book_cache");
+        bDir.mkdirs();
+
+        File oldFile = new File(bDir, "old.jpg");
+        File newFile = new File(bDir, "new.jpg");
+
+        byte[] chunk = new byte[1024]; // 1 KB
+        try (FileOutputStream out = new FileOutputStream(oldFile)) { out.write(chunk); }
+        try (FileOutputStream out = new FileOutputStream(newFile)) { out.write(chunk); }
+
+        oldFile.setLastModified(System.currentTimeMillis() - 100000);
+        newFile.setLastModified(System.currentTimeMillis());
+
+        // Trim cache so total size is <= 1500 bytes (should delete oldFile of 1024 bytes)
+        storageManager.enforcePagesCacheLimit(1500);
+
+        assertFalse(oldFile.exists());
+        assertTrue(newFile.exists());
+    }
+
+    @Test
+    public void testCleanupOrphans() throws IOException {
+        // Create active book file and orphan book file
+        File activeImport = new File(storageManager.getImportsDir(), "active.zip");
+        File orphanImport = new File(storageManager.getImportsDir(), "orphan.zip");
+        try (FileOutputStream out = new FileOutputStream(activeImport)) { out.write("active".getBytes()); }
+        try (FileOutputStream out = new FileOutputStream(orphanImport)) { out.write("orphan".getBytes()); }
+
+        // Create active cover and orphan cover
+        File activeCover = new File(storageManager.getCoversDir(), "cover_active.jpg");
+        File orphanCover = new File(storageManager.getCoversDir(), "cover_orphan.jpg");
+        try (FileOutputStream out = new FileOutputStream(activeCover)) { out.write("active cover".getBytes()); }
+        try (FileOutputStream out = new FileOutputStream(orphanCover)) { out.write("orphan cover".getBytes()); }
+
+        java.util.Set<String> activeRelativePaths = new java.util.HashSet<>();
+        activeRelativePaths.add("active.zip");
+
+        java.util.Set<String> activeCoverPaths = new java.util.HashSet<>();
+        activeCoverPaths.add(activeCover.getAbsolutePath());
+
+        storageManager.cleanupOrphans(activeRelativePaths, activeCoverPaths);
+
+        assertTrue(activeImport.exists());
+        assertFalse(orphanImport.exists());
+
+        assertTrue(activeCover.exists());
+        assertFalse(orphanCover.exists());
+    }
 }

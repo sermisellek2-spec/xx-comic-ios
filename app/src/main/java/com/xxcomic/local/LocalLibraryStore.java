@@ -120,6 +120,23 @@ public class LocalLibraryStore {
         return null;
     }
 
+    public synchronized DeletedFingerprint findDeletedByProgressKey(String progressKey) {
+        if (progressKey == null) return null;
+        SQLiteDatabase db = helper.getReadableDatabase();
+        try (Cursor c = db.query(TABLE_DELETED_FINGERPRINTS, null, "progress_key = ?",
+                new String[]{progressKey}, null, null, null)) {
+            if (c != null && c.moveToFirst()) {
+                return new DeletedFingerprint(
+                        c.getString(c.getColumnIndexOrThrow("fingerprint")),
+                        c.getString(c.getColumnIndexOrThrow("progress_key")),
+                        c.getString(c.getColumnIndexOrThrow("user_title")),
+                        c.getLong(c.getColumnIndexOrThrow("deleted_at"))
+                );
+            }
+        }
+        return null;
+    }
+
     public synchronized List<LocalModels.Chapter> getChapters(String bookId) {
         if (bookId == null) return Collections.emptyList();
         SQLiteDatabase db = helper.getReadableDatabase();
@@ -207,7 +224,10 @@ public class LocalLibraryStore {
             bv.put("status", book.status);
             bv.put("created_at", book.createdAt);
             bv.put("updated_at", book.updatedAt);
-            db.insertWithOnConflict(TABLE_BOOKS, null, bv, SQLiteDatabase.CONFLICT_REPLACE);
+            long rowId = db.insertWithOnConflict(TABLE_BOOKS, null, bv, SQLiteDatabase.CONFLICT_REPLACE);
+            if (rowId == -1) {
+                throw new android.database.SQLException("Failed to insert book: " + book.id);
+            }
 
             // Insert chapters
             if (chapters != null) {
@@ -219,7 +239,10 @@ public class LocalLibraryStore {
                     cv.put("title", ch.title);
                     cv.put("entry_path", ch.entryPath);
                     cv.put("page_count", ch.pageCount);
-                    db.insertWithOnConflict(TABLE_CHAPTERS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+                    long chRow = db.insertWithOnConflict(TABLE_CHAPTERS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+                    if (chRow == -1) {
+                        throw new android.database.SQLException("Failed to insert chapter: " + ch.id);
+                    }
 
                     List<LocalModels.Page> pages = pagesByChapter != null ? pagesByChapter.get(ch.id) : null;
                     if (pages != null) {
@@ -234,7 +257,10 @@ public class LocalLibraryStore {
                             pv.put("height", pg.height);
                             pv.put("transformation", pg.transformation);
                             pv.put("mime_type", pg.mimeType);
-                            db.insertWithOnConflict(TABLE_PAGES, null, pv, SQLiteDatabase.CONFLICT_REPLACE);
+                            long pgRow = db.insertWithOnConflict(TABLE_PAGES, null, pv, SQLiteDatabase.CONFLICT_REPLACE);
+                            if (pgRow == -1) {
+                                throw new android.database.SQLException("Failed to insert page: " + pg.id);
+                            }
                         }
                     }
                 }
@@ -311,28 +337,88 @@ public class LocalLibraryStore {
     }
 
     public synchronized void recoverOrphanedStates() {
+        recoverOrphanedStates(null);
+    }
+
+    public synchronized void recoverOrphanedStates(LocalStorageManager storageManager) {
         SQLiteDatabase db = helper.getWritableDatabase();
         db.beginTransaction();
         try {
-            // Clean up books left in staging or deleting
-            List<String> toDelete = new ArrayList<>();
-            try (Cursor c = db.query(TABLE_BOOKS, new String[]{"id", "status"},
+            List<LocalModels.Book> toClean = new ArrayList<>();
+            try (Cursor c = db.query(TABLE_BOOKS, null,
                     "status = ? OR status = ?",
                     new String[]{LocalModels.STATUS_STAGING, LocalModels.STATUS_DELETING},
                     null, null, null)) {
                 while (c != null && c.moveToNext()) {
-                    toDelete.add(c.getString(0));
+                    toClean.add(readBook(c));
                 }
             }
-            for (String bookId : toDelete) {
-                db.delete(TABLE_PAGES, "book_id = ?", new String[]{bookId});
-                db.delete(TABLE_CHAPTERS, "book_id = ?", new String[]{bookId});
-                db.delete(TABLE_BOOKS, "id = ?", new String[]{bookId});
+            for (LocalModels.Book book : toClean) {
+                if (LocalModels.STATUS_DELETING.equals(book.status)) {
+                    ContentValues dfv = new ContentValues();
+                    dfv.put("fingerprint", book.fingerprint);
+                    dfv.put("progress_key", book.progressKey);
+                    dfv.put("user_title", book.userTitle);
+                    dfv.put("deleted_at", System.currentTimeMillis());
+                    db.insertWithOnConflict(TABLE_DELETED_FINGERPRINTS, null, dfv, SQLiteDatabase.CONFLICT_REPLACE);
+                }
+                if (storageManager != null) {
+                    try {
+                        File f = storageManager.getBookImportFile(book.relativePath);
+                        storageManager.deleteRecursively(f);
+                    } catch (Exception ignored) {}
+                    try {
+                        File cover = storageManager.getCoverFile(book.id);
+                        if (cover.exists()) cover.delete();
+                    } catch (Exception ignored) {}
+                    storageManager.clearDerivedPagesForBook(book.id);
+                }
+                db.delete(TABLE_PAGES, "book_id = ?", new String[]{book.id});
+                db.delete(TABLE_CHAPTERS, "book_id = ?", new String[]{book.id});
+                db.delete(TABLE_BOOKS, "id = ?", new String[]{book.id});
             }
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
         }
+    }
+
+    public synchronized java.util.Set<String> getAllActiveRelativePaths() {
+        SQLiteDatabase db = helper.getReadableDatabase();
+        java.util.Set<String> paths = new java.util.HashSet<>();
+        try (Cursor c = db.query(TABLE_BOOKS, new String[]{"relative_path"}, "status = ?",
+                new String[]{LocalModels.STATUS_READY}, null, null, null)) {
+            while (c != null && c.moveToNext()) {
+                String p = c.getString(0);
+                if (p != null && !p.isEmpty()) paths.add(p);
+            }
+        }
+        return paths;
+    }
+
+    public synchronized java.util.Set<String> getAllActiveCoverPaths() {
+        SQLiteDatabase db = helper.getReadableDatabase();
+        java.util.Set<String> paths = new java.util.HashSet<>();
+        try (Cursor c = db.query(TABLE_BOOKS, new String[]{"cover_path"}, "status = ?",
+                new String[]{LocalModels.STATUS_READY}, null, null, null)) {
+            while (c != null && c.moveToNext()) {
+                String p = c.getString(0);
+                if (p != null && !p.isEmpty()) paths.add(p);
+            }
+        }
+        return paths;
+    }
+
+    public synchronized LocalModels.Book findByProgressKey(String progressKey) {
+        if (progressKey == null) return null;
+        SQLiteDatabase db = helper.getReadableDatabase();
+        try (Cursor c = db.query(TABLE_BOOKS, null, "progress_key = ? AND status = ?",
+                new String[]{progressKey, LocalModels.STATUS_READY}, null, null, null)) {
+            if (c != null && c.moveToFirst()) {
+                return readBook(c);
+            }
+        }
+        return null;
     }
 
     public synchronized int getNextUnnamedIndex() {

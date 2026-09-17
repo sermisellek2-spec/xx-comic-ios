@@ -95,16 +95,16 @@ public final class LocalLibraryChecks {
             checks++;
 
             // 5. Re-import with same fingerprint: previous progress key and user title are restored
-            String newBookId = "book_test_reimported";
+            String newBookId = df.progressKey;
             LocalModels.Book reimported = new LocalModels.Book(
                     newBookId, fingerprint, "测试漫画1", df.userTitle,
                     LocalModels.FORMAT_ZIP, LocalModels.SOURCE_TYPE_IMPORT, df.progressKey,
                     "imports/test1_re.zip", null, 1024L * 1024L, 1, 1,
                     LocalModels.STATUS_READY, System.currentTimeMillis(), System.currentTimeMillis()
             );
-            List<LocalModels.Chapter> reCh = Collections.singletonList(new LocalModels.Chapter("re_ch", newBookId, 0, "正文", "", 1));
-            Map<String, List<LocalModels.Page>> rePg = Collections.singletonMap("re_ch",
-                    Collections.singletonList(new LocalModels.Page("re_p", newBookId, "re_ch", 0, "01.jpg", 100, 100, null, "image/jpeg")));
+            List<LocalModels.Chapter> reCh = Collections.singletonList(new LocalModels.Chapter(LocalModels.buildStableChapterId(newBookId, 0), newBookId, 0, "正文", "", 1));
+            Map<String, List<LocalModels.Page>> rePg = Collections.singletonMap(reCh.get(0).id,
+                    Collections.singletonList(new LocalModels.Page(LocalModels.buildStablePageId(reCh.get(0).id, 0), newBookId, reCh.get(0).id, 0, "01.jpg", 100, 100, null, "image/jpeg")));
 
             store.commitImport(reimported, reCh, rePg);
 
@@ -112,6 +112,7 @@ public final class LocalLibraryChecks {
             LocalModels.Book active = store.findReadyByFingerprint(fingerprint);
             assertCondition(active != null, "Reimported book active");
             assertCondition("自定义新名称".equals(active.getDisplayTitle()), "Custom title restored");
+            assertCondition(bookId.equals(active.id), "Book ID matches original progress key");
             assertCondition(bookId.equals(active.progressKey), "Original progress key restored");
             checks++;
 

@@ -4,6 +4,9 @@ import android.content.Context;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class LocalStorageManager {
     public static final long MIN_RESERVED_FREE_BYTES = 256L * 1024L * 1024L; // 256 MiB
@@ -149,6 +152,15 @@ public class LocalStorageManager {
         return (usable - requiredBytes) >= MIN_RESERVED_FREE_BYTES;
     }
 
+    public boolean hasUsableMargin() {
+        return getUsableSpace() >= MIN_RESERVED_FREE_BYTES;
+    }
+
+    public boolean hasSufficientSpaceForRemaining(long remainingBytes) {
+        long usable = getUsableSpace();
+        return (usable - Math.max(0L, remainingBytes)) >= MIN_RESERVED_FREE_BYTES;
+    }
+
     public boolean deleteRecursively(File fileOrDir) {
         if (fileOrDir == null || !fileOrDir.exists()) return true;
         try {
@@ -185,6 +197,67 @@ public class LocalStorageManager {
                 for (File child : children) {
                     deleteRecursively(child);
                 }
+            }
+        }
+    }
+
+    public boolean clearDerivedPagesForBook(String bookId) {
+        if (bookId == null || bookId.trim().isEmpty()) return true;
+        File bookPagesDir = new File(pagesCacheDir, bookId.trim());
+        return deleteRecursively(bookPagesDir);
+    }
+
+    public void cleanupOrphans(java.util.Set<String> activeRelativePaths, java.util.Set<String> activeCoverPaths) {
+        cleanStaging();
+        if (importsDir.exists()) {
+            File[] files = importsDir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (activeRelativePaths == null || !activeRelativePaths.contains(f.getName())) {
+                        deleteRecursively(f);
+                    }
+                }
+            }
+        }
+        if (coversDir.exists()) {
+            File[] covers = coversDir.listFiles();
+            if (covers != null) {
+                for (File c : covers) {
+                    String fullPath = c.getAbsolutePath();
+                    if (activeCoverPaths == null || (!activeCoverPaths.contains(fullPath) && !activeCoverPaths.contains(c.getName()))) {
+                        c.delete();
+                    }
+                }
+            }
+        }
+    }
+
+    public void enforcePagesCacheLimit(long maxBytes) {
+        if (!pagesCacheDir.exists()) return;
+        List<File> allFiles = new ArrayList<>();
+        collectAllFiles(pagesCacheDir, allFiles);
+        long currentTotal = 0L;
+        for (File f : allFiles) currentTotal += f.length();
+        if (currentTotal <= maxBytes) return;
+
+        Collections.sort(allFiles, (f1, f2) -> Long.compare(f1.lastModified(), f2.lastModified()));
+        for (File f : allFiles) {
+            long len = f.length();
+            if (f.delete()) {
+                currentTotal -= len;
+                if (currentTotal <= maxBytes) break;
+            }
+        }
+    }
+
+    private void collectAllFiles(File dir, List<File> list) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File f : files) {
+            if (f.isDirectory()) {
+                collectAllFiles(f, list);
+            } else {
+                list.add(f);
             }
         }
     }
