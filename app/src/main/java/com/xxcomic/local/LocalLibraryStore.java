@@ -43,13 +43,16 @@ public class LocalLibraryStore {
 
     public LocalLibraryStore(Context context) {
         this.helper = new OpenHelper(new NoBackupContext(context));
-        recoverOrphanedStates();
+    }
+
+    // For unit testing without Android SQLite runtime
+    protected LocalLibraryStore() {
+        this.helper = null;
     }
 
     // For testing or custom database file location
     public LocalLibraryStore(Context context, File customDbFile) {
         this.helper = new OpenHelper(new CustomDirectoryContext(context, customDbFile));
-        recoverOrphanedStates();
     }
 
     public synchronized void close() {
@@ -362,24 +365,53 @@ public class LocalLibraryStore {
                     dfv.put("deleted_at", System.currentTimeMillis());
                     db.insertWithOnConflict(TABLE_DELETED_FINGERPRINTS, null, dfv, SQLiteDatabase.CONFLICT_REPLACE);
                 }
+                boolean filesCleaned = (storageManager != null);
                 if (storageManager != null) {
                     try {
                         File f = storageManager.getBookImportFile(book.relativePath);
-                        storageManager.deleteRecursively(f);
-                    } catch (Exception ignored) {}
+                        if (f != null && f.exists()) {
+                            if (!storageManager.deleteRecursively(f) && f.exists()) {
+                                filesCleaned = false;
+                            }
+                        }
+                    } catch (Exception ignored) {
+                        filesCleaned = false;
+                    }
                     try {
                         File cover = storageManager.getCoverFile(book.id);
-                        if (cover.exists()) cover.delete();
-                    } catch (Exception ignored) {}
-                    storageManager.clearDerivedPagesForBook(book.id);
+                        if (cover != null && cover.exists()) {
+                            if (!cover.delete() && cover.exists()) {
+                                filesCleaned = false;
+                            }
+                        }
+                    } catch (Exception ignored) {
+                        filesCleaned = false;
+                    }
+                    if (!storageManager.clearDerivedPagesForBook(book.id)) {
+                        filesCleaned = false;
+                    }
                 }
-                db.delete(TABLE_PAGES, "book_id = ?", new String[]{book.id});
-                db.delete(TABLE_CHAPTERS, "book_id = ?", new String[]{book.id});
-                db.delete(TABLE_BOOKS, "id = ?", new String[]{book.id});
+                if (filesCleaned) {
+                    db.delete(TABLE_PAGES, "book_id = ?", new String[]{book.id});
+                    db.delete(TABLE_CHAPTERS, "book_id = ?", new String[]{book.id});
+                    db.delete(TABLE_BOOKS, "id = ?", new String[]{book.id});
+                }
             }
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
+        }
+
+        if (storageManager != null) {
+            java.util.Set<String> activeRelativePaths = getAllActiveRelativePaths();
+            java.util.Set<String> activeCoverPaths = new java.util.HashSet<>();
+            for (LocalModels.Book b : listBooks()) {
+                if (LocalModels.STATUS_READY.equals(b.status)) {
+                    activeCoverPaths.add(b.id);
+                    activeCoverPaths.add(b.id + ".jpg");
+                }
+            }
+            storageManager.cleanupOrphans(activeRelativePaths, activeCoverPaths);
         }
     }
 

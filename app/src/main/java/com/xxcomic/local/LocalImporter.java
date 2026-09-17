@@ -158,7 +158,7 @@ public class LocalImporter {
                 callback.onProgress(bytesCopied, bytesCopied, "正在解析章节与页面...");
             }
 
-            ArchiveIndex.ParseResult parseResult = ArchiveIndex.indexArchive(stagingFile, bookId);
+            ArchiveIndex.ParseResult parseResult = ArchiveIndex.indexArchive(stagingFile, bookId, callback);
 
             if (callback != null && callback.isCancelled()) {
                 throw new InterruptedException("用户取消导入");
@@ -167,7 +167,7 @@ public class LocalImporter {
             // Extract cover with candidate fallback
             String coverPath = null;
             coverTarget = storageManager.getCoverFile(bookId);
-            if (extractArchiveCover(stagingFile, parseResult.candidateCoverEntries, coverTarget)) {
+            if (extractArchiveCover(stagingFile, parseResult.candidateCoverEntries, coverTarget, callback)) {
                 coverPath = coverTarget.getAbsolutePath();
             }
 
@@ -235,7 +235,7 @@ public class LocalImporter {
             }
 
             // Index copied folder
-            FolderIndexResult folderResult = indexFolder(stagingDir);
+            FolderIndexResult folderResult = indexFolder(stagingDir, callback);
             if (folderResult.validImages.isEmpty()) {
                 throw new IOException("文件夹内没有找到可支持的漫画图片");
             }
@@ -244,7 +244,7 @@ public class LocalImporter {
                 throw new InterruptedException("用户取消导入");
             }
 
-            String fingerprint = computeFolderManifestFingerprint(stagingDir, folderResult.validImages);
+            String fingerprint = computeFolderManifestFingerprint(stagingDir, folderResult.validImages, callback);
 
             // Check if active book with same fingerprint already exists
             LocalModels.Book existing = store.findReadyByFingerprint(fingerprint);
@@ -432,36 +432,38 @@ public class LocalImporter {
     }
 
     public static FolderIndexResult indexFolder(File rootDir) throws IOException {
+        return indexFolder(rootDir, null);
+    }
+
+    public static FolderIndexResult indexFolder(File rootDir, LocalModels.ImportProgressCallback callback) throws IOException {
         List<String> found = new ArrayList<>();
-        collectImagesRecursive(rootDir, "", found, 0);
+        collectImagesRecursive(rootDir, "", found, 0, callback);
         if (found.isEmpty()) {
             throw new IOException("未找到有效的漫画图片: " + rootDir.getAbsolutePath());
         }
         return new FolderIndexResult(found);
     }
 
-    private static void collectImagesRecursive(File current, String prefix, List<String> result, int depth) throws IOException {
+    private static void collectImagesRecursive(File current, String prefix, List<String> result, int depth, LocalModels.ImportProgressCallback callback) throws IOException {
+        if (callback != null && callback.isCancelled()) {
+            throw new IOException("用户取消导入");
+        }
         if (depth > MAX_FOLDER_DEPTH) {
             throw new IOException("目录层级过深（最多支持 5 层）: " + current.getAbsolutePath());
         }
         File[] children = current.listFiles();
         if (children == null) return;
         for (File child : children) {
+            if (callback != null && callback.isCancelled()) {
+                throw new IOException("用户取消导入");
+            }
             String name = child.getName();
             if (ArchiveIndex.isIgnoredMetadata(name)) continue;
             String rel = prefix.isEmpty() ? name : prefix + "/" + name;
             if (child.isDirectory()) {
-                collectImagesRecursive(child, rel, result, depth + 1);
+                collectImagesRecursive(child, rel, result, depth + 1, callback);
             } else if (ArchiveIndex.hasImageExtension(name)) {
-                byte[] header = new byte[4096];
-                int readBytes = 0;
-                try (InputStream in = new FileInputStream(child)) {
-                    int n;
-                    while (readBytes < header.length && (n = in.read(header, readBytes, header.length - readBytes)) != -1) {
-                        readBytes += n;
-                    }
-                } catch (Exception ignored) {}
-                if (ArchiveIndex.validateImageBytes(header, readBytes, child.length(), name)) {
+                if (ArchiveIndex.isDecodableImage(() -> new FileInputStream(child), child.length(), name)) {
                     result.add(rel.replace('\\', '/'));
                 }
             }
@@ -469,6 +471,10 @@ public class LocalImporter {
     }
 
     public static String computeFolderManifestFingerprint(File rootDir, List<String> imageRelPaths) throws Exception {
+        return computeFolderManifestFingerprint(rootDir, imageRelPaths, null);
+    }
+
+    public static String computeFolderManifestFingerprint(File rootDir, List<String> imageRelPaths, LocalModels.ImportProgressCallback callback) throws Exception {
         List<String> sorted = new ArrayList<>(imageRelPaths);
         Collections.sort(sorted, new NaturalPathOrder());
 
@@ -476,11 +482,17 @@ public class LocalImporter {
         byte[] buf = new byte[65536];
 
         for (String rel : sorted) {
+            if (callback != null && callback.isCancelled()) {
+                throw new IOException("用户取消导入");
+            }
             File img = new File(rootDir, rel);
             MessageDigest fileDigest = MessageDigest.getInstance("SHA-256");
             try (InputStream in = new FileInputStream(img)) {
                 int len;
                 while ((len = in.read(buf)) > 0) {
+                    if (callback != null && callback.isCancelled()) {
+                        throw new IOException("用户取消导入");
+                    }
                     fileDigest.update(buf, 0, len);
                 }
             }
@@ -629,10 +641,11 @@ public class LocalImporter {
         return currentPrefix;
     }
 
-    private boolean extractArchiveCover(File zipFile, List<String> candidateEntries, File targetCoverFile) {
+    private boolean extractArchiveCover(File zipFile, List<String> candidateEntries, File targetCoverFile, LocalModels.ImportProgressCallback callback) {
         if (candidateEntries == null || candidateEntries.isEmpty()) return false;
         try (ZipFile zip = ArchiveIndex.openZipWithFallbackCharset(zipFile)) {
             for (String entryName : candidateEntries) {
+                if (callback != null && callback.isCancelled()) return false;
                 ZipEntry entry = zip.getEntry(entryName);
                 if (entry == null) continue;
 

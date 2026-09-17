@@ -367,13 +367,47 @@ public class MainActivity extends Activity {
     private LinearLayout bookshelfRightActions;
     private ValueAnimator bookshelfTabAnimator;
 
+    private static class ActiveImportTask {
+        final String title;
+        final java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
+        volatile String currentMessage = "准备中...";
+        volatile int currentItem = 0;
+        volatile int totalItems = 0;
+        volatile boolean isFolder = false;
+        AlertDialog dialog;
+        Runnable showDialogAction;
+        java.lang.ref.WeakReference<TextView> messageViewRef;
+
+        ActiveImportTask(String title, boolean isFolder) {
+            this.title = title;
+            this.isFolder = isFolder;
+        }
+    }
+    private ActiveImportTask currentImportTask = null;
+    private final java.util.concurrent.atomic.AtomicBoolean localStoreRecoveryStarted = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    private void ensureLocalLibraryRecovery() {
+        if (localStoreRecoveryStarted.compareAndSet(false, true)) {
+            miscIo.submit(() -> {
+                try {
+                    getLocalLibraryStore().recoverOrphanedStates(getLocalStorageManager());
+                } catch (Exception e) {
+                    android.util.Log.w("MainActivity", "Local library startup recovery failed", e);
+                }
+            });
+        }
+    }
+
     private LocalStorageManager getLocalStorageManager() {
         if (localStorageManager == null) localStorageManager = new LocalStorageManager(this);
         return localStorageManager;
     }
 
     private LocalLibraryStore getLocalLibraryStore() {
-        if (localLibraryStore == null) localLibraryStore = new LocalLibraryStore(this);
+        if (localLibraryStore == null) {
+            localLibraryStore = new LocalLibraryStore(this);
+            ensureLocalLibraryRecovery();
+        }
         return localLibraryStore;
     }
 
@@ -535,6 +569,7 @@ public class MainActivity extends Activity {
                     FavoriteUpdateCoordinator.getInstance().shouldShowBadge(comicId)));
         });
         triggerStartupChecks();
+        ensureLocalLibraryRecovery();
     }
 
     @Override
@@ -660,17 +695,163 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void updateImportTaskProgress(ActiveImportTask task, String message) {
+        main.post(() -> {
+            TextView tv = task.messageViewRef != null ? task.messageViewRef.get() : null;
+            if (tv != null && task.dialog != null && task.dialog.isShowing()) {
+                tv.setText(message);
+            }
+        });
+    }
+
+    private AlertDialog showThemedImportProgressDialog(ActiveImportTask task) {
+        if (task == null || isFinishing()) return null;
+        if (task.dialog != null && task.dialog.isShowing()) {
+            return task.dialog;
+        }
+
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.HORIZONTAL);
+        content.setGravity(Gravity.TOP);
+        content.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 16),
+                UIHelpers.dp(this, 16), UIHelpers.dp(this, 10));
+
+        ImageView art = new ImageView(this);
+        art.setImageResource(R.drawable.rem_loading);
+        art.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        content.addView(art, new LinearLayout.LayoutParams(
+                UIHelpers.dp(this, 56), UIHelpers.dp(this, 56)));
+
+        LinearLayout copy = new LinearLayout(this);
+        copy.setOrientation(LinearLayout.VERTICAL);
+        copy.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 2), 0, 0);
+
+        TextView titleView = UIHelpers.text(this, task.title, 17, UIHelpers.TEXT, Typeface.BOLD);
+        titleView.setMaxLines(2);
+        titleView.setEllipsize(TextUtils.TruncateAt.END);
+        copy.addView(titleView);
+
+        TextView messageView = UIHelpers.text(this, task.currentMessage, 13, UIHelpers.TEXT2, Typeface.NORMAL);
+        messageView.setMaxLines(3);
+        messageView.setEllipsize(TextUtils.TruncateAt.END);
+        copy.addView(messageView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 5)));
+        content.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(content)
+                .setNegativeButton("取消", (d, which) -> {
+                    task.cancelled.set(true);
+                    task.currentMessage = "正在取消...";
+                    messageView.setText("正在取消...");
+                    showRemSuccessToast("已请求取消导入");
+                })
+                .setNeutralButton("后台运行", (d, which) -> {
+                    task.dialog = null;
+                    refreshLocalBookshelf();
+                })
+                .setCancelable(true)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            android.view.Window window = dialog.getWindow();
+            if (window != null) {
+                window.setBackgroundDrawable(UIHelpers.round(
+                        UIHelpers.CARD, UIHelpers.dp(this, 12), Color.TRANSPARENT));
+                int width = Math.min(getResources().getDisplayMetrics().widthPixels
+                        - UIHelpers.dp(this, 40), UIHelpers.dp(this, 328));
+                window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
+            Button neutral = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
+            if (neutral != null) {
+                neutral.setTextColor(UIHelpers.ACCENT);
+                neutral.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            }
+            Button negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            if (negative != null) {
+                negative.setTextColor(UIHelpers.TEXT3);
+                negative.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            }
+        });
+        dialog.setOnDismissListener(d -> {
+            task.dialog = null;
+            refreshLocalBookshelf();
+        });
+
+        task.dialog = dialog;
+        task.messageViewRef = new java.lang.ref.WeakReference<>(messageView);
+        dialog.show();
+        return dialog;
+    }
+
+    private View buildActiveImportBanner(ActiveImportTask task) {
+        LinearLayout banner = new LinearLayout(this);
+        banner.setOrientation(LinearLayout.HORIZONTAL);
+        banner.setGravity(Gravity.CENTER_VERTICAL);
+        banner.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 10), UIHelpers.dp(this, 12), UIHelpers.dp(this, 10));
+        banner.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 8), UIHelpers.BORDER));
+
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(R.drawable.rem_loading);
+        icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        banner.addView(icon, new LinearLayout.LayoutParams(UIHelpers.dp(this, 28), UIHelpers.dp(this, 28)));
+
+        LinearLayout textCol = new LinearLayout(this);
+        textCol.setOrientation(LinearLayout.VERTICAL);
+        textCol.setPadding(UIHelpers.dp(this, 8), 0, UIHelpers.dp(this, 8), 0);
+
+        TextView titleView = UIHelpers.text(this, task.title, 13, UIHelpers.TEXT, Typeface.BOLD);
+        titleView.setMaxLines(1);
+        titleView.setEllipsize(TextUtils.TruncateAt.END);
+        textCol.addView(titleView);
+
+        TextView msgView = UIHelpers.text(this, task.currentMessage, 11, UIHelpers.TEXT2, Typeface.NORMAL);
+        msgView.setMaxLines(1);
+        msgView.setEllipsize(TextUtils.TruncateAt.END);
+        textCol.addView(msgView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
+
+        banner.addView(textCol, UIHelpers.weight(1));
+
+        TextView viewBtn = UIHelpers.text(this, "查看", 12, UIHelpers.ACCENT, Typeface.BOLD);
+        viewBtn.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 4), UIHelpers.dp(this, 8), UIHelpers.dp(this, 4));
+        viewBtn.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 6), UIHelpers.BORDER));
+        viewBtn.setOnClickListener(v -> {
+            if (task.showDialogAction != null) {
+                task.showDialogAction.run();
+            }
+        });
+        banner.addView(viewBtn);
+
+        TextView cancelBtn = UIHelpers.text(this, "取消", 12, UIHelpers.DANGER, Typeface.BOLD);
+        cancelBtn.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 4), UIHelpers.dp(this, 8), UIHelpers.dp(this, 4));
+        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(-2, -2);
+        cancelParams.leftMargin = UIHelpers.dp(this, 6);
+        cancelBtn.setLayoutParams(cancelParams);
+        cancelBtn.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 6), UIHelpers.BORDER));
+        cancelBtn.setOnClickListener(v -> {
+            task.cancelled.set(true);
+            task.currentMessage = "正在取消...";
+            msgView.setText("正在取消...");
+            if (task.dialog != null && task.dialog.isShowing()) {
+                task.dialog.dismiss();
+            }
+            showRemSuccessToast("已请求取消导入");
+        });
+        banner.addView(cancelBtn);
+
+        return banner;
+    }
+
     private void handleImportArchiveUris(List<Uri> uris) {
-        final java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
-        final AlertDialog[] dialogRef = new AlertDialog[1];
-        AlertDialog.Builder builder = new AlertDialog.Builder(this)
-                .setTitle("正在导入本地漫画")
-                .setMessage("准备中...")
-                .setNegativeButton("取消", (dialog, which) -> cancelled.set(true))
-                .setNeutralButton("后台运行", (dialog, which) -> dialog.dismiss())
-                .setCancelable(true);
-        dialogRef[0] = builder.create();
-        dialogRef[0].show();
+        if (uris == null || uris.isEmpty()) return;
+        final ActiveImportTask task = new ActiveImportTask("正在导入压缩包", false);
+        task.totalItems = uris.size();
+        task.currentItem = 1;
+        task.currentMessage = "准备中...";
+        task.showDialogAction = () -> showThemedImportProgressDialog(task);
+        currentImportTask = task;
+
+        showThemedImportProgressDialog(task);
+        refreshLocalBookshelf();
 
         miscIo.submit(() -> {
             int successCount = 0;
@@ -679,15 +860,11 @@ public class MainActivity extends Activity {
             LocalImporter importer = new LocalImporter(this, getLocalStorageManager(), getLocalLibraryStore());
 
             for (int i = 0; i < uris.size(); i++) {
-                if (cancelled.get()) break;
+                if (task.cancelled.get()) break;
                 Uri uri = uris.get(i);
                 final int current = i + 1;
                 final int total = uris.size();
-                main.post(() -> {
-                    if (dialogRef[0] != null && dialogRef[0].isShowing()) {
-                        dialogRef[0].setMessage("正在处理 (" + current + "/" + total + ")...");
-                    }
-                });
+                task.currentItem = current;
 
                 String uriDisplayName = null;
                 try {
@@ -702,43 +879,50 @@ public class MainActivity extends Activity {
                 if (TextUtils.isEmpty(uriDisplayName)) {
                     uriDisplayName = "文件 " + current;
                 }
+                final String displayName = uriDisplayName;
+
+                String initialMsg = "(" + current + "/" + total + ") 正在读取 " + displayName + "...";
+                task.currentMessage = initialMsg;
+                updateImportTaskProgress(task, initialMsg);
 
                 try {
                     importer.importArchiveUri(uri, null, new LocalModels.ImportProgressCallback() {
                         @Override
                         public void onProgress(long currentBytes, long totalBytes, String message) {
-                            main.post(() -> {
-                                if (dialogRef[0] != null && dialogRef[0].isShowing()) {
-                                    dialogRef[0].setMessage("(" + current + "/" + total + ") " + message);
-                                }
-                            });
+                            String msg = "(" + current + "/" + total + ") " + message;
+                            task.currentMessage = msg;
+                            updateImportTaskProgress(task, msg);
                         }
 
                         @Override
                         public boolean isCancelled() {
-                            return cancelled.get();
+                            return task.cancelled.get();
                         }
                     });
                     successCount++;
                 } catch (InterruptedException e) {
                     break;
                 } catch (Exception e) {
-                    failedItems.add(uriDisplayName);
+                    failedItems.add(displayName);
                     failedReasons.add(clean(e.getMessage(), "解析或导入失败"));
                 }
             }
 
             final int finalSuccess = successCount;
-            final boolean wasCancelled = cancelled.get();
+            final boolean wasCancelled = task.cancelled.get();
             final List<String> finalFailedItems = new ArrayList<>(failedItems);
             final List<String> finalFailedReasons = new ArrayList<>(failedReasons);
 
             main.post(() -> {
-                if (isFinishing()) return;
-                if (dialogRef[0] != null && dialogRef[0].isShowing()) {
-                    dialogRef[0].dismiss();
+                if (currentImportTask == task) {
+                    currentImportTask = null;
+                }
+                if (task.dialog != null && task.dialog.isShowing()) {
+                    task.dialog.dismiss();
+                    task.dialog = null;
                 }
                 refreshLocalBookshelf();
+                if (isFinishing()) return;
 
                 if (wasCancelled) {
                     showRemSuccessToast("已取消导入" + (finalSuccess > 0 ? "，已完成 " + finalSuccess + " 本" : ""));
@@ -763,16 +947,14 @@ public class MainActivity extends Activity {
     }
 
     private void handleImportFolderUri(Uri treeUri) {
-        final java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
-        final AlertDialog[] dialogRef = new AlertDialog[1];
-        AlertDialog.Builder builder = new AlertDialog.Builder(this)
-                .setTitle("正在导入文件夹漫画")
-                .setMessage("准备中...")
-                .setNegativeButton("取消", (dialog, which) -> cancelled.set(true))
-                .setNeutralButton("后台运行", (dialog, which) -> dialog.dismiss())
-                .setCancelable(true);
-        dialogRef[0] = builder.create();
-        dialogRef[0].show();
+        if (treeUri == null) return;
+        final ActiveImportTask task = new ActiveImportTask("正在导入文件夹漫画", true);
+        task.currentMessage = "正在读取文件夹...";
+        task.showDialogAction = () -> showThemedImportProgressDialog(task);
+        currentImportTask = task;
+
+        showThemedImportProgressDialog(task);
+        refreshLocalBookshelf();
 
         miscIo.submit(() -> {
             LocalImporter importer = new LocalImporter(this, getLocalStorageManager(), getLocalLibraryStore());
@@ -782,16 +964,13 @@ public class MainActivity extends Activity {
                 importer.importFolderUri(treeUri, null, new LocalModels.ImportProgressCallback() {
                     @Override
                     public void onProgress(long currentBytes, long totalBytes, String message) {
-                        main.post(() -> {
-                            if (dialogRef[0] != null && dialogRef[0].isShowing()) {
-                                dialogRef[0].setMessage(message);
-                            }
-                        });
+                        task.currentMessage = message;
+                        updateImportTaskProgress(task, message);
                     }
 
                     @Override
                     public boolean isCancelled() {
-                        return cancelled.get();
+                        return task.cancelled.get();
                     }
                 });
                 success = true;
@@ -802,14 +981,20 @@ public class MainActivity extends Activity {
             }
 
             final boolean finalSuccess = success;
-            final boolean wasCancelled = cancelled.get();
+            final boolean wasCancelled = task.cancelled.get();
             final String finalError = errorMsg;
+
             main.post(() -> {
-                if (isFinishing()) return;
-                if (dialogRef[0] != null && dialogRef[0].isShowing()) {
-                    dialogRef[0].dismiss();
+                if (currentImportTask == task) {
+                    currentImportTask = null;
+                }
+                if (task.dialog != null && task.dialog.isShowing()) {
+                    task.dialog.dismiss();
+                    task.dialog = null;
                 }
                 refreshLocalBookshelf();
+                if (isFinishing()) return;
+
                 if (wasCancelled) {
                     showRemSuccessToast("已取消文件夹导入");
                 } else if (finalSuccess) {
@@ -822,26 +1007,81 @@ public class MainActivity extends Activity {
     }
 
     private void showImportOptionsDialog() {
-        String[] options = new String[]{"导入压缩包 (ZIP / CBZ)", "导入图片文件夹"};
-        new AlertDialog.Builder(this)
-                .setTitle("导入本地漫画")
-                .setItems(options, (dialog, which) -> {
-                    if (which == 0) {
-                        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                        intent.addCategory(Intent.CATEGORY_OPENABLE);
-                        intent.setType("*/*");
-                        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
-                                "application/zip", "application/x-cbz", "application/x-zip-compressed", "application/octet-stream"
-                        });
-                        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                        startActivityForResult(intent, REQUEST_CODE_IMPORT_ARCHIVE);
-                    } else if (which == 1) {
-                        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-                        startActivityForResult(intent, REQUEST_CODE_IMPORT_FOLDER);
-                    }
-                })
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 16),
+                UIHelpers.dp(this, 16), UIHelpers.dp(this, 16));
+
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+
+        ImageView rem = new ImageView(this);
+        rem.setImageResource(R.drawable.rem_reader_resume);
+        rem.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        header.addView(rem, new LinearLayout.LayoutParams(UIHelpers.dp(this, 40), UIHelpers.dp(this, 40)));
+
+        LinearLayout headerText = new LinearLayout(this);
+        headerText.setOrientation(LinearLayout.VERTICAL);
+        headerText.setPadding(UIHelpers.dp(this, 10), 0, 0, 0);
+        TextView title = UIHelpers.text(this, "导入本地漫画", 16, UIHelpers.TEXT, Typeface.BOLD);
+        headerText.addView(title);
+        TextView sub = UIHelpers.text(this, "选择本地漫画的导入来源", 12, UIHelpers.TEXT3, Typeface.NORMAL);
+        headerText.addView(sub, UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
+        header.addView(headerText, UIHelpers.weight(1));
+        content.addView(header);
+
+        LinearLayout archiveCard = new LinearLayout(this);
+        archiveCard.setOrientation(LinearLayout.VERTICAL);
+        archiveCard.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 10), UIHelpers.dp(this, 12), UIHelpers.dp(this, 10));
+        archiveCard.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 8), UIHelpers.BORDER));
+        archiveCard.addView(UIHelpers.text(this, "📦 压缩包 (ZIP / CBZ)", 14, UIHelpers.TEXT, Typeface.BOLD));
+        archiveCard.addView(UIHelpers.text(this, "支持批量导入单个或多个 .zip / .cbz 文件", 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
+        content.addView(archiveCard, UIHelpers.marginTop(-1, UIHelpers.dp(this, 14)));
+
+        LinearLayout folderCard = new LinearLayout(this);
+        folderCard.setOrientation(LinearLayout.VERTICAL);
+        folderCard.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 10), UIHelpers.dp(this, 12), UIHelpers.dp(this, 10));
+        folderCard.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 8), UIHelpers.BORDER));
+        folderCard.addView(UIHelpers.text(this, "📁 图片文件夹", 14, UIHelpers.TEXT, Typeface.BOLD));
+        folderCard.addView(UIHelpers.text(this, "支持包含图片或章节子目录的漫画文件夹", 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
+        content.addView(folderCard, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8)));
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(content)
                 .setNegativeButton("取消", null)
-                .show();
+                .create();
+
+        archiveCard.setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("*/*");
+            intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
+                    "application/zip", "application/x-cbz", "application/x-zip-compressed", "application/octet-stream"
+            });
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            startActivityForResult(intent, REQUEST_CODE_IMPORT_ARCHIVE);
+        });
+
+        folderCard.setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            startActivityForResult(intent, REQUEST_CODE_IMPORT_FOLDER);
+        });
+
+        dialog.setOnShowListener(d -> {
+            android.view.Window window = dialog.getWindow();
+            if (window != null) {
+                window.setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 12), Color.TRANSPARENT));
+                int width = Math.min(getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 40), UIHelpers.dp(this, 328));
+                window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
+            Button neg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            if (neg != null) neg.setTextColor(UIHelpers.TEXT3);
+        });
+
+        dialog.show();
     }
 
     private void showDeleteLocalBookDialog(LocalModels.Book book) {
@@ -854,6 +1094,9 @@ public class MainActivity extends Activity {
                         details.remove(deletedBook.id);
                         summaries.remove(deletedBook.id);
                         refreshLocalBookshelf();
+                    }
+                    @Override public void showToast(String message) {
+                        showRemSuccessToast(message);
                     }
                 });
     }
@@ -1797,12 +2040,17 @@ public class MainActivity extends Activity {
         }
         int continueChapter = continueLocalId != null ? savedChapter(continueLocalId) : 0;
 
+        View importBanner = (currentImportTask != null && !currentImportTask.cancelled.get())
+                ? buildActiveImportBanner(currentImportTask)
+                : null;
+
         return LocalLibraryView.build(
                 this,
                 getLocalLibraryStore(),
                 getLocalStorageManager(),
                 continueLocalId,
                 continueChapter,
+                importBanner,
                 new LocalLibraryView.Listener() {
                     @Override
                     public void onBookClick(LocalModels.Book book) {
@@ -2980,6 +3228,11 @@ public class MainActivity extends Activity {
                         } else {
                             showTab(0);
                         }
+                    }
+
+                    @Override
+                    public void showToast(String message) {
+                        showRemSuccessToast(message);
                     }
                 }
         );

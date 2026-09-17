@@ -156,6 +156,12 @@ public class LocalStorageManager {
         return getUsableSpace() >= MIN_RESERVED_FREE_BYTES;
     }
 
+    public void checkUsableSpace(long requiredBytes) throws IOException {
+        if (!hasSufficientSpace(requiredBytes)) {
+            throw new IOException("存储空间不足，需预留至少 " + (MIN_RESERVED_FREE_BYTES / 1024 / 1024) + "MB 余量");
+        }
+    }
+
     public boolean hasSufficientSpaceForRemaining(long remainingBytes) {
         long usable = getUsableSpace();
         return (usable - Math.max(0L, remainingBytes)) >= MIN_RESERVED_FREE_BYTES;
@@ -257,6 +263,10 @@ public class LocalStorageManager {
             if (f.isDirectory()) {
                 collectAllFiles(f, list);
             } else {
+                String name = f.getName();
+                if (name.endsWith(".writing") || name.endsWith(".tmp.writing")) {
+                    continue;
+                }
                 list.add(f);
             }
         }

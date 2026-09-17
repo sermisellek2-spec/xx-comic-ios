@@ -169,4 +169,33 @@ public class LocalStorageManagerTest {
         assertTrue(activeCover.exists());
         assertFalse(orphanCover.exists());
     }
+
+    @Test
+    public void testEnforcePagesCacheLimitPreservesActiveWritingFiles() throws IOException {
+        File pagesDir = storageManager.getPagesCacheDir();
+        File bDir = new File(pagesDir, "book_writing_test");
+        bDir.mkdirs();
+
+        File writingFile = new File(bDir, "page1_123.writing");
+        File tmpWritingFile = new File(bDir, "page2_456.tmp.writing");
+        File finishedFile = new File(bDir, "finished.jpg");
+
+        byte[] chunk = new byte[1024]; // 1 KB
+        try (FileOutputStream out = new FileOutputStream(writingFile)) { out.write(chunk); }
+        try (FileOutputStream out = new FileOutputStream(tmpWritingFile)) { out.write(chunk); }
+        try (FileOutputStream out = new FileOutputStream(finishedFile)) { out.write(chunk); }
+
+        // Make writing files older than finished file
+        writingFile.setLastModified(System.currentTimeMillis() - 100000);
+        tmpWritingFile.setLastModified(System.currentTimeMillis() - 90000);
+        finishedFile.setLastModified(System.currentTimeMillis());
+
+        // Trim cache so total size must be <= 500 bytes (finishedFile of 1024 bytes should be deleted)
+        storageManager.enforcePagesCacheLimit(500);
+
+        // Active writing files must NOT be collected or deleted by cache eviction
+        assertTrue(writingFile.exists());
+        assertTrue(tmpWritingFile.exists());
+        assertFalse(finishedFile.exists());
+    }
 }

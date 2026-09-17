@@ -1,5 +1,6 @@
 package com.xxcomic.local;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,9 +73,13 @@ public class ArchiveIndex {
     }
 
     public static ParseResult indexArchive(File archiveFile, String bookId) throws IOException {
+        return indexArchive(archiveFile, bookId, null);
+    }
+
+    public static ParseResult indexArchive(File archiveFile, String bookId, LocalModels.ImportProgressCallback callback) throws IOException {
         ZipFile zipFile = openZipWithFallbackCharset(archiveFile);
         try {
-            return indexZipFile(zipFile, bookId);
+            return indexZipFile(zipFile, bookId, callback);
         } finally {
             try {
                 zipFile.close();
@@ -130,7 +135,7 @@ public class ArchiveIndex {
         }
     }
 
-    private static ParseResult indexZipFile(ZipFile zipFile, String bookId) throws IOException {
+    private static ParseResult indexZipFile(ZipFile zipFile, String bookId, LocalModels.ImportProgressCallback callback) throws IOException {
         Enumeration<? extends ZipEntry> entries = zipFile.entries();
         int count = 0;
         long totalBytes = 0;
@@ -139,6 +144,9 @@ public class ArchiveIndex {
         Set<String> seenNormalizedPaths = new HashSet<>();
 
         while (entries.hasMoreElements()) {
+            if (callback != null && callback.isCancelled()) {
+                throw new IOException("用户取消导入");
+            }
             ZipEntry entry = entries.nextElement();
             count++;
             if (count > MAX_ENTRIES) {
@@ -177,25 +185,24 @@ public class ArchiveIndex {
             throw new IOException("压缩包内没有找到可支持的漫画图片");
         }
 
-        // Verify that entries are actually decodable images (not just truncated signatures)
+        // Verify that entries are actually decodable images (not just truncated signatures or corrupt headers)
         List<RawEntryInfo> verifiedEntries = new ArrayList<>();
         Map<String, String> mimeTypes = new HashMap<>();
 
         for (RawEntryInfo item : candidateEntries) {
+            if (callback != null && callback.isCancelled()) {
+                throw new IOException("用户取消导入");
+            }
             ZipEntry entry = zipFile.getEntry(item.name);
             if (entry == null) continue;
-            byte[] header = new byte[4096];
-            int readBytes = 0;
-            try (InputStream in = zipFile.getInputStream(entry)) {
-                int n;
-                while (readBytes < header.length && (n = in.read(header, readBytes, header.length - readBytes)) != -1) {
-                    readBytes += n;
-                }
-            } catch (Exception e) {
-                continue;
-            }
-            if (validateImageBytes(header, readBytes, item.size, item.name)) {
+
+            if (isDecodableImage(() -> zipFile.getInputStream(entry), item.size, item.name)) {
                 verifiedEntries.add(item);
+                byte[] header = new byte[32];
+                int readBytes = 0;
+                try (InputStream in = zipFile.getInputStream(entry)) {
+                    readBytes = in.read(header);
+                } catch (Exception ignored) {}
                 mimeTypes.put(item.name, detectMimeType(header, readBytes, item.name));
             }
         }
@@ -362,54 +369,71 @@ public class ArchiveIndex {
                 || lower.endsWith(".gif");
     }
 
-    public static boolean validateImageBytes(byte[] header, int length, long entrySize, String name) {
-        if (header == null || length < 10) return false;
-        if (entrySize > 0 && entrySize < 64) return false;
+    public interface InputStreamSupplier {
+        InputStream open() throws IOException;
+    }
 
-        // PNG: 89 50 4E 47 0D 0A 1A 0A
-        if ((header[0] & 0xFF) == 0x89 && header[1] == 'P' && header[2] == 'N' && header[3] == 'G') {
-            if (length < 24) return false;
-            // IHDR chunk check: bytes 12..15 should be "IHDR"
-            if (header[12] == 'I' && header[13] == 'H' && header[14] == 'D' && header[15] == 'R') {
-                int width = ((header[16] & 0xFF) << 24) | ((header[17] & 0xFF) << 16) | ((header[18] & 0xFF) << 8) | (header[19] & 0xFF);
-                int height = ((header[20] & 0xFF) << 24) | ((header[21] & 0xFF) << 16) | ((header[22] & 0xFF) << 8) | (header[23] & 0xFF);
-                return width > 0 && height > 0;
+    public static boolean isDecodableImage(InputStreamSupplier supplier, long entrySize, String name) {
+        if (entrySize > 0 && entrySize < 14) return false;
+        // 1. Try Android BitmapFactory if available
+        try {
+            Class<?> bfClass = Class.forName("android.graphics.BitmapFactory");
+            Class<?> optsClass = Class.forName("android.graphics.BitmapFactory$Options");
+            Object opts = optsClass.newInstance();
+            java.lang.reflect.Field inJustDecodeBounds = optsClass.getField("inJustDecodeBounds");
+            java.lang.reflect.Field outWidth = optsClass.getField("outWidth");
+            java.lang.reflect.Field outHeight = optsClass.getField("outHeight");
+            java.lang.reflect.Field inSampleSize = optsClass.getField("inSampleSize");
+
+            inJustDecodeBounds.setBoolean(opts, true);
+            java.lang.reflect.Method decodeStream = bfClass.getMethod("decodeStream", InputStream.class, Class.forName("android.graphics.Rect"), optsClass);
+            try (InputStream in = supplier.open()) {
+                decodeStream.invoke(null, in, null, opts);
             }
+            int w = outWidth.getInt(opts);
+            int h = outHeight.getInt(opts);
+            if (w <= 0 || h <= 0) return false;
+
+            // Bounded sample decode to verify real image raster data exists (rejects header-only fake files)
+            inJustDecodeBounds.setBoolean(opts, false);
+            int sample = Math.max(1, Math.max(w / 16, h / 16));
+            inSampleSize.setInt(opts, sample);
+            Object bitmap;
+            try (InputStream in = supplier.open()) {
+                bitmap = decodeStream.invoke(null, in, null, opts);
+            }
+            if (bitmap == null) return false;
+            try {
+                java.lang.reflect.Method recycle = bitmap.getClass().getMethod("recycle");
+                recycle.invoke(bitmap);
+            } catch (Throwable ignored) {}
+            return true;
+        } catch (ClassNotFoundException | NoSuchMethodException | NoSuchFieldException e) {
+            return isDecodableWithImageIO(supplier);
+        } catch (InvocationTargetException ite) {
+            return isDecodableWithImageIO(supplier);
+        } catch (Throwable t) {
+            return isDecodableWithImageIO(supplier);
+        }
+    }
+
+    private static boolean isDecodableWithImageIO(InputStreamSupplier supplier) {
+        try {
+            Class<?> ioClass = Class.forName("javax.imageio.ImageIO");
+            java.lang.reflect.Method readMethod = ioClass.getMethod("read", InputStream.class);
+            Object img;
+            try (InputStream in = supplier.open()) {
+                img = readMethod.invoke(null, in);
+            }
+            return img != null;
+        } catch (Throwable ignored) {
             return false;
         }
+    }
 
-        // JPEG: FF D8 FF
-        if ((header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8 && (header[2] & 0xFF) == 0xFF) {
-            int idx = 2;
-            while (idx < length - 8) {
-                if ((header[idx] & 0xFF) == 0xFF) {
-                    int marker = header[idx + 1] & 0xFF;
-                    if (marker == 0xC0 || marker == 0xC1 || marker == 0xC2) {
-                        int h = ((header[idx + 5] & 0xFF) << 8) | (header[idx + 6] & 0xFF);
-                        int w = ((header[idx + 7] & 0xFF) << 8) | (header[idx + 8] & 0xFF);
-                        if (w > 0 && h > 0) return true;
-                    }
-                }
-                idx++;
-            }
-            return entrySize >= 128 || length >= 128;
-        }
-
-        // GIF: GIF87a or GIF89a
-        if (header[0] == 'G' && header[1] == 'I' && header[2] == 'F' && header[3] == '8') {
-            if (length < 10) return false;
-            int width = (header[6] & 0xFF) | ((header[7] & 0xFF) << 8);
-            int height = (header[8] & 0xFF) | ((header[9] & 0xFF) << 8);
-            return width > 0 && height > 0;
-        }
-
-        // WebP: RIFF .... WEBP
-        if (length >= 30 && header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F'
-                && header[8] == 'W' && header[9] == 'E' && header[10] == 'B' && header[11] == 'P') {
-            return true;
-        }
-
-        return false;
+    public static boolean validateImageBytes(byte[] header, int length, long entrySize, String name) {
+        if (header == null || length < 14) return false;
+        return isDecodableImage(() -> new ByteArrayInputStream(header, 0, length), entrySize, name);
     }
 
     public static boolean isImageMagic(byte[] header, int length) {

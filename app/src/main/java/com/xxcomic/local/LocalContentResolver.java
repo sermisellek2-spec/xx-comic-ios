@@ -67,8 +67,8 @@ public class LocalContentResolver {
             throw new IOException("本地页面未找到: " + pageId);
         }
         LocalModels.Book book = store.getBook(page.bookId);
-        if (book == null) {
-            throw new IOException("页面所属本地漫画未找到: " + page.bookId);
+        if (book == null || LocalModels.STATUS_DELETING.equals(book.status)) {
+            throw new IOException("页面所属本地漫画未找到或正在删除中: " + page.bookId);
         }
 
         if (LocalModels.FORMAT_FOLDER.equals(book.format)) {
@@ -112,8 +112,8 @@ public class LocalContentResolver {
             throw new IOException("本地页面未找到: " + pageId);
         }
         LocalModels.Book book = store.getBook(page.bookId);
-        if (book == null) {
-            throw new IOException("页面所属本地漫画未找到: " + page.bookId);
+        if (book == null || LocalModels.STATUS_DELETING.equals(book.status)) {
+            throw new IOException("页面所属本地漫画未找到或正在删除中: " + page.bookId);
         }
 
         if (LocalModels.FORMAT_FOLDER.equals(book.format)) {
@@ -125,8 +125,15 @@ public class LocalContentResolver {
             }
         }
 
-        Object lock = pageLocks.computeIfAbsent(pageId, k -> new Object());
+        // Android API 23 compatible lock acquisition (avoid ConcurrentHashMap.computeIfAbsent from API 24)
+        Object lock = getPageLock(pageId);
+
         synchronized (lock) {
+            book = store.getBook(page.bookId);
+            if (book == null || LocalModels.STATUS_DELETING.equals(book.status)) {
+                throw new IOException("页面所属本地漫画未找到或正在删除中: " + page.bookId);
+            }
+
             File derivedPagesDir = storageManager.getPagesCacheDir();
             File bookCacheDir = new File(derivedPagesDir, book.id);
             if (!bookCacheDir.exists()) bookCacheDir.mkdirs();
@@ -137,6 +144,7 @@ public class LocalContentResolver {
             }
 
             storageManager.enforcePagesCacheLimit(200L * 1024L * 1024L);
+            storageManager.checkUsableSpace(ArchiveIndex.MAX_PAGE_BYTES);
 
             File tempFile = new File(bookCacheDir, pageId + "_" + System.currentTimeMillis() + ".writing");
             boolean success = false;
@@ -146,6 +154,9 @@ public class LocalContentResolver {
                 int len;
                 long totalWritten = 0L;
                 while ((len = in.read(buf)) > 0) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        throw new IOException("页面解压已被中断: " + pageId);
+                    }
                     totalWritten += len;
                     if (totalWritten > ArchiveIndex.MAX_PAGE_BYTES) {
                         throw new IOException("单页解压大小超出安全限制（最大 32MiB）: " + pageId);
@@ -161,11 +172,21 @@ public class LocalContentResolver {
 
             if (targetFile.exists()) targetFile.delete();
             if (!tempFile.renameTo(targetFile)) {
-                if (targetFile.exists()) tempFile.delete();
-                else return tempFile;
+                if (tempFile.exists()) tempFile.delete();
+                throw new IOException("无法发布解压页面到缓存目录: " + targetFile.getAbsolutePath());
             }
             return targetFile;
         }
+    }
+
+    Object getPageLock(String pageId) {
+        Object lock = pageLocks.get(pageId);
+        if (lock == null) {
+            Object newLock = new Object();
+            Object existing = pageLocks.putIfAbsent(pageId, newLock);
+            lock = (existing != null) ? existing : newLock;
+        }
+        return lock;
     }
 
     public InputStream openCover(String bookId) throws IOException {

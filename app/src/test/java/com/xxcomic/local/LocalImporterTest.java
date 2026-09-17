@@ -163,4 +163,41 @@ public class LocalImporterTest {
             assertTrue(e.getMessage().contains("未找到有效的漫画图片"));
         }
     }
+
+    @Test
+    public void testComputeFolderManifestFingerprintCancellation() throws Exception {
+        File folder = new File(tempDir, "cancel_folder");
+        writeFile(new File(folder, "01.png"), VALID_PNG_BYTES);
+        List<String> images = Collections.singletonList("01.png");
+
+        LocalModels.ImportProgressCallback cancelledCallback = new LocalModels.ImportProgressCallback() {
+            @Override public void onProgress(long currentBytes, long totalBytes, String message) {}
+            @Override public boolean isCancelled() { return true; }
+        };
+
+        try {
+            LocalImporter.computeFolderManifestFingerprint(folder, images, cancelledCallback);
+            org.junit.Assert.fail("Expected IOException when callback is cancelled during fingerprint computation");
+        } catch (IOException e) {
+            assertTrue(e.getMessage().contains("用户取消导入"));
+        }
+    }
+
+    @Test
+    public void testFolderIndexingCancellation() throws Exception {
+        File folder = new File(tempDir, "cancel_index_folder");
+        writeFile(new File(folder, "01.png"), VALID_PNG_BYTES);
+
+        LocalModels.ImportProgressCallback cancelledCallback = new LocalModels.ImportProgressCallback() {
+            @Override public void onProgress(long currentBytes, long totalBytes, String message) {}
+            @Override public boolean isCancelled() { return true; }
+        };
+
+        try {
+            LocalImporter.indexFolder(folder, cancelledCallback);
+            org.junit.Assert.fail("Expected IOException when callback is cancelled during folder indexing");
+        } catch (IOException e) {
+            assertTrue(e.getMessage().contains("用户取消导入"));
+        }
+    }
 }

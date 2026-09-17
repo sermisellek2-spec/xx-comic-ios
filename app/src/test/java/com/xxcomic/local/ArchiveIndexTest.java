@@ -9,11 +9,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Base64;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -233,6 +235,97 @@ public class ArchiveIndexTest {
             assertNotNull(zipFile);
             assertNotNull(zipFile.getEntry("01.png"));
         }
+    }
+
+    @Test
+    public void testUncompressedSizeBudgetEnforcedDuringStreaming() throws IOException {
+        // Test that an infinite stream disguised with normal size is safely rejected without hanging or memory explosion
+        java.io.InputStream hugeStream = new java.io.InputStream() {
+            @Override
+            public int read() {
+                return 0;
+            }
+
+            @Override
+            public int read(byte[] b, int off, int len) {
+                java.util.Arrays.fill(b, off, off + len, (byte) 0);
+                return len;
+            }
+        };
+
+        boolean decodable = ArchiveIndex.isDecodableImage(() -> hugeStream, 1024L, "huge_fake.png");
+        assertFalse(decodable);
+    }
+
+    @Test
+    public void testSignatureOnlyImageRejectedAsPage() throws IOException {
+        // 64-byte PNG with IHDR only (no image data)
+        byte[] fakePng = new byte[64];
+        byte[] pngSig = {(byte) 137, 80, 78, 71, 13, 10, 26, 10};
+        System.arraycopy(pngSig, 0, fakePng, 0, pngSig.length);
+        fakePng[11] = 13; fakePng[12] = 'I'; fakePng[13] = 'H'; fakePng[14] = 'D'; fakePng[15] = 'R';
+        fakePng[19] = 1; fakePng[23] = 1; fakePng[24] = 8; fakePng[25] = 6;
+
+        File zipPng = new File(tempDir, "fake_png.zip");
+        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipPng))) {
+            addZipEntry(zos, "01.png", fakePng);
+        }
+
+        try {
+            ArchiveIndex.indexArchive(zipPng, "book_fake_png");
+            fail("Expected IOException for 64-byte header-only PNG");
+        } catch (IOException e) {
+            assertTrue(e.getMessage().contains("损坏") || e.getMessage().contains("非有效图片格式"));
+        }
+
+        // 128-byte JPEG header only
+        byte[] fakeJpg = new byte[128];
+        fakeJpg[0] = (byte) 255; fakeJpg[1] = (byte) 216; fakeJpg[2] = (byte) 255;
+        File zipJpg = new File(tempDir, "fake_jpg.zip");
+        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipJpg))) {
+            addZipEntry(zos, "01.jpg", fakeJpg);
+        }
+
+        try {
+            ArchiveIndex.indexArchive(zipJpg, "book_fake_jpg");
+            fail("Expected IOException for 128-byte header-only JPEG");
+        } catch (IOException e) {
+            assertTrue(e.getMessage().contains("损坏") || e.getMessage().contains("非有效图片格式"));
+        }
+    }
+
+    @Test
+    public void testCorruptedFirstImageFallsBackToSecondImageAsCoverAndFirstPage() throws IOException {
+        byte[] fakePng = new byte[64];
+        byte[] pngSig = {(byte) 137, 80, 78, 71, 13, 10, 26, 10};
+        System.arraycopy(pngSig, 0, fakePng, 0, pngSig.length);
+        fakePng[11] = 13; fakePng[12] = 'I'; fakePng[13] = 'H'; fakePng[14] = 'D'; fakePng[15] = 'R';
+        fakePng[19] = 1; fakePng[23] = 1; fakePng[24] = 8; fakePng[25] = 6;
+
+        File zip = new File(tempDir, "corrupted_first.zip");
+        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zip))) {
+            addZipEntry(zos, "01.png", fakePng); // Bad first image
+            addZipEntry(zos, "02.png", VALID_PNG_BYTES); // Good second image
+        }
+
+        ArchiveIndex.ParseResult result = ArchiveIndex.indexArchive(zip, "book_fallback");
+        assertEquals(1, result.totalPages);
+        assertEquals("02.png", result.firstValidPageEntry);
+        assertTrue(result.candidateCoverEntries.contains("02.png"));
+        assertFalse(result.candidateCoverEntries.contains("01.png"));
+    }
+
+    @Test
+    public void testValidSmallGifAccepted() throws IOException {
+        byte[] gif = Base64.getDecoder().decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+        File zip = new File(tempDir, "small_gif.zip");
+        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zip))) {
+            addZipEntry(zos, "01.gif", gif);
+        }
+
+        ArchiveIndex.ParseResult result = ArchiveIndex.indexArchive(zip, "book_gif");
+        assertEquals(1, result.totalPages);
+        assertEquals("01.gif", result.firstValidPageEntry);
     }
 
     private void addZipEntry(ZipOutputStream zos, String name, byte[] data) throws IOException {

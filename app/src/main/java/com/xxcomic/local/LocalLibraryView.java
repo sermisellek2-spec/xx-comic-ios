@@ -37,6 +37,16 @@ public class LocalLibraryView {
                              String continueBookId,
                              int continueChapterIndex,
                              Listener listener) {
+        return build(activity, store, storageManager, continueBookId, continueChapterIndex, null, listener);
+    }
+
+    public static View build(Activity activity,
+                             LocalLibraryStore store,
+                             LocalStorageManager storageManager,
+                             String continueBookId,
+                             int continueChapterIndex,
+                             View activeImportBanner,
+                             Listener listener) {
         ScrollView scroll = new ScrollView(activity);
         scroll.setVerticalScrollBarEnabled(false);
 
@@ -44,6 +54,10 @@ public class LocalLibraryView {
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(0, 0, 0, UIHelpers.dp(activity, 20));
         scroll.addView(content, new FrameLayout.LayoutParams(-1, -2));
+
+        if (activeImportBanner != null) {
+            content.addView(activeImportBanner, UIHelpers.marginBottom(-1, UIHelpers.dp(activity, 12)));
+        }
 
         List<LocalModels.Book> books = store.listBooks();
 

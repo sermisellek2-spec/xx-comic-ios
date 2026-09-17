@@ -8,6 +8,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -36,6 +37,7 @@ public class LocalDetailView {
         void onRead(LocalModels.Book book, ComicModels.ComicDetail detail, int chapterIndex);
         void onBookRenamed(LocalModels.Book updatedBook);
         void onBookDeleted(LocalModels.Book deletedBook);
+        default void showToast(String message) {}
     }
 
     public static View build(Activity activity, LocalModels.Book book,
@@ -267,8 +269,8 @@ public class LocalDetailView {
             render.run();
         });
 
-        render.run();
         popup.showAtLocation(rootLocation, Gravity.RIGHT, 0, 0);
+        render.run();
     }
 
     private static void fillBatch(Activity activity, LinearLayout list, PopupWindow popup,
@@ -344,6 +346,20 @@ public class LocalDetailView {
         input.setPadding(pad, pad, pad, pad);
         layout.addView(input, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 14)));
 
+        final TextView errorView = UIHelpers.text(activity, "", 11, UIHelpers.DANGER, Typeface.NORMAL);
+        errorView.setVisibility(View.GONE);
+        layout.addView(errorView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 4)));
+
+        input.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (errorView.getVisibility() == View.VISIBLE) {
+                    errorView.setVisibility(View.GONE);
+                }
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
+
         AlertDialog dialog = new AlertDialog.Builder(activity)
                 .setView(layout)
                 .setPositiveButton("保存", null)
@@ -351,23 +367,33 @@ public class LocalDetailView {
                 .create();
 
         dialog.setOnShowListener(d -> {
+            android.view.Window window = dialog.getWindow();
+            if (window != null) {
+                window.setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 12), Color.TRANSPARENT));
+                int width = Math.min(activity.getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(activity, 40), UIHelpers.dp(activity, 328));
+                window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
             Button pos = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            pos.setTextColor(UIHelpers.ACCENT);
-            pos.setOnClickListener(v -> {
-                String newTitle = input.getText().toString().trim();
-                if (TextUtils.isEmpty(newTitle)) {
-                    Toast.makeText(activity, "漫画名称不能为空", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                store.renameBook(book.id, newTitle);
-                LocalModels.Book updated = store.getBook(book.id);
-                dialog.dismiss();
-                if (listener != null && updated != null) {
-                    listener.onBookRenamed(updated);
-                }
-            });
+            if (pos != null) {
+                pos.setTextColor(UIHelpers.ACCENT);
+                pos.setOnClickListener(v -> {
+                    String newTitle = input.getText().toString().trim();
+                    if (TextUtils.isEmpty(newTitle)) {
+                        errorView.setText("漫画名称不能为空");
+                        errorView.setVisibility(View.VISIBLE);
+                        return;
+                    }
+                    store.renameBook(book.id, newTitle);
+                    LocalModels.Book updated = store.getBook(book.id);
+                    dialog.dismiss();
+                    if (listener != null) {
+                        if (updated != null) listener.onBookRenamed(updated);
+                        listener.showToast("已重命名漫画");
+                    }
+                });
+            }
             Button neg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-            neg.setTextColor(UIHelpers.TEXT2);
+            if (neg != null) neg.setTextColor(UIHelpers.TEXT3);
         });
 
         dialog.show();
@@ -409,10 +435,16 @@ public class LocalDetailView {
                 .create();
 
         dialog.setOnShowListener(d -> {
+            android.view.Window window = dialog.getWindow();
+            if (window != null) {
+                window.setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 12), Color.TRANSPARENT));
+                int width = Math.min(activity.getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(activity, 40), UIHelpers.dp(activity, 328));
+                window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
             Button pos = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            pos.setTextColor(UIHelpers.DANGER);
+            if (pos != null) pos.setTextColor(UIHelpers.DANGER);
             Button neg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-            neg.setTextColor(UIHelpers.TEXT2);
+            if (neg != null) neg.setTextColor(UIHelpers.TEXT3);
         });
 
         dialog.show();
@@ -429,7 +461,10 @@ public class LocalDetailView {
             boolean filesCleaned = true;
             try {
                 // Delete extracted derived pages
-                storageManager.clearDerivedPagesForBook(book.id);
+                boolean pagesCleared = storageManager.clearDerivedPagesForBook(book.id);
+                if (!pagesCleared) {
+                    filesCleaned = false;
+                }
             } catch (Exception ignored) {
                 filesCleaned = false;
             }
@@ -437,7 +472,7 @@ public class LocalDetailView {
             try {
                 // Delete import archive / folder
                 File bookFile = storageManager.getBookImportFile(book.relativePath);
-                if (bookFile.exists()) {
+                if (bookFile != null && bookFile.exists()) {
                     boolean deleted = storageManager.deleteRecursively(bookFile);
                     if (!deleted && bookFile.exists()) {
                         filesCleaned = false;
@@ -450,30 +485,75 @@ public class LocalDetailView {
             try {
                 // Delete cover file
                 File cover = storageManager.getCoverFile(book.id);
-                if (cover.exists()) {
-                    cover.delete();
+                if (cover != null && cover.exists()) {
+                    boolean coverDeleted = cover.delete();
+                    if (!coverDeleted && cover.exists()) {
+                        filesCleaned = false;
+                    }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                filesCleaned = false;
+            }
 
             final boolean success = filesCleaned;
-            activity.runOnUiThread(() -> {
-                if (activity.isFinishing()) return;
-                if (success) {
-                    store.completeDeletion(book.id);
-                    Toast.makeText(activity, "已删除本地漫画", Toast.LENGTH_SHORT).show();
-                    if (listener != null) {
-                        listener.onBookDeleted(book);
+            // Step 3: Decouple DB completion from Activity lifecycle: completeDeletion always runs if files cleaned
+            if (success) {
+                store.completeDeletion(book.id);
+            }
+
+            if (activity != null) {
+                activity.runOnUiThread(() -> {
+                    if (activity.isFinishing()) return;
+                    if (success) {
+                        if (listener != null) {
+                            listener.showToast("已删除本地漫画");
+                            listener.onBookDeleted(book);
+                        }
+                    } else {
+                        // Retention of deleting tombstone allows retry without faking success
+                        LinearLayout content = new LinearLayout(activity);
+                        content.setOrientation(LinearLayout.HORIZONTAL);
+                        content.setGravity(Gravity.TOP);
+                        content.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16),
+                                UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 10));
+
+                        ImageView art = new ImageView(activity);
+                        art.setImageResource(R.drawable.rem_error);
+                        art.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        content.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 56), UIHelpers.dp(activity, 56)));
+
+                        LinearLayout copy = new LinearLayout(activity);
+                        copy.setOrientation(LinearLayout.VERTICAL);
+                        copy.setPadding(UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 2), 0, 0);
+
+                        TextView titleView = UIHelpers.text(activity, "删除未完全完成", 17, UIHelpers.TEXT, Typeface.BOLD);
+                        copy.addView(titleView);
+
+                        TextView messageView = UIHelpers.text(activity, "部分漫画文件未能完全清理，建议稍后重试。", 12, UIHelpers.TEXT2, Typeface.NORMAL);
+                        copy.addView(messageView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 6)));
+                        content.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
+
+                        AlertDialog retryDialog = new AlertDialog.Builder(activity)
+                                .setView(content)
+                                .setPositiveButton("重试", (d, w) -> executeDelete(activity, book, store, storageManager, listener))
+                                .setNegativeButton("取消", null)
+                                .create();
+                        retryDialog.setOnShowListener(d -> {
+                            android.view.Window window = retryDialog.getWindow();
+                            if (window != null) {
+                                window.setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 12), Color.TRANSPARENT));
+                                int width = Math.min(activity.getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(activity, 40), UIHelpers.dp(activity, 328));
+                                window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+                            }
+                            Button pos = retryDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                            if (pos != null) pos.setTextColor(UIHelpers.ACCENT);
+                            Button neg = retryDialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+                            if (neg != null) neg.setTextColor(UIHelpers.TEXT3);
+                        });
+                        retryDialog.show();
                     }
-                } else {
-                    // Retention of deleting tombstone allows retry without faking success
-                    new AlertDialog.Builder(activity)
-                            .setTitle("删除未完全完成")
-                            .setMessage("部分漫画文件未能完全清理，建议稍后重试。")
-                            .setPositiveButton("重试", (d, w) -> executeDelete(activity, book, store, storageManager, listener))
-                            .setNegativeButton("取消", null)
-                            .show();
-                }
-            });
+                });
+            }
         }).start();
     }
 
