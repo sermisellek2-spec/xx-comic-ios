@@ -7,6 +7,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Base64;
@@ -71,7 +72,7 @@ public class ArchiveIndexTest {
             addZipEntry(zos, "2.png", VALID_PNG_BYTES);
         }
 
-        ArchiveIndex.ParseResult result = ArchiveIndex.indexArchive(zip, "book1");
+        ArchiveIndex.ParseResult result = LocalImageFixtures.indexArchive(zip, "book1");
         assertEquals(1, result.chapters.size());
         assertEquals("正文", result.chapters.get(0).title);
         assertEquals(3, result.chapters.get(0).pageCount);
@@ -91,7 +92,7 @@ public class ArchiveIndexTest {
             addZipEntry(zos, "第2话/02.png", VALID_PNG_BYTES);
         }
 
-        ArchiveIndex.ParseResult result = ArchiveIndex.indexArchive(zip, "book2");
+        ArchiveIndex.ParseResult result = LocalImageFixtures.indexArchive(zip, "book2");
         assertEquals(2, result.chapters.size());
         assertEquals("第2话", result.chapters.get(0).title);
         assertEquals(2, result.chapters.get(0).pageCount);
@@ -107,7 +108,7 @@ public class ArchiveIndexTest {
             addZipEntry(zos, "ComicOuterFolder/第2话/01.png", VALID_PNG_BYTES);
         }
 
-        ArchiveIndex.ParseResult result = ArchiveIndex.indexArchive(zip, "book3");
+        ArchiveIndex.ParseResult result = LocalImageFixtures.indexArchive(zip, "book3");
         assertEquals(2, result.chapters.size());
         assertEquals("第1话", result.chapters.get(0).title);
         assertEquals("第2话", result.chapters.get(1).title);
@@ -121,7 +122,7 @@ public class ArchiveIndexTest {
             addZipEntry(zos, "第1话/01.png", VALID_PNG_BYTES);
         }
 
-        ArchiveIndex.ParseResult result = ArchiveIndex.indexArchive(zip, "book4");
+        ArchiveIndex.ParseResult result = LocalImageFixtures.indexArchive(zip, "book4");
         assertEquals(2, result.chapters.size());
         assertEquals("未分章", result.chapters.get(0).title);
         assertEquals(1, result.chapters.get(0).pageCount);
@@ -138,7 +139,7 @@ public class ArchiveIndexTest {
             addZipEntry(zos, "01.png", VALID_PNG_BYTES);
         }
 
-        ArchiveIndex.ParseResult result = ArchiveIndex.indexArchive(zip, "book5");
+        ArchiveIndex.ParseResult result = LocalImageFixtures.indexArchive(zip, "book5");
         assertEquals(1, result.totalPages);
         assertEquals("01.png", result.firstValidPageEntry);
     }
@@ -150,7 +151,7 @@ public class ArchiveIndexTest {
             addZipEntry(zos, "01.jpg", "This is plain text not an image".getBytes());
         }
 
-        ArchiveIndex.indexArchive(zip, "book6");
+        LocalImageFixtures.indexArchive(zip, "book6");
     }
 
     @Test(expected = SecurityException.class)
@@ -160,7 +161,7 @@ public class ArchiveIndexTest {
             addZipEntry(zos, "../evil.png", VALID_PNG_BYTES);
         }
 
-        ArchiveIndex.indexArchive(zip, "book7");
+        LocalImageFixtures.indexArchive(zip, "book7");
     }
 
     @Test
@@ -171,7 +172,7 @@ public class ArchiveIndexTest {
         }
 
         try {
-            ArchiveIndex.indexArchive(zip, "book_sig_only");
+            LocalImageFixtures.indexArchive(zip, "book_sig_only");
             fail("Expected IOException for signature-only PNG without valid dimensions");
         } catch (IOException e) {
             assertTrue(e.getMessage().contains("损坏") || e.getMessage().contains("非有效图片格式") || e.getMessage().contains("有效"));
@@ -187,7 +188,7 @@ public class ArchiveIndexTest {
         }
 
         try {
-            ArchiveIndex.indexArchive(zip, "book_dup");
+            LocalImageFixtures.indexArchive(zip, "book_dup");
             fail("Expected IOException for duplicate normalized path");
         } catch (IOException e) {
             assertTrue(e.getMessage().contains("重复"));
@@ -203,8 +204,8 @@ public class ArchiveIndexTest {
         }
 
         String stableBookId = "local_stable_fingerprint_123";
-        ArchiveIndex.ParseResult result1 = ArchiveIndex.indexArchive(zip, stableBookId);
-        ArchiveIndex.ParseResult result2 = ArchiveIndex.indexArchive(zip, stableBookId);
+        ArchiveIndex.ParseResult result1 = LocalImageFixtures.indexArchive(zip, stableBookId);
+        ArchiveIndex.ParseResult result2 = LocalImageFixtures.indexArchive(zip, stableBookId);
 
         assertEquals(result1.chapters.size(), result2.chapters.size());
         for (int i = 0; i < result1.chapters.size(); i++) {
@@ -253,8 +254,18 @@ public class ArchiveIndexTest {
             }
         };
 
-        boolean decodable = ArchiveIndex.isDecodableImage(() -> hugeStream, 1024L, "huge_fake.png");
-        assertFalse(decodable);
+        try {
+            ArchiveIndex.isDecodableImage(() -> hugeStream, null, source -> {
+                try (InputStream in = source.open()) {
+                    byte[] buffer = new byte[65536];
+                    while (in.read(buffer) != -1) { }
+                    return true;
+                }
+            });
+            fail("actual stream size must be bounded independently of metadata");
+        } catch (IOException expected) {
+            assertTrue(expected.getMessage().contains("上限"));
+        }
     }
 
     @Test
@@ -272,7 +283,7 @@ public class ArchiveIndexTest {
         }
 
         try {
-            ArchiveIndex.indexArchive(zipPng, "book_fake_png");
+            LocalImageFixtures.indexArchive(zipPng, "book_fake_png");
             fail("Expected IOException for 64-byte header-only PNG");
         } catch (IOException e) {
             assertTrue(e.getMessage().contains("损坏") || e.getMessage().contains("非有效图片格式"));
@@ -287,7 +298,7 @@ public class ArchiveIndexTest {
         }
 
         try {
-            ArchiveIndex.indexArchive(zipJpg, "book_fake_jpg");
+            LocalImageFixtures.indexArchive(zipJpg, "book_fake_jpg");
             fail("Expected IOException for 128-byte header-only JPEG");
         } catch (IOException e) {
             assertTrue(e.getMessage().contains("损坏") || e.getMessage().contains("非有效图片格式"));
@@ -308,7 +319,7 @@ public class ArchiveIndexTest {
             addZipEntry(zos, "02.png", VALID_PNG_BYTES); // Good second image
         }
 
-        ArchiveIndex.ParseResult result = ArchiveIndex.indexArchive(zip, "book_fallback");
+        ArchiveIndex.ParseResult result = LocalImageFixtures.indexArchive(zip, "book_fallback");
         assertEquals(1, result.totalPages);
         assertEquals("02.png", result.firstValidPageEntry);
         assertTrue(result.candidateCoverEntries.contains("02.png"));
@@ -323,7 +334,7 @@ public class ArchiveIndexTest {
             addZipEntry(zos, "01.gif", gif);
         }
 
-        ArchiveIndex.ParseResult result = ArchiveIndex.indexArchive(zip, "book_gif");
+        ArchiveIndex.ParseResult result = LocalImageFixtures.indexArchive(zip, "book_gif");
         assertEquals(1, result.totalPages);
         assertEquals("01.gif", result.firstValidPageEntry);
     }

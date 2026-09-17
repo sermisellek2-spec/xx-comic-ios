@@ -20,6 +20,44 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class LocalImporterTest {
+    @Test
+    public void cancellationInterruptsDecoderReadsEvenWhenDecoderSwallowsIOException() throws Exception {
+        java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean();
+        LocalModels.ImportProgressCallback callback = new LocalModels.ImportProgressCallback() {
+            @Override public void onProgress(long current, long total, String message) { }
+            @Override public boolean isCancelled() { return cancelled.get(); }
+        };
+        try {
+            ArchiveIndex.isDecodableImage(() -> new java.io.ByteArrayInputStream(new byte[1024]), callback, source -> {
+                try (java.io.InputStream in = source.open()) {
+                    assertEquals(16, in.read(new byte[16]));
+                    cancelled.set(true);
+                    in.read();
+                    org.junit.Assert.fail("decoder read continued after cancellation");
+                } catch (IOException ignored) { /* Native decoders may consume stream errors. */ }
+                return true;
+            });
+            org.junit.Assert.fail("cancelled decoder accepted as a valid page");
+        } catch (java.io.InterruptedIOException expected) { }
+    }
+
+    @Test
+    public void boundedStreamAcceptsExactLimitAndRejectsOneByteMore() throws Exception {
+        try (java.io.InputStream in = new LocalImporter.BoundedInputStream(
+                new java.io.ByteArrayInputStream(new byte[]{1, 2}), 2)) {
+            assertEquals(1, in.read());
+            assertEquals(2, in.read());
+            assertEquals(-1, in.read());
+        }
+        try {
+            try (java.io.InputStream in = new LocalImporter.BoundedInputStream(
+                    new java.io.ByteArrayInputStream(new byte[]{1, 2, 3}), 2)) {
+                assertEquals(2, in.read(new byte[2]));
+                in.read();
+                org.junit.Assert.fail("oversized stream accepted");
+            }
+        } catch (IOException expected) { assertTrue(expected.getMessage().contains("上限")); }
+    }
     private File tempDir;
     // Valid 1x1 PNG bytes (starts with 89 50 4E 47 ... followed by valid IHDR with width=1, height=1)
     private static final byte[] VALID_PNG_BYTES = new byte[]{
@@ -71,7 +109,7 @@ public class LocalImporterTest {
         writeFile(new File(folder1, "ch1/01.png"), VALID_PNG_BYTES);
         writeFile(new File(folder1, "ch1/02.png"), VALID_PNG_BYTES);
 
-        LocalImporter.FolderIndexResult idx1 = LocalImporter.indexFolder(folder1);
+        LocalImporter.FolderIndexResult idx1 = LocalImageFixtures.indexFolder(folder1);
         assertEquals(2, idx1.validImages.size());
 
         String fp1 = LocalImporter.computeFolderManifestFingerprint(folder1, idx1.validImages);
@@ -82,7 +120,7 @@ public class LocalImporterTest {
         writeFile(new File(folder2, "ch1/01.png"), VALID_PNG_BYTES);
         writeFile(new File(folder2, "ch1/02.png"), VALID_PNG_BYTES);
 
-        LocalImporter.FolderIndexResult idx2 = LocalImporter.indexFolder(folder2);
+        LocalImporter.FolderIndexResult idx2 = LocalImageFixtures.indexFolder(folder2);
         String fp2 = LocalImporter.computeFolderManifestFingerprint(folder2, idx2.validImages);
         assertEquals(fp1, fp2);
 
@@ -142,7 +180,7 @@ public class LocalImporterTest {
         writeFile(new File(deep, "01.png"), VALID_PNG_BYTES);
 
         try {
-            LocalImporter.indexFolder(tempDir);
+            LocalImageFixtures.indexFolder(tempDir);
             org.junit.Assert.fail("Expected IOException for folder depth exceeding MAX_FOLDER_DEPTH");
         } catch (IOException e) {
             assertTrue(e.getMessage().contains("层级过深") || e.getMessage().contains("深度"));
@@ -157,7 +195,7 @@ public class LocalImporterTest {
         writeFile(new File(folder, "sig.png"), sigOnly);
 
         try {
-            LocalImporter.indexFolder(folder);
+            LocalImageFixtures.indexFolder(folder);
             org.junit.Assert.fail("Expected IOException for folder without valid decodable images");
         } catch (IOException e) {
             assertTrue(e.getMessage().contains("未找到有效的漫画图片"));
@@ -194,7 +232,7 @@ public class LocalImporterTest {
         };
 
         try {
-            LocalImporter.indexFolder(folder, cancelledCallback);
+            LocalImageFixtures.indexFolder(folder, cancelledCallback);
             org.junit.Assert.fail("Expected IOException when callback is cancelled during folder indexing");
         } catch (IOException e) {
             assertTrue(e.getMessage().contains("用户取消导入"));

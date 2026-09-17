@@ -354,9 +354,10 @@ public class MainActivity extends Activity {
     private static final int REQUEST_CODE_IMPORT_ARCHIVE = 1001;
     private static final int REQUEST_CODE_IMPORT_FOLDER = 1002;
 
-    private LocalStorageManager localStorageManager;
-    private LocalLibraryStore localLibraryStore;
-    private LocalContentResolver localContentResolver;
+    private static LocalStorageManager localStorageManager;
+    private static LocalLibraryStore localLibraryStore;
+    private static LocalContentResolver localContentResolver;
+    private static final ExecutorService localLibraryIo = Executors.newSingleThreadExecutor();
 
     private int bookshelfTab = 0; // 0: 我的书架, 1: 本地书架
     private FrameLayout bookshelfContainer;
@@ -377,6 +378,8 @@ public class MainActivity extends Activity {
         AlertDialog dialog;
         Runnable showDialogAction;
         java.lang.ref.WeakReference<TextView> messageViewRef;
+        java.lang.ref.WeakReference<TextView> bannerMessageViewRef;
+        long lastProgressUpdate;
 
         ActiveImportTask(String title, boolean isFolder) {
             this.title = title;
@@ -384,38 +387,52 @@ public class MainActivity extends Activity {
         }
     }
     private ActiveImportTask currentImportTask = null;
+    private boolean localLibraryReady;
+    private String localLibraryRecoveryError;
     private final java.util.concurrent.atomic.AtomicBoolean localStoreRecoveryStarted = new java.util.concurrent.atomic.AtomicBoolean(false);
 
     private void ensureLocalLibraryRecovery() {
         if (localStoreRecoveryStarted.compareAndSet(false, true)) {
-            miscIo.submit(() -> {
+            localLibraryIo.submit(() -> {
+                String error = null;
                 try {
                     getLocalLibraryStore().recoverOrphanedStates(getLocalStorageManager());
                 } catch (Exception e) {
+                    error = "本地文件整理失败，请重试";
                     android.util.Log.w("MainActivity", "Local library startup recovery failed", e);
                 }
+                final String failure = error;
+                main.post(() -> {
+                    if (activityDestroyed || isFinishing()) return;
+                    localLibraryReady = failure == null;
+                    localLibraryRecoveryError = failure;
+                    refreshLocalBookshelf();
+                });
             });
         }
     }
 
     private LocalStorageManager getLocalStorageManager() {
-        if (localStorageManager == null) localStorageManager = new LocalStorageManager(this);
-        return localStorageManager;
+        synchronized (MainActivity.class) {
+            if (localStorageManager == null) localStorageManager = new LocalStorageManager(getApplicationContext());
+            return localStorageManager;
+        }
     }
 
     private LocalLibraryStore getLocalLibraryStore() {
-        if (localLibraryStore == null) {
-            localLibraryStore = new LocalLibraryStore(this);
-            ensureLocalLibraryRecovery();
+        synchronized (MainActivity.class) {
+            if (localLibraryStore == null) localLibraryStore = new LocalLibraryStore(getApplicationContext());
+            return localLibraryStore;
         }
-        return localLibraryStore;
     }
 
     private LocalContentResolver getLocalContentResolver() {
-        if (localContentResolver == null) {
-            localContentResolver = new LocalContentResolver(getLocalLibraryStore(), getLocalStorageManager());
+        synchronized (MainActivity.class) {
+            if (localContentResolver == null) {
+                localContentResolver = new LocalContentResolver(getLocalLibraryStore(), getLocalStorageManager());
+            }
+            return localContentResolver;
         }
-        return localContentResolver;
     }
 
     private boolean isLocalComic(String comicId) {
@@ -613,6 +630,11 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        activityDestroyed = true;
+        if (currentImportTask != null) {
+            currentImportTask.cancelled.set(true);
+            if (currentImportTask.dialog != null) currentImportTask.dialog.dismiss();
+        }
         if (detailSourceSheet != null) detailSourceSheet.dismissImmediately();
         detailSourceSearch.close();
         if (detailSwitchTimeout != null) main.removeCallbacks(detailSwitchTimeout);
@@ -632,7 +654,6 @@ public class MainActivity extends Activity {
         if (mh18BrowserSession != null) mh18BrowserSession.shutdown();
         if (jmcomicBrowserSession != null) jmcomicBrowserSession.shutdown();
         super.onDestroy();
-        activityDestroyed = true;
         cancelUpdateDownload();
         cancelSourceHealthCheck();
         main.removeCallbacks(themeSwitchRunnable);
@@ -696,11 +717,17 @@ public class MainActivity extends Activity {
     }
 
     private void updateImportTaskProgress(ActiveImportTask task, String message) {
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now - task.lastProgressUpdate < 100) return;
+        task.lastProgressUpdate = now;
         main.post(() -> {
+            if (activityDestroyed || isFinishing()) return;
             TextView tv = task.messageViewRef != null ? task.messageViewRef.get() : null;
             if (tv != null && task.dialog != null && task.dialog.isShowing()) {
-                tv.setText(message);
+                tv.setText(task.currentMessage);
             }
+            TextView banner = task.bannerMessageViewRef != null ? task.bannerMessageViewRef.get() : null;
+            if (banner != null) banner.setText(task.currentMessage);
         });
     }
 
@@ -774,7 +801,7 @@ public class MainActivity extends Activity {
         });
         dialog.setOnDismissListener(d -> {
             task.dialog = null;
-            refreshLocalBookshelf();
+            if (!activityDestroyed) refreshLocalBookshelf();
         });
 
         task.dialog = dialog;
@@ -805,6 +832,7 @@ public class MainActivity extends Activity {
         textCol.addView(titleView);
 
         TextView msgView = UIHelpers.text(this, task.currentMessage, 11, UIHelpers.TEXT2, Typeface.NORMAL);
+        task.bannerMessageViewRef = new java.lang.ref.WeakReference<>(msgView);
         msgView.setMaxLines(1);
         msgView.setEllipsize(TextUtils.TruncateAt.END);
         textCol.addView(msgView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
@@ -843,6 +871,7 @@ public class MainActivity extends Activity {
 
     private void handleImportArchiveUris(List<Uri> uris) {
         if (uris == null || uris.isEmpty()) return;
+        if (!canStartLocalImport()) return;
         final ActiveImportTask task = new ActiveImportTask("正在导入压缩包", false);
         task.totalItems = uris.size();
         task.currentItem = 1;
@@ -853,7 +882,7 @@ public class MainActivity extends Activity {
         showThemedImportProgressDialog(task);
         refreshLocalBookshelf();
 
-        miscIo.submit(() -> {
+        localLibraryIo.submit(() -> {
             int successCount = 0;
             List<String> failedItems = new ArrayList<>();
             List<String> failedReasons = new ArrayList<>();
@@ -914,6 +943,7 @@ public class MainActivity extends Activity {
             final List<String> finalFailedReasons = new ArrayList<>(failedReasons);
 
             main.post(() -> {
+                if (activityDestroyed || isFinishing()) return;
                 if (currentImportTask == task) {
                     currentImportTask = null;
                 }
@@ -948,6 +978,7 @@ public class MainActivity extends Activity {
 
     private void handleImportFolderUri(Uri treeUri) {
         if (treeUri == null) return;
+        if (!canStartLocalImport()) return;
         final ActiveImportTask task = new ActiveImportTask("正在导入文件夹漫画", true);
         task.currentMessage = "正在读取文件夹...";
         task.showDialogAction = () -> showThemedImportProgressDialog(task);
@@ -956,7 +987,7 @@ public class MainActivity extends Activity {
         showThemedImportProgressDialog(task);
         refreshLocalBookshelf();
 
-        miscIo.submit(() -> {
+        localLibraryIo.submit(() -> {
             LocalImporter importer = new LocalImporter(this, getLocalStorageManager(), getLocalLibraryStore());
             String errorMsg = null;
             boolean success = false;
@@ -985,6 +1016,7 @@ public class MainActivity extends Activity {
             final String finalError = errorMsg;
 
             main.post(() -> {
+                if (activityDestroyed || isFinishing()) return;
                 if (currentImportTask == task) {
                     currentImportTask = null;
                 }
@@ -1007,6 +1039,7 @@ public class MainActivity extends Activity {
     }
 
     private void showImportOptionsDialog() {
+        if (!canStartLocalImport()) return;
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 16),
@@ -1082,6 +1115,23 @@ public class MainActivity extends Activity {
         });
 
         dialog.show();
+    }
+
+    private boolean canStartLocalImport() {
+        if (!localLibraryReady) {
+            if (localLibraryRecoveryError != null) {
+                localLibraryRecoveryError = null;
+                localStoreRecoveryStarted.set(false);
+                ensureLocalLibraryRecovery();
+            }
+            showRemSuccessToast("正在整理本地文件，稍等一下哦");
+            return false;
+        }
+        if (currentImportTask != null) {
+            showThemedImportProgressDialog(currentImportTask);
+            return false;
+        }
+        return true;
     }
 
     private void showDeleteLocalBookDialog(LocalModels.Book book) {
@@ -1953,7 +2003,7 @@ public class MainActivity extends Activity {
             remParams.leftMargin = UIHelpers.dp(this, 8);
             bookshelfRightActions.addView(rem, remParams);
         } else {
-            int localCount = getLocalLibraryStore().getBookCount();
+            int localCount = localLibraryReady ? getLocalLibraryStore().getBookCount() : 0;
             bookshelfRightActions.addView(UIHelpers.text(this, localCount + " 本", 12, UIHelpers.TEXT3, Typeface.NORMAL));
             TextView importBtn = UIHelpers.text(this, "+ 导入", 12, UIHelpers.ACCENT, Typeface.BOLD);
             importBtn.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 4), UIHelpers.dp(this, 8), UIHelpers.dp(this, 4));
@@ -2020,6 +2070,13 @@ public class MainActivity extends Activity {
     }
 
     private View buildLocalBookshelfView() {
+        if (!localLibraryReady) {
+            TextView state = UIHelpers.text(this, localLibraryRecoveryError == null
+                    ? "正在整理本地书架…" : localLibraryRecoveryError + " · 点击重试", 14, UIHelpers.TEXT3, Typeface.NORMAL);
+            state.setGravity(Gravity.CENTER);
+            state.setOnClickListener(v -> canStartLocalImport());
+            return state;
+        }
         String continueLocalId = null;
         long latestRead = Long.MIN_VALUE;
         for (String id : progress.keySet()) {
@@ -3104,6 +3161,10 @@ public class MainActivity extends Activity {
     }
 
     private void showLocalDetail(String comicId) {
+        if (!localLibraryReady) {
+            showRemSuccessToast("正在整理本地文件，稍等一下哦");
+            return;
+        }
         if (detailBackAction == null) {
             final boolean returnToHistory = historyVisible;
             final boolean returnToStandaloneSearch = standaloneSearchVisible;
@@ -3127,7 +3188,7 @@ public class MainActivity extends Activity {
         readerVisible = false;
 
         LocalModels.Book book = getLocalLibraryStore().getBook(comicId);
-        if (book == null) {
+        if (book == null || !LocalModels.STATUS_READY.equals(book.status)) {
             showRemDialog(R.drawable.rem_empty, "漫画已移除", "该漫画已从本地书架删除，重新导入该文件后可恢复阅读进度", "返回", () -> {
                 if (detailBackAction != null) {
                     Runnable back = detailBackAction;
@@ -5185,8 +5246,12 @@ public class MainActivity extends Activity {
     private void showDetailThenRead(String id) {
         onUserOpenComicDetail(id);
         if (isLocalComic(id)) {
+            if (!localLibraryReady) {
+                showRemSuccessToast("正在整理本地文件，稍等一下哦");
+                return;
+            }
             LocalModels.Book book = getLocalLibraryStore().getBook(id);
-            if (book == null) {
+            if (book == null || !LocalModels.STATUS_READY.equals(book.status)) {
                 showRemDialog(R.drawable.rem_empty, "漫画已移除", "该漫画已从本地书架删除", "确定", null);
                 return;
             }
@@ -6000,28 +6065,33 @@ public class MainActivity extends Activity {
         if (TextUtils.isEmpty(imageUrl)) return null;
         return submitReaderImage(() -> {
             try {
-                File cached = LocalContentResolver.isLocalPageUrl(imageUrl) ?
-                        getLocalContentResolver().materializePage(LocalContentResolver.extractId(imageUrl, LocalContentResolver.PREFIX_PAGE)) :
-                        imageCacheFile(imageUrl);
-                long[] cachedIdentity = captureImageCacheIdentity(cached);
-                Bitmap bitmap = cachedIdentity != null ? decodeReaderImage(cached, readerContentWidth(), imageUrl) : null;
-                if (bitmap == null) {
-                    if (!LocalContentResolver.isLocalPageUrl(imageUrl)) {
-                        deleteImageCacheIfUnchanged(cached, cachedIdentity);
-                    }
-                    if (!ensureReaderImageCached(imageUrl, chapterUrl, cacheOnly)) {
-                        main.post(() -> {
-                            if (activityDestroyed || !TextUtils.equals(imageUrl, (String) target.getTag())
-                                    || !isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
-                            target.setImageResource(R.drawable.rem_error);
-                            applyReaderImageDisplayMode(target);
-                            target.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                        });
-                        return;
-                    }
-                    bitmap = decodeReaderImage(cached, readerContentWidth(), imageUrl);
+                Bitmap bitmap;
+                if (LocalContentResolver.isLocalPageUrl(imageUrl)) {
+                    bitmap = getLocalContentResolver().withPageFile(
+                            LocalContentResolver.extractId(imageUrl, LocalContentResolver.PREFIX_PAGE),
+                            file -> decodeReaderImage(file, readerContentWidth(), imageUrl));
                 } else {
-                    cached.setLastModified(System.currentTimeMillis());
+                    File cached = imageCacheFile(imageUrl);
+                    long[] cachedIdentity = captureImageCacheIdentity(cached);
+                    bitmap = cachedIdentity != null ? decodeReaderImage(cached, readerContentWidth(), imageUrl) : null;
+                    if (bitmap == null) {
+                        if (!LocalContentResolver.isLocalPageUrl(imageUrl)) {
+                            deleteImageCacheIfUnchanged(cached, cachedIdentity);
+                        }
+                        if (!ensureReaderImageCached(imageUrl, chapterUrl, cacheOnly)) {
+                            main.post(() -> {
+                                if (activityDestroyed || !TextUtils.equals(imageUrl, (String) target.getTag())
+                                        || !isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
+                                target.setImageResource(R.drawable.rem_error);
+                                applyReaderImageDisplayMode(target);
+                                target.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                            });
+                            return;
+                        }
+                        bitmap = decodeReaderImage(cached, readerContentWidth(), imageUrl);
+                    } else {
+                        cached.setLastModified(System.currentTimeMillis());
+                    }
                 }
                 if (bitmap == null) throw new IOException("Reader image decode failed: " + imageUrl);
                 Bitmap loaded = bitmap;
@@ -6197,9 +6267,8 @@ public class MainActivity extends Activity {
                         bitmap = getLocalContentResolver().decodeCoverBitmap(bookId, UIHelpers.dp(this, 120), UIHelpers.dp(this, 160));
                     } else if (LocalContentResolver.isLocalPageUrl(imageUrl)) {
                         String pageId = LocalContentResolver.extractId(imageUrl, LocalContentResolver.PREFIX_PAGE);
-                        try (InputStream is = getLocalContentResolver().openPage(pageId)) {
-                            if (is != null) bitmap = BitmapFactory.decodeStream(is);
-                        }
+                        bitmap = getLocalContentResolver().withPageFile(pageId,
+                                file -> decodeReaderImage(file, readerContentWidth(), imageUrl));
                     }
                     if (bitmap != null) {
                         final Bitmap loaded = bitmap;
@@ -9109,9 +9178,6 @@ public class MainActivity extends Activity {
             deleteFiles(new File(getCacheDir(), "images"));
             imageCacheBytes = 0L;
         }
-        try {
-            getLocalStorageManager().clearDerivedPagesCache();
-        } catch (Exception ignored) {}
         imageMemoryCache.evictAll();
         Set<String> favoriteIds = new HashSet<>(favorites);
         summaries.keySet().retainAll(favoriteIds);
@@ -9120,7 +9186,12 @@ public class MainActivity extends Activity {
         searchResults.clear();
         persistComicCachesAsync();
         showTab(2);
-        main.post(() -> showRemSuccessToast("缓存已清理，收藏数据已保留"));
+        localLibraryIo.submit(() -> {
+            getLocalStorageManager().clearDerivedPagesCache();
+            main.post(() -> {
+                if (!activityDestroyed) showRemSuccessToast("缓存已清理，收藏与本地漫画已保留");
+            });
+        });
     }
 
     private void deleteFiles(File file) {

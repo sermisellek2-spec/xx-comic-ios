@@ -1,6 +1,5 @@
 package com.xxcomic.local;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +25,7 @@ public class ArchiveIndex {
     public static final int MAX_ENTRIES = 50000;
     public static final long MAX_SINGLE_ENTRY_BYTES = 128L * 1024L * 1024L; // 128 MiB
     public static final long MAX_TOTAL_UNCOMPRESSED_BYTES = 20L * 1024L * 1024L * 1024L; // 20 GiB
-    public static final long MAX_PAGE_BYTES = 32L * 1024L * 1024L; // 32 MiB
+    public static final long MAX_PAGE_BYTES = MAX_SINGLE_ENTRY_BYTES;
 
     public static class ParseResult {
         public final List<LocalModels.Chapter> chapters;
@@ -77,9 +76,14 @@ public class ArchiveIndex {
     }
 
     public static ParseResult indexArchive(File archiveFile, String bookId, LocalModels.ImportProgressCallback callback) throws IOException {
+        return indexArchive(archiveFile, bookId, callback, new AndroidImageProbe());
+    }
+
+    static ParseResult indexArchive(File archiveFile, String bookId, LocalModels.ImportProgressCallback callback,
+                                   ImageProbe imageProbe) throws IOException {
         ZipFile zipFile = openZipWithFallbackCharset(archiveFile);
         try {
-            return indexZipFile(zipFile, bookId, callback);
+            return indexZipFile(zipFile, bookId, callback, imageProbe);
         } finally {
             try {
                 zipFile.close();
@@ -135,7 +139,8 @@ public class ArchiveIndex {
         }
     }
 
-    private static ParseResult indexZipFile(ZipFile zipFile, String bookId, LocalModels.ImportProgressCallback callback) throws IOException {
+    private static ParseResult indexZipFile(ZipFile zipFile, String bookId, LocalModels.ImportProgressCallback callback,
+                                          ImageProbe imageProbe) throws IOException {
         Enumeration<? extends ZipEntry> entries = zipFile.entries();
         int count = 0;
         long totalBytes = 0;
@@ -196,7 +201,7 @@ public class ArchiveIndex {
             ZipEntry entry = zipFile.getEntry(item.name);
             if (entry == null) continue;
 
-            if (isDecodableImage(() -> zipFile.getInputStream(entry), item.size, item.name)) {
+            if (isDecodableImage(() -> zipFile.getInputStream(entry), callback, imageProbe)) {
                 verifiedEntries.add(item);
                 byte[] header = new byte[32];
                 int readBytes = 0;
@@ -373,71 +378,17 @@ public class ArchiveIndex {
         InputStream open() throws IOException;
     }
 
-    public static boolean isDecodableImage(InputStreamSupplier supplier, long entrySize, String name) {
-        if (entrySize > 0 && entrySize < 14) return false;
-        // 1. Try Android BitmapFactory if available
-        try {
-            Class<?> bfClass = Class.forName("android.graphics.BitmapFactory");
-            Class<?> optsClass = Class.forName("android.graphics.BitmapFactory$Options");
-            Object opts = optsClass.newInstance();
-            java.lang.reflect.Field inJustDecodeBounds = optsClass.getField("inJustDecodeBounds");
-            java.lang.reflect.Field outWidth = optsClass.getField("outWidth");
-            java.lang.reflect.Field outHeight = optsClass.getField("outHeight");
-            java.lang.reflect.Field inSampleSize = optsClass.getField("inSampleSize");
-
-            inJustDecodeBounds.setBoolean(opts, true);
-            java.lang.reflect.Method decodeStream = bfClass.getMethod("decodeStream", InputStream.class, Class.forName("android.graphics.Rect"), optsClass);
-            try (InputStream in = supplier.open()) {
-                decodeStream.invoke(null, in, null, opts);
-            }
-            int w = outWidth.getInt(opts);
-            int h = outHeight.getInt(opts);
-            if (w <= 0 || h <= 0) return false;
-
-            // Bounded sample decode to verify real image raster data exists (rejects header-only fake files)
-            inJustDecodeBounds.setBoolean(opts, false);
-            int sample = Math.max(1, Math.max(w / 16, h / 16));
-            inSampleSize.setInt(opts, sample);
-            Object bitmap;
-            try (InputStream in = supplier.open()) {
-                bitmap = decodeStream.invoke(null, in, null, opts);
-            }
-            if (bitmap == null) return false;
-            try {
-                java.lang.reflect.Method recycle = bitmap.getClass().getMethod("recycle");
-                recycle.invoke(bitmap);
-            } catch (Throwable ignored) {}
-            return true;
-        } catch (ClassNotFoundException | NoSuchMethodException | NoSuchFieldException e) {
-            return isDecodableWithImageIO(supplier);
-        } catch (InvocationTargetException ite) {
-            return isDecodableWithImageIO(supplier);
-        } catch (Throwable t) {
-            return isDecodableWithImageIO(supplier);
-        }
+    interface ImageProbe {
+        boolean isReadable(InputStreamSupplier source) throws IOException;
     }
 
-    private static boolean isDecodableWithImageIO(InputStreamSupplier supplier) {
-        try {
-            Class<?> ioClass = Class.forName("javax.imageio.ImageIO");
-            java.lang.reflect.Method readMethod = ioClass.getMethod("read", InputStream.class);
-            Object img;
-            try (InputStream in = supplier.open()) {
-                img = readMethod.invoke(null, in);
-            }
-            return img != null;
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
-
-    public static boolean validateImageBytes(byte[] header, int length, long entrySize, String name) {
-        if (header == null || length < 14) return false;
-        return isDecodableImage(() -> new ByteArrayInputStream(header, 0, length), entrySize, name);
-    }
-
-    public static boolean isImageMagic(byte[] header, int length) {
-        return validateImageBytes(header, length, 1024, "");
+    static boolean isDecodableImage(InputStreamSupplier supplier, LocalModels.ImportProgressCallback callback,
+                                    ImageProbe probe) throws IOException {
+        LocalImporter.checkCancelled(callback);
+        boolean readable = probe.isReadable(() -> new LocalImporter.BoundedInputStream(
+                supplier.open(), MAX_PAGE_BYTES, callback));
+        LocalImporter.checkCancelled(callback);
+        return readable;
     }
 
     public static String detectMimeType(byte[] header, int length, String name) {

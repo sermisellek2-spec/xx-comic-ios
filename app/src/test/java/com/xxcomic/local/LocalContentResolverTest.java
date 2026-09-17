@@ -9,6 +9,80 @@ import static org.junit.Assert.assertTrue;
 
 public class LocalContentResolverTest {
     @Test
+    public void pendingBookCannotBeOpenedEvenWhenItsArchiveExists() throws Exception {
+        FakeStore index = new FakeStore();
+        java.io.File root = java.nio.file.Files.createTempDirectory("pending_page").toFile();
+        LocalStorageManager storage = new LocalStorageManager(root);
+        LocalModels.Book pending = book(LocalModels.STATUS_STAGING);
+        index.books.put(pending.id, pending);
+        index.pages.put("page", new LocalModels.Page("page", pending.id, "chapter", 0, "1.png", 1, 1, null, "image/png"));
+        try {
+            try (java.util.zip.ZipOutputStream out = new java.util.zip.ZipOutputStream(
+                    new java.io.FileOutputStream(storage.getBookImportFile(pending.relativePath)))) {
+                out.putNextEntry(new java.util.zip.ZipEntry("1.png"));
+                out.write(new byte[]{1, 2, 3});
+                out.closeEntry();
+            }
+            try (java.io.InputStream ignored = new LocalContentResolver(index, storage).openPage("page")) {
+                org.junit.Assert.fail("pending book was readable");
+            } catch (java.io.IOException expected) {
+                assertTrue(expected.getMessage().contains("所属本地漫画"));
+            }
+        } finally { deleteRecursive(root); }
+    }
+
+    @Test
+    public void deletionDuringMaterializationCannotPublishPage() throws Exception {
+        FakeStore index = new FakeStore();
+        java.io.File root = java.nio.file.Files.createTempDirectory("delete_during_page").toFile();
+        LocalStorageManager storage = new LocalStorageManager(root);
+        LocalModels.Book ready = book(LocalModels.STATUS_READY);
+        index.books.put(ready.id, ready);
+        index.pages.put("page", new LocalModels.Page("page", ready.id, "chapter", 0, "1.png", 1, 1, null, "image/png"));
+        LocalContentResolver resolver = new LocalContentResolver(index, storage) {
+            @Override public java.io.InputStream openPage(String id) {
+                index.books.put(ready.id, book(LocalModels.STATUS_DELETING));
+                return new java.io.ByteArrayInputStream(new byte[]{1, 2, 3});
+            }
+        };
+        try {
+            try { resolver.materializePage("page"); org.junit.Assert.fail("published a deleting book"); }
+            catch (java.io.IOException expected) { /* cancellation is surfaced */ }
+            assertEquals(0, storage.getDerivedTotalSize());
+        } finally { deleteRecursive(root); }
+    }
+
+    @Test
+    public void materializationRechecksFreeSpaceDuringCopy() throws Exception {
+        FakeStore index = new FakeStore();
+        java.io.File root = java.nio.file.Files.createTempDirectory("space_during_page").toFile();
+        LocalStorageManager storage = new LocalStorageManager(root) {
+            int checks;
+            @Override public long getUsableSpace() {
+                return ++checks == 1 ? 1024L * 1024 * 1024 : 0;
+            }
+        };
+        LocalModels.Book ready = book(LocalModels.STATUS_READY);
+        index.books.put(ready.id, ready);
+        index.pages.put("page", new LocalModels.Page("page", ready.id, "chapter", 0, "1.png", 1, 1, null, "image/png"));
+        LocalContentResolver resolver = new LocalContentResolver(index, storage) {
+            @Override public java.io.InputStream openPage(String id) {
+                return new java.io.ByteArrayInputStream(new byte[128 * 1024]);
+            }
+        };
+        try {
+            try { resolver.materializePage("page"); org.junit.Assert.fail("ignored disk exhaustion"); }
+            catch (java.io.IOException expected) { assertTrue(expected.getMessage().contains("空间")); }
+            assertEquals(0, storage.getDerivedTotalSize());
+        } finally { deleteRecursive(root); }
+    }
+
+    private static LocalModels.Book book(String status) {
+        return new LocalModels.Book("local_book", "fingerprint", "Comic", null,
+                LocalModels.FORMAT_ZIP, LocalModels.SOURCE_TYPE_IMPORT, "local_book", "book.zip",
+                null, 3, 1, 1, status, 0, 0);
+    }
+    @Test
     public void testSchemeAndUrlParsing() {
         String pageUrl = LocalContentResolver.buildPageUrl("page_123");
         assertEquals("local://page/page_123", pageUrl);
@@ -36,36 +110,62 @@ public class LocalContentResolverTest {
     }
 
     @Test
-    public void testPageLocksSupportApi23ConcurrentResolution() throws Exception {
-        LocalContentResolver resolver = new LocalContentResolver(new FakeStore(), null);
-        int threadCount = 16;
-        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(threadCount);
-        java.util.concurrent.CountDownLatch readyLatch = new java.util.concurrent.CountDownLatch(threadCount);
-        java.util.concurrent.CountDownLatch startLatch = new java.util.concurrent.CountDownLatch(1);
-        java.util.List<Object> locks = java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+    public void concurrentRequestsPublishOnlyOneCompletePage() throws Exception {
+        FakeStore index = new FakeStore();
+        java.io.File root = java.nio.file.Files.createTempDirectory("parallel_pages").toFile();
+        LocalStorageManager storage = new LocalStorageManager(root);
+        index.books.put("local_book", book(LocalModels.STATUS_READY));
+        index.pages.put("page", new LocalModels.Page("page", "local_book", "chapter", 0, "1.png", 1, 1, null, "image/png"));
+        java.util.concurrent.atomic.AtomicInteger reads = new java.util.concurrent.atomic.AtomicInteger();
+        LocalContentResolver resolver = new LocalContentResolver(index, storage) {
+            @Override public java.io.InputStream openPage(String id) {
+                reads.incrementAndGet();
+                return new java.io.ByteArrayInputStream(new byte[]{1, 2, 3});
+            }
+        };
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(4);
+        try {
+            java.util.List<java.util.concurrent.Future<java.io.File>> results = new java.util.ArrayList<>();
+            for (int i = 0; i < 16; i++) results.add(executor.submit(() -> resolver.materializePage("page")));
+            for (java.util.concurrent.Future<java.io.File> result : results) {
+                org.junit.Assert.assertArrayEquals(new byte[]{1, 2, 3}, java.nio.file.Files.readAllBytes(
+                        result.get(3, java.util.concurrent.TimeUnit.SECONDS).toPath()));
+            }
+            assertEquals(1, reads.get());
+        } finally { executor.shutdownNow(); deleteRecursive(root); }
+    }
 
-        for (int i = 0; i < threadCount; i++) {
-            executor.submit(() -> {
-                readyLatch.countDown();
-                try {
-                    startLatch.await();
-                    Object lock = resolver.getPageLock("test_page_api23");
-                    locks.add(lock);
-                } catch (InterruptedException ignored) {}
-            });
-        }
-
-        readyLatch.await();
-        startLatch.countDown();
-        executor.shutdown();
-        executor.awaitTermination(3, java.util.concurrent.TimeUnit.SECONDS);
-
-        assertEquals(threadCount, locks.size());
-        Object firstLock = locks.get(0);
-        assertNotNull(firstLock);
-        for (Object lock : locks) {
-            org.junit.Assert.assertSame(firstLock, lock);
-        }
+    @Test
+    public void clearingCacheWaitsUntilPageConsumerFinishes() throws Exception {
+        FakeStore index = new FakeStore();
+        java.io.File root = java.nio.file.Files.createTempDirectory("leased_page").toFile();
+        LocalStorageManager storage = new LocalStorageManager(root);
+        index.books.put("local_book", book(LocalModels.STATUS_READY));
+        index.pages.put("page", new LocalModels.Page("page", "local_book", "chapter", 0, "1.png", 1, 1, null, "image/png"));
+        LocalContentResolver resolver = new LocalContentResolver(index, storage) {
+            @Override public java.io.InputStream openPage(String id) {
+                return new java.io.ByteArrayInputStream(new byte[]{1, 2, 3});
+            }
+        };
+        java.util.concurrent.CountDownLatch entered = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            java.util.concurrent.Future<Boolean> reading = executor.submit(() -> resolver.withPageFile("page", file -> {
+                entered.countDown();
+                try { if (!release.await(3, java.util.concurrent.TimeUnit.SECONDS)) throw new java.io.IOException("timeout"); }
+                catch (InterruptedException e) { throw new java.io.IOException(e); }
+                return file.exists() && file.length() == 3;
+            }));
+            assertTrue(entered.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            java.util.concurrent.Future<?> clearing = executor.submit(storage::clearDerivedPagesCache);
+            try { clearing.get(100, java.util.concurrent.TimeUnit.MILLISECONDS); org.junit.Assert.fail("deleted page during decode"); }
+            catch (java.util.concurrent.TimeoutException expected) { }
+            release.countDown();
+            assertTrue(reading.get(3, java.util.concurrent.TimeUnit.SECONDS));
+            clearing.get(3, java.util.concurrent.TimeUnit.SECONDS);
+            assertEquals(0, storage.getDerivedTotalSize());
+        } finally { release.countDown(); executor.shutdownNow(); deleteRecursive(root); }
     }
 
     @Test
@@ -112,12 +212,12 @@ public class LocalContentResolverTest {
             java.io.File zipFile = storage.getBookImportFile(relPath);
             zipFile.getParentFile().mkdirs();
 
-            // Create a zip with an entry whose uncompressed size exceeds 32MiB
+            // Create a zip with an entry whose uncompressed size exceeds 128MiB
             try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(new java.io.FileOutputStream(zipFile))) {
                 zos.putNextEntry(new java.util.zip.ZipEntry("huge.png"));
                 byte[] chunk = new byte[65536];
-                // Write 33 MiB of data
-                for (int i = 0; i < (33 * 1024 * 1024 / chunk.length); i++) {
+                // Write 129 MiB of data
+                for (int i = 0; i < (129 * 1024 * 1024 / chunk.length); i++) {
                     zos.write(chunk);
                 }
                 zos.closeEntry();
@@ -136,9 +236,9 @@ public class LocalContentResolverTest {
 
             try {
                 resolver.materializePage(page.id);
-                org.junit.Assert.fail("Expected IOException for page exceeding 32MiB size limit");
+                org.junit.Assert.fail("Expected IOException for page exceeding 128MiB size limit");
             } catch (java.io.IOException e) {
-                assertTrue(e.getMessage().contains("32MiB") || e.getMessage().contains("超出安全限制"));
+                assertTrue(e.getMessage().contains("128MiB") || e.getMessage().contains("超出安全限制"));
             }
 
             // Verify .writing file was deleted on failure
@@ -156,12 +256,13 @@ public class LocalContentResolverTest {
         }
     }
 
-    private static class FakeStore extends LocalLibraryStore {
+    private static class FakeStore implements LocalContentResolver.ContentIndex {
         final java.util.Map<String, LocalModels.Book> books = new java.util.HashMap<>();
         final java.util.Map<String, LocalModels.Page> pages = new java.util.HashMap<>();
 
-        FakeStore() {
-            super();
+        @Override public LocalModels.Page getFirstPage(String bookId) {
+            for (LocalModels.Page page : pages.values()) if (bookId.equals(page.bookId)) return page;
+            return null;
         }
 
         @Override

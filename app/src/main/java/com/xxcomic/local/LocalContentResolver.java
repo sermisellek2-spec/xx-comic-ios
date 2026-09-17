@@ -20,10 +20,16 @@ public class LocalContentResolver {
     public static final String PREFIX_COVER = "local://cover/";
     public static final String PREFIX_CHAPTER = "local://chapter/";
 
-    private final LocalLibraryStore store;
+    public interface ContentIndex {
+        LocalModels.Book getBook(String id);
+        LocalModels.Page getPage(String id);
+        LocalModels.Page getFirstPage(String bookId);
+    }
+
+    private final ContentIndex store;
     private final LocalStorageManager storageManager;
 
-    public LocalContentResolver(LocalLibraryStore store, LocalStorageManager storageManager) {
+    public LocalContentResolver(ContentIndex store, LocalStorageManager storageManager) {
         this.store = store;
         this.storageManager = storageManager;
     }
@@ -67,7 +73,7 @@ public class LocalContentResolver {
             throw new IOException("本地页面未找到: " + pageId);
         }
         LocalModels.Book book = store.getBook(page.bookId);
-        if (book == null || LocalModels.STATUS_DELETING.equals(book.status)) {
+        if (book == null || !LocalModels.STATUS_READY.equals(book.status)) {
             throw new IOException("页面所属本地漫画未找到或正在删除中: " + page.bookId);
         }
 
@@ -90,7 +96,12 @@ public class LocalContentResolver {
                 try { zip.close(); } catch (IOException ignored) {}
                 throw new IOException("压缩包内页面条目未找到: " + page.entryPath);
             }
-            InputStream entryStream = zip.getInputStream(entry);
+            InputStream entryStream;
+            try { entryStream = zip.getInputStream(entry); }
+            catch (IOException | RuntimeException error) {
+                try { zip.close(); } catch (IOException ignored) { }
+                throw error;
+            }
             return new FilterInputStream(entryStream) {
                 @Override
                 public void close() throws IOException {
@@ -104,15 +115,31 @@ public class LocalContentResolver {
         }
     }
 
-    private final java.util.concurrent.ConcurrentHashMap<String, Object> pageLocks = new java.util.concurrent.ConcurrentHashMap<>();
-
     public File materializePage(String pageId) throws IOException {
+        synchronized (storageManager) {
+            return materializePageLocked(pageId);
+        }
+    }
+
+    public interface PageFileReader<T> {
+        T read(File file) throws IOException;
+    }
+
+    // Keep the file alive until the reader finishes decoding, including during cache cleanup/deletion.
+    public <T> T withPageFile(String pageId, PageFileReader<T> reader) throws IOException {
+        synchronized (storageManager) {
+            return reader.read(materializePageLocked(pageId));
+        }
+    }
+
+    private File materializePageLocked(String pageId) throws IOException {
+        LocalImporter.checkCancelled(null);
         LocalModels.Page page = store.getPage(pageId);
         if (page == null) {
             throw new IOException("本地页面未找到: " + pageId);
         }
         LocalModels.Book book = store.getBook(page.bookId);
-        if (book == null || LocalModels.STATUS_DELETING.equals(book.status)) {
+        if (book == null || !LocalModels.STATUS_READY.equals(book.status)) {
             throw new IOException("页面所属本地漫画未找到或正在删除中: " + page.bookId);
         }
 
@@ -123,31 +150,23 @@ public class LocalContentResolver {
             if (pageFile.exists() && pageFile.length() > 0) {
                 return pageFile;
             }
+            throw new IOException("本地图片文件不存在: " + page.entryPath);
         }
 
-        // Android API 23 compatible lock acquisition (avoid ConcurrentHashMap.computeIfAbsent from API 24)
-        Object lock = getPageLock(pageId);
-
-        synchronized (lock) {
-            book = store.getBook(page.bookId);
-            if (book == null || LocalModels.STATUS_DELETING.equals(book.status)) {
-                throw new IOException("页面所属本地漫画未找到或正在删除中: " + page.bookId);
-            }
-
-            File derivedPagesDir = storageManager.getPagesCacheDir();
-            File bookCacheDir = new File(derivedPagesDir, book.id);
-            if (!bookCacheDir.exists()) bookCacheDir.mkdirs();
-
-            File targetFile = new File(bookCacheDir, pageId + ".tmp");
-            if (targetFile.exists() && targetFile.length() > 0) {
-                return targetFile;
-            }
-
-            storageManager.enforcePagesCacheLimit(200L * 1024L * 1024L);
-            storageManager.checkUsableSpace(ArchiveIndex.MAX_PAGE_BYTES);
-
-            File tempFile = new File(bookCacheDir, pageId + "_" + System.currentTimeMillis() + ".writing");
-            boolean success = false;
+        File bookCacheDir = new File(storageManager.getPagesCacheDir(), book.id);
+        LocalStorageManager.assertPathInsideRoot(bookCacheDir, storageManager.getPagesCacheDir());
+        if (!bookCacheDir.exists() && !bookCacheDir.mkdirs()) throw new IOException("无法创建本地图片缓存");
+        File targetFile = new File(bookCacheDir, pageId + ".tmp");
+        LocalStorageManager.assertPathInsideRoot(targetFile, bookCacheDir);
+        if (targetFile.exists() && targetFile.length() > 0) {
+            targetFile.setLastModified(System.currentTimeMillis());
+            return targetFile;
+        }
+        storageManager.enforcePagesCacheLimit(200L * 1024L * 1024L - ArchiveIndex.MAX_PAGE_BYTES);
+        storageManager.checkUsableSpace(0);
+        File tempFile = File.createTempFile("page_", ".writing", bookCacheDir);
+        boolean success = false;
+        try {
             try (InputStream in = openPage(pageId);
                  OutputStream out = new FileOutputStream(tempFile)) {
                 byte[] buf = new byte[65536];
@@ -159,86 +178,72 @@ public class LocalContentResolver {
                     }
                     totalWritten += len;
                     if (totalWritten > ArchiveIndex.MAX_PAGE_BYTES) {
-                        throw new IOException("单页解压大小超出安全限制（最大 32MiB）: " + pageId);
+                        throw new IOException("单页解压大小超出安全限制（最大 128MiB）: " + pageId);
                     }
+                    storageManager.checkUsableSpace(len);
                     out.write(buf, 0, len);
                 }
-                success = true;
-            } finally {
-                if (!success && tempFile.exists()) {
-                    tempFile.delete();
-                }
             }
-
-            if (targetFile.exists()) targetFile.delete();
+            LocalImporter.checkCancelled(null);
+            LocalModels.Book latest = store.getBook(page.bookId);
+            if (latest == null || !LocalModels.STATUS_READY.equals(latest.status)) {
+                throw new IOException("本地漫画正在删除中");
+            }
             if (!tempFile.renameTo(targetFile)) {
-                if (tempFile.exists()) tempFile.delete();
                 throw new IOException("无法发布解压页面到缓存目录: " + targetFile.getAbsolutePath());
             }
+            success = true;
             return targetFile;
+        } finally {
+            if (!success) tempFile.delete();
         }
-    }
-
-    Object getPageLock(String pageId) {
-        Object lock = pageLocks.get(pageId);
-        if (lock == null) {
-            Object newLock = new Object();
-            Object existing = pageLocks.putIfAbsent(pageId, newLock);
-            lock = (existing != null) ? existing : newLock;
-        }
-        return lock;
-    }
-
-    public InputStream openCover(String bookId) throws IOException {
-        LocalModels.Book book = store.getBook(bookId);
-        if (book == null) return null;
-
-        if (!TextUtils.isEmpty(book.coverPath)) {
-            File coverFile = new File(book.coverPath);
-            if (coverFile.exists() && coverFile.length() > 0) {
-                return new FileInputStream(coverFile);
-            }
-        }
-
-        LocalModels.Page firstPage = store.getFirstPage(bookId);
-        if (firstPage != null) {
-            return openPage(firstPage.id);
-        }
-        return null;
     }
 
     public Bitmap decodeCoverBitmap(String bookId, int targetWidth, int targetHeight) {
-        LocalModels.Book book = store.getBook(bookId);
-        if (book != null && !TextUtils.isEmpty(book.coverPath)) {
-            File coverFile = new File(book.coverPath);
-            if (coverFile.exists() && coverFile.length() > 0) {
-                try {
-                    BitmapFactory.Options bounds = new BitmapFactory.Options();
-                    bounds.inJustDecodeBounds = true;
-                    BitmapFactory.decodeFile(coverFile.getAbsolutePath(), bounds);
-                    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null;
+        synchronized (storageManager) {
+            LocalModels.Book book = store.getBook(bookId);
+            if (book == null || !LocalModels.STATUS_READY.equals(book.status)) return null;
+            if (!TextUtils.isEmpty(book.coverPath)) {
+                File coverFile = new File(book.coverPath);
+                if (coverFile.exists() && coverFile.length() > 0) {
+                    try {
+                        BitmapFactory.Options bounds = new BitmapFactory.Options();
+                        bounds.inJustDecodeBounds = true;
+                        BitmapFactory.decodeFile(coverFile.getAbsolutePath(), bounds);
+                        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null;
 
-                    BitmapFactory.Options opts = new BitmapFactory.Options();
-                    opts.inSampleSize = 1;
-                    if (targetWidth > 0 && targetHeight > 0) {
-                        int sample = 1;
-                        while (bounds.outWidth / (sample * 2) >= targetWidth && bounds.outHeight / (sample * 2) >= targetHeight) {
-                            sample *= 2;
+                        BitmapFactory.Options opts = new BitmapFactory.Options();
+                        opts.inSampleSize = 1;
+                        if (targetWidth > 0 && targetHeight > 0) {
+                            int sample = 1;
+                            while (bounds.outWidth / (sample * 2) >= targetWidth && bounds.outHeight / (sample * 2) >= targetHeight) {
+                                sample *= 2;
+                            }
+                            opts.inSampleSize = sample;
                         }
-                        opts.inSampleSize = sample;
+                        return BitmapFactory.decodeFile(coverFile.getAbsolutePath(), opts);
+                    } catch (Exception ignored) {
+                        return null;
                     }
-                    return BitmapFactory.decodeFile(coverFile.getAbsolutePath(), opts);
-                } catch (Exception ignored) {
-                    return null;
                 }
             }
-        }
 
-        try (InputStream in = openCover(bookId)) {
-            if (in == null) return null;
-            return BitmapFactory.decodeStream(new LocalImporter.BoundedInputStream(in, ArchiveIndex.MAX_PAGE_BYTES));
-        } catch (Exception ignored) {
-            return null;
+            LocalModels.Page first = store.getFirstPage(bookId);
+            if (first == null) return null;
+            try {
+                return withPageFile(first.id, file -> {
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+                    if (options.outWidth <= 0 || options.outHeight <= 0) return null;
+                    options.inJustDecodeBounds = false;
+                    options.inSampleSize = 1;
+                    while (Math.max(options.outWidth, options.outHeight) / options.inSampleSize > 600) options.inSampleSize *= 2;
+                    return BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+                });
+            } catch (Exception ignored) {
+                return null;
+            }
         }
     }
 }

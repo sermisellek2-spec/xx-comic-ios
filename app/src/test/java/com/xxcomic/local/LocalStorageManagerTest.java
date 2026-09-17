@@ -15,6 +15,21 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class LocalStorageManagerTest {
+    @Test
+    public void rejectsImportRootAsBookPath() throws Exception {
+        try { storageManager.getBookImportFile(""); org.junit.Assert.fail("accepted imports root as one book"); }
+        catch (IOException | SecurityException expected) { }
+    }
+
+    @Test
+    public void bookDeletionReportsDerivedFailure() throws Exception {
+        LocalStorageManager failing = new LocalStorageManager(tempRoot) {
+            @Override public synchronized boolean clearDerivedPagesForBook(String id) { return false; }
+        };
+        LocalModels.Book book = new LocalModels.Book("book", "fp", "title", null, "zip", "import", "book",
+                "book.zip", null, 0, 1, 1, LocalModels.STATUS_DELETING, 0, 0);
+        assertFalse(failing.deleteBookFiles(book));
+    }
     private File tempRoot;
     private LocalStorageManager storageManager;
 

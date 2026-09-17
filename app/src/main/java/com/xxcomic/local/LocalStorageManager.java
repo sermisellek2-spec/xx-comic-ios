@@ -89,8 +89,10 @@ public class LocalStorageManager {
     }
 
     public File getBookImportFile(String relativePath) throws IOException {
+        if (relativePath == null || relativePath.trim().isEmpty()) throw new IOException("本地漫画文件路径为空");
         File file = new File(importsDir, relativePath);
         assertPathInsideRoot(file, importsDir);
+        if (file.getCanonicalFile().equals(importsDir.getCanonicalFile())) throw new IOException("本地漫画路径不能是整个书架目录");
         return file;
     }
 
@@ -108,39 +110,13 @@ public class LocalStorageManager {
             parent.mkdirs();
         }
         if (targetImportFile.exists()) {
-            deleteRecursively(targetImportFile);
+            throw new IOException("导入目标已存在，保留原副本: " + targetImportFile.getName());
         }
         boolean renamed = stagingFile.renameTo(targetImportFile);
         if (!renamed) {
-            // fallback: copy and delete
-            copyFileOrDir(stagingFile, targetImportFile);
-            deleteRecursively(stagingFile);
-            return true;
+            throw new IOException("无法将暂存文件移入本地书架");
         }
         return true;
-    }
-
-    private void copyFileOrDir(File src, File dest) throws IOException {
-        if (src.isDirectory()) {
-            if (!dest.exists() && !dest.mkdirs()) {
-                throw new IOException("Failed to create dir: " + dest.getAbsolutePath());
-            }
-            File[] children = src.listFiles();
-            if (children != null) {
-                for (File child : children) {
-                    copyFileOrDir(child, new File(dest, child.getName()));
-                }
-            }
-        } else {
-            try (java.io.InputStream in = new java.io.FileInputStream(src);
-                 java.io.OutputStream out = new java.io.FileOutputStream(dest)) {
-                byte[] buf = new byte[65536];
-                int len;
-                while ((len = in.read(buf)) > 0) {
-                    out.write(buf, 0, len);
-                }
-            }
-        }
     }
 
     public long getUsableSpace() {
@@ -167,11 +143,11 @@ public class LocalStorageManager {
         return (usable - Math.max(0L, remainingBytes)) >= MIN_RESERVED_FREE_BYTES;
     }
 
-    public boolean deleteRecursively(File fileOrDir) {
+    public synchronized boolean deleteRecursively(File fileOrDir) {
         if (fileOrDir == null || !fileOrDir.exists()) return true;
         try {
             assertPathInsideRoot(fileOrDir, libraryRoot);
-        } catch (IOException e) {
+        } catch (IOException | SecurityException e) {
             return false;
         }
         if (fileOrDir.isDirectory()) {
@@ -196,7 +172,7 @@ public class LocalStorageManager {
         }
     }
 
-    public void clearDerivedPagesCache() {
+    public synchronized void clearDerivedPagesCache() {
         if (pagesCacheDir.exists()) {
             File[] children = pagesCacheDir.listFiles();
             if (children != null) {
@@ -207,13 +183,22 @@ public class LocalStorageManager {
         }
     }
 
-    public boolean clearDerivedPagesForBook(String bookId) {
+    public synchronized boolean clearDerivedPagesForBook(String bookId) {
         if (bookId == null || bookId.trim().isEmpty()) return true;
         File bookPagesDir = new File(pagesCacheDir, bookId.trim());
         return deleteRecursively(bookPagesDir);
     }
 
-    public void cleanupOrphans(java.util.Set<String> activeRelativePaths, java.util.Set<String> activeCoverPaths) {
+    public synchronized boolean deleteBookFiles(LocalModels.Book book) {
+        boolean cleaned = clearDerivedPagesForBook(book.id);
+        try { cleaned &= deleteRecursively(getBookImportFile(book.relativePath)); }
+        catch (IOException | SecurityException error) { cleaned = false; }
+        try { cleaned &= deleteRecursively(getCoverFile(book.id)); }
+        catch (IOException | SecurityException error) { cleaned = false; }
+        return cleaned;
+    }
+
+    public synchronized void cleanupOrphans(java.util.Set<String> activeRelativePaths, java.util.Set<String> activeCoverPaths) {
         cleanStaging();
         if (importsDir.exists()) {
             File[] files = importsDir.listFiles();
@@ -238,7 +223,7 @@ public class LocalStorageManager {
         }
     }
 
-    public void enforcePagesCacheLimit(long maxBytes) {
+    public synchronized void enforcePagesCacheLimit(long maxBytes) {
         if (!pagesCacheDir.exists()) return;
         List<File> allFiles = new ArrayList<>();
         collectAllFiles(pagesCacheDir, allFiles);

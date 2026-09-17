@@ -90,20 +90,32 @@ public class LocalDetailView {
         });
         topBar.addView(backBtn, UIHelpers.weight(1));
 
-        TextView renameBtn = UIHelpers.text(activity, "重命名", 14, Color.WHITE, Typeface.NORMAL);
-        renameBtn.setBackground(UIHelpers.round(Color.argb(120, 0, 0, 0), UIHelpers.dp(activity, 14), Color.TRANSPARENT));
-        renameBtn.setPadding(UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 6), UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 6));
-        renameBtn.setOnClickListener(v -> showRenameDialog(activity, book, store, listener));
-        topBar.addView(renameBtn);
-
-        TextView deleteBtn = UIHelpers.text(activity, "删除", 14, Color.rgb(255, 120, 120), Typeface.NORMAL);
-        deleteBtn.setBackground(UIHelpers.round(Color.argb(120, 0, 0, 0), UIHelpers.dp(activity, 14), Color.TRANSPARENT));
-        deleteBtn.setPadding(UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 6), UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 6));
-        LinearLayout.LayoutParams delParams = new LinearLayout.LayoutParams(-2, -2);
-        delParams.leftMargin = UIHelpers.dp(activity, 8);
-        deleteBtn.setLayoutParams(delParams);
-        deleteBtn.setOnClickListener(v -> showDeleteDialog(activity, book, store, storageManager, listener));
-        topBar.addView(deleteBtn);
+        TextView more = UIHelpers.text(activity, "···", 22, Color.WHITE, Typeface.BOLD);
+        more.setGravity(Gravity.CENTER);
+        more.setContentDescription("更多操作");
+        more.setOnClickListener(v -> {
+            LinearLayout menu = new LinearLayout(activity);
+            menu.setOrientation(LinearLayout.VERTICAL);
+            menu.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 8), UIHelpers.BORDER));
+            PopupWindow popup = new PopupWindow(menu, UIHelpers.dp(activity, 140), -2, true);
+            popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            popup.setOutsideTouchable(true);
+            popup.setElevation(UIHelpers.dp(activity, 8));
+            String[] labels = {"重命名", "删除漫画"};
+            for (int i = 0; i < labels.length; i++) {
+                final int action = i;
+                TextView item = UIHelpers.text(activity, labels[i], 14, UIHelpers.TEXT, Typeface.NORMAL);
+                item.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 14), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 14));
+                item.setOnClickListener(clicked -> {
+                    popup.dismiss();
+                    if (action == 0) showRenameDialog(activity, book, store, listener);
+                    else showDeleteDialog(activity, book, store, storageManager, listener);
+                });
+                menu.addView(item, new LinearLayout.LayoutParams(-1, -2));
+            }
+            popup.showAsDropDown(more, 0, 0, Gravity.END);
+        });
+        topBar.addView(more, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 44), UIHelpers.dp(activity, 44)));
 
         hero.addView(topBar, new FrameLayout.LayoutParams(-1, -2));
 
@@ -383,13 +395,28 @@ public class LocalDetailView {
                         errorView.setVisibility(View.VISIBLE);
                         return;
                     }
-                    store.renameBook(book.id, newTitle);
-                    LocalModels.Book updated = store.getBook(book.id);
-                    dialog.dismiss();
-                    if (listener != null) {
-                        if (updated != null) listener.onBookRenamed(updated);
-                        listener.showToast("已重命名漫画");
-                    }
+                    pos.setEnabled(false);
+                    new Thread(() -> {
+                        LocalModels.Book renamed = null;
+                        try {
+                            if (store.renameBook(book.id, newTitle)) renamed = store.getBook(book.id);
+                        } catch (Exception ignored) { }
+                        final LocalModels.Book updated = renamed;
+                        activity.runOnUiThread(() -> {
+                            if (activity.isFinishing() || activity.isDestroyed()) return;
+                            pos.setEnabled(true);
+                            if (updated == null) {
+                                errorView.setText("名称保存失败，请重试");
+                                errorView.setVisibility(View.VISIBLE);
+                                return;
+                            }
+                            dialog.dismiss();
+                            if (listener != null) {
+                                listener.onBookRenamed(updated);
+                                listener.showToast("已重命名漫画");
+                            }
+                        });
+                    }, "local-rename").start();
                 });
             }
             Button neg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
@@ -453,53 +480,11 @@ public class LocalDetailView {
     private static void executeDelete(Activity activity, LocalModels.Book book,
                                       LocalLibraryStore store, LocalStorageManager storageManager,
                                       Listener listener) {
-        // Step 1: Immediately mark deleting in store to stop reads/prefetches
-        store.markDeleting(book.id);
-
-        // Step 2: Perform file deletions in background
         new Thread(() -> {
-            boolean filesCleaned = true;
-            try {
-                // Delete extracted derived pages
-                boolean pagesCleared = storageManager.clearDerivedPagesForBook(book.id);
-                if (!pagesCleared) {
-                    filesCleaned = false;
-                }
-            } catch (Exception ignored) {
-                filesCleaned = false;
-            }
-
-            try {
-                // Delete import archive / folder
-                File bookFile = storageManager.getBookImportFile(book.relativePath);
-                if (bookFile != null && bookFile.exists()) {
-                    boolean deleted = storageManager.deleteRecursively(bookFile);
-                    if (!deleted && bookFile.exists()) {
-                        filesCleaned = false;
-                    }
-                }
-            } catch (Exception ignored) {
-                filesCleaned = false;
-            }
-
-            try {
-                // Delete cover file
-                File cover = storageManager.getCoverFile(book.id);
-                if (cover != null && cover.exists()) {
-                    boolean coverDeleted = cover.delete();
-                    if (!coverDeleted && cover.exists()) {
-                        filesCleaned = false;
-                    }
-                }
-            } catch (Exception ignored) {
-                filesCleaned = false;
-            }
-
-            final boolean success = filesCleaned;
-            // Step 3: Decouple DB completion from Activity lifecycle: completeDeletion always runs if files cleaned
-            if (success) {
-                store.completeDeletion(book.id);
-            }
+            boolean deleted;
+            try { deleted = store.deleteBook(book.id, storageManager); }
+            catch (Exception error) { deleted = false; }
+            final boolean success = deleted;
 
             if (activity != null) {
                 activity.runOnUiThread(() -> {

@@ -4,6 +4,8 @@ import android.content.Context;
 
 import com.xxcomic.local.LocalModels;
 import com.xxcomic.local.LocalLibraryStore;
+import com.xxcomic.local.LocalStorageManager;
+import com.xxcomic.local.LocalImportRecoveryChecks;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ public final class LocalLibraryChecks {
         if (testDb.exists()) testDb.delete();
 
         LocalLibraryStore store = new LocalLibraryStore(context, testDb);
+        LocalStorageManager storage = new LocalStorageManager(new File(context.getCacheDir(), "test_library_" + System.nanoTime()));
         try {
             // 1. Initial empty check
             assertCondition(store.listBooks().isEmpty(), "Initial store should have 0 books");
@@ -137,15 +140,16 @@ public final class LocalLibraryChecks {
                     "staging/tmp.zip", null, 100L, 1, 1, LocalModels.STATUS_STAGING, 0L, 0L
             );
             store.commitImport(stagingBook, Collections.emptyList(), Collections.emptyMap());
-            store.recoverOrphanedStates();
+            store.recoverOrphanedStates(storage);
             assertCondition(store.getBook("b_staging") == null, "Staging book recovered and deleted");
             checks++;
 
         } finally {
             store.close();
+            storage.deleteRecursively(storage.getLibraryRoot());
             if (testDb.exists()) testDb.delete();
         }
-        return checks;
+        return checks + LocalImportRecoveryChecks.run(context);
     }
 
     private static void assertCondition(boolean condition, String message) {
