@@ -1,0 +1,6 @@
+<resources>
+    <style name="DownloadSheetAnimation">
+        <item name="android:windowEnterAnimation">@anim/download_sheet_enter</item>
+        <item name="android:windowExitAnimation">@anim/download_sheet_exit</item>
+    </style>
+</resources>

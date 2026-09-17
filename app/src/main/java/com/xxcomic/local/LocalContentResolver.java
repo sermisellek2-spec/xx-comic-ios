@@ -78,7 +78,7 @@ public class LocalContentResolver {
         }
 
         if (LocalModels.FORMAT_FOLDER.equals(book.format)) {
-            File bookDir = storageManager.getBookImportFile(book.relativePath);
+            File bookDir = storageManager.getBookContentFile(book);
             File pageFile = new File(bookDir, page.entryPath);
             LocalStorageManager.assertPathInsideRoot(pageFile, bookDir);
             if (!pageFile.exists()) {
@@ -144,7 +144,7 @@ public class LocalContentResolver {
         }
 
         if (LocalModels.FORMAT_FOLDER.equals(book.format)) {
-            File bookDir = storageManager.getBookImportFile(book.relativePath);
+            File bookDir = storageManager.getBookContentFile(book);
             File pageFile = new File(bookDir, page.entryPath);
             LocalStorageManager.assertPathInsideRoot(pageFile, bookDir);
             if (pageFile.exists() && pageFile.length() > 0) {
@@ -221,6 +221,7 @@ public class LocalContentResolver {
                             }
                             opts.inSampleSize = sample;
                         }
+                        while ((long)(bounds.outWidth / opts.inSampleSize) * (bounds.outHeight / opts.inSampleSize) > 4_000_000L) opts.inSampleSize *= 2;
                         return BitmapFactory.decodeFile(coverFile.getAbsolutePath(), opts);
                     } catch (Exception ignored) {
                         return null;
@@ -239,7 +240,9 @@ public class LocalContentResolver {
                     options.inJustDecodeBounds = false;
                     options.inSampleSize = 1;
                     while (Math.max(options.outWidth, options.outHeight) / options.inSampleSize > 600) options.inSampleSize *= 2;
-                    return BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+                    Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+                    return first.transformation != null && first.transformation.startsWith("jm:")
+                            ? com.xxcomic.JmImageTransform.restore(bitmap, first.transformation.substring(3)) : bitmap;
                 });
             } catch (Exception ignored) {
                 return null;

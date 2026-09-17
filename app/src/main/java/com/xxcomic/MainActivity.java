@@ -95,6 +95,9 @@ import com.xxcomic.local.LocalDetailView;
 import com.xxcomic.local.LocalImporter;
 import com.xxcomic.local.LocalLibraryStore;
 import com.xxcomic.local.LocalLibraryView;
+import com.xxcomic.download.DownloadRuntime;
+import com.xxcomic.download.DownloadViews;
+import com.xxcomic.download.DownloadModels;
 import com.xxcomic.local.LocalModels;
 import com.xxcomic.local.LocalStorageManager;
 
@@ -388,6 +391,8 @@ public class MainActivity extends Activity {
     }
     private ActiveImportTask currentImportTask = null;
     private boolean localLibraryReady;
+    private Runnable offlinePageBack;
+    private String readerLocalBookId = "";
     private String localLibraryRecoveryError;
     private final java.util.concurrent.atomic.AtomicBoolean localStoreRecoveryStarted = new java.util.concurrent.atomic.AtomicBoolean(false);
 
@@ -407,6 +412,14 @@ public class MainActivity extends Activity {
                     localLibraryReady = failure == null;
                     localLibraryRecoveryError = failure;
                     refreshLocalBookshelf();
+                    if (failure == null) {
+                        DownloadRuntime runtime = DownloadRuntime.get(this);
+                        if (runtime.hasPending()) DownloadViews.startService(this);
+                        if (getIntent().getBooleanExtra("open.downloads", false)) {
+                            getIntent().removeExtra("open.downloads");
+                            showDownloadCenter();
+                        }
+                    }
                 });
             });
         }
@@ -414,14 +427,14 @@ public class MainActivity extends Activity {
 
     private LocalStorageManager getLocalStorageManager() {
         synchronized (MainActivity.class) {
-            if (localStorageManager == null) localStorageManager = new LocalStorageManager(getApplicationContext());
+            if (localStorageManager == null) localStorageManager = com.xxcomic.local.LocalLibrary.get(this).storage;
             return localStorageManager;
         }
     }
 
     private LocalLibraryStore getLocalLibraryStore() {
         synchronized (MainActivity.class) {
-            if (localLibraryStore == null) localLibraryStore = new LocalLibraryStore(getApplicationContext());
+            if (localLibraryStore == null) localLibraryStore = com.xxcomic.local.LocalLibrary.get(this).store;
             return localLibraryStore;
         }
     }
@@ -429,7 +442,7 @@ public class MainActivity extends Activity {
     private LocalContentResolver getLocalContentResolver() {
         synchronized (MainActivity.class) {
             if (localContentResolver == null) {
-                localContentResolver = new LocalContentResolver(getLocalLibraryStore(), getLocalStorageManager());
+                localContentResolver = com.xxcomic.local.LocalLibrary.get(this).resolver;
             }
             return localContentResolver;
         }
@@ -573,6 +586,7 @@ public class MainActivity extends Activity {
         mh18BrowserSession = new Mh18WebViewSession(
                 this, main, mh18Config.name, null,
                 () -> requestProtectedSourceRetry("mh18"));
+        DownloadSources.attachMh18(mh18BrowserSession);
         jmcomicBrowserSession = new JmComicWebViewSession(
                 this, main, jmcomicConfig.name, null,
                 () -> requestProtectedSourceRetry("jmcomic"));
@@ -630,6 +644,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        DownloadSources.attachMh18(null);
         activityDestroyed = true;
         if (currentImportTask != null) {
             currentImportTask.cancelled.set(true);
@@ -1189,6 +1204,9 @@ public class MainActivity extends Activity {
     }
 
     private boolean navigateBack() {
+        if (offlinePageBack != null) {
+            Runnable back = offlinePageBack; offlinePageBack = null; back.run(); return true;
+        }
         if (pageLoading) {
             Runnable backAction = pageLoadingBackAction;
             pageLoading = false;
@@ -1418,6 +1436,7 @@ public class MainActivity extends Activity {
     }
 
     private void enterScreen(boolean keepDetailSearch) {
+        offlinePageBack = null;
         if (!keepDetailSearch) detailSourceSearch.detach();
         if (detailSourceSheet != null) detailSourceSheet.dismissImmediately();
         detailSourceEntry = null;
@@ -1560,6 +1579,8 @@ public class MainActivity extends Activity {
                 enabledBuiltinSources().size() + " 个开启", this::showSourceManagement));
         local.addView(UIHelpers.divider(this));
         local.addView(settingsMenuItem(R.drawable.ic_trash, "缓存清理", "保留收藏与阅读历史", cacheSize, this::showCacheCleanup));
+        local.addView(UIHelpers.divider(this));
+        local.addView(settingsMenuItem(R.drawable.ic_download, "本地存储与下载", "仅 Wi-Fi 下载 · 副本管理", "", this::showLocalStorage));
         local.addView(UIHelpers.divider(this));
         local.addView(settingsMenuItem(R.drawable.ic_lightning, "错误日志", "只保存在本机", errorLogSummary(), this::showErrorLogs));
         page.addView(local);
@@ -2013,6 +2034,10 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, -2);
             p.leftMargin = UIHelpers.dp(this, 8);
             bookshelfRightActions.addView(importBtn, p);
+            ImageView downloads = UIHelpers.vectorIconButton(this, R.drawable.ic_download, UIHelpers.ACCENT, 8);
+            downloads.setContentDescription("下载中心");
+            downloads.setOnClickListener(v -> showDownloadCenter());
+            bookshelfRightActions.addView(downloads, new LinearLayout.LayoutParams(UIHelpers.dp(this, 48), UIHelpers.dp(this, 48)));
         }
     }
 
@@ -2080,22 +2105,25 @@ public class MainActivity extends Activity {
         String continueLocalId = null;
         long latestRead = Long.MIN_VALUE;
         for (String id : progress.keySet()) {
-            if (!isLocalComic(id)) continue;
+            LocalModels.Book local = getLocalLibraryStore().findByProgressKey(id);
+            if (local == null) continue;
             long readAt = lastViewedAt.containsKey(id) ? lastViewedAt.get(id) : Long.MIN_VALUE;
             if (readAt > latestRead) {
                 latestRead = readAt;
-                continueLocalId = id;
+                continueLocalId = local.id;
             }
         }
         if (continueLocalId == null) {
             for (String id : progress.keySet()) {
-                if (isLocalComic(id)) {
-                    continueLocalId = id;
+                LocalModels.Book local = getLocalLibraryStore().findByProgressKey(id);
+                if (local != null) {
+                    continueLocalId = local.id;
                     break;
                 }
             }
         }
-        int continueChapter = continueLocalId != null ? savedChapter(continueLocalId) : 0;
+        LocalModels.Book continuing = continueLocalId == null ? null : getLocalLibraryStore().getBook(continueLocalId);
+        int continueChapter = continuing != null ? savedChapter(continuing.progressKey) : 0;
 
         View importBanner = (currentImportTask != null && !currentImportTask.cancelled.get())
                 ? buildActiveImportBanner(currentImportTask)
@@ -3109,6 +3137,11 @@ public class MainActivity extends Activity {
             postMainIfAlive(() -> {
                 verifyingProtectedSourceIds.remove(sourceId);
                 boolean retry = retryProtectedSourceIds.remove(sourceId);
+                if (verificationFailure == null) {
+                    DownloadRuntime runtime = DownloadRuntime.get(this);
+                    runtime.queue.verificationReady(sourceId);
+                    if (runtime.hasPending()) DownloadViews.startService(this);
+                }
                 if (retry) {
                     verifyProtectedSource(sourceId);
                 } else if (verificationFailure != null
@@ -3214,7 +3247,7 @@ public class MainActivity extends Activity {
                 "本地导入",
                 Collections.emptyList()
         );
-        ComicModels.ComicDetail detail = new ComicModels.ComicDetail(
+        ComicModels.ComicDetail importedDetail = new ComicModels.ComicDetail(
                 summary,
                 "本地",
                 "已完成",
@@ -3222,11 +3255,18 @@ public class MainActivity extends Activity {
                 "",
                 comicChapters
         );
+        final ComicModels.ComicDetail detail = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType)
+                ? downloadedDetail(book) : importedDetail;
+        if (detail == null) { showRemErrorToast("下载目录缺失，请到下载中心重试"); return; }
         details.put(book.id, detail);
         summaries.put(book.id, summary);
+        if (LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType)) {
+            details.put(book.progressKey, detail);
+            summaries.put(book.progressKey, detail.summary);
+        }
 
-        int savedChapter = savedChapter(book.id);
-        boolean hasRead = lastViewedAt.containsKey(book.id);
+        int savedChapter = localReadIndex(book, detail);
+        boolean hasRead = lastViewedAt.containsKey(book.progressKey);
         root.removeAllViews();
         View localDetailView = LocalDetailView.build(
                 this,
@@ -3250,6 +3290,7 @@ public class MainActivity extends Activity {
 
                     @Override
                     public void onRead(LocalModels.Book b, ComicModels.ComicDetail d, int chapterIndex) {
+                        readerLocalBookId = b.id;
                         showReader(d, chapterIndex);
                     }
 
@@ -3300,7 +3341,48 @@ public class MainActivity extends Activity {
         root.addView(localDetailView, UIHelpers.match());
     }
 
+    private ComicModels.ComicDetail downloadedDetail(LocalModels.Book book) {
+        // The local view uses Book's title/cover; online cache metadata must retain the site's identity.
+        return DownloadRuntime.get(this).store.snapshot(book.id);
+    }
+
+    private int localReadIndex(LocalModels.Book book, ComicModels.ComicDetail detail) {
+        if (progress.containsKey(book.progressKey) || !LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType)) return savedChapter(book.progressKey);
+        Set<String> available = new HashSet<>();
+        for (LocalModels.Chapter chapter : getLocalLibraryStore().getChapters(book.id)) available.add(chapter.entryPath);
+        for (int i=0; i<detail.chapters.size(); i++) if (available.contains(detail.chapters.get(i).chapterId)) return i;
+        return 0;
+    }
+
+    private void showDownloadCenter() {
+        enterScreen(); readerVisible = false; activeDetailId = ""; settingsScene = "";
+        sourceManagementVisible = false; historyVisible = false; standaloneSearchVisible = false; detailBackAction = null;
+        applyThemeAndSystemBars(); root.removeAllViews();
+        offlinePageBack = () -> showTab(0);
+        root.addView(DownloadViews.center(this, offlinePageBack, this::showLocalDetail, this::showSourceManagement), UIHelpers.match());
+    }
+
+    private void showLocalStorage() {
+        enterScreen(); readerVisible = false; activeDetailId = ""; settingsScene = "";
+        sourceManagementVisible = false; historyVisible = false; standaloneSearchVisible = false; detailBackAction = null;
+        applyThemeAndSystemBars(); root.removeAllViews();
+        offlinePageBack = () -> showTab(2);
+        root.addView(DownloadViews.storage(this, offlinePageBack, this::showLocalStorage), UIHelpers.match());
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent); setIntent(intent);
+        if (intent.getBooleanExtra("open.downloads", false) && localLibraryReady) {
+            intent.removeExtra("open.downloads"); showDownloadCenter();
+        }
+    }
+
     private void showDetail(String comicId) {
+        if (readerVisible && !TextUtils.isEmpty(readerLocalBookId)) {
+            LocalModels.Book local = getLocalLibraryStore().getBook(readerLocalBookId);
+            if (local != null && local.progressKey.equals(comicId)) { showLocalDetail(local.id); return; }
+        }
+        readerLocalBookId = "";
         if (isLocalComic(comicId)) {
             showLocalDetail(comicId);
             return;
@@ -3434,6 +3516,12 @@ public class MainActivity extends Activity {
         body.addView(summary, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
 
         body.addView(chapterEntry(detail), UIHelpers.marginTop(-1, UIHelpers.dp(this, 10)));
+        TextView downloadEntry = UIHelpers.text(this, "↓ 下载章节", 13, UIHelpers.ACCENT, Typeface.NORMAL);
+        downloadEntry.setGravity(Gravity.CENTER_VERTICAL);
+        downloadEntry.setMinimumHeight(UIHelpers.dp(this, 48));
+        downloadEntry.setOnClickListener(v -> ensureChaptersThen(detail, loaded ->
+                DownloadViews.selection(this, loaded, savedChapter(loaded.summary.comicId), () -> {})));
+        body.addView(downloadEntry);
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
@@ -3631,6 +3719,31 @@ public class MainActivity extends Activity {
         if (!TextUtils.equals(readerEntryChapterUrl, chapterUrl)) {
             readerEntryChapterUrl = "";
             readerEntryTarget = 0;
+        }
+        if (!isLocalComic(comicId)) {
+            DownloadRuntime runtime = DownloadRuntime.get(this);
+            DownloadModels.Task task = runtime.store.get(DownloadModels.key(detail.summary.sourceId, comicId, chapter.chapterId));
+            if (task != null && task.state == DownloadModels.State.COMPLETED) {
+                showReaderLoading(detail);
+                final int localIndex = readerChapterIndex;
+                track(detailIo.submit(() -> {
+                    try {
+                        ComicModels.ChapterPage page = runtime.localChapter(detail, localIndex);
+                        if (page == null) throw new IOException("本章下载已移除");
+                        main.post(() -> commitReaderPage(generation, comicId, chapterUrl, detail, page));
+                    } catch (Exception error) {
+                        main.post(() -> {
+                            if (!isCurrentReaderRequest(generation, comicId, chapterUrl, detail)) return;
+                            showReaderError(detail, "本章下载文件需要修复", "到下载中心重新下载本章", this::showDownloadCenter);
+                        });
+                    }
+                }));
+                return;
+            }
+            if (!runtime.connected() && !TextUtils.isEmpty(readerLocalBookId)) {
+                showReaderError(detail, "这一章还没有下载哦", "已下载的章节可以在下载中心找到", this::showDownloadCenter);
+                return;
+            }
         }
         ComicModels.ChapterPage cached = chapters.get(chapter.url);
         if (isEmptyChapterPage(cached)) {
@@ -5245,6 +5358,16 @@ public class MainActivity extends Activity {
 
     private void showDetailThenRead(String id) {
         onUserOpenComicDetail(id);
+        if (isLocalComic(id) && localLibraryReady) {
+            LocalModels.Book book = getLocalLibraryStore().getBook(id);
+            if (book != null && LocalModels.STATUS_READY.equals(book.status) && LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType)) {
+                ComicModels.ComicDetail downloaded = downloadedDetail(book);
+                if (downloaded == null) { showRemErrorToast("下载目录缺失，请到下载中心重试"); return; }
+                readerLocalBookId = book.id;
+                details.put(book.progressKey, downloaded); summaries.put(book.progressKey, downloaded.summary);
+                showReader(downloaded, localReadIndex(book, downloaded)); return;
+            }
+        }
         if (isLocalComic(id)) {
             if (!localLibraryReady) {
                 showRemSuccessToast("正在整理本地文件，稍等一下哦");
@@ -6176,67 +6299,16 @@ public class MainActivity extends Activity {
         return restoreJmReaderImage(bitmap, imageUrl);
     }
 
-    private Bitmap restoreJmReaderImage(Bitmap source, String imageUrl) {
-        if (source == null || TextUtils.isEmpty(imageUrl)) return source;
-        Matcher path = Pattern.compile(
-                "https?://cdn-msp[^/]*\\.18comic\\.vip/media/photos/(\\d+)/([^/?#]+)",
-                Pattern.CASE_INSENSITIVE).matcher(imageUrl);
-        Matcher scramble = Pattern.compile("[?&]scramble_id=(\\d+)").matcher(imageUrl);
-        if (!path.find() || !scramble.find()) return source;
-        long aid;
-        long scrambleId;
-        try {
-            aid = Long.parseLong(path.group(1));
-            scrambleId = Long.parseLong(scramble.group(1));
-        } catch (NumberFormatException ignored) {
-            return source;
+    private Bitmap restoreJmReaderImage(Bitmap bitmap, String url) {
+        if (LocalContentResolver.isLocalPageUrl(url)) {
+            LocalModels.Page page = getLocalLibraryStore().getPage(LocalContentResolver.extractId(url, LocalContentResolver.PREFIX_PAGE));
+            url = page != null && page.transformation != null && page.transformation.startsWith("jm:")
+                    ? page.transformation.substring(3) : "";
         }
-        int slices = jmScrambleSlices(aid, scrambleId, path.group(2));
-        if (slices <= 1 || source.getHeight() < slices) return source;
-        Bitmap.Config config = source.getConfig();
-        if (config == null || config == Bitmap.Config.HARDWARE) config = Bitmap.Config.ARGB_8888;
-        Bitmap restored = Bitmap.createBitmap(source.getWidth(), source.getHeight(), config);
-        Canvas canvas = new Canvas(restored);
-        for (int[] bound : jmSliceBounds(source.getHeight(), slices)) {
-            canvas.drawBitmap(source,
-                    new Rect(0, bound[0], source.getWidth(), bound[1]),
-                    new Rect(0, bound[2], source.getWidth(), bound[3]), null);
-        }
-        source.recycle();
-        return restored;
+        return JmImageTransform.restore(bitmap, url);
     }
-
-    static int[][] jmSliceBounds(int height, int slices) {
-        int[][] bounds = new int[slices][4];
-        int move = height / slices;
-        int remainder = height % slices;
-        int targetY = 0;
-        for (int i = 0; i < slices; i++) {
-            int sliceHeight = move + (i == 0 ? remainder : 0);
-            int sourceY = height - targetY - sliceHeight;
-            bounds[i] = new int[]{sourceY, sourceY + sliceHeight, targetY, targetY + sliceHeight};
-            targetY += sliceHeight;
-        }
-        return bounds;
-    }
-
-    static int jmScrambleSlices(long aid, long scrambleId, String fileName) {
-        if (aid < scrambleId) return 0;
-        if (aid < 268850L) return 10;
-        try {
-            String baseName = fileName == null ? "" : fileName;
-            int extension = baseName.lastIndexOf('.');
-            if (extension > 0) baseName = baseName.substring(0, extension);
-            byte[] digest = MessageDigest.getInstance("MD5")
-                    .digest((aid + baseName).getBytes("UTF-8"));
-            StringBuilder hex = new StringBuilder(digest.length * 2);
-            for (byte value : digest) hex.append(String.format(Locale.US, "%02x", value & 0xff));
-            int divisor = aid >= 421926L ? 8 : 10;
-            return hex.charAt(hex.length() - 1) % divisor * 2 + 2;
-        } catch (Exception ignored) {
-            return 0;
-        }
-    }
+    static int[][] jmSliceBounds(int height,int slices) { return JmImageTransform.jmSliceBounds(height,slices); }
+    static int jmScrambleSlices(long aid,long scramble,String name) { return JmImageTransform.jmScrambleSlices(aid,scramble,name); }
 
     private int readerContentWidth() {
         return Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
@@ -6367,13 +6439,7 @@ public class MainActivity extends Activity {
     }
 
     private void applyImageHeaders(HttpURLConnection connection, String referer) {
-        connection.setRequestProperty("User-Agent", IMAGE_USER_AGENT);
-        connection.setRequestProperty("Accept", "image/webp,image/apng,image/*,*/*;q=0.8");
-        connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8");
-        connection.setRequestProperty("Sec-Fetch-Dest", "image");
-        connection.setRequestProperty("Sec-Fetch-Mode", "no-cors");
-        connection.setRequestProperty("Sec-Fetch-Site", "cross-site");
-        if (!TextUtils.isEmpty(referer)) connection.setRequestProperty("Referer", referer);
+        com.xxcomic.download.SourceImageFetcher.applyHeaders(connection, referer);
     }
 
     private String refererForImage(String imageUrl) {

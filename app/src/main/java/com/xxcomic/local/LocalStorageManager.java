@@ -13,6 +13,7 @@ public class LocalStorageManager {
 
     private final File libraryRoot;
     private final File importsDir;
+    private final File downloadsDir;
     private final File stagingDir;
     private final File derivedDir;
     private final File coversDir;
@@ -25,6 +26,7 @@ public class LocalStorageManager {
     public LocalStorageManager(File libraryRoot) {
         this.libraryRoot = libraryRoot;
         this.importsDir = new File(libraryRoot, "imports");
+        this.downloadsDir = new File(libraryRoot, "downloads");
         this.stagingDir = new File(libraryRoot, "staging");
         this.derivedDir = new File(libraryRoot, "derived");
         this.coversDir = new File(derivedDir, "covers");
@@ -43,6 +45,7 @@ public class LocalStorageManager {
     public synchronized void ensureDirectories() {
         if (!libraryRoot.exists()) libraryRoot.mkdirs();
         if (!importsDir.exists()) importsDir.mkdirs();
+        if (!downloadsDir.exists()) downloadsDir.mkdirs();
         if (!stagingDir.exists()) stagingDir.mkdirs();
         if (!derivedDir.exists()) derivedDir.mkdirs();
         if (!coversDir.exists()) coversDir.mkdirs();
@@ -55,6 +58,21 @@ public class LocalStorageManager {
 
     public File getImportsDir() {
         return importsDir;
+    }
+
+    public File getDownloadsDir() { return downloadsDir; }
+
+    public File getDownloadFile(String relativePath) throws IOException {
+        if(relativePath==null || relativePath.trim().isEmpty()) throw new IOException("下载路径为空");
+        File file=new File(downloadsDir,relativePath);
+        assertPathInsideRoot(file,downloadsDir);
+        if(file.getCanonicalFile().equals(downloadsDir.getCanonicalFile())) throw new IOException("不能把全部下载作为单本漫画路径");
+        return file;
+    }
+
+    public File getBookContentFile(LocalModels.Book book) throws IOException {
+        return LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType)
+                ? getDownloadFile(book.relativePath) : getBookImportFile(book.relativePath);
     }
 
     public File getStagingDir() {
@@ -191,7 +209,7 @@ public class LocalStorageManager {
 
     public synchronized boolean deleteBookFiles(LocalModels.Book book) {
         boolean cleaned = clearDerivedPagesForBook(book.id);
-        try { cleaned &= deleteRecursively(getBookImportFile(book.relativePath)); }
+        try { cleaned &= deleteRecursively(getBookContentFile(book)); }
         catch (IOException | SecurityException error) { cleaned = false; }
         try { cleaned &= deleteRecursively(getCoverFile(book.id)); }
         catch (IOException | SecurityException error) { cleaned = false; }

@@ -66,9 +66,7 @@ public class LocalDetailView {
         ImageView coverImage = new ImageView(activity);
         coverImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
         coverImage.setImageResource(R.drawable.rem_no_image);
-        if (!TextUtils.isEmpty(book.coverPath) && new File(book.coverPath).exists()) {
-            coverImage.setImageURI(android.net.Uri.fromFile(new File(book.coverPath)));
-        }
+        LocalLibrary.loadCover(activity, coverImage, book);
         hero.addView(coverImage, new FrameLayout.LayoutParams(-1, -1));
 
         // Dim overlay on hero
@@ -138,7 +136,7 @@ public class LocalDetailView {
         titleView.setEllipsize(TextUtils.TruncateAt.END);
         titleRow.addView(titleView, UIHelpers.weight(1));
 
-        TextView formatBadge = UIHelpers.text(activity, book.format.toUpperCase(Locale.US), 11, UIHelpers.ACCENT, Typeface.BOLD);
+        TextView formatBadge = UIHelpers.text(activity, LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) ? "离线" : book.format.toUpperCase(Locale.US), 11, UIHelpers.ACCENT, Typeface.BOLD);
         formatBadge.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(activity, 4), UIHelpers.BORDER));
         formatBadge.setPadding(UIHelpers.dp(activity, 6), UIHelpers.dp(activity, 3), UIHelpers.dp(activity, 6), UIHelpers.dp(activity, 3));
         titleRow.addView(formatBadge);
@@ -146,7 +144,7 @@ public class LocalDetailView {
         body.addView(titleRow);
 
         // Metadata
-        String metaText = "本地导入 · " + formatBytes(book.totalSize) + " · 共 " + book.chapterCount + " 话 / " + book.pageCount + " 页";
+        String metaText = (LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) ? "离线下载 · " : "本地导入 · ") + formatBytes(book.totalSize) + " · 共 " + book.chapterCount + " 话 / " + book.pageCount + " 页";
         TextView metaView = UIHelpers.text(activity, metaText, 12, UIHelpers.TEXT2, Typeface.NORMAL);
         body.addView(metaView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 8)));
 
@@ -311,6 +309,11 @@ public class LocalDetailView {
             row.addView(name, UIHelpers.weight(1));
 
             String endText = isCurrent ? "上次读到" : String.valueOf(chapterIndex + 1);
+            if (!"local".equals(detail.summary.sourceId)) {
+                com.xxcomic.download.DownloadModels.Task task = com.xxcomic.download.DownloadRuntime.get(activity).store.get(
+                        com.xxcomic.download.DownloadModels.key(detail.summary.sourceId, detail.summary.comicId, ch.chapterId));
+                if (!isCurrent) endText = task != null && task.state == com.xxcomic.download.DownloadModels.State.COMPLETED ? "已下载" : "在线";
+            }
             TextView numView = UIHelpers.text(activity, endText, 11, isCurrent ? UIHelpers.ACCENT : UIHelpers.TEXT3, Typeface.NORMAL);
             numView.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
             row.addView(numView);
@@ -482,7 +485,8 @@ public class LocalDetailView {
                                       Listener listener) {
         new Thread(() -> {
             boolean deleted;
-            try { deleted = store.deleteBook(book.id, storageManager); }
+            try { deleted = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType)
+                    ? com.xxcomic.download.DownloadRuntime.get(activity).deleteBook(book.id) : store.deleteBook(book.id, storageManager); }
             catch (Exception error) { deleted = false; }
             final boolean success = deleted;
 

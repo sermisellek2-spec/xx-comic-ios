@@ -128,9 +128,7 @@ public class LocalLibraryView {
         ImageView cover = new ImageView(activity);
         cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
         cover.setImageResource(R.drawable.rem_no_image);
-        if (!TextUtils.isEmpty(book.coverPath) && new File(book.coverPath).exists()) {
-            cover.setImageURI(android.net.Uri.fromFile(new File(book.coverPath)));
-        }
+        LocalLibrary.loadCover(activity, cover, book);
         cover.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(activity, 6), Color.TRANSPARENT));
         cover.setClipToOutline(true);
         row.addView(cover, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 36), UIHelpers.dp(activity, 48)));
@@ -183,13 +181,11 @@ public class LocalLibraryView {
         ImageView cover = new ImageView(activity);
         cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
         cover.setImageResource(R.drawable.rem_no_image);
-        if (!TextUtils.isEmpty(book.coverPath) && new File(book.coverPath).exists()) {
-            cover.setImageURI(android.net.Uri.fromFile(new File(book.coverPath)));
-        }
+        LocalLibrary.loadCover(activity, cover, book);
         coverWrap.addView(cover, new FrameLayout.LayoutParams(-1, -1));
 
         // Small format badge at top right
-        TextView badge = UIHelpers.text(activity, book.format.toUpperCase(Locale.US), 9, Color.WHITE, Typeface.BOLD);
+        TextView badge = UIHelpers.text(activity, LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) ? "离线" : book.format.toUpperCase(Locale.US), 9, Color.WHITE, Typeface.BOLD);
         badge.setBackground(UIHelpers.round(Color.argb(160, 20, 40, 58), UIHelpers.dp(activity, 3), Color.TRANSPARENT));
         badge.setPadding(UIHelpers.dp(activity, 4), UIHelpers.dp(activity, 1), UIHelpers.dp(activity, 4), UIHelpers.dp(activity, 1));
         FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(-2, -2);

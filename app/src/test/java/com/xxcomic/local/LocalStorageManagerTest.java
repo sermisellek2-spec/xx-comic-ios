@@ -15,6 +15,20 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class LocalStorageManagerTest {
+    @Test public void downloadDeletionAndCacheCleanupCannotDeleteImports() throws Exception {
+        File imported=storageManager.getBookImportFile("original.cbz");
+        Files.write(imported.toPath(),new byte[]{1,2});
+        File downloaded=storageManager.getDownloadFile("book/ch/0.img");
+        assertTrue(downloaded.getParentFile().mkdirs());Files.write(downloaded.toPath(),new byte[]{3,4});
+        storageManager.clearDerivedPagesCache();assertTrue(downloaded.isFile());assertTrue(imported.isFile());
+        LocalModels.Book book=new LocalModels.Book("book","book","title",null,"folder","download","online-key","book",null,2,1,1,"ready",0,0);
+        assertTrue(storageManager.deleteBookFiles(book));assertFalse(downloaded.exists());assertTrue(imported.isFile());
+    }
+    @Test public void downloadPathsRejectRootAndTraversal() throws Exception {
+        org.junit.Assert.assertThrows(IOException.class,()->storageManager.getDownloadFile(""));
+        org.junit.Assert.assertThrows(IOException.class,()->storageManager.getDownloadFile("."));
+        org.junit.Assert.assertThrows(SecurityException.class,()->storageManager.getDownloadFile("../imports/a"));
+    }
     @Test
     public void rejectsImportRootAsBookPath() throws Exception {
         try { storageManager.getBookImportFile(""); org.junit.Assert.fail("accepted imports root as one book"); }

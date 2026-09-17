@@ -33,6 +33,7 @@ public final class ReaderInstrumentation extends Instrumentation {
     private boolean manwaOnly;
     private boolean sourceOrderOnly;
     private boolean localOnly;
+    private boolean downloadsOnly;
     @Override public void onCreate(Bundle arguments) {
         super.onCreate(arguments);
         immersionOnly = arguments != null && "true".equals(arguments.getString("immersionOnly"));
@@ -40,11 +41,17 @@ public final class ReaderInstrumentation extends Instrumentation {
         manwaOnly = arguments != null && "true".equals(arguments.getString("manwaOnly"));
         sourceOrderOnly = arguments != null && "true".equals(arguments.getString("sourceOrderOnly"));
         localOnly = arguments != null && "true".equals(arguments.getString("localOnly"));
+        downloadsOnly = arguments != null && "true".equals(arguments.getString("downloadsOnly"));
         start();
     }
     @Override public void onStart() {
         Bundle result = new Bundle();
         try {
+            if (downloadsOnly) {
+                int count = OfflineDownloadChecks.run(getTargetContext());
+                result.putString("stream", "PASS: " + count + " offline download native checks\n");
+                finish(-1, result); return;
+            }
             if (localOnly) {
                 int count = LocalLibraryChecks.runChecks(getTargetContext());
                 result.putString("stream", "PASS: " + count + " local library database checks\n");

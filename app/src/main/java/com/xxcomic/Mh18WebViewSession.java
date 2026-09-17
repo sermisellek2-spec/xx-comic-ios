@@ -185,13 +185,21 @@ final class Mh18WebViewSession implements BrowserSession {
         }
     }
 
-    private HttpFetch fetchHttp(String url) throws IOException {
+    static String fetchCachedForDownload(String url) throws IOException {
+        HttpFetch response = fetchHttp(url);
+        HttpAction action = httpAction(response.statusCode, response.mitigated, response.body);
+        if (action == HttpAction.VERIFICATION_REQUIRED) throw new VerificationRequiredException("请先在站源管理验证18漫画");
+        if (action == HttpAction.FAIL) throw new IOException("HTTP " + response.statusCode);
+        return response.body;
+    }
+
+    private static HttpFetch fetchHttp(String url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         try {
             connection.setInstanceFollowRedirects(true);
             connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
             connection.setReadTimeout(READ_TIMEOUT_MS);
-            connection.setRequestProperty("User-Agent", userAgent);
+            connection.setRequestProperty("User-Agent", fixedUserAgent());
             connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
             String cookie = CookieManager.getInstance().getCookie(url);
             if (!TextUtils.isEmpty(cookie)) connection.setRequestProperty("Cookie", cookie);
@@ -228,7 +236,7 @@ final class Mh18WebViewSession implements BrowserSession {
         return task.response;
     }
 
-    private void persistResponseCookies(String url, Map<String, List<String>> headers) {
+    private static void persistResponseCookies(String url, Map<String, List<String>> headers) {
         if (headers == null) return;
         CookieManager manager = CookieManager.getInstance();
         for (Map.Entry<String, List<String>> header : headers.entrySet()) {
@@ -239,7 +247,7 @@ final class Mh18WebViewSession implements BrowserSession {
         manager.flush();
     }
 
-    private String readBody(InputStream stream) throws IOException {
+    private static String readBody(InputStream stream) throws IOException {
         if (stream == null) return "";
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(stream, "UTF-8"))) {

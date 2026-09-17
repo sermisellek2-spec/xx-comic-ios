@@ -16,6 +16,7 @@ public final class LocalModels {
     public static final String FORMAT_FOLDER = "folder";
 
     public static final String SOURCE_TYPE_IMPORT = "import";
+    public static final String SOURCE_TYPE_DOWNLOAD = "download";
 
     public static final class Book implements Serializable {
         private static final long serialVersionUID = 1L;

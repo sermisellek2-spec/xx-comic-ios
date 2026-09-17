@@ -282,6 +282,39 @@ public class LocalLibraryStore implements LocalContentResolver.ContentIndex {
         return rows > 0;
     }
 
+    public synchronized void publishDownloadedChapter(LocalModels.Book incoming,LocalModels.Chapter chapter,
+                                                       List<LocalModels.Page> pages) {
+        LocalModels.Book previous=getBook(incoming.id);
+        if(previous!=null && !LocalModels.STATUS_READY.equals(previous.status)) throw new IllegalStateException("漫画正在删除");
+        int totalPages=pages.size(),chapterCount=1;
+        for(LocalModels.Chapter existing:getChapters(incoming.id)) if(!existing.id.equals(chapter.id)) {
+            totalPages+=existing.pageCount;chapterCount++;
+        }
+        LocalModels.Book merged=new LocalModels.Book(incoming.id,incoming.fingerprint,incoming.originalTitle,
+                previous==null?incoming.userTitle:previous.userTitle,incoming.format,incoming.sourceType,
+                incoming.progressKey,incoming.relativePath,incoming.coverPath,incoming.totalSize,chapterCount,totalPages,
+                LocalModels.STATUS_READY,previous==null?incoming.createdAt:previous.createdAt,System.currentTimeMillis());
+        SQLiteDatabase db=helper.getWritableDatabase();db.beginTransactionNonExclusive();
+        try {
+            db.delete(TABLE_PAGES,"chapter_id=?",new String[]{chapter.id});
+            commitImport(merged,Collections.singletonList(chapter),Collections.singletonMap(chapter.id,pages));
+            db.setTransactionSuccessful();
+        } finally {db.endTransaction();}
+    }
+
+    public synchronized void removeDownloadedChapter(String bookId,String chapterId,long remainingBytes) {
+        SQLiteDatabase db=helper.getWritableDatabase();db.beginTransactionNonExclusive();
+        try {
+            db.delete(TABLE_PAGES,"chapter_id=?",new String[]{chapterId});
+            db.delete(TABLE_CHAPTERS,"id=? AND book_id=?",new String[]{chapterId,bookId});
+            List<LocalModels.Chapter> remaining=getChapters(bookId);int pages=0;
+            for(LocalModels.Chapter c:remaining)pages+=c.pageCount;
+            ContentValues values=new ContentValues();values.put("chapter_count",remaining.size());values.put("page_count",pages);values.put("total_size",remainingBytes);
+            db.update(TABLE_BOOKS,values,"id=?",new String[]{bookId});
+            db.setTransactionSuccessful();
+        } finally {db.endTransaction();}
+    }
+
     public synchronized boolean updateBookCover(String bookId, String coverPath) {
         if (bookId == null) return false;
         SQLiteDatabase db = helper.getWritableDatabase();
