@@ -174,7 +174,28 @@ public class LocalImporter {
                 callback.onProgress(bytesCopied, bytesCopied, "正在解析章节与页面...");
             }
 
-            ArchiveIndex.ParseResult parseResult = ArchiveIndex.indexArchive(stagingFile, bookId, callback);
+            boolean isEpub = isEpubFile(stagingFile, displayName);
+            String format;
+            if (isEpub) {
+                format = LocalModels.FORMAT_EPUB;
+            } else if (displayName != null && displayName.toLowerCase(Locale.US).endsWith(".cbz")) {
+                format = LocalModels.FORMAT_CBZ;
+            } else {
+                format = LocalModels.FORMAT_ZIP;
+            }
+
+            ArchiveIndex.ParseResult parseResult;
+            if (isEpub) {
+                com.xxcomic.ebook.Publication pub = com.xxcomic.ebook.EpubParser.parse(stagingFile);
+                try (ZipFile zip = ArchiveIndex.openZipWithFallbackCharset(stagingFile)) {
+                    parseResult = pub.toParseResult(bookId, zip, new AndroidImageProbe(), callback);
+                }
+                if (pub.title != null && !pub.title.trim().isEmpty()) {
+                    originalTitle = pub.title.trim();
+                }
+            } else {
+                parseResult = ArchiveIndex.indexArchive(stagingFile, bookId, callback);
+            }
 
             if (callback != null && callback.isCancelled()) {
                 throw new InterruptedException("用户取消导入");
@@ -192,9 +213,9 @@ public class LocalImporter {
             }
 
             // Move staging file to imports
-            String format = (displayName != null && displayName.toLowerCase(Locale.US).endsWith(".cbz"))
-                    ? LocalModels.FORMAT_CBZ : LocalModels.FORMAT_ZIP;
-            String targetFileName = bookId + (LocalModels.FORMAT_CBZ.equals(format) ? ".cbz" : ".zip");
+            String ext = LocalModels.FORMAT_CBZ.equals(format) ? ".cbz"
+                    : (LocalModels.FORMAT_EPUB.equals(format) ? ".epub" : ".zip");
+            String targetFileName = bookId + ext;
             targetImportFile = storageManager.getBookImportFile(targetFileName);
             LocalModels.Book book = new LocalModels.Book(
                     bookId, fingerprint, originalTitle, userTitle, format,
@@ -341,6 +362,29 @@ public class LocalImporter {
                 throw error;
             }
         }
+    }
+
+    public static boolean isEpubFile(File file, String displayName) {
+        if (displayName != null && displayName.toLowerCase(Locale.US).endsWith(".epub")) {
+            return true;
+        }
+        try (ZipFile zip = ArchiveIndex.openZipWithFallbackCharset(file)) {
+            if (zip.getEntry("META-INF/container.xml") != null) {
+                return true;
+            }
+            ZipEntry mime = zip.getEntry("mimetype");
+            if (mime != null) {
+                try (InputStream in = zip.getInputStream(mime)) {
+                    byte[] b = new byte[32];
+                    int n = in.read(b);
+                    if (n > 0) {
+                        String s = new String(b, 0, n, StandardCharsets.US_ASCII);
+                        if (s.startsWith("application/epub+zip")) return true;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+        return false;
     }
 
     public static String sanitizeSegmentName(String rawName) {

@@ -378,7 +378,7 @@ public class ArchiveIndex {
         InputStream open() throws IOException;
     }
 
-    interface ImageProbe {
+    public interface ImageProbe {
         boolean isReadable(InputStreamSupplier source) throws IOException;
     }
 

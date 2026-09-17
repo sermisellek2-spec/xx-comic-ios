@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /** Native image validation; archive traversal and byte limits remain platform independent. */
-final class AndroidImageProbe implements ArchiveIndex.ImageProbe {
+public final class AndroidImageProbe implements ArchiveIndex.ImageProbe {
     @Override public boolean isReadable(ArchiveIndex.InputStreamSupplier source) throws IOException {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;

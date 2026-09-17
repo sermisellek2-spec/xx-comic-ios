@@ -1083,8 +1083,8 @@ public class MainActivity extends Activity {
         archiveCard.setOrientation(LinearLayout.VERTICAL);
         archiveCard.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 10), UIHelpers.dp(this, 12), UIHelpers.dp(this, 10));
         archiveCard.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 8), UIHelpers.BORDER));
-        archiveCard.addView(UIHelpers.text(this, "📦 压缩包 (ZIP / CBZ)", 14, UIHelpers.TEXT, Typeface.BOLD));
-        archiveCard.addView(UIHelpers.text(this, "支持批量导入单个或多个 .zip / .cbz 文件", 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
+        archiveCard.addView(UIHelpers.text(this, "📦 压缩包与电子书 (ZIP / CBZ / EPUB)", 14, UIHelpers.TEXT, Typeface.BOLD));
+        archiveCard.addView(UIHelpers.text(this, "支持单个或批量导入 .zip / .cbz / .epub 漫画", 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
         content.addView(archiveCard, UIHelpers.marginTop(-1, UIHelpers.dp(this, 14)));
 
         LinearLayout folderCard = new LinearLayout(this);
@@ -1106,7 +1106,8 @@ public class MainActivity extends Activity {
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("*/*");
             intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
-                    "application/zip", "application/x-cbz", "application/x-zip-compressed", "application/octet-stream"
+                    "application/zip", "application/x-cbz", "application/x-zip-compressed",
+                    "application/epub+zip", "application/octet-stream"
             });
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             startActivityForResult(intent, REQUEST_CODE_IMPORT_ARCHIVE);
