@@ -174,9 +174,12 @@ public class LocalImporter {
                 callback.onProgress(bytesCopied, bytesCopied, "正在解析章节与页面...");
             }
 
-            boolean isEpub = isEpubFile(stagingFile, displayName);
+            boolean isPdf = isPdfFile(stagingFile, displayName);
+            boolean isEpub = !isPdf && isEpubFile(stagingFile, displayName);
             String format;
-            if (isEpub) {
+            if (isPdf) {
+                format = LocalModels.FORMAT_PDF;
+            } else if (isEpub) {
                 format = LocalModels.FORMAT_EPUB;
             } else if (displayName != null && displayName.toLowerCase(Locale.US).endsWith(".cbz")) {
                 format = LocalModels.FORMAT_CBZ;
@@ -185,8 +188,11 @@ public class LocalImporter {
             }
 
             ArchiveIndex.ParseResult parseResult;
-            if (isEpub) {
-                com.xxcomic.ebook.Publication pub = com.xxcomic.ebook.EpubParser.parse(stagingFile);
+            com.xxcomic.ebook.Publication pub = null;
+            if (isPdf) {
+                parseResult = com.xxcomic.pdf.PdfParser.parse(stagingFile, bookId, callback);
+            } else if (isEpub) {
+                pub = com.xxcomic.ebook.EpubParser.parse(stagingFile);
                 try (ZipFile zip = ArchiveIndex.openZipWithFallbackCharset(stagingFile)) {
                     parseResult = pub.toParseResult(bookId, zip, new AndroidImageProbe(), callback);
                 }
@@ -204,8 +210,17 @@ public class LocalImporter {
             // Extract cover with candidate fallback
             String coverPath = null;
             coverTarget = storageManager.getCoverFile(bookId);
-            if (extractArchiveCover(stagingFile, parseResult.candidateCoverEntries, coverTarget, callback)) {
+            if (isPdf) {
+                if (com.xxcomic.pdf.PdfParser.renderCover(stagingFile, coverTarget)) {
+                    coverPath = coverTarget.getAbsolutePath();
+                }
+            } else if (extractArchiveCover(stagingFile, parseResult.candidateCoverEntries, coverTarget, callback)) {
                 coverPath = coverTarget.getAbsolutePath();
+            } else if (isEpub) {
+                String author = (pub != null) ? pub.author : "";
+                if (com.xxcomic.ebook.TextReaderView.generateTextCover(originalTitle, author, coverTarget)) {
+                    coverPath = coverTarget.getAbsolutePath();
+                }
             }
 
             if (callback != null && callback.isCancelled()) {
@@ -213,8 +228,16 @@ public class LocalImporter {
             }
 
             // Move staging file to imports
-            String ext = LocalModels.FORMAT_CBZ.equals(format) ? ".cbz"
-                    : (LocalModels.FORMAT_EPUB.equals(format) ? ".epub" : ".zip");
+            String ext;
+            if (LocalModels.FORMAT_PDF.equals(format)) {
+                ext = ".pdf";
+            } else if (LocalModels.FORMAT_CBZ.equals(format)) {
+                ext = ".cbz";
+            } else if (LocalModels.FORMAT_EPUB.equals(format)) {
+                ext = ".epub";
+            } else {
+                ext = ".zip";
+            }
             String targetFileName = bookId + ext;
             targetImportFile = storageManager.getBookImportFile(targetFileName);
             LocalModels.Book book = new LocalModels.Book(
@@ -362,6 +385,10 @@ public class LocalImporter {
                 throw error;
             }
         }
+    }
+
+    public static boolean isPdfFile(File file, String displayName) {
+        return com.xxcomic.pdf.PdfParser.isPdfFile(file, displayName);
     }
 
     public static boolean isEpubFile(File file, String displayName) {

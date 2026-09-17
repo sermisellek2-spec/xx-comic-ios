@@ -314,6 +314,7 @@ public class MainActivity extends Activity {
     private int themeMode = 0;
     private int readerLayoutMode = 0; // 0 continuous, 1 single image
     private PagedReaderView readerPager;
+    private com.xxcomic.ebook.TextReaderView textReaderView;
     private ListView readerList;
     private boolean[] readerRestoringPosition;
     private TextView readerPreviousButton, readerNextButton;
@@ -1083,8 +1084,8 @@ public class MainActivity extends Activity {
         archiveCard.setOrientation(LinearLayout.VERTICAL);
         archiveCard.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 10), UIHelpers.dp(this, 12), UIHelpers.dp(this, 10));
         archiveCard.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 8), UIHelpers.BORDER));
-        archiveCard.addView(UIHelpers.text(this, "📦 压缩包与电子书 (ZIP / CBZ / EPUB)", 14, UIHelpers.TEXT, Typeface.BOLD));
-        archiveCard.addView(UIHelpers.text(this, "支持单个或批量导入 .zip / .cbz / .epub 漫画", 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
+        archiveCard.addView(UIHelpers.text(this, "📦 压缩包与电子书 (ZIP / CBZ / EPUB / PDF)", 14, UIHelpers.TEXT, Typeface.BOLD));
+        archiveCard.addView(UIHelpers.text(this, "支持单个或批量导入 .zip / .cbz / .epub / .pdf 文件", 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
         content.addView(archiveCard, UIHelpers.marginTop(-1, UIHelpers.dp(this, 14)));
 
         LinearLayout folderCard = new LinearLayout(this);
@@ -1107,7 +1108,7 @@ public class MainActivity extends Activity {
             intent.setType("*/*");
             intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
                     "application/zip", "application/x-cbz", "application/x-zip-compressed",
-                    "application/epub+zip", "application/octet-stream"
+                    "application/epub+zip", "application/pdf", "application/octet-stream"
             });
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             startActivityForResult(intent, REQUEST_CODE_IMPORT_ARCHIVE);
@@ -3952,7 +3953,11 @@ public class MainActivity extends Activity {
         String battery = currentBatteryLevel >= 0 ? currentBatteryLevel + "%" : "";
         StringBuilder sb = new StringBuilder();
         if (!TextUtils.isEmpty(chapterTitle)) sb.append(chapterTitle).append("  ");
-        sb.append(readerCurrentPageNumber).append("/").append(readerTotalPages).append("  ");
+        if (isLocalTextBook(activeDetailId)) {
+            sb.append(readerCurrentPageNumber).append("%  ");
+        } else {
+            sb.append(readerCurrentPageNumber).append("/").append(readerTotalPages).append("  ");
+        }
         sb.append(time);
         if (!TextUtils.isEmpty(battery)) sb.append("  ").append(battery);
         String newText = sb.toString();
@@ -4044,6 +4049,10 @@ public class MainActivity extends Activity {
             readerPositions.put(entryKey, entry.legacyProgress(page.imageUrls.size()));
             readerEntryChapterUrl = "";
             readerEntryTarget = 0;
+        }
+        if (isLocalTextBook(detail.summary.comicId)) {
+            renderTextReader(detail, page, shell, top, topBarHeight, bottomBarHeight);
+            return;
         }
         if (readerLayoutMode == 0) {
             int contentWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
@@ -4475,6 +4484,246 @@ public class MainActivity extends Activity {
         setReaderFullscreen(!readerFullscreen, true);
     }
 
+    private boolean isLocalTextBook(String comicId) {
+        if (!isLocalComic(comicId) || !localLibraryReady) return false;
+        try {
+            LocalModels.Book book = getLocalLibraryStore().getBook(comicId);
+            if (book != null && LocalModels.FORMAT_EPUB.equals(book.format)) {
+                LocalModels.Page firstPage = getLocalLibraryStore().getFirstPage(comicId);
+                if (firstPage != null && firstPage.mimeType != null) {
+                    return firstPage.mimeType.contains("xhtml")
+                            || firstPage.mimeType.contains("html")
+                            || firstPage.mimeType.contains("text");
+                }
+            }
+        } catch (Exception ignored) {}
+        return false;
+    }
+
+    private void renderTextReader(ComicModels.ComicDetail detail, ComicModels.ChapterPage page,
+                                  FrameLayout shell, LinearLayout top, int topBarHeight, int bottomBarHeight) {
+        String comicId = detail.summary.comicId;
+        LocalModels.Book book = getLocalLibraryStore().getBook(comicId);
+        if (book == null) return;
+
+        File epubFile;
+        com.xxcomic.ebook.TextReaderView textReader = new com.xxcomic.ebook.TextReaderView(this);
+        textReaderView = textReader;
+        try {
+            epubFile = getLocalStorageManager().getBookImportFile(book.relativePath);
+            textReader.setEpubFile(epubFile, book.id);
+        } catch (Exception error) {
+            showRemErrorToast("无法打开电子书文件: " + error.getMessage());
+            return;
+        }
+
+        com.xxcomic.ebook.TextReaderSettingsSheet.Settings settings =
+                com.xxcomic.ebook.TextReaderSettingsSheet.loadSettings(this);
+        textReader.setSettings(settings.fontSizeSp, settings.lineHeight, settings.theme, settings.pagedMode);
+
+        FrameLayout content = new FrameLayout(this);
+        readerContentView = content;
+        content.addView(textReader, UIHelpers.match());
+        shell.addView(content, UIHelpers.match());
+
+        // Restore locator
+        String prefKey = "text_pos_" + comicId;
+        String savedLocJson = getSharedPreferences("xxcomic_text_locators", MODE_PRIVATE).getString(prefKey, null);
+        com.xxcomic.ebook.TextLocator savedLoc = com.xxcomic.ebook.TextLocator.fromJson(savedLocJson);
+        if (savedLoc != null && savedLoc.chapterIndex != readerChapterIndex) {
+            savedLoc = null;
+        }
+
+        // Determine entryPath
+        String entryPath = "";
+        if (readerChapterIndex >= 0 && readerChapterIndex < detail.chapters.size()) {
+            String chUrl = detail.chapters.get(readerChapterIndex).url;
+            if (LocalContentResolver.isLocalChapterUrl(chUrl)) {
+                String chId = LocalContentResolver.extractId(chUrl, LocalContentResolver.PREFIX_CHAPTER);
+                List<LocalModels.Page> lps = getLocalLibraryStore().getPages(chId);
+                if (lps != null && !lps.isEmpty()) {
+                    entryPath = lps.get(0).entryPath;
+                }
+            }
+        }
+        if (TextUtils.isEmpty(entryPath) && page != null && !page.imageUrls.isEmpty()) {
+            String pUrl = page.imageUrls.get(0);
+            if (LocalContentResolver.isLocalPageUrl(pUrl)) {
+                LocalModels.Page lp = getLocalLibraryStore().getPage(LocalContentResolver.extractId(pUrl, LocalContentResolver.PREFIX_PAGE));
+                if (lp != null) entryPath = lp.entryPath;
+            }
+        }
+
+        textReader.loadSpineEntry(readerChapterIndex, readerChapterIndex, entryPath, savedLoc);
+
+        textReader.setListener(new com.xxcomic.ebook.TextReaderView.Listener() {
+            @Override
+            public void onPositionChanged(com.xxcomic.ebook.TextLocator locator) {
+                if (locator != null) {
+                    getSharedPreferences("xxcomic_text_locators", MODE_PRIVATE).edit()
+                            .putString(prefKey, locator.toJson())
+                            .apply();
+                }
+                int pct = Math.round(locator != null ? locator.scrollPercentage * 100f : 0f);
+                if (readerSeekBar != null && !readerSeeking) {
+                    readerSeekBar.setProgress(pct);
+                }
+                readerCurrentPageNumber = pct;
+                readerTotalPages = 100;
+                refreshReaderOverlayBadge();
+            }
+
+            @Override
+            public void onToggleControls() {
+                toggleReaderFullscreen();
+            }
+
+            @Override
+            public void onNavigateChapter(int delta) {
+                if (readerChapterIndex + delta >= 0 && readerChapterIndex + delta < detail.chapters.size()) {
+                    switchChapter(detail, delta);
+                } else {
+                    showReaderBoundaryHint(delta > 0 ? "已经是最后一章" : "已经是第一章");
+                }
+            }
+
+            @Override
+            public void onExternalLinkClicked(String url) {
+                showRemDialog(R.drawable.rem_reader_boundary, "外部链接提示", "该链接指向外部网络：\n" + url + "\n\n是否在外部浏览器打开？",
+                        "打开", () -> {
+                            try {
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                                startActivity(intent);
+                            } catch (Exception ignored) {}
+                        });
+            }
+        });
+
+        // Overlay Badge
+        TextView overlayBadge = new TextView(this);
+        readerOverlayBadge = overlayBadge;
+        overlayBadge.setTextSize(11);
+        overlayBadge.setTextColor(Color.argb(220, 230, 240, 255));
+        overlayBadge.setShadowLayer(3f, 1f, 1f, Color.argb(180, 0, 0, 0));
+        overlayBadge.setBackground(UIHelpers.round(Color.argb(140, 12, 19, 28), UIHelpers.dp(this, 6), Color.TRANSPARENT));
+        overlayBadge.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 4), UIHelpers.dp(this, 8), UIHelpers.dp(this, 4));
+        overlayBadge.setSingleLine(true);
+        FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.START);
+        badgeParams.leftMargin = UIHelpers.dp(this, 12);
+        badgeParams.bottomMargin = UIHelpers.dp(this, 12);
+        shell.addView(overlayBadge, badgeParams);
+        overlayBadge.setVisibility(readerFullscreen ? View.VISIBLE : View.GONE);
+        refreshReaderOverlayBadge();
+
+        // Top Toolbar
+        shell.addView(top, new FrameLayout.LayoutParams(-1, topBarHeight, Gravity.TOP));
+        readerTopBar = top;
+
+        // Bottom Bar
+        LinearLayout bottom = new LinearLayout(this);
+        bottom.setOrientation(LinearLayout.VERTICAL);
+        bottom.setClickable(true);
+        bottom.setBackground(new GradientDrawable(
+                GradientDrawable.Orientation.BOTTOM_TOP,
+                new int[]{0xF20C1420, 0xD80C1420}
+        ));
+
+        // Row 1: Prev Chapter | SeekBar | Next Chapter
+        LinearLayout row1 = new LinearLayout(this);
+        row1.setOrientation(LinearLayout.HORIZONTAL);
+        row1.setGravity(Gravity.CENTER_VERTICAL);
+        row1.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 2), UIHelpers.dp(this, 12), 0);
+
+        TextView prevChapter = UIHelpers.text(this, "上一章", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
+        prevChapter.setGravity(Gravity.CENTER);
+        prevChapter.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 6), UIHelpers.dp(this, 8), UIHelpers.dp(this, 6));
+        boolean hasPrevChapter = readerChapterIndex > 0;
+        boolean hasNextChapter = readerChapterIndex + 1 < detail.chapters.size();
+        prevChapter.setEnabled(hasPrevChapter);
+        prevChapter.setAlpha(hasPrevChapter ? 1f : 0.35f);
+        prevChapter.setOnClickListener(v -> {
+            if (readerChapterIndex > 0) switchChapter(detail, -1);
+        });
+
+        TextView nextChapter = UIHelpers.text(this, "下一章", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
+        nextChapter.setGravity(Gravity.CENTER);
+        nextChapter.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 6), UIHelpers.dp(this, 8), UIHelpers.dp(this, 6));
+        nextChapter.setEnabled(hasNextChapter);
+        nextChapter.setAlpha(hasNextChapter ? 1f : 0.35f);
+        nextChapter.setOnClickListener(v -> {
+            if (readerChapterIndex + 1 < detail.chapters.size()) switchChapter(detail, 1);
+        });
+
+        SeekBar seekBar = new SeekBar(this);
+        readerSeekBar = seekBar;
+        seekBar.setMax(100);
+        int initialPct = savedLoc != null ? Math.round(savedLoc.scrollPercentage * 100f) : 0;
+        seekBar.setProgress(initialPct);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
+                if (fromUser) {
+                    textReader.scrollToPercent(progress / 100f);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar sb) {
+                readerSeeking = true;
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar sb) {
+                readerSeeking = false;
+                textReader.scrollToPercent(sb.getProgress() / 100f);
+            }
+        });
+
+        row1.addView(prevChapter);
+        row1.addView(seekBar, new LinearLayout.LayoutParams(0, -2, 1));
+        row1.addView(nextChapter);
+        bottom.addView(row1, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 42)));
+
+        // Row 2: 目录 ｜ 详情 ｜ 排版设置 ｜ 切换主题
+        LinearLayout row2 = new LinearLayout(this);
+        row2.setOrientation(LinearLayout.HORIZONTAL);
+        row2.setGravity(Gravity.CENTER_VERTICAL);
+        row2.setPadding(UIHelpers.dp(this, 16), 0, UIHelpers.dp(this, 16), UIHelpers.dp(this, 4));
+
+        LinearLayout tocBtn = createBottomActionItem(R.drawable.ic_chapter_list, "目录", () -> showChapterDrawer(detail));
+        LinearLayout detailBtn = createBottomActionItem(R.drawable.ic_detail, "详情", () -> {
+            if (!TextUtils.isEmpty(activeDetailId)) {
+                showDetailFromReader(activeDetailId, readerChapterIndex);
+            } else {
+                onBackPressed();
+            }
+        });
+        LinearLayout settingsBtn = createBottomActionItem(R.drawable.ic_settings, "排版", () -> {
+            com.xxcomic.ebook.TextReaderSettingsSheet.show(this, (fs, lh, th, paged) -> {
+                textReader.setSettings(fs, lh, th, paged);
+            });
+        });
+        LinearLayout themeBtn = createBottomActionItem(R.drawable.ic_moon, "主题", () -> {
+            com.xxcomic.ebook.TextReaderSettingsSheet.Settings s =
+                    com.xxcomic.ebook.TextReaderSettingsSheet.loadSettings(this);
+            s.theme = (s.theme + 1) % 3;
+            com.xxcomic.ebook.TextReaderSettingsSheet.saveSettings(this, s);
+            textReader.setSettings(s.fontSizeSp, s.lineHeight, s.theme, s.pagedMode);
+        });
+
+        row2.addView(tocBtn, new LinearLayout.LayoutParams(0, -1, 1f));
+        row2.addView(detailBtn, new LinearLayout.LayoutParams(0, -1, 1f));
+        row2.addView(settingsBtn, new LinearLayout.LayoutParams(0, -1, 1f));
+        row2.addView(themeBtn, new LinearLayout.LayoutParams(0, -1, 1f));
+        bottom.addView(row2, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 46)));
+
+        FrameLayout.LayoutParams bottomParams = new FrameLayout.LayoutParams(-1, bottomBarHeight, Gravity.BOTTOM);
+        shell.addView(bottom, bottomParams);
+        readerBottomBar = bottom;
+
+        setReaderFullscreen(readerFullscreen, false);
+    }
+
     private void navigateReader(ComicModels.ComicDetail detail, ComicModels.ChapterPage page, int delta) {
         if (readerLayoutMode == 0) {
             switchChapter(detail, delta);
@@ -4542,6 +4791,10 @@ public class MainActivity extends Activity {
         readerRestoringPosition = null;
         if (readerPager != null) readerPager.release();
         readerPager = null;
+        if (textReaderView != null) {
+            textReaderView.release();
+            textReaderView = null;
+        }
         readerPreviousButton = null;
         readerNextButton = null;
         readerContentView = null;

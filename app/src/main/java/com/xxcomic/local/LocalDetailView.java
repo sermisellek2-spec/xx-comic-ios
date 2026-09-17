@@ -192,7 +192,8 @@ public class LocalDetailView {
         text.setOrientation(LinearLayout.VERTICAL);
         text.addView(UIHelpers.text(activity, "章节目录", 14, UIHelpers.TEXT, Typeface.BOLD));
         String sourceTag = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) ? "离线下载"
-                : (LocalModels.FORMAT_EPUB.equals(book.format) ? "EPUB 漫画" : "本地漫画");
+                : (LocalModels.FORMAT_PDF.equals(book.format) ? "PDF 文档"
+                : (LocalModels.FORMAT_EPUB.equals(book.format) ? "EPUB 漫画" : "本地漫画"));
         String status = detail.chapters.isEmpty() ? "暂无章节" : detail.chapters.size() + " 话 · " + sourceTag;
         text.addView(UIHelpers.text(activity, status, 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(activity, 3)));
         row.addView(text, UIHelpers.weight(1));
@@ -203,7 +204,7 @@ public class LocalDetailView {
     }
 
     private static void showChapterDrawer(Activity activity, View rootLocation, LocalModels.Book book, ComicModels.ComicDetail detail,
-                                         int targetChapter, boolean hasRead, OnChapterSelected onSelect) {
+                                          int targetChapter, boolean hasRead, OnChapterSelected onSelect) {
         if (activity == null || activity.isFinishing()) return;
 
         LinearLayout panel = new LinearLayout(activity);
@@ -236,7 +237,8 @@ public class LocalDetailView {
         drawerTools.setMinimumHeight(UIHelpers.dp(activity, 39));
 
         String sourceLabel = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) ? "离线下载"
-                : (LocalModels.FORMAT_EPUB.equals(book.format) ? "EPUB 导入" : "本地导入");
+                : (LocalModels.FORMAT_PDF.equals(book.format) ? "PDF 导入"
+                : (LocalModels.FORMAT_EPUB.equals(book.format) ? "EPUB 导入" : "本地导入"));
         TextView drawerSource = UIHelpers.text(activity, sourceLabel, 11, UIHelpers.TEXT3, Typeface.NORMAL);
         drawerTools.addView(drawerSource, UIHelpers.weight(1));
 

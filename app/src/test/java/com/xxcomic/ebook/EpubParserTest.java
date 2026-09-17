@@ -462,10 +462,11 @@ public class EpubParserTest {
         assertFalse(pub.isPurePictureEpub);
 
         try (ZipFile zip = new ZipFile(epub)) {
-            pub.toParseResult("text_book", zip, mockProbe, null);
-            fail("Should have rejected text novel");
-        } catch (IOException expected) {
-            assertTrue(expected.getMessage().contains("纯文本"));
+            ArchiveIndex.ParseResult pr = pub.toParseResult("text_book", zip, mockProbe, null);
+            assertNotNull(pr);
+            assertEquals(2, pr.totalPages);
+            assertEquals(1, pr.chapters.size());
+            assertEquals("application/xhtml+xml", pr.pagesByChapter.get(pr.chapters.get(0).id).get(0).mimeType);
         }
     }
 

@@ -15,6 +15,7 @@ public final class LocalModels {
     public static final String FORMAT_CBZ = "cbz";
     public static final String FORMAT_FOLDER = "folder";
     public static final String FORMAT_EPUB = "epub";
+    public static final String FORMAT_PDF = "pdf";
 
     public static final String SOURCE_TYPE_IMPORT = "import";
     public static final String SOURCE_TYPE_DOWNLOAD = "download";

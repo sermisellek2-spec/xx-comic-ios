@@ -85,6 +85,9 @@ public class LocalContentResolver {
                 throw new IOException("本地图片文件不存在: " + pageFile.getAbsolutePath());
             }
             return new FileInputStream(pageFile);
+        } else if (LocalModels.FORMAT_PDF.equals(book.format)) {
+            File materialized = materializePage(pageId);
+            return new FileInputStream(materialized);
         } else {
             File zipFile = storageManager.getBookImportFile(book.relativePath);
             if (!zipFile.exists()) {
@@ -167,21 +170,39 @@ public class LocalContentResolver {
         File tempFile = File.createTempFile("page_", ".writing", bookCacheDir);
         boolean success = false;
         try {
-            try (InputStream in = openPage(pageId);
-                 OutputStream out = new FileOutputStream(tempFile)) {
-                byte[] buf = new byte[65536];
-                int len;
-                long totalWritten = 0L;
-                while ((len = in.read(buf)) > 0) {
-                    if (Thread.currentThread().isInterrupted()) {
-                        throw new IOException("页面解压已被中断: " + pageId);
+            if (LocalModels.FORMAT_PDF.equals(book.format)) {
+                File pdfFile = storageManager.getBookImportFile(book.relativePath);
+                if (!pdfFile.exists()) {
+                    throw new IOException("本地 PDF 文档不存在: " + pdfFile.getAbsolutePath());
+                }
+                int pageIndex = 0;
+                try {
+                    pageIndex = Integer.parseInt(page.entryPath);
+                } catch (Exception ignored) {}
+                Bitmap bm = com.xxcomic.pdf.PdfParser.renderPageBitmap(pdfFile, pageIndex, 2048);
+                if (bm == null) throw new IOException("无法渲染 PDF 页面: " + pageId);
+                try (OutputStream out = new FileOutputStream(tempFile)) {
+                    bm.compress(Bitmap.CompressFormat.JPEG, 92, out);
+                } finally {
+                    bm.recycle();
+                }
+            } else {
+                try (InputStream in = openPage(pageId);
+                     OutputStream out = new FileOutputStream(tempFile)) {
+                    byte[] buf = new byte[65536];
+                    int len;
+                    long totalWritten = 0L;
+                    while ((len = in.read(buf)) > 0) {
+                        if (Thread.currentThread().isInterrupted()) {
+                            throw new IOException("页面解压已被中断: " + pageId);
+                        }
+                        totalWritten += len;
+                        if (totalWritten > ArchiveIndex.MAX_PAGE_BYTES) {
+                            throw new IOException("单页解压大小超出安全限制（最大 128MiB）: " + pageId);
+                        }
+                        storageManager.checkUsableSpace(len);
+                        out.write(buf, 0, len);
                     }
-                    totalWritten += len;
-                    if (totalWritten > ArchiveIndex.MAX_PAGE_BYTES) {
-                        throw new IOException("单页解压大小超出安全限制（最大 128MiB）: " + pageId);
-                    }
-                    storageManager.checkUsableSpace(len);
-                    out.write(buf, 0, len);
                 }
             }
             LocalImporter.checkCancelled(null);

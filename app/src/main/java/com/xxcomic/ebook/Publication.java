@@ -136,15 +136,6 @@ public class Publication implements Serializable {
         if (hasDrm) {
             throw new IOException("该 EPUB 受到 DRM 加密保护，暂不支持阅读");
         }
-        if (isReflowableText) {
-            throw new IOException("该电子书为纯文本/流式排版小说，将在后续阶段文字阅读器中支持");
-        }
-        if (!isPurePictureEpub) {
-            if (unsupportedReason != null && !unsupportedReason.isEmpty()) {
-                throw new IOException(unsupportedReason);
-            }
-            throw new IOException("该 EPUB 包含暂不支持的图文混排或复杂版式");
-        }
         if (spine.isEmpty()) {
             throw new IOException("EPUB 没有可阅读的正文页面");
         }
@@ -195,31 +186,46 @@ public class Publication implements Serializable {
                 }
                 int spineIdx = start + pIdx;
                 SpineItem item = spine.get(spineIdx);
-                String imageEntryPath = item.resolvedImageEntry;
-                ZipEntry entry = zipFile.getEntry(imageEntryPath);
-                if (entry == null) {
-                    throw new IOException("EPUB 内页面图片缺失: " + imageEntryPath);
-                }
+                String entryPath;
+                String mime;
 
-                long entrySize = entry.getSize();
-                if (entrySize > 0) totalBytes += entrySize;
-
-                if (probe != null) {
-                    boolean readable = probe.isReadable(() -> zipFile.getInputStream(entry));
-                    if (!readable) {
-                        throw new IOException("EPUB 内图片损坏无法解码: " + imageEntryPath);
+                if (item.isImageOrImageWrapper()) {
+                    entryPath = item.resolvedImageEntry;
+                    ZipEntry entry = zipFile.getEntry(entryPath);
+                    if (entry == null) {
+                        throw new IOException("EPUB 内页面图片缺失: " + entryPath);
                     }
+
+                    long entrySize = entry.getSize();
+                    if (entrySize > 0) totalBytes += entrySize;
+
+                    if (probe != null) {
+                        boolean readable = probe.isReadable(() -> zipFile.getInputStream(entry));
+                        if (!readable) {
+                            throw new IOException("EPUB 内图片损坏无法解码: " + entryPath);
+                        }
+                    }
+
+                    mime = ArchiveIndex.detectMimeType(null, 0, entryPath);
+                    if (firstValidPageEntry == null) {
+                        firstValidPageEntry = entryPath;
+                    }
+                } else {
+                    // Reflowable / Mixed text page (XHTML/HTML)
+                    entryPath = item.fullZipPath;
+                    ZipEntry entry = zipFile.getEntry(entryPath);
+                    if (entry == null) {
+                        throw new IOException("EPUB 内正文页面缺失: " + entryPath);
+                    }
+                    long entrySize = entry.getSize();
+                    if (entrySize > 0) totalBytes += entrySize;
+                    mime = (item.mediaType != null && !item.mediaType.isEmpty()) ? item.mediaType : "application/xhtml+xml";
                 }
 
-                String mime = ArchiveIndex.detectMimeType(null, 0, imageEntryPath);
                 String pageId = LocalModels.buildStablePageId(chapterId, pIdx);
                 LocalModels.Page page = new LocalModels.Page(
-                        pageId, bookId, chapterId, pIdx, imageEntryPath, 0, 0, null, mime);
+                        pageId, bookId, chapterId, pIdx, entryPath, 0, 0, null, mime);
                 pageList.add(page);
-
-                if (firstValidPageEntry == null) {
-                    firstValidPageEntry = imageEntryPath;
-                }
                 totalPages++;
             }
             pagesByChapter.put(chapterId, pageList);
@@ -231,6 +237,14 @@ public class Publication implements Serializable {
         }
         if (firstValidPageEntry != null && !coverCandidates.contains(firstValidPageEntry)) {
             coverCandidates.add(firstValidPageEntry);
+        }
+        if (coverCandidates.isEmpty()) {
+            for (ManifestItem mi : manifest.values()) {
+                if (mi.mediaType != null && mi.mediaType.startsWith("image/") && zipFile.getEntry(mi.href) != null) {
+                    coverCandidates.add(mi.href);
+                    break;
+                }
+            }
         }
 
         return new ArchiveIndex.ParseResult(
