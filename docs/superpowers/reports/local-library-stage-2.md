@@ -109,3 +109,28 @@ adb shell am instrument -w -e downloadsOnly true com.xxcomic.test/com.xxcomic.Re
 Codex：代码检查和上述自动验证完成，不能替代设备验收。用户真机结论：待最终总验收填写。
 
 本阶段验收包独立保存；未推送、未合并 master、未正式升版、未覆盖 COS。阶段 3 尚未开始。
+
+## 书架布局回归修复 — 2026-09-17
+
+用户真机截图显示在线/本地书架标题居中、正文消失。本轮暂停后续阶段并修复，代码提交 `e8d8e86`。
+
+根因：`addBookshelfHeader` 先给标题行设置 44dp 高度，随后 `page.addView` 传入的 WRAP_CONTENT 参数覆盖了这个限制；水平弹性空白 View 也使用 WRAP_CONTENT 高度，测量时占满可用高度。标题行因此撑满页面，CENTER_VERTICAL 把文字置于屏幕中间，下方权重内容容器被挤到零高度。此前仅通过编译和业务测试，缺少设备布局验证，未发现这个回归。
+
+最小修复：在最终添加标题行时明确设置 48dp 高度（容纳现有下载入口），保留 6dp 底部间距；水平弹性占位高度设为 0。没有修改公共 weight 方法，也没有调整收藏数据、导入副本、下载任务或阅读进度。
+
+新增原生布局检查 `bookshelfOnly`，使用真实 renderFavorites 和 Android measure/layout，覆盖 320/360/412/600dp 宽度与在线→本地→在线切换，检查标题高度、列表剩余空间和选中内容填满。该入口在 seed 之前返回，不执行原阅读器测试的数据填充。
+
+```text
+adb shell am instrument -w -e bookshelfOnly true com.xxcomic.test/com.xxcomic.ReaderInstrumentation
+```
+
+验证证据：沿用上文 Gradle 命令，BUILD SUCCESSFUL；40 套件、275 项 JVM 测试，0 failures/0 errors；AndroidTest 编译成功，git diff --check 通过。adb 无连接设备，本机无模拟器，因此新增布局用例未运行，未完成修复前失败/修复后通过的设备验证，也未宣称真机视觉验收通过。上述原生用例仍需在测试设备运行；人工检查浅深色、真实收藏列表、本地空状态/已有漫画、导入/下载入口和底部导航。
+
+新验收包：
+
+- APK：`F:/softForCode/codex-project/xx-comic/release/local-library-stage-2/xx-comic-local-stage-2-e8d8e86.apk`
+- 测试 APK：同目录 `xx-comic-local-stage-2-e8d8e86-androidTest.apk`
+- 大小：11,554,782 字节。
+- SHA-256：`2019E245594D537E008FADA976FCF9F46C96FF1E32F8560AECC8D28899A854D4`
+- 包名 `com.xxcomic`，版本 `2.0.21 / 221`；签名验证通过，证书与上一个验收包一致。
+- 本轮只提交开发分支、归档独立验收包，没有发布 COS 或更改正式版本。
