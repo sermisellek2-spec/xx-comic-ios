@@ -1559,6 +1559,23 @@ public class MainActivity extends Activity {
         checkPendingUpdatePrompt();
     }
 
+    private String downloadSummaryText() {
+        try {
+            com.xxcomic.download.DownloadRuntime runtime = com.xxcomic.download.DownloadRuntime.get(this);
+            int pending = 0;
+            for (com.xxcomic.download.DownloadModels.Task t : runtime.store.list()) {
+                if (com.xxcomic.download.DownloadModels.active(t.state)
+                        || t.state == com.xxcomic.download.DownloadModels.State.QUEUED
+                        || t.state == com.xxcomic.download.DownloadModels.State.WAITING_NETWORK) {
+                    pending++;
+                }
+            }
+            return pending > 0 ? pending + " 个进行中" : "";
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
     private void renderSettings(LinearLayout page) {
         addTitle(page, "设置", null);
         page.addView(settingsSectionText("阅读与外观"));
@@ -1578,9 +1595,12 @@ public class MainActivity extends Activity {
         local.addView(settingsMenuItem(R.drawable.ic_source, "站源管理", "拖动排序、启停与导入导出",
                 enabledBuiltinSources().size() + " 个开启", this::showSourceManagement));
         local.addView(UIHelpers.divider(this));
-        local.addView(settingsMenuItem(R.drawable.ic_trash, "缓存清理", "保留收藏与阅读历史", cacheSize, this::showCacheCleanup));
+        local.addView(settingsMenuItem(R.drawable.ic_download, "下载中心", "任务进度、暂停与章节重试",
+                downloadSummaryText(), this::showDownloadCenter));
         local.addView(UIHelpers.divider(this));
-        local.addView(settingsMenuItem(R.drawable.ic_download, "本地存储与下载", "仅 Wi-Fi 下载 · 副本管理", "", this::showLocalStorage));
+        local.addView(settingsMenuItem(R.drawable.ic_bookshelf, "本地存储管理", "仅 Wi-Fi 下载 · 副本与空间统计", "", this::showLocalStorage));
+        local.addView(UIHelpers.divider(this));
+        local.addView(settingsMenuItem(R.drawable.ic_trash, "缓存清理", "保留收藏与阅读历史", cacheSize, this::showCacheCleanup));
         local.addView(UIHelpers.divider(this));
         local.addView(settingsMenuItem(R.drawable.ic_lightning, "错误日志", "只保存在本机", errorLogSummary(), this::showErrorLogs));
         page.addView(local);
@@ -2036,10 +2056,6 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, -2);
             p.leftMargin = UIHelpers.dp(this, 8);
             bookshelfRightActions.addView(importBtn, p);
-            ImageView downloads = UIHelpers.vectorIconButton(this, R.drawable.ic_download, UIHelpers.ACCENT, 8);
-            downloads.setContentDescription("下载中心");
-            downloads.setOnClickListener(v -> showDownloadCenter());
-            bookshelfRightActions.addView(downloads, new LinearLayout.LayoutParams(UIHelpers.dp(this, 48), UIHelpers.dp(this, 48)));
         }
     }
 
@@ -3360,7 +3376,7 @@ public class MainActivity extends Activity {
         enterScreen(); readerVisible = false; activeDetailId = ""; settingsScene = "";
         sourceManagementVisible = false; historyVisible = false; standaloneSearchVisible = false; detailBackAction = null;
         applyThemeAndSystemBars(); root.removeAllViews();
-        offlinePageBack = () -> showTab(0);
+        offlinePageBack = () -> showTab(2);
         root.addView(DownloadViews.center(this, offlinePageBack, this::showLocalDetail, this::showSourceManagement), UIHelpers.match());
     }
 
@@ -3518,12 +3534,26 @@ public class MainActivity extends Activity {
         body.addView(summary, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
 
         body.addView(chapterEntry(detail), UIHelpers.marginTop(-1, UIHelpers.dp(this, 10)));
-        TextView downloadEntry = UIHelpers.text(this, "↓ 下载章节", 13, UIHelpers.ACCENT, Typeface.NORMAL);
-        downloadEntry.setGravity(Gravity.CENTER_VERTICAL);
-        downloadEntry.setMinimumHeight(UIHelpers.dp(this, 48));
-        downloadEntry.setOnClickListener(v -> ensureChaptersThen(detail, loaded ->
+
+        LinearLayout downloadRow = new LinearLayout(this);
+        downloadRow.setGravity(Gravity.CENTER_VERTICAL);
+        downloadRow.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 8), UIHelpers.dp(this, 10), UIHelpers.dp(this, 8));
+        downloadRow.setMinimumHeight(UIHelpers.dp(this, 44));
+        downloadRow.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 7), UIHelpers.BORDER));
+        downloadRow.setOnClickListener(v -> ensureChaptersThen(detail, loaded ->
                 DownloadViews.selection(this, loaded, savedChapter(loaded.summary.comicId), () -> {})));
-        body.addView(downloadEntry);
+
+        ImageView dlIcon = UIHelpers.vectorIconButton(this, R.drawable.ic_download, UIHelpers.ACCENT, 2);
+        downloadRow.addView(dlIcon, new LinearLayout.LayoutParams(UIHelpers.dp(this, 20), UIHelpers.dp(this, 20)));
+
+        TextView dlText = UIHelpers.text(this, "下载离线章节", 13, UIHelpers.ACCENT, Typeface.BOLD);
+        LinearLayout.LayoutParams dlParams = new LinearLayout.LayoutParams(0, -2, 1f);
+        dlParams.leftMargin = UIHelpers.dp(this, 8);
+        downloadRow.addView(dlText, dlParams);
+
+        ImageView dlArrow = UIHelpers.vectorIconButton(this, R.drawable.ic_chevron_right, UIHelpers.TEXT3, 3);
+        downloadRow.addView(dlArrow, new LinearLayout.LayoutParams(UIHelpers.dp(this, 24), UIHelpers.dp(this, 24)));
+        body.addView(downloadRow, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8)));
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);

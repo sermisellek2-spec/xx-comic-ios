@@ -167,7 +167,7 @@ public class LocalDetailView {
         body.addView(UIHelpers.divider(activity), UIHelpers.marginTop(-1, UIHelpers.dp(activity, 16)));
 
         // 3. Chapter Entry (Opens 76% Drawer)
-        View chapterEntryView = buildChapterEntry(activity, root, detail, targetChapter, hasRead, (selectedChapter) -> {
+        View chapterEntryView = buildChapterEntry(activity, root, book, detail, targetChapter, hasRead, (selectedChapter) -> {
             if (listener != null) listener.onRead(book, detail, selectedChapter);
         });
         body.addView(chapterEntryView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 12)));
@@ -179,19 +179,20 @@ public class LocalDetailView {
         void onSelect(int chapterIndex);
     }
 
-    private static View buildChapterEntry(Activity activity, View rootLocation, ComicModels.ComicDetail detail,
+    private static View buildChapterEntry(Activity activity, View rootLocation, LocalModels.Book book, ComicModels.ComicDetail detail,
                                           int targetChapter, boolean hasRead, OnChapterSelected onSelect) {
         LinearLayout row = new LinearLayout(activity);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 9), UIHelpers.dp(activity, 10), UIHelpers.dp(activity, 9));
         row.setMinimumHeight(UIHelpers.dp(activity, 54));
         row.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(activity, 7), UIHelpers.BORDER));
-        row.setOnClickListener(v -> showChapterDrawer(activity, rootLocation, detail, targetChapter, hasRead, onSelect));
+        row.setOnClickListener(v -> showChapterDrawer(activity, rootLocation, book, detail, targetChapter, hasRead, onSelect));
 
         LinearLayout text = new LinearLayout(activity);
         text.setOrientation(LinearLayout.VERTICAL);
         text.addView(UIHelpers.text(activity, "章节目录", 14, UIHelpers.TEXT, Typeface.BOLD));
-        String status = detail.chapters.isEmpty() ? "暂无章节" : detail.chapters.size() + " 话 · 本地漫画";
+        String sourceTag = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) ? "离线下载" : "本地漫画";
+        String status = detail.chapters.isEmpty() ? "暂无章节" : detail.chapters.size() + " 话 · " + sourceTag;
         text.addView(UIHelpers.text(activity, status, 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(activity, 3)));
         row.addView(text, UIHelpers.weight(1));
 
@@ -200,7 +201,7 @@ public class LocalDetailView {
         return row;
     }
 
-    private static void showChapterDrawer(Activity activity, View rootLocation, ComicModels.ComicDetail detail,
+    private static void showChapterDrawer(Activity activity, View rootLocation, LocalModels.Book book, ComicModels.ComicDetail detail,
                                          int targetChapter, boolean hasRead, OnChapterSelected onSelect) {
         if (activity == null || activity.isFinishing()) return;
 
@@ -233,7 +234,8 @@ public class LocalDetailView {
         drawerTools.setGravity(Gravity.CENTER_VERTICAL);
         drawerTools.setMinimumHeight(UIHelpers.dp(activity, 39));
 
-        TextView drawerSource = UIHelpers.text(activity, "本地导入", 11, UIHelpers.TEXT3, Typeface.NORMAL);
+        String sourceLabel = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType) ? "离线下载" : "本地导入";
+        TextView drawerSource = UIHelpers.text(activity, sourceLabel, 11, UIHelpers.TEXT3, Typeface.NORMAL);
         drawerTools.addView(drawerSource, UIHelpers.weight(1));
 
         final boolean[] desc = new boolean[]{false};
@@ -452,8 +454,10 @@ public class LocalDetailView {
         TextView titleView = UIHelpers.text(activity, "删除本地漫画？", 17, UIHelpers.TEXT, Typeface.BOLD);
         copy.addView(titleView);
 
-        String message = "将删除《" + book.getDisplayTitle() + "》在 App 内的副本并释放 " + formatBytes(book.totalSize) + " 存储空间。\n\n"
-                + "提示：您手机上的原始文件不受影响。阅读进度已保留，日后重导可继续阅读。";
+        boolean isDownload = LocalModels.SOURCE_TYPE_DOWNLOAD.equals(book.sourceType);
+        String message = isDownload
+                ? "将删除《" + book.getDisplayTitle() + "》的全部离线下载文件并释放 " + formatBytes(book.totalSize) + " 存储空间。\n\n提示：在线收藏与阅读进度已保留，之后仍可在联网时继续阅读。"
+                : "将删除《" + book.getDisplayTitle() + "》在 App 内的副本并释放 " + formatBytes(book.totalSize) + " 存储空间。\n\n提示：您手机上的原始文件不受影响。阅读进度已保留，日后重导可继续阅读。";
         TextView messageView = UIHelpers.text(activity, message, 12, UIHelpers.TEXT2, Typeface.NORMAL);
         copy.addView(messageView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 6)));
         content.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
