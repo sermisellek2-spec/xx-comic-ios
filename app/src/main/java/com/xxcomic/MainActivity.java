@@ -2036,29 +2036,19 @@ public class MainActivity extends Activity {
     private void updateBookshelfRightActions() {
         if (bookshelfRightActions == null) return;
         bookshelfRightActions.removeAllViews();
-        if (bookshelfTab == 0) {
-            bookshelfRightActions.addView(UIHelpers.text(this, favorites.size() + " 本", 12, UIHelpers.TEXT3, Typeface.NORMAL));
-            ImageView rem = new ImageView(this);
-            rem.setImageResource(R.drawable.rem_reader_resume);
-            rem.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            rem.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 12), UIHelpers.BORDER));
-            rem.setClipToOutline(true);
-            rem.setContentDescription("蕾姆主题");
-            LinearLayout.LayoutParams remParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 23), UIHelpers.dp(this, 23));
-            remParams.leftMargin = UIHelpers.dp(this, 8);
-            bookshelfRightActions.addView(rem, remParams);
-        } else {
-            int localCount = localLibraryReady ? getLocalLibraryStore().getBookCount() : 0;
-            bookshelfRightActions.addView(UIHelpers.text(this, localCount + " 本", 12, UIHelpers.TEXT3, Typeface.NORMAL));
-            TextView importBtn = UIHelpers.text(this, "+ 导入", 12, UIHelpers.ACCENT, Typeface.BOLD);
-            importBtn.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 4), UIHelpers.dp(this, 8), UIHelpers.dp(this, 4));
-            importBtn.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 10), UIHelpers.BORDER));
-            importBtn.setContentDescription("导入本地漫画");
-            importBtn.setOnClickListener(v -> showImportOptionsDialog());
-            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, -2);
-            p.leftMargin = UIHelpers.dp(this, 8);
-            bookshelfRightActions.addView(importBtn, p);
-        }
+        int count = (bookshelfTab == 0)
+                ? favorites.size()
+                : (localLibraryReady ? getLocalLibraryStore().getBookCount() : 0);
+        bookshelfRightActions.addView(UIHelpers.text(this, count + " 本", 12, UIHelpers.TEXT3, Typeface.NORMAL));
+        ImageView rem = new ImageView(this);
+        rem.setImageResource(R.drawable.rem_reader_resume);
+        rem.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        rem.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 12), UIHelpers.BORDER));
+        rem.setClipToOutline(true);
+        rem.setContentDescription("蕾姆主题");
+        LinearLayout.LayoutParams remParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 23), UIHelpers.dp(this, 23));
+        remParams.leftMargin = UIHelpers.dp(this, 8);
+        bookshelfRightActions.addView(rem, remParams);
     }
 
     private View buildOnlineBookshelfView() {

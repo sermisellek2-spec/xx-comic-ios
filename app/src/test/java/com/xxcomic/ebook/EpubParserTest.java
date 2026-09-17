@@ -8,6 +8,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -506,6 +507,22 @@ public class EpubParserTest {
             fail("Should fail on missing spine");
         } catch (IOException expected) {
             assertTrue(expected.getMessage().contains("spine"));
+        }
+    }
+
+    @Test
+    public void parseXmlSafelyHandlesUtf8Bom() throws Exception {
+        byte[] bom = new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
+        byte[] xmlBytes = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root><item id=\"test\">Value</item></root>".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] combined = new byte[bom.length + xmlBytes.length];
+        System.arraycopy(bom, 0, combined, 0, bom.length);
+        System.arraycopy(xmlBytes, 0, combined, bom.length, xmlBytes.length);
+
+        try (ByteArrayInputStream in = new ByteArrayInputStream(combined)) {
+            org.w3c.dom.Document doc = EpubParser.parseXmlSafely(in);
+            org.w3c.dom.NodeList list = doc.getElementsByTagName("item");
+            assertEquals(1, list.getLength());
+            assertEquals("Value", list.item(0).getTextContent());
         }
     }
 }

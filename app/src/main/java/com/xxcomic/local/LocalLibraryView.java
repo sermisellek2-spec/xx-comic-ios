@@ -236,7 +236,7 @@ public class LocalLibraryView {
         TextView title = UIHelpers.text(activity, "本地书架还是空的", 17, UIHelpers.TEXT, Typeface.BOLD);
         state.addView(title, UIHelpers.marginTop(-2, UIHelpers.dp(activity, 10)));
 
-        TextView desc = UIHelpers.text(activity, "支持导入本地 ZIP/CBZ 压缩包和图片文件夹\n文件将安全保存在本机，不修改用户原文件", 12, UIHelpers.TEXT3, Typeface.NORMAL);
+        TextView desc = UIHelpers.text(activity, "支持导入本地 ZIP/CBZ 压缩包、EPUB 电子书与 PDF 文档\n文件将安全保存在本机，不修改用户原文件", 12, UIHelpers.TEXT3, Typeface.NORMAL);
         desc.setGravity(Gravity.CENTER);
         state.addView(desc, UIHelpers.marginTop(-2, UIHelpers.dp(activity, 6)));
 

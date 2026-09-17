@@ -8,6 +8,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -331,8 +332,6 @@ public final class EpubParser {
             }
             if (totalManifestImages <= 1 && imageSpineCount == 0) {
                 isReflowableText = true;
-            } else if (unsupportedReason == null) {
-                unsupportedReason = "该 EPUB 包含图文混排或暂不支持的多图复合页面";
             }
         }
 
@@ -544,11 +543,28 @@ public final class EpubParser {
         try {
             dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         } catch (Throwable ignored) {}
-        dbf.setXIncludeAware(false);
-        dbf.setExpandEntityReferences(false);
+        try {
+            dbf.setFeature("http://xml.org/sax/features/validation", false);
+        } catch (Throwable ignored) {}
+        try {
+            dbf.setXIncludeAware(false);
+        } catch (Throwable ignored) {}
+        try {
+            dbf.setExpandEntityReferences(false);
+        } catch (Throwable ignored) {}
         DocumentBuilder builder = dbf.newDocumentBuilder();
         builder.setEntityResolver((publicId, systemId) -> new InputSource(new StringReader("")));
-        return builder.parse(in);
+
+        BufferedInputStream bin = (in instanceof BufferedInputStream) ? (BufferedInputStream) in : new BufferedInputStream(in);
+        bin.mark(4);
+        byte[] bom = new byte[3];
+        int read = bin.read(bom, 0, 3);
+        if (read == 3 && bom[0] == (byte) 0xEF && bom[1] == (byte) 0xBB && bom[2] == (byte) 0xBF) {
+            // UTF-8 BOM detected and stripped
+        } else {
+            bin.reset();
+        }
+        return builder.parse(bin);
     }
 
     private static String getParentDir(String path) {
