@@ -5,8 +5,8 @@
 本阶段已完成 EPUB 纯文本小说与图文混排阅读器（阶段 4）及原生 PDF 漫画/文档适配的全部代码实现、单元测试全量回归与 Debug 验收包归档。未推送到远程，未打包发布正式 Release 包，未上传到 COS。
 
 - **分支**：`codex/local-library-offline`
-- **代码提交**：`16a48fc`
-- **验证结论**：自动化编译通过，44 个测试套件、294 项 JVM 单元测试 100% 全部通过（新增 8 项测试覆盖 PDF 解析校验、TextLocator 定位序列化、EPUB 纯文本小说与图文混排，无失败无错误）。
+- **最新代码提交**：`97e00f5`
+- **验证结论**：自动化编译通过，44 个测试套件、295 项 JVM 单元测试 100% 全部通过（修复 Android XML 解析器兼容性与书架顶栏样式，新增 UTF-8 BOM 兼容测试，无失败无错误）。
 
 ---
 
@@ -59,8 +59,8 @@
 
 | 项目 | 文件路径 | 大小 | SHA-256 |
 | --- | --- | --- | --- |
-| **Stage 4 + PDF 验收 APK** | `release/local-library-stage-4/xx-comic-local-stage-4-16a48fc.apk` | 11,650,007 字节 (~11.11 MB) | `1973E6B79EA8EB2109417117A9B3698D0F0A6B1B0FB66D2E73EA0C2D7039301F` |
-| **AndroidTest APK** | `release/local-library-stage-4/xx-comic-local-stage-4-16a48fc-androidTest.apk` | 44,218 字节 | `69AB45B6E06CE0939E5C1FB4BD29B25B665FB79C7DA4309C791A0FD53DC5D5EC` |
+| **Stage 4 + PDF 验收 APK** | `release/local-library-stage-4/xx-comic-local-stage-4-97e00f5.apk` | 11,438,986 字节 (~10.91 MB) | `CC28EC80C9C9EDA180E68D99998E84FE0105658679B0F00972FD88F7231DF57C` |
+| **AndroidTest APK** | `release/local-library-stage-4/xx-comic-local-stage-4-97e00f5-androidTest.apk` | 44,218 字节 | `69AB45B6E06CE0939E5C1FB4BD29B25B665FB79C7DA4309C791A0FD53DC5D5EC` |
 | **签名证书指纹** | Android Debug Certificate | - | `13:1D:74:72:0C:25:65:D2:E5:02:A4:74:DC:31:E6:6A:67:03:9E:04:85:11:A0:7F:DD:35:D9:48:7C:93:B7:2A` |
 
 ---
