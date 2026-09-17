@@ -32,17 +32,25 @@ public final class ReaderInstrumentation extends Instrumentation {
     private boolean startupOnly;
     private boolean manwaOnly;
     private boolean sourceOrderOnly;
+    private boolean localOnly;
     @Override public void onCreate(Bundle arguments) {
         super.onCreate(arguments);
         immersionOnly = arguments != null && "true".equals(arguments.getString("immersionOnly"));
         startupOnly = arguments != null && "true".equals(arguments.getString("startupOnly"));
         manwaOnly = arguments != null && "true".equals(arguments.getString("manwaOnly"));
         sourceOrderOnly = arguments != null && "true".equals(arguments.getString("sourceOrderOnly"));
+        localOnly = arguments != null && "true".equals(arguments.getString("localOnly"));
         start();
     }
     @Override public void onStart() {
         Bundle result = new Bundle();
         try {
+            if (localOnly) {
+                int count = LocalLibraryChecks.runChecks(getTargetContext());
+                result.putString("stream", "PASS: " + count + " local library database checks\n");
+                finish(-1, result);
+                return;
+            }
             activity = (MainActivity) startActivitySync(new Intent(getTargetContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             if (sourceOrderOnly) {
                 testSourceOrder();

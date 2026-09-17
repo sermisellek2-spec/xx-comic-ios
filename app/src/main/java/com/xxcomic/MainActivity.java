@@ -90,6 +90,13 @@ import com.xxcomic.favorite.FavoriteUpdateCoordinator;
 import com.xxcomic.update.AppRelease;
 import com.xxcomic.update.AppUpdateChecker;
 import com.xxcomic.update.RemUpdateDialog;
+import com.xxcomic.local.LocalContentResolver;
+import com.xxcomic.local.LocalDetailView;
+import com.xxcomic.local.LocalImporter;
+import com.xxcomic.local.LocalLibraryStore;
+import com.xxcomic.local.LocalLibraryView;
+import com.xxcomic.local.LocalModels;
+import com.xxcomic.local.LocalStorageManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -343,6 +350,43 @@ public class MainActivity extends Activity {
     private int readerPageMode = 0; // 0 touch edge, 1 buttons, 2 horizontal swipe
     private int readerDisplayMode = 0; // 0 normal, 1 e-ink
     private ColorMatrixColorFilter readerEinkFilter;
+
+    private static final int REQUEST_CODE_IMPORT_ARCHIVE = 1001;
+    private static final int REQUEST_CODE_IMPORT_FOLDER = 1002;
+
+    private LocalStorageManager localStorageManager;
+    private LocalLibraryStore localLibraryStore;
+    private LocalContentResolver localContentResolver;
+
+    private int bookshelfTab = 0; // 0: 我的书架, 1: 本地书架
+    private FrameLayout bookshelfContainer;
+    private View onlineBookshelfView;
+    private View localBookshelfView;
+    private TextView titleMyBookshelf;
+    private TextView titleLocalBookshelf;
+    private LinearLayout bookshelfRightActions;
+    private ValueAnimator bookshelfTabAnimator;
+
+    private LocalStorageManager getLocalStorageManager() {
+        if (localStorageManager == null) localStorageManager = new LocalStorageManager(this);
+        return localStorageManager;
+    }
+
+    private LocalLibraryStore getLocalLibraryStore() {
+        if (localLibraryStore == null) localLibraryStore = new LocalLibraryStore(this);
+        return localLibraryStore;
+    }
+
+    private LocalContentResolver getLocalContentResolver() {
+        if (localContentResolver == null) {
+            localContentResolver = new LocalContentResolver(getLocalLibraryStore(), getLocalStorageManager());
+        }
+        return localContentResolver;
+    }
+
+    private boolean isLocalComic(String comicId) {
+        return comicId != null && comicId.startsWith("local_");
+    }
 
     private ColorMatrixColorFilter readerEinkColorFilter() {
         if (readerEinkFilter == null) {
@@ -598,7 +642,176 @@ public class MainActivity extends Activity {
                 pendingUpdateApk = null;
                 showInfo("无法安装更新", "需要允许 XX Comic 安装未知应用。");
             }
+        } else if (requestCode == REQUEST_CODE_IMPORT_ARCHIVE && resultCode == RESULT_OK && data != null) {
+            List<Uri> uris = new ArrayList<>();
+            if (data.getClipData() != null) {
+                for (int i = 0; i < data.getClipData().getItemCount(); i++) {
+                    Uri u = data.getClipData().getItemAt(i).getUri();
+                    if (u != null) uris.add(u);
+                }
+            } else if (data.getData() != null) {
+                uris.add(data.getData());
+            }
+            if (!uris.isEmpty()) {
+                handleImportArchiveUris(uris);
+            }
+        } else if (requestCode == REQUEST_CODE_IMPORT_FOLDER && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            handleImportFolderUri(data.getData());
         }
+    }
+
+    private void handleImportArchiveUris(List<Uri> uris) {
+        final boolean[] cancelled = new boolean[]{false};
+        AlertDialog progressDialog = new AlertDialog.Builder(this)
+                .setTitle("正在导入本地漫画")
+                .setMessage("准备中...")
+                .setNegativeButton("取消", (dialog, which) -> cancelled[0] = true)
+                .setCancelable(false)
+                .show();
+
+        miscIo.submit(() -> {
+            int successCount = 0;
+            String lastError = null;
+            LocalImporter importer = new LocalImporter(this, getLocalStorageManager(), getLocalLibraryStore());
+
+            for (int i = 0; i < uris.size(); i++) {
+                if (cancelled[0]) break;
+                Uri uri = uris.get(i);
+                final int current = i + 1;
+                final int total = uris.size();
+                main.post(() -> {
+                    if (progressDialog.isShowing()) {
+                        progressDialog.setMessage("正在处理 (" + current + "/" + total + ")...");
+                    }
+                });
+
+                try {
+                    LocalModels.Book book = importer.importArchiveUri(uri, null, new LocalModels.ImportProgressCallback() {
+                        @Override
+                        public void onProgress(long currentBytes, long totalBytes, String message) {
+                            main.post(() -> {
+                                if (progressDialog.isShowing()) {
+                                    progressDialog.setMessage("(" + current + "/" + total + ") " + message);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public boolean isCancelled() {
+                            return cancelled[0];
+                        }
+                    });
+                    successCount++;
+                } catch (InterruptedException e) {
+                    break;
+                } catch (Exception e) {
+                    lastError = e.getMessage();
+                }
+            }
+
+            final int finalSuccess = successCount;
+            final String finalError = lastError;
+            main.post(() -> {
+                if (progressDialog.isShowing()) {
+                    progressDialog.dismiss();
+                }
+                refreshLocalBookshelf();
+                if (finalSuccess > 0) {
+                    showRemSuccessToast("成功导入 " + finalSuccess + " 本漫画");
+                } else if (finalError != null) {
+                    showRemDialog(R.drawable.rem_error, "导入失败", finalError, "确定", null);
+                }
+            });
+        });
+    }
+
+    private void handleImportFolderUri(Uri treeUri) {
+        final boolean[] cancelled = new boolean[]{false};
+        AlertDialog progressDialog = new AlertDialog.Builder(this)
+                .setTitle("正在导入文件夹漫画")
+                .setMessage("准备中...")
+                .setNegativeButton("取消", (dialog, which) -> cancelled[0] = true)
+                .setCancelable(false)
+                .show();
+
+        miscIo.submit(() -> {
+            LocalImporter importer = new LocalImporter(this, getLocalStorageManager(), getLocalLibraryStore());
+            String errorMsg = null;
+            boolean success = false;
+            try {
+                importer.importFolderUri(treeUri, null, new LocalModels.ImportProgressCallback() {
+                    @Override
+                    public void onProgress(long currentBytes, long totalBytes, String message) {
+                        main.post(() -> {
+                            if (progressDialog.isShowing()) {
+                                progressDialog.setMessage(message);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public boolean isCancelled() {
+                        return cancelled[0];
+                    }
+                });
+                success = true;
+            } catch (InterruptedException e) {
+                // Cancelled
+            } catch (Exception e) {
+                errorMsg = e.getMessage();
+            }
+
+            final boolean finalSuccess = success;
+            final String finalError = errorMsg;
+            main.post(() -> {
+                if (progressDialog.isShowing()) {
+                    progressDialog.dismiss();
+                }
+                refreshLocalBookshelf();
+                if (finalSuccess) {
+                    showRemSuccessToast("成功导入文件夹漫画");
+                } else if (finalError != null) {
+                    showRemDialog(R.drawable.rem_error, "导入失败", finalError, "确定", null);
+                }
+            });
+        });
+    }
+
+    private void showImportOptionsDialog() {
+        String[] options = new String[]{"导入压缩包 (ZIP / CBZ)", "导入图片文件夹"};
+        new AlertDialog.Builder(this)
+                .setTitle("导入本地漫画")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+                        intent.setType("*/*");
+                        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
+                                "application/zip", "application/x-cbz", "application/x-zip-compressed", "application/octet-stream"
+                        });
+                        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                        startActivityForResult(intent, REQUEST_CODE_IMPORT_ARCHIVE);
+                    } else if (which == 1) {
+                        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                        startActivityForResult(intent, REQUEST_CODE_IMPORT_FOLDER);
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void showDeleteLocalBookDialog(LocalModels.Book book) {
+        LocalDetailView.showDeleteDialog(this, book, getLocalLibraryStore(), getLocalStorageManager(),
+                new LocalDetailView.Listener() {
+                    @Override public void onBack() {}
+                    @Override public void onRead(LocalModels.Book b, ComicModels.ComicDetail d, int chapterIndex) {}
+                    @Override public void onBookRenamed(LocalModels.Book updatedBook) { refreshLocalBookshelf(); }
+                    @Override public void onBookDeleted(LocalModels.Book deletedBook) {
+                        details.remove(deletedBook.id);
+                        summaries.remove(deletedBook.id);
+                        refreshLocalBookshelf();
+                    }
+                });
     }
 
     @Override
@@ -1317,27 +1530,187 @@ public class MainActivity extends Activity {
         searchPagingFooter = null;
     }
     private void renderFavorites(LinearLayout page) {
-        addBookshelfTitle(page);
+        addBookshelfHeader(page);
+
+        bookshelfContainer = new FrameLayout(this);
+        page.addView(bookshelfContainer, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        onlineBookshelfView = buildOnlineBookshelfView();
+        bookshelfContainer.addView(onlineBookshelfView, new FrameLayout.LayoutParams(-1, -1));
+
+        localBookshelfView = buildLocalBookshelfView();
+        bookshelfContainer.addView(localBookshelfView, new FrameLayout.LayoutParams(-1, -1));
+
+        onlineBookshelfView.setVisibility(bookshelfTab == 0 ? View.VISIBLE : View.GONE);
+        localBookshelfView.setVisibility(bookshelfTab == 1 ? View.VISIBLE : View.GONE);
+    }
+
+    private void addBookshelfHeader(LinearLayout page) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(UIHelpers.dp(this, 40));
+
+        titleMyBookshelf = new TextView(this);
+        titleMyBookshelf.setText("我的书架");
+        titleMyBookshelf.setTextSize(bookshelfTab == 0 ? 24 : 16);
+        titleMyBookshelf.setTextColor(bookshelfTab == 0 ? UIHelpers.TEXT : UIHelpers.TEXT3);
+        titleMyBookshelf.setTypeface(Typeface.create("sans-serif-medium", bookshelfTab == 0 ? Typeface.BOLD : Typeface.NORMAL));
+        titleMyBookshelf.setGravity(Gravity.CENTER_VERTICAL);
+        titleMyBookshelf.setOnClickListener(v -> switchBookshelfTab(0));
+        row.addView(titleMyBookshelf);
+
+        TextView divider = UIHelpers.text(this, " | ", 16, UIHelpers.TEXT3, Typeface.NORMAL);
+        divider.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(divider);
+
+        titleLocalBookshelf = new TextView(this);
+        titleLocalBookshelf.setText("本地书架");
+        titleLocalBookshelf.setTextSize(bookshelfTab == 1 ? 24 : 16);
+        titleLocalBookshelf.setTextColor(bookshelfTab == 1 ? UIHelpers.TEXT : UIHelpers.TEXT3);
+        titleLocalBookshelf.setTypeface(Typeface.create("sans-serif-medium", bookshelfTab == 1 ? Typeface.BOLD : Typeface.NORMAL));
+        titleLocalBookshelf.setGravity(Gravity.CENTER_VERTICAL);
+        titleLocalBookshelf.setOnClickListener(v -> switchBookshelfTab(1));
+        row.addView(titleLocalBookshelf);
+
+        View space = new View(this);
+        row.addView(space, UIHelpers.weight(1));
+
+        bookshelfRightActions = new LinearLayout(this);
+        bookshelfRightActions.setOrientation(LinearLayout.HORIZONTAL);
+        bookshelfRightActions.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(bookshelfRightActions);
+
+        updateBookshelfRightActions();
+
+        page.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
+    }
+
+    private void switchBookshelfTab(int newTab) {
+        if (bookshelfTab == newTab) return;
+        if (bookshelfTabAnimator != null && bookshelfTabAnimator.isRunning()) {
+            bookshelfTabAnimator.cancel();
+        }
+
+        final int oldTab = bookshelfTab;
+        bookshelfTab = newTab;
+
+        if (onlineBookshelfView != null) {
+            onlineBookshelfView.setVisibility(newTab == 0 ? View.VISIBLE : View.GONE);
+        }
+        if (localBookshelfView != null) {
+            localBookshelfView.setVisibility(newTab == 1 ? View.VISIBLE : View.GONE);
+            if (newTab == 1) {
+                refreshLocalBookshelf();
+            }
+        }
+        updateBookshelfRightActions();
+
+        final int activeColor = UIHelpers.TEXT;
+        final int inactiveColor = UIHelpers.TEXT3;
+
+        bookshelfTabAnimator = ValueAnimator.ofFloat(0f, 1f);
+        bookshelfTabAnimator.setDuration(200);
+        bookshelfTabAnimator.setInterpolator(new DecelerateInterpolator());
+        bookshelfTabAnimator.addUpdateListener(animation -> {
+            float frac = (float) animation.getAnimatedValue();
+            if (titleMyBookshelf != null && titleLocalBookshelf != null) {
+                float mySize = oldTab == 0 ? 24f - 8f * frac : 16f + 8f * frac;
+                float localSize = oldTab == 1 ? 24f - 8f * frac : 16f + 8f * frac;
+                int myColor = interpolateColor(oldTab == 0 ? activeColor : inactiveColor,
+                        newTab == 0 ? activeColor : inactiveColor, frac);
+                int localColor = interpolateColor(oldTab == 1 ? activeColor : inactiveColor,
+                        newTab == 1 ? activeColor : inactiveColor, frac);
+
+                titleMyBookshelf.setTextSize(mySize);
+                titleMyBookshelf.setTextColor(myColor);
+                titleLocalBookshelf.setTextSize(localSize);
+                titleLocalBookshelf.setTextColor(localColor);
+            }
+        });
+        bookshelfTabAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                if (titleMyBookshelf != null && titleLocalBookshelf != null) {
+                    titleMyBookshelf.setTextSize(newTab == 0 ? 24 : 16);
+                    titleMyBookshelf.setTextColor(newTab == 0 ? activeColor : inactiveColor);
+                    titleMyBookshelf.setTypeface(Typeface.create("sans-serif-medium", newTab == 0 ? Typeface.BOLD : Typeface.NORMAL));
+
+                    titleLocalBookshelf.setTextSize(newTab == 1 ? 24 : 16);
+                    titleLocalBookshelf.setTextColor(newTab == 1 ? activeColor : inactiveColor);
+                    titleLocalBookshelf.setTypeface(Typeface.create("sans-serif-medium", newTab == 1 ? Typeface.BOLD : Typeface.NORMAL));
+                }
+            }
+        });
+        bookshelfTabAnimator.start();
+    }
+
+    private static int interpolateColor(int colorStart, int colorEnd, float fraction) {
+        float f = Math.max(0f, Math.min(1f, fraction));
+        int a = Math.round(Color.alpha(colorStart) + f * (Color.alpha(colorEnd) - Color.alpha(colorStart)));
+        int r = Math.round(Color.red(colorStart) + f * (Color.red(colorEnd) - Color.red(colorStart)));
+        int g = Math.round(Color.green(colorStart) + f * (Color.green(colorEnd) - Color.green(colorStart)));
+        int b = Math.round(Color.blue(colorStart) + f * (Color.blue(colorEnd) - Color.blue(colorStart)));
+        return Color.argb(a, r, g, b);
+    }
+
+    private void updateBookshelfRightActions() {
+        if (bookshelfRightActions == null) return;
+        bookshelfRightActions.removeAllViews();
+        if (bookshelfTab == 0) {
+            bookshelfRightActions.addView(UIHelpers.text(this, favorites.size() + " 本", 12, UIHelpers.TEXT3, Typeface.NORMAL));
+            ImageView rem = new ImageView(this);
+            rem.setImageResource(R.drawable.rem_reader_resume);
+            rem.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            rem.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 12), UIHelpers.BORDER));
+            rem.setClipToOutline(true);
+            rem.setContentDescription("蕾姆主题");
+            LinearLayout.LayoutParams remParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 23), UIHelpers.dp(this, 23));
+            remParams.leftMargin = UIHelpers.dp(this, 8);
+            bookshelfRightActions.addView(rem, remParams);
+        } else {
+            int localCount = getLocalLibraryStore().getBookCount();
+            bookshelfRightActions.addView(UIHelpers.text(this, localCount + " 本", 12, UIHelpers.TEXT3, Typeface.NORMAL));
+            TextView importBtn = UIHelpers.text(this, "+ 导入", 12, UIHelpers.ACCENT, Typeface.BOLD);
+            importBtn.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 4), UIHelpers.dp(this, 8), UIHelpers.dp(this, 4));
+            importBtn.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 10), UIHelpers.BORDER));
+            importBtn.setContentDescription("导入本地漫画");
+            importBtn.setOnClickListener(v -> showImportOptionsDialog());
+            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, -2);
+            p.leftMargin = UIHelpers.dp(this, 8);
+            bookshelfRightActions.addView(importBtn, p);
+        }
+    }
+
+    private View buildOnlineBookshelfView() {
         ScrollView scroll = new ScrollView(this);
         tuneScroll(scroll);
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         scroll.addView(content, UIHelpers.matchWrap());
-        page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+
         List<String> visible = filterFavorites();
         String continueId = null;
         long latestRead = Long.MIN_VALUE;
         for (String id : progress.keySet()) {
+            if (isLocalComic(id)) continue;
             long readAt = lastViewedAt.containsKey(id) ? lastViewedAt.get(id) : Long.MIN_VALUE;
             if (readAt > latestRead) {
                 latestRead = readAt;
                 continueId = id;
             }
         }
-        if (continueId == null && !progress.isEmpty()) continueId = progress.keySet().iterator().next();
+        if (continueId == null && !progress.isEmpty()) {
+            for (String id : progress.keySet()) {
+                if (!isLocalComic(id)) {
+                    continueId = id;
+                    break;
+                }
+            }
+        }
         if (favorites.isEmpty() && continueId == null) {
             content.addView(bookshelfEmptyState(false));
-            return;
+            return scroll;
         }
         if (continueId != null) {
             content.addView(bookshelfSectionHeader("接着看", "阅读历史 ›", this::showHistory));
@@ -1346,7 +1719,7 @@ public class MainActivity extends Activity {
         content.addView(bookshelfSectionHeader("全部收藏", visible.isEmpty() ? "0 本" : "最近使用排序", null));
         if (visible.isEmpty()) {
             content.addView(bookshelfEmptyState(true));
-            return;
+            return scroll;
         }
         for (int i = 0; i < visible.size(); i += 3) {
             LinearLayout row = new LinearLayout(this);
@@ -1359,25 +1732,70 @@ public class MainActivity extends Activity {
             }
             content.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 10)));
         }
+        return scroll;
     }
 
-    private void addBookshelfTitle(LinearLayout page) {
-        LinearLayout row = new LinearLayout(this);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = UIHelpers.text(this, "书架", 24, UIHelpers.TEXT, Typeface.BOLD);
-        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        row.addView(title, UIHelpers.weight(1));
-        row.addView(UIHelpers.text(this, favorites.size() + " 本", 12, UIHelpers.TEXT3, Typeface.NORMAL));
-        ImageView rem = new ImageView(this);
-        rem.setImageResource(R.drawable.rem_reader_resume);
-        rem.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        rem.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 12), UIHelpers.BORDER));
-        rem.setClipToOutline(true);
-        rem.setContentDescription("蕾姆主题");
-        LinearLayout.LayoutParams remParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 23), UIHelpers.dp(this, 23));
-        remParams.leftMargin = UIHelpers.dp(this, 8);
-        row.addView(rem, remParams);
-        page.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
+    private View buildLocalBookshelfView() {
+        String continueLocalId = null;
+        long latestRead = Long.MIN_VALUE;
+        for (String id : progress.keySet()) {
+            if (!isLocalComic(id)) continue;
+            long readAt = lastViewedAt.containsKey(id) ? lastViewedAt.get(id) : Long.MIN_VALUE;
+            if (readAt > latestRead) {
+                latestRead = readAt;
+                continueLocalId = id;
+            }
+        }
+        if (continueLocalId == null) {
+            for (String id : progress.keySet()) {
+                if (isLocalComic(id)) {
+                    continueLocalId = id;
+                    break;
+                }
+            }
+        }
+        int continueChapter = continueLocalId != null ? savedChapter(continueLocalId) : 0;
+
+        return LocalLibraryView.build(
+                this,
+                getLocalLibraryStore(),
+                getLocalStorageManager(),
+                continueLocalId,
+                continueChapter,
+                new LocalLibraryView.Listener() {
+                    @Override
+                    public void onBookClick(LocalModels.Book book) {
+                        showLocalDetail(book.id);
+                    }
+
+                    @Override
+                    public void onBookLongClick(LocalModels.Book book) {
+                        showDeleteLocalBookDialog(book);
+                    }
+
+                    @Override
+                    public void onImportClick() {
+                        showImportOptionsDialog();
+                    }
+
+                    @Override
+                    public void onResumeRead(LocalModels.Book book) {
+                        showDetailThenRead(book.id);
+                    }
+                }
+        );
+    }
+
+    private void refreshLocalBookshelf() {
+        if (bookshelfContainer != null) {
+            if (localBookshelfView != null) {
+                bookshelfContainer.removeView(localBookshelfView);
+            }
+            localBookshelfView = buildLocalBookshelfView();
+            bookshelfContainer.addView(localBookshelfView, new FrameLayout.LayoutParams(-1, -1));
+            localBookshelfView.setVisibility(bookshelfTab == 1 ? View.VISIBLE : View.GONE);
+        }
+        updateBookshelfRightActions();
     }
 
     private View bookshelfSectionHeader(String title, String end, Runnable endAction) {
@@ -2388,7 +2806,137 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void showLocalDetail(String comicId) {
+        if (detailBackAction == null) {
+            final boolean returnToHistory = historyVisible;
+            final boolean returnToStandaloneSearch = standaloneSearchVisible;
+            final boolean returnToStandaloneSearchResults = standaloneSearchResultsMode;
+            final int returnTab = currentTab;
+            detailBackAction = () -> {
+                activeDetailId = "";
+                detailBackAction = null;
+                if (returnToHistory) {
+                    showHistory();
+                } else if (returnToStandaloneSearch) {
+                    showStandaloneSearch(returnToStandaloneSearchResults);
+                } else {
+                    showTab(returnTab);
+                }
+            };
+        }
+        enterScreen(true);
+        applyThemeAndSystemBars();
+        activeDetailId = comicId;
+        readerVisible = false;
+
+        LocalModels.Book book = getLocalLibraryStore().getBook(comicId);
+        if (book == null) {
+            showRemDialog(R.drawable.rem_empty, "漫画已移除", "该漫画已从本地书架删除，重新导入该文件后可恢复阅读进度", "返回", () -> {
+                if (detailBackAction != null) {
+                    Runnable back = detailBackAction;
+                    detailBackAction = null;
+                    back.run();
+                } else {
+                    showTab(0);
+                }
+            });
+            return;
+        }
+
+        List<LocalModels.Chapter> localChapters = getLocalLibraryStore().getChapters(book.id);
+        List<ComicModels.Chapter> comicChapters = new ArrayList<>();
+        for (LocalModels.Chapter lc : localChapters) {
+            comicChapters.add(new ComicModels.Chapter(lc.id, lc.title, LocalContentResolver.buildChapterUrl(lc.id), 0, lc.orderIndex));
+        }
+        ComicModels.ComicSummary summary = new ComicModels.ComicSummary(
+                "local",
+                book.id,
+                book.getDisplayTitle(),
+                LocalContentResolver.buildCoverUrl(book.id),
+                "本地导入",
+                Collections.emptyList()
+        );
+        ComicModels.ComicDetail detail = new ComicModels.ComicDetail(
+                summary,
+                "本地",
+                "已完成",
+                "本地漫画 · " + book.format.toUpperCase(Locale.US) + " 格式\n文件存储于 App 专属目录，原文件未受修改。",
+                "",
+                comicChapters
+        );
+        details.put(book.id, detail);
+        summaries.put(book.id, summary);
+
+        int savedChapter = savedChapter(book.id);
+        root.removeAllViews();
+        View localDetailView = LocalDetailView.build(
+                this,
+                book,
+                detail,
+                getLocalLibraryStore(),
+                getLocalStorageManager(),
+                savedChapter,
+                new LocalDetailView.Listener() {
+                    @Override
+                    public void onBack() {
+                        if (detailBackAction != null) {
+                            Runnable back = detailBackAction;
+                            detailBackAction = null;
+                            back.run();
+                        } else {
+                            showTab(0);
+                        }
+                    }
+
+                    @Override
+                    public void onRead(LocalModels.Book b, ComicModels.ComicDetail d, int chapterIndex) {
+                        showReader(d, chapterIndex);
+                    }
+
+                    @Override
+                    public void onBookRenamed(LocalModels.Book updatedBook) {
+                        ComicModels.ComicSummary updatedSummary = new ComicModels.ComicSummary(
+                                "local",
+                                updatedBook.id,
+                                updatedBook.getDisplayTitle(),
+                                LocalContentResolver.buildCoverUrl(updatedBook.id),
+                                "本地导入",
+                                Collections.emptyList()
+                        );
+                        details.put(updatedBook.id, new ComicModels.ComicDetail(
+                                updatedSummary,
+                                "本地",
+                                "已完成",
+                                detail.description,
+                                "",
+                                detail.chapters
+                        ));
+                        refreshLocalBookshelf();
+                    }
+
+                    @Override
+                    public void onBookDeleted(LocalModels.Book deletedBook) {
+                        details.remove(deletedBook.id);
+                        summaries.remove(deletedBook.id);
+                        refreshLocalBookshelf();
+                        if (detailBackAction != null) {
+                            Runnable back = detailBackAction;
+                            detailBackAction = null;
+                            back.run();
+                        } else {
+                            showTab(0);
+                        }
+                    }
+                }
+        );
+        root.addView(localDetailView, UIHelpers.match());
+    }
+
     private void showDetail(String comicId) {
+        if (isLocalComic(comicId)) {
+            showLocalDetail(comicId);
+            return;
+        }
         if (detailBackAction == null) {
             final boolean returnToHistory = historyVisible;
             final boolean returnToStandaloneSearch = standaloneSearchVisible;
@@ -2722,6 +3270,34 @@ public class MainActivity extends Activity {
             cached = null;
         }
         if (cached == null) {
+            if (LocalContentResolver.isLocalChapterUrl(chapterUrl) || isLocalComic(comicId)) {
+                showReaderLoading(detail);
+                track(detailIo.submit(() -> {
+                    try {
+                        String chapterId = LocalContentResolver.isLocalChapterUrl(chapterUrl) ?
+                                LocalContentResolver.extractId(chapterUrl, LocalContentResolver.PREFIX_CHAPTER) : chapterUrl;
+                        List<LocalModels.Page> localPages = getLocalLibraryStore().getPages(chapterId);
+                        List<String> imageUrls = new ArrayList<>();
+                        for (LocalModels.Page lp : localPages) {
+                            imageUrls.add(LocalContentResolver.buildPageUrl(lp.id));
+                        }
+                        ComicModels.ChapterPage page = new ComicModels.ChapterPage(chapterId, chapter.title, imageUrls, null);
+                        main.post(() -> {
+                            if (!isCurrentReaderRequest(generation, comicId, chapterUrl, detail)) return;
+                            chapters.put(chapterUrl, page);
+                            commitReaderPage(generation, comicId, chapterUrl, detail, page);
+                        });
+                    } catch (Exception error) {
+                        main.post(() -> {
+                            if (!isCurrentReaderRequest(generation, comicId, chapterUrl, detail)) return;
+                            appendErrorLog("本地章节加载失败", error);
+                            showReaderError(detail, "加载失败了", "无法读取本地章节图片",
+                                    () -> showReader(detail, chapterIndex));
+                        });
+                    }
+                }));
+                return;
+            }
             showReaderLoading(detail);
             track(detailIo.submit(() -> {
                 try {
@@ -4071,6 +4647,7 @@ public class MainActivity extends Activity {
     }
 
     private String sourceNameForId(String sourceId) {
+        if ("local".equals(sourceId) || "本地".equals(sourceId)) return "本地导入";
         if (sourceClient.id().equals(sourceId)) return sourceClient.name();
         if (mhua5Client.id().equals(sourceId)) return mhua5Client.name();
         if (mh160Client.id().equals(sourceId)) return mh160Client.name();
@@ -4300,6 +4877,38 @@ public class MainActivity extends Activity {
 
     private void showDetailThenRead(String id) {
         onUserOpenComicDetail(id);
+        if (isLocalComic(id)) {
+            LocalModels.Book book = getLocalLibraryStore().getBook(id);
+            if (book == null) {
+                showRemDialog(R.drawable.rem_empty, "漫画已移除", "该漫画已从本地书架删除", "确定", null);
+                return;
+            }
+            List<LocalModels.Chapter> localChapters = getLocalLibraryStore().getChapters(book.id);
+            List<ComicModels.Chapter> comicChapters = new ArrayList<>();
+            for (LocalModels.Chapter lc : localChapters) {
+                comicChapters.add(new ComicModels.Chapter(lc.id, lc.title, LocalContentResolver.buildChapterUrl(lc.id), 0, lc.orderIndex));
+            }
+            ComicModels.ComicSummary summary = new ComicModels.ComicSummary(
+                    "local",
+                    book.id,
+                    book.getDisplayTitle(),
+                    LocalContentResolver.buildCoverUrl(book.id),
+                    "本地导入",
+                    Collections.emptyList()
+            );
+            ComicModels.ComicDetail detail = new ComicModels.ComicDetail(
+                    summary,
+                    "本地",
+                    "已完成",
+                    "本地漫画 · " + book.format.toUpperCase(Locale.US),
+                    "",
+                    comicChapters
+            );
+            details.put(book.id, detail);
+            summaries.put(book.id, summary);
+            showReader(detail, savedChapter(id));
+            return;
+        }
         ComicModels.ComicDetail detail = details.get(id);
         if (detail != null) {
             ensureChaptersThen(detail, loaded -> showReader(loaded, savedChapter(id)));
@@ -4439,6 +5048,23 @@ public class MainActivity extends Activity {
         }
         if (!detail.chapters.isEmpty()) {
             action.run(detail);
+            return;
+        }
+        if (isLocalComic(detail.summary.comicId)) {
+            List<LocalModels.Chapter> localChapters = getLocalLibraryStore().getChapters(detail.summary.comicId);
+            List<ComicModels.Chapter> comicChapters = new ArrayList<>();
+            for (LocalModels.Chapter lc : localChapters) {
+                comicChapters.add(new ComicModels.Chapter(lc.id, lc.title, LocalContentResolver.buildChapterUrl(lc.id), 0, lc.orderIndex));
+            }
+            ComicModels.ComicDetail loaded = new ComicModels.ComicDetail(
+                    detail.summary,
+                    detail.author,
+                    detail.status,
+                    detail.description,
+                    detail.latestChapter,
+                    comicChapters);
+            details.put(detail.summary.comicId, loaded);
+            action.run(loaded);
             return;
         }
         int loadingGeneration = showPageLoading("正在加载章节目录...", "目录加载完成后会自动打开。", () -> showDetail(detail.summary.comicId));
@@ -5024,6 +5650,11 @@ public class MainActivity extends Activity {
     }
 
     private boolean ensureReaderImageCached(String imageUrl, String chapterUrl, boolean cacheOnly) throws IOException {
+        if (LocalContentResolver.isLocalPageUrl(imageUrl)) {
+            String pageId = LocalContentResolver.extractId(imageUrl, LocalContentResolver.PREFIX_PAGE);
+            File materialized = getLocalContentResolver().materializePage(pageId);
+            return materialized != null && materialized.exists() && materialized.length() > 0;
+        }
         File cached = imageCacheFile(imageUrl);
         long[] cachedIdentity = captureImageCacheIdentity(cached);
         if (cachedIdentity != null && cachedIdentity[0] > 0L) {
@@ -5062,11 +5693,15 @@ public class MainActivity extends Activity {
         if (TextUtils.isEmpty(imageUrl)) return null;
         return submitReaderImage(() -> {
             try {
-                File cached = imageCacheFile(imageUrl);
+                File cached = LocalContentResolver.isLocalPageUrl(imageUrl) ?
+                        getLocalContentResolver().materializePage(LocalContentResolver.extractId(imageUrl, LocalContentResolver.PREFIX_PAGE)) :
+                        imageCacheFile(imageUrl);
                 long[] cachedIdentity = captureImageCacheIdentity(cached);
                 Bitmap bitmap = cachedIdentity != null ? decodeReaderImage(cached, readerContentWidth(), imageUrl) : null;
                 if (bitmap == null) {
-                    deleteImageCacheIfUnchanged(cached, cachedIdentity);
+                    if (!LocalContentResolver.isLocalPageUrl(imageUrl)) {
+                        deleteImageCacheIfUnchanged(cached, cachedIdentity);
+                    }
                     if (!ensureReaderImageCached(imageUrl, chapterUrl, cacheOnly)) {
                         main.post(() -> {
                             if (activityDestroyed || !TextUtils.equals(imageUrl, (String) target.getTag())
@@ -5247,6 +5882,29 @@ public class MainActivity extends Activity {
             return;
         }
         trackImage(imageIo.submit(() -> {
+            if (LocalContentResolver.isLocalUrl(imageUrl)) {
+                try {
+                    Bitmap bitmap = null;
+                    if (LocalContentResolver.isLocalCoverUrl(imageUrl)) {
+                        String bookId = LocalContentResolver.extractId(imageUrl, LocalContentResolver.PREFIX_COVER);
+                        bitmap = getLocalContentResolver().decodeCoverBitmap(bookId, UIHelpers.dp(this, 120), UIHelpers.dp(this, 160));
+                    } else if (LocalContentResolver.isLocalPageUrl(imageUrl)) {
+                        String pageId = LocalContentResolver.extractId(imageUrl, LocalContentResolver.PREFIX_PAGE);
+                        try (InputStream is = getLocalContentResolver().openPage(pageId)) {
+                            if (is != null) bitmap = BitmapFactory.decodeStream(is);
+                        }
+                    }
+                    if (bitmap != null) {
+                        final Bitmap loaded = bitmap;
+                        imageMemoryCache.put(imageUrl, loaded);
+                        main.post(() -> target.setImageBitmap(loaded));
+                        return;
+                    }
+                } catch (Exception ignored) {
+                }
+                main.post(() -> target.setImageResource(R.drawable.rem_no_image));
+                return;
+            }
             HttpURLConnection connection = null;
             try {
                 File cached = imageCacheFile(imageUrl);
@@ -6525,6 +7183,7 @@ public class MainActivity extends Activity {
 
                     @Override
                     public boolean isSourceAvailable(String comicId) {
+                        if (isLocalComic(comicId)) return false;
                         if (isRetiredComic(comicId)) return false;
                         ComicSource src = sourceForComicId(comicId);
                         if (src == null) return false;
@@ -6768,6 +7427,11 @@ public class MainActivity extends Activity {
 
     private interface UpdateProgress {
         void onProgress(int percent);
+    }
+
+    private AlertDialog showRemDialog(int imageRes, String title, String message,
+                                       String positiveText, Runnable positiveAction) {
+        return showRemDialog(imageRes, title, message, positiveText, positiveAction, null, null);
     }
 
     private AlertDialog showRemDialog(int imageRes, String title, String message,
@@ -8036,15 +8700,30 @@ public class MainActivity extends Activity {
         row.setMinimumHeight(UIHelpers.dp(this, 56));
         ComicModels.ComicSummary summary = summaries.get(comicId);
         ComicModels.ComicDetail detail = details.get(comicId);
-        boolean orphaned = summary == null;
+        if (summary == null && isLocalComic(comicId)) {
+            LocalModels.Book localBook = getLocalLibraryStore().getBook(comicId);
+            if (localBook != null) {
+                summary = new ComicModels.ComicSummary(
+                        "local",
+                        localBook.id,
+                        localBook.getDisplayTitle(),
+                        LocalContentResolver.buildCoverUrl(localBook.id),
+                        "本地导入",
+                        Collections.emptyList()
+                );
+                summaries.put(comicId, summary);
+            }
+        }
+        final ComicModels.ComicSummary resolvedSummary = summary;
+        boolean orphaned = resolvedSummary == null;
         FrameLayout coverWrap = new FrameLayout(this);
         View cover;
         if (orphaned) {
             cover = UIHelpers.coverPlaceholder(this, "");
-        } else if (!TextUtils.isEmpty(summary.coverUrl)) {
-            cover = coverFrame(summary.coverUrl, 32, 43, isRetiredComic(comicId));
+        } else if (!TextUtils.isEmpty(resolvedSummary.coverUrl)) {
+            cover = coverFrame(resolvedSummary.coverUrl, 32, 43, isRetiredComic(comicId));
         } else {
-            cover = UIHelpers.coverPlaceholder(this, summary.title);
+            cover = UIHelpers.coverPlaceholder(this, resolvedSummary.title);
         }
         coverWrap.addView(cover, new FrameLayout.LayoutParams(UIHelpers.dp(this, 32), UIHelpers.dp(this, 43)));
         row.addView(coverWrap, new LinearLayout.LayoutParams(UIHelpers.dp(this, 32), UIHelpers.dp(this, 43)));
@@ -8053,7 +8732,7 @@ public class MainActivity extends Activity {
         info.setOrientation(LinearLayout.VERTICAL);
         info.setPadding(UIHelpers.dp(this, 8), 0, UIHelpers.dp(this, 8), 0);
         TextView titleView = new TextView(this);
-        titleView.setText(orphaned ? "已清除的漫画" : summary.title);
+        titleView.setText(orphaned ? "已清除的漫画" : resolvedSummary.title);
         titleView.setTextSize(14);
         titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         titleView.setTextColor(orphaned ? UIHelpers.TEXT3 : UIHelpers.TEXT);
@@ -8073,17 +8752,20 @@ public class MainActivity extends Activity {
                 UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
         row.addView(info, UIHelpers.weight(1));
 
+        final String historyTitle = orphaned ? "这条记录" : resolvedSummary.title;
         ImageView close = new ImageView(this);
         close.setImageResource(R.drawable.ic_trash);
         close.setImageTintList(android.content.res.ColorStateList.valueOf(UIHelpers.TEXT3));
         close.setPadding(UIHelpers.dp(this, 7), UIHelpers.dp(this, 7), UIHelpers.dp(this, 7), UIHelpers.dp(this, 7));
         close.setOnClickListener(v -> {
-            String title = orphaned ? "这条记录" : summary.title;
-            showRemDialog(R.drawable.rem_empty, "删除这条记录？", "只移除《" + title + "》的阅读位置，书架收藏保持不变。", "删除", () -> {
+            showRemDialog(R.drawable.rem_empty, "删除这条记录？", "只移除《" + historyTitle + "》的阅读位置，书架收藏保持不变。", "删除", () -> {
                 progress.remove(comicId);
                 removeReaderPositions(comicId);
                 lastViewedAt.remove(comicId);
                 saveLocalState();
+                if (isLocalComic(comicId)) {
+                    getLocalLibraryStore().removeDeletedFingerprintByProgressKey(comicId);
+                }
                 showHistory();
             }, "取消", null);
         });
@@ -8091,6 +8773,8 @@ public class MainActivity extends Activity {
 
         if (!orphaned) {
             row.setOnClickListener(v -> openComicDetail(comicId));
+        } else if (isLocalComic(comicId)) {
+            row.setOnClickListener(v -> showRemDialog(R.drawable.rem_empty, "作品已移除", "该漫画已从本地书架移除。如需继续阅读，请重新导入原文件。", "确定", null));
         }
         return row;
     }
@@ -8105,6 +8789,9 @@ public class MainActivity extends Activity {
             deleteFiles(new File(getCacheDir(), "images"));
             imageCacheBytes = 0L;
         }
+        try {
+            getLocalStorageManager().clearDerivedPagesCache();
+        } catch (Exception ignored) {}
         imageMemoryCache.evictAll();
         Set<String> favoriteIds = new HashSet<>(favorites);
         summaries.keySet().retainAll(favoriteIds);
