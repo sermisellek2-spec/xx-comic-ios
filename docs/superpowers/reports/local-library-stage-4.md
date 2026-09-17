@@ -59,8 +59,8 @@
 
 | 项目 | 文件路径 | 大小 | SHA-256 |
 | --- | --- | --- | --- |
-| **Stage 4 + PDF 验收 APK** | `release/local-library-stage-4/xx-comic-local-stage-4-97e00f5.apk` | 11,438,986 字节 (~10.91 MB) | `CC28EC80C9C9EDA180E68D99998E84FE0105658679B0F00972FD88F7231DF57C` |
-| **AndroidTest APK** | `release/local-library-stage-4/xx-comic-local-stage-4-97e00f5-androidTest.apk` | 44,218 字节 | `69AB45B6E06CE0939E5C1FB4BD29B25B665FB79C7DA4309C791A0FD53DC5D5EC` |
+| **最新 Debug 验收 APK** | `release/xx-comic-debug.apk` / `release/local-library-stage-4/xx-comic-local-stage-4-latest-debug.apk` | 11,483,255 字节 (~10.95 MB) | `11DC5A4F23DEFE0307B82036CC1028A9520418E1E3ACCE4CCF32FF3B8B158D81` |
+| **AndroidTest APK** | `release/local-library-stage-4/xx-comic-local-stage-4-latest-androidTest.apk` | 44,218 字节 | `69AB45B6E06CE0939E5C1FB4BD29B25B665FB79C7DA4309C791A0FD53DC5D5EC` |
 | **签名证书指纹** | Android Debug Certificate | - | `13:1D:74:72:0C:25:65:D2:E5:02:A4:74:DC:31:E6:6A:67:03:9E:04:85:11:A0:7F:DD:35:D9:48:7C:93:B7:2A` |
 
 ---
