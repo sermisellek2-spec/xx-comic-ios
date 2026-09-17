@@ -1906,7 +1906,6 @@ public class MainActivity extends Activity {
     private void addBookshelfHeader(LinearLayout page) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setLayoutParams(new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 44)));
         row.setGravity(Gravity.CENTER_VERTICAL);
 
         titleMyBookshelf = new TextView(this);
@@ -1932,7 +1931,7 @@ public class MainActivity extends Activity {
         row.addView(titleLocalBookshelf);
 
         View space = new View(this);
-        row.addView(space, UIHelpers.weight(1));
+        row.addView(space, new LinearLayout.LayoutParams(0, 0, 1));
 
         bookshelfRightActions = new LinearLayout(this);
         bookshelfRightActions.setOrientation(LinearLayout.HORIZONTAL);
@@ -1941,7 +1940,10 @@ public class MainActivity extends Activity {
 
         updateBookshelfRightActions();
 
-        page.addView(row, UIHelpers.marginBottom(-1, UIHelpers.dp(this, 6)));
+        // Keep the header bounded so the weighted bookshelf below retains its height.
+        LinearLayout.LayoutParams headerParams = new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 48));
+        headerParams.bottomMargin = UIHelpers.dp(this, 6);
+        page.addView(row, headerParams);
     }
 
     private void switchBookshelfTab(int newTab) {

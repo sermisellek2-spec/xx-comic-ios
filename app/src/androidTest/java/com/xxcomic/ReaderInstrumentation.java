@@ -12,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.LinearLayout;
 import com.xxcomic.reader.PagedReaderView;
 import com.xxcomic.reader.ZoomImageView;
 import com.xxcomic.reader.ReaderPosition;
@@ -34,6 +35,7 @@ public final class ReaderInstrumentation extends Instrumentation {
     private boolean sourceOrderOnly;
     private boolean localOnly;
     private boolean downloadsOnly;
+    private boolean bookshelfOnly;
     @Override public void onCreate(Bundle arguments) {
         super.onCreate(arguments);
         immersionOnly = arguments != null && "true".equals(arguments.getString("immersionOnly"));
@@ -42,6 +44,7 @@ public final class ReaderInstrumentation extends Instrumentation {
         sourceOrderOnly = arguments != null && "true".equals(arguments.getString("sourceOrderOnly"));
         localOnly = arguments != null && "true".equals(arguments.getString("localOnly"));
         downloadsOnly = arguments != null && "true".equals(arguments.getString("downloadsOnly"));
+        bookshelfOnly = arguments != null && "true".equals(arguments.getString("bookshelfOnly"));
         start();
     }
     @Override public void onStart() {
@@ -59,6 +62,11 @@ public final class ReaderInstrumentation extends Instrumentation {
                 return;
             }
             activity = (MainActivity) startActivitySync(new Intent(getTargetContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            if (bookshelfOnly) {
+                testBookshelfLayout();
+                result.putString("stream", "PASS: " + checks + " bookshelf layout checks\n");
+                finish(-1, result); return;
+            }
             if (sourceOrderOnly) {
                 testSourceOrder();
                 result.putString("stream", "PASS: " + checks + " source order device checks\n");
@@ -453,6 +461,34 @@ public final class ReaderInstrumentation extends Instrumentation {
         if(view instanceof TextView && text.equals(((TextView)view).getText().toString()))return view;
         if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++){View found=findText(((ViewGroup)view).getChildAt(i),text);if(found!=null)return found;}
         return null;
+    }
+    private void testBookshelfLayout() throws Exception {
+        onMain(() -> {
+            LinearLayout page = new LinearLayout(activity);
+            page.setOrientation(LinearLayout.VERTICAL);
+            call("renderFavorites", page);
+            for (int widthDp : new int[]{320, 360, 412, 600}) {
+                for (int tab : new int[]{0, 1, 0}) {
+                    call("switchBookshelfTab", tab);
+                    android.animation.ValueAnimator animator = (android.animation.ValueAnimator) get("bookshelfTabAnimator");
+                    if (animator != null) animator.end();
+                    int width = UIHelpers.dp(activity, widthDp);
+                    int height = UIHelpers.dp(activity, 720);
+                    page.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+                    page.layout(0, 0, width, height);
+                    View header = page.getChildAt(0);
+                    View content = (View) get("bookshelfContainer");
+                    check(header.getHeight() > 0 && header.getHeight() <= UIHelpers.dp(activity, 64),
+                            "bookshelf header stays compact: " + widthDp + "/" + tab);
+                    check(content.getHeight() > height / 2 && content.getTop() == header.getBottom() + UIHelpers.dp(activity, 6),
+                            "bookshelf content keeps usable height below header: " + widthDp + "/" + tab);
+                    View visible = (View) get(tab == 0 ? "onlineBookshelfView" : "localBookshelfView");
+                    check(visible.getVisibility() == View.VISIBLE && visible.getHeight() == content.getHeight(),
+                            "selected bookshelf fills content area: " + widthDp + "/" + tab);
+                }
+            }
+        });
     }
     private void check(boolean ok,String message){if(!ok)throw new AssertionError(message);checks++;}
     private void screenshot(String name) throws Exception {
