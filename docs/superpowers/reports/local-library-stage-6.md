@@ -59,3 +59,14 @@ adb shell am instrument -w -e filesOnly true com.xxcomic.test/com.xxcomic.Reader
 - 大小：10,708,746 字节
 - SHA-256：`fb4306081eabccc367079121a0556c4386e03f601722dfdabb4c1961312b5c75`
 - 签名验证通过，证书 SHA-256：`131d74720c2565d2e502a474dc31e66a67039e048511a07fdd35d9487c93b72a`，与旧版本一致。
+
+## 发布结果
+
+- 功能与版本提交：`95143636afa841020f2ed2b4c893ef28df3e362c`，开发分支 fast-forward 合并至 `master`，已推送 `origin/master` 并核对远端 SHA。
+- 合并后源码与构建源码相同，master 再次执行 `:app:testDebugUnitTest` 成功。
+- COS 上传返回 HTTP 200；公网下载 COS 与服务器备用 APK，二者 SHA-256 均与上述正式包一致。
+- 下载：`https://xx-1321588235.cos.ap-guangzhou.myqcloud.com/apk/xx-comic/xx-comic.bin`
+- 备用：`https://weifeng.cloud/xx-comic/releases/xx-comic.apk`
+- 两份包核验后才发布 `https://weifeng.cloud/xx-comic/releases/android-release.json`；公网确认 `2.0.22 / 222`、`updateMode: prompt`、大小及 SHA-256 正确。
+- 服务器保留 2.0.21 APK 和元数据备份；既有本地构建输出改动未提交或清除。开发分支保留。
+- 发布完成不等于真机验收完成；设备总验收及未支持格式边界仍按上文记录。
