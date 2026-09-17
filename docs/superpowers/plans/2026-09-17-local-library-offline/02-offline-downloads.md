@@ -60,7 +60,7 @@
 **Files:** 新建 `DownloadSelectionSheet.java`、`DownloadCenterView.java`、`DownloadTaskDetailView.java`、`local/StorageManagementView.java`；修改 MainActivity 详情、设置、本地书架入口和本地优先判定；扩展 LocalStorageManager。
 
 - [x] 在线详情添加紧凑下载入口，76% 底部抽屉支持当前章/勾选多章/全章，已有任务可识别且不重复创建；反转排序身份测试通过。
-- [x] 开放本地书架右上角下载中心；作品聚合任务可进入章节详情，能暂停、恢复、重试、取消。
+- [x] 下载中心迁移至设置「站源与本地数据」，本地书架右上角保持纯净书目数与导入入口；作品聚合任务可进入章节详情，能暂停、恢复、重试、取消。
 - [x] 设置新增仅 Wi-Fi 和存储管理；后台统计导入、下载、可再生页面缓存；可批量删除副本，原文件不受影响。
 - [x] 同源作品多次下载并入原本地作品，共用在线 progressKey；跨站同名不合并；保留完整目录与原 chapterId。
 - [x] 删除整本先使旧任务失效；删部分章保留其余；取消保留已正式完成章；保留收藏/进度，更新实际占用。
