@@ -9,6 +9,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.text.TextUtils;
+import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,7 @@ import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -155,6 +157,7 @@ public final class DownloadViews {
             start.setText("下载选中章节 (0)");
             adapter.notifyDataSetChanged();
         });
+        addToolChip(a, tools, "区间", () -> showRangeDialog(a, visible, selected, start, adapter));
         addToolChip(a, tools, "倒序 ⇄", () -> {
             Collections.reverse(visible);
             adapter.notifyDataSetChanged();
@@ -209,6 +212,72 @@ public final class DownloadViews {
             w.setLayout(-1, (int) (a.getResources().getDisplayMetrics().heightPixels * 0.76f));
             w.setDimAmount(0.28f);
             w.setWindowAnimations(R.style.DownloadSheetAnimation);
+        }
+    }
+
+    private static void showRangeDialog(Activity a, List<ComicModels.Chapter> visible,
+                                        Set<String> selected, Button start, BaseAdapter adapter) {
+        LinearLayout content = column(a);
+        content.setPadding(dp(a, 18), dp(a, 10), dp(a, 18), dp(a, 2));
+        TextView hint = UIHelpers.text(a, "按当前目录顺序输入起止序号（含首尾）", 12, UIHelpers.TEXT3, Typeface.NORMAL);
+        content.addView(hint);
+
+        LinearLayout fields = row(a);
+        EditText from = rangeInput(a, "起始序号");
+        EditText to = rangeInput(a, "结束序号");
+        fields.addView(from, UIHelpers.weight(1));
+        TextView dash = UIHelpers.text(a, "  至  ", 13, UIHelpers.TEXT3, Typeface.NORMAL);
+        dash.setGravity(Gravity.CENTER);
+        fields.addView(dash, new LinearLayout.LayoutParams(dp(a, 52), -2));
+        fields.addView(to, UIHelpers.weight(1));
+        content.addView(fields, UIHelpers.marginTop(-1, dp(a, 10)));
+
+        AlertDialog dialog = new AlertDialog.Builder(a)
+                .setTitle("选择章节区间")
+                .setView(content)
+                .setNegativeButton("取消", null)
+                .setPositiveButton("选中", null)
+                .create();
+        theme(dialog, a);
+        dialog.setOnShowListener(ignored -> {
+            Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            if (positive == null) return;
+            positive.setOnClickListener(v -> {
+                int startIndex = parsePositiveInt(from.getText().toString());
+                int endIndex = parsePositiveInt(to.getText().toString());
+                List<ComicModels.Chapter> range = ChapterRangeSelection.select(visible, startIndex, endIndex);
+                if (range.isEmpty()) {
+                    toast(a, "请输入有效的章节区间（1 - " + visible.size() + "）");
+                    return;
+                }
+                selected.clear();
+                for (ComicModels.Chapter chapter : range) selected.add(chapter.chapterId);
+                start.setText("下载选中章节 (" + selected.size() + ")");
+                adapter.notifyDataSetChanged();
+                dialog.dismiss();
+            });
+        });
+        dialog.show();
+    }
+
+    private static EditText rangeInput(Activity a, String hint) {
+        EditText input = new EditText(a);
+        input.setHint(hint);
+        input.setTextSize(15);
+        input.setSingleLine(true);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setGravity(Gravity.CENTER);
+        input.setPadding(dp(a, 10), dp(a, 4), dp(a, 10), dp(a, 4));
+        input.setBackground(UIHelpers.round(UIHelpers.CARD_SOFT, dp(a, 8), UIHelpers.BORDER));
+        return input;
+    }
+
+    private static int parsePositiveInt(String value) {
+        try {
+            int parsed = Integer.parseInt(value.trim());
+            return parsed > 0 ? parsed : 0;
+        } catch (Exception ignored) {
+            return 0;
         }
     }
 
