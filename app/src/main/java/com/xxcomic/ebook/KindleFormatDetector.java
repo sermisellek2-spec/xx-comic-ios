@@ -210,13 +210,19 @@ public final class KindleFormatDetector {
                 exthFlags = readUint32(mobiRest, 104);
             }
 
-            int drmCount = (mobiRest.length >= 168) ? readUint32(mobiRest, 164) : 0;
-            int drmFlags = (mobiRest.length >= 176) ? readUint32(mobiRest, 172) : 0;
+            // The DRM fields are in the MOBI header at record-0 offsets 168..180.
+            // mobiRest starts at record-0 offset 24, so their local offsets are
+            // 144..156.  The no-DRM sentinel is 0xFFFFFFFF, not a non-zero flag.
+            int drmOffset = (mobiRest.length >= 148) ? readUint32(mobiRest, 144) : -1;
+            int drmCount = (mobiRest.length >= 152) ? readUint32(mobiRest, 148) : -1;
+            int drmSize = (mobiRest.length >= 156) ? readUint32(mobiRest, 152) : 0;
+            int drmFlags = (mobiRest.length >= 160) ? readUint32(mobiRest, 156) : 0;
 
             DrmType drm = DrmType.NONE;
             if (encryptionType == 1) {
                 drm = DrmType.MOBIPOCKET_DRM;
-            } else if (encryptionType != 0 || drmCount != 0 || drmFlags != 0) {
+            } else if (encryptionType != 0
+                    || (drmOffset >= 0 && drmCount > 0 && drmSize > 0)) {
                 drm = DrmType.AMAZON_DRM;
             }
 

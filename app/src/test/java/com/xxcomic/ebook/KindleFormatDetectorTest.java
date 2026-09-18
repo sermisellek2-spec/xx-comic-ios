@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.util.Arrays;
 
@@ -266,6 +268,46 @@ public class KindleFormatDetectorTest {
         assertEquals(KindleFormatDetector.DrmType.AMAZON_DRM, res.drmType);
         assertNotNull(res.unsupportedReason);
         assertTrue(res.unsupportedReason.contains("DRM"));
+    }
+
+    @Test
+    public void nonDrmSentinelsAndUnknownTailFieldsAreNotMisclassified() throws Exception {
+        byte[] data = createPdbMobiFile("普通无保护书", "作者", 6, 0, false, false);
+        int record0 = ByteBuffer.wrap(data, 78, 4).order(ByteOrder.BIG_ENDIAN).getInt();
+        putInt(data, record0 + 168, -1); // DRM offset sentinel: no DRM.
+        putInt(data, record0 + 172, -1); // DRM count sentinel: no DRM.
+        putInt(data, record0 + 176, 0);
+        putInt(data, record0 + 180, 0);
+        // These are outside the DRM fields. Older code read them as count/flags.
+        putInt(data, record0 + 188, 1);
+        putInt(data, record0 + 196, 1);
+        File file = new File(tempDir, "plain-tail-fields.mobi");
+        Files.write(file.toPath(), data);
+
+        KindleFormatDetector.DetectionResult result = KindleFormatDetector.detect(file);
+        assertEquals(KindleFormatDetector.DrmType.NONE, result.drmType);
+        assertTrue(result.isReadable);
+    }
+
+    @Test
+    public void validMobiDrmSectionIsDetectedFromDocumentedOffsets() throws Exception {
+        byte[] data = createPdbMobiFile("真实保护书", "作者", 6, 0, false, false);
+        int record0 = ByteBuffer.wrap(data, 78, 4).order(ByteOrder.BIG_ENDIAN).getInt();
+        putInt(data, record0 + 168, 5);  // DRM record offset.
+        putInt(data, record0 + 172, 1);  // DRM record count.
+        putInt(data, record0 + 176, 16); // DRM record size.
+        putInt(data, record0 + 180, 1);  // DRM flags.
+        File file = new File(tempDir, "documented-drm.mobi");
+        Files.write(file.toPath(), data);
+
+        KindleFormatDetector.DetectionResult result = KindleFormatDetector.detect(file);
+        assertEquals(KindleFormatDetector.DrmType.AMAZON_DRM, result.drmType);
+        assertFalse(result.isReadable);
+        assertTrue(result.unsupportedReason.contains("DRM"));
+    }
+
+    private static void putInt(byte[] data, int offset, int value) {
+        ByteBuffer.wrap(data, offset, 4).order(ByteOrder.BIG_ENDIAN).putInt(value);
     }
 
     @Test
