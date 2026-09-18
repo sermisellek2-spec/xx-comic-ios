@@ -151,6 +151,7 @@ public final class KindlePublicationAdapter {
             byte[] docHeader = new byte[16];
             raf.readFully(docHeader);
             int compression = readUint16(docHeader, 0);
+            long declaredTextLength = readUint32(docHeader, 4);
             int textRecordCount = readUint16(docHeader, 8);
             int encryptionType = readUint16(docHeader, 12);
             if (encryptionType != 0) {
@@ -180,15 +181,20 @@ public final class KindlePublicationAdapter {
                 int len = (int) (end - start);
                 if (len <= 0) continue;
 
+                int remainingText = declaredTextLength > 0 && declaredTextLength < Integer.MAX_VALUE
+                        ? (int) Math.min(8L * 1024L * 1024L, declaredTextLength - textBaos.size())
+                        : 8 * 1024 * 1024 - textBaos.size();
+                if (remainingText <= 0) break;
+
                 byte[] recData = new byte[len];
                 raf.seek(start);
                 raf.readFully(recData);
 
                 if (compression == 2) {
-                    byte[] decomp = decompressPalmDoc(recData);
+                    byte[] decomp = decompressPalmDoc(recData, remainingText);
                     textBaos.write(decomp);
                 } else {
-                    textBaos.write(recData);
+                    textBaos.write(recData, 0, Math.min(recData.length, remainingText));
                 }
                 if(textBaos.size()>8*1024*1024)throw new IOException("电子书正文超出当前解析容量");
             }
@@ -262,13 +268,19 @@ public final class KindlePublicationAdapter {
     }
 
     public static byte[] decompressPalmDoc(byte[] input) {
+        return decompressPalmDoc(input, 8 * 1024 * 1024);
+    }
+
+    static byte[] decompressPalmDoc(byte[] input, int maxOutputBytes) {
         if (input == null || input.length == 0) return new byte[0];
         if(input.length>8*1024*1024)throw new IllegalArgumentException("PalmDOC 记录过大");
+        if (maxOutputBytes <= 0) return new byte[0];
+        maxOutputBytes = Math.min(maxOutputBytes, 8 * 1024 * 1024);
         byte[] outBuf = new byte[Math.max(4096, input.length * 3)];
         int outPos = 0;
         int pos = 0;
 
-        while (pos < input.length) {
+        while (pos < input.length && outPos < maxOutputBytes) {
             if(outPos>8*1024*1024-10)throw new IllegalArgumentException("PalmDOC 解压数据过大");
             int b = input[pos++] & 0xFF;
             if (b == 0) {
@@ -279,7 +291,7 @@ public final class KindlePublicationAdapter {
                 // Next b bytes are literals
                 int count = b;
                 if(pos+count>input.length)throw new IllegalArgumentException("PalmDOC 字面量记录截断");
-                while (count > 0 && pos < input.length) {
+                while (count > 0 && pos < input.length && outPos < maxOutputBytes) {
                     if (outPos >= outBuf.length) outBuf = Arrays.copyOf(outBuf, outBuf.length * 2);
                     outBuf[outPos++] = input[pos++];
                     count--;
@@ -299,10 +311,11 @@ public final class KindlePublicationAdapter {
                 int copyStart = outPos - distance;
                 if(distance==0 || copyStart<0)throw new IllegalArgumentException("PalmDOC 回溯距离无效");
                 if (copyStart >= 0) {
+                    int copyLength = Math.min(length, maxOutputBytes - outPos);
                     while (outPos + length > outBuf.length) {
                         outBuf = Arrays.copyOf(outBuf, outBuf.length * 2);
                     }
-                    for (int i = 0; i < length; i++) {
+                    for (int i = 0; i < copyLength; i++) {
                         outBuf[outPos++] = outBuf[copyStart + i];
                     }
                 }
@@ -315,6 +328,13 @@ public final class KindlePublicationAdapter {
         }
 
         return Arrays.copyOf(outBuf, outPos);
+    }
+
+    private static long readUint32(byte[] b, int offset) {
+        return ((long) (b[offset] & 0xFF) << 24)
+                | ((long) (b[offset + 1] & 0xFF) << 16)
+                | ((long) (b[offset + 2] & 0xFF) << 8)
+                | (long) (b[offset + 3] & 0xFF);
     }
 
     private static String detectImageExtension(byte[] data) {

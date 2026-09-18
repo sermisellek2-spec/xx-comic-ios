@@ -8,8 +8,8 @@ android {
         applicationId "com.xxcomic"
         minSdk 23
         targetSdk 34
-        versionCode 224
-        versionName "2.0.24"
+        versionCode 225
+        versionName "2.0.25"
         testInstrumentationRunner "com.xxcomic.ReaderInstrumentation"
     }
 

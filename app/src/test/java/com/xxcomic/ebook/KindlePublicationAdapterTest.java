@@ -29,6 +29,27 @@ public class KindlePublicationAdapterTest {
         org.junit.Assert.assertThrows(IllegalArgumentException.class,()->KindlePublicationAdapter.decompressPalmDoc(new byte[]{3,1}));
     }
 
+    @Test
+    public void palmDocRecordPaddingAfterDeclaredTextDoesNotFail() {
+        byte[] compressed = new byte[]{'a', 'b', 'c', (byte) 0x80};
+        byte[] decompressed = KindlePublicationAdapter.decompressPalmDoc(compressed, 3);
+        assertEquals("abc", new String(decompressed, StandardCharsets.US_ASCII));
+    }
+
+    @Test
+    public void mobiImportUsesDeclaredTextLengthForPaddedPalmDocRecord() throws Exception {
+        byte[] compressed = new byte[]{'a', 'b', 'c', (byte) 0x80};
+        byte[] mobiData = createMockMobi("带填充的 MOBI", "作者", compressed, 3,
+                new byte[][]{createMockJpeg()}, 0, 2);
+        File mobiFile = new File(tempDir, "padded.mobi");
+        Files.write(mobiFile.toPath(), mobiData);
+
+        KindlePublicationAdapter.ParseResult result = KindlePublicationAdapter.parse(
+                mobiFile, "book_padded", new File(tempDir, "derived"), null);
+        assertNotNull(result);
+        assertNotNull(result.publication);
+    }
+
     private File tempDir;
 
     @Before
@@ -92,6 +113,12 @@ public class KindlePublicationAdapterTest {
 
     private byte[] createMockMobi(String title, String author, String htmlContent,
                                   byte[][] images, int encryptionType) throws IOException {
+        byte[] textBytes = htmlContent.getBytes(StandardCharsets.UTF_8);
+        return createMockMobi(title, author, textBytes, textBytes.length, images, encryptionType, 1);
+    }
+
+    private byte[] createMockMobi(String title, String author, byte[] textBytes, int declaredTextLength,
+                                  byte[][] images, int encryptionType, int compression) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(baos);
 
@@ -125,12 +152,10 @@ public class KindlePublicationAdapterTest {
         ByteArrayOutputStream rec0Baos = new ByteArrayOutputStream();
         DataOutputStream rec0Out = new DataOutputStream(rec0Baos);
 
-        byte[] textBytes = htmlContent.getBytes(StandardCharsets.UTF_8);
-
         // PalmDOC Header (16 bytes)
-        rec0Out.writeShort(1); // compression = 1 (none) for straightforward test mock
+        rec0Out.writeShort(compression);
         rec0Out.writeShort(0);
-        rec0Out.writeInt(textBytes.length);
+        rec0Out.writeInt(declaredTextLength);
         rec0Out.writeShort(1); // 1 text record
         rec0Out.writeShort(4096);
         rec0Out.writeShort(encryptionType);
