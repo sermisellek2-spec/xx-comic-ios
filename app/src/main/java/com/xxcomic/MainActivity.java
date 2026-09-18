@@ -3,6 +3,7 @@ package com.xxcomic;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -30,12 +31,14 @@ import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
@@ -60,6 +63,8 @@ import com.xxcomic.reader.PagedReaderView;
 import com.xxcomic.reader.ReaderPosition;
 import com.xxcomic.reader.ReaderNavigation;
 import com.xxcomic.reader.ReaderSettingsSheet;
+import com.xxcomic.reader.ZoomGeometry;
+import com.xxcomic.reader.ChapterDrawerSheet;
 
 import com.xxcomic.source.BaoziComicSource;
 import com.xxcomic.source.AntbywComicSource;
@@ -579,6 +584,7 @@ public class MainActivity extends Activity {
     private String pendingExportJson = "";
     private String pendingLogText = "";
     private PopupWindow activePopup;
+    private ChapterDrawerSheet activeChapterSheet;
     private ScrollView searchScroll;
     private ProgressBar searchRefreshIndicator;
     private LinearLayout searchResultsContent;
@@ -1058,95 +1064,241 @@ public class MainActivity extends Activity {
                 List<BatchImportModels.ImportGroup> appendGroups = Collections.singletonList(
                         new BatchImportModels.ImportGroup("append:" + targetBookId, target.getDisplayTitle(), false,
                                 BatchImportPlanner.orderVolumes(files)));
-                showRemDialog(R.drawable.rem_empty, "添加分卷", "将 " + files.size() + " 个文件加入《"
-                        + target.getDisplayTitle() + "》。已有内容保留，重复文件跳过；可在管理分卷中调整顺序。", "开始添加", () -> {
-                    if (canStartLocalImport()) startBatchImport(orderedItems, appendGroups, null, targetBookId);
-                }, "取消", null);
+                if (canStartLocalImport()) {
+                    startBatchImport(orderedItems, appendGroups, null, targetBookId);
+                }
             } else if (orderedItems.size() > 1) showBatchImportConfirmation(orderedItems, plannedGroups);
             else startBatchImport(orderedItems, plannedGroups);
         });
     }
 
     private void showBatchImportConfirmation(List<PendingImportItem> items, List<BatchImportModels.ImportGroup> groups) {
-        LinearLayout content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.addView(UIHelpers.text(this, "按书内系列信息和文件名建议分组，请确认。关闭合并可分别导入；不会合并已有的同名漫画。",
-                12, UIHelpers.TEXT2, Typeface.NORMAL));
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCanceledOnTouchOutside(true);
+
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(UIHelpers.dp(this, 16), UIHelpers.dp(this, 10), UIHelpers.dp(this, 16), UIHelpers.dp(this, 16));
+
+        GradientDrawable panelBg = new GradientDrawable();
+        float radius = UIHelpers.dp(this, 18);
+        panelBg.setCornerRadii(new float[]{radius, radius, radius, radius, 0, 0, 0, 0});
+        panelBg.setColor(UIHelpers.CARD);
+        panel.setBackground(panelBg);
+
+        // Top drag handle bar
+        View pullBar = new View(this);
+        pullBar.setBackground(UIHelpers.round(UIHelpers.BORDER, UIHelpers.dp(this, 2), Color.TRANSPARENT));
+        LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(UIHelpers.dp(this, 36), UIHelpers.dp(this, 4));
+        barParams.gravity = Gravity.CENTER_HORIZONTAL;
+        barParams.bottomMargin = UIHelpers.dp(this, 12);
+        panel.addView(pullBar, barParams);
+
+        // Header row
+        LinearLayout headerRow = new LinearLayout(this);
+        headerRow.setOrientation(LinearLayout.HORIZONTAL);
+        headerRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView titleView = UIHelpers.text(this, "整理导入文件", 17, UIHelpers.TEXT, Typeface.BOLD);
+        titleView.setSingleLine(true);
+        titleView.setEllipsize(TextUtils.TruncateAt.END);
+        headerRow.addView(titleView, UIHelpers.weight(1));
+
+        TextView badge = UIHelpers.text(this, "共 " + items.size() + " 个文件", 11, UIHelpers.ACCENT, Typeface.NORMAL);
+        badge.setSingleLine(true);
+        badge.setPadding(UIHelpers.dp(this, 6), UIHelpers.dp(this, 2), UIHelpers.dp(this, 6), UIHelpers.dp(this, 2));
+        badge.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 4), Color.TRANSPARENT));
+        LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(-2, -2);
+        badgeParams.leftMargin = UIHelpers.dp(this, 8);
+        badgeParams.rightMargin = UIHelpers.dp(this, 8);
+        headerRow.addView(badge, badgeParams);
+
+        ImageView closeBtn = UIHelpers.vectorIconButton(this, R.drawable.ic_close, UIHelpers.TEXT3, 6);
+        closeBtn.setBackground(UIHelpers.round(UIHelpers.CARD_SOFT, UIHelpers.dp(this, 14), Color.TRANSPARENT));
+        closeBtn.setOnClickListener(v -> dialog.dismiss());
+        headerRow.addView(closeBtn, new LinearLayout.LayoutParams(UIHelpers.dp(this, 28), UIHelpers.dp(this, 28)));
+        panel.addView(headerRow);
+
+        TextView subtitle = UIHelpers.text(this, "已按文件信息智能建议分组，请确认或调整合并方式", 12, UIHelpers.TEXT3, Typeface.NORMAL);
+        panel.addView(subtitle, UIHelpers.marginTop(-1, UIHelpers.dp(this, 4)));
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout scrollContent = new LinearLayout(this);
+        scrollContent.setOrientation(LinearLayout.VERTICAL);
+        scrollContent.setPadding(0, UIHelpers.dp(this, 10), 0, UIHelpers.dp(this, 10));
+        scroll.addView(scrollContent, new ScrollView.LayoutParams(-1, -2));
+        panel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
+
+        // Combine all card
+        LinearLayout combineCard = new LinearLayout(this);
+        combineCard.setOrientation(LinearLayout.VERTICAL);
+        combineCard.setPadding(UIHelpers.dp(this, 14), UIHelpers.dp(this, 12), UIHelpers.dp(this, 14), UIHelpers.dp(this, 12));
+        combineCard.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 10), UIHelpers.BORDER));
+
+        LinearLayout combineHeader = new LinearLayout(this);
+        combineHeader.setOrientation(LinearLayout.HORIZONTAL);
+        combineHeader.setGravity(Gravity.CENTER_VERTICAL);
+
         android.widget.CheckBox combineAll = new android.widget.CheckBox(this);
-        combineAll.setText("这些文件都是同一部漫画，合并为一本");
+        combineAll.setText("合并为一部完整漫画");
+        combineAll.setMaxLines(2);
+        combineAll.setEllipsize(TextUtils.TruncateAt.END);
+        combineAll.setTextSize(13);
+        combineAll.setTypeface(Typeface.DEFAULT_BOLD);
         combineAll.setTextColor(UIHelpers.TEXT);
         combineAll.setButtonTintList(android.content.res.ColorStateList.valueOf(UIHelpers.ACCENT));
-        content.addView(combineAll);
+        combineHeader.addView(combineAll, UIHelpers.weight(1));
+
+        TextView tip = UIHelpers.text(this, "多卷合集", 10, UIHelpers.TEXT3, Typeface.NORMAL);
+        tip.setSingleLine(true);
+        tip.setPadding(UIHelpers.dp(this, 6), UIHelpers.dp(this, 2), UIHelpers.dp(this, 6), UIHelpers.dp(this, 2));
+        tip.setBackground(UIHelpers.round(UIHelpers.CARD_SOFT, UIHelpers.dp(this, 4), Color.TRANSPARENT));
+        combineHeader.addView(tip);
+        combineCard.addView(combineHeader);
+
         EditText combinedTitle = new EditText(this);
         combinedTitle.setSingleLine(true);
+        combinedTitle.setTextSize(13);
         combinedTitle.setTextColor(UIHelpers.TEXT);
         combinedTitle.setHintTextColor(UIHelpers.TEXT3);
-        combinedTitle.setHint("合集名称");
+        combinedTitle.setHint("输入漫画合集名称（例如：狂赌之渊）");
         combinedTitle.setText(groups.isEmpty() ? "" : groups.get(0).title);
+        combinedTitle.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 10), UIHelpers.dp(this, 12), UIHelpers.dp(this, 10));
+        combinedTitle.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 8), UIHelpers.BORDER));
         combinedTitle.setVisibility(View.GONE);
-        content.addView(combinedTitle);
-        combineAll.setOnCheckedChangeListener((button, checked) -> combinedTitle.setVisibility(checked ? View.VISIBLE : View.GONE));
-        ScrollView scroll = new ScrollView(this);
-        LinearLayout rows = new LinearLayout(this);
-        rows.setOrientation(LinearLayout.VERTICAL);
-        scroll.addView(rows);
+        LinearLayout.LayoutParams editParams = new LinearLayout.LayoutParams(-1, -2);
+        editParams.topMargin = UIHelpers.dp(this, 10);
+        combineCard.addView(combinedTitle, editParams);
+
+        scrollContent.addView(combineCard);
+
+        TextView groupHeader = UIHelpers.text(this, "建议分组明细", 12, UIHelpers.TEXT2, Typeface.BOLD);
+        scrollContent.addView(groupHeader, UIHelpers.marginTop(-1, UIHelpers.dp(this, 14)));
+
+        LinearLayout groupListContainer = new LinearLayout(this);
+        groupListContainer.setOrientation(LinearLayout.VERTICAL);
+        scrollContent.addView(groupListContainer, UIHelpers.marginTop(-1, UIHelpers.dp(this, 6)));
+
+        combineAll.setOnCheckedChangeListener((button, checked) -> {
+            combinedTitle.setVisibility(checked ? View.VISIBLE : View.GONE);
+            groupHeader.setVisibility(checked ? View.GONE : View.VISIBLE);
+            groupListContainer.setVisibility(checked ? View.GONE : View.VISIBLE);
+        });
+
         List<android.widget.CheckBox> choices = new ArrayList<>();
         for (BatchImportModels.ImportGroup group : groups) {
+            LinearLayout groupCard = new LinearLayout(this);
+            groupCard.setOrientation(LinearLayout.VERTICAL);
+            groupCard.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 10), UIHelpers.dp(this, 12), UIHelpers.dp(this, 10));
+            groupCard.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 10), UIHelpers.BORDER));
+
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+
             android.widget.CheckBox choice = new android.widget.CheckBox(this);
             choice.setText(group.title + " · " + group.volumes.size() + " 个文件");
+            choice.setMaxLines(2);
+            choice.setEllipsize(TextUtils.TruncateAt.END);
+            choice.setTextSize(13);
+            choice.setTypeface(Typeface.DEFAULT_BOLD);
             choice.setTextColor(UIHelpers.TEXT);
             choice.setButtonTintList(android.content.res.ColorStateList.valueOf(UIHelpers.ACCENT));
             choice.setChecked(group.volumes.size() > 1);
             choice.setEnabled(group.volumes.size() > 1);
             choices.add(choice);
-            rows.addView(choice);
+            row.addView(choice, UIHelpers.weight(1));
+            groupCard.addView(row);
+
             TextView files = UIHelpers.text(this, "", 11, UIHelpers.TEXT3, Typeface.NORMAL);
+            files.setLineSpacing(UIHelpers.dp(this, 2), 1f);
+            files.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 6), UIHelpers.dp(this, 8), UIHelpers.dp(this, 6));
+            files.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(this, 6), Color.TRANSPARENT));
+
             StringBuilder names = new StringBuilder();
             for (int i = 0; i < Math.min(group.volumes.size(), 4); i++) {
                 if (i > 0) names.append("\n");
-                names.append(group.volumes.get(i).fileName);
+                names.append("• ").append(group.volumes.get(i).fileName);
             }
-            if (group.volumes.size() > 4) names.append("\n…共 ").append(group.volumes.size()).append(" 个文件");
+            if (group.volumes.size() > 4) names.append("\n…点击展开其余 ").append(group.volumes.size() - 4).append(" 个文件");
             files.setText(names.toString());
             files.setOnClickListener(v -> {
-                if (Boolean.TRUE.equals(files.getTag())) { files.setText(names.toString()); files.setTag(false); }
-                else {
+                if (Boolean.TRUE.equals(files.getTag())) {
+                    files.setText(names.toString());
+                    files.setTag(false);
+                } else {
                     StringBuilder full = new StringBuilder();
                     for (BatchImportModels.FileCandidate file : group.volumes) {
                         if (full.length() > 0) full.append("\n");
-                        full.append(file.fileName);
+                        full.append("• ").append(file.fileName);
                     }
-                    files.setText(full.toString()); files.setTag(true);
+                    full.append("\n(点击收起)");
+                    files.setText(full.toString());
+                    files.setTag(true);
                 }
             });
-            rows.addView(files);
+            groupCard.addView(files, UIHelpers.marginTop(-1, UIHelpers.dp(this, 6)));
+
+            LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
+            cardParams.bottomMargin = UIHelpers.dp(this, 8);
+            groupListContainer.addView(groupCard, cardParams);
         }
-        content.addView(scroll, new LinearLayout.LayoutParams(-1,
-                Math.min(UIHelpers.dp(this, 350), getResources().getDisplayMetrics().heightPixels / 2)));
-        TextView start = UIHelpers.text(this, "确认并在后台导入", 14, UIHelpers.ON_ACCENT, Typeface.BOLD);
-        start.setGravity(Gravity.CENTER);
+
+        Button start = new Button(this);
+        start.setText("确认并开始导入 (" + items.size() + " 个文件)");
+        start.setTextSize(14);
+        start.setTypeface(Typeface.DEFAULT_BOLD);
+        start.setTextColor(UIHelpers.ON_ACCENT);
         start.setBackground(UIHelpers.round(UIHelpers.ACCENT, UIHelpers.dp(this, 10), Color.TRANSPARENT));
-        content.addView(start, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 46)));
-        PopupWindow popup = showSettingsSheet("整理 " + items.size() + " 个文件", content);
+        start.setGravity(Gravity.CENTER);
+        start.setMinimumHeight(UIHelpers.dp(this, 46));
+        panel.addView(start, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8)));
+
+        panel.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        panel.setFocusableInTouchMode(true);
+        dialog.setContentView(panel, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        panel.requestFocus();
+
+        Window w = dialog.getWindow();
+        if (w != null) {
+            w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            w.setGravity(Gravity.BOTTOM);
+            w.setDimAmount(0.4f);
+            w.setWindowAnimations(R.style.DownloadSheetAnimation);
+            w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+                    | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        }
+        dialog.show();
+        if (w != null) {
+            int availableHeight = getWindow().getDecorView().getHeight();
+            if (availableHeight <= 0) availableHeight = getResources().getDisplayMetrics().heightPixels;
+            w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, Math.round(availableHeight * 0.76f));
+        }
+
         start.setOnClickListener(v -> {
             if (!canStartLocalImport()) return;
             List<BatchImportModels.ImportGroup> confirmed = new ArrayList<>();
             if (combineAll.isChecked()) {
                 String title = combinedTitle.getText().toString().trim();
-                if (title.isEmpty()) { combinedTitle.setError("请填写合集名称"); return; }
+                if (title.isEmpty()) {
+                    combinedTitle.setError("请填写合集名称");
+                    return;
+                }
                 List<BatchImportModels.FileCandidate> files = new ArrayList<>();
                 for (BatchImportModels.ImportGroup group : groups) files.addAll(group.volumes);
                 confirmed.add(new BatchImportModels.ImportGroup("confirmed", title, false, BatchImportPlanner.orderVolumes(files)));
             } else {
-            for (int i = 0; i < groups.size(); i++) {
-                BatchImportModels.ImportGroup group = groups.get(i);
-                if (choices.get(i).isChecked()) confirmed.add(group);
-                else for (BatchImportModels.FileCandidate file : group.volumes)
-                    confirmed.add(new BatchImportModels.ImportGroup(group.key + ":" + file.selectionIndex,
-                            stripBatchExtension(file.fileName), false, Collections.singletonList(file)));
+                for (int i = 0; i < groups.size(); i++) {
+                    BatchImportModels.ImportGroup group = groups.get(i);
+                    if (choices.get(i).isChecked()) confirmed.add(group);
+                    else for (BatchImportModels.FileCandidate file : group.volumes)
+                        confirmed.add(new BatchImportModels.ImportGroup(group.key + ":" + file.selectionIndex,
+                                stripBatchExtension(file.fileName), false, Collections.singletonList(file)));
+                }
             }
-            }
-            popup.dismiss();
+            dialog.dismiss();
             startBatchImport(items, confirmed);
         });
     }
@@ -1285,6 +1437,15 @@ public class MainActivity extends Activity {
                 }
                 refreshLocalBookshelf();
                 if (isFinishing()) return;
+
+                if (appendToBookId != null) {
+                    com.xxcomic.local.VolumeManagerSheet activeSheet = com.xxcomic.local.VolumeManagerSheet.getActiveInstance();
+                    if (activeSheet != null && activeSheet.isShowing() && appendToBookId.equals(activeSheet.getBookId())) {
+                        activeSheet.reloadVolumes();
+                    } else if (TextUtils.equals(activeDetailId, appendToBookId)) {
+                        showLocalDetail(appendToBookId);
+                    }
+                }
 
                 if (task.persistenceFailed) {
                     showRemErrorToast("保存导入状态失败，已暂停；已完成内容保留，可稍后继续");
@@ -1709,6 +1870,11 @@ public class MainActivity extends Activity {
         if (activePopup != null && activePopup.isShowing()) {
             activePopup.dismiss();
             activePopup = null;
+            return true;
+        }
+        if (activeChapterSheet != null && activeChapterSheet.isShowing()) {
+            activeChapterSheet.dismiss();
+            activeChapterSheet = null;
             return true;
         }
         if (activeFavoriteDeleteOverlay != null) {
@@ -3735,32 +3901,6 @@ public class MainActivity extends Activity {
     }
 
     private void showDetailFromReader(String comicId, int chapterIndex) {
-        final String returnComicId = comicId;
-        final int returnChapterIndex = chapterIndex;
-        final ComicModels.ComicDetail returnDetail = details.get(comicId);
-        final String returnChapterId = returnDetail != null && chapterIndex >= 0 && chapterIndex < returnDetail.chapters.size()
-                ? returnDetail.chapters.get(chapterIndex).chapterId : null;
-        final Runnable previousDetailBackAction = detailBackAction;
-        detailBackAction = () -> {
-            activeDetailId = returnComicId;
-            detailBackAction = previousDetailBackAction;
-            ComicModels.ComicDetail saved = details.get(returnComicId);
-            if (saved != null) {
-                int resolved = returnChapterIndex;
-                if (isLocalComic(returnComicId) && returnChapterId != null) {
-                    resolved = 0;
-                    for (int i = 0; i < saved.chapters.size(); i++)
-                        if (returnChapterId.equals(saved.chapters.get(i).chapterId)) { resolved = i; break; }
-                }
-                showReader(saved, resolved);
-            } else if (returnDetail != null) {
-                showReader(returnDetail, returnChapterIndex);
-            } else if (previousDetailBackAction != null) {
-                previousDetailBackAction.run();
-            } else {
-                showTab(currentTab);
-            }
-        };
         openComicDetail(comicId);
     }
 
@@ -4090,13 +4230,25 @@ public class MainActivity extends Activity {
         detailTitle.setMaxLines(2);
         detailTitle.setEllipsize(TextUtils.TruncateAt.END);
         titleRow.addView(detailTitle, UIHelpers.weight(1));
+
+        boolean fileSource = sourceForId(detail.summary.sourceId) instanceof com.xxcomic.source.FileSourceCapability;
+
+        ImageView dlBtn = UIHelpers.vectorIconButton(this, R.drawable.ic_download, UIHelpers.ACCENT, 4);
+        dlBtn.setContentDescription(fileSource ? "文件与分卷" : "下载离线章节");
+        dlBtn.setPadding(UIHelpers.dp(this, 6), UIHelpers.dp(this, 6), UIHelpers.dp(this, 6), UIHelpers.dp(this, 6));
+        dlBtn.setOnClickListener(v -> {
+            if (fileSource) showFileVolumes(detail);
+            else ensureChaptersThen(detail, loaded -> DownloadViews.selection(this, loaded, savedChapter(loaded.summary.comicId), () -> {}));
+        });
+        titleRow.addView(dlBtn, new LinearLayout.LayoutParams(UIHelpers.dp(this, 36), UIHelpers.dp(this, 36)));
+
         TextView source = UIHelpers.text(this, sourceNameForId(detail.summary.sourceId) + " ⇄", 12, UIHelpers.ACCENT, Typeface.NORMAL);
         source.setSingleLine(true);
         source.setMaxWidth(UIHelpers.dp(this, 160));
         source.setEllipsize(TextUtils.TruncateAt.END);
         source.setGravity(Gravity.CENTER);
         source.setMinHeight(UIHelpers.dp(this, 44));
-        source.setPadding(UIHelpers.dp(this, 10), 0, 0, 0);
+        source.setPadding(UIHelpers.dp(this, 8), 0, 0, 0);
         source.setContentDescription("切换站源，当前" + sourceNameForId(detail.summary.sourceId));
         source.setOnClickListener(v -> showDetailSourceSheet());
         detailSourceEntry = source;
@@ -4130,30 +4282,7 @@ public class MainActivity extends Activity {
         summary.setLineSpacing(0f, 1.2f);
         body.addView(summary, UIHelpers.marginTop(-1, UIHelpers.dp(this, 12)));
 
-        boolean fileSource=sourceForId(detail.summary.sourceId) instanceof com.xxcomic.source.FileSourceCapability;
-        if(!fileSource)body.addView(chapterEntry(detail), UIHelpers.marginTop(-1, UIHelpers.dp(this, 10)));
-
-        LinearLayout downloadRow = new LinearLayout(this);
-        downloadRow.setGravity(Gravity.CENTER_VERTICAL);
-        downloadRow.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 8), UIHelpers.dp(this, 10), UIHelpers.dp(this, 8));
-        downloadRow.setMinimumHeight(UIHelpers.dp(this, 44));
-        downloadRow.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 7), UIHelpers.BORDER));
-        downloadRow.setOnClickListener(v -> {
-            if(fileSource)showFileVolumes(detail);
-            else ensureChaptersThen(detail, loaded -> DownloadViews.selection(this, loaded, savedChapter(loaded.summary.comicId), () -> {}));
-        });
-
-        ImageView dlIcon = UIHelpers.vectorIconButton(this, R.drawable.ic_download, UIHelpers.ACCENT, 2);
-        downloadRow.addView(dlIcon, new LinearLayout.LayoutParams(UIHelpers.dp(this, 20), UIHelpers.dp(this, 20)));
-
-        TextView dlText = UIHelpers.text(this, fileSource?"文件与分卷":"下载离线章节", 13, UIHelpers.ACCENT, Typeface.BOLD);
-        LinearLayout.LayoutParams dlParams = new LinearLayout.LayoutParams(0, -2, 1f);
-        dlParams.leftMargin = UIHelpers.dp(this, 8);
-        downloadRow.addView(dlText, dlParams);
-
-        ImageView dlArrow = UIHelpers.vectorIconButton(this, R.drawable.ic_chevron_right, UIHelpers.TEXT3, 3);
-        downloadRow.addView(dlArrow, new LinearLayout.LayoutParams(UIHelpers.dp(this, 24), UIHelpers.dp(this, 24)));
-        body.addView(downloadRow, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8)));
+        if (!fileSource) body.addView(chapterEntry(detail), UIHelpers.marginTop(-1, UIHelpers.dp(this, 10)));
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
@@ -4174,12 +4303,13 @@ public class MainActivity extends Activity {
     }
 
     private void renderDetailSourceOptions() {
-        if (detailSourceEntry == null) return;
-        ComicModels.ComicDetail current = details.get(activeDetailId);
-        if (current != null) {
-            detailSourceEntry.setText(TextUtils.isEmpty(pendingDetailSourceId)
-                    ? sourceNameForId(current.summary.sourceId) + " ⇄"
-                    : "切换中…");
+        if (detailSourceEntry != null) {
+            ComicModels.ComicDetail current = details.get(activeDetailId);
+            if (current != null) {
+                detailSourceEntry.setText(TextUtils.isEmpty(pendingDetailSourceId)
+                        ? sourceNameForId(current.summary.sourceId) + " ⇄"
+                        : "切换中…");
+            }
         }
         if (detailSourceSheet != null && detailSourceSheet.isShowing()) {
             detailSourceSheet.update(detailSourceOptions, activeDetailId, pendingDetailSourceId, detailSourcesLoading);
@@ -4200,6 +4330,179 @@ public class MainActivity extends Activity {
         });
         sheet.update(detailSourceOptions, activeDetailId, pendingDetailSourceId, detailSourcesLoading);
         sheet.show(root);
+    }
+
+    private void showReaderSourceSheet(ComicModels.ComicDetail detail) {
+        if (detail == null || detail.summary == null) return;
+        if (detailSourceSheet != null && detailSourceSheet.isShowing()) return;
+        if (activePopup != null) activePopup.dismiss();
+        if (activeChapterSheet != null) activeChapterSheet.dismiss();
+
+        boolean hasValidOptions = false;
+        for (ComicModels.ComicSummary item : detailSourceOptions) {
+            if (item != null && TextUtils.equals(item.comicId, detail.summary.comicId)) {
+                hasValidOptions = true;
+                break;
+            }
+        }
+        if (!hasValidOptions) {
+            detailSourceOptions = Collections.singletonList(detail.summary);
+            detailSourcesLoading = true;
+        }
+
+        SourceSwitchSheet sheet = new SourceSwitchSheet(this, root, true,
+                comic -> coverFrame(comic.coverUrl, 48, 66), this::sourceNameForId, this::switchReaderSource);
+        detailSourceSheet = sheet;
+        activePopup = sheet;
+        sheet.setOnDismissListener(() -> {
+            if (detailSourceSheet == sheet) detailSourceSheet = null;
+            if (activePopup == sheet) activePopup = null;
+            checkPendingUpdatePrompt();
+        });
+        sheet.update(detailSourceOptions, activeDetailId, pendingDetailSourceId, detailSourcesLoading);
+        sheet.show(root);
+
+        final String comicId = detail.summary.comicId;
+        detailSourceSearch.start(detail.summary, enabledSearchSources(), (items, loading) -> {
+            if (activityDestroyed || !TextUtils.equals(activeDetailId, comicId)) return;
+            detailSourceOptions = items;
+            detailSourcesLoading = loading;
+            if (detailSourceSheet != null && detailSourceSheet.isShowing()) {
+                detailSourceSheet.update(items, activeDetailId, pendingDetailSourceId, loading);
+            }
+            renderDetailSourceOptions();
+        });
+    }
+
+    private void switchReaderSource(ComicModels.ComicSummary target) {
+        if (target == null || TextUtils.equals(activeDetailId, target.comicId)
+                || TextUtils.equals(pendingDetailSourceId, target.sourceId)) return;
+        final String originalId = activeDetailId;
+        final int token = ++detailSwitchGeneration;
+        if (detailSwitchTask != null) detailSwitchTask.cancel(true);
+        if (detailSwitchTimeout != null) main.removeCallbacks(detailSwitchTimeout);
+        pendingDetailSourceId = target.sourceId;
+        renderDetailSourceOptions();
+
+        ComicModels.ComicDetail originalDetail = details.get(originalId);
+        final String currentTitle = (originalDetail != null && readerChapterIndex >= 0
+                && readerChapterIndex < originalDetail.chapters.size())
+                ? originalDetail.chapters.get(readerChapterIndex).title : "";
+        final int currentIndex = readerChapterIndex;
+
+        ComicModels.ComicDetail cached = details.get(target.comicId);
+        if (cached != null) {
+            summaries.put(target.comicId, cached.summary);
+            activeDetailId = target.comicId;
+            pendingDetailSourceId = "";
+            renderDetailSourceOptions();
+            if (readerVisible) {
+                ensureChaptersThen(cached, loaded -> {
+                    int matched = findMatchingChapterIndex(loaded.chapters, currentTitle, currentIndex);
+                    showReader(loaded, matched);
+                    showRemSuccessToast("已换源至 " + sourceNameForId(target.sourceId));
+                });
+            } else {
+                openComicDetail(target.comicId);
+            }
+            return;
+        }
+
+        showRemSuccessToast("正在切换至 " + sourceNameForId(target.sourceId) + "…");
+        ComicSource client = sourceForId(target.sourceId);
+        detailSwitchTimeout = () -> {
+            if (token != detailSwitchGeneration) return;
+            detailSwitchGeneration++;
+            if (detailSwitchTask != null) detailSwitchTask.cancel(true);
+            pendingDetailSourceId = "";
+            renderDetailSourceOptions();
+            showRemErrorToast("这个站源有点慢，请重试");
+        };
+        main.postDelayed(detailSwitchTimeout, 20000);
+        detailSwitchTask = track(detailIo.submit(() -> {
+            try {
+                ComicModels.ComicDetail loaded = client.detail(target.comicId);
+                if (loaded == null || loaded.summary == null
+                        || !target.sourceId.equals(loaded.summary.sourceId)
+                        || !target.comicId.equals(loaded.summary.comicId)) throw new IOException("详情不匹配");
+                main.post(() -> {
+                    if (activityDestroyed || token != detailSwitchGeneration
+                            || !TextUtils.equals(originalId, activeDetailId)) return;
+                    main.removeCallbacks(detailSwitchTimeout);
+                    details.put(target.comicId, loaded);
+                    summaries.put(target.comicId, loaded.summary);
+                    refreshedComicIds.add(target.comicId);
+                    persistComicCachesAsync();
+                    activeDetailId = target.comicId;
+                    pendingDetailSourceId = "";
+                    renderDetailSourceOptions();
+                    if (readerVisible) {
+                        ensureChaptersThen(loaded, fullDetail -> {
+                            int matched = findMatchingChapterIndex(fullDetail.chapters, currentTitle, currentIndex);
+                            showReader(fullDetail, matched);
+                            showRemSuccessToast("已换源至 " + sourceNameForId(target.sourceId));
+                        });
+                    } else {
+                        openComicDetail(target.comicId);
+                    }
+                });
+            } catch (Exception error) {
+                main.post(() -> {
+                    if (activityDestroyed || token != detailSwitchGeneration
+                            || !TextUtils.equals(originalId, activeDetailId)) return;
+                    main.removeCallbacks(detailSwitchTimeout);
+                    pendingDetailSourceId = "";
+                    renderDetailSourceOptions();
+                    showRemErrorToast(isVerificationRequired(error)
+                            ? "请先到站源管理验证" : "切换失败，请重试");
+                });
+            }
+        }));
+    }
+
+    private int findMatchingChapterIndex(List<ComicModels.Chapter> chapters, String currentTitle, int defaultIndex) {
+        if (chapters == null || chapters.isEmpty()) return 0;
+        if (!TextUtils.isEmpty(currentTitle)) {
+            String trimmedCurrent = currentTitle.trim();
+            for (int i = 0; i < chapters.size(); i++) {
+                if (trimmedCurrent.equalsIgnoreCase(chapters.get(i).title.trim())) {
+                    return i;
+                }
+            }
+            String normCurrent = normalizeChapterName(trimmedCurrent);
+            if (!normCurrent.isEmpty()) {
+                for (int i = 0; i < chapters.size(); i++) {
+                    if (normCurrent.equalsIgnoreCase(normalizeChapterName(chapters.get(i).title))) {
+                        return i;
+                    }
+                }
+                for (int i = 0; i < chapters.size(); i++) {
+                    String normTarget = normalizeChapterName(chapters.get(i).title);
+                    if (!normTarget.isEmpty() && (normCurrent.contains(normTarget) || normTarget.contains(normCurrent))) {
+                        return i;
+                    }
+                }
+            }
+        }
+        return Math.max(0, Math.min(defaultIndex, chapters.size() - 1));
+    }
+
+    private static String normalizeChapterName(String title) {
+        if (title == null) return "";
+        return title.replaceAll("[\\s第话章节回卷【】\\[\\]()]", "").toLowerCase();
+    }
+
+    private boolean isLocalComicDetail(ComicModels.ComicDetail detail) {
+        if (detail == null || detail.summary == null) return false;
+        String comicId = detail.summary.comicId;
+        String sourceId = detail.summary.sourceId;
+        if (isLocalComic(comicId) || "local".equals(sourceId) || !TextUtils.isEmpty(readerLocalBookId)) {
+            return true;
+        }
+        if (localLibraryReady && localBookForReading(comicId) != null) {
+            return true;
+        }
+        return sourceForId(sourceId) instanceof com.xxcomic.source.FileSourceCapability;
     }
 
     private void switchDetailSource(ComicModels.ComicSummary target) {
@@ -4669,8 +4972,9 @@ public class MainActivity extends Activity {
             list.setSelector(new ColorDrawable(Color.TRANSPARENT));
             list.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4),
                     UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
-            list.setClipToPadding(false);
-            list.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+            list.setVerticalScrollBarEnabled(false);
+            list.setHorizontalScrollBarEnabled(false);
+            list.setFastScrollEnabled(false);
             String positionKey = readerPositionKey(detail.summary.comicId, activeChapter);
             int savedPosition = readerPositions.containsKey(positionKey) ? readerPositions.get(positionKey) : 0;
             list.setTag(positionKey);
@@ -4792,35 +5096,160 @@ public class MainActivity extends Activity {
                     }
                 }
             });
+            final float[] scaleState = new float[]{1.0f};
+            final float[] transXState = new float[]{0.0f};
+            final float[] transYState = new float[]{0.0f};
+            final float[] lastTouchX = new float[]{0.0f};
+            final float[] lastTouchY = new float[]{0.0f};
+            final boolean[] skipNextMove = new boolean[]{false};
+            final boolean[] multiTouchGesture = new boolean[]{false};
+            final boolean[] doubleTapGesture = new boolean[]{false};
+            final ValueAnimator[] zoomAnimation = new ValueAnimator[1];
+
             ScaleGestureDetector listScaleDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
-                private float currentScale = 1.0f;
-                @Override public boolean onScale(ScaleGestureDetector detector) {
+                private float lastFocusX, lastFocusY;
+
+                @Override
+                public boolean onScaleBegin(ScaleGestureDetector detector) {
                     if (!readerPinchZoom) return false;
-                    currentScale *= detector.getScaleFactor();
-                    currentScale = Math.max(1.0f, Math.min(3.0f, currentScale));
-                    list.setPivotX(detector.getFocusX());
-                    list.setPivotY(detector.getFocusY());
-                    list.setScaleX(currentScale);
-                    list.setScaleY(currentScale);
+                    lastFocusX = detector.getFocusX();
+                    lastFocusY = detector.getFocusY();
+                    list.setPivotX(list.getWidth() / 2f);
+                    list.setPivotY(list.getHeight() / 2f);
+                    return true;
+                }
+
+                @Override
+                public boolean onScale(ScaleGestureDetector detector) {
+                    if (!readerPinchZoom) return false;
+                    float factor = detector.getScaleFactor();
+                    float oldScale = scaleState[0];
+                    float newScale = Math.max(0.75f, Math.min(3.5f, oldScale * factor));
+                    scaleState[0] = newScale;
+
+                    float focusX = detector.getFocusX();
+                    float focusY = detector.getFocusY();
+                    float centerX = list.getWidth() / 2f;
+                    float centerY = list.getHeight() / 2f;
+                    float ratio = newScale / oldScale;
+
+                    transXState[0] = ZoomGeometry.followFocus(transXState[0], centerX, lastFocusX, focusX, ratio);
+                    transYState[0] = ZoomGeometry.followFocus(transYState[0], centerY, lastFocusY, focusY, ratio);
+                    lastFocusX = focusX;
+                    lastFocusY = focusY;
+                    transXState[0] += ZoomGeometry.correction(centerX * (1f - newScale) + transXState[0],
+                            list.getWidth() * newScale, list.getWidth(), list.getWidth() * .2f);
+                    transYState[0] += ZoomGeometry.correction(centerY * (1f - newScale) + transYState[0],
+                            list.getHeight() * newScale, list.getHeight(), list.getHeight() * .2f);
+
+                    list.setScaleX(newScale);
+                    list.setScaleY(newScale);
+                    list.setTranslationX(transXState[0]);
+                    list.setTranslationY(transYState[0]);
+                    return true;
+                }
+
+            });
+            listScaleDetector.setQuickScaleEnabled(false);
+
+            GestureDetector listTapDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+                @Override
+                public boolean onDoubleTap(MotionEvent e) {
+                    if (!readerPinchZoom) return false;
+                    doubleTapGesture[0] = true;
+                    if (scaleState[0] > 1.05f) {
+                        animateScaleTo(list, scaleState, transXState, transYState, zoomAnimation, 1f, 0f, 0f);
+                    } else {
+                        float targetScale = 2.2f;
+                        float focusX = e.getX();
+                        float focusY = e.getY();
+                        float centerX = list.getWidth() / 2f;
+                        float centerY = list.getHeight() / 2f;
+                        float targetTransX = ZoomGeometry.followFocus(transXState[0], centerX, focusX, focusX, targetScale / scaleState[0]);
+                        float targetTransY = ZoomGeometry.followFocus(transYState[0], centerY, focusY, focusY, targetScale / scaleState[0]);
+                        float maxPanX = Math.max(0f, (list.getWidth() * (targetScale - 1f)) / 2f);
+                        float maxPanY = Math.max(0f, (list.getHeight() * (targetScale - 1f)) / 2f);
+                        targetTransX = Math.max(-maxPanX, Math.min(maxPanX, targetTransX));
+                        targetTransY = Math.max(-maxPanY, Math.min(maxPanY, targetTransY));
+                        animateScaleTo(list, scaleState, transXState, transYState, zoomAnimation, targetScale, targetTransX, targetTransY);
+                    }
                     return true;
                 }
             });
+            listTapDetector.setIsLongpressEnabled(false);
+
             list.setOnTouchListener((v, event) -> {
-                if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                int action = event.getActionMasked();
+                if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN) {
+                    list.animate().cancel();
+                    if (zoomAnimation[0] != null) { zoomAnimation[0].cancel(); zoomAnimation[0] = null; }
+                    scaleState[0] = list.getScaleX();
+                    transXState[0] = list.getTranslationX();
+                    transYState[0] = list.getTranslationY();
+                    if (action == MotionEvent.ACTION_DOWN) {
+                        multiTouchGesture[0] = false;
+                        doubleTapGesture[0] = false;
+                        skipNextMove[0] = false;
+                    } else if (readerPinchZoom) {
+                        multiTouchGesture[0] = true;
+                        doubleTapGesture[0] = false;
+                        // End native scrolling/fling before the pinch takes ownership.
+                        MotionEvent cancel = MotionEvent.obtain(event);
+                        cancel.setAction(MotionEvent.ACTION_CANCEL);
+                        list.onTouchEvent(cancel);
+                        cancel.recycle();
+                    }
+                }
+                if (readerPinchZoom) {
+                    // Android delivers inverse-transformed coordinates to the scaled view.
+                    // Map them back so changing scale cannot feed back into the next pinch span.
+                    MotionEvent viewportEvent = MotionEvent.obtain(event);
+                    viewportEvent.transform(list.getMatrix());
+                    listScaleDetector.onTouchEvent(viewportEvent);
+                    listTapDetector.onTouchEvent(viewportEvent);
+                    viewportEvent.recycle();
+                }
+                if (action == MotionEvent.ACTION_DOWN) {
                     restoringPosition[0] = false;
                     readerDownX = event.getRawX();
                     readerDownY = event.getRawY();
+                    lastTouchX[0] = event.getRawX();
+                    lastTouchY[0] = event.getRawY();
                     readerDownAt = System.currentTimeMillis();
-                    return false;
+                    return Math.abs(scaleState[0] - 1f) > .001f || doubleTapGesture[0];
                 }
-                if (readerPinchZoom && event.getPointerCount() > 1) {
-                    listScaleDetector.onTouchEvent(event);
+                if (action == MotionEvent.ACTION_POINTER_DOWN || action == MotionEvent.ACTION_POINTER_UP) {
+                    skipNextMove[0] = true;
+                }
+                if (readerPinchZoom && event.getPointerCount() > 1 && action != MotionEvent.ACTION_CANCEL) {
                     return true;
                 }
-                if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+                if (action == MotionEvent.ACTION_MOVE) {
+                    if (skipNextMove[0]) {
+                        skipNextMove[0] = false;
+                        lastTouchX[0] = event.getRawX();
+                        lastTouchY[0] = event.getRawY();
+                    }
                     float dy = Math.abs(event.getRawY() - readerDownY);
                     float dx = Math.abs(event.getRawX() - readerDownX);
-                    if (readerPageMode == 2 && dx > dy && dx > UIHelpers.dp(MainActivity.this, 8)) {
+                    if (scaleState[0] > 1.05f) {
+                        float deltaX = event.getRawX() - lastTouchX[0];
+                        float deltaY = event.getRawY() - lastTouchY[0];
+                        lastTouchX[0] = event.getRawX();
+                        lastTouchY[0] = event.getRawY();
+                        if (doubleTapGesture[0]) return true;
+                        transXState[0] += deltaX;
+                        transYState[0] += deltaY;
+                        transXState[0] += ZoomGeometry.correction(list.getWidth() * (1f - scaleState[0]) / 2f + transXState[0],
+                                list.getWidth() * scaleState[0], list.getWidth(), list.getWidth() * .2f);
+                        transYState[0] += ZoomGeometry.correction(list.getHeight() * (1f - scaleState[0]) / 2f + transYState[0],
+                                list.getHeight() * scaleState[0], list.getHeight(), list.getHeight() * .2f);
+                        list.setTranslationX(transXState[0]);
+                        list.setTranslationY(transYState[0]);
+                        return true;
+                    }
+                    if (multiTouchGesture[0] || doubleTapGesture[0] || Math.abs(scaleState[0] - 1f) > .001f) return true;
+                    if (readerPageMode == 2 && scaleState[0] <= 1.05f && dx > dy && dx > UIHelpers.dp(MainActivity.this, 8)) {
                         float drag = event.getRawX() - readerDownX;
                         v.setTranslationX(Math.max(-UIHelpers.dp(MainActivity.this, 110), Math.min(UIHelpers.dp(MainActivity.this, 110), drag * .28f)));
                         return true;
@@ -4830,35 +5259,52 @@ public class MainActivity extends Activity {
                     }
                     return false;
                 }
-                if (event.getActionMasked() == MotionEvent.ACTION_UP) {
-                    float totalDy = event.getRawY() - readerDownY;
-                    long duration = System.currentTimeMillis() - readerDownAt;
-                    if (list.getScaleX() <= 1.05f && duration < 1500) {
-                        if (totalDy < -UIHelpers.dp(MainActivity.this, 36)) {
-                            int lastVisible = list.getLastVisiblePosition();
-                            int total = list.getCount();
-                            if (lastVisible >= total - 1) {
-                                View lastChild = list.getChildAt(list.getChildCount() - 1);
-                                if (lastChild != null && lastChild.getBottom() <= list.getHeight() + UIHelpers.dp(MainActivity.this, 30)) {
-                                    navigateReader(detail, page, 1);
-                                    return true;
-                                }
-                            }
-                        }
-                        if (totalDy > UIHelpers.dp(MainActivity.this, 40)) {
-                            int firstVisible = list.getFirstVisiblePosition();
-                            if (firstVisible == 0) {
-                                View firstChild = list.getChildAt(0);
-                                if (firstChild != null && firstChild.getTop() >= -UIHelpers.dp(MainActivity.this, 20)) {
-                                    navigateReader(detail, page, -1);
-                                    return true;
-                                }
-                            }
-                        }
+                if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                    if (doubleTapGesture[0]) return true;
+                    boolean zoomGesture = multiTouchGesture[0] || Math.abs(scaleState[0] - 1f) > .001f;
+                    if (scaleState[0] <= 1.05f) {
+                        if (zoomGesture) animateScaleTo(list, scaleState, transXState, transYState, zoomAnimation, 1f, 0f, 0f);
+                    } else {
+                        float maxPanX = Math.max(0f, (list.getWidth() * (scaleState[0] - 1f)) / 2f);
+                        float maxPanY = Math.max(0f, (list.getHeight() * (scaleState[0] - 1f)) / 2f);
+                        animateScaleTo(list, scaleState, transXState, transYState, zoomAnimation, scaleState[0],
+                                Math.max(-maxPanX, Math.min(maxPanX, transXState[0])),
+                                Math.max(-maxPanY, Math.min(maxPanY, transYState[0])));
                     }
-                    boolean handled = handleReaderTap(event, detail, page);
-                    v.animate().translationX(0f).setDuration(220L).start();
-                    return handled;
+                    if (zoomGesture) return true;
+                    if (action == MotionEvent.ACTION_UP) {
+                        float totalDy = event.getRawY() - readerDownY;
+                        long duration = System.currentTimeMillis() - readerDownAt;
+                        if (scaleState[0] <= 1.05f && duration < 1500) {
+                            if (totalDy < -UIHelpers.dp(MainActivity.this, 36)) {
+                                int lastVisible = list.getLastVisiblePosition();
+                                int total = list.getCount();
+                                if (lastVisible >= total - 1) {
+                                    View lastChild = list.getChildAt(list.getChildCount() - 1);
+                                    if (lastChild != null && lastChild.getBottom() <= list.getHeight() + UIHelpers.dp(MainActivity.this, 30)) {
+                                        navigateReader(detail, page, 1);
+                                        return true;
+                                    }
+                                }
+                            }
+                            if (totalDy > UIHelpers.dp(MainActivity.this, 40)) {
+                                int firstVisible = list.getFirstVisiblePosition();
+                                if (firstVisible == 0) {
+                                    View firstChild = list.getChildAt(0);
+                                    if (firstChild != null && firstChild.getTop() >= -UIHelpers.dp(MainActivity.this, 20)) {
+                                        navigateReader(detail, page, -1);
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                        boolean handled = handleReaderTap(event, detail, page);
+                        if (scaleState[0] <= 1.05f) {
+                            v.animate().translationX(0f).setDuration(220L).start();
+                        }
+                        return handled;
+                    }
+                    return false;
                 }
                 return false;
             });
@@ -5044,24 +5490,26 @@ public class MainActivity extends Activity {
         row1.addView(nextChapter, new LinearLayout.LayoutParams(-2, -2));
         bottom.addView(row1, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 42)));
 
-        // Row 2: 目录 ｜ 详情 ｜ 设置
+        // Row 2: 目录 ｜ 换源/详情 ｜ 设置
         LinearLayout row2 = new LinearLayout(this);
         row2.setOrientation(LinearLayout.HORIZONTAL);
         row2.setGravity(Gravity.CENTER_VERTICAL);
         row2.setPadding(UIHelpers.dp(this, 16), 0, UIHelpers.dp(this, 16), UIHelpers.dp(this, 4));
 
         LinearLayout tocBtn = createBottomActionItem(R.drawable.ic_chapter_list, "目录", () -> showChapterDrawer(detail));
-        LinearLayout detailBtn = createBottomActionItem(R.drawable.ic_detail, "详情", () -> {
-            if (!TextUtils.isEmpty(activeDetailId)) {
-                showDetailFromReader(activeDetailId, readerChapterIndex);
-            } else {
-                onBackPressed();
-            }
-        });
+        LinearLayout middleBtn = isLocalComicDetail(detail)
+                ? createBottomActionItem(R.drawable.ic_detail, "详情", () -> {
+                    if (!TextUtils.isEmpty(activeDetailId)) {
+                        showDetailFromReader(activeDetailId, readerChapterIndex);
+                    } else {
+                        onBackPressed();
+                    }
+                })
+                : createBottomActionItem(R.drawable.ic_source, "换源", () -> showReaderSourceSheet(detail));
         LinearLayout settingsBtn = createBottomActionItem(R.drawable.ic_settings, "设置", this::showReaderSettings);
 
         row2.addView(tocBtn, new LinearLayout.LayoutParams(0, -1, 1f));
-        row2.addView(detailBtn, new LinearLayout.LayoutParams(0, -1, 1f));
+        row2.addView(middleBtn, new LinearLayout.LayoutParams(0, -1, 1f));
         row2.addView(settingsBtn, new LinearLayout.LayoutParams(0, -1, 1f));
         bottom.addView(row2, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 46)));
 
@@ -5100,6 +5548,30 @@ public class MainActivity extends Activity {
         updateReaderOverlayVisibility(false);
 
         setReaderFullscreen(readerFullscreen, false);
+    }
+
+    private void animateScaleTo(View view, float[] scaleState, float[] transXState, float[] transYState,
+                                ValueAnimator[] animation, float targetScale, float targetTransX, float targetTransY) {
+        if (animation[0] != null) animation[0].cancel();
+        view.animate().cancel();
+        view.setPivotX(view.getWidth() / 2f);
+        view.setPivotY(view.getHeight() / 2f);
+        float startScale = view.getScaleX(), startX = view.getTranslationX(), startY = view.getTranslationY();
+        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+        animation[0] = animator;
+        animator.setDuration(220L);
+        animator.setInterpolator(new DecelerateInterpolator());
+        animator.addUpdateListener(a -> {
+            float progress = (float) a.getAnimatedValue();
+            scaleState[0] = startScale + (targetScale - startScale) * progress;
+            transXState[0] = startX + (targetTransX - startX) * progress;
+            transYState[0] = startY + (targetTransY - startY) * progress;
+            view.setScaleX(scaleState[0]);
+            view.setScaleY(scaleState[0]);
+            view.setTranslationX(transXState[0]);
+            view.setTranslationY(transYState[0]);
+        });
+        animator.start();
     }
 
     private boolean handleReaderTap(MotionEvent event, ComicModels.ComicDetail detail, ComicModels.ChapterPage page) {
@@ -6589,159 +7061,74 @@ public class MainActivity extends Activity {
     }
 
     private void showChapterDrawer(ComicModels.ComicDetail detail) {
-        LinearLayout panel = new LinearLayout(this);
-        panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 12), UIHelpers.dp(this, 12), UIHelpers.dp(this, 10));
-        panel.setBackgroundColor(UIHelpers.CARD);
+        if (detail == null) return;
+        if (activeChapterSheet != null && activeChapterSheet.isShowing()) {
+            activeChapterSheet.dismiss();
+            activeChapterSheet = null;
+        }
 
-        LinearLayout header = new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setMinimumHeight(UIHelpers.dp(this, 43));
-        panel.addView(header, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 43)));
-        LinearLayout titleHost = new LinearLayout(this);
-        titleHost.setOrientation(LinearLayout.VERTICAL);
-        header.addView(titleHost, UIHelpers.weight(1));
-        ImageView close = UIHelpers.vectorIconButton(this, R.drawable.ic_close, UIHelpers.TEXT2, 6);
-        close.setContentDescription("关闭目录");
-        header.addView(close, new LinearLayout.LayoutParams(UIHelpers.dp(this, 34), UIHelpers.dp(this, 34)));
+        int currentChapter;
+        boolean hasCurrent;
+        if (readerVisible) {
+            currentChapter = readerChapterIndex;
+            hasCurrent = true;
+        } else {
+            hasCurrent = lastViewedAt.containsKey(detail.summary.comicId) || progress.containsKey(detail.summary.comicId);
+            currentChapter = Math.max(0, savedChapter(detail.summary.comicId));
+        }
 
-        panel.addView(UIHelpers.divider(this));
-        LinearLayout drawerTools = new LinearLayout(this);
-        drawerTools.setGravity(Gravity.CENTER_VERTICAL);
-        drawerTools.setMinimumHeight(UIHelpers.dp(this, 39));
-        TextView drawerSource = UIHelpers.text(this, sourceNameForId(detail.summary.sourceId), 11, UIHelpers.TEXT3, Typeface.NORMAL);
-        drawerSource.setSingleLine(true);
-        drawerSource.setEllipsize(TextUtils.TruncateAt.END);
-        drawerTools.addView(drawerSource, UIHelpers.weight(1));
-        TextView order = UIHelpers.text(this, chapterDesc ? "倒序" : "正序", 11, UIHelpers.ACCENT, Typeface.BOLD);
-        order.setGravity(Gravity.CENTER);
-        order.setPadding(UIHelpers.dp(this, 4), 0, UIHelpers.dp(this, 4), 0);
-        order.setBackgroundColor(Color.TRANSPARENT);
-        LinearLayout orderHost = new LinearLayout(this);
-        orderHost.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
-        orderHost.addView(order, UIHelpers.wrap());
-        drawerTools.addView(orderHost, new LinearLayout.LayoutParams(UIHelpers.dp(this, 54), UIHelpers.dp(this, 39)));
-        drawerTools.setVisibility(detail.chapters.isEmpty() ? View.GONE : View.VISIBLE);
-        panel.addView(drawerTools, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 39)));
-        View drawerToolsDivider = UIHelpers.divider(this);
-        drawerToolsDivider.setVisibility(detail.chapters.isEmpty() ? View.GONE : View.VISIBLE);
-        panel.addView(drawerToolsDivider);
-
-        ScrollView scroll = new ScrollView(this);
-        LinearLayout list = new LinearLayout(this);
-        list.setOrientation(LinearLayout.VERTICAL);
-        scroll.addView(list, UIHelpers.matchWrap());
-        panel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-
-        PopupWindow popup = new PopupWindow(panel, Math.round(getResources().getDisplayMetrics().widthPixels * .76f), -1, true);
-        popup.setBackgroundDrawable(new ColorDrawable(UIHelpers.CARD));
-        popup.setOutsideTouchable(true);
-        popup.setElevation(UIHelpers.dp(this, 14));
-        popup.setOnDismissListener(() -> {
-            if (activePopup == popup) activePopup = null;
+        ChapterDrawerSheet sheet = new ChapterDrawerSheet(this, detail.chapters,
+                currentChapter, hasCurrent, readerVisible, chapterDesc, null,
+                selectedChapter -> showReader(detail, selectedChapter));
+        sheet.setOrderChangeListener(desc -> {
+            chapterDesc = desc;
+            saveLocalState();
+        });
+        sheet.setDismissListener(() -> {
+            if (activeChapterSheet == sheet) activeChapterSheet = null;
             checkPendingUpdatePrompt();
         });
+        activeChapterSheet = sheet;
+        sheet.show();
 
-        final ComicModels.ComicDetail[] current = {detail};
-        final int[] renderGeneration = {0};
-        Runnable fill = () -> {
-            int generation = ++renderGeneration[0];
-            titleHost.removeAllViews();
-            titleHost.addView(chapterDrawerTitle(current[0].chapters.size()));
-            int toolsVisibility = current[0].chapters.isEmpty() ? View.GONE : View.VISIBLE;
-            drawerTools.setVisibility(toolsVisibility);
-            drawerToolsDivider.setVisibility(toolsVisibility);
-            list.removeAllViews();
-            List<Integer> orderIndexes = DataHelpers.chapterOrder(chapterDesc, current[0].chapters.size());
-            fillChapterRows(list, popup, current[0], orderIndexes, 0, generation, renderGeneration);
-        };
-        order.setOnClickListener(v -> {
-            if (current[0].chapters.isEmpty() || activePopup != popup || !popup.isShowing()) return;
-            chapterDesc = !chapterDesc;
-            saveLocalState();
-            order.setText(chapterDesc ? "倒序" : "正序");
-            fill.run();
-        });
-        activePopup = popup;
-        popup.showAtLocation(root, Gravity.RIGHT, 0, 0);
-        close.setOnClickListener(v -> popup.dismiss());
         if (!detail.chapters.isEmpty()) {
-            fill.run();
             return;
         }
-        titleHost.addView(chapterDrawerTitle(0));
-        Runnable[] load = new Runnable[1];
-        load[0] = () -> {
-            list.removeAllViews();
-            list.addView(remState(R.drawable.rem_loading, "正在解析章节目录", "可以先关闭抽屉", "", null));
-            track(detailIo.submit(() -> {
-                try {
-                    List<ComicModels.Chapter> chapters = sourceForDetail(detail).chapters(detail.summary.comicId);
-                    if (chapters.isEmpty()) {
-                        main.post(() -> {
-                            if (activePopup != popup || !popup.isShowing()) return;
-                            list.removeAllViews();
-                            list.addView(remState(R.drawable.rem_empty, "这里还没有章节", "稍后再来看看", "重新加载", load[0]));
-                        });
-                        return;
-                    }
-                    normalizeChaptersOldestFirst(chapters);
-                    ComicModels.ComicDetail loaded = withChapters(detail, chapters);
+
+        sheet.showLoadingState("正在解析章节目录", "可以先关闭抽屉");
+        track(detailIo.submit(() -> {
+            try {
+                List<ComicModels.Chapter> chapters = sourceForDetail(detail).chapters(detail.summary.comicId);
+                if (chapters.isEmpty()) {
                     main.post(() -> {
-                        if (activePopup != popup || !popup.isShowing()) return;
-                        details.put(detail.summary.comicId, loaded);
-                        persistComicCachesAsync();
-                        current[0] = loaded;
-                        fill.run();
+                        if (activeChapterSheet != sheet || !sheet.isShowing()) return;
+                        sheet.showErrorState("这里还没有章节", "重新加载", () -> showChapterDrawer(detail));
                     });
-                } catch (Exception error) {
-                    boolean expectedCancellation = isExpectedTaskCancellation(error);
-                    boolean verificationRequired = isVerificationRequired(error);
-                    main.post(() -> {
-                        if (expectedCancellation || activePopup != popup || !popup.isShowing()) return;
-                        list.removeAllViews();
-                        if (shouldOfferSourceVerification(
-                                detail.summary.sourceId, verificationRequired)) {
-                            list.addView(verificationRequiredState(detail.summary.sourceId));
-                        } else {
-                            appendErrorLog("目录解析失败", error);
-                            list.addView(remState(R.drawable.rem_error,
-                                    "目录解析失败", "请稍后再试", "重试", load[0]));
-                        }
-                    });
+                    return;
                 }
-            }));
-        };
-        load[0].run();
-    }
-
-    private void fillChapterRows(LinearLayout list, PopupWindow popup, ComicModels.ComicDetail detail,
-                                 List<Integer> orderIndexes, int start, int generation, int[] renderGeneration) {
-        if (generation != renderGeneration[0] || activePopup != popup || !popup.isShowing()) return;
-        int endIndex = Math.min(start + CHAPTER_DRAWER_BATCH_SIZE, orderIndexes.size());
-        for (int i = start; i < endIndex; i++) {
-                int chapterIndex = orderIndexes.get(i);
-                ComicModels.Chapter chapter = detail.chapters.get(chapterIndex);
-                String end = readerChapterIndex == chapterIndex ? "当前" : String.valueOf(chapterIndex + 1);
-                View item = chapterDrawerRow(chapter.title, end, chapterIndex == readerChapterIndex);
-                item.setOnClickListener(v -> {
-                    popup.dismiss();
-                    showReader(detail, chapterIndex);
+                normalizeChaptersOldestFirst(chapters);
+                ComicModels.ComicDetail loaded = withChapters(detail, chapters);
+                main.post(() -> {
+                    if (activeChapterSheet != sheet || !sheet.isShowing()) return;
+                    details.put(detail.summary.comicId, loaded);
+                    persistComicCachesAsync();
+                    sheet.updateChapters(loaded.chapters, currentChapter, hasCurrent);
                 });
-                list.addView(item);
-                if (i < orderIndexes.size() - 1) list.addView(UIHelpers.divider(this));
-        }
-        if (endIndex < orderIndexes.size() && activePopup == popup) {
-            main.postDelayed(() -> fillChapterRows(list, popup, detail, orderIndexes, endIndex, generation, renderGeneration), 16);
-        }
-    }
-
-    private LinearLayout chapterDrawerTitle(int count) {
-        LinearLayout text = new LinearLayout(this);
-        text.setOrientation(LinearLayout.VERTICAL);
-        text.addView(UIHelpers.text(this, "章节目录", 16, UIHelpers.TEXT, Typeface.BOLD));
-        text.addView(UIHelpers.text(this, count == 0 ? "打开后异步加载" : "共 " + count + " 话", 11, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
-        return text;
+            } catch (Exception error) {
+                boolean expectedCancellation = isExpectedTaskCancellation(error);
+                boolean verificationRequired = isVerificationRequired(error);
+                main.post(() -> {
+                    if (expectedCancellation || activeChapterSheet != sheet || !sheet.isShowing()) return;
+                    if (shouldOfferSourceVerification(detail.summary.sourceId, verificationRequired)) {
+                        sheet.dismiss();
+                        showVerificationRequired(detail.summary.sourceId);
+                    } else {
+                        appendErrorLog("目录解析失败", error);
+                        sheet.showErrorState("目录解析失败", "重试", () -> showChapterDrawer(detail));
+                    }
+                });
+            }
+        }));
     }
 
     private void showFileVolumes(ComicModels.ComicDetail detail) {
@@ -6847,28 +7234,6 @@ public class MainActivity extends Activity {
             }
             return false;
         });
-    }
-
-    private View chapterDrawerRow(String title, String end, boolean current) {
-        LinearLayout row = new LinearLayout(this);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setMinimumHeight(UIHelpers.dp(this, 37));
-        row.setPadding(UIHelpers.dp(this, 2), 0, UIHelpers.dp(this, 2), 0);
-        if (current) row.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 5), Color.TRANSPARENT));
-        TextView name = UIHelpers.text(this, title, 14, current ? UIHelpers.TEXT3 : UIHelpers.TEXT, Typeface.NORMAL);
-        name.setGravity(Gravity.CENTER_VERTICAL);
-        name.setSingleLine(true);
-        name.setEllipsize(TextUtils.TruncateAt.END);
-        row.addView(name, UIHelpers.weight(1));
-        row.addView(chapterNumberView(end, current), new LinearLayout.LayoutParams(UIHelpers.dp(this, 32), -2));
-        return row;
-    }
-
-    private TextView chapterNumberView(String value, boolean current) {
-        TextView view = UIHelpers.text(this, value, 12, current ? UIHelpers.ACCENT : UIHelpers.TEXT3, Typeface.NORMAL);
-        view.setTypeface(Typeface.MONOSPACE);
-        view.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
-        return view;
     }
 
     private void toggleFavorite(ComicModels.ComicDetail detail) {

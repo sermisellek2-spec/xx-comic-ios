@@ -90,10 +90,6 @@ public final class DownloadViews {
         headerTextCol.addView(UIHelpers.text(a, wifiHint, 12, UIHelpers.TEXT3, Typeface.NORMAL), UIHelpers.marginTop(-1, dp(a, 2)));
         headerRow.addView(headerTextCol, UIHelpers.weight(1));
 
-        ImageView closeBtn = UIHelpers.vectorIconButton(a, R.drawable.ic_close, UIHelpers.TEXT2, 6);
-        closeBtn.setContentDescription("关闭");
-        closeBtn.setOnClickListener(v -> dialog.dismiss());
-        headerRow.addView(closeBtn, new LinearLayout.LayoutParams(dp(a, 32), dp(a, 32)));
         panel.addView(headerRow);
 
         // Tool chips: 本章, 全选, 清空, 倒序
@@ -414,10 +410,6 @@ public final class DownloadViews {
         TextView titleView = UIHelpers.text(a, "章节下载详情", 17, UIHelpers.TEXT, Typeface.BOLD);
         headerRow.addView(titleView, UIHelpers.weight(1));
 
-        ImageView closeBtn = UIHelpers.vectorIconButton(a, R.drawable.ic_close, UIHelpers.TEXT2, 6);
-        closeBtn.setContentDescription("关闭");
-        closeBtn.setOnClickListener(v -> dialog.dismiss());
-        headerRow.addView(closeBtn, new LinearLayout.LayoutParams(dp(a, 32), dp(a, 32)));
         panel.addView(headerRow);
 
         // Actions: 阅读 & 去验证

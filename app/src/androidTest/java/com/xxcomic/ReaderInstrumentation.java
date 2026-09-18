@@ -37,6 +37,7 @@ public final class ReaderInstrumentation extends Instrumentation {
     private boolean downloadsOnly;
     private boolean bookshelfOnly;
     private boolean filesOnly;
+    private boolean zoomOnly;
     @Override public void onCreate(Bundle arguments) {
         super.onCreate(arguments);
         immersionOnly = arguments != null && "true".equals(arguments.getString("immersionOnly"));
@@ -47,11 +48,17 @@ public final class ReaderInstrumentation extends Instrumentation {
         downloadsOnly = arguments != null && "true".equals(arguments.getString("downloadsOnly"));
         bookshelfOnly = arguments != null && "true".equals(arguments.getString("bookshelfOnly"));
         filesOnly = arguments != null && "true".equals(arguments.getString("filesOnly"));
+        zoomOnly = arguments != null && "true".equals(arguments.getString("zoomOnly"));
         start();
     }
     @Override public void onStart() {
         Bundle result = new Bundle();
         try {
+            if (zoomOnly) {
+                int count = ReaderZoomChecks.run(this);
+                result.putString("stream", "PASS: " + count + " reader zoom checks\n");
+                finish(-1, result); return;
+            }
             if(filesOnly) {
                 int count=FileSourceChecks.run(getTargetContext());
                 result.putString("stream","PASS: "+count+" native file source checks\n");

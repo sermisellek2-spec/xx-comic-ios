@@ -25,6 +25,7 @@ import android.widget.Toast;
 
 import com.xxcomic.R;
 import com.xxcomic.UIHelpers;
+import com.xxcomic.reader.ChapterDrawerSheet;
 import com.xxcomic.source.ComicModels;
 
 import java.io.File;
@@ -122,13 +123,7 @@ public class LocalDetailView {
             if (listener != null) listener.onRead(book, detail, selectedChapter);
         });
         body.addView(chapterEntryView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 12)));
-        if (LocalModels.SOURCE_TYPE_IMPORT.equals(book.sourceType)) {
-            TextView add = UIHelpers.text(activity, "+ 添加分卷", 13, UIHelpers.ACCENT, Typeface.NORMAL);
-            add.setPadding(0, UIHelpers.dp(activity, 14), 0, UIHelpers.dp(activity, 14));
-            add.setOnClickListener(v -> { if (listener != null) listener.onAddVolumes(book); });
-            body.addView(add);
-        }
-        if (volumes.size() > 1) {
+        if (LocalModels.SOURCE_TYPE_IMPORT.equals(book.sourceType) || volumes.size() > 1) {
             TextView manage = UIHelpers.text(activity, "管理分卷  ›", 13, UIHelpers.ACCENT, Typeface.NORMAL);
             manage.setPadding(0, UIHelpers.dp(activity, 14), 0, UIHelpers.dp(activity, 14));
             manage.setOnClickListener(v -> showVolumeManager(activity, book, store, storageManager, listener));
@@ -298,155 +293,27 @@ public class LocalDetailView {
                                           int targetChapter, boolean hasRead, OnChapterSelected onSelect) {
         if (activity == null || activity.isFinishing()) return;
 
-        LinearLayout panel = new LinearLayout(activity);
-        panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 12), UIHelpers.dp(activity, 10));
-        panel.setBackgroundColor(UIHelpers.CARD);
-
-        // Header
-        LinearLayout header = new LinearLayout(activity);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setMinimumHeight(UIHelpers.dp(activity, 43));
-        panel.addView(header, new LinearLayout.LayoutParams(-1, UIHelpers.dp(activity, 43)));
-
-        LinearLayout titleHost = new LinearLayout(activity);
-        titleHost.setOrientation(LinearLayout.VERTICAL);
-        titleHost.addView(UIHelpers.text(activity, "章节目录", 16, UIHelpers.TEXT, Typeface.BOLD));
-        titleHost.addView(UIHelpers.text(activity, "共 " + detail.chapters.size() + " 话", 11, UIHelpers.TEXT3, Typeface.NORMAL),
-                UIHelpers.marginTop(-1, UIHelpers.dp(activity, 2)));
-        header.addView(titleHost, UIHelpers.weight(1));
-
-        ImageView close = UIHelpers.vectorIconButton(activity, R.drawable.ic_close, UIHelpers.TEXT2, 6);
-        close.setContentDescription("关闭目录");
-        header.addView(close, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 34), UIHelpers.dp(activity, 34)));
-
-        panel.addView(UIHelpers.divider(activity));
-
-        // Tools (Source tag & Order toggle)
-        LinearLayout drawerTools = new LinearLayout(activity);
-        drawerTools.setGravity(Gravity.CENTER_VERTICAL);
-        drawerTools.setMinimumHeight(UIHelpers.dp(activity, 39));
-
-        String sourceLabel = LocalModels.isDownload(book) ? "离线下载"
-                : (LocalModels.FORMAT_PDF.equals(book.format) ? "PDF 导入"
-                : (LocalModels.FORMAT_EPUB.equals(book.format) ? "EPUB 导入"
-                : (LocalModels.isKindleFormat(book.format) ? book.format.toUpperCase(Locale.US) + " 导入" : "本地导入")));
-        TextView drawerSource = UIHelpers.text(activity, sourceLabel, 11, UIHelpers.TEXT3, Typeface.NORMAL);
-        drawerTools.addView(drawerSource, UIHelpers.weight(1));
-
-        final boolean[] desc = new boolean[]{false};
-        TextView order = UIHelpers.text(activity, "正序", 11, UIHelpers.ACCENT, Typeface.BOLD);
-        order.setGravity(Gravity.CENTER);
-        order.setPadding(UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 4), UIHelpers.dp(activity, 8), UIHelpers.dp(activity, 4));
-        drawerTools.addView(order);
-        panel.addView(drawerTools, new LinearLayout.LayoutParams(-1, UIHelpers.dp(activity, 39)));
-        panel.addView(UIHelpers.divider(activity));
-
-        ScrollView scroll = new ScrollView(activity);
-        scroll.setVerticalScrollBarEnabled(false);
-        LinearLayout list = new LinearLayout(activity);
-        list.setOrientation(LinearLayout.VERTICAL);
-        scroll.addView(list, new FrameLayout.LayoutParams(-1, -2));
-        panel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-
-        int drawerWidth = Math.round(activity.getResources().getDisplayMetrics().widthPixels * 0.76f);
-        PopupWindow popup = new PopupWindow(panel, drawerWidth, -1, true);
-        popup.setBackgroundDrawable(new ColorDrawable(UIHelpers.CARD));
-        popup.setOutsideTouchable(true);
-        popup.setElevation(UIHelpers.dp(activity, 14));
-
-        close.setOnClickListener(v -> popup.dismiss());
-
         java.util.Map<String, LocalModels.Volume> chapterVolumes = new java.util.HashMap<>();
         LocalLibraryStore localStore = LocalLibrary.get(activity).store;
         java.util.Map<String, LocalModels.Volume> volumesById = new java.util.HashMap<>();
         for (LocalModels.Volume volume : localStore.getVolumes(book.id)) volumesById.put(volume.id, volume);
-        if (volumesById.size() > 1) for (LocalModels.Chapter chapter : localStore.getChapters(book.id)) {
-            LocalModels.Volume volume = volumesById.get(chapter.volumeId);
-            if (volume != null) chapterVolumes.put(chapter.id, volume);
-        }
-        final int[] renderGeneration = {0};
-        Runnable render = () -> {
-            int generation = ++renderGeneration[0];
-            list.removeAllViews();
-            List<Integer> orderIndexes = new ArrayList<>();
-            for (int i = 0; i < detail.chapters.size(); i++) {
-                orderIndexes.add(i);
-            }
-            if (desc[0]) {
-                Collections.reverse(orderIndexes);
-            }
-            fillBatch(activity, list, popup, detail, orderIndexes, 0, generation, renderGeneration, targetChapter, hasRead, onSelect, chapterVolumes);
-        };
-
-        order.setOnClickListener(v -> {
-            desc[0] = !desc[0];
-            order.setText(desc[0] ? "倒序" : "正序");
-            render.run();
-        });
-
-        popup.showAtLocation(rootLocation, Gravity.RIGHT, 0, 0);
-        render.run();
-    }
-
-    private static void fillBatch(Activity activity, LinearLayout list, PopupWindow popup,
-                                  ComicModels.ComicDetail detail, List<Integer> orderIndexes,
-                                  int start, int generation, int[] renderGeneration,
-                                  int targetChapter, boolean hasRead, OnChapterSelected onSelect,
-                                  java.util.Map<String, LocalModels.Volume> chapterVolumes) {
-        if (generation != renderGeneration[0] || !popup.isShowing()) return;
-        int endIndex = Math.min(start + CHAPTER_DRAWER_BATCH_SIZE, orderIndexes.size());
-        for (int i = start; i < endIndex; i++) {
-            int chapterIndex = orderIndexes.get(i);
-            ComicModels.Chapter ch = detail.chapters.get(chapterIndex);
-            LocalModels.Volume volume = chapterVolumes.get(ch.chapterId);
-            LocalModels.Volume previous = i == 0 ? null : chapterVolumes.get(detail.chapters.get(orderIndexes.get(i - 1)).chapterId);
-            if (volume != null && (previous == null || !previous.id.equals(volume.id))) {
-                TextView heading = UIHelpers.text(activity, volume.title, 12, UIHelpers.ACCENT, Typeface.BOLD);
-                heading.setPadding(UIHelpers.dp(activity, 4), UIHelpers.dp(activity, 12), 0, UIHelpers.dp(activity, 6));
-                list.addView(heading);
-            }
-            boolean isCurrent = hasRead && (chapterIndex == targetChapter);
-
-            LinearLayout row = new LinearLayout(activity);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setMinimumHeight(UIHelpers.dp(activity, 38));
-            row.setPadding(UIHelpers.dp(activity, 4), 0, UIHelpers.dp(activity, 4), 0);
-            if (isCurrent) {
-                row.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(activity, 5), Color.TRANSPARENT));
-            }
-
-            TextView name = UIHelpers.text(activity, ch.title, 14, isCurrent ? UIHelpers.ACCENT : UIHelpers.TEXT,
-                    isCurrent ? Typeface.BOLD : Typeface.NORMAL);
-            name.setSingleLine(true);
-            name.setEllipsize(TextUtils.TruncateAt.END);
-            row.addView(name, UIHelpers.weight(1));
-
-            String endText = isCurrent ? "上次读到" : String.valueOf(chapterIndex + 1);
-            if (!"local".equals(detail.summary.sourceId)) {
-                com.xxcomic.download.DownloadModels.Task task = com.xxcomic.download.DownloadRuntime.get(activity).store.get(
-                        com.xxcomic.download.DownloadModels.key(detail.summary.sourceId, detail.summary.comicId, ch.chapterId));
-                if (!isCurrent) endText = task != null && task.state == com.xxcomic.download.DownloadModels.State.COMPLETED ? "已下载" : "在线";
-            }
-            TextView numView = UIHelpers.text(activity, endText, 11, isCurrent ? UIHelpers.ACCENT : UIHelpers.TEXT3, Typeface.NORMAL);
-            numView.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
-            row.addView(numView);
-
-            row.setOnClickListener(v -> {
-                popup.dismiss();
-                if (onSelect != null) onSelect.onSelect(chapterIndex);
-            });
-
-            list.addView(row);
-            if (i < orderIndexes.size() - 1) {
-                list.addView(UIHelpers.divider(activity));
+        if (volumesById.size() > 1) {
+            for (LocalModels.Chapter chapter : localStore.getChapters(book.id)) {
+                LocalModels.Volume volume = volumesById.get(chapter.volumeId);
+                if (volume != null) chapterVolumes.put(chapter.id, volume);
             }
         }
 
-        if (endIndex < orderIndexes.size() && popup.isShowing()) {
-            list.postDelayed(() -> fillBatch(activity, list, popup, detail, orderIndexes, endIndex,
-                    generation, renderGeneration, targetChapter, hasRead, onSelect, chapterVolumes), 16);
-        }
+        ChapterDrawerSheet sheet = new ChapterDrawerSheet(activity, detail.chapters,
+                targetChapter, hasRead, false, false,
+                chapterId -> {
+                    LocalModels.Volume vol = chapterVolumes.get(chapterId);
+                    return vol != null ? vol.title : null;
+                },
+                selectedChapter -> {
+                    if (onSelect != null) onSelect.onSelect(selectedChapter);
+                });
+        sheet.show();
     }
 
     public static void showRenameDialog(Activity activity, LocalModels.Book book,

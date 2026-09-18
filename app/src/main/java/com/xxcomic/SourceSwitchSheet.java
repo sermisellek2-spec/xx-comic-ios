@@ -41,11 +41,17 @@ final class SourceSwitchSheet extends PopupWindow {
     private final Map<String, Row> rows = new LinkedHashMap<>();
     private int collapsedHeight, expandedHeight;
     private ValueAnimator resize;
+    private final boolean isReader;
     private boolean closing;
 
     SourceSwitchSheet(Activity activity, View anchor, CoverFactory covers, SourceName names, Selection selection) {
+        this(activity, anchor, false, covers, names, selection);
+    }
+
+    SourceSwitchSheet(Activity activity, View anchor, boolean isReader, CoverFactory covers, SourceName names, Selection selection) {
         super(activity);
         this.activity = activity;
+        this.isReader = isReader;
         this.covers = covers;
         this.names = names;
         this.selection = selection;
@@ -57,28 +63,28 @@ final class SourceSwitchSheet extends PopupWindow {
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(16), 0, dp(16), dp(12));
         GradientDrawable background = new GradientDrawable();
-        background.setColor(UIHelpers.CARD);
+        background.setColor(isReader ? Color.parseColor("#1C2128") : UIHelpers.CARD);
         float radius = dp(16);
         background.setCornerRadii(new float[]{radius, radius, radius, radius, 0, 0, 0, 0});
         panel.setBackground(background);
         panel.setClipToOutline(true);
         FrameLayout handleHost = new FrameLayout(activity);
         View handle = new View(activity);
-        handle.setBackground(UIHelpers.round(UIHelpers.BORDER, dp(2), Color.TRANSPARENT));
+        handle.setBackground(UIHelpers.round(isReader ? Color.parseColor("#444C56") : UIHelpers.BORDER, dp(2), Color.TRANSPARENT));
         handleHost.addView(handle, new FrameLayout.LayoutParams(dp(32), dp(4), Gravity.CENTER));
         handleHost.setContentDescription("展开或收起换源列表");
         handleHost.setOnClickListener(v -> animateHeight(panel.getHeight() < expandedHeight ? expandedHeight : collapsedHeight));
         panel.addView(handleHost, new LinearLayout.LayoutParams(-1, dp(24)));
         LinearLayout header = new LinearLayout(activity);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        title = UIHelpers.text(activity, "换源列表", 16, UIHelpers.TEXT, Typeface.BOLD);
+        title = UIHelpers.text(activity, "换源列表", 16, isReader ? Color.parseColor("#E6EDF3") : UIHelpers.TEXT, Typeface.BOLD);
         header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
-        View close = UIHelpers.vectorIconButton(activity, R.drawable.ic_close, UIHelpers.TEXT3, 10);
+        View close = UIHelpers.vectorIconButton(activity, R.drawable.ic_close, isReader ? Color.parseColor("#8B949E") : UIHelpers.TEXT3, 10);
         close.setContentDescription("关闭换源列表");
         close.setOnClickListener(v -> dismiss());
         header.addView(close, new LinearLayout.LayoutParams(dp(44), dp(44)));
         panel.addView(header, new LinearLayout.LayoutParams(-1, dp(44)));
-        status = UIHelpers.text(activity, "", 11, UIHelpers.TEXT3, Typeface.NORMAL);
+        status = UIHelpers.text(activity, "", 11, isReader ? Color.parseColor("#8B949E") : UIHelpers.TEXT3, Typeface.NORMAL);
         status.setPadding(0, 0, 0, dp(8));
         panel.addView(status);
         scroll = new ScrollView(activity);
@@ -130,9 +136,10 @@ final class SourceSwitchSheet extends PopupWindow {
             }
             boolean selected = comic.comicId.equals(selectedId);
             row.mark.setText(selected ? "✓" : "○");
-            row.mark.setTextColor(selected ? UIHelpers.ON_ACCENT : UIHelpers.TEXT3);
+            row.mark.setTextColor(selected ? UIHelpers.ON_ACCENT : (isReader ? Color.parseColor("#8B949E") : UIHelpers.TEXT3));
             row.mark.setBackground(UIHelpers.round(selected ? UIHelpers.ACCENT : Color.TRANSPARENT, dp(12), Color.TRANSPARENT));
-            row.name.setText(names.get(comic.sourceId) + (comic.sourceId.equals(pendingSource) ? " · 切换中" : ""));
+            row.name.setText(names.get(comic.sourceId) + (comic.sourceId.equals(pendingSource) ? " · 切换中…" : ""));
+            row.name.setTextColor(comic.sourceId.equals(pendingSource) ? UIHelpers.ACCENT : (isReader ? Color.parseColor("#8B949E") : UIHelpers.TEXT2));
             row.view.setSelected(selected);
             row.view.setContentDescription(comic.title + "，" + names.get(comic.sourceId) + (selected ? "，当前站源" : "，点击切换"));
             list.addView(row.view);
@@ -148,7 +155,10 @@ final class SourceSwitchSheet extends PopupWindow {
             this.comic = comic;
             view = new LinearLayout(activity);
             view.setGravity(Gravity.CENTER_VERTICAL);
-            view.setPadding(0, dp(10), 0, dp(10));
+            view.setPadding(dp(4), dp(10), dp(4), dp(10));
+            view.setClickable(true);
+            view.setFocusable(true);
+            UIHelpers.tapFeedback(view);
             mark = UIHelpers.text(activity, "", 16, UIHelpers.ACCENT, Typeface.BOLD);
             mark.setGravity(Gravity.CENTER);
             view.addView(mark, new LinearLayout.LayoutParams(dp(24), dp(24)));
@@ -157,11 +167,11 @@ final class SourceSwitchSheet extends PopupWindow {
             view.addView(covers.create(comic), coverParams);
             LinearLayout info = new LinearLayout(activity);
             info.setOrientation(LinearLayout.VERTICAL);
-            TextView comicTitle = UIHelpers.text(activity, comic.title, 14, UIHelpers.TEXT, Typeface.NORMAL);
+            TextView comicTitle = UIHelpers.text(activity, comic.title, 14, isReader ? Color.parseColor("#E6EDF3") : UIHelpers.TEXT, Typeface.NORMAL);
             comicTitle.setMaxLines(2);
             comicTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
             info.addView(comicTitle);
-            name = UIHelpers.text(activity, "", 12, UIHelpers.TEXT2, Typeface.NORMAL);
+            name = UIHelpers.text(activity, "", 12, isReader ? Color.parseColor("#8B949E") : UIHelpers.TEXT2, Typeface.NORMAL);
             info.addView(name, UIHelpers.marginTop(-1, dp(6)));
             view.addView(info, new LinearLayout.LayoutParams(0, -2, 1));
             view.setOnClickListener(v -> { dismiss(); selection.select(comic); });

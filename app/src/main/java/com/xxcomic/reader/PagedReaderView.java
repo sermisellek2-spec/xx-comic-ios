@@ -46,6 +46,13 @@ public final class PagedReaderView extends FrameLayout {
         pager.setOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
         pager.setUserInputEnabled(inputMode != 1);
         pager.setOffscreenPageLimit(1);
+        pager.setVerticalScrollBarEnabled(false);
+        pager.setHorizontalScrollBarEnabled(false);
+        View child = pager.getChildAt(0);
+        if (child != null) {
+            child.setVerticalScrollBarEnabled(false);
+            child.setHorizontalScrollBarEnabled(false);
+        }
         addView(pager, new FrameLayout.LayoutParams(-1, -1));
         pager.setAdapter(new RecyclerView.Adapter<Holder>() {
             @Override public Holder onCreateViewHolder(ViewGroup parent, int type) {

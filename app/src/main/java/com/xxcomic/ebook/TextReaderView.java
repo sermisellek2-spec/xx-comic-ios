@@ -100,8 +100,8 @@ public class TextReaderView extends FrameLayout {
 
         webView.setBackgroundColor(getThemeBackgroundColor(readerTheme));
         webView.setHorizontalScrollBarEnabled(false);
-        webView.setVerticalScrollBarEnabled(true);
-        webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+        webView.setVerticalScrollBarEnabled(false);
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
 
         webView.addJavascriptInterface(new JsBridge(), "TextBridge");
 
