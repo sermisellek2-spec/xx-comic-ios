@@ -44,6 +44,20 @@ public final class LocalVolumeChecks {
             require(store.getReadyVolumeCounts().get("book") == 2, "shelf volume count uses ready volumes");
             require("book".equals(store.findReadyByFingerprint("fp2").id), "appended fingerprint is indexed");
             require("mobi".equals(store.getVolume(store.getPage(page.id).volumeId).format), "mixed format survives persistence");
+            LocalModels.Volume third = new LocalModels.Volume("third", "book", "fp3", "卷3",
+                    "epub", "third.epub", 5, 2, "ready", 3, 3);
+            LocalModels.Chapter thirdChapter = new LocalModels.Chapter("third_ch", "book", third.id,
+                    0, "卷3", third.relativePath, 0);
+            store.appendVolume(third, new ArchiveIndex.ParseResult(Collections.singletonList(thirdChapter),
+                    Collections.emptyMap(), 0, 0, null, Collections.emptyList()));
+            store.moveVolumeToPosition("book", "book", 2);
+            require("book_vol_fp2".equals(store.getVolumes("book").get(0).id)
+                    && "third".equals(store.getVolumes("book").get(1).id)
+                    && "book".equals(store.getVolumes("book").get(2).id), "drag inserts across multiple rows without swapping endpoints");
+            require("old_ch".equals(store.getChapters("book").get(2).id), "drag preserves chapter identity and follows volume order");
+            store.moveVolumeToPosition("book", "book", 0);
+            require("old_ch".equals(store.getChapters("book").get(0).id), "drag moves back to first position");
+            require(store.deleteVolume("book", third.id, storage), "remove extra test volume");
             store.moveVolume("book", volume.id, -1);
             require(chapter.id.equals(store.getChapters("book").get(0).id), "volume reorder retains chapter identity");
             require(store.deleteVolume("book", volume.id, storage), "delete one volume");
@@ -54,7 +68,7 @@ public final class LocalVolumeChecks {
             require(store.getPage(page.id) != null && store.getPage("old_p") == null, "removing default keeps other pages");
             require(store.findReadyByFingerprint("fp1") == null, "deleted first volume no longer deduplicates");
             require(store.getVolumes("book").size() == 1, "default volume is not recreated");
-            return 15;
+            return 19;
         } finally { store.close(); storage.deleteRecursively(root); }
     }
     private static void require(boolean ok, String message) { if (!ok) throw new AssertionError(message); }

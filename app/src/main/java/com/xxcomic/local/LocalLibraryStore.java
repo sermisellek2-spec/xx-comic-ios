@@ -416,11 +416,21 @@ public class LocalLibraryStore implements LocalContentResolver.ContentIndex {
 
     public synchronized void moveVolume(String bookId, String volumeId, int direction) {
         List<LocalModels.Volume> volumes = getVolumes(bookId);
+        for (int i = 0; i < volumes.size(); i++) {
+            if (volumes.get(i).id.equals(volumeId)) {
+                moveVolumeToPosition(bookId, volumeId, i + Integer.signum(direction));
+                return;
+            }
+        }
+    }
+
+    public synchronized void moveVolumeToPosition(String bookId, String volumeId, int to) {
+        List<LocalModels.Volume> volumes = getVolumes(bookId);
         int from = -1;
         for (int i = 0; i < volumes.size(); i++) if (volumes.get(i).id.equals(volumeId)) from = i;
-        int to = from + Integer.signum(direction);
         if (from < 0 || to < 0 || to >= volumes.size()) return;
-        Collections.swap(volumes, from, to);
+        if (from == to) return;
+        volumes.add(to, volumes.remove(from));
         SQLiteDatabase db = helper.getWritableDatabase();
         db.beginTransactionNonExclusive();
         try {

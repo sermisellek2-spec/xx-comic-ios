@@ -258,85 +258,9 @@ public class LocalDetailView {
         dialog.show();
     }
 
-    private static final java.util.concurrent.ExecutorService volumeIo = java.util.concurrent.Executors.newSingleThreadExecutor();
-
     private static void showVolumeManager(Activity activity, LocalModels.Book book, LocalLibraryStore store,
                                            LocalStorageManager storage, Listener listener) {
-        Dialog dialog = new Dialog(activity);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        LinearLayout panel = new LinearLayout(activity);
-        panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 20));
-        panel.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 16), Color.TRANSPARENT));
-        panel.addView(UIHelpers.text(activity, "管理分卷", 17, UIHelpers.TEXT, Typeface.BOLD));
-        panel.addView(UIHelpers.text(activity, "调整顺序不改变卷内章节；移除只清理 App 副本，原文件保留。", 12, UIHelpers.TEXT3, Typeface.NORMAL));
-        ScrollView scroll = new ScrollView(activity);
-        LinearLayout rows = new LinearLayout(activity);
-        rows.setOrientation(LinearLayout.VERTICAL);
-        scroll.addView(rows);
-        for (LocalModels.Volume volume : store.getVolumes(book.id)) {
-            LinearLayout row = new LinearLayout(activity);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            TextView title = UIHelpers.text(activity, volume.title, 13, UIHelpers.TEXT, Typeface.NORMAL);
-            title.setMaxLines(2);
-            row.addView(title, UIHelpers.weight(1));
-            for (int direction : new int[]{-1, 1, 0}) {
-                TextView action = UIHelpers.text(activity, direction == 0 ? "移除" : direction < 0 ? "↑" : "↓", 14,
-                        direction == 0 ? UIHelpers.DANGER : UIHelpers.ACCENT, Typeface.NORMAL);
-                action.setGravity(Gravity.CENTER);
-                action.setContentDescription((direction == 0 ? "移除 " : direction < 0 ? "上移 " : "下移 ") + volume.title);
-                row.addView(action, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 46), UIHelpers.dp(activity, 48)));
-                action.setOnClickListener(v -> {
-                    Runnable change = () -> {
-                        dialog.dismiss();
-                        volumeIo.execute(() -> {
-                            boolean ok = true;
-                            try {
-                                if (direction == 0) ok = store.deleteVolume(book.id, volume.id, storage);
-                                else store.moveVolume(book.id, volume.id, direction);
-                            } catch (Exception e) { ok = false; }
-                            boolean done = ok;
-                            activity.runOnUiThread(() -> {
-                                if (activity.isDestroyed() || activity.isFinishing()) return;
-                                if (!done) { Toast.makeText(activity, "操作未完成，请重试", Toast.LENGTH_SHORT).show(); return; }
-                                LocalModels.Book latest = store.getBook(book.id);
-                                if (listener != null) {
-                                    if (latest == null) listener.onBookDeleted(book);
-                                    else listener.onBookRenamed(latest);
-                                }
-                            });
-                        });
-                    };
-                    if (direction != 0) change.run();
-                    else {
-                        LinearLayout message = new LinearLayout(activity);
-                        message.setOrientation(LinearLayout.VERTICAL);
-                        message.setPadding(UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 20), 0);
-                        message.addView(UIHelpers.text(activity, "移除这一卷？", 17, UIHelpers.TEXT, Typeface.BOLD));
-                        message.addView(UIHelpers.text(activity, volume.title + "\n其他分卷和手机中的原文件不受影响。",
-                                13, UIHelpers.TEXT2, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(activity, 8)));
-                        AlertDialog confirm = new AlertDialog.Builder(activity).setView(message)
-                                .setNegativeButton("取消", null).setPositiveButton("移除", (d, which) -> change.run()).create();
-                        confirm.show();
-                        if (confirm.getWindow() != null)
-                            confirm.getWindow().setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 12), Color.TRANSPARENT));
-                        confirm.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(UIHelpers.TEXT3);
-                        confirm.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(UIHelpers.DANGER);
-                    }
-                });
-            }
-            rows.addView(row);
-        }
-        panel.addView(scroll, new LinearLayout.LayoutParams(-1,
-                Math.min(UIHelpers.dp(activity, 420), activity.getResources().getDisplayMetrics().heightPixels / 2)));
-        dialog.setContentView(panel);
-        dialog.show();
-        Window window = dialog.getWindow();
-        if (window != null) {
-            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            window.setLayout(-1, -2); window.setGravity(Gravity.BOTTOM);
-            window.setWindowAnimations(android.R.style.Animation_InputMethod);
-        }
+        new VolumeManagerSheet(activity, book, store, storage, listener).show();
     }
 
     private interface OnChapterSelected {
