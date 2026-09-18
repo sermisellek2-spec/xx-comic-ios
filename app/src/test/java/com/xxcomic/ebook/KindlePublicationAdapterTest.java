@@ -37,6 +37,14 @@ public class KindlePublicationAdapterTest {
     }
 
     @Test
+    public void palmDocBackreferenceMaySpanTextRecordBoundary() {
+        byte[] first = new byte[]{'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd', '!', (byte) 0x80};
+        byte[] second = new byte[]{0x63};
+        byte[] decompressed = KindlePublicationAdapter.decompressPalmDoc(new byte[][]{first, second}, 64);
+        assertEquals("Hello World!Hello ", new String(decompressed, StandardCharsets.UTF_8));
+    }
+
+    @Test
     public void mobiImportUsesDeclaredTextLengthForPaddedPalmDocRecord() throws Exception {
         byte[] compressed = new byte[]{'a', 'b', 'c', (byte) 0x80};
         byte[] mobiData = createMockMobi("带填充的 MOBI", "作者", compressed, 3,

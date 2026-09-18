@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -31,14 +32,26 @@ public final class KindlePublicationAdapter {
     public static class ImageEntry {
         public final int relativeIndex; // 1-based (recindex="1")
         public final byte[] data;
+        public final File file;
         public final String mimeType;
         public final String extension;
+        public final boolean cover;
 
         public ImageEntry(int relativeIndex, byte[] data, String mimeType, String extension) {
+            this(relativeIndex, data, null, mimeType, extension, false);
+        }
+
+        public ImageEntry(int relativeIndex, File file, String mimeType, String extension, boolean cover) {
+            this(relativeIndex, null, file, mimeType, extension, cover);
+        }
+
+        private ImageEntry(int relativeIndex, byte[] data, File file, String mimeType, String extension, boolean cover) {
             this.relativeIndex = relativeIndex;
             this.data = data;
+            this.file = file;
             this.mimeType = mimeType;
             this.extension = extension;
+            this.cover = cover;
         }
     }
 
@@ -171,6 +184,9 @@ public final class KindlePublicationAdapter {
                 maxTextRec = detection.kf8BoundaryRecord - 1;
             }
 
+            List<byte[]> compressedTextRecords = compression == 2 ? new ArrayList<byte[]>() : null;
+            long compressedTextBytes = 0L;
+
             for (int i = 1; i <= maxTextRec; i++) {
                 if (callback != null && callback.isCancelled()) {
                     throw new InterruptedException("用户取消导入");
@@ -181,22 +197,32 @@ public final class KindlePublicationAdapter {
                 int len = (int) (end - start);
                 if (len <= 0) continue;
 
-                int remainingText = declaredTextLength > 0 && declaredTextLength < Integer.MAX_VALUE
-                        ? (int) Math.min(8L * 1024L * 1024L, declaredTextLength - textBaos.size())
-                        : 8 * 1024 * 1024 - textBaos.size();
-                if (remainingText <= 0) break;
-
                 byte[] recData = new byte[len];
                 raf.seek(start);
                 raf.readFully(recData);
 
                 if (compression == 2) {
-                    byte[] decomp = decompressPalmDoc(recData, remainingText);
-                    textBaos.write(decomp);
+                    compressedTextBytes += recData.length;
+                    if (compressedTextBytes > 16L * 1024L * 1024L) {
+                        throw new IOException("电子书压缩正文超出当前解析容量");
+                    }
+                    compressedTextRecords.add(recData);
                 } else {
+                    int remainingText = declaredTextLength > 0 && declaredTextLength < Integer.MAX_VALUE
+                            ? (int) Math.min(8L * 1024L * 1024L, declaredTextLength - textBaos.size())
+                            : 8 * 1024 * 1024 - textBaos.size();
+                    if (remainingText <= 0) break;
                     textBaos.write(recData, 0, Math.min(recData.length, remainingText));
                 }
                 if(textBaos.size()>8*1024*1024)throw new IOException("电子书正文超出当前解析容量");
+            }
+
+            if (compression == 2 && compressedTextRecords != null && !compressedTextRecords.isEmpty()) {
+                int maxTextBytes = declaredTextLength > 0 && declaredTextLength < Integer.MAX_VALUE
+                        ? (int) Math.min(8L * 1024L * 1024L, declaredTextLength)
+                        : 8 * 1024 * 1024;
+                textBaos.write(decompressPalmDoc(
+                        compressedTextRecords.toArray(new byte[compressedTextRecords.size()][]), maxTextBytes));
             }
 
             Charset textCharset = StandardCharsets.UTF_8;
@@ -212,8 +238,11 @@ public final class KindlePublicationAdapter {
             byte[] coverData = null;
             String coverMime = null;
             long imageBytes=0;
+            File imageTempDir = new File(destEpubFile.getParentFile(), destEpubFile.getName() + ".images.tmp");
+            if (!imageTempDir.exists() && !imageTempDir.mkdirs()) throw new IOException("电子书图片临时目录创建失败");
 
-            if (firstImg > 0 && firstImg < numRecords) {
+            try {
+              if (firstImg > 0 && firstImg < numRecords) {
                 for (int recIdx = firstImg; recIdx < numRecords; recIdx++) {
                     if (callback != null && callback.isCancelled()) {
                         throw new InterruptedException("用户取消导入");
@@ -221,7 +250,7 @@ public final class KindlePublicationAdapter {
                     long start = recordOffsets[recIdx];
                     long end = (recIdx + 1 < numRecords) ? recordOffsets[recIdx + 1] : fileLength;
                     imageBytes+=end-start;
-                    if(end-start>8L*1024*1024 || imageBytes>32L*1024*1024)throw new IOException("电子书图片超出当前解析容量");
+                    if(end-start>16L*1024*1024 || imageBytes>512L*1024*1024)throw new IOException("电子书图片超出当前解析容量");
                     int len = (int) (end - start);
                     if (len < 4) continue;
 
@@ -237,19 +266,24 @@ public final class KindlePublicationAdapter {
 
                     String mime = "image/" + (ext.equals("jpg") ? "jpeg" : ext);
                     int relIdx = recIdx - firstImg + 1; // 1-based index
-                    ImageEntry ie = new ImageEntry(relIdx, imgBuf, mime, ext);
+                    File imageFile = new File(imageTempDir, "img_" + relIdx + "." + ext);
+                    try (FileOutputStream imageOut = new FileOutputStream(imageFile)) {
+                        imageOut.write(imgBuf);
+                    }
+                    boolean isCover = recIdx == detection.coverRecordIndex;
+                    ImageEntry ie = new ImageEntry(relIdx, imageFile, mime, ext, isCover);
                     imageMap.put(relIdx, ie);
 
-                    if (recIdx == detection.coverRecordIndex) {
+                    if (isCover) {
                         coverData = imgBuf;
                         coverMime = mime;
                     }
                 }
-            }
+              }
 
             if (coverData == null && !imageMap.isEmpty()) {
                 ImageEntry first = imageMap.values().iterator().next();
-                coverData = first.data;
+                coverData = readFileBytes(first.file);
                 coverMime = first.mimeType;
             }
 
@@ -264,6 +298,9 @@ public final class KindlePublicationAdapter {
             buildDerivedEpub(destEpubFile, title, author, rawHtml, imageMap, isComic, coverData, coverMime, callback);
 
             return new ParseResult(null, destEpubFile, coverData, coverMime, isComic, title, author);
+            } finally {
+                deleteRecursively(imageTempDir);
+            }
         }
     }
 
@@ -273,7 +310,7 @@ public final class KindlePublicationAdapter {
 
     static byte[] decompressPalmDoc(byte[] input, int maxOutputBytes) {
         if (input == null || input.length == 0) return new byte[0];
-        if(input.length>8*1024*1024)throw new IllegalArgumentException("PalmDOC 记录过大");
+        if(input.length>16*1024*1024)throw new IllegalArgumentException("PalmDOC 记录过大");
         if (maxOutputBytes <= 0) return new byte[0];
         maxOutputBytes = Math.min(maxOutputBytes, 8 * 1024 * 1024);
         byte[] outBuf = new byte[Math.max(4096, input.length * 3)];
@@ -328,6 +365,19 @@ public final class KindlePublicationAdapter {
         }
 
         return Arrays.copyOf(outBuf, outPos);
+    }
+
+    static byte[] decompressPalmDoc(byte[][] inputRecords, int maxOutputBytes) {
+        if (inputRecords == null || inputRecords.length == 0) return new byte[0];
+        ByteArrayOutputStream joined = new ByteArrayOutputStream();
+        for (byte[] record : inputRecords) {
+            if (record == null || record.length == 0) continue;
+            if (joined.size() + record.length > 16 * 1024 * 1024) {
+                throw new IllegalArgumentException("PalmDOC 记录过大");
+            }
+            joined.write(record, 0, record.length);
+        }
+        return decompressPalmDoc(joined.toByteArray(), maxOutputBytes);
     }
 
     private static long readUint32(byte[] b, int offset) {
@@ -392,7 +442,8 @@ public final class KindlePublicationAdapter {
             // 3. Write Images
             for (ImageEntry ie : imageMap.values()) {
                 String imgPath = "OEBPS/images/img_" + ie.relativeIndex + "." + ie.extension;
-                writeZipEntry(zos, imgPath, ie.data);
+                if (ie.file != null) writeZipEntry(zos, imgPath, ie.file);
+                else writeZipEntry(zos, imgPath, ie.data);
             }
 
             // 4. Write Chapters / Pages
@@ -487,7 +538,7 @@ public final class KindlePublicationAdapter {
             boolean coverAssigned = false;
             for (ImageEntry ie : imageMap.values()) {
                 String imgId = "img_" + ie.relativeIndex;
-                if (!coverAssigned && coverData != null && Arrays.equals(coverData, ie.data)) {
+                if (!coverAssigned && coverData != null && (ie.cover || (ie.data != null && Arrays.equals(coverData, ie.data)))) {
                     imgId = "cover-image";
                     coverAssigned = true;
                 }
@@ -576,6 +627,35 @@ public final class KindlePublicationAdapter {
         zos.putNextEntry(entry);
         zos.write(data);
         zos.closeEntry();
+    }
+
+    private static void writeZipEntry(ZipOutputStream zos, String path, File file) throws IOException {
+        ZipEntry entry = new ZipEntry(path);
+        zos.putNextEntry(entry);
+        try (InputStream in = new FileInputStream(file)) {
+            byte[] buffer = new byte[65536];
+            int len;
+            while ((len = in.read(buffer)) > 0) zos.write(buffer, 0, len);
+        }
+        zos.closeEntry();
+    }
+
+    private static byte[] readFileBytes(File file) throws IOException {
+        try (FileInputStream in = new FileInputStream(file); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[65536];
+            int len;
+            while ((len = in.read(buffer)) > 0) out.write(buffer, 0, len);
+            return out.toByteArray();
+        }
+    }
+
+    private static void deleteRecursively(File file) {
+        if (file == null || !file.exists()) return;
+        if (file.isDirectory()) {
+            File[] children = file.listFiles();
+            if (children != null) for (File child : children) deleteRecursively(child);
+        }
+        file.delete();
     }
 
     private static long calculateCrc32(byte[] data) {
