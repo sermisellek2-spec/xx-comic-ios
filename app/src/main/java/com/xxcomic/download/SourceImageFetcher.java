@@ -6,6 +6,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 public final class SourceImageFetcher {
+    private static final SourceRequestGate DEFAULT_GATE = new SourceRequestGate(350L, 120000L);
     public interface Check { void check() throws IOException; }
     public interface Decoder { InputStream open(InputStream in) throws IOException; }
     public interface Validator { void validate(File file) throws IOException; }
@@ -26,15 +27,28 @@ public final class SourceImageFetcher {
     }
     /** Page-level restart only: never append an untrusted HTTP entity to an existing partial file. */
     public Result fetch(String url,String referer,File part,Map<String,String> headers,Decoder decoder,Check check,Validator validator) throws IOException {
+        return fetch(null, url, referer, part, headers, decoder, check, validator);
+    }
+
+    /** Same request path with a source identity for per-source pacing and throttle backoff. */
+    public Result fetch(String sourceId, String url,String referer,File part,Map<String,String> headers,
+                        Decoder decoder,Check check,Validator validator) throws IOException {
         HttpURLConnection connection=null; boolean success=false;
         try {
+            check.check();
+            DEFAULT_GATE.before(sourceId);
             check.check();
             connection=(HttpURLConnection)new URL(url).openConnection();
             connection.setConnectTimeout(10000); connection.setReadTimeout(25000); connection.setInstanceFollowRedirects(true);
             applyHeaders(connection,referer); connection.setRequestProperty("Accept-Encoding","identity");
             for(Map.Entry<String,String> header:headers.entrySet()) connection.setRequestProperty(header.getKey(),header.getValue());
             int status=connection.getResponseCode();
-            if(status!=200) throw new HttpFailure(status,retryAfter(connection.getHeaderField("Retry-After")));
+            if(status!=200) {
+                long retryAfter = retryAfter(connection.getHeaderField("Retry-After"));
+                DEFAULT_GATE.onFailure(sourceId, status, retryAfter);
+                throw new HttpFailure(status,retryAfter);
+            }
+            DEFAULT_GATE.onSuccess(sourceId);
             String type=connection.getContentType();
             if(type!=null && (type.toLowerCase(Locale.ROOT).contains("text/") || type.toLowerCase(Locale.ROOT).contains("json"))) throw new IOException("服务器返回了网页，未下载图片");
             long expected=-1; try { expected=Long.parseLong(connection.getHeaderField("Content-Length")); } catch(Exception ignored) { }
