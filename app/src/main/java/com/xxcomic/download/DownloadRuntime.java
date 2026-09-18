@@ -17,15 +17,16 @@ import static com.xxcomic.download.DownloadModels.*;
 
 /** Single chapter worker, independent of Activity lifetime. Lock order: queue, files, database. */
 public final class DownloadRuntime {
+    private static final int MAX_ACTIVE_WORKERS = 2;
     private static DownloadRuntime instance;
     private final Context context;
     public final DownloadStore store;
     public final DownloadCoordinator queue;
     public final LocalLibrary library;
     public final ExecutorService io = Executors.newSingleThreadExecutor();
-    private final ExecutorService worker = Executors.newSingleThreadExecutor();
+    private final ExecutorService worker = Executors.newFixedThreadPool(MAX_ACTIVE_WORKERS);
+    private final Set<String> activeWorkers = new HashSet<>();
     private volatile boolean initialized;
-    private boolean working;
     public static synchronized DownloadRuntime get(Context context) {
         if (instance == null) instance = new DownloadRuntime(context.getApplicationContext());
         return instance;
@@ -83,13 +84,28 @@ public final class DownloadRuntime {
             queue.enqueueFiles(detail.summary.sourceId,detail.summary.comicId,files,selected);
         }
     }
-    public synchronized void kick() {
-        if(working || !initialized) return;
-        working=true;
-        worker.execute(() -> { try {
-            Task task=queue.claim(System.currentTimeMillis(),connected(),wifi(),wifiOnly());
-            if(task!=null)download(task);
-        } finally { synchronized(this) { working=false; } } });
+    public void kick() {
+        if (!initialized) return;
+        while (true) {
+            Task task;
+            synchronized (this) {
+                if (activeWorkers.size() >= MAX_ACTIVE_WORKERS) return;
+                task = queue.claim(System.currentTimeMillis(), connected(), wifi(), wifiOnly(),
+                        MAX_ACTIVE_WORKERS, MAX_ACTIVE_WORKERS);
+                if (task == null) return;
+                activeWorkers.add(task.id);
+            }
+            worker.execute(() -> {
+                try {
+                    download(task);
+                } finally {
+                    synchronized (DownloadRuntime.this) {
+                        activeWorkers.remove(task.id);
+                    }
+                    kick();
+                }
+            });
+        }
     }
     public boolean hasPending() {
         for(Task t:store.list()) if(active(t.state) || t.state==State.QUEUED || t.state==State.WAITING_NETWORK)return true;
@@ -133,7 +149,7 @@ public final class DownloadRuntime {
                         if(!queue.isCurrent(task))throw new InterruptedIOException("任务已停止");
                         if(!target.getParentFile().exists()&&!target.getParentFile().mkdirs())throw new IOException("无法创建下载目录");
                     } }
-                    SourceImageFetcher.Result result=new SourceImageFetcher().fetch(image,adapter.referer(task.url),part,
+                    SourceImageFetcher.Result result=new SourceImageFetcher().fetch(task.sourceId,image,adapter.referer(task.url),part,
                             Collections.emptyMap(),in->adapter.decode(image,in),()->check(task),DownloadRuntime::validateImage);
                     synchronized(queue) {
                         synchronized(library.storage) {
@@ -254,7 +270,7 @@ public final class DownloadRuntime {
             if(url==null || !url.startsWith("http"))return;
             File target=library.storage.getDownloadFile(task.bookId+"/cover.img");if(target.isFile()&&target.length()>0)return;
             part=new File(target.getParentFile(),"cover."+task.generation+".part");
-            new SourceImageFetcher().fetch(url,adapter.config.referer,part,Collections.emptyMap(),in->adapter.decode(url,in),()->check(task),DownloadRuntime::validateImage);
+            new SourceImageFetcher().fetch(task.sourceId,url,adapter.config.referer,part,Collections.emptyMap(),in->adapter.decode(url,in),()->check(task),DownloadRuntime::validateImage);
             synchronized(queue) {synchronized(library.storage){if(queue.isCurrent(task)&&!target.exists())part.renameTo(target);}}
         } catch(Exception ignored) { /* First readable page is the offline fallback cover. */ }
         finally {if(part!=null)part.delete();}

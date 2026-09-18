@@ -88,6 +88,23 @@ public class DownloadCoordinatorTest {
         queue.failed(queue.claim(0,true,true,true),0,"HTTP 429",60000);
         assertEquals("other",queue.claim(10000,true,true,true).sourceId);
     }
+
+    @Test public void boundedClaimsAllowTwoTasksButRejectTheThird() {
+        Memory db = new Memory(); DownloadCoordinator queue = new DownloadCoordinator(db);
+        queue.enqueue("source", "comic", Arrays.asList(chapter("a"), chapter("b"), chapter("c")), Arrays.asList("a", "b", "c"));
+        assertNotNull(queue.claim(0, true, true, true, 2, 2));
+        assertNotNull(queue.claim(0, true, true, true, 2, 2));
+        assertNull(queue.claim(0, true, true, true, 2, 2));
+    }
+
+    @Test public void sourceLimitDoesNotBlockAnotherSource() {
+        Memory db = new Memory(); DownloadCoordinator queue = new DownloadCoordinator(db);
+        queue.enqueue("source", "comic", Arrays.asList(chapter("a"), chapter("b"), chapter("c")), Arrays.asList("a", "b", "c"));
+        queue.enqueue("other", "comic", Arrays.asList(chapter("d")), Arrays.asList("d"));
+        assertNotNull(queue.claim(0, true, true, true, 3, 2));
+        assertNotNull(queue.claim(0, true, true, true, 3, 2));
+        assertEquals("other", queue.claim(0, true, true, true, 3, 2).sourceId);
+    }
     @Test public void deletingAndRecreatingIdentityCannotReviveAnOldWorker() {
         Memory db=new Memory(); DownloadCoordinator queue=new DownloadCoordinator(db);
         queue.enqueue("s","c",Arrays.asList(chapter("a")),Arrays.asList("a"));

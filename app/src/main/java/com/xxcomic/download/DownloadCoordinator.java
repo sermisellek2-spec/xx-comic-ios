@@ -2,6 +2,7 @@ package com.xxcomic.download;
 import com.xxcomic.source.ComicModels;
 import java.util.List;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import static com.xxcomic.download.DownloadModels.*;
 public final class DownloadCoordinator {
@@ -45,10 +46,21 @@ public final class DownloadCoordinator {
         }
     }
     public synchronized Task claim(long now, boolean connected, boolean wifi, boolean wifiOnly) {
+        return claim(now, connected, wifi, wifiOnly, 1, 1);
+    }
+    public synchronized Task claim(long now, boolean connected, boolean wifi, boolean wifiOnly,
+                                   int maxActive, int maxPerSource) {
         List<Task> tasks=repository.list();
-        for(Task t:tasks) if(active(t.state)) return null;
+        int activeCount=0;
+        for(Task t:tasks) if(active(t.state)) activeCount++;
+        if (activeCount >= Math.max(1, maxActive)) return null;
+        Map<String,Integer> sourceCounts=new java.util.HashMap<>();
+        for(Task t:tasks) if(active(t.state))
+            sourceCounts.put(t.sourceId, sourceCounts.containsKey(t.sourceId) ? sourceCounts.get(t.sourceId) + 1 : 1);
         for(Task original:tasks) {
             if(original.state!=State.QUEUED && original.state!=State.WAITING_NETWORK) continue;
+            if (sourceCounts.containsKey(original.sourceId)
+                    && sourceCounts.get(original.sourceId) >= Math.max(1, maxPerSource)) continue;
             Task t=original.copy();
             if(!connected || (wifiOnly && !wifi)) {
                 t.state=State.WAITING_NETWORK; repository.save(t); continue;
@@ -58,6 +70,7 @@ public final class DownloadCoordinator {
         }
         return null;
     }
+
     public synchronized boolean isCurrent(Task lease) {
         Task t=repository.get(lease.id);
         return t!=null && t.generation==lease.generation && active(t.state);
