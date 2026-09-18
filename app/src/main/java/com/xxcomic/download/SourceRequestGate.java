@@ -26,7 +26,11 @@ public final class SourceRequestGate {
     public void before(String sourceId) throws InterruptedIOException {
         if (sourceId == null || sourceId.trim().isEmpty()) return;
         synchronized (states) {
-            State state = states.computeIfAbsent(sourceId, ignored -> new State());
+            State state = states.get(sourceId);
+            if (state == null) {
+                state = new State();
+                states.put(sourceId, state);
+            }
             while (true) {
                 long waitMs = Math.max(state.nextRequestAt, state.cooldownUntil) - now();
                 if (waitMs <= 0L) {
@@ -56,7 +60,11 @@ public final class SourceRequestGate {
     public void onFailure(String sourceId, int status, long retryAfterMs) {
         if (sourceId == null || sourceId.trim().isEmpty() || (status != 429 && status != 503)) return;
         synchronized (states) {
-            State state = states.computeIfAbsent(sourceId, ignored -> new State());
+            State state = states.get(sourceId);
+            if (state == null) {
+                state = new State();
+                states.put(sourceId, state);
+            }
             state.throttledResponses = Math.min(8, state.throttledResponses + 1);
             long exponential = THROTTLE_BASE_MS << Math.min(6, state.throttledResponses - 1);
             long requested = retryAfterMs > 0L ? retryAfterMs : exponential;
