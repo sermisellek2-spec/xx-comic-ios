@@ -34,7 +34,7 @@ public final class SourceRequestGate {
                     return;
                 }
                 try {
-                    states.wait(Math.min(waitMs, 1000L));
+                    states.wait(Math.min(waitMs, 250L));
                 } catch (InterruptedException interrupted) {
                     Thread.currentThread().interrupt();
                     throw new InterruptedIOException("请求等待已取消");
@@ -48,8 +48,7 @@ public final class SourceRequestGate {
         synchronized (states) {
             State state = states.get(sourceId);
             if (state == null) return;
-            state.throttledResponses = 0;
-            state.cooldownUntil = 0L;
+            if (state.cooldownUntil <= now()) state.throttledResponses = 0;
             states.notifyAll();
         }
     }

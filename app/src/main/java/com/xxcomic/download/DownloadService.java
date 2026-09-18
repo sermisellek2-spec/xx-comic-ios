@@ -39,11 +39,14 @@ public final class DownloadService extends Service {
     private final Runnable tick=new Runnable(){public void run(){
         runtime.kick();
         runtime.io.execute(()->{
-            String status="等待网络或重试";boolean active=false,pending=false;
+            String status="等待网络或重试";boolean active=false,pending=false;long cooldown=0L;
             for(DownloadModels.Task task:runtime.store.list()) {
                 pending|=DownloadModels.active(task.state)||task.state==DownloadModels.State.QUEUED||task.state==DownloadModels.State.WAITING_NETWORK;
                 if(DownloadModels.active(task.state)){active=true;status=task.title+" · "+task.donePages+" / "+task.totalPages+" 页";}
+                if(task.state==DownloadModels.State.QUEUED || task.state==DownloadModels.State.WAITING_NETWORK)
+                    cooldown=Math.max(cooldown,SourceImageFetcher.cooldownRemaining(task.sourceId));
             }
+            if(!active && cooldown>0L)status="站源冷却中，约 "+Math.max(1L,(cooldown+999L)/1000L)+" 秒后重试";
             final String message=status;final boolean running=active,waiting=pending;
             handler.post(()->{
                 if(destroyed)return;

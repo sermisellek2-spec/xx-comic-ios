@@ -39,6 +39,13 @@ public class SourceRequestGateTest {
         assertTrue(gate.cooldownRemaining("source") >= 350);
     }
 
+    @Test public void inFlightSuccessDoesNotCancelAConcurrentThrottle() {
+        SourceRequestGate gate = new SourceRequestGate(1, 1000);
+        gate.onFailure("source", 503, 500);
+        gate.onSuccess("source");
+        assertTrue(gate.cooldownRemaining("source") > 0);
+    }
+
     @Test(expected = InterruptedIOException.class)
     public void interruptedWaitStopsPromptly() throws Exception {
         SourceRequestGate gate = new SourceRequestGate(1, 1000);

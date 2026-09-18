@@ -836,6 +836,12 @@ public final class DownloadViews {
     }
 
     public static String state(Task t) {
+        if (t != null && (t.state == State.QUEUED || t.state == State.WAITING_NETWORK)) {
+            long cooldown = SourceImageFetcher.cooldownRemaining(t.sourceId);
+            if (cooldown > 0L) {
+                return "站源冷却中 · " + Math.max(1L, (cooldown + 999L) / 1000L) + " 秒后重试";
+            }
+        }
         switch (t.state) {
             case QUEUED: return "等待下载";
             case RESOLVING: return t.isFileTask?"获取文件":"读取章节";

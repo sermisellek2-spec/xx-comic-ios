@@ -29,6 +29,9 @@ public final class SourceImageFetcher {
     public Result fetch(String url,String referer,File part,Map<String,String> headers,Decoder decoder,Check check,Validator validator) throws IOException {
         return fetch(null, url, referer, part, headers, decoder, check, validator);
     }
+    public static long cooldownRemaining(String sourceId) {
+        return DEFAULT_GATE.cooldownRemaining(sourceId);
+    }
 
     /** Same request path with a source identity for per-source pacing and throttle backoff. */
     public Result fetch(String sourceId, String url,String referer,File part,Map<String,String> headers,
