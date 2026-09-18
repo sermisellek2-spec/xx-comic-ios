@@ -94,11 +94,50 @@ public final class LocalModels {
         }
     }
 
+    /** One independently stored EPUB/MOBI/archive inside a local series. */
+    public static final class Volume implements Serializable {
+        private static final long serialVersionUID = 1L;
+        public final String id;
+        public final String seriesId;
+        public final String fingerprint;
+        public final String title;
+        public final String format;
+        public final String relativePath;
+        public final long totalSize;
+        public final int orderIndex;
+        public final String status;
+        public final long createdAt;
+        public final long updatedAt;
+
+        public Volume(String id, String seriesId, String fingerprint, String title,
+                      String format, String relativePath, long totalSize, int orderIndex,
+                      String status, long createdAt, long updatedAt) {
+            this.id = id != null ? id : "";
+            this.seriesId = seriesId != null ? seriesId : "";
+            this.fingerprint = fingerprint != null ? fingerprint : "";
+            this.title = title != null ? title : "";
+            this.format = format != null ? format : FORMAT_ZIP;
+            this.relativePath = relativePath != null ? relativePath : "";
+            this.totalSize = Math.max(0L, totalSize);
+            this.orderIndex = Math.max(0, orderIndex);
+            this.status = status != null ? status : STATUS_READY;
+            this.createdAt = createdAt;
+            this.updatedAt = updatedAt;
+        }
+
+        public static String stableId(String seriesId, String fingerprint) {
+            String safeSeries = seriesId != null ? seriesId : "";
+            String safeFingerprint = fingerprint != null ? fingerprint : "";
+            return safeSeries + "_vol_" + safeFingerprint;
+        }
+    }
+
     public static final class Chapter implements Serializable {
         private static final long serialVersionUID = 1L;
 
         public final String id;
         public final String bookId;
+        public final String volumeId;
         public final int orderIndex;
         public final String title;
         public final String entryPath;
@@ -106,8 +145,14 @@ public final class LocalModels {
 
         public Chapter(String id, String bookId, int orderIndex, String title,
                        String entryPath, int pageCount) {
+            this(id, bookId, null, orderIndex, title, entryPath, pageCount);
+        }
+
+        public Chapter(String id, String bookId, String volumeId, int orderIndex, String title,
+                       String entryPath, int pageCount) {
             this.id = id;
             this.bookId = bookId;
+            this.volumeId = volumeId;
             this.orderIndex = orderIndex;
             this.title = title != null ? title : "";
             this.entryPath = entryPath != null ? entryPath : "";
@@ -120,6 +165,7 @@ public final class LocalModels {
 
         public final String id;
         public final String bookId;
+        public final String volumeId;
         public final String chapterId;
         public final int orderIndex;
         public final String entryPath;
@@ -131,8 +177,15 @@ public final class LocalModels {
         public Page(String id, String bookId, String chapterId, int orderIndex,
                     String entryPath, int width, int height, String transformation,
                     String mimeType) {
+            this(id, bookId, null, chapterId, orderIndex, entryPath, width, height, transformation, mimeType);
+        }
+
+        public Page(String id, String bookId, String volumeId, String chapterId, int orderIndex,
+                    String entryPath, int width, int height, String transformation,
+                    String mimeType) {
             this.id = id;
             this.bookId = bookId;
+            this.volumeId = volumeId;
             this.chapterId = chapterId;
             this.orderIndex = orderIndex;
             this.entryPath = entryPath != null ? entryPath : "";
@@ -159,5 +212,6 @@ public final class LocalModels {
     public interface ImportProgressCallback {
         void onProgress(long currentBytes, long totalBytes, String message);
         boolean isCancelled();
+        default void onBookIdentified(String bookId) throws java.io.IOException { }
     }
 }

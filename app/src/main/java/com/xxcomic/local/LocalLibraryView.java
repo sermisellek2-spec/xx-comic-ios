@@ -105,6 +105,7 @@ public class LocalLibraryView {
         }
 
         List<LocalModels.Book> allBooks = store.listBooks();
+        java.util.Map<String, Integer> volumeCounts = store.getReadyVolumeCounts();
         List<LocalModels.Book> books = new ArrayList<>();
         if (hiddenBookIds != null && !hiddenBookIds.isEmpty()) {
             for (LocalModels.Book b : allBooks) {
@@ -215,7 +216,9 @@ public class LocalLibraryView {
                 for (int col = 0; col < colCount; col++) {
                     int index = i + col;
                     if (index < books.size()) {
-                        row.addView(buildBookCard(activity, books.get(index), listener), UIHelpers.weight(1));
+                        LocalModels.Book book = books.get(index);
+                        Integer count = volumeCounts.get(book.id);
+                        row.addView(buildBookCard(activity, book, count == null ? 0 : count, listener), UIHelpers.weight(1));
                     } else {
                         row.addView(new View(activity), UIHelpers.weight(1));
                     }
@@ -285,7 +288,7 @@ public class LocalLibraryView {
         return strip;
     }
 
-    private static View buildBookCard(Activity activity, LocalModels.Book book, Listener listener) {
+    private static View buildBookCard(Activity activity, LocalModels.Book book, int volumeCount, Listener listener) {
         LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
 
@@ -320,6 +323,8 @@ public class LocalLibraryView {
         title.setEllipsize(TextUtils.TruncateAt.END);
         title.setMinHeight(UIHelpers.dp(activity, 34));
         card.addView(title, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 4)));
+        if (volumeCount > 1)
+            card.addView(UIHelpers.text(activity, volumeCount + " 卷 · 可阅读", 10, UIHelpers.TEXT3, Typeface.NORMAL));
 
         card.setOnClickListener(v -> {
             if (activeLocalDeleteOverlay != null) {

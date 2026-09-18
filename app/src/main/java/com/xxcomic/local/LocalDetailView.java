@@ -41,6 +41,7 @@ public class LocalDetailView {
         void onRead(LocalModels.Book book, ComicModels.ComicDetail detail, int chapterIndex);
         void onBookRenamed(LocalModels.Book updatedBook);
         void onBookDeleted(LocalModels.Book deletedBook);
+        default void onAddVolumes(LocalModels.Book book) {}
         default void showToast(String message) {}
     }
 
@@ -107,6 +108,8 @@ public class LocalDetailView {
         // Metadata: only type + file size
         String typeLabel = LocalModels.isDownload(book) ? "离线下载" : "本地导入";
         String metaText = typeLabel + " · " + formatBytes(book.totalSize);
+        List<LocalModels.Volume> volumes = store.getVolumes(book.id);
+        if (volumes.size() > 1) metaText += " · " + volumes.size() + " 卷";
         TextView metaView = UIHelpers.text(activity, metaText, 12, UIHelpers.TEXT2, Typeface.NORMAL);
         body.addView(metaView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 8)));
 
@@ -119,6 +122,18 @@ public class LocalDetailView {
             if (listener != null) listener.onRead(book, detail, selectedChapter);
         });
         body.addView(chapterEntryView, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 12)));
+        if (LocalModels.SOURCE_TYPE_IMPORT.equals(book.sourceType)) {
+            TextView add = UIHelpers.text(activity, "+ 添加分卷", 13, UIHelpers.ACCENT, Typeface.NORMAL);
+            add.setPadding(0, UIHelpers.dp(activity, 14), 0, UIHelpers.dp(activity, 14));
+            add.setOnClickListener(v -> { if (listener != null) listener.onAddVolumes(book); });
+            body.addView(add);
+        }
+        if (volumes.size() > 1) {
+            TextView manage = UIHelpers.text(activity, "管理分卷  ›", 13, UIHelpers.ACCENT, Typeface.NORMAL);
+            manage.setPadding(0, UIHelpers.dp(activity, 14), 0, UIHelpers.dp(activity, 14));
+            manage.setOnClickListener(v -> showVolumeManager(activity, book, store, storageManager, listener));
+            body.addView(manage);
+        }
 
         // 4. Fixed Bottom Action Bar (Matches online detail style & typography)
         LinearLayout actions = new LinearLayout(activity);
@@ -243,6 +258,87 @@ public class LocalDetailView {
         dialog.show();
     }
 
+    private static final java.util.concurrent.ExecutorService volumeIo = java.util.concurrent.Executors.newSingleThreadExecutor();
+
+    private static void showVolumeManager(Activity activity, LocalModels.Book book, LocalLibraryStore store,
+                                           LocalStorageManager storage, Listener listener) {
+        Dialog dialog = new Dialog(activity);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        LinearLayout panel = new LinearLayout(activity);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 20));
+        panel.setBackground(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 16), Color.TRANSPARENT));
+        panel.addView(UIHelpers.text(activity, "管理分卷", 17, UIHelpers.TEXT, Typeface.BOLD));
+        panel.addView(UIHelpers.text(activity, "调整顺序不改变卷内章节；移除只清理 App 副本，原文件保留。", 12, UIHelpers.TEXT3, Typeface.NORMAL));
+        ScrollView scroll = new ScrollView(activity);
+        LinearLayout rows = new LinearLayout(activity);
+        rows.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(rows);
+        for (LocalModels.Volume volume : store.getVolumes(book.id)) {
+            LinearLayout row = new LinearLayout(activity);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            TextView title = UIHelpers.text(activity, volume.title, 13, UIHelpers.TEXT, Typeface.NORMAL);
+            title.setMaxLines(2);
+            row.addView(title, UIHelpers.weight(1));
+            for (int direction : new int[]{-1, 1, 0}) {
+                TextView action = UIHelpers.text(activity, direction == 0 ? "移除" : direction < 0 ? "↑" : "↓", 14,
+                        direction == 0 ? UIHelpers.DANGER : UIHelpers.ACCENT, Typeface.NORMAL);
+                action.setGravity(Gravity.CENTER);
+                action.setContentDescription((direction == 0 ? "移除 " : direction < 0 ? "上移 " : "下移 ") + volume.title);
+                row.addView(action, new LinearLayout.LayoutParams(UIHelpers.dp(activity, 46), UIHelpers.dp(activity, 48)));
+                action.setOnClickListener(v -> {
+                    Runnable change = () -> {
+                        dialog.dismiss();
+                        volumeIo.execute(() -> {
+                            boolean ok = true;
+                            try {
+                                if (direction == 0) ok = store.deleteVolume(book.id, volume.id, storage);
+                                else store.moveVolume(book.id, volume.id, direction);
+                            } catch (Exception e) { ok = false; }
+                            boolean done = ok;
+                            activity.runOnUiThread(() -> {
+                                if (activity.isDestroyed() || activity.isFinishing()) return;
+                                if (!done) { Toast.makeText(activity, "操作未完成，请重试", Toast.LENGTH_SHORT).show(); return; }
+                                LocalModels.Book latest = store.getBook(book.id);
+                                if (listener != null) {
+                                    if (latest == null) listener.onBookDeleted(book);
+                                    else listener.onBookRenamed(latest);
+                                }
+                            });
+                        });
+                    };
+                    if (direction != 0) change.run();
+                    else {
+                        LinearLayout message = new LinearLayout(activity);
+                        message.setOrientation(LinearLayout.VERTICAL);
+                        message.setPadding(UIHelpers.dp(activity, 20), UIHelpers.dp(activity, 16), UIHelpers.dp(activity, 20), 0);
+                        message.addView(UIHelpers.text(activity, "移除这一卷？", 17, UIHelpers.TEXT, Typeface.BOLD));
+                        message.addView(UIHelpers.text(activity, volume.title + "\n其他分卷和手机中的原文件不受影响。",
+                                13, UIHelpers.TEXT2, Typeface.NORMAL), UIHelpers.marginTop(-1, UIHelpers.dp(activity, 8)));
+                        AlertDialog confirm = new AlertDialog.Builder(activity).setView(message)
+                                .setNegativeButton("取消", null).setPositiveButton("移除", (d, which) -> change.run()).create();
+                        confirm.show();
+                        if (confirm.getWindow() != null)
+                            confirm.getWindow().setBackgroundDrawable(UIHelpers.round(UIHelpers.CARD, UIHelpers.dp(activity, 12), Color.TRANSPARENT));
+                        confirm.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(UIHelpers.TEXT3);
+                        confirm.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(UIHelpers.DANGER);
+                    }
+                });
+            }
+            rows.addView(row);
+        }
+        panel.addView(scroll, new LinearLayout.LayoutParams(-1,
+                Math.min(UIHelpers.dp(activity, 420), activity.getResources().getDisplayMetrics().heightPixels / 2)));
+        dialog.setContentView(panel);
+        dialog.show();
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(-1, -2); window.setGravity(Gravity.BOTTOM);
+            window.setWindowAnimations(android.R.style.Animation_InputMethod);
+        }
+    }
+
     private interface OnChapterSelected {
         void onSelect(int chapterIndex);
     }
@@ -337,6 +433,14 @@ public class LocalDetailView {
 
         close.setOnClickListener(v -> popup.dismiss());
 
+        java.util.Map<String, LocalModels.Volume> chapterVolumes = new java.util.HashMap<>();
+        LocalLibraryStore localStore = LocalLibrary.get(activity).store;
+        java.util.Map<String, LocalModels.Volume> volumesById = new java.util.HashMap<>();
+        for (LocalModels.Volume volume : localStore.getVolumes(book.id)) volumesById.put(volume.id, volume);
+        if (volumesById.size() > 1) for (LocalModels.Chapter chapter : localStore.getChapters(book.id)) {
+            LocalModels.Volume volume = volumesById.get(chapter.volumeId);
+            if (volume != null) chapterVolumes.put(chapter.id, volume);
+        }
         final int[] renderGeneration = {0};
         Runnable render = () -> {
             int generation = ++renderGeneration[0];
@@ -348,7 +452,7 @@ public class LocalDetailView {
             if (desc[0]) {
                 Collections.reverse(orderIndexes);
             }
-            fillBatch(activity, list, popup, detail, orderIndexes, 0, generation, renderGeneration, targetChapter, hasRead, onSelect);
+            fillBatch(activity, list, popup, detail, orderIndexes, 0, generation, renderGeneration, targetChapter, hasRead, onSelect, chapterVolumes);
         };
 
         order.setOnClickListener(v -> {
@@ -364,12 +468,20 @@ public class LocalDetailView {
     private static void fillBatch(Activity activity, LinearLayout list, PopupWindow popup,
                                   ComicModels.ComicDetail detail, List<Integer> orderIndexes,
                                   int start, int generation, int[] renderGeneration,
-                                  int targetChapter, boolean hasRead, OnChapterSelected onSelect) {
+                                  int targetChapter, boolean hasRead, OnChapterSelected onSelect,
+                                  java.util.Map<String, LocalModels.Volume> chapterVolumes) {
         if (generation != renderGeneration[0] || !popup.isShowing()) return;
         int endIndex = Math.min(start + CHAPTER_DRAWER_BATCH_SIZE, orderIndexes.size());
         for (int i = start; i < endIndex; i++) {
             int chapterIndex = orderIndexes.get(i);
             ComicModels.Chapter ch = detail.chapters.get(chapterIndex);
+            LocalModels.Volume volume = chapterVolumes.get(ch.chapterId);
+            LocalModels.Volume previous = i == 0 ? null : chapterVolumes.get(detail.chapters.get(orderIndexes.get(i - 1)).chapterId);
+            if (volume != null && (previous == null || !previous.id.equals(volume.id))) {
+                TextView heading = UIHelpers.text(activity, volume.title, 12, UIHelpers.ACCENT, Typeface.BOLD);
+                heading.setPadding(UIHelpers.dp(activity, 4), UIHelpers.dp(activity, 12), 0, UIHelpers.dp(activity, 6));
+                list.addView(heading);
+            }
             boolean isCurrent = hasRead && (chapterIndex == targetChapter);
 
             LinearLayout row = new LinearLayout(activity);
@@ -409,7 +521,7 @@ public class LocalDetailView {
 
         if (endIndex < orderIndexes.size() && popup.isShowing()) {
             list.postDelayed(() -> fillBatch(activity, list, popup, detail, orderIndexes, endIndex,
-                    generation, renderGeneration, targetChapter, hasRead, onSelect), 16);
+                    generation, renderGeneration, targetChapter, hasRead, onSelect, chapterVolumes), 16);
         }
     }
 

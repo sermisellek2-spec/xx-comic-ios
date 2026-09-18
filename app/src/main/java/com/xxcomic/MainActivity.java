@@ -99,6 +99,7 @@ import com.xxcomic.local.LocalLibraryStore;
 import com.xxcomic.local.LocalLibraryView;
 import com.xxcomic.local.BatchImportModels;
 import com.xxcomic.local.BatchImportPlanner;
+import com.xxcomic.local.BatchImportSession;
 import com.xxcomic.download.DownloadRuntime;
 import com.xxcomic.download.DownloadViews;
 import com.xxcomic.download.DownloadModels;
@@ -361,6 +362,8 @@ public class MainActivity extends Activity {
     private ColorMatrixColorFilter readerEinkFilter;
 
     private static final int REQUEST_CODE_IMPORT_ARCHIVE = 1001;
+    private static final int REQUEST_CODE_APPEND_VOLUMES = 1003;
+    private String appendVolumeBookId;
     private static final int REQUEST_CODE_IMPORT_FOLDER = 1002;
 
     private static LocalStorageManager localStorageManager;
@@ -390,6 +393,9 @@ public class MainActivity extends Activity {
         java.lang.ref.WeakReference<TextView> messageViewRef;
         java.lang.ref.WeakReference<TextView> bannerMessageViewRef;
         long lastProgressUpdate;
+        BatchImportSession session;
+        volatile boolean persistenceFailed;
+        volatile boolean userCancelled;
 
         ActiveImportTask(String title, boolean isFolder) {
             this.title = title;
@@ -397,6 +403,9 @@ public class MainActivity extends Activity {
         }
     }
     private ActiveImportTask currentImportTask = null;
+    private boolean localImportScanning;
+    private boolean batchShelfRefreshPending;
+    private BatchImportSession savedImportSession;
     private boolean localLibraryReady;
     private Runnable offlinePageBack;
     private String readerLocalBookId = "";
@@ -416,10 +425,15 @@ public class MainActivity extends Activity {
                     android.util.Log.w("MainActivity", "Local library startup recovery failed", e);
                 }
                 final String failure = error;
+                BatchImportSession recovered = null;
+                try { recovered = BatchImportSession.load(batchSessionFile()); }
+                catch (IOException e) { android.util.Log.w("MainActivity", "Cannot read saved import session", e); }
+                final BatchImportSession restored = recovered;
                 main.post(() -> {
                     if (activityDestroyed || isFinishing()) return;
                     localLibraryReady = failure == null;
                     localLibraryRecoveryError = failure;
+                    savedImportSession = restored;
                     refreshLocalBookshelf();
                     if (failure == null) {
                         DownloadRuntime runtime = DownloadRuntime.get(this);
@@ -591,6 +605,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) appendVolumeBookId = savedInstanceState.getString("appendVolumeBookId");
         applyThemeAndSystemBars();
         root = new FrameLayout(this);
         // The pager opts into RTL for left-hand swipes; keep the app's existing layout direction.
@@ -679,8 +694,12 @@ public class MainActivity extends Activity {
         }
         releaseReaderViews();
         dismissTransientHint();
-        if (mh18BrowserSession != null) mh18BrowserSession.shutdown();
-        if (jmcomicBrowserSession != null) jmcomicBrowserSession.shutdown();
+        if (mh18BrowserSession != null) {
+            mh18BrowserSession.shutdown();
+        }
+        if (jmcomicBrowserSession != null) {
+            jmcomicBrowserSession.shutdown();
+        }
         for (Runnable r : new ArrayList<>(pendingLocalDeleteRunnables.values())) {
             main.removeCallbacks(r);
             r.run();
@@ -732,7 +751,8 @@ public class MainActivity extends Activity {
                 pendingUpdateApk = null;
                 showInfo("无法安装更新", "需要允许 XX Comic 安装未知应用。");
             }
-        } else if (requestCode == REQUEST_CODE_IMPORT_ARCHIVE && resultCode == RESULT_OK && data != null) {
+        } else if ((requestCode == REQUEST_CODE_IMPORT_ARCHIVE || requestCode == REQUEST_CODE_APPEND_VOLUMES)
+                && resultCode == RESULT_OK && data != null) {
             List<Uri> uris = new ArrayList<>();
             if (data.getClipData() != null) {
                 for (int i = 0; i < data.getClipData().getItemCount(); i++) {
@@ -743,8 +763,11 @@ public class MainActivity extends Activity {
                 uris.add(data.getData());
             }
             if (!uris.isEmpty()) {
-                handleImportArchiveUris(uris);
+                if (requestCode == REQUEST_CODE_APPEND_VOLUMES && TextUtils.isEmpty(appendVolumeBookId)) {
+                    showRemErrorToast("请重新进入漫画详情添加分卷");
+                } else handleImportArchiveUris(uris, requestCode == REQUEST_CODE_APPEND_VOLUMES ? appendVolumeBookId : null);
             }
+            appendVolumeBookId = null;
         } else if (requestCode == REQUEST_CODE_IMPORT_FOLDER && resultCode == RESULT_OK && data != null && data.getData() != null) {
             handleImportFolderUri(data.getData());
         }
@@ -801,6 +824,7 @@ public class MainActivity extends Activity {
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(content)
                 .setNegativeButton("取消", (d, which) -> {
+                    task.userCancelled = true;
                     task.cancelled.set(true);
                     task.currentMessage = "正在取消...";
                     messageView.setText("正在取消...");
@@ -890,6 +914,7 @@ public class MainActivity extends Activity {
         cancelBtn.setLayoutParams(cancelParams);
         cancelBtn.setBackground(UIHelpers.round(UIHelpers.SURFACE, UIHelpers.dp(this, 6), UIHelpers.BORDER));
         cancelBtn.setOnClickListener(v -> {
+            task.userCancelled = true;
             task.cancelled.set(true);
             task.currentMessage = "正在取消...";
             msgView.setText("正在取消...");
@@ -911,6 +936,8 @@ public class MainActivity extends Activity {
         final String chapterTitle;
         final boolean matchedFormat;
         final int selectionIndex;
+        String seriesTitle;
+        java.math.BigDecimal volumeOrder;
 
         PendingImportItem(Uri uri, String displayName, String format, String comicTitle, String chapterTitle,
                           boolean matchedFormat, int selectionIndex) {
@@ -925,17 +952,32 @@ public class MainActivity extends Activity {
     }
 
     private static final class BatchImportOutcome {
+        int skippedCount;
         int successCount;
         final List<String> failedItems = new ArrayList<>();
         final List<String> failedReasons = new ArrayList<>();
     }
 
-    private void handleImportArchiveUris(List<Uri> uris) {
+    private void handleImportArchiveUris(List<Uri> uris, String targetBookId) {
         if (uris == null || uris.isEmpty()) return;
         if (!canStartLocalImport()) return;
+        localImportScanning = true;
+        showRemSuccessToast("正在读取文件信息，可继续浏览");
+        localLibraryIo.submit(() -> {
+            try { scanImportArchiveUris(uris, targetBookId); }
+            catch (Exception error) {
+                main.post(() -> {
+                    localImportScanning = false;
+                    if (!activityDestroyed && !isFinishing()) showRemErrorToast("读取文件信息失败，请重新选择");
+                });
+            }
+        });
+    }
 
+    private void scanImportArchiveUris(List<Uri> uris, String targetBookId) {
         List<PendingImportItem> pendingList = new ArrayList<>();
         for (int i = 0; i < uris.size(); i++) {
+            if (activityDestroyed || Thread.currentThread().isInterrupted()) return;
             Uri uri = uris.get(i);
             try {
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -976,11 +1018,185 @@ public class MainActivity extends Activity {
             if (dot > 0) {
                 comicTitle = displayName.substring(0, dot).trim();
             }
-            pendingList.add(new PendingImportItem(uri, displayName, fmt, comicTitle, "全本", false, i));
+            PendingImportItem item = new PendingImportItem(uri, displayName, fmt, comicTitle, "全本", false, i);
+            // Metadata is optional: providers without a seekable descriptor fall back to filenames,
+            // without copying the entire file just to show the confirmation sheet.
+            if ("epub".equals(fmt) || LocalModels.isKindleFormat(fmt)) {
+                android.os.ParcelFileDescriptor[] descriptor = new android.os.ParcelFileDescriptor[1];
+                try {
+                    File file = com.xxcomic.local.UriUtils.resolveFileOrProcFd(this, uri, descriptor);
+                    if (file != null) {
+                        com.xxcomic.ebook.QuickPublicationInfo info = com.xxcomic.ebook.QuickPublicationInfo.read(file, fmt);
+                        item.seriesTitle = info.seriesTitle;
+                        if (!TextUtils.isEmpty(info.volumeNumber)) {
+                            try { item.volumeOrder = new java.math.BigDecimal(info.volumeNumber); }
+                            catch (NumberFormatException ignored) { }
+                        }
+                    }
+                } catch (Exception ignored) {
+                    // The importer reports structural/DRM errors per file; scanning never blocks the batch.
+                } finally {
+                    if (descriptor[0] != null) try { descriptor[0].close(); } catch (IOException ignored) { }
+                }
+            }
+            pendingList.add(item);
         }
 
         final List<PendingImportItem> orderedItems = pendingList;
         final List<BatchImportModels.ImportGroup> plannedGroups = buildImportGroups(orderedItems);
+        main.post(() -> {
+            localImportScanning = false;
+            if (activityDestroyed || isFinishing()) return;
+            if (targetBookId != null) {
+                LocalModels.Book target = getLocalLibraryStore().getBook(targetBookId);
+                if (target == null || !LocalModels.STATUS_READY.equals(target.status)) {
+                    showRemErrorToast("原漫画已移除，请重新选择");
+                    return;
+                }
+                List<BatchImportModels.FileCandidate> files = new ArrayList<>();
+                for (BatchImportModels.ImportGroup group : plannedGroups) files.addAll(group.volumes);
+                List<BatchImportModels.ImportGroup> appendGroups = Collections.singletonList(
+                        new BatchImportModels.ImportGroup("append:" + targetBookId, target.getDisplayTitle(), false,
+                                BatchImportPlanner.orderVolumes(files)));
+                showRemDialog(R.drawable.rem_empty, "添加分卷", "将 " + files.size() + " 个文件加入《"
+                        + target.getDisplayTitle() + "》。已有内容保留，重复文件跳过；可在管理分卷中调整顺序。", "开始添加", () -> {
+                    if (canStartLocalImport()) startBatchImport(orderedItems, appendGroups, null, targetBookId);
+                }, "取消", null);
+            } else if (orderedItems.size() > 1) showBatchImportConfirmation(orderedItems, plannedGroups);
+            else startBatchImport(orderedItems, plannedGroups);
+        });
+    }
+
+    private void showBatchImportConfirmation(List<PendingImportItem> items, List<BatchImportModels.ImportGroup> groups) {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.addView(UIHelpers.text(this, "按书内系列信息和文件名建议分组，请确认。关闭合并可分别导入；不会合并已有的同名漫画。",
+                12, UIHelpers.TEXT2, Typeface.NORMAL));
+        android.widget.CheckBox combineAll = new android.widget.CheckBox(this);
+        combineAll.setText("这些文件都是同一部漫画，合并为一本");
+        combineAll.setTextColor(UIHelpers.TEXT);
+        combineAll.setButtonTintList(android.content.res.ColorStateList.valueOf(UIHelpers.ACCENT));
+        content.addView(combineAll);
+        EditText combinedTitle = new EditText(this);
+        combinedTitle.setSingleLine(true);
+        combinedTitle.setTextColor(UIHelpers.TEXT);
+        combinedTitle.setHintTextColor(UIHelpers.TEXT3);
+        combinedTitle.setHint("合集名称");
+        combinedTitle.setText(groups.isEmpty() ? "" : groups.get(0).title);
+        combinedTitle.setVisibility(View.GONE);
+        content.addView(combinedTitle);
+        combineAll.setOnCheckedChangeListener((button, checked) -> combinedTitle.setVisibility(checked ? View.VISIBLE : View.GONE));
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout rows = new LinearLayout(this);
+        rows.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(rows);
+        List<android.widget.CheckBox> choices = new ArrayList<>();
+        for (BatchImportModels.ImportGroup group : groups) {
+            android.widget.CheckBox choice = new android.widget.CheckBox(this);
+            choice.setText(group.title + " · " + group.volumes.size() + " 个文件");
+            choice.setTextColor(UIHelpers.TEXT);
+            choice.setButtonTintList(android.content.res.ColorStateList.valueOf(UIHelpers.ACCENT));
+            choice.setChecked(group.volumes.size() > 1);
+            choice.setEnabled(group.volumes.size() > 1);
+            choices.add(choice);
+            rows.addView(choice);
+            TextView files = UIHelpers.text(this, "", 11, UIHelpers.TEXT3, Typeface.NORMAL);
+            StringBuilder names = new StringBuilder();
+            for (int i = 0; i < Math.min(group.volumes.size(), 4); i++) {
+                if (i > 0) names.append("\n");
+                names.append(group.volumes.get(i).fileName);
+            }
+            if (group.volumes.size() > 4) names.append("\n…共 ").append(group.volumes.size()).append(" 个文件");
+            files.setText(names.toString());
+            files.setOnClickListener(v -> {
+                if (Boolean.TRUE.equals(files.getTag())) { files.setText(names.toString()); files.setTag(false); }
+                else {
+                    StringBuilder full = new StringBuilder();
+                    for (BatchImportModels.FileCandidate file : group.volumes) {
+                        if (full.length() > 0) full.append("\n");
+                        full.append(file.fileName);
+                    }
+                    files.setText(full.toString()); files.setTag(true);
+                }
+            });
+            rows.addView(files);
+        }
+        content.addView(scroll, new LinearLayout.LayoutParams(-1,
+                Math.min(UIHelpers.dp(this, 350), getResources().getDisplayMetrics().heightPixels / 2)));
+        TextView start = UIHelpers.text(this, "确认并在后台导入", 14, UIHelpers.ON_ACCENT, Typeface.BOLD);
+        start.setGravity(Gravity.CENTER);
+        start.setBackground(UIHelpers.round(UIHelpers.ACCENT, UIHelpers.dp(this, 10), Color.TRANSPARENT));
+        content.addView(start, new LinearLayout.LayoutParams(-1, UIHelpers.dp(this, 46)));
+        PopupWindow popup = showSettingsSheet("整理 " + items.size() + " 个文件", content);
+        start.setOnClickListener(v -> {
+            if (!canStartLocalImport()) return;
+            List<BatchImportModels.ImportGroup> confirmed = new ArrayList<>();
+            if (combineAll.isChecked()) {
+                String title = combinedTitle.getText().toString().trim();
+                if (title.isEmpty()) { combinedTitle.setError("请填写合集名称"); return; }
+                List<BatchImportModels.FileCandidate> files = new ArrayList<>();
+                for (BatchImportModels.ImportGroup group : groups) files.addAll(group.volumes);
+                confirmed.add(new BatchImportModels.ImportGroup("confirmed", title, false, BatchImportPlanner.orderVolumes(files)));
+            } else {
+            for (int i = 0; i < groups.size(); i++) {
+                BatchImportModels.ImportGroup group = groups.get(i);
+                if (choices.get(i).isChecked()) confirmed.add(group);
+                else for (BatchImportModels.FileCandidate file : group.volumes)
+                    confirmed.add(new BatchImportModels.ImportGroup(group.key + ":" + file.selectionIndex,
+                            stripBatchExtension(file.fileName), false, Collections.singletonList(file)));
+            }
+            }
+            popup.dismiss();
+            startBatchImport(items, confirmed);
+        });
+    }
+
+    private void startBatchImport(List<PendingImportItem> orderedItems, List<BatchImportModels.ImportGroup> plannedGroups) {
+        startBatchImport(orderedItems, plannedGroups, null);
+    }
+
+    private File batchSessionFile() {
+        return new File(getLocalStorageManager().getLibraryRoot(), "batch-import.json");
+    }
+
+    private void resumeBatchImport() {
+        if (!canStartLocalImport() || savedImportSession == null) return;
+        BatchImportSession session = savedImportSession;
+        localImportScanning = true;
+        localLibraryIo.submit(() -> {
+            try {
+                session.retryFailed();
+                List<PendingImportItem> items = new ArrayList<>();
+                List<BatchImportModels.ImportGroup> groups = new ArrayList<>();
+                for (BatchImportSession.Group group : session.pendingGroups()) {
+                    List<BatchImportModels.FileCandidate> candidates = new ArrayList<>();
+                    for (BatchImportSession.Item item : group.items) {
+                        if (!"pending".equals(item.state) && !"running".equals(item.state)) continue;
+                        items.add(new PendingImportItem(Uri.parse(item.uri), item.name, item.format, group.title,
+                                stripBatchExtension(item.name), false, item.selectionIndex));
+                        candidates.add(new BatchImportModels.FileCandidate(null, null, group.title, item.name,
+                                item.uri, null, item.format, "", item.selectionIndex));
+                    }
+                    groups.add(new BatchImportModels.ImportGroup(group.key, group.title, false, candidates));
+                }
+                main.post(() -> {
+                    localImportScanning = false;
+                    if (!activityDestroyed && !isFinishing() && !items.isEmpty()) startBatchImport(items, groups, session);
+                });
+            } catch (IOException e) {
+                main.post(() -> { localImportScanning = false; if (!activityDestroyed) showRemErrorToast("无法恢复导入记录，请重试"); });
+            }
+        });
+    }
+
+    private void startBatchImport(List<PendingImportItem> orderedItems, List<BatchImportModels.ImportGroup> plannedGroups,
+                                  BatchImportSession resumed) {
+        startBatchImport(orderedItems, plannedGroups, resumed, null);
+    }
+
+    private void startBatchImport(List<PendingImportItem> orderedItems, List<BatchImportModels.ImportGroup> plannedGroups,
+                                  BatchImportSession resumed, String appendToBookId) {
+        if (resumed != null && resumed.cancelled) return;
         final Map<Integer, PendingImportItem> itemsBySelection = new HashMap<>();
         for (PendingImportItem item : orderedItems) itemsBySelection.put(item.selectionIndex, item);
 
@@ -1000,6 +1216,28 @@ public class MainActivity extends Activity {
         refreshLocalBookshelf();
 
         localLibraryIo.submit(() -> {
+            try {
+                if (resumed == null) {
+                    List<BatchImportSession.Group> groups = new ArrayList<>();
+                    for (BatchImportModels.ImportGroup group : plannedGroups) {
+                        List<BatchImportSession.Item> files = new ArrayList<>();
+                        for (BatchImportModels.FileCandidate candidate : group.volumes) {
+                            PendingImportItem item = itemsBySelection.get(candidate.selectionIndex);
+                            files.add(new BatchImportSession.Item(item.uri.toString(), item.displayName, item.format, item.selectionIndex));
+                        }
+                        groups.add(new BatchImportSession.Group(group.key, group.title, appendToBookId, files, appendToBookId != null));
+                    }
+                    task.session = BatchImportSession.create(batchSessionFile(), groups);
+                } else task.session = resumed;
+                main.post(() -> savedImportSession = task.session);
+            } catch (IOException e) {
+                main.post(() -> {
+                    if (currentImportTask == task) currentImportTask = null;
+                    if (task.dialog != null) task.dialog.dismiss();
+                    if (!activityDestroyed) { refreshLocalBookshelf(); showRemErrorToast("请先继续或取消上次导入任务；导入记录不可用时请保留日志"); }
+                });
+                return;
+            }
             java.util.concurrent.atomic.AtomicInteger completed = new java.util.concurrent.atomic.AtomicInteger();
             List<Future<BatchImportOutcome>> futures = new ArrayList<>();
             for (BatchImportModels.ImportGroup group : plannedGroups) {
@@ -1007,12 +1245,14 @@ public class MainActivity extends Activity {
             }
 
             int successCount = 0;
+            int skippedCount = 0;
             List<String> failedItems = new ArrayList<>();
             List<String> failedReasons = new ArrayList<>();
             for (Future<BatchImportOutcome> future : futures) {
                 try {
                     BatchImportOutcome outcome = future.get();
                     successCount += outcome.successCount;
+                    skippedCount += outcome.skippedCount;
                     failedItems.addAll(outcome.failedItems);
                     failedReasons.addAll(outcome.failedReasons);
                 } catch (Exception e) {
@@ -1022,9 +1262,17 @@ public class MainActivity extends Activity {
             }
 
             final int finalSuccess = successCount;
+            final int finalSkipped = skippedCount;
             final boolean wasCancelled = task.cancelled.get();
             final List<String> finalFailedItems = new ArrayList<>(failedItems);
             final List<String> finalFailedReasons = new ArrayList<>(failedReasons);
+            if (task.userCancelled && !task.persistenceFailed) {
+                try { task.session.cancel(); }
+                catch (IOException e) {
+                    task.persistenceFailed = true;
+                    android.util.Log.w("MainActivity", "Cannot persist cancellation", e);
+                }
+            }
 
             main.post(() -> {
                 if (activityDestroyed || isFinishing()) return;
@@ -1038,17 +1286,21 @@ public class MainActivity extends Activity {
                 refreshLocalBookshelf();
                 if (isFinishing()) return;
 
-                if (wasCancelled) {
-                    showRemSuccessToast("已取消导入" + (finalSuccess > 0 ? "，已完成 " + finalSuccess + " 本" : ""));
+                if (task.persistenceFailed) {
+                    showRemErrorToast("保存导入状态失败，已暂停；已完成内容保留，可稍后继续");
+                } else if (wasCancelled) {
+                    showRemSuccessToast("已取消导入" + (finalSuccess > 0 ? "，已完成 " + finalSuccess + " 个文件" : ""));
+                } else if (finalFailedItems.isEmpty() && finalSkipped > 0) {
+                    showRemSuccessToast("导入 " + finalSuccess + " 个文件，跳过 " + finalSkipped + " 个已有文件");
                 } else if (finalSuccess > 0 && finalFailedItems.isEmpty()) {
                     if (orderedItems.size() > 1) {
-                        showRemSuccessToast("成功导入 " + finalSuccess + " 本漫画");
+                        showRemSuccessToast("成功导入 " + finalSuccess + " 个文件");
                     } else {
                         showRemSuccessToast("成功导入《" + orderedItems.get(0).comicTitle + "》");
                     }
                 } else if (finalSuccess > 0 && !finalFailedItems.isEmpty()) {
                     StringBuilder sb = new StringBuilder();
-                    sb.append("已成功导入 ").append(finalSuccess).append(" 本漫画。\n以下 ").append(finalFailedItems.size()).append(" 项导入失败：\n");
+                    sb.append("已成功导入 ").append(finalSuccess).append(" 个文件。\n以下 ").append(finalFailedItems.size()).append(" 项导入失败：\n");
                     for (int j = 0; j < Math.min(finalFailedItems.size(), 5); j++) {
                         sb.append("• ").append(finalFailedItems.get(j)).append(": ").append(finalFailedReasons.get(j)).append("\n");
                     }
@@ -1067,8 +1319,8 @@ public class MainActivity extends Activity {
     private List<BatchImportModels.ImportGroup> buildImportGroups(List<PendingImportItem> items) {
         List<BatchImportModels.FileCandidate> candidates = new ArrayList<>();
         for (PendingImportItem item : items) {
-            candidates.add(new BatchImportModels.FileCandidate(null, null, null, item.displayName,
-                    item.uri != null ? item.uri.toString() : "", null, item.format, "", item.selectionIndex));
+            candidates.add(new BatchImportModels.FileCandidate(null, null, item.seriesTitle, item.displayName,
+                    item.uri != null ? item.uri.toString() : "", item.volumeOrder, item.format, "", item.selectionIndex));
         }
         return BatchImportPlanner.plan(candidates);
     }
@@ -1080,19 +1332,44 @@ public class MainActivity extends Activity {
                                                    int total) {
         BatchImportOutcome outcome = new BatchImportOutcome();
         LocalImporter importer = new LocalImporter(this, getLocalStorageManager(), getLocalLibraryStore());
+        BatchImportSession.Group savedGroup = null;
+        for (BatchImportSession.Group saved : task.session.groups) if (saved.key.equals(group.key)) { savedGroup = saved; break; }
+        if (savedGroup == null) return outcome;
+        String targetBookId = TextUtils.isEmpty(savedGroup.targetBookId) ? null : savedGroup.targetBookId;
+        final BatchImportSession.Group persistentGroup = savedGroup;
         for (BatchImportModels.FileCandidate candidate : group.volumes) {
-            if (task.cancelled.get()) break;
+            if (task.cancelled.get() || task.session.cancelled) break;
             PendingImportItem item = itemsBySelection.get(candidate.selectionIndex);
             if (item == null) continue;
+            BatchImportSession.Item savedItem = null;
+            for (BatchImportSession.Item saved : savedGroup.items)
+                if (saved.selectionIndex == item.selectionIndex) { savedItem = saved; break; }
+            if (savedItem == null) continue;
             int current = completed.get() + 1;
             task.currentItem = current;
             String initialMsg = "(" + current + "/" + total + ") 正在整理《" + group.title + "》· " + item.displayName;
             task.currentMessage = initialMsg;
             updateImportTaskProgress(task, initialMsg);
             try {
+                if (getLocalLibraryStore().getBook(targetBookId) == null) {
+                    if (savedGroup.requiresExistingBook) throw new IOException("原合集已移除，请取消任务后重新导入");
+                    for (BatchImportSession.Item saved : savedGroup.items)
+                        if ("completed".equals(saved.state)) throw new IOException("原合集已移除，请取消任务后重新导入");
+                }
+                task.session.start(savedGroup, savedItem);
                 String chapterTitle = stripBatchExtension(item.displayName);
-                importer.importArchiveUri(item.uri, item.displayName, group.title, chapterTitle, true,
+                LocalModels.Book imported = importer.importBatchVolume(item.uri, item.displayName, group.title, chapterTitle, targetBookId,
                         new LocalModels.ImportProgressCallback() {
+                            @Override public void onBookIdentified(String id) throws IOException {
+                                // This callback runs only when creating a new book. An explicitly chosen
+                                // existing series must never be recreated if deleted while hashing a file.
+                                if (persistentGroup.requiresExistingBook)
+                                    throw new IOException("原合集已移除，请取消任务后重新导入");
+                                for (BatchImportSession.Item previous : persistentGroup.items)
+                                    if ("completed".equals(previous.state))
+                                        throw new IOException("原合集已移除，请取消任务后重新导入");
+                                task.session.setTargetBookId(persistentGroup, id);
+                            }
                             @Override
                             public void onProgress(long currentBytes, long totalBytes, String message) {
                                 String msg = "(" + current + "/" + total + ") " + message;
@@ -1102,13 +1379,30 @@ public class MainActivity extends Activity {
 
                             @Override
                             public boolean isCancelled() {
-                                return task.cancelled.get();
+                                return task.cancelled.get() || task.session.cancelled;
                             }
                         });
+                if (targetBookId == null) targetBookId = imported.id;
+                task.session.complete(savedGroup, savedItem, targetBookId);
                 outcome.successCount++;
+                main.post(() -> {
+                    if (batchShelfRefreshPending || activityDestroyed || isFinishing()) return;
+                    batchShelfRefreshPending = true;
+                    main.postDelayed(() -> {
+                        batchShelfRefreshPending = false;
+                        if (!activityDestroyed && !isFinishing()) refreshLocalBookshelf();
+                    }, 800);
+                });
+            } catch (LocalImporter.AlreadyImportedException e) {
+                try { task.session.skip(savedGroup, savedItem); }
+                catch (IOException failure) { task.persistenceFailed = true; task.cancelled.set(true); }
+                outcome.skippedCount++;
             } catch (InterruptedException e) {
                 break;
             } catch (Exception e) {
+                if (targetBookId == null && !TextUtils.isEmpty(savedGroup.targetBookId)) targetBookId = savedGroup.targetBookId;
+                if (!task.cancelled.get()) try { task.session.fail(savedGroup, savedItem, clean(e.getMessage(), "导入失败")); }
+                catch (IOException failure) { task.persistenceFailed = true; task.cancelled.set(true); }
                 outcome.failedItems.add(item.displayName);
                 outcome.failedReasons.add(clean(e.getMessage(), "解析或导入失败"));
             } finally {
@@ -1277,6 +1571,10 @@ public class MainActivity extends Activity {
     }
 
     private boolean canStartLocalImport() {
+        if (localImportScanning) {
+            showRemSuccessToast("正在读取所选文件信息");
+            return false;
+        }
         if (!localLibraryReady) {
             if (localLibraryRecoveryError != null) {
                 localLibraryRecoveryError = null;
@@ -1291,6 +1589,21 @@ public class MainActivity extends Activity {
             return false;
         }
         return true;
+    }
+
+    @Override protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("appendVolumeBookId", appendVolumeBookId);
+        super.onSaveInstanceState(outState);
+    }
+
+    private void pickAdditionalVolumes(LocalModels.Book book) {
+        if (!canStartLocalImport()) return;
+        appendVolumeBookId = book.id;
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        startActivityForResult(intent, REQUEST_CODE_APPEND_VOLUMES);
     }
 
     private void checkStoragePermissionBeforeImport(Runnable proceedAction) {
@@ -2306,6 +2619,40 @@ public class MainActivity extends Activity {
         View importBanner = (currentImportTask != null && !currentImportTask.cancelled.get())
                 ? buildActiveImportBanner(currentImportTask)
                 : null;
+        if (currentImportTask == null && savedImportSession != null) {
+            boolean unfinished = savedImportSession.hasPending();
+            for (BatchImportSession.Group group : savedImportSession.groups)
+                for (BatchImportSession.Item item : group.items) unfinished |= "failed".equals(item.state);
+            if (unfinished) {
+                LinearLayout banner = new LinearLayout(this);
+                banner.setGravity(Gravity.CENTER_VERTICAL);
+                banner.setPadding(UIHelpers.dp(this, 10), UIHelpers.dp(this, 12), UIHelpers.dp(this, 6), UIHelpers.dp(this, 12));
+                banner.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 10), UIHelpers.BORDER));
+                banner.addView(UIHelpers.text(this, "有未完成的导入 · 已完成分卷可阅读", 12, UIHelpers.TEXT2, Typeface.NORMAL), UIHelpers.weight(1));
+                TextView resume = UIHelpers.text(this, "继续", 13, UIHelpers.ACCENT, Typeface.BOLD);
+                resume.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 8), UIHelpers.dp(this, 8), UIHelpers.dp(this, 8));
+                resume.setOnClickListener(v -> resumeBatchImport());
+                banner.addView(resume);
+                TextView cancel = UIHelpers.text(this, "取消", 13, UIHelpers.TEXT3, Typeface.NORMAL);
+                cancel.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 8), UIHelpers.dp(this, 8), UIHelpers.dp(this, 8));
+                cancel.setOnClickListener(v -> {
+                    if (!canStartLocalImport()) return;
+                    localImportScanning = true;
+                    BatchImportSession session = savedImportSession;
+                    localLibraryIo.execute(() -> {
+                        try {
+                            session.cancel();
+                            main.post(() -> { localImportScanning = false; if (!activityDestroyed) refreshLocalBookshelf(); });
+                        } catch (IOException e) { main.post(() -> {
+                            localImportScanning = false;
+                            if (!activityDestroyed) showRemErrorToast("无法保存取消操作，请重试");
+                        }); }
+                    });
+                });
+                banner.addView(cancel);
+                importBanner = banner;
+            }
+        }
 
         return LocalLibraryView.build(
                 this,
@@ -3391,13 +3738,21 @@ public class MainActivity extends Activity {
         final String returnComicId = comicId;
         final int returnChapterIndex = chapterIndex;
         final ComicModels.ComicDetail returnDetail = details.get(comicId);
+        final String returnChapterId = returnDetail != null && chapterIndex >= 0 && chapterIndex < returnDetail.chapters.size()
+                ? returnDetail.chapters.get(chapterIndex).chapterId : null;
         final Runnable previousDetailBackAction = detailBackAction;
         detailBackAction = () -> {
             activeDetailId = returnComicId;
             detailBackAction = previousDetailBackAction;
             ComicModels.ComicDetail saved = details.get(returnComicId);
             if (saved != null) {
-                showReader(saved, returnChapterIndex);
+                int resolved = returnChapterIndex;
+                if (isLocalComic(returnComicId) && returnChapterId != null) {
+                    resolved = 0;
+                    for (int i = 0; i < saved.chapters.size(); i++)
+                        if (returnChapterId.equals(saved.chapters.get(i).chapterId)) { resolved = i; break; }
+                }
+                showReader(saved, resolved);
             } else if (returnDetail != null) {
                 showReader(returnDetail, returnChapterIndex);
             } else if (previousDetailBackAction != null) {
@@ -3515,6 +3870,9 @@ public class MainActivity extends Activity {
                 savedChapter,
                 hasRead,
                 new LocalDetailView.Listener() {
+                    @Override public void onAddVolumes(LocalModels.Book target) {
+                        pickAdditionalVolumes(target);
+                    }
                     @Override
                     public void onBack() {
                         if (detailBackAction != null) {
@@ -3534,6 +3892,25 @@ public class MainActivity extends Activity {
 
                     @Override
                     public void onBookRenamed(LocalModels.Book updatedBook) {
+                        int previousIndex = progress.containsKey(book.progressKey) ? progress.get(book.progressKey) : 0;
+                        if (hasRead && previousIndex >= 0 && previousIndex < detail.chapters.size()) {
+                            String previousChapter = detail.chapters.get(previousIndex).chapterId;
+                            List<LocalModels.Chapter> latestChapters = getLocalLibraryStore().getChapters(updatedBook.id);
+                            int restoredIndex = -1;
+                            for (int i = 0; i < latestChapters.size(); i++)
+                                if (previousChapter.equals(latestChapters.get(i).id)) { restoredIndex = i; break; }
+                            progress.put(updatedBook.progressKey, Math.max(0, restoredIndex));
+                            android.content.SharedPreferences locators = getSharedPreferences("xxcomic_text_locators", MODE_PRIVATE);
+                            String locatorKey = "text_pos_" + book.progressKey;
+                            com.xxcomic.ebook.TextLocator locator = com.xxcomic.ebook.TextLocator.fromJson(locators.getString(locatorKey, null));
+                            if (locator != null) {
+                                if (restoredIndex < 0) locators.edit().remove(locatorKey).apply();
+                                else locators.edit().putString(locatorKey, new com.xxcomic.ebook.TextLocator(locator.bookId,
+                                        restoredIndex, locator.spineIndex, locator.resourceHref, locator.anchorId,
+                                        locator.scrollPercentage, locator.charOffset).toJson()).apply();
+                            }
+                            saveLocalState();
+                        }
                         ComicModels.ComicSummary updatedSummary = new ComicModels.ComicSummary(
                                 "local",
                                 updatedBook.id,
@@ -4076,6 +4453,10 @@ public class MainActivity extends Activity {
             return;
         }
         progress.put(comicId, readerChapterIndex);
+        if (isLocalComic(comicId) && readerChapterIndex >= 0 && readerChapterIndex < detail.chapters.size()) {
+            getSharedPreferences("xxcomic_local_locators", MODE_PRIVATE).edit()
+                    .putString(comicId, detail.chapters.get(readerChapterIndex).chapterId).apply();
+        }
         lastViewedAt.put(comicId, System.currentTimeMillis());
         saveLocalState();
         renderReader(detail, page);
@@ -4762,8 +5143,11 @@ public class MainActivity extends Activity {
         if (!isLocalComic(comicId) || !localLibraryReady) return false;
         try {
             LocalModels.Book book = localBookForReading(comicId);
-            if (book != null && (LocalModels.FORMAT_EPUB.equals(book.format) || LocalModels.isKindleFormat(book.format))) {
-                LocalModels.Page firstPage = getLocalLibraryStore().getFirstPage(book.id);
+            if (book != null) {
+                List<LocalModels.Chapter> chapters = getLocalLibraryStore().getChapters(book.id);
+                List<LocalModels.Page> pages = chapters.isEmpty() ? Collections.emptyList()
+                        : getLocalLibraryStore().getPages(chapters.get(Math.max(0, Math.min(readerChapterIndex, chapters.size() - 1))).id);
+                LocalModels.Page firstPage = pages.isEmpty() ? null : pages.get(0);
                 if (firstPage != null && firstPage.mimeType != null) {
                     return firstPage.mimeType.contains("xhtml")
                             || firstPage.mimeType.contains("html")
@@ -4784,11 +5168,22 @@ public class MainActivity extends Activity {
         com.xxcomic.ebook.TextReaderView textReader = new com.xxcomic.ebook.TextReaderView(this);
         textReaderView = textReader;
         try {
-            if (LocalModels.isKindleFormat(book.format)) {
-                epubFile = getLocalStorageManager().getDerivedBookFile(book.id, ".epub");
+            LocalModels.Volume volume = null;
+            if (readerChapterIndex >= 0 && readerChapterIndex < detail.chapters.size()) {
+                String chapterId = LocalContentResolver.extractId(detail.chapters.get(readerChapterIndex).url, LocalContentResolver.PREFIX_CHAPTER);
+                LocalModels.Chapter chapter = getLocalLibraryStore().getChapter(chapterId);
+                if (chapter != null && chapter.volumeId != null) {
+                    volume = getLocalLibraryStore().getVolume(chapter.volumeId);
+                    if (volume == null) throw new IOException("本地分卷已移除");
+                }
+            }
+            String containerId = volume == null ? book.id : volume.id;
+            if (LocalModels.isKindleFormat(volume == null ? book.format : volume.format)) {
+                epubFile = getLocalStorageManager().getDerivedBookFile(containerId, ".epub");
                 if (!epubFile.exists()) {
-                    File srcFile = getLocalStorageManager().getBookContentFile(book);
-                    com.xxcomic.ebook.KindlePublicationAdapter.convertMobiToDerivedEpub(srcFile, epubFile, book.id);
+                    File srcFile = volume == null ? getLocalStorageManager().getBookContentFile(book)
+                            : getLocalStorageManager().getBookImportFile(volume.relativePath);
+                    com.xxcomic.ebook.KindlePublicationAdapter.convertMobiToDerivedEpub(srcFile, epubFile, containerId);
                 }
             } else {
                 String chFilePath = book.relativePath;
@@ -4802,9 +5197,9 @@ public class MainActivity extends Activity {
                         }
                     }
                 }
-                epubFile = getLocalStorageManager().getBookImportFile(chFilePath);
+                epubFile = getLocalStorageManager().getBookImportFile(volume == null ? chFilePath : volume.relativePath);
             }
-            textReader.setEpubFile(epubFile, book.id);
+            textReader.setEpubFile(epubFile, containerId);
         } catch (Exception error) {
             showRemErrorToast("无法打开电子书文件: " + error.getMessage());
             return;
@@ -7844,6 +8239,13 @@ public class MainActivity extends Activity {
     }
 
     private int savedChapter(String id) {
+        if (localLibraryReady && isLocalComic(id)) {
+            String chapterId = getSharedPreferences("xxcomic_local_locators", MODE_PRIVATE).getString(id, null);
+            if (chapterId != null) {
+                LocalModels.Chapter chapter = getLocalLibraryStore().getChapter(chapterId);
+                return chapter == null ? 0 : chapter.orderIndex;
+            }
+        }
         Integer value = progress.get(id);
         return value == null ? 0 : value;
     }

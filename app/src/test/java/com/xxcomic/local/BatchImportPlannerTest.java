@@ -10,6 +10,22 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class BatchImportPlannerTest {
+    @Test public void explicitMergeSortsDifferentTitlesByMetadataWithoutRegrouping() {
+        BatchImportModels.FileCandidate later = new BatchImportModels.FileCandidate(null, null, "Different A",
+                "A.epub", "a", 3, "epub", "", 0);
+        BatchImportModels.FileCandidate earlier = new BatchImportModels.FileCandidate(null, null, "Different Z",
+                "Z.mobi", "z", 1, "mobi", "", 1);
+        List<BatchImportModels.FileCandidate> input = Arrays.asList(later, earlier);
+        assertEquals(Arrays.asList(earlier, later), BatchImportPlanner.orderVolumes(input));
+        assertEquals(later, input.get(0));
+    }
+    @Test public void decimalMetadataOrderWinsOverFileName() {
+        BatchImportModels.FileCandidate later = new BatchImportModels.FileCandidate(null, null, "Series",
+                "A.epub", "a", new java.math.BigDecimal("2.5"), "epub", "", 0);
+        BatchImportModels.FileCandidate earlier = new BatchImportModels.FileCandidate(null, null, "Series",
+                "Z.epub", "z", new java.math.BigDecimal("2.0"), "epub", "", 1);
+        assertEquals(Arrays.asList("Z.epub", "A.epub"), names(BatchImportPlanner.plan(Arrays.asList(later, earlier)).get(0)));
+    }
     @Test
     public void groupsRemoteFilesBySourceAndComicAndSortsByVolume() {
         List<BatchImportModels.FileCandidate> files = Arrays.asList(

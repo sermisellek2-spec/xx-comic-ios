@@ -19,6 +19,7 @@ public final class LocalLibraryChecks {
 
     public static int runChecks(Context context) throws Exception {
         int checks = 0;
+        checks += com.xxcomic.local.LocalVolumeChecks.run(context);
         File testDb = new File(context.getCacheDir(), "test_local_library_" + System.currentTimeMillis() + ".db");
         if (testDb.exists()) testDb.delete();
 

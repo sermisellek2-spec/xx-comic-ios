@@ -8,6 +8,68 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class LocalContentResolverTest {
+    @Test public void folderVolumeKeepsItsPathAfterAnotherVolumeBecomesFirst() throws Exception {
+        FakeStore index = new FakeStore();
+        java.io.File root = java.nio.file.Files.createTempDirectory("folder_volume").toFile();
+        LocalStorageManager storage = new LocalStorageManager(root);
+        LocalModels.Book ready = book(LocalModels.STATUS_READY);
+        index.books.put(ready.id, ready);
+        try {
+            java.io.File directory = storage.getBookImportFile("original-images");
+            assertTrue(directory.mkdir());
+            java.io.File image = new java.io.File(directory, "1.png");
+            java.nio.file.Files.write(image.toPath(), new byte[]{7, 8, 9});
+            index.volumes.put("folder", new LocalModels.Volume("folder", ready.id, "fp", "原图片卷",
+                    "folder", "original-images", 3, 1, "ready", 0, 0));
+            index.pages.put("p", new LocalModels.Page("p", ready.id, "folder", "ch", 0, "1.png", 1, 1, null, "image/png"));
+            LocalContentResolver resolver = new LocalContentResolver(index, storage);
+            try (java.io.InputStream in = resolver.openPage("p")) { assertEquals(7, in.read()); }
+            assertEquals(image.getCanonicalPath(), resolver.materializePage("p").getCanonicalPath());
+        } finally { deleteRecursive(root); }
+    }
+    @Test
+    public void mixedVolumesReadTheirOwnContainerRatherThanBookFormat() throws Exception {
+        FakeStore index = new FakeStore();
+        java.io.File root = java.nio.file.Files.createTempDirectory("mixed_volumes").toFile();
+        LocalStorageManager storage = new LocalStorageManager(root);
+        LocalModels.Book ready = book(LocalModels.STATUS_READY);
+        index.books.put(ready.id, ready);
+        try {
+            for (int i = 1; i <= 2; i++) {
+                String id = "volume" + i;
+                String format = i == 1 ? "epub" : "mobi";
+                index.volumes.put(id, new LocalModels.Volume(id, ready.id, "hash" + i, id,
+                        format, id + "." + format, 10, i, "ready", 0, 0));
+                index.pages.put("p" + i, new LocalModels.Page("p" + i, ready.id, id,
+                        "ch" + i, 0, "1.png", 1, 1, null, "image/png"));
+                java.io.File archive = i == 1 ? storage.getBookImportFile("volume1.epub")
+                        : storage.getDerivedBookFile("volume2", ".epub");
+                try (java.util.zip.ZipOutputStream out = new java.util.zip.ZipOutputStream(new java.io.FileOutputStream(archive))) {
+                    out.putNextEntry(new java.util.zip.ZipEntry("1.png"));
+                    out.write(i);
+                    out.closeEntry();
+                }
+            }
+            LocalContentResolver resolver = new LocalContentResolver(index, storage);
+            try (java.io.InputStream in = resolver.openPage("p1")) { assertEquals(1, in.read()); }
+            try (java.io.InputStream in = resolver.openPage("p2")) { assertEquals(2, in.read()); }
+        } finally { deleteRecursive(root); }
+    }
+
+    @Test
+    public void missingVolumeMustNotFallBackToAnotherVolumesFile() throws Exception {
+        FakeStore index = new FakeStore();
+        java.io.File root = java.nio.file.Files.createTempDirectory("missing_volume").toFile();
+        LocalModels.Book ready = book(LocalModels.STATUS_READY);
+        index.books.put(ready.id, ready);
+        index.pages.put("p", new LocalModels.Page("p", ready.id, "missing", "ch", 0, "1.png", 1, 1, null, "image/png"));
+        try {
+            new LocalContentResolver(index, new LocalStorageManager(root)).openPage("p");
+            org.junit.Assert.fail("missing volume accepted");
+        } catch (java.io.IOException expected) {
+            assertTrue(expected.getMessage().contains("分卷"));
+        } finally { deleteRecursive(root); }
+    }
     @Test
     public void pendingBookCannotBeOpenedEvenWhenItsArchiveExists() throws Exception {
         FakeStore index = new FakeStore();
@@ -257,6 +319,8 @@ public class LocalContentResolverTest {
     }
 
     private static class FakeStore implements LocalContentResolver.ContentIndex {
+        final java.util.Map<String, LocalModels.Volume> volumes = new java.util.HashMap<>();
+        public LocalModels.Volume getVolume(String id) { return volumes.get(id); }
         final java.util.Map<String, LocalModels.Book> books = new java.util.HashMap<>();
         final java.util.Map<String, LocalModels.Page> pages = new java.util.HashMap<>();
         final java.util.Map<String, LocalModels.Chapter> chapters = new java.util.HashMap<>();

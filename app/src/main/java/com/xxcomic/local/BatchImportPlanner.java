@@ -18,6 +18,12 @@ public final class BatchImportPlanner {
 
     private BatchImportPlanner() {}
 
+    public static List<BatchImportModels.FileCandidate> orderVolumes(List<BatchImportModels.FileCandidate> files) {
+        List<BatchImportModels.FileCandidate> ordered = new ArrayList<>(files);
+        Collections.sort(ordered, VOLUME_ORDER);
+        return ordered;
+    }
+
     public static List<BatchImportModels.ImportGroup> plan(List<BatchImportModels.FileCandidate> candidates) {
         if (candidates == null || candidates.isEmpty()) return Collections.emptyList();
         Map<String, MutableGroup> grouped = new LinkedHashMap<>();
@@ -86,8 +92,8 @@ public final class BatchImportPlanner {
             new Comparator<BatchImportModels.FileCandidate>() {
                 @Override public int compare(BatchImportModels.FileCandidate a,
                                               BatchImportModels.FileCandidate b) {
-                    if (a.sourceOrder != null && b.sourceOrder != null && !a.sourceOrder.equals(b.sourceOrder)) {
-                        return Integer.compare(a.sourceOrder, b.sourceOrder);
+                    if (a.sourceOrder != null && b.sourceOrder != null && a.sourceOrder.compareTo(b.sourceOrder) != 0) {
+                        return a.sourceOrder.compareTo(b.sourceOrder);
                     }
                     if (a.sourceOrder != null && b.sourceOrder == null) return -1;
                     if (a.sourceOrder == null && b.sourceOrder != null) return 1;

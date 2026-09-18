@@ -1,103 +1,61 @@
-# 批量本地导入与多卷合集 Implementation Plan
+# 批量本地导入与多卷合集实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+日期：2026-09-18；分支：`codex/local-batch-import`；基线：`master@d403daf`。
 
-**Goal:** 为大量 EPUB/MOBI 本地文件提供快速扫描、确认分组、后台增量导入和多卷合集阅读能力。
+目标：大量本地文件经确认分组合为一本漫画，逐卷后台导入，可取消、恢复及追加。设计见同目录 specs 中的批量本地导入设计。
 
-**Architecture:** 在现有本地库之上增加来源无关的 series/volume 逻辑模型。快速扫描只产出轻量元数据，后台导入按卷提交；旧单文件 Book 通过默认卷兼容，不改变现有阅读器的外部入口。
+## 实现约束
 
-**Tech Stack:** Java、Android 原生 View、SQLite、现有 EPUB/MOBI 解析器、JUnit。
+- 复用 Java/native View、SQLite、现有 EPUB/MOBI 解析器，不引入新依赖。
+- Book 作为合集身份，新增卷表，不拼接文件、不按标题自动绑定已有书。
+- 组间最多两个并发任务，组内顺序执行；不删除外部原文件。
+- 在独立分支提供验收包，不改正式版本号、master 或 COS。
 
-**Spec:** `docs/superpowers/specs/2026-09-18-batch-local-import-design.md`
+## Task 1：快速分组
 
-## Global Constraints
+- [x] FileCandidate/ImportGroup、卷号/自然排序、来源隔离、哈希去重与候选确认。
+- [x] 支持小数元数据卷号，手动全部合并复用同一排序规则。
+- [x] 规划器 JVM 测试；初版提交 `28bff22`。
 
-- 保留 Java/native Android UI、minSdk 23、compileSdk/targetSdk 34。
-- 不拼接或重新打包 EPUB/MOBI，不引入新格式库。
-- 不按标题自动合并不同来源；无来源文件必须有明确合集确认。
-- 后台导入最多 2 个文件并发；页面图片默认按需解码。
-- 不删除用户原文件；普通缓存清理不得删除本地导入和下载。
+## Task 2：卷持久化与读取
 
----
+- [x] SQLite v2 卷表、章节/页面归属、v1 默认卷及旧追加卷迁移。
+- [x] 混合格式逐卷读取，事务内幂等追加，卷调序及单卷删除。
+- [x] 稳定章节定位，避免调序/删除后续读跳到别章。
+- [x] JVM 测试：混合格式、文件夹卷路径、缺卷拒绝回退、完整目录绑定。
+- [x] 编写并编译真实 SQLite 插桩检查：迁移、计数、幂等、调序、删除。
+- [ ] 设备执行 SQLite 插桩检查（未连接设备）。
 
-### Task 1: 快速扫描与分组纯逻辑
+## Task 3：轻量元数据
 
-**Files:**
-- Create: `app/src/main/java/com/xxcomic/local/BatchImportModels.java`
-- Create: `app/src/main/java/com/xxcomic/local/BatchImportPlanner.java`
-- Test: `app/src/test/java/com/xxcomic/local/BatchImportPlannerTest.java`
+- [x] EPUB container/OPF、Calibre/EPUB3 系列与卷号；MOBI 复用头部探测。
+- [x] XML 大小/DOCTYPE 限制，不读取正文或解码封面。
+- [x] 后台扫描；不可随机读取的 SAF 提供方回退文件名。
+- [x] 轻量扫描 JVM 测试。
 
-- [ ] 写失败测试：卷号解析、标题规范化、同一合集候选分组、来源隔离、排序优先级、重复内容识别。
-- [ ] 运行该测试确认因类/方法不存在而失败。
-- [ ] 实现无 Android 依赖的 `FileCandidate`、`ImportGroup`、`VolumePlan` 和 `BatchImportPlanner`。
-- [ ] 运行测试通过。
-- [x] 提交 `feat(local): add fast batch import planning`。
+## Task 4：持久批次
 
-### Task 2: 本地合集与卷索引
+- [x] 逐文件原子日志、写失败回滚、备份恢复、失败重试。
+- [x] 发布首卷前持久化合集 ID；恢复跳过完成项。
+- [x] 同组串行、组间最多两个任务；单卷失败继续其他卷。
+- [x] 取消保留完成卷，生命周期停止后可继续；修复恢复/取消竞态。
+- [x] 复制期间删除目标后不重建合集；真实文件日志 JVM 测试。
 
-**Files:**
-- Modify: `app/src/main/java/com/xxcomic/local/LocalModels.java`
-- Modify: `app/src/main/java/com/xxcomic/local/LocalLibraryStore.java`
-- Modify: `app/src/main/java/com/xxcomic/local/LocalContentResolver.java`
-- Test: `app/src/test/java/com/xxcomic/local/LocalLibraryStoreTest.java`
+## Task 5：界面
 
-- [ ] 写失败测试：同一合集多卷计数、卷级排序、单卷删除、旧 Book 默认卷兼容。
-- [ ] 运行测试确认失败。
-- [ ] 增加最小 `Series`/`Volume` 模型和 SQLite 迁移；章节、页面保存卷归属。
-- [ ] 让内容解析根据页面的卷归属打开对应文件。
-- [ ] 运行相关测试和已有本地测试。
-- [ ] 提交 `feat(local): persist multi-volume local series`。
+- [x] 后台扫描、候选分组确认抽屉、分别导入/全部合并。
+- [x] 蕾姆进度横幅、继续/取消、书架已完成卷数。
+- [x] 本地详情分卷目录、添加文件、调序和单卷移除。
+- [x] 浅深色主题色，800ms 合并书架刷新，保留在线路由。
+- [ ] 真机浅深色、文件选择器、横竖屏和前后台交互验收。
 
-### Task 3: 快速 EPUB/MOBI 元数据读取
+## Task 6：交付
 
-**Files:**
-- Create: `app/src/main/java/com/xxcomic/ebook/QuickPublicationInfo.java`
-- Modify: `app/src/main/java/com/xxcomic/ebook/EpubParser.java`
-- Modify: `app/src/main/java/com/xxcomic/ebook/KindleFormatDetector.java`
-- Test: `app/src/test/java/com/xxcomic/ebook/QuickPublicationInfoTest.java`
+- [x] 完整 JVM 测试、debug/AndroidTest APK 构建及 lint。
+- [x] 源码审查、路径/缓存清理边界检查。
+- [x] 最终 diff 检查、分支交付、验收包与报告（提交号见交付回复）。
+- [ ] 32 卷/400 文件实际设备性能验收。
 
-- [ ] 写失败测试：读取 EPUB 标题/系列/卷号/封面入口，不遍历或解码全部页面；读取 MOBI 头部标题。
-- [ ] 运行测试确认失败。
-- [ ] 实现快速读取接口，结构错误返回可展示的文件级错误。
-- [ ] 运行测试通过。
-- [ ] 提交 `feat(ebook): add lightweight publication scan`。
+## 后续扩展
 
-### Task 4: 批量后台导入会话
-
-**Files:**
-- Create: `app/src/main/java/com/xxcomic/local/BatchImportSession.java`
-- Modify: `app/src/main/java/com/xxcomic/local/LocalImporter.java`
-- Modify: `app/src/main/java/com/xxcomic/download/DownloadRuntime.java`
-- Test: `app/src/test/java/com/xxcomic/local/BatchImportSessionTest.java`
-
-- [ ] 写失败测试：最多两个并发槽、单卷失败不阻塞、完成一卷即可发布、取消不发布半成品。
-- [ ] 运行测试确认失败。
-- [ ] 实现持久会话状态、卷级 staging 和增量提交；复用现有解析器与校验。
-- [ ] 为 EPUB 快速模式跳过全量图片预解码，阅读时仍使用现有完整错误处理。
-- [ ] 运行测试通过。
-- [x] 接入现有导入入口，提交 `feat(local): process batch imports incrementally`。
-
-### Task 5: 导入确认与本地书架聚合 UI
-
-**Files:**
-- Modify: `app/src/main/java/com/xxcomic/MainActivity.java`
-- Modify: `app/src/main/java/com/xxcomic/local/LocalLibraryView.java`
-- Modify: `app/src/main/java/com/xxcomic/local/LocalDetailView.java`
-- Test: `app/src/test/java/com/xxcomic/local/BatchImportUiStateTest.java`
-
-- [ ] 写失败测试：扫描中、待确认、处理中、部分完成、失败和完成状态文案/操作。
-- [ ] 运行测试确认失败。
-- [ ] 增加紧凑导入状态、分组确认、卷级目录和合集删除入口，沿用现有浅深色主题。
-- [ ] 运行测试通过并检查现有在线书架路由不变。
-- [ ] 提交 `feat(local): expose batch import and volume grouping`。
-
-### Task 6: 回归与交付
-
-**Files:**
-- Modify: `docs/superpowers/reports/local-batch-import.md`
-- Test: existing local/ebook/download tests
-
-- [ ] 运行完整 JVM 测试和 lint/build。
-- [ ] 编译 AndroidTest；有设备时执行批量导入入口，否则如实记录未运行。
-- [ ] 检查 `git diff --check`、线程、目录路径和普通缓存清理边界。
-- [ ] 更新报告、提交并输出分支和验收包信息。
+文件夹自动发现多个电子书、下载中心合集聚合、文件源 fileId/revision 原子替换、手动全量图片校验、前台 Service 导入另行实现。本轮进程终止后暂停，下次手动继续。

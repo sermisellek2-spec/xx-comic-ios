@@ -21,6 +21,24 @@ import static org.junit.Assert.assertTrue;
 
 public class LocalImporterTest {
     @Test
+    public void volumeBindingKeepsEveryChapterAndNamespacesPagesByContent() {
+        LocalImporter.FolderChaptersResult source = LocalImporter.buildFolderChapters(new File("."),
+                Arrays.asList("ch1/1.png", "ch2/1.png"), "temporary");
+        ArchiveIndex.ParseResult index = new ArchiveIndex.ParseResult(source.chapters, source.pagesByChapter,
+                source.totalPages, 0, null, Collections.emptyList());
+        LocalModels.Volume volume = new LocalModels.Volume("series_vol_hash", "series", "hash", "卷2",
+                "epub", "volume.epub", 20, 1, "ready", 0, 0);
+        ArchiveIndex.ParseResult bound = LocalImporter.bindVolume(index, volume);
+        assertEquals(2, bound.chapters.size());
+        assertEquals("series_vol_hash_ch_0", bound.chapters.get(0).id);
+        assertEquals("series_vol_hash_ch_1", bound.chapters.get(1).id);
+        assertEquals("series", bound.chapters.get(1).bookId);
+        assertEquals("series_vol_hash", bound.chapters.get(1).volumeId);
+        assertEquals("volume.epub", bound.chapters.get(1).entryPath);
+        assertEquals("ch2/1.png", bound.pagesByChapter.get("series_vol_hash_ch_1").get(0).entryPath);
+        assertEquals("series_vol_hash_ch_1_p_0", bound.pagesByChapter.get("series_vol_hash_ch_1").get(0).id);
+    }
+    @Test
     public void cancellationInterruptsDecoderReadsEvenWhenDecoderSwallowsIOException() throws Exception {
         java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean();
         LocalModels.ImportProgressCallback callback = new LocalModels.ImportProgressCallback() {

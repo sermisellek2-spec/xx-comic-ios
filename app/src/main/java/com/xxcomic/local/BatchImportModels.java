@@ -14,20 +14,20 @@ public final class BatchImportModels {
         public final String seriesTitle;
         public final String fileName;
         public final String fileId;
-        public final Integer sourceOrder;
+        public final java.math.BigDecimal sourceOrder;
         public final String format;
         public final String fingerprint;
         public final int selectionIndex;
 
         public FileCandidate(String sourceId, String remoteComicId, String seriesTitle,
-                             String fileName, String fileId, Integer sourceOrder,
+                             String fileName, String fileId, Number sourceOrder,
                              String format, String fingerprint, int selectionIndex) {
             this.sourceId = clean(sourceId);
             this.remoteComicId = clean(remoteComicId);
             this.seriesTitle = clean(seriesTitle);
             this.fileName = clean(fileName);
             this.fileId = clean(fileId);
-            this.sourceOrder = sourceOrder;
+            this.sourceOrder = sourceOrder == null ? null : new java.math.BigDecimal(sourceOrder.toString());
             this.format = clean(format);
             this.fingerprint = clean(fingerprint);
             this.selectionIndex = Math.max(0, selectionIndex);

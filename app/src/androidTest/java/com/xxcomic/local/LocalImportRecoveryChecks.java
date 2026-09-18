@@ -43,6 +43,10 @@ public final class LocalImportRecoveryChecks {
             LocalModels.Book imported = importer.importArchiveUri(Uri.fromFile(archive), "original.cbz", null);
             LocalModels.Book duplicate = importer.importArchiveUri(Uri.fromFile(archive), "another-name.cbz", null);
             require(imported.id.equals(duplicate.id) && store.getBookCount() == 1, "real importer duplicate detection");
+            try {
+                importer.importBatchVolume(Uri.fromFile(archive), "original.cbz", "Another series", "Volume 1", null, null);
+                throw new AssertionError("batch duplicate selected another series as target");
+            } catch (LocalImporter.AlreadyImportedException expected) { }
             String chapter = store.getChapters(imported.id).get(0).id;
             String page = store.getPages(chapter).get(0).id;
             store.renameBook(imported.id, "保留的名字");

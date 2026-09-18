@@ -32,6 +32,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class LocalImporter {
+    private static final Object[] CONTENT_LOCKS = new Object[32];
+    static { for (int i = 0; i < CONTENT_LOCKS.length; i++) CONTENT_LOCKS[i] = new Object(); }
+    public static final class AlreadyImportedException extends IOException {
+        public AlreadyImportedException() { super("文件已在本地书架中，已跳过"); }
+    }
     public static final int MAX_FOLDER_DEPTH = 5;
     public static final int MAX_FOLDER_FILES = ArchiveIndex.MAX_ENTRIES;
     public static final long MAX_SINGLE_FILE_BYTES = ArchiveIndex.MAX_SINGLE_ENTRY_BYTES;
@@ -214,6 +219,19 @@ public class LocalImporter {
     private LocalModels.Book importArchiveOrVolume(Uri uri, String rawDisplayName,
                                                    String explicitComicTitle, String explicitChapterTitle,
                                                    boolean fast, LocalModels.ImportProgressCallback callback) throws Exception {
+        return importArchiveOrVolume(uri, rawDisplayName, explicitComicTitle, explicitChapterTitle,
+                fast, null, true, callback);
+    }
+
+    /** A confirmed batch binds by identity, never by another library item's display title. */
+    public LocalModels.Book importBatchVolume(Uri uri, String displayName, String title,
+            String volumeTitle, String targetBookId, LocalModels.ImportProgressCallback callback) throws Exception {
+        return importArchiveOrVolume(uri, displayName, title, volumeTitle, true, targetBookId, false, callback);
+    }
+
+    private LocalModels.Book importArchiveOrVolume(Uri uri, String rawDisplayName,
+            String explicitComicTitle, String explicitChapterTitle, boolean fast,
+            String targetBookId, boolean allowTitleLookup, LocalModels.ImportProgressCallback callback) throws Exception {
         ContentResolver resolver = context.getContentResolver();
         String displayName = rawDisplayName;
         if (TextUtils.isEmpty(displayName)) {
@@ -291,11 +309,15 @@ public class LocalImporter {
             }
 
             String fingerprint = toHexString(sha256.digest());
-
+            // Two worker groups can contain the same bytes under different filenames.
+            // Serialize that content before touching its shared cover, derived file or DB identity.
+            synchronized (CONTENT_LOCKS[(fingerprint.hashCode() & Integer.MAX_VALUE) % CONTENT_LOCKS.length]) {
             // Check if active book with same fingerprint already exists
             LocalModels.Book existingSameFingerprint = store.findReadyByFingerprint(fingerprint);
             if (existingSameFingerprint != null) {
                 if (stagingFile != null) storageManager.deleteRecursively(stagingFile);
+                if (!allowTitleLookup && !existingSameFingerprint.id.equals(targetBookId))
+                    throw new AlreadyImportedException();
                 return existingSameFingerprint;
             }
 
@@ -359,8 +381,11 @@ public class LocalImporter {
 
             // Check if comic with same name already exists to merge / append
             if (explicitComicTitle != null && explicitChapterTitle != null) {
-                LocalModels.Book existingBook = store.findReadyByTitle(resolvedComicTitle);
-                if (existingBook != null && existingBook.format.equals(format)) {
+                LocalModels.Book existingBook = targetBookId != null ? store.getBook(targetBookId)
+                        : allowTitleLookup ? store.findReadyByTitle(resolvedComicTitle) : null;
+                if (targetBookId != null && existingBook != null && !LocalModels.STATUS_READY.equals(existingBook.status))
+                    throw new IOException("目标合集已移除，请重新导入");
+                if (existingBook != null && LocalModels.SOURCE_TYPE_IMPORT.equals(existingBook.sourceType)) {
                     String targetChapterTitle = resolvedChapterTitle;
                     if (TextUtils.isEmpty(targetChapterTitle)) {
                         targetChapterTitle = "第 " + (existingBook.chapterCount + 1) + " 话";
@@ -368,20 +393,13 @@ public class LocalImporter {
                         targetChapterTitle = targetChapterTitle.trim();
                     }
 
-                    List<LocalModels.Chapter> existingChapters = store.getChapters(existingBook.id);
-                    for (LocalModels.Chapter ch : existingChapters) {
-                        if (ch.title.equals(targetChapterTitle)) {
-                            if (stagingFile != null) storageManager.deleteRecursively(stagingFile);
-                            throw new IOException("章节「" + targetChapterTitle + "」已存在于《" + existingBook.getDisplayTitle() + "》，已跳过");
-                        }
-                    }
-
-                    int nextOrder = existingChapters.size();
+                    int nextOrder = 0;
+                    String volumeId = LocalModels.Volume.stableId(existingBook.id, fingerprint);
                     String savedAppendPath;
                     if (isZeroCopy) {
                         savedAppendPath = directFile != null ? directFile.getAbsolutePath() : sourceFile.getAbsolutePath();
                     } else {
-                        String targetFileName = existingBook.id + "_" + System.currentTimeMillis() + ext;
+                        String targetFileName = volumeId + ext;
                         targetImportFile = storageManager.getBookImportFile(targetFileName);
                         savedAppendPath = targetFileName;
                     }
@@ -392,12 +410,12 @@ public class LocalImporter {
                     } else if (isEpub) {
                         com.xxcomic.ebook.Publication pub = com.xxcomic.ebook.EpubParser.parse(sourceFile);
                         try (ZipFile zip = ArchiveIndex.openZipWithFallbackCharset(sourceFile)) {
-                            parseResult = pub.toParseResult(existingBook.id, zip, imageProbe, targetChapterTitle, nextOrder, savedAppendPath, callback);
+                            parseResult = pub.toParseResult(existingBook.id, zip, imageProbe, allowTitleLookup ? targetChapterTitle : null, nextOrder, savedAppendPath, callback);
                         }
                     } else if (isKindle) {
-                        com.xxcomic.ebook.KindlePublicationAdapter.ParseResult kr = com.xxcomic.ebook.KindlePublicationAdapter.parse(sourceFile, existingBook.id, storageManager.getDerivedDir(), callback);
+                        com.xxcomic.ebook.KindlePublicationAdapter.ParseResult kr = com.xxcomic.ebook.KindlePublicationAdapter.parse(sourceFile, volumeId, storageManager.getDerivedDir(), callback);
                         try (ZipFile derivedZip = ArchiveIndex.openZipWithFallbackCharset(kr.derivedEpubFile)) {
-                            parseResult = kr.publication.toParseResult(existingBook.id, derivedZip, imageProbe, targetChapterTitle, nextOrder, savedAppendPath, callback);
+                            parseResult = kr.publication.toParseResult(existingBook.id, derivedZip, imageProbe, allowTitleLookup ? targetChapterTitle : null, nextOrder, savedAppendPath, callback);
                         }
                     } else {
                         parseResult = ArchiveIndex.indexArchive(sourceFile, existingBook.id, targetChapterTitle, nextOrder, savedAppendPath, callback);
@@ -407,14 +425,13 @@ public class LocalImporter {
                         throw new InterruptedException("用户取消导入");
                     }
 
-                    if (isZeroCopy) {
-                        store.appendChapterToBook(existingBook.id, parseResult.chapters.get(0),
-                                parseResult.pagesByChapter.get(parseResult.chapters.get(0).id), fileSize);
-                    } else {
-                        publishAppendChapter(stagingFile, targetImportFile, existingBook.id,
-                                parseResult.chapters.get(0), parseResult.pagesByChapter.get(parseResult.chapters.get(0).id),
-                                fileSize, callback);
-                    }
+                    long now = System.currentTimeMillis();
+                    LocalModels.Volume volume = new LocalModels.Volume(volumeId, existingBook.id, fingerprint,
+                            targetChapterTitle, format, savedAppendPath, fileSize, store.getVolumes(existingBook.id).size(),
+                            LocalModels.STATUS_READY, now, now);
+                    parseResult = bindVolume(parseResult, volume);
+                    if (isZeroCopy) store.appendVolume(volume, parseResult);
+                    else publishAppendVolume(stagingFile, targetImportFile, volume, parseResult, callback);
 
                     return store.getBook(existingBook.id);
                 }
@@ -425,8 +442,13 @@ public class LocalImporter {
             String progressKey = (tombstone != null && tombstone.progressKey != null)
                     ? tombstone.progressKey
                     : LocalModels.buildStableBookId(fingerprint);
+            if (!allowTitleLookup && targetBookId != null) progressKey = targetBookId;
+            // The first volume may have been removed while its series identity is still in use.
+            if (store.getBook(progressKey) != null && LocalModels.STATUS_READY.equals(store.getBook(progressKey).status))
+                progressKey = "local_" + java.util.UUID.randomUUID().toString();
             String bookId = progressKey;
             String userTitle = tombstone != null ? tombstone.userTitle : null;
+            if (callback != null) callback.onBookIdentified(bookId);
             ensureNoPendingImport(bookId);
 
             String savedRelativePath;
@@ -446,13 +468,13 @@ public class LocalImporter {
             } else if (isEpub) {
                 pub = com.xxcomic.ebook.EpubParser.parse(sourceFile);
                 try (ZipFile zip = ArchiveIndex.openZipWithFallbackCharset(sourceFile)) {
-                    parseResult = pub.toParseResult(bookId, zip, imageProbe, resolvedChapterTitle, 0, savedRelativePath, callback);
+                    parseResult = pub.toParseResult(bookId, zip, imageProbe, allowTitleLookup ? resolvedChapterTitle : null, 0, savedRelativePath, callback);
                 }
             } else if (isKindle) {
                 kindleResult = com.xxcomic.ebook.KindlePublicationAdapter.parse(sourceFile, bookId, storageManager.getDerivedDir(), callback);
                 pub = kindleResult.publication;
                 try (ZipFile derivedZip = ArchiveIndex.openZipWithFallbackCharset(kindleResult.derivedEpubFile)) {
-                    parseResult = pub.toParseResult(bookId, derivedZip, imageProbe, resolvedChapterTitle, 0, savedRelativePath, callback);
+                    parseResult = pub.toParseResult(bookId, derivedZip, imageProbe, allowTitleLookup ? resolvedChapterTitle : null, 0, savedRelativePath, callback);
                 }
             } else {
                 parseResult = ArchiveIndex.indexArchive(sourceFile, bookId, resolvedChapterTitle, 0, savedRelativePath, callback);
@@ -501,6 +523,7 @@ public class LocalImporter {
                 publishImport(stagingFile, targetImportFile, book, parseResult.chapters, parseResult.pagesByChapter, callback);
             }
             return book;
+            }
         } catch (Throwable error) {
             if (stagingFile != null) {
                 storageManager.deleteRecursively(stagingFile);
@@ -679,15 +702,33 @@ public class LocalImporter {
         }
     }
 
-    private void publishAppendChapter(File staging, File target, String bookId,
-                                      LocalModels.Chapter chapter, List<LocalModels.Page> pages,
-                                      long fileSize, LocalModels.ImportProgressCallback callback) throws Exception {
+    static ArchiveIndex.ParseResult bindVolume(ArchiveIndex.ParseResult index, LocalModels.Volume volume) {
+        List<LocalModels.Chapter> chapters = new ArrayList<>();
+        Map<String, List<LocalModels.Page>> pages = new HashMap<>();
+        for (LocalModels.Chapter chapter : index.chapters) {
+            String id = LocalModels.buildStableChapterId(volume.id, chapters.size());
+            chapters.add(new LocalModels.Chapter(id, volume.seriesId, volume.id, chapters.size(),
+                    chapter.title, volume.relativePath, chapter.pageCount));
+            List<LocalModels.Page> boundPages = new ArrayList<>();
+            for (LocalModels.Page page : index.pagesByChapter.get(chapter.id)) {
+                boundPages.add(new LocalModels.Page(LocalModels.buildStablePageId(id, page.orderIndex),
+                        volume.seriesId, volume.id, id, page.orderIndex, page.entryPath, page.width,
+                        page.height, page.transformation, page.mimeType));
+            }
+            pages.put(id, boundPages);
+        }
+        return new ArchiveIndex.ParseResult(chapters, pages, index.totalPages, index.totalUncompressedBytes,
+                index.firstValidPageEntry, index.candidateCoverEntries);
+    }
+
+    private void publishAppendVolume(File staging, File target, LocalModels.Volume volume,
+                                      ArchiveIndex.ParseResult index, LocalModels.ImportProgressCallback callback) throws Exception {
         synchronized (storageManager) {
             checkCancelled(callback);
             storageManager.promoteStagingToImports(staging, target);
             try {
                 checkCancelled(callback);
-                store.appendChapterToBook(bookId, chapter, pages, fileSize);
+                store.appendVolume(volume, index);
             } catch (Exception error) {
                 target.delete();
                 throw error;
