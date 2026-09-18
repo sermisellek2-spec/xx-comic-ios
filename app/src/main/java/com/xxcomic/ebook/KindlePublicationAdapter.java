@@ -36,22 +36,24 @@ public final class KindlePublicationAdapter {
         public final String mimeType;
         public final String extension;
         public final boolean cover;
+        public final long crc;
 
         public ImageEntry(int relativeIndex, byte[] data, String mimeType, String extension) {
-            this(relativeIndex, data, null, mimeType, extension, false);
+            this(relativeIndex, data, null, mimeType, extension, false, calculateCrc32(data));
         }
 
-        public ImageEntry(int relativeIndex, File file, String mimeType, String extension, boolean cover) {
-            this(relativeIndex, null, file, mimeType, extension, cover);
+        public ImageEntry(int relativeIndex, File file, String mimeType, String extension, boolean cover, long crc) {
+            this(relativeIndex, null, file, mimeType, extension, cover, crc);
         }
 
-        private ImageEntry(int relativeIndex, byte[] data, File file, String mimeType, String extension, boolean cover) {
+        private ImageEntry(int relativeIndex, byte[] data, File file, String mimeType, String extension, boolean cover, long crc) {
             this.relativeIndex = relativeIndex;
             this.data = data;
             this.file = file;
             this.mimeType = mimeType;
             this.extension = extension;
             this.cover = cover;
+            this.crc = crc;
         }
     }
 
@@ -271,7 +273,7 @@ public final class KindlePublicationAdapter {
                         imageOut.write(imgBuf);
                     }
                     boolean isCover = recIdx == detection.coverRecordIndex;
-                    ImageEntry ie = new ImageEntry(relIdx, imageFile, mime, ext, isCover);
+                    ImageEntry ie = new ImageEntry(relIdx, imageFile, mime, ext, isCover, calculateCrc32(imgBuf));
                     imageMap.put(relIdx, ie);
 
                     if (isCover) {
@@ -288,7 +290,9 @@ public final class KindlePublicationAdapter {
             }
 
             // Determine whether Comic or Text Novel
-            String textWithoutTags = rawHtml.replaceAll("<[^>]+>", " ").trim();
+            // Layout whitespace (including non-breaking spaces) is not novel text.
+            String textWithoutTags = rawHtml.replaceAll("<[^>]+>", "")
+                    .replaceAll("(?i)&(?:nbsp|#0*160|#x0*a0);|[\\s\\u00a0\\u3000]+", "");
             boolean isComic = imageMap.size() >= 3 && textWithoutTags.length() < 300;
 
             String title = !detection.title.isEmpty() ? detection.title : "未命名电子书";
@@ -441,8 +445,9 @@ public final class KindlePublicationAdapter {
 
             // 3. Write Images
             for (ImageEntry ie : imageMap.values()) {
+                if (callback != null && callback.isCancelled()) throw new InterruptedException("用户取消导入");
                 String imgPath = "OEBPS/images/img_" + ie.relativeIndex + "." + ie.extension;
-                if (ie.file != null) writeZipEntry(zos, imgPath, ie.file);
+                if (ie.file != null) writeZipEntry(zos, imgPath, ie.file, ie.crc, callback);
                 else writeZipEntry(zos, imgPath, ie.data);
             }
 
@@ -629,13 +634,21 @@ public final class KindlePublicationAdapter {
         zos.closeEntry();
     }
 
-    private static void writeZipEntry(ZipOutputStream zos, String path, File file) throws IOException {
+    private static void writeZipEntry(ZipOutputStream zos, String path, File file, long crc,
+                                      LocalModels.ImportProgressCallback callback) throws IOException {
         ZipEntry entry = new ZipEntry(path);
+        // Images are already compressed; preserve bytes without running DEFLATE again.
+        entry.setMethod(ZipEntry.STORED);
+        entry.setSize(file.length());
+        entry.setCrc(crc);
         zos.putNextEntry(entry);
         try (InputStream in = new FileInputStream(file)) {
             byte[] buffer = new byte[65536];
             int len;
-            while ((len = in.read(buffer)) > 0) zos.write(buffer, 0, len);
+            while ((len = in.read(buffer)) > 0) {
+                if (callback != null && callback.isCancelled()) throw new java.io.InterruptedIOException("导入已取消");
+                zos.write(buffer, 0, len);
+            }
         }
         zos.closeEntry();
     }

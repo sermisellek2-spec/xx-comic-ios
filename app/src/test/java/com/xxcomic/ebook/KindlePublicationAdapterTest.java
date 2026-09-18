@@ -368,6 +368,36 @@ public class KindlePublicationAdapterTest {
     }
 
     @Test
+    public void whitespaceBetweenComicPagesDoesNotCreateTextChapters() throws Exception {
+        StringBuilder html = new StringBuilder();
+        byte[][] images = new byte[4][];
+        for (int i = 0; i < 4; i++) {
+            images[i] = createMockJpeg();
+            html.append("<img recindex=\"").append(i + 1).append("\"/>");
+            for (int j = 0; j < 100; j++) html.append(" \n&#160;&nbsp;");
+            html.append("<mbp:pagebreak/>");
+        }
+        File source = new File(tempDir, "comic.mobi");
+        Files.write(source.toPath(), createMockMobi("卷03", "作者", html.toString(), images, 0));
+        KindlePublicationAdapter.ParseResult result = KindlePublicationAdapter.parse(
+                source, "comic", new File(tempDir, "derived"), null);
+        assertTrue(result.isComic);
+        try (ZipFile zip = new ZipFile(result.derivedEpubFile)) {
+            ArchiveIndex.ParseResult index = result.publication.toParseResult("comic", zip, null, null);
+            assertEquals(1, index.chapters.size());
+            assertEquals(4, index.totalPages);
+            for (int i = 0; i < 4; i++) {
+                LocalModels.Page page = index.pagesByChapter.get(index.chapters.get(0).id).get(i);
+                assertEquals("OEBPS/images/img_" + (i + 1) + ".jpg", page.entryPath);
+                assertEquals(java.util.zip.ZipEntry.STORED, zip.getEntry(page.entryPath).getMethod());
+                try (java.io.InputStream in = zip.getInputStream(zip.getEntry(page.entryPath))) {
+                    org.junit.Assert.assertArrayEquals(images[i], in.readAllBytes());
+                }
+            }
+        }
+    }
+
+    @Test
     public void testCancelImportDeletesDerivedEpub() throws Exception {
         byte[] mobiData = createMockMobi("测试小说", "作者", "正文内容",
                 new byte[][]{createMockJpeg()}, 0);
