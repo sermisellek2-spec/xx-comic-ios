@@ -97,6 +97,8 @@ import com.xxcomic.local.LocalDetailView;
 import com.xxcomic.local.LocalImporter;
 import com.xxcomic.local.LocalLibraryStore;
 import com.xxcomic.local.LocalLibraryView;
+import com.xxcomic.local.BatchImportModels;
+import com.xxcomic.local.BatchImportPlanner;
 import com.xxcomic.download.DownloadRuntime;
 import com.xxcomic.download.DownloadViews;
 import com.xxcomic.download.DownloadModels;
@@ -365,6 +367,7 @@ public class MainActivity extends Activity {
     private static LocalLibraryStore localLibraryStore;
     private static LocalContentResolver localContentResolver;
     private static final ExecutorService localLibraryIo = Executors.newSingleThreadExecutor();
+    private static final ExecutorService localBatchIo = Executors.newFixedThreadPool(2);
 
     private int bookshelfTab = 0; // 0: 我的书架, 1: 本地书架
     private FrameLayout bookshelfContainer;
@@ -907,15 +910,24 @@ public class MainActivity extends Activity {
         final String comicTitle;
         final String chapterTitle;
         final boolean matchedFormat;
+        final int selectionIndex;
 
-        PendingImportItem(Uri uri, String displayName, String format, String comicTitle, String chapterTitle, boolean matchedFormat) {
+        PendingImportItem(Uri uri, String displayName, String format, String comicTitle, String chapterTitle,
+                          boolean matchedFormat, int selectionIndex) {
             this.uri = uri;
             this.displayName = displayName;
             this.format = format;
             this.comicTitle = comicTitle;
             this.chapterTitle = chapterTitle;
             this.matchedFormat = matchedFormat;
+            this.selectionIndex = selectionIndex;
         }
+    }
+
+    private static final class BatchImportOutcome {
+        int successCount;
+        final List<String> failedItems = new ArrayList<>();
+        final List<String> failedReasons = new ArrayList<>();
     }
 
     private void handleImportArchiveUris(List<Uri> uris) {
@@ -964,10 +976,13 @@ public class MainActivity extends Activity {
             if (dot > 0) {
                 comicTitle = displayName.substring(0, dot).trim();
             }
-            pendingList.add(new PendingImportItem(uri, displayName, fmt, comicTitle, "全本", false));
+            pendingList.add(new PendingImportItem(uri, displayName, fmt, comicTitle, "全本", false, i));
         }
 
         final List<PendingImportItem> orderedItems = pendingList;
+        final List<BatchImportModels.ImportGroup> plannedGroups = buildImportGroups(orderedItems);
+        final Map<Integer, PendingImportItem> itemsBySelection = new HashMap<>();
+        for (PendingImportItem item : orderedItems) itemsBySelection.put(item.selectionIndex, item);
 
         final ActiveImportTask task = new ActiveImportTask("正在导入漫画", false);
         task.totalItems = orderedItems.size();
@@ -977,46 +992,32 @@ public class MainActivity extends Activity {
         currentImportTask = task;
 
         showThemedImportProgressDialog(task);
+        // Batch work is deliberately non-blocking: the bookshelf banner remains available
+        // for progress/cancel while the user can continue browsing other tabs.
+        if (orderedItems.size() > 1 && task.dialog != null && task.dialog.isShowing()) {
+            task.dialog.dismiss();
+        }
         refreshLocalBookshelf();
 
         localLibraryIo.submit(() -> {
+            java.util.concurrent.atomic.AtomicInteger completed = new java.util.concurrent.atomic.AtomicInteger();
+            List<Future<BatchImportOutcome>> futures = new ArrayList<>();
+            for (BatchImportModels.ImportGroup group : plannedGroups) {
+                futures.add(localBatchIo.submit(() -> processImportGroup(group, itemsBySelection, task, completed, orderedItems.size())));
+            }
+
             int successCount = 0;
             List<String> failedItems = new ArrayList<>();
             List<String> failedReasons = new ArrayList<>();
-            LocalImporter importer = new LocalImporter(this, getLocalStorageManager(), getLocalLibraryStore());
-
-            for (int i = 0; i < orderedItems.size(); i++) {
-                if (task.cancelled.get()) break;
-                PendingImportItem item = orderedItems.get(i);
-                final int current = i + 1;
-                final int total = orderedItems.size();
-                task.currentItem = current;
-
-                String initialMsg = "(" + current + "/" + total + ") 正在读取 " + item.displayName + "...";
-                task.currentMessage = initialMsg;
-                updateImportTaskProgress(task, initialMsg);
-
+            for (Future<BatchImportOutcome> future : futures) {
                 try {
-                    importer.importArchiveUri(item.uri, item.displayName,
-                            new LocalModels.ImportProgressCallback() {
-                        @Override
-                        public void onProgress(long currentBytes, long totalBytes, String message) {
-                            String msg = "(" + current + "/" + total + ") " + message;
-                            task.currentMessage = msg;
-                            updateImportTaskProgress(task, msg);
-                        }
-
-                        @Override
-                        public boolean isCancelled() {
-                            return task.cancelled.get();
-                        }
-                    });
-                    successCount++;
-                } catch (InterruptedException e) {
-                    break;
+                    BatchImportOutcome outcome = future.get();
+                    successCount += outcome.successCount;
+                    failedItems.addAll(outcome.failedItems);
+                    failedReasons.addAll(outcome.failedReasons);
                 } catch (Exception e) {
-                    failedItems.add(item.displayName);
-                    failedReasons.add(clean(e.getMessage(), "解析或导入失败"));
+                    failedItems.add("批量导入任务");
+                    failedReasons.add(clean(e.getMessage(), "批量导入失败"));
                 }
             }
 
@@ -1061,6 +1062,67 @@ public class MainActivity extends Activity {
                 }
             });
         });
+    }
+
+    private List<BatchImportModels.ImportGroup> buildImportGroups(List<PendingImportItem> items) {
+        List<BatchImportModels.FileCandidate> candidates = new ArrayList<>();
+        for (PendingImportItem item : items) {
+            candidates.add(new BatchImportModels.FileCandidate(null, null, null, item.displayName,
+                    item.uri != null ? item.uri.toString() : "", null, item.format, "", item.selectionIndex));
+        }
+        return BatchImportPlanner.plan(candidates);
+    }
+
+    private BatchImportOutcome processImportGroup(BatchImportModels.ImportGroup group,
+                                                   Map<Integer, PendingImportItem> itemsBySelection,
+                                                   ActiveImportTask task,
+                                                   java.util.concurrent.atomic.AtomicInteger completed,
+                                                   int total) {
+        BatchImportOutcome outcome = new BatchImportOutcome();
+        LocalImporter importer = new LocalImporter(this, getLocalStorageManager(), getLocalLibraryStore());
+        for (BatchImportModels.FileCandidate candidate : group.volumes) {
+            if (task.cancelled.get()) break;
+            PendingImportItem item = itemsBySelection.get(candidate.selectionIndex);
+            if (item == null) continue;
+            int current = completed.get() + 1;
+            task.currentItem = current;
+            String initialMsg = "(" + current + "/" + total + ") 正在整理《" + group.title + "》· " + item.displayName;
+            task.currentMessage = initialMsg;
+            updateImportTaskProgress(task, initialMsg);
+            try {
+                String chapterTitle = stripBatchExtension(item.displayName);
+                importer.importArchiveUri(item.uri, item.displayName, group.title, chapterTitle, true,
+                        new LocalModels.ImportProgressCallback() {
+                            @Override
+                            public void onProgress(long currentBytes, long totalBytes, String message) {
+                                String msg = "(" + current + "/" + total + ") " + message;
+                                task.currentMessage = msg;
+                                updateImportTaskProgress(task, msg);
+                            }
+
+                            @Override
+                            public boolean isCancelled() {
+                                return task.cancelled.get();
+                            }
+                        });
+                outcome.successCount++;
+            } catch (InterruptedException e) {
+                break;
+            } catch (Exception e) {
+                outcome.failedItems.add(item.displayName);
+                outcome.failedReasons.add(clean(e.getMessage(), "解析或导入失败"));
+            } finally {
+                completed.incrementAndGet();
+            }
+        }
+        return outcome;
+    }
+
+    private static String stripBatchExtension(String name) {
+        if (name == null || name.trim().isEmpty()) return "全本";
+        String value = name.trim();
+        int dot = value.lastIndexOf('.');
+        return dot > 0 ? value.substring(0, dot).trim() : value;
     }
 
     private void handleImportFolderUri(Uri treeUri) {

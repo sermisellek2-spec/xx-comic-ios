@@ -135,7 +135,17 @@ public class LocalImporter {
 
     public LocalModels.Book importArchiveUri(Uri uri, String rawDisplayName,
                                              LocalModels.ImportProgressCallback callback) throws Exception {
-        return importArchiveOrVolume(uri, rawDisplayName, null, null, callback);
+        return importArchiveOrVolume(uri, rawDisplayName, null, null, false, callback);
+    }
+
+    /**
+     * Imports one item as a chapter of an explicitly selected local group. Fast mode
+     * keeps structural checks but defers per-page image decoding until reading.
+     */
+    public LocalModels.Book importArchiveUri(Uri uri, String rawDisplayName,
+                                             String explicitComicTitle, String explicitChapterTitle,
+                                             boolean fast, LocalModels.ImportProgressCallback callback) throws Exception {
+        return importArchiveOrVolume(uri, rawDisplayName, explicitComicTitle, explicitChapterTitle, fast, callback);
     }
 
     /** Parse an already downloaded private file without a second full-file copy or publishing early. */
@@ -198,6 +208,12 @@ public class LocalImporter {
     public LocalModels.Book importArchiveOrVolume(Uri uri, String rawDisplayName,
                                                   String explicitComicTitle, String explicitChapterTitle,
                                                   LocalModels.ImportProgressCallback callback) throws Exception {
+        return importArchiveOrVolume(uri, rawDisplayName, explicitComicTitle, explicitChapterTitle, false, callback);
+    }
+
+    private LocalModels.Book importArchiveOrVolume(Uri uri, String rawDisplayName,
+                                                   String explicitComicTitle, String explicitChapterTitle,
+                                                   boolean fast, LocalModels.ImportProgressCallback callback) throws Exception {
         ContentResolver resolver = context.getContentResolver();
         String displayName = rawDisplayName;
         if (TextUtils.isEmpty(displayName)) {
@@ -282,6 +298,8 @@ public class LocalImporter {
                 if (stagingFile != null) storageManager.deleteRecursively(stagingFile);
                 return existingSameFingerprint;
             }
+
+            ArchiveIndex.ImageProbe imageProbe = fast ? null : new AndroidImageProbe();
 
             // Determine comic title and chapter title
             String resolvedComicTitle = explicitComicTitle;
@@ -374,12 +392,12 @@ public class LocalImporter {
                     } else if (isEpub) {
                         com.xxcomic.ebook.Publication pub = com.xxcomic.ebook.EpubParser.parse(sourceFile);
                         try (ZipFile zip = ArchiveIndex.openZipWithFallbackCharset(sourceFile)) {
-                            parseResult = pub.toParseResult(existingBook.id, zip, new AndroidImageProbe(), targetChapterTitle, nextOrder, savedAppendPath, callback);
+                            parseResult = pub.toParseResult(existingBook.id, zip, imageProbe, targetChapterTitle, nextOrder, savedAppendPath, callback);
                         }
                     } else if (isKindle) {
                         com.xxcomic.ebook.KindlePublicationAdapter.ParseResult kr = com.xxcomic.ebook.KindlePublicationAdapter.parse(sourceFile, existingBook.id, storageManager.getDerivedDir(), callback);
                         try (ZipFile derivedZip = ArchiveIndex.openZipWithFallbackCharset(kr.derivedEpubFile)) {
-                            parseResult = kr.publication.toParseResult(existingBook.id, derivedZip, new AndroidImageProbe(), targetChapterTitle, nextOrder, savedAppendPath, callback);
+                            parseResult = kr.publication.toParseResult(existingBook.id, derivedZip, imageProbe, targetChapterTitle, nextOrder, savedAppendPath, callback);
                         }
                     } else {
                         parseResult = ArchiveIndex.indexArchive(sourceFile, existingBook.id, targetChapterTitle, nextOrder, savedAppendPath, callback);
@@ -428,13 +446,13 @@ public class LocalImporter {
             } else if (isEpub) {
                 pub = com.xxcomic.ebook.EpubParser.parse(sourceFile);
                 try (ZipFile zip = ArchiveIndex.openZipWithFallbackCharset(sourceFile)) {
-                    parseResult = pub.toParseResult(bookId, zip, new AndroidImageProbe(), resolvedChapterTitle, 0, savedRelativePath, callback);
+                    parseResult = pub.toParseResult(bookId, zip, imageProbe, resolvedChapterTitle, 0, savedRelativePath, callback);
                 }
             } else if (isKindle) {
                 kindleResult = com.xxcomic.ebook.KindlePublicationAdapter.parse(sourceFile, bookId, storageManager.getDerivedDir(), callback);
                 pub = kindleResult.publication;
                 try (ZipFile derivedZip = ArchiveIndex.openZipWithFallbackCharset(kindleResult.derivedEpubFile)) {
-                    parseResult = pub.toParseResult(bookId, derivedZip, new AndroidImageProbe(), resolvedChapterTitle, 0, savedRelativePath, callback);
+                    parseResult = pub.toParseResult(bookId, derivedZip, imageProbe, resolvedChapterTitle, 0, savedRelativePath, callback);
                 }
             } else {
                 parseResult = ArchiveIndex.indexArchive(sourceFile, bookId, resolvedChapterTitle, 0, savedRelativePath, callback);
