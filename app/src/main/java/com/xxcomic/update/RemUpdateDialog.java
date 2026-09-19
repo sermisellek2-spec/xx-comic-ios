@@ -2,12 +2,16 @@ package com.xxcomic.update;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -21,9 +25,21 @@ public final class RemUpdateDialog {
     private RemUpdateDialog() {
     }
 
+    public interface UpdateActionListener {
+        void onAction(boolean ignoreToday);
+    }
+
     public static AlertDialog show(Activity activity, AppRelease release,
                                    String currentVersionName, String formattedSize,
                                    Runnable onConfirm, Runnable onDismiss) {
+        return show(activity, release, currentVersionName, formattedSize,
+                ignoreToday -> { if (onConfirm != null) onConfirm.run(); },
+                ignoreToday -> { if (onDismiss != null) onDismiss.run(); });
+    }
+
+    public static AlertDialog show(Activity activity, AppRelease release,
+                                   String currentVersionName, String formattedSize,
+                                   UpdateActionListener onConfirm, UpdateActionListener onDismiss) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return null;
         }
@@ -81,19 +97,32 @@ public final class RemUpdateDialog {
         notesHost.addView(notesScroll, new LinearLayout.LayoutParams(-1, -2));
 
         copy.addView(notesHost, UIHelpers.marginTop(-1, UIHelpers.dp(activity, 8)));
+
+        CheckBox ignoreTodayCheck = new CheckBox(activity);
+        ignoreTodayCheck.setText("今日不再提示");
+        ignoreTodayCheck.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        ignoreTodayCheck.setTextColor(UIHelpers.TEXT3);
+        ignoreTodayCheck.setChecked(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ignoreTodayCheck.setButtonTintList(ColorStateList.valueOf(UIHelpers.ACCENT));
+        }
+        LinearLayout.LayoutParams checkLp = new LinearLayout.LayoutParams(-2, -2);
+        checkLp.topMargin = UIHelpers.dp(activity, 6);
+        copy.addView(ignoreTodayCheck, checkLp);
+
         content.addView(copy, new LinearLayout.LayoutParams(0, -2, 1f));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity)
                 .setView(content)
                 .setCancelable(true)
                 .setPositiveButton("立即更新", (dialog, which) -> {
-                    if (onConfirm != null) onConfirm.run();
+                    if (onConfirm != null) onConfirm.onAction(ignoreTodayCheck.isChecked());
                 })
                 .setNegativeButton("稍后再说", (dialog, which) -> {
-                    if (onDismiss != null) onDismiss.run();
+                    if (onDismiss != null) onDismiss.onAction(ignoreTodayCheck.isChecked());
                 })
                 .setOnCancelListener(dialog -> {
-                    if (onDismiss != null) onDismiss.run();
+                    if (onDismiss != null) onDismiss.onAction(ignoreTodayCheck.isChecked());
                 });
 
         AlertDialog dialog = builder.create();

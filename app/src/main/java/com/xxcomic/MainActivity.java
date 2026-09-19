@@ -97,6 +97,7 @@ import com.xxcomic.favorite.FavoriteUpdateCoordinator;
 import com.xxcomic.update.AppRelease;
 import com.xxcomic.update.AppUpdateChecker;
 import com.xxcomic.update.RemUpdateDialog;
+import com.xxcomic.update.UpdatePromptPolicy;
 import com.xxcomic.local.LocalContentResolver;
 import com.xxcomic.local.LocalDetailView;
 import com.xxcomic.local.LocalImporter;
@@ -154,6 +155,7 @@ import java.util.regex.Pattern;
 
 public class MainActivity extends Activity {
     private static final String PREFS_NAME = "xx-comic";
+    private static final String PREF_UPDATE_IGNORE_TODAY_DATE = "update_ignore_today_date";
     private static final String ALL_TAG = "全部";
     private static final int DETAIL_HERO_DP = 190;
     private static final int DETAIL_HERO_MAX_DP = 390;
@@ -290,7 +292,7 @@ public class MainActivity extends Activity {
             postMainIfAlive(() -> {
                 if (release == null || !release.hasNewVersion(BuildConfig.VERSION_CODE)) return;
                 availableUpdateRelease = release;
-                if (release.isPromptMode()) tryShowUpdatePrompt(release);
+                if (release.isPromptMode() && !isUpdatePromptIgnoredToday()) tryShowUpdatePrompt(release);
             });
 
     private FrameLayout root;
@@ -332,6 +334,8 @@ public class MainActivity extends Activity {
     private SeekBar readerSeekBar;
     private boolean readerSeeking = false;
     private TextView readerOverlayBadge;
+    private final Set<String> readerLoadedChapterUrls = new HashSet<>();
+    private TextView readerToolbarTitle;
     private boolean readerFullyImmersive = false;
     private final android.util.LruCache<String, Bitmap> readerBitmapCache =
             new android.util.LruCache<String, Bitmap>((int) (Runtime.getRuntime().maxMemory() / 6)) {
@@ -366,10 +370,11 @@ public class MainActivity extends Activity {
     private boolean readerPinchZoom = true;
     private ColorMatrixColorFilter readerEinkFilter;
 
-    private static final int REQUEST_CODE_IMPORT_ARCHIVE = 1001;
-    private static final int REQUEST_CODE_APPEND_VOLUMES = 1003;
+    // Local library pickers must not overlap source configuration/log export requests (1001-1004).
+    private static final int REQUEST_CODE_IMPORT_ARCHIVE = 2001;
+    private static final int REQUEST_CODE_APPEND_VOLUMES = 2003;
     private String appendVolumeBookId;
-    private static final int REQUEST_CODE_IMPORT_FOLDER = 1002;
+    private static final int REQUEST_CODE_IMPORT_FOLDER = 2002;
 
     private static LocalStorageManager localStorageManager;
     private static LocalLibraryStore localLibraryStore;
@@ -1384,6 +1389,7 @@ public class MainActivity extends Activity {
                 main.post(() -> savedImportSession = task.session);
             } catch (IOException e) {
                 main.post(() -> {
+                    appendErrorLog("创建或恢复漫画导入批次失败", e);
                     if (currentImportTask == task) currentImportTask = null;
                     if (task.dialog != null) task.dialog.dismiss();
                     if (!activityDestroyed) { refreshLocalBookshelf(); showRemErrorToast("请先继续或取消上次导入任务；导入记录不可用时请保留日志"); }
@@ -1408,6 +1414,7 @@ public class MainActivity extends Activity {
                     failedItems.addAll(outcome.failedItems);
                     failedReasons.addAll(outcome.failedReasons);
                 } catch (Exception e) {
+                    main.post(() -> appendErrorLog("批量漫画导入任务失败", e));
                     failedItems.add("批量导入任务");
                     failedReasons.add(clean(e.getMessage(), "批量导入失败"));
                 }
@@ -1562,6 +1569,7 @@ public class MainActivity extends Activity {
                 break;
             } catch (Exception e) {
                 if (targetBookId == null && !TextUtils.isEmpty(savedGroup.targetBookId)) targetBookId = savedGroup.targetBookId;
+                if (!task.cancelled.get()) main.post(() -> appendErrorLog("漫画文件导入失败：" + item.displayName, e));
                 if (!task.cancelled.get()) try { task.session.fail(savedGroup, savedItem, clean(e.getMessage(), "导入失败")); }
                 catch (IOException failure) { task.persistenceFailed = true; task.cancelled.set(true); }
                 outcome.failedItems.add(item.displayName);
@@ -1616,6 +1624,7 @@ public class MainActivity extends Activity {
                 // Cancelled
             } catch (Exception e) {
                 errorMsg = e.getMessage();
+                if (!task.cancelled.get()) main.post(() -> appendErrorLog("漫画文件夹导入失败", e));
             }
 
             final boolean finalSuccess = success;
@@ -4635,6 +4644,123 @@ public class MainActivity extends Activity {
                 resolved);
     }
 
+    private static class ContinuousReaderItem {
+        final String imageUrl;
+        final String chapterUrl;
+        final int chapterIndex;
+        final int pageIndex;
+        final int pageCount;
+        final String positionKey;
+
+        ContinuousReaderItem(String imageUrl, String chapterUrl, int chapterIndex,
+                             int pageIndex, int pageCount, String positionKey) {
+            this.imageUrl = imageUrl;
+            this.chapterUrl = chapterUrl;
+            this.chapterIndex = chapterIndex;
+            this.pageIndex = pageIndex;
+            this.pageCount = pageCount;
+            this.positionKey = positionKey;
+        }
+    }
+
+    private interface ChapterPageCallback {
+        void onLoaded(ComicModels.ChapterPage page);
+    }
+
+    private void updateReaderToolbarTitle(ComicModels.ComicDetail detail) {
+        if (readerToolbarTitle == null || detail == null || readerChapterIndex < 0 || readerChapterIndex >= detail.chapters.size()) return;
+        String titleText = detail.chapters.get(readerChapterIndex).title;
+        if (!TextUtils.isEmpty(detail.summary.title)) {
+            titleText = detail.summary.title + " · " + titleText;
+        }
+        readerToolbarTitle.setText(titleText);
+    }
+
+    private void loadChapterPageAsync(ComicModels.ComicDetail detail, int chapterIndex,
+                                      ChapterPageCallback onLoaded, Runnable onError) {
+        if (detail == null || detail.chapters == null || chapterIndex < 0 || chapterIndex >= detail.chapters.size()) {
+            if (onError != null) onError.run();
+            return;
+        }
+        ComicModels.Chapter targetChapter = detail.chapters.get(chapterIndex);
+        String chapterUrl = targetChapter.url;
+        String comicId = detail.summary.comicId;
+        int generation = readerGeneration;
+
+        if (!isLocalComic(comicId)) {
+            DownloadRuntime runtime = DownloadRuntime.get(this);
+            DownloadModels.Task task = runtime.store.get(DownloadModels.key(detail.summary.sourceId, comicId, targetChapter.chapterId));
+            if (task != null && task.state == DownloadModels.State.COMPLETED) {
+                track(detailIo.submit(() -> {
+                    try {
+                        ComicModels.ChapterPage page = runtime.localChapter(detail, chapterIndex);
+                        if (page != null) {
+                            main.post(() -> {
+                                if (generation == readerGeneration && readerVisible) {
+                                    onLoaded.onLoaded(page);
+                                }
+                            });
+                            return;
+                        }
+                    } catch (Exception ignored) {}
+                    main.post(() -> { if (onError != null) onError.run(); });
+                }));
+                return;
+            }
+        }
+
+        ComicModels.ChapterPage cached = chapters.get(chapterUrl);
+        if (!isEmptyChapterPage(cached)) {
+            onLoaded.onLoaded(cached);
+            return;
+        }
+
+        if (LocalContentResolver.isLocalChapterUrl(chapterUrl) || isLocalComic(comicId)) {
+            track(detailIo.submit(() -> {
+                try {
+                    String chapterId = LocalContentResolver.isLocalChapterUrl(chapterUrl) ?
+                            LocalContentResolver.extractId(chapterUrl, LocalContentResolver.PREFIX_CHAPTER) : chapterUrl;
+                    List<LocalModels.Page> localPages = getLocalLibraryStore().getPages(chapterId);
+                    List<String> imageUrls = new ArrayList<>();
+                    for (LocalModels.Page lp : localPages) {
+                        imageUrls.add(LocalContentResolver.buildPageUrl(lp.id));
+                    }
+                    ComicModels.ChapterPage page = new ComicModels.ChapterPage(chapterId, targetChapter.title, imageUrls, null);
+                    main.post(() -> {
+                        if (generation != readerGeneration || !readerVisible) return;
+                        chapters.put(chapterUrl, page);
+                        onLoaded.onLoaded(page);
+                    });
+                } catch (Exception e) {
+                    main.post(() -> { if (onError != null) onError.run(); });
+                }
+            }));
+            return;
+        }
+
+        track(detailIo.submit(() -> {
+            try {
+                ComicSource client = sourceForDetail(detail);
+                ComicModels.ChapterPage page = client.chapter(chapterUrl);
+                main.post(() -> {
+                    if (generation != readerGeneration || !readerVisible) return;
+                    if (!isEmptyChapterPage(page)) {
+                        chapters.put(chapterUrl, page);
+                        persistComicCachesAsync();
+                        onLoaded.onLoaded(page);
+                    } else {
+                        if (onError != null) onError.run();
+                    }
+                });
+            } catch (Exception e) {
+                main.post(() -> {
+                    if (generation != readerGeneration || !readerVisible) return;
+                    if (onError != null) onError.run();
+                });
+            }
+        }));
+    }
+
     private void showReader(ComicModels.ComicDetail detail, int chapterIndex) {
         enterScreen();
         if (detail.chapters.isEmpty()) {
@@ -4914,6 +5040,7 @@ public class MainActivity extends Activity {
         name.setIncludeFontPadding(false);
         name.setSingleLine(true);
         name.setEllipsize(TextUtils.TruncateAt.END);
+        readerToolbarTitle = name;
         top.addView(name, UIHelpers.weight(1));
         return top;
     }
@@ -4960,9 +5087,16 @@ public class MainActivity extends Activity {
             return;
         }
         if (readerLayoutMode == 0) {
+            readerLoadedChapterUrls.clear();
+            readerLoadedChapterUrls.add(chapterUrl);
             int contentWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
             int placeholderHeight = Math.max(1, contentWidth * 4 / 3);
             List<String> imageUrls = new ArrayList<>(page.imageUrls);
+            List<ContinuousReaderItem> continuousItems = new ArrayList<>();
+            for (int i = 0; i < page.imageUrls.size(); i++) {
+                continuousItems.add(new ContinuousReaderItem(page.imageUrls.get(i), chapterUrl, readerChapterIndex,
+                        i, page.imageUrls.size(), readerPositionKey(detail.summary.comicId, activeChapter)));
+            }
             Map<ImageView, Future<?>> readerImageFutures = new HashMap<>();
             ListView list = new ListView(this);
             readerList = list;
@@ -4980,18 +5114,18 @@ public class MainActivity extends Activity {
             list.setTag(positionKey);
             final boolean[] restoringPosition = {savedPosition > 0 || readerImagePositions.containsKey(positionKey)};
             readerRestoringPosition = restoringPosition;
-            boolean hasNextChapter = readerChapterIndex + 1 < detail.chapters.size();
-            String nextChapterTitle = hasNextChapter ? "下一章：" + detail.chapters.get(readerChapterIndex + 1).title : "已是最后一章";
             LinearLayout listFooter = new LinearLayout(this);
             listFooter.setOrientation(LinearLayout.VERTICAL);
             listFooter.setGravity(Gravity.CENTER);
             listFooter.setPadding(0, UIHelpers.dp(this, 24), 0, UIHelpers.dp(this, 40));
-            TextView footerPrompt = UIHelpers.text(this, hasNextChapter ? "—— 继续向下拉，自动进入 " + nextChapterTitle + " ——" : "—— 已到达全书末尾 ——",
+            TextView footerPrompt = UIHelpers.text(this, "—— 已到达全书末尾 ——",
                     12, Color.argb(180, 160, 180, 205), Typeface.NORMAL);
             footerPrompt.setGravity(Gravity.CENTER);
             listFooter.addView(footerPrompt);
+            boolean initialIsLast = readerChapterIndex + 1 >= detail.chapters.size();
+            listFooter.setVisibility(initialIsLast ? View.VISIBLE : View.GONE);
             list.addFooterView(listFooter, null, false);
-            list.setAdapter(new BaseAdapter() {
+            BaseAdapter continuousAdapter = new BaseAdapter() {
                 @Override
                 public int getCount() {
                     return imageUrls.size();
@@ -5020,6 +5154,8 @@ public class MainActivity extends Activity {
                     Future<?> previous = readerImageFutures.remove(image);
                     if (previous != null && !previous.isDone()) previous.cancel(true);
                     String imageUrl = getItem(position);
+                    ContinuousReaderItem item = position >= 0 && position < continuousItems.size() ? continuousItems.get(position) : null;
+                    String itemChapterUrl = item != null ? item.chapterUrl : chapterUrl;
 
                     Bitmap cachedMem = readerBitmapCache.get(imageUrl);
                     if (cachedMem != null && !cachedMem.isRecycled()) {
@@ -5057,12 +5193,57 @@ public class MainActivity extends Activity {
                     applyReaderImageDisplayMode(image);
                     image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
                     image.setTag(imageUrl);
-                    Future<?> future = loadReaderImage(image, imageUrl, chapterUrl, generation, comicId,
+                    Future<?> future = loadReaderImage(image, imageUrl, itemChapterUrl, generation, comicId,
                             list, restoringPosition, savedPosition, cacheOnly);
                     if (future != null) readerImageFutures.put(image, future);
                     return image;
                 }
-            });
+            };
+            list.setAdapter(continuousAdapter);
+
+            final int[] highestLoadedChapter = {readerChapterIndex};
+            final boolean[] loadingNextChapter = {false};
+            final BaseAdapter listAdapter = continuousAdapter;
+
+            Runnable tryLoadNextChapter = new Runnable() {
+                @Override
+                public void run() {
+                    if (loadingNextChapter[0]) return;
+                    int nextIndex = highestLoadedChapter[0] + 1;
+                    if (nextIndex >= detail.chapters.size()) {
+                        if (listFooter.getVisibility() != View.VISIBLE) {
+                            listFooter.setVisibility(View.VISIBLE);
+                        }
+                        return;
+                    }
+                    loadingNextChapter[0] = true;
+                    loadChapterPageAsync(detail, nextIndex, nextChapterPage -> {
+                        if (generation != readerGeneration || readerList != list || !readerVisible) return;
+                        loadingNextChapter[0] = false;
+                        if (nextChapterPage == null || nextChapterPage.imageUrls == null || nextChapterPage.imageUrls.isEmpty()) return;
+                        highestLoadedChapter[0] = nextIndex;
+                        ComicModels.Chapter nextChapter = detail.chapters.get(nextIndex);
+                        String nextChapterUrl = nextChapter.url;
+                        String nextPosKey = readerPositionKey(detail.summary.comicId, nextChapter);
+                        readerLoadedChapterUrls.add(nextChapterUrl);
+                        int newPageCount = nextChapterPage.imageUrls.size();
+                        for (int i = 0; i < newPageCount; i++) {
+                            String u = nextChapterPage.imageUrls.get(i);
+                            imageUrls.add(u);
+                            continuousItems.add(new ContinuousReaderItem(u, nextChapterUrl, nextIndex, i, newPageCount, nextPosKey));
+                        }
+                        listAdapter.notifyDataSetChanged();
+                        prefetchReaderImages(imageUrls, list.getLastVisiblePosition() + 1,
+                                nextChapterUrl, generation, comicId, cacheOnly);
+                        if (highestLoadedChapter[0] >= detail.chapters.size() - 1) {
+                            listFooter.setVisibility(View.VISIBLE);
+                        }
+                    }, () -> {
+                        if (generation != readerGeneration || readerList != list || !readerVisible) return;
+                        loadingNextChapter[0] = false;
+                    });
+                }
+            };
 
             list.setOnScrollListener(new AbsListView.OnScrollListener() {
                 @Override
@@ -5078,11 +5259,37 @@ public class MainActivity extends Activity {
                 @Override
                 public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                     if (generation != readerGeneration || readerList != list) return;
-                    if (!restoringPosition[0]) saveReaderPosition(list, positionKey);
-                    if (!readerSeeking && readerSeekBar != null && totalItemCount > 0) {
-                        readerSeekBar.setProgress(firstVisibleItem);
+                    ContinuousReaderItem currentItem = (firstVisibleItem >= 0 && firstVisibleItem < continuousItems.size())
+                            ? continuousItems.get(firstVisibleItem) : null;
+                    if (!restoringPosition[0]) {
+                        saveReaderPosition(list, positionKey);
+                        if (currentItem != null && !TextUtils.equals(currentItem.positionKey, positionKey)) {
+                            saveContinuousReaderPosition(list, currentItem);
+                        }
                     }
-                    if (totalItemCount > 0) {
+                    if (!readerSeeking && readerSeekBar != null && totalItemCount > 0) {
+                        readerSeekBar.setProgress(currentItem != null ? currentItem.pageIndex : firstVisibleItem);
+                    }
+                    if (currentItem != null) {
+                        if (currentItem.chapterIndex != readerChapterIndex) {
+                            readerChapterIndex = currentItem.chapterIndex;
+                            progress.put(comicId, readerChapterIndex);
+                            if (isLocalComic(comicId) && readerChapterIndex >= 0 && readerChapterIndex < detail.chapters.size()) {
+                                getSharedPreferences("xxcomic_local_locators", MODE_PRIVATE).edit()
+                                        .putString(comicId, detail.chapters.get(readerChapterIndex).chapterId).apply();
+                            }
+                            lastViewedAt.put(comicId, System.currentTimeMillis());
+                            saveLocalState();
+                            updateReaderToolbarTitle(detail);
+                        }
+                        int newPage = currentItem.pageIndex + 1;
+                        int newTotal = currentItem.pageCount;
+                        if (newPage != readerCurrentPageNumber || newTotal != readerTotalPages) {
+                            readerCurrentPageNumber = newPage;
+                            readerTotalPages = newTotal;
+                            refreshReaderOverlayBadge();
+                        }
+                    } else if (totalItemCount > 0) {
                         int newPage = Math.max(1, Math.min(totalItemCount, firstVisibleItem + 1));
                         if (newPage != readerCurrentPageNumber || totalItemCount != readerTotalPages) {
                             readerCurrentPageNumber = newPage;
@@ -5092,7 +5299,10 @@ public class MainActivity extends Activity {
                     }
                     if (visibleItemCount > 0) {
                         prefetchReaderImagesAround(imageUrls, firstVisibleItem, visibleItemCount,
-                                chapterUrl, generation, comicId, cacheOnly);
+                                currentItem != null ? currentItem.chapterUrl : chapterUrl, generation, comicId, cacheOnly);
+                    }
+                    if (totalItemCount > 0 && firstVisibleItem + visibleItemCount >= totalItemCount - 5) {
+                        tryLoadNextChapter.run();
                     }
                 }
             });
@@ -5282,7 +5492,11 @@ public class MainActivity extends Activity {
                                 if (lastVisible >= total - 1) {
                                     View lastChild = list.getChildAt(list.getChildCount() - 1);
                                     if (lastChild != null && lastChild.getBottom() <= list.getHeight() + UIHelpers.dp(MainActivity.this, 30)) {
-                                        navigateReader(detail, page, 1);
+                                        if (highestLoadedChapter[0] + 1 < detail.chapters.size()) {
+                                            tryLoadNextChapter.run();
+                                        } else {
+                                            showReaderBoundaryHint("已经是最后一章");
+                                        }
                                         return true;
                                     }
                                 }
@@ -5317,6 +5531,7 @@ public class MainActivity extends Activity {
             });
             list.post(() -> prefetchReaderImages(imageUrls,
                     Math.max(0, list.getLastVisiblePosition() + 1), chapterUrl, generation, comicId, cacheOnly));
+            list.postDelayed(tryLoadNextChapter, 600L);
             FrameLayout readerContent = new FrameLayout(this);
             readerContentView = readerContent;
             FrameLayout.LayoutParams listParams = new FrameLayout.LayoutParams(-1, -1);
@@ -5944,6 +6159,8 @@ public class MainActivity extends Activity {
         unregisterReaderBatteryReceiver();
         main.removeCallbacks(readerTimeUpdateRunnable);
         readerOverlayBadge = null;
+        readerLoadedChapterUrls.clear();
+        readerToolbarTitle = null;
         readerList = null;
         readerRestoringPosition = null;
         if (readerPager != null) readerPager.release();
@@ -7642,7 +7859,8 @@ public class MainActivity extends Activity {
         if (generation != readerGeneration || !readerVisible || !TextUtils.equals(activeDetailId, comicId)) return false;
         ComicModels.ComicDetail detail = details.get(comicId);
         if (detail == null || readerChapterIndex < 0 || readerChapterIndex >= detail.chapters.size()) return false;
-        return TextUtils.equals(detail.chapters.get(readerChapterIndex).url, chapterUrl);
+        if (TextUtils.equals(detail.chapters.get(readerChapterIndex).url, chapterUrl)) return true;
+        return readerLoadedChapterUrls.contains(chapterUrl);
     }
 
     private Bitmap decodeReaderImage(File file, int targetWidth, String imageUrl) {
@@ -8641,10 +8859,22 @@ public class MainActivity extends Activity {
         main.postDelayed(persistReaderPositionRunnable, READER_POSITION_SAVE_DELAY_MS);
     }
 
+    private void saveContinuousReaderPosition(ListView list, ContinuousReaderItem item) {
+        View firstChild = list.getChildAt(0);
+        if (firstChild == null || firstChild.getHeight() <= 0) return;
+        double offset = Math.max(0d, Math.min(1d, -firstChild.getTop() / (double) firstChild.getHeight()));
+        int position = (int) Math.round((item.pageIndex + offset) * READER_POSITION_SCALE / Math.max(1, item.pageCount));
+        boolean atBottom = item.pageIndex == item.pageCount - 1 && offset >= 0.95;
+        readerImagePositions.put(item.positionKey, new ReaderPosition(item.pageIndex, offset, atBottom));
+        readerPositions.put(item.positionKey, Math.max(0, Math.min(READER_POSITION_SCALE, position)));
+        main.removeCallbacks(persistReaderPositionRunnable);
+        main.postDelayed(persistReaderPositionRunnable, READER_POSITION_SAVE_DELAY_MS);
+    }
+
     private void restoreReaderPosition(ListView list, int savedPosition) {
         int count = list.getCount();
         if (count <= 0) return;
-        list.post(() -> showReaderResumeHint(savedPosition));
+        // showReaderResumeHint(savedPosition); // disabled per user request
         if (savedPosition == READER_POSITION_SCALE) {
             list.setSelection(count - 1);
             list.post(() -> alignReaderBottom(list));
@@ -9018,6 +9248,10 @@ public class MainActivity extends Activity {
     }
 
     private void checkPendingUpdatePrompt() {
+        if (isUpdatePromptIgnoredToday()) {
+            pendingPromptRelease = null;
+            return;
+        }
         if (AppUpdateChecker.getInstance().isSessionPromptDismissed()) {
             pendingPromptRelease = null;
             return;
@@ -9028,18 +9262,21 @@ public class MainActivity extends Activity {
         pendingPromptRelease = null;
         activeUpdateDialog = RemUpdateDialog.show(this, release,
                 installedVersionLabel(), formatBytes(release.size),
-                () -> {
+                (ignoreToday) -> {
                     activeUpdateDialog = null;
                     AppUpdateChecker.getInstance().markSessionPromptDismissed();
+                    if (ignoreToday) markUpdatePromptIgnoredToday();
                     startUpdateDownload(release);
                 },
-                () -> {
+                (ignoreToday) -> {
                     activeUpdateDialog = null;
                     AppUpdateChecker.getInstance().markSessionPromptDismissed();
+                    if (ignoreToday) markUpdatePromptIgnoredToday();
                 });
     }
 
     private boolean canShowUpdateDialogNow() {
+        if (isUpdatePromptIgnoredToday()) return false;
         if (!activityResumed || !hasWindowFocus() || isFinishing() || isDestroyed()) return false;
         if (!verifyingProtectedSourceIds.isEmpty()) return false;
         if (AppUpdateChecker.getInstance().isSessionPromptDismissed()) return false;
@@ -9050,6 +9287,20 @@ public class MainActivity extends Activity {
         if (updateRunning) return false;
         if (sourceManagementVisible) return false;
         return true;
+    }
+
+    private boolean isUpdatePromptIgnoredToday() {
+        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        String savedDate = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(PREF_UPDATE_IGNORE_TODAY_DATE, "");
+        return UpdatePromptPolicy.isIgnoredToday(savedDate, today);
+    }
+
+    private void markUpdatePromptIgnoredToday() {
+        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                .putString(PREF_UPDATE_IGNORE_TODAY_DATE, today)
+                .apply();
     }
 
     private void startUpdateDownload(AppRelease release) {
@@ -9575,6 +9826,7 @@ public class MainActivity extends Activity {
                     loadDefaultCategory();
                 });
             } catch (Exception error) {
+                main.post(() -> appendErrorLog("站源配置导入失败", error));
                 postMainIfAlive(() -> showInfo("导入失败", clean(error.getMessage(), "配置文件格式不正确")));
             }
         });
