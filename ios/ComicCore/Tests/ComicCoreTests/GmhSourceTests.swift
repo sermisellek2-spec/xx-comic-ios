@@ -379,6 +379,24 @@ final class GmhSourceTests: XCTestCase {
         XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/x-www-form-urlencoded")
     }
 
+    func testURLSessionTransportCarriesResponseCharset() async throws {
+        TestURLProtocol.configure(.succeed, responseHeaders: ["Content-Type": "text/html; charset=iso-8859-1"])
+        defer { TestURLProtocol.reset() }
+        let transport = URLSessionHTTPTransport(session: makeTestURLSession())
+
+        let response = try await transport.get(URL(string: "https://example.test/latin")!, headers: [:])
+
+        XCTAssertEqual(response.textEncodingName?.lowercased(), "iso-8859-1")
+    }
+
+    func testGETOnlyFixtureRejectsDefaultPOST() async {
+        let transport = StubTransport(responses: [:])
+
+        await XCTAssertAsyncThrowsError(try await transport.post(URL(string: "https://example.test/form")!, headers: [:], body: Data())) { error in
+            XCTAssertEqual(error as? HTTPTransportError, .unsupportedMethod)
+        }
+    }
+
     func testURLSessionTransportAllowsSourceSpecificReadTimeouts() async throws {
         TestURLProtocol.configure(.succeed)
         defer { TestURLProtocol.reset() }
@@ -515,12 +533,14 @@ private final class TestURLProtocol: URLProtocol, @unchecked Sendable {
     private static var requests: [URLRequest] = []
     private static var onStart: () -> Void = {}
     private static var onStop: () -> Void = {}
+    private static var responseHeaders: [String: String]? = nil
 
-    static func configure(_ behavior: Behavior, onStart: @escaping () -> Void = {}, onStop: @escaping () -> Void = {}) {
+    static func configure(_ behavior: Behavior, onStart: @escaping () -> Void = {}, onStop: @escaping () -> Void = {}, responseHeaders: [String: String]? = nil) {
         lock.lock()
         self.behavior = behavior
         self.onStart = onStart
         self.onStop = onStop
+        self.responseHeaders = responseHeaders
         requests = []
         lock.unlock()
     }
@@ -543,11 +563,12 @@ private final class TestURLProtocol: URLProtocol, @unchecked Sendable {
         Self.requests.append(request)
         let behavior = Self.behavior
         let onStart = Self.onStart
+        let responseHeaders = Self.responseHeaders
         Self.lock.unlock()
         onStart()
 
         guard behavior == .succeed else { return }
-        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: responseHeaders)!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: Data())
         client?.urlProtocolDidFinishLoading(self)

@@ -40,9 +40,11 @@ public actor ManbenComicSource: ComicSource {
     }
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         let html = try await fetch("/search?page=\(max(1,page))&title=\(form(SearchRules.trim(keyword)))&language=1")
-        guard !matches(#"class=["'][^"']*\b(?:item|pager)\b[^"']*["']"#, html).isEmpty else { throw error("搜索列表解析失败") }
+        let blocks = matches(#"class=["'][^"']*\bitem\b[^"']*["'][^>]*>([\s\S]*?)(?=class=["'][^"']*\b(?:item|pager)\b[^"']*["']|$)"#, html)
+        let explicitEmpty = !matches(#"(?:没有|未)(?:找到|搜索到).{0,20}(?:漫画|作品|结果)|暂无.{0,10}(?:漫画|作品|结果|数据)"#, clean(html)).isEmpty
+        guard !blocks.isEmpty || !matches(#"class=["'][^"']*\bpager\b[^"']*["']"#, html).isEmpty || explicitEmpty else { throw error("搜索列表解析失败") }
         var seen = Set<String>()
-        return matches(#"class=["'][^"']*\bitem\b[^"']*["'][^>]*>([\s\S]*?)(?=class=["'][^"']*\b(?:item|pager)\b[^"']*["']|$)"#, html).compactMap { match in
+        let result: [ComicSummary] = blocks.compactMap { match in
             let block = match[1], rawID = first(#"/mh-([^/"'\?]+)/"#, match[1])
             guard !rawID.isEmpty, seen.insert(rawID).inserted else { return nil }
             var title = clean(first(#"class=["']title["'][^>]*>[\s\S]*?<a[^>]*>([\s\S]*?)</a>"#, block))
@@ -53,6 +55,8 @@ public actor ManbenComicSource: ComicSource {
             return .init(sourceId: id, comicId: id + ":" + rawID, title: title, coverUrl: absolute(imageURL(cover)),
                          subtitle: clean(first(#"class=["']tip["'][^>]*>([\s\S]*?)</(?:div|p)>"#, block)))
         }
+        guard !result.isEmpty || blocks.isEmpty || explicitEmpty else { throw error("搜索列表解析失败") }
+        return result
     }
     public func filterGroups() async throws -> [SourceFilterGroup] {
         let html = try await fetch("/mh-list/")

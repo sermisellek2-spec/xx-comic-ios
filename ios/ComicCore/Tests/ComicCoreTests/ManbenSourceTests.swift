@@ -35,6 +35,24 @@ final class ManbenSourceTests: XCTestCase {
         XCTAssertEqual(requests[0].url, "https://www.manben.com/search?page=3&title=%E6%98%9F+%26%7E*&language=1")
     }
 
+    func testSearchRejectsInvalidItemsAndAcceptsExplicitEmptyResult() async throws {
+        let invalid = ManbenComicSource(transport: ManbenFixtureTransport([
+            #"<div class="item"><p>请输入验证码后继续访问</p></div>"#
+        ]))
+        do {
+            _ = try await invalid.search(keyword: "漫画", page: 1)
+            XCTFail("无有效漫画的 item 不能冒充搜索无结果")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("搜索列表解析失败"))
+        }
+
+        let empty = ManbenComicSource(transport: ManbenFixtureTransport([
+            #"<div class="search-empty">没有找到相关漫画</div>"#
+        ]))
+        let items = try await empty.search(keyword: "不存在", page: 1)
+        XCTAssertEqual(items, [])
+    }
+
     func testDetailStripsNestedScoreAndCatalogKeepsGroupsSorted() async throws {
         let html = """
         <div class="comicInfo"><p class="title"><span class="grading"><span>9.2</span>分</span> 星&amp;海</p><div class="cover"><img data-src="/c.jpg"></div><a href="{{ a > b }}" class="user avatar"><b>作者</b></a><p>状 态：连载中</p><p>类 别：热血/奇幻</p><p class="content">介绍<br>第二行</p><a href="/m20/" class="op">第20话</a></div>
