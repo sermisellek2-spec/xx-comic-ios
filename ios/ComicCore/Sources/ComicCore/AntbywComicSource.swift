@@ -14,7 +14,7 @@ public struct AntbywComicSource: ComicSource {
     private static let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     private let libraryPath = "/plugin.php?id=jameson_manhua&c=index&a=ku"
 
-    public init(transport: any HTTPTransport = URLSessionHTTPTransport()) { self.transport = transport }
+    public init(transport: any HTTPTransport = URLSessionHTTPTransport(timeoutInterval: 25)) { self.transport = transport }
 
     public func latest(page: Int) async throws -> [ComicSummary] {
         try cards(await fetch(libraryPath + "&odfie=addtime&order=desc&page=\(max(1, page))"))

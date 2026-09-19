@@ -39,8 +39,12 @@ public struct HiperdexComicSource: ComicSource {
 
     public func detail(comicId: String) async throws -> ComicDetail {
         let rawID = rawComicID(comicId), html = try await fetch("/manga/\(rawID)/")
-        var title = clean(meta("og:title", html)).replacingOccurrences(of: " - HiperDEX", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let metaTitle = meta("og:title", html)
+        let escapedID = NSRegularExpression.escapedPattern(for: rawID)
+        guard !metaTitle.isEmpty || html.range(of: #"class=[\"'][^\"']*(?:summary__|profile-manga|chapter-list)[^\"']*[\"']|href=[\"'][^\"']*/manga/"# + escapedID + #"/"#, options: [.regularExpression, .caseInsensitive]) != nil else { throw parseError("详情解析失败") }
+        var title = clean(metaTitle)
         if title.isEmpty { title = clean(first(#"<h1[^>]*>([\s\S]*?)</h1>"#, html)) }
+        title = title.replacingOccurrences(of: " - HiperDEX", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { throw parseError("详情解析失败：缺少标题") }
         var description = clean(meta("og:description", html))
         if description.isEmpty { description = clean(first(#"<div[^>]+class=\"[^\"]*summary__[^\"]*\"[^>]*>([\s\S]*?)</div>"#, html)) }
@@ -99,7 +103,7 @@ public struct HiperdexComicSource: ComicSource {
             let latest = clean(first(#"<a[^>]+href=\"[^\"]*/manga/"# + NSRegularExpression.escapedPattern(for: rawID) + #"/[^\"]+/\"[^>]*>(Chapter[^<]*)</a>"#, block))
             result.append(.init(sourceId: id, comicId: "hiperdex:\(rawID)", title: title, coverUrl: absolute(imageURL(image)), subtitle: latest))
         }
-        if result.isEmpty, blocks.isEmpty {
+        if result.isEmpty {
             for match in matches(#"<a[^>]+href=\"([^\"]*/manga/[^\"]+/)\"[^>]*>([\s\S]*?)</a>"#, html) {
                 let rawID = rawComicID(match[1]), title = clean(match[2])
                 if !rawID.isEmpty, !title.isEmpty, seen.insert(rawID).inserted { result.append(.init(sourceId: id, comicId: "hiperdex:\(rawID)", title: title)) }

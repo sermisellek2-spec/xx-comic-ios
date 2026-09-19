@@ -48,6 +48,7 @@ public struct D5d6ComicSource: ComicSource {
 
     public func detail(comicId: String) async throws -> ComicDetail {
         let rawID = rawComicID(comicId), html = try await fetch("/jiujiucomic_\(rawID)/")
+        guard html.range(of: #"article-info-item|cover-box|chapter-list"#, options: [.regularExpression, .caseInsensitive]) != nil else { throw parseError("详情解析失败") }
         let info = raw(#"<div[^>]+class=[\"'][^\"']*article-info-item[^\"']*[\"'][^>]*>[\s\S]*?<div[^>]+class=[\"'][^\"']*mt20[^\"']*[\"'][^>]*>"#, html).isEmpty ? html : raw(#"<div[^>]+class=[\"'][^\"']*article-info-item[^\"']*[\"'][^>]*>[\s\S]*?<div[^>]+class=[\"'][^\"']*mt20[^\"']*[\"'][^>]*>"#, html)
         var title = clean(first(#"<h1[^>]+class=[\"'][^\"']*title[^\"']*[\"'][^>]*>([\s\S]*?)</h1>"#, info))
         if title.isEmpty { title = clean(first(#"<h1[^>]*>([\s\S]*?)</h1>"#, html)) }
@@ -128,6 +129,7 @@ public struct D5d6ComicSource: ComicSource {
             let image = raw(#"<img[^>]+>"#, block), info = raw(#"<div[^>]+class=[\"'][^\"']*cart-info[^\"']*[\"'][^>]*>[\s\S]*?</div>"#, block)
             var title = clean(first(#"<p[^>]*>[\s\S]*?<a[^>]*>([\s\S]*?)</a>"#, info))
             if title.isEmpty { title = clean(attribute("alt", image)) }
+            if title.isEmpty { title = clean(attribute("title", block)) }
             guard !title.isEmpty else { continue }
             result.append(.init(sourceId: id, comicId: "d5d6:\(rawID)", title: title, coverUrl: absolute(imageURL(image)), subtitle: clean(first(#"<span[^>]+class=[\"'][^\"']*new-chapter[^\"']*[\"'][^>]*>([\s\S]*?)</span>"#, block))))
         }

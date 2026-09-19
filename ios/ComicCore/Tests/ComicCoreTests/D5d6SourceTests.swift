@@ -105,6 +105,14 @@ final class D5d6SourceTests: XCTestCase {
         let empty = try await source.chapters(comicId: "8")
         XCTAssertEqual(empty, [])
         await XCTAssertD5d6Throws(try await source.chapters(comicId: "9")) { XCTAssertNotNil($0 as? D5d6SourceError) }
+        await XCTAssertD5d6Throws(try await source.detail(comicId: "9")) { XCTAssertNotNil($0 as? D5d6SourceError) }
+    }
+
+    func testCardFallsBackToBlockTitleAttribute() async throws {
+        let html = "<ul class='cart-list'><li title='属性&amp;标题'><div class='cart-item'><a class='cart-cover' href='/jiujiucomic_12/'><img src='/12.jpg'></a><div class='cart-info'></div></div></li></ul>"
+        let url = "https://www.d5d6.com/jiujiucate_jiujiuquanbu_allvisit_0_1/"
+        let items = try await D5d6ComicSource(transport: D5d6Transport([url: .text(html)])).latest(page: 1)
+        XCTAssertEqual(items, [.init(sourceId: "d5d6", comicId: "d5d6:12", title: "属性&标题", coverUrl: "https://www.d5d6.com/12.jpg")])
     }
 
     func testDefaultGBKResponseDecodesChineseCards() async throws {

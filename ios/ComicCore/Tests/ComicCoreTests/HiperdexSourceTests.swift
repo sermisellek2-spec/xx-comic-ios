@@ -97,6 +97,23 @@ final class HiperdexSourceTests: XCTestCase {
         XCTAssertEqual(empty, [])
         await XCTAssertHiperdexThrows(try await source.chapters(comicId: "bad")) { XCTAssertNotNil($0 as? HiperdexSourceError) }
     }
+
+    func testDetailRejectsErrorHeadingAndStripsSuffixAfterH1Fallback() async throws {
+        let source = HiperdexComicSource(transport: HiperdexTransport([
+            "https://hiperdex.com/manga/fallback/": "<h1>Fallback &amp; Title - HiperDEX</h1><div class='summary__content'>Description</div>",
+            "https://hiperdex.com/manga/bad/": "<html><h1>Rate limited</h1></html>"
+        ]))
+        let detail = try await source.detail(comicId: "fallback")
+        XCTAssertEqual(detail.summary.title, "Fallback & Title")
+        await XCTAssertHiperdexThrows(try await source.detail(comicId: "bad")) { XCTAssertNotNil($0 as? HiperdexSourceError) }
+    }
+
+    func testFallbackLinksRunWhenRecognizedCardBlocksProduceNoItems() async throws {
+        let html = "<main class='c-page-content'><div class=\"manga-item\"><span>broken card</span></div></main><a href=\"/manga/fallback/\">Fallback &amp; Name</a>"
+        let source = HiperdexComicSource(transport: HiperdexTransport(["https://hiperdex.com/manga/?m_orderby=latest": html]))
+        let items = try await source.latest(page: 1)
+        XCTAssertEqual(items, [.init(sourceId: "hiperdex", comicId: "hiperdex:fallback", title: "Fallback & Name")])
+    }
 }
 
 private struct HiperdexRequest: Sendable { let url: String; let headers: [String: String] }
