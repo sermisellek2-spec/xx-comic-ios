@@ -174,9 +174,9 @@ final class BaoziSourceTests: XCTestCase {
 
     func testExplicitEmptyCollectionsAreAccepted() async throws {
         let transport = BaoziStubTransport(responses: [
-            "https://cn.dzmanga.com/list/new": baoziResponse("<html><div class=\"comics-list\"></div></html>"),
-            "https://cn.dzmanga.com/comic/empty": baoziResponse("<html><div class=\"comics-chapters\"></div></html>"),
-            "https://cn.dzmanga.com/comic/chapter/empty/0_0.html?page_direct=1": baoziResponse("<html><title>Empty</title><div class=\"comic-contain\"></div></html>"),
+            "https://cn.dzmanga.com/list/new": baoziResponse("<html><section class='grid comics-list is-empty'></section></html>"),
+            "https://cn.dzmanga.com/comic/empty": baoziResponse("<html><main class='foo comics-chapters bar'></main></html>"),
+            "https://cn.dzmanga.com/comic/chapter/empty/0_0.html?page_direct=1": baoziResponse("<html><title>Empty</title><article class='comic-contain reader'></article></html>"),
             "https://cn.dzmanga.com/api/bzmhq/amp_comic_list?limit=36&language=cn&__amp_source_origin=https%3A%2F%2Fcn.dzmanga.com&type=all&region=all&state=all&filter=*&page=2": baoziResponse("{\"items\":[]}")
         ])
         let source = BaoziComicSource(transport: transport)
@@ -189,6 +189,42 @@ final class BaoziSourceTests: XCTestCase {
         XCTAssertEqual(chapters, [])
         XCTAssertEqual(chapter.imageUrls, [])
         XCTAssertEqual(category, [])
+    }
+
+    func testHTMLShellWithoutBaoziBusinessContentIsRejected() async {
+        let errorPage = "<html><head><title>Sign in</title></head><body><h1>Rate limited</h1><amp-img src=\"https://error.example/logo.webp\"></amp-img></body></html>"
+        let operations: [(BaoziComicSource, (BaoziComicSource) async throws -> Void)] = [
+            (BaoziComicSource(transport: BaoziStubTransport(responses: ["https://cn.dzmanga.com/list/new": baoziResponse(errorPage)])), { source in _ = try await source.latest(page: 1) }),
+            (BaoziComicSource(transport: BaoziStubTransport(responses: ["https://cn.dzmanga.com/comic/bad": baoziResponse(errorPage)])), { source in _ = try await source.chapters(comicId: "bad") }),
+            (BaoziComicSource(transport: BaoziStubTransport(responses: ["https://cn.dzmanga.com/chapter/bad": baoziResponse(errorPage)])), { source in _ = try await source.chapter(url: "/chapter/bad") })
+        ]
+
+        for (source, operation) in operations {
+            await XCTAssertBaoziThrows(try await operation(source)) { error in
+                XCTAssertNotNil(error as? BaoziSourceError)
+            }
+        }
+    }
+
+    func testHTML4NamedEntitiesAreDecodedLikeAndroidHtmlFromHtml() async throws {
+        let html = """
+        <html><div class="comics-list"><div class="comics-card">
+          <a href="/comic/entities" title="Wait&hellip; &mdash; &copy; 2026">
+            <img src="https://img.example/entities.webp">
+            <small class="tags text-truncate">Price&nbsp;&euro; &trade;</small>
+          </a>
+        </div></div></html>
+        """
+        let source = BaoziComicSource(transport: BaoziStubTransport(responses: [
+            "https://cn.dzmanga.com/list/new": baoziResponse(html)
+        ]))
+
+        let comics = try await source.latest(page: 1)
+
+        XCTAssertEqual(comics, [ComicSummary(
+            sourceId: "baozimh", comicId: "entities", title: "Wait… — © 2026",
+            coverUrl: "https://img.example/entities.webp", subtitle: "Price € ™", tags: ["Price", "€", "™"]
+        )])
     }
 
     func testMalformedResponsesThrowInsteadOfLookingEmpty() async {
