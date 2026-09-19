@@ -117,6 +117,25 @@ final class D5d6SourceTests: XCTestCase {
         let items = try await D5d6ComicSource(transport: D5d6Transport([url: .init(data: data, statusCode: 200)])).latest(page: 1)
         XCTAssertEqual(items.map(\.title), ["漫画"])
     }
+
+    func testResponseHeaderCharsetTakesPriority() async throws {
+        let body = "<ul class='cart-list'><li><div class='cart-item'><a class='cart-cover' href='/jiujiucomic_10/'><img alt='Café'></a><div class='cart-info'><p><a>Café</a></p></div></div></li></ul>"
+        let response = HTTPResponse(data: body.data(using: .isoLatin1)!, statusCode: 200, textEncodingName: "iso-8859-1")
+        let url = "https://www.d5d6.com/jiujiucate_jiujiuquanbu_allvisit_0_1/"
+        let items = try await D5d6ComicSource(transport: D5d6Transport([url: response])).latest(page: 1)
+        XCTAssertEqual(items.map(\.title), ["Café"])
+    }
+
+    func testMissingCharsetDefaultsToGBKEvenWhenBytesAreValidUTF8() async throws {
+        var data = Data("<ul class='cart-list'><li><div class='cart-item'><a class='cart-cover' href='/jiujiucomic_11/'><img alt='".utf8)
+        data.append(contentsOf: [0xC2, 0xA2]) // UTF-8: ¢; GBK: 垄
+        data.append(Data("'></a><div class='cart-info'><p><a>".utf8))
+        data.append(contentsOf: [0xC2, 0xA2])
+        data.append(Data("</a></p></div></div></li></ul>".utf8))
+        let url = "https://www.d5d6.com/jiujiucate_jiujiuquanbu_allvisit_0_1/"
+        let items = try await D5d6ComicSource(transport: D5d6Transport([url: .init(data: data, statusCode: 200)])).latest(page: 1)
+        XCTAssertEqual(items.map(\.title), ["垄"])
+    }
 }
 
 private struct D5d6Request: Sendable { let url: String; let headers: [String: String] }
@@ -126,6 +145,6 @@ private actor D5d6Transport: HTTPTransport {
     func get(_ url: URL, headers: [String: String]) async throws -> HTTPResponse { requests.append(.init(url: url.absoluteString, headers: headers)); guard let response = responses[url.absoluteString] else { throw URLError(.badURL) }; return response }
     func count() -> Int { requests.count }
 }
-private extension HTTPResponse { static func text(_ body: String, status: Int = 200) -> Self { .init(data: Data(body.utf8), statusCode: status) } }
+private extension HTTPResponse { static func text(_ body: String, status: Int = 200) -> Self { .init(data: Data(body.utf8), statusCode: status, textEncodingName: "utf-8") } }
 private struct D5d6CancelledTransport: HTTPTransport { func get(_ url: URL, headers: [String: String]) async throws -> HTTPResponse { throw CancellationError() } }
 private func XCTAssertD5d6Throws<T>(_ expression: @autoclosure () async throws -> T, _ handler: (Error) -> Void, file: StaticString = #filePath, line: UInt = #line) async { do { _ = try await expression(); XCTFail("Expected throw", file: file, line: line) } catch { handler(error) } }

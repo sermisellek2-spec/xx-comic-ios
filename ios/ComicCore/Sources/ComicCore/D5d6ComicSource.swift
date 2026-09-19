@@ -1,4 +1,5 @@
 import Foundation
+import CoreFoundation
 
 public enum D5d6SourceError: Error, Equatable, LocalizedError, Sendable {
     case invalidResponse(String)
@@ -100,10 +101,20 @@ public struct D5d6ComicSource: ComicSource {
         let response = try await transport.get(url, headers: ["User-Agent": Self.userAgent, "Referer": referer])
         try Task.checkCancellation()
         guard (200..<400).contains(response.statusCode) else { throw HTTPTransportError.invalidStatusCode(response.statusCode) }
-        if let utf8 = String(data: response.data, encoding: .utf8) { return utf8 }
-        let gb18030 = String.Encoding(rawValue: 0x80000632)
-        guard let html = String(data: response.data, encoding: gb18030) else { throw parseError("响应编码无法识别") }
+        let declared = response.textEncodingName.flatMap { $0.isEmpty ? nil : $0 } ?? charsetName(in: response.data) ?? "GBK"
+        let name = declared.caseInsensitiveCompare("gb2312") == .orderedSame ? "GBK" : declared
+        guard let charset = CFStringCreateWithCString(nil, name, CFStringBuiltInEncodings.UTF8.rawValue) else { throw parseError("响应编码无法识别") }
+        let cfEncoding = CFStringConvertIANACharSetNameToEncoding(charset)
+        guard cfEncoding != kCFStringEncodingInvalidId else { throw parseError("响应字符集不支持：\(name)") }
+        let encoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(cfEncoding))
+        guard let html = String(data: response.data, encoding: encoding) else { throw parseError("响应编码无法识别") }
         return html
+    }
+
+    private func charsetName(in data: Data) -> String? {
+        guard let head = String(data: Data(data.prefix(4096)), encoding: .isoLatin1) else { return nil }
+        let name = first(#"charset\s*=\s*['\"]?([A-Za-z0-9_\-]+)"#, head)
+        return name.isEmpty ? nil : name
     }
 
     private func cards(_ html: String) throws -> [ComicSummary] {
