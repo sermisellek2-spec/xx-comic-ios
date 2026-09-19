@@ -125,3 +125,13 @@ func testLatestUsesPostCategoryPageAndDefaults() async throws {
 - [ ] 搜索 `/search?page={page}&title={keyword}&language=1` 使用Java表单编码，保留分页；动态筛选按网页顺序、tagClick参数、中文标签映射。详情保留评分嵌套span剥离、作者长链接回归、简介/封面/状态/最新章、目录为空的按需契约。章节仅取chapterlistload，保留站点分组sectionSlot，组内按数值ID升序、去重和连续chapterSlot；不要扫推荐区。
 - [ ] 正文先解析章节标题和被屏蔽状态，再按 `/imageshow.ashx?cid={chapterId}&page={page}&showtype=1&ispre=0` 顺序取页，Referer为章节URL。解析chapterimage JSON的ImagePix/Images/IsEnd，只保留ImagePix范围内图片，去重；两次连续无新增报错、最多1000次、未正常结束报错、空正文报错。fixture覆盖正常两页、重复图片、终止空数据/错误壳、无新增循环、取消中断零后续请求。保留HTTP失败，不吞取消。
 - [ ] 聚焦执行 `docker run --rm --mount 'type=bind,source=F:\softForCode\codex-project\xx-comic\.worktrees\ios-port\ios\ComicCore,target=/work' -w /work swift:5.10-jammy swift test --filter 'ManbenSourceTests|GmhSourceTests'`，再全量一次确认POST接口未破坏已有源。报告实际测试名称/数量、RED/GREEN、未覆盖平台编码差异。仅主代理提交和接线；独立审查后更新矩阵，不把fixture通过当作站点或设备验收。
+
+### Task 16: 站源 AES-CBC 平台解码
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/SourceAES.swift`、`ios/ComicCore/Tests/ComicCoreTests/SourceAESTests.swift`。不改现有站源或UIKit；随后催漫画/六漫画/拷贝/漫蛙直接调用。
+
+**Interface:** internal `SourceAES.decrypt(_ ciphertext: Data, key: Data, iv: Data) throws -> Data`；对应 Android `AES/CBC/PKCS5Padding`，AES块大小16时等于PKCS7。接受16/24/32字节密钥、16字节IV、正数且16整除密文；坏输入/填充必须报错。返回字节，不做站源JSON/图片语义验证，后者由消费者负责。
+
+- [ ] 新增固定已知密文测试：Android CuimhComicSourceTest.decryptsChapterImagesWithNativeAes 的 Base64 样本首16字节是IV，密钥为该源码 AES_KEY。解密JSON images必须为 `["https://img.example/1.webp","/static/2.webp"]`。先跑 `swift test --filter SourceAESTests` 观察缺实现失败；同时补24/32字节密钥固定向量和坏长度/坏padding回归。
+- [ ] Apple端 `import CommonCrypto` 调用 CCCrypt(kCCDecrypt,kCCAlgorithmAES,kCCOptionPKCS7Padding,...)，不写AES算法、不增加Swift依赖。Linux仅用于核心测试，使用已安装 `/usr/bin/openssl enc -d -aes-{128|192|256}-cbc` 的独立进程，参数数组不经过shell；临时目录保存输入输出并defer清理，避免管道阻塞，不打印站源公开格式密钥。调用前后检查取消；Apple分支需Xcode单独验收，Linux通过不能替代。
+- [ ] 再跑同聚焦测试，校验已知明文、三种密钥长度、错误填充/输入及预取消。记录Linux后端差异和命令；独立审查，不以抽象层测试替代后续源集成测试。
