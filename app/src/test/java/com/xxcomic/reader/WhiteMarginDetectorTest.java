@@ -174,4 +174,50 @@ public class WhiteMarginDetectorTest {
         // Safety margin: 5 - 2 = 3
         assertEquals(3, rect.left);
     }
+
+    @Test
+    public void buildCacheKeyFormatting() {
+        assertEquals("https://example.com/1.jpg|1000x1500|scroll",
+                WhiteMarginDetector.buildCacheKey("https://example.com/1.jpg", 1000, 1500, true));
+        assertEquals("https://example.com/1.jpg|1000x1500|paged",
+                WhiteMarginDetector.buildCacheKey("https://example.com/1.jpg", 1000, 1500, false));
+        assertEquals("|800x1200|paged",
+                WhiteMarginDetector.buildCacheKey(null, 800, 1200, false));
+    }
+
+    @Test
+    public void cropRectValidityCheck() {
+        WhiteMarginDetector.CropRect valid = new WhiteMarginDetector.CropRect(10, 20, 190, 280);
+        assertTrue(valid.isValid(200, 300));
+
+        // Exactly full size
+        assertTrue(new WhiteMarginDetector.CropRect(0, 0, 200, 300).isValid(200, 300));
+
+        // Negative left / top
+        assertFalse(new WhiteMarginDetector.CropRect(-1, 0, 200, 300).isValid(200, 300));
+        assertFalse(new WhiteMarginDetector.CropRect(0, -1, 200, 300).isValid(200, 300));
+
+        // Exceeding width / height
+        assertFalse(new WhiteMarginDetector.CropRect(0, 0, 201, 300).isValid(200, 300));
+        assertFalse(new WhiteMarginDetector.CropRect(0, 0, 200, 301).isValid(200, 300));
+
+        // Inverted or degenerate bounds
+        assertFalse(new WhiteMarginDetector.CropRect(100, 0, 100, 300).isValid(200, 300));
+        assertFalse(new WhiteMarginDetector.CropRect(150, 0, 100, 300).isValid(200, 300));
+        assertFalse(new WhiteMarginDetector.CropRect(0, 150, 200, 150).isValid(200, 300));
+        assertFalse(new WhiteMarginDetector.CropRect(0, 200, 200, 100).isValid(200, 300));
+    }
+
+    @Test
+    public void cropRectDimensionsAndProperties() {
+        WhiteMarginDetector.CropRect rect = new WhiteMarginDetector.CropRect(10, 20, 110, 220);
+        assertEquals(100, rect.width());
+        assertEquals(200, rect.height());
+        assertEquals(10, rect.left);
+        assertEquals(20, rect.top);
+        assertEquals(110, rect.right);
+        assertEquals(220, rect.bottom);
+        assertFalse(rect.isNoOp(110, 220));
+        assertTrue(new WhiteMarginDetector.CropRect(0, 0, 100, 200).isNoOp(100, 200));
+    }
 }

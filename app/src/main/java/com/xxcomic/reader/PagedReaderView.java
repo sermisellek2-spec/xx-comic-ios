@@ -25,6 +25,7 @@ public final class PagedReaderView extends FrameLayout {
     private final List<String> urls;
     private final int inputMode;
     private final boolean leftHand;
+    private final ImageLoader loader;
     private final Listener listener;
     private boolean pinchZoomEnabled = true;
     private boolean animationDisabled = false;
@@ -39,6 +40,7 @@ public final class PagedReaderView extends FrameLayout {
         this.urls = new ArrayList<>(images);
         this.inputMode = inputMode;
         this.leftHand = leftHand;
+        this.loader = loader;
         this.pinchZoomEnabled = pinchZoomEnabled;
         this.animationDisabled = animationDisabled;
         this.listener = listener;
@@ -129,6 +131,19 @@ public final class PagedReaderView extends FrameLayout {
 
     public boolean isAnimationDisabled() {
         return animationDisabled;
+    }
+
+    public void refreshVisiblePages() {
+        if (disposed || loader == null) return;
+        for (Holder holder : holders) {
+            int pos = holder.getBindingAdapterPosition();
+            if (pos >= 0 && pos < urls.size() && holder.image != null) {
+                holder.image.resetZoom();
+                if (holder.future != null) holder.future.cancel(true);
+                holder.image.setTag(urls.get(pos));
+                holder.future = loader.load(holder.image, urls.get(pos));
+            }
+        }
     }
 
     private void updateUserInputEnabled() {

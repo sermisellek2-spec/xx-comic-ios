@@ -376,6 +376,7 @@ public class MainActivity extends Activity {
     private boolean readerDisablePageAnimation = false;
     private boolean readerCropWhiteMargins = false;
     private final android.util.LruCache<String, WhiteMarginDetector.CropRect> readerCropBoundsCache = new android.util.LruCache<>(256);
+    private final List<ContinuousReaderItem> continuousItems = new ArrayList<>();
     private ColorMatrixColorFilter readerEinkFilter;
 
     // Local library pickers must not overlap source configuration/log export requests (1001-1004).
@@ -539,13 +540,63 @@ public class MainActivity extends Activity {
             return bitmap == null ? new WhiteMarginDetector.CropRect(0, 0, 1, 1)
                     : new WhiteMarginDetector.CropRect(0, 0, bitmap.getWidth(), bitmap.getHeight());
         }
-        String cropKey = (isScroll ? "s_" : "p_") + imageUrl;
+        String cropKey = WhiteMarginDetector.buildCacheKey(imageUrl, bitmap.getWidth(), bitmap.getHeight(), isScroll);
         WhiteMarginDetector.CropRect rect = readerCropBoundsCache.get(cropKey);
-        if (rect == null) {
-            rect = WhiteMarginDetector.detect(bitmap, !isScroll);
-            readerCropBoundsCache.put(cropKey, rect);
+        if (rect != null && rect.isValid(bitmap.getWidth(), bitmap.getHeight())) {
+            return rect;
         }
+        return null;
+    }
+
+    private WhiteMarginDetector.CropRect getOrComputeReaderCropRectBackground(String imageUrl, Bitmap bitmap, boolean isScroll) {
+        if (!readerCropWhiteMargins || bitmap == null || bitmap.isRecycled()) {
+            return bitmap == null ? new WhiteMarginDetector.CropRect(0, 0, 1, 1)
+                    : new WhiteMarginDetector.CropRect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        }
+        String cropKey = WhiteMarginDetector.buildCacheKey(imageUrl, bitmap.getWidth(), bitmap.getHeight(), isScroll);
+        WhiteMarginDetector.CropRect rect = readerCropBoundsCache.get(cropKey);
+        if (rect != null && rect.isValid(bitmap.getWidth(), bitmap.getHeight())) {
+            return rect;
+        }
+        rect = WhiteMarginDetector.detect(bitmap, !isScroll);
+        if (rect == null || !rect.isValid(bitmap.getWidth(), bitmap.getHeight())) {
+            rect = new WhiteMarginDetector.CropRect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        }
+        readerCropBoundsCache.put(cropKey, rect);
         return rect;
+    }
+
+    private void asyncComputeReaderCrop(String imageUrl, Bitmap bitmap, boolean isScroll,
+                                        int generation, ImageView target) {
+        if (TextUtils.isEmpty(imageUrl) || bitmap == null || bitmap.isRecycled()) return;
+        submitReaderImage(() -> {
+            if (generation != readerGeneration || activityDestroyed || bitmap.isRecycled()) return;
+            WhiteMarginDetector.CropRect crop = getOrComputeReaderCropRectBackground(imageUrl, bitmap, isScroll);
+            main.post(() -> {
+                if (generation != readerGeneration || activityDestroyed || target == null
+                        || !TextUtils.equals(imageUrl, (String) target.getTag())) return;
+                if (!readerCropWhiteMargins) {
+                    target.setImageBitmap(bitmap);
+                    return;
+                }
+                if (crop != null && !crop.isNoOp(bitmap.getWidth(), bitmap.getHeight())) {
+                    target.setImageDrawable(new CroppedBitmapDrawable(bitmap,
+                            new Rect(crop.left, crop.top, crop.right, crop.bottom)));
+                } else {
+                    target.setImageBitmap(bitmap);
+                }
+                if (isScroll && target.getLayoutParams() != null) {
+                    int contentWidth = readerContentWidth();
+                    int targetHeight = computeReaderImageHeight(imageUrl, bitmap, contentWidth);
+                    ViewGroup.LayoutParams params = target.getLayoutParams();
+                    if (params != null && params.height != targetHeight) {
+                        params.height = targetHeight;
+                        target.setLayoutParams(params);
+                        readerImageHeights.put(imageUrl, targetHeight);
+                    }
+                }
+            });
+        });
     }
 
     private void setReaderImageContent(ImageView target, String imageUrl, Bitmap bitmap, boolean isScroll) {
@@ -556,9 +607,15 @@ public class MainActivity extends Activity {
         }
         if (readerCropWhiteMargins) {
             WhiteMarginDetector.CropRect crop = getReaderCropRect(imageUrl, bitmap, isScroll);
-            if (!crop.isNoOp(bitmap.getWidth(), bitmap.getHeight())) {
-                target.setImageDrawable(new CroppedBitmapDrawable(bitmap,
-                        new Rect(crop.left, crop.top, crop.right, crop.bottom)));
+            if (crop != null) {
+                if (!crop.isNoOp(bitmap.getWidth(), bitmap.getHeight())) {
+                    target.setImageDrawable(new CroppedBitmapDrawable(bitmap,
+                            new Rect(crop.left, crop.top, crop.right, crop.bottom)));
+                    return;
+                }
+            } else {
+                target.setImageBitmap(bitmap);
+                asyncComputeReaderCrop(imageUrl, bitmap, isScroll, readerGeneration, target);
                 return;
             }
         }
@@ -569,7 +626,9 @@ public class MainActivity extends Activity {
         if (bitmap == null || bitmap.isRecycled()) return Math.max(1, contentWidth * 4 / 3);
         if (readerCropWhiteMargins) {
             WhiteMarginDetector.CropRect crop = getReaderCropRect(imageUrl, bitmap, true);
-            return Math.max(1, Math.round(contentWidth * crop.height() / (float) Math.max(1, crop.width())));
+            if (crop != null) {
+                return Math.max(1, Math.round(contentWidth * crop.height() / (float) Math.max(1, crop.width())));
+            }
         }
         return Math.max(1, Math.round(contentWidth * bitmap.getHeight() / (float) Math.max(1, bitmap.getWidth())));
     }
@@ -3545,10 +3604,85 @@ public class MainActivity extends Activity {
                     public void onCropWhiteMarginsChanged(boolean enabled) {
                         readerCropWhiteMargins = enabled;
                         saveLocalState();
-                        readerCropBoundsCache.evictAll();
-                        reloadCurrentReaderContent();
+                        applyCropWhiteMarginsInPlace();
                     }
                 });
+    }
+
+    private void applyCropWhiteMarginsInPlace() {
+        if (!readerVisible || textReaderView != null) return;
+        if (readerLayoutMode == 0 && readerList != null) {
+            applyScrollCropInPlace();
+        } else if (readerPager != null) {
+            readerPager.refreshVisiblePages();
+        }
+    }
+
+    private void applyScrollCropInPlace() {
+        if (readerList == null || continuousItems.isEmpty()) return;
+        int count = readerList.getCount();
+        if (count <= 0) return;
+        int childCount = readerList.getChildCount();
+        View lastChild = childCount > 0 ? readerList.getChildAt(childCount - 1) : null;
+        boolean atEnd = (readerList.getLastVisiblePosition() == count - 1 && lastChild != null
+                && lastChild.getBottom() <= readerList.getHeight() - readerList.getPaddingBottom());
+
+        int firstVisible = readerList.getFirstVisiblePosition();
+        View firstChild = readerList.getChildAt(0);
+        double offsetRatio = 0.0;
+        if (firstChild != null && firstChild.getHeight() > 0) {
+            offsetRatio = Math.max(0.0, Math.min(1.0, -firstChild.getTop() / (double) firstChild.getHeight()));
+        }
+        ContinuousReaderItem anchorItem = (firstVisible >= 0 && firstVisible < continuousItems.size())
+                ? continuousItems.get(firstVisible) : null;
+
+        int contentWidth = readerContentWidth();
+
+        for (int i = 0; i < childCount; i++) {
+            View child = readerList.getChildAt(i);
+            if (child instanceof ImageView) {
+                ImageView iv = (ImageView) child;
+                String imageUrl = (String) iv.getTag();
+                if (!TextUtils.isEmpty(imageUrl)) {
+                    Bitmap bmp = readerBitmapCache.get(imageUrl);
+                    if (bmp != null && !bmp.isRecycled()) {
+                        int newH = computeReaderImageHeight(imageUrl, bmp, contentWidth);
+                        readerImageHeights.put(imageUrl, newH);
+                        ViewGroup.LayoutParams lp = iv.getLayoutParams();
+                        if (lp != null && lp.height != newH) {
+                            lp.height = newH;
+                            iv.setLayoutParams(lp);
+                        }
+                        setReaderImageContent(iv, imageUrl, bmp, true);
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < continuousItems.size(); i++) {
+            ContinuousReaderItem item = continuousItems.get(i);
+            if (item != null && !TextUtils.isEmpty(item.imageUrl)) {
+                Bitmap bmp = readerBitmapCache.get(item.imageUrl);
+                if (bmp != null && !bmp.isRecycled()) {
+                    int newH = computeReaderImageHeight(item.imageUrl, bmp, contentWidth);
+                    readerImageHeights.put(item.imageUrl, newH);
+                }
+            }
+        }
+
+        if (readerList.getAdapter() instanceof BaseAdapter) {
+            ((BaseAdapter) readerList.getAdapter()).notifyDataSetChanged();
+        }
+
+        if (atEnd) {
+            readerList.post(() -> alignReaderBottom(readerList));
+        } else if (anchorItem != null) {
+            Integer anchorHeightObj = readerImageHeights.get(anchorItem.imageUrl);
+            int anchorHeight = anchorHeightObj != null ? anchorHeightObj : (firstChild != null ? firstChild.getHeight() : 1);
+            int newTop = -(int) Math.round(offsetRatio * anchorHeight) - readerList.getPaddingTop();
+            readerList.setSelectionFromTop(firstVisible, newTop);
+            saveContinuousReaderPosition(readerList, anchorItem);
+        }
     }
 
     private void reloadCurrentReaderContent() {
@@ -5341,7 +5475,7 @@ public class MainActivity extends Activity {
             int contentWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels);
             int placeholderHeight = Math.max(1, contentWidth * 4 / 3);
             List<String> imageUrls = new ArrayList<>(page.imageUrls);
-            List<ContinuousReaderItem> continuousItems = new ArrayList<>();
+            continuousItems.clear();
             for (int i = 0; i < page.imageUrls.size(); i++) {
                 continuousItems.add(new ContinuousReaderItem(page.imageUrls.get(i), chapterUrl, readerChapterIndex,
                         i, page.imageUrls.size(), readerPositionKey(detail.summary.comicId, activeChapter)));
@@ -6448,6 +6582,7 @@ public class MainActivity extends Activity {
         main.removeCallbacks(readerTimeUpdateRunnable);
         readerOverlayBadge = null;
         readerLoadedChapterUrls.clear();
+        continuousItems.clear();
         readerToolbarTitle = null;
         readerList = null;
         readerRestoringPosition = null;
@@ -8100,6 +8235,10 @@ public class MainActivity extends Activity {
                 }
                 if (bitmap == null) throw new IOException("Reader image decode failed: " + imageUrl);
                 Bitmap loaded = bitmap;
+                boolean isScroll = (list != null);
+                if (readerCropWhiteMargins) {
+                    getOrComputeReaderCropRectBackground(imageUrl, loaded, isScroll);
+                }
                 int targetHeight = computeReaderImageHeight(imageUrl, loaded, readerContentWidth());
                 readerBitmapCache.put(imageUrl, loaded);
                 readerImageHeights.put(imageUrl, targetHeight);

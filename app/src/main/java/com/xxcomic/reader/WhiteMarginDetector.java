@@ -11,6 +11,10 @@ public final class WhiteMarginDetector {
     public static final int NEAR_WHITE_MIN_COMPONENT = 245;
     public static final int NEAR_WHITE_MAX_DELTA = 10;
 
+    public static String buildCacheKey(String imageUrl, int width, int height, boolean isScroll) {
+        return (imageUrl == null ? "" : imageUrl) + "|" + width + "x" + height + "|" + (isScroll ? "scroll" : "paged");
+    }
+
     public interface PixelReader {
         int getPixel(int x, int y);
         int getWidth();
@@ -40,6 +44,11 @@ public final class WhiteMarginDetector {
 
         public boolean isNoOp(int origWidth, int origHeight) {
             return left == 0 && top == 0 && right == origWidth && bottom == origHeight;
+        }
+
+        public boolean isValid(int origWidth, int origHeight) {
+            return left >= 0 && top >= 0 && right <= origWidth && bottom <= origHeight
+                    && left < right && top < bottom;
         }
 
         @Override
@@ -263,6 +272,11 @@ public final class WhiteMarginDetector {
                 bottom = Math.min(height, bottom + safetyY);
             }
         }
+
+        left = Math.max(0, Math.min(width - 1, left));
+        top = Math.max(0, Math.min(height - 1, top));
+        right = Math.max(left + 1, Math.min(width, right));
+        bottom = Math.max(top + 1, Math.min(height, bottom));
 
         if (right <= left || bottom <= top) {
             return new CropRect(0, 0, width, height);
