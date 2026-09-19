@@ -69,6 +69,7 @@ import com.xxcomic.reader.HistoryProgressLabel;
 import com.xxcomic.reader.ReadingHabitTracker;
 import com.xxcomic.reader.CroppedBitmapDrawable;
 import com.xxcomic.reader.WhiteMarginDetector;
+import com.xxcomic.search.GlobalSearchMatchHelper;
 
 import com.xxcomic.source.BaoziComicSource;
 import com.xxcomic.source.AntbywComicSource;
@@ -638,6 +639,7 @@ public class MainActivity extends Activity {
     private LinearLayout globalSearchResultsContainer;     // 当前选中站源的结果列表容器（持久，便于局部刷新）
     private final Set<String> globalSearchShownIds = new HashSet<>();  // 已显示 comicId 去重
     private String selectedGlobalSearchSourceId = "";
+    private boolean userSelectedGlobalSearchSource = false;
     private int globalSearchTotalSources;          // 本次搜索总站源数
     private int globalSearchCompletedSources;      // 已完成站源数（含失败）
     private int globalSearchFailedSources;         // 失败站源数
@@ -3744,26 +3746,56 @@ public class MainActivity extends Activity {
         for (ComicSource source : sources) {
             String sourceId = source.id();
             boolean selected = sourceId.equals(selectedGlobalSearchSourceId);
-            int count = globalResultsForSource(sourceId).size();
+            List<ComicModels.ComicSummary> sourceList = globalResultsForSource(sourceId);
+            int count = sourceList.size();
             boolean pending = globalSearchLoading
                     && !globalSearchFailedSourceIds.contains(sourceId)
                     && !globalSearchCompletedSourceIds.contains(sourceId);
+            boolean hasExactMatch = GlobalSearchMatchHelper.hasExactTitleMatch(sourceList, globalSearchQuery);
             String label = source.name() + (count > 0 ? " " + count : pending ? " ..." : "");
+
+            FrameLayout tabContainer = new FrameLayout(this);
             TextView tab = UIHelpers.chip(this, label, selected);
             tab.setSingleLine(true);
             tab.setEllipsize(TextUtils.TruncateAt.END);
             tab.setGravity(Gravity.CENTER);
             tab.setMinWidth(UIHelpers.dp(this, 108));
             tab.setMaxWidth(UIHelpers.dp(this, 150));
-            tab.setOnClickListener(v -> {
+            tabContainer.addView(tab, new FrameLayout.LayoutParams(-2, UIHelpers.dp(this, 36)));
+
+            if (hasExactMatch) {
+                View dot = new View(this);
+                int dotSize = UIHelpers.dp(this, 5);
+                android.graphics.drawable.GradientDrawable dotBg = new android.graphics.drawable.GradientDrawable();
+                dotBg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                dotBg.setColor(0xFFFF4D4F);
+                dot.setBackground(dotBg);
+                dot.setClickable(false);
+                dot.setFocusable(false);
+
+                FrameLayout.LayoutParams dotParams = new FrameLayout.LayoutParams(dotSize, dotSize, Gravity.TOP | Gravity.END);
+                dotParams.topMargin = UIHelpers.dp(this, 4);
+                dotParams.rightMargin = UIHelpers.dp(this, 6);
+                tabContainer.addView(dot, dotParams);
+            }
+
+            String accessibilityText = label + (hasExactMatch ? "，有同名作品" : "");
+            tab.setContentDescription(accessibilityText);
+            tabContainer.setContentDescription(accessibilityText);
+
+            View.OnClickListener clickListener = v -> {
                 cancelCurrentImageTasks();
+                userSelectedGlobalSearchSource = true;
                 selectedGlobalSearchSourceId = sourceId;
                 refreshGlobalSearchTabs();
                 refreshGlobalSearchResults();
-            });
+            };
+            tab.setOnClickListener(clickListener);
+            tabContainer.setOnClickListener(clickListener);
+
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-2, UIHelpers.dp(this, 36));
             params.setMargins(0, UIHelpers.dp(this, 6), UIHelpers.dp(this, 8), UIHelpers.dp(this, 6));
-            tabs.addView(tab, params);
+            tabs.addView(tabContainer, params);
         }
     }
 
@@ -3955,6 +3987,7 @@ public class MainActivity extends Activity {
     }
 
     private void addGlobalSearchSourceResults(String sourceId, List<ComicModels.ComicSummary> result) {
+        List<ComicModels.ComicSummary> prioritized = GlobalSearchMatchHelper.prioritizeExactMatches(result, globalSearchQuery);
         List<ComicModels.ComicSummary> sourceResults = globalSearchResultsBySource.get(sourceId);
         if (sourceResults == null) {
             sourceResults = new ArrayList<>();
@@ -3965,7 +3998,7 @@ public class MainActivity extends Activity {
             sourceShownIds = new HashSet<>();
             globalSearchShownIdsBySource.put(sourceId, sourceShownIds);
         }
-        for (ComicModels.ComicSummary item : result) {
+        for (ComicModels.ComicSummary item : prioritized) {
             if (sourceShownIds.add(item.comicId)) {
                 sourceResults.add(item);
                 globalSearchResults.add(item);
@@ -6860,6 +6893,7 @@ public class MainActivity extends Activity {
 
     private void startGlobalSearch(String keyword) {
         globalSearchQuery = keyword == null ? "" : keyword.trim();
+        userSelectedGlobalSearchSource = false;
         globalSearchResults.clear();
         globalSearchShownIds.clear();
         globalSearchResultsBySource.clear();
@@ -6878,6 +6912,7 @@ public class MainActivity extends Activity {
         globalSearchFailedSources = 0;
         globalSearchLoadingView = null;
         globalSearchLoading = true;
+        refreshGlobalSearchTabs();
         showTab(1);
         runGlobalSearch(globalSearchQuery);
     }
@@ -6918,7 +6953,7 @@ public class MainActivity extends Activity {
                 boolean verificationRequired = false;
                 try {
                     List<ComicModels.ComicSummary> got = client.search(query, 1);
-                    if (got != null) partial = got;
+                    if (got != null) partial = GlobalSearchMatchHelper.prioritizeExactMatches(got, query);
                 } catch (Exception e) {
                     failed = true;
                     verificationRequired = isVerificationRequired(e);
@@ -6931,7 +6966,9 @@ public class MainActivity extends Activity {
                     String sourceId = client.id();
                     if (!isFailed) {
                         addGlobalSearchSourceResults(sourceId, result);
-                        if (!globalResultsForSource(sourceId).isEmpty() && globalResultsForSource(selectedGlobalSearchSourceId).isEmpty()) {
+                        if (!userSelectedGlobalSearchSource
+                                && !globalResultsForSource(sourceId).isEmpty()
+                                && globalResultsForSource(selectedGlobalSearchSourceId).isEmpty()) {
                             selectedGlobalSearchSourceId = sourceId;
                         }
                     }
