@@ -66,3 +66,7 @@ Docker 核心测试、UIKit 语法检查、Android 基准检查。独立审查�
 对照 FiveUmComicSource.java、SourceConfig.fiveUm 和 SourceFilters，新增单一 FiveUmComicSource 适配器，通过两份默认配置支持 manhuazhan/漫画栈/https://www.60ti.com 与 bbyin/比卡漫画/https://bbyin.com。复用 ComicSource、HTTPTransport、HTML4EntityDecoder。迁移最新分页、仅第一页搜索（Java表单URL编码）、动态题材/状态、详情作者/封面/标签/简介/最新章但返回空目录、独立目录顺序和URL去重、仅正文comic-image图片及懒加载属性优先级。ID含站源前缀，支持旧详情URL输入。
 
 测试请求URL/请求头、双站隔离、筛选文档顺序/全部项/重复标签、详情不暴露目录、章节顺序/去重/正文范围、HTML实体、HTTP失败和取消。遵循现有约定，合法空列表可以为空，错误HTML壳不冒充搜索无结果，缺标题/筛选/正文必须报中文错误。不增加第三方依赖。注册放在习惯任务完成后，由主代理按安卓相对顺序接线以免AppEnvironment冲突；只改iOS，Windows测试不替代设备验证。
+
+### Task 10: 漫客栈
+
+对照 MkzhanComicSource.java 和 SourceConfig.mkzhan，新增 MkzhanComicSource.swift 及测试。保留 latest不强加is_free而category筛选默认is_free=1 的区别；搜索仅第一页、Java表单编码；动态四组筛选和参数顺序；限定列表容器、封面/标题/更新文本回退和去重；详情携带同次HTML中目录、data-hreflink章节顺序及“开始阅读”排除。章节调用comic.mkzcdn.com既有公开API，从data.page提取图片去重、http升级https，保留章节ID为comic/chapter及url规范化。保留请求头和可取消HTTP契约。错误响应不能冒充正常内容；合法空列表/目录仍可返回。测试先行，固定fixture对照URL及解析，不访问账号、不新增依赖、不修改Android。主代理注册，不与其他实现者同时写AppEnvironment。
