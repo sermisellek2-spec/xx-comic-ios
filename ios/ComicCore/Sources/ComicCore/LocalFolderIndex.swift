@@ -28,7 +28,7 @@ struct LocalFolderIndex {
                 guard value.isRegularFile == true, let size = value.fileSize else { throw LocalLibraryError.invalidBook }
                 guard size <= LocalLibrary.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
                 totalBytes += Int64(size)
-                guard totalBytes <= 20 * 1024 * 1024 * 1024 else { throw LocalLibraryError.folderTooLarge }
+                guard totalBytes <= LocalLibrary.maximumImportBytes else { throw LocalLibraryError.folderTooLarge }
                 if try isReadableImage(url) { found.append((relative, url)) }
             }
         }

@@ -21,10 +21,17 @@ public struct LocalBookChapter: Codable, Equatable, Sendable {
 /// A complete import becomes visible through a single directory rename.
 public struct LocalLibrary: Sendable {
     public static let maximumImageBytes = 40 * 1024 * 1024
+    static let maximumImportBytes: Int64 = 20 * 1024 * 1024 * 1024
+    private static let copyChunkBytes = 256 * 1024
     private let directoryPath: String
+    private let readChunk: @Sendable (FileHandle, Int) throws -> Data?
     public var directory: URL { URL(fileURLWithPath: directoryPath, isDirectory: true) }
     public init(directory: URL) throws {
+        try self.init(directory: directory, readChunk: { try $0.read(upToCount: $1) })
+    }
+    init(directory: URL, readChunk: @escaping @Sendable (FileHandle, Int) throws -> Data?) throws {
         directoryPath = directory.path
+        self.readChunk = readChunk
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
     public func books() throws -> [LocalBook] {
@@ -47,8 +54,11 @@ public struct LocalLibrary: Sendable {
         let pageNames = Set(book.pages)
         guard UUID(uuidString: book.id) != nil, !book.pages.isEmpty, pageNames.count == book.pages.count else { throw LocalLibraryError.invalidBook }
         if let chapters = book.chapters {
+            let chapterPages = chapters.flatMap(\.pages)
             guard !chapters.isEmpty, Set(chapters.map(\.id)).count == chapters.count,
-                  chapters.allSatisfy({ !$0.id.isEmpty && !$0.id.contains("/") && !$0.id.contains("\\") && $0.id != "." && $0.id != ".." && !$0.pages.isEmpty && $0.pages.allSatisfy(pageNames.contains) }) else { throw LocalLibraryError.invalidBook }
+                  chapters.allSatisfy({ !$0.id.isEmpty && !$0.id.contains("/") && !$0.id.contains("\\") && $0.id != "." && $0.id != ".." && !$0.pages.isEmpty && $0.pages.allSatisfy(pageNames.contains) }),
+                  chapterPages.count == book.pages.count, Set(chapterPages).count == chapterPages.count,
+                  Set(chapterPages) == pageNames else { throw LocalLibraryError.invalidBook }
         }
         return try book.pages.map { name in
             guard name != ".", name != "..", !name.contains("/"), !name.contains("\\"), !name.isEmpty else { throw LocalLibraryError.invalidBook }
@@ -73,13 +83,14 @@ public struct LocalLibrary: Sendable {
         try manager.createDirectory(at: staging, withIntermediateDirectories: false)
         defer { if manager.fileExists(atPath: staging.path) { try? manager.removeItem(at: staging) } }
         var names: [String] = []
+        var totalBytes: Int64 = 0
         for (index, file) in files.enumerated() {
             try Task.checkCancellation()
             let attributes = try file.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
             guard attributes.isRegularFile == true, attributes.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
             guard let size = attributes.fileSize, size <= Self.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
             let name = "\(index)." + file.pathExtension.lowercased()
-            try manager.copyItem(at: file, to: staging.appendingPathComponent(name))
+            try copy(file, to: staging.appendingPathComponent(name), totalBytes: &totalBytes)
             names.append(name)
         }
         let cleaned = SearchRules.trim(title)
@@ -91,6 +102,26 @@ public struct LocalLibrary: Sendable {
         try Task.checkCancellation()
         try manager.moveItem(at: staging, to: directory.appendingPathComponent(id, isDirectory: true))
         return book
+    }
+    private func copy(_ source: URL, to destination: URL, totalBytes: inout Int64) throws {
+        guard FileManager.default.createFile(atPath: destination.path, contents: nil) else { throw LocalLibraryError.invalidBook }
+        let input = try FileHandle(forReadingFrom: source)
+        defer { try? input.close() }
+        let output = try FileHandle(forWritingTo: destination)
+        defer { try? output.close() }
+        var imageBytes: Int64 = 0
+        while true {
+            try Task.checkCancellation()
+            guard let data = try readChunk(input, Self.copyChunkBytes), !data.isEmpty else { break }
+            try Task.checkCancellation()
+            let count = Int64(data.count)
+            guard count <= Int64(Self.maximumImageBytes) - imageBytes else { throw LocalLibraryError.imageTooLarge }
+            guard count <= Self.maximumImportBytes - totalBytes else { throw LocalLibraryError.folderTooLarge }
+            try output.write(contentsOf: data)
+            imageBytes += count
+            totalBytes += count
+        }
+        try Task.checkCancellation()
     }
 }
 

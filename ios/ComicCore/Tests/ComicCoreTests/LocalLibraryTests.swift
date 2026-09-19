@@ -56,4 +56,62 @@ final class LocalLibraryTests: XCTestCase {
         XCTAssertThrowsError(try library.importImages(title: "大图", files: [file]))
         XCTAssertTrue(try library.books().isEmpty)
     }
+
+    func testCancellationDuringCopyRemovesStagingAndPreservesSource() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let file = root.appendingPathComponent("large.jpg")
+        XCTAssertTrue(FileManager.default.createFile(atPath: file.path, contents: nil))
+        let handle = try FileHandle(forWritingTo: file)
+        try handle.truncate(atOffset: 4 * 1024 * 1024)
+        try handle.close()
+        let secondReadStarted = expectation(description: "second copy chunk started")
+        let reader = BlockingLocalCopyReader(blocked: secondReadStarted)
+        let library = try LocalLibrary(directory: root.appendingPathComponent("library"), readChunk: { handle, count in
+            try reader.read(handle, count: count)
+        })
+
+        let task = Task.detached(priority: .background) {
+            try library.importImages(title: "复制中取消", files: [file])
+        }
+        await fulfillment(of: [secondReadStarted], timeout: 2)
+        let staging = try XCTUnwrap(FileManager.default.contentsOfDirectory(at: library.directory, includingPropertiesForKeys: nil)
+            .first(where: { $0.lastPathComponent.hasPrefix(".import-") }))
+        let partialSize = try XCTUnwrap(staging.appendingPathComponent("0.jpg").resourceValues(forKeys: [.fileSizeKey]).fileSize)
+        XCTAssertGreaterThan(partialSize, 0)
+        XCTAssertLessThan(partialSize, 4 * 1024 * 1024)
+        task.cancel()
+        reader.resume()
+
+        do {
+            _ = try await task.value
+            XCTFail("复制期间取消不应发布书籍")
+        } catch {
+            XCTAssertTrue(error is CancellationError, "unexpected error: \(error)")
+        }
+        XCTAssertTrue(try library.books().isEmpty)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), [])
+        XCTAssertEqual(try file.resourceValues(forKeys: [.fileSizeKey]).fileSize, 4 * 1024 * 1024)
+    }
+}
+
+private final class BlockingLocalCopyReader: @unchecked Sendable {
+    private let blocked: XCTestExpectation
+    private let semaphore = DispatchSemaphore(value: 0)
+    private var reads = 0
+
+    init(blocked: XCTestExpectation) { self.blocked = blocked }
+
+    func read(_ handle: FileHandle, count: Int) throws -> Data? {
+        let data = try handle.read(upToCount: count)
+        reads += 1
+        if reads == 2 {
+            blocked.fulfill()
+            semaphore.wait()
+        }
+        return data
+    }
+
+    func resume() { semaphore.signal() }
 }

@@ -86,6 +86,15 @@ final class LocalFolderTests: XCTestCase {
         XCTAssertThrowsError(try library.pageURLs(for: escape))
         let missing = LocalBook(id: id, title: "缺页", createdAt: 0, pages: ["0.jpg"], chapters: [.init(id: "chapter", title: "章", pages: ["not-in-book.jpg"])])
         XCTAssertThrowsError(try library.pageURLs(for: missing))
+        let repeated = LocalBook(id: id, title: "重复分章", createdAt: 0, pages: ["0.jpg", "1.jpg"], chapters: [
+            .init(id: "chapter-1", title: "第一章", pages: ["0.jpg"]),
+            .init(id: "chapter-2", title: "第二章", pages: ["0.jpg", "1.jpg"])
+        ])
+        XCTAssertThrowsError(try library.pageURLs(for: repeated))
+        let omitted = LocalBook(id: id, title: "遗漏分章", createdAt: 0, pages: ["0.jpg", "1.jpg"], chapters: [
+            .init(id: "chapter", title: "第一章", pages: ["0.jpg"])
+        ])
+        XCTAssertThrowsError(try library.pageURLs(for: omitted))
     }
 
     private func fixture(_ files: [String: UInt8]) throws -> URL {
