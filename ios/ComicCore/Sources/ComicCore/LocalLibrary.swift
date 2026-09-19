@@ -5,6 +5,17 @@ public struct LocalBook: Codable, Equatable, Sendable {
     public let title: String
     public let createdAt: TimeInterval
     public let pages: [String]
+    public let chapters: [LocalBookChapter]?
+
+    public init(id: String, title: String, createdAt: TimeInterval, pages: [String], chapters: [LocalBookChapter]? = nil) {
+        self.id = id; self.title = title; self.createdAt = createdAt; self.pages = pages; self.chapters = chapters
+    }
+}
+
+public struct LocalBookChapter: Codable, Equatable, Sendable {
+    public let id: String
+    public let title: String
+    public let pages: [String]
 }
 
 /// A complete import becomes visible through a single directory rename.
@@ -33,7 +44,12 @@ public struct LocalLibrary: Sendable {
         return book
     }
     public func pageURLs(for book: LocalBook) throws -> [URL] {
-        guard UUID(uuidString: book.id) != nil, !book.pages.isEmpty else { throw LocalLibraryError.invalidBook }
+        let pageNames = Set(book.pages)
+        guard UUID(uuidString: book.id) != nil, !book.pages.isEmpty, pageNames.count == book.pages.count else { throw LocalLibraryError.invalidBook }
+        if let chapters = book.chapters {
+            guard !chapters.isEmpty, Set(chapters.map(\.id)).count == chapters.count,
+                  chapters.allSatisfy({ !$0.id.isEmpty && !$0.id.contains("/") && !$0.id.contains("\\") && $0.id != "." && $0.id != ".." && !$0.pages.isEmpty && $0.pages.allSatisfy(pageNames.contains) }) else { throw LocalLibraryError.invalidBook }
+        }
         return try book.pages.map { name in
             guard name != ".", name != "..", !name.contains("/"), !name.contains("\\"), !name.isEmpty else { throw LocalLibraryError.invalidBook }
             return directory.appendingPathComponent(book.id, isDirectory: true).appendingPathComponent(name)
@@ -44,13 +60,20 @@ public struct LocalLibrary: Sendable {
                      coverUrl: try pageURLs(for: book).first?.absoluteString ?? "", subtitle: "\(book.pages.count) 页")
     }
     public func importImages(title: String, files: [URL]) throws -> LocalBook {
+        try importFiles(title: title, files: files.sorted(by: { NaturalPathOrder.less($0.lastPathComponent, $1.lastPathComponent) }), groups: nil)
+    }
+    public func importFolder(title: String, folder: URL, isReadableImage: (URL) throws -> Bool) throws -> LocalBook {
+        let index = try LocalFolderIndex(folder: folder, isReadableImage: isReadableImage)
+        return try importFiles(title: title, files: index.files, groups: index.groups)
+    }
+    private func importFiles(title: String, files: [URL], groups: [LocalFolderIndex.Group]?) throws -> LocalBook {
         guard !files.isEmpty else { throw LocalLibraryError.emptyImport }
         let id = UUID().uuidString, manager = FileManager.default
         let staging = directory.appendingPathComponent(".import-" + id, isDirectory: true)
         try manager.createDirectory(at: staging, withIntermediateDirectories: false)
         defer { if manager.fileExists(atPath: staging.path) { try? manager.removeItem(at: staging) } }
         var names: [String] = []
-        for (index, file) in files.sorted(by: { NaturalPathOrder.less($0.lastPathComponent, $1.lastPathComponent) }).enumerated() {
+        for (index, file) in files.enumerated() {
             try Task.checkCancellation()
             let attributes = try file.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
             guard attributes.isRegularFile == true, attributes.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
@@ -60,7 +83,10 @@ public struct LocalLibrary: Sendable {
             names.append(name)
         }
         let cleaned = SearchRules.trim(title)
-        let book = LocalBook(id: id, title: cleaned.isEmpty ? "本地漫画" : cleaned, createdAt: Date().timeIntervalSince1970, pages: names)
+        let chapters = groups?.enumerated().map { slot, group in
+            LocalBookChapter(id: id + "_ch_\(slot)", title: group.title, pages: group.indices.map { names[$0] })
+        }
+        let book = LocalBook(id: id, title: cleaned.isEmpty ? "本地漫画" : cleaned, createdAt: Date().timeIntervalSince1970, pages: names, chapters: chapters)
         try JSONEncoder().encode(book).write(to: staging.appendingPathComponent("book.json"), options: .atomic)
         try Task.checkCancellation()
         try manager.moveItem(at: staging, to: directory.appendingPathComponent(id, isDirectory: true))
@@ -69,12 +95,14 @@ public struct LocalLibrary: Sendable {
 }
 
 public enum LocalLibraryError: LocalizedError {
-    case invalidBook, emptyImport, imageTooLarge
+    case invalidBook, emptyImport, imageTooLarge, folderTooDeep, folderTooLarge
     public var errorDescription: String? {
         switch self {
         case .invalidBook: return "本地漫画数据无效或文件不可用，原文件已保留。"
         case .emptyImport: return "没有可导入的图片。"
         case .imageTooLarge: return "单张图片不能超过 40 MiB，本次未导入，请先缩小该图片。"
+        case .folderTooDeep: return "目录层级过深（最多支持 5 层），本次未导入。"
+        case .folderTooLarge: return "文件夹超过 50000 个文件或 20 GiB，本次未导入。"
         }
     }
 }

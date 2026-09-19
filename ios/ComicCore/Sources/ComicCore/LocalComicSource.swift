@@ -22,12 +22,29 @@ public actor LocalComicSource: ComicSource {
     public func chapters(comicId: String) async throws -> [Chapter] {
         try Task.checkCancellation()
         let book = try library.book(id: comicId)
+        _ = try library.pageURLs(for: book)
+        if let chapters = book.chapters {
+            return chapters.enumerated().map { index, chapter in
+                Chapter(chapterId: chapter.id, title: chapter.title, url: book.id + "/" + chapter.id, chapterSlot: index)
+            }
+        }
         return [Chapter(chapterId: book.id, title: book.title, url: book.id)]
     }
     public func chapter(url: String) async throws -> ChapterPage {
         try Task.checkCancellation()
-        let book = try library.book(id: url)
-        return ChapterPage(chapterId: book.id, title: book.title, nextPageUrl: "", imageUrls: try library.pageURLs(for: book).map(\.absoluteString))
+        let parts = url.split(separator: "/", omittingEmptySubsequences: false)
+        guard parts.count == 1 || parts.count == 2 else { throw LocalLibraryError.invalidBook }
+        let book = try library.book(id: String(parts[0]))
+        let allURLs = try library.pageURLs(for: book)
+        if parts.count == 2 {
+            guard let chapter = book.chapters?.first(where: { $0.id == parts[1] }) else { throw LocalLibraryError.invalidBook }
+            let pages = Dictionary(uniqueKeysWithValues: zip(book.pages, allURLs))
+            return ChapterPage(chapterId: chapter.id, title: chapter.title, nextPageUrl: "", imageUrls: try chapter.pages.map { name in
+                guard let url = pages[name] else { throw LocalLibraryError.invalidBook }
+                return url.absoluteString
+            })
+        }
+        return ChapterPage(chapterId: book.id, title: book.title, nextPageUrl: "", imageUrls: allURLs.map(\.absoluteString))
     }
     public func filterGroups() async throws -> [SourceFilterGroup] { [] }
     public func category(filters: [String: String], page: Int) async throws -> [ComicSummary] { try await latest(page: page) }

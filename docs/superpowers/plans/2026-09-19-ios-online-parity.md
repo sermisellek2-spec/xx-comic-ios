@@ -70,3 +70,15 @@ Docker 核心测试、UIKit 语法检查、Android 基准检查。独立审查�
 ### Task 10: 漫客栈
 
 对照 MkzhanComicSource.java 和 SourceConfig.mkzhan，新增 MkzhanComicSource.swift 及测试。保留 latest不强加is_free而category筛选默认is_free=1 的区别；搜索仅第一页、Java表单编码；动态四组筛选和参数顺序；限定列表容器、封面/标题/更新文本回退和去重；详情携带同次HTML中目录、data-hreflink章节顺序及“开始阅读”排除。章节调用comic.mkzcdn.com既有公开API，从data.page提取图片去重、http升级https，保留章节ID为comic/chapter及url规范化。保留请求头和可取消HTTP契约。错误响应不能冒充正常内容；合法空列表/目录仍可返回。测试先行，固定fixture对照URL及解析，不访问账号、不新增依赖、不修改Android。主代理注册，不与其他实现者同时写AppEnvironment。
+
+### Task 11: HiperDEX、悦看漫画、tapmanga搬运
+
+一组同类 HTML 站源移植：新增 HiperdexComicSource、D5d6ComicSource、AntbywComicSource 和各自 fixture 测试，严格对照同名Android源码及SourceConfig默认配置，复用现有ComicSource/HTTPTransport/HTML4EntityDecoder。逐源移植latest/search/page行为、筛选键值/顺序、详情元数据与目录按需契约、章节ID与排序去重、正文图匹配及相对URL/实体解码。源特有区域/状态回退按原代码，不把三站归并成通用猜测解析器。
+
+允许提取被这三站实际共同使用的小型文本/URL函数，不提前设计爬虫框架。HTTP失败和取消必须传播，错误壳不冒充正常空内容；保留合法空列表/目录。先写测试观察缺实现失败，再实现并运行聚焦测试，最后全量一次；报告具体URL、解析和错误覆盖。仅改对应iOS源/测试及必要共享helper，不修改Android、不注册AppEnvironment、不提交不暂存、不访问账号。注册由主代理按安卓默认相对顺序完成；独立复审后才记为已接入。
+
+### Task 12: 本地文件夹章节导入
+
+按Android LocalImporter.indexFolder/buildFolderChapters/findCommonFolderWrapper移植图片目录：忽略元数据、最多5层，递归自然排序，剥离共同包装目录，有子目录时根图为“未分章”且各第一层目录为章，无子目录时为“正文”。保持图片副本和原子发布、取消/失败回收，不改原文件。LocalBook兼容已有pages JSON，新增可选章节信息，旧单章URL仍能续读；文件存储仍为受控扁平命名，不能由manifest路径越界。通过LocalComicSource目录和章节API接共用阅读器。
+
+系统文件选择增加图片文件夹入口，安全范围访问包住整个导入任务；ImageIO过滤无效图片，扫描/复制均在后台且可取消。测试旧数据兼容、共同包装目录、多章/根图顺序、重复文件名、非图/符号链接/过深目录/取消不发布及重新打开目录阅读。当前40MiB单图保护保留并明确不是Android128MiB上限一致性验收；批量分书、分卷编辑、指纹去重恢复后续任务，不宣称完整本地复刻。

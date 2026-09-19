@@ -102,6 +102,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     private let resume = UIButton(type: .system)
     private let shelfMode = UISegmentedControl(items: ["我的书架", "本地书架"])
     private var importTask: Task<Void, Never>?
+    private var importingFolder = false
     private var localMode: Bool { !historyOnly && shelfMode.selectedSegmentIndex == 1 }
     init(environment: AppEnvironment, historyOnly: Bool = false) {
         self.historyOnly = historyOnly
@@ -152,28 +153,44 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     }
     @objc private func importImages() {
         if let importTask { importTask.cancel(); return }
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.image], asCopy: true)
-        picker.allowsMultipleSelection = true; picker.delegate = self
+        let menu = UIAlertController(title: "导入本地漫画", message: nil, preferredStyle: .actionSheet)
+        menu.addAction(UIAlertAction(title: "图片文件", style: .default) { [weak self] _ in self?.pickImport(folder: false) })
+        menu.addAction(UIAlertAction(title: "图片文件夹", style: .default) { [weak self] _ in self?.pickImport(folder: true) })
+        menu.addAction(UIAlertAction(title: "取消", style: .cancel))
+        menu.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.first
+        present(menu, animated: true)
+    }
+    private func pickImport(folder: Bool) {
+        importingFolder = folder
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: folder ? [.folder] : [.image], asCopy: !folder)
+        picker.allowsMultipleSelection = !folder; picker.delegate = self
         present(picker, animated: true)
     }
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard !urls.isEmpty else { return }
-        let alert = UIAlertController(title: "导入图片漫画", message: "所选图片合并为一本漫画，按文件名自然排序。", preferredStyle: .alert)
-        alert.addTextField { $0.text = urls.first?.deletingPathExtension().lastPathComponent }
+        let folder = importingFolder
+        let alert = UIAlertController(title: folder ? "导入文件夹漫画" : "导入图片漫画", message: folder ? "支持图片和章节子目录，按自然顺序导入。" : "所选图片合并为一本漫画，按文件名自然排序。", preferredStyle: .alert)
+        alert.addTextField { $0.text = folder ? urls.first?.lastPathComponent : urls.first?.deletingPathExtension().lastPathComponent }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "导入", style: .default) { [weak self, weak alert] _ in
-            self?.beginImport(urls, title: alert?.textFields?.first?.text ?? "本地漫画")
+            self?.beginImport(urls, title: alert?.textFields?.first?.text ?? "本地漫画", folder: folder)
         })
         if presentedViewController === controller {
             controller.dismiss(animated: true) { [weak self] in self?.present(alert, animated: true) }
         } else { present(alert, animated: true) }
     }
-    private func beginImport(_ urls: [URL], title: String) {
+    private func beginImport(_ urls: [URL], title: String, folder: Bool) {
         let library = environment.localLibrary
         status("正在导入…，再次点击导入可取消")
         let worker = Task.detached(priority: .userInitiated) {
             let scoped = urls.filter { $0.startAccessingSecurityScopedResource() }
             defer { scoped.forEach { $0.stopAccessingSecurityScopedResource() } }
+            if folder, let url = urls.first {
+                return try library.importFolder(title: title, folder: url) { file in
+                    guard let source = CGImageSourceCreateWithURL(file as CFURL, nil), CGImageSourceGetCount(source) > 0 else { return false }
+                    return CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceThumbnailMaxPixelSize: 16] as CFDictionary) != nil
+                }
+            }
             for url in urls {
                 try Task.checkCancellation()
                 guard let image = CGImageSourceCreateWithURL(url as CFURL, nil), CGImageSourceGetCount(image) > 0 else { throw LocalLibraryError.invalidBook }
