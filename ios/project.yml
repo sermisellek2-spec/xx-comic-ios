@@ -1,0 +1,51 @@
+name: XXComic
+options:
+  deploymentTarget:
+    iOS: '16.0'
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    IPHONEOS_DEPLOYMENT_TARGET: '16.0'
+    TARGETED_DEVICE_FAMILY: '1,2'
+packages:
+  ComicCore:
+    path: ComicCore
+targets:
+  XXComic:
+    type: application
+    platform: iOS
+    sources:
+      - XXComic
+    dependencies:
+      - package: ComicCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.xxcomic.ios
+        MARKETING_VERSION: '0.1.0'
+        CURRENT_PROJECT_VERSION: '1'
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: XX Comic
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+  XXComicUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - XXComicUITests
+    dependencies:
+      - target: XXComic
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.xxcomic.ios.uitests
+schemes:
+  XXComic:
+    build:
+      targets:
+        XXComic: all
+        XXComicUITests: [test]
+    test:
+      targets: [XXComicUITests]
