@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -33,6 +34,8 @@ public final class ReaderSettingsSheet {
         void onHideStatusBadgeChanged(boolean hide);
         void onEinkModeChanged(boolean eink);
         void onPinchZoomChanged(boolean enabled);
+        default void onDisablePageAnimationChanged(boolean disabled) {}
+        default void onCropWhiteMarginsChanged(boolean enabled) {}
     }
 
     public static int toReadingMode(int layoutMode, boolean leftHand) {
@@ -50,11 +53,17 @@ public final class ReaderSettingsSheet {
 
     public static Dialog show(Activity activity, int initialMode, boolean initialHideBadge, boolean initialEink,
                               OnSettingsChangeListener listener) {
-        return show(activity, initialMode, initialHideBadge, initialEink, true, listener);
+        return show(activity, initialMode, initialHideBadge, initialEink, true, false, listener);
     }
 
     public static Dialog show(Activity activity, int initialMode, boolean initialHideBadge, boolean initialEink,
                               boolean initialPinchZoom, OnSettingsChangeListener listener) {
+        return show(activity, initialMode, initialHideBadge, initialEink, initialPinchZoom, false, listener);
+    }
+
+    public static Dialog show(Activity activity, int initialMode, boolean initialHideBadge, boolean initialEink,
+                              boolean initialPinchZoom, boolean initialDisablePageAnimation,
+                              OnSettingsChangeListener listener) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) return null;
 
         Dialog dialog = new Dialog(activity);
@@ -65,7 +74,7 @@ public final class ReaderSettingsSheet {
         panel.setDialog(dialog);
         panel.setOrientation(LinearLayout.VERTICAL);
         int padH = UIHelpers.dp(activity, 18);
-        panel.setPadding(padH, UIHelpers.dp(activity, 10), padH, UIHelpers.dp(activity, 24));
+        panel.setPadding(padH, UIHelpers.dp(activity, 10), padH, UIHelpers.dp(activity, 16));
 
         GradientDrawable panelBg = new GradientDrawable();
         panelBg.setColor(Color.parseColor("#1C2128"));
@@ -82,8 +91,16 @@ public final class ReaderSettingsSheet {
         LinearLayout.LayoutParams handleLp = new LinearLayout.LayoutParams(UIHelpers.dp(activity, 36), UIHelpers.dp(activity, 4));
         handleLp.gravity = Gravity.CENTER_HORIZONTAL;
         handleLp.topMargin = UIHelpers.dp(activity, 2);
-        handleLp.bottomMargin = UIHelpers.dp(activity, 14);
+        handleLp.bottomMargin = UIHelpers.dp(activity, 10);
         panel.addView(handle, handleLp);
+
+        MaxHeightScrollView scroll = new MaxHeightScrollView(activity);
+        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        scroll.setVerticalScrollBarEnabled(false);
+        panel.setScrollView(scroll);
+
+        LinearLayout content = new LinearLayout(activity);
+        content.setOrientation(LinearLayout.VERTICAL);
 
         // Row 1: 阅读模式
         LinearLayout modeRow = new LinearLayout(activity);
@@ -126,7 +143,7 @@ public final class ReaderSettingsSheet {
         }
 
         modeRow.addView(cardsContainer, new LinearLayout.LayoutParams(-1, -2));
-        panel.addView(modeRow);
+        content.addView(modeRow);
 
         // Row 2: 隐藏右下角状态信息
         LinearLayout rowHideStatus = createSwitchRow(activity, "隐藏右下角状态信息", initialHideBadge, (view, isChecked) -> {
@@ -134,7 +151,7 @@ public final class ReaderSettingsSheet {
                 listener.onHideStatusBadgeChanged(isChecked);
             }
         });
-        panel.addView(rowHideStatus);
+        content.addView(rowHideStatus);
 
         // Row 3: 墨水屏模式
         LinearLayout rowEink = createSwitchRow(activity, "墨水屏模式", initialEink, (view, isChecked) -> {
@@ -142,7 +159,7 @@ public final class ReaderSettingsSheet {
                 listener.onEinkModeChanged(isChecked);
             }
         });
-        panel.addView(rowEink);
+        content.addView(rowEink);
 
         // Row 4: 搓指放大
         LinearLayout rowPinchZoom = createSwitchRow(activity, "搓指放大", initialPinchZoom, (view, isChecked) -> {
@@ -150,7 +167,18 @@ public final class ReaderSettingsSheet {
                 listener.onPinchZoomChanged(isChecked);
             }
         });
-        panel.addView(rowPinchZoom);
+        content.addView(rowPinchZoom);
+
+        // Row 5: 禁止动画翻页
+        LinearLayout rowDisableAnimation = createSwitchRow(activity, "禁止动画翻页", "开启后直接切页，滑动手势仍可用", initialDisablePageAnimation, (view, isChecked) -> {
+            if (listener != null) {
+                listener.onDisablePageAnimationChanged(isChecked);
+            }
+        });
+        content.addView(rowDisableAnimation);
+
+        scroll.addView(content, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        panel.addView(scroll, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         dialog.setContentView(panel);
         dialog.show();
@@ -169,22 +197,40 @@ public final class ReaderSettingsSheet {
 
     private static LinearLayout createSwitchRow(Activity activity, String label, boolean initialValue,
                                                 Switch.OnCheckedChangeListener changeListener) {
+        return createSwitchRow(activity, label, null, initialValue, changeListener);
+    }
+
+    private static LinearLayout createSwitchRow(Activity activity, String label, String subtitle, boolean initialValue,
+                                                Switch.OnCheckedChangeListener changeListener) {
         LinearLayout row = new LinearLayout(activity);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, UIHelpers.dp(activity, 12), 0, UIHelpers.dp(activity, 12));
+        row.setPadding(0, UIHelpers.dp(activity, 10), 0, UIHelpers.dp(activity, 10));
         row.setClickable(true);
         row.setFocusable(true);
 
+        LinearLayout textLayout = new LinearLayout(activity);
+        textLayout.setOrientation(LinearLayout.VERTICAL);
+
         TextView text = UIHelpers.text(activity, label, 14, Color.parseColor("#E6EDF3"), Typeface.NORMAL);
         text.setIncludeFontPadding(false);
-        row.addView(text, new LinearLayout.LayoutParams(0, -2, 1f));
+        textLayout.addView(text, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        if (subtitle != null && !subtitle.isEmpty()) {
+            TextView sub = UIHelpers.text(activity, subtitle, 12, Color.parseColor("#8B949E"), Typeface.NORMAL);
+            sub.setIncludeFontPadding(false);
+            LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            subLp.topMargin = UIHelpers.dp(activity, 2);
+            textLayout.addView(sub, subLp);
+        }
+
+        row.addView(textLayout, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         Switch sw = new Switch(activity);
         sw.setChecked(initialValue);
         setupSwitchColors(activity, sw);
         sw.setOnCheckedChangeListener(changeListener);
-        row.addView(sw, new LinearLayout.LayoutParams(-2, -2));
+        row.addView(sw, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         row.setOnClickListener(v -> sw.toggle());
         return row;
@@ -258,11 +304,37 @@ public final class ReaderSettingsSheet {
         }
     }
 
+    public static class MaxHeightScrollView extends ScrollView {
+        private int maxHeight;
+
+        public MaxHeightScrollView(Context context) {
+            super(context);
+            maxHeight = (int) (context.getResources().getDisplayMetrics().heightPixels * 0.65f);
+        }
+
+        public void setMaxHeight(int maxHeight) {
+            this.maxHeight = maxHeight;
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            if (maxHeight > 0) {
+                int hMode = MeasureSpec.getMode(heightMeasureSpec);
+                int hSize = MeasureSpec.getSize(heightMeasureSpec);
+                if (hMode == MeasureSpec.UNSPECIFIED || hSize > maxHeight) {
+                    heightMeasureSpec = MeasureSpec.makeMeasureSpec(maxHeight, MeasureSpec.AT_MOST);
+                }
+            }
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        }
+    }
+
     public static class SheetRootLayout extends LinearLayout {
         private final int touchSlop;
         private float downX, downY;
         private boolean isDragging = false;
         private Dialog dialog;
+        private ScrollView scrollView;
 
         public SheetRootLayout(Context context) {
             super(context);
@@ -271,6 +343,10 @@ public final class ReaderSettingsSheet {
 
         public void setDialog(Dialog dialog) {
             this.dialog = dialog;
+        }
+
+        public void setScrollView(ScrollView scrollView) {
+            this.scrollView = scrollView;
         }
 
         @Override
@@ -285,6 +361,9 @@ public final class ReaderSettingsSheet {
                     float dy = ev.getRawY() - downY;
                     float dx = ev.getRawX() - downX;
                     if (dy > touchSlop && dy > Math.abs(dx) * 1.5f) {
+                        if (scrollView != null && scrollView.canScrollVertically(-1)) {
+                            return false;
+                        }
                         isDragging = true;
                         return true;
                     }

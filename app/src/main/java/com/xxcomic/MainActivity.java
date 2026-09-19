@@ -370,6 +370,7 @@ public class MainActivity extends Activity {
     private int readerPageMode = 0; // 0 touch edge, 1 buttons, 2 horizontal swipe
     private int readerDisplayMode = 0; // 0 normal, 1 e-ink
     private boolean readerPinchZoom = true;
+    private boolean readerDisablePageAnimation = false;
     private ColorMatrixColorFilter readerEinkFilter;
 
     // Local library pickers must not overlap source configuration/log export requests (1001-1004).
@@ -3442,7 +3443,7 @@ public class MainActivity extends Activity {
         if (!readerVisible) return;
         int currentMode = ReaderSettingsSheet.toReadingMode(readerLayoutMode, readerLeftHand);
         ReaderSettingsSheet.show(this, currentMode, readerFullyImmersive, readerDisplayMode == 1, readerPinchZoom,
-                new ReaderSettingsSheet.OnSettingsChangeListener() {
+                readerDisablePageAnimation, new ReaderSettingsSheet.OnSettingsChangeListener() {
                     @Override
                     public void onReadingModeChanged(int mode) {
                         int newLayoutMode = ReaderSettingsSheet.toLayoutMode(mode);
@@ -3482,6 +3483,15 @@ public class MainActivity extends Activity {
                         if (readerList != null && !enabled) {
                             readerList.setScaleX(1f);
                             readerList.setScaleY(1f);
+                        }
+                    }
+
+                    @Override
+                    public void onDisablePageAnimationChanged(boolean disabled) {
+                        readerDisablePageAnimation = disabled;
+                        saveLocalState();
+                        if (readerPager != null) {
+                            readerPager.setAnimationDisabled(disabled);
                         }
                     }
                 });
@@ -5619,8 +5629,10 @@ public class MainActivity extends Activity {
                     }
                     if (multiTouchGesture[0] || doubleTapGesture[0] || Math.abs(scaleState[0] - 1f) > .001f) return true;
                     if (readerPageMode == 2 && scaleState[0] <= 1.05f && dx > dy && dx > UIHelpers.dp(MainActivity.this, 8)) {
-                        float drag = event.getRawX() - readerDownX;
-                        v.setTranslationX(Math.max(-UIHelpers.dp(MainActivity.this, 110), Math.min(UIHelpers.dp(MainActivity.this, 110), drag * .28f)));
+                        if (!readerDisablePageAnimation) {
+                            float drag = event.getRawX() - readerDownX;
+                            v.setTranslationX(Math.max(-UIHelpers.dp(MainActivity.this, 110), Math.min(UIHelpers.dp(MainActivity.this, 110), drag * .28f)));
+                        }
                         return true;
                     }
                     if ((dy > UIHelpers.dp(MainActivity.this, 8) || dx > UIHelpers.dp(MainActivity.this, 8)) && !readerFullscreen) {
@@ -5673,7 +5685,11 @@ public class MainActivity extends Activity {
                         }
                         boolean handled = handleReaderTap(event, detail, page);
                         if (scaleState[0] <= 1.05f) {
-                            v.animate().translationX(0f).setDuration(220L).start();
+                            if (readerDisablePageAnimation) {
+                                v.setTranslationX(0f);
+                            } else {
+                                v.animate().translationX(0f).setDuration(220L).start();
+                            }
                         }
                         return handled;
                     }
@@ -5715,7 +5731,7 @@ public class MainActivity extends Activity {
                 if (position == null) position = ReaderPosition.fromLegacy(readerPositions.containsKey(entryKey) ? readerPositions.get(entryKey) : 0, page.imageUrls.size());
                 int initial = position.indexFor(page.imageUrls.size());
                 readerImagePositions.put(entryKey, position);
-                readerPager = new PagedReaderView(this, page.imageUrls, initial, readerPageMode, readerLeftHand, readerPinchZoom,
+                readerPager = new PagedReaderView(this, page.imageUrls, initial, readerPageMode, readerLeftHand, readerPinchZoom, readerDisablePageAnimation,
                         (image, imageUrl) -> {
                             applyReaderImageDisplayMode(image);
                             Bitmap mem = readerBitmapCache.get(imageUrl);
@@ -10337,6 +10353,7 @@ public class MainActivity extends Activity {
         readerFullyImmersive = prefs.getBoolean("reader.fully.immersive", false);
         readerDisplayMode = prefs.getInt("reader.display.mode", 0) == 1 ? 1 : 0;
         readerPinchZoom = prefs.getBoolean("reader.pinch.zoom", true);
+        readerDisablePageAnimation = prefs.getBoolean("reader.disable.page.animation", false);
         readerImagePositions.clear();
         try {
             JSONObject savedImages = new JSONObject(prefs.getString("reader.image.positions", "{}"));
@@ -10447,6 +10464,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("reader.fully.immersive", readerFullyImmersive);
         editor.putInt("reader.display.mode", readerDisplayMode);
         editor.putBoolean("reader.pinch.zoom", readerPinchZoom);
+        editor.putBoolean("reader.disable.page.animation", readerDisablePageAnimation);
         JSONObject savedImages = new JSONObject();
         try {
             for (Map.Entry<String, ReaderPosition> item : readerImagePositions.entrySet()) {
