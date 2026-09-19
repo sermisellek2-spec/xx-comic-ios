@@ -39,7 +39,8 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         top.alignment = .center
         mode.widthAnchor.constraint(equalToConstant: 100).isActive = true
         header.addArrangedSubview(top)
-        sourceButton.showsMenuAsPrimaryAction = true
+        sourceButton.addTarget(self, action: #selector(showSources), for: .touchUpInside)
+        sourceButton.accessibilityIdentifier = "discover.source"
         updateSourceMenu()
         filterButton.setTitle("分类筛选", for: .normal)
         filterButton.addTarget(self, action: #selector(showFilters), for: .touchUpInside)
@@ -81,18 +82,12 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     }
     private func updateSourceMenu() {
         filterButton.isEnabled = !environment.sources.isEmpty
+        sourceButton.isEnabled = !environment.sources.isEmpty
         guard !environment.sources.isEmpty else {
             sourceButton.setTitle("没有已启用的站源", for: .normal)
-            sourceButton.menu = nil
             return
         }
         sourceButton.setTitle(environment.sources[sourceIndex].name + " ▾", for: .normal)
-        sourceButton.menu = UIMenu(children: environment.sources.enumerated().map { index, source in
-            UIAction(title: source.name, state: index == sourceIndex ? .on : .off) { [weak self] _ in
-                guard let self else { return }
-                self.sourceIndex = index; self.filters = [:]; self.updateSourceMenu(); self.start()
-            }
-        })
     }
     @objc private func sourcesChanged() {
         let previous = sourceIDs.indices.contains(sourceIndex) ? sourceIDs[sourceIndex] : nil
@@ -233,11 +228,15 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         guard environment.sources.indices.contains(sender.tag) else { return }
         global.select(environment.sources[sender.tag].id); refreshGlobal()
     }
-    @objc private func showFilters() {
+    @objc private func showSources() { showFilterDrawer(sourceList: true) }
+    @objc private func showFilters() { showFilterDrawer(sourceList: false) }
+    private func showFilterDrawer(sourceList: Bool) {
         guard environment.sources.indices.contains(sourceIndex) else { return }
         let source = environment.sources[sourceIndex]
-        let controller = FilterViewController(source: source, selected: filters) { [weak self] selected in
-            self?.filters = selected; self?.start()
+        let controller = FilterViewController(sources: environment.sources, source: source, selected: filters, sourceList: sourceList) { [weak self] sourceID, selected in
+            guard let self, let index = self.environment.sources.firstIndex(where: { $0.id == sourceID }) else { return }
+            self.sourceIndex = index; self.filters = selected
+            self.updateSourceMenu(); self.start()
         }
         present(FilterDrawerNavigationController(rootViewController: controller), animated: true)
     }
@@ -245,17 +244,21 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
 
 @MainActor
 private final class FilterViewController: UIViewController {
-    let source: any ComicSource
+    let sources: [any ComicSource]
+    var source: any ComicSource
     var selected: [String: String]
-    let onSelect: ([String: String]) -> Void
+    let onSelect: (String, [String: String]) -> Void
     var groups: [SourceFilterGroup] = []
     var task: Task<Void, Never>?
     private let tabs = UIStackView()
+    private let tabScroll = UIScrollView()
+    private var tabHeight: NSLayoutConstraint?
     private let options = UIStackView()
     private let state = UIButton(type: .system)
-    private var activeGroup = 0
-    init(source: any ComicSource, selected: [String: String], onSelect: @escaping ([String: String]) -> Void) {
-        self.source = source; self.selected = selected; self.onSelect = onSelect
+    private var activeGroup: Int
+    init(sources: [any ComicSource], source: any ComicSource, selected: [String: String], sourceList: Bool, onSelect: @escaping (String, [String: String]) -> Void) {
+        self.sources = sources; self.source = source; self.selected = selected; self.onSelect = onSelect
+        activeGroup = sourceList ? -1 : 0
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
@@ -264,20 +267,23 @@ private final class FilterViewController: UIViewController {
         super.viewDidLoad(); title = "筛选"
         view.backgroundColor = Palette.card
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(close))
-        let tabScroll = UIScrollView(), scroll = UIScrollView(), confirm = UIButton(type: .system)
+        navigationItem.rightBarButtonItem?.accessibilityIdentifier = "filter.close"
+        let scroll = UIScrollView(), confirm = UIButton(type: .system)
         tabs.axis = .horizontal; tabs.spacing = 8
         options.axis = .vertical; options.spacing = 8
         state.titleLabel?.numberOfLines = 0
         state.addTarget(self, action: #selector(loadGroups), for: .touchUpInside)
         confirm.configuration = .filled(); confirm.setTitle("确认搜索", for: .normal)
+        confirm.accessibilityIdentifier = "filter.confirm"
         confirm.addTarget(self, action: #selector(done), for: .touchUpInside)
         for item in [tabScroll, scroll, state, confirm] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
         tabs.translatesAutoresizingMaskIntoConstraints = false; tabScroll.addSubview(tabs)
         options.translatesAutoresizingMaskIntoConstraints = false; scroll.addSubview(options)
+        tabHeight = tabScroll.heightAnchor.constraint(equalToConstant: 42)
+        tabHeight?.isActive = true
         NSLayoutConstraint.activate([
             tabScroll.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tabScroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12), tabScroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            tabScroll.heightAnchor.constraint(equalToConstant: 42),
             tabs.leadingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.leadingAnchor), tabs.trailingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.trailingAnchor),
             tabs.topAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.topAnchor), tabs.bottomAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.bottomAnchor),
             tabs.heightAnchor.constraint(equalTo: tabScroll.frameLayoutGuide.heightAnchor),
@@ -290,10 +296,10 @@ private final class FilterViewController: UIViewController {
             confirm.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12), confirm.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
             confirm.heightAnchor.constraint(equalToConstant: 46), confirm.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
         ])
-        loadGroups()
+        if activeGroup < 0 { render() } else { loadGroups() }
     }
     @objc private func loadGroups() {
-        task?.cancel(); state.setTitle("正在加载分类…", for: .normal)
+        task?.cancel(); groups = []; render(); state.setTitle("正在加载分类…", for: .normal)
         task = Task { [weak self, source] in
             do {
                 let groups = try await source.filterGroups(); try Task.checkCancellation()
@@ -304,11 +310,35 @@ private final class FilterViewController: UIViewController {
             catch { if !Task.isCancelled { self?.state.setTitle("分类加载失败 · 点击重试", for: .normal) } }
         }
     }
-    @objc private func close() { dismiss(animated: true) }
-    @objc private func done() { onSelect(selected); dismiss(animated: true) }
+    override func viewDidDisappear(_ animated: Bool) { super.viewDidDisappear(animated); task?.cancel() }
+    @objc private func close() { task?.cancel(); dismiss(animated: true) }
+    @objc private func done() { task?.cancel(); onSelect(source.id, selected); dismiss(animated: true) }
     private func render() {
+        tabScroll.isHidden = activeGroup < 0
+        tabHeight?.constant = activeGroup < 0 ? 0 : 42
         tabs.arrangedSubviews.forEach { $0.removeFromSuperview() }
         options.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        if activeGroup < 0 {
+            state.setTitle("已启用站源", for: .normal)
+            state.isEnabled = false
+            for candidate in sources {
+                let button = UIButton(type: .system)
+                button.accessibilityIdentifier = "filter.source." + candidate.id
+                button.contentHorizontalAlignment = .leading
+                button.setTitle(candidate.name + (candidate.id == source.id ? "  ✓" : ""), for: .normal)
+                button.tintColor = candidate.id == source.id ? Palette.accent : Palette.text
+                button.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
+                button.addAction(UIAction { [weak self] _ in
+                    guard let self else { return }
+                    self.task?.cancel(); self.source = candidate; self.selected = [:]; self.groups = []
+                    if ["mh18", "jmcomic"].contains(candidate.id) { self.render() }
+                    else { self.activeGroup = 0; self.loadGroups() }
+                }, for: .touchUpInside)
+                options.addArrangedSubview(button)
+            }
+            return
+        }
+        state.isEnabled = true
         for (index, group) in groups.enumerated() {
             let button = UIButton(type: .system)
             button.setTitle(group.label, for: .normal)
