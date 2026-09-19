@@ -55,7 +55,7 @@ public actor GmhComicSource: ComicSource {
     public func chapters(comicId: String) async throws -> [Chapter] {
         let rawID = rawComicID(comicId)
         let mid = try await mangaID(for: rawID)
-        let items = try await mangaData(mid)["chapters"] as? [[String: Any]] ?? []
+        let items = try chapterItems(in: await mangaData(mid))
         var all: [Chapter] = []
         var visible: [Chapter] = []
         for (index, item) in items.enumerated() {
@@ -80,7 +80,7 @@ public actor GmhComicSource: ComicSource {
         let rawID = rawComicID(url)
         let slug = rawChapterSlug(url)
         let mid = try await mangaID(for: rawID)
-        let items = try await mangaData(mid)["chapters"] as? [[String: Any]] ?? []
+        let items = try chapterItems(in: await mangaData(mid))
         guard let item = items.first(where: { item in
             guard let attributes = item["attributes"] as? [String: Any] else { return false }
             return string(attributes["slug"]) == slug
@@ -95,27 +95,32 @@ public actor GmhComicSource: ComicSource {
             let info = data["info"] as? [String: Any]
         else { throw GmhSourceError.invalidResponse("G社漫画章节解析失败") }
         let title = clean(string(info["title"], default: string(attributes["title"])))
-        let images = try decodeChapterImages(info["images"] as? [String: Any])
+        guard let imagesObject = info["images"] as? [String: Any] else {
+            throw GmhSourceError.invalidResponse("G社漫画图片解析失败")
+        }
+        let images = try decodeChapterImages(imagesObject)
         return ChapterPage(chapterId: url, title: title, nextPageUrl: "", imageUrls: images)
     }
 
     public func filterGroups() async throws -> [SourceFilterGroup] {
         let html = try await fetch(categoryURL(region: "all", page: 1))
-        var genres = [SourceFilterOption(label: "全部", value: "all")]
-        var tags = [SourceFilterOption(label: "全部", value: "all")]
-        var genreValues = Set<String>()
-        var tagValues = Set<String>()
+        var genres: [SourceFilterOption] = []
+        var tags: [SourceFilterOption] = []
+        var genreIndexes: [String: Int] = [:]
+        var tagIndexes: [String: Int] = [:]
         for match in matches(Self.filterPattern, in: html) {
             let value = match[3]
             let label = clean(match[4]).replacingOccurrences(of: "^#", with: "", options: .regularExpression)
-            guard !label.isEmpty else { continue }
-            if match[2].lowercased() == "genre", genreValues.insert(value).inserted {
-                genres.append(SourceFilterOption(label: label, value: value))
-            } else if match[2].lowercased() == "tag", tagValues.insert(value).inserted {
-                tags.append(SourceFilterOption(label: label, value: value))
+            guard !label.isEmpty, label != "全部" else { continue }
+            if match[2].lowercased() == "genre" {
+                upsert(SourceFilterOption(label: label, value: value), in: &genres, indexes: &genreIndexes)
+            } else if match[2].lowercased() == "tag" {
+                upsert(SourceFilterOption(label: label, value: value), in: &tags, indexes: &tagIndexes)
             }
         }
-        guard genres.count > 1, tags.count > 1 else { throw GmhSourceError.invalidResponse("G社漫画分类解析失败") }
+        guard !genres.isEmpty, !tags.isEmpty else { throw GmhSourceError.invalidResponse("G社漫画分类解析失败") }
+        genres.insert(SourceFilterOption(label: "全部", value: "all"), at: 0)
+        tags.insert(SourceFilterOption(label: "全部", value: "all"), at: 0)
         return [
             SourceFilterGroup(key: "genre", label: "漫画类型", options: genres),
             SourceFilterGroup(key: "tag", label: "热门标签", options: tags)
@@ -199,8 +204,19 @@ public actor GmhComicSource: ComicSource {
         return dictionary
     }
 
-    private func decodeChapterImages(_ object: [String: Any]?) throws -> [String] {
-        guard let object else { return [] }
+    private func chapterItems(in data: [String: Any]) throws -> [[String: Any]] {
+        guard let rawItems = data["chapters"] as? [Any] else {
+            throw GmhSourceError.invalidResponse("G社漫画目录解析失败")
+        }
+        return try rawItems.map { item in
+            guard let item = item as? [String: Any] else {
+                throw GmhSourceError.invalidResponse("G社漫画目录解析失败")
+            }
+            return item
+        }
+    }
+
+    private func decodeChapterImages(_ object: [String: Any]) throws -> [String] {
         let rawItems: [Any]
         if let plain = object["images"] as? [Any] {
             rawItems = plain
@@ -211,7 +227,7 @@ public actor GmhComicSource: ComicSource {
             }
             rawItems = items
         } else {
-            return []
+            throw GmhSourceError.invalidResponse("G社漫画图片解析失败")
         }
 
         let host = cleanURL(string(object["host"])).isEmpty ? hostForLine(int(object["line"], default: 1)) : cleanURL(string(object["host"]))
@@ -228,6 +244,15 @@ public actor GmhComicSource: ComicSource {
             if seen.insert(url).inserted { urls.append(url) }
         }
         return urls
+    }
+
+    private func upsert(_ option: SourceFilterOption, in options: inout [SourceFilterOption], indexes: inout [String: Int]) {
+        if let index = indexes[option.label] {
+            options[index] = option
+        } else {
+            indexes[option.label] = options.count
+            options.append(option)
+        }
     }
 
     private func decodeEncryptedImages(_ encrypted: String) throws -> String {

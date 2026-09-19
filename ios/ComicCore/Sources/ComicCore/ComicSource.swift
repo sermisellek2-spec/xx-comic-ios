@@ -44,8 +44,11 @@ public struct URLSessionHTTPTransport: HTTPTransport, @unchecked Sendable {
     }
 
     public func get(_ url: URL, headers: [String: String]) async throws -> HTTPResponse {
+        try Task.checkCancellation()
         var request = URLRequest(url: url)
+        request.timeoutInterval = 15
         headers.forEach { request.setValue($0.value, forHTTPHeaderField: $0.key) }
+#if canImport(FoundationNetworking)
         let box = URLSessionTaskBox()
         let (data, response): (Data, URLResponse) = try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
@@ -60,24 +63,34 @@ public struct URLSessionHTTPTransport: HTTPTransport, @unchecked Sendable {
         } onCancel: {
             box.cancel()
         }
+#else
+        let (data, response) = try await session.data(for: request)
+#endif
         guard let response = response as? HTTPURLResponse else { throw HTTPTransportError.invalidResponse }
         return HTTPResponse(data: data, statusCode: response.statusCode)
     }
 }
 
+#if canImport(FoundationNetworking)
 private final class URLSessionTaskBox: @unchecked Sendable {
     private let lock = NSLock()
     private var task: URLSessionTask?
+    private var isCancelled = false
 
     func set(_ task: URLSessionTask) {
         lock.lock()
         self.task = task
+        let shouldCancel = isCancelled
         lock.unlock()
+        if shouldCancel { task.cancel() }
     }
 
     func cancel() {
         lock.lock()
-        task?.cancel()
+        isCancelled = true
+        let task = task
         lock.unlock()
+        task?.cancel()
     }
 }
+#endif

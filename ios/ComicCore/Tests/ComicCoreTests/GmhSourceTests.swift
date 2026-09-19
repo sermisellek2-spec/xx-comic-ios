@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import XCTest
 @testable import ComicCore
 
@@ -79,6 +82,37 @@ final class GmhSourceTests: XCTestCase {
         await XCTAssertAsyncThrowsError(try await source.filterGroups())
     }
 
+    func testFilterGroupsDeduplicateByLabelLikeAndroidLinkedHashMap() async throws {
+        let html = """
+        <a href="/manga-genre/kr"><button>韩漫</button></a>
+        <a href="/manga-genre/all"><button>全部</button></a>
+        <a href="/manga-genre/korean-new"><button>韩漫</button></a>
+        <a href="/manga-genre/jp"><button>日漫</button></a>
+        <a href="/manga-tag/fuchou"><button>#复仇</button></a>
+        <a href="/manga-tag/all"><button>#全部</button></a>
+        <a href="/manga-tag/revenge-new"><button>#复仇</button></a>
+        <a href="/manga-tag/nixi"><button>#逆袭</button></a>
+        """
+        let source = GmhComicSource(transport: StubTransport(responses: [
+            "https://m.g-mh.org/manga": response(html)
+        ]))
+
+        let groups = try await source.filterGroups()
+
+        XCTAssertEqual(groups, [
+            SourceFilterGroup(key: "genre", label: "漫画类型", options: [
+                SourceFilterOption(label: "全部", value: "all"),
+                SourceFilterOption(label: "韩漫", value: "korean-new"),
+                SourceFilterOption(label: "日漫", value: "jp")
+            ]),
+            SourceFilterGroup(key: "tag", label: "热门标签", options: [
+                SourceFilterOption(label: "全部", value: "all"),
+                SourceFilterOption(label: "复仇", value: "revenge-new"),
+                SourceFilterOption(label: "逆袭", value: "nixi")
+            ])
+        ])
+    }
+
     func testDetailUsesMangaAPIDataAndMapsStatus() async throws {
         let transport = StubTransport(responses: [
             "https://m.g-mh.org/manga/demo": response("<main data-mid=\"42\"></main>"),
@@ -128,6 +162,24 @@ final class GmhSourceTests: XCTestCase {
         let chapters = try await source.chapters(comicId: "demo")
 
         XCTAssertEqual(chapters.map(\.chapterId), ["1", "2"])
+    }
+
+    func testChaptersAcceptExplicitEmptyArray() async throws {
+        let source = GmhComicSource(transport: catalogTransport(chapters: "[]"))
+
+        let chapters = try await source.chapters(comicId: "demo")
+
+        XCTAssertEqual(chapters, [])
+    }
+
+    func testChaptersRejectMissingOrWrongTypedArray() async {
+        for data in ["{\"slug\":\"demo\"}", "{\"slug\":\"demo\",\"chapters\":{}}"] {
+            let source = GmhComicSource(transport: mangaDataTransport(data))
+
+            await XCTAssertAsyncThrowsError(try await source.chapters(comicId: "demo")) { error in
+                XCTAssertEqual(error as? GmhSourceError, .invalidResponse("G社漫画目录解析失败"))
+            }
+        }
     }
 
     func testChapterDecodesRealWebsiteFixtureAndMigratesLineHost() async throws {
@@ -184,6 +236,71 @@ final class GmhSourceTests: XCTestCase {
         )
     }
 
+    func testChapterAcceptsExplicitEmptyImagesArray() async throws {
+        let source = chapterSource(imagesJSON: "{\"images\":[]}")
+
+        let page = try await source.chapter(url: "https://m.g-mh.org/manga/demo/plain")
+
+        XCTAssertEqual(page.imageUrls, [])
+    }
+
+    func testChapterRejectsMissingOrWrongTypedImagesPayload() async {
+        for infoJSON in ["{\"title\":\"Chapter\"}", "{\"title\":\"Chapter\",\"images\":[]}", "{\"title\":\"Chapter\",\"images\":{}}"] {
+            let source = chapterSource(infoJSON: infoJSON)
+
+            await XCTAssertAsyncThrowsError(try await source.chapter(url: "https://m.g-mh.org/manga/demo/plain")) { error in
+                XCTAssertEqual(error as? GmhSourceError, .invalidResponse("G社漫画图片解析失败"))
+            }
+        }
+    }
+
+    func testInvalidEncryptedImagesThrow() async {
+        let source = chapterSource(imagesJSON: "{\"images\":\"not-encrypted\"}")
+
+        await XCTAssertAsyncThrowsError(try await source.chapter(url: "https://m.g-mh.org/manga/demo/plain")) { error in
+            XCTAssertEqual(error as? GmhSourceError, .imageDecryptionFailed)
+        }
+    }
+
+    func testMissingMangaIDThrows() async {
+        let source = GmhComicSource(transport: StubTransport(responses: [
+            "https://m.g-mh.org/manga/demo": response("<html></html>")
+        ]))
+
+        await XCTAssertAsyncThrowsError(try await source.chapters(comicId: "demo")) { error in
+            XCTAssertEqual(error as? GmhSourceError, .missingMangaID("demo"))
+        }
+    }
+
+    func testUnknownChapterSlugThrows() async {
+        let source = GmhComicSource(transport: catalogTransport(chapters: "[]"))
+
+        await XCTAssertAsyncThrowsError(try await source.chapter(url: "https://m.g-mh.org/manga/demo/missing")) { error in
+            XCTAssertEqual(error as? GmhSourceError, .chapterNotFound("missing"))
+        }
+    }
+
+    func testInvalidJSONThrows() async {
+        let source = GmhComicSource(transport: StubTransport(responses: [
+            "https://m.g-mh.org/manga/demo": response("<main data-mid=\"42\"></main>"),
+            "https://v2.apikk.top/api/v2/manga/get?mid=42&mode=all": jsonResponse("not-json")
+        ]))
+
+        await XCTAssertAsyncThrowsError(try await source.detail(comicId: "demo")) { error in
+            XCTAssertEqual(error as? GmhSourceError, .invalidResponse("JSON 解析失败"))
+        }
+    }
+
+    func testInvalidUTF8Throws() async {
+        let source = GmhComicSource(transport: StubTransport(responses: [
+            "https://m.g-mh.org/manga": HTTPResponse(data: Data([0xff]), statusCode: 200)
+        ]))
+
+        await XCTAssertAsyncThrowsError(try await source.latest(page: 1)) { error in
+            XCTAssertEqual(error as? GmhSourceError, .invalidResponse("响应不是 UTF-8"))
+        }
+    }
+
     func testHTTPStatusFailureThrowsInsteadOfReturningEmptyResults() async {
         let source = GmhComicSource(transport: StubTransport(responses: [
             "https://m.g-mh.org/s/test": response("server error", statusCode: 503)
@@ -203,6 +320,52 @@ final class GmhSourceTests: XCTestCase {
             XCTAssertEqual(error as? StubError, .offline)
         }
     }
+
+    func testURLSessionTransportDoesNotStartPreCancelledRequest() async {
+        TestURLProtocol.configure(.succeed)
+        defer { TestURLProtocol.reset() }
+        let session = makeTestURLSession()
+        let transport = URLSessionHTTPTransport(session: session)
+        let task = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            return try await transport.get(URL(string: "https://example.test/pre-cancelled")!, headers: [:])
+        }
+
+        let result = await task.result
+
+        assertCancellation(result)
+        XCTAssertEqual(TestURLProtocol.startedRequests().count, 0)
+    }
+
+    func testURLSessionTransportCancelsInFlightDataTask() async {
+        let started = expectation(description: "request started")
+        let stopped = expectation(description: "request stopped")
+        TestURLProtocol.configure(.block, onStart: { started.fulfill() }, onStop: { stopped.fulfill() })
+        defer { TestURLProtocol.reset() }
+        let session = makeTestURLSession()
+        let transport = URLSessionHTTPTransport(session: session)
+        let task = Task {
+            try await transport.get(URL(string: "https://example.test/in-flight")!, headers: [:])
+        }
+        await fulfillment(of: [started], timeout: 1)
+
+        task.cancel()
+        let result = await task.result
+
+        assertCancellation(result)
+        await fulfillment(of: [stopped], timeout: 1)
+    }
+
+    func testURLSessionTransportUsesAndroidReadTimeout() async throws {
+        TestURLProtocol.configure(.succeed)
+        defer { TestURLProtocol.reset() }
+        let session = makeTestURLSession()
+        let transport = URLSessionHTTPTransport(session: session)
+
+        _ = try await transport.get(URL(string: "https://example.test/timeout")!, headers: [:])
+
+        XCTAssertEqual(try XCTUnwrap(TestURLProtocol.startedRequests().first).timeoutInterval, 15)
+    }
 }
 
 private func catalogTransport(chapters: String) -> StubTransport {
@@ -210,6 +373,25 @@ private func catalogTransport(chapters: String) -> StubTransport {
         "https://m.g-mh.org/manga/demo": response("<main data-mid=\"42\"></main>"),
         "https://v2.apikk.top/api/v2/manga/get?mid=42&mode=all": jsonResponse("{\"data\":{\"slug\":\"demo\",\"chapters\":\(chapters)}}")
     ])
+}
+
+private func mangaDataTransport(_ data: String) -> StubTransport {
+    StubTransport(responses: [
+        "https://m.g-mh.org/manga/demo": response("<main data-mid=\"42\"></main>"),
+        "https://v2.apikk.top/api/v2/manga/get?mid=42&mode=all": jsonResponse("{\"data\":\(data)}")
+    ])
+}
+
+private func chapterSource(imagesJSON: String) -> GmhComicSource {
+    chapterSource(infoJSON: "{\"title\":\"Chapter\",\"images\":\(imagesJSON)}")
+}
+
+private func chapterSource(infoJSON: String) -> GmhComicSource {
+    GmhComicSource(transport: StubTransport(responses: [
+        "https://m.g-mh.org/manga/demo": response("<main data-mid=\"42\"></main>"),
+        "https://v2.apikk.top/api/v2/manga/get?mid=42&mode=all": jsonResponse("{\"data\":{\"chapters\":[{\"id\":\"7\",\"attributes\":{\"title\":\"Chapter\",\"slug\":\"plain\"}}]}}"),
+        "https://v2.apikk.top/api/v2/chapter/getinfo?m=42&c=7": jsonResponse("{\"data\":{\"info\":\(infoJSON)}}")
+    ]))
 }
 
 private func response(_ body: String, statusCode: Int = 200) -> HTTPResponse {
@@ -264,5 +446,80 @@ private func XCTAssertAsyncThrowsError<T>(
         XCTFail("Expected expression to throw", file: file, line: line)
     } catch {
         errorHandler(error)
+    }
+}
+
+private func makeTestURLSession() -> URLSession {
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.protocolClasses = [TestURLProtocol.self]
+    return URLSession(configuration: configuration)
+}
+
+private func assertCancellation(
+    _ result: Result<HTTPResponse, Error>,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    guard case .failure(let error) = result else {
+        return XCTFail("Expected cancellation", file: file, line: line)
+    }
+    let isCancelled = error is CancellationError || (error as? URLError)?.code == .cancelled
+    XCTAssertTrue(isCancelled, "Unexpected error: \(error)", file: file, line: line)
+}
+
+private final class TestURLProtocol: URLProtocol, @unchecked Sendable {
+    enum Behavior {
+        case succeed
+        case block
+    }
+
+    private static let lock = NSLock()
+    private static var behavior = Behavior.succeed
+    private static var requests: [URLRequest] = []
+    private static var onStart: () -> Void = {}
+    private static var onStop: () -> Void = {}
+
+    static func configure(_ behavior: Behavior, onStart: @escaping () -> Void = {}, onStop: @escaping () -> Void = {}) {
+        lock.lock()
+        self.behavior = behavior
+        self.onStart = onStart
+        self.onStop = onStop
+        requests = []
+        lock.unlock()
+    }
+
+    static func reset() {
+        configure(.succeed)
+    }
+
+    static func startedRequests() -> [URLRequest] {
+        lock.lock()
+        defer { lock.unlock() }
+        return requests
+    }
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        Self.lock.lock()
+        Self.requests.append(request)
+        let behavior = Self.behavior
+        let onStart = Self.onStart
+        Self.lock.unlock()
+        onStart()
+
+        guard behavior == .succeed else { return }
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Data())
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {
+        Self.lock.lock()
+        let onStop = Self.onStop
+        Self.lock.unlock()
+        onStop()
     }
 }
