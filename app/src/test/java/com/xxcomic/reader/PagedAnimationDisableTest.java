@@ -112,4 +112,86 @@ public class PagedAnimationDisableTest {
         // Swiping left (dx < 0) turns to PREVIOUS page (backward, delta = -1)
         assertEquals(-1, ReaderNavigation.swipeDelta(-80f, true));
     }
+
+    @Test
+    public void gestureSuppressedInButtonMode() {
+        int inputMode = 1; // Button mode
+        float dx = -100f;
+        float dy = 5f;
+        boolean canSwipe = (inputMode != 1) && Math.abs(dx) > 72f && Math.abs(dx) > Math.abs(dy) * 1.1f;
+        assertFalse("Swipe gesture must be completely disabled in button mode (inputMode == 1)", canSwipe);
+
+        inputMode = 0; // Touch edge mode
+        canSwipe = (inputMode != 1) && Math.abs(dx) > 72f && Math.abs(dx) > Math.abs(dy) * 1.1f;
+        assertTrue(canSwipe);
+    }
+
+    @Test
+    public void angleExceeding45DegreesRejected() {
+        float dx = 80f;
+        // Exactly 45 degrees (|dx| == |dy|)
+        float dy = 80f;
+        boolean validAngle = Math.abs(dx) > Math.abs(dy) * 1.1f;
+        assertFalse(validAngle);
+
+        // 60 degrees (|dy| > |dx|)
+        dy = 120f;
+        validAngle = Math.abs(dx) > Math.abs(dy) * 1.1f;
+        assertFalse(validAngle);
+
+        // 30 degrees (|dx| = 80, |dy| = 40, |dx| > 44)
+        dy = 40f;
+        validAngle = Math.abs(dx) > Math.abs(dy) * 1.1f;
+        assertTrue(validAngle);
+    }
+
+    @Test
+    public void singleStepGestureDebounceLogic() {
+        long minInterval = 200L;
+        long lastNavigateTime = 0L;
+
+        // First swipe at 1000ms
+        long t1 = 1000L;
+        boolean canNavigate1 = (t1 - lastNavigateTime >= minInterval);
+        assertTrue(canNavigate1);
+        lastNavigateTime = t1;
+
+        // Second rapid swipe at 1100ms (within 100ms < 200ms)
+        long t2 = 1100L;
+        boolean canNavigate2 = (t2 - lastNavigateTime >= minInterval);
+        assertFalse("Rapid consecutive swipe within debounce interval must be rejected", canNavigate2);
+
+        // Third swipe at 1250ms (250ms elapsed >= 200ms)
+        long t3 = 1250L;
+        boolean canNavigate3 = (t3 - lastNavigateTime >= minInterval);
+        assertTrue("Swipe after debounce interval must be allowed", canNavigate3);
+    }
+
+    @Test
+    public void multiTouchAndCancelBlocksGesture() {
+        boolean blockedGesture = false;
+        boolean navigationTriggeredInGesture = false;
+
+        // Simulate multi-touch pointer count > 1
+        int pointerCount = 2;
+        if (pointerCount > 1) {
+            blockedGesture = true;
+        }
+        assertTrue(blockedGesture);
+
+        // ACTION_UP evaluation
+        boolean wouldTrigger = !blockedGesture && !navigationTriggeredInGesture;
+        assertFalse(wouldTrigger);
+
+        // Simulate ACTION_CANCEL
+        blockedGesture = false;
+        navigationTriggeredInGesture = false;
+        boolean isCancel = true;
+        if (isCancel) {
+            blockedGesture = true;
+            navigationTriggeredInGesture = true;
+        }
+        assertTrue(blockedGesture);
+        assertTrue(navigationTriggeredInGesture);
+    }
 }

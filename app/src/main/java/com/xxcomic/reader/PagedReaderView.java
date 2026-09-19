@@ -33,6 +33,9 @@ public final class PagedReaderView extends FrameLayout {
     private long downTime;
     private int downPage;
     private boolean blockedGesture, disposed;
+    private boolean navigationTriggeredInGesture;
+    private long lastNavigateTime = 0L;
+    private static final long MIN_NAVIGATE_INTERVAL_MS = 200L;
 
     public PagedReaderView(Context context, List<String> images, int initialPage, int inputMode,
                            boolean leftHand, boolean pinchZoomEnabled, boolean animationDisabled, ImageLoader loader, Listener listener) {
@@ -127,6 +130,20 @@ public final class PagedReaderView extends FrameLayout {
         this.animationDisabled = disabled;
         blockedGesture = true;
         updateUserInputEnabled();
+        if (disabled && pager != null && pager.getScrollState() != ViewPager2.SCROLL_STATE_IDLE) {
+            pager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                @Override
+                public void onPageScrollStateChanged(int state) {
+                    if (state == ViewPager2.SCROLL_STATE_IDLE) {
+                        pager.unregisterOnPageChangeCallback(this);
+                        if (!disposed && pager != null) {
+                            pager.setCurrentItem(pager.getCurrentItem(), false);
+                            updateUserInputEnabled();
+                        }
+                    }
+                }
+            });
+        }
     }
 
     public boolean isAnimationDisabled() {
@@ -144,6 +161,7 @@ public final class PagedReaderView extends FrameLayout {
                 holder.future = loader.load(holder.image, urls.get(pos));
             }
         }
+        updateUserInputEnabled();
     }
 
     private void updateUserInputEnabled() {
@@ -172,20 +190,33 @@ public final class PagedReaderView extends FrameLayout {
         if (action == MotionEvent.ACTION_DOWN) {
             downX = event.getX(); downY = event.getY(); downTime = event.getEventTime();
             downPage = currentPage(); blockedGesture = isZoomed();
+            navigationTriggeredInGesture = false;
         }
-        if (event.getPointerCount() > 1) blockedGesture = true;
+        if (action == MotionEvent.ACTION_POINTER_DOWN || event.getPointerCount() > 1) {
+            blockedGesture = true;
+        }
+        if (action == MotionEvent.ACTION_CANCEL) {
+            blockedGesture = true;
+            navigationTriggeredInGesture = true;
+        }
         float dx = event.getX() - downX, dy = event.getY() - downY;
         if (action == MotionEvent.ACTION_MOVE && (Math.abs(dx) > dp(8) || Math.abs(dy) > dp(8))) listener.onInteraction();
         boolean result = super.dispatchTouchEvent(event);
         if (action == MotionEvent.ACTION_UP && inputMode != 1 && !blockedGesture && !isZoomed()
+                && !navigationTriggeredInGesture
                 && Math.abs(dx) > dp(36) && Math.abs(dx) > Math.abs(dy) * 1.1f
                 && event.getEventTime() - downTime < 1000) {
-            int delta = ReaderNavigation.swipeDelta(dx, leftHand);
-            if (delta != 0) {
-                if (animationDisabled) {
-                    listener.onNavigate(delta);
-                } else if (currentPage() == downPage && ReaderNavigation.crossesChapter(downPage, urls.size(), delta)) {
-                    listener.onNavigate(delta);
+            long now = event.getEventTime();
+            if (now - lastNavigateTime >= MIN_NAVIGATE_INTERVAL_MS) {
+                int delta = ReaderNavigation.swipeDelta(dx, leftHand);
+                if (delta != 0) {
+                    lastNavigateTime = now;
+                    navigationTriggeredInGesture = true;
+                    if (animationDisabled) {
+                        listener.onNavigate(delta);
+                    } else if (currentPage() == downPage && ReaderNavigation.crossesChapter(downPage, urls.size(), delta)) {
+                        listener.onNavigate(delta);
+                    }
                 }
             }
         }
