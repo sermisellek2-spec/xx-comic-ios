@@ -74,7 +74,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if needsReload { needsReload = false; start() }
+        if needsReload { needsReload = false; start(query: submittedQuery) }
     }
     private func updateSourceMenu() {
         guard !environment.sources.isEmpty else { return }
@@ -91,12 +91,12 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) { searchBar.resignFirstResponder(); start() }
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) { if searchText.isEmpty { start() } }
 
-    private func start() {
+    private func start(query: String? = nil) {
         requestID = UUID()
         tasks.forEach { $0.cancel() }; tasks = []
         loading = false; ended = false; nextPage = 1
         comics = []; collection.reloadData()
-        submittedQuery = SearchRules.trim(searchBar.text ?? "")
+        submittedQuery = query ?? SearchRules.trim(searchBar.text ?? "")
         history.arrangedSubviews.forEach { $0.removeFromSuperview() }
         sourceButton.isHidden = isGlobal; filterButton.isHidden = isGlobal
         tabs.isHidden = !isGlobal || submittedQuery.isEmpty
@@ -219,50 +219,100 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         let controller = FilterViewController(source: source, selected: filters) { [weak self] selected in
             self?.filters = selected; self?.start()
         }
-        present(UINavigationController(rootViewController: controller), animated: true)
+        present(FilterDrawerNavigationController(rootViewController: controller), animated: true)
     }
 }
 
 @MainActor
-private final class FilterViewController: UITableViewController {
+private final class FilterViewController: UIViewController {
     let source: any ComicSource
     var selected: [String: String]
     let onSelect: ([String: String]) -> Void
     var groups: [SourceFilterGroup] = []
     var task: Task<Void, Never>?
+    private let tabs = UIStackView()
+    private let options = UIStackView()
+    private let state = UIButton(type: .system)
+    private var activeGroup = 0
     init(source: any ComicSource, selected: [String: String], onSelect: @escaping ([String: String]) -> Void) {
         self.source = source; self.selected = selected; self.onSelect = onSelect
-        super.init(style: .insetGrouped)
+        super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
     deinit { task?.cancel() }
     override func viewDidLoad() {
-        super.viewDidLoad(); title = "正在加载分类…"
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "完成", style: .done, target: self, action: #selector(done))
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "重试", style: .plain, target: self, action: #selector(loadGroups))
+        super.viewDidLoad(); title = "筛选"
+        view.backgroundColor = Palette.card
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(close))
+        let tabScroll = UIScrollView(), scroll = UIScrollView(), confirm = UIButton(type: .system)
+        tabs.axis = .horizontal; tabs.spacing = 8
+        options.axis = .vertical; options.spacing = 8
+        state.titleLabel?.numberOfLines = 0
+        state.addTarget(self, action: #selector(loadGroups), for: .touchUpInside)
+        confirm.configuration = .filled(); confirm.setTitle("确认搜索", for: .normal)
+        confirm.addTarget(self, action: #selector(done), for: .touchUpInside)
+        for item in [tabScroll, scroll, state, confirm] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
+        tabs.translatesAutoresizingMaskIntoConstraints = false; tabScroll.addSubview(tabs)
+        options.translatesAutoresizingMaskIntoConstraints = false; scroll.addSubview(options)
+        NSLayoutConstraint.activate([
+            tabScroll.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            tabScroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12), tabScroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            tabScroll.heightAnchor.constraint(equalToConstant: 42),
+            tabs.leadingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.leadingAnchor), tabs.trailingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.trailingAnchor),
+            tabs.topAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.topAnchor), tabs.bottomAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.bottomAnchor),
+            tabs.heightAnchor.constraint(equalTo: tabScroll.frameLayoutGuide.heightAnchor),
+            state.topAnchor.constraint(equalTo: tabScroll.bottomAnchor), state.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12), state.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            scroll.topAnchor.constraint(equalTo: state.bottomAnchor, constant: 8), scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12), scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            scroll.bottomAnchor.constraint(equalTo: confirm.topAnchor, constant: -12),
+            options.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor), options.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            options.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor), options.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+            options.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
+            confirm.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12), confirm.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            confirm.heightAnchor.constraint(equalToConstant: 46), confirm.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
+        ])
         loadGroups()
     }
     @objc private func loadGroups() {
-        task?.cancel(); title = "正在加载分类…"
+        task?.cancel(); state.setTitle("正在加载分类…", for: .normal)
         task = Task { [weak self, source] in
-            do { let groups = try await source.filterGroups(); try Task.checkCancellation(); self?.groups = groups; self?.title = "分类筛选"; self?.tableView.reloadData() }
-            catch { if !Task.isCancelled { self?.title = "分类加载失败"; self?.showError(error) } }
+            do {
+                let groups = try await source.filterGroups(); try Task.checkCancellation()
+                self?.groups = groups; self?.activeGroup = 0
+                self?.state.setTitle(groups.isEmpty ? "该站源暂无分类" : nil, for: .normal)
+                self?.render()
+            }
+            catch { if !Task.isCancelled { self?.state.setTitle("分类加载失败 · 点击重试", for: .normal) } }
         }
     }
+    @objc private func close() { dismiss(animated: true) }
     @objc private func done() { onSelect(selected); dismiss(animated: true) }
-    override func numberOfSections(in tableView: UITableView) -> Int { groups.count }
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { groups[section].options.count }
-    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? { groups[section].label }
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let group = groups[indexPath.section], option = group.options[indexPath.row]
-        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        cell.textLabel?.text = option.label
-        cell.accessoryType = (selected[group.key] ?? "all") == option.value ? .checkmark : .none
-        return cell
-    }
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let group = groups[indexPath.section]
-        selected[group.key] = group.options[indexPath.row].value
-        tableView.reloadData()
+    private func render() {
+        tabs.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        options.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        for (index, group) in groups.enumerated() {
+            let button = UIButton(type: .system)
+            button.setTitle(group.label, for: .normal)
+            button.titleLabel?.font = .systemFont(ofSize: 14, weight: index == activeGroup ? .bold : .regular)
+            button.addAction(UIAction { [weak self] _ in self?.activeGroup = index; self?.render() }, for: .touchUpInside)
+            tabs.addArrangedSubview(button)
+        }
+        guard groups.indices.contains(activeGroup) else { return }
+        let group = groups[activeGroup]
+        for start in stride(from: 0, to: group.options.count, by: 3) {
+            let row = UIStackView(); row.axis = .horizontal; row.spacing = 8; row.distribution = .fillEqually
+            for index in start..<(start + 3) {
+                guard group.options.indices.contains(index) else { row.addArrangedSubview(UIView()); continue }
+                let option = group.options[index], button = UIButton(type: .system)
+                var config = UIButton.Configuration.tinted()
+                config.title = option.label
+                config.baseBackgroundColor = (selected[group.key] ?? "all") == option.value ? Palette.accent : .clear
+                config.titleLineBreakMode = .byTruncatingTail
+                button.configuration = config
+                button.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
+                button.addAction(UIAction { [weak self] _ in self?.selected[group.key] = option.value; self?.render() }, for: .touchUpInside)
+                row.addArrangedSubview(button)
+            }
+            options.addArrangedSubview(row)
+        }
     }
 }
