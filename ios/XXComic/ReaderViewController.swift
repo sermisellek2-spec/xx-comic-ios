@@ -79,6 +79,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         tap.delegate = self; pages.addGestureRecognizer(tap)
         let doubleTap = UITapGestureRecognizer(target: self, action: #selector(doubleTapped(_:)))
         doubleTap.numberOfTapsRequired = 2
+        doubleTap.delegate = self
         pages.addGestureRecognizer(doubleTap); tap.require(toFail: doubleTap)
         let pan = UIPanGestureRecognizer(target: self, action: #selector(panned(_:)))
         pan.maximumNumberOfTouches = 1; pan.delegate = self; pages.addGestureRecognizer(pan)
@@ -121,6 +122,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         if pageAnimating {
             pages.setContentOffset(pages.contentOffset, animated: false)
             pageAnimating = false
+            restore(position)
         }
         layout.scrollDirection = settings.layout == .strip ? .vertical : .horizontal
         pages.isPagingEnabled = settings.layout == .paged
@@ -242,6 +244,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     @objc private func refreshReaderTheme() { if viewIfLoaded?.window != nil { applySettings() } }
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
+        guard isViewLoaded else { return }
         if settings.theme == .system && overrideUserInterfaceStyle != UIScreen.main.traitCollection.userInterfaceStyle { applySettings() }
     }
     private func updateBadge() {
@@ -278,11 +281,16 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         if presentedViewController == nil { present(alert, animated: true) }
     }
     @objc private func tapped(_ gesture: UITapGestureRecognizer) {
-        guard !isZoomed else { return }
-        let fraction = (gesture.location(in: pages).x - pages.bounds.minX) / max(1, pages.bounds.width)
-        if settings.turnMode == .tap && (fraction < 0.3 || fraction > 0.7) {
-            move(ReaderNavigation.tapDelta(leftSide: fraction < 0.3, leftHand: settings.leftHand))
-        } else {
+        let location = gesture.location(in: pages)
+        let action = ReaderNavigation.tapAction(
+            x: Double((location.x - pages.bounds.minX) / max(1, pages.bounds.width)),
+            y: Double((location.y - pages.bounds.minY) / max(1, pages.bounds.height)),
+            controlsVisible: !fullscreen, layout: settings.layout, mode: settings.turnMode,
+            leftHand: settings.leftHand, zoomed: isZoomed)
+        switch action {
+        case .none: break
+        case .move(let delta): move(delta)
+        case .toggleControls:
             fullscreen.toggle()
             toolbar.isHidden = fullscreen
             badge.isHidden = !fullscreen || settings.fullyImmersive
@@ -299,7 +307,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     @objc private func panned(_ gesture: UIPanGestureRecognizer) {
         guard gesture.state == .ended, !isZoomed, settings.turnMode == .swipe else { return }
         let translation = gesture.translation(in: pages)
-        guard abs(translation.x) >= 72, abs(translation.x) > abs(translation.y) * 1.35 else { return }
+        guard abs(translation.x) > 72, abs(translation.x) > abs(translation.y) * 1.35 else { return }
         move(ReaderNavigation.swipeDelta(dx: Double(translation.x), leftHand: settings.leftHand))
     }
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
@@ -307,7 +315,16 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             let velocity = pan.velocity(in: pages)
             return settings.turnMode == .swipe && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.35
         }
-        return !isZoomed
+        return true
+    }
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        var touched = touch.view
+        while let current = touched {
+            if current is UIControl { return false }
+            if current === pages { break }
+            touched = current.superview
+        }
+        return true
     }
     @objc private func showSettings() {
         savePosition()

@@ -2,6 +2,14 @@ import XCTest
 @testable import ComicCore
 
 final class ReadingRulesTests: XCTestCase {
+    func testTapZonesHonorControlsMiddleHeightAndPageInputMode() {
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: true, layout: .paged, mode: .tap, leftHand: false, zoomed: false), .toggleControls)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.29, y: 0.5, controlsVisible: false, layout: .paged, mode: .tap, leftHand: false, zoomed: false), .toggleControls)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.1, controlsVisible: false, layout: .paged, mode: .tap, leftHand: false, zoomed: false), .none)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .paged, mode: .swipe, leftHand: false, zoomed: false), .move(-1))
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .strip, mode: .swipe, leftHand: false, zoomed: false), .toggleControls)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.9, y: 0.5, controlsVisible: false, layout: .paged, mode: .tap, leftHand: false, zoomed: true), .toggleControls)
+    }
     func testLegacyProgressRestoresImageAndOffset() {
         let position = ReaderPosition.fromLegacy(4200, count: 8)
         XCTAssertEqual(position.imageIndex, 3)
