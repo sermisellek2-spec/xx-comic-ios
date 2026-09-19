@@ -20,33 +20,54 @@ public protocol ComicSource: Sendable {
 public struct HTTPResponse: Sendable {
     public let data: Data
     public let statusCode: Int
+    public let textEncodingName: String?
 
-    public init(data: Data, statusCode: Int) {
+    public init(data: Data, statusCode: Int, textEncodingName: String? = nil) {
         self.data = data
         self.statusCode = statusCode
+        self.textEncodingName = textEncodingName
     }
 }
 
 public protocol HTTPTransport: Sendable {
     func get(_ url: URL, headers: [String: String]) async throws -> HTTPResponse
+    func post(_ url: URL, headers: [String: String], body: Data) async throws -> HTTPResponse
+}
+
+public extension HTTPTransport {
+    func post(_ url: URL, headers: [String: String], body: Data) async throws -> HTTPResponse {
+        throw HTTPTransportError.unsupportedMethod
+    }
 }
 
 public enum HTTPTransportError: Error, Equatable, Sendable {
     case invalidResponse
     case invalidStatusCode(Int)
+    case unsupportedMethod
 }
 
 public struct URLSessionHTTPTransport: HTTPTransport, @unchecked Sendable {
     private let session: URLSession
+    private let timeoutInterval: TimeInterval
 
-    public init(session: URLSession = .shared) {
+    public init(session: URLSession = .shared, timeoutInterval: TimeInterval = 15) {
         self.session = session
+        self.timeoutInterval = timeoutInterval
     }
 
     public func get(_ url: URL, headers: [String: String]) async throws -> HTTPResponse {
+        try await send(url, headers: headers, body: nil)
+    }
+
+    public func post(_ url: URL, headers: [String: String], body: Data) async throws -> HTTPResponse {
+        try await send(url, headers: headers, body: body)
+    }
+
+    private func send(_ url: URL, headers: [String: String], body: Data?) async throws -> HTTPResponse {
         try Task.checkCancellation()
         var request = URLRequest(url: url)
-        request.timeoutInterval = 15
+        request.timeoutInterval = timeoutInterval
+        if let body { request.httpMethod = "POST"; request.httpBody = body }
         headers.forEach { request.setValue($0.value, forHTTPHeaderField: $0.key) }
 #if canImport(FoundationNetworking)
         let box = URLSessionTaskBox()
@@ -67,7 +88,7 @@ public struct URLSessionHTTPTransport: HTTPTransport, @unchecked Sendable {
         let (data, response) = try await session.data(for: request)
 #endif
         guard let response = response as? HTTPURLResponse else { throw HTTPTransportError.invalidResponse }
-        return HTTPResponse(data: data, statusCode: response.statusCode)
+        return HTTPResponse(data: data, statusCode: response.statusCode, textEncodingName: response.textEncodingName)
     }
 }
 

@@ -4,6 +4,7 @@ extension HTTPTransportError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .invalidResponse: return "站源返回了无法识别的响应，请稍后重试。"
+        case .unsupportedMethod: return "当前网络连接不支持该请求方式。"
         case .invalidStatusCode(let code): return "站源请求失败（HTTP \(code)），请稍后重试。"
         }
     }

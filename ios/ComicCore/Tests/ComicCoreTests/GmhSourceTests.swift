@@ -366,6 +366,43 @@ final class GmhSourceTests: XCTestCase {
 
         XCTAssertEqual(try XCTUnwrap(TestURLProtocol.startedRequests().first).timeoutInterval, 15)
     }
+
+    func testURLSessionTransportSendsPOSTBodyAndHeaders() async throws {
+        TestURLProtocol.configure(.succeed)
+        defer { TestURLProtocol.reset() }
+        let session = makeTestURLSession()
+        let transport = URLSessionHTTPTransport(session: session)
+        _ = try await transport.post(URL(string: "https://example.test/form")!, headers: ["Content-Type":"application/x-www-form-urlencoded"], body: Data("pageindex=2&tnm=A+%26".utf8))
+        let request = try XCTUnwrap(TestURLProtocol.startedRequests().first)
+        XCTAssertEqual(request.httpMethod, "POST")
+        XCTAssertEqual(request.httpBody, Data("pageindex=2&tnm=A+%26".utf8))
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/x-www-form-urlencoded")
+    }
+
+    func testURLSessionTransportAllowsSourceSpecificReadTimeouts() async throws {
+        TestURLProtocol.configure(.succeed)
+        defer { TestURLProtocol.reset() }
+        let session = makeTestURLSession()
+        for timeout: TimeInterval in [20, 30] {
+            let transport = URLSessionHTTPTransport(session: session, timeoutInterval: timeout)
+            _ = try await transport.get(URL(string: "https://example.test/source")!, headers: [:])
+        }
+        XCTAssertEqual(TestURLProtocol.startedRequests().map(\.timeoutInterval), [20, 30])
+    }
+
+    func testURLSessionTransportCancelsInFlightPOST() async {
+        let started = expectation(description: "POST started")
+        let stopped = expectation(description: "POST stopped")
+        TestURLProtocol.configure(.block, onStart: { started.fulfill() }, onStop: { stopped.fulfill() })
+        defer { TestURLProtocol.reset() }
+        let session = makeTestURLSession()
+        let transport = URLSessionHTTPTransport(session: session)
+        let task = Task { try await transport.post(URL(string: "https://example.test/form")!, headers: [:], body: Data("a=1".utf8)) }
+        await fulfillment(of: [started], timeout: 1)
+        task.cancel()
+        assertCancellation(await task.result)
+        await fulfillment(of: [stopped], timeout: 1)
+    }
 }
 
 private func catalogTransport(chapters: String) -> StubTransport {
