@@ -17,7 +17,7 @@ final class AppEnvironment {
 
     init(defaults: UserDefaults) throws {
         self.defaults = defaults
-        let available: [any ComicSource] = [BaoziComicSource(), Mh160ComicSource(), GmhComicSource(), MkzhanComicSource(), HiperdexComicSource(), D5d6ComicSource(), FiveUmComicSource(), FiveUmComicSource(site: .bbyin), AntbywComicSource()]
+        let available: [any ComicSource] = [BaoziComicSource(), Mh160ComicSource(), GmhComicSource(), MkzhanComicSource(), HiperdexComicSource(), D5d6ComicSource(), ManbenComicSource(), FiveUmComicSource(), FiveUmComicSource(site: .bbyin), AntbywComicSource()]
         allSources = available
         sourcePreferences = SourcePreferences(defaults: defaults, defaultIDs: available.map(\.id))
         preferences = ReaderPreferencesStore(defaults: defaults)
