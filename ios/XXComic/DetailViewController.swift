@@ -18,6 +18,7 @@ final class DetailViewController: UIViewController {
     private var cachedChapters: [Chapter]?
     private var detailLoaded = false
     private var directoryID = UUID()
+    private var readTask: Task<Void, Never>?
 
     init(comic: ComicSummary, environment: AppEnvironment) {
         self.comic = comic; self.environment = environment
@@ -26,7 +27,7 @@ final class DetailViewController: UIViewController {
         hidesBottomBarWhenPushed = true
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
-    deinit { detailTask?.cancel(); directoryTask?.cancel() }
+    deinit { detailTask?.cancel(); directoryTask?.cancel(); readTask?.cancel() }
     override func viewDidLoad() {
         super.viewDidLoad()
         title = source.name
@@ -73,6 +74,7 @@ final class DetailViewController: UIViewController {
         guard presentedViewController == nil else { return }
         detailTask?.cancel(); detailTask = nil
         directoryID = UUID(); directoryTask?.cancel(); directoryTask = nil
+        readTask?.cancel(); readTask = nil; read.isEnabled = true
         cover.cancel()
     }
     private func updateButtons() {
@@ -115,7 +117,7 @@ final class DetailViewController: UIViewController {
         do {
             let result = try await directoryTask!.value
             guard directoryID == token else { throw CancellationError() }
-            cachedChapters = result; directoryTask = nil
+            cachedChapters = result.isEmpty ? nil : result; directoryTask = nil
             return result
         } catch { if directoryID == token { directoryTask = nil }; throw error }
     }
@@ -133,7 +135,22 @@ final class DetailViewController: UIViewController {
         if let saved = environment.library.entry(for: comic)?.reading {
             // Saved chapter URL is sufficient; do not block resume on directory loading.
             openReader(chapters: [saved.chapter], index: 0, incomplete: true)
-        } else { showDirectory() }
+        } else {
+            guard readTask == nil else { return }
+            read.isEnabled = false; read.setTitle("正在加载章节…", for: .normal)
+            readTask = Task { [weak self] in
+                guard let self else { return }
+                defer { self.readTask = nil; self.read.isEnabled = true; self.updateButtons() }
+                do {
+                    let items = try await self.chapters(); try Task.checkCancellation()
+                    guard !items.isEmpty else {
+                        self.retry.setTitle("暂无章节 · 点击章节目录刷新", for: .normal)
+                        return
+                    }
+                    self.openReader(chapters: items, index: 0, incomplete: false)
+                } catch { if !Task.isCancelled { self.showError(error) } }
+            }
+        }
     }
     private func openReader(chapters: [Chapter], index: Int, incomplete: Bool) {
         navigationController?.pushViewController(ReaderViewController(comic: comic, chapters: chapters,

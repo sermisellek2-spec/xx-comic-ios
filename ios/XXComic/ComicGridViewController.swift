@@ -1,5 +1,7 @@
 import UIKit
 import ComicCore
+import UniformTypeIdentifiers
+import ImageIO
 
 @MainActor
 class ComicGridViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -95,9 +97,12 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
 }
 
 @MainActor
-final class BookshelfViewController: ComicGridViewController {
+final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDelegate {
     private let historyOnly: Bool
     private let resume = UIButton(type: .system)
+    private let shelfMode = UISegmentedControl(items: ["我的书架", "本地书架"])
+    private var importTask: Task<Void, Never>?
+    private var localMode: Bool { !historyOnly && shelfMode.selectedSegmentIndex == 1 }
     init(environment: AppEnvironment, historyOnly: Bool = false) {
         self.historyOnly = historyOnly
         super.init(environment: environment)
@@ -107,7 +112,13 @@ final class BookshelfViewController: ComicGridViewController {
         super.viewDidLoad()
         title = historyOnly ? "阅读历史" : "书架"
         if !historyOnly {
-            navigationItem.rightBarButtonItem = UIBarButtonItem(title: "历史", style: .plain, target: self, action: #selector(showHistory))
+            navigationItem.rightBarButtonItems = [
+                UIBarButtonItem(title: "导入", style: .plain, target: self, action: #selector(importImages)),
+                UIBarButtonItem(title: "历史", style: .plain, target: self, action: #selector(showHistory))
+            ]
+            shelfMode.selectedSegmentIndex = 0
+            shelfMode.addTarget(self, action: #selector(shelfChanged), for: .valueChanged)
+            header.addArrangedSubview(shelfMode)
             resume.titleLabel?.numberOfLines = 2
             resume.contentHorizontalAlignment = .leading
             resume.addTarget(self, action: #selector(continueReading), for: .touchUpInside)
@@ -116,6 +127,15 @@ final class BookshelfViewController: ComicGridViewController {
     }
     override func viewWillAppear(_ animated: Bool) { super.viewWillAppear(animated); refresh() }
     private func refresh() {
+        if localMode {
+            resume.isHidden = true
+            do {
+                comics = try environment.localLibrary.books().map { try environment.localLibrary.summary(for: $0) }
+                collection.reloadData()
+                status(comics.isEmpty ? "本地书架空空的，点击导入添加图片" : "")
+            } catch { status(error.localizedDescription) }
+            return
+        }
         comics = (historyOnly ? environment.library.history : environment.library.favorites).map(\.summary)
         collection.reloadData()
         status(comics.isEmpty ? (historyOnly ? "还没有阅读记录" : "书架空空的，去发现页找漫画吧") : "")
@@ -126,9 +146,53 @@ final class BookshelfViewController: ComicGridViewController {
     @objc private func showHistory() {
         navigationController?.pushViewController(BookshelfViewController(environment: environment, historyOnly: true), animated: true)
     }
+    @objc private func shelfChanged() { refresh() }
+    @objc private func importImages() {
+        if let importTask { importTask.cancel(); return }
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.image], asCopy: true)
+        picker.allowsMultipleSelection = true; picker.delegate = self
+        present(picker, animated: true)
+    }
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        let alert = UIAlertController(title: "导入图片漫画", message: "所选图片合并为一本漫画，按文件名自然排序。", preferredStyle: .alert)
+        alert.addTextField { $0.text = urls.first?.deletingPathExtension().lastPathComponent }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "导入", style: .default) { [weak self, weak alert] _ in
+            self?.beginImport(urls, title: alert?.textFields?.first?.text ?? "本地漫画")
+        })
+        if presentedViewController === controller {
+            controller.dismiss(animated: true) { [weak self] in self?.present(alert, animated: true) }
+        } else { present(alert, animated: true) }
+    }
+    private func beginImport(_ urls: [URL], title: String) {
+        let library = environment.localLibrary
+        status("正在导入…，再次点击导入可取消")
+        let worker = Task.detached(priority: .userInitiated) {
+            let scoped = urls.filter { $0.startAccessingSecurityScopedResource() }
+            defer { scoped.forEach { $0.stopAccessingSecurityScopedResource() } }
+            for url in urls {
+                try Task.checkCancellation()
+                guard let image = CGImageSourceCreateWithURL(url as CFURL, nil), CGImageSourceGetCount(image) > 0 else { throw LocalLibraryError.invalidBook }
+            }
+            return try library.importImages(title: title, files: urls)
+        }
+        importTask = Task { [weak self] in
+            do {
+                _ = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+                guard let self else { return }
+                self.shelfMode.selectedSegmentIndex = 1; self.refresh()
+                self.status("导入完成")
+            } catch {
+                self?.status(error is CancellationError ? "已取消导入，原文件未改动" : error.localizedDescription)
+            }
+            self?.importTask = nil
+        }
+    }
+    deinit { importTask?.cancel() }
     @objc private func continueReading() { if let recent = environment.library.history.first { open(recent.summary) } }
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        guard !historyOnly else { return nil }
+        guard !historyOnly, !localMode else { return nil }
         let comic = comics[indexPath.item]
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
             UIMenu(children: [UIAction(title: "移出收藏", image: UIImage(systemName: "trash"), attributes: .destructive) { _ in

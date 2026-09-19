@@ -23,7 +23,7 @@ final class RemoteImageView: UIImageView {
         cancel()
         image = nil; original = nil
         backgroundColor = Palette.card
-        guard let url = URL(string: text), ["https", "http"].contains(url.scheme?.lowercased() ?? "") else {
+        guard let url = URL(string: text), ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") else {
             onFailure?(); return
         }
         let key = ((reader ? "reader\n" : "cover\n") + referer + "\n" + text) as NSString
@@ -38,9 +38,24 @@ final class RemoteImageView: UIImageView {
                 request.setValue(referer, forHTTPHeaderField: "Referer")
                 request.setValue("Mozilla/5.0", forHTTPHeaderField: "User-Agent")
                 request.timeoutInterval = 30
-                let (data, response) = try await URLSession.shared.data(for: request)
-                guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode), data.count <= 40 * 1024 * 1024 else {
-                    throw URLError(.badServerResponse)
+                let data: Data
+                if url.isFileURL {
+                    let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+                    let resolved = url.resolvingSymlinksInPath().standardizedFileURL
+                    let suffix = ProcessInfo.processInfo.arguments.contains("--ui-testing") ? "XXComic-UITests" : "XXComic"
+                    let allowed = support.appendingPathComponent(suffix).appendingPathComponent("Local").resolvingSymlinksInPath()
+                    guard resolved.path.hasPrefix(allowed.path + "/") else { throw URLError(.noPermissionsToReadFile) }
+                    data = try await Task.detached(priority: .userInitiated) {
+                        let size = try resolved.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+                        guard size <= 40 * 1024 * 1024 else { throw URLError(.dataLengthExceedsMaximum) }
+                        return try Data(contentsOf: resolved)
+                    }.value
+                } else {
+                    let (bytes, response) = try await URLSession.shared.data(for: request)
+                    guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode), bytes.count <= 40 * 1024 * 1024 else {
+                        throw URLError(.badServerResponse)
+                    }
+                    data = bytes
                 }
                 let decoded = await Task.detached(priority: .userInitiated) { () -> UIImage? in
                     guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
