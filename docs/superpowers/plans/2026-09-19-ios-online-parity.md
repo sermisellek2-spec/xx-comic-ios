@@ -92,3 +92,36 @@ AppEnvironment保留完整适配器列表，并向发现页提供已启用有序
 ### Task 14: 站源筛选抽屉统一
 
 按MainActivity.showFilterDrawer(0/1)把源名按钮的即时菜单换成已有右侧抽屉的站源列表入口；分类按钮进入分类页。抽屉内选源只改草稿并重置该源筛选，确认后才提交源和筛选；关闭/点外部丢弃。选源后普通源加载分类，mh18/jmcomic保留源列表直到确认（categoriesFollowInitialList）。取消旧分类请求，禁止旧结果覆盖新选源；关闭抽屉取消分类请求。复用现有三列布局和抽屉宽度，不额外添加页面。UIKit验收需Mac，Windows只记录语法和静态审查。
+
+### Task 15: 漫本与表单 POST
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/ManbenComicSource.swift`、`ios/ComicCore/Tests/ComicCoreTests/ManbenSourceTests.swift`；修改 `ios/ComicCore/Sources/ComicCore/ComicSource.swift` 和 `ios/ComicCore/Tests/ComicCoreTests/GmhSourceTests.swift` 中已有 URLProtocol transport 测试。注册由主代理在审查后修改 `ios/XXComic/AppEnvironment.swift`。
+
+**Interfaces:** 沿用 `ComicSource`；`ManbenComicSource(transport: any HTTPTransport = URLSessionHTTPTransport())`，默认 ID `manben`、名称 `漫本`、baseURL `https://www.manben.com`、Referer 带尾斜杠。给 `HTTPTransport` 增加 `post(_ url: URL, headers: [String:String], body: Data) async throws -> HTTPResponse`；协议扩展默认实现抛出明确 unsupported-method 错误以兼容既有只读 fixture，URLSession 实现必须真实 POST。GET/POST 共用现有取消发送逻辑，不复制网络栈、不新增依赖。
+
+- [ ] 读取 Android `ManbenComicSource.java`、`SourceConfig.manben`、`ManbenComicSourceTest.java`。先在新测试文件创建记录 method/URL/headers/body 的 actor transport，POST 分类合法空响应 fixture 为 `[]`。添加首个行为测试并运行，确认缺少适配器或POST接口导致失败：
+
+```swift
+func testLatestUsesPostCategoryPageAndDefaults() async throws {
+    let transport = ManbenFixtureTransport(response: "[]")
+    let source = ManbenComicSource(transport: transport)
+    let items = try await source.latest(page: 2)
+    XCTAssertTrue(items.isEmpty)
+    let recorded = await transport.lastRequest()
+    let request = try XCTUnwrap(recorded)
+    XCTAssertEqual(request.method, "POST")
+    XCTAssertEqual(request.url.absoluteString, "https://www.manben.com/mh-list/pagerdata.ashx")
+    XCTAssertEqual(request.fields["pageindex"], "2")
+    XCTAssertEqual(request.fields["t"], "2")
+    XCTAssertEqual(request.fields["sc"], "1")
+    XCTAssertEqual(request.fields["tsort"], "2")
+    XCTAssertEqual(request.fields["tnm"], "")
+}
+```
+
+测试代码的 await 结果先存局部变量再传 XCTest autoclosure；fixture 记录字段解析自实际表单 body，不能复用生产编码逻辑生成期望值。
+
+- [ ] 移植分类默认字段 `t=2,pageindex=max(1,page),sc=1,tsort=2,tagid=0,tst=0,tarea=0,tgroup=0,tnm=`，筛选映射 state/tag/audience/region/letter 到 tst/tagid/tgroup/tarea/tnm，all转换按Android。验证POST编码及取消；不改变现有GET fixture行为。
+- [ ] 搜索 `/search?page={page}&title={keyword}&language=1` 使用Java表单编码，保留分页；动态筛选按网页顺序、tagClick参数、中文标签映射。详情保留评分嵌套span剥离、作者长链接回归、简介/封面/状态/最新章、目录为空的按需契约。章节仅取chapterlistload，保留站点分组sectionSlot，组内按数值ID升序、去重和连续chapterSlot；不要扫推荐区。
+- [ ] 正文先解析章节标题和被屏蔽状态，再按 `/imageshow.ashx?cid={chapterId}&page={page}&showtype=1&ispre=0` 顺序取页，Referer为章节URL。解析chapterimage JSON的ImagePix/Images/IsEnd，只保留ImagePix范围内图片，去重；两次连续无新增报错、最多1000次、未正常结束报错、空正文报错。fixture覆盖正常两页、重复图片、终止空数据/错误壳、无新增循环、取消中断零后续请求。保留HTTP失败，不吞取消。
+- [ ] 聚焦执行 `docker run --rm --mount 'type=bind,source=F:\softForCode\codex-project\xx-comic\.worktrees\ios-port\ios\ComicCore,target=/work' -w /work swift:5.10-jammy swift test --filter 'ManbenSourceTests|GmhSourceTests'`，再全量一次确认POST接口未破坏已有源。报告实际测试名称/数量、RED/GREEN、未覆盖平台编码差异。仅主代理提交和接线；独立审查后更新矩阵，不把fixture通过当作站点或设备验收。
