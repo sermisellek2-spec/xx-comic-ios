@@ -66,6 +66,7 @@ import com.xxcomic.reader.ReaderSettingsSheet;
 import com.xxcomic.reader.ZoomGeometry;
 import com.xxcomic.reader.ChapterDrawerSheet;
 import com.xxcomic.reader.HistoryProgressLabel;
+import com.xxcomic.reader.ReadingHabitTracker;
 
 import com.xxcomic.source.BaoziComicSource;
 import com.xxcomic.source.AntbywComicSource;
@@ -384,6 +385,16 @@ public class MainActivity extends Activity {
     private static final ExecutorService localBatchIo = Executors.newFixedThreadPool(2);
 
     private int bookshelfTab = 0; // 0: 我的书架, 1: 本地书架
+    private ReadingHabitTracker readingHabitTracker;
+    private final Runnable readerTickRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (readerVisible && readingHabitTracker != null) {
+                readingHabitTracker.tick();
+                main.postDelayed(this, 2000L);
+            }
+        }
+    };
     private FrameLayout bookshelfContainer;
     private View onlineBookshelfView;
     private View localBookshelfView;
@@ -632,6 +643,12 @@ public class MainActivity extends Activity {
                 () -> requestProtectedSourceRetry("jmcomic"));
         rebuildSourceClients();
         restoreLocalState();
+        readingHabitTracker = new ReadingHabitTracker();
+        restoreReadingHabitState();
+        readingHabitTracker.setListener(tracker -> persistReadingHabitState());
+        if (savedInstanceState == null) {
+            bookshelfTab = readingHabitTracker.resolveCurrentLaunchTab();
+        }
         applyThemeAndSystemBars();
         scheduleThemeSwitch();
         showTab(0);
@@ -647,6 +664,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         activityResumed = true;
+        if (readingHabitTracker != null) readingHabitTracker.onAppForeground();
         boolean themeChanged = refreshThemeIfChanged();
         scheduleThemeSwitch();
         if (themeChanged && root != null) rerenderCurrentScreen();
@@ -654,6 +672,8 @@ public class MainActivity extends Activity {
             applyReaderSystemBars();
             registerReaderBatteryReceiver();
             main.post(readerTimeUpdateRunnable);
+            main.removeCallbacks(readerTickRunnable);
+            main.postDelayed(readerTickRunnable, 2000L);
         }
         checkPendingUpdatePrompt();
     }
@@ -670,6 +690,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         activityResumed = false;
+        if (readingHabitTracker != null) readingHabitTracker.onAppBackground();
+        main.removeCallbacks(readerTickRunnable);
         if (activeUpdateDialog != null && activeUpdateDialog.isShowing()) {
             pendingPromptRelease = availableUpdateRelease;
             activeUpdateDialog.dismiss();
@@ -703,6 +725,9 @@ public class MainActivity extends Activity {
         if (activeRemDialog != null && activeRemDialog.isShowing()) {
             activeRemDialog.dismiss();
             activeRemDialog = null;
+        }
+        if (readerVisible && readingHabitTracker != null) {
+            readingHabitTracker.onExitReader();
         }
         releaseReaderViews();
         dismissTransientHint();
@@ -2098,6 +2123,14 @@ public class MainActivity extends Activity {
     }
 
     private void enterScreen(boolean keepDetailSearch) {
+        if (readerVisible) {
+            if (readingHabitTracker != null) {
+                readingHabitTracker.onExitReader();
+            }
+            if (main != null && readerTickRunnable != null) {
+                main.removeCallbacks(readerTickRunnable);
+            }
+        }
         offlinePageBack = null;
         if (!keepDetailSearch) detailSourceSearch.detach();
         if (detailSourceSheet != null) detailSourceSheet.dismissImmediately();
@@ -2244,6 +2277,8 @@ public class MainActivity extends Activity {
         LinearLayout appearance = settingsList();
         appearance.setPadding(0, 0, 0, 0);
         appearance.addView(settingsMenuItem(themeIcon(), "主题模式", "跟随系统、浅色或深色", themeModeLabel(), this::showThemeDrawer));
+        appearance.addView(UIHelpers.divider(this));
+        appearance.addView(settingsMenuItem(R.drawable.ic_bookshelf, "启动书架", launchBookshelfSubtitle(), launchBookshelfModeLabel(), this::showLaunchBookshelfDrawer));
         appearance.addView(UIHelpers.divider(this));
         appearance.addView(settingsMenuItem(R.drawable.ic_history, "阅读历史", "章节与阅读位置", progress.size() + " 条", this::showHistory));
         page.addView(appearance);
@@ -2633,6 +2668,9 @@ public class MainActivity extends Activity {
 
         final int oldTab = bookshelfTab;
         bookshelfTab = newTab;
+        if (readingHabitTracker != null) {
+            readingHabitTracker.setLastManualTab(newTab);
+        }
 
         if (onlineBookshelfView != null) {
             onlineBookshelfView.setVisibility(newTab == 0 ? View.VISIBLE : View.GONE);
@@ -3286,6 +3324,114 @@ public class MainActivity extends Activity {
             if (i < labels.length - 1) choices.addView(UIHelpers.space(this, UIHelpers.dp(this, 6), 1));
         }
         showSettingsSheet("选择主题", choices);
+    }
+
+    private String launchBookshelfModeLabel() {
+        int mode = readingHabitTracker != null ? readingHabitTracker.getLaunchMode() : ReadingHabitTracker.LAUNCH_MODE_AUTO;
+        if (mode == ReadingHabitTracker.LAUNCH_MODE_MY) return "我的书架";
+        if (mode == ReadingHabitTracker.LAUNCH_MODE_LOCAL) return "本地书架";
+        return "自动跟随";
+    }
+
+    private String launchBookshelfSubtitle() {
+        if (readingHabitTracker == null) return "自动跟随习惯";
+        int mode = readingHabitTracker.getLaunchMode();
+        if (mode == ReadingHabitTracker.LAUNCH_MODE_MY) return "启动默认显示我的书架";
+        if (mode == ReadingHabitTracker.LAUNCH_MODE_LOCAL) return "启动默认显示本地书架";
+        return readingHabitTracker.getCurrentAutoSubtitle();
+    }
+
+    private void showLaunchBookshelfDrawer() {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(0, UIHelpers.dp(this, 10), 0, UIHelpers.dp(this, 6));
+
+        int currentMode = readingHabitTracker != null ? readingHabitTracker.getLaunchMode() : ReadingHabitTracker.LAUNCH_MODE_AUTO;
+        String autoSub = readingHabitTracker != null ? readingHabitTracker.getCurrentAutoSubtitle() : "自动跟随阅读偏好";
+
+        PopupWindow[] popup = {null};
+
+        content.addView(launchBookshelfOption("自动跟随习惯（默认）", autoSub, currentMode == ReadingHabitTracker.LAUNCH_MODE_AUTO, () -> {
+            if (readingHabitTracker != null) readingHabitTracker.setLaunchMode(ReadingHabitTracker.LAUNCH_MODE_AUTO);
+            if (popup[0] != null) popup[0].dismiss();
+            rerenderSettingsScene();
+        }));
+        content.addView(UIHelpers.divider(this));
+        content.addView(launchBookshelfOption("我的书架", "启动默认打开我的书架", currentMode == ReadingHabitTracker.LAUNCH_MODE_MY, () -> {
+            if (readingHabitTracker != null) readingHabitTracker.setLaunchMode(ReadingHabitTracker.LAUNCH_MODE_MY);
+            if (popup[0] != null) popup[0].dismiss();
+            rerenderSettingsScene();
+        }));
+        content.addView(UIHelpers.divider(this));
+        content.addView(launchBookshelfOption("本地书架", "启动默认打开本地书架", currentMode == ReadingHabitTracker.LAUNCH_MODE_LOCAL, () -> {
+            if (readingHabitTracker != null) readingHabitTracker.setLaunchMode(ReadingHabitTracker.LAUNCH_MODE_LOCAL);
+            if (popup[0] != null) popup[0].dismiss();
+            rerenderSettingsScene();
+        }));
+
+        content.addView(UIHelpers.space(this, 1, UIHelpers.dp(this, 12)));
+        TextView reset = UIHelpers.text(this, "重置习惯数据", 13, UIHelpers.ACCENT, Typeface.NORMAL);
+        reset.setGravity(Gravity.CENTER);
+        reset.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 10), UIHelpers.dp(this, 12), UIHelpers.dp(this, 10));
+        reset.setBackground(UIHelpers.round(UIHelpers.ACCENT_SOFT, UIHelpers.dp(this, 8), Color.TRANSPARENT));
+        reset.setClickable(true);
+        reset.setFocusable(true);
+        reset.setOnClickListener(v -> {
+            if (readingHabitTracker != null) readingHabitTracker.resetHabit();
+            if (popup[0] != null) popup[0].dismiss();
+            showRemSuccessToast("已重置习惯数据");
+            rerenderSettingsScene();
+        });
+        content.addView(reset, new LinearLayout.LayoutParams(-1, -2));
+
+        popup[0] = showSettingsSheet("启动书架", content);
+    }
+
+    private View launchBookshelfOption(String title, String subtitle, boolean selected, Runnable onClick) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 10), UIHelpers.dp(this, 8), UIHelpers.dp(this, 10));
+        row.setClickable(true);
+        row.setFocusable(true);
+        UIHelpers.tapFeedback(row);
+        row.setOnClickListener(v -> onClick.run());
+
+        LinearLayout textCol = new LinearLayout(this);
+        textCol.setOrientation(LinearLayout.VERTICAL);
+        TextView titleView = UIHelpers.text(this, title, 14, selected ? UIHelpers.ACCENT : UIHelpers.TEXT, Typeface.BOLD);
+        textCol.addView(titleView);
+        if (!TextUtils.isEmpty(subtitle)) {
+            TextView subView = UIHelpers.text(this, subtitle, 12, UIHelpers.TEXT3, Typeface.NORMAL);
+            textCol.addView(subView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
+        }
+        row.addView(textCol, UIHelpers.weight(1));
+
+        if (selected) {
+            ImageView check = UIHelpers.vectorIconButton(this, R.drawable.ic_auto, UIHelpers.ACCENT, 0);
+            row.addView(check, new LinearLayout.LayoutParams(UIHelpers.dp(this, 20), UIHelpers.dp(this, 20)));
+        }
+        return row;
+    }
+
+    private void restoreReadingHabitState() {
+        if (readingHabitTracker == null) return;
+        SharedPreferences sp = getSharedPreferences("xxcomic_habit_preferences", MODE_PRIVATE);
+        int mode = sp.getInt("launch_bookshelf_mode", ReadingHabitTracker.LAUNCH_MODE_AUTO);
+        int lastManual = sp.getInt("last_manual_bookshelf_tab", 0);
+        int learned = sp.getInt("learned_preference", ReadingHabitTracker.PREF_NONE);
+        String samples = sp.getString("habit_samples", "[]");
+        readingHabitTracker.restoreState(mode, lastManual, learned, samples);
+    }
+
+    private void persistReadingHabitState() {
+        if (readingHabitTracker == null) return;
+        getSharedPreferences("xxcomic_habit_preferences", MODE_PRIVATE).edit()
+                .putInt("launch_bookshelf_mode", readingHabitTracker.getLaunchMode())
+                .putInt("last_manual_bookshelf_tab", readingHabitTracker.getLastManualTab())
+                .putInt("learned_preference", readingHabitTracker.getLearnedPreference())
+                .putString("habit_samples", readingHabitTracker.serializeSamples())
+                .apply();
     }
 
     private void showReaderSettings() {
@@ -4773,6 +4919,9 @@ public class MainActivity extends Activity {
         readerVisible = true;
         readerFullscreen = keepFullscreen;
         activeDetailId = detail.summary.comicId;
+        if (readingHabitTracker != null) {
+            readingHabitTracker.onEnterReader(detail.summary.comicId, isLocalComicDetail(detail));
+        }
         readerChapterIndex = Math.max(0, Math.min(chapterIndex, detail.chapters.size() - 1));
         ComicModels.Chapter chapter = detail.chapters.get(readerChapterIndex);
         int generation = readerGeneration;
@@ -5053,6 +5202,10 @@ public class MainActivity extends Activity {
         readerPrefetching.clear();
         root.removeAllViews();
         readerVisible = true;
+        if (main != null && readerTickRunnable != null) {
+            main.removeCallbacks(readerTickRunnable);
+            main.postDelayed(readerTickRunnable, 1000L);
+        }
         readerTopBar = null;
         readerBottomBar = null;
         readerProgressView = null;
@@ -5159,6 +5312,9 @@ public class MainActivity extends Activity {
 
                     Bitmap cachedMem = readerBitmapCache.get(imageUrl);
                     if (cachedMem != null && !cachedMem.isRecycled()) {
+                        if (readingHabitTracker != null) {
+                            readingHabitTracker.onContentReadable();
+                        }
                         image.setImageBitmap(cachedMem);
                         image.setScaleType(ImageView.ScaleType.FIT_CENTER);
                         applyReaderImageDisplayMode(image);
@@ -5250,6 +5406,9 @@ public class MainActivity extends Activity {
                 public void onScrollStateChanged(AbsListView view, int scrollState) {
                     if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL
                             || scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING) {
+                        if (readingHabitTracker != null) {
+                            readingHabitTracker.onUserAction();
+                        }
                         if (!readerFullscreen) {
                             setReaderFullscreen(true, true);
                         }
@@ -5561,6 +5720,9 @@ public class MainActivity extends Activity {
                             applyReaderImageDisplayMode(image);
                             Bitmap mem = readerBitmapCache.get(imageUrl);
                             if (mem != null && !mem.isRecycled()) {
+                                if (readingHabitTracker != null) {
+                                    readingHabitTracker.onContentReadable();
+                                }
                                 image.setImageBitmap(mem);
                                 image.setScaleType(ImageView.ScaleType.FIT_CENTER);
                                 applyReaderImageDisplayMode(image);
@@ -5571,6 +5733,10 @@ public class MainActivity extends Activity {
                             return loadReaderImage(image, imageUrl, chapterUrl, generation, comicId, null, new boolean[]{false}, 0, cacheOnly);
                         }, new PagedReaderView.Listener() {
                     @Override public void onPageChanged(int index) {
+                        if (readingHabitTracker != null) {
+                            readingHabitTracker.onContentReadable();
+                            readingHabitTracker.onUserAction();
+                        }
                         if (!isCurrentReaderImageRequest(generation, comicId, chapterUrl)) return;
                         recordPagedPosition(entryKey, index, page.imageUrls.size());
                         if (readerCount[0] != null) readerCount[0].setText((index + 1) + " / " + page.imageUrls.size() + " 页");
@@ -5583,7 +5749,12 @@ public class MainActivity extends Activity {
                     }
                     @Override public void onNavigate(int delta) { navigateReader(detail, page, delta); }
                     @Override public void onToggleControls() { toggleReaderFullscreen(); }
-                    @Override public void onInteraction() { if (!readerFullscreen) setReaderFullscreen(true, true); }
+                    @Override public void onInteraction() {
+                        if (readingHabitTracker != null) {
+                            readingHabitTracker.onUserAction();
+                        }
+                        if (!readerFullscreen) setReaderFullscreen(true, true);
+                    }
                 });
                 readerPager.setBackgroundColor(readerDisplayMode == 1 ? Color.BLACK : Color.rgb(12, 20, 32));
                 content.addView(readerPager, UIHelpers.match());
@@ -5685,6 +5856,9 @@ public class MainActivity extends Activity {
             @Override
             public void onProgressChanged(SeekBar sb, int progressVal, boolean fromUser) {
                 if (fromUser) {
+                    if (readingHabitTracker != null) {
+                        readingHabitTracker.onUserAction();
+                    }
                     if (readerLayoutMode == 1 && readerPager != null) {
                         readerPager.moveTo(progressVal);
                     } else if (readerLayoutMode == 0 && readerList != null) {
@@ -5850,6 +6024,10 @@ public class MainActivity extends Activity {
         String comicId = detail.summary.comicId;
         LocalModels.Book book = localBookForReading(comicId);
         if (book == null) return;
+        if (readingHabitTracker != null) {
+            readingHabitTracker.onEnterReader(comicId, true);
+            readingHabitTracker.onContentReadable();
+        }
 
         File epubFile;
         com.xxcomic.ebook.TextReaderView textReader = new com.xxcomic.ebook.TextReaderView(this);
@@ -5934,6 +6112,9 @@ public class MainActivity extends Activity {
         textReader.setListener(new com.xxcomic.ebook.TextReaderView.Listener() {
             @Override
             public void onPositionChanged(com.xxcomic.ebook.TextLocator locator) {
+                if (readingHabitTracker != null) {
+                    readingHabitTracker.onUserAction();
+                }
                 if (locator != null) {
                     getSharedPreferences("xxcomic_text_locators", MODE_PRIVATE).edit()
                             .putString(prefKey, locator.toJson())
@@ -6038,6 +6219,9 @@ public class MainActivity extends Activity {
             @Override
             public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
                 if (fromUser) {
+                    if (readingHabitTracker != null) {
+                        readingHabitTracker.onUserAction();
+                    }
                     textReader.scrollToPercent(progress / 100f);
                 }
             }
@@ -6100,6 +6284,9 @@ public class MainActivity extends Activity {
     }
 
     private void navigateReader(ComicModels.ComicDetail detail, ComicModels.ChapterPage page, int delta) {
+        if (readingHabitTracker != null) {
+            readingHabitTracker.onUserAction();
+        }
         if (readerLayoutMode == 1 && readerPager != null && !page.imageUrls.isEmpty()) {
             int current = readerPager.currentPage();
             if (!ReaderNavigation.crossesChapter(current, page.imageUrls.size(), delta)) {
@@ -6210,6 +6397,9 @@ public class MainActivity extends Activity {
 
     private void setReaderFullscreen(boolean fullscreen, boolean animated) {
         readerFullscreen = fullscreen;
+        if (readingHabitTracker != null) {
+            readingHabitTracker.onOverlayVisibilityChanged(!fullscreen);
+        }
         if (readerDisplayMode == 1) animated = false;
         updateReaderOverlayVisibility(animated);
         if (readerTopBar == null || readerBottomBar == null) return;
@@ -7818,6 +8008,9 @@ public class MainActivity extends Activity {
                     }
                     target.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     target.setImageBitmap(loaded);
+                    if (readingHabitTracker != null) {
+                        readingHabitTracker.onContentReadable();
+                    }
                     applyReaderImageDisplayMode(target);
                     if (list != null && restoringPosition[0] && savedPosition < READER_POSITION_SCALE) {
                         list.post(() -> {
