@@ -135,3 +135,15 @@ func testLatestUsesPostCategoryPageAndDefaults() async throws {
 - [ ] 新增固定已知密文测试：Android CuimhComicSourceTest.decryptsChapterImagesWithNativeAes 的 Base64 样本首16字节是IV，密钥为该源码 AES_KEY。解密JSON images必须为 `["https://img.example/1.webp","/static/2.webp"]`。先跑 `swift test --filter SourceAESTests` 观察缺实现失败；同时补24/32字节密钥固定向量和坏长度/坏padding回归。
 - [ ] Apple端 `import CommonCrypto` 调用 CCCrypt(kCCDecrypt,kCCAlgorithmAES,kCCOptionPKCS7Padding,...)，不写AES算法、不增加Swift依赖。Linux仅用于核心测试，使用已安装 `/usr/bin/openssl enc -d -aes-{128|192|256}-cbc` 的独立进程，参数数组不经过shell；临时目录保存输入输出并defer清理，避免管道阻塞，不打印站源公开格式密钥。调用前后检查取消；Apple分支需Xcode单独验收，Linux通过不能替代。
 - [ ] 再跑同聚焦测试，校验已知明文、三种密钥长度、错误填充/输入及预取消。记录Linux后端差异和命令；独立审查，不以抽象层测试替代后续源集成测试。
+
+### Task 17: 催漫画与六漫画
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/CuimhComicSource.swift`、`LiumanhuaComicSource.swift` 及 `ios/ComicCore/Tests/ComicCoreTests/CuimhSourceTests.swift`、`LiumanhuaSourceTests.swift`。修改 `ComicSource.swift` 仅增加 `var supportsSearch: Bool { get }` 和协议扩展默认true。两源返回false，search直接抛中文“不支持搜索”，不能请求网络。主代理在审查后注册及接发现页搜索能力过滤。
+
+**Interfaces:** public可默认初始化的两源适配器，HTTPTransport注入、模型沿用ComicSource；用Task16内部SourceAES解密，HTML4EntityDecoder清文本，不复制AES实现、不引入依赖。默认配置以Android SourceConfig.cuimh/liumanhua为准。先完整读两源Android源码及对应Tests，必须分别移植，不把细微不同归并猜测。
+
+- [ ] 先移植Android现有明文/加密fixture成失败测试（`swift test --filter 'CuimhSourceTests|LiumanhuaSourceTests'`），验证最新和分类、动态分组、详情同次携带目录、目录顺序去重、ID和相对URL。错误壳须有站点结构检查，不能单凭h1认正常详情；Cuimh单独目录无章应报错。
+- [ ] Cuimh分类顺序 `classification,subject,type,quality,region,copyright,state` 对应 `/list/,/tags/,/theme/,/quality/,/city/,/copyright/,/finish/`，只接受匹配键前缀；默认/category和/category/共用缓存键。5分钟TTL、LRU最多8页、每次网络开始间隔至少1秒；403本地冷却30分钟，冷却优先于缓存，禁止自动绕过/重试。Swift actor的await可重入，必须保持安卓synchronized fetch的串行性，不能让并发请求跳过间隔。时钟/等待可注入以快速测试TTL边界、LRU、冷却和取消；不要让真实测试睡30分钟。
+- [ ] Cuimh固定Base64 payload沿用Android测试，首16字节IV，AES公钥沿用原源码；解密JSON必须host精确www.cuimh.com，缺images报错；相对图片前缀https://img1.baipiaoguai.org，保持顺序去重。
+- [ ] Liumanhua分别保留自己的categoryPath筛选限制、目录URL模式和无目录时“在线阅读”fallback条件；普通20秒、章页30秒。解密JSON验证comic_down、source_id、host、comic_id/comicId/chapter_id/chapterId与请求一致性，以及非空HTTP(S)图片；不把Cuimh的相对地址规则用于六漫画。测试Android原本的所有拒绝场景，替换为固定密文时由独立Java/OpenSSL生成并记录来源。
+- [ ] 聚焦成功后全量一次，记录真实数量和未执行Xcode情况；代理不暂存不提交不注册，不运行真实站点请求。主代理提交并独立复审；修复通过后主代理按Android enabledSearchSources规则排除不支持搜索的源（它们仍能分类/收藏/阅读），单站输入也给清晰中文提示，不伪造空结果。
