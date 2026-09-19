@@ -10,7 +10,7 @@ public final class SourcePreferences {
     public var orderedIDs: [String] {
         let json = defaults.string(forKey: "source.order") ?? "[]"
         let values = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [Any] ?? []
-        return normalize(values.compactMap { $0 as? String })
+        return SourceOrder.normalize(values.compactMap { $0 as? String }, available: defaultIDs)
     }
     public var enabledIDs: [String] { orderedIDs.filter(isEnabled) }
     public func isEnabled(_ id: String) -> Bool {
@@ -22,13 +22,8 @@ public final class SourcePreferences {
     }
     public func setOrder(_ ids: [String]) {
         // An array of strings always has a JSON representation.
-        guard let data = try? JSONEncoder().encode(normalize(ids)), let json = String(data: data, encoding: .utf8) else { return }
+        guard let data = try? JSONEncoder().encode(SourceOrder.normalize(ids, available: defaultIDs)), let json = String(data: data, encoding: .utf8) else { return }
         defaults.set(json, forKey: "source.order")
     }
     public func resetOrder() { setOrder(defaultIDs) }
-    private func normalize(_ ids: [String]) -> [String] {
-        let available = Set(defaultIDs)
-        var seen = Set<String>()
-        return (ids + defaultIDs).filter { available.contains($0) && seen.insert($0).inserted }
-    }
 }

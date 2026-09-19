@@ -78,7 +78,10 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if needsReload { needsReload = false; start(query: submittedQuery) }
+        if needsReload {
+            needsReload = false
+            start(query: submittedQuery, restoringGlobalSourceID: isGlobal ? global.selectedSourceID : nil)
+        }
     }
     private func updateSourceMenu() {
         filterButton.isEnabled = !environment.sources.isEmpty
@@ -90,6 +93,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         sourceButton.setTitle(environment.sources[sourceIndex].name + " ▾", for: .normal)
     }
     @objc private func sourcesChanged() {
+        let selectedGlobalSourceID = global.selectedSourceID
         let previous = sourceIDs.indices.contains(sourceIndex) ? sourceIDs[sourceIndex] : nil
         sourceIDs = environment.sources.map(\.id)
         if let previous, let index = sourceIDs.firstIndex(of: previous) { sourceIndex = index }
@@ -97,7 +101,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         requestID = UUID(); tasks.forEach { $0.cancel() }; tasks = []
         loading = false
         updateSourceMenu()
-        if viewIfLoaded?.window != nil { start(query: submittedQuery) }
+        if viewIfLoaded?.window != nil { start(query: submittedQuery, restoringGlobalSourceID: selectedGlobalSourceID) }
         else { needsReload = true }
     }
     @objc private func modeChanged() { start() }
@@ -105,7 +109,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) { searchBar.resignFirstResponder(); start() }
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) { if searchText.isEmpty { start() } }
 
-    private func start(query: String? = nil) {
+    private func start(query: String? = nil, restoringGlobalSourceID: String? = nil) {
         requestID = UUID()
         tasks.forEach { $0.cancel() }; tasks = []
         loading = false; ended = false; nextPage = 1
@@ -115,13 +119,20 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         sourceButton.isHidden = isGlobal; filterButton.isHidden = isGlobal
         tabs.isHidden = !isGlobal || submittedQuery.isEmpty
         collection.refreshControl?.endRefreshing()
-        guard !environment.sources.isEmpty else { status("没有已启用的站源"); return }
+        guard !environment.sources.isEmpty else {
+            global = GlobalSearchState()
+            errors = [:]; finished = []
+            tabRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            tabs.isHidden = true
+            status("没有已启用的站源")
+            return
+        }
         if isGlobal {
             if submittedQuery.isEmpty { showHistory(); status("输入关键词，按搜索键开始全站搜索"); return }
             var saved = environment.defaults.stringArray(forKey: "global.search.history") ?? []
             saved.removeAll { $0 == submittedQuery }; saved.insert(submittedQuery, at: 0)
             environment.defaults.set(Array(saved.prefix(60)), forKey: "global.search.history")
-            loadGlobal()
+            loadGlobal(restoringSelectedSourceID: restoringGlobalSourceID)
         } else { loadSingle() }
     }
 
@@ -180,9 +191,9 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         if !isGlobal && indexPath.item >= comics.count - 4 { loadSingle() }
     }
 
-    private func loadGlobal() {
+    private func loadGlobal(restoringSelectedSourceID: String? = nil) {
         let token = requestID
-        let generation = global.begin(query: submittedQuery, sourceIDs: environment.sources.map(\.id))
+        let generation = global.begin(query: submittedQuery, sourceIDs: environment.sources.map(\.id), restoringSelectedSourceID: restoringSelectedSourceID)
         errors = [:]; finished = []
         refreshGlobal()
         for source in environment.sources {

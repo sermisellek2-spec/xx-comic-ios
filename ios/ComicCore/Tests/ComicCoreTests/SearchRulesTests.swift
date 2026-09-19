@@ -49,6 +49,39 @@ final class SearchRulesTests: XCTestCase {
         XCTAssertTrue(state.results.isEmpty)
     }
 
+    func testReorderedSourcesRestoreManualGlobalSelection() {
+        var state = GlobalSearchState()
+        _ = state.begin(query: "陷阱", sourceIDs: ["a", "b", "c"])
+        state.select("b")
+        let selected = state.selectedSourceID
+
+        let generation = state.begin(query: "陷阱", sourceIDs: ["c", "b", "a"], restoringSelectedSourceID: selected)
+        XCTAssertEqual(state.selectedSourceID, "b")
+        _ = state.receive(sourceID: "c", items: [comic("c1", "陷阱")], generation: generation)
+        XCTAssertEqual(state.selectedSourceID, "b")
+    }
+
+    func testDisabledGlobalSelectionFallsBackToFirstEnabledSource() {
+        var state = GlobalSearchState()
+        _ = state.begin(query: "陷阱", sourceIDs: ["a", "b", "c"])
+        state.select("b")
+        let selected = state.selectedSourceID
+
+        _ = state.begin(query: "陷阱", sourceIDs: ["c", "a"], restoringSelectedSourceID: selected)
+        XCTAssertEqual(state.selectedSourceID, "c")
+    }
+
+    func testNewGlobalSearchStillSelectsFirstNonemptyResult() {
+        var state = GlobalSearchState()
+        _ = state.begin(query: "旧词", sourceIDs: ["a", "b"])
+        state.select("a")
+
+        let generation = state.begin(query: "新词", sourceIDs: ["a", "b"])
+        _ = state.receive(sourceID: "b", items: [comic("b1", "新词")], generation: generation)
+        _ = state.receive(sourceID: "a", items: [comic("a1", "新词")], generation: generation)
+        XCTAssertEqual(state.selectedSourceID, "b")
+    }
+
     private func comic(_ id: String, _ title: String) -> ComicSummary {
         ComicSummary(sourceId: "test", comicId: id, title: title)
     }

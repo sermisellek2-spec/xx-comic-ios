@@ -50,11 +50,16 @@ public struct GlobalSearchState: Sendable {
     public init() {}
 
     @discardableResult
-    public mutating func begin(query: String, sourceIDs: [String]) -> UUID {
+    public mutating func begin(query: String, sourceIDs: [String], restoringSelectedSourceID: String? = nil) -> UUID {
         self = GlobalSearchState()
         self.query = SearchRules.trim(query)
         self.sourceIDs = SourceOrder.normalize([], available: sourceIDs)
-        selectedSourceID = self.sourceIDs.first
+        if let restoringSelectedSourceID, self.sourceIDs.contains(restoringSelectedSourceID) {
+            selectedSourceID = restoringSelectedSourceID
+            manuallySelected = true
+        } else {
+            selectedSourceID = self.sourceIDs.first
+        }
         return generation
     }
 
