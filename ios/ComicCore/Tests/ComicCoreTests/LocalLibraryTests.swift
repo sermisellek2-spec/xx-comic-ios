@@ -44,4 +44,16 @@ final class LocalLibraryTests: XCTestCase {
         let book = LocalBook(id: UUID().uuidString, title: "无效", createdAt: 0, pages: ["../private.jpg"])
         XCTAssertThrowsError(try library.pageURLs(for: book))
     }
+    func testOversizedImageIsRejectedBeforeBookIsPublished() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let library = try LocalLibrary(directory: root)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("large.jpg")
+        XCTAssertTrue(FileManager.default.createFile(atPath: file.path, contents: nil))
+        let handle = try FileHandle(forWritingTo: file)
+        try handle.truncate(atOffset: 40 * 1024 * 1024 + 1)
+        try handle.close()
+        XCTAssertThrowsError(try library.importImages(title: "大图", files: [file]))
+        XCTAssertTrue(try library.books().isEmpty)
+    }
 }

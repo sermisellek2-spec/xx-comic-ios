@@ -47,7 +47,7 @@ final class RemoteImageView: UIImageView {
                     guard resolved.path.hasPrefix(allowed.path + "/") else { throw URLError(.noPermissionsToReadFile) }
                     data = try await Task.detached(priority: .userInitiated) {
                         let size = try resolved.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
-                        guard size <= 40 * 1024 * 1024 else { throw URLError(.dataLengthExceedsMaximum) }
+                        guard size <= LocalLibrary.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
                         return try Data(contentsOf: resolved)
                     }.value
                 } else {

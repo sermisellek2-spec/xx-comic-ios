@@ -9,6 +9,7 @@ public struct LocalBook: Codable, Equatable, Sendable {
 
 /// A complete import becomes visible through a single directory rename.
 public struct LocalLibrary: Sendable {
+    public static let maximumImageBytes = 40 * 1024 * 1024
     private let directoryPath: String
     public var directory: URL { URL(fileURLWithPath: directoryPath, isDirectory: true) }
     public init(directory: URL) throws {
@@ -51,8 +52,9 @@ public struct LocalLibrary: Sendable {
         var names: [String] = []
         for (index, file) in files.sorted(by: { NaturalPathOrder.less($0.lastPathComponent, $1.lastPathComponent) }).enumerated() {
             try Task.checkCancellation()
-            let attributes = try file.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+            let attributes = try file.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
             guard attributes.isRegularFile == true, attributes.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
+            guard let size = attributes.fileSize, size <= Self.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
             let name = "\(index)." + file.pathExtension.lowercased()
             try manager.copyItem(at: file, to: staging.appendingPathComponent(name))
             names.append(name)
@@ -67,11 +69,12 @@ public struct LocalLibrary: Sendable {
 }
 
 public enum LocalLibraryError: LocalizedError {
-    case invalidBook, emptyImport
+    case invalidBook, emptyImport, imageTooLarge
     public var errorDescription: String? {
         switch self {
         case .invalidBook: return "本地漫画数据无效或文件不可用，原文件已保留。"
         case .emptyImport: return "没有可导入的图片。"
+        case .imageTooLarge: return "单张图片不能超过 40 MiB，本次未导入，请先缩小该图片。"
         }
     }
 }

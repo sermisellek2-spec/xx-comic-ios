@@ -122,6 +122,7 @@ final class DetailViewController: UIViewController {
         } catch { if directoryID == token { directoryTask = nil }; throw error }
     }
     @objc private func showDirectory() {
+        readTask?.cancel()
         let controller = ChapterListViewController(load: { [weak self] in
             guard let self else { throw CancellationError() }
             return try await self.chapters()
