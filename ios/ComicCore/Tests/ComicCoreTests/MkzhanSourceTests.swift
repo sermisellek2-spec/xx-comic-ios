@@ -85,6 +85,83 @@ final class MkzhanSourceTests: XCTestCase {
         XCTAssertEqual(chapter.nextPageUrl, "")
     }
 
+    func testListsRequireTargetContainerAndDoNotLeakRecommendationsWithoutPagination() async throws {
+        let noPagination = """
+        <div class="cate-comic-list clearfix">
+        <div class="common-comic-item" data-cid="42"><img alt="正文"></div>
+        </div>
+        <aside><div class="common-comic-item" data-cid="999"><img alt="推荐"></div></aside>
+        """
+        let source = MkzhanComicSource(transport: MkzhanTransport(["https://www.mkzhan.com/category": noPagination]))
+        let comics = try await source.latest(page: 1)
+        XCTAssertEqual(comics.map(\.comicId), ["mkzhan:42"])
+
+        let empty = MkzhanComicSource(transport: MkzhanTransport([
+            "https://www.mkzhan.com/category": #"<div class="cate-comic-list clearfix"></div><div class="common-comic-item" data-cid="999"><img alt="推荐"></div>"#
+        ]))
+        let emptyComics = try await empty.latest(page: 1)
+        XCTAssertEqual(emptyComics, [])
+
+        let recommendationsOnly = MkzhanComicSource(transport: MkzhanTransport([
+            "https://www.mkzhan.com/category": #"<html><head><title>临时页面</title></head><body><div class="common-comic-item" data-cid="999"><img alt="推荐"></div></body></html>"#
+        ]))
+        do {
+            _ = try await recommendationsOnly.latest(page: 1)
+            XCTFail("推荐卡片不能冒充列表")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("列表解析失败"))
+        }
+    }
+
+    func testTitledErrorShellIsRejectedButStructuredEmptyCatalogIsValid() async throws {
+        let errorShell = """
+        <html><head><title>Access denied - 漫客栈</title></head><body>
+        <h1>Access denied</h1><a data-hreflink="/42/9.html">返回首页</a>
+        </body></html>
+        """
+        let invalid = MkzhanComicSource(transport: MkzhanTransport(["https://www.mkzhan.com/42/": errorShell]))
+        do {
+            _ = try await invalid.detail(comicId: "42")
+            XCTFail("带标题的错误页不能冒充详情")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("详情解析失败"))
+        }
+        do {
+            _ = try await invalid.chapters(comicId: "42")
+            XCTFail("带标题的错误页不能冒充目录")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("目录解析失败"))
+        }
+
+        let emptyCatalog = """
+        <h1>暂无章节</h1><div class="de-info__cover"><img data-src="/42.jpg"></div>
+        <div class="de-chapter__title"><span>连载中</span></div>
+        """
+        let valid = MkzhanComicSource(transport: MkzhanTransport(["https://www.mkzhan.com/42/": emptyCatalog]))
+        let detail = try await valid.detail(comicId: "42")
+        let chapters = try await valid.chapters(comicId: "42")
+        XCTAssertEqual(detail.chapters, [])
+        XCTAssertEqual(chapters, [])
+    }
+
+    func testPreCancelledRequestDoesNotReachTransport() async {
+        let transport = MkzhanTransport([:])
+        let source = MkzhanComicSource(transport: transport)
+        let task = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            return try await source.latest(page: 1)
+        }
+
+        do {
+            _ = try await task.value
+            XCTFail("预取消任务不应继续请求")
+        } catch {
+            XCTAssertTrue(error is CancellationError)
+        }
+        let requests = await transport.requests
+        XCTAssertEqual(requests.count, 0)
+    }
+
     func testErrorShellAndHTTPFailureAreNotEmptySuccess() async throws {
         let source = MkzhanComicSource(transport: MkzhanTransport(["https://www.mkzhan.com/category": "<html>error</html>", "https://www.mkzhan.com/42/": "<html>error</html>"]))
         do { _ = try await source.latest(page: 1); XCTFail("shell") } catch { XCTAssertTrue(error.localizedDescription.contains("解析失败")) }

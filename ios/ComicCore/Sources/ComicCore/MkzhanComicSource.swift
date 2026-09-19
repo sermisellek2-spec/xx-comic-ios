@@ -49,6 +49,7 @@ public struct MkzhanComicSource: ComicSource {
     public func detail(comicId: String) async throws -> ComicDetail {
         let rawID = rawComicID(comicId)
         let html = try await fetch("/\(rawID)/")
+        guard isDetailPage(html) else { throw parseError("详情解析失败") }
         var title = clean(first(#"<h1[^>]*>([\s\S]*?)</h1>"#, html))
         if title.isEmpty { title = clean(first(#"<title>([\s\S]*?)(?:_|-)"#, html)) }
         guard !title.isEmpty else { throw parseError("详情解析失败：缺少标题") }
@@ -63,7 +64,7 @@ public struct MkzhanComicSource: ComicSource {
     }
     public func chapters(comicId: String) async throws -> [Chapter] {
         let html = try await fetch("/\(rawComicID(comicId))/")
-        guard !raw(#"<h1\b|<div class="de-chapter__title">|data-hreflink="/\d+/\d+\.html""#, html).isEmpty else { throw parseError("目录解析失败") }
+        guard isDetailPage(html) else { throw parseError("目录解析失败") }
         return catalog(html)
     }
     public func chapter(url: String) async throws -> ChapterPage {
@@ -81,11 +82,10 @@ public struct MkzhanComicSource: ComicSource {
         return .init(chapterId: absolute(path), title: "", nextPageUrl: "", imageUrls: images)
     }
     private func cards(_ html: String) throws -> [ComicSummary] {
-        var list = raw(#"<div class="cate-comic-list clearfix">[\s\S]*?<div id="Pagination""#, html)
-        if list.isEmpty { list = raw(#"<div class="search-comic-list">[\s\S]*?<div id="Pagination""#, html) }
-        if list.isEmpty { list = html }
+        guard let list = div(withClass: "cate-comic-list", in: html) ?? div(withClass: "search-comic-list", in: html) else {
+            throw parseError("列表解析失败")
+        }
         let blocks = matches(#"<div class="common-comic-item"[^>]*>[\s\S]*?(?=<div class="common-comic-item"|<div id="Pagination"|$)"#, list)
-        guard !blocks.isEmpty || !raw(#"class="(?:cate-comic-list clearfix|search-comic-list)""#, html).isEmpty else { throw parseError("列表解析失败") }
         var seen = Set<String>()
         return blocks.compactMap { match in
             let block = match[0]
@@ -100,6 +100,28 @@ public struct MkzhanComicSource: ComicSource {
             if subtitle.isEmpty { subtitle = clean(first(#"<p class="comic-count">([\s\S]*?)</p>"#, block)) }
             return .init(sourceId: id, comicId: id + ":" + rawID, title: title, coverUrl: absolute(imageURL(image)), subtitle: subtitle)
         }
+    }
+    private func isDetailPage(_ html: String) -> Bool {
+        div(withClass: "de-info__cover", in: html) != nil && div(withClass: "de-chapter__title", in: html) != nil
+    }
+    private func div(withClass className: String, in html: String) -> String? {
+        let escaped = NSRegularExpression.escapedPattern(for: className)
+        guard
+            let opening = try? NSRegularExpression(pattern: #"<div\b[^>]*class=["'][^"']*\b"# + escaped + #"\b[^"']*["'][^>]*>"#, options: .caseInsensitive),
+            let start = opening.firstMatch(in: html, range: NSRange(html.startIndex..., in: html))
+        else { return nil }
+        let searchRange = NSRange(location: start.range.location, length: html.utf16.count - start.range.location)
+        guard let tags = try? NSRegularExpression(pattern: #"</?div\b[^>]*>"#, options: .caseInsensitive) else { return nil }
+        var depth = 0
+        for tag in tags.matches(in: html, range: searchRange) {
+            guard let range = Range(tag.range, in: html) else { continue }
+            if html[range].hasPrefix("</") { depth -= 1 } else { depth += 1 }
+            if depth == 0 {
+                let block = NSRange(location: start.range.location, length: tag.range.location + tag.range.length - start.range.location)
+                return Range(block, in: html).map { String(html[$0]) }
+            }
+        }
+        return nil
     }
     private func catalog(_ html: String) -> [Chapter] {
         var result: [Chapter] = [], seen = Set<String>()
