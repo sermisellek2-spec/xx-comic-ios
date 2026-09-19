@@ -67,6 +67,8 @@ import com.xxcomic.reader.ZoomGeometry;
 import com.xxcomic.reader.ChapterDrawerSheet;
 import com.xxcomic.reader.HistoryProgressLabel;
 import com.xxcomic.reader.ReadingHabitTracker;
+import com.xxcomic.reader.CroppedBitmapDrawable;
+import com.xxcomic.reader.WhiteMarginDetector;
 
 import com.xxcomic.source.BaoziComicSource;
 import com.xxcomic.source.AntbywComicSource;
@@ -371,6 +373,8 @@ public class MainActivity extends Activity {
     private int readerDisplayMode = 0; // 0 normal, 1 e-ink
     private boolean readerPinchZoom = true;
     private boolean readerDisablePageAnimation = false;
+    private boolean readerCropWhiteMargins = false;
+    private final android.util.LruCache<String, WhiteMarginDetector.CropRect> readerCropBoundsCache = new android.util.LruCache<>(256);
     private ColorMatrixColorFilter readerEinkFilter;
 
     // Local library pickers must not overlap source configuration/log export requests (1001-1004).
@@ -527,6 +531,46 @@ public class MainActivity extends Activity {
         } else {
             view.setColorFilter(null);
         }
+    }
+
+    private WhiteMarginDetector.CropRect getReaderCropRect(String imageUrl, Bitmap bitmap, boolean isScroll) {
+        if (!readerCropWhiteMargins || bitmap == null || bitmap.isRecycled()) {
+            return bitmap == null ? new WhiteMarginDetector.CropRect(0, 0, 1, 1)
+                    : new WhiteMarginDetector.CropRect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        }
+        String cropKey = (isScroll ? "s_" : "p_") + imageUrl;
+        WhiteMarginDetector.CropRect rect = readerCropBoundsCache.get(cropKey);
+        if (rect == null) {
+            rect = WhiteMarginDetector.detect(bitmap, !isScroll);
+            readerCropBoundsCache.put(cropKey, rect);
+        }
+        return rect;
+    }
+
+    private void setReaderImageContent(ImageView target, String imageUrl, Bitmap bitmap, boolean isScroll) {
+        if (target == null) return;
+        if (bitmap == null || bitmap.isRecycled()) {
+            target.setImageDrawable(null);
+            return;
+        }
+        if (readerCropWhiteMargins) {
+            WhiteMarginDetector.CropRect crop = getReaderCropRect(imageUrl, bitmap, isScroll);
+            if (!crop.isNoOp(bitmap.getWidth(), bitmap.getHeight())) {
+                target.setImageDrawable(new CroppedBitmapDrawable(bitmap,
+                        new Rect(crop.left, crop.top, crop.right, crop.bottom)));
+                return;
+            }
+        }
+        target.setImageBitmap(bitmap);
+    }
+
+    private int computeReaderImageHeight(String imageUrl, Bitmap bitmap, int contentWidth) {
+        if (bitmap == null || bitmap.isRecycled()) return Math.max(1, contentWidth * 4 / 3);
+        if (readerCropWhiteMargins) {
+            WhiteMarginDetector.CropRect crop = getReaderCropRect(imageUrl, bitmap, true);
+            return Math.max(1, Math.round(contentWidth * crop.height() / (float) Math.max(1, crop.width())));
+        }
+        return Math.max(1, Math.round(contentWidth * bitmap.getHeight() / (float) Math.max(1, bitmap.getWidth())));
     }
     private String cacheSize = "42.6 MB";
     private int searchGeneration = 0;
@@ -3443,7 +3487,7 @@ public class MainActivity extends Activity {
         if (!readerVisible) return;
         int currentMode = ReaderSettingsSheet.toReadingMode(readerLayoutMode, readerLeftHand);
         ReaderSettingsSheet.show(this, currentMode, readerFullyImmersive, readerDisplayMode == 1, readerPinchZoom,
-                readerDisablePageAnimation, new ReaderSettingsSheet.OnSettingsChangeListener() {
+                readerDisablePageAnimation, readerCropWhiteMargins, new ReaderSettingsSheet.OnSettingsChangeListener() {
                     @Override
                     public void onReadingModeChanged(int mode) {
                         int newLayoutMode = ReaderSettingsSheet.toLayoutMode(mode);
@@ -3493,6 +3537,14 @@ public class MainActivity extends Activity {
                         if (readerPager != null) {
                             readerPager.setAnimationDisabled(disabled);
                         }
+                    }
+
+                    @Override
+                    public void onCropWhiteMarginsChanged(boolean enabled) {
+                        readerCropWhiteMargins = enabled;
+                        saveLocalState();
+                        readerCropBoundsCache.evictAll();
+                        reloadCurrentReaderContent();
                     }
                 });
     }
@@ -5325,13 +5377,13 @@ public class MainActivity extends Activity {
                         if (readingHabitTracker != null) {
                             readingHabitTracker.onContentReadable();
                         }
-                        image.setImageBitmap(cachedMem);
+                        setReaderImageContent(image, imageUrl, cachedMem, true);
                         image.setScaleType(ImageView.ScaleType.FIT_CENTER);
                         applyReaderImageDisplayMode(image);
                         image.setTag(imageUrl);
                         int h = readerImageHeights.containsKey(imageUrl)
                                 ? readerImageHeights.get(imageUrl)
-                                : Math.max(1, Math.round(contentWidth * cachedMem.getHeight() / (float) Math.max(1, cachedMem.getWidth())));
+                                : computeReaderImageHeight(imageUrl, cachedMem, contentWidth);
                         readerImageHeights.put(imageUrl, h);
                         image.setLayoutParams(new AbsListView.LayoutParams(-1, h));
                         return image;
@@ -5739,7 +5791,7 @@ public class MainActivity extends Activity {
                                 if (readingHabitTracker != null) {
                                     readingHabitTracker.onContentReadable();
                                 }
-                                image.setImageBitmap(mem);
+                                setReaderImageContent(image, imageUrl, mem, false);
                                 image.setScaleType(ImageView.ScaleType.FIT_CENTER);
                                 applyReaderImageDisplayMode(image);
                                 return null;
@@ -6378,6 +6430,7 @@ public class MainActivity extends Activity {
         readerSeekBar = null;
         readerSeeking = false;
         readerBitmapCache.evictAll();
+        readerCropBoundsCache.evictAll();
         readerImageHeights.clear();
     }
 
@@ -8010,8 +8063,7 @@ public class MainActivity extends Activity {
                 }
                 if (bitmap == null) throw new IOException("Reader image decode failed: " + imageUrl);
                 Bitmap loaded = bitmap;
-                int targetHeight = Math.max(1, Math.round(readerContentWidth()
-                        * loaded.getHeight() / (float) Math.max(1, loaded.getWidth())));
+                int targetHeight = computeReaderImageHeight(imageUrl, loaded, readerContentWidth());
                 readerBitmapCache.put(imageUrl, loaded);
                 readerImageHeights.put(imageUrl, targetHeight);
                 main.post(() -> {
@@ -8023,7 +8075,7 @@ public class MainActivity extends Activity {
                         target.setLayoutParams(params);
                     }
                     target.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    target.setImageBitmap(loaded);
+                    setReaderImageContent(target, imageUrl, loaded, list != null);
                     if (readingHabitTracker != null) {
                         readingHabitTracker.onContentReadable();
                     }
@@ -10354,6 +10406,7 @@ public class MainActivity extends Activity {
         readerDisplayMode = prefs.getInt("reader.display.mode", 0) == 1 ? 1 : 0;
         readerPinchZoom = prefs.getBoolean("reader.pinch.zoom", true);
         readerDisablePageAnimation = prefs.getBoolean("reader.disable.page.animation", false);
+        readerCropWhiteMargins = prefs.getBoolean("reader.crop.white.margins", false);
         readerImagePositions.clear();
         try {
             JSONObject savedImages = new JSONObject(prefs.getString("reader.image.positions", "{}"));
@@ -10465,6 +10518,7 @@ public class MainActivity extends Activity {
         editor.putInt("reader.display.mode", readerDisplayMode);
         editor.putBoolean("reader.pinch.zoom", readerPinchZoom);
         editor.putBoolean("reader.disable.page.animation", readerDisablePageAnimation);
+        editor.putBoolean("reader.crop.white.margins", readerCropWhiteMargins);
         JSONObject savedImages = new JSONObject();
         try {
             for (Map.Entry<String, ReaderPosition> item : readerImagePositions.entrySet()) {
@@ -11113,6 +11167,7 @@ public class MainActivity extends Activity {
             imageCacheBytes = 0L;
         }
         imageMemoryCache.evictAll();
+        readerCropBoundsCache.evictAll();
         Set<String> favoriteIds = new HashSet<>(favorites);
         summaries.keySet().retainAll(favoriteIds);
         details.keySet().retainAll(favoriteIds);

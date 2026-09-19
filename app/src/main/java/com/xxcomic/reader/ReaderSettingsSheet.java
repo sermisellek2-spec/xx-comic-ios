@@ -53,16 +53,22 @@ public final class ReaderSettingsSheet {
 
     public static Dialog show(Activity activity, int initialMode, boolean initialHideBadge, boolean initialEink,
                               OnSettingsChangeListener listener) {
-        return show(activity, initialMode, initialHideBadge, initialEink, true, false, listener);
+        return show(activity, initialMode, initialHideBadge, initialEink, true, false, false, listener);
     }
 
     public static Dialog show(Activity activity, int initialMode, boolean initialHideBadge, boolean initialEink,
                               boolean initialPinchZoom, OnSettingsChangeListener listener) {
-        return show(activity, initialMode, initialHideBadge, initialEink, initialPinchZoom, false, listener);
+        return show(activity, initialMode, initialHideBadge, initialEink, initialPinchZoom, false, false, listener);
     }
 
     public static Dialog show(Activity activity, int initialMode, boolean initialHideBadge, boolean initialEink,
                               boolean initialPinchZoom, boolean initialDisablePageAnimation,
+                              OnSettingsChangeListener listener) {
+        return show(activity, initialMode, initialHideBadge, initialEink, initialPinchZoom, initialDisablePageAnimation, false, listener);
+    }
+
+    public static Dialog show(Activity activity, int initialMode, boolean initialHideBadge, boolean initialEink,
+                              boolean initialPinchZoom, boolean initialDisablePageAnimation, boolean initialCropWhiteMargins,
                               OnSettingsChangeListener listener) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) return null;
 
@@ -176,6 +182,14 @@ public final class ReaderSettingsSheet {
             }
         });
         content.addView(rowDisableAnimation);
+
+        // Row 6: 去白边
+        LinearLayout rowCropWhiteMargins = createSwitchRow(activity, "去白边", "自动裁去图片外围白边，原文件不变", initialCropWhiteMargins, (view, isChecked) -> {
+            if (listener != null) {
+                listener.onCropWhiteMarginsChanged(isChecked);
+            }
+        });
+        content.addView(rowCropWhiteMargins);
 
         scroll.addView(content, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         panel.addView(scroll, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
