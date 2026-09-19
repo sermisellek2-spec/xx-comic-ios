@@ -339,7 +339,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     @objc private func showDirectory() {
         guard chapters.indices.contains(session.chapterIndex) else { return }
         let id = comic.comicId, current = chapters[session.chapterIndex].chapterId
-        let controller = ChapterListViewController(load: { [source] in try await source.chapters(comicId: id) }, selectedID: current) { [weak self] all, index in
+        let controller = ChapterListViewController(load: { [source] in try await source.chapters(comicId: id) }, selectedID: current, defaults: environment.defaults) { [weak self] all, index in
             guard let self else { return }
             self.savePosition()
             self.chapters = all; self.incompleteDirectory = false

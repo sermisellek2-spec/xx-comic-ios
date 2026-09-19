@@ -126,7 +126,7 @@ final class DetailViewController: UIViewController {
         let controller = ChapterListViewController(load: { [weak self] in
             guard let self else { throw CancellationError() }
             return try await self.chapters()
-        }, selectedID: environment.library.entry(for: comic)?.reading?.chapter.chapterId) { [weak self] chapters, index in
+        }, selectedID: environment.library.entry(for: comic)?.reading?.chapter.chapterId, defaults: environment.defaults) { [weak self] chapters, index in
             guard let self else { return }
             self.openReader(chapters: chapters, index: index, incomplete: false)
         }
@@ -177,19 +177,21 @@ final class ChapterListViewController: UITableViewController {
     private let load: () async throws -> [Chapter]
     private let onSelect: ([Chapter], Int) -> Void
     private let selectedID: String?
+    private let defaults: UserDefaults
     private var chapters: [Chapter] = []
     private var descending = false
     private var task: Task<Void, Never>?
     private let state = UIButton(type: .system)
-    init(load: @escaping () async throws -> [Chapter], selectedID: String?, onSelect: @escaping ([Chapter], Int) -> Void) {
+    init(load: @escaping () async throws -> [Chapter], selectedID: String?, defaults: UserDefaults = .standard, onSelect: @escaping ([Chapter], Int) -> Void) {
         self.load = load; self.selectedID = selectedID; self.onSelect = onSelect
+        self.defaults = defaults; descending = defaults.bool(forKey: "chapter.desc")
         super.init(style: .plain)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
     deinit { task?.cancel() }
     override func viewDidLoad() {
         super.viewDidLoad(); title = "全部章节"
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "正序", style: .plain, target: self, action: #selector(reverseOrder))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: descending ? "倒序" : "正序", style: .plain, target: self, action: #selector(reverseOrder))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(close))
         state.titleLabel?.numberOfLines = 0
         state.addTarget(self, action: #selector(reload), for: .touchUpInside)
@@ -213,6 +215,7 @@ final class ChapterListViewController: UITableViewController {
     @objc private func close() { dismiss(animated: true) }
     @objc private func reverseOrder() {
         descending.toggle()
+        defaults.set(descending, forKey: "chapter.desc")
         navigationItem.leftBarButtonItem?.title = descending ? "倒序" : "正序"
         tableView.reloadData()
         scrollToSelected()

@@ -8,7 +8,7 @@ final class AppEnvironment {
     let library: LibraryStore
     let localLibrary: LocalLibrary
     private let localSource: LocalComicSource
-    let sources: [any ComicSource] = [BaoziComicSource(), GmhComicSource()]
+    let sources: [any ComicSource] = [BaoziComicSource(), Mh160ComicSource(), GmhComicSource()]
     static let libraryChanged = Notification.Name("XXComic.libraryChanged")
 
     init(defaults: UserDefaults) throws {
