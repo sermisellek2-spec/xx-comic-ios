@@ -147,20 +147,48 @@ final class Mh160SourceTests: XCTestCase {
         ])
     }
 
-    func testExplicitEmptyBusinessContainersAreAccepted() async throws {
+    func testExplicitEmptyListAndCatalogContainersAreAccepted() async throws {
         let transport = Mh160StubTransport(responses: [
             "https://www.mh160mh.com/kanmanhua/all/": mh160Response("<html><ul class='mh-search-list'></ul></html>"),
-            "https://www.mh160mh.com/kanmanhua/empty/": mh160Response("<html><div class='cy_plist'><ul></ul></div></html>"),
-            "https://www.mh160mh.com/kanmanhua/empty/0.html": mh160Response("<html><title>Empty</title><script>var qTcms_S_m_murl_e='';</script></html>")
+            "https://www.mh160mh.com/kanmanhua/empty/": mh160Response("<html><div class='cy_plist'><ul></ul></div></html>")
         ])
         let source = Mh160ComicSource(transport: transport)
 
         let latest = try await source.latest(page: 1)
         let chapters = try await source.chapters(comicId: "empty")
-        let chapter = try await source.chapter(url: "/kanmanhua/empty/0.html")
         XCTAssertEqual(latest, [])
         XCTAssertEqual(chapters, [])
-        XCTAssertEqual(chapter.imageUrls, [])
+    }
+
+    func testReaderRejectsEmptyOrFilteredToEmptyPayloadLikeAndroid() async {
+        let filtered = Data("/recommend/banner.jpg$qingtiandy$/tuijian/skip.jpg".utf8).base64EncodedString()
+        let transport = Mh160StubTransport(responses: [
+            "https://www.mh160mh.com/kanmanhua/empty/0.html": mh160Response("<html><script>var qTcms_S_m_murl_e='';</script></html>"),
+            "https://www.mh160mh.com/kanmanhua/empty/1.html": mh160Response("<html><script>var qTcms_S_m_murl_e='\(filtered)';</script></html>")
+        ])
+        let source = Mh160ComicSource(transport: transport)
+
+        await XCTAssertMh160Throws(try await source.chapter(url: "/kanmanhua/empty/0.html")) {
+            XCTAssertEqual($0 as? Mh160SourceError, .invalidResponse("漫画160章节解析失败：缺少正文图片"))
+        }
+        await XCTAssertMh160Throws(try await source.chapter(url: "/kanmanhua/empty/1.html")) {
+            XCTAssertEqual($0 as? Mh160SourceError, .invalidResponse("漫画160章节解析失败：缺少正文图片"))
+        }
+    }
+
+    func testDetailRejectsEmptyBusinessShellButKeepsTitleFallbackWithRealMetadata() async throws {
+        let transport = Mh160StubTransport(responses: [
+            "https://www.mh160mh.com/kanmanhua/not-found/": mh160Response("<html><title>Not found</title><div class='mh-cover'></div><div class='cy_plist'></div></html>"),
+            "https://www.mh160mh.com/kanmanhua/fallback/": mh160Response("<html><title>Fallback &amp; Title</title><div class='mh-cover'><img src='/cover/fallback.jpg'></div></html>")
+        ])
+        let source = Mh160ComicSource(transport: transport)
+
+        await XCTAssertMh160Throws(try await source.detail(comicId: "not-found")) {
+            XCTAssertEqual($0 as? Mh160SourceError, .invalidResponse("漫画160详情解析失败"))
+        }
+        let detail = try await source.detail(comicId: "fallback")
+        XCTAssertEqual(detail.summary.title, "Fallback & Title")
+        XCTAssertEqual(detail.summary.coverUrl, "https://www.mh160mh.com/cover/fallback.jpg")
     }
 
     func testMalformedHTMLAndErrorShellsThrowInsteadOfLookingEmpty() async {

@@ -44,16 +44,18 @@ public actor Mh160ComicSource: ComicSource {
     public func detail(comicId: String) async throws -> ComicDetail {
         let rawID = rawComicID(comicId)
         let html = try await fetch(absolute("/kanmanhua/\(rawID)/"))
-        guard hasAnyClass(["mh-date-info-name", "mh-date-info", "mh-date-bgpic", "mh-cover", "cy_plist"], in: html) else {
+        let parsed = try parseDetail(rawID: rawID, html: html)
+        let chapters = parseChapters(html, comicID: rawID)
+        let primaryTitle = clean(firstMatch(#"<div[^>]*class=[\"'][^\"']*mh-date-info-name[^\"']*[\"'][^>]*>[\s\S]*?<h[1-6][^>]*>([\s\S]*?)</h[1-6]>"#, in: html) ?? "")
+        guard !primaryTitle.isEmpty || !parsed.summary.coverUrl.isEmpty || !parsed.author.isEmpty ||
+                !parsed.status.isEmpty || !parsed.description.isEmpty || !parsed.summary.tags.isEmpty || !chapters.isEmpty else {
             throw Mh160SourceError.invalidResponse("漫画160详情解析失败")
         }
-        var detail = try parseDetail(rawID: rawID, html: html)
-        detail = ComicDetail(
-            summary: detail.summary, author: detail.author, status: detail.status,
-            description: detail.description, latestChapter: detail.latestChapter,
-            chapters: parseChapters(html, comicID: rawID)
+        return ComicDetail(
+            summary: parsed.summary, author: parsed.author, status: parsed.status,
+            description: parsed.description, latestChapter: parsed.latestChapter,
+            chapters: chapters
         )
-        return detail
     }
 
     public func chapters(comicId: String) async throws -> [Chapter] {
@@ -69,11 +71,11 @@ public actor Mh160ComicSource: ComicSource {
     public func chapter(url: String) async throws -> ChapterPage {
         let requestURL = absolute(url)
         let html = try await fetch(requestURL)
-        guard let encoded = firstMatch(#"qTcms_S_m_murl_e\s*=\s*[\"']([^\"']*)[\"']"#, in: html) else {
+        guard let encoded = firstMatch(#"qTcms_S_m_murl_e\s*=\s*[\"']([^\"']+)[\"']"#, in: html) else {
             throw Mh160SourceError.invalidResponse("漫画160章节解析失败：缺少正文图片")
         }
         let images = try resolveChapterImages(encoded: encoded, html: html)
-        guard !images.isEmpty || encoded.isEmpty else {
+        guard !images.isEmpty else {
             throw Mh160SourceError.invalidResponse("漫画160章节解析失败：缺少正文图片")
         }
         let chapterID = chapterID(from: requestURL)
@@ -342,10 +344,6 @@ public actor Mh160ComicSource: ComicSource {
         matches(#"class\s*=\s*[\"']([^\"']*)[\"']"#, in: html).contains {
             $0[1].split(whereSeparator: \.isWhitespace).contains(Substring(name))
         }
-    }
-
-    private func hasAnyClass(_ names: [String], in html: String) -> Bool {
-        names.contains { hasClass($0, in: html) }
     }
 
     private func regex(_ pattern: String) -> NSRegularExpression? {
