@@ -176,14 +176,16 @@ final class ChapterListViewController: UITableViewController {
     }
     private let load: () async throws -> [Chapter]
     private let onSelect: ([Chapter], Int) -> Void
+    private let onDismiss: () -> Void
     private let selectedID: String?
     private let defaults: UserDefaults
     private var chapters: [Chapter] = []
     private var descending = false
     private var task: Task<Void, Never>?
     private let state = UIButton(type: .system)
-    init(load: @escaping () async throws -> [Chapter], selectedID: String?, defaults: UserDefaults = .standard, onSelect: @escaping ([Chapter], Int) -> Void) {
-        self.load = load; self.selectedID = selectedID; self.onSelect = onSelect
+    init(load: @escaping () async throws -> [Chapter], selectedID: String?, defaults: UserDefaults = .standard,
+         onDismiss: @escaping () -> Void = {}, onSelect: @escaping ([Chapter], Int) -> Void) {
+        self.load = load; self.selectedID = selectedID; self.onDismiss = onDismiss; self.onSelect = onSelect
         self.defaults = defaults; descending = defaults.bool(forKey: "chapter.desc")
         super.init(style: .plain)
     }
@@ -212,7 +214,7 @@ final class ChapterListViewController: UITableViewController {
             } catch { if !Task.isCancelled { self?.state.setTitle(error.localizedDescription + " · 点击重试", for: .normal) } }
         }
     }
-    @objc private func close() { dismiss(animated: true) }
+    @objc private func close() { dismissSheet() }
     @objc private func reverseOrder() {
         descending.toggle()
         defaults.set(descending, forKey: "chapter.desc")
@@ -226,6 +228,9 @@ final class ChapterListViewController: UITableViewController {
         tableView.scrollToRow(at: IndexPath(row: descending ? chapters.count - 1 - selected : selected, section: 0), at: .top, animated: false)
     }
     private func index(_ row: Int) -> Int { descending ? chapters.count - 1 - row : row }
+    private func dismissSheet(then completion: (() -> Void)? = nil) {
+        dismiss(animated: true) { [onDismiss] in onDismiss(); completion?() }
+    }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { chapters.count }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let chapter = chapters[index(indexPath.row)]
@@ -236,6 +241,6 @@ final class ChapterListViewController: UITableViewController {
     }
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let selected = index(indexPath.row), items = chapters
-        dismiss(animated: true) { [onSelect] in onSelect(items, selected) }
+        dismissSheet { [onSelect] in onSelect(items, selected) }
     }
 }

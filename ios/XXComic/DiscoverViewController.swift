@@ -11,6 +11,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     private let tabRow = UIStackView()
     private let history = UIStackView()
     private var sourceIndex = 0
+    private var sourceIDs: [String] = []
     private var filters: [String: String] = [:]
     private var requestID = UUID()
     private var tasks: [Task<Void, Never>] = []
@@ -26,6 +27,8 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        sourceIDs = environment.sources.map(\.id)
+        NotificationCenter.default.addObserver(self, selector: #selector(sourcesChanged), name: AppEnvironment.sourcesChanged, object: environment)
         title = "发现"
         searchBar.placeholder = "搜索漫画"
         searchBar.delegate = self
@@ -77,7 +80,12 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         if needsReload { needsReload = false; start(query: submittedQuery) }
     }
     private func updateSourceMenu() {
-        guard !environment.sources.isEmpty else { return }
+        filterButton.isEnabled = !environment.sources.isEmpty
+        guard !environment.sources.isEmpty else {
+            sourceButton.setTitle("没有已启用的站源", for: .normal)
+            sourceButton.menu = nil
+            return
+        }
         sourceButton.setTitle(environment.sources[sourceIndex].name + " ▾", for: .normal)
         sourceButton.menu = UIMenu(children: environment.sources.enumerated().map { index, source in
             UIAction(title: source.name, state: index == sourceIndex ? .on : .off) { [weak self] _ in
@@ -85,6 +93,17 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
                 self.sourceIndex = index; self.filters = [:]; self.updateSourceMenu(); self.start()
             }
         })
+    }
+    @objc private func sourcesChanged() {
+        let previous = sourceIDs.indices.contains(sourceIndex) ? sourceIDs[sourceIndex] : nil
+        sourceIDs = environment.sources.map(\.id)
+        if let previous, let index = sourceIDs.firstIndex(of: previous) { sourceIndex = index }
+        else { sourceIndex = 0; filters = [:] }
+        requestID = UUID(); tasks.forEach { $0.cancel() }; tasks = []
+        loading = false
+        updateSourceMenu()
+        if viewIfLoaded?.window != nil { start(query: submittedQuery) }
+        else { needsReload = true }
     }
     @objc private func modeChanged() { start() }
     @objc private func refreshResults() { start() }
@@ -139,7 +158,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     }
 
     private func loadSingle() {
-        guard !loading, !ended else { return }
+        guard !loading, !ended, environment.sources.indices.contains(sourceIndex) else { return }
         loading = true; status(nextPage == 1 ? "正在加载…" : "正在加载下一页…")
         let token = requestID, page = nextPage, query = submittedQuery, activeFilters = filters
         let source = environment.sources[sourceIndex]
@@ -215,6 +234,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         global.select(environment.sources[sender.tag].id); refreshGlobal()
     }
     @objc private func showFilters() {
+        guard environment.sources.indices.contains(sourceIndex) else { return }
         let source = environment.sources[sourceIndex]
         let controller = FilterViewController(source: source, selected: filters) { [weak self] selected in
             self?.filters = selected; self?.start()

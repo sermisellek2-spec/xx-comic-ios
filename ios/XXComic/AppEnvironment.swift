@@ -9,11 +9,17 @@ final class AppEnvironment {
     let library: LibraryStore
     let localLibrary: LocalLibrary
     private let localSource: LocalComicSource
-    let sources: [any ComicSource] = [BaoziComicSource(), Mh160ComicSource(), GmhComicSource()]
+    let allSources: [any ComicSource]
+    let sourcePreferences: SourcePreferences
+    var sources: [any ComicSource] { sourcePreferences.enabledIDs.compactMap { id in allSources.first { $0.id == id } } }
     static let libraryChanged = Notification.Name("XXComic.libraryChanged")
+    static let sourcesChanged = Notification.Name("XXComic.sourcesChanged")
 
     init(defaults: UserDefaults) throws {
         self.defaults = defaults
+        let available: [any ComicSource] = [BaoziComicSource(), Mh160ComicSource(), GmhComicSource(), MkzhanComicSource(), FiveUmComicSource(), FiveUmComicSource(site: .bbyin)]
+        allSources = available
+        sourcePreferences = SourcePreferences(defaults: defaults, defaultIDs: available.map(\.id))
         preferences = ReaderPreferencesStore(defaults: defaults)
         let habits = ReadingHabitTracker()
         habits.restore(from: defaults)
@@ -29,7 +35,7 @@ final class AppEnvironment {
         }
     }
 
-    func source(for comic: ComicSummary) -> (any ComicSource)? { comic.sourceId == "local" ? localSource : sources.first { $0.id == comic.sourceId } }
+    func source(for comic: ComicSummary) -> (any ComicSource)? { comic.sourceId == "local" ? localSource : allSources.first { $0.id == comic.sourceId } }
     func notifyLibraryChanged() { NotificationCenter.default.post(name: Self.libraryChanged, object: nil) }
 }
 

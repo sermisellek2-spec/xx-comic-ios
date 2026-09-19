@@ -298,9 +298,14 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         loadChapter(index, atEnd: atEnd, restoreSaved: false)
     }
     private func boundary() {
+        guard presentedViewController == nil else { return }
+        environment.readingHabits.overlayVisibilityChanged(isVisible: true)
         let alert = UIAlertController(title: "没有更多章节了", message: nil, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "确定", style: .default))
-        if presentedViewController == nil { present(alert, animated: true) }
+        alert.addAction(UIAlertAction(title: "确定", style: .default) { [weak self] _ in
+            guard let self else { return }
+            self.environment.readingHabits.overlayVisibilityChanged(isVisible: !self.fullscreen)
+        })
+        present(alert, animated: true)
     }
     @objc private func tapped(_ gesture: UITapGestureRecognizer) {
         let location = gesture.location(in: pages)
@@ -360,8 +365,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         let navigation = UINavigationController(rootViewController: controller)
         controller.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeSheet))
         navigation.overrideUserInterfaceStyle = overrideUserInterfaceStyle
-        navigation.presentationController?.delegate = self
         present(navigation, animated: true)
+        navigation.presentationController?.delegate = self
     }
     @objc private func closeSheet() { dismiss(animated: true) { [weak self] in self?.syncHabitOverlay() } }
     @objc private func showDirectory() {
@@ -369,7 +374,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         environment.readingHabits.userDidRead()
         environment.readingHabits.overlayVisibilityChanged(isVisible: true)
         let id = comic.comicId, current = chapters[session.chapterIndex].chapterId
-        let controller = ChapterListViewController(load: { [source] in try await source.chapters(comicId: id) }, selectedID: current, defaults: environment.defaults) { [weak self] all, index in
+        let controller = ChapterListViewController(load: { [source] in try await source.chapters(comicId: id) }, selectedID: current,
+            defaults: environment.defaults, onDismiss: { [weak self] in self?.syncHabitOverlay() }) { [weak self] all, index in
             guard let self else { return }
             self.savePosition()
             self.chapters = all; self.incompleteDirectory = false
@@ -378,8 +384,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         }
         let navigation = ChapterListViewController.navigation(controller)
         navigation.overrideUserInterfaceStyle = overrideUserInterfaceStyle
-        navigation.presentationController?.delegate = self
         present(navigation, animated: true)
+        navigation.presentationController?.delegate = self
     }
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) { syncHabitOverlay() }
     private func syncHabitOverlay() {
@@ -393,6 +399,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             guard let self else { return }; self.isZoomed = zoomed
             self.pages.isScrollEnabled = self.settings.layout == .strip && !zoomed
         }
+        cell.onUserAction = { [weak self] in self?.environment.readingHabits.userDidRead() }
         cell.onSize = { [weak self] size in
             guard let self, self.images.contains(url) else { return }
             self.environment.readingHabits.contentBecameReadable()
@@ -442,6 +449,7 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
     private var url = "", referer = ""
     var onSize: ((CGSize) -> Void)?
     var onZoom: ((Bool) -> Void)?
+    var onUserAction: (() -> Void)?
     override init(frame: CGRect) {
         super.init(frame: frame)
         scroll.delegate = self; scroll.minimumZoomScale = 1; scroll.maximumZoomScale = 4
@@ -483,6 +491,7 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
     @objc private func reload() { retry.isHidden = false; retry.setTitle("正在加载图片…", for: .normal); image.load(url, referer: referer, reader: true) }
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { image }
     func scrollViewDidZoom(_ scrollView: UIScrollView) { onZoom?(scrollView.zoomScale > 1.05) }
+    func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) { onUserAction?() }
     func cancel() { image.cancel() }
-    override func prepareForReuse() { super.prepareForReuse(); image.cancel(); onSize = nil; onZoom = nil; scroll.setZoomScale(1, animated: false) }
+    override func prepareForReuse() { super.prepareForReuse(); image.cancel(); onSize = nil; onZoom = nil; onUserAction = nil; scroll.setZoomScale(1, animated: false) }
 }

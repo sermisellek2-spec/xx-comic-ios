@@ -21,7 +21,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         let shelf = BookshelfViewController(environment: environment)
         let discover = DiscoverViewController(environment: environment)
-        let settings = SettingsViewController(store: environment.preferences, habitTracker: environment.readingHabits, defaults: defaults)
+        let settings = SettingsViewController(environment: environment)
         tabs.viewControllers = [
             navigation(shelf, title: "书架", image: "books.vertical"),
             navigation(discover, title: "发现", image: "safari"),
@@ -42,11 +42,11 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
 
-    func applicationDidEnterBackground(_ application: UIApplication) {
+    func applicationWillResignActive(_ application: UIApplication) {
         environment?.readingHabits.appDidEnterBackground()
     }
 
-    func applicationWillEnterForeground(_ application: UIApplication) {
+    func applicationDidBecomeActive(_ application: UIApplication) {
         environment?.readingHabits.appWillEnterForeground()
     }
 

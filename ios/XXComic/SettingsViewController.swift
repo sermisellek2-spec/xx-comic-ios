@@ -2,13 +2,15 @@ import UIKit
 import ComicCore
 
 final class SettingsViewController: UITableViewController {
+    private let environment: AppEnvironment
     private let store: ReaderPreferencesStore
     private let habitTracker: ReadingHabitTracker
     private let defaults: UserDefaults
-    init(store: ReaderPreferencesStore, habitTracker: ReadingHabitTracker, defaults: UserDefaults = .standard) {
-        self.store = store
-        self.habitTracker = habitTracker
-        self.defaults = defaults
+    init(environment: AppEnvironment) {
+        self.environment = environment
+        self.store = environment.preferences
+        self.habitTracker = environment.readingHabits
+        self.defaults = environment.defaults
         super.init(style: .insetGrouped)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -22,8 +24,16 @@ final class SettingsViewController: UITableViewController {
         super.viewWillAppear(animated)
         tableView.reloadData()
     }
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { 3 }
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { 4 }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if indexPath.row == 3 {
+            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+            cell.textLabel?.text = "站源管理"
+            cell.textLabel?.textColor = Palette.text
+            cell.backgroundColor = Palette.card
+            cell.accessoryType = .disclosureIndicator
+            return cell
+        }
         if indexPath.row == 2 {
             let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
             cell.textLabel?.text = "启动书架"
@@ -55,6 +65,8 @@ final class SettingsViewController: UITableViewController {
             navigationController?.pushViewController(ReaderSettingsViewController(store: store), animated: true)
         } else if indexPath.row == 2 {
             navigationController?.pushViewController(LaunchBookshelfSettingsViewController(tracker: habitTracker), animated: true)
+        } else if indexPath.row == 3 {
+            navigationController?.pushViewController(SourceSettingsViewController(environment: environment), animated: true)
         }
     }
     @objc private func themeChanged(_ sender: UISegmentedControl) {
