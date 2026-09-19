@@ -3,9 +3,11 @@ import ComicCore
 
 final class SettingsViewController: UITableViewController {
     private let store: ReaderPreferencesStore
+    private let habitTracker: ReadingHabitTracker
     private let defaults: UserDefaults
-    init(store: ReaderPreferencesStore, defaults: UserDefaults = .standard) {
+    init(store: ReaderPreferencesStore, habitTracker: ReadingHabitTracker, defaults: UserDefaults = .standard) {
         self.store = store
+        self.habitTracker = habitTracker
         self.defaults = defaults
         super.init(style: .insetGrouped)
     }
@@ -16,8 +18,22 @@ final class SettingsViewController: UITableViewController {
         title = "设置"
         tableView.backgroundColor = Palette.background
     }
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { 2 }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tableView.reloadData()
+    }
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { 3 }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if indexPath.row == 2 {
+            let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+            cell.textLabel?.text = "启动书架"
+            cell.detailTextLabel?.text = launchBookshelfSubtitle
+            cell.textLabel?.textColor = Palette.text
+            cell.detailTextLabel?.textColor = Palette.secondaryText
+            cell.backgroundColor = Palette.card
+            cell.accessoryType = .disclosureIndicator
+            return cell
+        }
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
         if indexPath.row == 1 {
             cell.textLabel?.text = "主题模式"
@@ -34,12 +50,80 @@ final class SettingsViewController: UITableViewController {
         return cell
     }
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard indexPath.row == 0 else { return }
-        navigationController?.pushViewController(ReaderSettingsViewController(store: store), animated: true)
+        tableView.deselectRow(at: indexPath, animated: true)
+        if indexPath.row == 0 {
+            navigationController?.pushViewController(ReaderSettingsViewController(store: store), animated: true)
+        } else if indexPath.row == 2 {
+            navigationController?.pushViewController(LaunchBookshelfSettingsViewController(tracker: habitTracker), animated: true)
+        }
     }
     @objc private func themeChanged(_ sender: UISegmentedControl) {
         defaults.set(sender.selectedSegmentIndex, forKey: "theme.mode")
         NotificationCenter.default.post(name: AppThemeController.changed, object: nil)
+    }
+
+    private var launchBookshelfSubtitle: String {
+        switch habitTracker.launchMode {
+        case .automatic: return habitTracker.currentAutoSubtitle
+        case .my: return "启动默认显示我的书架"
+        case .local: return "启动默认显示本地书架"
+        }
+    }
+}
+
+final class LaunchBookshelfSettingsViewController: UITableViewController {
+    private let tracker: ReadingHabitTracker
+    private let options: [(String, String, ReadingHabitTracker.LaunchMode)] = [
+        ("自动跟随习惯（默认）", "根据本机阅读习惯选择", .automatic),
+        ("我的书架", "启动默认打开我的书架", .my),
+        ("本地书架", "启动默认打开本地书架", .local)
+    ]
+
+    init(tracker: ReadingHabitTracker) {
+        self.tracker = tracker
+        super.init(style: .insetGrouped)
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "启动书架"
+        tableView.backgroundColor = Palette.background
+    }
+    override func numberOfSections(in tableView: UITableView) -> Int { 2 }
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { section == 0 ? options.count : 1 }
+    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        section == 0 ? tracker.currentAutoSubtitle : "习惯数据只保存在本机。"
+    }
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+        cell.backgroundColor = Palette.card
+        if indexPath.section == 0 {
+            let option = options[indexPath.row]
+            cell.textLabel?.text = option.0
+            cell.detailTextLabel?.text = option.1
+            cell.accessoryType = tracker.launchMode == option.2 ? .checkmark : .none
+        } else {
+            cell.textLabel?.text = "重置习惯数据"
+            cell.textLabel?.textColor = .systemRed
+            cell.accessibilityIdentifier = "settings.reset.reading.habit"
+        }
+        return cell
+    }
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        if indexPath.section == 0 {
+            tracker.launchMode = options[indexPath.row].2
+            tableView.reloadData()
+            return
+        }
+        let alert = UIAlertController(title: "重置习惯数据", message: "将清除本机学习到的阅读偏好，是否继续？", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "重置", style: .destructive) { [weak self] _ in
+            self?.tracker.resetHabit()
+            self?.tableView.reloadData()
+        })
+        present(alert, animated: true)
     }
 }
 

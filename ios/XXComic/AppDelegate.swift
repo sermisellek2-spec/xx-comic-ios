@@ -5,6 +5,7 @@ import ComicCore
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     private var themeController: AppThemeController?
+    private var environment: AppEnvironment?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let defaults = ProcessInfo.processInfo.arguments.contains("--ui-testing")
@@ -20,7 +21,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         let shelf = BookshelfViewController(environment: environment)
         let discover = DiscoverViewController(environment: environment)
-        let settings = SettingsViewController(store: environment.preferences, defaults: defaults)
+        let settings = SettingsViewController(store: environment.preferences, habitTracker: environment.readingHabits, defaults: defaults)
         tabs.viewControllers = [
             navigation(shelf, title: "书架", image: "books.vertical"),
             navigation(discover, title: "发现", image: "safari"),
@@ -36,8 +37,17 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         window.rootViewController = tabs
         window.makeKeyAndVisible()
         self.window = window
+        self.environment = environment
         themeController = AppThemeController(root: tabs, defaults: defaults)
         return true
+    }
+
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        environment?.readingHabits.appDidEnterBackground()
+    }
+
+    func applicationWillEnterForeground(_ application: UIApplication) {
+        environment?.readingHabits.appWillEnterForeground()
     }
 
     private func navigation(_ root: UIViewController, title: String, image: String) -> UINavigationController {

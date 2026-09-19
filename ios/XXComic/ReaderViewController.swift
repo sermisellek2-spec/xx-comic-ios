@@ -2,7 +2,7 @@ import UIKit
 import ComicCore
 
 @MainActor
-final class ReaderViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate {
+final class ReaderViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate, UIAdaptivePresentationControllerDelegate {
     private let environment: AppEnvironment
     private let comic: ComicSummary
     private let source: any ComicSource
@@ -31,6 +31,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var oldNavigationStyle: UIUserInterfaceStyle = .unspecified
     private var isZoomed = false
     private var pageAnimating = false
+    private var habitTimer: Timer?
+    private var leavingReader = false
 
     init(comic: ComicSummary, chapters: [Chapter], chapterIndex: Int, directoryIncomplete: Bool, environment: AppEnvironment) {
         self.comic = comic; self.chapters = chapters; self.environment = environment
@@ -87,6 +89,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         pages.panGestureRecognizer.require(toFail: pan)
         NotificationCenter.default.addObserver(self, selector: #selector(saveBeforeBackground), name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(refreshReaderTheme), name: UIApplication.didBecomeActiveNotification, object: nil)
+        environment.readingHabits.enterReader(comicID: comic.comicId, isLocal: comic.sourceId == "local")
+        syncHabitOverlay()
         applySettings()
         loadChapter(session.chapterIndex)
         if incompleteDirectory { loadDirectory() }
@@ -95,13 +99,30 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         super.viewWillAppear(animated)
         applySettings()
     }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        habitTimer?.invalidate()
+        habitTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+            self?.environment.readingHabits.tick()
+        }
+        syncHabitOverlay()
+    }
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        habitTimer?.invalidate(); habitTimer = nil
+        leavingReader = isMovingFromParent
         savePosition()
         if isMovingFromParent {
             loadTask?.cancel(); directoryTask?.cancel()
             navigationController?.setNavigationBarHidden(false, animated: false)
             navigationController?.overrideUserInterfaceStyle = oldNavigationStyle
+        }
+    }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if leavingReader {
+            environment.readingHabits.exitReader()
+            leavingReader = false
         }
     }
     override func viewDidLayoutSubviews() {
@@ -256,6 +277,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     @objc private func forward() { move(1) }
     private func move(_ delta: Int) {
         guard !loading, !isZoomed, !pageAnimating else { return }
+        environment.readingHabits.userDidRead()
         session.updateImage(currentPosition().imageIndex)
         if settings.layout == .strip { changeChapter(delta); return }
         switch session.move(delta: delta) {
@@ -291,17 +313,20 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         case .none: break
         case .move(let delta): move(delta)
         case .toggleControls:
+            environment.readingHabits.userDidRead()
             fullscreen.toggle()
             toolbar.isHidden = fullscreen
             badge.isHidden = !fullscreen || settings.fullyImmersive
             navigationController?.setNavigationBarHidden(fullscreen, animated: true)
             setNeedsStatusBarAppearanceUpdate()
+            syncHabitOverlay()
         }
     }
     @objc private func doubleTapped(_ gesture: UITapGestureRecognizer) {
         guard settings.pinchZoom, !loading, !pageAnimating,
               let index = pages.indexPathForItem(at: gesture.location(in: pages)),
               let cell = pages.cellForItem(at: index) as? ReaderImageCell else { return }
+        environment.readingHabits.userDidRead()
         cell.toggleZoom()
     }
     @objc private func panned(_ gesture: UIPanGestureRecognizer) {
@@ -328,16 +353,21 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     @objc private func showSettings() {
         savePosition()
+        environment.readingHabits.userDidRead()
+        environment.readingHabits.overlayVisibilityChanged(isVisible: true)
         let controller = ReaderSettingsViewController(store: environment.preferences)
         controller.onChange = { [weak self] in self?.applySettings() }
         let navigation = UINavigationController(rootViewController: controller)
         controller.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeSheet))
         navigation.overrideUserInterfaceStyle = overrideUserInterfaceStyle
+        navigation.presentationController?.delegate = self
         present(navigation, animated: true)
     }
-    @objc private func closeSheet() { dismiss(animated: true) }
+    @objc private func closeSheet() { dismiss(animated: true) { [weak self] in self?.syncHabitOverlay() } }
     @objc private func showDirectory() {
         guard chapters.indices.contains(session.chapterIndex) else { return }
+        environment.readingHabits.userDidRead()
+        environment.readingHabits.overlayVisibilityChanged(isVisible: true)
         let id = comic.comicId, current = chapters[session.chapterIndex].chapterId
         let controller = ChapterListViewController(load: { [source] in try await source.chapters(comicId: id) }, selectedID: current, defaults: environment.defaults) { [weak self] all, index in
             guard let self else { return }
@@ -348,7 +378,12 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         }
         let navigation = ChapterListViewController.navigation(controller)
         navigation.overrideUserInterfaceStyle = overrideUserInterfaceStyle
+        navigation.presentationController?.delegate = self
         present(navigation, animated: true)
+    }
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) { syncHabitOverlay() }
+    private func syncHabitOverlay() {
+        environment.readingHabits.overlayVisibilityChanged(isVisible: !fullscreen || presentedViewController != nil)
     }
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int { images.count }
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -359,7 +394,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             self.pages.isScrollEnabled = self.settings.layout == .strip && !zoomed
         }
         cell.onSize = { [weak self] size in
-            guard let self, self.images.contains(url), self.sizes[url] != size else { return }
+            guard let self, self.images.contains(url) else { return }
+            self.environment.readingHabits.contentBecameReadable()
+            guard self.sizes[url] != size else { return }
             let position = self.currentPosition()
             self.sizes[url] = size
             if self.settings.layout == .strip { self.layout.invalidateLayout(); self.restore(position) }
@@ -381,6 +418,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         guard !restoring else { return }
         session.updateImage(currentPosition().imageIndex); updateBadge()
     }
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) { environment.readingHabits.userDidRead() }
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { savePosition() }
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) { pageAnimating = false; savePosition() }
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) { if !decelerate { savePosition() } }

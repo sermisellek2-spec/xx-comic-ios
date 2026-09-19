@@ -116,7 +116,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                 UIBarButtonItem(title: "导入", style: .plain, target: self, action: #selector(importImages)),
                 UIBarButtonItem(title: "历史", style: .plain, target: self, action: #selector(showHistory))
             ]
-            shelfMode.selectedSegmentIndex = 0
+            shelfMode.selectedSegmentIndex = environment.readingHabits.currentLaunchTab
             shelfMode.addTarget(self, action: #selector(shelfChanged), for: .valueChanged)
             header.addArrangedSubview(shelfMode)
             resume.titleLabel?.numberOfLines = 2
@@ -146,7 +146,10 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     @objc private func showHistory() {
         navigationController?.pushViewController(BookshelfViewController(environment: environment, historyOnly: true), animated: true)
     }
-    @objc private func shelfChanged() { refresh() }
+    @objc private func shelfChanged() {
+        environment.readingHabits.lastManualTab = shelfMode.selectedSegmentIndex
+        refresh()
+    }
     @objc private func importImages() {
         if let importTask { importTask.cancel(); return }
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.image], asCopy: true)
