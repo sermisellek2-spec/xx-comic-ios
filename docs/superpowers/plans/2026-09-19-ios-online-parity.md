@@ -52,3 +52,17 @@ Docker 核心测试、UIKit 语法检查、Android 基准检查。独立审查�
 ### Task 7: 漫画160
 
 完整迁移 Mh160ComicSource 搜索、动态筛选、详情、目录、Base64章节图片与CDN迁移阈值；共享已存在的HTML4解码器，避免复制映射。保留合法空列表/目录，但空章节正文应与Android一样报错。以确定性fixture验证错误壳、编码、去重、旧ID与顺序。集成后按包子、漫画160、G社的默认相对顺序展示；只为该源原有的 `auto.mangafiles.com` 图片域设置HTTP例外，不放开全局ATS。
+
+### Task 8: 阅读习惯与启动书架
+
+按 Android reader/ReadingHabitTracker.java 及 ReadingHabitTrackerTest.java 移植本地状态机，新增 ComicCore/ReadingHabitTracker.swift 和对应测试。保持60秒可读有效时间加主动操作、120秒空闲截止、后台超过300秒新会话、30天最近10次且至少5次和70%阈值；不足阈值保留旧偏好，每会话一票，手动模式不学习，重置及持久化行为对齐。时钟可注入，持续时间使用单调时钟、样本使用墙钟。不得上传统计。
+
+接入 AppEnvironment、AppDelegate、Bookshelf、Reader、RemoteImageView（如需要图片成功回调）、Settings：首次书架选择采用解析结果，手动切换保存；设置提供自动/固定我的/固定本地、当前偏好、确认后重置；真实图片可读后才开始计时，用户主动阅读操作才激活，覆盖层/后台暂停，离开阅读器结束，跨章不重复计票。对照 Android MainActivity 的调用位置与文案。避免定时器循环持有页面及通知泄漏。
+
+先运行失败测试再实现；Docker核心测试、UIKit语法检查。新增状态机/持久化测试需覆盖阈值前后、空闲、覆盖层、短/长后台、同书/换书、重置和重新加载。不得把语法检查报告成 iOS 编译通过。仅修改 iOS 文件，代理不暂存不提交，主代理统一提交并独立审查。
+
+### Task 9: 漫画栈和比卡漫画
+
+对照 FiveUmComicSource.java、SourceConfig.fiveUm 和 SourceFilters，新增单一 FiveUmComicSource 适配器，通过两份默认配置支持 manhuazhan/漫画栈/https://www.60ti.com 与 bbyin/比卡漫画/https://bbyin.com。复用 ComicSource、HTTPTransport、HTML4EntityDecoder。迁移最新分页、仅第一页搜索（Java表单URL编码）、动态题材/状态、详情作者/封面/标签/简介/最新章但返回空目录、独立目录顺序和URL去重、仅正文comic-image图片及懒加载属性优先级。ID含站源前缀，支持旧详情URL输入。
+
+测试请求URL/请求头、双站隔离、筛选文档顺序/全部项/重复标签、详情不暴露目录、章节顺序/去重/正文范围、HTML实体、HTTP失败和取消。遵循现有约定，合法空列表可以为空，错误HTML壳不冒充搜索无结果，缺标题/筛选/正文必须报中文错误。不增加第三方依赖。注册放在习惯任务完成后，由主代理按安卓相对顺序接线以免AppEnvironment冲突；只改iOS，Windows测试不替代设备验证。
