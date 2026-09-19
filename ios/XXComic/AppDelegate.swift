@@ -9,9 +9,17 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         let defaults = ProcessInfo.processInfo.arguments.contains("--ui-testing")
             ? UserDefaults(suiteName: "XXComic.UITests")! : .standard
         let tabs = UITabBarController()
-        let shelf = DevelopmentPage(title: "书架", message: "iOS 内测版正在开发，在线收藏与本地书架尚未接入。")
-        let discover = DevelopmentPage(title: "发现", message: "站源正在迁移，当前版本暂不提供在线搜索和阅读。")
-        let settings = SettingsViewController(store: ReaderPreferencesStore(defaults: defaults))
+        let environment: AppEnvironment
+        do { environment = try AppEnvironment(defaults: defaults) }
+        catch {
+            let window = UIWindow(frame: UIScreen.main.bounds)
+            window.rootViewController = DevelopmentPage(title: "本地数据读取失败", message: "书架数据无法读取，原文件已保留。\n\n" + error.localizedDescription)
+            window.makeKeyAndVisible(); self.window = window
+            return true
+        }
+        let shelf = BookshelfViewController(environment: environment)
+        let discover = DiscoverViewController(environment: environment)
+        let settings = SettingsViewController(store: environment.preferences)
         tabs.viewControllers = [
             navigation(shelf, title: "书架", image: "books.vertical"),
             navigation(discover, title: "发现", image: "safari"),

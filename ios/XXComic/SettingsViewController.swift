@@ -29,6 +29,7 @@ final class SettingsViewController: UITableViewController {
 }
 
 final class ReaderSettingsViewController: UITableViewController {
+    var onChange: (() -> Void)?
     private let store: ReaderPreferencesStore
     private var settings: ReaderPreferences
     private let toggles: [(String, String, WritableKeyPath<ReaderPreferences, Bool>)] = [
@@ -58,7 +59,7 @@ final class ReaderSettingsViewController: UITableViewController {
     override func numberOfSections(in tableView: UITableView) -> Int { 2 }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { section == 0 ? 3 : toggles.count }
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        section == 0 ? "阅读主题的“默认”跟随手机系统，独立于 App 主题。" : "设置会保存在本机；阅读器功能将在后续内测版本接入。"
+        section == 0 ? "阅读主题的“默认”跟随手机系统，独立于 App 主题。" : "设置保存在本机。"
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
@@ -115,10 +116,12 @@ final class ReaderSettingsViewController: UITableViewController {
         default: settings.theme = ReaderTheme(rawValue: control.selectedSegmentIndex) ?? .system
         }
         store.save(settings)
+        onChange?()
     }
 
     @objc private func toggleChanged(_ control: UISwitch) {
         settings[keyPath: toggles[control.tag].2] = control.isOn
         store.save(settings)
+        onChange?()
     }
 }

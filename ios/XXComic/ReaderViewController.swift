@@ -1,0 +1,427 @@
+import UIKit
+import ComicCore
+
+@MainActor
+final class ReaderViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate {
+    private let environment: AppEnvironment
+    private let comic: ComicSummary
+    private let source: any ComicSource
+    private var chapters: [Chapter]
+    private var incompleteDirectory: Bool
+    private var session: ReaderSession
+    private var settings: ReaderPreferences
+    private var images: [String] = []
+    private var sizes: [String: CGSize] = [:]
+    private var loadTask: Task<Void, Never>?
+    private var directoryTask: Task<Void, Never>?
+    private var requestID = UUID()
+    private var loading = false
+    private var restoring = false
+    private var fullscreen = false
+    private var pendingPosition: ReaderPosition?
+    private var lastSaved: ReaderPosition?
+    private let layout = UICollectionViewFlowLayout()
+    private lazy var pages = UICollectionView(frame: .zero, collectionViewLayout: layout)
+    private let toolbar = UIStackView()
+    private let previous = UIButton(type: .system)
+    private let next = UIButton(type: .system)
+    private let status = UIButton(type: .system)
+    private let badge = UILabel()
+    private var retryAction: (() -> Void)?
+    private var oldNavigationStyle: UIUserInterfaceStyle = .unspecified
+    private var isZoomed = false
+    private var pageAnimating = false
+
+    init(comic: ComicSummary, chapters: [Chapter], chapterIndex: Int, directoryIncomplete: Bool, environment: AppEnvironment) {
+        self.comic = comic; self.chapters = chapters; self.environment = environment
+        source = environment.source(for: comic)!
+        incompleteDirectory = directoryIncomplete
+        session = ReaderSession(chapterCount: chapters.count, chapterIndex: chapterIndex)
+        settings = environment.preferences.load()
+        super.init(nibName: nil, bundle: nil)
+        hidesBottomBarWhenPushed = true
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:)") }
+    deinit { loadTask?.cancel(); directoryTask?.cancel() }
+    override var prefersStatusBarHidden: Bool { fullscreen }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        layout.minimumLineSpacing = 0; layout.minimumInteritemSpacing = 0
+        pages.dataSource = self; pages.delegate = self
+        pages.register(ReaderImageCell.self, forCellWithReuseIdentifier: "image")
+        pages.contentInsetAdjustmentBehavior = .never
+        pages.showsHorizontalScrollIndicator = false
+        toolbar.axis = .horizontal; toolbar.distribution = .fillEqually
+        let directory = UIButton(type: .system), preferences = UIButton(type: .system)
+        directory.setTitle("目录", for: .normal); preferences.setTitle("设置", for: .normal)
+        previous.addTarget(self, action: #selector(backward), for: .touchUpInside)
+        next.addTarget(self, action: #selector(forward), for: .touchUpInside)
+        directory.addTarget(self, action: #selector(showDirectory), for: .touchUpInside)
+        preferences.addTarget(self, action: #selector(showSettings), for: .touchUpInside)
+        for button in [previous, directory, preferences, next] { toolbar.addArrangedSubview(button) }
+        status.titleLabel?.numberOfLines = 0
+        status.addTarget(self, action: #selector(retry), for: .touchUpInside)
+        badge.font = .monospacedDigitSystemFont(ofSize: 11, weight: .regular)
+        badge.textAlignment = .right; badge.numberOfLines = 2
+        for item in [pages, toolbar, status, badge] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
+        NSLayoutConstraint.activate([
+            pages.topAnchor.constraint(equalTo: view.topAnchor), pages.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            pages.leadingAnchor.constraint(equalTo: view.leadingAnchor), pages.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor), toolbar.heightAnchor.constraint(equalToConstant: 52),
+            status.centerYAnchor.constraint(equalTo: view.centerYAnchor), status.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            status.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            badge.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -10),
+            badge.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8)
+        ])
+        let tap = UITapGestureRecognizer(target: self, action: #selector(tapped(_:)))
+        tap.delegate = self; pages.addGestureRecognizer(tap)
+        let doubleTap = UITapGestureRecognizer(target: self, action: #selector(doubleTapped(_:)))
+        doubleTap.numberOfTapsRequired = 2
+        pages.addGestureRecognizer(doubleTap); tap.require(toFail: doubleTap)
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(panned(_:)))
+        pan.maximumNumberOfTouches = 1; pan.delegate = self; pages.addGestureRecognizer(pan)
+        // Keep page changes discrete. UIScrollView owns strip scrolling and zoom only.
+        pages.panGestureRecognizer.require(toFail: pan)
+        NotificationCenter.default.addObserver(self, selector: #selector(saveBeforeBackground), name: UIApplication.willResignActiveNotification, object: nil)
+        applySettings()
+        loadChapter(session.chapterIndex)
+        if incompleteDirectory { loadDirectory() }
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        oldNavigationStyle = navigationController?.overrideUserInterfaceStyle ?? .unspecified
+        applySettings()
+    }
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        savePosition()
+        if isMovingFromParent {
+            loadTask?.cancel(); directoryTask?.cancel()
+            navigationController?.setNavigationBarHidden(false, animated: false)
+            navigationController?.overrideUserInterfaceStyle = oldNavigationStyle
+        }
+    }
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        if let position = pendingPosition, !images.isEmpty, pages.bounds.width > 0 {
+            pendingPosition = nil; restore(position)
+        }
+    }
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        let position = currentPosition()
+        super.viewWillTransition(to: size, with: coordinator)
+        coordinator.animate(alongsideTransition: { _ in self.layout.invalidateLayout() }, completion: { _ in self.restore(position) })
+    }
+    private func applySettings() {
+        let position = currentPosition()
+        let previousSettings = settings
+        settings = environment.preferences.load()
+        if pageAnimating {
+            pages.setContentOffset(pages.contentOffset, animated: false)
+            pageAnimating = false
+        }
+        layout.scrollDirection = settings.layout == .strip ? .vertical : .horizontal
+        pages.isPagingEnabled = settings.layout == .paged
+        pages.isScrollEnabled = settings.layout == .strip && !isZoomed
+        previous.setTitle(settings.layout == .strip ? "上一章" : "上一页", for: .normal)
+        next.setTitle(settings.layout == .strip ? "下一章" : "下一页", for: .normal)
+        let style: UIUserInterfaceStyle = settings.theme == .system ? .unspecified : (settings.theme == .dark ? .dark : .light)
+        overrideUserInterfaceStyle = style
+        navigationController?.overrideUserInterfaceStyle = style
+        pages.backgroundColor = .systemBackground; view.backgroundColor = .systemBackground
+        toolbar.backgroundColor = .secondarySystemBackground
+        badge.textColor = .secondaryLabel
+        badge.isHidden = !fullscreen || settings.fullyImmersive
+        presentedViewController?.overrideUserInterfaceStyle = style
+        for cell in pages.visibleCells { (cell as? ReaderImageCell)?.apply(settings) }
+        if previousSettings.layout != settings.layout {
+            layout.invalidateLayout(); pages.reloadData()
+            pendingPosition = position
+            view.setNeedsLayout()
+        }
+    }
+    private func loadDirectory() {
+        directoryTask?.cancel()
+        let id = comic.comicId
+        directoryTask = Task { [weak self, source] in
+            do {
+                let all = try await source.chapters(comicId: id); try Task.checkCancellation()
+                guard let self, self.chapters.indices.contains(self.session.chapterIndex) else { return }
+                let current = self.chapters[self.session.chapterIndex]
+                guard let index = all.firstIndex(where: { $0.chapterId == current.chapterId || $0.url == current.url }) else { throw ReaderError.chapterMissing }
+                let position = self.currentPosition()
+                self.chapters = all
+                self.session = ReaderSession(chapterCount: all.count, chapterIndex: index)
+                self.session.loaded(imageCount: self.images.count, position: position)
+                self.incompleteDirectory = false
+                if !self.loading { self.status.isHidden = true; self.retryAction = nil }
+            } catch {
+                guard let self, !Task.isCancelled else { return }
+                if !self.loading {
+                    self.status.isHidden = false
+                    self.status.setTitle("目录加载失败：" + error.localizedDescription + " · 点击重试", for: .normal)
+                    self.retryAction = { [weak self] in self?.loadDirectory() }
+                }
+            }
+        }
+    }
+    private func loadChapter(_ index: Int, atEnd: Bool = false, restoreSaved: Bool = true) {
+        guard chapters.indices.contains(index) else { return }
+        savePosition()
+        loadTask?.cancel(); requestID = UUID()
+        let token = requestID, chapter = chapters[index]
+        loading = true
+        status.isHidden = false; status.setTitle("正在加载章节…", for: .normal)
+        retryAction = nil
+        loadTask = Task { [weak self, source] in
+            do {
+                let page = try await source.chapter(url: chapter.url); try Task.checkCancellation()
+                guard let self, self.requestID == token else { return }
+                guard !page.imageUrls.isEmpty else { throw ReaderError.noImages }
+                let saved = restoreSaved ? self.environment.library.position(for: self.comic, chapterID: chapter.chapterId) : nil
+                let position = atEnd ? ReaderPosition(imageIndex: page.imageUrls.count - 1, offset: 0, atEnd: true)
+                    : (saved ?? ReaderPosition(imageIndex: 0, offset: 0))
+                guard self.session.loaded(chapter: chapter, in: self.chapters, imageCount: page.imageUrls.count, position: position) else { throw ReaderError.chapterMissing }
+                self.images = page.imageUrls; self.sizes = [:]
+                self.title = chapter.title
+                self.loading = false; self.status.isHidden = true; self.lastSaved = nil
+                self.pages.reloadData(); self.layout.invalidateLayout()
+                self.pendingPosition = position; self.view.setNeedsLayout()
+                self.updateBadge()
+            } catch {
+                guard let self, self.requestID == token, !Task.isCancelled else { return }
+                self.loading = false
+                self.status.isHidden = false; self.status.setTitle(error.localizedDescription + " · 点击重试", for: .normal)
+                self.retryAction = { [weak self] in
+                    guard let self, let currentIndex = self.chapters.firstIndex(where: { $0.chapterId == chapter.chapterId || $0.url == chapter.url }) else { return }
+                    self.loadChapter(currentIndex, atEnd: atEnd, restoreSaved: restoreSaved)
+                }
+            }
+        }
+    }
+    private func currentPosition() -> ReaderPosition {
+        guard !images.isEmpty, pages.bounds.width > 0 else { return ReaderPosition(imageIndex: 0, offset: 0) }
+        if let pendingPosition { return pendingPosition }
+        if settings.layout == .paged {
+            let index = Int((pages.contentOffset.x / max(1, pages.bounds.width)).rounded())
+            return ReaderPosition(imageIndex: max(0, min(images.count - 1, index)), offset: 0, atEnd: index == images.count - 1)
+        }
+        let visible = pages.indexPathsForVisibleItems.sorted { $0.item < $1.item }
+        let index = visible.first(where: { (layout.layoutAttributesForItem(at: $0)?.frame.maxY ?? 0) > pages.contentOffset.y + 1 }) ?? visible.first
+        guard let index, let frame = layout.layoutAttributesForItem(at: index)?.frame else { return ReaderPosition(imageIndex: session.imageIndex, offset: 0) }
+        let offset = (pages.contentOffset.y - frame.minY) / max(1, frame.height)
+        let end = pages.contentSize.height > pages.bounds.height && pages.contentOffset.y + pages.bounds.height >= pages.contentSize.height - 2
+        return ReaderPosition(imageIndex: index.item, offset: Double(offset), atEnd: end)
+    }
+    private func restore(_ position: ReaderPosition) {
+        guard !images.isEmpty else { return }
+        restoring = true
+        pages.layoutIfNeeded()
+        let index = position.index(for: images.count)
+        if settings.layout == .paged {
+            pages.setContentOffset(CGPoint(x: CGFloat(index) * pages.bounds.width, y: 0), animated: false)
+        } else if let frame = layout.layoutAttributesForItem(at: IndexPath(item: index, section: 0))?.frame {
+            let maxY = max(0, pages.contentSize.height - pages.bounds.height)
+            let target = position.atEnd ? maxY : frame.minY + frame.height * CGFloat(position.offset)
+            pages.setContentOffset(CGPoint(x: 0, y: max(0, min(maxY, target))), animated: false)
+        }
+        session.updateImage(index); restoring = false; updateBadge()
+    }
+    private func savePosition() {
+        guard !loading, !restoring, !images.isEmpty, chapters.indices.contains(session.chapterIndex) else { return }
+        let position = currentPosition()
+        guard position != lastSaved else { return }
+        do {
+            try environment.library.saveReading(comic, chapter: chapters[session.chapterIndex], chapterIndex: session.chapterIndex, position: position)
+            lastSaved = position
+        } catch { status.isHidden = false; status.setTitle("阅读位置保存失败：" + error.localizedDescription, for: .normal) }
+    }
+    @objc private func saveBeforeBackground() { savePosition() }
+    private func updateBadge() {
+        guard !images.isEmpty else { badge.text = nil; return }
+        badge.text = "\(session.imageIndex + 1)/\(images.count) · \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short))"
+    }
+    @objc private func retry() { retryAction?() }
+    @objc private func backward() { move(-1) }
+    @objc private func forward() { move(1) }
+    private func move(_ delta: Int) {
+        guard !loading, !isZoomed, !pageAnimating else { return }
+        session.updateImage(currentPosition().imageIndex)
+        if settings.layout == .strip { changeChapter(delta); return }
+        switch session.move(delta: delta) {
+        case .image(let index):
+            pageAnimating = !settings.disablePageAnimation && !settings.inkScreen
+            pages.setContentOffset(CGPoint(x: CGFloat(index) * pages.bounds.width, y: 0), animated: pageAnimating)
+            updateBadge()
+            if settings.disablePageAnimation || settings.inkScreen { savePosition() }
+        case .chapter(_, let atEnd): changeChapter(delta, atEnd: atEnd)
+        case .boundary: boundary()
+        case .unavailable: break
+        }
+    }
+    private func changeChapter(_ delta: Int, atEnd: Bool = false) {
+        if incompleteDirectory { status.isHidden = false; status.setTitle("目录尚未加载，点击重试", for: .normal); retryAction = { [weak self] in self?.loadDirectory() }; loadDirectory(); return }
+        let index = session.chapterIndex + delta
+        guard chapters.indices.contains(index) else { boundary(); return }
+        loadChapter(index, atEnd: atEnd, restoreSaved: false)
+    }
+    private func boundary() {
+        let alert = UIAlertController(title: "没有更多章节了", message: nil, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "确定", style: .default))
+        if presentedViewController == nil { present(alert, animated: true) }
+    }
+    @objc private func tapped(_ gesture: UITapGestureRecognizer) {
+        guard !isZoomed else { return }
+        let fraction = gesture.location(in: pages).x / max(1, pages.bounds.width)
+        if settings.turnMode == .tap && (fraction < 0.3 || fraction > 0.7) {
+            move(ReaderNavigation.tapDelta(leftSide: fraction < 0.3, leftHand: settings.leftHand))
+        } else {
+            fullscreen.toggle()
+            toolbar.isHidden = fullscreen
+            badge.isHidden = !fullscreen || settings.fullyImmersive
+            navigationController?.setNavigationBarHidden(fullscreen, animated: true)
+            setNeedsStatusBarAppearanceUpdate()
+        }
+    }
+    @objc private func doubleTapped(_ gesture: UITapGestureRecognizer) {
+        guard settings.pinchZoom, !loading, !pageAnimating,
+              let index = pages.indexPathForItem(at: gesture.location(in: pages)),
+              let cell = pages.cellForItem(at: index) as? ReaderImageCell else { return }
+        cell.toggleZoom()
+    }
+    @objc private func panned(_ gesture: UIPanGestureRecognizer) {
+        guard gesture.state == .ended, !isZoomed, settings.turnMode == .swipe else { return }
+        let translation = gesture.translation(in: pages)
+        guard abs(translation.x) >= 72, abs(translation.x) > abs(translation.y) * 1.35 else { return }
+        move(ReaderNavigation.swipeDelta(dx: Double(translation.x), leftHand: settings.leftHand))
+    }
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if let pan = gestureRecognizer as? UIPanGestureRecognizer, pan.view === pages {
+            let velocity = pan.velocity(in: pages)
+            return settings.turnMode == .swipe && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.35
+        }
+        return !isZoomed
+    }
+    @objc private func showSettings() {
+        savePosition()
+        let controller = ReaderSettingsViewController(store: environment.preferences)
+        controller.onChange = { [weak self] in self?.applySettings() }
+        let navigation = UINavigationController(rootViewController: controller)
+        controller.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeSheet))
+        navigation.overrideUserInterfaceStyle = overrideUserInterfaceStyle
+        present(navigation, animated: true)
+    }
+    @objc private func closeSheet() { dismiss(animated: true) }
+    @objc private func showDirectory() {
+        guard chapters.indices.contains(session.chapterIndex) else { return }
+        let id = comic.comicId, current = chapters[session.chapterIndex].chapterId
+        let controller = ChapterListViewController(load: { [source] in try await source.chapters(comicId: id) }, selectedID: current) { [weak self] all, index in
+            guard let self else { return }
+            self.savePosition()
+            self.chapters = all; self.incompleteDirectory = false
+            self.session = ReaderSession(chapterCount: all.count, chapterIndex: index)
+            self.images = []; self.loadChapter(index)
+        }
+        let navigation = UINavigationController(rootViewController: controller)
+        navigation.overrideUserInterfaceStyle = overrideUserInterfaceStyle
+        present(navigation, animated: true)
+    }
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int { images.count }
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "image", for: indexPath) as! ReaderImageCell
+        let url = images[indexPath.item]
+        cell.onZoom = { [weak self] zoomed in
+            guard let self else { return }; self.isZoomed = zoomed
+            self.pages.isScrollEnabled = self.settings.layout == .strip && !zoomed
+        }
+        cell.onSize = { [weak self] size in
+            guard let self, self.images.contains(url), self.sizes[url] != size else { return }
+            let position = self.currentPosition()
+            self.sizes[url] = size
+            if self.settings.layout == .strip { self.layout.invalidateLayout(); self.restore(position) }
+            self.savePosition()
+        }
+        cell.configure(url: url, referer: source.referer, settings: settings)
+        return cell
+    }
+    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        (cell as? ReaderImageCell)?.cancel()
+    }
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let width = max(1, collectionView.bounds.width)
+        if settings.layout == .paged { return CGSize(width: width, height: max(1, collectionView.bounds.height)) }
+        let size = sizes[images[indexPath.item]] ?? CGSize(width: 3, height: 4)
+        return CGSize(width: width, height: max(1, width * size.height / max(1, size.width)))
+    }
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard !restoring else { return }
+        session.updateImage(currentPosition().imageIndex); updateBadge()
+    }
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { savePosition() }
+    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) { pageAnimating = false; savePosition() }
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) { if !decelerate { savePosition() } }
+}
+
+private enum ReaderError: LocalizedError {
+    case noImages, chapterMissing
+    var errorDescription: String? {
+        switch self {
+        case .noImages: return "章节没有返回可阅读的图片"
+        case .chapterMissing: return "当前章节已不在目录中，请重新选择章节"
+        }
+    }
+}
+
+@MainActor
+private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
+    private let scroll = UIScrollView()
+    private let image = RemoteImageView()
+    private let retry = UIButton(type: .system)
+    private var url = "", referer = ""
+    var onSize: ((CGSize) -> Void)?
+    var onZoom: ((Bool) -> Void)?
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        scroll.delegate = self; scroll.minimumZoomScale = 1; scroll.maximumZoomScale = 4
+        scroll.showsHorizontalScrollIndicator = false; scroll.showsVerticalScrollIndicator = false
+        scroll.bouncesZoom = true
+        image.contentMode = .scaleAspectFit
+        contentView.addSubview(scroll); scroll.addSubview(image); contentView.addSubview(retry)
+        retry.setTitle("正在加载图片…", for: .normal)
+        retry.addTarget(self, action: #selector(reload), for: .touchUpInside)
+        image.onLoaded = { [weak self] size in
+            self?.retry.isHidden = true
+            let callback = self?.onSize
+            DispatchQueue.main.async { callback?(size) }
+        }
+        image.onFailure = { [weak self] in self?.retry.isHidden = false; self?.retry.setTitle("图片加载失败 · 点击重试", for: .normal) }
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:)") }
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        scroll.frame = contentView.bounds
+        if scroll.zoomScale == 1 { image.frame = scroll.bounds; scroll.contentSize = scroll.bounds.size }
+        retry.frame = CGRect(x: 0, y: max(0, bounds.midY - 22), width: bounds.width, height: 44)
+    }
+    func configure(url: String, referer: String, settings: ReaderPreferences) {
+        self.url = url; self.referer = referer
+        scroll.setZoomScale(1, animated: false)
+        apply(settings)
+        reload()
+    }
+    func apply(_ settings: ReaderPreferences) {
+        setZoomEnabled(settings.pinchZoom)
+        image.setReaderEffects(crop: settings.cropWhiteMargins, vertical: settings.layout == .paged, ink: settings.inkScreen)
+    }
+    func setZoomEnabled(_ enabled: Bool) {
+        if !enabled { scroll.setZoomScale(1, animated: false) }
+        scroll.maximumZoomScale = enabled ? 4 : 1
+    }
+    func toggleZoom() { scroll.setZoomScale(scroll.zoomScale > 1.05 ? 1 : min(2, scroll.maximumZoomScale), animated: true) }
+    @objc private func reload() { retry.isHidden = false; retry.setTitle("正在加载图片…", for: .normal); image.load(url, referer: referer) }
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? { image }
+    func scrollViewDidZoom(_ scrollView: UIScrollView) { onZoom?(scrollView.zoomScale > 1.05) }
+    func cancel() { image.cancel() }
+    override func prepareForReuse() { super.prepareForReuse(); image.cancel(); onSize = nil; onZoom = nil; scroll.setZoomScale(1, animated: false) }
+}
