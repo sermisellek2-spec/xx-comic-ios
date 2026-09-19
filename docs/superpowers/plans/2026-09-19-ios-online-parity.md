@@ -147,3 +147,12 @@ func testLatestUsesPostCategoryPageAndDefaults() async throws {
 - [ ] Cuimh固定Base64 payload沿用Android测试，首16字节IV，AES公钥沿用原源码；解密JSON必须host精确www.cuimh.com，缺images报错；相对图片前缀https://img1.baipiaoguai.org，保持顺序去重。
 - [ ] Liumanhua分别保留自己的categoryPath筛选限制、目录URL模式和无目录时“在线阅读”fallback条件；普通20秒、章页30秒。解密JSON验证comic_down、source_id、host、comic_id/comicId/chapter_id/chapterId与请求一致性，以及非空HTTP(S)图片；不把Cuimh的相对地址规则用于六漫画。测试Android原本的所有拒绝场景，替换为固定密文时由独立Java/OpenSSL生成并记录来源。
 - [ ] 聚焦成功后全量一次，记录真实数量和未执行Xcode情况；代理不暂存不提交不注册，不运行真实站点请求。主代理提交并独立复审；修复通过后主代理按Android enabledSearchSources规则排除不支持搜索的源（它们仍能分类/收藏/阅读），单站输入也给清晰中文提示，不伪造空结果。
+
+### Task 18: 漫蛙图片解码与显示接线
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/ManwaImageDecoder.swift`、`ios/ComicCore/Tests/ComicCoreTests/ManwaImageDecoderTests.swift`；修改 `ios/XXComic/RemoteImageView.swift` 的后台图像解码入口。
+
+- [ ] public `ManwaImageDecoder.usesImageHost(_ text: String) -> Bool` 和 `decode(_ data: Data, publicKey: String = ...) throws -> Data`。默认公钥逐字使用Android SourceConfig.manwa.route(imageKey)，是站点公开图片格式的一部分，非账号凭证。测试直接使用Android ManwaImageDecoderTest内.NET生成的一像素PNG和密文常量，先观察新API失败；验证明文不改、密文精确还原、截断/HTML/错误key拒绝、主域/子域匹配且相似域不匹配。
+- [ ] 仅识别 `mwtuwu.cc,mwzu.cc,mhttu.cc,manwace.cc` 主域及点分子域；至少16字节，JPEG/PNG/GIF8/RIFF+WEBP头透传，其他数据首16字节IV、32字节UTF8密钥调用SourceAES，然后再次检查图片头。错误不允许进入图片缓存。
+- [ ] RemoteImageView后台ImageIO之前按原请求URL域名决定是否解码；所有来源和本地文件仍沿用既有展示/裁边/缓存，明文与加密图片都走同一显示通路，不在主线程解码。保持取消/代次检查和onFailure。当前无下载队列，后续下载必须复用同decoder，不能把显示接线称为离线实现。
+- [ ] 聚焦 `swift test --filter ManwaImageDecoderTests`，UIKit全文件syntax parse；不把Linux通过称为CommonCrypto/Xcode通过。报告/独立审查后才算此范围实现完成，漫蛙站源API另项继续。

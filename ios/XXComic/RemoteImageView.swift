@@ -57,8 +57,9 @@ final class RemoteImageView: UIImageView {
                     }
                     data = bytes
                 }
-                let decoded = await Task.detached(priority: .userInitiated) { () -> UIImage? in
-                    guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+                let decoded = try await Task.detached(priority: .userInitiated) { () throws -> UIImage? in
+                    let imageData = ManwaImageDecoder.usesImageHost(text) ? try ManwaImageDecoder.decode(data) : data
+                    guard let source = CGImageSourceCreateWithData(imageData as CFData, nil) else { return nil }
                     var maximumDimension = 4096
                     if reader, let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
                        let width = properties[kCGImagePropertyPixelWidth] as? NSNumber,
