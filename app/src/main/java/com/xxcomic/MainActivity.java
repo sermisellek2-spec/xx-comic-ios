@@ -65,6 +65,7 @@ import com.xxcomic.reader.ReaderNavigation;
 import com.xxcomic.reader.ReaderSettingsSheet;
 import com.xxcomic.reader.ZoomGeometry;
 import com.xxcomic.reader.ChapterDrawerSheet;
+import com.xxcomic.reader.HistoryProgressLabel;
 
 import com.xxcomic.source.BaoziComicSource;
 import com.xxcomic.source.AntbywComicSource;
@@ -5089,7 +5090,7 @@ public class MainActivity extends Activity {
         if (readerLayoutMode == 0) {
             readerLoadedChapterUrls.clear();
             readerLoadedChapterUrls.add(chapterUrl);
-            int contentWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
+            int contentWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels);
             int placeholderHeight = Math.max(1, contentWidth * 4 / 3);
             List<String> imageUrls = new ArrayList<>(page.imageUrls);
             List<ContinuousReaderItem> continuousItems = new ArrayList<>();
@@ -5104,8 +5105,7 @@ public class MainActivity extends Activity {
             list.setCacheColorHint(readerDisplayMode == 1 ? Color.BLACK : UIHelpers.DARK);
             list.setDivider(null);
             list.setSelector(new ColorDrawable(Color.TRANSPARENT));
-            list.setPadding(UIHelpers.dp(this, 4), UIHelpers.dp(this, 4),
-                    UIHelpers.dp(this, 4), UIHelpers.dp(this, 4));
+            list.setPadding(0, 0, 0, 0);
             list.setVerticalScrollBarEnabled(false);
             list.setHorizontalScrollBarEnabled(false);
             list.setFastScrollEnabled(false);
@@ -7898,7 +7898,7 @@ public class MainActivity extends Activity {
     static int jmScrambleSlices(long aid,long scramble,String name) { return JmImageTransform.jmScrambleSlices(aid,scramble,name); }
 
     private int readerContentWidth() {
-        return Math.max(1, getResources().getDisplayMetrics().widthPixels - UIHelpers.dp(this, 8));
+        return Math.max(1, getResources().getDisplayMetrics().widthPixels);
     }
 
     private void loadImage(ImageView target, String imageUrl) {
@@ -10748,14 +10748,30 @@ public class MainActivity extends Activity {
         if (progress.isEmpty()) {
             content.addView(emptyState(R.drawable.ic_history, "还没有阅读记录", "翻开一本，故事从这里开始", "去搜索", () -> showTab(1)));
         } else {
-            List<Map.Entry<String, Long>> entries = new ArrayList<>(lastViewedAt.entrySet());
-            Collections.sort(entries, (a, b) -> Long.compare(b.getValue(), a.getValue()));
+            List<Map.Entry<String, Long>> entries = new ArrayList<>();
+            for (Map.Entry<String, Long> entry : lastViewedAt.entrySet()) {
+                if (entry != null && entry.getKey() != null) {
+                    entries.add(entry);
+                }
+            }
+            Collections.sort(entries, (a, b) -> {
+                long va = a.getValue() == null ? 0L : a.getValue();
+                long vb = b.getValue() == null ? 0L : b.getValue();
+                return Long.compare(vb, va);
+            });
             LinearLayout list = settingsList();
             int visible = 0;
             for (Map.Entry<String, Long> entry : entries) {
                 if (!progress.containsKey(entry.getKey())) continue;
-                if (visible++ > 0) list.addView(UIHelpers.divider(this));
-                list.addView(historyRow(entry.getKey(), entry.getValue()));
+                try {
+                    View row = historyRow(entry.getKey(), entry.getValue() == null ? 0L : entry.getValue());
+                    if (row != null) {
+                        if (visible++ > 0) list.addView(UIHelpers.divider(this));
+                        list.addView(row);
+                    }
+                } catch (Exception e) {
+                    appendErrorLog("渲染历史记录失败: " + entry.getKey(), e);
+                }
             }
             content.addView(list);
             TextView note = UIHelpers.text(this, "删除记录不会移除书架收藏，也不会清理漫画缓存。", 11, UIHelpers.TEXT3, Typeface.NORMAL);
@@ -10824,15 +10840,26 @@ public class MainActivity extends Activity {
         titleView.setMaxLines(1);
         titleView.setEllipsize(TextUtils.TruncateAt.END);
         info.addView(titleView);
-        int chapterIdx = progress.containsKey(comicId) ? progress.get(comicId) : 0;
-        String chapterText;
-        if (chapterIdx == 0) {
-            chapterText = "刚开始看";
-        } else if (detail != null && chapterIdx >= detail.chapters.size() - 1 && !detail.chapters.isEmpty()) {
-            chapterText = "已读完整 · " + detail.chapters.get(chapterIdx).title;
-        } else {
-            chapterText = "上次看到 第 " + (chapterIdx + 1) + " 章";
+        List<String> chapterTitles = null;
+        if (detail != null && detail.chapters != null) {
+            chapterTitles = new ArrayList<>();
+            for (ComicModels.Chapter chapter : detail.chapters) {
+                chapterTitles.add(chapter != null ? chapter.title : "");
+            }
+        } else if (isLocalComic(comicId)) {
+            LocalModels.Book localBook = localBookForReading(comicId);
+            if (localBook != null) {
+                List<LocalModels.Chapter> localChapters = getLocalLibraryStore().getChapters(localBook.id);
+                if (localChapters != null && !localChapters.isEmpty()) {
+                    chapterTitles = new ArrayList<>();
+                    for (LocalModels.Chapter lc : localChapters) {
+                        chapterTitles.add(lc != null ? lc.title : "");
+                    }
+                }
+            }
         }
+        int chapterIdx = progress.containsKey(comicId) ? progress.get(comicId) : -1;
+        String chapterText = HistoryProgressLabel.label(chapterIdx, chapterTitles);
         info.addView(UIHelpers.text(this, chapterText + " · " + DataHelpers.formatRelative(viewedAt), 11, UIHelpers.TEXT3, Typeface.NORMAL),
                 UIHelpers.marginTop(-1, UIHelpers.dp(this, 2)));
         row.addView(info, UIHelpers.weight(1));
