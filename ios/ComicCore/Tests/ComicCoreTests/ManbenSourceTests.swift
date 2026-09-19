@@ -46,6 +46,16 @@ final class ManbenSourceTests: XCTestCase {
             XCTAssertTrue(error.localizedDescription.contains("搜索列表解析失败"))
         }
 
+        let notFound = ManbenComicSource(transport: ManbenFixtureTransport([
+            #"<html><h1>没有找到您访问的页面</h1><a href="/hot">热门漫画</a></html>"#
+        ]))
+        do {
+            _ = try await notFound.search(keyword: "漫画", page: 1)
+            XCTFail("404 页面不能冒充搜索无结果")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("搜索列表解析失败"))
+        }
+
         let empty = ManbenComicSource(transport: ManbenFixtureTransport([
             #"<div class="search-empty">没有找到相关漫画</div>"#
         ]))

@@ -41,7 +41,8 @@ public actor ManbenComicSource: ComicSource {
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         let html = try await fetch("/search?page=\(max(1,page))&title=\(form(SearchRules.trim(keyword)))&language=1")
         let blocks = matches(#"class=["'][^"']*\bitem\b[^"']*["'][^>]*>([\s\S]*?)(?=class=["'][^"']*\b(?:item|pager)\b[^"']*["']|$)"#, html)
-        let explicitEmpty = !matches(#"(?:没有|未)(?:找到|搜索到).{0,20}(?:漫画|作品|结果)|暂无.{0,10}(?:漫画|作品|结果|数据)"#, clean(html)).isEmpty
+        let emptyMessage = clean(first(#"<(?:div|p)\b[^>]*class=["'][^"']*\bsearch-empty\b[^"']*["'][^>]*>([\s\S]*?)</(?:div|p)>"#, html))
+        let explicitEmpty = emptyMessage == "没有找到相关漫画"
         guard !blocks.isEmpty || !matches(#"class=["'][^"']*\bpager\b[^"']*["']"#, html).isEmpty || explicitEmpty else { throw error("搜索列表解析失败") }
         var seen = Set<String>()
         let result: [ComicSummary] = blocks.compactMap { match in
