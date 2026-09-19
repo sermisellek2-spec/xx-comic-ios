@@ -329,7 +329,13 @@ public class MainActivity extends Activity {
     private boolean manwaEnabled = true;
     private boolean chapterDesc = false;
     private int themeMode = 0;
+    public static final int READER_THEME_DEFAULT = 0;
+    public static final int READER_THEME_DARK = 1;
+    public static final int READER_THEME_LIGHT = 2;
+    private int readerThemeMode = READER_THEME_DEFAULT;
     private int readerLayoutMode = 0; // 0 continuous, 1 single image
+    private ViewGroup readerShell;
+    private LinearLayout readerChapterButtons;
     private PagedReaderView readerPager;
     private com.xxcomic.ebook.TextReaderView textReaderView;
     private ListView readerList;
@@ -791,6 +797,14 @@ public class MainActivity extends Activity {
             applyReaderSystemBars();
         }
         if (hasFocus) checkPendingUpdatePrompt();
+    }
+
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (readerVisible && readerThemeMode == READER_THEME_DEFAULT) {
+            applyReaderThemeInPlace();
+        }
     }
 
     @Override
@@ -2109,6 +2123,26 @@ public class MainActivity extends Activity {
         }
     }
 
+    public int getReaderThemeMode() {
+        return readerThemeMode;
+    }
+
+    public void setReaderThemeMode(int mode) {
+        this.readerThemeMode = mode;
+    }
+
+    public boolean isReaderDarkTheme() {
+        if (readerDisplayMode == 1) return true;
+        if (readerThemeMode == READER_THEME_DARK) return true;
+        if (readerThemeMode == READER_THEME_LIGHT) return false;
+        return UIHelpers.isSystemNightMode(this);
+    }
+
+    private int readerCanvasBackground() {
+        if (readerDisplayMode == 1) return Color.BLACK;
+        return isReaderDarkTheme() ? UIHelpers.DARK : Color.rgb(244, 246, 248);
+    }
+
     private void applyReaderSystemBars() {
         applyReaderSystemBars(true);
     }
@@ -2122,6 +2156,14 @@ public class MainActivity extends Activity {
                 | View.SYSTEM_UI_FLAG_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        if (!isReaderDarkTheme()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            }
+        }
         getWindow().getDecorView().setSystemUiVisibility(flags);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             android.view.WindowManager.LayoutParams lp = getWindow().getAttributes();
@@ -2164,6 +2206,12 @@ public class MainActivity extends Activity {
     }
 
     private boolean refreshThemeIfChanged() {
+        if (readerVisible) {
+            if (readerThemeMode == READER_THEME_DEFAULT) {
+                applyReaderThemeInPlace();
+            }
+            return false;
+        }
         boolean before = nightThemeApplied;
         applyThemeAndSystemBars();
         return before != nightThemeApplied;
@@ -3548,7 +3596,7 @@ public class MainActivity extends Activity {
         if (!readerVisible) return;
         int currentMode = ReaderSettingsSheet.toReadingMode(readerLayoutMode, readerLeftHand);
         ReaderSettingsSheet.show(this, currentMode, readerFullyImmersive, readerDisplayMode == 1, readerPinchZoom,
-                readerDisablePageAnimation, readerCropWhiteMargins, new ReaderSettingsSheet.OnSettingsChangeListener() {
+                readerDisablePageAnimation, readerCropWhiteMargins, readerThemeMode, new ReaderSettingsSheet.OnSettingsChangeListener() {
                     @Override
                     public void onReadingModeChanged(int mode) {
                         int newLayoutMode = ReaderSettingsSheet.toLayoutMode(mode);
@@ -3606,7 +3654,129 @@ public class MainActivity extends Activity {
                         saveLocalState();
                         applyCropWhiteMarginsInPlace();
                     }
+
+                    @Override
+                    public void onReaderThemeChanged(int themeMode) {
+                        if (readerThemeMode == themeMode) return;
+                        readerThemeMode = themeMode;
+                        saveLocalState();
+                        applyReaderThemeInPlace();
+                    }
                 });
+    }
+
+    private void applyReaderThemeInPlace() {
+        if (!readerVisible || textReaderView != null) return;
+        boolean isDark = isReaderDarkTheme();
+        int canvasBg = readerCanvasBackground();
+        int textColor = isDark ? UIHelpers.READER_TEXT : Color.parseColor("#1F2328");
+
+        if (readerShell != null) {
+            readerShell.setBackgroundColor(canvasBg);
+        }
+        if (readerContentView != null) {
+            readerContentView.setBackgroundColor(canvasBg);
+        }
+        if (readerList != null) {
+            readerList.setBackgroundColor(canvasBg);
+            readerList.setCacheColorHint(canvasBg);
+            for (int i = 0; i < readerList.getChildCount(); i++) {
+                View child = readerList.getChildAt(i);
+                if (child instanceof ImageView) {
+                    child.setBackgroundColor(canvasBg);
+                }
+            }
+        }
+        if (readerPager != null) {
+            readerPager.setCanvasBackground(canvasBg);
+        }
+        if (readerTopBar instanceof ViewGroup) {
+            ViewGroup topBar = (ViewGroup) readerTopBar;
+            if (readerDisplayMode == 1) {
+                topBar.setBackgroundColor(Color.BLACK);
+            } else if (isDark) {
+                topBar.setBackground(new GradientDrawable(
+                        GradientDrawable.Orientation.TOP_BOTTOM,
+                        new int[]{0xF00C1420, 0xD80C1420}
+                ));
+            } else {
+                topBar.setBackground(new GradientDrawable(
+                        GradientDrawable.Orientation.TOP_BOTTOM,
+                        new int[]{0xF2F7F9FC, 0xD8F7F9FC}
+                ));
+            }
+            for (int i = 0; i < topBar.getChildCount(); i++) {
+                View child = topBar.getChildAt(i);
+                if (child instanceof ImageView) {
+                    ((ImageView) child).setColorFilter(textColor);
+                } else if (child instanceof TextView) {
+                    ((TextView) child).setTextColor(textColor);
+                }
+            }
+        }
+        if (readerBottomBar instanceof ViewGroup) {
+            ViewGroup bottomBar = (ViewGroup) readerBottomBar;
+            if (readerDisplayMode == 1) {
+                bottomBar.setBackgroundColor(Color.BLACK);
+            } else if (isDark) {
+                bottomBar.setBackground(new GradientDrawable(
+                        GradientDrawable.Orientation.BOTTOM_TOP,
+                        new int[]{0xF20C1420, 0xD80C1420}
+                ));
+            } else {
+                bottomBar.setBackground(new GradientDrawable(
+                        GradientDrawable.Orientation.BOTTOM_TOP,
+                        new int[]{0xF2F7F9FC, 0xD8F7F9FC}
+                ));
+            }
+            if (bottomBar.getChildCount() > 0 && bottomBar.getChildAt(0) instanceof LinearLayout) {
+                LinearLayout row1 = (LinearLayout) bottomBar.getChildAt(0);
+                for (int i = 0; i < row1.getChildCount(); i++) {
+                    View c = row1.getChildAt(i);
+                    if (c instanceof TextView) {
+                        ((TextView) c).setTextColor(textColor);
+                    }
+                }
+            }
+            if (bottomBar.getChildCount() > 1 && bottomBar.getChildAt(1) instanceof LinearLayout) {
+                LinearLayout row2 = (LinearLayout) bottomBar.getChildAt(1);
+                for (int i = 0; i < row2.getChildCount(); i++) {
+                    View item = row2.getChildAt(i);
+                    if (item instanceof LinearLayout) {
+                        LinearLayout btn = (LinearLayout) item;
+                        for (int j = 0; j < btn.getChildCount(); j++) {
+                            View c = btn.getChildAt(j);
+                            if (c instanceof ImageView) {
+                                ((ImageView) c).setColorFilter(textColor);
+                            } else if (c instanceof TextView) {
+                                ((TextView) c).setTextColor(textColor);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (readerChapterButtons != null) {
+            readerChapterButtons.setBackgroundColor(readerDisplayMode == 1 ? Color.BLACK : (isDark ? 0xF00C1420 : 0xF2F0F3F6));
+            if (readerPreviousButton != null) readerPreviousButton.setTextColor(textColor);
+            if (readerNextButton != null) readerNextButton.setTextColor(textColor);
+        }
+        if (readerOverlayBadge != null) {
+            if (readerDisplayMode == 1) {
+                readerOverlayBadge.setTextColor(Color.WHITE);
+                readerOverlayBadge.setBackground(UIHelpers.round(Color.BLACK, UIHelpers.dp(this, 6), Color.WHITE));
+                readerOverlayBadge.setShadowLayer(0, 0, 0, 0);
+            } else if (isDark) {
+                readerOverlayBadge.setTextColor(Color.argb(220, 230, 240, 255));
+                readerOverlayBadge.setShadowLayer(3f, 1f, 1f, Color.argb(180, 0, 0, 0));
+                readerOverlayBadge.setBackground(UIHelpers.round(Color.argb(140, 12, 19, 28), UIHelpers.dp(this, 6), Color.TRANSPARENT));
+            } else {
+                readerOverlayBadge.setTextColor(Color.argb(230, 31, 35, 40));
+                readerOverlayBadge.setShadowLayer(0, 0, 0, 0);
+                readerOverlayBadge.setBackground(UIHelpers.round(Color.argb(200, 255, 255, 255), UIHelpers.dp(this, 6), Color.argb(40, 0, 0, 0)));
+            }
+        }
+        applyReaderSystemBars(true);
     }
 
     private void applyCropWhiteMarginsInPlace() {
@@ -5282,7 +5452,7 @@ public class MainActivity extends Activity {
         applyReaderSystemBars();
         LinearLayout shell = new LinearLayout(this);
         shell.setOrientation(LinearLayout.VERTICAL);
-        shell.setBackgroundColor(readerDisplayMode == 1 ? Color.BLACK : UIHelpers.DARK);
+        shell.setBackgroundColor(readerCanvasBackground());
         root.addView(shell, UIHelpers.match());
         int topHeight = UIHelpers.dp(this, 42);
         shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, topHeight));
@@ -5299,7 +5469,7 @@ public class MainActivity extends Activity {
         applyReaderSystemBars();
         LinearLayout shell = new LinearLayout(this);
         shell.setOrientation(LinearLayout.VERTICAL);
-        shell.setBackgroundColor(readerDisplayMode == 1 ? Color.BLACK : UIHelpers.DARK);
+        shell.setBackgroundColor(readerCanvasBackground());
         root.addView(shell, UIHelpers.match());
         int topHeight = UIHelpers.dp(this, 42);
         shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, topHeight));
@@ -5383,17 +5553,25 @@ public class MainActivity extends Activity {
         top.setPadding(UIHelpers.dp(this, 12), statusInset, UIHelpers.dp(this, 12), 0);
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.setClickable(true);
+        boolean isDark = isReaderDarkTheme();
         if (readerDisplayMode == 1) {
             top.setBackgroundColor(Color.BLACK);
-        } else {
+        } else if (isDark) {
             GradientDrawable bg = new GradientDrawable(
                     GradientDrawable.Orientation.TOP_BOTTOM,
                     new int[]{0xF00C1420, 0xD80C1420}
             );
             top.setBackground(bg);
+        } else {
+            GradientDrawable bg = new GradientDrawable(
+                    GradientDrawable.Orientation.TOP_BOTTOM,
+                    new int[]{0xF2F7F9FC, 0xD8F7F9FC}
+            );
+            top.setBackground(bg);
         }
 
-        ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, UIHelpers.READER_TEXT, 4);
+        int textColor = isDark ? UIHelpers.READER_TEXT : Color.parseColor("#1F2328");
+        ImageView back = UIHelpers.vectorIconButton(this, R.drawable.ic_back, textColor, 4);
         back.setContentDescription("返回");
         back.setClickable(true);
         back.setFocusable(true);
@@ -5413,7 +5591,7 @@ public class MainActivity extends Activity {
         if (!TextUtils.isEmpty(detail.summary.title)) {
             titleText = detail.summary.title + " · " + titleText;
         }
-        TextView name = UIHelpers.text(this, titleText, 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
+        TextView name = UIHelpers.text(this, titleText, 13, textColor, Typeface.NORMAL);
         name.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         name.setGravity(Gravity.CENTER_VERTICAL);
         name.setIncludeFontPadding(false);
@@ -5440,7 +5618,8 @@ public class MainActivity extends Activity {
         readerProgressView = null;
         applyReaderSystemBars(true);
         FrameLayout shell = new FrameLayout(this);
-        shell.setBackgroundColor(readerDisplayMode == 1 ? Color.BLACK : UIHelpers.DARK);
+        readerShell = shell;
+        shell.setBackgroundColor(readerCanvasBackground());
         root.addView(shell, UIHelpers.match());
 
         int topBarHeight = getStatusBarOrCutoutHeight() + UIHelpers.dp(this, 44);
@@ -5483,8 +5662,8 @@ public class MainActivity extends Activity {
             Map<ImageView, Future<?>> readerImageFutures = new HashMap<>();
             ListView list = new ListView(this);
             readerList = list;
-            list.setBackgroundColor(readerDisplayMode == 1 ? Color.BLACK : UIHelpers.DARK);
-            list.setCacheColorHint(readerDisplayMode == 1 ? Color.BLACK : UIHelpers.DARK);
+            list.setBackgroundColor(readerCanvasBackground());
+            list.setCacheColorHint(readerCanvasBackground());
             list.setDivider(null);
             list.setSelector(new ColorDrawable(Color.TRANSPARENT));
             list.setPadding(0, 0, 0, 0);
@@ -5531,7 +5710,7 @@ public class MainActivity extends Activity {
                     } else {
                         image = new ImageView(MainActivity.this);
                         image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        image.setBackgroundColor(readerDisplayMode == 1 ? Color.BLACK : UIHelpers.DARK);
+                        image.setBackgroundColor(readerCanvasBackground());
                     }
                     Future<?> previous = readerImageFutures.remove(image);
                     if (previous != null && !previous.isDone()) previous.cancel(true);
@@ -5991,7 +6170,9 @@ public class MainActivity extends Activity {
                         if (!readerFullscreen) setReaderFullscreen(true, true);
                     }
                 });
-                readerPager.setBackgroundColor(readerDisplayMode == 1 ? Color.BLACK : Color.rgb(12, 20, 32));
+                readerPager.setControlsVisible(!readerFullscreen);
+                readerPager.setBackgroundColor(readerCanvasBackground());
+                readerPager.setCanvasBackground(readerCanvasBackground());
                 content.addView(readerPager, UIHelpers.match());
                 prefetchReaderImages(page.imageUrls, initial + 1, chapterUrl, generation, comicId, cacheOnly);
             }
@@ -5999,12 +6180,15 @@ public class MainActivity extends Activity {
 
         if (readerButtonMode) {
             LinearLayout chapterButtons = new LinearLayout(this);
+            readerChapterButtons = chapterButtons;
             chapterButtons.setOrientation(LinearLayout.HORIZONTAL);
             chapterButtons.setGravity(Gravity.CENTER);
             chapterButtons.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 4), UIHelpers.dp(this, 12), UIHelpers.dp(this, 4));
-            chapterButtons.setBackgroundColor(readerDisplayMode == 1 ? Color.BLACK : 0xF00C1420);
-            TextView previous = UIHelpers.text(this, readerLayoutMode == 1 ? "上一页" : "上一章", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
-            TextView next = UIHelpers.text(this, readerLayoutMode == 1 ? "下一页" : "下一章", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
+            boolean isDark = isReaderDarkTheme();
+            chapterButtons.setBackgroundColor(readerDisplayMode == 1 ? Color.BLACK : (isDark ? 0xF00C1420 : 0xF2F0F3F6));
+            int btnTextColor = isDark ? UIHelpers.READER_TEXT : Color.parseColor("#1F2328");
+            TextView previous = UIHelpers.text(this, readerLayoutMode == 1 ? "上一页" : "上一章", 13, btnTextColor, Typeface.NORMAL);
+            TextView next = UIHelpers.text(this, readerLayoutMode == 1 ? "下一页" : "下一章", 13, btnTextColor, Typeface.NORMAL);
             previous.setGravity(Gravity.CENTER); next.setGravity(Gravity.CENTER);
             readerPreviousButton = previous; readerNextButton = next;
             updateReaderButtons(detail, page);
@@ -6028,12 +6212,19 @@ public class MainActivity extends Activity {
         LinearLayout bottom = new LinearLayout(this);
         bottom.setOrientation(LinearLayout.VERTICAL);
         bottom.setClickable(true);
+        boolean isDark = isReaderDarkTheme();
         if (readerDisplayMode == 1) {
             bottom.setBackgroundColor(Color.BLACK);
-        } else {
+        } else if (isDark) {
             GradientDrawable bottomBg = new GradientDrawable(
                     GradientDrawable.Orientation.BOTTOM_TOP,
                     new int[]{0xF20C1420, 0xD80C1420}
+            );
+            bottom.setBackground(bottomBg);
+        } else {
+            GradientDrawable bottomBg = new GradientDrawable(
+                    GradientDrawable.Orientation.BOTTOM_TOP,
+                    new int[]{0xF2F7F9FC, 0xD8F7F9FC}
             );
             bottom.setBackground(bottomBg);
         }
@@ -6044,7 +6235,8 @@ public class MainActivity extends Activity {
         row1.setGravity(Gravity.CENTER_VERTICAL);
         row1.setPadding(UIHelpers.dp(this, 12), UIHelpers.dp(this, 2), UIHelpers.dp(this, 12), 0);
 
-        TextView prevChapter = UIHelpers.text(this, "上一章", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
+        int barTextColor = isDark ? UIHelpers.READER_TEXT : Color.parseColor("#1F2328");
+        TextView prevChapter = UIHelpers.text(this, "上一章", 13, barTextColor, Typeface.NORMAL);
         prevChapter.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         prevChapter.setGravity(Gravity.CENTER);
         prevChapter.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 6), UIHelpers.dp(this, 8), UIHelpers.dp(this, 6));
@@ -6059,7 +6251,7 @@ public class MainActivity extends Activity {
             if (readerChapterIndex > 0) switchChapter(detail, -1);
         });
 
-        TextView nextChapter = UIHelpers.text(this, "下一章", 13, UIHelpers.READER_TEXT, Typeface.NORMAL);
+        TextView nextChapter = UIHelpers.text(this, "下一章", 13, barTextColor, Typeface.NORMAL);
         nextChapter.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         nextChapter.setGravity(Gravity.CENTER);
         nextChapter.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 6), UIHelpers.dp(this, 8), UIHelpers.dp(this, 6));
@@ -6147,10 +6339,14 @@ public class MainActivity extends Activity {
         if (readerDisplayMode == 1) {
             overlayBadge.setTextColor(Color.WHITE);
             overlayBadge.setBackground(UIHelpers.round(Color.BLACK, UIHelpers.dp(this, 6), Color.WHITE));
-        } else {
+        } else if (isDark) {
             overlayBadge.setTextColor(Color.argb(220, 230, 240, 255));
             overlayBadge.setShadowLayer(3f, 1f, 1f, Color.argb(180, 0, 0, 0));
             overlayBadge.setBackground(UIHelpers.round(Color.argb(140, 12, 19, 28), UIHelpers.dp(this, 6), Color.TRANSPARENT));
+        } else {
+            overlayBadge.setTextColor(Color.argb(230, 31, 35, 40));
+            overlayBadge.setShadowLayer(0, 0, 0, 0);
+            overlayBadge.setBackground(UIHelpers.round(Color.argb(200, 255, 255, 255), UIHelpers.dp(this, 6), Color.argb(40, 0, 0, 0)));
         }
         overlayBadge.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 4), UIHelpers.dp(this, 8), UIHelpers.dp(this, 4));
         overlayBadge.setSingleLine(true);
@@ -6219,8 +6415,13 @@ public class MainActivity extends Activity {
             return true;
         }
         boolean tap = moveX < UIHelpers.dp(this, 10) && moveY < UIHelpers.dp(this, 10) && System.currentTimeMillis() - readerDownAt < 300L;
+        if (!tap) return false;
+        if (!readerFullscreen) {
+            setReaderFullscreen(true, true);
+            return true;
+        }
         boolean activeY = y > height * 0.25f && y < height * 0.75f;
-        if (!tap || !activeY) return false;
+        if (!activeY) return false;
         boolean leftSide = x < width * 0.28f;
         boolean rightSide = x > width * 0.72f;
         if (readerPageMode == 0 && (leftSide || rightSide)) {
@@ -6597,6 +6798,8 @@ public class MainActivity extends Activity {
         readerContentView = null;
         readerSeekBar = null;
         readerSeeking = false;
+        readerShell = null;
+        readerChapterButtons = null;
         readerBitmapCache.evictAll();
         readerCropBoundsCache.evictAll();
         readerImageHeights.clear();
@@ -6619,10 +6822,13 @@ public class MainActivity extends Activity {
         UIHelpers.tapFeedback(item);
         item.setOnClickListener(v -> action.run());
 
-        ImageView icon = UIHelpers.vectorIconButton(this, iconRes, UIHelpers.READER_TEXT, 0);
+        boolean isDark = isReaderDarkTheme();
+        int textColor = isDark ? UIHelpers.READER_TEXT : Color.parseColor("#1F2328");
+
+        ImageView icon = UIHelpers.vectorIconButton(this, iconRes, textColor, 0);
         item.addView(icon, new LinearLayout.LayoutParams(UIHelpers.dp(this, 20), UIHelpers.dp(this, 20)));
 
-        TextView label = UIHelpers.text(this, title, 11, UIHelpers.READER_TEXT, Typeface.NORMAL);
+        TextView label = UIHelpers.text(this, title, 11, textColor, Typeface.NORMAL);
         label.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         label.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(-2, -2);
@@ -6639,6 +6845,9 @@ public class MainActivity extends Activity {
         }
         if (readerDisplayMode == 1) animated = false;
         updateReaderOverlayVisibility(animated);
+        if (readerPager != null) {
+            readerPager.setControlsVisible(!fullscreen);
+        }
         if (readerTopBar == null || readerBottomBar == null) return;
 
         int topHeight = readerTopBar.getHeight();
@@ -6650,16 +6859,18 @@ public class MainActivity extends Activity {
             bottomHeight = UIHelpers.dp(this, 88);
         }
 
-        int shellH = readerContainerHeight();
-        float availableH = Math.max(1, shellH - topHeight - bottomHeight);
-        float scale = Math.max(0.4f, Math.min(1f, availableH / (float) shellH));
-        float targetTransY = (topHeight - bottomHeight) / 2f;
+        // Keep reader content view fixed in place: no scaling, no translation, zero jitter!
+        if (readerContentView != null) {
+            readerContentView.animate().cancel();
+            readerContentView.setScaleX(1f);
+            readerContentView.setScaleY(1f);
+            readerContentView.setTranslationY(0f);
+        }
 
         if (!animated) {
             readerTopBar.animate().cancel();
             readerBottomBar.animate().cancel();
             if (readerProgressView != null) readerProgressView.animate().cancel();
-            if (readerContentView != null) readerContentView.animate().cancel();
 
             readerTopBar.setAlpha(readerFullscreen ? 0f : 1f);
             readerTopBar.setTranslationY(readerFullscreen ? -topHeight : 0f);
@@ -6668,12 +6879,6 @@ public class MainActivity extends Activity {
             readerBottomBar.setAlpha(readerFullscreen ? 0f : 1f);
             readerBottomBar.setTranslationY(readerFullscreen ? bottomHeight : 0f);
             readerBottomBar.setVisibility(readerFullscreen ? View.INVISIBLE : View.VISIBLE);
-
-            if (readerContentView != null) {
-                readerContentView.setScaleX(readerFullscreen ? 1f : scale);
-                readerContentView.setScaleY(readerFullscreen ? 1f : scale);
-                readerContentView.setTranslationY(readerFullscreen ? 0f : targetTransY);
-            }
 
             if (readerProgressView != null) {
                 readerProgressView.setAlpha(readerFullscreen ? 1f : 0f);
@@ -6684,19 +6889,21 @@ public class MainActivity extends Activity {
         }
 
         long duration = READER_CHROME_ANIM_MS;
-        android.view.animation.Interpolator interpolator = readerFullscreen
-                ? new AccelerateInterpolator(1.6f)
-                : new DecelerateInterpolator(1.6f);
+        android.view.animation.Interpolator enterInterpolator = new DecelerateInterpolator(1.5f);
+        android.view.animation.Interpolator exitInterpolator = new DecelerateInterpolator(1.2f);
 
         readerTopBar.animate().cancel();
         if (!readerFullscreen) {
             readerTopBar.setVisibility(View.VISIBLE);
+            if (readerTopBar.getAlpha() == 0f && readerTopBar.getTranslationY() == 0f) {
+                readerTopBar.setTranslationY(-topHeight);
+            }
         }
         readerTopBar.animate()
                 .alpha(readerFullscreen ? 0f : 1f)
                 .translationY(readerFullscreen ? -topHeight : 0f)
                 .setDuration(duration)
-                .setInterpolator(interpolator)
+                .setInterpolator(readerFullscreen ? exitInterpolator : enterInterpolator)
                 .withLayer()
                 .withEndAction(() -> {
                     if (readerFullscreen && readerTopBar != null) {
@@ -6708,12 +6915,15 @@ public class MainActivity extends Activity {
         readerBottomBar.animate().cancel();
         if (!readerFullscreen) {
             readerBottomBar.setVisibility(View.VISIBLE);
+            if (readerBottomBar.getAlpha() == 0f && readerBottomBar.getTranslationY() == 0f) {
+                readerBottomBar.setTranslationY(bottomHeight);
+            }
         }
         readerBottomBar.animate()
                 .alpha(readerFullscreen ? 0f : 1f)
                 .translationY(readerFullscreen ? bottomHeight : 0f)
                 .setDuration(duration)
-                .setInterpolator(interpolator)
+                .setInterpolator(readerFullscreen ? exitInterpolator : enterInterpolator)
                 .withLayer()
                 .withEndAction(() -> {
                     if (readerFullscreen && readerBottomBar != null) {
@@ -6722,25 +6932,13 @@ public class MainActivity extends Activity {
                 })
                 .start();
 
-        if (readerContentView != null) {
-            readerContentView.animate().cancel();
-            readerContentView.animate()
-                    .scaleX(readerFullscreen ? 1f : scale)
-                    .scaleY(readerFullscreen ? 1f : scale)
-                    .translationY(readerFullscreen ? 0f : targetTransY)
-                    .setDuration(duration)
-                    .setInterpolator(interpolator)
-                    .withLayer()
-                    .start();
-        }
-
         if (readerProgressView != null) {
             readerProgressView.animate().cancel();
             readerProgressView.setVisibility(View.VISIBLE);
             readerProgressView.animate()
                     .alpha(readerFullscreen ? 1f : 0f)
                     .setDuration(duration)
-                    .setInterpolator(interpolator)
+                    .setInterpolator(readerFullscreen ? enterInterpolator : exitInterpolator)
                     .withLayer()
                     .start();
         }
@@ -6765,7 +6963,7 @@ public class MainActivity extends Activity {
         if (show) badge.setVisibility(View.VISIBLE);
         badge.animate().alpha(show ? 1f : 0f)
                 .setDuration(READER_CHROME_ANIM_MS)
-                .setInterpolator(show ? new AccelerateInterpolator(1.6f) : new DecelerateInterpolator(1.6f))
+                .setInterpolator(show ? new DecelerateInterpolator(1.5f) : new DecelerateInterpolator(1.2f))
                 .withLayer()
                 .withEndAction(() -> {
                     if (readerOverlayBadge != badge) return;
@@ -7726,7 +7924,7 @@ public class MainActivity extends Activity {
         }
 
         ChapterDrawerSheet sheet = new ChapterDrawerSheet(this, detail.chapters,
-                currentChapter, hasCurrent, readerVisible, chapterDesc, null,
+                currentChapter, hasCurrent, readerVisible, isReaderDarkTheme(), chapterDesc, null,
                 selectedChapter -> showReader(detail, selectedChapter));
         sheet.setOrderChangeListener(desc -> {
             chapterDesc = desc;
@@ -8075,12 +8273,13 @@ public class MainActivity extends Activity {
         art.setImageResource(imageRes);
         art.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         box.addView(art, new LinearLayout.LayoutParams(UIHelpers.dp(this, 126), UIHelpers.dp(this, 126)));
-        TextView titleView = UIHelpers.text(this, title, 14, UIHelpers.READER_TEXT, Typeface.BOLD);
+        boolean isDark = isReaderDarkTheme();
+        TextView titleView = UIHelpers.text(this, title, 14, isDark ? UIHelpers.READER_TEXT : Color.parseColor("#1F2328"), Typeface.BOLD);
         titleView.setGravity(Gravity.CENTER);
         titleView.setIncludeFontPadding(false);
         box.addView(titleView, UIHelpers.marginTop(-1, UIHelpers.dp(this, 8)));
         if (!TextUtils.isEmpty(desc)) {
-            TextView description = UIHelpers.text(this, desc, 10, Color.argb(190, 235, 246, 255), Typeface.NORMAL);
+            TextView description = UIHelpers.text(this, desc, 10, isDark ? Color.argb(190, 235, 246, 255) : Color.parseColor("#656D76"), Typeface.NORMAL);
             description.setGravity(Gravity.CENTER);
             description.setIncludeFontPadding(false);
             box.addView(description, UIHelpers.marginTop(-1, UIHelpers.dp(this, 5)));
@@ -9109,7 +9308,7 @@ public class MainActivity extends Activity {
         applyReaderSystemBars();
         LinearLayout shell = new LinearLayout(this);
         shell.setOrientation(LinearLayout.VERTICAL);
-        shell.setBackgroundColor(readerDisplayMode == 1 ? Color.BLACK : UIHelpers.DARK);
+        shell.setBackgroundColor(readerCanvasBackground());
         root.addView(shell, UIHelpers.match());
         int topHeight = UIHelpers.dp(this, 42);
         shell.addView(readerToolbar(detail), new LinearLayout.LayoutParams(-1, topHeight));
@@ -10583,6 +10782,7 @@ public class MainActivity extends Activity {
         readerPinchZoom = prefs.getBoolean("reader.pinch.zoom", true);
         readerDisablePageAnimation = prefs.getBoolean("reader.disable.page.animation", false);
         readerCropWhiteMargins = prefs.getBoolean("reader.crop.white.margins", false);
+        readerThemeMode = prefs.getInt("reader.theme.mode", READER_THEME_DEFAULT);
         readerImagePositions.clear();
         try {
             JSONObject savedImages = new JSONObject(prefs.getString("reader.image.positions", "{}"));
@@ -10695,6 +10895,7 @@ public class MainActivity extends Activity {
         editor.putBoolean("reader.pinch.zoom", readerPinchZoom);
         editor.putBoolean("reader.disable.page.animation", readerDisablePageAnimation);
         editor.putBoolean("reader.crop.white.margins", readerCropWhiteMargins);
+        editor.putInt("reader.theme.mode", readerThemeMode);
         JSONObject savedImages = new JSONObject();
         try {
             for (Map.Entry<String, ReaderPosition> item : readerImagePositions.entrySet()) {

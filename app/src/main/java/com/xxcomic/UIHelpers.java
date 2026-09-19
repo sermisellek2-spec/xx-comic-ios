@@ -2,6 +2,7 @@ package com.xxcomic;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -73,6 +74,12 @@ public final class UIHelpers {
 
     public static boolean isNightTheme() {
         return nightTheme;
+    }
+
+    public static boolean isSystemNightMode(Context context) {
+        if (context == null) return false;
+        int nightModeFlags = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
     }
 
     public static long nextThemeSwitchDelayMs() {

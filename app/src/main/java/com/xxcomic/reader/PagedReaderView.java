@@ -33,6 +33,7 @@ public final class PagedReaderView extends FrameLayout {
     private long downTime;
     private int downPage;
     private boolean blockedGesture, disposed;
+    private boolean controlsVisible;
     private boolean navigationTriggeredInGesture;
     private long lastNavigateTime = 0L;
     private static final long MIN_NAVIGATE_INTERVAL_MS = 200L;
@@ -71,6 +72,10 @@ public final class PagedReaderView extends FrameLayout {
                 image.setListener(new ZoomImageView.Listener() {
                     @Override public void onTap(float x, float y) {
                         if (disposed || holder.getBindingAdapterPosition() != currentPage()) return;
+                        if (controlsVisible) {
+                            listener.onToggleControls();
+                            return;
+                        }
                         if (y < image.getHeight() * .25f || y > image.getHeight() * .75f) return;
                         boolean left = x < image.getWidth() * .28f, right = x > image.getWidth() * .72f;
                         if (inputMode != 1 && !image.isZoomed() && (left || right)) listener.onNavigate(ReaderNavigation.tapDelta(left, leftHand));
@@ -148,6 +153,18 @@ public final class PagedReaderView extends FrameLayout {
 
     public boolean isAnimationDisabled() {
         return animationDisabled;
+    }
+
+    public void setControlsVisible(boolean visible) {
+        this.controlsVisible = visible;
+    }
+
+    public boolean isControlsVisible() {
+        return controlsVisible;
+    }
+
+    public void setCanvasBackground(int color) {
+        setBackgroundColor(color);
     }
 
     public void refreshVisiblePages() {

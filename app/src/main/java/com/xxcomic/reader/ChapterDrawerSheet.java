@@ -60,6 +60,7 @@ public final class ChapterDrawerSheet extends PopupWindow {
     private final TextView headerTitleView;
     private final TextView orderBtn;
     private final boolean isReader;
+    private final boolean isDarkReader;
     private final OnChapterSelectedListener selectionListener;
     private final VolumeProvider volumeProvider;
     private OrderChangeListener orderChangeListener;
@@ -83,19 +84,27 @@ public final class ChapterDrawerSheet extends PopupWindow {
                               int currentChapterIndex, boolean hasCurrent, boolean isReader,
                               boolean isDesc, VolumeProvider volumeProvider,
                               OnChapterSelectedListener listener) {
+        this(activity, chapters, currentChapterIndex, hasCurrent, isReader, true, isDesc, volumeProvider, listener);
+    }
+
+    public ChapterDrawerSheet(Activity activity, List<ComicModels.Chapter> chapters,
+                              int currentChapterIndex, boolean hasCurrent, boolean isReader,
+                              boolean isDarkReader, boolean isDesc, VolumeProvider volumeProvider,
+                              OnChapterSelectedListener listener) {
         super(activity);
         this.activity = activity;
         this.chapters = chapters != null ? chapters : new ArrayList<>();
         this.currentChapterIndex = currentChapterIndex;
         this.hasCurrent = hasCurrent;
         this.isReader = isReader;
+        this.isDarkReader = isDarkReader;
         this.isDesc = isDesc;
         this.volumeProvider = volumeProvider;
         this.selectionListener = listener;
 
         overlay = new FrameLayout(activity);
         backdrop = new View(activity);
-        backdrop.setBackgroundColor(isReader ? Color.argb(130, 0, 0, 0) : Color.argb(110, 10, 24, 37));
+        backdrop.setBackgroundColor(isReader ? (isDarkReader ? Color.argb(130, 0, 0, 0) : Color.argb(90, 0, 0, 0)) : Color.argb(110, 10, 24, 37));
         overlay.addView(backdrop, new FrameLayout.LayoutParams(-1, -1));
         backdrop.setOnClickListener(v -> dismiss());
 
@@ -104,13 +113,13 @@ public final class ChapterDrawerSheet extends PopupWindow {
         panel.setPadding(0, 0, 0, dp(12));
 
         // Drawer background:
-        // Reader: dark translucent #1C2128 (~92% opacity) so comic page underneath is faintly visible
+        // Reader: dark translucent #1C2128 (~92% opacity) or light translucent #FFFFFF (~97% opacity)
         // Detail: follows theme mode (UIHelpers.CARD)
         GradientDrawable panelBg = new GradientDrawable();
         float radius = dp(16);
         panelBg.setCornerRadii(new float[]{radius, radius, radius, radius, 0, 0, 0, 0});
         if (isReader) {
-            panelBg.setColor(Color.argb(235, 28, 33, 40));
+            panelBg.setColor(isDarkReader ? Color.argb(235, 28, 33, 40) : Color.argb(248, 255, 255, 255));
         } else {
             panelBg.setColor(UIHelpers.CARD);
         }
@@ -120,7 +129,7 @@ public final class ChapterDrawerSheet extends PopupWindow {
         // Top drag handle bar (clickable to toggle between 55% and 92%)
         FrameLayout handleHost = new FrameLayout(activity);
         View handle = new View(activity);
-        handle.setBackground(UIHelpers.round(isReader ? Color.parseColor("#444C56") : UIHelpers.BORDER, dp(2), Color.TRANSPARENT));
+        handle.setBackground(UIHelpers.round(isReader ? (isDarkReader ? Color.parseColor("#444C56") : Color.parseColor("#D0D7DE")) : UIHelpers.BORDER, dp(2), Color.TRANSPARENT));
         handleHost.addView(handle, new FrameLayout.LayoutParams(dp(32), dp(4), Gravity.CENTER));
         handleHost.setContentDescription("展开或收起章节目录");
         handleHost.setOnClickListener(v -> animateHeight(panel.getHeight() < expandedHeight ? expandedHeight : collapsedHeight));
@@ -133,16 +142,16 @@ public final class ChapterDrawerSheet extends PopupWindow {
         header.setPadding(dp(20), dp(6), dp(20), dp(10));
 
         headerTitleView = UIHelpers.text(activity, "全部章节", 16,
-                isReader ? Color.parseColor("#E6EDF3") : UIHelpers.TEXT,
+                isReader ? (isDarkReader ? Color.parseColor("#E6EDF3") : Color.parseColor("#1F2328")) : UIHelpers.TEXT,
                 Typeface.BOLD);
         header.addView(headerTitleView, new LinearLayout.LayoutParams(0, -2, 1f));
         headerTitleView.setOnClickListener(v -> toggleOrder());
 
         orderBtn = UIHelpers.text(activity, isDesc ? "倒序" : "正序", 12,
-                isReader ? Color.parseColor("#8B949E") : UIHelpers.TEXT3,
+                isReader ? (isDarkReader ? Color.parseColor("#8B949E") : Color.parseColor("#656D76")) : UIHelpers.TEXT3,
                 Typeface.NORMAL);
         orderBtn.setPadding(dp(10), dp(4), dp(10), dp(4));
-        orderBtn.setBackground(UIHelpers.round(isReader ? Color.argb(40, 255, 255, 255) : UIHelpers.CARD_SOFT, dp(12), Color.TRANSPARENT));
+        orderBtn.setBackground(UIHelpers.round(isReader ? (isDarkReader ? Color.argb(40, 255, 255, 255) : Color.argb(20, 0, 0, 0)) : UIHelpers.CARD_SOFT, dp(12), Color.TRANSPARENT));
         orderBtn.setOnClickListener(v -> toggleOrder());
         header.addView(orderBtn);
 
@@ -277,7 +286,7 @@ public final class ChapterDrawerSheet extends PopupWindow {
         box.addView(pb, new LinearLayout.LayoutParams(dp(36), dp(36)));
 
         TextView msgView = UIHelpers.text(activity, message, 14,
-                isReader ? Color.parseColor("#E6EDF3") : UIHelpers.TEXT, Typeface.NORMAL);
+                isReader ? (isDarkReader ? Color.parseColor("#E6EDF3") : Color.parseColor("#1F2328")) : UIHelpers.TEXT, Typeface.NORMAL);
         msgView.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(-2, -2);
         msgLp.topMargin = dp(14);
@@ -285,7 +294,7 @@ public final class ChapterDrawerSheet extends PopupWindow {
 
         if (!TextUtils.isEmpty(subMessage)) {
             TextView subView = UIHelpers.text(activity, subMessage, 12,
-                    isReader ? Color.parseColor("#8B949E") : UIHelpers.TEXT3, Typeface.NORMAL);
+                    isReader ? (isDarkReader ? Color.parseColor("#8B949E") : Color.parseColor("#656D76")) : UIHelpers.TEXT3, Typeface.NORMAL);
             subView.setGravity(Gravity.CENTER);
             LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-2, -2);
             subLp.topMargin = dp(6);
@@ -303,7 +312,7 @@ public final class ChapterDrawerSheet extends PopupWindow {
         box.setPadding(dp(24), dp(48), dp(24), dp(48));
 
         TextView msgView = UIHelpers.text(activity, message, 14,
-                isReader ? Color.parseColor("#E6EDF3") : UIHelpers.TEXT, Typeface.NORMAL);
+                isReader ? (isDarkReader ? Color.parseColor("#E6EDF3") : Color.parseColor("#1F2328")) : UIHelpers.TEXT, Typeface.NORMAL);
         msgView.setGravity(Gravity.CENTER);
         box.addView(msgView);
 
@@ -335,7 +344,7 @@ public final class ChapterDrawerSheet extends PopupWindow {
         recyclerView.setOverScrollMode(View.OVER_SCROLL_NEVER);
 
         adapter = new ChapterAdapter(activity, chapters, orderIndexes, currentChapterIndex,
-                hasCurrent, isReader, volumeProvider, index -> {
+                hasCurrent, isReader, isDarkReader, volumeProvider, index -> {
             dismiss();
             if (selectionListener != null) {
                 selectionListener.onChapterSelected(index);
@@ -448,11 +457,12 @@ public final class ChapterDrawerSheet extends PopupWindow {
         private final int currentChapterIndex;
         private final boolean hasCurrent;
         private final boolean isReader;
+        private final boolean isDarkReader;
         private final VolumeProvider volumeProvider;
         private final OnChapterSelectedListener listener;
 
         ChapterAdapter(Activity activity, List<ComicModels.Chapter> chapters, List<Integer> orderIndexes,
-                       int currentChapterIndex, boolean hasCurrent, boolean isReader,
+                       int currentChapterIndex, boolean hasCurrent, boolean isReader, boolean isDarkReader,
                        VolumeProvider volumeProvider, OnChapterSelectedListener listener) {
             this.activity = activity;
             this.chapters = chapters;
@@ -460,6 +470,7 @@ public final class ChapterDrawerSheet extends PopupWindow {
             this.currentChapterIndex = currentChapterIndex;
             this.hasCurrent = hasCurrent;
             this.isReader = isReader;
+            this.isDarkReader = isDarkReader;
             this.volumeProvider = volumeProvider;
             this.listener = listener;
         }
@@ -472,7 +483,7 @@ public final class ChapterDrawerSheet extends PopupWindow {
         @NonNull
         @Override
         public ChapterViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new ChapterViewHolder(activity, isReader);
+            return new ChapterViewHolder(activity, isReader, isDarkReader);
         }
 
         @Override
@@ -510,10 +521,12 @@ public final class ChapterDrawerSheet extends PopupWindow {
         private final View indicator;
         private final TextView titleView;
         private final boolean isReader;
+        private final boolean isDarkReader;
 
-        ChapterViewHolder(Context context, boolean isReader) {
+        ChapterViewHolder(Context context, boolean isReader, boolean isDarkReader) {
             super(new LinearLayout(context));
             this.isReader = isReader;
+            this.isDarkReader = isDarkReader;
             container = (LinearLayout) itemView;
             container.setOrientation(LinearLayout.VERTICAL);
             container.setLayoutParams(new RecyclerView.LayoutParams(-1, -2));
@@ -541,7 +554,7 @@ public final class ChapterDrawerSheet extends PopupWindow {
             // Left vertical blue indicator bar (▌)
             indicator = new View(context);
             GradientDrawable indicatorBg = new GradientDrawable();
-            indicatorBg.setColor(Color.parseColor("#2E79E6"));
+            indicatorBg.setColor(isReader && !isDarkReader ? Color.parseColor("#0969DA") : Color.parseColor("#2E79E6"));
             indicatorBg.setCornerRadius(UIHelpers.dp(context, 2));
             indicator.setBackground(indicatorBg);
 
@@ -573,7 +586,9 @@ public final class ChapterDrawerSheet extends PopupWindow {
             titleView.setText(chapter.title);
 
             if (isReader) {
-                titleView.setTextColor(isCurrent ? Color.WHITE : Color.parseColor("#E6EDF3"));
+                titleView.setTextColor(isCurrent
+                        ? (isDarkReader ? Color.WHITE : Color.parseColor("#0969DA"))
+                        : (isDarkReader ? Color.parseColor("#E6EDF3") : Color.parseColor("#1F2328")));
             } else {
                 titleView.setTextColor(isCurrent ? UIHelpers.ACCENT : UIHelpers.TEXT);
             }
