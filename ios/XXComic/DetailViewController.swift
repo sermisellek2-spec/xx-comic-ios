@@ -16,6 +16,8 @@ final class DetailViewController: UIViewController {
     private var detailTask: Task<Void, Never>?
     private var directoryTask: Task<[Chapter], Error>?
     private var cachedChapters: [Chapter]?
+    private var detailLoaded = false
+    private var directoryID = UUID()
 
     init(comic: ComicSummary, environment: AppEnvironment) {
         self.comic = comic; self.environment = environment
@@ -61,7 +63,18 @@ final class DetailViewController: UIViewController {
         cover.load(comic.coverUrl, referer: source.referer)
         loadDetail()
     }
-    override func viewWillAppear(_ animated: Bool) { super.viewWillAppear(animated); updateButtons() }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated); updateButtons()
+        if !detailLoaded && detailTask == nil { loadDetail() }
+        if cover.image == nil { cover.load(comic.coverUrl, referer: source.referer) }
+    }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        guard presentedViewController == nil else { return }
+        detailTask?.cancel(); detailTask = nil
+        directoryID = UUID(); directoryTask?.cancel(); directoryTask = nil
+        cover.cancel()
+    }
     private func updateButtons() {
         favorite.setTitle(environment.library.entry(for: comic)?.isFavorite == true ? "已收藏 · 点击移除" : "加入书架", for: .normal)
         read.setTitle(environment.library.entry(for: comic)?.reading.map { "继续阅读\n上次看到 · \($0.chapter.title)" } ?? "开始阅读", for: .normal)
@@ -76,6 +89,7 @@ final class DetailViewController: UIViewController {
                 try Task.checkCancellation()
                 guard let self else { return }
                 self.comic = detail.summary
+                self.detailLoaded = true
                 self.heading.text = detail.summary.title
                 self.descriptionLabel.text = [detail.author, detail.status, detail.description].filter { !$0.isEmpty }.joined(separator: "\n\n")
                 self.cover.load(detail.summary.coverUrl, referer: source.referer)
@@ -93,14 +107,17 @@ final class DetailViewController: UIViewController {
     private func chapters() async throws -> [Chapter] {
         if let cachedChapters { return cachedChapters }
         if directoryTask == nil {
+            directoryID = UUID()
             let id = comic.comicId
             directoryTask = Task { [source] in try await source.chapters(comicId: id) }
         }
+        let token = directoryID
         do {
             let result = try await directoryTask!.value
+            guard directoryID == token else { throw CancellationError() }
             cachedChapters = result; directoryTask = nil
             return result
-        } catch { directoryTask = nil; throw error }
+        } catch { if directoryID == token { directoryTask = nil }; throw error }
     }
     @objc private func showDirectory() {
         let controller = ChapterListViewController(load: { [weak self] in
@@ -110,7 +127,7 @@ final class DetailViewController: UIViewController {
             guard let self else { return }
             self.openReader(chapters: chapters, index: index, incomplete: false)
         }
-        present(UINavigationController(rootViewController: controller), animated: true)
+        present(ChapterListViewController.navigation(controller), animated: true)
     }
     @objc private func startReading() {
         if let saved = environment.library.entry(for: comic)?.reading {
@@ -126,6 +143,19 @@ final class DetailViewController: UIViewController {
 
 @MainActor
 final class ChapterListViewController: UITableViewController {
+    static func navigation(_ controller: ChapterListViewController) -> UINavigationController {
+        let navigation = UINavigationController(rootViewController: controller)
+        if let sheet = navigation.sheetPresentationController {
+            sheet.detents = [
+                .custom(identifier: .init("collapsed")) { $0.maximumDetentValue * 0.55 },
+                .custom(identifier: .init("expanded")) { $0.maximumDetentValue * 0.92 }
+            ]
+            sheet.prefersGrabberVisible = true
+            sheet.preferredCornerRadius = 16
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+        }
+        return navigation
+    }
     private let load: () async throws -> [Chapter]
     private let onSelect: ([Chapter], Int) -> Void
     private let selectedID: String?
@@ -140,7 +170,7 @@ final class ChapterListViewController: UITableViewController {
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
     deinit { task?.cancel() }
     override func viewDidLoad() {
-        super.viewDidLoad(); title = "章节目录"
+        super.viewDidLoad(); title = "全部章节"
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "正序", style: .plain, target: self, action: #selector(reverseOrder))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(close))
         state.titleLabel?.numberOfLines = 0
@@ -158,6 +188,7 @@ final class ChapterListViewController: UITableViewController {
                 self.chapters = chapters
                 self.state.setTitle(chapters.isEmpty ? "暂无章节 · 点击刷新" : nil, for: .normal)
                 self.tableView.reloadData()
+                self.scrollToSelected()
             } catch { if !Task.isCancelled { self?.state.setTitle(error.localizedDescription + " · 点击重试", for: .normal) } }
         }
     }
@@ -166,6 +197,12 @@ final class ChapterListViewController: UITableViewController {
         descending.toggle()
         navigationItem.leftBarButtonItem?.title = descending ? "倒序" : "正序"
         tableView.reloadData()
+        scrollToSelected()
+    }
+    private func scrollToSelected() {
+        guard let selectedID, let selected = chapters.firstIndex(where: { $0.chapterId == selectedID }) else { return }
+        tableView.layoutIfNeeded()
+        tableView.scrollToRow(at: IndexPath(row: descending ? chapters.count - 1 - selected : selected, section: 0), at: .top, animated: false)
     }
     private func index(_ row: Int) -> Int { descending ? chapters.count - 1 - row : row }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { chapters.count }

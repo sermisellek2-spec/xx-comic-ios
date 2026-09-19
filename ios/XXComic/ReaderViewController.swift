@@ -46,6 +46,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     override var prefersStatusBarHidden: Bool { fullscreen }
     override func viewDidLoad() {
         super.viewDidLoad()
+        oldNavigationStyle = navigationController?.overrideUserInterfaceStyle ?? .unspecified
         layout.minimumLineSpacing = 0; layout.minimumInteritemSpacing = 0
         pages.dataSource = self; pages.delegate = self
         pages.register(ReaderImageCell.self, forCellWithReuseIdentifier: "image")
@@ -84,13 +85,13 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         // Keep page changes discrete. UIScrollView owns strip scrolling and zoom only.
         pages.panGestureRecognizer.require(toFail: pan)
         NotificationCenter.default.addObserver(self, selector: #selector(saveBeforeBackground), name: UIApplication.willResignActiveNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(refreshReaderTheme), name: UIApplication.didBecomeActiveNotification, object: nil)
         applySettings()
         loadChapter(session.chapterIndex)
         if incompleteDirectory { loadDirectory() }
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        oldNavigationStyle = navigationController?.overrideUserInterfaceStyle ?? .unspecified
         applySettings()
     }
     override func viewWillDisappear(_ animated: Bool) {
@@ -126,7 +127,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         pages.isScrollEnabled = settings.layout == .strip && !isZoomed
         previous.setTitle(settings.layout == .strip ? "上一章" : "上一页", for: .normal)
         next.setTitle(settings.layout == .strip ? "下一章" : "下一页", for: .normal)
-        let style: UIUserInterfaceStyle = settings.theme == .system ? .unspecified : (settings.theme == .dark ? .dark : .light)
+        let style: UIUserInterfaceStyle = settings.theme == .system ? UIScreen.main.traitCollection.userInterfaceStyle : (settings.theme == .dark ? .dark : .light)
         overrideUserInterfaceStyle = style
         navigationController?.overrideUserInterfaceStyle = style
         pages.backgroundColor = .systemBackground; view.backgroundColor = .systemBackground
@@ -238,6 +239,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         } catch { status.isHidden = false; status.setTitle("阅读位置保存失败：" + error.localizedDescription, for: .normal) }
     }
     @objc private func saveBeforeBackground() { savePosition() }
+    @objc private func refreshReaderTheme() { if viewIfLoaded?.window != nil { applySettings() } }
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if settings.theme == .system && overrideUserInterfaceStyle != UIScreen.main.traitCollection.userInterfaceStyle { applySettings() }
+    }
     private func updateBadge() {
         guard !images.isEmpty else { badge.text = nil; return }
         badge.text = "\(session.imageIndex + 1)/\(images.count) · \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short))"
@@ -273,7 +279,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     @objc private func tapped(_ gesture: UITapGestureRecognizer) {
         guard !isZoomed else { return }
-        let fraction = gesture.location(in: pages).x / max(1, pages.bounds.width)
+        let fraction = (gesture.location(in: pages).x - pages.bounds.minX) / max(1, pages.bounds.width)
         if settings.turnMode == .tap && (fraction < 0.3 || fraction > 0.7) {
             move(ReaderNavigation.tapDelta(leftSide: fraction < 0.3, leftHand: settings.leftHand))
         } else {
@@ -321,9 +327,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             self.savePosition()
             self.chapters = all; self.incompleteDirectory = false
             self.session = ReaderSession(chapterCount: all.count, chapterIndex: index)
-            self.images = []; self.loadChapter(index)
+            self.images = []; self.pages.reloadData(); self.loadChapter(index)
         }
-        let navigation = UINavigationController(rootViewController: controller)
+        let navigation = ChapterListViewController.navigation(controller)
         navigation.overrideUserInterfaceStyle = overrideUserInterfaceStyle
         present(navigation, animated: true)
     }
@@ -419,7 +425,7 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
         scroll.maximumZoomScale = enabled ? 4 : 1
     }
     func toggleZoom() { scroll.setZoomScale(scroll.zoomScale > 1.05 ? 1 : min(2, scroll.maximumZoomScale), animated: true) }
-    @objc private func reload() { retry.isHidden = false; retry.setTitle("正在加载图片…", for: .normal); image.load(url, referer: referer) }
+    @objc private func reload() { retry.isHidden = false; retry.setTitle("正在加载图片…", for: .normal); image.load(url, referer: referer, reader: true) }
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { image }
     func scrollViewDidZoom(_ scrollView: UIScrollView) { onZoom?(scrollView.zoomScale > 1.05) }
     func cancel() { image.cancel() }

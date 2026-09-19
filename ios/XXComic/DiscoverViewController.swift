@@ -21,6 +21,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     private var loading = false
     private var ended = false
     private var submittedQuery = ""
+    private var needsReload = false
     private var isGlobal: Bool { mode.selectedSegmentIndex == 1 }
 
     override func viewDidLoad() {
@@ -64,6 +65,17 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         start()
     }
     deinit { tasks.forEach { $0.cancel() } }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if presentedViewController != nil { return }
+        needsReload = loading || (isGlobal && finished.count < environment.sources.count)
+        requestID = UUID(); tasks.forEach { $0.cancel() }; tasks = []
+        loading = false
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if needsReload { needsReload = false; start() }
+    }
     private func updateSourceMenu() {
         guard !environment.sources.isEmpty else { return }
         sourceButton.setTitle(environment.sources[sourceIndex].name + " ▾", for: .normal)

@@ -4,6 +4,7 @@ import ComicCore
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
+    private var themeController: AppThemeController?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let defaults = ProcessInfo.processInfo.arguments.contains("--ui-testing")
@@ -19,7 +20,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         let shelf = BookshelfViewController(environment: environment)
         let discover = DiscoverViewController(environment: environment)
-        let settings = SettingsViewController(store: environment.preferences)
+        let settings = SettingsViewController(store: environment.preferences, defaults: defaults)
         tabs.viewControllers = [
             navigation(shelf, title: "书架", image: "books.vertical"),
             navigation(discover, title: "发现", image: "safari"),
@@ -35,6 +36,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         window.rootViewController = tabs
         window.makeKeyAndVisible()
         self.window = window
+        themeController = AppThemeController(root: tabs, defaults: defaults)
         return true
     }
 

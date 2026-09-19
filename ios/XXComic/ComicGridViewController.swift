@@ -9,6 +9,7 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
     let collection: UICollectionView
     var comics: [ComicSummary] = []
     var retry: (() -> Void)?
+    private let emptyArtwork = UIImageView(image: UIImage(named: "rem_empty"))
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -34,6 +35,16 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
         collection.register(ComicCell.self, forCellWithReuseIdentifier: "comic")
         collection.dataSource = self
         collection.delegate = self
+        emptyArtwork.contentMode = .scaleAspectFit
+        let emptyHost = UIView()
+        emptyArtwork.translatesAutoresizingMaskIntoConstraints = false; emptyHost.addSubview(emptyArtwork)
+        NSLayoutConstraint.activate([
+            emptyArtwork.centerXAnchor.constraint(equalTo: emptyHost.centerXAnchor),
+            emptyArtwork.centerYAnchor.constraint(equalTo: emptyHost.centerYAnchor),
+            emptyArtwork.widthAnchor.constraint(equalToConstant: 180),
+            emptyArtwork.heightAnchor.constraint(equalToConstant: 180)
+        ])
+        collection.backgroundView = emptyHost
         for item in [header, collection, statusButton] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
         NSLayoutConstraint.activate([
             header.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), header.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -45,7 +56,20 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
         ])
     }
     @objc private func retryPressed() { retry?() }
-    func status(_ text: String, retry: (() -> Void)? = nil) { statusButton.setTitle(text, for: .normal); self.retry = retry }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        guard presentedViewController == nil else { return }
+        collection.visibleCells.forEach { ($0 as? ComicCell)?.cover.cancel() }
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        collection.reloadData()
+    }
+    func status(_ text: String, retry: (() -> Void)? = nil) {
+        statusButton.setTitle(text, for: .normal); self.retry = retry
+        emptyArtwork.isHidden = !comics.isEmpty
+        emptyArtwork.image = UIImage(named: retry != nil ? "rem_error" : (text.contains("正在") ? "rem_loading" : "rem_empty"))
+    }
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int { comics.count }
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "comic", for: indexPath) as! ComicCell

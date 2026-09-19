@@ -3,8 +3,10 @@ import ComicCore
 
 final class SettingsViewController: UITableViewController {
     private let store: ReaderPreferencesStore
-    init(store: ReaderPreferencesStore) {
+    private let defaults: UserDefaults
+    init(store: ReaderPreferencesStore, defaults: UserDefaults = .standard) {
         self.store = store
+        self.defaults = defaults
         super.init(style: .insetGrouped)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -14,9 +16,17 @@ final class SettingsViewController: UITableViewController {
         title = "设置"
         tableView.backgroundColor = Palette.background
     }
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { 1 }
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { 2 }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+        if indexPath.row == 1 {
+            cell.textLabel?.text = "主题模式"
+            let control = UISegmentedControl(items: ["自动", "白天", "黑夜"])
+            control.selectedSegmentIndex = (AppTheme(rawValue: defaults.integer(forKey: "theme.mode")) ?? .automatic).rawValue
+            control.addTarget(self, action: #selector(themeChanged(_:)), for: .valueChanged)
+            cell.accessoryView = control; cell.backgroundColor = Palette.card
+            return cell
+        }
         cell.textLabel?.text = "阅读设置"
         cell.textLabel?.textColor = Palette.text
         cell.backgroundColor = Palette.card
@@ -24,7 +34,12 @@ final class SettingsViewController: UITableViewController {
         return cell
     }
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard indexPath.row == 0 else { return }
         navigationController?.pushViewController(ReaderSettingsViewController(store: store), animated: true)
+    }
+    @objc private func themeChanged(_ sender: UISegmentedControl) {
+        defaults.set(sender.selectedSegmentIndex, forKey: "theme.mode")
+        NotificationCenter.default.post(name: AppThemeController.changed, object: nil)
     }
 }
 

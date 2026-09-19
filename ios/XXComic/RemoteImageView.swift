@@ -19,14 +19,14 @@ final class RemoteImageView: UIImageView {
     var onLoaded: ((CGSize) -> Void)?
     var onFailure: (() -> Void)?
 
-    func load(_ text: String, referer: String) {
+    func load(_ text: String, referer: String, reader: Bool = false) {
         cancel()
         image = nil; original = nil
         backgroundColor = Palette.card
         guard let url = URL(string: text), ["https", "http"].contains(url.scheme?.lowercased() ?? "") else {
             onFailure?(); return
         }
-        let key = (referer + "\n" + text) as NSString
+        let key = ((reader ? "reader\n" : "cover\n") + referer + "\n" + text) as NSString
         if let cached = Self.cache.object(forKey: key) {
             original = cached; render()
             return
@@ -43,10 +43,19 @@ final class RemoteImageView: UIImageView {
                     throw URLError(.badServerResponse)
                 }
                 let decoded = await Task.detached(priority: .userInitiated) { () -> UIImage? in
-                    guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-                          let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                    guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+                    var maximumDimension = 4096
+                    if reader, let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+                       let width = properties[kCGImagePropertyPixelWidth] as? NSNumber,
+                       let height = properties[kCGImagePropertyPixelHeight] as? NSNumber,
+                       width.doubleValue > 0, height.doubleValue > 0 {
+                        // Preserve long-strip text; constrain decoded pixel area, not its longest edge.
+                        let scale = min(1, sqrt(24_000_000 / (width.doubleValue * height.doubleValue)))
+                        maximumDimension = max(1, Int(max(width.doubleValue, height.doubleValue) * scale))
+                    }
+                    guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
                             kCGImageSourceCreateThumbnailFromImageAlways: true,
-                            kCGImageSourceThumbnailMaxPixelSize: 4096,
+                            kCGImageSourceThumbnailMaxPixelSize: maximumDimension,
                             kCGImageSourceCreateThumbnailWithTransform: true
                           ] as CFDictionary) else { return nil }
                     return UIImage(cgImage: image)
