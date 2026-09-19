@@ -72,7 +72,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         if presentedViewController != nil { return }
-        needsReload = loading || (isGlobal && finished.count < environment.sources.count)
+        needsReload = loading || (isGlobal && !submittedQuery.isEmpty && finished.count < environment.searchSources.count)
         requestID = UUID(); tasks.forEach { $0.cancel() }; tasks = []
         loading = false
     }
@@ -128,6 +128,14 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
             return
         }
         if isGlobal {
+            guard !environment.searchSources.isEmpty else {
+                global = GlobalSearchState()
+                errors = [:]; finished = []
+                tabRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
+                tabs.isHidden = true
+                status("没有支持搜索的已启用站源")
+                return
+            }
             if submittedQuery.isEmpty { showHistory(); status("输入关键词，按搜索键开始全站搜索"); return }
             var saved = environment.defaults.stringArray(forKey: "global.search.history") ?? []
             saved.removeAll { $0 == submittedQuery }; saved.insert(submittedQuery, at: 0)
@@ -165,9 +173,14 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
 
     private func loadSingle() {
         guard !loading, !ended, environment.sources.indices.contains(sourceIndex) else { return }
+        let source = environment.sources[sourceIndex]
+        guard submittedQuery.isEmpty || source.supportsSearch else {
+            ended = true
+            status(source.name + "暂不支持搜索")
+            return
+        }
         loading = true; status(nextPage == 1 ? "正在加载…" : "正在加载下一页…")
         let token = requestID, page = nextPage, query = submittedQuery, activeFilters = filters
-        let source = environment.sources[sourceIndex]
         tasks.append(Task { [weak self] in
             do {
                 let results = try await (query.isEmpty ? source.category(filters: activeFilters, page: page) : source.search(keyword: query, page: page))
@@ -193,10 +206,10 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
 
     private func loadGlobal(restoringSelectedSourceID: String? = nil) {
         let token = requestID
-        let generation = global.begin(query: submittedQuery, sourceIDs: environment.sources.map(\.id), restoringSelectedSourceID: restoringSelectedSourceID)
+        let generation = global.begin(query: submittedQuery, sourceIDs: environment.searchSources.map(\.id), restoringSelectedSourceID: restoringSelectedSourceID)
         errors = [:]; finished = []
         refreshGlobal()
-        for source in environment.sources {
+        for source in environment.searchSources {
             let query = submittedQuery
             tasks.append(Task { [weak self] in
                 do {
@@ -215,8 +228,9 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     }
     private func refreshGlobal() {
         tabRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        for (index, source) in environment.sources.enumerated() {
+        for (index, source) in environment.searchSources.enumerated() {
             let button = UIButton(type: .system)
+            button.accessibilityIdentifier = "discover.global." + source.id
             var configuration = UIButton.Configuration.tinted()
             configuration.title = source.name
             configuration.baseBackgroundColor = source.id == global.selectedSourceID ? .systemBlue : .clear
@@ -231,13 +245,13 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         }
         comics = global.results[global.selectedSourceID ?? ""] ?? []
         collection.reloadData()
-        let progress = "\(finished.count)/\(environment.sources.count) 个站源完成"
+        let progress = "\(finished.count)/\(environment.searchSources.count) 个站源完成"
         if let error = errors[global.selectedSourceID ?? ""] { status(progress + " · " + error + " · 点击重试") { [weak self] in self?.start() } }
         else { status(progress + (comics.isEmpty && finished.contains(global.selectedSourceID ?? "") ? " · 没有找到漫画" : "")) }
     }
     @objc private func selectGlobalSource(_ sender: UIButton) {
-        guard environment.sources.indices.contains(sender.tag) else { return }
-        global.select(environment.sources[sender.tag].id); refreshGlobal()
+        guard environment.searchSources.indices.contains(sender.tag) else { return }
+        global.select(environment.searchSources[sender.tag].id); refreshGlobal()
     }
     @objc private func showSources() { showFilterDrawer(sourceList: true) }
     @objc private func showFilters() { showFilterDrawer(sourceList: false) }

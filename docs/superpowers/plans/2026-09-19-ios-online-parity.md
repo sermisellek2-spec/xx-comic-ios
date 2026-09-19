@@ -156,3 +156,15 @@ func testLatestUsesPostCategoryPageAndDefaults() async throws {
 - [ ] 仅识别 `mwtuwu.cc,mwzu.cc,mhttu.cc,manwace.cc` 主域及点分子域；至少16字节，JPEG/PNG/GIF8/RIFF+WEBP头透传，其他数据首16字节IV、32字节UTF8密钥调用SourceAES，然后再次检查图片头。错误不允许进入图片缓存。
 - [ ] RemoteImageView后台ImageIO之前按原请求URL域名决定是否解码；所有来源和本地文件仍沿用既有展示/裁边/缓存，明文与加密图片都走同一显示通路，不在主线程解码。保持取消/代次检查和onFailure。当前无下载队列，后续下载必须复用同decoder，不能把显示接线称为离线实现。
 - [ ] 聚焦 `swift test --filter ManwaImageDecoderTests`，UIKit全文件syntax parse；不把Linux通过称为CommonCrypto/Xcode通过。报告/独立审查后才算此范围实现完成，漫蛙站源API另项继续。
+
+### Task 19: 漫蛙 API 站源
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/ManwaComicSource.swift`、`ios/ComicCore/Tests/ComicCoreTests/ManwaSourceTests.swift`。仅这两个文件及必要的测试fixture，不改网络协议/UI，不暂存提交、不派子代理。主代理审查后注册。
+
+**Contract:** 完整阅读 Android `ManwaComicSource.java`、`ManwaComicSourceTest.java`、`SourceConfig.manwa` 和 `app/src/test/resources/manwa/`；以该基准精确移植路由、筛选、列表、详情、目录和正文。复用现有HTTPTransport POST与模型、HTML4EntityDecoder，不新建网络层或依赖。默认base `https://manwace.cc`、imageSource `https://tu.mwzu.cc`、25秒读取；连接15秒的独立限制URLSession不能等价表达，要在报告披露。16MiB响应上限若只能取回后检查也须披露，不称增量防护一致。
+
+- [ ] 先写 Android 样本驱动的失败测试并实际运行，后实现。GET搜索 `/api/search?type=mh&page={page}&pageSize=20&keyword={keyword}`；分类JSON POST `/api/cate{tagSuffix}`，7组顺序level/type/tag/region/state/day/sort，完整标签slug/数值默认对照Android，不缩减选项。分类Referer `/cate{tagSuffix}`，Origin base，Content-Type `application/json; charset=UTF-8`；Cookie只在该请求设置`typeId=N`（all为0），不能污染后续搜索。tag通过URL后缀起效，未知slug报错。列表data.list必须存在，对象类型错误报错，numeric ID、去重、text标题、cover回退pic、author和分隔标签；非空原列表解析无结果报错，明确空列表合法。
+- [ ] 详情HTML必须有page-title；comic-cover按data-src/data-original-cover/src；作者中文逗号空白、tagsContainer、comic-desc、状态和最新章，详情不预取目录。目录 `/api/comic/{id}/chapters` 使用全部列表，按sortId Double稳定排序（含1.5番外），每项合法正数字ID，排序后去重、连续chapterSlot；878条测试证明不受HTML20条截断。
+- [ ] 正文URL严格 `/comic/{comicId}/{chapterId}`；先info `/api/comic/chapter/info/{chapterId}` 校验data.current comicId/id，再图片API `/api/comic/image/{chapterId}?page={page}&page_size=100&image_source={encoded}`。images和pagination必需；total>0、total_pages 1...500、current_page正确且后页总量不变，每页非空、图片URL为HTTP(S)或合法相对地址，重复图片必须报错，最终计数等于total才可返回，不可吞错返回半章。chapterId为完整规范章URL、nextPageUrl空。
+- [ ] HTTP401/403及JSON code401/403明确访问受限，不绕过账号/付费；其他HTTP非2xx及code非200报错；每次请求前后检查取消。覆盖分类实际method/body/headers与搜索无Cookie、各筛选映射、合法空/错误壳、详情按需、长目录小数稳定次序、多页/重复/错页/总量变化/不完整/取消零后续请求。
+- [ ] 聚焦 `swift test --filter ManwaSourceTests`，最后全量一次；与主代理协调共享target。报告RED/GREEN实际数量、URL与结构验证、网络/Apple未验收。图片显示已独立接ManwaImageDecoder，无需重复解密实现，也不假称已有离线下载。

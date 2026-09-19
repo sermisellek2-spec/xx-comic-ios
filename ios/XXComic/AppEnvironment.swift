@@ -12,6 +12,7 @@ final class AppEnvironment {
     let allSources: [any ComicSource]
     let sourcePreferences: SourcePreferences
     var sources: [any ComicSource] { sourcePreferences.enabledIDs.compactMap { id in allSources.first { $0.id == id } } }
+    var searchSources: [any ComicSource] { sources.filter(\.supportsSearch) }
     static let libraryChanged = Notification.Name("XXComic.libraryChanged")
     static let sourcesChanged = Notification.Name("XXComic.sourcesChanged")
 
