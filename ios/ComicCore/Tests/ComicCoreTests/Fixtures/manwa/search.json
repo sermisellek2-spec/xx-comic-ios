@@ -1,0 +1,39 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "total": 335,
+    "list": [
+      {
+        "alias": "スライム圣女",
+        "author": "午子, 八绪あいら",
+        "collection": 37,
+        "cover": "https://mwtuwu.cc/en_images/202608/cover/04f42df12007423b9775bc8d25311677.jpg",
+        "createTime": 1745126777,
+        "description": "憧憬着人类的最弱魔物（史莱姆）的转生目标是虽被称为圣女但性格却极其恶劣的极恶大小姐…？ 从被记恨唾弃的底边史莱姆、变成了为了避免一旦暴露后就大结局想要安心生活而努力成为被人敬爱的圣女的故事…！",
+        "editTime": 1786388528,
+        "id": 10395,
+        "status": 0,
+        "tags": "魔幻,冒险",
+        "thits": 3031,
+        "title": "史莱姆圣女",
+        "url": "/comic/10395"
+      },
+      {
+        "alias": "転スラ日记 転生したらスライムだった件",
+        "author": "柴, 伏瀬",
+        "collection": 69,
+        "cover": "https://mwtuwu.cc/en_images/20254/cover/13323.jpg",
+        "createTime": 1745257710,
+        "description": "转生史莱姆日记漫画 ，萌王利姆露与他森林居民的日常",
+        "editTime": 1760128207,
+        "id": 13323,
+        "status": 0,
+        "tags": "魔法/奇幻",
+        "thits": 2341,
+        "title": "转生史莱姆日记",
+        "url": "/comic/13323"
+      }
+    ]
+  }
+}
