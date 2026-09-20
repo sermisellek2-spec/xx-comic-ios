@@ -31,13 +31,16 @@ public struct LocalLibrary: Sendable {
     private static let copyChunkBytes = 256 * 1024
     private let directoryPath: String
     private let readChunk: @Sendable (FileHandle, Int) throws -> Data?
+    let beforeKindlePublish: @Sendable () throws -> Void
     public var directory: URL { URL(fileURLWithPath: directoryPath, isDirectory: true) }
     public init(directory: URL) throws {
         try self.init(directory: directory, readChunk: { try $0.read(upToCount: $1) })
     }
-    init(directory: URL, readChunk: @escaping @Sendable (FileHandle, Int) throws -> Data?) throws {
+    init(directory: URL, readChunk: @escaping @Sendable (FileHandle, Int) throws -> Data?,
+         beforeKindlePublish: @escaping @Sendable () throws -> Void = {}) throws {
         directoryPath = directory.path
         self.readChunk = readChunk
+        self.beforeKindlePublish = beforeKindlePublish
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
     public func books() throws -> [LocalBook] {

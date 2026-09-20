@@ -1,4 +1,9 @@
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
 
 /// The selected filename extension is a label, never a claim of format support.
 public enum LocalKindleFormat: String, Codable, Sendable {
@@ -53,6 +58,19 @@ extension LocalLibrary {
             return [device, inode]
         }
         let folderIdentity = try identity(folder), sourceIdentity = try identity(original), manifestIdentity = try identity(manifest)
+        // Pin the directory before validation; a later rename/symlink cannot redirect linkat.
+        let folderFD = open(folder.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)
+        guard folderFD >= 0 else {
+            let failure = errno
+            throw NSError(domain: NSPOSIXErrorDomain, code: Int(failure))
+        }
+        defer { close(folderFD) }
+        var opened = stat()
+        guard fstat(folderFD, &opened) == 0 else {
+            let failure = errno
+            throw NSError(domain: NSPOSIXErrorDomain, code: Int(failure))
+        }
+        guard [NSNumber(value: opened.st_dev), NSNumber(value: opened.st_ino)] == folderIdentity else { throw LocalLibraryError.invalidBook }
         func validateOwner() throws {
             try Task.checkCancellation()
             _ = try ownedKindle(book)
@@ -66,13 +84,12 @@ extension LocalLibrary {
         let publication = try KindlePublicationAdapter.convert(source: original, to: derived)
         guard publication == book.epub else { throw LocalLibraryError.invalidBook }
         try validateOwner()
-        let destination = folder.appendingPathComponent("content.epub")
+        try beforeKindlePublish()
         try Task.checkCancellation()
-        // A same-volume hard link publishes atomically without replacing a concurrent winner.
-        // Removing this request's scratch below completes the move.
-        do { try manager.linkItem(at: derived, to: destination) }
-        catch let error as NSError where (error.domain == NSCocoaErrorDomain && error.code == NSFileWriteFileExistsError)
-            || (error.domain == NSPOSIXErrorDomain && error.code == Int(POSIXErrorCode.EEXIST.rawValue)) {
+        // This relative name has no parent components and is atomically non-overwriting.
+        if linkat(AT_FDCWD, derived.path, folderFD, "content.epub", 0) != 0 {
+            let failure = errno
+            guard failure == EEXIST else { throw NSError(domain: NSPOSIXErrorDomain, code: Int(failure)) }
             // Each worker converts independently. Only a matching owned winner is reusable.
             try validateOwner()
             guard let winner = try existingOwnedEPUB(book), try EpubParser.parse(archive: winner) == book.epub else {
@@ -81,6 +98,13 @@ extension LocalLibrary {
             try Task.checkCancellation()
             return winner
         }
-        return try ownedFile(bookID: book.id, name: "content.epub")
+        // A moved directory may still accept the link. Roll back only our successful link,
+        // using the pinned directory, never the now-untrusted original path or an EEXIST winner.
+        var keepPublication = false
+        defer { if !keepPublication { _ = unlinkat(folderFD, "content.epub", 0) } }
+        try validateOwner()
+        let content = try ownedFile(bookID: book.id, name: "content.epub")
+        keepPublication = true
+        return content
     }
 }

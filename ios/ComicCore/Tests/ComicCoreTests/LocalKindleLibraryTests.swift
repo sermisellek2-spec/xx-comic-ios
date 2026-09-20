@@ -292,4 +292,71 @@ final class LocalKindleLibraryTests: XCTestCase {
         XCTAssertEqual(try library.books(), [book])
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), [book.id])
     }
+
+    func testFinalPublishBoundaryRejectsReplacedSymlinkMovedAndDeletedDirectoriesWithoutWritingElsewhere() throws {
+        for change in ["replacement", "external-symlink", "moved", "deleted"] {
+            let library = try LocalLibrary(directory: directory())
+            let book = try library.importKindle(title: "发布边界", source: input(mobi()), format: .mobi) { _ in true }
+            let folder = library.directory.appendingPathComponent(book.id)
+            try FileManager.default.removeItem(at: folder.appendingPathComponent("content.epub"))
+            let parked = try directory().appendingPathComponent("original-book")
+            let external = try directory().appendingPathComponent("different-book")
+            try FileManager.default.copyItem(at: folder, to: external)
+            let original = try Data(contentsOf: external.appendingPathComponent("source.kindle"))
+            let metadata = try Data(contentsOf: external.appendingPathComponent("book.json"))
+            let boundary = expectation(description: "owner validation completed before \(change)")
+            boundary.assertForOverFulfill = true
+            let recovering = try LocalLibrary(directory: library.directory, readChunk: { try $0.read(upToCount: $1) }, beforeKindlePublish: {
+                boundary.fulfill()
+                if change == "deleted" { try FileManager.default.removeItem(at: folder) }
+                else { try FileManager.default.moveItem(at: folder, to: parked) }
+                if change == "replacement" { try FileManager.default.copyItem(at: external, to: folder) }
+                if change == "external-symlink" { try FileManager.default.createSymbolicLink(at: folder, withDestinationURL: external) }
+            })
+            XCTAssertThrowsError(try recovering.epubResource(bookID: book.id, path: XCTUnwrap(book.epub?.spine.first?.fullZipPath), maximumBytes: 8 * 1024 * 1024), change)
+            wait(for: [boundary], timeout: 1)
+            for candidate in [folder, parked, external] {
+                XCTAssertFalse(FileManager.default.fileExists(atPath: candidate.appendingPathComponent("content.epub").path), "\(change): \(candidate.path)")
+                if FileManager.default.fileExists(atPath: candidate.path) {
+                    XCTAssertEqual(try Data(contentsOf: candidate.appendingPathComponent("source.kindle")), original)
+                    XCTAssertEqual(try Data(contentsOf: candidate.appendingPathComponent("book.json")), metadata)
+                }
+            }
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), ["replacement", "external-symlink"].contains(change) ? [book.id] : [])
+        }
+    }
+
+    func testFinalPublishBoundaryPreservesConcurrentWinnerOnSuccessFailureAndCancellation() async throws {
+        for mode in ["matching", "invalid", "cancelled"] {
+            let library = try LocalLibrary(directory: directory())
+            let book = try library.importKindle(title: "发布赢家", source: input(mobi()), format: .mobi) { _ in true }
+            let folder = library.directory.appendingPathComponent(book.id), target = folder.appendingPathComponent("content.epub")
+            let winner = mode == "invalid" ? Data([1, 2, 3]) : try Data(contentsOf: target)
+            let original = try Data(contentsOf: folder.appendingPathComponent("source.kindle"))
+            let metadata = try Data(contentsOf: folder.appendingPathComponent("book.json"))
+            let path = try XCTUnwrap(book.epub?.spine.first?.fullZipPath)
+            let expected = try library.epubResource(bookID: book.id, path: path, maximumBytes: 10000)
+            try FileManager.default.removeItem(at: target)
+            let boundary = expectation(description: "winner created immediately before \(mode) publish")
+            boundary.assertForOverFulfill = true
+            let recovering = try LocalLibrary(directory: library.directory, readChunk: { try $0.read(upToCount: $1) }, beforeKindlePublish: {
+                try winner.write(to: target, options: .withoutOverwriting)
+                boundary.fulfill()
+                if mode == "cancelled" { withUnsafeCurrentTask { $0?.cancel() } }
+            })
+            let worker = Task.detached { try recovering.epubResource(bookID: book.id, path: path, maximumBytes: 10000) }
+            do {
+                let bytes = try await worker.value
+                XCTAssertEqual(mode, "matching"); XCTAssertEqual(bytes, expected)
+            } catch {
+                XCTAssertNotEqual(mode, "matching", "\(error)")
+                if mode == "cancelled" { XCTAssertTrue(error is CancellationError, "\(error)") }
+            }
+            await fulfillment(of: [boundary], timeout: 1)
+            XCTAssertEqual(try Data(contentsOf: target), winner)
+            XCTAssertEqual(try Data(contentsOf: folder.appendingPathComponent("source.kindle")), original)
+            XCTAssertEqual(try Data(contentsOf: folder.appendingPathComponent("book.json")), metadata)
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), [book.id])
+        }
+    }
 }
