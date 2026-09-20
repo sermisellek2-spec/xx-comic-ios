@@ -15,8 +15,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var loadTask: Task<Void, Never>?
     private var directoryTask: Task<Void, Never>?
     private var requestID = UUID()
-    private var loading = false
-    private var chapterLoadFailed = false
+    private var loadState = ReaderLoadState()
+    private var loading: Bool { loadState.chapterLoading }
+    private var chapterRetryAction: (() -> Void)?
     private var restoring = false
     private var fullscreen = false
     private var pendingPosition: ReaderPosition?
@@ -168,6 +169,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     private func loadDirectory() {
         directoryTask?.cancel()
+        if !loading && loadState.visibleFailure == nil {
+            status.isHidden = false
+            status.setTitle("正在加载目录…", for: .normal)
+            retryAction = nil
+        }
         let id = comic.comicId
         directoryTask = Task { [weak self, source] in
             do {
@@ -180,22 +186,12 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 self.session = ReaderSession(chapterCount: all.count, chapterIndex: index)
                 self.session.loaded(imageCount: self.images.count, position: position)
                 self.incompleteDirectory = false
-                if !self.loading && !self.chapterLoadFailed { self.status.isHidden = true; self.retryAction = nil }
+                self.loadState.directoryFinished()
+                self.updateLoadStatus()
             } catch {
-                guard let self, !Task.isCancelled, !(error is CancellationError) else { return }
-                if !self.loading && !self.chapterLoadFailed {
-                    self.status.isHidden = false
-                    if (error as? Mh18SourceError) == .verificationRequired {
-                        self.status.setTitle("需要验证 · 去验证", for: .normal)
-                        self.retryAction = { [weak self] in
-                            guard let self else { return }
-                            self.showSourceManagement(environment: self.environment) { [weak self] in self?.loadDirectory() }
-                        }
-                    } else {
-                        self.status.setTitle("目录加载失败：" + error.localizedDescription + " · 点击重试", for: .normal)
-                        self.retryAction = { [weak self] in self?.loadDirectory() }
-                    }
-                }
+                guard let self, !Task.isCancelled else { return }
+                self.loadState.directoryFinished(error: error)
+                self.updateLoadStatus()
             }
         }
     }
@@ -204,9 +200,12 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         savePosition()
         loadTask?.cancel(); requestID = UUID()
         let token = requestID, chapter = chapters[index]
-        loading = true; chapterLoadFailed = false
-        status.isHidden = false; status.setTitle("正在加载章节…", for: .normal)
-        retryAction = nil
+        loadState.chapterStarted()
+        chapterRetryAction = { [weak self] in
+            guard let self, let currentIndex = self.chapters.firstIndex(where: { $0.chapterId == chapter.chapterId || $0.url == chapter.url }) else { return }
+            self.loadChapter(currentIndex, atEnd: atEnd, restoreSaved: restoreSaved)
+        }
+        updateLoadStatus()
         loadTask = Task { [weak self, source] in
             do {
                 let page = try await source.chapter(url: chapter.url); try Task.checkCancellation()
@@ -218,29 +217,39 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 guard self.session.loaded(chapter: chapter, in: self.chapters, imageCount: page.imageUrls.count, position: position) else { throw ReaderError.chapterMissing }
                 self.images = page.imageUrls; self.sizes = [:]
                 self.title = chapter.title
-                self.loading = false; self.status.isHidden = true; self.lastSaved = nil
+                self.loadState.chapterFinished(); self.updateLoadStatus(); self.lastSaved = nil
                 self.pages.reloadData(); self.layout.invalidateLayout()
                 self.pendingPosition = position; self.view.setNeedsLayout()
                 self.updateBadge()
             } catch {
-                guard let self, self.requestID == token, !Task.isCancelled, !(error is CancellationError) else { return }
-                self.loading = false; self.chapterLoadFailed = true
-                let retryChapter: () -> Void = { [weak self] in
-                    guard let self, let currentIndex = self.chapters.firstIndex(where: { $0.chapterId == chapter.chapterId || $0.url == chapter.url }) else { return }
-                    self.loadChapter(currentIndex, atEnd: atEnd, restoreSaved: restoreSaved)
-                }
-                self.status.isHidden = false
-                if (error as? Mh18SourceError) == .verificationRequired {
-                    self.status.setTitle("需要验证 · 去验证", for: .normal)
-                    self.retryAction = { [weak self] in
-                        guard let self else { return }
-                        self.showSourceManagement(environment: self.environment, onVerified: retryChapter)
-                    }
-                } else {
-                    self.status.setTitle(error.localizedDescription + " · 点击重试", for: .normal)
-                    self.retryAction = retryChapter
-                }
+                guard let self, self.requestID == token, !Task.isCancelled else { return }
+                self.loadState.chapterFinished(error: error)
+                self.updateLoadStatus()
             }
+        }
+    }
+    private func updateLoadStatus() {
+        retryAction = nil
+        if loading {
+            status.isHidden = false
+            status.setTitle("正在加载章节…", for: .normal)
+            return
+        }
+        guard let failure = loadState.visibleFailure else { status.isHidden = true; return }
+        status.isHidden = false
+        let retry: () -> Void = failure.kind == .chapter
+            ? { [weak self] in self?.chapterRetryAction?() }
+            : { [weak self] in self?.loadDirectory() }
+        if (failure.error as? Mh18SourceError) == .verificationRequired {
+            status.setTitle("需要验证 · 去验证", for: .normal)
+            retryAction = { [weak self] in
+                guard let self else { return }
+                self.showSourceManagement(environment: self.environment, onVerified: retry)
+            }
+        } else {
+            let text = failure.error is CancellationError ? "已取消" : (failure.kind == .directory ? "目录加载失败：" : "") + failure.error.localizedDescription
+            status.setTitle(text + " · 点击重试", for: .normal)
+            retryAction = retry
         }
     }
     private func currentPosition() -> ReaderPosition {
@@ -311,7 +320,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         }
     }
     private func changeChapter(_ delta: Int, atEnd: Bool = false) {
-        if incompleteDirectory { status.isHidden = false; status.setTitle("目录尚未加载，点击重试", for: .normal); retryAction = { [weak self] in self?.loadDirectory() }; loadDirectory(); return }
+        if incompleteDirectory { loadDirectory(); return }
         let index = session.chapterIndex + delta
         guard chapters.indices.contains(index) else { boundary(); return }
         loadChapter(index, atEnd: atEnd, restoreSaved: false)
@@ -398,6 +407,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             guard let self else { return }
             self.savePosition()
             self.chapters = all; self.incompleteDirectory = false
+            self.loadState.directoryFinished()
             self.session = ReaderSession(chapterCount: all.count, chapterIndex: index)
             self.images = []; self.pages.reloadData(); self.loadChapter(index)
         }

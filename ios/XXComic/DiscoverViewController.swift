@@ -194,7 +194,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
                 self.collection.reloadData()
                 self.status(self.comics.isEmpty ? "没有找到漫画" : (self.ended ? "已经到底了" : ""))
             } catch {
-                guard let self, self.requestID == token, !Task.isCancelled, !(error is CancellationError) else { return }
+                guard let self, self.requestID == token, !Task.isCancelled else { return }
                 self.loading = false
                 if (error as? Mh18SourceError) == .verificationRequired {
                     self.status("需要验证 · 去验证") { [weak self] in
@@ -202,7 +202,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
                         self.showSourceManagement(environment: self.environment) { [weak self] in self?.loadSingle() }
                     }
                 } else {
-                    self.status(error.localizedDescription + " · 点击重试") { [weak self] in self?.loadSingle() }
+                    self.status((error is CancellationError ? "已取消" : error.localizedDescription) + " · 点击重试") { [weak self] in self?.loadSingle() }
                 }
             }
         })
@@ -226,7 +226,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
                     self.global.receive(sourceID: source.id, items: items, generation: generation)
                     self.finished.insert(source.id); self.refreshGlobal()
                 } catch {
-                    guard let self, self.requestID == token, !Task.isCancelled, !(error is CancellationError) else { return }
+                    guard let self, self.requestID == token, !Task.isCancelled else { return }
                     self.errors[source.id] = error
                     self.finished.insert(source.id); self.refreshGlobal()
                 }
@@ -264,7 +264,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
                     }
                 }
             } else {
-                status(progress + " · " + error.localizedDescription + " · 点击重试") { [weak self] in
+                status(progress + " · " + (error is CancellationError ? "已取消" : error.localizedDescription) + " · 点击重试") { [weak self] in
                     guard let self else { return }
                     self.start(query: self.submittedQuery, restoringGlobalSourceID: self.global.selectedSourceID)
                 }
@@ -360,9 +360,9 @@ private final class FilterViewController: UIViewController {
                 self?.render()
             }
             catch {
-                guard let self, !Task.isCancelled, !(error is CancellationError) else { return }
+                guard let self, !Task.isCancelled else { return }
                 self.needsVerification = (error as? Mh18SourceError) == .verificationRequired
-                self.state.setTitle(self.needsVerification ? "需要验证 · 去验证" : "分类加载失败 · 点击重试", for: .normal)
+                self.state.setTitle(self.needsVerification ? "需要验证 · 去验证" : (error is CancellationError ? "已取消 · 点击重试" : "分类加载失败 · 点击重试"), for: .normal)
             }
         }
     }

@@ -19,6 +19,7 @@ final class DetailViewController: UIViewController {
     private var detailLoaded = false
     private var directoryID = UUID()
     private var readTask: Task<Void, Never>?
+    private var readID = UUID()
     private var needsVerification = false
 
     init(comic: ComicSummary, environment: AppEnvironment) {
@@ -75,7 +76,7 @@ final class DetailViewController: UIViewController {
         guard presentedViewController == nil else { return }
         detailTask?.cancel(); detailTask = nil
         directoryID = UUID(); directoryTask?.cancel(); directoryTask = nil
-        readTask?.cancel(); readTask = nil; read.isEnabled = true
+        readID = UUID(); readTask?.cancel(); readTask = nil; read.isEnabled = true
         cover.cancel()
     }
     private func updateButtons() {
@@ -100,9 +101,9 @@ final class DetailViewController: UIViewController {
                 self.retry.setTitle(nil, for: .normal)
                 self.updateButtons()
             } catch {
-                guard let self, !Task.isCancelled, !(error is CancellationError) else { return }
+                guard let self, !Task.isCancelled else { return }
                 self.needsVerification = (error as? Mh18SourceError) == .verificationRequired
-                self.retry.setTitle(self.needsVerification ? "需要验证 · 去验证" : error.localizedDescription + " · 点击重试", for: .normal)
+                self.retry.setTitle(self.needsVerification ? "需要验证 · 去验证" : (error is CancellationError ? "已取消" : error.localizedDescription) + " · 点击重试", for: .normal)
             }
         }
     }
@@ -133,7 +134,7 @@ final class DetailViewController: UIViewController {
         } catch { if directoryID == token { directoryTask = nil }; throw error }
     }
     @objc private func showDirectory() {
-        readTask?.cancel()
+        readID = UUID(); readTask?.cancel(); readTask = nil; read.isEnabled = true; updateButtons()
         let controller = ChapterListViewController(load: { [weak self] in
             guard let self else { throw CancellationError() }
             return try await self.chapters()
@@ -149,19 +150,29 @@ final class DetailViewController: UIViewController {
             openReader(chapters: [saved.chapter], index: 0, incomplete: true)
         } else {
             guard readTask == nil else { return }
+            readID = UUID()
+            let token = readID
             read.isEnabled = false; read.setTitle("正在加载章节…", for: .normal)
             readTask = Task { [weak self] in
                 guard let self else { return }
-                defer { self.readTask = nil; self.read.isEnabled = true; self.updateButtons() }
+                var independentlyCancelled = false
+                defer {
+                    if self.readID == token && !Task.isCancelled {
+                        self.readTask = nil; self.read.isEnabled = true; self.updateButtons()
+                        if independentlyCancelled { self.read.setTitle("已取消 · 点击重试", for: .normal) }
+                    }
+                }
                 do {
                     let items = try await self.chapters(); try Task.checkCancellation()
+                    guard self.readID == token else { return }
                     guard !items.isEmpty else {
                         self.retry.setTitle("暂无章节 · 点击章节目录刷新", for: .normal)
                         return
                     }
                     self.openReader(chapters: items, index: 0, incomplete: false)
                 } catch {
-                    if !Task.isCancelled {
+                    if self.readID == token && !Task.isCancelled {
+                        if error is CancellationError { independentlyCancelled = true; return }
                         self.showSourceError(error, environment: self.environment) { [weak self] in self?.startReading() }
                     }
                 }
@@ -231,9 +242,9 @@ final class ChapterListViewController: UITableViewController {
                 self.tableView.reloadData()
                 self.scrollToSelected()
             } catch {
-                guard let self, !Task.isCancelled, !(error is CancellationError) else { return }
+                guard let self, !Task.isCancelled else { return }
                 self.needsVerification = self.environment != nil && (error as? Mh18SourceError) == .verificationRequired
-                self.state.setTitle(self.needsVerification ? "需要验证 · 去验证" : error.localizedDescription + " · 点击重试", for: .normal)
+                self.state.setTitle(self.needsVerification ? "需要验证 · 去验证" : (error is CancellationError ? "已取消" : error.localizedDescription) + " · 点击重试", for: .normal)
             }
         }
     }
