@@ -1,6 +1,6 @@
 {
   "version": "2.0.29",
-  "commit": "0d41c22f6917fb471e663fc3dbb40c2c39ed6d9c",
+  "commit": "e800a06e520449a176b66b30fa0661e301b7147e",
   "files": {
     "app/src/androidTest/java/com/xxcomic/FileSourceChecks.java": "3e5184dc0125c51b4bb7d8be546588ee78c8ad9bde688f6f6ed4b08aa8dad6c8",
     "app/src/androidTest/java/com/xxcomic/local/LocalImportRecoveryChecks.java": "db692ddae716b31671f4a1e4773b75ee5b5f642eb5e76c7526f8c9a072c3fdb0",

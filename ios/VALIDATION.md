@@ -4,6 +4,33 @@
 
 ## 实际执行
 
+- 下载安全加固、文件下载Worker、本机HTTP测试服务与动态站源消费（2026-09-20 深夜）：全量 638 项测试通过（2 项 Apple 条件跳过，0 失败，137.464 秒）；全量 XXComic Swift 语法前端解析 0 错误；Android 254 个基准文件 SHA-256 严格一致。
+  1. 【本机真实 HTTP 测试服务实现与验证】`LocalTestHTTPServer.swift`（基于纯 Swift POSIX TCP socket），提供真实 `127.0.0.1:0` HTTP/1.1 服务，测试 `LocalTestHTTPServerTests`（2/2 通过）。
+  2. 【文件下载 Worker 落地与完整验证】`FileDownloadWorker.swift` 支持 Strong ETag、Range/If-Range、200/206/416 状态码处理、失效链接刷新回调、保留旧版本以及真实格式探测（PDF/EPUB/MOBI/CBZ/ZIP），测试 `FileDownloadWorkerTests`（11/11 通过）。
+  3. 【图片下载加固与流式体积校验】`DefaultDownloadImageFetcher` 在数据流式读取过程中硬限制 128MiB，拦截 HTML/JSON 误码响应，漫蛙 AES-CBC 解密，魔数解码校验（PNG/JPEG/GIF/WebP），支持中途取消，测试 `DefaultDownloadImageFetcherTests`（9/9 通过）。
+  4. 【动态站源配置消费接通】包子（Baozi）、漫画160（Mh160）、G社（Gmh）、漫客栈（Mkzhan）、漫蛙（Manwa）、18漫画（Mh18）全量接入消费导入的 `routes`、`filters`、`baseUrl`、`referer`，测试 `SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders` 通过。
+  5. 【网络状态监听接入下载运行时】`SystemNetworkMonitor` 接入 `AppEnvironment`，通过 `updateNetworkStatus` 动态更新仅 Wi-Fi 模式与断网自动暂停/网络恢复恢复下载。
+  6. 【CI 与构建脚本触发条件说明明确】`.github/workflows/ios.yml` 为 `workflow_dispatch` 手动触发（非推送触发）；`build.sh` 仅在环境变量 `$IOS_TEST_DESTINATION` 非空时执行 UI 测试；在真实 Xcode 与物理设备运行前，UIKit、Files、WebKit 严格标记为未经验收。
+
+- 综合对账核实与业务闭环补齐（2026-09-20 晚）：相关新写和修复测试全部通过（ErrorLogStoreTests 5 项、SourcePreferencesTests 4 项、AppUpdateCheckerTests 1 项、LibraryStoreTests 7 项全部通过）；ComicCore 全量 615 项测试全部通过（2 项 Apple 条件跳过，0 失败，126.262 秒）；全量 XXComic 与 XXComicUITests Swift 语法检查 0 错误；Android 254 个基准文件 SHA-256 绝对一致（0 mismatches）。
+  1. 【脱敏错误日志全链路接通】`ErrorLogSanitizer` 自动拦截并脱敏 URL query 敏感 key、Bearer 令牌与 Cookie；在 `ErrorLogStore.append` 自动脱敏并截断；在 `ReaderViewController`（章节与目录加载失败）、`DetailViewController`（详情与目录加载失败）、`BatchImportWorker`（批量导入单项失败）、`DownloadRuntime`（下载异常与 HTTP 失败）中全面调用埋点。
+  2. 【下载离线损坏检测与修复接通】`DownloadRuntime.localChapter` 校验本地页面真实存在性、大小与 SHA-256 哈希，损坏或不全时抛出明确 `DownloadError.corruptedData("本章下载文件需要修复")`；`ReaderViewController` 不再使用 `try?` 吞掉损坏静默走网络，而是精准捕获离线损坏，展示“本章下载文件需要修复”卡片，提供“到下载中心重新下载本章”入口并记录日志，完成闭环。
+  3. 【站源配置导入导出与可用性检测接通】建立 `SourceConfigModels.swift`，完全对齐 Android `xx-comic.sources` v2 schema（schema、version、exportedAt、sourceOrder、sources 等结构与校验）；在 `SourcePreferences` 落地 `exportConfig` 与 `importConfig`；在 `SourceSettingsViewController` 提供“更多”ActionSheet（“测试站源可用性”、“导入站源配置”、“导出站源配置”、“恢复默认排序”）；实现 `healthCheck` 机制（带代次取消、测速延迟显示于副标题）。
+  4. 【iOS 版本更新逻辑落地】实现 `AppRelease` 与 `AppUpdateChecker`，从远程元数据获取更新、对齐 Android `versionCode` 比对逻辑；在 `SettingsViewController` 接入真实的更新检查闭环（进度弹窗、新版本提示与更新日志、打开下载/发行页外链、已经是最新版本、检查失败带重试）。
+  5. 【历史删除原子清理】`LibraryStore` 删除历史严格清空阅读记录、图片与文字位置，保留收藏状态；断开本地墓碑关联；写入失败内存回滚保护。
+
+- 设置管理与本地运维（阶段 F）：相关 7 项核心测试全部通过（ErrorLogStoreTests 4 项、StorageCalculatorTests 3 项，0 失败，0.135 秒）；全量 610 项核心测试全部通过（2 项 Apple 条件跳过，0 失败，121.09 秒）。完成 `ErrorLogStore`（线程安全、时间戳与标题格式对齐、错误信息与堆栈持久化、100,000 字符边界自动截断、清空与单条/全量获取）；完成 `StorageCalculator`（递归目录体积统计、Darwin 与 Linux 跨平台可用存储空间检测、多级单位 B/KB/MB/GB 格式化）；重构 `SettingsViewController` 为 InsetGrouped 三段式 Section（“阅读与外观”、“站源与本地数据”、“App”）；接入阅读历史入口至 `BookshelfViewController(historyOnly: true)`；完成本地存储管理 `LocalStorageViewController`（仅 Wi-Fi 开关、存储空间统计：导入/下载/缓存/剩余空间、已存漫画勾选列表、清理缓存、删除副本弹窗确认）；完成缓存清理 `CacheCleanupViewController`（将被清理 vs 始终保留分组、重新计算大小、立即清理确认并保留收藏与进度）；完成错误日志 `ErrorLogsViewController` 与详情 `ErrorLogDetailViewController`（列表卡片、蕾姆空状态、等宽代码块展示、长按复制与系统分享导出、清空确认）；完成关于 App `AboutAppViewController`（蕾姆头像、说明文案、版本与本地信息列表）。全量 UIKit 语法检查通过（XXComic 与 UITests 全部 0 错误），Android 254 文件基准绝对一致。真实系统分享与 iOS 设备视觉手势未验收。
+
+- 下载离线与队列协调（阶段 E）：相关 24 项核心测试全部通过（DownloadIdentityTests 3 项、DownloadCoordinatorTests 11 项、DownloadStoreTests 6 项、DownloadRuntimeTests 4 项，0 失败，0.146 秒）；全量 603 项核心测试通过（2 项 Apple 条件跳过，0 失败，128.799 秒）。完成 `DownloadModels`（确定性长度分隔 SHA-256 身份隔离、JM `scramble_id` 保留而剔除临时鉴权 query、纯 Swift FIPS 180-4 SHA-256 引擎）；完成 `DownloadCoordinator`（代次租约与取消防竞态、FIFO 严格保序与去重入队、并发限制最大 2 个活跃 worker、仅 Wi-Fi/移动网络模式判定、指数退避 2s/5s/15s 与同源 429 Retry-After 延迟协调、验证等待隔离）；完成 `DownloadStore`（版本化原子 JSON 快照、16MiB 边界超限保护、更新保留 FIFO rowid 语义、多页面与目录快照持久化与崩溃恢复）；完成 `DownloadRuntime`（多 worker 后台并发调度、断点续传跳过已有校验通过页面、临时 `.part` 文件校验后原子重命名至 `.img`、失败重试与 403 权限暂停、`localChapter` 优先离线阅读路由）；完成 76% 高度下载选择抽屉 `DownloadSelectionViewController`（本章/全选/清空/区间/倒序快捷芯片、已下载状态互斥与置灰、多选批量入队）；完成下载中心 `DownloadCenterViewController`（作品分组卡片、实时进度条、状态提示、全部暂停/继续、单项暂停/恢复/重试/取消、滑动删除、蕾姆横幅与点击已完成直接跳转阅读器）；在 `DetailViewController` 增加“下载章节”与右上角“下载中心”入口；在 `ReaderViewController` 接入 `localChapter` 优先无缝离线阅读；在 `SettingsViewController` 增加“下载中心”行。全量 UIKit 语法检查通过，Android 254 文件基准严格一致。真实网络环境与 iOS 设备手势视觉未验收。
+
+- 批量导入执行、Files 授权与卷管理交互（阶段 D）：相关 6 项核心测试全部通过（BatchImportWorkerTests 6 项，0 失败，0.274 秒）；全量 579 项核心测试通过（2 项 Apple 条件跳过，0 失败，129.563 秒）。完成 `BatchImportWorker` 批量任务执行器（安全作用域授权、Darwin `NSFileCoordinator` 同步读取协调、`.minimalBookmark` 往返生成与解析、多卷候选自动合并为单一系列、支持已有系列追加新卷、单项失败隔离继续后续项、失败项单独重试、任务代次取消与临时 staging 目录即时清理）；完成 72% 高度分卷管理抽屉 `VolumeManagerViewController`（分卷列表、拖动手柄交互排序、落手原子提交、3.5 秒撤销删除条、超时/关闭/二次删除原子提交、追加新分卷）；完成批量导入确认抽屉 `BatchImportConfirmationViewController`（展示建议分组、提供“合并为一部漫画”开关、各组标题重命名）；在 `DetailViewController` 中接入“管理分卷”抽屉、重命名作品、删除 App 副本提示（提示原文件不受影响，若日后重新导入进度自动恢复）；在 `ComicGridViewController` 中放开多选，选定多文件自动唤起批量确认抽屉，并接入本地漫画长按管理菜单（管理分卷、重命名、删除副本）。全量 UIKit 语法检查通过，Android 254 文件基准严格一致。Apple 原生环境与实机视觉手势尚未验收。
+
+- 系列阅读路由与 UI 消费者（阶段 C）：相关 8 项核心测试全部通过（LocalReadingRoutingTests 8 项，0 失败，0.217 秒）；全量 573 项核心测试通过（2 项 Apple 条件跳过，0 失败，126.951 秒）。完成跨卷连续章节列表拼接、稳定章节 ID 与连续 slot 计算；实现 `LocalReadingTarget` 精确映射全局章节索引到物理卷、卷内章节索引与阅读器类型（`.comic` vs `.text`）；支持混合格式系列（ZIP 图片卷 + 文字 EPUB 卷 + PDF 卷）；支持分卷重排后章节位置动态找回；实现 `TextLocator` 系列身份与物理卷本地身份双向转换；完成 `DetailViewController`、`ReaderViewController` 与 `EpubTextReaderViewController` 在跨卷阅读时的双向原地平级切换（不堆叠导航栈，保留详情返回路径）；保留入口意图（章首/章末/续读恢复）；本地书架列表适配系列摘要展示；已删除本地书历史提供明确“重新导入相同内容即可恢复”提示。UIKit 语法检查与 Android 254 文件基准一致。Apple 原生环境与设备未验收。
+
+- 本地合集、身份、去重与删除恢复（阶段 B）：相关 18 项核心测试全部通过（LocalCatalogTests 9 项、LocalSeriesLifecycleTests 9 项，0 失败，0.247 秒）；全量 565 项核心测试通过（2 项 Apple 条件跳过，0 失败，127.221 秒）。完成原子版本化 JSON 快照（16MiB 边界、写失败回滚、损坏/非法版本保护）、单实例 actor 串行写入；物理卷与系列身份解耦，旧单卷隐式系列兼容；发布前同指纹去重（普通导入返回已存在系列，显式追加冲突抛出 `alreadyImported`）；墓碑机制完整记录系列 ID、卷 ID、用户标题，重新导入同一内容时恢复原有身份与标题；安全卷删除（末卷整删/首卷删除保留系列）、全排列严格重排、Android trim 重命名，启动孤儿回收（未提交卷与遗留暂存安全回收）。UIKit 语法检查与 Android 254 文件基准一致。Apple 原生环境与设备未验收。
+
+- 真实导入指纹与格式元数据（Task 45）：相关 109 项测试全部通过（1 项 Apple 条件跳过，0 失败，68.482 秒）。完成图片、文件夹、ZIP、CBZ、EPUB、PDF、Kindle 拥有的副本指纹与格式计算及元数据校验；文件夹保留剥离前的原相对路径映射，改变原路径导致指纹变化；ZIP/CBZ 先复制为暂存 `source.archive`，再从中解析解压并保留原包（双份实际占用）；EPUB/PDF/Kindle 对各自拥有的原包进行散列；Node crypto 独立固定测试预期替换自证哈希；重开验证声明的拥有包及 64 位小写哈希；旧无字段 JSON 保持兼容；暂存取消与符号链接校验修复。全量 UIKit 语法检查与 Android 254 文件基准一致。Apple 原生环境、真实 Files 授权与设备未验收。
+
 - 本地准备/发布分离（ba575ef、6335cfc）独立审查及修复复审通过：图片、文件夹、ZIP、EPUB、PDF、Kindle共用暂存生命周期；误删未知文件/空目录及同名替换回归先3项13失败后通过。相关87项检查发现EPUB探测文件复用回归后修复，最终重跑51项、1项Apple跳过、0失败（2026-09-20 09:21:30 UTC，49.179秒）；其余36项此前通过，未重复。未知项冲突时保留暂存内容并报错，不声称已清理。Android254文件基准一致。Apple目录发布/APFS/真实PDF未运行；尚未接批量UI、去重和合集。
 
 - 流式内容指纹（11a684f）独立审查通过：12/12（2026-09-20 08:25:28 UTC，1.735秒）；行为RED为42断言失败。独立Node SHA-256向量、真实文件路径/符号链接/读错误/中途取消/截断增长测试通过；256KiB分块、原相对路径清单。仅Linux OpenSSL验证，Apple CryptoKit未运行；去重、墓碑和导入发布尚待整合。
@@ -34,14 +61,15 @@
 
 首次测试在核心 target 为空时失败，属于缺失实现导致的构建失败，不将其称为所有行为测试都完成了断言级 red-green。后续翻页数值映射、旧按钮模式回退测试均实际出现断言失败，修复后通过。
 
-## 尚未执行
+## 尚未执行与平台限制
 
-- XcodeGen 工程生成、Xcode 模拟器/设备编译、UIKit 类型检查。
-- iOS 模拟器 UI 测试；已编写导航与设置重启后保存测试，但未运行。
-- `LocalImageProbeTests` 两项Apple专用测试：真实图片/截断图片、符号链接、大小和取消；Linux不提供ImageIO，未执行，也未通过Apple类型检查。
-- ZIP/CBZ的Apple真实图片探测测试、ComicZlib系统库在Apple SDK的编译链接、ZIP/CBZ文件选择器实机操作。
+- 真实 macOS / Xcode 编译（XcodeGen 工程生成、Xcode 模拟器与 iPhone 真机架构编译、UIKit/CoreGraphics/WebKit 类型检查与链接）。
+- iOS 模拟器/真机原生 UI 测试运行：`build.sh` 中明确要求在环境变量 `$IOS_TEST_DESTINATION` 非空（如指定设备 UDID）时才执行 UI 测试；在非 macOS 或未设目标的环境下将自动跳过 UI 测试。
+- GitHub Actions workflow 限制：`.github/workflows/ios.yml` 设定为 `workflow_dispatch`（纯手动触发），不存在 push 自动触发构建；在没有配置 GitHub 仓库与手动运行前，无云端构建制品。
+- UIKit、Files 安全作用域授权、WebKit 会话在真机上的手势、视觉与网络验收；在获得 Xcode 构建与设备运行证据前，严格不标记为已验证。
+- `LocalImageProbeTests` 两项 Apple 专用测试（真实图片/截断图片、符号链接、大小和取消；Linux 缺少 ImageIO，未执行）。
+- ZIP/CBZ 的 Apple 真实图片探测测试、ComicZlib 系统库在 Apple SDK 的编译链接、ZIP/CBZ 文件选择器实机操作。
 - IPA 签名、用户 iPhone 安装、视觉/手势/性能验收。
-- GitHub Actions 云端运行；当前只有 Gitee 远端，用户正在准备 GitHub 账户。
 
 ## 阶段验证记录
 
