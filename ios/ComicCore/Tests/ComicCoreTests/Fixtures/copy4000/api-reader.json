@@ -1,0 +1,297 @@
+{
+  "code": 200,
+  "message": "请求成功",
+  "results": {
+    "is_lock": false,
+    "is_login": false,
+    "is_mobile_bind": false,
+    "is_vip": false,
+    "comic": {
+      "name": "八角籠的帝王",
+      "uuid": "d55d0f14-6979-11ed-a96e-024352452ce0",
+      "path_word": "bajiaolongdediwang",
+      "restrict": {
+        "value": 0,
+        "display": "一般向(免費)"
+      }
+    },
+    "chapter": {
+      "index": 0,
+      "uuid": "4cdb2472-697a-11ed-a96e-024352452ce0",
+      "count": 190,
+      "ordered": 10,
+      "size": 86,
+      "name": "第1话",
+      "comic_id": "d55d0f14-6979-11ed-a96e-024352452ce0",
+      "comic_path_word": "bajiaolongdediwang",
+      "group_id": null,
+      "group_path_word": "default",
+      "type": 1,
+      "news": "success",
+      "datetime_created": "2022-11-21",
+      "prev": null,
+      "next": "52395880-697a-11ed-a96e-024352452ce0",
+      "contents": [
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021052150046.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021052520043.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021053190060.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021053680031.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021054340042.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021055090023.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021055840005.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021056790066.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021057580081.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021058480013.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021059300020.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021060280047.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021061260049.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021061970002.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021062780057.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021063520010.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021064360009.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021065320040.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021066020045.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021066410024.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021067060068.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021067930029.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021068780032.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021069590073.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021070320051.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021071320055.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021072000053.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021072590086.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021073360082.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021074240063.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021075090026.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021075790076.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021076350033.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021076820016.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021077880007.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021078910001.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021079920004.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021080710075.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021081560048.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021082380038.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021083160061.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021084280064.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021085130058.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021086020019.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021086750044.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021087300036.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021087860017.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021088620039.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021088980008.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021089890014.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021090750054.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021091670084.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021092340077.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021093030022.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021093450050.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021094070018.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021094980012.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021095680062.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021096390035.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021096950003.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021097620074.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021098200006.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021098890030.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021099770072.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021100800083.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021101850041.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021102890065.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021103560021.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021104750015.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021105530027.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021106310071.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021106940070.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021107840067.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021108680011.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021109840069.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021110670034.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021111510052.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021112260085.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021113020056.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021113810025.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021115030059.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021115470079.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021116240037.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021116820028.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021117510078.jpg.h1500x.webp"
+        },
+        {
+          "url": "https://sb.mangafunb.fun/b/bajiaolongdediwang/29ae4/1669021118220080.jpg.h1500x.webp"
+        }
+      ],
+      "is_long": true
+    }
+  }
+}

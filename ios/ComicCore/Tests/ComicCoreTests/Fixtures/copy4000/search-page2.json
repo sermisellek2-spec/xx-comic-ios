@@ -1,0 +1,232 @@
+{
+  "code": 200,
+  "message": "请求成功",
+  "results": {
+    "list": [
+      {
+        "name": "海貓莊days",
+        "alias": "海猫庄的日常,海貓莊days,海猫庄days",
+        "path_word": "haimaozhuangdays",
+        "cover": "https://sh.mangafunb.fun/h/haimaozhuangdays/cover/1651121995.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "コダマナオコ",
+            "alias": "コダマナオコ",
+            "path_word": "kodamanaoko"
+          }
+        ],
+        "popular": 28760,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "夜與海",
+        "alias": "夜與海,夜与海",
+        "path_word": "yeyuhai",
+        "cover": "https://sy.mangafunb.fun/y/yeyuhai/cover/1651108987.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "乡本",
+            "alias": null,
+            "path_word": "xiangben"
+          }
+        ],
+        "popular": 98090,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "逢芽和宇海",
+        "alias": "逢芽和宇海,逢芽宇海",
+        "path_word": "fengyayuhai",
+        "cover": "https://sf.mangafunb.fun/f/fengyayuhai/cover/1751866221.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "ヤマガタアツカ",
+            "alias": null,
+            "path_word": "yamagataacuka"
+          }
+        ],
+        "popular": 96656,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "海帝",
+        "alias": "海帝",
+        "path_word": "haidi",
+        "cover": "https://sh.mangafunb.fun/h/haidi/cover/1727662786.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "星野之宣",
+            "alias": "星野之宣",
+            "path_word": "xingyezhixuan"
+          }
+        ],
+        "popular": 8248,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "香海高中",
+        "alias": "香海高中,香海高中",
+        "path_word": "xianghaigaozhong",
+        "cover": "https://sx.mangafunb.fun/x/xianghaigaozhong/cover/1651171186.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "ShiBi",
+            "alias": "shibi",
+            "path_word": "shibi"
+          },
+          {
+            "name": "ハトポポコ",
+            "alias": "ハトポポコ",
+            "path_word": "hatopopoko"
+          }
+        ],
+        "popular": 7091,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "滅獸之海",
+        "alias": "滅獸之海,灭兽之海",
+        "path_word": "mszh",
+        "cover": "https://sm.mangafunb.fun/m/mszh/cover/1651050991.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "星野之宣",
+            "alias": "星野之宣",
+            "path_word": "xingyezhixuan"
+          }
+        ],
+        "popular": 722,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "四海演武",
+        "alias": "四海演武,四海演武",
+        "path_word": "sihaiyanwu",
+        "cover": "https://ss.mangafunb.fun/s/sihaiyanwu/cover/1651092555.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "松本直也",
+            "alias": "松本直也",
+            "path_word": "sbzy"
+          }
+        ],
+        "popular": 1599,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "七海醬在焦躁不已地等待",
+        "alias": "七海酱在焦躁不已地等待，七海迫不及待，七海迫不及待",
+        "path_word": "qihaijiangzaijiaozaobuyididengdai",
+        "cover": "https://sq.mangafunb.fun/q/qihaijiangzaijiaozaobuyididengdai/cover/1654521233.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "石田裕挥",
+            "alias": null,
+            "path_word": "shitianyuhui"
+          }
+        ],
+        "popular": 1058,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "幻想鄉之海",
+        "alias": "幻想鄉之海,幻想乡之海",
+        "path_word": "huanxiangxiangzhihai",
+        "cover": "https://sh.mangafunb.fun/h/huanxiangxiangzhihai/cover/1650969268.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "游闲地",
+            "alias": "游闲地",
+            "path_word": "youxiandi"
+          }
+        ],
+        "popular": 621,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "海千山千",
+        "alias": "海千山千,海千山千",
+        "path_word": "haiqianshanqian",
+        "cover": "https://sh.mangafunb.fun/h/haiqianshanqian/cover/1651193397.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "杉浦日向子",
+            "alias": null,
+            "path_word": "shanpurixiangzi"
+          }
+        ],
+        "popular": 964,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "藍色珊瑚海",
+        "alias": "藍色珊瑚海,蓝色珊瑚海",
+        "path_word": "lanseshanhuhai",
+        "cover": "https://sl.mangafunb.fun/l/lanseshanhuhai/cover/1651153570.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "萩尾望都",
+            "alias": "萩尾望都",
+            "path_word": "diweiwangdu"
+          }
+        ],
+        "popular": 811,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      },
+      {
+        "name": "陽光中的海",
+        "alias": "陽光中的海,阳光中的海",
+        "path_word": "yangguangzhongdehai",
+        "cover": "https://sy.mangafunb.fun/y/yangguangzhongdehai/cover/1650964846.jpg.328x422.jpg",
+        "author": [
+          {
+            "name": "绫濑羽美",
+            "alias": "绫濑羽美",
+            "path_word": "linlaiyumei"
+          }
+        ],
+        "popular": 567,
+        "theme": [],
+        "parodies": [],
+        "females": [],
+        "males": []
+      }
+    ],
+    "total": 625,
+    "limit": 12,
+    "offset": 12
+  }
+}

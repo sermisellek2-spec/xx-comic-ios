@@ -7,6 +7,6 @@ let package = Package(
     products: [.library(name: "ComicCore", targets: ["ComicCore"])],
     targets: [
         .target(name: "ComicCore"),
-        .testTarget(name: "ComicCoreTests", dependencies: ["ComicCore"], resources: [.copy("Fixtures/manwa")])
+        .testTarget(name: "ComicCoreTests", dependencies: ["ComicCore"], resources: [.copy("Fixtures/manwa"), .copy("Fixtures/copy4000")])
     ]
 )
