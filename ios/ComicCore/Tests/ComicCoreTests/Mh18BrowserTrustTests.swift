@@ -23,4 +23,20 @@ final class Mh18BrowserTrustTests: XCTestCase {
             XCTAssertFalse(Mh18BrowserTrust.allowsNavigation(URL(string: raw)!), raw)
         }
     }
+
+    func testEncodedChallengePrefixesCannotGrantNavigationPermission() {
+        for path in [
+            "/%2574urnstile/private", "/turnstile%252fprivate",
+            "/%2563dn-cgi/challenge-platform/private", "/cdn-cgi/challenge-platform%252fprivate",
+            "/%74urnstile/private", "/turnstile%2fprivate",
+            "/%63dn-cgi/challenge-platform/private", "/cdn-cgi/challenge-platform%2fprivate",
+            "/turnstile/%252e%252e/private", "/turnstile/%255cprivate"
+        ] {
+            let url = URL(string: "https://challenges.cloudflare.com" + path)!
+            XCTAssertFalse(Mh18BrowserTrust.allowsNavigation(url), path)
+        }
+        for path in ["/turnstile/v0/api.js", "/cdn-cgi/challenge-platform/h/b", "/turnstile/v0/safe%20name.js"] {
+            XCTAssertTrue(Mh18BrowserTrust.allowsNavigation(URL(string: "https://challenges.cloudflare.com" + path)!), path)
+        }
+    }
 }

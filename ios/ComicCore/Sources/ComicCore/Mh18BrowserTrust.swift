@@ -9,10 +9,13 @@ public enum Mh18BrowserTrust {
     public static func allowsNavigation(_ url: URL) -> Bool {
         if allowsRequest(url) { return true }
         guard secure(url), belongs(url, to: "challenges.cloudflare.com") else { return false }
+        guard let rawPath = URLComponents(url: url, resolvingAgainstBaseURL: false)?.percentEncodedPath,
+              rawPath.hasPrefix("/cdn-cgi/challenge-platform/") || rawPath.hasPrefix("/turnstile/") else { return false }
         // Reject ambiguous traversal instead of trusting WebKit/server normalization to agree.
+        // Decoding can only reject a path; it must never grant a challenge-prefix exception.
         let path = url.path.removingPercentEncoding ?? url.path
         guard !path.contains("\\"), !path.split(separator: "/").contains(where: { $0 == "." || $0 == ".." }) else { return false }
-        return path.hasPrefix("/cdn-cgi/challenge-platform/") || path.hasPrefix("/turnstile/")
+        return true
     }
 
     private static func secure(_ url: URL) -> Bool {
