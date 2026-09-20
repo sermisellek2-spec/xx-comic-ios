@@ -16,8 +16,8 @@ public actor LocalComicSource: ComicSource {
     public func detail(comicId: String) async throws -> ComicDetail {
         try Task.checkCancellation()
         let book = try library.book(id: comicId)
-        return ComicDetail(summary: try library.summary(for: book), author: "", status: "本地漫画",
-                           description: "\(book.pages.count) 页", latestChapter: "", chapters: [])
+        return ComicDetail(summary: try library.summary(for: book), author: book.epub?.author ?? "", status: book.epub == nil ? "本地漫画" : "EPUB",
+                           description: book.epub?.description ?? "\(book.pages.count) 页", latestChapter: "", chapters: [])
     }
     public func chapters(comicId: String) async throws -> [Chapter] {
         try Task.checkCancellation()
@@ -38,13 +38,22 @@ public actor LocalComicSource: ComicSource {
         let allURLs = try library.pageURLs(for: book)
         if parts.count == 2 {
             guard let chapter = book.chapters?.first(where: { $0.id == parts[1] }) else { throw LocalLibraryError.invalidBook }
+            try requireImagePages(chapter.pages, in: book)
             let pages = Dictionary(uniqueKeysWithValues: zip(book.pages, allURLs))
             return ChapterPage(chapterId: chapter.id, title: chapter.title, nextPageUrl: "", imageUrls: try chapter.pages.map { name in
                 guard let url = pages[name] else { throw LocalLibraryError.invalidBook }
                 return url.absoluteString
             })
         }
+        try requireImagePages(book.pages, in: book)
         return ChapterPage(chapterId: book.id, title: book.title, nextPageUrl: "", imageUrls: allURLs.map(\.absoluteString))
+    }
+    private func requireImagePages(_ pages: [String], in book: LocalBook) throws {
+        guard let publication = book.epub else { return }
+        let selected = Set(pages)
+        for (index, token) in book.pages.enumerated() where selected.contains(token) {
+            guard publication.spine[index].resolvedImageEntry != nil else { throw LocalLibraryError.requiresTextReader }
+        }
     }
     public func filterGroups() async throws -> [SourceFilterGroup] { [] }
     public func category(filters: [String: String], page: Int) async throws -> [ComicSummary] { try await latest(page: page) }

@@ -9,10 +9,11 @@ final class EpubArchive {
     private let archive: Archive
     private var entries: [String: (Entry, ZIPDirectory.Record)] = [:]
     private var bytesRead: UInt64 = 0
-    private let maximumReadBytes: UInt64 = 256 * 1024 * 1024
+    private let maximumReadBytes: UInt64
 
-    init(url: URL) throws {
+    init(url: URL, maximumReadBytes: UInt64 = 256 * 1024 * 1024) throws {
         self.url = url
+        self.maximumReadBytes = maximumReadBytes
         do {
             try Task.checkCancellation()
             let directory = try ZIPDirectory(url: url)
@@ -46,28 +47,46 @@ final class EpubArchive {
     func contains(_ path: String) -> Bool { entries[path] != nil }
 
     func read(_ path: String, maximumBytes: Int = 8 * 1024 * 1024, prefixOnly: Bool = false) throws -> Data {
+        var output = Data()
+        try extract(path, maximumBytes: maximumBytes, prefixOnly: prefixOnly) { data in
+            output.append(data.prefix(max(0, maximumBytes - output.count)))
+        }
+        return output
+    }
+
+    /// Uses the same CRC, byte budget and cancellation checks as in-memory reads.
+    func write(_ path: String, to destination: URL, maximumBytes: Int = LocalLibrary.maximumImageBytes) throws {
+        guard FileManager.default.createFile(atPath: destination.path, contents: nil) else { throw EpubError.invalid("无法创建资源临时文件") }
+        var complete = false
+        defer { if !complete { try? FileManager.default.removeItem(at: destination) } }
+        let output = try FileHandle(forWritingTo: destination)
+        defer { try? output.close() }
+        try extract(path, maximumBytes: maximumBytes, prefixOnly: false) { try output.write(contentsOf: $0) }
+        complete = true
+    }
+
+    private func extract(_ path: String, maximumBytes: Int, prefixOnly: Bool, consumer: (Data) throws -> Void) throws {
         do {
             try Task.checkCancellation()
             guard let (entry, record) = entries[path] else { throw EpubError.invalid("缺少资源：\(path)") }
             guard maximumBytes >= 0 else { throw EpubError.limitExceeded("读取大小非法") }
-            if !prefixOnly && entry.uncompressedSize > UInt64(maximumBytes) { throw EpubError.limitExceeded("单次 XML 读取超过 8 MiB：\(path)") }
-            guard entry.uncompressedSize <= maximumReadBytes - bytesRead else { throw EpubError.limitExceeded("累计解析读取超过 256 MiB") }
-            var output = Data(), actual: UInt64 = 0
+            if !prefixOnly && entry.uncompressedSize > UInt64(maximumBytes) { throw EpubError.limitExceeded("单次资源读取超过指定上限：\(path)") }
+            guard entry.uncompressedSize <= maximumReadBytes - bytesRead else { throw EpubError.limitExceeded("累计资源读取超过 \(maximumReadBytes) 字节") }
+            var actual: UInt64 = 0
             let consume: (Data) throws -> Void = { data in
                 try Task.checkCancellation()
                 let count = UInt64(data.count)
                 guard count <= entry.uncompressedSize - actual else { throw EpubError.invalid("ZIP 解压大小不符：\(path)") }
-                guard count <= self.maximumReadBytes - self.bytesRead else { throw EpubError.limitExceeded("累计解析读取超过 256 MiB") }
+                guard count <= self.maximumReadBytes - self.bytesRead else { throw EpubError.limitExceeded("累计资源读取超过 \(self.maximumReadBytes) 字节") }
                 actual += count
                 self.bytesRead += count
-                output.append(data.prefix(max(0, maximumBytes - output.count)))
+                try consumer(data)
             }
             let crc = try entry.isCompressed
                 ? ZIPDeflate.extract(url: url, offset: record.dataOffset, compressedSize: record.compressedSize, consumer: consume)
                 : archive.extract(entry, bufferSize: 256 * 1024, skipCRC32: false, consumer: consume)
             try Task.checkCancellation()
             guard actual == entry.uncompressedSize, crc == entry.checksum else { throw EpubError.invalid("ZIP CRC 或解压大小校验失败：\(path)") }
-            return output
         } catch { throw Self.wrapped(error) }
     }
 
@@ -82,7 +101,7 @@ final class EpubArchive {
         return try normalized(base + stripped)
     }
 
-    private static func normalized(_ value: String) throws -> String {
+    static func normalized(_ value: String) throws -> String {
         let path = value.replacingOccurrences(of: "\\", with: "/")
         guard !path.isEmpty, !path.hasPrefix("/"), !path.contains("\0"),
               !(path.split(separator: "/").first?.contains(":") ?? false) else {

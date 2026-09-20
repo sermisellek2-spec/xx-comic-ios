@@ -6,9 +6,12 @@ public struct LocalBook: Codable, Equatable, Sendable {
     public let createdAt: TimeInterval
     public let pages: [String]
     public let chapters: [LocalBookChapter]?
+    public let epub: EpubPublication?
+    public let coverName: String?
 
-    public init(id: String, title: String, createdAt: TimeInterval, pages: [String], chapters: [LocalBookChapter]? = nil) {
+    public init(id: String, title: String, createdAt: TimeInterval, pages: [String], chapters: [LocalBookChapter]? = nil, epub: EpubPublication? = nil, coverName: String? = nil) {
         self.id = id; self.title = title; self.createdAt = createdAt; self.pages = pages; self.chapters = chapters
+        self.epub = epub; self.coverName = coverName
     }
 }
 
@@ -37,17 +40,15 @@ public struct LocalLibrary: Sendable {
     public func books() throws -> [LocalBook] {
         try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)
             .filter { UUID(uuidString: $0.lastPathComponent) != nil }
-            .map { folder in
-                let book = try JSONDecoder().decode(LocalBook.self, from: Data(contentsOf: folder.appendingPathComponent("book.json")))
-                guard book.id == folder.lastPathComponent else { throw LocalLibraryError.invalidBook }
-                _ = try pageURLs(for: book)
-                return book
-            }.sorted { $0.createdAt == $1.createdAt ? $0.id < $1.id : $0.createdAt > $1.createdAt }
+            .map { try book(id: $0.lastPathComponent) }
+            .sorted { $0.createdAt == $1.createdAt ? $0.id < $1.id : $0.createdAt > $1.createdAt }
     }
     public func book(id: String) throws -> LocalBook {
         guard UUID(uuidString: id) != nil else { throw LocalLibraryError.invalidBook }
-        let book = try JSONDecoder().decode(LocalBook.self, from: Data(contentsOf: directory.appendingPathComponent(id).appendingPathComponent("book.json")))
+        let manifest = try ownedFile(bookID: id, name: "book.json")
+        let book = try JSONDecoder().decode(LocalBook.self, from: Data(contentsOf: manifest))
         guard book.id == id else { throw LocalLibraryError.invalidBook }
+        _ = try pageURLs(for: book)
         return book
     }
     public func pageURLs(for book: LocalBook) throws -> [URL] {
@@ -60,14 +61,22 @@ public struct LocalLibrary: Sendable {
                   chapterPages.count == book.pages.count, Set(chapterPages).count == chapterPages.count,
                   Set(chapterPages) == pageNames else { throw LocalLibraryError.invalidBook }
         }
+        if book.epub != nil {
+            try validateEpub(book)
+            return try book.pages.indices.map { try EpubPageURL.make(bookID: book.id, index: $0) }
+        }
+        guard book.coverName == nil else { throw LocalLibraryError.invalidBook }
         return try book.pages.map { name in
             guard name != ".", name != "..", !name.contains("/"), !name.contains("\\"), !name.isEmpty else { throw LocalLibraryError.invalidBook }
             return directory.appendingPathComponent(book.id, isDirectory: true).appendingPathComponent(name)
         }
     }
     public func summary(for book: LocalBook) throws -> ComicSummary {
-        ComicSummary(sourceId: "local", comicId: book.id, title: book.title,
-                     coverUrl: try pageURLs(for: book).first?.absoluteString ?? "", subtitle: "\(book.pages.count) 页")
+        let pages = try pageURLs(for: book)
+        let cover = book.epub == nil ? pages.first?.absoluteString ?? ""
+            : try book.coverName.map { try ownedFile(bookID: book.id, name: $0).absoluteString } ?? ""
+        return ComicSummary(sourceId: "local", comicId: book.id, title: book.title,
+                            coverUrl: cover, subtitle: "\(book.pages.count) 页")
     }
     public func importImages(title: String, files: [URL]) throws -> LocalBook {
         try importFiles(title: title, files: files.sorted(by: { NaturalPathOrder.less($0.lastPathComponent, $1.lastPathComponent) }), groups: nil)
@@ -122,7 +131,7 @@ public struct LocalLibrary: Sendable {
         try FileManager.default.moveItem(at: staging, to: directory.appendingPathComponent(id, isDirectory: true))
         return book
     }
-    private func copy(_ source: URL, to destination: URL, totalBytes: inout Int64) throws {
+    func copy(_ source: URL, to destination: URL, totalBytes: inout Int64, maximumFileBytes: Int64 = Int64(maximumImageBytes)) throws {
         guard FileManager.default.createFile(atPath: destination.path, contents: nil) else { throw LocalLibraryError.invalidBook }
         let input = try FileHandle(forReadingFrom: source)
         defer { try? input.close() }
@@ -134,7 +143,9 @@ public struct LocalLibrary: Sendable {
             guard let data = try readChunk(input, Self.copyChunkBytes), !data.isEmpty else { break }
             try Task.checkCancellation()
             let count = Int64(data.count)
-            guard count <= Int64(Self.maximumImageBytes) - imageBytes else { throw LocalLibraryError.imageTooLarge }
+            guard count <= maximumFileBytes - imageBytes else {
+                throw maximumFileBytes == Int64(Self.maximumImageBytes) ? LocalLibraryError.imageTooLarge : LocalLibraryError.archiveTooLarge
+            }
             guard count <= Self.maximumImportBytes - totalBytes else { throw LocalLibraryError.folderTooLarge }
             try output.write(contentsOf: data)
             imageBytes += count
@@ -145,7 +156,7 @@ public struct LocalLibrary: Sendable {
 }
 
 public enum LocalLibraryError: LocalizedError {
-    case invalidBook, emptyImport, imageTooLarge, folderTooDeep, folderTooLarge, invalidArchive, archiveTooLarge
+    case invalidBook, emptyImport, imageTooLarge, folderTooDeep, folderTooLarge, invalidArchive, archiveTooLarge, requiresTextReader
     public var errorDescription: String? {
         switch self {
         case .invalidBook: return "本地漫画数据无效或文件不可用，原文件已保留。"
@@ -155,6 +166,7 @@ public enum LocalLibraryError: LocalizedError {
         case .folderTooLarge: return "文件夹超过 50000 项或 20 GiB，本次未导入。"
         case .invalidArchive: return "压缩包损坏、路径不安全、已加密或格式不支持，本次未导入，原文件已保留。仅支持 ZIP/CBZ。"
         case .archiveTooLarge: return "压缩包超过安全限制：最多 50000 项、单项 128 MiB、总量 20 GiB。本次未导入，原文件已保留。"
+        case .requiresTextReader: return "该 EPUB 章节包含文字内容，需要使用文字阅读器。"
         }
     }
 }
