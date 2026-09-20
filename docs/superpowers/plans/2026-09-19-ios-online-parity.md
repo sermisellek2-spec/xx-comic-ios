@@ -369,3 +369,26 @@ XCTAssertThrowsError(try EpubReaderResource.path(from: URL(string: "xxcomic-book
 
 - [ ] RemoteImageView.load增加默认nil的 `epubImage: (@Sendable (URL)throws->Data)?` 参数，只在精确 `xxcomic-epub` scheme时调用该resolver；没有resolver走明确失败，不交URLSession。后台Task读取，withTaskCancellationHandler转发取消到worker；generation继续保护缓存/尺寸/失败回调。HTTP/file既有行为保持，单图上限仍128MiB、解码沿现有ImageIO。ReaderViewController仅local源注入捕获Sendable LocalLibrary副本的epubImageData；ReaderImageCell.configure→retry保存并传递resolver，prepareForReuse清理。不能扩大file路径白名单或全局注册URLProtocol。
 - [ ] Core GREEN后仅做相关回归，UIKit全文件syntax parse与静态接线审查；不能把syntaxparse称Apple类型检查。写task-34-report.md，父代理提交/独立审查。UI入口仍未开放，后续Task35消费此正文resourceURL契约并添加安全WK渲染。
+
+### Task 35: EPUB 全正文导航与原生文字阅读、导入入口
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/EpubTextSession.swift`、`Tests/ComicCoreTests/EpubTextSessionTests.swift`；新增 `ios/XXComic/EpubTextReaderViewController.swift`（导航/位置/工具栏）、`EpubTextContentView.swift`（WK隔离文档/资源/样式）、`TextReaderSettingsViewController.swift`（设置）、`TextBookCover.swift`（UIKit绘制封面）；修改 `ComicGridViewController.swift`、`DetailViewController.swift`、`RemoteImageView.swift`、`AppEnvironment.swift` 接入口/默认文字封面/设置实例；在 `ios/XXComicUITests/EpubReadingUITests.swift` 添加原生验收用例，必要时为现有UITest启动分支增加只读fixture种子。复用Task32–34最终审查接口，只有完成本任务才显示EPUB导入按钮。不要拆成占位页面交付。
+
+**Core interface:** `EpubTextSession:Sendable` 持有已结构验证的LocalBook，公开只读chapterIndex/spineIndex和当前entry:EpubPublication.SpineItem；`init(book:LocalBook,chapterIndex:Int,locator:TextLocator?) throws`、`mutating selectChapter(_ index:Int)throws`、`mutating moveSpine(delta:Int)->Bool`、`mutating navigate(path:String)->Bool`、`locator(anchorID:String="",percent:Double,charOffset:Int=0)->TextLocator`。章节来自book.chapters的pages token→book.pages索引，不重新按目录名排序；初始化章节越界夹合法范围，错误分区/无EPUB/DRM/空spine拒绝。恢复位置必须bookID/章节/资源路径/spine索引都对应当前章，失效回本章首spine；同路径重复出现以locator索引恢复，内部链接优先本次spine否则首匹配。moveSpine只接受±1，按完整spine顺序跨章，每次恰好一步，边界false不改状态。navigate仅接受本书spine内规范路径。文字/混合书按全部spine可读，保留图片条目；纯图片书仍共用漫画阅读器。
+
+- [ ] RED核心覆盖一章多正文/同href重复出现/混合图片/跨章/旧位置不匹配与越界，使用真实EPUB fixture解析并importEpub得到book，不手造不成立模型。GREEN后才原生接线。
+
+```swift
+var session = try EpubTextSession(book: book, chapterIndex: 0, locator: nil)
+XCTAssertEqual(session.spineIndex, 0)
+XCTAssertTrue(session.moveSpine(delta: 1))
+XCTAssertEqual(session.spineIndex, 1) // 一章包含两个正文时，第二个不能丢失
+XCTAssertEqual(session.chapterIndex, 0)
+```
+
+- [ ] 原生文字view使用非持久WKWebsiteDataStore、每书专属WKURLSchemeHandler，只读Task34 `xxcomic-book` 本书资源。正文8MiB，资源128MiB，单次文档累计256MiB/1024请求/最多2个资源读取并行，超限明确失败；后台读取每次独立Archive，取消转发且stopURLSchemeTask后不得回调。页面切换/退出撤销所有旧worker和脚本回调，用generation与对应WK实例隔离；不得把上一正文的迟到scroll写进新位置。
+- [ ] WK配置 `defaultWebpagePreferences.allowsContentJavaScript = false`，正文自己的script/eventhandler不能执行。自己的滚动/位置脚本在独立WKContentWorld中运行，使用callAsyncJavaScript arguments传anchor/percent/样式，禁止拼接书籍字符串进代码；脚本message handler弱引用并退出移除。编译并安装WKContentRuleList阻止http/https/ws/wss/ftp/file资源，编译失败不能展示正文。主文档开始处强制CSP default-src 'none'、script-src 'none'、img-src本书scheme与data、style-src本书scheme与unsafe-inline、font-src本书scheme、frame-src/object-src/connect-src 'none'、base-uri 'none'、form-action 'none'；规则与主导航delegate共同执行，不能只regex删除script。scheme handler只接受匹配书ID的路径，不允许任意file/网络委托。未知MIME不当HTML执行，明文text/plain需HTML转义，直接图片spine用转义URL的img文档承载。新窗口/重定向/非主框架导航默认拒绝；用户点击http/https外链弹确认再系统浏览器，其他scheme拒绝；书内链接用session.navigate+fragment或当前anchor。
+- [ ] 样式按Android TextReaderView.generateCss对照：18px/1.75默认、字号12...32；浅FAFAFA/23272E/4C78A8、护眼F5EEDB/3F3222/8C6239、深12161F/C8D0E0/5E81AC；正文padding22px18px90px18px、段首2em、段间.9em、图片max-width100%/margin14px/radius4。排版变更立即保存并更新当前文档，保留位置；字体变化/旋转后恢复当前anchor优先，否则percent。120ms延迟恢复必须校验generation。进度上报最多每100ms，退出/后台同步保存最后有效位置；只有当前document成功可读才更新历史/阅读习惯，不把加载失败当已读。
+- [ ] 工具栏上一章/下一章、进度0...100、目录/详情/排版/主题，主题循环0→1→2；目录复用55%/92%抽屉且选中真实chapter。一章多spine提供上一节/下一节与序号，确保全部内容可达（相较Android只读首正文的缺陷，账本已裁定修正）；进度代表当前正文。排版面板字号±1、行距紧凑1.5/标准1.75/宽松2、浅白/护眼/夜空、连续滚动/点击翻页，默认值由Task33读取。中央32%...68%单击切换控制条；边缘仅paged模式滚动0.88视口，多指/取消/拖动/链接点击不能误翻；仍可系统返回。接现有ReadingHabitTracker的enter/readable/user/overlay/tick/exit，面板时不累计阅读。
+- [ ] Bookshelf添加EPUB文件选择和导入说明，标题默认文件名，原security-scoped后台worker及取消保留，调用Task32 importEpub+LocalImageProbe。不改已发布manifest来生成封面；无图片封面的本地书在grid/detail显示UIKit绘制600×900蓝渐变243B55→141E30、EPUB电子书徽标和书名作者，布局按AndroidgenerateTextCover；不生成AI图片。Detail.openReader针对本地非纯图片EPUB转文字reader，纯图片走Task34已接resolver的漫画reader。加载/损坏/取消分别展示，重试保留目标章，不把HTML传图片decode。
+- [ ] 验证：EpubTextSessionTests真实核心RED/GREEN；UIKit全文件syntaxparse；原生UI用例覆盖导入文本/图文/纯图片、设置重启保存、正文跨页/目录/位置恢复、外链确认和退出（当前Windows不能运行，标记未验收）。为WK隔离/同书资源/旧回调编写可执行Apple测试或现有原生测试靶可承载的fixture场景，严禁静态字符串断言冒充WebKit行为测试。报告task-35-report.md，父代理提交/独立审查；Apple编译/WK规则和JS隔离/性能验收没有环境则明确列出，不能称完全1:1完成。
