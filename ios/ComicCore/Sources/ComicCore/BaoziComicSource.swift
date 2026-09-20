@@ -7,35 +7,54 @@ public enum BaoziSourceError: Error, Equatable, Sendable {
 
 public actor BaoziComicSource: ComicSource {
     public nonisolated let id = "baozimh"
-    public nonisolated let name = "包子漫画"
-    public nonisolated let referer = "https://cn.dzmanga.com/"
+    public nonisolated let name: String
+    public nonisolated let referer: String
 
-    private static let baseURL = "https://cn.dzmanga.com"
+    private let baseURL: String
+    private let config: SourceConfigItem
+    private let transport: any HTTPTransport
+
     private static let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    private static let categoryAPI = "/api/bzmhq/amp_comic_list?type={type}&region={region}&state={state}&filter={filter}&page={page}&limit=36&language=cn&__amp_source_origin=https%3A%2F%2Fcn.dzmanga.com"
     private static let cardPattern = #"<div class="comics-card[\s\S]*?<a href="([^"]+)" title="([^"]+)"[\s\S]*?src="([^"]+)"[\s\S]*?<small class="tags text-truncate">([\s\S]*?)</small>"#
     private static let metaPattern = #"<meta[^>]+(?:name|property|data-hid)="([^"]+)"[^>]+content="([^"]*)""#
     private static let chapterPattern = #"<a href="([^"]*page_direct[^"]*)"[^>]*class="comics-chapters__item"[\s\S]*?<span[^>]*>([\s\S]*?)</span>"#
     private static let imagePattern = #"<amp-img[^>]+(?:data-src|src)="(https://[^"]+?\.(?:jpg|jpeg|png|webp)[^"]*)"#
     private static let nextPagePattern = #"<div class="next_chapter">[\s\S]*?<a href="([^"]+)""#
 
-    private let transport: any HTTPTransport
-
-    public init(transport: any HTTPTransport = URLSessionHTTPTransport()) {
+    public init(
+        config: SourceConfigItem = SourceConfigDefaults.baozi(enabled: true),
+        transport: any HTTPTransport = URLSessionHTTPTransport()
+    ) {
+        self.config = config
+        self.name = config.name
+        self.referer = config.referer.isEmpty ? "\(config.baseUrl)/" : config.referer
+        self.baseURL = config.baseUrl
         self.transport = transport
     }
 
     public func latest(page: Int) async throws -> [ComicSummary] {
-        let path = page <= 1 ? "/list/new" : "/list/new/\(page)"
+        let pagePath = page <= 1 ? "" : "/\(page)"
+        let pageQuery = page <= 1 ? "" : "?page=\(page)"
+        let path = config.route("latest")
+            .replacingOccurrences(of: "{page}", with: String(page))
+            .replacingOccurrences(of: "{pagePath}", with: pagePath)
+            .replacingOccurrences(of: "{pageQuery}", with: pageQuery)
         return try parseCards(await fetch(absolute(path)))
     }
 
-    public func search(keyword: String, page _: Int) async throws -> [ComicSummary] {
-        try parseCards(await fetch(absolute("/search?q=\(formEncode(keyword))")))
+    public func search(keyword: String, page: Int = 1) async throws -> [ComicSummary] {
+        let encoded = formEncode(keyword)
+        let pageQuery = page > 1 ? "&page=\(page)" : ""
+        let path = config.route("search")
+            .replacingOccurrences(of: "{keyword}", with: encoded)
+            .replacingOccurrences(of: "{page}", with: String(page))
+            .replacingOccurrences(of: "{pageQuery}", with: pageQuery)
+        return try parseCards(await fetch(absolute(path)))
     }
 
     public func detail(comicId: String) async throws -> ComicDetail {
-        let html = try await fetch(absolute("/comic/\(comicId)"))
+        let path = config.route("detail").replacingOccurrences(of: "{comicId}", with: comicId)
+        let html = try await fetch(absolute(path))
         try requireHTML(html, context: "包子漫画详情解析失败")
         let title = meta("og:novel:book_name", in: html)
         guard !title.isEmpty else { throw BaoziSourceError.invalidResponse("包子漫画详情解析失败") }
@@ -55,7 +74,8 @@ public actor BaoziComicSource: ComicSource {
     }
 
     public func chapters(comicId: String) async throws -> [Chapter] {
-        let html = try await fetch(absolute("/comic/\(comicId)"))
+        let path = config.route("detail").replacingOccurrences(of: "{comicId}", with: comicId)
+        let html = try await fetch(absolute(path))
         let chapterMatches = matches(Self.chapterPattern, in: html)
         guard !chapterMatches.isEmpty || hasClass("comics-chapters", in: html) else {
             throw BaoziSourceError.invalidResponse("包子漫画目录解析失败")
@@ -109,11 +129,14 @@ public actor BaoziComicSource: ComicSource {
     }
 
     public func category(filters: [String: String], page: Int) async throws -> [ComicSummary] {
+        let rawRegion = filter(filters["region"], default: "all")
+        let rawState = filter(filters["state"], default: "all")
+        let region = safeFilter("region.\(rawRegion)", fallback: rawRegion)
+        let state = safeFilter("state.\(rawState)", fallback: rawState)
         let type = filter(filters["type"], default: "all")
-        let region = filter(filters["region"], default: "all")
-        let state = filter(filters["state"], default: "all")
         let letter = filter(filters["filter"], default: "*")
-        let route = page > 1 ? Self.categoryAPI : "/classify?type={type}&region={region}&state={state}&filter={filter}{pageQuery}"
+        let categoryApi = config.route("categoryApi")
+        let route = (page > 1 && !categoryApi.isEmpty) ? categoryApi : config.route("category")
         var path = route
             .replacingOccurrences(of: "{type}", with: type)
             .replacingOccurrences(of: "{region}", with: region)
@@ -123,7 +146,12 @@ public actor BaoziComicSource: ComicSource {
             .replacingOccurrences(of: "{pageQuery}", with: page > 1 ? "&page=\(page)" : "")
         path = withCategoryFilters(absolute(path), type: type, region: region, state: state, filter: letter, page: page)
         let body = try await fetch(path)
-        return page > 1 ? try parseAPICards(body) : try parseCards(body)
+        return (page > 1 && !categoryApi.isEmpty && route == categoryApi) ? try parseAPICards(body) : try parseCards(body)
+    }
+
+    private func safeFilter(_ key: String, fallback: String) -> String {
+        let mapped = config.filter(key)
+        return mapped.isEmpty ? fallback : mapped
     }
 
     private func parseCards(_ html: String) throws -> [ComicSummary] {
@@ -198,12 +226,12 @@ public actor BaoziComicSource: ComicSource {
     private func absolute(_ rawValue: String) -> String {
         let value = rawValue.replacingOccurrences(
             of: #"^(?:https?:)?//(?:cn\.bzmgcn\.com|www\.baozimh\.com|www\.twmanga\.com)(?=[/:?#]|$)"#,
-            with: Self.baseURL,
+            with: baseURL,
             options: .regularExpression
         )
         if value.hasPrefix("http://") || value.hasPrefix("https://") { return value }
         if value.hasPrefix("//") { return "https:\(value)" }
-        return Self.baseURL + (value.hasPrefix("/") ? value : "/\(value)")
+        return baseURL + (value.hasPrefix("/") ? value : "/\(value)")
     }
 
     private func comicID(from href: String) -> String {

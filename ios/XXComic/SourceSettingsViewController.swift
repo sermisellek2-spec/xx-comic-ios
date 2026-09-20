@@ -6,6 +6,8 @@ final class SourceSettingsViewController: UITableViewController {
     private let environment: AppEnvironment
     let onVerified: (() -> Void)?
     private var verificationTask: Task<Void, Never>?
+    private var healthCheckTask: Task<Void, Never>?
+    private var healthStatuses: [String: String] = [:]
     private var ids: [String] { environment.sourcePreferences.orderedIDs }
     init(environment: AppEnvironment, onVerified: (() -> Void)? = nil) {
         self.environment = environment; self.onVerified = onVerified
@@ -18,13 +20,14 @@ final class SourceSettingsViewController: UITableViewController {
         tableView.backgroundColor = Palette.background
         tableView.setEditing(true, animated: false)
         tableView.allowsSelectionDuringEditing = false
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "恢复默认排序", style: .plain, target: self, action: #selector(resetOrder))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), style: .plain, target: self, action: #selector(showMoreMenu))
         environment.mh18BrowserSession.statusChanged = { [weak self] in self?.tableView.reloadData() }
     }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         if isMovingFromParent || isBeingDismissed || navigationController?.isBeingDismissed == true {
             verificationTask?.cancel()
+            healthCheckTask?.cancel()
             environment.mh18BrowserSession.statusChanged = nil
         }
     }
@@ -38,7 +41,14 @@ final class SourceSettingsViewController: UITableViewController {
         let source = environment.allSources.first { $0.id == id }
         cell.backgroundColor = Palette.card
         cell.textLabel?.text = source?.name
-        cell.detailTextLabel?.text = URL(string: source?.referer ?? "")?.host
+        let host = URL(string: source?.referer ?? "")?.host ?? ""
+        if let health = healthStatuses[id] {
+            cell.detailTextLabel?.text = "\(host) · \(health)"
+        } else if id == "mh18" {
+            cell.detailTextLabel?.text = "18mh.org · " + environment.mh18BrowserSession.status
+        } else {
+            cell.detailTextLabel?.text = host
+        }
         cell.textLabel?.textColor = Palette.text
         cell.detailTextLabel?.textColor = Palette.secondaryText
         let toggle = UISwitch()
@@ -52,7 +62,6 @@ final class SourceSettingsViewController: UITableViewController {
         }, for: .valueChanged)
         cell.editingAccessoryView = toggle
         if id == "mh18" {
-            cell.detailTextLabel?.text = "18mh.org · " + environment.mh18BrowserSession.status
             let verify = UIButton(type: .system)
             verify.setTitle("验证", for: .normal)
             verify.accessibilityLabel = "验证18漫画"
@@ -88,7 +97,96 @@ final class SourceSettingsViewController: UITableViewController {
         tableView.reloadData()
         notifyChanged()
     }
-    private func notifyChanged() { NotificationCenter.default.post(name: AppEnvironment.sourcesChanged, object: environment) }
+    @objc private func showMoreMenu() {
+        let alert = UIAlertController(title: "站源管理", message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "测试站源可用性", style: .default) { [weak self] _ in
+            self?.runHealthCheck()
+        })
+        alert.addAction(UIAlertAction(title: "导入站源配置", style: .default) { [weak self] _ in
+            self?.importConfig()
+        })
+        alert.addAction(UIAlertAction(title: "导出站源配置", style: .default) { [weak self] _ in
+            self?.exportConfig()
+        })
+        alert.addAction(UIAlertAction(title: "恢复默认排序", style: .default) { [weak self] _ in
+            self?.resetOrder()
+        })
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        present(alert, animated: true)
+    }
+    private func runHealthCheck() {
+        healthCheckTask?.cancel()
+        for id in environment.sourcePreferences.enabledIDs {
+            healthStatuses[id] = "检测中…"
+        }
+        for id in ids where !environment.sourcePreferences.isEnabled(id) {
+            healthStatuses[id] = "已关闭"
+        }
+        tableView.reloadData()
+
+        healthCheckTask = Task { [weak self] in
+            guard let self else { return }
+            for id in self.environment.sourcePreferences.enabledIDs {
+                guard !Task.isCancelled else { break }
+                guard let source = self.environment.allSources.first(where: { $0.id == id }) else { continue }
+                let start = DispatchTime.now()
+                let ok = await source.healthCheck()
+                guard !Task.isCancelled else { break }
+                let ms = Int((DispatchTime.now().uptimeNanoseconds - start.uptimeNanoseconds) / 1_000_000)
+                self.healthStatuses[id] = ok ? "可用 (\(ms)ms)" : "不可用"
+                self.tableView.reloadData()
+            }
+        }
+    }
+    private func importConfig() {
+        let alert = UIAlertController(title: "导入站源配置", message: "粘贴符合 xx-comic.sources 格式的 JSON 配置：", preferredStyle: .alert)
+        alert.addTextField { field in
+            field.placeholder = "{\"schema\":\"xx-comic.sources\", ...}"
+            field.clearButtonMode = .whileEditing
+            if let clip = UIPasteboard.general.string, clip.contains("xx-comic.sources") {
+                field.text = clip
+            }
+        }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "导入", style: .default) { [weak self, weak alert] _ in
+            guard let self, let text = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return }
+            do {
+                let result = try self.environment.sourcePreferences.importConfig(jsonString: text)
+                self.tableView.reloadData()
+                self.notifyChanged()
+                let successAlert = UIAlertController(
+                    title: "导入成功",
+                    message: "成功导入 \(result.totalSources) 个站源配置（启用 \(result.enabledCount)，禁用 \(result.disabledCount)）",
+                    preferredStyle: .alert
+                )
+                successAlert.addAction(UIAlertAction(title: "确定", style: .default))
+                self.present(successAlert, animated: true)
+            } catch {
+                self.showError(error)
+            }
+        })
+        present(alert, animated: true)
+    }
+    private func exportConfig() {
+        let tuples = environment.allSources.map { ($0.id, $0.name, URL(string: $0.referer)?.host ?? "", $0.referer) }
+        let json = environment.sourcePreferences.exportConfig(sources: tuples)
+        UIPasteboard.general.string = json
+        let alert = UIAlertController(
+            title: "已导出站源配置",
+            message: "站源配置 JSON 已复制到剪贴板，符合 xx-comic.sources v2 规范，可直接分享或备份。",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "分享", style: .default) { [weak self] _ in
+            let share = UIActivityViewController(activityItems: [json], applicationActivities: nil)
+            self?.present(share, animated: true)
+        })
+        alert.addAction(UIAlertAction(title: "完成", style: .cancel))
+        present(alert, animated: true)
+    }
+    private func notifyChanged() {
+        environment.reloadSources()
+        NotificationCenter.default.post(name: AppEnvironment.sourcesChanged, object: environment)
+    }
     private func verifyMh18() {
         guard verificationTask == nil else { return }
         verificationTask = Task { [weak self] in

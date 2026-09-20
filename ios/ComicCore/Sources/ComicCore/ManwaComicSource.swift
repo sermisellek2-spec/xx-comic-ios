@@ -3,20 +3,33 @@ import CoreFoundation
 
 public struct ManwaComicSource: ComicSource {
     public let id = "manwa"
-    public let name = "漫蛙"
-    public let referer = "https://manwace.cc/"
-    private let base = "https://manwace.cc"
+    public let name: String
+    public let referer: String
+    private let base: String
+    private let config: SourceConfigItem
     private let transport: any HTTPTransport
     private let tags = ["热血","玄幻","恋爱","冒险","古风","都市","穿越","奇幻","搞笑","少男","战斗","重生","逆袭","爆笑","少年","后宫","系统","BL","韩漫","完整版","19r","台版"]
     private let slugs = ["hotblooded","xuanhuan","romance","adventure","historical","urban","transmigration","fantasy","comedy","shounen","action","rebirth","counterattack","hilarious","youth","harem","system","bl","manhwa","fullversion","19plus","taiwanver"]
 
-    public init(transport: any HTTPTransport = URLSessionHTTPTransport(timeoutInterval: 25)) { self.transport = transport }
+    public init(
+        config: SourceConfigItem = SourceConfigDefaults.manwa(enabled: true),
+        transport: any HTTPTransport = URLSessionHTTPTransport(timeoutInterval: 25)
+    ) {
+        self.config = config
+        self.name = config.name
+        self.referer = config.referer.isEmpty ? "\(config.baseUrl)/" : config.referer
+        self.base = config.baseUrl
+        self.transport = transport
+    }
     public func latest(page: Int) async throws -> [ComicSummary] { try await category(filters: [:], page: page) }
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()
         let keyword = SearchRules.trim(keyword)
         guard !keyword.isEmpty else { return [] }
-        return try cards(await request("/api/search?type=mh&page=\(max(1,page))&pageSize=20&keyword=\(form(keyword))"))
+        let path = config.route("search")
+            .replacingOccurrences(of: "{page}", with: String(max(1, page)))
+            .replacingOccurrences(of: "{keyword}", with: form(keyword))
+        return try cards(await request(path))
     }
     public func filterGroups() async throws -> [SourceFilterGroup] {
         func group(_ key: String, _ label: String, _ pairs: [(String,String)]) -> SourceFilterGroup {
@@ -47,11 +60,13 @@ public struct ManwaComicSource: ComicSource {
             "video":["year":0,"typeId":0,"typeId1":0,"area":"","lang":"","status":-1,"day":0,"level":0],
             "novel":["status":-1,"day":0,"sortId":0,"level":0]
         ]
-        return try cards(await request("/api/cate" + suffix, referer: base + "/cate" + suffix, body: body, typeID: number("type")))
+        let route = config.route("category")
+        return try cards(await request(route + suffix, referer: base + "/cate" + suffix, body: body, typeID: number("type")))
     }
     public func detail(comicId: String) async throws -> ComicDetail {
         let raw = try rawID(comicId)
-        let data = try await request("/comic/" + raw)
+        let path = config.route("detail").replacingOccurrences(of: "{comicId}", with: raw)
+        let data = try await request(path)
         guard let html = String(data: data, encoding: .utf8) else { throw error("详情文字解码失败") }
         let title = clean(element("page-title", html))
         guard !title.isEmpty else { throw error("详情解析失败，站点可能暂不可用") }
@@ -64,7 +79,8 @@ public struct ManwaComicSource: ComicSource {
     }
     public func chapters(comicId: String) async throws -> [Chapter] {
         let raw = try rawID(comicId), detail = base + "/comic/" + raw
-        let payload = try json(await request("/api/comic/" + raw + "/chapters", referer: detail))
+        let path = config.route("chapters").replacingOccurrences(of: "{comicId}", with: raw)
+        let payload = try json(await request(path, referer: detail))
         let rows = try array(payload,"list")
         var ordered: [(Int,Double,String,String)] = []
         for (index, value) in rows.enumerated() {
@@ -87,11 +103,22 @@ public struct ManwaComicSource: ComicSource {
         guard let path = URL(string: address)?.path,
               let ids = matches(#"^/comic/(\d+)/(\d+)/?$"#,path).first else { throw error("章节链接格式错误") }
         let comic = ids[1], chapter = ids[2], referer = base + "/comic/" + ids[1] + "/" + ids[2]
-        let info = try json(await request("/api/comic/chapter/info/" + chapter, referer: referer))
+        let infoRoute = config.route("chapterInfo").replacingOccurrences(of: "{chapterId}", with: chapter)
+        let info = try json(await request(infoRoute, referer: referer))
         guard let current = info["current"] as? [String:Any], string(current["comicId"]) == comic, string(current["id"]) == chapter else { throw error("章节信息不匹配") }
         var images: [String] = [], seen = Set<String>(), expectedTotal = -1, expectedPages = -1
+        let imageSource = config.route("imageSource").isEmpty ? "https://tu.mwzu.cc" : config.route("imageSource")
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_.~"))
+        let encodedSource = imageSource.addingPercentEncoding(withAllowedCharacters: allowed) ?? imageSource
+        let imageRoute = config.route("images").isEmpty
+            ? "/api/comic/image/{chapterId}?page={page}&page_size=100&image_source={imageSource}"
+            : config.route("images")
         for page in 1...500 {
-            let payload = try json(await request("/api/comic/image/\(chapter)?page=\(page)&page_size=100&image_source=https%3A%2F%2Ftu.mwzu.cc", referer: referer))
+            let pagePath = imageRoute
+                .replacingOccurrences(of: "{chapterId}", with: chapter)
+                .replacingOccurrences(of: "{page}", with: String(page))
+                .replacingOccurrences(of: "{imageSource}", with: encodedSource)
+            let payload = try json(await request(pagePath, referer: referer))
             let rows = try array(payload,"images")
             guard let pagination = payload["pagination"] as? [String:Any],
                   let total = Int(string(pagination["total"])), total > 0,

@@ -6,6 +6,7 @@ enum Palette {
     static let text = color(day: 0x14283A, night: 0xE8F4FD)
     static let secondaryText = color(day: 0x4C697F, night: 0xB8CFE1)
     static let accent = color(day: 0x2B98D9, night: 0x6AB8F3)
+    static let border = color(day: 0xDDE6EE, night: 0x27394D)
 
     private static func color(day: Int, night: Int) -> UIColor {
         UIColor { traits in

@@ -19,17 +19,44 @@ public actor Mh18ComicSource: ComicSource {
     public nonisolated let name: String
     public nonisolated let referer: String
     private let baseURL: URL
+    private let config: SourceConfigItem
     private let transport: any HTTPTransport
     private let browserSession: (any ComicBrowserSession)?
     private static let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     private static let cardPattern = #"<a[^>]+href="([^"]*?/manga/[^"]+)"[\s\S]{0,900}?<img[^>]+(?:src|data-src)="([^"]+)"[\s\S]{0,900}?<h3[^>]*class="[^"]*cardtitle[^"]*"[^>]*>([\s\S]*?)</h3>"#
 
-    public init(baseURL: URL = URL(string: "https://18mh.org")!, name: String = "18漫画", transport: any HTTPTransport = URLSessionHTTPTransport(timeoutInterval: 15), browserSession: (any ComicBrowserSession)? = nil) {
-        self.name = name
-        self.baseURL = baseURL
+    public init(
+        config: SourceConfigItem = SourceConfigDefaults.mh18(enabled: true),
+        transport: any HTTPTransport = URLSessionHTTPTransport(timeoutInterval: 15),
+        browserSession: (any ComicBrowserSession)? = nil
+    ) {
+        self.config = config
+        self.name = config.name
+        let url = URL(string: config.baseUrl) ?? URL(string: "https://18mh.org")!
+        self.baseURL = url
         self.transport = transport
         self.browserSession = browserSession
-        referer = baseURL.absoluteString.replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression) + "/"
+        self.referer = config.referer.isEmpty ? url.absoluteString.replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression) + "/" : config.referer
+    }
+
+    public init(
+        baseURL: URL,
+        name: String = "18漫画",
+        transport: any HTTPTransport = URLSessionHTTPTransport(timeoutInterval: 15),
+        browserSession: (any ComicBrowserSession)? = nil
+    ) {
+        let baseStr = baseURL.absoluteString.replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression)
+        let item = SourceConfigItem(
+            id: "mh18",
+            name: name,
+            domain: baseURL.host ?? "18mh.org",
+            baseUrl: baseStr,
+            referer: baseStr + "/",
+            enabled: true,
+            routes: SourceConfigDefaults.mh18().routes,
+            filters: SourceConfigDefaults.mh18().filters
+        )
+        self.init(config: item, transport: transport, browserSession: browserSession)
     }
 
     public static func hasCatalogMarker(_ html: String) -> Bool { !matches(cardPattern, in: html).isEmpty }
@@ -50,14 +77,32 @@ public actor Mh18ComicSource: ComicSource {
             if character == " " { return "+" }
             return allowed.contains(character) ? String(character) : String(format: "%%%02X", byte)
         }.joined()
-        return try parseCards(await fetch("/s/" + encoded + (page > 1 ? "/page/\(page)" : "")))
+        let pageQuery = page > 1 ? "/page/\(page)" : ""
+        let path = config.route("search")
+            .replacingOccurrences(of: "{keyword}", with: encoded)
+            .replacingOccurrences(of: "{pageQuery}", with: pageQuery)
+            + (page > 1 && !config.route("search").contains("{pageQuery}") ? "/page/\(page)" : "")
+        return try parseCards(await fetch(path))
     }
 
     public func category(filters: [String: String], page: Int) async throws -> [ComicSummary] {
         let tag = filters["tag"].flatMap { $0.isEmpty ? nil : $0 } ?? "all"
-        let genre = filters["genre"].flatMap { $0.isEmpty ? nil : $0 } ?? "all"
-        let path = tag != "all" ? "/manga-tag/" + tag : genre != "all" ? "/manga-genre/" + genre : "/manga"
-        return try parseCards(await fetch(path + (page > 1 ? "/page/\(page)" : "")))
+        let rawGenre = filters["genre"].flatMap { $0.isEmpty ? nil : $0 } ?? "all"
+        let mappedGenre = config.filter("genre.\(rawGenre)")
+        let genre = mappedGenre.isEmpty ? rawGenre : mappedGenre
+        let path: String
+        if tag != "all" {
+            path = "/manga-tag/" + tag + (page > 1 ? "/page/\(page)" : "")
+        } else if genre != "all" && !genre.isEmpty {
+            let genrePath = "-genre/" + genre
+            let pagePath = page > 1 ? "/page/\(page)" : ""
+            path = config.route("category")
+                .replacingOccurrences(of: "{genrePath}", with: genrePath)
+                .replacingOccurrences(of: "{pagePath}", with: pagePath)
+        } else {
+            path = "/manga" + (page > 1 ? "/page/\(page)" : "")
+        }
+        return try parseCards(await fetch(path))
     }
 
     public func filterGroups() async throws -> [SourceFilterGroup] {
@@ -81,7 +126,8 @@ public actor Mh18ComicSource: ComicSource {
 
     public func detail(comicId: String) async throws -> ComicDetail {
         let rawID = Self.rawComicID(comicId)
-        let html = try await fetch("/manga/" + rawID)
+        let path = config.route("detail").replacingOccurrences(of: "{comicId}", with: rawID)
+        let html = try await fetch(path)
         var data: [String: Any] = [:]
         for script in Self.matches(#"<script\b([^>]*)>([\s\S]*?)</script>"#, in: html) {
             guard Self.attribute("type", in: script[1]).lowercased() == "application/ld+json",
@@ -214,9 +260,10 @@ public actor Mh18ComicSource: ComicSource {
 
     private func absolute(_ value: String) throws -> URL {
         let string: String
+        let base = baseURL.absoluteString.hasSuffix("/") ? String(baseURL.absoluteString.dropLast()) : baseURL.absoluteString
         if value.hasPrefix("http://") || value.hasPrefix("https://") { string = value }
         else if value.hasPrefix("//") { string = "https:" + value }
-        else { string = referer + (value.hasPrefix("/") ? String(value.dropFirst()) : value) }
+        else { string = base + (value.hasPrefix("/") ? value : "/" + value) }
         guard let url = URL(string: string) else { throw Mh18SourceError.invalidResponse("18漫画链接无效") }
         return url
     }

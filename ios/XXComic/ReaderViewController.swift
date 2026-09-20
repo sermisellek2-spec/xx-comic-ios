@@ -201,6 +201,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 self.updateLoadStatus()
             } catch {
                 guard let self, !Task.isCancelled else { return }
+                if !(error is CancellationError) {
+                    ErrorLogStore.shared.append(title: "目录加载失败: \(self.comic.title)", error: error)
+                }
                 self.loadState.directoryFinished(error: error)
                 self.updateLoadStatus()
             }
@@ -219,7 +222,32 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         updateLoadStatus()
         loadTask = Task { [weak self, source] in
             do {
-                let page = try await source.chapter(url: chapter.url); try Task.checkCancellation()
+                let page: ChapterPage
+                if let self, self.comic.sourceId != "local" {
+                    let runtime = self.environment.downloadRuntime
+                    if let taskId = try? DownloadModels.key(self.comic.sourceId, self.comic.comicId, chapter.chapterId),
+                       let task = runtime.store.get(id: taskId), task.state == .completed {
+                        do {
+                            guard let local = try runtime.localChapter(
+                                detail: ComicDetail(summary: self.comic, author: "", status: "", description: "", latestChapter: "", chapters: self.chapters),
+                                chapterIndex: index
+                            ) else {
+                                throw DownloadError.corruptedData("本章下载文件需要修复")
+                            }
+                            page = local
+                        } catch {
+                            ErrorLogStore.shared.append(title: "下载文件损坏: \(self.comic.title) - \(chapter.title)", error: error)
+                            throw DownloadError.corruptedData("本章下载文件需要修复")
+                        }
+                    } else if !runtime.isNetworkConnected {
+                        throw DownloadError.corruptedData("这一章还没有下载哦")
+                    } else {
+                        page = try await source.chapter(url: chapter.url)
+                    }
+                } else {
+                    page = try await source.chapter(url: chapter.url)
+                }
+                try Task.checkCancellation()
                 guard let self, self.requestID == token else { return }
                 guard !page.imageUrls.isEmpty else { throw ReaderError.noImages }
                 let saved = restoreSaved ? self.environment.library.position(for: self.comic, chapterID: chapter.chapterId) : nil
@@ -234,6 +262,51 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 self.updateBadge()
             } catch {
                 guard let self, self.requestID == token, !Task.isCancelled else { return }
+                if (error as? LocalLibraryError) == .requiresTextReader {
+                    self.switchToTextReader(chapterIndex: index, atEnd: atEnd, restoreSaved: restoreSaved)
+                    return
+                }
+                if !(error is CancellationError) {
+                    ErrorLogStore.shared.append(title: "章节加载失败: \(self.comic.title) - \(chapter.title)", error: error)
+                }
+                self.loadState.chapterFinished(error: error)
+                self.updateLoadStatus()
+            }
+        }
+    }
+    private func switchToTextReader(chapterIndex: Int, atEnd: Bool, restoreSaved: Bool) {
+        guard chapters.indices.contains(chapterIndex) else { return }
+        savePosition()
+        let chapter = chapters[chapterIndex]
+        let library = environment.localLibrary
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let target = try await library.readingTarget(seriesId: self.comic.comicId, chapterId: chapter.chapterId)
+                let book = try library.book(id: target.volumeId)
+                let saved = restoreSaved ? self.environment.library.textPosition(for: self.comic, chapterID: chapter.chapterId) : nil
+                let volLocator: TextLocator?
+                if let saved {
+                    volLocator = saved.toVolumeLocator(volumeId: target.volumeId, volumeChapterIndex: target.volumeChapterIndex)
+                } else if atEnd {
+                    let spineCount = book.chapters?[target.volumeChapterIndex].pages.count ?? 1
+                    volLocator = TextLocator(bookID: target.volumeId, chapterIndex: target.volumeChapterIndex,
+                                             spineIndex: max(0, spineCount - 1), resourceHref: "", anchorID: "", scrollPercentage: 1.0)
+                } else {
+                    volLocator = TextLocator(bookID: target.volumeId, chapterIndex: target.volumeChapterIndex,
+                                             spineIndex: 0, resourceHref: "", anchorID: "", scrollPercentage: 0.0)
+                }
+                let session = try EpubTextSession(book: book, chapterIndex: target.volumeChapterIndex, locator: volLocator)
+                let textVC = EpubTextReaderViewController(comic: self.comic, chapters: self.chapters, session: session,
+                                                          locator: volLocator, environment: self.environment)
+                if let nav = self.navigationController {
+                    var vcs = nav.viewControllers
+                    if let idx = vcs.lastIndex(where: { $0 === self }) {
+                        vcs[idx] = textVC
+                        nav.setViewControllers(vcs, animated: false)
+                    }
+                }
+            } catch {
                 self.loadState.chapterFinished(error: error)
                 self.updateLoadStatus()
             }
@@ -248,6 +321,21 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         }
         guard let failure = loadState.visibleFailure else { status.isHidden = true; return }
         status.isHidden = false
+        if let dlErr = failure.error as? DownloadError, case .corruptedData(let msg) = dlErr {
+            if msg == "本章下载文件需要修复" {
+                status.setTitle("本章下载文件需要修复 · 到下载中心重新下载本章", for: .normal)
+                retryAction = { [weak self] in
+                    self?.showDownloadCenter()
+                }
+                return
+            } else if msg == "这一章还没有下载哦" {
+                status.setTitle("这一章还没有下载哦 · 已下载的章节可以在下载中心找到", for: .normal)
+                retryAction = { [weak self] in
+                    self?.showDownloadCenter()
+                }
+                return
+            }
+        }
         let retry: () -> Void = failure.kind == .chapter
             ? { [weak self] in self?.chapterRetryAction?() }
             : { [weak self] in self?.loadDirectory() }
@@ -262,6 +350,12 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             status.setTitle(text + " · 点击重试", for: .normal)
             retryAction = retry
         }
+    }
+    private func showDownloadCenter() {
+        let centerVC = DownloadCenterViewController(environment: environment)
+        let nav = UINavigationController(rootViewController: centerVC)
+        centerVC.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeSheet))
+        present(nav, animated: true)
     }
     private func currentPosition() -> ReaderPosition {
         guard !images.isEmpty, pages.bounds.width > 0 else { return ReaderPosition(imageIndex: 0, offset: 0) }

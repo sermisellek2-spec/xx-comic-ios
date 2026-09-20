@@ -124,17 +124,23 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             resume.contentHorizontalAlignment = .leading
             resume.addTarget(self, action: #selector(continueReading), for: .touchUpInside)
             header.addArrangedSubview(resume)
+        } else {
+            navigationItem.rightBarButtonItem = UIBarButtonItem(title: "清空", style: .plain, target: self, action: #selector(clearHistoryTapped))
         }
     }
     override func viewWillAppear(_ animated: Bool) { super.viewWillAppear(animated); refresh() }
     private func refresh() {
         if localMode {
             resume.isHidden = true
-            do {
-                comics = try environment.localLibrary.books().map { try environment.localLibrary.summary(for: $0) }
-                collection.reloadData()
-                status(comics.isEmpty ? "本地书架空空的，点击导入添加图片、文件夹、ZIP/CBZ、EPUB、PDF 或 Kindle" : "")
-            } catch { status(error.localizedDescription) }
+            Task { [weak self] in
+                guard let self else { return }
+                do {
+                    let series = try await self.environment.localLibrary.series()
+                    self.comics = series.compactMap { try? self.environment.localLibrary.summary(for: $0) }
+                    self.collection.reloadData()
+                    self.status(self.comics.isEmpty ? "本地书架空空的，点击导入添加图片、文件夹、ZIP/CBZ、EPUB、PDF 或 Kindle" : "")
+                } catch { self.status(error.localizedDescription) }
+            }
             return
         }
         comics = (historyOnly ? environment.library.history : environment.library.favorites).map(\.summary)
@@ -154,7 +160,8 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     @objc private func importImages() {
         if let importTask { importTask.cancel(); return }
         let menu = UIAlertController(title: "导入本地漫画", message: nil, preferredStyle: .actionSheet)
-        menu.addAction(UIAlertAction(title: "图片文件", style: .default) { [weak self] _ in self?.pickImport(.images) })
+        menu.addAction(UIAlertAction(title: "批量导入多文件 (ZIP/EPUB/PDF)", style: .default) { [weak self] _ in self?.pickBatchImport() })
+        menu.addAction(UIAlertAction(title: "图片文件 (合并为一卷)", style: .default) { [weak self] _ in self?.pickImport(.images) })
         menu.addAction(UIAlertAction(title: "图片文件夹", style: .default) { [weak self] _ in self?.pickImport(.folder) })
         menu.addAction(UIAlertAction(title: "ZIP / CBZ 压缩包", style: .default) { [weak self] _ in self?.pickImport(.archive) })
         menu.addAction(UIAlertAction(title: "EPUB 电子书", style: .default) { [weak self] _ in self?.pickImport(.epub) })
@@ -167,6 +174,13 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         menu.addAction(UIAlertAction(title: "取消", style: .cancel))
         menu.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.first
         present(menu, animated: true)
+    }
+    private func pickBatchImport() {
+        let types: [UTType] = [.zip, .epub, .pdf, .data]
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: false)
+        picker.allowsMultipleSelection = true
+        picker.delegate = self
+        present(picker, animated: true)
     }
     private func pickImport(_ kind: ImportKind) {
         importKind = kind
@@ -182,11 +196,31 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             types = available.count == 3 ? available : [.data]
         }
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: kind == .images)
-        picker.allowsMultipleSelection = kind == .images; picker.delegate = self
+        picker.allowsMultipleSelection = kind != .folder
+        picker.delegate = self
         present(picker, animated: true)
     }
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        confirmImport(urls, kind: importKind, picker: controller)
+        guard !urls.isEmpty else { return }
+        if urls.count > 1 && importKind != .images {
+            var urlMap: [String: URL] = [:]
+            let candidates = urls.enumerated().compactMap { idx, url -> BatchImportCandidate? in
+                urlMap[url.path] = url
+                return try? BatchImportCandidate(
+                    fileName: url.lastPathComponent,
+                    fileId: url.path,
+                    format: url.pathExtension,
+                    selectionIndex: idx
+                )
+            }
+            let confirmVC = BatchImportConfirmationViewController(candidates: candidates, urlMap: urlMap) { [weak self] groups, finalUrlMap in
+                self?.beginBatchImport(groups: groups, urlMap: finalUrlMap)
+            }
+            let nav = UINavigationController(rootViewController: confirmVC)
+            present(nav, animated: true)
+        } else {
+            confirmImport(urls, kind: importKind, picker: controller)
+        }
     }
     private func confirmImport(_ urls: [URL], kind: ImportKind, picker: UIViewController? = nil) {
         guard !urls.isEmpty else { return }
@@ -208,6 +242,39 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         if let picker, presentedViewController === picker {
             picker.dismiss(animated: true) { [weak self] in self?.present(alert, animated: true) }
         } else { present(alert, animated: true) }
+    }
+    private func beginBatchImport(groups: [BatchImportGroup], urlMap: [String: URL]) {
+        let library = environment.localLibrary
+        status("正在准备批量导入…，再次点击导入可取消")
+        var currentWorker: BatchImportWorker?
+        importTask = Task { [weak self] in
+            do {
+                guard let self else { return }
+                let sessionURL = library.directory.appendingPathComponent("batch_import_session.json")
+                let session = try BatchImportSession(file: sessionURL)
+                let worker = BatchImportWorker(
+                    library: library,
+                    session: session,
+                    isReadableImage: LocalImageProbe.isReadable,
+                    inspectPdf: PdfRenderer.inspect,
+                    renderCover: { try PdfRenderer.render($0, pageIndex: 0, maximumDimension: 720, quality: 0.85) }
+                )
+                currentWorker = worker
+                let summary = try await worker.execute(groups: groups, urlMap: urlMap) { [weak self] progress in
+                    Task { @MainActor in
+                        self?.status("正在导入 \(progress.itemName) (\(progress.itemIndex + 1)/\(progress.totalItemsInGroup))…")
+                    }
+                }
+                self.shelfMode.selectedSegmentIndex = 1
+                self.refresh()
+                self.status(summary.failedCount > 0
+                    ? "导入完成：\(summary.succeededCount) 卷成功，\(summary.failedCount) 卷失败"
+                    : "批量导入完成，共 \(summary.succeededCount) 卷")
+            } catch {
+                self?.status(error is CancellationError ? "已取消导入，原文件未改动" : error.localizedDescription)
+            }
+            self?.importTask = nil
+        }
     }
     private func beginImport(_ urls: [URL], title: String, kind: ImportKind) {
         let library = environment.localLibrary
@@ -252,9 +319,84 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     }
     deinit { importTask?.cancel() }
     @objc private func continueReading() { if let recent = environment.library.history.first { open(recent.summary) } }
+    @objc private func clearHistoryTapped() {
+        guard !comics.isEmpty else { return }
+        let alert = UIAlertController(
+            title: "清空全部阅读历史？",
+            message: "所有已读章节记录都会被清空，书架收藏不受影响。",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "清空", style: .destructive) { [weak self] _ in
+            guard let self else { return }
+            try? self.environment.library.clearHistory()
+            self.environment.notifyLibraryChanged()
+            self.refresh()
+        })
+        present(alert, animated: true)
+    }
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        guard !historyOnly, !localMode else { return nil }
         let comic = comics[indexPath.item]
+        if historyOnly {
+            return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+                let deleteAction = UIAction(title: "删除此条历史", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+                    guard let self else { return }
+                    try? self.environment.library.deleteHistory(for: comic)
+                    if comic.sourceId == "local" {
+                        Task { try? await self.environment.localLibrary.catalogStore.removeTombstones(forSeriesId: comic.comicId) }
+                    }
+                    self.environment.notifyLibraryChanged()
+                    self.refresh()
+                }
+                return UIMenu(children: [deleteAction])
+            }
+        }
+        if localMode {
+            return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+                let manageAction = UIAction(title: "管理分卷", image: UIImage(systemName: "square.stack.3d.up")) { [weak self] _ in
+                    guard let self else { return }
+                    let vm = VolumeManagerViewController(seriesId: comic.comicId, seriesTitle: comic.title, environment: self.environment) { [weak self] in
+                        self?.refresh()
+                    }
+                    let nav = UINavigationController(rootViewController: vm)
+                    self.present(nav, animated: true)
+                }
+                let renameAction = UIAction(title: "修改作品名称", image: UIImage(systemName: "pencil")) { [weak self] _ in
+                    guard let self else { return }
+                    let alert = UIAlertController(title: "修改作品名称", message: nil, preferredStyle: .alert)
+                    alert.addTextField { $0.text = comic.title; $0.clearButtonMode = .whileEditing }
+                    alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+                    alert.addAction(UIAlertAction(title: "确定", style: .default) { [weak self, weak alert] _ in
+                        guard let self, let title = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty else { return }
+                        Task {
+                            _ = try? await self.environment.localLibrary.renameSeries(id: comic.comicId, newTitle: title)
+                            self.refresh()
+                        }
+                    })
+                    self.present(alert, animated: true)
+                }
+                let deleteAction = UIAction(title: "删除本地漫画", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+                    guard let self else { return }
+                    let alert = UIAlertController(
+                        title: "删除本地漫画",
+                        message: "将从书架和 App 本地存储中移除此漫画，原导入文件不受影响。\n（若以后重新导入相同文件，阅读历史和进度将自动恢复）",
+                        preferredStyle: .actionSheet
+                    )
+                    alert.addAction(UIAlertAction(title: "删除 App 副本", style: .destructive) { [weak self] _ in
+                        guard let self else { return }
+                        Task {
+                            try? await self.environment.localLibrary.deleteSeries(id: comic.comicId)
+                            try? self.environment.library.setFavorite(comic, favorite: false)
+                            self.environment.notifyLibraryChanged()
+                            self.refresh()
+                        }
+                    })
+                    alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+                    self.present(alert, animated: true)
+                }
+                return UIMenu(children: [manageAction, renameAction, deleteAction])
+            }
+        }
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
             UIMenu(children: [UIAction(title: "移出收藏", image: UIImage(systemName: "trash"), attributes: .destructive) { _ in
                 guard let self else { return }

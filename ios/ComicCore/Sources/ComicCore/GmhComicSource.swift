@@ -10,23 +10,30 @@ public enum GmhSourceError: Error, Equatable, Sendable {
 
 public actor GmhComicSource: ComicSource {
     public nonisolated let id = "gmh"
-    public nonisolated let name = "G社漫画"
-    public nonisolated let referer = "https://m.g-mh.org/"
+    public nonisolated let name: String
+    public nonisolated let referer: String
 
-    private static let baseURL = "https://m.g-mh.org"
-    private static let mangaAPI = "https://v2.apikk.top/api/v2/manga/get?mid=%@&mode=all"
-    private static let chapterAPI = "https://v2.apikk.top/api/v2/chapter/getinfo?m=%@&c=%@"
+    private let baseURL: String
+    private let config: SourceConfigItem
+    private let transport: any HTTPTransport
+
     private static let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     private static let cardPattern = #"<a[^>]+href="([^"]*?/manga/[^"]+)"[\s\S]{0,900}?<img[^>]+(?:src|data-src)="([^"]+)"[\s\S]{0,900}?<h3[^>]*class="[^"]*cardtitle[^"]*"[^>]*>([\s\S]*?)</h3>"#
     private static let filterPattern = #"<a[^>]+href=["']/(manga-(genre|tag)/([^/"']+))["'][^>]*>[\s\S]*?<button[^>]*>([\s\S]*?)</button>[\s\S]*?</a>"#
     private static let sourceAlphabet = "_-9876543210abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     private static let targetAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 
-    private let transport: any HTTPTransport
     private var midCache: [String: String] = [:]
     private var mangaCache: [String: [String: Any]] = [:]
 
-    public init(transport: any HTTPTransport = URLSessionHTTPTransport()) {
+    public init(
+        config: SourceConfigItem = SourceConfigDefaults.gmh(enabled: true),
+        transport: any HTTPTransport = URLSessionHTTPTransport()
+    ) {
+        self.config = config
+        self.name = config.name
+        self.referer = config.referer.isEmpty ? "\(config.baseUrl)/" : config.referer
+        self.baseURL = config.baseUrl
         self.transport = transport
     }
 
@@ -36,7 +43,8 @@ public actor GmhComicSource: ComicSource {
 
     public func search(keyword: String, page _: Int) async throws -> [ComicSummary] {
         let keyword = formEncode(SearchRules.trim(keyword))
-        return try await parseCards(fetch(absolute("/s/\(keyword)")))
+        let path = config.route("search").replacingOccurrences(of: "{keyword}", with: keyword)
+        return try await parseCards(fetch(absolute(path)))
     }
 
     public func detail(comicId: String) async throws -> ComicDetail {
@@ -64,10 +72,13 @@ public actor GmhComicSource: ComicSource {
             let title = clean(string(attributes["title"]))
             let slug = string(attributes["slug"])
             guard !chapterID.isEmpty, !title.isEmpty, !slug.isEmpty else { continue }
+            let chapterPath = config.route("chapter")
+                .replacingOccurrences(of: "{comicId}", with: rawID)
+                .replacingOccurrences(of: "{chapterSlug}", with: slug)
             let chapter = Chapter(
                 chapterId: chapterID,
                 title: title,
-                url: absolute("/manga/\(rawID)/\(slug)"),
+                url: absolute(chapterPath),
                 chapterSlot: int(attributes["order"], default: index)
             )
             all.append(chapter)
@@ -89,7 +100,10 @@ public actor GmhComicSource: ComicSource {
         }
         let chapterID = string(item["id"])
         guard !chapterID.isEmpty else { throw GmhSourceError.chapterNotFound(slug) }
-        let root = try await jsonObject(fetch(String(format: Self.chapterAPI, mid, chapterID)))
+        let chapterApi = config.route("chapterApi")
+            .replacingOccurrences(of: "{mid}", with: mid)
+            .replacingOccurrences(of: "{chapterId}", with: chapterID)
+        let root = try await jsonObject(fetch(chapterApi.hasPrefix("http") ? chapterApi : absolute(chapterApi)))
         guard
             let data = root["data"] as? [String: Any],
             let info = data["info"] as? [String: Any]
@@ -157,10 +171,13 @@ public actor GmhComicSource: ComicSource {
     }
 
     private func categoryURL(region: String, page: Int) -> String {
-        let genres = ["kr": "kr", "hots": "hots", "cn": "cn", "jp": "jp"]
-        let genre = genres[region] ?? ""
+        let genre = config.filter("genre.\(region.isEmpty ? "all" : region)")
+        let genrePath = genre.isEmpty ? "" : "-genre/\(genre)"
         let pagePath = page <= 1 ? "" : "/page/\(page)"
-        return absolute("/manga\(genre.isEmpty ? "" : "-genre/\(genre)")\(pagePath)")
+        let path = config.route("category")
+            .replacingOccurrences(of: "{genrePath}", with: genrePath)
+            .replacingOccurrences(of: "{pagePath}", with: pagePath)
+        return absolute(path)
     }
 
     private func fetch(_ urlString: String) async throws -> String {
@@ -172,7 +189,8 @@ public actor GmhComicSource: ComicSource {
     }
 
     private func fetchDetailHTML(_ rawID: String) async throws -> String {
-        let html = try await fetch(absolute("/manga/\(rawID)"))
+        let path = config.route("detail").replacingOccurrences(of: "{comicId}", with: rawID)
+        let html = try await fetch(absolute(path))
         let mid = firstMatch(#"data-mid="(\d+)""#, in: html)
         if !mid.isEmpty { midCache[rawID] = mid }
         return html
@@ -189,7 +207,8 @@ public actor GmhComicSource: ComicSource {
 
     private func mangaData(_ mid: String) async throws -> [String: Any] {
         if let cached = mangaCache[mid] { return cached }
-        let root = try await jsonObject(fetch(String(format: Self.mangaAPI, mid)))
+        let mangaApi = config.route("mangaApi").replacingOccurrences(of: "{mid}", with: mid)
+        let root = try await jsonObject(fetch(mangaApi.hasPrefix("http") ? mangaApi : absolute(mangaApi)))
         guard let data = root["data"] as? [String: Any] else { throw GmhSourceError.invalidResponse("G社漫画详情解析失败") }
         if let slug = data["slug"] as? String, !slug.isEmpty { midCache[slug] = mid }
         mangaCache[mid] = data
@@ -316,7 +335,7 @@ public actor GmhComicSource: ComicSource {
     private func absolute(_ value: String) -> String {
         if value.hasPrefix("http://") || value.hasPrefix("https://") { return value }
         if value.hasPrefix("//") { return "https:\(value)" }
-        return Self.baseURL + (value.hasPrefix("/") ? value : "/\(value)")
+        return baseURL + (value.hasPrefix("/") ? value : "/\(value)")
     }
 
     private func formEncode(_ value: String) -> String {

@@ -21,12 +21,19 @@ final class EpubTextReaderViewController: UIViewController, UIAdaptivePresentati
 
     init(comic: ComicSummary, chapters: [Chapter], session: EpubTextSession, locator: TextLocator?, environment: AppEnvironment) {
         self.comic = comic; self.chapters = chapters; self.session = session; self.environment = environment
-        // A stale locator must not restore its percent into the fallback spine.
-        self.locator = locator.flatMap { $0.bookID == session.book.id && $0.chapterIndex == session.chapterIndex && $0.spineIndex == session.spineIndex && $0.resourceHref == session.entry.fullZipPath ? $0 : nil }
+        let volLocator = locator?.toVolumeLocator(volumeId: session.book.id, volumeChapterIndex: session.chapterIndex)
+        self.locator = volLocator.flatMap { $0.bookID == session.book.id && $0.chapterIndex == session.chapterIndex && $0.spineIndex == session.spineIndex && $0.resourceHref == session.entry.fullZipPath ? $0 : nil }
         settings = environment.textPreferences.load()
         super.init(nibName: nil, bundle: nil); hidesBottomBarWhenPushed = true
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
+    private var currentGlobalChapterIndex: Int {
+        if let chapters = session.book.chapters, chapters.indices.contains(session.chapterIndex) {
+            let chId = chapters[session.chapterIndex].id
+            return self.chapters.firstIndex(where: { $0.chapterId == chId }) ?? session.chapterIndex
+        }
+        return self.chapters.firstIndex(where: { $0.chapterId == session.book.id }) ?? session.chapterIndex
+    }
     override func viewDidLoad() {
         super.viewDidLoad(); view.backgroundColor = Palette.background
         controls.axis = .vertical; controls.spacing = 8; controls.backgroundColor = Palette.background.withAlphaComponent(0.96)
@@ -128,11 +135,12 @@ final class EpubTextReaderViewController: UIViewController, UIAdaptivePresentati
     }
     private func load() {
         readable = false; state.isHidden = false; state.setTitle("正在加载正文…", for: .normal)
-        title = chapters[session.chapterIndex].title
+        let gIdx = currentGlobalChapterIndex
+        title = chapters.indices.contains(gIdx) ? chapters[gIdx].title : ""
         let pages = session.book.chapters![session.chapterIndex].pages
         let localIndex = pages.firstIndex(of: session.book.pages[session.spineIndex]) ?? 0
         sectionLabel.text = "\(localIndex + 1)/\(pages.count) 节"
-        sectionLabel.accessibilityValue = "第\(session.chapterIndex + 1)章，第\(localIndex + 1)节"
+        sectionLabel.accessibilityValue = "第\(gIdx + 1)章，第\(localIndex + 1)节"
         progress.value = Float((locator?.scrollPercentage ?? 0) * 100)
         progress.accessibilityValue = "\(Int(progress.value))%"
         overlayChanged()
@@ -140,32 +148,107 @@ final class EpubTextReaderViewController: UIViewController, UIAdaptivePresentati
     }
     private func save() {
         guard readable, let locator else { return }
+        let gIdx = currentGlobalChapterIndex
+        guard chapters.indices.contains(gIdx) else { return }
+        let seriesLocator = locator.toSeriesLocator(seriesId: comic.comicId, globalChapterIndex: gIdx)
         do {
-            try environment.library.saveTextReading(comic, chapter: chapters[session.chapterIndex], chapterIndex: session.chapterIndex, locator: locator)
+            try environment.library.saveTextReading(comic, chapter: chapters[gIdx], chapterIndex: gIdx, locator: seriesLocator)
             environment.notifyLibraryChanged()
         } catch { state.isHidden = false; state.setTitle("阅读位置保存失败：\(error.localizedDescription)", for: .normal) }
     }
-    private func selectChapter(_ index: Int) {
+    private func selectChapter(_ index: Int, atEnd: Bool = false) {
         guard chapters.indices.contains(index) else { return }
         save()
-        do {
-            let saved = environment.library.textPosition(for: comic, chapterID: chapters[index].chapterId)
-            session = try EpubTextSession(book: session.book, chapterIndex: index, locator: saved)
-            locator = saved.flatMap { $0.spineIndex == session.spineIndex && $0.resourceHref == session.entry.fullZipPath && $0.bookID == session.book.id && $0.chapterIndex == index ? $0 : nil }
-            load(); environment.readingHabits.userDidRead()
-        } catch { showError(error) }
+        let targetChapter = chapters[index]
+        let library = environment.localLibrary
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let target = try await library.readingTarget(seriesId: self.comic.comicId, chapterId: targetChapter.chapterId)
+                if target.kind == .comic {
+                    self.switchToComicReader(chapterIndex: target.globalChapterIndex, atEnd: atEnd)
+                    return
+                }
+                let book = try library.book(id: target.volumeId)
+                let saved = self.environment.library.textPosition(for: self.comic, chapterID: targetChapter.chapterId)
+                let volLocator: TextLocator?
+                if let saved {
+                    volLocator = saved.toVolumeLocator(volumeId: target.volumeId, volumeChapterIndex: target.volumeChapterIndex)
+                } else if atEnd {
+                    let spineCount = book.chapters?[target.volumeChapterIndex].pages.count ?? 1
+                    volLocator = TextLocator(bookID: target.volumeId, chapterIndex: target.volumeChapterIndex,
+                                             spineIndex: max(0, spineCount - 1), resourceHref: "", anchorID: "", scrollPercentage: 1.0)
+                } else {
+                    volLocator = TextLocator(bookID: target.volumeId, chapterIndex: target.volumeChapterIndex,
+                                             spineIndex: 0, resourceHref: "", anchorID: "", scrollPercentage: 0.0)
+                }
+                self.session = try EpubTextSession(book: book, chapterIndex: target.volumeChapterIndex, locator: volLocator)
+                self.locator = volLocator
+                self.load()
+                self.environment.readingHabits.userDidRead()
+            } catch {
+                self.showError(error)
+            }
+        }
+    }
+    private func switchToComicReader(chapterIndex: Int, atEnd: Bool) {
+        let reader = ReaderViewController(comic: comic, chapters: chapters, chapterIndex: chapterIndex, directoryIncomplete: false, environment: environment)
+        if let nav = navigationController {
+            var vcs = nav.viewControllers
+            if let idx = vcs.lastIndex(where: { $0 === self }) {
+                vcs[idx] = reader
+                nav.setViewControllers(vcs, animated: false)
+            }
+        }
     }
     private func move(_ delta: Int) {
-        save(); guard session.moveSpine(delta: delta) else { return }
-        locator = nil; load(); environment.readingHabits.userDidRead()
+        save()
+        if session.moveSpine(delta: delta) {
+            locator = nil; load(); environment.readingHabits.userDidRead()
+            return
+        }
+        if delta == 1 {
+            nextChapter()
+        } else if delta == -1 {
+            previousChapter()
+        }
     }
-    @objc private func previousChapter() { selectChapter(session.chapterIndex - 1) }
-    @objc private func nextChapter() { selectChapter(session.chapterIndex + 1) }
+    @objc private func previousChapter() {
+        let current = currentGlobalChapterIndex
+        guard current > 0 else {
+            boundary()
+            return
+        }
+        selectChapter(current - 1, atEnd: true)
+    }
+    @objc private func nextChapter() {
+        let current = currentGlobalChapterIndex
+        guard current + 1 < chapters.count else {
+            boundary()
+            return
+        }
+        selectChapter(current + 1, atEnd: false)
+    }
+    private func boundary() {
+        guard presentedViewController == nil else { return }
+        let alert = UIAlertController(title: "没有更多章节了", message: nil, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "确定", style: .default))
+        present(alert, animated: true)
+    }
     @objc private func previousSpine() { move(-1) }
     @objc private func nextSpine() { move(1) }
     @objc private func retry() { load() }
     @objc private func seek() { content.restore(anchor: "", percent: Double(progress.value) / 100); environment.readingHabits.userDidRead() }
-    @objc private func detail() { save(); navigationController?.pushViewController(DetailViewController(comic: comic, environment: environment), animated: true) }
+    @objc private func detail() {
+        save()
+        if let nav = navigationController {
+            if let detailVC = nav.viewControllers.first(where: { $0 is DetailViewController }) {
+                nav.popToViewController(detailVC, animated: true)
+                return
+            }
+        }
+        navigationController?.pushViewController(DetailViewController(comic: comic, environment: environment), animated: true)
+    }
     private func overlayChanged() { environment.readingHabits.overlayVisibilityChanged(isVisible: !readable || !controls.isHidden || presentedViewController != nil) }
     private func presentPanel(_ controller: UIViewController) {
         environment.readingHabits.overlayVisibilityChanged(isVisible: true)
@@ -174,7 +257,9 @@ final class EpubTextReaderViewController: UIViewController, UIAdaptivePresentati
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) { overlayChanged() }
     @objc private func directory() {
         let items = chapters
-        let controller = ChapterListViewController(load: { items }, selectedID: chapters[session.chapterIndex].chapterId, defaults: environment.defaults,
+        let current = currentGlobalChapterIndex
+        let currentChapterId = chapters.indices.contains(current) ? chapters[current].chapterId : nil
+        let controller = ChapterListViewController(load: { items }, selectedID: currentChapterId, defaults: environment.defaults,
             onDismiss: { [weak self] in self?.overlayChanged() }, onSelect: { [weak self] _, index in self?.selectChapter(index) })
         presentPanel(ChapterListViewController.navigation(controller))
     }

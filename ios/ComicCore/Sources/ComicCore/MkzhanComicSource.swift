@@ -2,22 +2,46 @@ import Foundation
 
 public struct MkzhanComicSource: ComicSource {
     public let id = "mkzhan"
-    public let name = "漫客栈"
-    public let referer = "https://www.mkzhan.com/"
+    public let name: String
+    public let referer: String
+    private let baseURL: String
+    private let config: SourceConfigItem
     private let transport: any HTTPTransport
-    public init(transport: any HTTPTransport = URLSessionHTTPTransport()) { self.transport = transport }
+
+    public init(
+        config: SourceConfigItem = SourceConfigDefaults.mkzhan(enabled: true),
+        transport: any HTTPTransport = URLSessionHTTPTransport()
+    ) {
+        self.config = config
+        self.name = config.name
+        self.referer = config.referer.isEmpty ? "\(config.baseUrl)/" : config.referer
+        self.baseURL = config.baseUrl
+        self.transport = transport
+    }
 
     public func latest(page: Int) async throws -> [ComicSummary] {
-        try cards(await fetch("/category" + (page > 1 ? "?page=\(page)" : "")))
+        let pageQuery = page > 1 ? "?page=\(page)" : ""
+        let route = config.route("latest").isEmpty ? "/category{pageQuery}" : config.route("latest")
+        let path = route
+            .replacingOccurrences(of: "{pageQuery}", with: pageQuery)
+            .replacingOccurrences(of: "{query}", with: pageQuery)
+            .replacingOccurrences(of: "{page}", with: String(page))
+        return try cards(await fetch(path))
     }
+
     public func category(filters: [String: String], page: Int) async throws -> [ComicSummary] {
         var query = "is_free=1"
         for key in ["theme_id", "finish", "audience", "copyright"] {
             if let value = filters[key], !value.isEmpty, value != "all" { query += "&\(key)=\(value)" }
         }
         if page > 1 { query += "&page=\(page)" }
-        return try cards(await fetch("/category?" + query))
+        let route = config.route("category").isEmpty ? "/category?{query}" : config.route("category")
+        let path = route
+            .replacingOccurrences(of: "{query}", with: query)
+            .replacingOccurrences(of: "{page}", with: String(page))
+        return try cards(await fetch(path.contains("?") ? path : path + "?" + query))
     }
+
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()
         guard page <= 1 else { return [] }
@@ -26,8 +50,10 @@ public struct MkzhanComicSource: ComicSource {
             if (65...90).contains(byte) || (97...122).contains(byte) || (48...57).contains(byte) || [45, 46, 95, 42].contains(byte) { return String(UnicodeScalar(byte)) }
             return String(format: "%%%02X", byte)
         }.joined()
-        return try cards(await fetch("/search/?keyword=" + encoded))
+        let path = config.route("search").replacingOccurrences(of: "{keyword}", with: encoded)
+        return try cards(await fetch(path))
     }
+
     public func filterGroups() async throws -> [SourceFilterGroup] {
         let html = try await fetch("/category")
         let keys = ["题材": "theme_id", "进度": "finish", "受众": "audience", "版权": "copyright"]
@@ -46,9 +72,11 @@ public struct MkzhanComicSource: ComicSource {
         guard !result.isEmpty else { throw parseError("分类解析失败") }
         return result
     }
+
     public func detail(comicId: String) async throws -> ComicDetail {
         let rawID = rawComicID(comicId)
-        let html = try await fetch("/\(rawID)/")
+        let path = config.route("detail").replacingOccurrences(of: "{comicId}", with: rawID)
+        let html = try await fetch(path)
         guard isDetailPage(html) else { throw parseError("详情解析失败") }
         var title = clean(first(#"<h1[^>]*>([\s\S]*?)</h1>"#, html))
         if title.isEmpty { title = clean(first(#"<title>([\s\S]*?)(?:_|-)"#, html)) }
@@ -62,15 +90,21 @@ public struct MkzhanComicSource: ComicSource {
         if description.isEmpty { description = clean(first(#"<p class="intro">([\s\S]*?)</p>"#, html)) }
         return .init(summary: .init(sourceId: id, comicId: id + ":" + rawID, title: title, coverUrl: absolute(cover), subtitle: latest), author: author, status: status, description: description, latestChapter: latest, chapters: catalog(html))
     }
+
     public func chapters(comicId: String) async throws -> [Chapter] {
-        let html = try await fetch("/\(rawComicID(comicId))/")
+        let rawID = rawComicID(comicId)
+        let path = config.route("detail").replacingOccurrences(of: "{comicId}", with: rawID)
+        let html = try await fetch(path)
         guard isDetailPage(html) else { throw parseError("目录解析失败") }
         return catalog(html)
     }
+
     public func chapter(url: String) async throws -> ChapterPage {
         let path = url.hasPrefix("http") ? URL(string: url)?.path ?? url : (url.hasPrefix("/") ? url : "/" + url)
         guard let ids = matches(#"/?(\d+)/(\d+)(?:\.html)?/?"#, decode(path)).first else { throw parseError("章节解析失败：无效地址") }
-        let api = "https://comic.mkzcdn.com/chapter/content/v1/?chapter_id=\(ids[2])&comic_id=\(ids[1])&quality=1&type=1&format=0&uid=&sign="
+        let api = config.route("chapterApi")
+            .replacingOccurrences(of: "{comicId}", with: ids[1])
+            .replacingOccurrences(of: "{chapterId}", with: ids[2])
         let html = try await fetch(api)
         guard let root = try? JSONSerialization.jsonObject(with: Data(html.utf8)) as? [String: Any], let data = root["data"] as? [String: Any], let pages = data["page"] as? [Any] else { throw parseError("章节解析失败：无效图片响应") }
         var seen = Set<String>()
@@ -160,7 +194,7 @@ public struct MkzhanComicSource: ComicSource {
         guard !value.isEmpty else { return "" }
         if value.hasPrefix("http://") || value.hasPrefix("https://") { return value }
         if value.hasPrefix("//") { return "https:" + value }
-        return referer + (value.hasPrefix("/") ? String(value.dropFirst()) : value)
+        return baseURL + (value.hasPrefix("/") ? value : "/" + value)
     }
     private func decode(_ value: String) -> String { value.replacingOccurrences(of: "&amp;", with: "&").replacingOccurrences(of: "&quot;", with: "\"").replacingOccurrences(of: #"\/"#, with: "/") }
     private func clean(_ value: String) -> String {

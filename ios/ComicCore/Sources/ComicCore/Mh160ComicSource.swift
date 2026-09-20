@@ -16,34 +16,50 @@ extension Mh160SourceError: LocalizedError {
 
 public actor Mh160ComicSource: ComicSource {
     public nonisolated let id = "mh160"
-    public nonisolated let name = "漫画160"
-    public nonisolated let referer = "https://www.mh160mh.com/"
+    public nonisolated let name: String
+    public nonisolated let referer: String
 
-    private static let baseURL = "https://www.mh160mh.com"
+    private let baseURL: String
+    private let config: SourceConfigItem
+    private let transport: any HTTPTransport
+
     private static let imageBaseURL = "http://auto.mangafiles.com:88"
     private static let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     private static let filterPriority = ["state", "subject", "region", "version", "audience", "special", "color", "quality", "letter"]
 
-    private let transport: any HTTPTransport
-
-    public init(transport: any HTTPTransport = URLSessionHTTPTransport()) {
+    public init(
+        config: SourceConfigItem = SourceConfigDefaults.mh160(enabled: true),
+        transport: any HTTPTransport = URLSessionHTTPTransport()
+    ) {
+        self.config = config
+        self.name = config.name
+        self.referer = config.referer.isEmpty ? "\(config.baseUrl)/" : config.referer
+        self.baseURL = config.baseUrl
         self.transport = transport
     }
 
     public func latest(page: Int) async throws -> [ComicSummary] {
-        let path = "/kanmanhua/all/" + (page > 1 ? "\(page).html" : "")
+        let pagePath = page > 1 ? "\(page).html" : ""
+        let path = config.route("latest")
+            .replacingOccurrences(of: "{pagePath}", with: pagePath)
+            .replacingOccurrences(of: "{page}", with: String(page))
         return try parseCards(await fetch(absolute(path)))
     }
 
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         let keyword = formEncode(SearchRules.trim(keyword))
         let pageQuery = page > 1 ? "&page=\(page)" : ""
-        return try parseCards(await fetch(absolute("/statics/searchelxt1e1.aspx?key=\(keyword)\(pageQuery)")))
+        let path = config.route("search")
+            .replacingOccurrences(of: "{keyword}", with: keyword)
+            .replacingOccurrences(of: "{pageQuery}", with: pageQuery)
+            .replacingOccurrences(of: "{page}", with: String(page))
+        return try parseCards(await fetch(absolute(path)))
     }
 
     public func detail(comicId: String) async throws -> ComicDetail {
         let rawID = rawComicID(comicId)
-        let html = try await fetch(absolute("/kanmanhua/\(rawID)/"))
+        let path = config.route("detail").replacingOccurrences(of: "{comicId}", with: rawID)
+        let html = try await fetch(absolute(path))
         let parsed = try parseDetail(rawID: rawID, html: html)
         let chapters = parseChapters(html, comicID: rawID)
         let primaryTitle = clean(firstMatch(#"<div[^>]*class=[\"'][^\"']*mh-date-info-name[^\"']*[\"'][^>]*>[\s\S]*?<h[1-6][^>]*>([\s\S]*?)</h[1-6]>"#, in: html) ?? "")
@@ -60,7 +76,8 @@ public actor Mh160ComicSource: ComicSource {
 
     public func chapters(comicId: String) async throws -> [Chapter] {
         let rawID = rawComicID(comicId)
-        let html = try await fetch(absolute("/kanmanhua/\(rawID)/"))
+        let path = config.route("detail").replacingOccurrences(of: "{comicId}", with: rawID)
+        let html = try await fetch(absolute(path))
         let result = parseChapters(html, comicID: rawID)
         guard !result.isEmpty || hasClass("cy_plist", in: html) else {
             throw Mh160SourceError.invalidResponse("漫画160目录解析失败")
@@ -98,7 +115,11 @@ public actor Mh160ComicSource: ComicSource {
             break
         }
         let pagePath = page > 1 ? "\(page).html" : ""
-        return try parseCards(await fetch(absolute("/kanmanhua/\(filterPath)/\(pagePath)")))
+        let path = config.route("category")
+            .replacingOccurrences(of: "{filterPath}", with: filterPath)
+            .replacingOccurrences(of: "{pagePath}", with: pagePath)
+            .replacingOccurrences(of: "{page}", with: String(page))
+        return try parseCards(await fetch(absolute(path)))
     }
 
     private func fetch(_ urlString: String) async throws -> String {
@@ -311,7 +332,7 @@ public actor Mh160ComicSource: ComicSource {
         let value = htmlDecode(rawValue)
         if value.hasPrefix("http://") || value.hasPrefix("https://") { return value }
         if value.hasPrefix("//") { return "https:\(value)" }
-        return Self.baseURL + (value.hasPrefix("/") ? value : "/\(value)")
+        return baseURL + (value.hasPrefix("/") ? value : "/\(value)")
     }
 
     private func absoluteImage(_ rawValue: String) -> String {
