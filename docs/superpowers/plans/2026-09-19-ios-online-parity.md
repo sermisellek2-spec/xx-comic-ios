@@ -358,7 +358,7 @@ XCTAssertEqual(try LibraryStore(directory: directory).textPosition(for: comic, c
 
 **Interfaces:** `EpubReaderResource` 公开静态 `url(bookID:String,path:String,fragment:String?=nil)throws->URL`、`path(from:URL,bookID:String)throws->String`、`mimeType(path:String,publication:EpubPublication)->String`。正文资源使用独立scheme `xxcomic-book://<UUID小写>/<按路径组件编码的ZIP路径>`；不与图片页URL混用。url生成前验证UUID与非空规范路径；path解析要求精确scheme、匹配bookUUID小写host、无userinfo/port/query、单次percent解码，允许fragment但不计入资源路径；拒绝NUL、反斜线、绝对/空路径、点/父段、空段、编码分隔符、编码点段。加号是路径文字，不用Java URLDecoder再次解码已经规范的ZIP路径。literal `%20` 文件名生成 `%2520` 后必须恢复成literal `%20`，不能双解码。MIME优先按manifest规范路径匹配，其次只支持已知扩展html/xhtml/css/jpg/jpeg/png/gif/webp/svg/ttf/otf/woff/woff2，未知为application/octet-stream；manifestMIME不直接拼进HTML。
 
-- [ ] 真实RED覆盖同书URL与中文/空格/加号/百分号路径roundtrip、fragment、外书UUID、host欺骗、userinfo/port/query、编码斜杠/点段/反斜线/双解码案例。资源契约只定位包内条目，不自动请求网络。
+- [ ] 真实RED覆盖同书URL与中文/空格/加号/百分号路径roundtrip、fragment、外书UUID、host欺骗（包括percent编码host，用percentEncodedHost核对原始host）、userinfo/port/query、编码斜杠/点段/反斜线/双解码案例。资源契约只定位包内条目，不自动请求网络。
 
 ```swift
 let id = "A2DA4DA0-271B-4B86-86E4-814D4DD6249B"
