@@ -123,6 +123,34 @@ final class ManhuaguiTests: XCTestCase {
         let result = try await page(#"<h2>Don't stop</h2><script>SMH.imgData({path:'/a/',files:['one.jpg'],sl:{}})</script>"#)
         XCTAssertEqual(result.imageUrls,["https://eu2.hamreus.com/a/one.jpg?e=&m="])
     }
+    func testPrecedingJavaScriptStringCannotPolluteObjectBoundary() async throws {
+        let result = try await page(#"<script>var label = "{don't"; SMH.imgData({path:"/a/",files:["one.jpg"],sl:{}})</script>"#)
+        XCTAssertEqual(result.imageUrls,["https://eu2.hamreus.com/a/one.jpg?e=&m="])
+    }
+    func testRepeatedInvalidMarkersExhaustSharedScanBudget() throws {
+        for marker in ["function(p,a,c,k,e,d)","SMH.imgData"] {
+            do { _ = try ManhuaguiReader.images(String(repeating:marker,count:6000)); XCTFail("Missing targets must not permit unbounded suffix scans") }
+            catch { XCTAssertTrue(error.localizedDescription.contains("扫描预算"),error.localizedDescription) }
+        }
+    }
+    func testRepeatedInvalidMarkerScanCanBeCancelled() async throws {
+        let input = String(repeating:"function(p,a,c,k,e,d)",count:6000)
+        let task = Task.detached { try ManhuaguiReader.images(input) }
+        try await Task.sleep(nanoseconds:100_000_000)
+        task.cancel()
+        do { _ = try await task.value; XCTFail("Must cancel candidate scanning") }
+        catch { XCTAssertTrue(error is CancellationError,error.localizedDescription) }
+    }
+    func testCleanedEmptyCardAndChapterTitlesFallBack() async throws {
+        for title in ["   ","&lt;b&gt;&lt;/b&gt;"] {
+            let card = "<a class='bcover' href='/comic/1/' title='"+title+"'><img alt='有效标题' src='/a.jpg'></a>"
+            let cards = try await ManhuaguiComicSource(transport:GuiTransport(card)).latest(page:1)
+            XCTAssertEqual(cards.map(\.title),["有效标题"])
+            let directory = "<a href='/comic/1/111.html' title='"+title+"'><span>有效章节</span></a>"
+            let chapters = try await ManhuaguiComicSource(transport:GuiTransport(directory)).chapters(comicId:"1")
+            XCTAssertEqual(chapters.map(\.title),["有效章节"])
+        }
+    }
     func testSearchTrimsOnlyJavaControlAndASCIISpaces() async throws {
         let t = GuiTransport(cards)
         _ = try await ManhuaguiComicSource(transport:t).search(keyword:" \t\u{00A0}书\u{3000}\n ",page:1)

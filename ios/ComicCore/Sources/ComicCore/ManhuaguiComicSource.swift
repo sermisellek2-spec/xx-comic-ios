@@ -59,8 +59,8 @@ public struct ManhuaguiComicSource: ComicSource {
         for link in guiMatches(#"<a[^>]*href=["'](/comic/(\d+)/(\d+)\.html)["'][^>]*>([\s\S]*?)</a>"#,html) {
             try Task.checkCancellation()
             guard link[2] == raw, seen.insert(link[1]).inserted else { continue }
-            let title = guiAttribute("title",link[0])
-            result.append(.init(chapterId:link[3],title:guiClean(title.isEmpty ? link[4] : title),url:absolute(link[1]),chapterSlot:Int32(link[3]).map(Int.init) ?? result.count))
+            let title = guiClean(guiAttribute("title",link[0]))
+            result.append(.init(chapterId:link[3],title:title.isEmpty ? guiClean(link[4]) : title,url:absolute(link[1]),chapterSlot:Int32(link[3]).map(Int.init) ?? result.count))
         }
         return result.sorted { $0.chapterSlot < $1.chapterSlot }
     }
@@ -74,7 +74,7 @@ public struct ManhuaguiComicSource: ComicSource {
         for block in guiMatches(#"<a\b(?=[^>]*\bclass=["'][^"']*\bbcover\b)[^>]*>[\s\S]*?</a>"#,html) {
             try Task.checkCancellation()
             let raw = rawID(guiAttribute("href",block[0])), tag = guiFirst(#"(<img\b[^>]*>)"#,block[0])
-            let attrTitle = guiAttribute("title",block[0]), title = guiClean(attrTitle.isEmpty ? guiAttribute("alt",tag) : attrTitle)
+            let attrTitle = guiClean(guiAttribute("title",block[0])), title = attrTitle.isEmpty ? guiClean(guiAttribute("alt",tag)) : attrTitle
             guard !raw.isEmpty, !title.isEmpty, seen.insert(raw).inserted else { continue }
             result.append(.init(sourceId:id,comicId:id+":"+raw,title:title,coverUrl:absolute(image(tag))))
         }

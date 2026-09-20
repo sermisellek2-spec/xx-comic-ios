@@ -31,17 +31,19 @@ enum ManhuaguiReader {
         try Task.checkCancellation()
         guard depth <= 4 else { throw guiError("解包深度超过4层") }
         let units = Array(text.utf16), ns = text as NSString
-        let braces = try braceEnds(units,budget:&budget)
         var invocations: [Int] = []
         let functions = try NSRegularExpression(pattern:#"function\(p,a,c,k,e,d\)"#)
         for match in functions.matches(in:text,range:NSRange(location:0,length:units.count)) {
+            try Task.checkCancellation()
             let from = NSMaxRange(match.range)
-            guard let brace = units[from...].firstIndex(of:123), let end = braces[brace], end+1 < units.count,
-                  let open = units[(end+1)...].firstIndex(of:40) else { continue }
+            guard let brace = try find(123,in:units,from:from,budget:&budget),
+                  let end = try matchingBrace(units,start:brace,budget:&budget),
+                  let open = try find(40,in:units,from:end+1,budget:&budget) else { continue }
             invocations.append(open)
         }
         var unpacked = false
         for open in invocations {
+            try Task.checkCancellation()
             if let args = try arguments(units,open:open) {
                 unpacked = true
                 if let result = try extract(unpack(args,budget:&budget),depth:depth+1,budget:&budget) { return result }
@@ -51,17 +53,23 @@ enum ManhuaguiReader {
             // Java's legacy invocation fallback is used only when no function invocation parsed.
             let pattern = #"\(\s*(["'])((?:\\.|(?!\1)[\s\S])*)\1\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(["'])((?:\\.|(?!\5)[\s\S])*)\5\s*(?:\.\s*split|\[[^\]]*\])\s*\(\s*(["'])((?:\\.|(?!\7)[\s\S])*)\7\s*\)"#
             for match in try NSRegularExpression(pattern:pattern).matches(in:text,range:NSRange(location:0,length:units.count)) {
+                try Task.checkCancellation()
                 if let args = try arguments(units,open:match.range.location), let result = try extract(unpack(args,budget:&budget),depth:depth+1,budget:&budget) { return result }
             }
         }
         let markers = try NSRegularExpression(pattern:#"SMH(?:\.imgData|\["imgData"\]|\['imgData'\])"#)
         for match in markers.matches(in:text,range:NSRange(location:0,length:units.count)) {
             try Task.checkCancellation()
-            guard let paren = units[NSMaxRange(match.range)...].firstIndex(of:40), let start = units[paren...].firstIndex(of:123), let end = braces[start] else { continue }
+            guard let paren = try find(40,in:units,from:NSMaxRange(match.range),budget:&budget),
+                  let start = try find(123,in:units,from:paren,budget:&budget),
+                  let end = try matchingBrace(units,start:start,budget:&budget) else { continue }
             if let root = try literal(ns,start:start,end:end,budget:&budget), !root["path"].string.isEmpty, root["files"].array != nil, root["sl"].object != nil { return root }
         }
-        for start in braces.keys.sorted() {
-            if let root = try literal(ns,start:start,end:braces[start]!,budget:&budget), let result = canonical(root) { return result }
+        var search = 0
+        while let start = try find(123,in:units,from:search,budget:&budget) {
+            if let end = try matchingBrace(units,start:start,budget:&budget),
+               let root = try literal(ns,start:start,end:end,budget:&budget), let result = canonical(root) { return result }
+            search = start+1
         }
         return nil
     }
@@ -83,18 +91,29 @@ enum ManhuaguiReader {
         guard !path.isEmpty, let files else { return nil }
         return .object([("path",.string(path)),("files",.array(files)),("sl",.object(signature ?? []))])
     }
-    private static func braceEnds(_ input: [UInt16], budget: inout GuiBudget) throws -> [Int:Int] {
-        var stack: [Int] = [], result: [Int:Int] = [:], quote: UInt16?, escape = false
-        try budget.scan(input.count)
-        for (i,c) in input.enumerated() {
-            if i % 4096 == 0 { try Task.checkCancellation() }
-            if let q = quote { if escape { escape = false } else if c == 92 { escape = true } else if c == q { quote = nil }; continue }
-            // Quotes in ordinary HTML prose do not start an object string.
-            if (c == 34 || c == 39) && !stack.isEmpty { quote = c }
-            else if c == 123 { guard stack.count < 262144 else { throw guiError("对象嵌套超限") }; stack.append(i) }
-            else if c == 125, let start = stack.popLast() { result[start] = i }
+    // Charge each suffix search in bounded chunks, including missing targets.
+    private static func find(_ unit: UInt16, in input: [UInt16], from: Int, budget: inout GuiBudget) throws -> Int? {
+        var position = from
+        while position < input.count {
+            let end = min(position+4096,input.count)
+            try budget.scan(end-position)
+            if let match = input[position..<end].firstIndex(of:unit) { return match }
+            position = end
         }
-        return result
+        return nil
+    }
+    // Like Java matchingBrace, quote state begins at this candidate, never in unrelated HTML/JS.
+    private static func matchingBrace(_ input: [UInt16], start: Int, budget: inout GuiBudget) throws -> Int? {
+        var depth = 0, quote: UInt16?, escape = false
+        for i in start..<input.count {
+            if (i-start) % 4096 == 0 { try budget.scan(min(4096,input.count-i)) }
+            let c = input[i]
+            if let q = quote { if escape { escape = false } else if c == 92 { escape = true } else if c == q { quote = nil }; continue }
+            if c == 34 || c == 39 { quote = c }
+            else if c == 123 { guard depth < 262144 else { throw guiError("对象嵌套超限") }; depth += 1 }
+            else if c == 125 { depth -= 1; if depth == 0 { return i } }
+        }
+        return nil
     }
     private struct Args { let payload: String; let radix: Int; let count: Int; let dictionary: String; let separator: String }
     private static func arguments(_ input: [UInt16], open: Int) throws -> Args? {
