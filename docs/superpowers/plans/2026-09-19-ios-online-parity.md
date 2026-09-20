@@ -303,3 +303,25 @@ XCTAssertFalse(publication.spine[1].linear) // still present in reading order
 
 - [ ] GREEN覆盖Android完整fixtures：spine非文件名顺序、NCX/nav、SVG/direct image、封面优先级、字体混淆/DRM、纯文本/混合、缺container/spine、UTF8 BOM、路径越界、XXE不读外部内容。补：linear=no、重复id/无效idref、伪页折叠/序言/override、nav损坏回退、坏encryption失败、Unicode空格/加号与percent路径、实际deflate/CRC坏包、取消、XML预算/嵌套上限。应断言业务结果，不仅“不崩溃”。CRC/取消不得被wrapper可选解析吞掉。
 - [ ] 固定/work Docker运行 `swift test -j 2 --filter EpubParserTests`，涉及包读取的现有 `LocalArchiveTests` 回归一次；不重复不相关全量。报告 `task-31-report.md` 含真实RED/GREEN与限制。父代理提交、独立审查。此交付仅解析核心，不称用户已能导入/阅读EPUB；下一项需扩展旧manifest兼容的正文类型、导入与阅读接线。
+
+### Task 32: EPUB 本地导入、旧书架兼容与按需资源
+
+**Files:** 修改 `ios/ComicCore/Sources/ComicCore/LocalLibrary.swift`、`LocalComicSource.swift`；新增 `LocalEpubLibrary.swift`、`Tests/ComicCoreTests/LocalEpubLibraryTests.swift`。消费Task31复审后的EpubParser/EpubPublication/EpubArchive，不修改UIKit或站源。本任务是持久化/资源读取层，用户入口与原生阅读在下一任务接入，不先展示不可读导入入口。
+
+**Interfaces:** LocalBook增加可选 `epub:EpubPublication?`、`coverName:String?`，公开init参数默认nil，旧book.json无需迁移。新增LocalLibrary方法 `importEpub(title:String,archive:URL,isReadableImage:(URL)throws->Bool) throws -> LocalBook`、`epubResource(bookID:String,path:String,maximumBytes:Int) throws -> Data`、`epubImageData(pageURL:URL) throws -> Data`。仅EPUB书使用生成的 `spine-0`、`spine-1` 等唯一逻辑页token（同一资源重复出现在spine时仍是两页），原图片书pages仍是原有唯一叶子文件名；chapters仍严格分区pages。资源原文件固定为书目录 `content.epub`，封面候选验证后可保存固定 `cover.bin`，不从manifest接受任意文件系统路径。安全页URL为 `xxcomic-epub://page/<bookUUID>/<spineIndex>`：精确scheme/host、无userinfo/port/query/fragment、路径恰好UUID与非负十进制索引，拒绝编码绕过和越界；生成/解析生产逻辑集中一处。
+
+- [ ] 先写真实ZIP临时文件的RED：导入并重开仍按spine顺序、chapterRanges映射准确、原包不改；图片token→真实资源字节；旧图片book.json缺新增key仍能读。使用Task31测试fixture构建方式，不重新实现测试解析器。
+- [ ] 导入到 `.import-UUID`：分块取消可控复制原包（总20GiB，非单图128MiB），解析的是复制副本；拒绝DRM/空spine，逐项验证图片或文本资源存在。图片流式写一个临时probe文件调用实际注入probe，不全书常驻Data；坏图片使整次导入失败（与图片ZIP可跳过不同）。可最小扩展现有copy helper的单文件上限参数，旧调用默认128MiB；不复制整段copy实现。封面顺序按Publication：有效显式封面→第一个有效正文图→首个manifest图片；无有效图片保留nil供原生生成文字封面。清理probe文件后，写manifest并在最终取消检查后目录rename发布；失败/取消只清理本次staging，已有书与外部原包不改。
+- [ ] books/book/pageURLs/summary分支验证EPUB元数据与逻辑token、spine数量/章节分区/封面叶子路径及owned content文件（拒绝符号链接逃逸）；旧图片路径校验不放宽。summary用已保存coverName，无封面空URL不伪造图片。LocalComicSource详情显示作者/简介/EPUB类型，目录使用导入chapterRanges；全图片章节返回安全页URL，含文本章节明确抛出需要文字阅读器的类型错误，由后续原生路由消费，禁止把HTML交给图片解码器。
+- [ ] 按需资源只能读取指定已验证本地EPUB内规范路径；每个worker独立EpubArchive实例，不跨线程共享ZIPFoundation。Data输出受调用上限和包上限约束，CRC/取消原样传播，不返回半截正文。`epubImageData`检查token索引和resolvedImageEntry存在；文字页URL不能伪装成图片读取。后续native图片加载将在后台调用该方法。
+
+```swift
+let imported = try library.importEpub(title: "文件名标题", archive: fixture, isReadableImage: { _ in true })
+let reopened = try LocalLibrary(directory: library.directory)
+XCTAssertEqual(try reopened.book(id: imported.id), imported)
+XCTAssertEqual(imported.pages, ["spine-0", "spine-1"])
+XCTAssertEqual(try Data(contentsOf: fixture), originalBytes)
+XCTAssertThrowsError(try reopened.epubImageData(pageURL: URL(string: "xxcomic-epub://page/invalid/0")!))
+```
+
+- [ ] GREEN覆盖新旧混合书架、正文重复资源、真实按需字节/非图片拒绝、缺资源/坏图/DRM、取消复制及取消probe不发布、损坏manifest/路径和符号链接逃逸、原包保留、无图文本书合法导入。测试注入probe仅替代ImageIO边界，不能用假解析器。运行LocalEpubLibraryTests与现有LocalLibraryTests/LocalFolderTests/LocalArchiveTests相关回归，报告task-32-report.md；父代理提交/独立审查。Apple probe/文件授权及最终UI仍未验收。
