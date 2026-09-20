@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(FoundationXML)
 import FoundationXML
+#endif
 
 /// A bounded XML tree shared by container, OPF and navigation parsing. No network/entity resolution.
 enum EpubXML {

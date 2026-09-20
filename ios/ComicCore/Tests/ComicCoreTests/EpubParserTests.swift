@@ -295,4 +295,35 @@ final class EpubParserTests: XCTestCase {
         XCTAssertEqual(publication.title, "正确标题")
         XCTAssertEqual(try publication.chapterRanges().map(\.title), ["Page\u{00a0}1", "Page\u{00a0}2"])
     }
+
+    func testMalformedWrapperMatchingHasTotalBudget() throws {
+        // Keep RED inputs small: the old quadratic matcher must not receive a full 1 MiB.
+        for tag in ["<img ", "<image "] {
+            let url = try fixture(opf(item("a", "a.xhtml"), "<itemref idref='a'/>"),
+                                  files: [("OEBPS/a.xhtml", String(repeating: tag, count: 6144))])
+            XCTAssertThrowsError(try EpubParser.parse(archive: url)) {
+                guard case .limitExceeded = $0 as? EpubError else { return XCTFail("\($0)") }
+            }
+        }
+    }
+
+    func testMalformedWrapperMatchingRespondsToRunningCancellation() async throws {
+        for tag in ["<img ", "<image "] {
+            let url = try fixture(opf(item("a", "a.xhtml"), "<itemref idref='a'/>"),
+                                  files: [("OEBPS/a.xhtml", String(repeating: tag, count: 6144))])
+            let started = expectation(description: "解析任务已启动")
+            let task = Task.detached {
+                started.fulfill()
+                return try EpubParser.parse(archive: url)
+            }
+            await fulfillment(of: [started], timeout: 2)
+            // This small stored ZIP reaches matching well before cancellation; no pre-cancel shortcut.
+            try await Task.sleep(nanoseconds: 50_000_000)
+            let cancelledAt = ContinuousClock.now
+            task.cancel()
+            do { _ = try await task.value; XCTFail("运行中取消不能返回成功") }
+            catch { XCTAssertTrue(error is CancellationError, "\(error)") }
+            XCTAssertLessThan(cancelledAt.duration(to: .now), .milliseconds(250), "\(tag) 匹配期间必须响应取消")
+        }
+    }
 }

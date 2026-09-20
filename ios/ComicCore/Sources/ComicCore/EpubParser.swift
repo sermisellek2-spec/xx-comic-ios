@@ -104,12 +104,26 @@ public enum EpubParser {
         // Match Android's bounded wrapper inspection, including text around a single image.
         let patterns = [#"<img[^>]+src\s*=\s*['"]([^'"]+)['"]"#, #"<image[^>]+(?:xlink:href|href)\s*=\s*['"]([^'"]+)['"]"#]
         var sources: [String] = []
+        // ICU can backtrack quadratically on malformed tags. Its progress callback can stop
+        // an in-flight match; the two patterns share one monotonic 500 ms time budget.
+        let deadline = ContinuousClock.now.advanced(by: .milliseconds(500))
+        var callbacks = 0
+        var matchingError: Error?
         for pattern in patterns {
             try Task.checkCancellation()
             let regex = try NSRegularExpression(pattern: pattern, options: .caseInsensitive)
-            for match in regex.matches(in: html, range: NSRange(html.startIndex..., in: html)) {
-                if let range = Range(match.range(at: 1), in: html) { sources.append(String(html[range])) }
+            regex.enumerateMatches(in: html, options: .reportProgress, range: NSRange(html.startIndex..., in: html)) { match, _, stop in
+                callbacks += 1
+                if Task.isCancelled { matchingError = CancellationError() }
+                else if callbacks % 128 == 0 && ContinuousClock.now >= deadline {
+                    matchingError = EpubError.limitExceeded("XHTML 单图检查超过 500 毫秒：\(path)")
+                }
+                if matchingError != nil { stop.pointee = true; return }
+                if let match, let range = Range(match.range(at: 1), in: html) { sources.append(String(html[range])) }
             }
+            if let matchingError { throw matchingError }
+            try Task.checkCancellation()
+            guard ContinuousClock.now < deadline else { throw EpubError.limitExceeded("XHTML 单图检查超过 500 毫秒：\(path)") }
         }
         guard sources.count == 1 else { return nil }
         let resolved = try EpubArchive.resolve(sources[0], relativeTo: path)
