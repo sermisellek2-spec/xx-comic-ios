@@ -234,3 +234,15 @@ Mh18VerificationRules移植HTTP/interactive/page/probe判定、挑战marker（�
 对照完整JmImageTransform.java及JmImageSlicesTest.java，MainActivity.decodeReaderImage/restoreJmReaderImage。最小JmImageTransform Swift实现官方公开图片格式：URL仅HTTP(S)的cdn-msp*.18comic.vip域与/media/photos/{aid}/{filename}，且scramble_id为非负Int64；低于scramble不还原，aid<268850固定10片，否则MD5(aid+不含末尾扩展名的filename)的最后一个小写十六进制字符ASCII值%divisor*2+2，aid>=421926 divisor8否则10，不能用十六进制数值替代字符。利用Apple原生CryptoKit/Linux已安装OpenSSL，不新写MD5算法/新增依赖。边界高度小于片数保持原样；分片余数放目标首片，源行逆序且每片内部不倒置。
 
 先跨平台RED/GREEN：Android1114754/220980/00010.webp与jpg均4片、阈值、ASCII字符公式、1499/14全源与全目标覆盖、不重叠、不丢行、非法或无关URL/端口/凭据不改图、取消。Apple CoreGraphics还原复用同一bounds，在RemoteImageView正文缩略解码后、白边/墨水屏前运行（Android亦先缩放再还原），不更改文件与网络数据；分配/裁片失败明确失败不能把乱序图显示为成功。Apple条件像素测试验证带余数色条的行重排，但Windows明确未执行。JM站源/浏览器尚未注册，本任务不冒称JM阅读完整可用；离线transformation元数据接线留待下载模块。与Task25源/会话文件不重叠，核心构建协调串行，审查独立。
+
+### Task 27: 漫画柜解析与站源移植
+
+先完整读本账本manhuagui-research.md及Android ManhuaguiComicSource.java、SourceConfig.manhuagui、tools/check-manhuagui-parser.js。Java是逻辑基准，JS内已有真实压缩字典和可重复fixtures可复用，不把旧sim或mock脚本的简化逻辑当权威。新增ManhuaguiComicSource.swift、最小packed/LZ数据解析及tests，不执行站点代码，不引入WebView/eval/新依赖。已有CopyMangaLiteral保序数据解析可重用，但其现有严格默认不能变宽；如明确loose模式支持漫画柜裸键/标识符值，须覆盖默认仍拒绝表达式以及引号内文本不被改写，不能全局regex替换字符串内容。避免重复造通用JS解释器。
+
+默认漫画柜/idmanhuagui/https://www.manhuagui.com，referer结尾slash；/list及/comic/id不带尾slash，分类segment按region/genre/audience/year/letter/state顺序以hyphen连接，page>1/index_pN.html；搜索/s/{Java表单编码keyword}.html只第一页。六类动态筛选、bcover属性顺序/title→imgalt/data-src→data-original→src、ID去重和空列表错误；详情h1/author/status/intro-cut/latest及多级cover最终cf.mhgui.com/cpic/b/id.jpg，详情不预取目录。目录只同bookID、href去重、title属性优先、numericchapterID顺序与Int32溢出fallbackindex。
+
+正文优先嵌套packer最多depth4，然后SMH.imgData/两种bracket形式，最后对象形状fallback。保留Java实际字典选择顺序：raw→LZdecoded，给定sep→pipe→comma，先达到count否则最多项；真实dictionary长度大于declaredcount也须使用，base62 ASCII tokens单次替换，不对replacement再次替换。括号/引号/反斜杠边界按data读取；数字溢出、不合法radix、截断LZ和递归/展开预算清晰失败，不能卡死或无限分配。标准库与现有依赖无LZString，可最小UTF16按位字典解码；输入/展开及累计字典上限每类32MiB、字典条目<=262144、深度4，循环检查取消。限制在报告披露，正常fixture不得削减。
+
+最终图像固定eu2.hamreus.com，path逐段JavaURLEncoder再+→%20，files顺序去重，e/m签名值按原格式；只发布有效HTTP(S)完整列表。保留普通Chrome150导航请求头和正文30s/普通15s超时（独立15/10s连接限制平台差异披露）；URLSession负责gzip，响应已有headers可手动处理未跟随的Location并最多5次，主站HTTP重定向规范为HTTPS。不得关闭TLS。真实平台自动重定向限制与站点可用性单列，不以fixtures冒称网络通过。
+
+RED→GREEN覆盖工具原样3cards、111/112章节、封面fallback、direct/loose/bracket、无效token跳过再有效、多层/双引号packer、稀疏count2但index197字典、LZ样本完整29图和精确第三图URL、百分号中文路径、输入顺序fallback、坏参数/展开预算/取消，以及源网络header/path/分页/归属。必要fixtures从本地工具静态提取并保留为测试资源，不抓取真实受限内容。单任务报告task-27-report.md；完成后父代理独立审查再注册，保护Android与所有既有测试。
