@@ -8,7 +8,7 @@ indirect enum CopyMangaValue {
     var array: [CopyMangaValue]? { if case .array(let value) = self { return value }; return nil }
     var string: String { if case .string(let value) = self { return value }; return "" }
     var integer: Int? { if case .number(let value) = self { return Int(value) }; return nil }
-    var isTrue: Bool { if case .bool(true) = self { return true }; return false }
+    var isTrue: Bool { if case .bool(true) = self { return true }; return string.lowercased() == "true" }
 }
 
 // Accept only data, never JavaScript/Python expressions or global text substitutions.

@@ -189,6 +189,25 @@ final class CopyMangaTests: XCTestCase {
         }
         for body in bad { await copyFails { _ = try await CopyMangaComicSource(transport:CopyTransport(body:body)).chapter(url:copyURL) } }
     }
+    func testBooleanAndStringLockFlagsRejectWithoutFallbackAndFalseRemainsReadable() async throws {
+        for flag: Any in [true, "true", "TRUE", "TrUe"] {
+            let body = try copyMutate("api-reader.json") { $0["is_lock"] = flag }
+            let transport = CopyTransport(body:body)
+            do {
+                _ = try await CopyMangaComicSource(transport:transport).chapter(url:copyURL)
+                XCTFail("Locked content must be rejected for flag \(flag)")
+            } catch { XCTAssertTrue(error.localizedDescription.contains("当前内容不可访问")) }
+            let calls = await transport.captured()
+            XCTAssertEqual(calls.count,1,"Locked content must not trigger fallback")
+        }
+        for flag: Any in [false, "false", "FALSE"] {
+            let body = try copyMutate("api-reader.json") { $0["is_lock"] = flag }
+            let transport = CopyTransport(body:body)
+            let page = try await CopyMangaComicSource(transport:transport).chapter(url:copyURL)
+            XCTAssertEqual(page.imageUrls.count,86)
+            let calls = await transport.captured(); XCTAssertEqual(calls.count,1)
+        }
+    }
     func testConnectionFallbackRemembersAndRecoversAfterNetworkChange() async throws {
         let body = try copyFixture("api-reader.json")
         let t = CopyTransport { url,n in
