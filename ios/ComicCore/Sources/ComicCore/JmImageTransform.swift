@@ -50,7 +50,7 @@ public enum JmImageTransform {
     private static func digestLastByte(_ data: Data) throws -> UInt8 {
 #if canImport(CryptoKit)
         // MD5 is part of the published image layout, not authentication.
-        return Insecure.MD5.hash(data: data).last!
+        return Array(Insecure.MD5.hash(data: data)).last!
 #elseif os(Linux)
         // Existing Docker toolchain only. Apple uses CryptoKit, never a subprocess.
         let process = Process(), input = Pipe(), output = Pipe()
