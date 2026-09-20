@@ -392,3 +392,23 @@ XCTAssertEqual(session.chapterIndex, 0)
 - [ ] 工具栏上一章/下一章、进度0...100、目录/详情/排版/主题，主题循环0→1→2；目录复用55%/92%抽屉且选中真实chapter。一章多spine提供上一节/下一节与序号，确保全部内容可达（相较Android只读首正文的缺陷，账本已裁定修正）；进度代表当前正文。排版面板字号±1、行距紧凑1.5/标准1.75/宽松2、浅白/护眼/夜空、连续滚动/点击翻页，默认值由Task33读取。中央32%...68%单击切换控制条；边缘仅paged模式滚动0.88视口，多指/取消/拖动/链接点击不能误翻；仍可系统返回。接现有ReadingHabitTracker的enter/readable/user/overlay/tick/exit，面板时不累计阅读。
 - [ ] Bookshelf添加EPUB文件选择和导入说明，标题默认文件名，原security-scoped后台worker及取消保留，调用Task32 importEpub+LocalImageProbe。不改已发布manifest来生成封面；无图片封面的本地书在grid/detail显示UIKit绘制600×900蓝渐变243B55→141E30、EPUB电子书徽标和书名作者，布局按AndroidgenerateTextCover；不生成AI图片。Detail.openReader针对本地非纯图片EPUB转文字reader，纯图片走Task34已接resolver的漫画reader。加载/损坏/取消分别展示，重试保留目标章，不把HTML传图片decode。
 - [ ] 验证：EpubTextSessionTests真实核心RED/GREEN；UIKit全文件syntaxparse；原生UI用例覆盖导入文本/图文/纯图片、设置重启保存、正文跨页/目录/位置恢复、外链确认和退出（当前Windows不能运行，标记未验收）。为WK隔离/同书资源/旧回调编写可执行Apple测试或现有原生测试靶可承载的fixture场景，严禁静态字符串断言冒充WebKit行为测试。报告task-35-report.md，父代理提交/独立审查；Apple编译/WK规则和JS隔离/性能验收没有环境则明确列出，不能称完全1:1完成。
+
+### Task 36: PDF 本地导入与按需原生渲染
+
+**Files:** 新增Core `PdfPublication.swift`（页面尺寸/绘制尺寸规则）、`LocalPdfLibrary.swift`（持久化/受限页URL）、`PdfRenderer.swift`（条件CoreGraphics+ImageIO实现）、`Tests/ComicCoreTests/LocalPdfLibraryTests.swift`、`PdfRendererTests.swift`；修改 `LocalLibrary.swift`、`LocalComicSource.swift`、原生 `ComicGridViewController.swift`、`ReaderViewController.swift`、`RemoteImageView.swift`；若提取共有的本地页URL编码/解码，仅合并EPUB/PDF完全相同的规则，保留既有EPUB契约和回归。先完整读取Android `app/src/main/java/com/xxcomic/pdf/PdfParser.java`、`app/src/test/java/com/xxcomic/pdf/PdfParserTest.java` 和LocalContentResolver的PDF分支。无需新依赖/手写PDF解析器。
+
+**Interfaces:** `PdfPublication:Codable,Equatable,Sendable` 包含有序pages:[PageSize]，PageSize公开width/height:Double与init；仅有限正尺寸、1...50000页合法。`PdfPublication.renderSize(width:Double,height:Double,maximumDimension:Int=2048)throws->PageSize` 实现Android min(2.5,max(1,targetMax/max(w,h)))并四舍五入，异常尺寸拒绝；在正常公式超过24M像素时额外等比缩小至24M（记录平台安全差异，不能无限分配）。LocalBook新增pdf:PdfPublication?默认nil，与epub互斥；旧JSON兼容。`LocalLibrary.importPdf(title:String,file:URL,inspect:(URL)throws->PdfPublication,renderCover:(URL)throws->Data?)throws->LocalBook`；`pdfPageData(pageURL:URL,render:(URL,Int)throws->Data)throws->Data`。固定owned `content.pdf`、可选`cover.bin`，逻辑页`pdf-0`等，单章“全本”，安全页 `xxcomic-pdf://page/<UUID>/<index>` 复用EPUB严格host/路径/索引/无query规则。渲染只允许本书范围，不能把任意fileURL传入native renderer。
+
+- [ ] 真实临时源文件+注入平台inspect/render边界先RED：副本持久、页顺序/原包不改、旧JSON、空页/过多页/非法尺寸/双格式元数据拒绝、后台取消/失败只清本次staging、页URL攻击与越界、源/owned文件符号链接拒绝。注入假尺寸只能证明核心持久化，不当成PDF可解析证据。
+
+```swift
+let size = try PdfPublication.renderSize(width: 600, height: 800)
+XCTAssertEqual(size.width, 1500)
+XCTAssertEqual(size.height, 2000) // 最大2.5倍，与Android规则一致
+XCTAssertThrowsError(try PdfPublication.renderSize(width: .infinity, height: 800))
+```
+
+- [ ] 复用Task32的分块copy（20GiB）、staging/manifest原子发布与ownedFile验证，不复制解压或文件copy。仅解析复制后的content.pdf。保存后验证与重开规则一致，临界值测试防止“导入成功却无法重开”。正文不在导入时全量转图片，只inspect逐页尺寸并渲染封面；图片页历史仍使用已有ReaderPosition，不使用文字locator。
+- [ ] `#if canImport(CoreGraphics) && canImport(ImageIO)` 内 `PdfRenderer.inspect(_ url:URL)throws->PdfPublication` 使用CGPDFDocument，拒绝encrypted/isUnlocked不足、空页、损坏页，并逐页取消检查；pageIndex对外0基，CGPDFDocument.page(at:)内部+1。`render(_ url:URL,pageIndex:Int,maximumDimension:Int=2048,quality:Double=0.92)throws->Data` 每worker独立document，白色不透明底，正确应用页面box/rotation绘图变换，JPEG通过ImageIO写Data；cover使用page0/720/0.85，禁止网络或外部命令。取消在打开/尺寸/绘图前后/编码后检查，不承诺中断系统单次同步绘图。
+- [ ] 添加真实Apple条件测试：用CGContext生成含白底/彩色定位块的两页PDF，实际inspect/渲染/尺寸/页序/旋转及坏页拒绝；Linux跳过须在报告单列，不能以mock或Swiftparse标记通过。Core尺寸安全及导入/页URL测试在Docker实际RED/GREEN；已有EPUB/图片/ZIP回归按改动范围一次验证。
+- [ ] UIDocumentPicker加PDF，security-scoped后台复制照旧；生产inspect/render使用PdfRenderer，图片读取resolver只接受本地EPUB/PDF明确scheme，保留EPUBretry/reuse取消。LocalComicSource详情显示PDF/页数、目录“全本”，阅读共用漫画阅读器按需取页；不让文字书route误吞PDF。原生入口与后台渲染同一任务完成，失败提供明确提示/重试，不显示空白当完成。UIKitsyntaxparse、task-36-report.md、父代理提交/独立审查；PDFKit/CoreGraphics实际Apple编译与像素性能仍需Mac设备。
