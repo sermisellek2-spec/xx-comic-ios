@@ -20,7 +20,7 @@ final class AppEnvironment {
     init(defaults: UserDefaults) throws {
         self.defaults = defaults
         mh18BrowserSession = Mh18BrowserSession(defaults: defaults)
-        let available: [any ComicSource] = [BaoziComicSource(), Mh160ComicSource(), GmhComicSource(), Mh18ComicSource(browserSession: mh18BrowserSession), MkzhanComicSource(), HiperdexComicSource(), D5d6ComicSource(), ManbenComicSource(), FiveUmComicSource(), FiveUmComicSource(site: .bbyin), AntbywComicSource(), CuimhComicSource(), LiumanhuaComicSource(), CopyMangaComicSource(), ManwaComicSource()]
+        let available: [any ComicSource] = [BaoziComicSource(), Mh160ComicSource(), GmhComicSource(), Mh18ComicSource(browserSession: mh18BrowserSession), MkzhanComicSource(), HiperdexComicSource(), ManhuaguiComicSource(), D5d6ComicSource(), ManbenComicSource(), FiveUmComicSource(), FiveUmComicSource(site: .bbyin), AntbywComicSource(), CuimhComicSource(), LiumanhuaComicSource(), CopyMangaComicSource(), ManwaComicSource()]
         allSources = available
         sourcePreferences = SourcePreferences(defaults: defaults, defaultIDs: available.map(\.id))
         preferences = ReaderPreferencesStore(defaults: defaults)
