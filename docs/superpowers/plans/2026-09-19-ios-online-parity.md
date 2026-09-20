@@ -271,3 +271,13 @@ RED→GREEN覆盖工具原样3cards、111/112章节、封面fallback、direct/lo
 - [ ] 测试先写：四个源从genre=a切tag=b得到genre=all/tag=b；选all只改单键；普通源多组选项共存；换同组不破坏未知key。以旧仅改单键行为为RED，明确错误断言输出。
 - [ ] 实现最少函数并真实接到现有按钮action，GREEN定向SourceFilterSelectionTests；Core不与其他任务共享构建并发。UIKit全文件syntaxparse，报告原生交互未执行。
 - [ ] 报告task-29-report.md，父代理提交/独立审查；同步PARITY的分类互斥修复与Apple待验收，不将helper测试当UIKit交互通过。
+
+### Task 30: 已接入站源搜索首尾字符语义
+
+**Files:** `CopyMangaComicSource.swift`、`D5d6ComicSource.swift`、`GmhComicSource.swift`、`AntbywComicSource.swift`、`Mh160ComicSource.swift`、`HiperdexComicSource.swift`、`Mh18ComicSource.swift` 内keyword规范化一行；新增 `ios/ComicCore/Tests/ComicCoreTests/SourceSearchTrimTests.swift`。漫画柜由Task27负责同项，不混入此任务。
+
+**Contract:** Android这些源对keyword使用Java String.trim，只去UTF16<=0x20，Swift Foundation.whitespacesAndNewlines额外去NBSP/全角空格。使用已有 `SearchRules.trim(keyword)` 替换恰好七处keyword规范化，不改标题/HTML/Cookie/host清理、路由、编码函数或其他行为；不新增通用trim或新依赖。完整对照这七个Androidsearch方法及现有Swifttests的transport注入方式。
+
+- [ ] 捕获真实适配器HTTP请求，先RED再改代码：`" \t\u{00A0}词\u{3000}\r\n"` 结果只去ASCII边界，URL仍含 `%C2%A0%E8%AF%8D%E3%80%80`；Copy还验证只含NBSP时仍发请求，而全ASCII空白返回空且不请求。HTML/JSON返回可用最小各站fixture，不真实联网；不能只测试SearchRules函数或复制编码实现当oracle。
+- [ ] 改七处一行，定向 `swift test -j 2 --filter SourceSearchTrimTests` GREEN；随后既有七源相关测试覆盖返回行为，不重复不相关全量。保持原URLEncoder与HiperDEX空格%20差异。
+- [ ] 报告task-30-report.md，父代理提交/范围审查，登记无新功能只是已有Android业务对齐。
