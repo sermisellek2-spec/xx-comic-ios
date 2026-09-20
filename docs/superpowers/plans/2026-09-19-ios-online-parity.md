@@ -506,3 +506,26 @@ XCTAssertTrue(info.isReadable) // 只代表元数据可扫描，不代表正文/
 - [ ] EPUB只读取container.xml和选中opf，每项最多1MiB、两项累计2MiB，使用现有CRC/取消/DTD禁用/节点深度边界；不调用完整EpubParser、不读取body/cover/encryption/nav资源，更不解码图片。first非空rootfile后优先最后一个media-type=application/oebps-package+xml，与原版一致。封面与rootfile解析保留literal+，仅一次percent解码再使用现有normalized/相对路径机制；不调用EpubArchive.resolve的form+替换行为，不改变全文解析器的既有语义。拒绝空、父路径越界、冒号、NUL/符号链接或绝对包路径，先检查相对关系再规范化；不请求网络。
 - [ ] title取首metadata中的首title并SearchRules.trim。Calibre系列/卷号按同metadata的meta顺序后值覆盖；只有series为空才按belongs-to-collection次序寻找id及匹配refines='#id'的collection-type=series/group-position，首匹配series采用其文本及position。避免原Java嵌套扫描二次复杂度：一次索引refines键再顺序匹配，保留同key最后值规则。封面取全局items中第一个properties token含cover-image或id匹配meta cover的href，路径可以不存在，不伪称已解码。
 - [ ] Kindle只复用检测结果，title及可读/原因透传，series/volume/cover为空；不转换正文。CancellationError不包装为损坏或不支持。测试加入正文/cover损坏CRC而metadata正常的档案，证明没有读正文；元数据自身CRC损坏必须失败。GREEN只跑新扫描及实际共用受影响回归；报告task-40-report.md，父代理提交/审查。批量导入功能仍需规划、持久队列及多卷UI完成，不能用扫描核心冒充用户入口。
+
+### Task 41: 批量分组建议与精确分卷排序
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/BatchImportPlanner.swift`、`Tests/ComicCoreTests/BatchImportPlannerTests.swift`。完整对照Android `local/BatchImportModels.java`、`BatchImportPlanner.java`、`BatchImportPlannerTest.java`；复用SearchRules.trim与NaturalPathOrder，不读文件、不导入、不提前更新批量功能完成状态。
+
+**Interfaces:** `BatchImportCandidate:Equatable,Sendable` 只读sourceId/remoteComicId/seriesTitle/fileName/fileId/format/fingerprint:String、sourceOrder:String?、selectionIndex:Int；公开throwing初始化，字符串默认空、sourceOrder默认nil、selectionIndex默认0。所有字符串Java trim；空sourceOrder按无元数据处理，非空非法十进制显式报错，selectionIndex夹到0。`BatchImportGroup:Equatable,Sendable` 有key/title:String、requiresConfirmation:Bool、volumes:[BatchImportCandidate]。`BatchImportPlanner.plan(_ candidates:[BatchImportCandidate])->[BatchImportGroup]`、`orderVolumes(_ candidates:[BatchImportCandidate])->[BatchImportCandidate]`、`normalizeTitle(_ fileName:String)->String`、`volumeNumber(_ fileName:String)->Int`。
+
+- [ ] RED移植全部Android用例并增加确定的独立oracle：首次组顺序、跨组相同指纹不去重、同组非空指纹大小写去重保留首项、空指纹保留；不同书名explicit orderVolumes不重新分组；元数据相等后文件名卷号/自然序/selectionIndex依次打破平局，全部相等保留输入序。
+
+```swift
+let later = try BatchImportCandidate(seriesTitle: "Series", fileName: "A.epub", sourceOrder: "2.5")
+let earlier = try BatchImportCandidate(seriesTitle: "Series", fileName: "Z.epub", sourceOrder: "2.0")
+let groups = BatchImportPlanner.plan([later, earlier])
+XCTAssertEqual(groups.first?.volumes.map(\.fileName), ["Z.epub", "A.epub"])
+XCTAssertEqual(groups.first?.requiresConfirmation, true)
+XCTAssertEqual(BatchImportPlanner.normalizeTitle(" 城市猎人 第02卷.epub "), "城市猎人")
+XCTAssertThrowsError(try BatchImportCandidate(sourceOrder: "NaN"))
+```
+
+- [ ] 分组key按Android字符串组合：sourceId与remoteComicId均非空则`remote:<source>:<comic>`且无需确认；否则`local:<title.lowercased()>`且必须确认。title优先seriesTitle否则normalizeTitle。输出按首次组出现顺序，不靠Dictionary枚举；指纹去重只在组内，不按title/fileId去重。这里只产生建议，不查询或合并既有书架。
+- [ ] normalizeTitle逐步照原版：Java trim→删末尾ASCII字母数字1...8位扩展→全角空格变空格并trim→删末尾卷号表达式及分隔符→删末尾ASCII空白/_/-并压缩ASCII空白→trim→空值“未命名漫画”。NSRegularExpression中的`\s`/`\d`须显式使用Java默认ASCII范围，不能让ICU默认Unicode语义吞NBSP或全角数字。volumeNumber保留最后一个成功Int32匹配；溢出忽略该匹配而不是覆盖已得到的值。测试中文/vol/v/末尾1...4数字、括号、内部卷号、NBSP、全角数字、溢出与零。
+- [ ] sourceOrder按十进制精确比较，不能Double或Foundation Decimal舍入后比较；Decimal不足以覆盖Java BigDecimal超过38位的输入。最小私有比较实现：解析ASCII符号/有效数字串/小数位/可选e/E有符号指数，规范零与前导零，用调整后的十进制位数和有效数字逐位（缺位补0）比较，负数反序，不展开巨大指数为零数组。合法指数及scale遵循Java BigDecimal的Int32范围，计算使用Int64检查；sourceOrder文本受1MiB上限约束，与元数据扫描上限一致。保留原始字符串用于后续持久化，不引入BigInt依赖或通用任意精度运算库。覆盖2.0/2、负数、负零、1e3、1e-3、超过38位且只末位不同、巨大指数、非法数字/指数溢出；测试只验证实际排序和失败，不复制比较算法作oracle。
+- [ ] 排序优先：两者sourceOrder均存在则精确非等值优先；仅一方存在则有值优先；其次已识别文件卷号（有值优先）；其次NaturalPathOrder；其次selectionIndex；最后原始输入次序保证稳定。不改变既有NaturalPathOrder和搜索trim的语义。GREEN本任务及实际受影响测试；写task-41-report.md，父代理限定文件提交/独立审查。持久批次、分卷存储、确认UI另行实施，不能将本任务计为用户可用批量导入。
