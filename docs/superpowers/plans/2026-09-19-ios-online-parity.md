@@ -605,6 +605,8 @@ XCTAssertEqual(try ContentFingerprint.folder(root, relativeImagePaths: ["10.png"
 
 **Interfaces:** `public enum LocalImportFormat:String,Codable,Sendable` 定义在LocalLibrary.swift，值images/folder/zip/cbz/epub/pdf/mobi/azw/azw3；`LocalBook`追加只读 `importFormat:LocalImportFormat?` 和 `fingerprint:String?`，现有公开初始化器最后追加两个默认nil参数，旧JSON缺字段仍可读。新增导入的format明确保存；独立多图导入fingerprint仍nil，不凭猜测将其等同于Android文件夹清单。各file/folder指纹为Task43的64位小写SHA256。`LocalFolderIndex`新增内部`relativePaths:[String]`，与files一一对应，保留共同包装目录剥离前路径。`ContentFingerprint`新增内部 `folder(_ root:URL, files:[(relativePath:String, ownedFile:URL)])throws->String`，公开folder接口不变并复用同一清单管线；不复制SHA实现。
 
+**Task44修复后的接口补充：** `prepareLocalImport` 的build闭包现为 `(String, URL, LocalImportDirectory) throws -> LocalBook`，第三参数登记本次资源的device/inode；`copy/copyEbook` 支持 `didCreateFile:` 回调。新增 `source.archive` 必须通过现有复制函数传 `owned.recordFile` 登记，不能让正常副本被视为外来对象；不绕过精确资源归属检查。`prepareOwnedEpub` 的prepare闭包现为 `(URL, LocalImportDirectory) throws -> Void`。原有探测文件复用与清理保持Task44最终实现。
+
 - [ ] RED使用真实图片文件夹和EPUB/ZIP/Kindle文件准备/发布后重开，断言新字段保存，外部原字节不变，旧无字段JSON仍可读。指纹测试预期采用独立Node crypto固定输入计算，不能用被测ContentFingerprint生成期望。文件夹原路径`2.png`/`10.png`分别为abc/empty，在内部映射到owned `0.png`/`1.png`时仍产生下列原清单指纹；探测可注入以验证字节身份，本例不冒称图片解码验证。
 
 ```swift
