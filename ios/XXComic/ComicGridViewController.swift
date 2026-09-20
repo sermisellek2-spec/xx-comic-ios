@@ -101,7 +101,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     private let resume = UIButton(type: .system)
     private let shelfMode = UISegmentedControl(items: ["我的书架", "本地书架"])
     private var importTask: Task<Void, Never>?
-    private enum ImportKind: Sendable { case images, folder, archive, epub, pdf }
+    private enum ImportKind: Sendable { case images, folder, archive, epub, pdf, kindle }
     private var importKind = ImportKind.images
     private var localMode: Bool { !historyOnly && shelfMode.selectedSegmentIndex == 1 }
     init(environment: AppEnvironment, historyOnly: Bool = false) {
@@ -133,7 +133,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             do {
                 comics = try environment.localLibrary.books().map { try environment.localLibrary.summary(for: $0) }
                 collection.reloadData()
-                status(comics.isEmpty ? "本地书架空空的，点击导入添加图片、文件夹、ZIP/CBZ 或 EPUB" : "")
+                status(comics.isEmpty ? "本地书架空空的，点击导入添加图片、文件夹、ZIP/CBZ、EPUB、PDF 或 Kindle" : "")
             } catch { status(error.localizedDescription) }
             return
         }
@@ -159,6 +159,11 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         menu.addAction(UIAlertAction(title: "ZIP / CBZ 压缩包", style: .default) { [weak self] _ in self?.pickImport(.archive) })
         menu.addAction(UIAlertAction(title: "EPUB 电子书", style: .default) { [weak self] _ in self?.pickImport(.epub) })
         menu.addAction(UIAlertAction(title: "PDF 文档", style: .default) { [weak self] _ in self?.pickImport(.pdf) })
+        menu.addAction(UIAlertAction(title: "Kindle 电子书", style: .default) { [weak self] _ in self?.pickImport(.kindle) })
+        // Fixture URLs exist only under the isolated UI-test library, using the real import worker.
+        for (name, url) in EpubUITestFixtures.kindleImports(library: environment.localLibrary) {
+            menu.addAction(UIAlertAction(title: name, style: .default) { [weak self] _ in self?.confirmImport([url], kind: .kindle) })
+        }
         menu.addAction(UIAlertAction(title: "取消", style: .cancel))
         menu.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.first
         present(menu, animated: true)
@@ -172,14 +177,19 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         case .archive: types = [.zip, UTType(filenameExtension: "cbz", conformingTo: .archive) ?? .archive]
         case .epub: types = [UTType(filenameExtension: "epub") ?? .data]
         case .pdf: types = [.pdf]
+        case .kindle:
+            let available = ["mobi", "azw", "azw3"].compactMap { UTType(filenameExtension: $0) }
+            types = available.count == 3 ? available : [.data]
         }
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: kind == .images)
         picker.allowsMultipleSelection = kind == .images; picker.delegate = self
         present(picker, animated: true)
     }
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        confirmImport(urls, kind: importKind, picker: controller)
+    }
+    private func confirmImport(_ urls: [URL], kind: ImportKind, picker: UIViewController? = nil) {
         guard !urls.isEmpty else { return }
-        let kind = importKind
         let prompt: (String, String)
         switch kind {
         case .images: prompt = ("导入图片漫画", "所选图片合并为一本漫画，按文件名自然排序。")
@@ -187,6 +197,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         case .archive: prompt = ("导入压缩包漫画", "仅支持 ZIP / CBZ，按目录自然分章。原压缩包会保留。")
         case .epub: prompt = ("导入 EPUB 电子书", "支持文字、图文与纯图片 EPUB，保留原文件和完整目录。不支持 DRM 加密电子书。")
         case .pdf: prompt = ("导入 PDF 文档", "按页阅读，保留原文件。不支持密码保护的 PDF。")
+        case .kindle: prompt = ("导入 Kindle 电子书", "选择 MOBI、AZW 或 AZW3 文件，保留原文件。支持可转换的旧版 Kindle 内容，不支持 DRM 加密和纯 KF8 电子书。")
         }
         let alert = UIAlertController(title: prompt.0, message: prompt.1, preferredStyle: .alert)
         alert.addTextField { $0.text = kind == .folder ? urls.first?.lastPathComponent : urls.first?.deletingPathExtension().lastPathComponent }
@@ -194,8 +205,8 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         alert.addAction(UIAlertAction(title: "导入", style: .default) { [weak self, weak alert] _ in
             self?.beginImport(urls, title: alert?.textFields?.first?.text ?? "本地漫画", kind: kind)
         })
-        if presentedViewController === controller {
-            controller.dismiss(animated: true) { [weak self] in self?.present(alert, animated: true) }
+        if let picker, presentedViewController === picker {
+            picker.dismiss(animated: true) { [weak self] in self?.present(alert, animated: true) }
         } else { present(alert, animated: true) }
     }
     private func beginImport(_ urls: [URL], title: String, kind: ImportKind) {
@@ -210,6 +221,10 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             }
             if kind == .epub, let url = urls.first {
                 return try library.importEpub(title: title, archive: url, isReadableImage: LocalImageProbe.isReadable)
+            }
+            if kind == .kindle, let url = urls.first {
+                guard let format = LocalKindleFormat(rawValue: url.pathExtension.lowercased()) else { throw LocalLibraryError.invalidBook }
+                return try library.importKindle(title: title, source: url, format: format, isReadableImage: LocalImageProbe.isReadable)
             }
             if kind == .archive, let url = urls.first {
                 return try library.importArchive(title: title, archive: url, isReadableImage: LocalImageProbe.isReadable)

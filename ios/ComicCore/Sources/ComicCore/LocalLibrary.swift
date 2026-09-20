@@ -9,10 +9,12 @@ public struct LocalBook: Codable, Equatable, Sendable {
     public let epub: EpubPublication?
     public let pdf: PdfPublication?
     public let coverName: String?
+    public let kindleFormat: LocalKindleFormat?
 
-    public init(id: String, title: String, createdAt: TimeInterval, pages: [String], chapters: [LocalBookChapter]? = nil, epub: EpubPublication? = nil, pdf: PdfPublication? = nil, coverName: String? = nil) {
+    public init(id: String, title: String, createdAt: TimeInterval, pages: [String], chapters: [LocalBookChapter]? = nil, epub: EpubPublication? = nil, pdf: PdfPublication? = nil, coverName: String? = nil, kindleFormat: LocalKindleFormat? = nil) {
         self.id = id; self.title = title; self.createdAt = createdAt; self.pages = pages; self.chapters = chapters
         self.epub = epub; self.pdf = pdf; self.coverName = coverName
+        self.kindleFormat = kindleFormat
     }
 }
 
@@ -54,6 +56,7 @@ public struct LocalLibrary: Sendable {
     }
     public func pageURLs(for book: LocalBook) throws -> [URL] {
         guard book.epub == nil || book.pdf == nil else { throw LocalLibraryError.invalidBook }
+        guard book.kindleFormat == nil || (book.epub != nil && book.pdf == nil) else { throw LocalLibraryError.invalidBook }
         let pageNames = Set(book.pages)
         guard UUID(uuidString: book.id) != nil, !book.pages.isEmpty, pageNames.count == book.pages.count else { throw LocalLibraryError.invalidBook }
         if let chapters = book.chapters {

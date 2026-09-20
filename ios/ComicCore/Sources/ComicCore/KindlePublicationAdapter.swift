@@ -112,8 +112,9 @@ public enum KindlePublicationAdapter {
         try KindleEpubWriter.write(to: derived, detection: detection, html: html, images: images)
         let publication = try EpubParser.parse(archive: derived)
         try Task.checkCancellation()
-        // FileManager's move refuses an existing destination, including one created during conversion.
-        try manager.moveItem(at: derived, to: destination)
+        // Same-volume link publication atomically refuses concurrent destinations; the scratch
+        // cleanup removes our source link, completing the move without any overwrite window.
+        try manager.linkItem(at: derived, to: destination)
         return publication
     }
 

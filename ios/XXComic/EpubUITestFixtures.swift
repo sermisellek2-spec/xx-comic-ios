@@ -9,6 +9,10 @@ enum EpubUITestFixtures {
     static func seed(library: LocalLibrary) throws {
         guard ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--epub-fixtures"),
               library.directory.deletingLastPathComponent().lastPathComponent == "XXComic-UITests" else { return }
+        if ProcessInfo.processInfo.arguments.contains("--kindle-fixtures") {
+            try seedKindleImports(library: library)
+            return
+        }
         let existing = Set(try library.books().map(\.title))
         for kind in ["文字", "图文", "图片", "隔离", "跨书", "超限", "无锚点", "编码空锚点"] {
             let title = "EPUB 验收·" + kind
@@ -82,6 +86,43 @@ enum EpubUITestFixtures {
                 }
             }
             _ = try library.importEpub(title: title, archive: archiveURL, isReadableImage: LocalImageProbe.isReadable)
+        }
+    }
+
+    static func kindleImports(library: LocalLibrary) -> [(String, URL)] {
+        guard ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--epub-fixtures"), ProcessInfo.processInfo.arguments.contains("--kindle-fixtures"),
+              library.directory.deletingLastPathComponent().lastPathComponent == "XXComic-UITests" else { return [] }
+        return [("小说", "mobi"), ("漫画", "azw"), ("图文", "mobi"), ("KF8", "azw3"), ("DRM", "mobi")].map { kind, ext in
+            ("验收 Kindle·" + kind, library.directory.appendingPathComponent(".kindle-fixtures").appendingPathComponent("Kindle 验收·\(kind).\(ext)"))
+        }
+    }
+
+    private static func seedKindleImports(library: LocalLibrary) throws {
+        let folder = library.directory.appendingPathComponent(".kindle-fixtures", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 32, height: 32)).image { context in
+            UIColor.systemBlue.setFill(); context.fill(CGRect(x: 0, y: 0, width: 32, height: 32))
+        }.pngData()!
+        let long = (1...100).map { "<p id='p\($0)'>Kindle 长篇正文，第 \($0) 段，用于验证实际阅读与位置恢复。</p>" }.joined()
+        for (name, url) in kindleImports(library: library) {
+            let comic = name.hasSuffix("漫画"), mixed = name.hasSuffix("图文")
+            let body = comic ? "<img recindex='1'/>" : "<h1>第一章</h1>" + long + (mixed ? "<img recindex='1'/><img recindex='2'/>" : "") + "<mbp:pagebreak/><h1>第二章</h1><p>Kindle 第二章正文</p>" + long
+            let text = Data(body.utf8), images = comic ? [image, image, image] : (mixed ? [image, image] : [])
+            func put(_ bytes: inout Data, _ offset: Int, _ value: UInt32) {
+                bytes.replaceSubrange(offset..<offset + 4, with: [UInt8(truncatingIfNeeded: value >> 24), UInt8(truncatingIfNeeded: value >> 16), UInt8(truncatingIfNeeded: value >> 8), UInt8(truncatingIfNeeded: value)])
+            }
+            var header = Data(repeating: 0, count: 256)
+            header[1] = 1; header[9] = 1; header[13] = name.hasSuffix("DRM") ? 2 : 0
+            put(&header, 4, UInt32(text.count)); header.replaceSubrange(16..<20, with: Data("MOBI".utf8))
+            put(&header, 20, 232); put(&header, 24, 2); put(&header, 28, 65001); put(&header, 36, name.hasSuffix("KF8") ? 8 : 6)
+            put(&header, 108, images.isEmpty ? .max : 2); put(&header, 168, .max); put(&header, 172, .max)
+            let records = [header, text] + images
+            var bytes = Data(repeating: 0, count: 78 + records.count * 8)
+            bytes.replaceSubrange(0..<4, with: Data("Book".utf8)); bytes.replaceSubrange(60..<68, with: Data("BOOKMOBI".utf8)); bytes[77] = UInt8(records.count)
+            var offset = bytes.count
+            for (index, record) in records.enumerated() { put(&bytes, 78 + index * 8, UInt32(offset)); offset += record.count }
+            for record in records { bytes += record }
+            try bytes.write(to: url, options: .atomic)
         }
     }
 }

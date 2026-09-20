@@ -16,7 +16,7 @@ public actor LocalComicSource: ComicSource {
     public func detail(comicId: String) async throws -> ComicDetail {
         try Task.checkCancellation()
         let book = try library.book(id: comicId)
-        return ComicDetail(summary: try library.summary(for: book), author: book.epub?.author ?? "", status: book.pdf != nil ? "PDF" : (book.epub == nil ? "本地漫画" : "EPUB"),
+        return ComicDetail(summary: try library.summary(for: book), author: book.epub?.author ?? "", status: book.kindleFormat?.rawValue.uppercased() ?? (book.pdf != nil ? "PDF" : (book.epub == nil ? "本地漫画" : "EPUB")),
                            description: book.epub?.description ?? "\(book.pages.count) 页", latestChapter: "", chapters: [])
     }
     public func chapters(comicId: String) async throws -> [Chapter] {

@@ -168,4 +168,91 @@ final class EpubReadingUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars.buttons["取消"].waitForExistence(timeout: 5))
         app.navigationBars.buttons["取消"].tap()
     }
+
+    private func launchKindle() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--epub-fixtures", "--kindle-fixtures"]
+        app.launch()
+        XCTAssertTrue(app.buttons["本地书架"].waitForExistence(timeout: 20)); app.buttons["本地书架"].tap()
+        return app
+    }
+
+    @discardableResult
+    private func importKindle(_ kind: String, app: XCUIApplication) -> String {
+        app.navigationBars.buttons["导入"].tap(); app.buttons["验收 Kindle·" + kind].tap()
+        let alert = app.alerts["导入 Kindle 电子书"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        let title = "Kindle 验收·\(kind)·\(UUID().uuidString.prefix(6))"
+        let field = alert.textFields.firstMatch
+        field.tap()
+        if let value = field.value as? String { field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: value.count)) }
+        field.typeText(title); alert.buttons["导入"].tap()
+        return title
+    }
+
+    private func openKindle(_ title: String, app: XCUIApplication) {
+        let cell = app.collectionViews.cells[title]
+        XCTAssertTrue(cell.waitForExistence(timeout: 15)); cell.tap()
+        XCTAssertTrue(app.buttons["章节目录"].waitForExistence(timeout: 10)); app.buttons["章节目录"].tap()
+        XCTAssertTrue(app.tables.cells.firstMatch.waitForExistence(timeout: 10)); app.tables.cells.firstMatch.tap()
+    }
+
+    func testKindleNovelRealImportTextReaderAndSecondChapterResume() {
+        let app = launchKindle(), title = importKindle("小说", app: app)
+        openKindle(title, app: app); ready(app)
+        XCTAssertTrue(app.webViews.staticTexts["第一章"].exists)
+        app.buttons["下一节"].tap(); ready(app)
+        XCTAssertTrue(app.webViews.staticTexts["Kindle 第二章正文"].exists)
+        app.sliders["epub.progress"].adjust(toNormalizedSliderPosition: 0.6)
+        let savedPosition = NSPredicate { _, _ in
+            guard let value = app.sliders["epub.progress"].value as? String,
+                  let number = Double(value.replacingOccurrences(of: "%", with: "")) else { return false }
+            return (55...65).contains(number)
+        }
+        expectation(for: savedPosition, evaluatedWith: app); waitForExpectations(timeout: 5)
+        back(app)
+        let resume = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '继续阅读'")).firstMatch
+        XCTAssertTrue(resume.waitForExistence(timeout: 5)); resume.tap(); ready(app)
+        XCTAssertEqual(app.staticTexts["epub.section"].value as? String, "第2章，第1节")
+        expectation(for: savedPosition, evaluatedWith: app); waitForExpectations(timeout: 5)
+        app.buttons["排版"].tap()
+        XCTAssertTrue(app.steppers["epub.fontSize"].waitForExistence(timeout: 5))
+    }
+
+    func testKindleComicRealImportUsesExistingImageReaderAndResume() {
+        let app = launchKindle(), title = importKindle("漫画", app: app)
+        openKindle(title, app: app)
+        XCTAssertTrue(app.buttons["设置"].waitForExistence(timeout: 15))
+        XCTAssertFalse(app.webViews.firstMatch.exists)
+        expectation(for: NSPredicate { _, _ in
+            app.collectionViews.cells.count > 0
+                && !app.buttons["正在加载图片…"].exists
+                && !app.buttons["图片加载失败 · 点击重试"].exists
+        }, evaluatedWith: app)
+        waitForExpectations(timeout: 15)
+        back(app)
+        let resume = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '继续阅读'")).firstMatch
+        XCTAssertTrue(resume.waitForExistence(timeout: 5)); resume.tap()
+        XCTAssertTrue(app.buttons["设置"].waitForExistence(timeout: 10))
+    }
+
+    func testKindleMixedRealImportRetainsTextAndImageInExistingTextReader() {
+        let app = launchKindle(), title = importKindle("图文", app: app)
+        openKindle(title, app: app); ready(app)
+        XCTAssertTrue(app.webViews.staticTexts["第一章"].exists)
+        XCTAssertTrue(app.webViews.images.firstMatch.exists)
+    }
+
+    func testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks() {
+        let app = launchKindle()
+        for kind in ["KF8", "DRM"] {
+            let title = importKindle(kind, app: app)
+            let error = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", kind)).firstMatch
+            XCTAssertTrue(error.waitForExistence(timeout: 15))
+            XCTAssertFalse(app.collectionViews.cells[title].exists)
+        }
+        app.navigationBars.buttons["导入"].tap(); app.buttons["Kindle 电子书"].tap()
+        XCTAssertTrue(app.navigationBars.buttons["取消"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons["取消"].tap()
+    }
 }

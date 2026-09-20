@@ -34,17 +34,30 @@ enum LocalPageURL {
 
 extension LocalLibrary {
     public func importEpub(title: String, archive source: URL, isReadableImage: (URL) throws -> Bool) throws -> LocalBook {
+        try importOwnedEpub(title: title, isReadableImage: isReadableImage) { staging in
+            try copyEbook(source, to: staging.appendingPathComponent("content.epub"))
+        }
+    }
+
+    func copyEbook(_ source: URL, to destination: URL) throws {
         try Task.checkCancellation()
         let attributes = try source.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
-        guard attributes.isRegularFile == true, attributes.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
+        guard source.isFileURL, attributes.isRegularFile == true, attributes.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
         guard let size = attributes.fileSize, Int64(size) <= Self.maximumImportBytes else { throw LocalLibraryError.archiveTooLarge }
+        var copied: Int64 = 0
+        try copy(source, to: destination, totalBytes: &copied, maximumFileBytes: Self.maximumImportBytes)
+    }
+
+    /// Both original and derived files must be complete before this single publication.
+    func importOwnedEpub(title: String, kindleFormat: LocalKindleFormat? = nil,
+                         isReadableImage: (URL) throws -> Bool, prepare: (URL) throws -> Void) throws -> LocalBook {
+        try Task.checkCancellation()
         let id = UUID().uuidString, manager = FileManager.default
         let staging = directory.appendingPathComponent(".import-" + id, isDirectory: true)
         try manager.createDirectory(at: staging, withIntermediateDirectories: false)
         defer { if manager.fileExists(atPath: staging.path) { try? manager.removeItem(at: staging) } }
         let content = staging.appendingPathComponent("content.epub"), probe = staging.appendingPathComponent("probe.bin")
-        var copied: Int64 = 0
-        try copy(source, to: content, totalBytes: &copied, maximumFileBytes: Self.maximumImportBytes)
+        try prepare(staging)
         let publication = try EpubParser.parse(archive: content)
         let ranges = try publication.chapterRanges() // Rejects DRM and empty spine before probing.
         let archive = try EpubArchive(url: content, maximumReadBytes: UInt64(Self.maximumImportBytes))
@@ -96,7 +109,7 @@ extension LocalLibrary {
         }
         let cleaned = SearchRules.trim(title)
         let book = LocalBook(id: id, title: cleaned.isEmpty ? (publication.title.isEmpty ? "本地 EPUB" : publication.title) : cleaned,
-                             createdAt: Date().timeIntervalSince1970, pages: names, chapters: chapters, epub: publication, coverName: coverName)
+                             createdAt: Date().timeIntervalSince1970, pages: names, chapters: chapters, epub: publication, coverName: coverName, kindleFormat: kindleFormat)
         try validateEpubMetadata(book)
         try JSONEncoder().encode(book).write(to: staging.appendingPathComponent("book.json"), options: .atomic)
         try Task.checkCancellation()
@@ -109,7 +122,7 @@ extension LocalLibrary {
         let book = try book(id: bookID)
         guard book.epub != nil, try EpubArchive.normalized(path) == path else { throw LocalLibraryError.invalidBook }
         // Each caller owns an independent archive; no ZIPFoundation instance crosses workers.
-        let archive = try EpubArchive(url: ownedFile(bookID: bookID, name: "content.epub"))
+        let archive = try EpubArchive(url: ownedEPUB(book))
         return try archive.read(path, maximumBytes: maximumBytes)
     }
 
@@ -139,10 +152,8 @@ extension LocalLibrary {
 
     func validateEpub(_ book: LocalBook) throws {
         try validateEpubMetadata(book)
-        let content = try ownedFile(bookID: book.id, name: "content.epub")
-        guard let size = try content.resourceValues(forKeys: [.fileSizeKey]).fileSize, Int64(size) <= Self.maximumImportBytes else {
-            throw LocalLibraryError.invalidBook
-        }
+        if book.kindleFormat != nil { _ = try ownedKindle(book) }
+        guard try existingOwnedEPUB(book) != nil || book.kindleFormat != nil else { throw LocalLibraryError.invalidBook }
         if let name = book.coverName { _ = try ownedFile(bookID: book.id, name: name) }
     }
 
