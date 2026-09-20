@@ -325,3 +325,27 @@ XCTAssertThrowsError(try reopened.epubImageData(pageURL: URL(string: "xxcomic-ep
 ```
 
 - [ ] GREEN覆盖新旧混合书架、正文重复资源、真实按需字节/非图片拒绝、缺资源/坏图/DRM、取消复制及取消probe不发布、损坏manifest/路径和符号链接逃逸、原包保留、无图文本书合法导入。测试注入probe仅替代ImageIO边界，不能用假解析器。运行LocalEpubLibraryTests与现有LocalLibraryTests/LocalFolderTests/LocalArchiveTests相关回归，报告task-32-report.md；父代理提交/独立审查。Apple probe/文件授权及最终UI仍未验收。
+
+### Task 33: 文字排版设置和独立阅读位置持久化
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/TextReaderPreferences.swift`、`TextLocator.swift`、`Tests/ComicCoreTests/TextReadingTests.swift`；修改 `LibraryStore.swift`。不修改UIKit、站源或Task32导入实现。原版对照 `app/src/main/java/com/xxcomic/ebook/TextLocator.java`、`TextReaderSettingsSheet.java`、`TextReaderView.java:setSettings`、`app/src/test/java/com/xxcomic/ebook/TextLocatorTest.java`。
+
+**Interfaces:** `TextReaderTheme:Int,CaseIterable,Sendable` 为light=0/sepia=1/dark=2；`TextReaderPreferences:Equatable,Sendable` 有fontSize:Int、lineHeight:Double、theme:TextReaderTheme、pagedMode:Bool，默认18/1.75/dark/false。`TextReaderPreferencesStore(defaults:UserDefaults = .standard)` 提供load()/save(_:)；键前缀 `text.reader.`，后接fontSize/lineHeight/theme/pagedMode，不覆盖漫画设置。`TextLocator:Codable,Equatable,Sendable` 有bookID:String、chapterIndex:Int、spineIndex:Int、resourceHref:String、anchorID:String、scrollPercentage:Double、charOffset:Int，公开完整init，anchorID/scrollPercentage/charOffset默认空/0/0；属性let。`LibraryEntry` 添加可选 `textPositions:[String:TextLocator]?` 保持旧JSON兼容。`LibraryStore.textPosition(for:ComicSummary,chapterID:String)->TextLocator?` 和 `saveTextReading(_:ComicSummary,chapter:Chapter,chapterIndex:Int,locator:TextLocator,now:TimeInterval=Date().timeIntervalSince1970)throws`。一次原子写更新历史ReadingRecord及文字位置；历史兼容ReaderPosition取默认零位置，绝不能把正文spine索引误当漫画图片位置或覆盖原positions。原有saveReading不删除文字位置。
+
+- [ ] 先真实RED验证默认值/设置重开/旧书架JSON解码、独立文字位置保存后重新打开及favorite取消保留文字记录。使用临时UserDefaults suite与真实临时文件。
+
+```swift
+let initial = TextReaderPreferencesStore(defaults: defaults).load()
+XCTAssertEqual(initial.fontSize, 18)
+XCTAssertEqual(initial.lineHeight, 1.75)
+XCTAssertEqual(initial.theme, .dark)
+XCTAssertFalse(initial.pagedMode)
+let locator = TextLocator(bookID: comic.comicId, chapterIndex: 2, spineIndex: 5,
+    resourceHref: "OEBPS/chapter2.xhtml", anchorID: "section_1", scrollPercentage: 0.45, charOffset: 120)
+try store.saveTextReading(comic, chapter: chapter, chapterIndex: 2, locator: locator, now: 123)
+XCTAssertEqual(try LibraryStore(directory: directory).textPosition(for: comic, chapterID: chapter.chapterId), locator)
+```
+
+- [ ] 最小实现：load/save统一字号12...32，行距1.2...2.5（UI下一任务只提供1.5/1.75/2），非有限行距回默认1.75，未知主题回dark。文字位置init和decode均将负索引/offset归0、百分比夹0...1，非有限百分比归0；decode缺字段走空/0，与原版缺字段语义一致；类型损坏抛解码错误。Codable键沿用Android bookId/anchorId等拼写。保存拒绝comic.sourceId不是local、bookID不匹配comic.comicId、locator.chapterIndex与有效chapterIndex不一致、空resourceHref；中文typed错误，不能默默存错书。资源安全/本书spine范围由消费层使用Task32书籍校验，位置模型不发明路径解析。
+- [ ] 复用LibraryStore.persist原子保存，内存更新发生在落盘成功之后；保持favoriteAt、漫画positions和其他章textPositions。JSON坏数据不能重建空库覆盖原文件。不另建文字历史数据库/计时器/缓存。
+- [ ] GREEN覆盖负值/越界/非有限数、JSON缺键和roundtrip、两章位置、旧数据兼容、写入失败内存不变、错误bookID拒绝、漫画与文字设置/记录互不覆盖；运行TextReadingTests和既有LibraryStore/ReaderPreferences相关回归（先rg确认实际测试名）。报告task-33-report.md，父代理提交/独立审查。此任务没有文字UI，不能称阅读器已完成。
