@@ -14,6 +14,7 @@ indirect enum CopyMangaValue {
 // Accept only data, never JavaScript/Python expressions or global text substitutions.
 private struct CopyMangaLiteral {
     let input: [UInt16]
+    let loose: Bool
     var position = 0
     mutating func parse() throws -> CopyMangaValue {
         let result = try value(depth:0)
@@ -22,6 +23,7 @@ private struct CopyMangaLiteral {
         return result
     }
     mutating func value(depth: Int) throws -> CopyMangaValue {
+        if loose { try Task.checkCancellation() }
         space()
         guard depth <= 64, position < input.count else { throw error() }
         switch input[position] {
@@ -42,7 +44,13 @@ private struct CopyMangaLiteral {
             if take(125) { return .object(result) }
             repeat {
                 space()
-                let key = try string()
+                let key: String
+                if loose, position < input.count, ![34,39].contains(input[position]) {
+                    let start = position
+                    while position < input.count && (isIdentifier(input[position]) || (48...57).contains(input[position])) { position += 1 }
+                    guard start < position, isIdentifier(input[start]) else { throw error() }
+                    key = String(decoding:input[start..<position],as:UTF16.self)
+                } else { key = try string() }
                 guard take(58) else { throw error() }
                 let item = try value(depth:depth+1)
                 // Match object replacement semantics without changing the first key's slot.
@@ -59,6 +67,8 @@ private struct CopyMangaLiteral {
             if ["null","None"].contains(token) { return .null }
             if ["true","True"].contains(token) { return .bool(true) }
             if ["false","False"].contains(token) { return .bool(false) }
+            if loose, token.range(of:#"^(?:[A-Za-z_$][A-Za-z0-9_$]*|[0-9]+[A-Za-z_$][A-Za-z0-9_$]*)$"#,options:.regularExpression) != nil,
+               token.range(of:#"^[0-9]+[eE][0-9]+$"#,options:.regularExpression) == nil { return .string(token) }
             guard token.range(of:#"^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"#,options:.regularExpression) != nil,
                   let number = Double(token), number.isFinite else { throw error() }
             if !token.contains(".") && !token.lowercased().contains("e") && Int64(token) == nil { throw error() }
@@ -70,6 +80,7 @@ private struct CopyMangaLiteral {
         let quote = input[position]; position += 1
         var result: [UInt16] = []
         while position < input.count {
+            if loose && position % 4096 == 0 { try Task.checkCancellation() }
             let c = input[position]; position += 1
             if c == quote {
                 var i = 0
@@ -114,9 +125,10 @@ private struct CopyMangaLiteral {
         position += 1; return true
     }
     func error() -> Error { NSError(domain:"CopyManga",code:1,userInfo:[NSLocalizedDescriptionKey:"拷贝漫画数据格式错误，位置 \(position)"]) }
+    func isIdentifier(_ c: UInt16) -> Bool { (65...90).contains(c) || (97...122).contains(c) || c == 95 || c == 36 }
 }
 
-func parseCopyMangaLiteral(_ input: String) throws -> CopyMangaValue {
-    var parser = CopyMangaLiteral(input:Array(input.utf16))
+func parseCopyMangaLiteral(_ input: String, loose: Bool = false) throws -> CopyMangaValue {
+    var parser = CopyMangaLiteral(input:Array(input.utf16),loose:loose)
     return try parser.parse()
 }
