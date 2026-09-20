@@ -246,3 +246,28 @@ Mh18VerificationRules移植HTTP/interactive/page/probe判定、挑战marker（�
 最终图像固定eu2.hamreus.com，path逐段JavaURLEncoder再+→%20，files顺序去重，e/m签名值按原格式；只发布有效HTTP(S)完整列表。保留普通Chrome150导航请求头和正文30s/普通15s超时（独立15/10s连接限制平台差异披露）；URLSession负责gzip，响应已有headers可手动处理未跟随的Location并最多5次，主站HTTP重定向规范为HTTPS。不得关闭TLS。真实平台自动重定向限制与站点可用性单列，不以fixtures冒称网络通过。
 
 RED→GREEN覆盖工具原样3cards、111/112章节、封面fallback、direct/loose/bracket、无效token跳过再有效、多层/双引号packer、稀疏count2但index197字典、LZ样本完整29图和精确第三图URL、百分号中文路径、输入顺序fallback、坏参数/展开预算/取消，以及源网络header/path/分页/归属。必要fixtures从本地工具静态提取并保留为测试资源，不抓取真实受限内容。单任务报告task-27-report.md；完成后父代理独立审查再注册，保护Android与所有既有测试。
+
+### Task 28: JM站源解析与验证判定
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/JmComicSource.swift`、`JmVerificationRules.swift`，对应 `JmSourceTests.swift`、`JmVerificationRulesTests.swift`；不修改UIKit、Mh18生产端、图片还原或注册。完整读同计划账本 `jm-research.md`、Android `JmComicSource.java`、`JmComicSourceTest.java`、`JmComicWebViewSession.java`、`JmComicWebViewSessionTest.java` 和 `SourceConfig.jmcomic`。
+
+**Interfaces:** 复用现有 `ComicSource`、`ComicBrowserSession` 和 `HTTPTransport`。`public actor JmComicSource: ComicSource`，nonisolated id/name/referer；init默认 `baseURL:URL=https://18comic.vip`、`name:String=禁漫天堂`、`transport:any HTTPTransport=URLSessionHTTPTransport(timeoutInterval:25)`、`browserSession:(any ComicBrowserSession)?=nil`。提供 `public func verifyAccess() async throws`、`public static func hasCatalogMarker(_ html:String)->Bool`。`JmSourceError` 是Equatable/Sendable/LocalizedError，case verificationRequired、invalidResponse(String)，不能复用Mh18站名错误。`JmVerificationRules` 提供 `HTTPAction { returnBody,verificationRequired,fail }`、`httpAction(statusCode:mitigated:body:)`、`isChallenge(url:title:body:statusCode:mitigated:)`、`isExpectedPage(requested:URL,actual:URL)`、`verificationComplete(browserCatalog:probeCatalog:)`、`probeCanComplete(activeAttempt:probeRunning:stopped:capturedNavigation:currentNavigation:)`、`requiresCredentialReset(storedFingerprint:String?,currentFingerprint:String?)->Bool`。纯规则保留Android结果；真实WK信任边界另行接入。
+
+- [ ] 先建真实fixture行为测试和必要接口骨架，运行断言级RED；不要将只有缺失类型的编译失败称为行为RED。
+- [ ] 逐项移植列表、搜索、分类、详情、目录和正文。latest `/albums?o=mr&page=1`，search `/search/photos?main_tag=0&search_query={Java表单编码}&page=N`，theme `/theme/`，detail `/album/{id}`。page至少1，删除原数字page参数后追加，保留其他query。UA desktopChrome124、Referer根slash、Language zh-CN,zh;q=0.9；session注入只走根/点分子域，interactive明确调用fetchInteractive。取消前后检查、HTTP错误传播，挑战typed错误与普通错误分开。不加入真实网络依赖。
+- [ ] 卡片slug数字ID，title→alt，data-original→data-src→src，保持Java先seen再校验title的行为；hasCatalogMarker只需album链接内部img，与有效卡片列表不同。latest任何页空拒绝，defaultcategory第一页空拒绝，filteredcategory/search/后页defaultcategory允许空。theme h4与其后1600字符内btnmg，七组规范label按Android；成功组缓存，失败不缓存。分类取有效theme选项：UI原本互斥，因此正常只一个；同时传多个时按theme数字索引选第一个，避免Swift Dictionary随机顺序，记录与原LinkedHashMap外部构造顺序的差异。
+- [ ] detail和chapters共用最后一个非空详情HTML缓存，保持不同作品隔离；actor重入时同作品并发合并为一个在途读取或明确测试请求行为，不能跨作品错用。标题book-name→og:title，作者main_tag=2、标签search/photos及完结/连载，范围book-name至episode排除推荐；封面仅当前albumID匹配，album_photo_cover优先；目录懒加载。episode div平衡范围内href数字photo且data-album相等、h3.h2_series标题、去重保序；无目录时仅read-block明确开始/继续阅读按钮回退第1话，排除read_mode与推荐。
+- [ ] 正文aid/scramble_id/cdnImgHost/page_arr无需尾分号。图片按数组保序，保留重复项、跳空字符串，绝对HTTP(S)项保留，否则cdn/media/photos/aid/file；追加scramble_id时正确使用?或&，不得丢失已存在query。复用已有数据字面量解析（数组单双引号等AndroidJSON可接受行为），不执行JS；拒绝不能安全表达的URL/整数溢出/非法数组，报告边界。不要新增图片还原算法。
+- [ ] 纯规则照AndroidJM列表移植，不能直接调用Mh18的额外challenge markers：JM不含 `_cf_chl_opt` 和 `challenge-error-text`。/albums原始路径、尾slash规范；sameSite纯helper保留祖先/端口语义但注释不是安全边界。fingerprint null current不重置，stored nil视空；同chrome124-v1不重置。
+- [ ] GREEN覆盖Android完整源/会话fixtures，补互斥多值确定顺序、详情缓存隔离、真实请求头/path、错误/取消、重复图片和已有query、编码路径不得被解码成/albums。示例断言：`XCTAssertEqual(page.imageUrls[0], "https://cdn-msp2.18comic.vip/media/photos/1114754/00010.webp?scramble_id=220980")`；主题七组按热门/类别/排行榜/主题/角色/特殊/其他。测试使用真实适配器+捕获transport/session，禁止镜像生产实现的假解析器。
+- [ ] 在固定 `/work` Docker挂载运行 `swift test -j 2 --filter 'JmSourceTests|JmVerificationRulesTests'`，最后一次全量并diffcheck，报告 `task-28-report.md` 给父代理提交与独立审查。不称JM可用、不注册；原生JM会话后续单独实现。
+
+### Task 29: 四站分类选项互斥
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/SourceFilterSelection.swift` 与 `Tests/ComicCoreTests/SourceFilterSelectionTests.swift`；修改 `ios/XXComic/DiscoverViewController.swift` 的FilterViewController option action。完整对照Android MainActivity.java 9028附近点击选项分支及8730附近选项初始化。
+
+**Interface:** `public enum SourceFilterSelection`，`public static func select(sourceID:String,key:String,value:String,groupKeys:[String],in selection:inout [String:String])`，仅集中一个实际生产规则，无状态机/新依赖。代码先写 `selection[key] = value`，若 `value != "all" && ["mh160","gmh","mh18","jmcomic"].contains(sourceID)`，遍历groupKeys中非当前key设为all。普通源保持其他筛选，选all不清其他，旧未知key按Android保留。UIKit点击直接调用此函数并render；草稿/确认/关闭/换源不变。
+
+- [ ] 测试先写：四个源从genre=a切tag=b得到genre=all/tag=b；选all只改单键；普通源多组选项共存；换同组不破坏未知key。以旧仅改单键行为为RED，明确错误断言输出。
+- [ ] 实现最少函数并真实接到现有按钮action，GREEN定向SourceFilterSelectionTests；Core不与其他任务共享构建并发。UIKit全文件syntaxparse，报告原生交互未执行。
+- [ ] 报告task-29-report.md，父代理提交/独立审查；同步PARITY的分类互斥修复与Apple待验收，不将helper测试当UIKit交互通过。
