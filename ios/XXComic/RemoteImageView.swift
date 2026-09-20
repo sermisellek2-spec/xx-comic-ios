@@ -36,7 +36,13 @@ final class RemoteImageView: UIImageView {
             do {
                 var request = URLRequest(url: url)
                 request.setValue(referer, forHTTPHeaderField: "Referer")
-                request.setValue("Mozilla/5.0", forHTTPHeaderField: "User-Agent")
+                // Match Android SourceImageFetcher.applyHeaders for cover and reader requests.
+                request.setValue("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
+                request.setValue("image/webp,image/apng,image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
+                request.setValue("zh-CN,zh;q=0.9,en;q=0.8", forHTTPHeaderField: "Accept-Language")
+                request.setValue("image", forHTTPHeaderField: "Sec-Fetch-Dest")
+                request.setValue("no-cors", forHTTPHeaderField: "Sec-Fetch-Mode")
+                request.setValue("cross-site", forHTTPHeaderField: "Sec-Fetch-Site")
                 request.timeoutInterval = 30
                 let data: Data
                 if url.isFileURL {
