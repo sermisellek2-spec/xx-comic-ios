@@ -8,27 +8,43 @@ public actor LocalComicSource: ComicSource {
     public init(library: LocalLibrary) { self.library = library }
     public func latest(page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()
-        return page == 1 ? try library.books().map { try library.summary(for: $0) } : []
+        guard page == 1 else { return [] }
+        let allSeries = try await library.series()
+        return allSeries.compactMap { try? library.summary(for: $0) }
     }
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try await latest(page: page).filter { $0.title.localizedCaseInsensitiveContains(keyword) }
     }
     public func detail(comicId: String) async throws -> ComicDetail {
         try Task.checkCancellation()
+        if let s = try await library.series(id: comicId) {
+            let summary = try library.summary(for: s)
+            let chapters = try await library.chapters(for: s.id)
+            let firstBook = s.volumeIDs.first.flatMap { try? library.book(id: $0) }
+            let allVolumes = s.volumeIDs.compactMap { try? library.book(id: $0) }
+            let author = firstBook?.epub?.author ?? ""
+            let totalPages = allVolumes.reduce(0) { $0 + $1.pages.count }
+            let formatStatus: String
+            if let first = firstBook {
+                let fmt = first.kindleFormat?.rawValue.uppercased() ?? (first.pdf != nil ? "PDF" : (first.epub == nil ? "本地漫画" : "EPUB"))
+                formatStatus = s.volumeIDs.count > 1 ? "\(s.volumeIDs.count) 卷 · \(fmt)" : fmt
+            } else {
+                formatStatus = "本地漫画"
+            }
+            let desc = (firstBook?.epub?.description.isEmpty == false) ? firstBook!.epub!.description : "\(totalPages) 页"
+            return ComicDetail(summary: summary, author: author, status: formatStatus,
+                               description: desc, latestChapter: chapters.last?.title ?? "", chapters: chapters)
+        }
         let book = try library.book(id: comicId)
-        return ComicDetail(summary: try library.summary(for: book), author: book.epub?.author ?? "", status: book.kindleFormat?.rawValue.uppercased() ?? (book.pdf != nil ? "PDF" : (book.epub == nil ? "本地漫画" : "EPUB")),
-                           description: book.epub?.description ?? "\(book.pages.count) 页", latestChapter: "", chapters: [])
+        let chapters = try await library.chapters(for: book.id)
+        return ComicDetail(summary: try library.summary(for: book), author: book.epub?.author ?? "",
+                           status: book.kindleFormat?.rawValue.uppercased() ?? (book.pdf != nil ? "PDF" : (book.epub == nil ? "本地漫画" : "EPUB")),
+                           description: book.epub?.description ?? "\(book.pages.count) 页",
+                           latestChapter: chapters.last?.title ?? "", chapters: chapters)
     }
     public func chapters(comicId: String) async throws -> [Chapter] {
         try Task.checkCancellation()
-        let book = try library.book(id: comicId)
-        _ = try library.pageURLs(for: book)
-        if let chapters = book.chapters {
-            return chapters.enumerated().map { index, chapter in
-                Chapter(chapterId: chapter.id, title: chapter.title, url: book.id + "/" + chapter.id, chapterSlot: index)
-            }
-        }
-        return [Chapter(chapterId: book.id, title: book.title, url: book.id)]
+        return try await library.chapters(for: comicId)
     }
     public func chapter(url: String) async throws -> ChapterPage {
         try Task.checkCancellation()

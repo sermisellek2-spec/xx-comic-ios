@@ -58,11 +58,52 @@ public struct ChapterPage: Codable, Equatable, Sendable {
     public let nextPageUrl: String
     public let imageUrls: [String]
 
-    public init(chapterId: String, title: String, nextPageUrl: String, imageUrls: [String]) {
+    public init(chapterId: String, title: String, nextPageUrl: String = "", imageUrls: [String]) {
         self.chapterId = chapterId
         self.title = title
         self.nextPageUrl = nextPageUrl
         self.imageUrls = imageUrls
+    }
+}
+
+public struct FileResource: Codable, Equatable, Sendable {
+    public let fileId: String
+    public let revision: String
+    public let title: String
+    public let order: Int
+    public let expectedFormat: String
+    public let bytes: Int64
+    public let sha256: String?
+    public let url: String
+    public let headers: [String: String]
+    public let expiresAt: Int64
+
+    public init(fileId: String, revision: String = "", title: String = "", order: Int = 0,
+                expectedFormat: String = "", bytes: Int64 = -1, sha256: String? = nil,
+                url: String = "", headers: [String: String] = [:], expiresAt: Int64 = 0) {
+        self.fileId = fileId.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.revision = revision.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.order = order
+        self.expectedFormat = expectedFormat.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        self.bytes = bytes
+        self.sha256 = sha256.flatMap {
+            let t = $0.trimmingCharacters(in: .whitespacesAndNewlines)
+            return t.isEmpty ? nil : t.lowercased()
+        }
+        self.url = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.headers = headers
+        self.expiresAt = expiresAt
+    }
+
+    public func isExpired(now: Int64) -> Bool {
+        expiresAt > 0 && now >= expiresAt
+    }
+
+    public func withUrl(_ newUrl: String, newExpiresAt: Int64) -> FileResource {
+        FileResource(fileId: fileId, revision: revision, title: title, order: order,
+                     expectedFormat: expectedFormat, bytes: bytes, sha256: sha256,
+                     url: newUrl, headers: headers, expiresAt: newExpiresAt)
     }
 }
 

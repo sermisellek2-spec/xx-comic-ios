@@ -16,11 +16,27 @@ public protocol ComicSource: Sendable {
     func chapter(url: String) async throws -> ChapterPage
     func filterGroups() async throws -> [SourceFilterGroup]
     func category(filters: [String: String], page: Int) async throws -> [ComicSummary]
+    func healthCheck() async -> Bool
 }
 
 public extension ComicSource {
     var supportsSearch: Bool { true }
+
+    func healthCheck() async -> Bool {
+        do {
+            let list = try await latest(page: 1)
+            return !list.isEmpty
+        } catch {
+            return false
+        }
+    }
 }
+
+public protocol FileSourceCapability: Sendable {
+    func listFiles(comicId: String) async throws -> [FileResource]
+    func resolveFile(comicId: String, fileId: String) async throws -> FileResource
+}
+
 
 public struct HTTPResponse: Sendable {
     public let data: Data
