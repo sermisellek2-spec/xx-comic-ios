@@ -219,7 +219,11 @@ Mh18VerificationRules移植HTTP/interactive/page/probe判定、挑战marker（�
 
 使用系统WebKit，在UIKit新增Mh18BrowserSession及验证弹层，复用Task24协议/判定；MainActor管理WebView、continuations、定时/导航代次。AppEnvironment持有session并注入Mh18适配器，按Android默认相对顺序注册；SourceSettings增加该源验证入口与状态，用户主动进入，其他源无多余验证按钮。必须完整对照AndroidMh18WebViewSession及MainActivity站源验证调用，先读mh18-research.md完整研究再实施，不以简单Cookie复制替代浏览器网络上下文。
 
+对照MainActivity.verificationRequiredState/showReaderVerificationRequired：发现单站/全站、详情、目录及阅读请求遇到typed verificationRequired时显示“需要验证/去验证”，点击到站源管理，不能只给网络重试或静默空页。全站错误需要保留验证状态类型，不能从中文字符串猜测。普通HTTP错误仍重试；取消不弹失败。验证成功后能从原错误页面重新请求，保留选中站源/关键词/章节位置，不能让旧请求覆盖新页面。当前没有下载队列，成功唤醒下载的消费者留待下载模块实现，不虚构已接线。
+
 初始普通请求用HTTP+Cookie，同一session串行；首次/失效挑战仅返回需要验证。手动验证先HTTP预检，有有效漫画目录直接成功；只有挑战打开浏览器，普通失败留重试/关闭。固定UA/Accept-Language按Android，会话生命周期保持Cookie，平台第三方Cookie限制必须披露。WKWebView配置默认持久dataStore；URLSession收到的Cookie同步到WKHTTPCookieStore，WK新Cookie能供HTTP预检/图片请求使用（仅按真实URL域规则发送，不把某站Cookie污染其他源）。返回URL与协议/host验证，严禁关闭TLS校验。
+
+信任边界补充：Task24纯规则为了对照保留Android sameSite的祖先域宽松语义及CF例外协议行为，UIKit不能单独依赖它。请求、导航与返回地址先约束到配置HTTPS根18mh.org或点分子域、443/默认端口、无userInfo；Cloudflare例外仅HTTPS/443的challenges.cloudflare.com及点分子域，且限既有挑战路径。拒绝org等祖先域、相似域、FTP/HTTP/自定义scheme和非默认端口。Cookie同样按实际域隔离。只收紧原逻辑在非业务地址上的信任，不改变正常本站跳转。
 
 显式验证绝对单调120s deadline从创建开始，自动probe reload最多2次且不续期；DOM检查600ms、成功延迟600ms，过程中可关闭取消，用户重新加载创建新请求。浏览器DOM在当前/manga有真实card marker后，通过同一WebView网络fetch(credentials include/cache no-store/redirect follow)再验证目录；都成功才保留WebView并切后续请求到browser context。使用callAsyncJavaScript参数传值或同等安全方式，不拼接未转义URL/执行源站提供脚本代码作为解码器。请求取消中止网络，过期request/attempt/navigation不能完成新页面；失败/timeout停止探测但保留手动重试/关闭，不自动操作验证码。retained context失效返回需要验证，不悄悄无限循环。关闭/缓存清理/进程终止完成所有continuation并释放UI。
 
