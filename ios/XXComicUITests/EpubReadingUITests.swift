@@ -42,7 +42,7 @@ final class EpubReadingUITests: XCTestCase {
     }
 
     func testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce() {
-        let app = launch(); open("编码锚点", app: app); ready(app)
+        let app = launch(); open("编码空锚点", app: app); ready(app)
         let cases = [("同页中文空格", "同页中文目标已到达"), ("同页字面百分号", "同页百分号目标已到达"),
                      ("跨章中文空格", "跨章中文目标已到达"), ("跨章字面百分号", "跨章百分号目标已到达")]
         for (link, target) in cases {

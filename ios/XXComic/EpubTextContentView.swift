@@ -212,7 +212,7 @@ final class EpubTextContentView: UIView, WKNavigationDelegate, WKUIDelegate {
     private static let events = #"""
     (()=>{
       const send = value => window.webkit.messageHandlers.reader.postMessage(value);
-      window.readerAnchor=e=>Boolean(e&&document.body.contains(e)&&!e.id.startsWith('__xxcomic_')&&Array.from(e.getClientRects()).some(r=>r.width>0&&r.height>0));
+      window.readerAnchor=e=>Boolean(e&&document.body.contains(e)&&!e.id.startsWith('__xxcomic_')&&e.getClientRects().length>0);
       window.readerPosition=()=>{
         const total=Math.max(0,document.documentElement.scrollHeight-innerHeight);
         let anchor='';
