@@ -76,6 +76,22 @@ public struct LocalLibrary: Sendable {
         let index = try LocalFolderIndex(folder: folder, isReadableImage: isReadableImage)
         return try importFiles(title: title, files: index.files, groups: index.groups)
     }
+    public func importArchive(title: String, archive: URL, isReadableImage: (URL) throws -> Bool) throws -> LocalBook {
+        try Task.checkCancellation()
+        let id = UUID().uuidString, manager = FileManager.default
+        let staging = directory.appendingPathComponent(".import-" + id, isDirectory: true)
+        try manager.createDirectory(at: staging, withIntermediateDirectories: false)
+        defer { if manager.fileExists(atPath: staging.path) { try? manager.removeItem(at: staging) } }
+        do {
+            let index = try LocalArchiveIndex(archive: archive, staging: staging, isReadableImage: isReadableImage)
+            return try publish(title: title, id: id, staging: staging, names: index.names, groups: index.groups)
+        } catch is CancellationError { throw CancellationError() }
+        catch let error as LocalLibraryError { throw error }
+        catch {
+            if [NSCocoaErrorDomain, NSPOSIXErrorDomain].contains((error as NSError).domain) { throw error }
+            throw LocalLibraryError.invalidArchive
+        }
+    }
     private func importFiles(title: String, files: [URL], groups: [LocalFolderIndex.Group]?) throws -> LocalBook {
         guard !files.isEmpty else { throw LocalLibraryError.emptyImport }
         let id = UUID().uuidString, manager = FileManager.default
@@ -93,6 +109,9 @@ public struct LocalLibrary: Sendable {
             try copy(file, to: staging.appendingPathComponent(name), totalBytes: &totalBytes)
             names.append(name)
         }
+        return try publish(title: title, id: id, staging: staging, names: names, groups: groups)
+    }
+    private func publish(title: String, id: String, staging: URL, names: [String], groups: [LocalFolderIndex.Group]?) throws -> LocalBook {
         let cleaned = SearchRules.trim(title)
         let chapters = groups?.enumerated().map { slot, group in
             LocalBookChapter(id: id + "_ch_\(slot)", title: group.title, pages: group.indices.map { names[$0] })
@@ -100,7 +119,7 @@ public struct LocalLibrary: Sendable {
         let book = LocalBook(id: id, title: cleaned.isEmpty ? "本地漫画" : cleaned, createdAt: Date().timeIntervalSince1970, pages: names, chapters: chapters)
         try JSONEncoder().encode(book).write(to: staging.appendingPathComponent("book.json"), options: .atomic)
         try Task.checkCancellation()
-        try manager.moveItem(at: staging, to: directory.appendingPathComponent(id, isDirectory: true))
+        try FileManager.default.moveItem(at: staging, to: directory.appendingPathComponent(id, isDirectory: true))
         return book
     }
     private func copy(_ source: URL, to destination: URL, totalBytes: inout Int64) throws {
@@ -126,7 +145,7 @@ public struct LocalLibrary: Sendable {
 }
 
 public enum LocalLibraryError: LocalizedError {
-    case invalidBook, emptyImport, imageTooLarge, folderTooDeep, folderTooLarge
+    case invalidBook, emptyImport, imageTooLarge, folderTooDeep, folderTooLarge, invalidArchive, archiveTooLarge
     public var errorDescription: String? {
         switch self {
         case .invalidBook: return "本地漫画数据无效或文件不可用，原文件已保留。"
@@ -134,6 +153,8 @@ public enum LocalLibraryError: LocalizedError {
         case .imageTooLarge: return "单张图片不能超过 128 MiB，本次未导入，请先缩小该图片。"
         case .folderTooDeep: return "目录层级过深（最多支持 5 层），本次未导入。"
         case .folderTooLarge: return "文件夹超过 50000 项或 20 GiB，本次未导入。"
+        case .invalidArchive: return "压缩包损坏、路径不安全、已加密或格式不支持，本次未导入，原文件已保留。仅支持 ZIP/CBZ。"
+        case .archiveTooLarge: return "压缩包超过安全限制：最多 50000 项、单项 128 MiB、总量 20 GiB。本次未导入，原文件已保留。"
         }
     }
 }

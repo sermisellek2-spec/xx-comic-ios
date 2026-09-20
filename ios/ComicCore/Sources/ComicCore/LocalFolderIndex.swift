@@ -37,7 +37,11 @@ struct LocalFolderIndex {
         guard !found.isEmpty else { throw LocalLibraryError.emptyImport }
         found.sort { NaturalPathOrder.less($0.path, $1.path) }
         files = found.map(\.url)
-        var paths = found.map { $0.path.split(separator: "/").map(String.init) }
+        groups = Self.groups(for: found.map(\.path))
+    }
+
+    static func groups(for sortedPaths: [String]) -> [Group] {
+        var paths = sortedPaths.map { $0.split(separator: "/").map(String.init) }
         while let first = paths.first?.first, paths.allSatisfy({ $0.count > 1 && $0[0] == first }) {
             paths = paths.map { Array($0.dropFirst()) }
         }
@@ -45,9 +49,9 @@ struct LocalFolderIndex {
         var byFolder: [String: [Int]] = [:]
         for index in paths.indices where paths[index].count > 1 { byFolder[paths[index][0], default: []].append(index) }
         if byFolder.isEmpty {
-            groups = [Group(title: "正文", indices: root)]
+            return [Group(title: "正文", indices: root)]
         } else {
-            groups = (root.isEmpty ? [] : [Group(title: "未分章", indices: root)]) + byFolder.keys.sorted(by: NaturalPathOrder.less).map { Group(title: $0, indices: byFolder[$0]!) }
+            return (root.isEmpty ? [] : [Group(title: "未分章", indices: root)]) + byFolder.keys.sorted(by: NaturalPathOrder.less).map { Group(title: $0, indices: byFolder[$0]!) }
         }
     }
 }

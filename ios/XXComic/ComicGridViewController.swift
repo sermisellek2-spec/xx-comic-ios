@@ -101,7 +101,8 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     private let resume = UIButton(type: .system)
     private let shelfMode = UISegmentedControl(items: ["我的书架", "本地书架"])
     private var importTask: Task<Void, Never>?
-    private var importingFolder = false
+    private enum ImportKind: Sendable { case images, folder, archive }
+    private var importKind = ImportKind.images
     private var localMode: Bool { !historyOnly && shelfMode.selectedSegmentIndex == 1 }
     init(environment: AppEnvironment, historyOnly: Bool = false) {
         self.historyOnly = historyOnly
@@ -132,7 +133,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             do {
                 comics = try environment.localLibrary.books().map { try environment.localLibrary.summary(for: $0) }
                 collection.reloadData()
-                status(comics.isEmpty ? "本地书架空空的，点击导入添加图片" : "")
+                status(comics.isEmpty ? "本地书架空空的，点击导入添加图片、文件夹或 ZIP/CBZ" : "")
             } catch { status(error.localizedDescription) }
             return
         }
@@ -153,38 +154,54 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     @objc private func importImages() {
         if let importTask { importTask.cancel(); return }
         let menu = UIAlertController(title: "导入本地漫画", message: nil, preferredStyle: .actionSheet)
-        menu.addAction(UIAlertAction(title: "图片文件", style: .default) { [weak self] _ in self?.pickImport(folder: false) })
-        menu.addAction(UIAlertAction(title: "图片文件夹", style: .default) { [weak self] _ in self?.pickImport(folder: true) })
+        menu.addAction(UIAlertAction(title: "图片文件", style: .default) { [weak self] _ in self?.pickImport(.images) })
+        menu.addAction(UIAlertAction(title: "图片文件夹", style: .default) { [weak self] _ in self?.pickImport(.folder) })
+        menu.addAction(UIAlertAction(title: "ZIP / CBZ 压缩包", style: .default) { [weak self] _ in self?.pickImport(.archive) })
         menu.addAction(UIAlertAction(title: "取消", style: .cancel))
         menu.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.first
         present(menu, animated: true)
     }
-    private func pickImport(folder: Bool) {
-        importingFolder = folder
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: folder ? [.folder] : [.image], asCopy: !folder)
-        picker.allowsMultipleSelection = !folder; picker.delegate = self
+    private func pickImport(_ kind: ImportKind) {
+        importKind = kind
+        let types: [UTType]
+        switch kind {
+        case .images: types = [.image]
+        case .folder: types = [.folder]
+        case .archive: types = [.zip, UTType(filenameExtension: "cbz", conformingTo: .archive) ?? .archive]
+        }
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: kind == .images)
+        picker.allowsMultipleSelection = kind == .images; picker.delegate = self
         present(picker, animated: true)
     }
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard !urls.isEmpty else { return }
-        let folder = importingFolder
-        let alert = UIAlertController(title: folder ? "导入文件夹漫画" : "导入图片漫画", message: folder ? "支持图片和章节子目录，按自然顺序导入。" : "所选图片合并为一本漫画，按文件名自然排序。", preferredStyle: .alert)
-        alert.addTextField { $0.text = folder ? urls.first?.lastPathComponent : urls.first?.deletingPathExtension().lastPathComponent }
+        let kind = importKind
+        let prompt: (String, String)
+        switch kind {
+        case .images: prompt = ("导入图片漫画", "所选图片合并为一本漫画，按文件名自然排序。")
+        case .folder: prompt = ("导入文件夹漫画", "支持图片和章节子目录，按自然顺序导入。")
+        case .archive: prompt = ("导入压缩包漫画", "仅支持 ZIP / CBZ，按目录自然分章。原压缩包会保留。")
+        }
+        let alert = UIAlertController(title: prompt.0, message: prompt.1, preferredStyle: .alert)
+        alert.addTextField { $0.text = kind == .folder ? urls.first?.lastPathComponent : urls.first?.deletingPathExtension().lastPathComponent }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "导入", style: .default) { [weak self, weak alert] _ in
-            self?.beginImport(urls, title: alert?.textFields?.first?.text ?? "本地漫画", folder: folder)
+            self?.beginImport(urls, title: alert?.textFields?.first?.text ?? "本地漫画", kind: kind)
         })
         if presentedViewController === controller {
             controller.dismiss(animated: true) { [weak self] in self?.present(alert, animated: true) }
         } else { present(alert, animated: true) }
     }
-    private func beginImport(_ urls: [URL], title: String, folder: Bool) {
+    private func beginImport(_ urls: [URL], title: String, kind: ImportKind) {
         let library = environment.localLibrary
-        status("正在导入…，再次点击导入可取消")
+        status(kind == .archive ? "正在校验并导入压缩包…，再次点击导入可取消" : "正在导入…，再次点击导入可取消")
         let worker = Task.detached(priority: .userInitiated) {
             let scoped = urls.filter { $0.startAccessingSecurityScopedResource() }
             defer { scoped.forEach { $0.stopAccessingSecurityScopedResource() } }
-            if folder, let url = urls.first {
+            if kind == .archive, let url = urls.first {
+                return try library.importArchive(title: title, archive: url, isReadableImage: LocalImageProbe.isReadable)
+            }
+            if kind == .folder, let url = urls.first {
                 return try library.importFolder(title: title, folder: url, isReadableImage: LocalImageProbe.isReadable)
             }
             for url in urls {

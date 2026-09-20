@@ -201,6 +201,8 @@ func testLatestUsesPostCategoryPageAndDefaults() async throws {
 
 所有条目（含目录和metadata）<=50000；每条声明<=128MiB，声明总量<=20GiB。非目录先拒绝绝对路径/盘符/越界路径，再规范化、拒绝重复，最后跳过metadata；拒绝符号链接。名称先尝试全部UTF8，失败全局GB18030（保留UTF8 flag强制UTF8规则）。Library序列可能静默截断，须最小EOCD/ZIP64计数校验，声明与实际数量必须匹配；多磁盘、加密、不支持或损坏后部条目不能静默导入部分书籍。流式consumer检查取消、实际单条/累计预算、最终长度和CRC，禁止只相信中央目录；坏图片跳过，压缩流完整性损坏应失败。真解码探测复用Task22 ImageIO路径，坏首图不能成为封面。深目录、自然顺序、wrapper剥离、未分章/正文规则同Android。
 
+实施验证补充：已复现ZIPFoundation0.9.20 Linux解压跨越声明compressedSize且接受截断条目（RED1测试3失败），其底层decode对短输入块还使用bufferSize而非实际chunk.count。不得保留该风险。继续用ZIPFoundation解析/枚举ZIP，deflate分支使用系统zlib最小薄封装（非自写算法），Apple/Linux共用；新增ComicZlib systemLibrary避免与依赖内部CZLib重名，最小shim/modulemap链接z。受限输入、实际avail_in、256KiB输出、取消、CRC、完整消费压缩长度及Z_STREAM_END验证，defer释放原生流。覆盖>256KiB含短尾数据、截断/提前流尾/额外尾部，Apple链接仍需Xcode验收。UTF8 flag/边界/支持方法由最小中央目录顺序校验补齐，不扩成通用ZIP实现。
+
 测试先失败后实现：存储/deflate、中文UTF8和GB18030、chapter自然顺序、深度>5、跳坏首图、越界/绝对/盘符/规范化重复/metadata重复、声明预算与50001条、损坏CRC/截断/后部加密条目/ZIP64计数、取消清理、重开阅读。测试fixture用确定性ZIP字节或库创建后定点破坏，不引入运行时shell。UIKit新增压缩包选择与清晰中文状态，保持安全作用域直至任务完成；parse不是Xcode验收。依赖、核心、UI分清验证，独立审查后更新矩阵。
 
 ### Task 24: 18漫画适配器与验证判定规则
