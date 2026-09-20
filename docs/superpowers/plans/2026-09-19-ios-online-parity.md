@@ -306,7 +306,7 @@ XCTAssertFalse(publication.spine[1].linear) // still present in reading order
 
 ### Task 32: EPUB 本地导入、旧书架兼容与按需资源
 
-**Files:** 修改 `ios/ComicCore/Sources/ComicCore/LocalLibrary.swift`、`LocalComicSource.swift`；新增 `LocalEpubLibrary.swift`、`Tests/ComicCoreTests/LocalEpubLibraryTests.swift`。消费Task31复审后的EpubParser/EpubPublication/EpubArchive，不修改UIKit或站源。本任务是持久化/资源读取层，用户入口与原生阅读在下一任务接入，不先展示不可读导入入口。
+**Files:** 修改 `ios/ComicCore/Sources/ComicCore/LocalLibrary.swift`、`LocalComicSource.swift`，必要时最小扩展 `EpubArchive.swift` 的流式资源写入接口（复用同一CRC/预算/取消逻辑，不复制解压器）；新增 `LocalEpubLibrary.swift`、`Tests/ComicCoreTests/LocalEpubLibraryTests.swift`。消费Task31复审后的EpubParser/EpubPublication/EpubArchive，不修改UIKit或站源。本任务是持久化/资源读取层，用户入口与原生阅读在下一任务接入，不先展示不可读导入入口。
 
 **Interfaces:** LocalBook增加可选 `epub:EpubPublication?`、`coverName:String?`，公开init参数默认nil，旧book.json无需迁移。新增LocalLibrary方法 `importEpub(title:String,archive:URL,isReadableImage:(URL)throws->Bool) throws -> LocalBook`、`epubResource(bookID:String,path:String,maximumBytes:Int) throws -> Data`、`epubImageData(pageURL:URL) throws -> Data`。仅EPUB书使用生成的 `spine-0`、`spine-1` 等唯一逻辑页token（同一资源重复出现在spine时仍是两页），原图片书pages仍是原有唯一叶子文件名；chapters仍严格分区pages。资源原文件固定为书目录 `content.epub`，封面候选验证后可保存固定 `cover.bin`，不从manifest接受任意文件系统路径。安全页URL为 `xxcomic-epub://page/<bookUUID>/<spineIndex>`：精确scheme/host、无userinfo/port/query/fragment、路径恰好UUID与非负十进制索引，拒绝编码绕过和越界；生成/解析生产逻辑集中一处。
 
