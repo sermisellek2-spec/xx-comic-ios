@@ -86,6 +86,7 @@ extension LocalLibrary {
         let cleaned = SearchRules.trim(title)
         let book = LocalBook(id: id, title: cleaned.isEmpty ? (publication.title.isEmpty ? "本地 EPUB" : publication.title) : cleaned,
                              createdAt: Date().timeIntervalSince1970, pages: names, chapters: chapters, epub: publication, coverName: coverName)
+        try validateEpubMetadata(book)
         try JSONEncoder().encode(book).write(to: staging.appendingPathComponent("book.json"), options: .atomic)
         try Task.checkCancellation()
         try manager.moveItem(at: staging, to: directory.appendingPathComponent(id, isDirectory: true))
@@ -126,6 +127,16 @@ extension LocalLibrary {
     }
 
     func validateEpub(_ book: LocalBook) throws {
+        try validateEpubMetadata(book)
+        let content = try ownedFile(bookID: book.id, name: "content.epub")
+        guard let size = try content.resourceValues(forKeys: [.fileSizeKey]).fileSize, Int64(size) <= Self.maximumImportBytes else {
+            throw LocalLibraryError.invalidBook
+        }
+        if let name = book.coverName { _ = try ownedFile(bookID: book.id, name: name) }
+    }
+
+    /// Import and reopening must agree before a book becomes visible to the shelf.
+    private func validateEpubMetadata(_ book: LocalBook) throws {
         guard let publication = book.epub, !publication.hasDrm,
               !publication.manifest.isEmpty, publication.manifest.count <= 50_000, publication.spine.count <= 100_000,
               book.pages == publication.spine.indices.map({ "spine-\($0)" }),
@@ -169,10 +180,5 @@ extension LocalLibrary {
             LocalBookChapter(id: book.id + "_ch_\(index)", title: range.title, pages: Array(book.pages[range.startIndex..<range.endIndex]))
         }
         guard book.chapters == expected else { throw LocalLibraryError.invalidBook }
-        let content = try ownedFile(bookID: book.id, name: "content.epub")
-        guard let size = try content.resourceValues(forKeys: [.fileSizeKey]).fileSize, Int64(size) <= Self.maximumImportBytes else {
-            throw LocalLibraryError.invalidBook
-        }
-        if let name = book.coverName { _ = try ownedFile(bookID: book.id, name: name) }
     }
 }

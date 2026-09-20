@@ -296,4 +296,39 @@ final class LocalEpubLibraryTests: XCTestCase {
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), [book.id])
         XCTAssertEqual(try Data(contentsOf: badInput), bytes)
     }
+
+    private func manifestFixture(count: Int) throws -> URL {
+        let items = (0..<count).map { "<item id='image-\($0)' href='a' media-type='image/jpeg'/>" }.joined()
+        let input = try fixture(opfTransform: { _ in
+            "<package><metadata/><manifest>\(items)</manifest><spine><itemref idref='image-0'/></spine></package>"
+        })
+        let archive = try Archive(url: input, accessMode: .update)
+        // Three physical ZIP entries, independent of the number of OPF manifest items.
+        try archive.remove(XCTUnwrap(archive["OPS/b"]))
+        try archive.remove(XCTUnwrap(archive["OPS/nav"]))
+        return input
+    }
+
+    func testOversizedManifestIsRejectedBeforePublishingAndPreservesShelf() throws {
+        let library = try LocalLibrary(directory: temporaryDirectory())
+        let existing = try library.importEpub(title: "原书", archive: fixture()) { _ in true }
+        let input = try manifestFixture(count: 50_001), original = try Data(contentsOf: input)
+        XCTAssertThrowsError(try library.importEpub(title: "过多条目", archive: input) { _ in true })
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), [existing.id])
+        XCTAssertEqual(try library.books(), [existing])
+        XCTAssertEqual(try Data(contentsOf: input), original)
+    }
+
+    func testManifestAtLimitImportsAndReopens() throws {
+        let library = try LocalLibrary(directory: temporaryDirectory())
+        let input = try manifestFixture(count: 50_000), original = try Data(contentsOf: input)
+        let book = try library.importEpub(title: "边界条目", archive: input) { _ in true }
+        let reopened = try LocalLibrary(directory: library.directory)
+        XCTAssertEqual(book.epub?.manifest.count, 50_000)
+        XCTAssertEqual(book.pages, ["spine-0"])
+        XCTAssertEqual(try reopened.book(id: book.id), book)
+        XCTAssertEqual(try reopened.books(), [book])
+        XCTAssertEqual(try reopened.epubImageData(pageURL: XCTUnwrap(reopened.pageURLs(for: book).first)), Data("IMAGE_A".utf8))
+        XCTAssertEqual(try Data(contentsOf: input), original)
+    }
 }
