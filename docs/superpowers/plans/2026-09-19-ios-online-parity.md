@@ -459,6 +459,7 @@ XCTAssertEqual(try Data(contentsOf: mobi), originalBytes)
 - [ ] 漫画分类：有效图>=3且移除HTML标签及布局空白后的UTF16长度<300；布局空白含Android ASCII正则空白、NBSP/全角空格与nbsp/十进制160/十六进制a0实体。漫画按record图序一图一正文，Page N目录使既有EPUB伪页目录折为一章。文字只按mbp:pagebreak/pagebreak分章（不凭注释增加h2分章），recindex映射本地images，缺图recindex删除；章名取首h1...h4同一行去标签后非空且UTF16<50，否则第 N 章。保留书中原文字/图片，不执行HTML/JS。新opf/ncx元数据逐项XML转义，正文继续由Task35的WK隔离机制显示。
 - [ ] 对不可信HTML的正则使用Foundation reportProgress可取消匹配，转换内HTML扫描共享单调时钟2秒预算，超限明确失败，不能在多个replaceAll中重新启动无界扫描；纯线性操作每块/章检查取消。输入正文8MiB、派生manifest<=50000、spine<=100000，与发布/重开边界一致。空正文且无可组成漫画内容明确报错，禁止照搬Android的“正文内容”占位页。mimetype必须首条且stored；META-INF/container.xml、OEBPS/content.opf、toc.ncx及相对图片/正文路径可被真实EpubParser读取，cover-image实际指向所选封面（避免原版fallback封面声明悬空）。
 - [ ] 本次转换在destination父目录创建唯一`.kindle-`+UUID工作目录，所有临时图片和derived.epub均在内；既有destination检查后仍以不覆盖的move发布。defer只清理本次明确创建且验证归属的scratch，失败/取消保留source与任何既有destination；不递归清理调用方目录。写完并解析验证、最终取消检查后才发布，无try?吞掉转换错误。最终验证只读产物，不执行内嵌内容。
+- [ ] 派生每篇完整XHTML（正文+转义标题+wrapper的UTF8字节）必须≤8MiB，与EpubTextContentView实际读取限制相同；超过明确报错并清理scratch，不截断原文、不擅自拆章。总解压8MiB可通过两个pagebreak章验证，不能单章写出后靠测试提高archive.read上限掩盖不可读。无标签正文允许先线性检查跳过必定无匹配的正则，仍检查取消/共享预算；不移除恶意HTML2秒边界。加完整页超限实际RED/GREEN和多章总输出截断边界。
 - [ ] GREEN覆盖实际ZIP元数据/文字/图片原字节/封面、控制record索引空洞、跨record/截断、空正文拒绝、超预算与运行中取消回收、既有target保护、无原包改动、恶意HTML耗时及取消；原Task37定向回归。报告task-38-report.md，父代理提交/独立审查；原生Kindle入口尚未完成。
 
 ### Task 39: Kindle 原包保存、派生恢复与完整阅读入口
