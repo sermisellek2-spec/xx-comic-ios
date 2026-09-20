@@ -432,3 +432,28 @@ XCTAssertThrowsError(try PalmDoc.decompress(Data([2, 65]))) // literal截断
 - [ ] 书名先PDB Latin1零终止+SearchRules.trim，fullNameOffset优先record0相对再MOBI相对，长度最多65536；UTF8声明65001，否则书名Latin1，正文encoding标记Windows-1252。EXTH author100（UTF8）、boundary121、cover201，边界完全在record0、条目8...65536；保留Java遇到不合法条目停止解析的行为，EXTH总长度越界corrupt。DRM字段record0+168/172/176（不是188/196），以Int32语义解释负哨兵，encryption=1优先mobipocket，否则非0或有效DRM元数据为amazon。有效boundary优先COMBO，否则version>=8或type248为KF8且isReadable=false；cover索引安全加法并要求0..<recordCount。界面错误中文，对受保护/不支持/损坏区分，不伪称可读。
 - [ ] PalmDOC输入最多16MiB、输出最多8MiB，maximumOutputBytes<=0返回空；检查取消（含运行中大输入）。0原样、1...8后续literal、9...127原样、128...191回溯distance/length、192...255空格+异或0x80字符。允许重叠回溯、跨record拼接后回溯；拒绝截断、distance0和超出已输出范围。每一分支都严格遵守输出上限，包括space+char仅剩1字节，不能复制Android该分支超写1字节及接近8MiB提前报错的缺陷。输出达到声明上限后不解析padding垃圾。Data动态增长须保持上限，不按输入*3无条件预分配大buffer。
 - [ ] GREEN覆盖全部检测fixture，额外覆盖EXTH边界/标题偏移/索引溢出、PalmDOC声明截断/重叠/跨记录/最大边界/真实运行中取消。只运行本任务测试和实际受影响回归；写task-37-report.md，父代理提交并独立审查。这个阶段尚未转换/导入或接UI，不更新矩阵为Kindle完成。
+
+### Task 38: Kindle 正文及图片转换为真实 EPUB
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/KindlePublicationAdapter.swift`（限量读取与转换编排）、`KindleEpubWriter.swift`（内部HTML处理及ZIP输出）、`Tests/ComicCoreTests/KindlePublicationTests.swift`。只实现可读取的MOBI7/PalmDOC/COMBO→EPUB，不接UIKit/书架或修改Task37已审查规则；如需读取record表共用内部窄接口，须保持检测器行为及测试。原版 `KindlePublicationAdapter.java` 和其完整测试为对照。
+
+**Interface:** `KindlePublicationAdapter.convert(source:URL,to destination:URL)throws->EpubPublication`，成功返回实际 `EpubParser.parse` 验证后的publication，destination必须原先不存在且不能等于source；不删除或覆盖既有文件。后台调用同步throws接口，Task取消始终传递。先检测Task37结果，isReadable=false抛中文错误，不尝试解密/外部转换。原书保留与书架原子发布留给下一整合任务，本任务生成可真实解析的派生文件，不称用户已可导入。
+
+- [ ] RED用真实PDB fixture调用convert后通过既有EpubParser/EpubArchive读实际产物：两章小说、三图以上漫画、含布局空白的漫画、文字与recindex图片混排、指定封面、UTF8/Windows1252、压缩1/2、跨record回溯及声明正文长度。JPEG/PNG用可真实解码的固定微型图片字节，不以伪magic作为后续ImageIO通过证据。可在测试内部复用Task37的fixture builder，但不得变更断言语义。
+
+```swift
+let publication = try KindlePublicationAdapter.convert(source: mobi, to: derived)
+XCTAssertEqual(publication.spine.count, 2) // fixture含两个pagebreak分开的正文
+XCTAssertEqual(try publication.chapterRanges().map(\.title), ["第一章", "第二章"])
+let archive = try EpubArchive(url: derived)
+let first = try archive.read(publication.spine[0].fullZipPath)
+XCTAssertTrue(String(decoding: first, as: UTF8.self).contains("第一章正文"))
+XCTAssertEqual(try Data(contentsOf: mobi), originalBytes)
+```
+
+- [ ] 使用FileHandle读取并重新验证真实record边界；每正文record<=8MiB，压缩record累计<=16MiB，输出<=8MiB及声明textLength（0或>=Int32.max使用8MiB），压缩2将record拼接后调用PalmDoc。textRecordCount必须<=numRecords-1，COMBO按Java在boundary<textRecordCount时取boundary-1；逐record/块取消。文本UTF8或Windows-1252，保留正文内容，不把乱码静默替换为假正文。
+- [ ] 从firstImageRecord扫描至末尾，每条<=16MiB、累计<=512MiB（包括未识别控制record）。JPEG/PNG/GIF/WebP/BMP魔数按原版，relativeIndex=recordIndex-firstImageRecord+1，忽略控制record但保留索引空洞。图片逐条暂存本次转换唯一scratch内，不把512MiB全部留内存；封面优先检测器coverRecord，否则第一张。ZIP图片条目stored，逐块写入并检查取消，原始字节/CRC交给现有ZIPFoundation，不实现第二套ZIP/CRC。
+- [ ] 漫画分类：有效图>=3且移除HTML标签及布局空白后的UTF16长度<300；布局空白含Android ASCII正则空白、NBSP/全角空格与nbsp/十进制160/十六进制a0实体。漫画按record图序一图一正文，Page N目录使既有EPUB伪页目录折为一章。文字只按mbp:pagebreak/pagebreak分章（不凭注释增加h2分章），recindex映射本地images，缺图recindex删除；章名取首h1...h4同一行去标签后非空且UTF16<50，否则第 N 章。保留书中原文字/图片，不执行HTML/JS。新opf/ncx元数据逐项XML转义，正文继续由Task35的WK隔离机制显示。
+- [ ] 对不可信HTML的正则使用Foundation reportProgress可取消匹配，转换内HTML扫描共享单调时钟2秒预算，超限明确失败，不能在多个replaceAll中重新启动无界扫描；纯线性操作每块/章检查取消。输入正文8MiB、派生manifest<=50000、spine<=100000，与发布/重开边界一致。空正文且无可组成漫画内容明确报错，禁止照搬Android的“正文内容”占位页。mimetype必须首条且stored；META-INF/container.xml、OEBPS/content.opf、toc.ncx及相对图片/正文路径可被真实EpubParser读取，cover-image实际指向所选封面（避免原版fallback封面声明悬空）。
+- [ ] 本次转换在destination父目录创建唯一`.kindle-`+UUID工作目录，所有临时图片和derived.epub均在内；既有destination检查后仍以不覆盖的move发布。defer只清理本次明确创建且验证归属的scratch，失败/取消保留source与任何既有destination；不递归清理调用方目录。写完并解析验证、最终取消检查后才发布，无try?吞掉转换错误。最终验证只读产物，不执行内嵌内容。
+- [ ] GREEN覆盖实际ZIP元数据/文字/图片原字节/封面、控制record索引空洞、跨record/截断、空正文拒绝、超预算与运行中取消回收、既有target保护、无原包改动、恶意HTML耗时及取消；原Task37定向回归。报告task-38-report.md，父代理提交/独立审查；原生Kindle入口尚未完成。
