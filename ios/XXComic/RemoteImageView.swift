@@ -27,8 +27,10 @@ final class RemoteImageView: UIImageView {
         task = Task { [weak self] in
             do {
                 let book = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
-                guard let self, self.generation == token, !Task.isCancelled, let epub = book.epub else { return }
-                self.original = TextBookCover.image(title: book.title, author: epub.author); self.render()
+                guard let self, self.generation == token, !Task.isCancelled else { return }
+                if let epub = book.epub { self.original = TextBookCover.image(title: book.title, author: epub.author) }
+                else if book.pdf != nil { self.original = UIImage(systemName: "doc.richtext") }
+                self.render()
             } catch {
                 guard let self, self.generation == token, !Task.isCancelled else { return }
                 self.onFailure?()
@@ -36,12 +38,12 @@ final class RemoteImageView: UIImageView {
         }
     }
 
-    func load(_ text: String, referer: String, reader: Bool = false, epubImage: (@Sendable (URL) throws -> Data)? = nil) {
+    func load(_ text: String, referer: String, reader: Bool = false, localPageImage: (@Sendable (URL) throws -> Data)? = nil) {
         cancel()
         image = nil; original = nil
         backgroundColor = Palette.card
         guard let url = URL(string: text),
-              ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") || (url.scheme == "xxcomic-epub" && epubImage != nil) else {
+              ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") || (["xxcomic-epub", "xxcomic-pdf"].contains(url.scheme ?? "") && localPageImage != nil) else {
             onFailure?(); return
         }
         let key = ((reader ? "reader\n" : "cover\n") + referer + "\n" + text) as NSString
@@ -63,11 +65,11 @@ final class RemoteImageView: UIImageView {
                 request.setValue("cross-site", forHTTPHeaderField: "Sec-Fetch-Site")
                 request.timeoutInterval = 30
                 let data: Data
-                if url.scheme == "xxcomic-epub" {
-                    guard let epubImage else { throw URLError(.unsupportedURL) }
+                if ["xxcomic-epub", "xxcomic-pdf"].contains(url.scheme ?? "") {
+                    guard let localPageImage else { throw URLError(.unsupportedURL) }
                     let worker = Task.detached(priority: .userInitiated) {
                         try Task.checkCancellation()
-                        let bytes = try epubImage(url)
+                        let bytes = try localPageImage(url)
                         try Task.checkCancellation()
                         guard bytes.count <= LocalLibrary.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
                         return bytes

@@ -6,7 +6,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private let environment: AppEnvironment
     private let comic: ComicSummary
     private let source: any ComicSource
-    private let epubImage: (@Sendable (URL) throws -> Data)?
+    private let localPageImage: (@Sendable (URL) throws -> Data)?
     private var chapters: [Chapter]
     private var incompleteDirectory: Bool
     private var session: ReaderSession
@@ -42,8 +42,14 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         source = environment.source(for: comic)!
         if comic.sourceId == "local" {
             let library = environment.localLibrary
-            epubImage = { try library.epubImageData(pageURL: $0) }
-        } else { epubImage = nil }
+            localPageImage = { url in
+                switch url.scheme {
+                case "xxcomic-epub": return try library.epubImageData(pageURL: url)
+                case "xxcomic-pdf": return try library.pdfPageData(pageURL: url) { try PdfRenderer.render($0, pageIndex: $1) }
+                default: throw LocalLibraryError.invalidBook
+                }
+            }
+        } else { localPageImage = nil }
         incompleteDirectory = directoryIncomplete
         session = ReaderSession(chapterCount: chapters.count, chapterIndex: chapterIndex)
         settings = environment.preferences.load()
@@ -443,7 +449,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             if self.settings.layout == .strip { self.layout.invalidateLayout(); self.restore(position) }
             self.savePosition()
         }
-        cell.configure(url: url, referer: source.referer, settings: settings, epubImage: epubImage)
+        cell.configure(url: url, referer: source.referer, settings: settings, localPageImage: localPageImage)
         return cell
     }
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
@@ -481,7 +487,7 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
     private let image = RemoteImageView()
     private let retry = UIButton(type: .system)
     private var url = "", referer = ""
-    private var epubImage: (@Sendable (URL) throws -> Data)?
+    private var localPageImage: (@Sendable (URL) throws -> Data)?
     var onSize: ((CGSize) -> Void)?
     var onZoom: ((Bool) -> Void)?
     var onUserAction: (() -> Void)?
@@ -508,9 +514,9 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
         if scroll.zoomScale == 1 { image.frame = scroll.bounds; scroll.contentSize = scroll.bounds.size }
         retry.frame = CGRect(x: 0, y: max(0, bounds.midY - 22), width: bounds.width, height: 44)
     }
-    func configure(url: String, referer: String, settings: ReaderPreferences, epubImage: (@Sendable (URL) throws -> Data)? = nil) {
+    func configure(url: String, referer: String, settings: ReaderPreferences, localPageImage: (@Sendable (URL) throws -> Data)? = nil) {
         self.url = url; self.referer = referer
-        self.epubImage = epubImage
+        self.localPageImage = localPageImage
         scroll.setZoomScale(1, animated: false)
         apply(settings)
         reload()
@@ -524,10 +530,10 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
         scroll.maximumZoomScale = enabled ? 4 : 1
     }
     func toggleZoom() { scroll.setZoomScale(scroll.zoomScale > 1.05 ? 1 : min(2, scroll.maximumZoomScale), animated: true) }
-    @objc private func reload() { retry.isHidden = false; retry.setTitle("正在加载图片…", for: .normal); image.load(url, referer: referer, reader: true, epubImage: epubImage) }
+    @objc private func reload() { retry.isHidden = false; retry.setTitle("正在加载图片…", for: .normal); image.load(url, referer: referer, reader: true, localPageImage: localPageImage) }
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { image }
     func scrollViewDidZoom(_ scrollView: UIScrollView) { onZoom?(scrollView.zoomScale > 1.05) }
     func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) { onUserAction?() }
     func cancel() { image.cancel() }
-    override func prepareForReuse() { super.prepareForReuse(); image.cancel(); epubImage = nil; onSize = nil; onZoom = nil; onUserAction = nil; scroll.setZoomScale(1, animated: false) }
+    override func prepareForReuse() { super.prepareForReuse(); image.cancel(); localPageImage = nil; onSize = nil; onZoom = nil; onUserAction = nil; scroll.setZoomScale(1, animated: false) }
 }

@@ -7,11 +7,12 @@ public struct LocalBook: Codable, Equatable, Sendable {
     public let pages: [String]
     public let chapters: [LocalBookChapter]?
     public let epub: EpubPublication?
+    public let pdf: PdfPublication?
     public let coverName: String?
 
-    public init(id: String, title: String, createdAt: TimeInterval, pages: [String], chapters: [LocalBookChapter]? = nil, epub: EpubPublication? = nil, coverName: String? = nil) {
+    public init(id: String, title: String, createdAt: TimeInterval, pages: [String], chapters: [LocalBookChapter]? = nil, epub: EpubPublication? = nil, pdf: PdfPublication? = nil, coverName: String? = nil) {
         self.id = id; self.title = title; self.createdAt = createdAt; self.pages = pages; self.chapters = chapters
-        self.epub = epub; self.coverName = coverName
+        self.epub = epub; self.pdf = pdf; self.coverName = coverName
     }
 }
 
@@ -52,6 +53,7 @@ public struct LocalLibrary: Sendable {
         return book
     }
     public func pageURLs(for book: LocalBook) throws -> [URL] {
+        guard book.epub == nil || book.pdf == nil else { throw LocalLibraryError.invalidBook }
         let pageNames = Set(book.pages)
         guard UUID(uuidString: book.id) != nil, !book.pages.isEmpty, pageNames.count == book.pages.count else { throw LocalLibraryError.invalidBook }
         if let chapters = book.chapters {
@@ -65,6 +67,10 @@ public struct LocalLibrary: Sendable {
             try validateEpub(book)
             return try book.pages.indices.map { try EpubPageURL.make(bookID: book.id, index: $0) }
         }
+        if book.pdf != nil {
+            try validatePdf(book)
+            return try book.pages.indices.map { try LocalPageURL.make(bookID: book.id, index: $0, scheme: "xxcomic-pdf") }
+        }
         guard book.coverName == nil else { throw LocalLibraryError.invalidBook }
         return try book.pages.map { name in
             guard name != ".", name != "..", !name.contains("/"), !name.contains("\\"), !name.isEmpty else { throw LocalLibraryError.invalidBook }
@@ -73,7 +79,7 @@ public struct LocalLibrary: Sendable {
     }
     public func summary(for book: LocalBook) throws -> ComicSummary {
         let pages = try pageURLs(for: book)
-        let cover = book.epub == nil ? pages.first?.absoluteString ?? ""
+        let cover = book.epub == nil && book.pdf == nil ? pages.first?.absoluteString ?? ""
             : try book.coverName.map { try ownedFile(bookID: book.id, name: $0).absoluteString } ?? ""
         return ComicSummary(sourceId: "local", comicId: book.id, title: book.title,
                             coverUrl: cover, subtitle: "\(book.pages.count) 页")

@@ -3,14 +3,25 @@ import Foundation
 /// The sole encoder/decoder for local EPUB image page identifiers.
 enum EpubPageURL {
     static func make(bookID: String, index: Int) throws -> URL {
+        try LocalPageURL.make(bookID: bookID, index: index, scheme: "xxcomic-epub")
+    }
+    static func parse(_ url: URL) throws -> (bookID: String, index: Int) {
+        try LocalPageURL.parse(url, scheme: "xxcomic-epub")
+    }
+}
+
+/// Shared strict encoding for owned EPUB/PDF logical pages; never accepts a file URL.
+enum LocalPageURL {
+    static func make(bookID: String, index: Int, scheme: String) throws -> URL {
         guard UUID(uuidString: bookID) != nil, index >= 0,
-              let url = URL(string: "xxcomic-epub://page/\(bookID)/\(index)") else { throw LocalLibraryError.invalidBook }
+              let url = URL(string: "\(scheme)://page/\(bookID)/\(index)") else { throw LocalLibraryError.invalidBook }
         return url
     }
 
-    static func parse(_ url: URL) throws -> (bookID: String, index: Int) {
+    static func parse(_ url: URL, scheme: String) throws -> (bookID: String, index: Int) {
         guard let parts = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              parts.scheme == "xxcomic-epub", parts.percentEncodedHost == "page", parts.user == nil, parts.password == nil,
+              parts.scheme == scheme, parts.percentEncodedHost == "page", parts.user == nil, parts.password == nil,
+              url.absoluteString.hasPrefix("\(scheme)://page/"),
               parts.port == nil, parts.query == nil, parts.fragment == nil,
               !parts.percentEncodedPath.contains("%") else { throw LocalLibraryError.invalidBook }
         let path = parts.percentEncodedPath.split(separator: "/", omittingEmptySubsequences: false)
