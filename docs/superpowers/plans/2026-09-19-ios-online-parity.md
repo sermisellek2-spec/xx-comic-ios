@@ -458,3 +458,28 @@ XCTAssertEqual(try Data(contentsOf: mobi), originalBytes)
 - [ ] 对不可信HTML的正则使用Foundation reportProgress可取消匹配，转换内HTML扫描共享单调时钟2秒预算，超限明确失败，不能在多个replaceAll中重新启动无界扫描；纯线性操作每块/章检查取消。输入正文8MiB、派生manifest<=50000、spine<=100000，与发布/重开边界一致。空正文且无可组成漫画内容明确报错，禁止照搬Android的“正文内容”占位页。mimetype必须首条且stored；META-INF/container.xml、OEBPS/content.opf、toc.ncx及相对图片/正文路径可被真实EpubParser读取，cover-image实际指向所选封面（避免原版fallback封面声明悬空）。
 - [ ] 本次转换在destination父目录创建唯一`.kindle-`+UUID工作目录，所有临时图片和derived.epub均在内；既有destination检查后仍以不覆盖的move发布。defer只清理本次明确创建且验证归属的scratch，失败/取消保留source与任何既有destination；不递归清理调用方目录。写完并解析验证、最终取消检查后才发布，无try?吞掉转换错误。最终验证只读产物，不执行内嵌内容。
 - [ ] GREEN覆盖实际ZIP元数据/文字/图片原字节/封面、控制record索引空洞、跨record/截断、空正文拒绝、超预算与运行中取消回收、既有target保护、无原包改动、恶意HTML耗时及取消；原Task37定向回归。报告task-38-report.md，父代理提交/独立审查；原生Kindle入口尚未完成。
+
+### Task 39: Kindle 原包保存、派生恢复与完整阅读入口
+
+**Files:** 修改 `ios/ComicCore/Sources/ComicCore/LocalLibrary.swift`、`LocalEpubLibrary.swift`、`LocalComicSource.swift`；新增 `LocalKindleLibrary.swift`、`Tests/ComicCoreTests/LocalKindleLibraryTests.swift`；修改 `ios/XXComic/ComicGridViewController.swift` 与既有EPUB原生UI测试文件接Kindle入口/fixture。派发前读取Task36–38最终接口，保持PDF、EPUB、ZIP/图片行为。不新增阅读器、不改变站源。
+
+**Interfaces:** `LocalKindleFormat:String,Codable,Sendable` 为mobi/azw/azw3；`LocalBook.kindleFormat:LocalKindleFormat?` 为新可选字段且init默认nil，旧书架JSON仍兼容；`LocalLibrary.importKindle(title:String,source:URL,format:LocalKindleFormat,isReadableImage:(URL)throws->Bool)throws->LocalBook`。固定拥有原包`source.kindle`、派生包`content.epub`，现有book.epub描述派生内容，kindleFormat!=nil要求epub!=nil且pdf==nil。format只展示原文件扩展名，不覆盖Task37按字节的实际变体/DRM判断，不承诺AZW3/KF8可读。
+
+- [ ] RED真实MOBI临时文件导入后重开、原包字节保持、派生EPUB正文/图片、历史位置及旧书架兼容。源文件被用户移走后仍从App副本读取；DRM/KF8损坏明确失败，无发布残留。删除App拥有的派生content.epub后实际资源读取重建，不用mock转换器充当格式支持。
+
+```swift
+let book = try library.importKindle(title: "小说", source: input, format: .mobi, isReadableImage: probe)
+XCTAssertEqual(book.kindleFormat, .mobi)
+let opened = try LocalLibrary(directory: directory).book(id: book.id)
+XCTAssertEqual(opened.epub, book.epub)
+let path = try XCTUnwrap(book.epub?.spine.first?.fullZipPath)
+let before = try library.epubResource(bookID: book.id, path: path, maximumBytes: 8 * 1024 * 1024)
+try FileManager.default.removeItem(at: directory.appendingPathComponent(book.id).appendingPathComponent("content.epub"))
+XCTAssertEqual(try library.epubResource(bookID: book.id, path: path, maximumBytes: 8 * 1024 * 1024), before)
+```
+
+- [ ] 最小提取LocalEpubLibrary现有单次staging→完整校验→manifest→原子move流程为共用内部实现；EPUB prepare只复制content.epub，Kindle prepare先限量复制source.kindle再调用Task38 convert到content.epub，之后共用解析、spine校验、ImageIO probe/cover、元数据校验和发布，不能先发布EPUB再补写原包/标记。只从本次拥有副本转换，不在安全域授权结束后再读外部URL；单个原包仍20GiB，转换自身采用Task38更小正文/图预算。取消/错误只回收本次staging，不动原包或已发布书架。
+- [ ] 重开校验允许仅Kindle的派生content.epub缺失，但必须有合法kindleFormat、匹配EPUB元数据和拥有的regular非符号链接source.kindle；普通EPUB缺失仍失败。epubResource/epubImageData在实际读取前通过共用内部ownedEPUB获取：content.epub存在则按原校验读取；仅缺失时用原包生成本次唯一scratch，实际EpubParser结果必须等于持久化publication，最终取消检查后不覆盖move到content.epub。不修改book.json/章ID/位置，不遇到普通CRC错误就静默换书。
+- [ ] 并发请求使用各自临时目录及非覆盖发布；另一请求先发布时，只有检查取消后验证已存在文件归属且publication与原metadata相等才能复用赢家。其他错误继续抛出。不为了重建创建已被删除的book目录，不保留旧worker输出到新/外书，不增加全局不可取消的转换锁。测试实际两请求缺派生重建、失败/取消不遗留临时文件、原包缺失/符号链接/派生不符拒绝；删除测试仅针对测试拥有目录。
+- [ ] Bookshelf增加Kindle文档选择（mobi/azw/azw3，具体UTType按系统可用类型），保持security-scoped worker/取消/导入标题确认；格式错误提示原解析器实际原因。LocalComicSource详情展示MOBI/AZW/AZW3，不把kindleFormat当支持声明。书架封面、纯图片阅读、文字/混合路由、目录/设置/续读均直接复用Task35；无封面沿既有蓝渐变电子书封面。原生fixture覆盖小说/漫画导入后的实际阅读、继续阅读与不支持提示；只在隔离UITest域种子。
+- [ ] GREEN核心真实导入/资源/恢复用例，再按修改范围回归EPUB/本地图片/PDF和转换器；UIKit全syntaxparse，Apple实际测试未运行单列。报告task-39-report.md，父代理提交并独立审查。没有Xcode/设备不能声称Kindle原生验收通过。
