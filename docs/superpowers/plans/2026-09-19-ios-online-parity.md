@@ -412,3 +412,23 @@ XCTAssertThrowsError(try PdfPublication.renderSize(width: .infinity, height: 800
 - [ ] `#if canImport(CoreGraphics) && canImport(ImageIO)` 内 `PdfRenderer.inspect(_ url:URL)throws->PdfPublication` 使用CGPDFDocument，拒绝encrypted/isUnlocked不足、空页、损坏页，并逐页取消检查；pageIndex对外0基，CGPDFDocument.page(at:)内部+1。`render(_ url:URL,pageIndex:Int,maximumDimension:Int=2048,quality:Double=0.92)throws->Data` 每worker独立document，白色不透明底，正确应用页面box/rotation绘图变换，JPEG通过ImageIO写Data；cover使用page0/720/0.85，禁止网络或外部命令。取消在打开/尺寸/绘图前后/编码后检查，不承诺中断系统单次同步绘图。
 - [ ] 添加真实Apple条件测试：用CGContext生成含白底/彩色定位块的两页PDF，实际inspect/渲染/尺寸/页序/旋转及坏页拒绝；Linux跳过须在报告单列，不能以mock或Swiftparse标记通过。Core尺寸安全及导入/页URL测试在Docker实际RED/GREEN；已有EPUB/图片/ZIP回归按改动范围一次验证。
 - [ ] UIDocumentPicker加PDF，security-scoped后台复制照旧；生产inspect/render使用PdfRenderer，图片读取resolver只接受本地EPUB/PDF明确scheme，保留EPUBretry/reuse取消。LocalComicSource详情显示PDF/页数、目录“全本”，阅读共用漫画阅读器按需取页；不让文字书route误吞PDF。原生入口与后台渲染同一任务完成，失败提供明确提示/重试，不显示空白当完成。UIKitsyntaxparse、task-36-report.md、父代理提交/独立审查；PDFKit/CoreGraphics实际Apple编译与像素性能仍需Mac设备。
+
+### Task 37: Kindle 容器识别与有界 PalmDOC 解压核心
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/KindleFormatDetector.swift`、`PalmDoc.swift`、`Tests/ComicCoreTests/KindleFormatTests.swift`。本任务只建立可实际测试的格式边界，不提前开放MOBI导入按钮、不添加DRM解密或KF8重建、不修改Android。完整对照 `ebook/KindleFormatDetector.java`、`KindlePublicationAdapter.java:decompressPalmDoc` 及两份对应Java测试；后续转换层复用本任务结果与既有ZIPFoundation/EPUB存储。
+
+**Interfaces:** `KindleVariant:String,Sendable` 为mobi7/kf8/combo/palmDoc/kfx/topaz/unknown/corrupt；`KindleDRM:String,Sendable` 为none/mobipocket/amazon/kfx；`KindleDetection:Equatable,Sendable` 只读variant/drm/isReadable/unsupportedReason:String?/title/author/compression:Int/encoding:String/recordCount:Int/firstImageRecord:Int/coverRecordIndex:Int/kf8BoundaryRecord:Int。`KindleFormatDetector.detect(_ file:URL)throws->KindleDetection`，正常不支持/坏格式返回typed结果，取消必须抛CancellationError而非转为corrupt；实际I/O失败抛错。`PalmDoc.decompress(_ input:Data,maximumOutputBytes:Int=8*1024*1024)throws->Data`，后续调用方先在16MiB内拼接正文record再调用，不能按record重置回溯字典。不引入新依赖或自写通用二进制框架；FileHandle限量读/seek、普通字节移位即可。
+
+- [ ] RED先建真实PDB二进制fixture（临时文件，不mock检测器）覆盖中文书名/作者、UTF8与Windows-1252标记、MOBI7/COMBO/PalmDOC/KF8、KFX/Topaz/azw1魔数、扩展名伪装、DRM真实偏移和0xffffffff哨兵、空/短文件/乱序/越界record表、HUFF拒绝。PalmDOC用独立字节期望，不用被测算法反向构造oracle：
+
+```swift
+XCTAssertEqual(try PalmDoc.decompress(Data([65, 66, 67, 0x80, 0x18])), Data("ABCABC".utf8))
+XCTAssertEqual(try PalmDoc.decompress(Data([0xC1]), maximumOutputBytes: 1), Data([32]))
+XCTAssertThrowsError(try PalmDoc.decompress(Data([0x80, 0]))) // 距离0
+XCTAssertThrowsError(try PalmDoc.decompress(Data([2, 65]))) // literal截断
+```
+
+- [ ] 识别严格遵循Java容器次序：小于8字节corrupt；先KFX/Topaz，PDB最少78字节，type BOOK/TEXt或creator MOBI满足其一；recordCount>0，table=78+8*n，offset unsigned32严格递增且在table后/文件内，record0至少16字节。compression仅1/2，其余unknown+明确HUFF说明；无MOBI头回PalmDOC。MOBI长度16...65536且完全在record0；字段偏移按Java而非网上另一版本猜测。仅小块读取表/头/title/EXTH条目，不Data(contentsOf:)读整本书；所有加法/转换先检查边界，记录循环取消检查。
+- [ ] 书名先PDB Latin1零终止+SearchRules.trim，fullNameOffset优先record0相对再MOBI相对，长度最多65536；UTF8声明65001，否则书名Latin1，正文encoding标记Windows-1252。EXTH author100（UTF8）、boundary121、cover201，边界完全在record0、条目8...65536；保留Java遇到不合法条目停止解析的行为，EXTH总长度越界corrupt。DRM字段record0+168/172/176（不是188/196），以Int32语义解释负哨兵，encryption=1优先mobipocket，否则非0或有效DRM元数据为amazon。有效boundary优先COMBO，否则version>=8或type248为KF8且isReadable=false；cover索引安全加法并要求0..<recordCount。界面错误中文，对受保护/不支持/损坏区分，不伪称可读。
+- [ ] PalmDOC输入最多16MiB、输出最多8MiB，maximumOutputBytes<=0返回空；检查取消（含运行中大输入）。0原样、1...8后续literal、9...127原样、128...191回溯distance/length、192...255空格+异或0x80字符。允许重叠回溯、跨record拼接后回溯；拒绝截断、distance0和超出已输出范围。每一分支都严格遵守输出上限，包括space+char仅剩1字节，不能复制Android该分支超写1字节及接近8MiB提前报错的缺陷。输出达到声明上限后不解析padding垃圾。Data动态增长须保持上限，不按输入*3无条件预分配大buffer。
+- [ ] GREEN覆盖全部检测fixture，额外覆盖EXTH边界/标题偏移/索引溢出、PalmDOC声明截断/重叠/跨记录/最大边界/真实运行中取消。只运行本任务测试和实际受影响回归；写task-37-report.md，父代理提交并独立审查。这个阶段尚未转换/导入或接UI，不更新矩阵为Kindle完成。
