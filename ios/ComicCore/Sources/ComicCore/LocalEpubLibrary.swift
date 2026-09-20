@@ -37,31 +37,38 @@ extension LocalLibrary {
         try publishPrepared(prepareEpub(title: title, archive: source, isReadableImage: isReadableImage))
     }
     func prepareEpub(title: String, archive source: URL, isReadableImage: (URL) throws -> Bool) throws -> PreparedLocalImport {
-        try prepareOwnedEpub(title: title, isReadableImage: isReadableImage) { staging in
-            try copyEbook(source, to: staging.appendingPathComponent("content.epub"))
+        try prepareOwnedEpub(title: title, isReadableImage: isReadableImage) { staging, owned in
+            try copyEbook(source, to: staging.appendingPathComponent("content.epub"), didCreateFile: owned.recordFile)
         }
     }
 
-    func copyEbook(_ source: URL, to destination: URL) throws {
+    func copyEbook(_ source: URL, to destination: URL, didCreateFile: (URL) throws -> Void = { _ in }) throws {
         try Task.checkCancellation()
         let attributes = try source.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
         guard source.isFileURL, attributes.isRegularFile == true, attributes.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
         guard let size = attributes.fileSize, Int64(size) <= Self.maximumImportBytes else { throw LocalLibraryError.archiveTooLarge }
         var copied: Int64 = 0
-        try copy(source, to: destination, totalBytes: &copied, maximumFileBytes: Self.maximumImportBytes)
+        try copy(source, to: destination, totalBytes: &copied, maximumFileBytes: Self.maximumImportBytes, didCreateFile: didCreateFile)
     }
 
     /// Original and derived files share the same preparation lifetime.
     func prepareOwnedEpub(title: String, kindleFormat: LocalKindleFormat? = nil,
-                         isReadableImage: (URL) throws -> Bool, prepare: (URL) throws -> Void) throws -> PreparedLocalImport {
-        try prepareLocalImport { id, staging in
+                         isReadableImage: (URL) throws -> Bool, prepare: (URL, LocalImportDirectory) throws -> Void) throws -> PreparedLocalImport {
+        try prepareLocalImport { id, staging, owned in
             let manager = FileManager.default
             let content = staging.appendingPathComponent("content.epub"), probe = staging.appendingPathComponent("probe.bin")
-            try prepare(staging)
+            try prepare(staging, owned)
             let publication = try EpubParser.parse(archive: content)
             let ranges = try publication.chapterRanges() // Rejects DRM and empty spine before probing.
             let archive = try EpubArchive(url: content, maximumReadBytes: UInt64(Self.maximumImportBytes))
             var validated = Set<String>(), validImages = Set<String>(), invalidImages = Set<String>(), coverName: String?
+
+            func writeProbe(_ path: String) throws {
+                // Each extraction replaces probe.bin; release only the previous owned inode.
+                try owned.removeFile(probe)
+                try archive.write(path, to: probe)
+                try owned.recordFile(probe)
+            }
 
             func validateImage(_ path: String, required: Bool) throws {
                 try Task.checkCancellation()
@@ -74,14 +81,17 @@ extension LocalLibrary {
                     if required { throw EpubError.invalid("缺少正文图片：\(path)") }
                     return
                 }
-                try archive.write(path, to: probe)
+                try writeProbe(path)
                 let readable = try isReadableImage(probe)
+                try owned.recordFile(probe)
                 try Task.checkCancellation()
                 if readable {
                     validated.insert(path)
                     validImages.insert(path)
                     if coverName == nil {
                         try manager.moveItem(at: probe, to: staging.appendingPathComponent("cover.bin"))
+                        try owned.recordFile(probe)
+                        try owned.recordFile(staging.appendingPathComponent("cover.bin"))
                         coverName = "cover.bin"
                     }
                 } else {
@@ -96,13 +106,13 @@ extension LocalLibrary {
                 if let image = item.resolvedImageEntry { try validateImage(image, required: true) }
                 if validated.insert(item.fullZipPath).inserted {
                     // Text and image wrappers also receive full CRC validation without retaining Data.
-                    try archive.write(item.fullZipPath, to: probe)
+                    try writeProbe(item.fullZipPath)
                 }
             }
             if coverName == nil, let candidate = publication.manifest.first(where: { $0.mediaType.hasPrefix("image/") }) {
                 try validateImage(candidate.href, required: false)
             }
-            if manager.fileExists(atPath: probe.path) { try manager.removeItem(at: probe) }
+            try owned.removeFile(probe)
             let names = publication.spine.indices.map { "spine-\($0)" }
             let chapters = ranges.enumerated().map { index, range in
                 LocalBookChapter(id: id + "_ch_\(index)", title: range.title, pages: Array(names[range.startIndex..<range.endIndex]))

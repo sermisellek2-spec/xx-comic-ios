@@ -17,10 +17,11 @@ extension LocalLibrary {
     }
     func prepareKindle(title: String, source: URL, format: LocalKindleFormat,
                        isReadableImage: (URL) throws -> Bool) throws -> PreparedLocalImport {
-        try prepareOwnedEpub(title: title, kindleFormat: format, isReadableImage: isReadableImage) { staging in
+        try prepareOwnedEpub(title: title, kindleFormat: format, isReadableImage: isReadableImage) { staging, owned in
             let original = staging.appendingPathComponent("source.kindle")
-            try copyEbook(source, to: original)
+            try copyEbook(source, to: original, didCreateFile: owned.recordFile)
             _ = try KindlePublicationAdapter.convert(source: original, to: staging.appendingPathComponent("content.epub"))
+            try owned.recordFile(staging.appendingPathComponent("content.epub"))
         }
     }
 

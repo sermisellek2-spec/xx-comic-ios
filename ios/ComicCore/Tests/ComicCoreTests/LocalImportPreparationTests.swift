@@ -213,7 +213,12 @@ final class LocalImportPreparationTests: XCTestCase {
                 if mode != "missing" { try FileManager.default.createSymbolicLink(at: target, withDestinationURL: input) }
             }
             XCTAssertThrowsError(try library.publishPrepared(prepared), mode)
-            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), [])
+            if mode == "resource-link" || mode == "manifest-link" {
+                // The introduced link is not our file, even at a formerly owned filename.
+                XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), [prepared.staging.lastPathComponent])
+                let link = mode == "manifest-link" ? manifest : prepared.staging.appendingPathComponent("0.png")
+                XCTAssertEqual(try FileManager.default.destinationOfSymbolicLink(atPath: link.path), input.path)
+            } else { XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), []) }
             XCTAssertEqual(try Data(contentsOf: input), png)
         }
     }
@@ -263,6 +268,8 @@ final class LocalImportPreparationTests: XCTestCase {
             if mode == "replacement" || mode == "symlink" {
                 XCTAssertEqual(try Data(contentsOf: parked.appendingPathComponent("0.png")), png)
                 XCTAssertEqual(try Data(contentsOf: prepared.staging.appendingPathComponent("0.png")), png)
+            } else if mode == "resource-link" {
+                XCTAssertEqual(try FileManager.default.destinationOfSymbolicLink(atPath: prepared.staging.appendingPathComponent("0.png").path), outside.path)
             } else { XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: root.path), []) }
             XCTAssertEqual(try Data(contentsOf: outside), png)
         }
@@ -298,7 +305,7 @@ final class LocalImportPreparationTests: XCTestCase {
         }
     }
 
-    func testRealManifestWriteFailureRemovesItsOwnStaging() throws {
+    func testRealManifestWriteFailureRetainsForeignDirectoryAndReportsFailure() throws {
         let library = try LocalLibrary(directory: directory()), input = try image()
         XCTAssertThrowsError(try library.preparePdf(title: "写入失败", file: input, inspect: { _ in
             PdfPublication(pages: [.init(width: 80, height: 120)])
@@ -306,7 +313,8 @@ final class LocalImportPreparationTests: XCTestCase {
             try FileManager.default.createDirectory(at: owned.deletingLastPathComponent().appendingPathComponent("book.json"), withIntermediateDirectories: false)
             return nil
         }))
-        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), [])
+        let staging = try XCTUnwrap(FileManager.default.contentsOfDirectory(at: library.directory, includingPropertiesForKeys: nil).first)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: staging.appendingPathComponent("book.json").path), [])
         XCTAssertEqual(try Data(contentsOf: input), png)
     }
 
@@ -356,5 +364,59 @@ final class LocalImportPreparationTests: XCTestCase {
         XCTAssertEqual(try library.books(), book.map { [$0] } ?? [])
         XCTAssertFalse(FileManager.default.fileExists(atPath: prepared.staging.path))
         try library.discardPrepared(prepared)
+    }
+
+    func testForeignDirectFileAndEmptyDirectorySurviveDiscardAndFailedPublication() throws {
+        for publishing in [false, true] {
+            for directoryEntry in [false, true] {
+                let library = try LocalLibrary(directory: directory())
+                let prepared = try library.prepareImages(title: "外来项", files: [image()])
+                let foreign = prepared.staging.appendingPathComponent(directoryEntry ? "foreign" : "foreign.txt")
+                if directoryEntry { try FileManager.default.createDirectory(at: foreign, withIntermediateDirectories: false) }
+                else { try png.write(to: foreign) }
+                if publishing {
+                    try FileManager.default.createDirectory(at: library.directory.appendingPathComponent(prepared.book.id), withIntermediateDirectories: false)
+                    XCTAssertThrowsError(try library.publishPrepared(prepared))
+                } else { XCTAssertThrowsError(try library.discardPrepared(prepared)) }
+                XCTAssertTrue(FileManager.default.fileExists(atPath: foreign.path), "未知直接项必须保留")
+                if FileManager.default.fileExists(atPath: foreign.path) {
+                    if directoryEntry { XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: foreign.path), []) }
+                    else { XCTAssertEqual(try Data(contentsOf: foreign), png) }
+                }
+            }
+        }
+    }
+
+    func testForeignEntriesAndReplacedOwnedFileSurvivePreparationFailure() throws {
+        for mode in ["file", "directory", "replacement"] {
+            let library = try LocalLibrary(directory: directory()), input = try epub()
+            let parked = try directory().appendingPathComponent("original-probe")
+            var retained: URL?
+            XCTAssertThrowsError(try library.prepareEpub(title: "中途失败", archive: input) { probe in
+                let target = mode == "replacement" ? probe : probe.deletingLastPathComponent().appendingPathComponent(mode == "file" ? "foreign.txt" : "foreign")
+                retained = target
+                if mode == "directory" { try FileManager.default.createDirectory(at: target, withIntermediateDirectories: false) }
+                else {
+                    if mode == "replacement" { try FileManager.default.moveItem(at: target, to: parked) }
+                    try self.png.write(to: target)
+                }
+                throw CocoaError(.fileWriteOutOfSpace)
+            })
+            XCTAssertTrue(FileManager.default.fileExists(atPath: try XCTUnwrap(retained).path), mode)
+        }
+    }
+
+    func testKnownFilenameReplacementIsNotOwnedForDiscardOrFailureCleanup() throws {
+        for publishing in [false, true] {
+            let library = try LocalLibrary(directory: directory()), prepared = try library.prepareImages(title: "替换", files: [image()])
+            let page = prepared.staging.appendingPathComponent("0.png"), parked = try directory().appendingPathComponent("owned.png")
+            try FileManager.default.moveItem(at: page, to: parked)
+            try Data("foreign replacement".utf8).write(to: page)
+            if publishing { XCTAssertThrowsError(try library.publishPrepared(prepared)) }
+            else { XCTAssertThrowsError(try library.discardPrepared(prepared)) }
+            XCTAssertTrue(FileManager.default.fileExists(atPath: page.path))
+            if FileManager.default.fileExists(atPath: page.path) { XCTAssertEqual(try Data(contentsOf: page), Data("foreign replacement".utf8)) }
+            XCTAssertEqual(try Data(contentsOf: parked), png)
+        }
     }
 }

@@ -11,17 +11,17 @@ extension LocalLibrary {
         let attributes = try source.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
         guard source.isFileURL, attributes.isRegularFile == true, attributes.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
         guard let size = attributes.fileSize, Int64(size) <= Self.maximumImportBytes else { throw LocalLibraryError.folderTooLarge }
-        return try prepareLocalImport { id, staging in
+        return try prepareLocalImport { id, staging, owned in
             let content = staging.appendingPathComponent("content.pdf")
             var copied: Int64 = 0
-            try copy(source, to: content, totalBytes: &copied, maximumFileBytes: Self.maximumImportBytes)
+            try copy(source, to: content, totalBytes: &copied, maximumFileBytes: Self.maximumImportBytes, didCreateFile: owned.recordFile)
             let publication = try inspect(content)
             try publication.validate()
             let cover = try renderCover(content)
             try Task.checkCancellation()
             if let cover {
                 guard !cover.isEmpty, cover.count <= Self.maximumImageBytes else { throw PdfError.renderFailed }
-                try cover.write(to: staging.appendingPathComponent("cover.bin"), options: .atomic)
+                try owned.write(cover, name: "cover.bin")
             }
             let names = publication.pages.indices.map { "pdf-\($0)" }
             let cleaned = SearchRules.trim(title)

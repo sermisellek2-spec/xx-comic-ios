@@ -112,8 +112,12 @@ public struct LocalLibrary: Sendable {
     }
     func prepareArchive(title: String, archive: URL, isReadableImage: (URL) throws -> Bool) throws -> PreparedLocalImport {
         do {
-            return try prepareLocalImport { id, staging in
-                let index = try LocalArchiveIndex(archive: archive, staging: staging, isReadableImage: isReadableImage)
+            return try prepareLocalImport { id, staging, owned in
+                let index = try LocalArchiveIndex(archive: archive, staging: staging, isReadableImage: { url in
+                    let readable = try isReadableImage(url)
+                    try owned.recordFile(url)
+                    return readable
+                }, didCreateFile: owned.recordFile)
                 return imageBook(title: title, id: id, names: index.names, groups: index.groups)
             }
         } catch is CancellationError { throw CancellationError() }
@@ -125,7 +129,7 @@ public struct LocalLibrary: Sendable {
     }
     private func prepareFiles(title: String, files: [URL], groups: [LocalFolderIndex.Group]?) throws -> PreparedLocalImport {
         guard !files.isEmpty else { throw LocalLibraryError.emptyImport }
-        return try prepareLocalImport { id, staging in
+        return try prepareLocalImport { id, staging, owned in
             var names: [String] = []
             var totalBytes: Int64 = 0
             for (index, file) in files.enumerated() {
@@ -134,7 +138,7 @@ public struct LocalLibrary: Sendable {
                 guard attributes.isRegularFile == true, attributes.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
                 guard let size = attributes.fileSize, size <= Self.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
                 let name = "\(index)." + file.pathExtension.lowercased()
-                try copy(file, to: staging.appendingPathComponent(name), totalBytes: &totalBytes)
+                try copy(file, to: staging.appendingPathComponent(name), totalBytes: &totalBytes, didCreateFile: owned.recordFile)
                 names.append(name)
             }
             return imageBook(title: title, id: id, names: names, groups: groups)
@@ -148,8 +152,10 @@ public struct LocalLibrary: Sendable {
         let book = LocalBook(id: id, title: cleaned.isEmpty ? "本地漫画" : cleaned, createdAt: Date().timeIntervalSince1970, pages: names, chapters: chapters)
         return book
     }
-    func copy(_ source: URL, to destination: URL, totalBytes: inout Int64, maximumFileBytes: Int64 = Int64(maximumImageBytes)) throws {
-        guard FileManager.default.createFile(atPath: destination.path, contents: nil) else { throw LocalLibraryError.invalidBook }
+    func copy(_ source: URL, to destination: URL, totalBytes: inout Int64, maximumFileBytes: Int64 = Int64(maximumImageBytes),
+              didCreateFile: (URL) throws -> Void = { _ in }) throws {
+        try Data().write(to: destination, options: .withoutOverwriting)
+        try didCreateFile(destination)
         let input = try FileHandle(forReadingFrom: source)
         defer { try? input.close() }
         let output = try FileHandle(forWritingTo: destination)

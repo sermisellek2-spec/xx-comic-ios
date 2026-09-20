@@ -7,7 +7,8 @@ struct LocalArchiveIndex {
     let names: [String]
     let groups: [LocalFolderIndex.Group]
 
-    init(archive url: URL, staging: URL, isReadableImage: (URL) throws -> Bool) throws {
+    init(archive url: URL, staging: URL, isReadableImage: (URL) throws -> Bool,
+         didCreateFile: (URL) throws -> Void = { _ in }) throws {
         let directory = try ZIPDirectory(url: url)
         let archive = try Archive(url: url, accessMode: .read)
         var entries: [Entry] = []
@@ -49,7 +50,8 @@ struct LocalArchiveIndex {
             let target = staging.appendingPathComponent(name)
             var output: FileHandle?
             if path != nil {
-                guard FileManager.default.createFile(atPath: target.path, contents: nil) else { throw LocalLibraryError.invalidArchive }
+                try Data().write(to: target, options: .withoutOverwriting)
+                try didCreateFile(target)
                 output = try FileHandle(forWritingTo: target)
             }
             defer { try? output?.close() }

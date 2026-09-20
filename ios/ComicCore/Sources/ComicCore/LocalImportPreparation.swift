@@ -16,17 +16,17 @@ struct PreparedLocalImport: Sendable {
 }
 
 extension LocalLibrary {
-    func prepareLocalImport(_ build: (String, URL) throws -> LocalBook) throws -> PreparedLocalImport {
+    func prepareLocalImport(_ build: (String, URL, LocalImportDirectory) throws -> LocalBook) throws -> PreparedLocalImport {
         try Task.checkCancellation()
         let storage = try LocalImportDirectory(root: directory, owner: importOwner)
         do {
-            let book = try build(storage.id, storage.staging)
+            let book = try build(storage.id, storage.staging, storage)
             try storage.validateLocation()
             guard book.id == storage.id else { throw LocalLibraryError.invalidBook }
             try Task.checkCancellation()
             let manifest = try JSONEncoder().encode(book)
             storage.manifestBytes = manifest.count
-            try manifest.write(to: storage.staging.appendingPathComponent("book.json"), options: .atomic)
+            try storage.write(manifest, name: "book.json")
             try storage.validate(book)
             try Task.checkCancellation()
             return PreparedLocalImport(book: book, storage: storage)
@@ -76,7 +76,7 @@ extension LocalLibrary {
 private func importSystemError() -> NSError { NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
 
 /// Pins both directories for relative publication/cleanup; the lock protects only terminal use.
-fileprivate final class LocalImportDirectory: @unchecked Sendable {
+final class LocalImportDirectory: @unchecked Sendable {
     let id = UUID().uuidString
     let owner: UUID
     let root: URL
@@ -85,6 +85,7 @@ fileprivate final class LocalImportDirectory: @unchecked Sendable {
     let lock = NSLock()
     var finished = false
     var manifestBytes = 0
+    private var ownedFiles: [String: [UInt64]] = [:]
     var name: String { ".import-" + id }
     var staging: URL { root.appendingPathComponent(name, isDirectory: true) }
 
@@ -126,6 +127,7 @@ fileprivate final class LocalImportDirectory: @unchecked Sendable {
 
     func validate(_ book: LocalBook) throws {
         try validateLocation()
+        try validateFiles()
         guard book.id == id, !book.pages.isEmpty else { throw LocalLibraryError.invalidBook }
         let manifestFD = openat(stagingFD, "book.json", O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC)
         guard manifestFD >= 0 else { throw importSystemError() }
@@ -150,10 +152,46 @@ fileprivate final class LocalImportDirectory: @unchecked Sendable {
         try validateLocation()
     }
 
-    func discard() throws {
-        if finished { return }
+    private func identity(_ name: String) throws -> [UInt64]? {
+        var info = stat()
+        guard fstatat(stagingFD, name, &info, AT_SYMLINK_NOFOLLOW) == 0 else {
+            if errno == ENOENT { return nil }
+            throw importSystemError()
+        }
+        guard info.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw LocalLibraryError.invalidBook }
+        return [UInt64(info.st_dev), UInt64(info.st_ino)]
+    }
+
+    /// Called immediately after a known writer creates a file, before any caller callback.
+    func recordFile(_ url: URL) throws {
+        guard url.deletingLastPathComponent().standardizedFileURL == staging.standardizedFileURL else { throw LocalLibraryError.invalidBook }
+        let name = url.lastPathComponent, current = try identity(name)
+        if let current, let previous = ownedFiles[name], previous != current { throw LocalLibraryError.invalidBook }
+        ownedFiles[name] = current
+    }
+
+    func removeFile(_ url: URL) throws {
+        guard url.deletingLastPathComponent().standardizedFileURL == staging.standardizedFileURL else { throw LocalLibraryError.invalidBook }
+        let name = url.lastPathComponent
+        if let current = try identity(name) {
+            guard ownedFiles[name] == current else { throw LocalLibraryError.invalidBook }
+            guard unlinkat(stagingFD, name, 0) == 0 else { throw importSystemError() }
+        }
+        ownedFiles[name] = nil
+    }
+
+    /// Staging is invisible: exclusive creation avoids atomic-write replacement of foreign files.
+    func write(_ data: Data, name: String) throws {
         try validateLocation()
-        // Every importer produces flat files. Do not recurse into a replaced/foreign directory.
+        let fd = openat(stagingFD, name, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600)
+        guard fd >= 0 else { throw importSystemError() }
+        let handle = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
+        try recordFile(staging.appendingPathComponent(name))
+        try handle.write(contentsOf: data)
+    }
+
+    /// Check the entire set before deleting anything; a matching name alone is not ownership.
+    private func validateFiles() throws {
         let descriptor = dup(stagingFD)
         guard descriptor >= 0 else { throw importSystemError() }
         guard let entries = fdopendir(descriptor) else {
@@ -171,12 +209,15 @@ fileprivate final class LocalImportDirectory: @unchecked Sendable {
                 $0.withMemoryRebound(to: CChar.self, capacity: MemoryLayout.size(ofValue: entry.pointee.d_name)) { String(cString: $0) }
             }
             if name == "." || name == ".." { continue }
-            var info = stat()
-            guard fstatat(stagingFD, name, &info, AT_SYMLINK_NOFOLLOW) == 0 else { throw importSystemError() }
-            // Empty directories left by a failed write may be removed, but never traversed.
-            let flags = info.st_mode & mode_t(S_IFMT) == mode_t(S_IFDIR) ? AT_REMOVEDIR : 0
-            guard unlinkat(stagingFD, name, flags) == 0 else { throw importSystemError() }
+            guard let owned = ownedFiles[name], try identity(name) == owned else { throw LocalLibraryError.invalidBook }
         }
+    }
+
+    func discard() throws {
+        if finished { return }
+        try validateLocation()
+        try validateFiles()
+        for name in Array(ownedFiles.keys) { try removeFile(staging.appendingPathComponent(name)) }
         try validateLocation()
         guard unlinkat(rootFD, name, AT_REMOVEDIR) == 0 else { throw importSystemError() }
         finished = true
