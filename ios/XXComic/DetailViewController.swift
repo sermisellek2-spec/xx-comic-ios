@@ -63,13 +63,13 @@ final class DetailViewController: UIViewController {
             content.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor, constant: 20), content.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor, constant: -20),
             content.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor, constant: -40)
         ])
-        cover.load(comic.coverUrl, referer: source.referer)
+        cover.loadCover(comic, referer: source.referer, library: environment.localLibrary)
         loadDetail()
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated); updateButtons()
         if !detailLoaded && detailTask == nil { loadDetail() }
-        if cover.image == nil { cover.load(comic.coverUrl, referer: source.referer) }
+        if cover.image == nil { cover.loadCover(comic, referer: source.referer, library: environment.localLibrary) }
     }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
@@ -97,7 +97,7 @@ final class DetailViewController: UIViewController {
                 self.detailLoaded = true
                 self.heading.text = detail.summary.title
                 self.descriptionLabel.text = [detail.author, detail.status, detail.description].filter { !$0.isEmpty }.joined(separator: "\n\n")
-                self.cover.load(detail.summary.coverUrl, referer: source.referer)
+                self.cover.loadCover(detail.summary, referer: source.referer, library: self.environment.localLibrary)
                 self.retry.setTitle(nil, for: .normal)
                 self.updateButtons()
             } catch {
@@ -180,6 +180,41 @@ final class DetailViewController: UIViewController {
         }
     }
     private func openReader(chapters: [Chapter], index: Int, incomplete: Bool) {
+        guard chapters.indices.contains(index) else { return }
+        if comic.sourceId == "local" {
+            readID = UUID(); readTask?.cancel()
+            let token = readID, target = chapters[index].chapterId, library = environment.localLibrary, id = comic.comicId
+            read.isEnabled = false; read.setTitle("正在打开本地书籍…", for: .normal)
+            let worker = Task.detached(priority: .userInitiated) { try library.book(id: id) }
+            readTask = Task { [weak self] in
+                do {
+                    let book = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+                    guard let self, self.readID == token, !Task.isCancelled else { return }
+                    if let epub = book.epub, !epub.isPurePictureEpub {
+                        let complete = try await self.source.chapters(comicId: id)
+                        try Task.checkCancellation()
+                        guard self.readID == token, !complete.isEmpty else { return }
+                        // Resume callers deliberately pass only saved.chapter with index 0.
+                        let savedIndex = self.environment.library.entry(for: self.comic)?.reading?.chapterIndex ?? 0
+                        let realIndex = complete.firstIndex { $0.chapterId == target } ?? max(0, min(complete.count - 1, savedIndex))
+                        let locator = self.environment.library.textPosition(for: self.comic, chapterID: complete[realIndex].chapterId)
+                        let session = try EpubTextSession(book: book, chapterIndex: realIndex, locator: locator)
+                        self.navigationController?.pushViewController(EpubTextReaderViewController(comic: self.comic, chapters: complete, session: session, locator: locator, environment: self.environment), animated: true)
+                    } else {
+                        self.navigationController?.pushViewController(ReaderViewController(comic: self.comic, chapters: chapters, chapterIndex: index, directoryIncomplete: incomplete, environment: self.environment), animated: true)
+                    }
+                    self.readTask = nil; self.read.isEnabled = true; self.updateButtons()
+                } catch {
+                    guard let self, self.readID == token, !Task.isCancelled else { return }
+                    self.readTask = nil; self.read.isEnabled = true
+                    let alert = UIAlertController(title: error is CancellationError ? "已取消打开" : "无法打开书籍", message: error.localizedDescription, preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+                    alert.addAction(UIAlertAction(title: "重试", style: .default) { [weak self] _ in self?.openReader(chapters: chapters, index: index, incomplete: incomplete) })
+                    self.present(alert, animated: true)
+                }
+            }
+            return
+        }
         navigationController?.pushViewController(ReaderViewController(comic: comic, chapters: chapters,
             chapterIndex: index, directoryIncomplete: incomplete, environment: environment), animated: true)
     }

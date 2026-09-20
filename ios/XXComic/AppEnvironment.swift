@@ -4,6 +4,7 @@ import ComicCore
 @MainActor
 final class AppEnvironment {
     let preferences: ReaderPreferencesStore
+    let textPreferences: TextReaderPreferencesStore
     let defaults: UserDefaults
     let mh18BrowserSession: Mh18BrowserSession
     let readingHabits: ReadingHabitTracker
@@ -24,6 +25,7 @@ final class AppEnvironment {
         allSources = available
         sourcePreferences = SourcePreferences(defaults: defaults, defaultIDs: available.map(\.id))
         preferences = ReaderPreferencesStore(defaults: defaults)
+        textPreferences = TextReaderPreferencesStore(defaults: defaults)
         let habits = ReadingHabitTracker()
         habits.restore(from: defaults)
         readingHabits = habits
@@ -32,6 +34,9 @@ final class AppEnvironment {
         library = try LibraryStore(directory: base.appendingPathComponent(suffix, isDirectory: true))
         localLibrary = try LocalLibrary(directory: base.appendingPathComponent(suffix, isDirectory: true).appendingPathComponent("Local", isDirectory: true))
         localSource = LocalComicSource(library: localLibrary)
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--epub-fixtures") {
+            try EpubUITestFixtures.seed(library: localLibrary)
+        }
         habits.onChange = { [weak habits, weak defaults] in
             guard let habits, let defaults else { return }
             habits.save(to: defaults)

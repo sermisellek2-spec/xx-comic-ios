@@ -75,7 +75,7 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "comic", for: indexPath) as! ComicCell
         let comic = comics[indexPath.item]
-        cell.configure(comic, referer: environment.source(for: comic)?.referer ?? "")
+        cell.configure(comic, referer: environment.source(for: comic)?.referer ?? "", library: environment.localLibrary)
         return cell
     }
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -101,7 +101,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     private let resume = UIButton(type: .system)
     private let shelfMode = UISegmentedControl(items: ["我的书架", "本地书架"])
     private var importTask: Task<Void, Never>?
-    private enum ImportKind: Sendable { case images, folder, archive }
+    private enum ImportKind: Sendable { case images, folder, archive, epub }
     private var importKind = ImportKind.images
     private var localMode: Bool { !historyOnly && shelfMode.selectedSegmentIndex == 1 }
     init(environment: AppEnvironment, historyOnly: Bool = false) {
@@ -133,7 +133,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             do {
                 comics = try environment.localLibrary.books().map { try environment.localLibrary.summary(for: $0) }
                 collection.reloadData()
-                status(comics.isEmpty ? "本地书架空空的，点击导入添加图片、文件夹或 ZIP/CBZ" : "")
+                status(comics.isEmpty ? "本地书架空空的，点击导入添加图片、文件夹、ZIP/CBZ 或 EPUB" : "")
             } catch { status(error.localizedDescription) }
             return
         }
@@ -157,6 +157,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         menu.addAction(UIAlertAction(title: "图片文件", style: .default) { [weak self] _ in self?.pickImport(.images) })
         menu.addAction(UIAlertAction(title: "图片文件夹", style: .default) { [weak self] _ in self?.pickImport(.folder) })
         menu.addAction(UIAlertAction(title: "ZIP / CBZ 压缩包", style: .default) { [weak self] _ in self?.pickImport(.archive) })
+        menu.addAction(UIAlertAction(title: "EPUB 电子书", style: .default) { [weak self] _ in self?.pickImport(.epub) })
         menu.addAction(UIAlertAction(title: "取消", style: .cancel))
         menu.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.first
         present(menu, animated: true)
@@ -168,6 +169,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         case .images: types = [.image]
         case .folder: types = [.folder]
         case .archive: types = [.zip, UTType(filenameExtension: "cbz", conformingTo: .archive) ?? .archive]
+        case .epub: types = [UTType(filenameExtension: "epub") ?? .data]
         }
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: kind == .images)
         picker.allowsMultipleSelection = kind == .images; picker.delegate = self
@@ -181,6 +183,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         case .images: prompt = ("导入图片漫画", "所选图片合并为一本漫画，按文件名自然排序。")
         case .folder: prompt = ("导入文件夹漫画", "支持图片和章节子目录，按自然顺序导入。")
         case .archive: prompt = ("导入压缩包漫画", "仅支持 ZIP / CBZ，按目录自然分章。原压缩包会保留。")
+        case .epub: prompt = ("导入 EPUB 电子书", "支持文字、图文与纯图片 EPUB，保留原文件和完整目录。不支持 DRM 加密电子书。")
         }
         let alert = UIAlertController(title: prompt.0, message: prompt.1, preferredStyle: .alert)
         alert.addTextField { $0.text = kind == .folder ? urls.first?.lastPathComponent : urls.first?.deletingPathExtension().lastPathComponent }
@@ -198,6 +201,9 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         let worker = Task.detached(priority: .userInitiated) {
             let scoped = urls.filter { $0.startAccessingSecurityScopedResource() }
             defer { scoped.forEach { $0.stopAccessingSecurityScopedResource() } }
+            if kind == .epub, let url = urls.first {
+                return try library.importEpub(title: title, archive: url, isReadableImage: LocalImageProbe.isReadable)
+            }
             if kind == .archive, let url = urls.first {
                 return try library.importArchive(title: title, archive: url, isReadableImage: LocalImageProbe.isReadable)
             }

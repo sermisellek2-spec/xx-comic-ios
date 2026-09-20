@@ -1,0 +1,133 @@
+import XCTest
+
+/// These are executable Apple UI scenarios, not source-code assertions. Run with an iOS simulator.
+final class EpubReadingUITests: XCTestCase {
+    private func launch() -> XCUIApplication {
+        let app = XCUIApplication(); app.launchArguments = ["--ui-testing", "--epub-fixtures"]; app.launch()
+        XCTAssertTrue(app.buttons["本地书架"].waitForExistence(timeout: 20)); app.buttons["本地书架"].tap()
+        return app
+    }
+    private func open(_ name: String, app: XCUIApplication) {
+        let cell = app.collectionViews.cells["EPUB 验收·" + name]
+        XCTAssertTrue(cell.waitForExistence(timeout: 15)); cell.tap()
+        XCTAssertTrue(app.buttons["章节目录"].waitForExistence(timeout: 10)); app.buttons["章节目录"].tap()
+        if name == "图片" {
+            XCTAssertTrue(app.tables.cells.firstMatch.waitForExistence(timeout: 10)); app.tables.cells.firstMatch.tap()
+        } else {
+            XCTAssertTrue(app.tables.staticTexts["第一章"].waitForExistence(timeout: 10)); app.tables.staticTexts["第一章"].tap()
+        }
+    }
+    private func ready(_ app: XCUIApplication) {
+        XCTAssertTrue(app.webViews.firstMatch.waitForExistence(timeout: 10))
+        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: app.buttons["epub.state"])
+        waitForExpectations(timeout: 15)
+    }
+    private func back(_ app: XCUIApplication) { app.navigationBars.buttons.element(boundBy: 0).tap() }
+
+    func testAllSpinesAndRealSecondChapterResumeRoute() {
+        let app = launch(); open("文字", app: app); ready(app)
+        app.buttons["下一节"].tap(); ready(app)
+        XCTAssertTrue(app.webViews.staticTexts["第一章第二节"].exists)
+        app.buttons["下一节"].tap(); ready(app)
+        XCTAssertEqual(app.staticTexts["epub.section"].value as? String, "第2章，第1节")
+        app.sliders["epub.progress"].adjust(toNormalizedSliderPosition: 0.55)
+        // Let the independent-world restore and 100 ms reporter finish before leaving.
+        expectation(for: NSPredicate { _, _ in
+            guard let value = app.sliders["epub.progress"].value as? String,
+                  let number = Double(value.replacingOccurrences(of: "%", with: "")) else { return false }
+            return number >= 50 && number <= 60
+        }, evaluatedWith: app)
+        waitForExpectations(timeout: 5)
+        back(app)
+        let resume = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '继续阅读'")).firstMatch
+        XCTAssertTrue(resume.waitForExistence(timeout: 5)); resume.tap(); ready(app)
+        XCTAssertEqual(app.staticTexts["epub.section"].value as? String, "第2章，第1节")
+        XCTAssertTrue(app.webViews.staticTexts["第二章正文"].exists)
+        XCTAssertNotEqual(app.sliders["epub.progress"].value as? String, "0%")
+    }
+
+    func testTextSettingsPersistAfterRelaunch() {
+        let app = launch(); open("文字", app: app); ready(app)
+        app.buttons["排版"].tap()
+        let font = app.steppers["epub.fontSize"]
+        XCTAssertTrue(font.waitForExistence(timeout: 5))
+        let before = app.tables.cells.element(boundBy: 0).staticTexts.firstMatch.label
+        let isMaximum = before.contains("32")
+        font.buttons.element(boundBy: isMaximum ? 0 : 1).tap()
+        let changed = app.tables.cells.element(boundBy: 0).staticTexts.firstMatch.label
+        XCTAssertNotEqual(before, changed)
+        app.buttons["护眼"].tap(); app.buttons["点击翻页"].tap()
+        app.terminate(); app.launch(); app.buttons["本地书架"].tap()
+        open("文字", app: app); ready(app); app.buttons["排版"].tap()
+        XCTAssertEqual(app.tables.cells.element(boundBy: 0).staticTexts.firstMatch.label, changed)
+        XCTAssertTrue(app.buttons["护眼"].isSelected); XCTAssertTrue(app.buttons["点击翻页"].isSelected)
+    }
+
+    func testMixedSpineRetainsDirectImageAndPureImageUsesComicReader() {
+        let app = launch(); open("图文", app: app); ready(app)
+        app.buttons["下一节"].tap(); ready(app)
+        app.buttons["下一节"].tap(); ready(app)
+        XCTAssertTrue(app.webViews.images["正文插图"].exists)
+        app.buttons["下一节"].tap(); ready(app)
+        XCTAssertTrue(app.webViews.staticTexts["第二章正文"].exists)
+        back(app); back(app); open("图片", app: app)
+        XCTAssertTrue(app.buttons["设置"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.webViews.firstMatch.exists)
+    }
+
+    func testPendingScrollRestoreCannotOverwriteNextDocumentPosition() {
+        let app = launch(); open("文字", app: app); ready(app)
+        app.sliders["epub.progress"].adjust(toNormalizedSliderPosition: 0.8)
+        app.buttons["下一节"].tap()
+        ready(app)
+        XCTAssertTrue(app.webViews.staticTexts["第一章第二节"].exists)
+        XCTAssertEqual(app.sliders["epub.progress"].value as? String, "0%")
+        back(app)
+        let resume = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '继续阅读'")).firstMatch
+        XCTAssertTrue(resume.waitForExistence(timeout: 5)); resume.tap(); ready(app)
+        XCTAssertEqual(app.staticTexts["epub.section"].value as? String, "第1章，第2节")
+        XCTAssertEqual(app.sliders["epub.progress"].value as? String, "0%")
+    }
+
+    func testWebKitBlocksBookScriptsAndLoadsSameBookCSS() {
+        let app = launch(); open("隔离", app: app); ready(app)
+        XCTAssertTrue(app.webViews.staticTexts["脚本未执行"].exists)
+        XCTAssertTrue(app.webViews.staticTexts["事件未执行"].exists)
+        XCTAssertFalse(app.webViews.staticTexts["本书 CSS 未加载"].exists)
+        XCTAssertFalse(app.webViews.staticTexts["第二章正文"].exists) // iframe must not render.
+        app.webViews.links["不安全链接"].tap()
+        XCTAssertFalse(app.webViews.staticTexts["JS链接执行"].exists)
+        app.webViews.links["外部测试链接"].tap()
+        XCTAssertTrue(app.alerts["打开外部链接？"].waitForExistence(timeout: 5))
+        app.alerts.buttons["取消"].tap()
+        back(app)
+        XCTAssertTrue(app.buttons["章节目录"].waitForExistence(timeout: 5))
+    }
+
+    func testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks() {
+        let app = launch(); open("超限", app: app)
+        let state = app.buttons["epub.state"]
+        expectation(for: NSPredicate(format: "label CONTAINS '上限'"), evaluatedWith: state)
+        waitForExpectations(timeout: 15)
+        app.buttons["下一节"].tap(); ready(app)
+        XCTAssertTrue(app.webViews.staticTexts["第一章第二节"].exists)
+        app.buttons["下一节"].tap() // Old callbacks cannot overwrite the new chapter after leaving.
+        ready(app); back(app)
+        let resume = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '继续阅读'")).firstMatch
+        XCTAssertTrue(resume.waitForExistence(timeout: 5)); resume.tap(); ready(app)
+        XCTAssertEqual(app.staticTexts["epub.section"].value as? String, "第2章，第1节")
+    }
+
+    func testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker() {
+        let app = launch(); open("跨书", app: app)
+        // The other real book's CSS hides the body if it is loaded; CSP or the scheme handler must refuse it.
+        let visible = app.webViews.staticTexts["跨书样式未执行"]
+        let failure = app.buttons["epub.state"]
+        expectation(for: NSPredicate { _, _ in visible.exists || (failure.exists && failure.label.contains("重试")) }, evaluatedWith: app)
+        waitForExpectations(timeout: 15)
+        back(app); back(app)
+        app.navigationBars.buttons["导入"].tap(); app.buttons["EPUB 电子书"].tap()
+        XCTAssertTrue(app.navigationBars.buttons["取消"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons["取消"].tap()
+    }
+}

@@ -19,6 +19,23 @@ final class RemoteImageView: UIImageView {
     var onLoaded: ((CGSize) -> Void)?
     var onFailure: (() -> Void)?
 
+    func loadCover(_ comic: ComicSummary, referer: String, library: LocalLibrary) {
+        guard comic.sourceId == "local", comic.coverUrl.isEmpty else { load(comic.coverUrl, referer: referer); return }
+        cancel(); image = nil; original = nil
+        let token = generation
+        let worker = Task.detached { try library.book(id: comic.comicId) }
+        task = Task { [weak self] in
+            do {
+                let book = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+                guard let self, self.generation == token, !Task.isCancelled, let epub = book.epub else { return }
+                self.original = TextBookCover.image(title: book.title, author: epub.author); self.render()
+            } catch {
+                guard let self, self.generation == token, !Task.isCancelled else { return }
+                self.onFailure?()
+            }
+        }
+    }
+
     func load(_ text: String, referer: String, reader: Bool = false, epubImage: (@Sendable (URL) throws -> Data)? = nil) {
         cancel()
         image = nil; original = nil
@@ -189,10 +206,10 @@ final class ComicCell: UICollectionViewCell {
         accessibilityTraits = .button
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
-    func configure(_ comic: ComicCore.ComicSummary, referer: String) {
+    func configure(_ comic: ComicCore.ComicSummary, referer: String, library: LocalLibrary) {
         nameLabel.text = comic.title
         accessibilityLabel = comic.title
-        cover.load(comic.coverUrl, referer: referer)
+        cover.loadCover(comic, referer: referer, library: library)
     }
     override func prepareForReuse() { super.prepareForReuse(); cover.cancel(); cover.image = nil }
 }
