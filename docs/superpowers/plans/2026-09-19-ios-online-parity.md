@@ -2,6 +2,7 @@
 
 **Goal:** 从已测试的基础规则推进到真实站源、书架、详情、目录、阅读及本地保存的完整闭环，然后继续扩展全部安卓版功能。
 **Spec:** docs/superpowers/specs/2026-09-19-ios-parity-baseline.md
+**本地批量/分卷后续设计:** docs/superpowers/specs/2026-09-20-ios-local-library-lifecycle.md（Tasks40–43之后的持久化、导入协调和阅读路由边界；尚未实现）
 **Architecture:** ComicCore 实现可注入网络的站源和可测试存储；UIKit 持有请求 Task、展示状态和阅读交互；Swift 5.9 / iOS 16。
 
 ## Global Constraints
