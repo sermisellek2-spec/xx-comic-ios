@@ -529,3 +529,29 @@ XCTAssertThrowsError(try BatchImportCandidate(sourceOrder: "NaN"))
 - [ ] normalizeTitle逐步照原版：Java trim→删末尾ASCII字母数字1...8位扩展→全角空格变空格并trim→删末尾卷号表达式及分隔符→删末尾ASCII空白/_/-并压缩ASCII空白→trim→空值“未命名漫画”。NSRegularExpression中的`\s`/`\d`须显式使用Java默认ASCII范围，不能让ICU默认Unicode语义吞NBSP或全角数字。volumeNumber保留最后一个成功Int32匹配；溢出忽略该匹配而不是覆盖已得到的值。测试中文/vol/v/末尾1...4数字、括号、内部卷号、NBSP、全角数字、溢出与零。
 - [ ] sourceOrder按十进制精确比较，不能Double或Foundation Decimal舍入后比较；Decimal不足以覆盖Java BigDecimal超过38位的输入。最小私有比较实现：解析ASCII符号/有效数字串/小数位/可选e/E有符号指数，规范零与前导零，用调整后的十进制位数和有效数字逐位（缺位补0）比较，负数反序，不展开巨大指数为零数组。合法指数及scale遵循Java BigDecimal的Int32范围，计算使用Int64检查；sourceOrder文本受1MiB上限约束，与元数据扫描上限一致。保留原始字符串用于后续持久化，不引入BigInt依赖或通用任意精度运算库。覆盖2.0/2、负数、负零、1e3、1e-3、超过38位且只末位不同、巨大指数、非法数字/指数溢出；测试只验证实际排序和失败，不复制比较算法作oracle。
 - [ ] 排序优先：两者sourceOrder均存在则精确非等值优先；仅一方存在则有值优先；其次已识别文件卷号（有值优先）；其次NaturalPathOrder；其次selectionIndex；最后原始输入次序保证稳定。不改变既有NaturalPathOrder和搜索trim的语义。GREEN本任务及实际受影响测试；写task-41-report.md，父代理限定文件提交/独立审查。持久批次、分卷存储、确认UI另行实施，不能将本任务计为用户可用批量导入。
+
+### Task 42: 可恢复批量导入状态持久化
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/BatchImportSession.swift`、`Tests/ComicCoreTests/BatchImportSessionTests.swift`。完整读取Android `local/BatchImportSession.java` 和全部对应测试，复用Foundation Codable/atomic snapshot模式，不引入数据库或任务框架。此任务只建立状态层，不启动实际导入worker或UI；输入文件授权与分卷发布由后续消费者实现。
+
+**Interfaces:** `public actor BatchImportSession` 由App后续持有唯一实例；`init(file:URL)throws` 限量加载旧快照，无文件时为空。嵌套`State:String,Codable,Sendable` 为pending/running/completed/skipped/failed；`Item:Codable,Equatable,Sendable` 为uri/name/format:String、selectionIndex:Int、state:State、error:String；`Group` 为key/title/targetBookId:String、requiresExistingBook:Bool、items:[Item]；`Snapshot` 为version:Int=1、taskId:String(UUID)、groups:[Group]、cancelled:Bool。外部只读值快照：`current()->Snapshot?`、`create(groups:[Group])throws->Snapshot`、`start(taskID:String,group:Int,item:Int)throws`、`complete(taskID:String,group:Int,item:Int,bookID:String)throws`、`fail(taskID:String,group:Int,item:Int,error:String)throws`、`skip(taskID:String,group:Int,item:Int)throws`、`setTargetBookID(taskID:String,group:Int,bookID:String)throws`、`retryFailed(taskID:String)throws`、`cancel(taskID:String)throws`、`pendingGroupIndices()->[Int]`。Item/Group公开初始化，state初始pending/error空；requiresExistingBook默认false，JSON缺此字段仍按false兼容。
+
+- [ ] RED真实临时JSON持久化测试：正在执行项重开回pending，已完成/跳过不重跑，失败不阻后续、错误保留且retry清理，取消保留完成项并跳过所有未完成项；明确targetBookId/requiresExistingBook跨重启保留。测试源文件原字节不变，状态层不碰源URL。
+
+```swift
+let store = try BatchImportSession(file: file)
+let created = try await store.create(groups: [.init(key: "series", title: "系列", targetBookId: "existing", requiresExistingBook: true,
+    items: [.init(uri: "file:///external/one.epub", name: "卷一.epub", format: "epub", selectionIndex: 4)])])
+try await store.start(taskID: created.taskId, group: 0, item: 0)
+let reopened = try BatchImportSession(file: file)
+let restored = await reopened.current()
+let saved = try XCTUnwrap(restored)
+XCTAssertEqual(saved.groups[0].items[0].state, .pending)
+XCTAssertTrue(saved.groups[0].requiresExistingBook)
+XCTAssertEqual(saved.groups[0].targetBookId, "existing")
+```
+
+- [ ] init仅限量读16MiB UTF8 JSON，超过限制、版本非1、非法UUID/状态、结构损坏、目录/符号链接当快照均明确错误并保留原文件；不得错误回退空队列导致覆盖。重开只在内存将running转pending，后续成功原子写落盘；完成/跳过/failed不变。不存在文件时才是空状态；丢权限/其他I/O错误不当成不存在。字符串不额外trim（原版Session.text只nil→空，与Planner不同）。URI作为opaque字符串保存，不打开或声称它具有跨重启授权。
+- [ ] 所有变更在actor内无await：先复制next snapshot→验证本次taskID与group/item范围→按规则改next→编码并检查仍≤16MiB→Foundation `.atomic` 写入→成功才替换内存。无手写tmp/bak替换协议，使用现有LibraryStore已用的原子快照模式；测试实际写失败时前一快照/内存不变，并保留失败路径。内部可注入窄write(data,url)测试边界模拟磁盘失败，但同时必须用真实目录阻塞验证系统I/O错误，不能只mock保存成功。
+- [ ] create拒绝旧批次未cancelled且存在非completed/skipped项，包括failed；cancelled或全部completed/skipped才可新建UUID。当前任务ID不匹配的迟到回调抛错且不改新批次；group/item越界抛错而不崩溃。cancelled时start明确报错，其他变更无操作；completed/skipped的complete/fail/skip均无操作。complete非空bookID更新target、空值保留；setTarget更新group。retry只将failed/running转pending并清error，completed/skipped保留；调用方必须先停旧worker，这一层不假装提供worker取消。pendingGroupIndices只返回含pending/running的组，保持原顺序，cancelled返回空。
+- [ ] 补RED/GREEN：取消后迟到complete不能复活、结束旧批次后新建而旧taskID写不能污染、非法索引、坏JSON不能create覆盖、失败写回滚target/state/error/cancelled、精确16MiB读取/保存上限、默认requiresExistingBook旧JSON、无权限或主路径变目录。不移植Android bak内部布局的测试到不存在的Swift协议；通过实际atomic快照前后字节及重开行为证明等价用户结果。报告task-42-report.md，父代理限定文件提交/审查。未完成实际批量worker/恢复授权/分卷存储，不标为完整功能。
