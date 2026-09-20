@@ -51,10 +51,26 @@ final class LocalLibraryTests: XCTestCase {
         let file = root.appendingPathComponent("large.jpg")
         XCTAssertTrue(FileManager.default.createFile(atPath: file.path, contents: nil))
         let handle = try FileHandle(forWritingTo: file)
-        try handle.truncate(atOffset: 40 * 1024 * 1024 + 1)
+        try handle.truncate(atOffset: 128 * 1024 * 1024 + 1)
         try handle.close()
         XCTAssertThrowsError(try library.importImages(title: "大图", files: [file]))
         XCTAssertTrue(try library.books().isEmpty)
+    }
+
+    func testAndroidSingleImageByteBoundaryIsAcceptedAndPreserved() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let library = try LocalLibrary(directory: root.appendingPathComponent("library"))
+        let file = root.appendingPathComponent("boundary.jpg")
+        XCTAssertTrue(FileManager.default.createFile(atPath: file.path, contents: nil))
+        let handle = try FileHandle(forWritingTo: file)
+        try handle.truncate(atOffset: 128 * 1024 * 1024)
+        try handle.close()
+        let book = try library.importImages(title: "边界", files: [file])
+        let copy = try XCTUnwrap(library.pageURLs(for: book).first)
+        XCTAssertEqual(try copy.resourceValues(forKeys: [.fileSizeKey]).fileSize, 128 * 1024 * 1024)
+        XCTAssertEqual(try file.resourceValues(forKeys: [.fileSizeKey]).fileSize, 128 * 1024 * 1024)
+        XCTAssertEqual(try library.books(), [book])
     }
 
     func testCancellationDuringCopyRemovesStagingAndPreservesSource() async throws {

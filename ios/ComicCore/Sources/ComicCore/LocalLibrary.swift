@@ -20,7 +20,7 @@ public struct LocalBookChapter: Codable, Equatable, Sendable {
 
 /// A complete import becomes visible through a single directory rename.
 public struct LocalLibrary: Sendable {
-    public static let maximumImageBytes = 40 * 1024 * 1024
+    public static let maximumImageBytes = 128 * 1024 * 1024
     static let maximumImportBytes: Int64 = 20 * 1024 * 1024 * 1024
     private static let copyChunkBytes = 256 * 1024
     private let directoryPath: String
@@ -131,7 +131,7 @@ public enum LocalLibraryError: LocalizedError {
         switch self {
         case .invalidBook: return "本地漫画数据无效或文件不可用，原文件已保留。"
         case .emptyImport: return "没有可导入的图片。"
-        case .imageTooLarge: return "单张图片不能超过 40 MiB，本次未导入，请先缩小该图片。"
+        case .imageTooLarge: return "单张图片不能超过 128 MiB，本次未导入，请先缩小该图片。"
         case .folderTooDeep: return "目录层级过深（最多支持 5 层），本次未导入。"
         case .folderTooLarge: return "文件夹超过 50000 个文件或 20 GiB，本次未导入。"
         }

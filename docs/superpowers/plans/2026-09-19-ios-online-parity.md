@@ -168,3 +168,7 @@ func testLatestUsesPostCategoryPageAndDefaults() async throws {
 - [ ] 正文URL严格 `/comic/{comicId}/{chapterId}`；先info `/api/comic/chapter/info/{chapterId}` 校验data.current comicId/id，再图片API `/api/comic/image/{chapterId}?page={page}&page_size=100&image_source={encoded}`。images和pagination必需；total>0、total_pages 1...500、current_page正确且后页总量不变，每页非空、图片URL为HTTP(S)或合法相对地址，重复图片必须报错，最终计数等于total才可返回，不可吞错返回半章。chapterId为完整规范章URL、nextPageUrl空。
 - [ ] HTTP401/403及JSON code401/403明确访问受限，不绕过账号/付费；其他HTTP非2xx及code非200报错；每次请求前后检查取消。覆盖分类实际method/body/headers与搜索无Cookie、各筛选映射、合法空/错误壳、详情按需、长目录小数稳定次序、多页/重复/错页/总量变化/不完整/取消零后续请求。
 - [ ] 聚焦 `swift test --filter ManwaSourceTests`，最后全量一次；与主代理协调共享target。报告RED/GREEN实际数量、URL与结构验证、网络/Apple未验收。图片显示已独立接ManwaImageDecoder，无需重复解密实现，也不假称已有离线下载。
+
+### Task 20: 本地图片大小边界对齐
+
+对照Android LocalImporter.MAX_SINGLE_FILE_BYTES和复制循环，把LocalLibrary单图上限由临时40MiB对齐128MiB；保留256KiB流式复制、20GiB总上限、取消/失败回收、系统ImageIO验证和24M解码像素预算。测试128MiB恰好允许、128MiB+1拒绝且不发布、不改原文件。测试使用临时稀疏文件，只验证核心文件大小边界，不声称它们是有效图片。RemoteImageView本地读取复用同一上限，用Foundation mappedIfSafe避免可映射文件的额外整份堆拷贝；在线图片上限不在此任务修改。先观察大小边界测试失败再修正。设备峰值内存和大图渲染仍需iPhone验收。

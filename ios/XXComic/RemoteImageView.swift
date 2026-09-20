@@ -48,7 +48,7 @@ final class RemoteImageView: UIImageView {
                     data = try await Task.detached(priority: .userInitiated) {
                         let size = try resolved.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
                         guard size <= LocalLibrary.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
-                        return try Data(contentsOf: resolved)
+                        return try Data(contentsOf: resolved, options: .mappedIfSafe)
                     }.value
                 } else {
                     let (bytes, response) = try await URLSession.shared.data(for: request)
