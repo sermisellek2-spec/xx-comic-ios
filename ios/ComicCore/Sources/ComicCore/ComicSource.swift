@@ -26,11 +26,16 @@ public struct HTTPResponse: Sendable {
     public let data: Data
     public let statusCode: Int
     public let textEncodingName: String?
+    public let headers: [String: String]
 
-    public init(data: Data, statusCode: Int, textEncodingName: String? = nil) {
+    public init(data: Data, statusCode: Int, textEncodingName: String? = nil, headers: [String: String] = [:]) {
         self.data = data
         self.statusCode = statusCode
         self.textEncodingName = textEncodingName
+        self.headers = headers
+    }
+    public func headerValue(for name: String) -> String? {
+        headers.first { $0.key.caseInsensitiveCompare(name) == .orderedSame }?.value
     }
 }
 
@@ -93,7 +98,10 @@ public struct URLSessionHTTPTransport: HTTPTransport, @unchecked Sendable {
         let (data, response) = try await session.data(for: request)
 #endif
         guard let response = response as? HTTPURLResponse else { throw HTTPTransportError.invalidResponse }
-        return HTTPResponse(data: data, statusCode: response.statusCode, textEncodingName: response.textEncodingName)
+        let responseHeaders = response.allHeaderFields.reduce(into: [String: String]()) { result, field in
+            if let key = field.key as? String { result[key] = String(describing: field.value) }
+        }
+        return HTTPResponse(data: data, statusCode: response.statusCode, textEncodingName: response.textEncodingName, headers: responseHeaders)
     }
 }
 

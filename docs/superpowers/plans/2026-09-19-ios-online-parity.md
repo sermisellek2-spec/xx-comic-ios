@@ -202,3 +202,23 @@ func testLatestUsesPostCategoryPageAndDefaults() async throws {
 所有条目（含目录和metadata）<=50000；每条声明<=128MiB，声明总量<=20GiB。非目录先拒绝绝对路径/盘符/越界路径，再规范化、拒绝重复，最后跳过metadata；拒绝符号链接。名称先尝试全部UTF8，失败全局GB18030（保留UTF8 flag强制UTF8规则）。Library序列可能静默截断，须最小EOCD/ZIP64计数校验，声明与实际数量必须匹配；多磁盘、加密、不支持或损坏后部条目不能静默导入部分书籍。流式consumer检查取消、实际单条/累计预算、最终长度和CRC，禁止只相信中央目录；坏图片跳过，压缩流完整性损坏应失败。真解码探测复用Task22 ImageIO路径，坏首图不能成为封面。深目录、自然顺序、wrapper剥离、未分章/正文规则同Android。
 
 测试先失败后实现：存储/deflate、中文UTF8和GB18030、chapter自然顺序、深度>5、跳坏首图、越界/绝对/盘符/规范化重复/metadata重复、声明预算与50001条、损坏CRC/截断/后部加密条目/ZIP64计数、取消清理、重开阅读。测试fixture用确定性ZIP字节或库创建后定点破坏，不引入运行时shell。UIKit新增压缩包选择与清晰中文状态，保持安全作用域直至任务完成；parse不是Xcode验收。依赖、核心、UI分清验证，独立审查后更新矩阵。
+
+### Task 24: 18漫画适配器与验证判定规则
+
+先读同计划账本目录mh18-research.md，再完整读Android Mh18ComicSource.java、Mh18ComicSourceTest、Mh18WebViewSession.java静态规则837..991及Mh18WebViewSessionTest。新增Mh18ComicSource.swift、Mh18VerificationRules.swift、ComicBrowserSession.swift及对应测试；ComicSource.swift只允许向HTTPResponse增加默认空响应header字典与URLSession返回头，保留既有初始化调用兼容。真实URLProtocol测试验证cf-mitigated字段传输及大小写无关查询，不能只测手造响应。
+
+ComicBrowserSession: Sendable，async throws fetch(_ url: URL) -> String / fetchInteractive(_ url: URL) -> String。适配器可注入browserSession与HTTPTransport，默认id mh18、名称18漫画、base/referer https://18mh.org[/]。当前任务不注册：先保留可测试的浏览器会话边界，Task25实现真实WK消费者再注册。非交互挑战抛typed verificationRequired，不弹窗口、不自动破解。verifyAccess明确调用interactive并要求hasCatalogMarker。
+
+请求/解析以Android当前公开路径逐项移植：搜索Java form编码和/page/N，分类tag优先genre/all及动态两组；cardtitle结构、去重、slug标题回退；JSON-LD ComicSeries含@graph、数组@type及meta属性顺序无关的fallback，作者/状态/标签，详情不预取目录。目录/chapterlist/{id}读取allchapters data-mid/data-host，再/manga/get?mid=N&mode=all；章节chapterContent data-ms/data-cs/data-ct，再/chapter/getcontent?m=N&c=N。data-host只HTTPS配置根/点分子域与默认443，不请求外域；有效252章完整测试、data-src优先src、图片HTTP(S)顺序去重；无目录/正文清晰报错。直接网络UAChrome124 desktop、15s请求限制，对10s独立连接差异披露。配置session时主域及子域请求进入session（包括API）；返回仍检查取消。错误壳不伪装合法空结果。
+
+Mh18VerificationRules移植HTTP/interactive/page/probe判定、挑战marker（排除普通precursor）、期望/manga路径/同协议根子域、Cloudflare挑战导航白名单、deadline120s/代次及成功条件。测试按Android现有18个会话案例扩展host相似域/错误协议/过期导航；避免仅测getter常量。所有核心测试先RED再GREEN；共享target与Task23串行，输出task-24-report.md并独立审查。该范围只实现adapter与规则，不能冒称WK验证可用。
+
+### Task 25: 18漫画 WKWebView 会话、Cookie 与手动验证接线
+
+使用系统WebKit，在UIKit新增Mh18BrowserSession及验证弹层，复用Task24协议/判定；MainActor管理WebView、continuations、定时/导航代次。AppEnvironment持有session并注入Mh18适配器，按Android默认相对顺序注册；SourceSettings增加该源验证入口与状态，用户主动进入，其他源无多余验证按钮。必须完整对照AndroidMh18WebViewSession及MainActivity站源验证调用，先读mh18-research.md完整研究再实施，不以简单Cookie复制替代浏览器网络上下文。
+
+初始普通请求用HTTP+Cookie，同一session串行；首次/失效挑战仅返回需要验证。手动验证先HTTP预检，有有效漫画目录直接成功；只有挑战打开浏览器，普通失败留重试/关闭。固定UA/Accept-Language按Android，会话生命周期保持Cookie，平台第三方Cookie限制必须披露。WKWebView配置默认持久dataStore；URLSession收到的Cookie同步到WKHTTPCookieStore，WK新Cookie能供HTTP预检/图片请求使用（仅按真实URL域规则发送，不把某站Cookie污染其他源）。返回URL与协议/host验证，严禁关闭TLS校验。
+
+显式验证绝对单调120s deadline从创建开始，自动probe reload最多2次且不续期；DOM检查600ms、成功延迟600ms，过程中可关闭取消，用户重新加载创建新请求。浏览器DOM在当前/manga有真实card marker后，通过同一WebView网络fetch(credentials include/cache no-store/redirect follow)再验证目录；都成功才保留WebView并切后续请求到browser context。使用callAsyncJavaScript参数传值或同等安全方式，不拼接未转义URL/执行源站提供脚本代码作为解码器。请求取消中止网络，过期request/attempt/navigation不能完成新页面；失败/timeout停止探测但保留手动重试/关闭，不自动操作验证码。retained context失效返回需要验证，不悄悄无限循环。关闭/缓存清理/进程终止完成所有continuation并释放UI。
+
+状态机与协调可用注入driver/clock测试实际并发、取消、超时、陈旧probe、两次恢复和手动重试；不为UIKit包装每个系统方法建框架。UI测试验证进入/关闭/错误重试入口并明确Windows未运行。至少原生代码syntax parse，真实WebKit网络/Cookie/验证、Apple类型检查与设备验收始终单列未完成，不能把Linux状态机GREEN称为站点可用。独立审查后再更新矩阵。

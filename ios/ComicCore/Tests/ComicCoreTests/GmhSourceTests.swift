@@ -389,6 +389,17 @@ final class GmhSourceTests: XCTestCase {
         XCTAssertEqual(response.textEncodingName?.lowercased(), "iso-8859-1")
     }
 
+    func testURLSessionTransportPreservesChallengeHeadersCaseInsensitively() async throws {
+        TestURLProtocol.configure(.succeed, responseHeaders: ["Cf-MiTiGaTeD": "challenge", "X-Source-State": "ready"])
+        defer { TestURLProtocol.reset() }
+        let transport = URLSessionHTTPTransport(session: makeTestURLSession())
+        let response = try await transport.get(URL(string: "https://example.test/verification")!, headers: [:])
+        XCTAssertEqual(response.headerValue(for: "cf-mitigated"), "challenge")
+        XCTAssertEqual(response.headerValue(for: "CF-MITIGATED"), "challenge")
+        XCTAssertEqual(response.headerValue(for: "x-source-state"), "ready")
+        XCTAssertNil(response.headerValue(for: "missing"))
+    }
+
     func testGETOnlyFixtureRejectsDefaultPOST() async {
         let transport = StubTransport(responses: [:])
 
