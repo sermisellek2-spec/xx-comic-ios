@@ -555,3 +555,22 @@ XCTAssertEqual(saved.groups[0].targetBookId, "existing")
 - [ ] 所有变更在actor内无await：先复制next snapshot→验证本次taskID与group/item范围→按规则改next→编码并检查仍≤16MiB→Foundation `.atomic` 写入→成功才替换内存。无手写tmp/bak替换协议，使用现有LibraryStore已用的原子快照模式；测试实际写失败时前一快照/内存不变，并保留失败路径。内部可注入窄write(data,url)测试边界模拟磁盘失败，但同时必须用真实目录阻塞验证系统I/O错误，不能只mock保存成功。
 - [ ] create拒绝旧批次未cancelled且存在非completed/skipped项，包括failed；cancelled或全部completed/skipped才可新建UUID。当前任务ID不匹配的迟到回调抛错且不改新批次；group/item越界抛错而不崩溃。cancelled时start明确报错，其他变更无操作；completed/skipped的complete/fail/skip均无操作。complete非空bookID更新target、空值保留；setTarget更新group。retry只将failed/running转pending并清error，completed/skipped保留；调用方必须先停旧worker，这一层不假装提供worker取消。pendingGroupIndices只返回含pending/running的组，保持原顺序，cancelled返回空。
 - [ ] 补RED/GREEN：取消后迟到complete不能复活、结束旧批次后新建而旧taskID写不能污染、非法索引、坏JSON不能create覆盖、失败写回滚target/state/error/cancelled、精确16MiB读取/保存上限、默认requiresExistingBook旧JSON、无权限或主路径变目录。不移植Android bak内部布局的测试到不存在的Swift协议；通过实际atomic快照前后字节及重开行为证明等价用户结果。报告task-42-report.md，父代理限定文件提交/审查。未完成实际批量worker/恢复授权/分卷存储，不标为完整功能。
+
+### Task 43: 流式内容指纹与文件夹清单身份
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/ContentFingerprint.swift`、`Tests/ComicCoreTests/ContentFingerprintTests.swift`。对照Android `LocalImporter.java` 的文件复制SHA256与`computeFolderManifestFingerprint`；先读原方法及已有LocalFolderIndex/NaturalPathOrder/JmImageTransform平台散列分支。只产出身份计算，不修改导入/删除/恢复流程。后续对已拥有副本计算并发布，不能在外部源可能变化时先算hash后复制却信任旧hash。
+
+**Interfaces:** `public enum ContentFingerprint` 提供 `static file(_ url:URL,maximumBytes:Int64=20*1024*1024*1024)throws->String`、`static folder(_ root:URL,relativeImagePaths:[String])throws->String`；输出64位小写十六进制。file不判断文件格式，空文件有标准SHA256；folder消费已通过图片探测的路径列表，不自己扫描或解码图片，不改变LocalFolderIndex规则。
+
+- [ ] RED真实临时文件+固定密码学向量：空文件、abc、多chunk文件，原字节不改；固定folder数据2.png为abc、10.png为空，输入倒序仍得到固定manifest hash。期望由独立Node crypto按Android清单计算，不能用被测函数拼出测试期望。
+
+```swift
+XCTAssertEqual(try ContentFingerprint.file(abcFile), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+XCTAssertEqual(try ContentFingerprint.folder(root, relativeImagePaths: ["10.png", "2.png"]),
+               "289a7e9d8b7639baa049ca4aed2c3fc55cf31ec0056560ea3459ff175cc325d3")
+```
+
+- [ ] Apple用系统CryptoKit.SHA256流式update/finalize，Linux沿现有测试工具链使用`/usr/bin/openssl dgst -sha256 -binary`，不加新依赖、不手写SHA256。最多256KiB一次FileHandle read，每块前后检查Task取消和累计大小；不Data(contentsOf:)整书读入、不把整书喂一次进程管道。Linux Process参数数组且不经shell，及时关闭stdin、检查退出码与32字节摘要，错误/取消回收进程；Apple代码无外部进程。内部最小共享digest-feed函数足够，不增加公共算法/hasher框架。
+- [ ] file要求fileURL、regular非符号链接，最大值必须非负，声明或实际流超过maximumBytes均报错，读取错误/取消原样传递。前后大小变化或被截断不得返回“成功”的混合身份；读取后核对已读字节与初始/最终元数据，后续消费者仍必须对自己的稳定副本调用，不能承诺检测同大小同时间恶意替换。测试以小maximumBytes验证边界和超限，不创建20GiB大文件。
+- [ ] folder按NaturalPathOrder排序原始相对路径，不剥共同包装目录。每个文件hash后向总hash输入UTF8 `relativePath + ':' + lowercaseFileHash + '\n'`，与Android字节一致；文件修改、相对路径改名改变指纹，扫描枚举顺序不改变。不使用mtime/文件名/尺寸代替内容。输入最多50000项，路径唯一且非空相对路径，仅`/`分隔；拒绝绝对路径、反斜杠、NUL、空段、`.`/`..`、根或中间目录/文件符号链接，解析后必须在root内。每图128MiB、累计20GiB，按实际读取累计；空列表允许标准空manifest摘要，是否允许导入空书由现有importer拒绝。
+- [ ] 覆盖非ASCII/空格路径、自然序、rename/content变化、根/中间/文件symlink、越界路径、重复路径、提前/运行中取消、文件读失败。运行中取消可用内部窄readChunk注入触发真实Task取消并继续生产散列管线，不mock摘要；不得成功返回截断指纹。GREEN本任务与实际受影响测试，Apple条件分支未运行单列；报告task-43-report.md，父代理提交/审查。去重与墓碑恢复仍需集成，不能把散列核心当完整去重功能。
