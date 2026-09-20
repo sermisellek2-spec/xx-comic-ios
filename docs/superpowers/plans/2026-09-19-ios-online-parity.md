@@ -485,3 +485,24 @@ XCTAssertEqual(try library.epubResource(bookID: book.id, path: path, maximumByte
 - [ ] 并发请求使用各自临时目录及非覆盖发布；另一请求先发布时，只有检查取消后验证已存在文件归属且publication与原metadata相等才能复用赢家。其他错误继续抛出。不为了重建创建已被删除的book目录，不保留旧worker输出到新/外书，不增加全局不可取消的转换锁。测试实际两请求缺派生重建、失败/取消不遗留临时文件、原包缺失/符号链接/派生不符拒绝；删除测试仅针对测试拥有目录。
 - [ ] Bookshelf增加Kindle文档选择（mobi/azw/azw3，具体UTType按系统可用类型），保持security-scoped worker/取消/导入标题确认；格式错误提示原解析器实际原因。LocalComicSource详情展示MOBI/AZW/AZW3，不把kindleFormat当支持声明。书架封面、纯图片阅读、文字/混合路由、目录/设置/续读均直接复用Task35；无封面沿既有蓝渐变电子书封面。原生fixture覆盖小说/漫画导入后的实际阅读、继续阅读与不支持提示；只在隔离UITest域种子。
 - [ ] GREEN核心真实导入/资源/恢复用例，再按修改范围回归EPUB/本地图片/PDF和转换器；UIKit全syntaxparse，Apple实际测试未运行单列。报告task-39-report.md，父代理提交并独立审查。没有Xcode/设备不能声称Kindle原生验收通过。
+
+### Task 40: 批量导入前的轻量电子书元数据扫描
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/QuickPublicationInfo.swift`、`Tests/ComicCoreTests/QuickPublicationInfoTests.swift`。只提供扫描，后续批量UI消费，不改现有导入/全文解析行为。完整对照Android `ebook/QuickPublicationInfo.java`及其测试；复用EpubArchive/EpubXML/Task37检测器，不实现第二套XML/ZIP/PDB解析。
+
+**Interface:** `QuickPublicationInfo:Equatable,Sendable` 公开只读title/seriesTitle/volumeNumber/coverEntry:String、isReadable:Bool、unsupportedReason:String?；`static read(_ file:URL,formatOrFileName:String?=nil)throws->Self`。format默认file.lastPathComponent，取最后点后缀并lowercase；epub读取元数据，mobi/azw/azw3/prc转KindleFormatDetector，其他明确unsupported错误。volumeNumber保留原始十进制字符串，不先Double舍入；本层只提供分组建议数据，不按同名自动合并。
+
+- [ ] 真实RED ZIP fixture：缺失body/cover仍可读metadata、Calibre系列+2.5卷号、EPUB3 collection/refines、literal+和编码空格封面路径、无metadata空字段、DOCTYPE含UTF16/32拒绝、压缩后超1MiB元数据拒绝、非法percent路径报错；真实Kindle头fixture复用Task37检测，MOBI7标题和KF8不支持状态保持。
+
+```swift
+let info = try QuickPublicationInfo.read(epub) // fixture声明但不包含body/cover
+XCTAssertEqual(info.title, "夏日列车")
+XCTAssertEqual(info.seriesTitle, "四季故事")
+XCTAssertEqual(info.volumeNumber, "2.5")
+XCTAssertEqual(info.coverEntry, "Images/cover art.jpg")
+XCTAssertTrue(info.isReadable) // 只代表元数据可扫描，不代表正文/DRM验收
+```
+
+- [ ] EPUB只读取container.xml和选中opf，每项最多1MiB、两项累计2MiB，使用现有CRC/取消/DTD禁用/节点深度边界；不调用完整EpubParser、不读取body/cover/encryption/nav资源，更不解码图片。first非空rootfile后优先最后一个media-type=application/oebps-package+xml，与原版一致。封面与rootfile解析保留literal+，仅一次percent解码再使用现有normalized/相对路径机制；不调用EpubArchive.resolve的form+替换行为，不改变全文解析器的既有语义。拒绝空、父路径越界、冒号、NUL/符号链接或绝对包路径，先检查相对关系再规范化；不请求网络。
+- [ ] title取首metadata中的首title并SearchRules.trim。Calibre系列/卷号按同metadata的meta顺序后值覆盖；只有series为空才按belongs-to-collection次序寻找id及匹配refines='#id'的collection-type=series/group-position，首匹配series采用其文本及position。避免原Java嵌套扫描二次复杂度：一次索引refines键再顺序匹配，保留同key最后值规则。封面取全局items中第一个properties token含cover-image或id匹配meta cover的href，路径可以不存在，不伪称已解码。
+- [ ] Kindle只复用检测结果，title及可读/原因透传，series/volume/cover为空；不转换正文。CancellationError不包装为损坏或不支持。测试加入正文/cover损坏CRC而metadata正常的档案，证明没有读正文；元数据自身CRC损坏必须失败。GREEN只跑新扫描及实际共用受影响回归；报告task-40-report.md，父代理提交/审查。批量导入功能仍需规划、持久队列及多卷UI完成，不能用扫描核心冒充用户入口。
