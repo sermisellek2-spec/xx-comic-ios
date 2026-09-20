@@ -13,7 +13,11 @@ public enum LocalKindleFormat: String, Codable, Sendable {
 extension LocalLibrary {
     public func importKindle(title: String, source: URL, format: LocalKindleFormat,
                              isReadableImage: (URL) throws -> Bool) throws -> LocalBook {
-        try importOwnedEpub(title: title, kindleFormat: format, isReadableImage: isReadableImage) { staging in
+        try publishPrepared(prepareKindle(title: title, source: source, format: format, isReadableImage: isReadableImage))
+    }
+    func prepareKindle(title: String, source: URL, format: LocalKindleFormat,
+                       isReadableImage: (URL) throws -> Bool) throws -> PreparedLocalImport {
+        try prepareOwnedEpub(title: title, kindleFormat: format, isReadableImage: isReadableImage) { staging in
             let original = staging.appendingPathComponent("source.kindle")
             try copyEbook(source, to: original)
             _ = try KindlePublicationAdapter.convert(source: original, to: staging.appendingPathComponent("content.epub"))

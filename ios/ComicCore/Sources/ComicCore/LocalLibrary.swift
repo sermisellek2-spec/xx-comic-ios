@@ -31,16 +31,20 @@ public struct LocalLibrary: Sendable {
     private static let copyChunkBytes = 256 * 1024
     private let directoryPath: String
     private let readChunk: @Sendable (FileHandle, Int) throws -> Data?
+    let importOwner = UUID()
+    let beforeImportPublish: @Sendable () throws -> Void
     let beforeKindlePublish: @Sendable () throws -> Void
     public var directory: URL { URL(fileURLWithPath: directoryPath, isDirectory: true) }
     public init(directory: URL) throws {
         try self.init(directory: directory, readChunk: { try $0.read(upToCount: $1) })
     }
     init(directory: URL, readChunk: @escaping @Sendable (FileHandle, Int) throws -> Data?,
-         beforeKindlePublish: @escaping @Sendable () throws -> Void = {}) throws {
+         beforeKindlePublish: @escaping @Sendable () throws -> Void = {},
+         beforeImportPublish: @escaping @Sendable () throws -> Void = {}) throws {
         directoryPath = directory.path
         self.readChunk = readChunk
         self.beforeKindlePublish = beforeKindlePublish
+        self.beforeImportPublish = beforeImportPublish
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
     public func books() throws -> [LocalBook] {
@@ -91,21 +95,27 @@ public struct LocalLibrary: Sendable {
                             coverUrl: cover, subtitle: "\(book.pages.count) 页")
     }
     public func importImages(title: String, files: [URL]) throws -> LocalBook {
-        try importFiles(title: title, files: files.sorted(by: { NaturalPathOrder.less($0.lastPathComponent, $1.lastPathComponent) }), groups: nil)
+        try publishPrepared(prepareImages(title: title, files: files))
+    }
+    func prepareImages(title: String, files: [URL]) throws -> PreparedLocalImport {
+        try prepareFiles(title: title, files: files.sorted(by: { NaturalPathOrder.less($0.lastPathComponent, $1.lastPathComponent) }), groups: nil)
     }
     public func importFolder(title: String, folder: URL, isReadableImage: (URL) throws -> Bool) throws -> LocalBook {
+        try publishPrepared(prepareFolder(title: title, folder: folder, isReadableImage: isReadableImage))
+    }
+    func prepareFolder(title: String, folder: URL, isReadableImage: (URL) throws -> Bool) throws -> PreparedLocalImport {
         let index = try LocalFolderIndex(folder: folder, isReadableImage: isReadableImage)
-        return try importFiles(title: title, files: index.files, groups: index.groups)
+        return try prepareFiles(title: title, files: index.files, groups: index.groups)
     }
     public func importArchive(title: String, archive: URL, isReadableImage: (URL) throws -> Bool) throws -> LocalBook {
-        try Task.checkCancellation()
-        let id = UUID().uuidString, manager = FileManager.default
-        let staging = directory.appendingPathComponent(".import-" + id, isDirectory: true)
-        try manager.createDirectory(at: staging, withIntermediateDirectories: false)
-        defer { if manager.fileExists(atPath: staging.path) { try? manager.removeItem(at: staging) } }
+        try publishPrepared(prepareArchive(title: title, archive: archive, isReadableImage: isReadableImage))
+    }
+    func prepareArchive(title: String, archive: URL, isReadableImage: (URL) throws -> Bool) throws -> PreparedLocalImport {
         do {
-            let index = try LocalArchiveIndex(archive: archive, staging: staging, isReadableImage: isReadableImage)
-            return try publish(title: title, id: id, staging: staging, names: index.names, groups: index.groups)
+            return try prepareLocalImport { id, staging in
+                let index = try LocalArchiveIndex(archive: archive, staging: staging, isReadableImage: isReadableImage)
+                return imageBook(title: title, id: id, names: index.names, groups: index.groups)
+            }
         } catch is CancellationError { throw CancellationError() }
         catch let error as LocalLibraryError { throw error }
         catch {
@@ -113,34 +123,29 @@ public struct LocalLibrary: Sendable {
             throw LocalLibraryError.invalidArchive
         }
     }
-    private func importFiles(title: String, files: [URL], groups: [LocalFolderIndex.Group]?) throws -> LocalBook {
+    private func prepareFiles(title: String, files: [URL], groups: [LocalFolderIndex.Group]?) throws -> PreparedLocalImport {
         guard !files.isEmpty else { throw LocalLibraryError.emptyImport }
-        let id = UUID().uuidString, manager = FileManager.default
-        let staging = directory.appendingPathComponent(".import-" + id, isDirectory: true)
-        try manager.createDirectory(at: staging, withIntermediateDirectories: false)
-        defer { if manager.fileExists(atPath: staging.path) { try? manager.removeItem(at: staging) } }
-        var names: [String] = []
-        var totalBytes: Int64 = 0
-        for (index, file) in files.enumerated() {
-            try Task.checkCancellation()
-            let attributes = try file.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
-            guard attributes.isRegularFile == true, attributes.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
-            guard let size = attributes.fileSize, size <= Self.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
-            let name = "\(index)." + file.pathExtension.lowercased()
-            try copy(file, to: staging.appendingPathComponent(name), totalBytes: &totalBytes)
-            names.append(name)
+        return try prepareLocalImport { id, staging in
+            var names: [String] = []
+            var totalBytes: Int64 = 0
+            for (index, file) in files.enumerated() {
+                try Task.checkCancellation()
+                let attributes = try file.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
+                guard attributes.isRegularFile == true, attributes.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
+                guard let size = attributes.fileSize, size <= Self.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
+                let name = "\(index)." + file.pathExtension.lowercased()
+                try copy(file, to: staging.appendingPathComponent(name), totalBytes: &totalBytes)
+                names.append(name)
+            }
+            return imageBook(title: title, id: id, names: names, groups: groups)
         }
-        return try publish(title: title, id: id, staging: staging, names: names, groups: groups)
     }
-    private func publish(title: String, id: String, staging: URL, names: [String], groups: [LocalFolderIndex.Group]?) throws -> LocalBook {
+    private func imageBook(title: String, id: String, names: [String], groups: [LocalFolderIndex.Group]?) -> LocalBook {
         let cleaned = SearchRules.trim(title)
         let chapters = groups?.enumerated().map { slot, group in
             LocalBookChapter(id: id + "_ch_\(slot)", title: group.title, pages: group.indices.map { names[$0] })
         }
         let book = LocalBook(id: id, title: cleaned.isEmpty ? "本地漫画" : cleaned, createdAt: Date().timeIntervalSince1970, pages: names, chapters: chapters)
-        try JSONEncoder().encode(book).write(to: staging.appendingPathComponent("book.json"), options: .atomic)
-        try Task.checkCancellation()
-        try FileManager.default.moveItem(at: staging, to: directory.appendingPathComponent(id, isDirectory: true))
         return book
     }
     func copy(_ source: URL, to destination: URL, totalBytes: inout Int64, maximumFileBytes: Int64 = Int64(maximumImageBytes)) throws {

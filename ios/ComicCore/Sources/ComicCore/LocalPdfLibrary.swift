@@ -3,35 +3,34 @@ import Foundation
 extension LocalLibrary {
     public func importPdf(title: String, file source: URL, inspect: (URL) throws -> PdfPublication,
                           renderCover: (URL) throws -> Data?) throws -> LocalBook {
+        try publishPrepared(preparePdf(title: title, file: source, inspect: inspect, renderCover: renderCover))
+    }
+    func preparePdf(title: String, file source: URL, inspect: (URL) throws -> PdfPublication,
+                    renderCover: (URL) throws -> Data?) throws -> PreparedLocalImport {
         try Task.checkCancellation()
         let attributes = try source.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
         guard source.isFileURL, attributes.isRegularFile == true, attributes.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
         guard let size = attributes.fileSize, Int64(size) <= Self.maximumImportBytes else { throw LocalLibraryError.folderTooLarge }
-        let id = UUID().uuidString, manager = FileManager.default
-        let staging = directory.appendingPathComponent(".import-" + id, isDirectory: true)
-        try manager.createDirectory(at: staging, withIntermediateDirectories: false)
-        defer { if manager.fileExists(atPath: staging.path) { try? manager.removeItem(at: staging) } }
-        let content = staging.appendingPathComponent("content.pdf")
-        var copied: Int64 = 0
-        try copy(source, to: content, totalBytes: &copied, maximumFileBytes: Self.maximumImportBytes)
-        let publication = try inspect(content)
-        try publication.validate()
-        let cover = try renderCover(content)
-        try Task.checkCancellation()
-        if let cover {
-            guard !cover.isEmpty, cover.count <= Self.maximumImageBytes else { throw PdfError.renderFailed }
-            try cover.write(to: staging.appendingPathComponent("cover.bin"), options: .atomic)
+        return try prepareLocalImport { id, staging in
+            let content = staging.appendingPathComponent("content.pdf")
+            var copied: Int64 = 0
+            try copy(source, to: content, totalBytes: &copied, maximumFileBytes: Self.maximumImportBytes)
+            let publication = try inspect(content)
+            try publication.validate()
+            let cover = try renderCover(content)
+            try Task.checkCancellation()
+            if let cover {
+                guard !cover.isEmpty, cover.count <= Self.maximumImageBytes else { throw PdfError.renderFailed }
+                try cover.write(to: staging.appendingPathComponent("cover.bin"), options: .atomic)
+            }
+            let names = publication.pages.indices.map { "pdf-\($0)" }
+            let cleaned = SearchRules.trim(title)
+            let book = LocalBook(id: id, title: cleaned.isEmpty ? "本地 PDF" : cleaned, createdAt: Date().timeIntervalSince1970,
+                                 pages: names, chapters: [LocalBookChapter(id: id + "_ch_0", title: "全本", pages: names)],
+                                 pdf: publication, coverName: cover == nil ? nil : "cover.bin")
+            try validatePdfMetadata(book)
+            return book
         }
-        let names = publication.pages.indices.map { "pdf-\($0)" }
-        let cleaned = SearchRules.trim(title)
-        let book = LocalBook(id: id, title: cleaned.isEmpty ? "本地 PDF" : cleaned, createdAt: Date().timeIntervalSince1970,
-                             pages: names, chapters: [LocalBookChapter(id: id + "_ch_0", title: "全本", pages: names)],
-                             pdf: publication, coverName: cover == nil ? nil : "cover.bin")
-        try validatePdfMetadata(book)
-        try JSONEncoder().encode(book).write(to: staging.appendingPathComponent("book.json"), options: .atomic)
-        try Task.checkCancellation()
-        try manager.moveItem(at: staging, to: directory.appendingPathComponent(id, isDirectory: true))
-        return book
     }
 
     public func pdfPageData(pageURL: URL, render: (URL, Int) throws -> Data) throws -> Data {

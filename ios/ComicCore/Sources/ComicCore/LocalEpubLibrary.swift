@@ -34,7 +34,10 @@ enum LocalPageURL {
 
 extension LocalLibrary {
     public func importEpub(title: String, archive source: URL, isReadableImage: (URL) throws -> Bool) throws -> LocalBook {
-        try importOwnedEpub(title: title, isReadableImage: isReadableImage) { staging in
+        try publishPrepared(prepareEpub(title: title, archive: source, isReadableImage: isReadableImage))
+    }
+    func prepareEpub(title: String, archive source: URL, isReadableImage: (URL) throws -> Bool) throws -> PreparedLocalImport {
+        try prepareOwnedEpub(title: title, isReadableImage: isReadableImage) { staging in
             try copyEbook(source, to: staging.appendingPathComponent("content.epub"))
         }
     }
@@ -48,73 +51,68 @@ extension LocalLibrary {
         try copy(source, to: destination, totalBytes: &copied, maximumFileBytes: Self.maximumImportBytes)
     }
 
-    /// Both original and derived files must be complete before this single publication.
-    func importOwnedEpub(title: String, kindleFormat: LocalKindleFormat? = nil,
-                         isReadableImage: (URL) throws -> Bool, prepare: (URL) throws -> Void) throws -> LocalBook {
-        try Task.checkCancellation()
-        let id = UUID().uuidString, manager = FileManager.default
-        let staging = directory.appendingPathComponent(".import-" + id, isDirectory: true)
-        try manager.createDirectory(at: staging, withIntermediateDirectories: false)
-        defer { if manager.fileExists(atPath: staging.path) { try? manager.removeItem(at: staging) } }
-        let content = staging.appendingPathComponent("content.epub"), probe = staging.appendingPathComponent("probe.bin")
-        try prepare(staging)
-        let publication = try EpubParser.parse(archive: content)
-        let ranges = try publication.chapterRanges() // Rejects DRM and empty spine before probing.
-        let archive = try EpubArchive(url: content, maximumReadBytes: UInt64(Self.maximumImportBytes))
-        var validated = Set<String>(), validImages = Set<String>(), invalidImages = Set<String>(), coverName: String?
+    /// Original and derived files share the same preparation lifetime.
+    func prepareOwnedEpub(title: String, kindleFormat: LocalKindleFormat? = nil,
+                         isReadableImage: (URL) throws -> Bool, prepare: (URL) throws -> Void) throws -> PreparedLocalImport {
+        try prepareLocalImport { id, staging in
+            let manager = FileManager.default
+            let content = staging.appendingPathComponent("content.epub"), probe = staging.appendingPathComponent("probe.bin")
+            try prepare(staging)
+            let publication = try EpubParser.parse(archive: content)
+            let ranges = try publication.chapterRanges() // Rejects DRM and empty spine before probing.
+            let archive = try EpubArchive(url: content, maximumReadBytes: UInt64(Self.maximumImportBytes))
+            var validated = Set<String>(), validImages = Set<String>(), invalidImages = Set<String>(), coverName: String?
 
-        func validateImage(_ path: String, required: Bool) throws {
-            try Task.checkCancellation()
-            if invalidImages.contains(path) {
-                if required { throw EpubError.invalid("正文图片不可读取：\(path)") }
-                return
-            }
-            if validImages.contains(path) { return }
-            guard archive.contains(path) else {
-                if required { throw EpubError.invalid("缺少正文图片：\(path)") }
-                return
-            }
-            try archive.write(path, to: probe)
-            let readable = try isReadableImage(probe)
-            try Task.checkCancellation()
-            if readable {
-                validated.insert(path)
-                validImages.insert(path)
-                if coverName == nil {
-                    try manager.moveItem(at: probe, to: staging.appendingPathComponent("cover.bin"))
-                    coverName = "cover.bin"
+            func validateImage(_ path: String, required: Bool) throws {
+                try Task.checkCancellation()
+                if invalidImages.contains(path) {
+                    if required { throw EpubError.invalid("正文图片不可读取：\(path)") }
+                    return
                 }
-            } else {
-                invalidImages.insert(path)
-                if required { throw EpubError.invalid("正文图片不可读取：\(path)") }
+                if validImages.contains(path) { return }
+                guard archive.contains(path) else {
+                    if required { throw EpubError.invalid("缺少正文图片：\(path)") }
+                    return
+                }
+                try archive.write(path, to: probe)
+                let readable = try isReadableImage(probe)
+                try Task.checkCancellation()
+                if readable {
+                    validated.insert(path)
+                    validImages.insert(path)
+                    if coverName == nil {
+                        try manager.moveItem(at: probe, to: staging.appendingPathComponent("cover.bin"))
+                        coverName = "cover.bin"
+                    }
+                } else {
+                    invalidImages.insert(path)
+                    if required { throw EpubError.invalid("正文图片不可读取：\(path)") }
+                }
             }
-        }
 
-        if let candidate = publication.coverEntry { try validateImage(candidate, required: false) }
-        for item in publication.spine {
-            try Task.checkCancellation()
-            if let image = item.resolvedImageEntry { try validateImage(image, required: true) }
-            if validated.insert(item.fullZipPath).inserted {
-                // Text and image wrappers also receive full CRC validation without retaining Data.
-                try archive.write(item.fullZipPath, to: probe)
+            if let candidate = publication.coverEntry { try validateImage(candidate, required: false) }
+            for item in publication.spine {
+                try Task.checkCancellation()
+                if let image = item.resolvedImageEntry { try validateImage(image, required: true) }
+                if validated.insert(item.fullZipPath).inserted {
+                    // Text and image wrappers also receive full CRC validation without retaining Data.
+                    try archive.write(item.fullZipPath, to: probe)
+                }
             }
+            if coverName == nil, let candidate = publication.manifest.first(where: { $0.mediaType.hasPrefix("image/") }) {
+                try validateImage(candidate.href, required: false)
+            }
+            if manager.fileExists(atPath: probe.path) { try manager.removeItem(at: probe) }
+            let names = publication.spine.indices.map { "spine-\($0)" }
+            let chapters = ranges.enumerated().map { index, range in
+                LocalBookChapter(id: id + "_ch_\(index)", title: range.title, pages: Array(names[range.startIndex..<range.endIndex]))
+            }
+            let cleaned = SearchRules.trim(title)
+            let book = LocalBook(id: id, title: cleaned.isEmpty ? (publication.title.isEmpty ? "本地 EPUB" : publication.title) : cleaned,
+                                 createdAt: Date().timeIntervalSince1970, pages: names, chapters: chapters, epub: publication, coverName: coverName, kindleFormat: kindleFormat)
+            try validateEpubMetadata(book)
+            return book
         }
-        if coverName == nil, let candidate = publication.manifest.first(where: { $0.mediaType.hasPrefix("image/") }) {
-            try validateImage(candidate.href, required: false)
-        }
-        if manager.fileExists(atPath: probe.path) { try manager.removeItem(at: probe) }
-        let names = publication.spine.indices.map { "spine-\($0)" }
-        let chapters = ranges.enumerated().map { index, range in
-            LocalBookChapter(id: id + "_ch_\(index)", title: range.title, pages: Array(names[range.startIndex..<range.endIndex]))
-        }
-        let cleaned = SearchRules.trim(title)
-        let book = LocalBook(id: id, title: cleaned.isEmpty ? (publication.title.isEmpty ? "本地 EPUB" : publication.title) : cleaned,
-                             createdAt: Date().timeIntervalSince1970, pages: names, chapters: chapters, epub: publication, coverName: coverName, kindleFormat: kindleFormat)
-        try validateEpubMetadata(book)
-        try JSONEncoder().encode(book).write(to: staging.appendingPathComponent("book.json"), options: .atomic)
-        try Task.checkCancellation()
-        try manager.moveItem(at: staging, to: directory.appendingPathComponent(id, isDirectory: true))
-        return book
     }
 
     public func epubResource(bookID: String, path: String, maximumBytes: Int) throws -> Data {
