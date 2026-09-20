@@ -13,6 +13,7 @@
 | Docker Swift 5.10 `swift test -j 2`（漫画柜初版后） | 306/306通过，0失败，42.472秒，2026-09-20 02:57 UTC | 漫画柜初版19项含完整LZ29图、拷贝既有24项通过；后续三项审查修复的证据见下一行，不把本次全量冒充后续改动回归 |
 | 漫画柜修复定向 `ManhuaguiTests\|CopyMangaTests/testLiteral` | 25/25通过，0失败，28.226秒，2026-09-20 03:11:14 UTC；三项复审均ADDRESSED | 漫画柜23项与Copy strict字面量2项；前置JS字符串不污染配置定位，扫描有预算且取消用例0.101秒，清理后空标题正确回退；未重复不相关全量 |
 | 四站分类互斥 `SourceFilterSelectionTests` | 4/4通过，0失败，2026-09-20 03:21:41 UTC；独立审查通过 | 真实RED四站各一断言失败；生产UIKit action已接线，原生高亮/确认/关闭未验收，未重跑全量 |
+| 七源搜索trim兼容 `SourceSearchTrimTests` | 9/9通过（03:41:01 UTC），既有七源99/99通过（03:41:36 UTC）；独立审查通过 | 七处复用Java trim语义，特殊空格保留；真实RED9断言失败；固定请求fixture，不代表真实网络或iOS验收 |
 | AES及漫蛙图片解码审查 | 两项范围审查均通过；AES固定向量4/4 | Linux OpenSSL路径；CommonCrypto仍未由Xcode编译或运行 |
 | 自动主题边界测试 | 1 项通过 | 08:00/18:00 边界、手动昼夜模式 |
 | `swiftc -frontend -parse XXComic/*.swift XXComicUITests/*.swift` | 通过 | Swift 语法，不包含 UIKit 类型检查和链接 |
