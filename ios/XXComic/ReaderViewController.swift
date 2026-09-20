@@ -16,6 +16,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var directoryTask: Task<Void, Never>?
     private var requestID = UUID()
     private var loading = false
+    private var chapterLoadFailed = false
     private var restoring = false
     private var fullscreen = false
     private var pendingPosition: ReaderPosition?
@@ -179,13 +180,21 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 self.session = ReaderSession(chapterCount: all.count, chapterIndex: index)
                 self.session.loaded(imageCount: self.images.count, position: position)
                 self.incompleteDirectory = false
-                if !self.loading { self.status.isHidden = true; self.retryAction = nil }
+                if !self.loading && !self.chapterLoadFailed { self.status.isHidden = true; self.retryAction = nil }
             } catch {
-                guard let self, !Task.isCancelled else { return }
-                if !self.loading {
+                guard let self, !Task.isCancelled, !(error is CancellationError) else { return }
+                if !self.loading && !self.chapterLoadFailed {
                     self.status.isHidden = false
-                    self.status.setTitle("目录加载失败：" + error.localizedDescription + " · 点击重试", for: .normal)
-                    self.retryAction = { [weak self] in self?.loadDirectory() }
+                    if (error as? Mh18SourceError) == .verificationRequired {
+                        self.status.setTitle("需要验证 · 去验证", for: .normal)
+                        self.retryAction = { [weak self] in
+                            guard let self else { return }
+                            self.showSourceManagement(environment: self.environment) { [weak self] in self?.loadDirectory() }
+                        }
+                    } else {
+                        self.status.setTitle("目录加载失败：" + error.localizedDescription + " · 点击重试", for: .normal)
+                        self.retryAction = { [weak self] in self?.loadDirectory() }
+                    }
                 }
             }
         }
@@ -195,7 +204,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         savePosition()
         loadTask?.cancel(); requestID = UUID()
         let token = requestID, chapter = chapters[index]
-        loading = true
+        loading = true; chapterLoadFailed = false
         status.isHidden = false; status.setTitle("正在加载章节…", for: .normal)
         retryAction = nil
         loadTask = Task { [weak self, source] in
@@ -214,12 +223,22 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 self.pendingPosition = position; self.view.setNeedsLayout()
                 self.updateBadge()
             } catch {
-                guard let self, self.requestID == token, !Task.isCancelled else { return }
-                self.loading = false
-                self.status.isHidden = false; self.status.setTitle(error.localizedDescription + " · 点击重试", for: .normal)
-                self.retryAction = { [weak self] in
+                guard let self, self.requestID == token, !Task.isCancelled, !(error is CancellationError) else { return }
+                self.loading = false; self.chapterLoadFailed = true
+                let retryChapter: () -> Void = { [weak self] in
                     guard let self, let currentIndex = self.chapters.firstIndex(where: { $0.chapterId == chapter.chapterId || $0.url == chapter.url }) else { return }
                     self.loadChapter(currentIndex, atEnd: atEnd, restoreSaved: restoreSaved)
+                }
+                self.status.isHidden = false
+                if (error as? Mh18SourceError) == .verificationRequired {
+                    self.status.setTitle("需要验证 · 去验证", for: .normal)
+                    self.retryAction = { [weak self] in
+                        guard let self else { return }
+                        self.showSourceManagement(environment: self.environment, onVerified: retryChapter)
+                    }
+                } else {
+                    self.status.setTitle(error.localizedDescription + " · 点击重试", for: .normal)
+                    self.retryAction = retryChapter
                 }
             }
         }
@@ -375,7 +394,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         environment.readingHabits.overlayVisibilityChanged(isVisible: true)
         let id = comic.comicId, current = chapters[session.chapterIndex].chapterId
         let controller = ChapterListViewController(load: { [source] in try await source.chapters(comicId: id) }, selectedID: current,
-            defaults: environment.defaults, onDismiss: { [weak self] in self?.syncHabitOverlay() }) { [weak self] all, index in
+            defaults: environment.defaults, environment: environment, onDismiss: { [weak self] in self?.syncHabitOverlay() }) { [weak self] all, index in
             guard let self else { return }
             self.savePosition()
             self.chapters = all; self.incompleteDirectory = false

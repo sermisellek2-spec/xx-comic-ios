@@ -19,6 +19,7 @@ final class DetailViewController: UIViewController {
     private var detailLoaded = false
     private var directoryID = UUID()
     private var readTask: Task<Void, Never>?
+    private var needsVerification = false
 
     init(comic: ComicSummary, environment: AppEnvironment) {
         self.comic = comic; self.environment = environment
@@ -50,7 +51,7 @@ final class DetailViewController: UIViewController {
         read.titleLabel?.numberOfLines = 2
         directory.setTitle("章节目录", for: .normal)
         directory.addTarget(self, action: #selector(showDirectory), for: .touchUpInside)
-        retry.addTarget(self, action: #selector(loadDetail), for: .touchUpInside)
+        retry.addTarget(self, action: #selector(retryDetail), for: .touchUpInside)
         retry.titleLabel?.numberOfLines = 0
         for item in [cover, heading, descriptionLabel, favorite, directory, read, retry] { content.addArrangedSubview(item) }
         for button in [favorite, directory, read, retry] { button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true }
@@ -82,6 +83,7 @@ final class DetailViewController: UIViewController {
         read.setTitle(environment.library.entry(for: comic)?.reading.map { "继续阅读\n上次看到 · \($0.chapter.title)" } ?? "开始阅读", for: .normal)
     }
     @objc private func loadDetail() {
+        needsVerification = false
         detailTask?.cancel()
         retry.setTitle("正在加载详情…", for: .normal)
         let id = comic.comicId
@@ -97,8 +99,17 @@ final class DetailViewController: UIViewController {
                 self.cover.load(detail.summary.coverUrl, referer: source.referer)
                 self.retry.setTitle(nil, for: .normal)
                 self.updateButtons()
-            } catch { if !Task.isCancelled { self?.retry.setTitle(error.localizedDescription + " · 点击重试", for: .normal) } }
+            } catch {
+                guard let self, !Task.isCancelled, !(error is CancellationError) else { return }
+                self.needsVerification = (error as? Mh18SourceError) == .verificationRequired
+                self.retry.setTitle(self.needsVerification ? "需要验证 · 去验证" : error.localizedDescription + " · 点击重试", for: .normal)
+            }
         }
+    }
+    @objc private func retryDetail() {
+        if needsVerification {
+            showSourceManagement(environment: environment) { [weak self] in self?.loadDetail() }
+        } else { loadDetail() }
     }
     @objc private func toggleFavorite() {
         do {
@@ -126,7 +137,7 @@ final class DetailViewController: UIViewController {
         let controller = ChapterListViewController(load: { [weak self] in
             guard let self else { throw CancellationError() }
             return try await self.chapters()
-        }, selectedID: environment.library.entry(for: comic)?.reading?.chapter.chapterId, defaults: environment.defaults) { [weak self] chapters, index in
+        }, selectedID: environment.library.entry(for: comic)?.reading?.chapter.chapterId, defaults: environment.defaults, environment: environment) { [weak self] chapters, index in
             guard let self else { return }
             self.openReader(chapters: chapters, index: index, incomplete: false)
         }
@@ -149,7 +160,11 @@ final class DetailViewController: UIViewController {
                         return
                     }
                     self.openReader(chapters: items, index: 0, incomplete: false)
-                } catch { if !Task.isCancelled { self.showError(error) } }
+                } catch {
+                    if !Task.isCancelled {
+                        self.showSourceError(error, environment: self.environment) { [weak self] in self?.startReading() }
+                    }
+                }
             }
         }
     }
@@ -179,14 +194,17 @@ final class ChapterListViewController: UITableViewController {
     private let onDismiss: () -> Void
     private let selectedID: String?
     private let defaults: UserDefaults
+    private let environment: AppEnvironment?
+    private var needsVerification = false
     private var chapters: [Chapter] = []
     private var descending = false
     private var task: Task<Void, Never>?
     private let state = UIButton(type: .system)
-    init(load: @escaping () async throws -> [Chapter], selectedID: String?, defaults: UserDefaults = .standard,
+    init(load: @escaping () async throws -> [Chapter], selectedID: String?, defaults: UserDefaults = .standard, environment: AppEnvironment? = nil,
          onDismiss: @escaping () -> Void = {}, onSelect: @escaping ([Chapter], Int) -> Void) {
         self.load = load; self.selectedID = selectedID; self.onDismiss = onDismiss; self.onSelect = onSelect
         self.defaults = defaults; descending = defaults.bool(forKey: "chapter.desc")
+        self.environment = environment
         super.init(style: .plain)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
@@ -196,11 +214,12 @@ final class ChapterListViewController: UITableViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: descending ? "倒序" : "正序", style: .plain, target: self, action: #selector(reverseOrder))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(close))
         state.titleLabel?.numberOfLines = 0
-        state.addTarget(self, action: #selector(reload), for: .touchUpInside)
+        state.addTarget(self, action: #selector(stateTapped), for: .touchUpInside)
         tableView.backgroundView = state
         reload()
     }
     @objc private func reload() {
+        needsVerification = false
         task?.cancel(); state.setTitle("正在加载目录…", for: .normal)
         let loader = load
         task = Task { [weak self] in
@@ -211,8 +230,17 @@ final class ChapterListViewController: UITableViewController {
                 self.state.setTitle(chapters.isEmpty ? "暂无章节 · 点击刷新" : nil, for: .normal)
                 self.tableView.reloadData()
                 self.scrollToSelected()
-            } catch { if !Task.isCancelled { self?.state.setTitle(error.localizedDescription + " · 点击重试", for: .normal) } }
+            } catch {
+                guard let self, !Task.isCancelled, !(error is CancellationError) else { return }
+                self.needsVerification = self.environment != nil && (error as? Mh18SourceError) == .verificationRequired
+                self.state.setTitle(self.needsVerification ? "需要验证 · 去验证" : error.localizedDescription + " · 点击重试", for: .normal)
+            }
         }
+    }
+    @objc private func stateTapped() {
+        if needsVerification, let environment {
+            showSourceManagement(environment: environment) { [weak self] in self?.reload() }
+        } else { reload() }
     }
     @objc private func close() { dismissSheet() }
     @objc private func reverseOrder() {

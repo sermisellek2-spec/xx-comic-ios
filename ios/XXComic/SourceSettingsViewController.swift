@@ -4,8 +4,12 @@ import ComicCore
 @MainActor
 final class SourceSettingsViewController: UITableViewController {
     private let environment: AppEnvironment
+    let onVerified: () -> Void
     private var ids: [String] { environment.sourcePreferences.orderedIDs }
-    init(environment: AppEnvironment) { self.environment = environment; super.init(style: .insetGrouped) }
+    init(environment: AppEnvironment, onVerified: @escaping () -> Void = {}) {
+        self.environment = environment; self.onVerified = onVerified
+        super.init(style: .insetGrouped)
+    }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
     override func viewDidLoad() {
         super.viewDidLoad()

@@ -16,7 +16,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     private var requestID = UUID()
     private var tasks: [Task<Void, Never>] = []
     private var global = GlobalSearchState()
-    private var errors: [String: String] = [:]
+    private var errors: [String: Error] = [:]
     private var finished = Set<String>()
     private var nextPage = 1
     private var loading = false
@@ -194,9 +194,16 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
                 self.collection.reloadData()
                 self.status(self.comics.isEmpty ? "没有找到漫画" : (self.ended ? "已经到底了" : ""))
             } catch {
-                guard let self, self.requestID == token, !Task.isCancelled else { return }
+                guard let self, self.requestID == token, !Task.isCancelled, !(error is CancellationError) else { return }
                 self.loading = false
-                self.status(error.localizedDescription + " · 点击重试") { [weak self] in self?.loadSingle() }
+                if (error as? Mh18SourceError) == .verificationRequired {
+                    self.status("需要验证 · 去验证") { [weak self] in
+                        guard let self else { return }
+                        self.showSourceManagement(environment: self.environment) { [weak self] in self?.loadSingle() }
+                    }
+                } else {
+                    self.status(error.localizedDescription + " · 点击重试") { [weak self] in self?.loadSingle() }
+                }
             }
         })
     }
@@ -219,8 +226,8 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
                     self.global.receive(sourceID: source.id, items: items, generation: generation)
                     self.finished.insert(source.id); self.refreshGlobal()
                 } catch {
-                    guard let self, self.requestID == token, !Task.isCancelled else { return }
-                    self.errors[source.id] = error.localizedDescription
+                    guard let self, self.requestID == token, !Task.isCancelled, !(error is CancellationError) else { return }
+                    self.errors[source.id] = error
                     self.finished.insert(source.id); self.refreshGlobal()
                 }
             })
@@ -246,7 +253,23 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         comics = global.results[global.selectedSourceID ?? ""] ?? []
         collection.reloadData()
         let progress = "\(finished.count)/\(environment.searchSources.count) 个站源完成"
-        if let error = errors[global.selectedSourceID ?? ""] { status(progress + " · " + error + " · 点击重试") { [weak self] in self?.start() } }
+        if let error = errors[global.selectedSourceID ?? ""] {
+            if (error as? Mh18SourceError) == .verificationRequired {
+                status(progress + " · 需要验证 · 去验证") { [weak self] in
+                    guard let self else { return }
+                    let sourceID = self.global.selectedSourceID
+                    self.showSourceManagement(environment: self.environment) { [weak self] in
+                        guard let self else { return }
+                        self.start(query: self.submittedQuery, restoringGlobalSourceID: sourceID)
+                    }
+                }
+            } else {
+                status(progress + " · " + error.localizedDescription + " · 点击重试") { [weak self] in
+                    guard let self else { return }
+                    self.start(query: self.submittedQuery, restoringGlobalSourceID: self.global.selectedSourceID)
+                }
+            }
+        }
         else { status(progress + (comics.isEmpty && finished.contains(global.selectedSourceID ?? "") ? " · 没有找到漫画" : "")) }
     }
     @objc private func selectGlobalSource(_ sender: UIButton) {
@@ -258,7 +281,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     private func showFilterDrawer(sourceList: Bool) {
         guard environment.sources.indices.contains(sourceIndex) else { return }
         let source = environment.sources[sourceIndex]
-        let controller = FilterViewController(sources: environment.sources, source: source, selected: filters, sourceList: sourceList) { [weak self] sourceID, selected in
+        let controller = FilterViewController(environment: environment, sources: environment.sources, source: source, selected: filters, sourceList: sourceList) { [weak self] sourceID, selected in
             guard let self, let index = self.environment.sources.firstIndex(where: { $0.id == sourceID }) else { return }
             self.sourceIndex = index; self.filters = selected
             self.updateSourceMenu(); self.start()
@@ -269,6 +292,8 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
 
 @MainActor
 private final class FilterViewController: UIViewController {
+    private let environment: AppEnvironment
+    private var needsVerification = false
     let sources: [any ComicSource]
     var source: any ComicSource
     var selected: [String: String]
@@ -281,7 +306,8 @@ private final class FilterViewController: UIViewController {
     private let options = UIStackView()
     private let state = UIButton(type: .system)
     private var activeGroup: Int
-    init(sources: [any ComicSource], source: any ComicSource, selected: [String: String], sourceList: Bool, onSelect: @escaping (String, [String: String]) -> Void) {
+    init(environment: AppEnvironment, sources: [any ComicSource], source: any ComicSource, selected: [String: String], sourceList: Bool, onSelect: @escaping (String, [String: String]) -> Void) {
+        self.environment = environment
         self.sources = sources; self.source = source; self.selected = selected; self.onSelect = onSelect
         activeGroup = sourceList ? -1 : 0
         super.init(nibName: nil, bundle: nil)
@@ -297,7 +323,7 @@ private final class FilterViewController: UIViewController {
         tabs.axis = .horizontal; tabs.spacing = 8
         options.axis = .vertical; options.spacing = 8
         state.titleLabel?.numberOfLines = 0
-        state.addTarget(self, action: #selector(loadGroups), for: .touchUpInside)
+        state.addTarget(self, action: #selector(stateTapped), for: .touchUpInside)
         confirm.configuration = .filled(); confirm.setTitle("确认搜索", for: .normal)
         confirm.accessibilityIdentifier = "filter.confirm"
         confirm.addTarget(self, action: #selector(done), for: .touchUpInside)
@@ -324,6 +350,7 @@ private final class FilterViewController: UIViewController {
         if activeGroup < 0 { render() } else { loadGroups() }
     }
     @objc private func loadGroups() {
+        needsVerification = false
         task?.cancel(); groups = []; render(); state.setTitle("正在加载分类…", for: .normal)
         task = Task { [weak self, source] in
             do {
@@ -332,8 +359,17 @@ private final class FilterViewController: UIViewController {
                 self?.state.setTitle(groups.isEmpty ? "该站源暂无分类" : nil, for: .normal)
                 self?.render()
             }
-            catch { if !Task.isCancelled { self?.state.setTitle("分类加载失败 · 点击重试", for: .normal) } }
+            catch {
+                guard let self, !Task.isCancelled, !(error is CancellationError) else { return }
+                self.needsVerification = (error as? Mh18SourceError) == .verificationRequired
+                self.state.setTitle(self.needsVerification ? "需要验证 · 去验证" : "分类加载失败 · 点击重试", for: .normal)
+            }
         }
+    }
+    @objc private func stateTapped() {
+        if needsVerification {
+            showSourceManagement(environment: environment) { [weak self] in self?.loadGroups() }
+        } else { loadGroups() }
     }
     override func viewDidDisappear(_ animated: Bool) { super.viewDidDisappear(animated); task?.cancel() }
     @objc private func close() { task?.cancel(); dismiss(animated: true) }
