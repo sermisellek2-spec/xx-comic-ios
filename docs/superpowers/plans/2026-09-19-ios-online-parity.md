@@ -376,6 +376,8 @@ XCTAssertThrowsError(try EpubReaderResource.path(from: URL(string: "xxcomic-book
 
 **Core interface:** `EpubTextSession:Sendable` 持有已结构验证的LocalBook，公开只读chapterIndex/spineIndex和当前entry:EpubPublication.SpineItem；`init(book:LocalBook,chapterIndex:Int,locator:TextLocator?) throws`、`mutating selectChapter(_ index:Int)throws`、`mutating moveSpine(delta:Int)->Bool`、`mutating navigate(path:String)->Bool`、`locator(anchorID:String="",percent:Double,charOffset:Int=0)->TextLocator`。章节来自book.chapters的pages token→book.pages索引，不重新按目录名排序；初始化章节越界夹合法范围，错误分区/无EPUB/DRM/空spine拒绝。恢复位置必须bookID/章节/资源路径/spine索引都对应当前章，失效回本章首spine；同路径重复出现以locator索引恢复，内部链接优先本次spine否则首匹配。moveSpine只接受±1，按完整spine顺序跨章，每次恰好一步，边界false不改状态。navigate仅接受本书spine内规范路径。文字/混合书按全部spine可读，保留图片条目；纯图片书仍共用漫画阅读器。
 
+**Fixture dependency:** 允许修改`ios/project.yml`给app显式连接已安装的ZIPFoundation product，URL与ComicCore一致且固定`exact 0.9.20`，不得改为from范围或新增ZIP实现。仅双参数隔离fixture生成真实EPUB使用；Apple工程生成/包解析未运行需报告，不以YAML静态检查代替。
+
 - [ ] RED核心覆盖一章多正文/同href重复出现/混合图片/跨章/旧位置不匹配与越界，使用真实EPUB fixture解析并importEpub得到book，不手造不成立模型。GREEN后才原生接线。
 
 ```swift
