@@ -588,6 +588,8 @@ XCTAssertEqual(try ContentFingerprint.folder(root, relativeImagePaths: ["10.png"
 
 **内部接口：** `PreparedLocalImport: Sendable` 保存本次独有暂存目录及已完成验证的 `LocalBook`；只在Core内部可用。`LocalLibrary` 的每种现有导入提供对应内部 `prepareImages/prepareFolder/prepareArchive/prepareEpub/preparePdf/prepareKindle`，参数沿现有公共导入函数，返回准备结果；`publishPrepared(_:) throws -> LocalBook` 与 `discardPrepared(_:) throws`。公共 `importImages/importFolder/importArchive/importEpub/importPdf/importKindle` 保持签名和用户结果，由准备+发布组合实现。使用最小共用暂存辅助方法，避免六份目录生命周期逻辑；不建立插件、任意导入协议或通用事务框架。
 
+**PDF验证平台边界：** Linux沿现有`LocalPdfLibraryTests`的inspect/render注入验证真实副本、暂存、发布和失败回收，不将注入元数据称作PDF解析验证。Apple条件测试使用真实PDF及`PdfRenderer`验证prepare/publish接线，Linux明确skip；不为了Linux引入第二个PDF解析器。EPUB/Kindle/ZIP的现有核心解析器可在Linux真实运行，不能用假解析替代。
+
 - [ ] 先真实RED：准备一份真实 EPUB 和一份图片卷后，书架仍不可见，暂存内已有完整book.json/资源/封面（若适用）；调用发布后重开书库可正常读取，准备目录消失。当前接口缺失的编译错误单列，至少有可编译行为桩的真实失败证明。其余格式复用现有真实fixture，不mock格式解析。
 - [ ] 准备仍使用一次唯一`.import-UUID`目录；成功返回前完成原有源校验、限量复制、格式解析、图片probe、CRC、metadata与book.json写入。失败/取消回收本次目录，原文件、已发布书和其他准备结果不受影响。成功返回后由明确调用方拥有，不能在返回前defer删掉；也不能遗留没有调用方负责回收的目录。
 - [ ] 发布校验本次准备结果归属、未被替换的暂存目录及完整元数据，最终取消检查后再沿现有单目录发布路径可见。不能发布其他library创建的结果、外部目录/符号链接、篡改book.id/manifest、已发布/已回收结果；已存在目标保留，不覆盖。发布失败也回收本次仍拥有的暂存结果，不能清理已存在目标。用于所有权校验的最小内部字段可由实现者选择，不能只信任任意URL字符串。
