@@ -420,7 +420,12 @@ private final class FilterViewController: UIViewController {
                 config.titleLineBreakMode = .byTruncatingTail
                 button.configuration = config
                 button.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
-                button.addAction(UIAction { [weak self] _ in self?.selected[group.key] = option.value; self?.render() }, for: .touchUpInside)
+                button.addAction(UIAction { [weak self] _ in
+                    guard let self else { return }
+                    SourceFilterSelection.select(sourceID: self.source.id, key: group.key, value: option.value,
+                                                 groupKeys: self.groups.map(\.key), in: &self.selected)
+                    self.render()
+                }, for: .touchUpInside)
                 row.addArrangedSubview(button)
             }
             options.addArrangedSubview(row)
