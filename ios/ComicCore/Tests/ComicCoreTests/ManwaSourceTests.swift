@@ -118,6 +118,42 @@ final class ManwaSourceTests: XCTestCase {
         XCTAssertEqual(large.last?.chapterId, "878")
     }
 
+    func testDirectoryRejectsBooleanChapterIDs() async throws {
+        for id in [true, false] {
+            let json = try response(["list":[["id":id,"sortId":1,"title":"第一话"]]])
+            do {
+                _ = try await ManwaComicSource(transport: ManwaTransport([json])).chapters(comicId: "163037")
+                XCTFail("布尔值目录 ID 必须拒绝：\(id)")
+            } catch { XCTAssertEqual((error as NSError).domain, "ManwaComicSource") }
+        }
+    }
+
+    func testChapterRejectsBooleanPaginationFields() async throws {
+        for field in ["total", "total_pages", "current_page"] {
+            for value in [true, false] {
+                var pagination: [String:Any] = ["total":1,"total_pages":1,"current_page":1]
+                pagination[field] = value
+                let json = try response(["images":[["url":"/a.jpg"]],"pagination":pagination])
+                do {
+                    _ = try await ManwaComicSource(transport: ManwaTransport([info, json])).chapter(url: chapterURL)
+                    XCTFail("布尔值分页字段必须拒绝：\(field)=\(value)")
+                } catch { XCTAssertEqual((error as NSError).domain, "ManwaComicSource") }
+            }
+        }
+    }
+
+    func testNumericAndStringIDsAndPaginationRemainValid() async throws {
+        for value: Any in [1, "1"] {
+            let directory = try response(["list":[["id":value,"sortId":1,"title":"第一话"]]])
+            let json = try response(["images":[["url":"/a.jpg"]],"pagination":["total":value,"total_pages":value,"current_page":value]])
+            let source = ManwaComicSource(transport: ManwaTransport([directory, info, json]))
+            let chapters = try await source.chapters(comicId: "163037")
+            XCTAssertEqual(chapters.map(\.chapterId), ["1"])
+            let page = try await source.chapter(url: chapterURL)
+            XCTAssertEqual(page.imageUrls, ["https://manwace.cc/a.jpg"])
+        }
+    }
+
     func testChapterFetchesAllPagesInOrder() async throws {
         let transport = ManwaTransport([info, try page(1, pages: 2, total: 3, ["/a.jpg","//tu.mwzu.cc/b.jpg"]), try page(2, pages: 2, total: 3, ["https://tu.mwzu.cc/c.jpg"])])
         let result = try await ManwaComicSource(transport: transport).chapter(url: chapterURL)

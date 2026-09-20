@@ -1,4 +1,5 @@
 import Foundation
+import CoreFoundation
 
 public struct ManwaComicSource: ComicSource {
     public let id = "manwa"
@@ -174,7 +175,11 @@ public struct ManwaComicSource: ComicSource {
         return raw
     }
     private func numeric(_ text: String) -> Bool { !text.isEmpty && text.utf8.allSatisfy { (48...57).contains($0) } }
-    private func string(_ value: Any?) -> String { (value as? String) ?? (value as? NSNumber)?.stringValue ?? "" }
+    private func string(_ value: Any?) -> String {
+        if let text = value as? String { return text }
+        guard let number = value as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID() else { return "" }
+        return number.stringValue
+    }
     private func form(_ text: String) -> String {
         text.utf8.map { byte in
             if (65...90).contains(byte) || (97...122).contains(byte) || (48...57).contains(byte) || [45,46,95,42].contains(byte) { return String(UnicodeScalar(byte)) }
