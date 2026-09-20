@@ -470,6 +470,8 @@ XCTAssertEqual(try Data(contentsOf: mobi), originalBytes)
 
 **发布裁定（Task39实施核对）：** 派生文件与scratch同一书库卷，最终发布使用Foundation `linkItem`的原子不覆盖语义，成功后本次scratch的defer回收源链接；不依赖moveItem内部先检查目标再rename的潜在竞态。下文“不覆盖move”按这一契约执行。允许对Task38 `KindlePublicationAdapter.swift`最后发布作同样最小修改并回归目标竞争/取消，不改转换规则。仅按NSError domain/code识别Cocoa/POSIX的已存在错误后验证赢家，其余错误继续抛出；不支持硬链接明确失败，不回退可能覆盖的rename。成本是依赖App私有书库所在文件系统支持同卷硬链接，Apple实际执行仍待验收。
 
+**复审补充：** 恢复到既有书目录不能仅路径校验后再按路径`linkItem`，必须把不覆盖发布绑定已打开、验证的目录身份（最小Darwin/Glibc目录fd与`linkat`或等价原语），防止最终校验与发布间目录替换导致写入新/外部目录。必要的本次输出回收也必须相对该句柄，只删除本次创建的链接，不能按替换后的路径清理。允许内部窄发布边界测试钩子确定性复现最后窗口；不增加公共发布框架或不可取消全局锁。Task38转换器的私有scratch发布不扩大转换规则。
+
 - [ ] RED真实MOBI临时文件导入后重开、原包字节保持、派生EPUB正文/图片、历史位置及旧书架兼容。源文件被用户移走后仍从App副本读取；DRM/KF8损坏明确失败，无发布残留。删除App拥有的派生content.epub后实际资源读取重建，不用mock转换器充当格式支持。
 
 ```swift
