@@ -7,7 +7,7 @@ struct LocalFolderIndex {
 
     init(folder: URL, isReadableImage: (URL) throws -> Bool) throws {
         var found: [(path: String, url: URL)] = []
-        var fileCount = 0, totalBytes: Int64 = 0
+        var entryCount = 0, totalBytes: Int64 = 0
         let keys: Set<URLResourceKey> = [.isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey]
         func scan(_ directory: URL, prefix: String, depth: Int) throws {
             try Task.checkCancellation()
@@ -18,12 +18,12 @@ struct LocalFolderIndex {
                 try Task.checkCancellation()
                 let lower = url.lastPathComponent.lowercased()
                 if lower == "__macosx" || [".ds_store", "thumbs.db", ".nomedia", "desktop.ini"].contains(where: lower.hasSuffix) { continue }
+                entryCount += 1
+                guard entryCount <= 50_000 else { throw LocalLibraryError.folderTooLarge }
                 let value = try url.resourceValues(forKeys: keys)
                 guard value.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
                 let relative = prefix + url.lastPathComponent
                 if value.isDirectory == true { try scan(url, prefix: relative + "/", depth: depth + 1); continue }
-                fileCount += 1
-                guard fileCount <= 50_000 else { throw LocalLibraryError.folderTooLarge }
                 guard ["jpg", "jpeg", "png", "webp", "gif"].contains(url.pathExtension.lowercased()) else { continue }
                 guard value.isRegularFile == true, let size = value.fileSize else { throw LocalLibraryError.invalidBook }
                 guard size <= LocalLibrary.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }

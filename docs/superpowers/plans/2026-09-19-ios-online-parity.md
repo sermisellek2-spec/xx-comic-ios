@@ -186,3 +186,19 @@ func testLatestUsesPostCategoryPageAndDefaults() async throws {
 - [ ] 目录先校验comic.path_word，groups全部遍历，不信count（0也取）。每组分页limit100、offset必须匹配、total>=0、list必需，每项comic/group归属以及uuid/name必需，跨组chapterID去重，sectionSlot按组、chapterSlot=offset+i；只要没到total的空页、重复整页、最多1000页未结束须失败，不能返回半目录。保持JSON分组原有顺序；Foundation Dictionary无稳定输入顺序保证，须选用最小保序解析方案或专门扫描groups键序，不悄悄排序改原行为。
 - [ ] 正文旧域URL提取comic/uuid并解码，规范为当前域；校验results非空且is_lock非true、comic/uuid/归属一致，contents非空且size等于数组长度，保留原图顺序（不用words字段重排），每图HTTP(S)，空nextPageUrl。拒绝被锁内容，不绕过访问限制。
 - [ ] 先失败测试后实现，复制使用Android记录样本：搜索两页各12、分类50、分类组题材含COLOR、目录190、正文86；失败目录/正文、连接回退/证书/取消及URL/header边界。响应16MiB只后验限制必须披露。聚焦测试结束后与主代理协调一次全量，报告真实结果和平台未验收。输出task-21-report.md。
+
+### Task 22: 本地导入条目计数与真实图片探测
+
+对照Android LocalImporter.copyDocumentTreeNative与AndroidImageProbe，修改LocalFolderIndex：忽略metadata后，所有目录与文件都计入50000项预算，保留5层深度、单图128MiB、总20GiB和取消。真实临时目录回归：49999个空目录和1张图恰好允许，再加1个目录失败；失败不发布新书、不动原图，metadata仍不计数。不要为测试给生产类加可变限制。
+
+新增仅Apple可用的ComicCore LocalImageProbe.isReadable(_:) throws -> Bool，使用原生ImageIO缩略图解码，文件必须普通文件、非符号链接、<=128MiB，前后检查取消。不只接受有效图片头。单图和文件夹UIKit入口共用；单图失败报错，文件夹坏图继续跳过，后台/安全作用域/发布流程不变。条件Apple测试覆盖有效PNG、只有头的截断PNG、非图片、大小超限及预取消。Windows不能运行ImageIO，明确这些测试未执行，不称完整TDD或Xcode验证；跨平台计数必须观察RED/GREEN。仅修改本地相关文件，不改Task21所有权文件。
+
+### Task 23: ZIP/CBZ 导入核心及接线
+
+完整对照Android ArchiveIndex.java、LocalImporter.java及ArchiveIndexTest；先读本计划账本目录archive-research.md。依赖标准库无ZIP解压器，采用固定ZIPFoundation0.9.20（MIT，保留许可）而不自写解压算法。等待Task21释放Package.swift，再新增依赖并保留其fixture资源。仅ZIP/CBZ，电子书/批量/分卷管理后续继续，不能称本地全量完成。
+
+核心LocalLibrary.importArchive(title:archive:isReadableImage:)流式解压到受控临时目录，成功后单次rename发布，失败/取消清理，原文件不变。不要解压后调用importFolder：ZIP无5层限制，避免再次复制整份数据。仅提取供图片页使用的受控扁平目标名，复用现有自然分章及manifest发布逻辑，不建通用导入框架。
+
+所有条目（含目录和metadata）<=50000；每条声明<=128MiB，声明总量<=20GiB。非目录先拒绝绝对路径/盘符/越界路径，再规范化、拒绝重复，最后跳过metadata；拒绝符号链接。名称先尝试全部UTF8，失败全局GB18030（保留UTF8 flag强制UTF8规则）。Library序列可能静默截断，须最小EOCD/ZIP64计数校验，声明与实际数量必须匹配；多磁盘、加密、不支持或损坏后部条目不能静默导入部分书籍。流式consumer检查取消、实际单条/累计预算、最终长度和CRC，禁止只相信中央目录；坏图片跳过，压缩流完整性损坏应失败。真解码探测复用Task22 ImageIO路径，坏首图不能成为封面。深目录、自然顺序、wrapper剥离、未分章/正文规则同Android。
+
+测试先失败后实现：存储/deflate、中文UTF8和GB18030、chapter自然顺序、深度>5、跳坏首图、越界/绝对/盘符/规范化重复/metadata重复、声明预算与50001条、损坏CRC/截断/后部加密条目/ZIP64计数、取消清理、重开阅读。测试fixture用确定性ZIP字节或库创建后定点破坏，不引入运行时shell。UIKit新增压缩包选择与清晰中文状态，保持安全作用域直至任务完成；parse不是Xcode验收。依赖、核心、UI分清验证，独立审查后更新矩阵。

@@ -2,6 +2,25 @@ import XCTest
 @testable import ComicCore
 
 final class LocalFolderTests: XCTestCase {
+    func testEntryLimitCountsDirectoriesAndPreservesSourcesWhenExceeded() throws {
+        let root = try fixture(["1.jpg": 42, "__MACOSX/ignored.jpg": 7, ".DS_Store": 9])
+        defer { try? FileManager.default.removeItem(at: root) }
+        let input = root.appendingPathComponent("input")
+        for index in 0..<49_999 {
+            try FileManager.default.createDirectory(at: input.appendingPathComponent("dir\(index)"), withIntermediateDirectories: false)
+        }
+        let library = try LocalLibrary(directory: root.appendingPathComponent("library"))
+        let book = try library.importFolder(title: "边界", folder: input, isReadableImage: { _ in true })
+        XCTAssertEqual(book.pages.count, 1)
+        try FileManager.default.createDirectory(at: input.appendingPathComponent("one-too-many"), withIntermediateDirectories: false)
+        XCTAssertThrowsError(try library.importFolder(title: "超限", folder: input, isReadableImage: { _ in true })) { error in
+            guard case LocalLibraryError.folderTooLarge = error else { return XCTFail("Unexpected error: \(error)") }
+        }
+        XCTAssertEqual(try library.books(), [book])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), [book.id])
+        XCTAssertEqual(try Data(contentsOf: input.appendingPathComponent("1.jpg")), Data([42]))
+    }
+
     func testWrapperIsRemovedAndChapterPagesKeepNaturalPathOrderAfterReopening() async throws {
         let root = try fixture(["wrapper/book/2.jpg": 0, "wrapper/book/第10话/1.jpg": 10, "wrapper/book/第2话/10.jpg": 3, "wrapper/book/第2话/2.jpg": 2, "wrapper/book/第2话/附录/1.jpg": 4, "wrapper/book/notes.txt": 99])
         defer { try? FileManager.default.removeItem(at: root) }

@@ -133,7 +133,7 @@ public enum LocalLibraryError: LocalizedError {
         case .emptyImport: return "没有可导入的图片。"
         case .imageTooLarge: return "单张图片不能超过 128 MiB，本次未导入，请先缩小该图片。"
         case .folderTooDeep: return "目录层级过深（最多支持 5 层），本次未导入。"
-        case .folderTooLarge: return "文件夹超过 50000 个文件或 20 GiB，本次未导入。"
+        case .folderTooLarge: return "文件夹超过 50000 项或 20 GiB，本次未导入。"
         }
     }
 }

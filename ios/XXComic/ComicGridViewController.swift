@@ -1,7 +1,6 @@
 import UIKit
 import ComicCore
 import UniformTypeIdentifiers
-import ImageIO
 
 @MainActor
 class ComicGridViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -186,14 +185,11 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             let scoped = urls.filter { $0.startAccessingSecurityScopedResource() }
             defer { scoped.forEach { $0.stopAccessingSecurityScopedResource() } }
             if folder, let url = urls.first {
-                return try library.importFolder(title: title, folder: url) { file in
-                    guard let source = CGImageSourceCreateWithURL(file as CFURL, nil), CGImageSourceGetCount(source) > 0 else { return false }
-                    return CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceThumbnailMaxPixelSize: 16] as CFDictionary) != nil
-                }
+                return try library.importFolder(title: title, folder: url, isReadableImage: LocalImageProbe.isReadable)
             }
             for url in urls {
                 try Task.checkCancellation()
-                guard let image = CGImageSourceCreateWithURL(url as CFURL, nil), CGImageSourceGetCount(image) > 0 else { throw LocalLibraryError.invalidBook }
+                guard try LocalImageProbe.isReadable(url) else { throw LocalLibraryError.invalidBook }
             }
             return try library.importImages(title: title, files: urls)
         }
