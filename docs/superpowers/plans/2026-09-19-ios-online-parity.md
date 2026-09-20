@@ -349,3 +349,21 @@ XCTAssertEqual(try LibraryStore(directory: directory).textPosition(for: comic, c
 - [ ] 最小实现：load/save统一字号12...32，行距1.2...2.5（UI下一任务只提供1.5/1.75/2），非有限行距回默认1.75，未知主题回dark。文字位置init和decode均将负索引/offset归0、百分比夹0...1，非有限百分比归0；decode缺字段走空/0，与原版缺字段语义一致；类型损坏抛解码错误。Codable键沿用Android bookId/anchorId等拼写。保存拒绝comic.sourceId不是local、bookID不匹配comic.comicId、locator.chapterIndex与有效chapterIndex不一致、空resourceHref；中文typed错误，不能默默存错书。资源安全/本书spine范围由消费层使用Task32书籍校验，位置模型不发明路径解析。
 - [ ] 复用LibraryStore.persist原子保存，内存更新发生在落盘成功之后；保持favoriteAt、漫画positions和其他章textPositions。JSON坏数据不能重建空库覆盖原文件。不另建文字历史数据库/计时器/缓存。
 - [ ] GREEN覆盖负值/越界/非有限数、JSON缺键和roundtrip、两章位置、旧数据兼容、写入失败内存不变、错误bookID拒绝、漫画与文字设置/记录互不覆盖；运行TextReadingTests和既有LibraryStore/ReaderPreferences相关回归（先rg确认实际测试名）。报告task-33-report.md，父代理提交/独立审查。此任务没有文字UI，不能称阅读器已完成。
+
+### Task 34: EPUB 图片阅读接线及文字显示资源边界
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/EpubReaderResource.swift`、`Tests/ComicCoreTests/EpubReaderResourceTests.swift`；修改 `ios/XXComic/RemoteImageView.swift`、`ReaderViewController.swift`。本任务不提前开放EPUB导入按钮；Task35原生文字阅读完成后统一开放。复用Task32资源API，不增加解压库/HTML解析库。
+
+**Interfaces:** `EpubReaderResource` 公开静态 `url(bookID:String,path:String,fragment:String?=nil)throws->URL`、`path(from:URL,bookID:String)throws->String`、`mimeType(path:String,publication:EpubPublication)->String`。正文资源使用独立scheme `xxcomic-book://<UUID小写>/<按路径组件编码的ZIP路径>`；不与图片页URL混用。url生成前验证UUID与非空规范路径；path解析要求精确scheme、匹配bookUUID小写host、无userinfo/port/query、单次percent解码，允许fragment但不计入资源路径；拒绝NUL、反斜线、绝对/空路径、点/父段、空段、编码分隔符、编码点段。加号是路径文字，不用Java URLDecoder再次解码已经规范的ZIP路径。literal `%20` 文件名生成 `%2520` 后必须恢复成literal `%20`，不能双解码。MIME优先按manifest规范路径匹配，其次只支持已知扩展html/xhtml/css/jpg/jpeg/png/gif/webp/svg/ttf/otf/woff/woff2，未知为application/octet-stream；manifestMIME不直接拼进HTML。
+
+- [ ] 真实RED覆盖同书URL与中文/空格/加号/百分号路径roundtrip、fragment、外书UUID、host欺骗、userinfo/port/query、编码斜杠/点段/反斜线/双解码案例。资源契约只定位包内条目，不自动请求网络。
+
+```swift
+let id = "A2DA4DA0-271B-4B86-86E4-814D4DD6249B"
+let url = try EpubReaderResource.url(bookID: id, path: "OEBPS/文+字%20.xhtml", fragment: "引言")
+XCTAssertEqual(try EpubReaderResource.path(from: url, bookID: id), "OEBPS/文+字%20.xhtml")
+XCTAssertThrowsError(try EpubReaderResource.path(from: URL(string: "xxcomic-book://a2da4da0-271b-4b86-86e4-814d4dd6249b/OEBPS/%2e%2e/a")!, bookID: id))
+```
+
+- [ ] RemoteImageView.load增加默认nil的 `epubImage: (@Sendable (URL)throws->Data)?` 参数，只在精确 `xxcomic-epub` scheme时调用该resolver；没有resolver走明确失败，不交URLSession。后台Task读取，withTaskCancellationHandler转发取消到worker；generation继续保护缓存/尺寸/失败回调。HTTP/file既有行为保持，单图上限仍128MiB、解码沿现有ImageIO。ReaderViewController仅local源注入捕获Sendable LocalLibrary副本的epubImageData；ReaderImageCell.configure→retry保存并传递resolver，prepareForReuse清理。不能扩大file路径白名单或全局注册URLProtocol。
+- [ ] Core GREEN后仅做相关回归，UIKit全文件syntax parse与静态接线审查；不能把syntaxparse称Apple类型检查。写task-34-report.md，父代理提交/独立审查。UI入口仍未开放，后续Task35消费此正文resourceURL契约并添加安全WK渲染。
