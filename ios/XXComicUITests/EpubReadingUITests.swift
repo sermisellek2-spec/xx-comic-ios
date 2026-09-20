@@ -9,6 +9,7 @@ final class EpubReadingUITests: XCTestCase {
     }
     private func open(_ name: String, app: XCUIApplication) {
         let cell = app.collectionViews.cells["EPUB 验收·" + name]
+        for _ in 0..<5 where !cell.isHittable { app.collectionViews.firstMatch.swipeUp() }
         XCTAssertTrue(cell.waitForExistence(timeout: 15)); cell.tap()
         XCTAssertTrue(app.buttons["章节目录"].waitForExistence(timeout: 10)); app.buttons["章节目录"].tap()
         if name == "图片" {
@@ -23,6 +24,43 @@ final class EpubReadingUITests: XCTestCase {
         waitForExpectations(timeout: 15)
     }
     private func back(_ app: XCUIApplication) { app.navigationBars.buttons.element(boundBy: 0).tap() }
+
+    func testLongBodyWithoutIDsResumesByPercentage() {
+        let app = launch(); open("无锚点", app: app); ready(app)
+        app.sliders["epub.progress"].adjust(toNormalizedSliderPosition: 0.65)
+        let nearSavedPosition = NSPredicate { _, _ in
+            guard let value = app.sliders["epub.progress"].value as? String,
+                  let number = Double(value.replacingOccurrences(of: "%", with: "")) else { return false }
+            return (60...70).contains(number)
+        }
+        expectation(for: nearSavedPosition, evaluatedWith: app); waitForExpectations(timeout: 5)
+        back(app)
+        let resume = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '继续阅读'")).firstMatch
+        XCTAssertTrue(resume.waitForExistence(timeout: 5)); resume.tap(); ready(app)
+        expectation(for: nearSavedPosition, evaluatedWith: app); waitForExpectations(timeout: 5)
+        XCTAssertFalse(app.webViews.staticTexts["无锚点正文"].isHittable)
+    }
+
+    func testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce() {
+        let app = launch(); open("编码锚点", app: app); ready(app)
+        let cases = [("同页中文空格", "同页中文目标已到达"), ("同页字面百分号", "同页百分号目标已到达"),
+                     ("跨章中文空格", "跨章中文目标已到达"), ("跨章字面百分号", "跨章百分号目标已到达")]
+        for (link, target) in cases {
+            app.buttons["目录"].tap()
+            XCTAssertTrue(app.tables.staticTexts["第一章"].waitForExistence(timeout: 5)); app.tables.staticTexts["第一章"].tap(); ready(app)
+            app.sliders["epub.progress"].adjust(toNormalizedSliderPosition: 0)
+            let anchorLink = app.webViews.links[link]
+            expectation(for: NSPredicate(format: "hittable == true"), evaluatedWith: anchorLink); waitForExpectations(timeout: 5)
+            anchorLink.tap()
+            let destination = app.webViews.staticTexts[target]
+            expectation(for: NSPredicate { _, _ in
+                guard let value = app.sliders["epub.progress"].value as? String,
+                      let number = Double(value.replacingOccurrences(of: "%", with: "")) else { return false }
+                return destination.isHittable && number > 0
+            }, evaluatedWith: app); waitForExpectations(timeout: 10)
+            if link.hasPrefix("跨章") { XCTAssertEqual(app.staticTexts["epub.section"].value as? String, "第2章，第1节") }
+        }
+    }
 
     func testAllSpinesAndRealSecondChapterResumeRoute() {
         let app = launch(); open("文字", app: app); ready(app)

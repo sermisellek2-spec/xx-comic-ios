@@ -10,7 +10,7 @@ enum EpubUITestFixtures {
         guard ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--epub-fixtures"),
               library.directory.deletingLastPathComponent().lastPathComponent == "XXComic-UITests" else { return }
         let existing = Set(try library.books().map(\.title))
-        for kind in ["文字", "图文", "图片", "隔离", "跨书", "超限"] {
+        for kind in ["文字", "图文", "图片", "隔离", "跨书", "超限", "无锚点", "编码锚点"] {
             let title = "EPUB 验收·" + kind
             guard !existing.contains(title) else { continue }
             let archiveURL = library.directory.appendingPathComponent(".fixture-\(UUID().uuidString).epub")
@@ -56,6 +56,22 @@ enum EpubUITestFixtures {
                 files["OPS/a.xhtml"] = Data("<html><head><link rel='stylesheet' href='\(url.absoluteString)'></head><body><h1>跨书样式未执行</h1></body></html>".utf8)
             }
             if kind == "超限" { files["OPS/a.xhtml"] = Data(("<html><body>" + String(repeating: "x", count: 8 * 1024 * 1024) + "</body></html>").utf8) }
+            if kind == "无锚点" {
+                let paragraphs = (1...100).map { "<p>没有 ID 的长篇正文，第 \($0) 段，必须使用百分比恢复阅读位置。</p>" }.joined()
+                files["OPS/a.xhtml"] = Data(("<html><body><h1>无锚点正文</h1>" + paragraphs + "</body></html>").utf8)
+            }
+            if kind == "编码锚点" {
+                let padding = String(repeating: "<p>用于验证链接真正滚动到目标的正文段落。</p>", count: 40)
+                // %2520 targets a literal "%20" ID suffix, not a space. Targets sit well below the top.
+                files["OPS/a.xhtml"] = Data(("""
+                <html><body><h1>编码链接起点</h1>
+                <a href='#%E4%B8%AD%E6%96%87%20%E7%9B%AE%E6%A0%87'>同页中文空格</a>
+                <a href='#literal%2520'>同页字面百分号</a>
+                <a href='c.xhtml#%E7%AC%AC%E4%BA%8C%E7%AB%A0%20%E7%9B%AE%E6%A0%87'>跨章中文空格</a>
+                <a href='c.xhtml#literal%2520'>跨章字面百分号</a>
+                """ + padding + "<h2 id='中文 目标'>同页中文目标已到达</h2>" + padding + "<h2 id='literal%20'>同页百分号目标已到达</h2>" + padding + "</body></html>").utf8)
+                files["OPS/c.xhtml"] = Data(("<html><body><h1>编码链接第二章</h1>" + padding + "<h2 id='第二章 目标'>跨章中文目标已到达</h2>" + padding + "<h2 id='literal%20'>跨章百分号目标已到达</h2>" + padding + "</body></html>").utf8)
+            }
             files["OPS/book.opf"] = Data(("<package xmlns:dc='http://purl.org/dc/elements/1.1/'><metadata><dc:title>\(title)</dc:title><dc:creator>验收作者</dc:creator></metadata><manifest>" + manifest + "</manifest><spine>" + spine + "</spine></package>").utf8)
             do {
                 let archive = try Archive(url: archiveURL, accessMode: .create)

@@ -146,7 +146,7 @@ final class EpubTextContentView: UIView, WKNavigationDelegate, WKUIDelegate {
             if case .failure(let error) = result { self.fail(error); return }
             DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(120)) { [weak self, weak web] in
                 guard let self, let web, self.generation == token, self.layoutGeneration == layoutToken, self.webView === web else { return }
-                web.callAsyncJavaScript("const e=anchor ? document.getElementById(anchor) : null;if(e){e.scrollIntoView()}else{window.scrollTo(0,percent*Math.max(0,document.documentElement.scrollHeight-innerHeight))}return window.readerPosition();", arguments: ["anchor": self.restoreAnchor, "percent": self.restorePercent], in: nil, contentWorld: Self.world) { [weak self, weak web] result in
+                web.callAsyncJavaScript("const e=anchor ? document.getElementById(anchor) : null;if(window.readerAnchor(e)){e.scrollIntoView()}else{window.scrollTo(0,percent*Math.max(0,document.documentElement.scrollHeight-innerHeight))}return window.readerPosition();", arguments: ["anchor": self.restoreAnchor, "percent": self.restorePercent], in: nil, contentWorld: Self.world) { [weak self, weak web] result in
                     guard let self, let web, self.generation == token, self.layoutGeneration == layoutToken, self.webView === web else { return }
                     self.restoring = false
                     switch result {
@@ -202,19 +202,21 @@ final class EpubTextContentView: UIView, WKNavigationDelegate, WKUIDelegate {
         guard navigationAction.navigationType == .linkActivated else { return }
         if url.scheme == "https" || url.scheme == "http" { onExternalLink?(url); return }
         guard let path = try? EpubReaderResource.path(from: url, bookID: bookID) else { return }
+        let fragment = URLComponents(url: url, resolvingAgainstBaseURL: false)?.fragment ?? ""
         if let documentURL, path == (try? EpubReaderResource.path(from: documentURL, bookID: bookID)) {
-            restore(anchor: url.fragment ?? "", percent: 0)
-        } else { onLink?(path, url.fragment ?? "") }
+            restore(anchor: fragment, percent: 0)
+        } else { onLink?(path, fragment) }
     }
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? { nil }
 
     private static let events = #"""
     (()=>{
       const send = value => window.webkit.messageHandlers.reader.postMessage(value);
+      window.readerAnchor=e=>Boolean(e&&document.body.contains(e)&&!e.id.startsWith('__xxcomic_')&&Array.from(e.getClientRects()).some(r=>r.width>0&&r.height>0));
       window.readerPosition=()=>{
         const total=Math.max(0,document.documentElement.scrollHeight-innerHeight);
         let anchor='';
-        for(const e of document.querySelectorAll('[id]')){if(e.getBoundingClientRect().top<=8)anchor=e.id;else break}
+        for(const e of document.body.querySelectorAll('[id]')){if(!window.readerAnchor(e))continue;if(e.getBoundingClientRect().top<=8)anchor=e.id;else break}
         return {type:'position',percent:total ? Math.max(0,Math.min(1,scrollY/total)):0,anchor};
       };
       let last=0, timer=0;
