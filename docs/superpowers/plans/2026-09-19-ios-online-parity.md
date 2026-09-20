@@ -532,6 +532,7 @@ XCTAssertThrowsError(try BatchImportCandidate(sourceOrder: "NaN"))
 ```
 
 - [ ] 分组key按Android字符串组合：sourceId与remoteComicId均非空则`remote:<source>:<comic>`且无需确认；否则`local:<title.lowercased()>`且必须确认。title优先seriesTitle否则normalizeTitle。输出按首次组出现顺序，不靠Dictionary枚举；指纹去重只在组内，不按title/fileId去重。这里只产生建议，不查询或合并既有书架。
+- [ ] 分组字典的实际身份比较保持Java字符串语义，不利用Swift String的canonical equality合并组合/分解Unicode文本；最小使用UTF8 Data或UTF16码元键，公开group.key仍为原字符串。加入显示相同但码元不同的本地系列名与remoteComicId两组真实行为断言；不对书名或ID做额外Unicode规范化。仅因Swift字符串默认行为导致的合并会违背同名建议边界。
 - [ ] normalizeTitle逐步照原版：Java trim→删末尾ASCII字母数字1...8位扩展→全角空格变空格并trim→删末尾卷号表达式及分隔符→删末尾ASCII空白/_/-并压缩ASCII空白→trim→空值“未命名漫画”。NSRegularExpression中的`\s`/`\d`须显式使用Java默认ASCII范围，不能让ICU默认Unicode语义吞NBSP或全角数字。volumeNumber保留最后一个成功Int32匹配；溢出忽略该匹配而不是覆盖已得到的值。测试中文/vol/v/末尾1...4数字、括号、内部卷号、NBSP、全角数字、溢出与零。
 - [ ] sourceOrder按十进制精确比较，不能Double或Foundation Decimal舍入后比较；Decimal不足以覆盖Java BigDecimal超过38位的输入。最小私有比较实现：解析ASCII符号/有效数字串/小数位/可选e/E有符号指数，规范零与前导零，用调整后的十进制位数和有效数字逐位（缺位补0）比较，负数反序，不展开巨大指数为零数组。合法指数及scale遵循Java BigDecimal的Int32范围，计算使用Int64检查；sourceOrder文本受1MiB上限约束，与元数据扫描上限一致。保留原始字符串用于后续持久化，不引入BigInt依赖或通用任意精度运算库。覆盖2.0/2、负数、负零、1e3、1e-3、超过38位且只末位不同、巨大指数、非法数字/指数溢出；测试只验证实际排序和失败，不复制比较算法作oracle。
 - [ ] 排序优先：两者sourceOrder均存在则精确非等值优先；仅一方存在则有值优先；其次已识别文件卷号（有值优先）；其次NaturalPathOrder；其次selectionIndex；最后原始输入次序保证稳定。不改变既有NaturalPathOrder和搜索trim的语义。GREEN本任务及实际受影响测试；写task-41-report.md，父代理限定文件提交/独立审查。持久批次、分卷存储、确认UI另行实施，不能将本任务计为用户可用批量导入。
