@@ -29,7 +29,9 @@ final class SourceSettingsViewController: UITableViewController {
         }
     }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { ids.count }
-    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? { "拖动右侧手柄调整顺序。关闭站源不会删除收藏和阅读记录。" }
+    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        "拖动右侧手柄调整顺序。关闭站源不会删除收藏和阅读记录。" + (ids.contains("mh18") ? "18漫画的“重置”会结束浏览器会话及进行中的请求，保留站点 Cookie。" : "")
+    }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let id = ids[indexPath.row]
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
@@ -57,9 +59,15 @@ final class SourceSettingsViewController: UITableViewController {
             verify.accessibilityIdentifier = "source.verify.mh18"
             verify.isEnabled = verificationTask == nil
             verify.addAction(UIAction { [weak self] _ in self?.verifyMh18() }, for: .touchUpInside)
-            let controls = UIStackView(arrangedSubviews: [verify, toggle])
-            controls.spacing = 12
-            controls.frame = CGRect(x: 0, y: 0, width: 108, height: 44)
+            let reset = UIButton(type: .system)
+            reset.setTitle("重置", for: .normal)
+            reset.accessibilityLabel = "重置18漫画验证"
+            reset.accessibilityHint = "结束浏览器会话和进行中的请求，保留站点 Cookie"
+            reset.accessibilityIdentifier = "source.reset.mh18"
+            reset.addAction(UIAction { [weak self] _ in self?.environment.mh18BrowserSession.reset() }, for: .touchUpInside)
+            let controls = UIStackView(arrangedSubviews: [verify, reset, toggle])
+            controls.spacing = 8
+            controls.frame = CGRect(x: 0, y: 0, width: 156, height: 44)
             cell.editingAccessoryView = controls
         }
         cell.showsReorderControl = true

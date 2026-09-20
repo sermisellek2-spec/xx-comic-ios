@@ -10,6 +10,8 @@ final class Mh18VerificationTests: XCTestCase {
         let verify = app.buttons["source.verify.mh18"]
         for _ in 0..<5 where !verify.isHittable { app.tables.firstMatch.swipeUp() }
         XCTAssertTrue(verify.waitForExistence(timeout: 5))
+        app.buttons["source.reset.mh18"].tap()
+        XCTAssertTrue(app.tables.staticTexts["18mh.org · 未验证"].exists)
         verify.tap()
         let close = app.buttons["mh18.verification.close"]
         XCTAssertTrue(close.waitForExistence(timeout: 5))

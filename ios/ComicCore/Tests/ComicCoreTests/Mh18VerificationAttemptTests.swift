@@ -2,6 +2,20 @@ import XCTest
 @testable import ComicCore
 
 final class Mh18VerificationAttemptTests: XCTestCase {
+    func testSuccessfulOrStoppedAttemptIgnoresLateNavigationAndCompletesOnlyOnce() {
+        var attempt = Mh18VerificationAttempt(startedAt: 0)
+        let token = attempt.token
+        XCTAssertTrue(attempt.complete(token, now: 1))
+        XCTAssertFalse(attempt.navigationStarted())
+        XCTAssertEqual(attempt.token, token)
+        XCTAssertTrue(attempt.succeeded)
+        XCTAssertFalse(attempt.complete(token, now: 2))
+        var stopped = Mh18VerificationAttempt(startedAt: 0)
+        let stoppedToken = stopped.token
+        stopped.stop()
+        XCTAssertFalse(stopped.navigationStarted())
+        XCTAssertEqual(stopped.token, stoppedToken)
+    }
     func testAutomaticRecoveryNeverExtendsDeadlineAndStopsAfterTwoReloads() {
         var attempt = Mh18VerificationAttempt(startedAt: 10)
         XCTAssertTrue(attempt.recover(now: 20))

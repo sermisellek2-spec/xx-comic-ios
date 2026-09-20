@@ -21,7 +21,7 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
     private var browser: WKWebView?
     private var browserReady = false
     private var browserGeneration = UUID()
-    private var cookieRevision = 0
+    private let cookieSync = Mh18CookieSynchronizer()
     private var jobs: [Job] = []
     private var interactive: Interactive?
     private weak var presenter: UIViewController?
@@ -107,7 +107,7 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
                 guard self.accepts(item, token) else { return }
                 guard Mh18VerificationRules.isExpectedPage(requested: item.url, actual: response.url) else { throw self.failure("页面跳转异常") }
                 switch Mh18VerificationRules.interactiveAction(statusCode: response.status, mitigated: response.mitigated, body: response.body) {
-                case .complete: self.succeed(item, token: token, body: response.body, retainBrowser: false)
+                case .complete: await self.succeed(item, token: token, body: response.body, retainBrowser: false)
                 case .openBrowser:
                     let view = try await self.makeBrowser()
                     guard self.accepts(item, token) else { return }
@@ -173,7 +173,7 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
                         case .fail: throw self.failure("确认请求失败，请重新加载")
                         case .complete:
                             guard Mh18VerificationRules.isExpectedPage(requested: item.url, actual: response.url), Mh18VerificationRules.verificationComplete(browserCatalog: catalog, probeCatalog: Mh18ComicSource.hasCatalogMarker(response.body)) else { throw self.failure("页面确认失败，请重新加载") }
-                            self.succeed(item, token: token, body: response.body, retainBrowser: true)
+                            await self.succeed(item, token: token, body: response.body, retainBrowser: true)
                         }
                         return
                     }
@@ -185,14 +185,17 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
         }
     }
 
-    private func succeed(_ item: Interactive, token: Mh18VerificationAttempt.Token, body: String, retainBrowser: Bool) {
-        guard interactive === item, item.attempt.complete(token, now: now) else { return }
+    private func succeed(_ item: Interactive, token: Mh18VerificationAttempt.Token, body: String, retainBrowser: Bool) async {
+        guard accepts(item, token) else { return }
+        // Images use URLSession.shared, so verification cannot return before this barrier applies.
+        await copyCookiesToHTTP()
+        guard !Task.isCancelled, interactive === item, item.attempt.complete(token, now: now) else { return }
         item.timeout?.cancel()
         browserReady = retainBrowser
         defaults.set(Date(), forKey: "mh18.verifiedAt")
         item.screen.setStatus("验证完成", succeeded: true)
         statusChanged?()
-        item.work = Task { [weak self, weak item] in
+        item.successClose = Task { [weak self, weak item] in
             do { try await Task.sleep(nanoseconds: 600_000_000) } catch { return }
             guard let self, let item, self.interactive === item else { return }
             self.finishInteractive(item.id, result: .success(body))
@@ -215,6 +218,7 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
         interactive = nil
         item.attempt.stop()
         item.work?.cancel()
+        item.successClose?.cancel()
         item.timeout?.cancel()
         if case .success = result, browserReady, let browser, let host = item.screen.view.window {
             browser.removeFromSuperview()
@@ -334,16 +338,7 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
     private func makeBrowser() async throws -> WKWebView {
         // Keep ordinary same-site redirect:follow. WebKit enforces this network allowlist;
         // its per-redirect behavior still needs device validation. Final URLs are checked again.
-        let site = #"^https://([a-z0-9-]+\.)*18mh\.org(:443)?/"#
-        let challenge = #"^https://([a-z0-9-]+\.)*challenges\.cloudflare\.com(:443)?/(cdn-cgi/challenge-platform/|turnstile/)"#
-        let rules: [[String: Any]] = [
-            ["trigger": ["url-filter": ".*", "resource-type": ["document", "raw"]], "action": ["type": "block"]],
-            ["trigger": ["url-filter": site, "resource-type": ["document", "raw"]], "action": ["type": "ignore-previous-rules"]],
-            ["trigger": ["url-filter": challenge, "resource-type": ["document", "raw"]], "action": ["type": "ignore-previous-rules"]],
-            ["trigger": ["url-filter": challenge + #"[^?]*[%\\]"#, "resource-type": ["document", "raw"]], "action": ["type": "block"]],
-            ["trigger": ["url-filter": challenge + #"([^?]*/)?\.\.?(/|\?|$)"#, "resource-type": ["document", "raw"]], "action": ["type": "block"]]
-        ]
-        let encoded = String(decoding: try JSONSerialization.data(withJSONObject: rules), as: UTF8.self)
+        let encoded = try Mh18BrowserContentRules.encoded()
         let list: WKContentRuleList = try await withCheckedThrowingContinuation { continuation in
             WKContentRuleListStore.default().compileContentRuleList(forIdentifier: "mh18-network-boundary-v1", encodedContentRuleList: encoded) { list, error in
                 if let error { continuation.resume(throwing: error) }
@@ -370,39 +365,26 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
     }
 
     func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
+        cookieSync.invalidate()
         Task { await copyCookiesToHTTP() }
     }
 
-    private func siteCookie(_ cookie: HTTPCookie) -> Bool {
-        let domain = cookie.domain.hasPrefix(".") ? String(cookie.domain.dropFirst()) : cookie.domain
-        return domain.lowercased() == "18mh.org" || domain.lowercased().hasSuffix(".18mh.org")
-    }
-
     private func copyCookiesToHTTP() async {
-        cookieRevision += 1
-        let revision = cookieRevision
-        let cookies: [HTTPCookie] = await withCheckedContinuation { continuation in
-            cookieStore.getAllCookies { continuation.resume(returning: $0) }
-        }
-        guard revision == cookieRevision else { return }
-        let siteCookies = cookies.filter(siteCookie)
-        // WebKit is authoritative between HTTP responses, including cookie deletion/logout.
-        for cookie in HTTPCookieStorage.shared.cookies ?? [] where siteCookie(cookie) {
-            if !siteCookies.contains(where: { $0.domain == cookie.domain && $0.path == cookie.path && $0.name == cookie.name }) {
-                HTTPCookieStorage.shared.deleteCookie(cookie)
+        await cookieSync.synchronize(read: { [cookieStore] in
+            await withCheckedContinuation { continuation in
+                cookieStore.getAllCookies { continuation.resume(returning: $0) }
             }
-        }
-        for cookie in siteCookies { HTTPCookieStorage.shared.setCookie(cookie) }
+        }, storage: .shared)
     }
 
     fileprivate func persistResponseCookies(_ response: HTTPURLResponse) async {
         guard let url = response.url, Mh18BrowserTrust.allowsRequest(url), let host = url.host?.lowercased() else { return }
-        cookieRevision += 1
+        cookieSync.invalidate()
         let headers = response.allHeaderFields.reduce(into: [String: String]()) { result, header in
             if let key = header.key as? String { result[key] = String(describing: header.value) }
         }
         // Copy only this response's cookies; copying the entire HTTP jar can revive old WK cookies.
-        for cookie in HTTPCookie.cookies(withResponseHeaderFields: headers, for: url) where siteCookie(cookie) {
+        for cookie in HTTPCookie.cookies(withResponseHeaderFields: headers, for: url) where Mh18CookieSynchronizer.isSiteCookie(cookie) {
             let domain = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")).lowercased()
             guard host == domain || host.hasSuffix("." + domain) else { continue }
             if let expiry = cookie.expiresDate, expiry <= Date() {
@@ -437,9 +419,8 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        guard webView === browser, let item = interactive else { return }
+        guard webView === browser, let item = interactive, item.attempt.navigationStarted() else { return }
         item.navigation = navigation
-        item.attempt.navigationStarted()
         item.work?.cancel()
         cancelBrowserJobs()
         item.statusCode = 200
@@ -493,6 +474,7 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
         var attempt: Mh18VerificationAttempt
         var timeout: Task<Void, Never>?
         var work: Task<Void, Never>?
+        var successClose: Task<Void, Never>?
         var statusCode = 200
         var mitigated: String?
         var navigation: WKNavigation?
