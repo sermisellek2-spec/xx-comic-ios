@@ -19,11 +19,12 @@ final class RemoteImageView: UIImageView {
     var onLoaded: ((CGSize) -> Void)?
     var onFailure: (() -> Void)?
 
-    func load(_ text: String, referer: String, reader: Bool = false) {
+    func load(_ text: String, referer: String, reader: Bool = false, epubImage: (@Sendable (URL) throws -> Data)? = nil) {
         cancel()
         image = nil; original = nil
         backgroundColor = Palette.card
-        guard let url = URL(string: text), ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") else {
+        guard let url = URL(string: text),
+              ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") || (url.scheme == "xxcomic-epub" && epubImage != nil) else {
             onFailure?(); return
         }
         let key = ((reader ? "reader\n" : "cover\n") + referer + "\n" + text) as NSString
@@ -45,7 +46,19 @@ final class RemoteImageView: UIImageView {
                 request.setValue("cross-site", forHTTPHeaderField: "Sec-Fetch-Site")
                 request.timeoutInterval = 30
                 let data: Data
-                if url.isFileURL {
+                if url.scheme == "xxcomic-epub" {
+                    guard let epubImage else { throw URLError(.unsupportedURL) }
+                    let worker = Task.detached(priority: .userInitiated) {
+                        try Task.checkCancellation()
+                        let bytes = try epubImage(url)
+                        try Task.checkCancellation()
+                        guard bytes.count <= LocalLibrary.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
+                        return bytes
+                    }
+                    data = try await withTaskCancellationHandler {
+                        try await worker.value
+                    } onCancel: { worker.cancel() }
+                } else if url.isFileURL {
                     let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
                     let resolved = url.resolvingSymlinksInPath().standardizedFileURL
                     let suffix = ProcessInfo.processInfo.arguments.contains("--ui-testing") ? "XXComic-UITests" : "XXComic"
@@ -63,6 +76,7 @@ final class RemoteImageView: UIImageView {
                     }
                     data = bytes
                 }
+                try Task.checkCancellation()
                 let decoder = Task.detached(priority: .userInitiated) { () throws -> UIImage? in
                     try Task.checkCancellation()
                     let imageData = ManwaImageDecoder.usesImageHost(text) ? try ManwaImageDecoder.decode(data) : data

@@ -6,6 +6,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private let environment: AppEnvironment
     private let comic: ComicSummary
     private let source: any ComicSource
+    private let epubImage: (@Sendable (URL) throws -> Data)?
     private var chapters: [Chapter]
     private var incompleteDirectory: Bool
     private var session: ReaderSession
@@ -39,6 +40,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     init(comic: ComicSummary, chapters: [Chapter], chapterIndex: Int, directoryIncomplete: Bool, environment: AppEnvironment) {
         self.comic = comic; self.chapters = chapters; self.environment = environment
         source = environment.source(for: comic)!
+        if comic.sourceId == "local" {
+            let library = environment.localLibrary
+            epubImage = { try library.epubImageData(pageURL: $0) }
+        } else { epubImage = nil }
         incompleteDirectory = directoryIncomplete
         session = ReaderSession(chapterCount: chapters.count, chapterIndex: chapterIndex)
         settings = environment.preferences.load()
@@ -438,7 +443,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             if self.settings.layout == .strip { self.layout.invalidateLayout(); self.restore(position) }
             self.savePosition()
         }
-        cell.configure(url: url, referer: source.referer, settings: settings)
+        cell.configure(url: url, referer: source.referer, settings: settings, epubImage: epubImage)
         return cell
     }
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
@@ -476,6 +481,7 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
     private let image = RemoteImageView()
     private let retry = UIButton(type: .system)
     private var url = "", referer = ""
+    private var epubImage: (@Sendable (URL) throws -> Data)?
     var onSize: ((CGSize) -> Void)?
     var onZoom: ((Bool) -> Void)?
     var onUserAction: (() -> Void)?
@@ -502,8 +508,9 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
         if scroll.zoomScale == 1 { image.frame = scroll.bounds; scroll.contentSize = scroll.bounds.size }
         retry.frame = CGRect(x: 0, y: max(0, bounds.midY - 22), width: bounds.width, height: 44)
     }
-    func configure(url: String, referer: String, settings: ReaderPreferences) {
+    func configure(url: String, referer: String, settings: ReaderPreferences, epubImage: (@Sendable (URL) throws -> Data)? = nil) {
         self.url = url; self.referer = referer
+        self.epubImage = epubImage
         scroll.setZoomScale(1, animated: false)
         apply(settings)
         reload()
@@ -517,10 +524,10 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
         scroll.maximumZoomScale = enabled ? 4 : 1
     }
     func toggleZoom() { scroll.setZoomScale(scroll.zoomScale > 1.05 ? 1 : min(2, scroll.maximumZoomScale), animated: true) }
-    @objc private func reload() { retry.isHidden = false; retry.setTitle("正在加载图片…", for: .normal); image.load(url, referer: referer, reader: true) }
+    @objc private func reload() { retry.isHidden = false; retry.setTitle("正在加载图片…", for: .normal); image.load(url, referer: referer, reader: true, epubImage: epubImage) }
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { image }
     func scrollViewDidZoom(_ scrollView: UIScrollView) { onZoom?(scrollView.zoomScale > 1.05) }
     func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) { onUserAction?() }
     func cancel() { image.cancel() }
-    override func prepareForReuse() { super.prepareForReuse(); image.cancel(); onSize = nil; onZoom = nil; onUserAction = nil; scroll.setZoomScale(1, animated: false) }
+    override func prepareForReuse() { super.prepareForReuse(); image.cancel(); epubImage = nil; onSize = nil; onZoom = nil; onUserAction = nil; scroll.setZoomScale(1, animated: false) }
 }
