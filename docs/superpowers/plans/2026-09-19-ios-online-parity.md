@@ -308,6 +308,8 @@ XCTAssertFalse(publication.spine[1].linear) // still present in reading order
 
 **Files:** 修改 `ios/ComicCore/Sources/ComicCore/LocalLibrary.swift`、`LocalComicSource.swift`，必要时最小扩展 `EpubArchive.swift` 的流式资源写入接口（复用同一CRC/预算/取消逻辑，不复制解压器）；新增 `LocalEpubLibrary.swift`、`Tests/ComicCoreTests/LocalEpubLibraryTests.swift`。消费Task31复审后的EpubParser/EpubPublication/EpubArchive，不修改UIKit或站源。本任务是持久化/资源读取层，用户入口与原生阅读在下一任务接入，不先展示不可读导入入口。
 
+**Archive预算衔接:** Task31解析器的每实例累计256MiB默认值保留。导入逐图验证可能合法超过256MiB，可给内部EpubArchive.init增加默认256MiB的累计读取上限参数，仅导入验证实例使用20GiB；流式write与read共用同一计数/CRC/取消循环。避免每张图重开扫描整个ZIP形成平方工作量。重复资源先验证一次（spine token仍保留重复位置），封面优先复用已验证候选结果或在读取预算内再读；预算耗尽必须明确失败而非吞掉。单项128MiB和ZIP声明总量20GiB限制不放宽。
+
 **Interfaces:** LocalBook增加可选 `epub:EpubPublication?`、`coverName:String?`，公开init参数默认nil，旧book.json无需迁移。新增LocalLibrary方法 `importEpub(title:String,archive:URL,isReadableImage:(URL)throws->Bool) throws -> LocalBook`、`epubResource(bookID:String,path:String,maximumBytes:Int) throws -> Data`、`epubImageData(pageURL:URL) throws -> Data`。仅EPUB书使用生成的 `spine-0`、`spine-1` 等唯一逻辑页token（同一资源重复出现在spine时仍是两页），原图片书pages仍是原有唯一叶子文件名；chapters仍严格分区pages。资源原文件固定为书目录 `content.epub`，封面候选验证后可保存固定 `cover.bin`，不从manifest接受任意文件系统路径。安全页URL为 `xxcomic-epub://page/<bookUUID>/<spineIndex>`：精确scheme/host、无userinfo/port/query/fragment、路径恰好UUID与非负十进制索引，拒绝编码绕过和越界；生成/解析生产逻辑集中一处。
 
 - [ ] 先写真实ZIP临时文件的RED：导入并重开仍按spine顺序、chapterRanges映射准确、原包不改；图片token→真实资源字节；旧图片book.json缺新增key仍能读。使用Task31测试fixture构建方式，不重新实现测试解析器。
