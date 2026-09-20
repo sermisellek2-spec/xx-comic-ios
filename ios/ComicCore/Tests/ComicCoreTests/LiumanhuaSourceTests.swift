@@ -60,6 +60,15 @@ final class LiumanhuaSourceTests: XCTestCase {
         XCTAssertEqual(requestCount, 1)
     }
 
+    func testCatalogChapterIDsExcludeQueryAndFragment() async throws {
+        for suffix in ["#reader", "?mode=1#reader", "#reader/position?mode=1"] {
+            let html = "<div class='cy_plist'><li class='chapter__item'><a href='/302262/217344.html\(suffix)'>第119话</a></li></div>"
+            let transport = LiumanhuaTransport(["https://www.liumanhua.com/302262": .html(html)])
+            let chapters = try await LiumanhuaComicSource(transport: transport).chapters(comicId: "302262")
+            XCTAssertEqual(chapters.map(\.chapterId), ["217344"], suffix)
+        }
+    }
+
     func testCatalogFallbackRequiresMatchingOnlineReadingURL() async throws {
         let fallback = "<div class='cy_title'><h1>漫画</h1></div><div class='cy_kan'><a href='/302262/217344.html'>在线阅读</a></div><div class='rd-guess__comic'><a href='/999/1.html'>推荐</a></div>"
         let wrong = "<div class='cy_title'><h1>漫画</h1></div><div class='cy_kan'><a href='/999/1.html'>在线阅读</a></div>"
@@ -78,13 +87,16 @@ final class LiumanhuaSourceTests: XCTestCase {
         // Generated independently with OpenSSL 3.0.2 AES-128-CBC/PKCS7, key 9S8$vJnU2ANeSRoF and IV 0123456789abcdef.
         let payload = "MDEyMzQ1Njc4OWFiY2RlZvWhelwjNs1fu1X1bfLj2ZeZVMl3H5UqUBUtX5nAe/ZNq475KqVbZ/8wjG60kTk4fSSA3SijtUbMEfKXQ5yf0rA0X5DP3caU6z+2xGpcl4n6YpiKgSnXRt3b175FA1kdbZFP1PP2kUnXsp4ihWqz+XMQZCVhsRwjI+cV4FEfseGideutb7En5EJQdczbHDvgToOiWZgxmHHMHc86QEY1Qrd2/w79Ur/+OITcdN0Z+YgTXj51beUjUcnq2qujX5JL4b93DvFQmgfZsotgrNIwl+0o//d5ihpIiqQtTJqYMLawjwPx4A66Y7h8g/F1ux+aLQ=="
         let html = "<title>第119话 - 六漫画</title><script>params='\(payload)'</script>"
-        let transport = LiumanhuaTransport(["https://www.liumanhua.com/302262/217344.html": .html(html)])
-
-        let page = try await LiumanhuaComicSource(transport: transport).chapter(url: "/302262/217344.html")
-
-        XCTAssertEqual(page.chapterId, "217344")
-        XCTAssertEqual(page.title, "第119话")
-        XCTAssertEqual(page.imageUrls, ["https://s2.bzcdn.net/comic/1.jpg", "https://s2.bzcdn.net/comic/2.jpg"])
+        for suffix in ["", "#reader", "?mode=1#reader"] {
+            let path = "/302262/217344.html" + suffix
+            let transport = LiumanhuaTransport(["https://www.liumanhua.com" + path: .html(html)])
+            do {
+                let page = try await LiumanhuaComicSource(transport: transport).chapter(url: path)
+                XCTAssertEqual(page.chapterId, "217344")
+                XCTAssertEqual(page.title, "第119话")
+                XCTAssertEqual(page.imageUrls, ["https://s2.bzcdn.net/comic/1.jpg", "https://s2.bzcdn.net/comic/2.jpg"])
+            } catch { XCTFail("合法正文应忽略查询与锚点：\(suffix)，\(error)") }
+        }
     }
 
     func testPayloadRejectsRestrictionsIdentityMismatchesAndInvalidImages() async throws {

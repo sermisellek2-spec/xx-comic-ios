@@ -238,7 +238,7 @@ public struct LiumanhuaComicSource: ComicSource {
         return value.split(separator: "/").last.map(String.init) ?? value
     }
     private func chapterID(_ input: String) -> String {
-        let value = input.components(separatedBy: "?")[0]
+        let value = input.components(separatedBy: CharacterSet(charactersIn: "?#"))[0]
         return (value.split(separator: "/").last.map(String.init) ?? value).replacingOccurrences(of: #"\.html$"#, with: "", options: .regularExpression)
     }
     private func imageURL(_ tag: String) -> String {

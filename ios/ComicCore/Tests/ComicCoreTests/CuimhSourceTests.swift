@@ -73,6 +73,15 @@ final class CuimhSourceTests: XCTestCase {
         XCTAssertEqual(requestCount, 1)
     }
 
+    func testCatalogChapterIDsExcludeQueryAndFragment() async throws {
+        for suffix in ["#reader", "?mode=1#reader", "#reader/position?mode=1"] {
+            let html = "<li class='chapter__item'><a href='/419013-227267.html\(suffix)'>第528话</a></li>"
+            let source = makeSource(transport: CuimhTransport(defaultResponse: .html(html)))
+            let chapters = try await source.chapters(comicId: "tree")
+            XCTAssertEqual(chapters.map(\.chapterId), ["419013-227267"], suffix)
+        }
+    }
+
     func testChapterDecryptsFixedAndroidFixtureAndNormalizesRelativeImages() async throws {
         let payload = "MDEyMzQ1Njc4OWFiY2RlZutEhySNBDxh7+9pX7lLguDwdPqtjE0tJLVG7+xCkHDt8wNN7cqhoHcwG3tUWN0IQwe7JEqUHI+AXvzwvUk6n4EgljPPb5F5MAJn2Knj9EpWbv2K8oHdIjj7c8x5IkNvnFDCV2qy8rDuJUDhSUFw4lU="
         let html = "<title>第528话-下拉式阅读</title><script>params = '\(payload)'</script>"
@@ -162,6 +171,29 @@ final class CuimhSourceTests: XCTestCase {
         XCTAssertEqual(requestCount, 3)
     }
 
+    func testCancelledForbiddenResponseStillBlocksCachedAndUncachedRequests() async throws {
+        let clock = TestMillisecondsClock()
+        let transport = CuimhTransport(responses: [
+            "https://www.cuimh.com/category/page/2": [.html("", status: 403)]
+        ], defaultResponse: .html(categoryHTML), cancelOnForbidden: true)
+        let source = makeSource(transport: transport, clock: clock)
+        _ = try await source.latest(page: 1)
+        let request = Task { try await source.latest(page: 2) }
+        do { _ = try await request.value; XCTFail("取消必须传播") }
+        catch { XCTAssertTrue(error is CancellationError) }
+        for page in [1, 3] {
+            do { _ = try await source.latest(page: page); XCTFail("取消后仍须保留403冷却：\(page)") }
+            catch { XCTAssertTrue(error.localizedDescription.contains("访问受限")) }
+        }
+        let requestCount = await transport.requests.count
+        XCTAssertEqual(requestCount, 2)
+        clock.advance(by: 1_800_000)
+        let comics = try await source.latest(page: 1)
+        XCTAssertEqual(comics.count, 1)
+        let countAfterExpiry = await transport.requests.count
+        XCTAssertEqual(countAfterExpiry, 3)
+    }
+
     func testWaitCancellationPropagatesAndDoesNotIssueSecondRequest() async throws {
         let clock = TestMillisecondsClock()
         let transport = CuimhTransport(defaultResponse: .html(categoryHTML))
@@ -219,16 +251,18 @@ private actor CuimhTransport: HTTPTransport {
     let defaultResponse: HTTPResponse?
     let clock: TestMillisecondsClock?
     let yields: Int
+    let cancelOnForbidden: Bool
     var requests: [(String, [String: String])] = []
     var startedAt: [Int64] = []
     var activeRequests = 0
     var maxActiveRequests = 0
 
-    init(responses: [String: [HTTPResponse]] = [:], defaultResponse: HTTPResponse? = nil, clock: TestMillisecondsClock? = nil, yields: Int = 0) {
+    init(responses: [String: [HTTPResponse]] = [:], defaultResponse: HTTPResponse? = nil, clock: TestMillisecondsClock? = nil, yields: Int = 0, cancelOnForbidden: Bool = false) {
         self.responses = responses
         self.defaultResponse = defaultResponse
         self.clock = clock
         self.yields = yields
+        self.cancelOnForbidden = cancelOnForbidden
     }
 
     func get(_ url: URL, headers: [String: String]) async throws -> HTTPResponse {
@@ -241,6 +275,7 @@ private actor CuimhTransport: HTTPTransport {
         if var queue = responses[url.absoluteString], !queue.isEmpty {
             let response = queue.removeFirst()
             responses[url.absoluteString] = queue
+            if cancelOnForbidden && response.statusCode == 403 { withUnsafeCurrentTask { $0?.cancel() } }
             return response
         }
         guard let defaultResponse else { throw URLError(.badURL) }

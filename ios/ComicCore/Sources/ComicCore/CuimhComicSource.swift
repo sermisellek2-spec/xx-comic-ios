@@ -143,8 +143,8 @@ public actor CuimhComicSource: ComicSource {
             "Referer": referer,
             "Accept-Language": "zh-CN,zh;q=0.9"
         ])
-        try Task.checkCancellation()
         if response.statusCode == 403 { forbiddenUntil = nowMilliseconds() + 1_800_000 }
+        try Task.checkCancellation()
         guard (200..<400).contains(response.statusCode) else { throw HTTPTransportError.invalidStatusCode(response.statusCode) }
         guard let html = String(data: response.data, encoding: .utf8) else { throw error("响应文字解码失败") }
         forbiddenUntil = 0
@@ -261,7 +261,7 @@ public actor CuimhComicSource: ComicSource {
     }
 
     private func chapterID(_ input: String) -> String {
-        let value = input.components(separatedBy: "?")[0]
+        let value = input.components(separatedBy: CharacterSet(charactersIn: "?#"))[0]
         return (value.split(separator: "/").last.map(String.init) ?? value).replacingOccurrences(of: #"\.html$"#, with: "", options: .regularExpression)
     }
 
