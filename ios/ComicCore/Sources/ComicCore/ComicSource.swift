@@ -7,6 +7,7 @@ public protocol ComicSource: Sendable {
     var id: String { get }
     var name: String { get }
     var referer: String { get }
+    var supportsSearch: Bool { get }
 
     func latest(page: Int) async throws -> [ComicSummary]
     func search(keyword: String, page: Int) async throws -> [ComicSummary]
@@ -15,6 +16,10 @@ public protocol ComicSource: Sendable {
     func chapter(url: String) async throws -> ChapterPage
     func filterGroups() async throws -> [SourceFilterGroup]
     func category(filters: [String: String], page: Int) async throws -> [ComicSummary]
+}
+
+public extension ComicSource {
+    var supportsSearch: Bool { true }
 }
 
 public struct HTTPResponse: Sendable {
