@@ -581,3 +581,16 @@ XCTAssertEqual(try ContentFingerprint.folder(root, relativeImagePaths: ["10.png"
 - [ ] file要求fileURL、regular非符号链接，最大值必须非负，声明或实际流超过maximumBytes均报错，读取错误/取消原样传递。前后大小变化或被截断不得返回“成功”的混合身份；读取后核对已读字节与初始/最终元数据，后续消费者仍必须对自己的稳定副本调用，不能承诺检测同大小同时间恶意替换。测试以小maximumBytes验证边界和超限，不创建20GiB大文件。
 - [ ] folder按NaturalPathOrder排序原始相对路径，不剥共同包装目录。每个文件hash后向总hash输入UTF8 `relativePath + ':' + lowercaseFileHash + '\n'`，与Android字节一致；文件修改、相对路径改名改变指纹，扫描枚举顺序不改变。不使用mtime/文件名/尺寸代替内容。输入最多50000项，路径唯一且非空相对路径，仅`/`分隔；拒绝绝对路径、反斜杠、NUL、空段、`.`/`..`、根或中间目录/文件符号链接，解析后必须在root内。每图128MiB、累计20GiB，按实际读取累计；空列表允许标准空manifest摘要，是否允许导入空书由现有importer拒绝。
 - [ ] 覆盖非ASCII/空格路径、自然序、rename/content变化、根/中间/文件symlink、越界路径、重复路径、提前/运行中取消、文件读失败。运行中取消可用内部窄readChunk注入触发真实Task取消并继续生产散列管线，不mock摘要；不得成功返回截断指纹。GREEN本任务与实际受影响测试，Apple条件分支未运行单列；报告task-43-report.md，父代理提交/审查。去重与墓碑恢复仍需集成，不能把散列核心当完整去重功能。
+
+### Task 44: 本地导入准备与发布分离，保持现有单卷入口
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/LocalImportPreparation.swift`、`Tests/ComicCoreTests/LocalImportPreparationTests.swift`；最小修改 `LocalLibrary.swift`、`LocalEpubLibrary.swift`、`LocalPdfLibrary.swift`、`LocalKindleLibrary.swift`。如现有 archive/folder index无需变更则保持。先读后续设计 `docs/superpowers/specs/2026-09-20-ios-local-library-lifecycle.md`、上述四个导入文件及其已有测试；不改解析器、阅读器、站源、Android。此任务为后续串行去重/合集提交提供准备边界，不实现目录快照、指纹集成或批量UI。
+
+**内部接口：** `PreparedLocalImport: Sendable` 保存本次独有暂存目录及已完成验证的 `LocalBook`；只在Core内部可用。`LocalLibrary` 的每种现有导入提供对应内部 `prepareImages/prepareFolder/prepareArchive/prepareEpub/preparePdf/prepareKindle`，参数沿现有公共导入函数，返回准备结果；`publishPrepared(_:) throws -> LocalBook` 与 `discardPrepared(_:) throws`。公共 `importImages/importFolder/importArchive/importEpub/importPdf/importKindle` 保持签名和用户结果，由准备+发布组合实现。使用最小共用暂存辅助方法，避免六份目录生命周期逻辑；不建立插件、任意导入协议或通用事务框架。
+
+- [ ] 先真实RED：准备一份真实 EPUB 和一份图片卷后，书架仍不可见，暂存内已有完整book.json/资源/封面（若适用）；调用发布后重开书库可正常读取，准备目录消失。当前接口缺失的编译错误单列，至少有可编译行为桩的真实失败证明。其余格式复用现有真实fixture，不mock格式解析。
+- [ ] 准备仍使用一次唯一`.import-UUID`目录；成功返回前完成原有源校验、限量复制、格式解析、图片probe、CRC、metadata与book.json写入。失败/取消回收本次目录，原文件、已发布书和其他准备结果不受影响。成功返回后由明确调用方拥有，不能在返回前defer删掉；也不能遗留没有调用方负责回收的目录。
+- [ ] 发布校验本次准备结果归属、未被替换的暂存目录及完整元数据，最终取消检查后再沿现有单目录发布路径可见。不能发布其他library创建的结果、外部目录/符号链接、篡改book.id/manifest、已发布/已回收结果；已存在目标保留，不覆盖。发布失败也回收本次仍拥有的暂存结果，不能清理已存在目标。用于所有权校验的最小内部字段可由实现者选择，不能只信任任意URL字符串。
+- [ ] 丢弃只接受本次库拥有且身份仍匹配的准备目录；已经成功发布或已丢弃可无操作，权限/其他I/O失败不能伪装成功。不能按目录名前缀枚举清理，不递归书库根，不在暂存路径被替换后沿新路径删除不属于本次操作的数据。保持Task39既有恢复fd发布/取消与赢家规则，不借重构退回path-only恢复。
+- [ ] 公共导入函数使用同一准备与发布实现，不保留第二套旧导入副本。PDF仍只在导入时inspect和渲染封面；Kindle仍原包/派生同暂存并仅从拥有副本转换；普通EPUB缺失派生不能恢复；图片/ZIP/文件夹自然序、分章和原有限额不变。此任务不改变书ID生成或旧JSON格式，不提前添加未被使用的合集/指纹字段。
+- [ ] 真实测试覆盖六种准备结果中有代表性的正文/图片读取、公共旧入口、准备阶段取消、准备完成后取消发布、目标已存在、跨库/外部/符号链接/替换目录拒绝、重复丢弃、两个独立准备结果互不清理，以及实际写/发布失败回收。仅操作测试拥有临时目录；狭窄系统错误注入可以补充，不能代替真实格式/文件行为。GREEN运行新测试与本次改动触及的本地格式测试，不重复未改的站源/元数据/解压算法全套。报告task-44-report.md，父代理限定提交/独立审查；不得把内部准备阶段称为批量导入界面完成。
