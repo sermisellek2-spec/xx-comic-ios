@@ -598,3 +598,26 @@ XCTAssertEqual(try ContentFingerprint.folder(root, relativeImagePaths: ["10.png"
 - [ ] 丢弃只接受本次库拥有且身份仍匹配的准备目录；已经成功发布或已丢弃可无操作，权限/其他I/O失败不能伪装成功。不能按目录名前缀枚举清理，不递归书库根，不在暂存路径被替换后沿新路径删除不属于本次操作的数据。保持Task39既有恢复fd发布/取消与赢家规则，不借重构退回path-only恢复。
 - [ ] 公共导入函数使用同一准备与发布实现，不保留第二套旧导入副本。PDF仍只在导入时inspect和渲染封面；Kindle仍原包/派生同暂存并仅从拥有副本转换；普通EPUB缺失派生不能恢复；图片/ZIP/文件夹自然序、分章和原有限额不变。此任务不改变书ID生成或旧JSON格式，不提前添加未被使用的合集/指纹字段。
 - [ ] 真实测试覆盖六种准备结果中有代表性的正文/图片读取、公共旧入口、准备阶段取消、准备完成后取消发布、目标已存在、跨库/外部/符号链接/替换目录拒绝、重复丢弃、两个独立准备结果互不清理，以及实际写/发布失败回收。仅操作测试拥有临时目录；狭窄系统错误注入可以补充，不能代替真实格式/文件行为。GREEN运行新测试与本次改动触及的本地格式测试，不重复未改的站源/元数据/解压算法全套。报告task-44-report.md，父代理限定提交/独立审查；不得把内部准备阶段称为批量导入界面完成。
+
+### Task 45: 导入副本的真实指纹与原格式元数据
+
+**Files:** 新增 `ios/ComicCore/Tests/ComicCoreTests/LocalImportFingerprintTests.swift`；最小修改 `LocalLibrary.swift`、`LocalFolderIndex.swift`、`LocalEpubLibrary.swift`、`LocalPdfLibrary.swift`、`ContentFingerprint.swift`、`LocalImportPreparation.swift`，对应扩展 `ContentFingerprintTests.swift`。不改解析器、Android、Native UI或站源，不实现目录快照与去重决策。先读Task44最终实现/报告及生命周期规格，沿其prepare/publish边界完成身份计算。
+
+**Interfaces:** `public enum LocalImportFormat:String,Codable,Sendable` 定义在LocalLibrary.swift，值images/folder/zip/cbz/epub/pdf/mobi/azw/azw3；`LocalBook`追加只读 `importFormat:LocalImportFormat?` 和 `fingerprint:String?`，现有公开初始化器最后追加两个默认nil参数，旧JSON缺字段仍可读。新增导入的format明确保存；独立多图导入fingerprint仍nil，不凭猜测将其等同于Android文件夹清单。各file/folder指纹为Task43的64位小写SHA256。`LocalFolderIndex`新增内部`relativePaths:[String]`，与files一一对应，保留共同包装目录剥离前路径。`ContentFingerprint`新增内部 `folder(_ root:URL, files:[(relativePath:String, ownedFile:URL)])throws->String`，公开folder接口不变并复用同一清单管线；不复制SHA实现。
+
+- [ ] RED使用真实图片文件夹和EPUB/ZIP/Kindle文件准备/发布后重开，断言新字段保存，外部原字节不变，旧无字段JSON仍可读。指纹测试预期采用独立Node crypto固定输入计算，不能用被测ContentFingerprint生成期望。文件夹原路径`2.png`/`10.png`分别为abc/empty，在内部映射到owned `0.png`/`1.png`时仍产生下列原清单指纹；探测可注入以验证字节身份，本例不冒称图片解码验证。
+
+```swift
+XCTAssertEqual(try ContentFingerprint.folder(staging, files: [
+    (relativePath: "10.png", ownedFile: staging.appendingPathComponent("1.png")),
+    (relativePath: "2.png", ownedFile: staging.appendingPathComponent("0.png"))]),
+    "289a7e9d8b7639baa049ca4aed2c3fc55cf31ec0056560ea3459ff175cc325d3")
+XCTAssertNil(legacy.fingerprint)
+XCTAssertEqual(reopened.importFormat, .folder)
+```
+
+- [ ] ZIP/CBZ先用现有限量copy保存到本次staging的`source.archive`，再从该拥有副本调用LocalArchiveIndex，指纹也只读取同一副本，发布保留原包。原后缀cbz保存.cbz，其余archive入口保存.zip；文件实际格式仍由解析器校验。在图片probe中改写外部源后，完整导入应继续使用先前拥有副本；真实测试同时验证原包字节、已解压页面与独立hash一致。不对外部路径先hash再复制。旧ZIP没有source.archive不要求补造；新增archive声明原格式时，prepare发布验证及重开校验须要求owned普通source.archive且非symlink，沿现有所有权规则。
+- [ ] EPUB hash拥有的content.epub，PDF hash content.pdf，Kindle hash source.kindle，不能hash派生EPUB冒充原包身份。全部在prepare返回前计算，取消/读失败按Task44回收本次暂存，原格式/指纹与book.json一次写成后才发布。复用prepareOwnedEpub的kindleFormat决定原包与枚举，不复制Kindle转换或增加第二次原包复制。PDF Linux测试仍仅检查存储/字节，Apple解析限制明确记录。
+- [ ] folder扫描记录原相对路径，平铺复制完成后用原路径→owned页映射计算身份，不额外复制整份原树，不用平铺数字页名替代清单原路径；文件夹原路径改变应改变指纹，外部文件在复制完成后改写不影响拥有副本的已算身份。内部映射入口要求路径数相等由tuple保证、最多50000项，原路径仍执行公开接口的相对路径/原始UTF8唯一校验；ownedFile必须fileURL且在root内，逐级无符号链接，保持128MiB单图/20GiB累计/取消/实际读取检查。不得允许任意外部文件借原路径标签进入hash。公开旧folder向该同一管线提供原始路径对应URL，避免两份校验分叉。
+- [ ] 新元数据若存在则验证合法组合：format与实际epub/pdf/kindle匹配，fingerprint须64位小写ASCII十六进制；旧两个字段均nil保持原行为，不重新散列所有旧书。所有新增文件/文件夹导入都有指纹，images只有format无指纹。不在book重开时读20GiB验证hash，重开只验证元数据和声明拥有原包；真正去重/损坏校验交给后续消费者。资源校验清单须包含新source.archive，Task44清理继续扁平且不覆盖赢家。
+- [ ] GREEN运行新整合测试、ContentFingerprintTests及实际触及本地格式/准备测试；不要重跑未修改的站源或全部解析算法。报告task-45-report.md，列明ZIP现在保留原包+图片有双份实际占用，不能把本任务称去重/墓碑恢复/批量UI完成。父代理限定提交与独立审查后才进入目录快照整合。
