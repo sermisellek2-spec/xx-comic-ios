@@ -21,7 +21,7 @@ public struct D5d6ComicSource: ComicSource {
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()
         guard page <= 1 else { return [] }
-        let html = try await fetch("/search/\(formEncode(keyword.trimmingCharacters(in: .whitespacesAndNewlines)))/")
+        let html = try await fetch("/search/\(formEncode(SearchRules.trim(keyword)))/")
         if clean(html).range(of: #"搜索《[^》]+》结果为空，以下是为您推荐的热门作品"#, options: .regularExpression) != nil { return [] }
         return try cards(html)
     }

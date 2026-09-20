@@ -45,7 +45,7 @@ public actor Mh18ComicSource: ComicSource {
 
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         let allowed = Set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._*")
-        let encoded = keyword.trimmingCharacters(in: .whitespacesAndNewlines).utf8.map { byte -> String in
+        let encoded = SearchRules.trim(keyword).utf8.map { byte -> String in
             let character = Character(UnicodeScalar(byte))
             if character == " " { return "+" }
             return allowed.contains(character) ? String(character) : String(format: "%%%02X", byte)

@@ -35,7 +35,7 @@ public actor GmhComicSource: ComicSource {
     }
 
     public func search(keyword: String, page _: Int) async throws -> [ComicSummary] {
-        let keyword = formEncode(keyword.trimmingCharacters(in: .whitespacesAndNewlines))
+        let keyword = formEncode(SearchRules.trim(keyword))
         return try await parseCards(fetch(absolute("/s/\(keyword)")))
     }
 

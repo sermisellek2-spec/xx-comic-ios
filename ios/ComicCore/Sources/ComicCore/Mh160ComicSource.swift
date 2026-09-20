@@ -36,7 +36,7 @@ public actor Mh160ComicSource: ComicSource {
     }
 
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
-        let keyword = formEncode(keyword.trimmingCharacters(in: .whitespacesAndNewlines))
+        let keyword = formEncode(SearchRules.trim(keyword))
         let pageQuery = page > 1 ? "&page=\(page)" : ""
         return try parseCards(await fetch(absolute("/statics/searchelxt1e1.aspx?key=\(keyword)\(pageQuery)")))
     }

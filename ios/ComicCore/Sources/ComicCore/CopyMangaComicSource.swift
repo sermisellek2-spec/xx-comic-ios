@@ -23,7 +23,7 @@ public actor CopyMangaComicSource: ComicSource {
     public func latest(page: Int) async throws -> [ComicSummary] { try await category(filters:[:],page:page) }
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()
-        let keyword = keyword.trimmingCharacters(in:.whitespacesAndNewlines)
+        let keyword = SearchRules.trim(keyword)
         guard !keyword.isEmpty else { return [] }
         let path = "/api/kb/web/searchci/comics?offset=\(try offset(page,12))&platform=2&limit=12&q=\(encode(keyword))&q_type="
         let data = try results(await request(base+path,api:false))

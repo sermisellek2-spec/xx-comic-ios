@@ -20,7 +20,7 @@ public struct HiperdexComicSource: ComicSource {
     }
 
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
-        let query = percentEncode(keyword.trimmingCharacters(in: .whitespacesAndNewlines))
+        let query = percentEncode(SearchRules.trim(keyword))
         return try cards(await fetch("/?s=\(query)&post_type=wp-manga" + (page > 1 ? "&paged=\(page)" : "")))
     }
 

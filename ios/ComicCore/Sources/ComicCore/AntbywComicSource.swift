@@ -23,7 +23,7 @@ public struct AntbywComicSource: ComicSource {
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()
         guard page <= 1 else { return [] }
-        return try cards(await fetch("/plugin.php?id=jameson_manhua&a=search&c=index&keyword=\(formEncode(keyword.trimmingCharacters(in: .whitespacesAndNewlines)))"))
+        return try cards(await fetch("/plugin.php?id=jameson_manhua&a=search&c=index&keyword=\(formEncode(SearchRules.trim(keyword)))"))
     }
 
     public func filterGroups() async throws -> [SourceFilterGroup] {
