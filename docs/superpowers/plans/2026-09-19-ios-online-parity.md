@@ -228,3 +228,9 @@ Mh18VerificationRules移植HTTP/interactive/page/probe判定、挑战marker（�
 显式验证绝对单调120s deadline从创建开始，自动probe reload最多2次且不续期；DOM检查600ms、成功延迟600ms，过程中可关闭取消，用户重新加载创建新请求。浏览器DOM在当前/manga有真实card marker后，通过同一WebView网络fetch(credentials include/cache no-store/redirect follow)再验证目录；都成功才保留WebView并切后续请求到browser context。使用callAsyncJavaScript参数传值或同等安全方式，不拼接未转义URL/执行源站提供脚本代码作为解码器。请求取消中止网络，过期request/attempt/navigation不能完成新页面；失败/timeout停止探测但保留手动重试/关闭，不自动操作验证码。retained context失效返回需要验证，不悄悄无限循环。关闭/缓存清理/进程终止完成所有continuation并释放UI。
 
 状态机与协调可用注入driver/clock测试实际并发、取消、超时、陈旧probe、两次恢复和手动重试；不为UIKit包装每个系统方法建框架。UI测试验证进入/关闭/错误重试入口并明确Windows未运行。至少原生代码syntax parse，真实WebKit网络/Cookie/验证、Apple类型检查与设备验收始终单列未完成，不能把Linux状态机GREEN称为站点可用。独立审查后再更新矩阵。
+
+### Task 26: JM图片分片还原核心与原生图像接线
+
+对照完整JmImageTransform.java及JmImageSlicesTest.java，MainActivity.decodeReaderImage/restoreJmReaderImage。最小JmImageTransform Swift实现官方公开图片格式：URL仅HTTP(S)的cdn-msp*.18comic.vip域与/media/photos/{aid}/{filename}，且scramble_id为非负Int64；低于scramble不还原，aid<268850固定10片，否则MD5(aid+不含末尾扩展名的filename)的最后一个小写十六进制字符ASCII值%divisor*2+2，aid>=421926 divisor8否则10，不能用十六进制数值替代字符。利用Apple原生CryptoKit/Linux已安装OpenSSL，不新写MD5算法/新增依赖。边界高度小于片数保持原样；分片余数放目标首片，源行逆序且每片内部不倒置。
+
+先跨平台RED/GREEN：Android1114754/220980/00010.webp与jpg均4片、阈值、ASCII字符公式、1499/14全源与全目标覆盖、不重叠、不丢行、非法或无关URL/端口/凭据不改图、取消。Apple CoreGraphics还原复用同一bounds，在RemoteImageView正文缩略解码后、白边/墨水屏前运行（Android亦先缩放再还原），不更改文件与网络数据；分配/裁片失败明确失败不能把乱序图显示为成功。Apple条件像素测试验证带余数色条的行重排，但Windows明确未执行。JM站源/浏览器尚未注册，本任务不冒称JM阅读完整可用；离线transformation元数据接线留待下载模块。与Task25源/会话文件不重叠，核心构建协调串行，审查独立。

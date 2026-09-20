@@ -57,7 +57,8 @@ final class RemoteImageView: UIImageView {
                     }
                     data = bytes
                 }
-                let decoded = try await Task.detached(priority: .userInitiated) { () throws -> UIImage? in
+                let decoder = Task.detached(priority: .userInitiated) { () throws -> UIImage? in
+                    try Task.checkCancellation()
                     let imageData = ManwaImageDecoder.usesImageHost(text) ? try ManwaImageDecoder.decode(data) : data
                     guard let source = CGImageSourceCreateWithData(imageData as CFData, nil) else { return nil }
                     var maximumDimension = 4096
@@ -74,8 +75,11 @@ final class RemoteImageView: UIImageView {
                             kCGImageSourceThumbnailMaxPixelSize: maximumDimension,
                             kCGImageSourceCreateThumbnailWithTransform: true
                           ] as CFDictionary) else { return nil }
-                    return UIImage(cgImage: image)
-                }.value
+                    return UIImage(cgImage: reader ? try JmImageTransform.restore(image, imageURL: text) : image)
+                }
+                let decoded = try await withTaskCancellationHandler {
+                    try await decoder.value
+                } onCancel: { decoder.cancel() }
                 try Task.checkCancellation()
                 guard let self, self.generation == token else { return }
                 guard let decoded else { self.onFailure?(); return }
