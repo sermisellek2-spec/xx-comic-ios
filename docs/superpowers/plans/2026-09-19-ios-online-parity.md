@@ -281,3 +281,25 @@ RED→GREEN覆盖工具原样3cards、111/112章节、封面fallback、direct/lo
 - [ ] 捕获真实适配器HTTP请求，先RED再改代码：`" \t\u{00A0}词\u{3000}\r\n"` 结果只去ASCII边界，URL仍含 `%C2%A0%E8%AF%8D%E3%80%80`；Copy还验证只含NBSP时仍发请求，而全ASCII空白返回空且不请求。HTML/JSON返回可用最小各站fixture，不真实联网；不能只测试SearchRules函数或复制编码实现当oracle。
 - [ ] 改七处一行，定向 `swift test -j 2 --filter SourceSearchTrimTests` GREEN；随后既有七源相关测试覆盖返回行为，不重复不相关全量。保持原URLEncoder与HiperDEX空格%20差异。
 - [ ] 报告task-30-report.md，父代理提交/范围审查，登记无新功能只是已有Android业务对齐。
+
+### Task 31: EPUB 解析与目录核心（暂停新增站源后的首项功能）
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/EpubPublication.swift`（值模型/章节边界）、`EpubParser.swift`（OPF/nav/NCX/XML解析）、`EpubArchive.swift`（只读按需ZIP资源访问），新增 `Tests/ComicCoreTests/EpubParserTests.swift`。复用现有 ZIPFoundation、ZIPDirectory、ZIPDeflate，不修改现有漫画ZIP导入逻辑、UIKit、LocalLibrary持久化格式或站源。完整读取 Android `ebook/EpubParser.java`、`Publication.java` 和 `EpubParserTest.java`；本计划账本 `ebook-pdf-research.md` 为背景，源码为准。
+
+**Interfaces:** `public enum EpubParser { public static func parse(archive: URL) throws -> EpubPublication }`。`EpubPublication: Codable, Equatable, Sendable` 含 title/author/description/language/opfPath:String、coverEntry:String?、有序manifest:[ManifestItem]、spine:[SpineItem]、navItems:[NavItem]、isFixedLayout/isPurePictureEpub/isReflowableText/hasDrm/hasFontObfuscation:Bool、unsupportedReason:String?。嵌套值类型字段逐项对应Java（id/href/mediaType/properties；idref/fullZipPath/mediaType/linear/resolvedImageEntry；title/href/spineIndex/children）。公开 `chapterRanges(overrideTitle:String? = nil) throws -> [ChapterRange]`，ChapterRange的title:String、startIndex/endIndex:Int（半开区间），只负责Publication边界规则，不制造文件或页面URL。`EpubError: Error, LocalizedError` 提供清晰中文原因；取消原样传播。
+
+**资源与安全裁定:** EpubArchive内部只读，现有ZIPDirectory校验条目数量/大小/中央目录；按UTF8与全局GB18030回退规则找条目，拒绝重复规范路径、符号链接、绝对/越界/NUL路径；使用ZIPDeflate和Archive.extract校验真实输出大小/CRC。不要一次加载整本书或提取全包。单次XML读取最多8MiB，XHTML单图检查仅保留首1MiB但流式校验完整条目CRC，单条128MiB/总包20GiB/50000项继承现有限制，累计解析读取预算256MiB（重复读取也计入）。XML使用FoundationXML.XMLParser，禁用外部实体；拒绝DOCTYPE/ENTITY（覆盖UTF8/16/32编码），节点数最多100000、嵌套最多128并检查取消。损坏encryption.xml明确失败，不沿用Android吞掉加密声明错误。此项比Android对异常文件更严格，记录兼容性边界，不宣称完全相同。
+
+- [ ] 先用最小可执行接口骨架和真实临时EPUB ZIP文件建立断言级RED（不是缺类型编译错误）。复用现有ZIPFixture或ZIPFoundation创建fixtures，不手写解析器当oracle。至少先验证spine顺序和文本分类。
+- [ ] 实现container/rootfile选择（首个非空，后续匹配media-type覆盖）、OPF元数据/有序manifest/非空spine/id唯一及缺失引用错误。资源href使用Java URLDecoder的加号变空格语义，再去fragment和规范路径；使用现有SearchRules.trim；禁止路径逃出包。linear=no仍保留。单图wrapper兼容img和SVG image，仅一个图片且条目存在时归类图片。分类/封面顺序和固定布局标记逐项按Java，字体混淆与DRM区分，hasDrm可返回元数据但chapterRanges拒绝阅读。
+- [ ] EPUB3 nav优先，空/普通XML格式错误则回退NCX；取消、预算或不安全XML错误必须传播，不静默fallback。嵌套目录保留，映射到第一个匹配spine索引，无法映射为-1。chapterRanges展平有效导航、稳定按spine排序、去同边界；伪页目录折叠；前置未映射正文补“封面与序言”；无目录默认书名或“全 1 卷”；显式overrideTitle优先。
+
+```swift
+let publication = try EpubParser.parse(archive: fixture)
+XCTAssertEqual(publication.spine.map(\.fullZipPath), ["OEBPS/text/01.xhtml", "OEBPS/text/02.xhtml", "OEBPS/text/10.xhtml"])
+XCTAssertEqual(try publication.chapterRanges().map(\.startIndex), [0, 2])
+XCTAssertFalse(publication.spine[1].linear) // still present in reading order
+```
+
+- [ ] GREEN覆盖Android完整fixtures：spine非文件名顺序、NCX/nav、SVG/direct image、封面优先级、字体混淆/DRM、纯文本/混合、缺container/spine、UTF8 BOM、路径越界、XXE不读外部内容。补：linear=no、重复id/无效idref、伪页折叠/序言/override、nav损坏回退、坏encryption失败、Unicode空格/加号与percent路径、实际deflate/CRC坏包、取消、XML预算/嵌套上限。应断言业务结果，不仅“不崩溃”。CRC/取消不得被wrapper可选解析吞掉。
+- [ ] 固定/work Docker运行 `swift test -j 2 --filter EpubParserTests`，涉及包读取的现有 `LocalArchiveTests` 回归一次；不重复不相关全量。报告 `task-31-report.md` 含真实RED/GREEN与限制。父代理提交、独立审查。此交付仅解析核心，不称用户已能导入/阅读EPUB；下一项需扩展旧manifest兼容的正文类型、导入与阅读接线。
