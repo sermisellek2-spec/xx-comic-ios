@@ -4,9 +4,10 @@ import ComicCore
 @MainActor
 final class SourceSettingsViewController: UITableViewController {
     private let environment: AppEnvironment
-    let onVerified: () -> Void
+    let onVerified: (() -> Void)?
+    private var verificationTask: Task<Void, Never>?
     private var ids: [String] { environment.sourcePreferences.orderedIDs }
-    init(environment: AppEnvironment, onVerified: @escaping () -> Void = {}) {
+    init(environment: AppEnvironment, onVerified: (() -> Void)? = nil) {
         self.environment = environment; self.onVerified = onVerified
         super.init(style: .insetGrouped)
     }
@@ -18,6 +19,14 @@ final class SourceSettingsViewController: UITableViewController {
         tableView.setEditing(true, animated: false)
         tableView.allowsSelectionDuringEditing = false
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "恢复默认排序", style: .plain, target: self, action: #selector(resetOrder))
+        environment.mh18BrowserSession.statusChanged = { [weak self] in self?.tableView.reloadData() }
+    }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if isMovingFromParent || isBeingDismissed || navigationController?.isBeingDismissed == true {
+            verificationTask?.cancel()
+            environment.mh18BrowserSession.statusChanged = nil
+        }
     }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { ids.count }
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? { "拖动右侧手柄调整顺序。关闭站源不会删除收藏和阅读记录。" }
@@ -40,6 +49,19 @@ final class SourceSettingsViewController: UITableViewController {
             self.notifyChanged()
         }, for: .valueChanged)
         cell.editingAccessoryView = toggle
+        if id == "mh18" {
+            cell.detailTextLabel?.text = "18mh.org · " + environment.mh18BrowserSession.status
+            let verify = UIButton(type: .system)
+            verify.setTitle("验证", for: .normal)
+            verify.accessibilityLabel = "验证18漫画"
+            verify.accessibilityIdentifier = "source.verify.mh18"
+            verify.isEnabled = verificationTask == nil
+            verify.addAction(UIAction { [weak self] _ in self?.verifyMh18() }, for: .touchUpInside)
+            let controls = UIStackView(arrangedSubviews: [verify, toggle])
+            controls.spacing = 12
+            controls.frame = CGRect(x: 0, y: 0, width: 108, height: 44)
+            cell.editingAccessoryView = controls
+        }
         cell.showsReorderControl = true
         return cell
     }
@@ -59,4 +81,23 @@ final class SourceSettingsViewController: UITableViewController {
         notifyChanged()
     }
     private func notifyChanged() { NotificationCenter.default.post(name: AppEnvironment.sourcesChanged, object: environment) }
+    private func verifyMh18() {
+        guard verificationTask == nil else { return }
+        verificationTask = Task { [weak self] in
+            guard let self else { return }
+            defer { self.verificationTask = nil; self.tableView.reloadData() }
+            do {
+                try await self.environment.mh18BrowserSession.verify(from: self)
+                guard !Task.isCancelled else { return }
+                // The browser has already closed. Only error-return management is a modal flow.
+                if let onVerified = self.onVerified {
+                    self.navigationController?.dismiss(animated: true, completion: onVerified)
+                }
+            } catch {
+                guard !(error is CancellationError), !Task.isCancelled else { return }
+                self.showError(error)
+            }
+        }
+        tableView.reloadData()
+    }
 }
