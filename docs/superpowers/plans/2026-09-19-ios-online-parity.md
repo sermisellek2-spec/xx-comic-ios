@@ -172,3 +172,17 @@ func testLatestUsesPostCategoryPageAndDefaults() async throws {
 ### Task 20: 本地图片大小边界对齐
 
 对照Android LocalImporter.MAX_SINGLE_FILE_BYTES和复制循环，把LocalLibrary单图上限由临时40MiB对齐128MiB；保留256KiB流式复制、20GiB总上限、取消/失败回收、系统ImageIO验证和24M解码像素预算。测试128MiB恰好允许、128MiB+1拒绝且不发布、不改原文件。测试使用临时稀疏文件，只验证核心文件大小边界，不声称它们是有效图片。RemoteImageView本地读取复用同一上限，用Foundation mappedIfSafe避免可映射文件的额外整份堆拷贝；在线图片上限不在此任务修改。先观察大小边界测试失败再修正。设备峰值内存和大图渲染仍需iPhone验收。
+
+### Task 21: 拷贝漫画当前 API 与分类字面量
+
+**Files:** 新增 `ios/ComicCore/Sources/ComicCore/CopyMangaComicSource.swift`、必要 `CopyMangaLiteral.swift`、对应测试和从Android复制的Fixtures/copy4000。测试资源只在Package.swift注册。主代理审查后注册，代理不暂存提交、不派子代理。不修改Android、网络协议或UIKit。默认ID `copy4000`、名称 `拷贝漫画`、base `https://www.copy4000.com`，referer尾斜杠。
+
+完整读Android CopyMangaComicSource.java、CopyMangaLiteral.java、SourceConfig.copy4000以及CopyMangaComicSourceTest/CopyMangaApiTest/CopyMangaConnectionTest。此任务只移植当前公开ComicSource调用的网络路径：章节/目录用API，不添加不可达的旧HTML加密目录/阅读回退（Android保留的parseReader/decrypt并非当前chapter实现）；固定旧URL重定向仍保留。测试按实际调用契约，不为未使用兼容函数写代码。
+
+- [ ] 搜索空白直接空、page<1抛错，limit12和offset=(page-1)*12；分类limit50及offset，ordering默认-datetime_updated并仅允许±datetime_updated/±popular；theme/region/status固定顺序、all略去、region/status限0/1/2；表单编码空格必须%20。/filter动态题材去数量后缀、去重，排序/题材/地区/状态4组，默认值与Android相同。
+- [ ] 类别exemptComic-box的list属性是数据字面量。优先考虑系统JSON，但实际有单引号、True/False/None、尾逗号及\x/\u转义，不能用全局替换破坏字符串或执行JS；若需最小递归解析器按Android64层深度、仅字符串键、有限合法数字、拒绝表达式和尾部垃圾。复用HTML4EntityDecoder，覆盖引号/转义/Unicode和注入拒绝。search JSON code200/results.list，列表每项path_word/name必需，作者用 ` / `，去重并允许合法空列表；详情依赖指定结构，目录按需。
+- [ ] 默认API `https://api.manga2026.xyz`，备选依次 `https://mapi.elfgjfghkk.club`、`https://mapi.fgjfghkkcenter.club`。路径detail `/api/v3/comic2/{comicId}?platform=3`，groups章节 `/api/v3/comic/{comicId}/group/{group}/chapters?limit=100&offset={offset}`，正文 `/api/v3/comic/{comicId}/chapter/{chapterId}?platform=3`。API header COPY/3.0.9、Accept application/json、platform3/version3.0.9/region1/webp1、Referer；普通网络保留Chrome140 UA和JSON优先Accept；不发送dnts。默认普通20s/API12s读取，不能独立表达15s/8s连接限制要披露。
+- [ ] API仅连接失败可按3个origin尝试并记住最近返回code200/results对象的线路；网络变化时仍可从该线路回退其他。HTTP失败、JSON错误/占位null、证书验证失败、取消均不得换线；不能放松TLS。保留原path/query；全部连接失败给含尝试host的中文错误。不新增自动无限重试。可注入transport和明确API origin/fallback列表用于契约测试；显式自定义API主域不落回内置备用域。
+- [ ] 目录先校验comic.path_word，groups全部遍历，不信count（0也取）。每组分页limit100、offset必须匹配、total>=0、list必需，每项comic/group归属以及uuid/name必需，跨组chapterID去重，sectionSlot按组、chapterSlot=offset+i；只要没到total的空页、重复整页、最多1000页未结束须失败，不能返回半目录。保持JSON分组原有顺序；Foundation Dictionary无稳定输入顺序保证，须选用最小保序解析方案或专门扫描groups键序，不悄悄排序改原行为。
+- [ ] 正文旧域URL提取comic/uuid并解码，规范为当前域；校验results非空且is_lock非true、comic/uuid/归属一致，contents非空且size等于数组长度，保留原图顺序（不用words字段重排），每图HTTP(S)，空nextPageUrl。拒绝被锁内容，不绕过访问限制。
+- [ ] 先失败测试后实现，复制使用Android记录样本：搜索两页各12、分类50、分类组题材含COLOR、目录190、正文86；失败目录/正文、连接回退/证书/取消及URL/header边界。响应16MiB只后验限制必须披露。聚焦测试结束后与主代理协调一次全量，报告真实结果和平台未验收。输出task-21-report.md。

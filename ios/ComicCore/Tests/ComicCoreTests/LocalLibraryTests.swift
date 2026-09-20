@@ -53,8 +53,11 @@ final class LocalLibraryTests: XCTestCase {
         let handle = try FileHandle(forWritingTo: file)
         try handle.truncate(atOffset: 128 * 1024 * 1024 + 1)
         try handle.close()
-        XCTAssertThrowsError(try library.importImages(title: "大图", files: [file]))
+        XCTAssertThrowsError(try library.importImages(title: "大图", files: [file])) { error in
+            guard case LocalLibraryError.imageTooLarge = error else { return XCTFail("unexpected error: \(error)") }
+        }
         XCTAssertTrue(try library.books().isEmpty)
+        XCTAssertEqual(try file.resourceValues(forKeys: [.fileSizeKey]).fileSize, 128 * 1024 * 1024 + 1)
     }
 
     func testAndroidSingleImageByteBoundaryIsAcceptedAndPreserved() throws {
