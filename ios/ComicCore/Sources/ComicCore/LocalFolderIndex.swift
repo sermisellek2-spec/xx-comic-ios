@@ -3,6 +3,7 @@ import Foundation
 struct LocalFolderIndex {
     struct Group { let title: String; let indices: [Int] }
     let files: [URL]
+    let relativePaths: [String]
     let groups: [Group]
 
     init(folder: URL, isReadableImage: (URL) throws -> Bool) throws {
@@ -37,6 +38,7 @@ struct LocalFolderIndex {
         guard !found.isEmpty else { throw LocalLibraryError.emptyImport }
         found.sort { NaturalPathOrder.less($0.path, $1.path) }
         files = found.map(\.url)
+        relativePaths = found.map(\.path)
         groups = Self.groups(for: found.map(\.path))
     }
 

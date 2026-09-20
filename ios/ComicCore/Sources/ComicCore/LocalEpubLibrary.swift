@@ -118,8 +118,23 @@ extension LocalLibrary {
                 LocalBookChapter(id: id + "_ch_\(index)", title: range.title, pages: Array(names[range.startIndex..<range.endIndex]))
             }
             let cleaned = SearchRules.trim(title)
+            let format: LocalImportFormat
+            let hashTarget: URL
+            if let kindleFormat {
+                switch kindleFormat {
+                case .mobi: format = .mobi
+                case .azw: format = .azw
+                case .azw3: format = .azw3
+                }
+                hashTarget = staging.appendingPathComponent("source.kindle")
+            } else {
+                format = .epub
+                hashTarget = content
+            }
+            let fingerprint = try ContentFingerprint.file(hashTarget)
             let book = LocalBook(id: id, title: cleaned.isEmpty ? (publication.title.isEmpty ? "本地 EPUB" : publication.title) : cleaned,
-                                 createdAt: Date().timeIntervalSince1970, pages: names, chapters: chapters, epub: publication, coverName: coverName, kindleFormat: kindleFormat)
+                                 createdAt: Date().timeIntervalSince1970, pages: names, chapters: chapters, epub: publication, coverName: coverName,
+                                 kindleFormat: kindleFormat, importFormat: format, fingerprint: fingerprint)
             try validateEpubMetadata(book)
             return book
         }
@@ -167,6 +182,7 @@ extension LocalLibrary {
 
     /// Import and reopening must agree before a book becomes visible to the shelf.
     private func validateEpubMetadata(_ book: LocalBook) throws {
+        try book.validateMetadata()
         guard let publication = book.epub, !publication.hasDrm,
               !publication.manifest.isEmpty, publication.manifest.count <= 50_000, publication.spine.count <= 100_000,
               book.pages == publication.spine.indices.map({ "spine-\($0)" }),

@@ -39,6 +39,14 @@ final class ContentFingerprintTests: XCTestCase {
         XCTAssertEqual(try ContentFingerprint.folder(root, relativeImagePaths: []), emptyHash)
     }
 
+    func testOwnedFlatFilesKeepTheirOriginalFolderManifestPaths() throws {
+        let zero = try write("0.png", Data("abc".utf8)), one = try write("1.png", Data())
+        XCTAssertEqual(try ContentFingerprint.folder(root, files: [
+            (relativePath: "10.png", ownedFile: one),
+            (relativePath: "2.png", ownedFile: zero)
+        ]), "289a7e9d8b7639baa049ca4aed2c3fc55cf31ec0056560ea3459ff175cc325d3")
+    }
+
     func testManifestPreservesWrapperSpacesAndOriginalUnicodeBytes() throws {
         let a = "包装 空间/卷2/é 2.png", b = "包装 空间/卷2/é 10.png"
         try write(a); try write(b, Data())

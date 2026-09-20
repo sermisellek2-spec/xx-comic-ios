@@ -9,16 +9,25 @@ private func renameat2(_ oldFD: Int32, _ old: UnsafePointer<CChar>, _ newFD: Int
 #endif
 
 /// The caller must publish or discard a successful preparation. Copies share one lifetime.
-struct PreparedLocalImport: Sendable {
-    let book: LocalBook
-    var staging: URL { storage.staging }
+public struct PreparedLocalImport: Sendable {
+    public let book: LocalBook
+    public var staging: URL { storage.staging }
     fileprivate let storage: LocalImportDirectory
+
+    func reassigningTargetID(_ targetID: String) throws -> PreparedLocalImport {
+        guard targetID != book.id else { return self }
+        guard UUID(uuidString: targetID) != nil else { throw LocalLibraryError.invalidBook }
+        guard !FileManager.default.fileExists(atPath: storage.root.appendingPathComponent(targetID).path) else {
+            return self
+        }
+        return try storage.reassign(targetID: targetID, book: book)
+    }
 }
 
 extension LocalLibrary {
-    func prepareLocalImport(_ build: (String, URL, LocalImportDirectory) throws -> LocalBook) throws -> PreparedLocalImport {
+    func prepareLocalImport(targetID: String? = nil, _ build: (String, URL, LocalImportDirectory) throws -> LocalBook) throws -> PreparedLocalImport {
         try Task.checkCancellation()
-        let storage = try LocalImportDirectory(root: directory, owner: importOwner)
+        let storage = try LocalImportDirectory(root: directory, owner: importOwner, targetID: targetID)
         do {
             let book = try build(storage.id, storage.staging, storage)
             try storage.validateLocation()
@@ -77,7 +86,8 @@ private func importSystemError() -> NSError { NSError(domain: NSPOSIXErrorDomain
 
 /// Pins both directories for relative publication/cleanup; the lock protects only terminal use.
 final class LocalImportDirectory: @unchecked Sendable {
-    let id = UUID().uuidString
+    var id: String
+    let token: String
     let owner: UUID
     let root: URL
     let rootFD: Int32
@@ -86,16 +96,20 @@ final class LocalImportDirectory: @unchecked Sendable {
     var finished = false
     var manifestBytes = 0
     private var ownedFiles: [String: [UInt64]] = [:]
-    var name: String { ".import-" + id }
+    var name: String { ".import-" + token }
     var staging: URL { root.appendingPathComponent(name, isDirectory: true) }
 
-    init(root: URL, owner: UUID) throws {
+    init(root: URL, owner: UUID, targetID: String? = nil) throws {
+        let assigned = targetID ?? UUID().uuidString
+        guard UUID(uuidString: assigned) != nil else { throw LocalLibraryError.invalidBook }
+        self.id = assigned
+        self.token = assigned
         self.root = root
         self.owner = owner
         let rootFD = open(root.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)
         guard rootFD >= 0 else { throw importSystemError() }
         self.rootFD = rootFD
-        let name = ".import-" + id
+        let name = ".import-" + token
         guard mkdirat(rootFD, name, 0o700) == 0 else {
             let error = importSystemError(); close(rootFD); throw error
         }
@@ -129,6 +143,7 @@ final class LocalImportDirectory: @unchecked Sendable {
         try validateLocation()
         try validateFiles()
         guard book.id == id, !book.pages.isEmpty else { throw LocalLibraryError.invalidBook }
+        try book.validateMetadata()
         let manifestFD = openat(stagingFD, "book.json", O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC)
         guard manifestFD >= 0 else { throw importSystemError() }
         let manifest = FileHandle(fileDescriptor: manifestFD, closeOnDealloc: true)
@@ -141,6 +156,7 @@ final class LocalImportDirectory: @unchecked Sendable {
         guard try JSONDecoder().decode(LocalBook.self, from: data) == book else { throw LocalLibraryError.invalidBook }
         var names = book.epub != nil ? ["content.epub"] : book.pdf != nil ? ["content.pdf"] : book.pages
         if book.kindleFormat != nil { names.append("source.kindle") }
+        if book.importFormat == .zip || book.importFormat == .cbz { names.append("source.archive") }
         if let cover = book.coverName { names.append(cover) }
         names.append("book.json")
         for name in names {
@@ -211,6 +227,29 @@ final class LocalImportDirectory: @unchecked Sendable {
             if name == "." || name == ".." { continue }
             guard let owned = ownedFiles[name], try identity(name) == owned else { throw LocalLibraryError.invalidBook }
         }
+    }
+
+    func reassign(targetID: String, book: LocalBook) throws -> PreparedLocalImport {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !finished else { throw LocalLibraryError.invalidBook }
+        try validateLocation()
+        let newChapters: [LocalBookChapter]? = book.chapters?.enumerated().map { index, ch in
+            let expectedOldPrefix = book.id + "_ch_"
+            let newChapterId = ch.id.hasPrefix(expectedOldPrefix) ? "\(targetID)_ch_\(index)" : (ch.id == book.id ? targetID : ch.id)
+            return LocalBookChapter(id: newChapterId, title: ch.title, pages: ch.pages)
+        }
+        let updatedBook = LocalBook(id: targetID, title: book.title, createdAt: book.createdAt, pages: book.pages,
+                                    chapters: newChapters, epub: book.epub, pdf: book.pdf, coverName: book.coverName,
+                                    kindleFormat: book.kindleFormat, importFormat: book.importFormat, fingerprint: book.fingerprint)
+        try updatedBook.validateMetadata()
+        try removeFile(staging.appendingPathComponent("book.json"))
+        self.id = targetID
+        let manifest = try JSONEncoder().encode(updatedBook)
+        self.manifestBytes = manifest.count
+        try write(manifest, name: "book.json")
+        try validate(updatedBook)
+        return PreparedLocalImport(book: updatedBook, storage: self)
     }
 
     func discard() throws {

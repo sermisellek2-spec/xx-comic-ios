@@ -25,9 +25,11 @@ extension LocalLibrary {
             }
             let names = publication.pages.indices.map { "pdf-\($0)" }
             let cleaned = SearchRules.trim(title)
+            let fingerprint = try ContentFingerprint.file(content)
             let book = LocalBook(id: id, title: cleaned.isEmpty ? "本地 PDF" : cleaned, createdAt: Date().timeIntervalSince1970,
                                  pages: names, chapters: [LocalBookChapter(id: id + "_ch_0", title: "全本", pages: names)],
-                                 pdf: publication, coverName: cover == nil ? nil : "cover.bin")
+                                 pdf: publication, coverName: cover == nil ? nil : "cover.bin",
+                                 importFormat: .pdf, fingerprint: fingerprint)
             try validatePdfMetadata(book)
             return book
         }
@@ -52,6 +54,7 @@ extension LocalLibrary {
     }
 
     private func validatePdfMetadata(_ book: LocalBook) throws {
+        try book.validateMetadata()
         guard book.epub == nil, let publication = book.pdf,
               book.pages == publication.pages.indices.map({ "pdf-\($0)" }),
               book.coverName == nil || book.coverName == "cover.bin",

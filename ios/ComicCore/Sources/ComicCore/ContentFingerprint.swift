@@ -11,13 +11,19 @@ public enum ContentFingerprint {
     }
 
     public static func folder(_ root: URL, relativeImagePaths: [String]) throws -> String {
+        let files = relativeImagePaths.map { (relativePath: $0, ownedFile: root.appendingPathComponent($0)) }
+        return try folder(root, files: files)
+    }
+
+    static func folder(_ root: URL, files: [(relativePath: String, ownedFile: URL)]) throws -> String {
         try Task.checkCancellation()
-        guard root.isFileURL, relativeImagePaths.count <= 50_000 else { throw Failure.invalidInput }
+        guard root.isFileURL, files.count <= 50_000 else { throw Failure.invalidInput }
         try requireDirectory(root)
         let resolvedRoot = root.resolvingSymlinksInPath().standardizedFileURL
         // Swift String equality folds canonical Unicode equivalents; identity uses raw UTF-8.
         var seen = Set<Data>()
-        for path in relativeImagePaths {
+        for file in files {
+            let path = file.relativePath
             let parts = path.split(separator: "/", omittingEmptySubsequences: false)
             guard !path.contains("\\"), !path.contains("\0"),
                   parts.allSatisfy({ !$0.isEmpty && $0 != "." && $0 != ".." }),
@@ -25,22 +31,14 @@ public enum ContentFingerprint {
         }
         var totalBytes: Int64 = 0
         return try digest { feed in
-            for path in relativeImagePaths.sorted(by: NaturalPathOrder.less) {
+            for file in files.sorted(by: { NaturalPathOrder.less($0.relativePath, $1.relativePath) }) {
                 try Task.checkCancellation()
                 try requireDirectory(root)
-                var url = root
-                let parts = path.split(separator: "/")
-                for (index, part) in parts.enumerated() {
-                    url.appendPathComponent(String(part))
-                    if index < parts.count - 1 { try requireDirectory(url) }
-                }
-                let resolved = url.resolvingSymlinksInPath().standardizedFileURL
-                let prefix = resolvedRoot.path.hasSuffix("/") ? resolvedRoot.path : resolvedRoot.path + "/"
-                guard resolved.path.hasPrefix(prefix) else { throw Failure.invalidInput }
-                let result = try hashFile(url, maximumBytes: min(128 * 1024 * 1024, 20 * 1024 * 1024 * 1024 - totalBytes),
+                try validateOwnedPath(root: root, resolvedRoot: resolvedRoot, file: file.ownedFile)
+                let result = try hashFile(file.ownedFile, maximumBytes: min(128 * 1024 * 1024, 20 * 1024 * 1024 * 1024 - totalBytes),
                                           readChunk: { try $0.read(upToCount: $1) })
                 totalBytes += result.bytes
-                try feed(Data((path + ":" + result.hash + "\n").utf8))
+                try feed(Data((file.relativePath + ":" + result.hash + "\n").utf8))
             }
         }
     }
@@ -89,6 +87,27 @@ public enum ContentFingerprint {
     private static func requireDirectory(_ url: URL) throws {
         let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
         guard attributes[.type] as? FileAttributeType == .typeDirectory else { throw Failure.invalidInput }
+    }
+
+    private static func validateOwnedPath(root: URL, resolvedRoot: URL, file: URL) throws {
+        guard file.isFileURL else { throw Failure.invalidInput }
+        let rootPath = root.path.hasSuffix("/") ? root.path : root.path + "/"
+        guard file.path.hasPrefix(rootPath) else { throw Failure.invalidInput }
+        let relative = String(file.path.dropFirst(rootPath.count))
+        let parts = relative.split(separator: "/", omittingEmptySubsequences: false)
+        guard !parts.isEmpty, parts.allSatisfy({ !$0.isEmpty && $0 != "." && $0 != ".." }) else { throw Failure.invalidInput }
+        var current = root
+        for (index, part) in parts.enumerated() {
+            current.appendPathComponent(String(part))
+            if index < parts.count - 1 {
+                try requireDirectory(current)
+            } else {
+                _ = try regularFileAttributes(current)
+            }
+        }
+        let resolvedFile = file.resolvingSymlinksInPath().standardizedFileURL
+        let resolvedPrefix = resolvedRoot.path.hasSuffix("/") ? resolvedRoot.path : resolvedRoot.path + "/"
+        guard resolvedFile.path.hasPrefix(resolvedPrefix) else { throw Failure.invalidInput }
     }
 
     private static func digest(_ produce: (_ feed: (Data) throws -> Void) throws -> Void) throws -> String {
