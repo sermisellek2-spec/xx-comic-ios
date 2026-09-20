@@ -86,6 +86,42 @@ public final class LibraryStore {
         try persist(entry)
     }
 
+    public func deleteHistory(for comic: ComicSummary) throws {
+        let k = Self.key(comic)
+        guard var entry = snapshot.entries[k] else { return }
+        entry.reading = nil
+        entry.positions.removeAll()
+        entry.textPositions?.removeAll()
+        var next = snapshot
+        if !entry.isFavorite {
+            next.entries.removeValue(forKey: k)
+        } else {
+            next.entries[k] = entry
+        }
+        let data = try JSONEncoder().encode(next)
+        try data.write(to: file, options: .atomic)
+        snapshot = next
+    }
+
+    public func clearHistory() throws {
+        var nextEntries = snapshot.entries
+        for (k, var entry) in nextEntries {
+            entry.reading = nil
+            entry.positions.removeAll()
+            entry.textPositions?.removeAll()
+            if !entry.isFavorite {
+                nextEntries.removeValue(forKey: k)
+            } else {
+                nextEntries[k] = entry
+            }
+        }
+        var next = snapshot
+        next.entries = nextEntries
+        let data = try JSONEncoder().encode(next)
+        try data.write(to: file, options: .atomic)
+        snapshot = next
+    }
+
     private func persist(_ entry: LibraryEntry) throws {
         var next = snapshot
         next.entries[Self.key(entry.summary)] = entry

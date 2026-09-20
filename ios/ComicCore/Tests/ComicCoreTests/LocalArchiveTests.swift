@@ -38,7 +38,7 @@ final class LocalArchiveTests: XCTestCase {
         XCTAssertEqual(book.chapters?.map(\.title), ["正文"])
         XCTAssertEqual(book.pages.count, 1)
         XCTAssertEqual(try Data(contentsOf: XCTUnwrap(URL(string: library.summary(for: book).coverUrl))), Data([2]))
-        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.appendingPathComponent(book.id).path).count, 2)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.appendingPathComponent(book.id).path).count, 3)
     }
 
     func testGB18030FallbackIsGlobalButFlaggedNamesRemainUTF8() throws {
@@ -224,7 +224,7 @@ final class LocalArchiveTests: XCTestCase {
 }
 
 /// Deterministic ZIP records allow corrupt fixtures without a shell or checked-in binary blobs.
-private enum ZIPFixture {
+enum ZIPFixture {
     struct Item {
         var name: Data, data: Data, flags: UInt16, method: UInt16
         var size: UInt32?, packedSize: UInt32?, crc: UInt32?, payload: Data?
@@ -287,7 +287,7 @@ private enum ZIPFixture {
         return crc ^ 0xffffffff
     }
 }
-private extension Data {
+extension Data {
     mutating func le<T: FixedWidthInteger>(_ value: T) {
         var little = value.littleEndian
         Swift.withUnsafeBytes(of: &little) { append(contentsOf: $0) }

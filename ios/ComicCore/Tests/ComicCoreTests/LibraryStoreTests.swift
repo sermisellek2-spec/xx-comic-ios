@@ -66,4 +66,64 @@ final class LibraryStoreTests: XCTestCase {
         XCTAssertThrowsError(try store.setFavorite(comic, favorite: true, now: 1))
         XCTAssertTrue(store.favorites.isEmpty)
     }
+
+    func testDeleteHistoryClearsPositionsAndRetainsFavorites() throws {
+        let folder = try directory()
+        let store = try LibraryStore(directory: folder)
+        let comicFav = ComicSummary(sourceId: "a", comicId: "fav1", title: "收藏漫画")
+        let comicUnfav = ComicSummary(sourceId: "a", comicId: "unfav1", title: "普通漫画")
+        let ch = Chapter(chapterId: "c1", title: "第1话", url: "https://example.org/1")
+
+        // 1. 收藏漫画：加收藏 + 存阅读记录 + 存章节位置
+        try store.setFavorite(comicFav, favorite: true, now: 100)
+        try store.saveReading(comicFav, chapter: ch, chapterIndex: 0, position: ReaderPosition(imageIndex: 10, offset: 0.5), now: 150)
+
+        // 2. 普通漫画：未收藏 + 存阅读记录
+        try store.saveReading(comicUnfav, chapter: ch, chapterIndex: 0, position: ReaderPosition(imageIndex: 2, offset: 0.1), now: 160)
+
+        XCTAssertEqual(store.history.count, 2)
+        XCTAssertEqual(store.favorites.count, 1)
+
+        // 删除普通漫画历史 -> 应该从 snapshot 中完全移除
+        try store.deleteHistory(for: comicUnfav)
+        XCTAssertEqual(store.history.count, 1)
+        XCTAssertNil(store.entry(for: comicUnfav))
+
+        // 删除收藏漫画历史 -> 历史清除、位置清除，但收藏仍被保留！
+        try store.deleteHistory(for: comicFav)
+        XCTAssertEqual(store.history.count, 0)
+        XCTAssertEqual(store.favorites.count, 1)
+        let entry = try XCTUnwrap(store.entry(for: comicFav))
+        XCTAssertTrue(entry.isFavorite)
+        XCTAssertNil(entry.reading)
+        XCTAssertTrue(entry.positions.isEmpty)
+        XCTAssertNil(store.position(for: comicFav, chapterID: "c1"))
+
+        // 重启 store，校验持久化结果
+        let reloaded = try LibraryStore(directory: folder)
+        XCTAssertTrue(reloaded.history.isEmpty)
+        XCTAssertEqual(reloaded.favorites.count, 1)
+        XCTAssertEqual(reloaded.favorites.first?.summary.comicId, "fav1")
+    }
+
+    func testClearHistoryClearsAllReadingRecordsAndPositions() throws {
+        let folder = try directory()
+        let store = try LibraryStore(directory: folder)
+        let c1 = ComicSummary(sourceId: "a", comicId: "1", title: "书1")
+        let c2 = ComicSummary(sourceId: "a", comicId: "2", title: "书2")
+        let ch = Chapter(chapterId: "c", title: "话", url: "u")
+
+        try store.setFavorite(c1, favorite: true, now: 10)
+        try store.saveReading(c1, chapter: ch, chapterIndex: 0, position: ReaderPosition(imageIndex: 1, offset: 0), now: 20)
+        try store.saveReading(c2, chapter: ch, chapterIndex: 0, position: ReaderPosition(imageIndex: 3, offset: 0), now: 30)
+
+        XCTAssertEqual(store.history.count, 2)
+        try store.clearHistory()
+
+        XCTAssertEqual(store.history.count, 0)
+        XCTAssertEqual(store.favorites.count, 1)
+        XCTAssertNil(store.entry(for: c2))
+        XCTAssertNotNil(store.entry(for: c1))
+        XCTAssertTrue(store.entry(for: c1)!.positions.isEmpty)
+    }
 }
