@@ -468,6 +468,8 @@ XCTAssertEqual(try Data(contentsOf: mobi), originalBytes)
 
 **Interfaces:** `LocalKindleFormat:String,Codable,Sendable` 为mobi/azw/azw3；`LocalBook.kindleFormat:LocalKindleFormat?` 为新可选字段且init默认nil，旧书架JSON仍兼容；`LocalLibrary.importKindle(title:String,source:URL,format:LocalKindleFormat,isReadableImage:(URL)throws->Bool)throws->LocalBook`。固定拥有原包`source.kindle`、派生包`content.epub`，现有book.epub描述派生内容，kindleFormat!=nil要求epub!=nil且pdf==nil。format只展示原文件扩展名，不覆盖Task37按字节的实际变体/DRM判断，不承诺AZW3/KF8可读。
 
+**发布裁定（Task39实施核对）：** 派生文件与scratch同一书库卷，最终发布使用Foundation `linkItem`的原子不覆盖语义，成功后本次scratch的defer回收源链接；不依赖moveItem内部先检查目标再rename的潜在竞态。下文“不覆盖move”按这一契约执行。允许对Task38 `KindlePublicationAdapter.swift`最后发布作同样最小修改并回归目标竞争/取消，不改转换规则。仅按NSError domain/code识别Cocoa/POSIX的已存在错误后验证赢家，其余错误继续抛出；不支持硬链接明确失败，不回退可能覆盖的rename。成本是依赖App私有书库所在文件系统支持同卷硬链接，Apple实际执行仍待验收。
+
 - [ ] RED真实MOBI临时文件导入后重开、原包字节保持、派生EPUB正文/图片、历史位置及旧书架兼容。源文件被用户移走后仍从App副本读取；DRM/KF8损坏明确失败，无发布残留。删除App拥有的派生content.epub后实际资源读取重建，不用mock转换器充当格式支持。
 
 ```swift
