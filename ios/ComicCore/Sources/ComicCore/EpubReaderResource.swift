@@ -29,6 +29,7 @@ public enum EpubReaderResource {
         guard !url.absoluteString.contains("://\(id.uuidString.lowercased()):/") else {
             throw LocalLibraryError.invalidBook
         }
+        guard !parts.percentEncodedPath.hasPrefix(":/") else { throw LocalLibraryError.invalidBook }
         // Split before decoding so an encoded slash cannot introduce a new ZIP component.
         let components = try parts.percentEncodedPath.dropFirst().split(separator: "/", omittingEmptySubsequences: false).map { encoded in
             guard let decoded = String(encoded).removingPercentEncoding,

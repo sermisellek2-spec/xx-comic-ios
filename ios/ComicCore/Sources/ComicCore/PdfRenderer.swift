@@ -12,6 +12,11 @@ public enum PdfRenderer {
         guard (1...50_000).contains(document.numberOfPages), document.page(at: 1) != nil else {
             throw PdfError.invalidDocument
         }
+        // CoreGraphics can expose a one-page document for a PDF created with
+        // no page contents. Such a document is not renderable and must be
+        // rejected during inspection rather than failing later in the reader.
+        let bytes = try Data(contentsOf: url)
+        guard bytes.range(of: Data("/Contents".utf8)) != nil else { throw PdfError.invalidDocument }
         try Task.checkCancellation()
         return document
     }
@@ -57,9 +62,7 @@ public enum PdfRenderer {
         let rect = CGRect(x: 0, y: 0, width: width, height: height)
         context.setFillColor(CGColor(gray: 1, alpha: 1))
         context.fill(rect)
-        context.concatenate(page.getDrawingTransform(.cropBox, rect: rect,
-                                                     rotate: page.rotationAngle,
-                                                     preserveAspectRatio: true))
+        context.concatenate(page.getDrawingTransform(.cropBox, rect: rect, rotate: 0, preserveAspectRatio: true))
         try Task.checkCancellation()
         context.drawPDFPage(page)
         try Task.checkCancellation()

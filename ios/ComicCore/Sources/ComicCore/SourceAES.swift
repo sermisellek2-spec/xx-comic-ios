@@ -8,7 +8,8 @@ enum SourceAES {
     static func decrypt(_ ciphertext: Data, key: Data, iv: Data) throws -> Data {
         try Task.checkCancellation()
         guard [16, 24, 32].contains(key.count), iv.count == 16,
-              !ciphertext.isEmpty, ciphertext.count.isMultiple(of: 16) else { throw DecodeError.invalidInput }
+              !ciphertext.isEmpty, ciphertext.count.isMultiple(of: 16),
+              !ciphertext.allSatisfy({ $0 == 0 }) else { throw DecodeError.invalidInput }
 #if canImport(CommonCrypto)
         var output = Data(count: ciphertext.count)
         let capacity = output.count
