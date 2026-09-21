@@ -16,7 +16,7 @@ public enum PdfRenderer {
         // no page contents. Such a document is not renderable and must be
         // rejected during inspection rather than failing later in the reader.
         guard let first = document.page(at: 1),
-              let dictionary = CGPDFPageGetDictionary(first) else { throw PdfError.invalidDocument }
+              let dictionary = first.dictionary else { throw PdfError.invalidDocument }
         var stream: CGPDFStreamRef?
         guard CGPDFDictionaryGetStream(dictionary, "Contents", &stream), stream != nil else {
             throw PdfError.invalidDocument
