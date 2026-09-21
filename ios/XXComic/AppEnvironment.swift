@@ -71,10 +71,10 @@ final class AppEnvironment {
 
         networkMonitor = SystemNetworkMonitor()
         downloadRuntime.updateNetworkStatus(isConnected: networkMonitor.isConnected, isWifi: networkMonitor.isWifi)
-        networkMonitor.statusDidChange = { [weak downloadRuntime] isConnected, isWifi in
+        networkMonitor.onStatusChange = { [weak downloadRuntime] isConnected, isWifi in
             downloadRuntime?.updateNetworkStatus(isConnected: isConnected, isWifi: isWifi)
         }
-        networkMonitor.startMonitoring()
+        networkMonitor.start()
 
         if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--epub-fixtures") {
             try EpubUITestFixtures.seed(library: localLibrary)

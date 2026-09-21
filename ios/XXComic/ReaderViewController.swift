@@ -27,7 +27,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private lazy var pages = UICollectionView(frame: .zero, collectionViewLayout: layout)
     private let toolbar = UIStackView()
     private let previous = UIButton(type: .system)
-    private let next = UIButton(type: .system)
+    private let nextButton = UIButton(type: .system)
     private let status = UIButton(type: .system)
     private let badge = UILabel()
     private var retryAction: (() -> Void)?
@@ -71,10 +71,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         let directory = UIButton(type: .system), preferences = UIButton(type: .system)
         directory.setTitle("目录", for: .normal); preferences.setTitle("设置", for: .normal)
         previous.addTarget(self, action: #selector(backward), for: .touchUpInside)
-        next.addTarget(self, action: #selector(forward), for: .touchUpInside)
+        nextButton.addTarget(self, action: #selector(forward), for: .touchUpInside)
         directory.addTarget(self, action: #selector(showDirectory), for: .touchUpInside)
         preferences.addTarget(self, action: #selector(showSettings), for: .touchUpInside)
-        for button in [previous, directory, preferences, next] { toolbar.addArrangedSubview(button) }
+        for button in [previous, directory, preferences, nextButton] { toolbar.addArrangedSubview(button) }
         status.titleLabel?.numberOfLines = 0
         status.addTarget(self, action: #selector(retry), for: .touchUpInside)
         badge.font = .monospacedDigitSystemFont(ofSize: 11, weight: .regular)
@@ -162,7 +162,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         pages.isPagingEnabled = settings.layout == .paged
         pages.isScrollEnabled = settings.layout == .strip && !isZoomed
         previous.setTitle(settings.layout == .strip ? "上一章" : "上一页", for: .normal)
-        next.setTitle(settings.layout == .strip ? "下一章" : "下一页", for: .normal)
+        nextButton.setTitle(settings.layout == .strip ? "下一章" : "下一页", for: .normal)
         let style: UIUserInterfaceStyle = settings.theme == .system ? UIScreen.main.traitCollection.userInterfaceStyle : (settings.theme == .dark ? .dark : .light)
         overrideUserInterfaceStyle = style
         navigationController?.overrideUserInterfaceStyle = style

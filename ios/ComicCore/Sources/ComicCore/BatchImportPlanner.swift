@@ -40,6 +40,13 @@ public struct BatchImportGroup: Equatable, Sendable {
     public let title: String
     public let requiresConfirmation: Bool
     public let volumes: [BatchImportCandidate]
+
+    public init(key: String, title: String, requiresConfirmation: Bool, volumes: [BatchImportCandidate]) {
+        self.key = key
+        self.title = title
+        self.requiresConfirmation = requiresConfirmation
+        self.volumes = volumes
+    }
 }
 
 public enum BatchImportPlanner {

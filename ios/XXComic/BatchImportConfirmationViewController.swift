@@ -62,7 +62,7 @@ final class BatchImportConfirmationViewController: UIViewController, UITableView
     private func setupViews() {
         // Merge switch row
         mergeSwitchContainer.translatesAutoresizingMaskIntoConstraints = false
-        mergeSwitchContainer.backgroundColor = Palette.cardBackground
+        mergeSwitchContainer.backgroundColor = Palette.card
         mergeSwitchContainer.layer.cornerRadius = 10
         view.addSubview(mergeSwitchContainer)
 
@@ -87,7 +87,7 @@ final class BatchImportConfirmationViewController: UIViewController, UITableView
         confirmButton.translatesAutoresizingMaskIntoConstraints = false
         confirmButton.setTitle("确认导入 (\(initialCandidates.count) 卷)", for: .normal)
         confirmButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
-        confirmButton.backgroundColor = Palette.tint
+        confirmButton.backgroundColor = Palette.accent
         confirmButton.setTitleColor(.white, for: .normal)
         confirmButton.layer.cornerRadius = 12
         confirmButton.clipsToBounds = true

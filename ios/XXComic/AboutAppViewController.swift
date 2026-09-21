@@ -31,7 +31,7 @@ final class AboutAppViewController: UIViewController, UITableViewDataSource, UIT
 
         let mark = UIImageView()
         mark.image = UIImage(named: "rem_reader_resume")
-        mark.contentMode = .scaleAspectCrop
+        mark.contentMode = .scaleAspectFill
         mark.layer.cornerRadius = 16
         mark.clipsToBounds = true
         mark.backgroundColor = Palette.card

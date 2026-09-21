@@ -13,7 +13,7 @@ final class AppThemeController {
         self.root = root; self.defaults = defaults
         for name in [Self.changed, UIApplication.didBecomeActiveNotification, UIApplication.significantTimeChangeNotification] {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                Task { @MainActor in self?.refresh() }
+                Task { @MainActor [weak self] in self?.refresh() }
             })
         }
         refresh()
@@ -29,7 +29,7 @@ final class AppThemeController {
         }.min()
         if let next {
             timer = Timer.scheduledTimer(withTimeInterval: max(1, next.timeIntervalSince(now) + 0.25), repeats: false) { [weak self] _ in
-                Task { @MainActor in self?.refresh() }
+                Task { @MainActor [weak self] in self?.refresh() }
             }
         }
     }

@@ -89,7 +89,7 @@ final class VolumeManagerViewController: UIViewController, UITableViewDataSource
         appendButton.translatesAutoresizingMaskIntoConstraints = false
         appendButton.setTitle("＋ 追加新分卷", for: .normal)
         appendButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
-        appendButton.backgroundColor = Palette.tint
+        appendButton.backgroundColor = Palette.accent
         appendButton.setTitleColor(.white, for: .normal)
         appendButton.layer.cornerRadius = 12
         appendButton.clipsToBounds = true
@@ -167,7 +167,7 @@ final class VolumeManagerViewController: UIViewController, UITableViewDataSource
                 self.volumes = loadedVolumes
                 self.tableView.reloadData()
             } catch {
-                self.showError(error)
+                self.showVolumeError(error)
             }
             self.loadingIndicator.stopAnimating()
         }
@@ -201,7 +201,7 @@ final class VolumeManagerViewController: UIViewController, UITableViewDataSource
                 try await self.environment.localLibrary.deleteVolume(seriesId: self.seriesId, volumeId: volumeIdToDelete)
                 self.onVolumesChanged()
             } catch {
-                self.showError(error)
+                self.showVolumeError(error)
                 self.loadVolumes()
             }
         }
@@ -283,7 +283,7 @@ final class VolumeManagerViewController: UIViewController, UITableViewDataSource
                 self.tableView.reloadData()
                 self.onVolumesChanged()
             } catch {
-                self.showError(error)
+                self.showVolumeError(error)
                 self.loadVolumes()
             }
         }
@@ -313,7 +313,7 @@ final class VolumeManagerViewController: UIViewController, UITableViewDataSource
         present(picker, animated: true)
     }
 
-    private func showError(_ error: Error) {
+    private func showVolumeError(_ error: Error) {
         let alert = UIAlertController(title: "操作失败", message: error.localizedDescription, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "好的", style: .default))
         present(alert, animated: true)
@@ -348,7 +348,7 @@ extension VolumeManagerViewController: UIDocumentPickerDelegate {
                     self.present(alert, animated: true)
                 }
             } catch {
-                self.showError(error)
+                self.showVolumeError(error)
             }
             self.loadingIndicator.stopAnimating()
             self.appendButton.isEnabled = true
