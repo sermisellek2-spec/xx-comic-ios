@@ -70,10 +70,10 @@ public enum PdfRenderer {
         let rect = CGRect(x: 0, y: 0, width: width, height: height)
         context.setFillColor(CGColor(gray: 1, alpha: 1))
         context.fill(rect)
-        context.concatenate(page.getDrawingTransform(.cropBox, rect: rect, rotate: 0, preserveAspectRatio: false))
-        // CoreGraphics' page transform is expressed in page points on some
-        // Apple SDKs. Apply the final pixel scale explicitly so a 2.5x render
-        // does not leave the PDF content at its original point dimensions.
+        let pointRect = CGRect(x: 0, y: 0, width: CGFloat(pageSize.width), height: CGFloat(pageSize.height))
+        context.concatenate(page.getDrawingTransform(.cropBox, rect: pointRect, rotate: 0, preserveAspectRatio: true))
+        // The page transform is built in points; apply the single final scale
+        // from points to the requested bitmap dimensions.
         context.scaleBy(x: CGFloat(width) / CGFloat(pageSize.width),
                         y: CGFloat(height) / CGFloat(pageSize.height))
         try Task.checkCancellation()
