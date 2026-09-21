@@ -252,7 +252,9 @@ final class EpubTextReaderViewController: UIViewController, UIAdaptivePresentati
     private func overlayChanged() { environment.readingHabits.overlayVisibilityChanged(isVisible: !readable || !controls.isHidden || presentedViewController != nil) }
     private func presentPanel(_ controller: UIViewController) {
         environment.readingHabits.overlayVisibilityChanged(isVisible: true)
-        present(controller, animated: true); controller.presentationController?.delegate = self
+        present(controller, animated: true)
+        // UIKit owns UIAlertController's presentation delegate; replacing it raises an exception.
+        if !(controller is UIAlertController) { controller.presentationController?.delegate = self }
     }
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) { overlayChanged() }
     @objc private func directory() {
