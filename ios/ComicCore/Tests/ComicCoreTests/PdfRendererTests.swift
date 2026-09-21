@@ -129,7 +129,26 @@ final class PdfRendererTests: XCTestCase {
                 }
             }
         }
-        XCTAssertThrowsError(try PdfRenderer.inspect(empty))
+        // CGContext synthesizes one valid blank page; this is not a zero-page PDF.
+        XCTAssertEqual(try PdfRenderer.inspect(empty).pages.count, 1)
+        let blank = try pixels(PdfRenderer.render(empty, pageIndex: 0))
+        for offset in stride(from: 0, to: blank.2.count, by: 4) {
+            XCTAssertTrue(blank.2[offset..<(offset + 3)].allSatisfy { $0 > 240 })
+        }
+        var zeroPages = "%PDF-1.4\n"
+        var offsets: [Int] = []
+        for (index, object) in ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [] /Count 0 >>"].enumerated() {
+            offsets.append(zeroPages.utf8.count)
+            zeroPages += "\(index + 1) 0 obj\n\(object)\nendobj\n"
+        }
+        let xref = zeroPages.utf8.count
+        zeroPages += "xref\n0 3\n0000000000 65535 f \n"
+        for offset in offsets { zeroPages += String(format: "%010d 00000 n \n", offset) }
+        zeroPages += "trailer\n<< /Size 3 /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n"
+        let zero = url.deletingLastPathComponent().appendingPathComponent("zero-pages.pdf")
+        try Data(zeroPages.utf8).write(to: zero)
+        XCTAssertThrowsError(try PdfRenderer.inspect(zero))
+        XCTAssertThrowsError(try PdfRenderer.render(zero, pageIndex: 0))
         try Data("%PDF-1.7 truncated document".utf8).write(to: url)
         XCTAssertThrowsError(try PdfRenderer.inspect(url))
         XCTAssertThrowsError(try PdfRenderer.render(url, pageIndex: 0))

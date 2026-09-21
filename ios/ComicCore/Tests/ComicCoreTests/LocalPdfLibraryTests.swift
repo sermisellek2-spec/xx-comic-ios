@@ -87,17 +87,35 @@ final class LocalPdfLibraryTests: XCTestCase {
         let library = try LocalLibrary(directory: directory()), book = try imported(library)
         for text in ["file:///tmp/book.pdf", "xxcomic-epub://page/\(book.id)/0", "xxcomic-pdf://other/\(book.id)/0",
                      "xxcomic-pdf://user@page/\(book.id)/0", "xxcomic-pdf://page:80/\(book.id)/0",
-                     "xxcomic-pdf://page:/\(book.id)/0",
                      "xxcomic-pdf://page/\(book.id)/0?x=1", "xxcomic-pdf://page/\(book.id)/0#x",
                      "xxcomic-pdf://page/\(book.id)/%30", "xxcomic-pdf://page/\(book.id)/-1",
                      "xxcomic-pdf://page/\(book.id)/2", "xxcomic-pdf://page/\(book.id)/999999999999999999999",
                      "xxcomic-pdf://page//0", "xxcomic-pdf://page/\(book.id)/0/extra"] {
-            if text.contains("page:/") {
-                print("URL_DIAGNOSTIC input=\(text) absolute=\(String(describing: URL(string: text)?.absoluteString))")
-            }
             XCTAssertThrowsError(try library.pdfPageData(pageURL: XCTUnwrap(URL(string: text))) { _, _ in XCTFail("不安全地址进入渲染器: \(text)"); return Data() })
         }
     }
+    func testEmptyPortNormalizationKeepsOwnedPageIdentity() throws {
+        let library = try LocalLibrary(directory: directory()), book = try imported(library)
+        let url = try XCTUnwrap(URL(string: "xxcomic-pdf://page:/\(book.id)/0"))
+        if url.absoluteString == "xxcomic-pdf://page/\(book.id)/0" {
+            var calls = 0
+            let data = try library.pdfPageData(pageURL: url) { file, index in
+                calls += 1
+                XCTAssertEqual(file.lastPathComponent, "content.pdf")
+                XCTAssertEqual(file.deletingLastPathComponent().lastPathComponent, book.id)
+                XCTAssertEqual(index, 0)
+                return Data([1])
+            }
+            XCTAssertEqual(calls, 1)
+            XCTAssertEqual(data, Data([1]))
+        } else {
+            XCTAssertThrowsError(try library.pdfPageData(pageURL: url) { _, _ in
+                XCTFail("Unnormalized empty port reached renderer")
+                return Data([1])
+            })
+        }
+    }
+
     func testSourceAndOwnedSymlinksAreRejected() throws {
         let library = try LocalLibrary(directory: directory()), input = try source(), link = try directory().appendingPathComponent("link.pdf")
         try FileManager.default.createSymbolicLink(at: link, withDestinationURL: input)

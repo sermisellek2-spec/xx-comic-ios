@@ -571,10 +571,21 @@ private final class TestURLProtocol: URLProtocol, @unchecked Sendable {
 
     override func startLoading() {
         Self.lock.lock()
-        if request.httpMethod == "POST" {
-            print("POST_DIAGNOSTIC bodyBytes=\(String(describing: request.httpBody?.count)) hasBodyStream=\(request.httpBodyStream != nil)")
+        var captured = request
+        if captured.httpBody == nil, let stream = captured.httpBodyStream {
+            stream.open()
+            defer { stream.close() }
+            var bytes = Data()
+            var buffer = [UInt8](repeating: 0, count: 4096)
+            while true {
+                let count = stream.read(&buffer, maxLength: buffer.count)
+                if count < 0 { XCTFail("Request body stream failed"); break }
+                if count == 0 { break }
+                bytes.append(contentsOf: buffer.prefix(count))
+            }
+            captured.httpBody = bytes
         }
-        Self.requests.append(request)
+        Self.requests.append(captured)
         let behavior = Self.behavior
         let onStart = Self.onStart
         let responseHeaders = Self.responseHeaders
