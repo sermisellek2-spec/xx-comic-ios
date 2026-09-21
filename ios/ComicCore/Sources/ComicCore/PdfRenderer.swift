@@ -9,7 +9,9 @@ public enum PdfRenderer {
         try Task.checkCancellation()
         guard url.isFileURL, let document = CGPDFDocument(url as CFURL) else { throw PdfError.invalidDocument }
         guard !document.isEncrypted, document.isUnlocked else { throw PdfError.encrypted }
-        guard (1...50_000).contains(document.numberOfPages) else { throw PdfError.invalidDocument }
+        guard (1...50_000).contains(document.numberOfPages), document.page(at: 1) != nil else {
+            throw PdfError.invalidDocument
+        }
         try Task.checkCancellation()
         return document
     }
@@ -55,7 +57,9 @@ public enum PdfRenderer {
         let rect = CGRect(x: 0, y: 0, width: width, height: height)
         context.setFillColor(CGColor(gray: 1, alpha: 1))
         context.fill(rect)
-        context.concatenate(page.getDrawingTransform(.cropBox, rect: rect, rotate: 0, preserveAspectRatio: true))
+        context.concatenate(page.getDrawingTransform(.cropBox, rect: rect,
+                                                     rotate: page.rotationAngle,
+                                                     preserveAspectRatio: true))
         try Task.checkCancellation()
         context.drawPDFPage(page)
         try Task.checkCancellation()

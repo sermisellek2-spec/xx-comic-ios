@@ -24,6 +24,10 @@ public enum EpubReaderResource {
               url.absoluteString.hasPrefix("xxcomic-book://\(id.uuidString.lowercased())/"),
               parts.user == nil, parts.password == nil, parts.port == nil, parts.query == nil,
               parts.percentEncodedPath.hasPrefix("/") else { throw LocalLibraryError.invalidBook }
+        // URLComponents normalizes an empty port ("host:/path") to nil. Keep
+        // the authority strict so that an explicit, malformed port is rejected.
+        if let authority = url.absoluteString.split(separator: "/", maxSplits: 3, omittingEmptySubsequences: false).dropFirst(2).first,
+           authority.contains(":") { throw LocalLibraryError.invalidBook }
         // Split before decoding so an encoded slash cannot introduce a new ZIP component.
         let components = try parts.percentEncodedPath.dropFirst().split(separator: "/", omittingEmptySubsequences: false).map { encoded in
             guard let decoded = String(encoded).removingPercentEncoding,

@@ -93,8 +93,12 @@ public struct URLSessionHTTPTransport: HTTPTransport, @unchecked Sendable {
         try Task.checkCancellation()
         var request = URLRequest(url: url)
         request.timeoutInterval = timeoutInterval
-        if let body { request.httpMethod = "POST"; request.httpBody = body }
+        if body != nil { request.httpMethod = "POST" }
         headers.forEach { request.setValue($0.value, forHTTPHeaderField: $0.key) }
+        // Assign after headers as Foundation may rebuild the request while
+        // applying header fields; keeping the body assignment last also makes
+        // it visible to URLProtocol based transports used in tests.
+        if let body { request.httpBody = body }
 #if canImport(FoundationNetworking)
         let box = URLSessionTaskBox()
         let (data, response): (Data, URLResponse) = try await withTaskCancellationHandler {

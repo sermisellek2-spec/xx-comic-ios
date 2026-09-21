@@ -194,7 +194,12 @@ public actor BatchImportSession {
             data.append(chunk)
             guard data.count <= byteLimit else { throw SessionError.tooLarge }
         }
-        guard String(data: data, encoding: .utf8) != nil else { throw SessionError.invalidSnapshot }
+        // JSONDecoder accepts UTF-16/32 data even without a BOM.  The persisted
+        // session format is explicitly UTF-8, so validate the byte sequence
+        // itself before decoding rather than relying on JSONDecoder's encoding
+        // detection.
+        guard let utf8 = String(data: data, encoding: .utf8),
+              Data(utf8.utf8) == data else { throw SessionError.invalidSnapshot }
         var restored = try JSONDecoder().decode(Snapshot.self, from: data)
         guard restored.version == 1 else { throw SessionError.unsupportedVersion }
         guard UUID(uuidString: restored.taskId) != nil else { throw SessionError.invalidSnapshot }

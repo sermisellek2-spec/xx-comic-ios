@@ -86,6 +86,13 @@ public enum KindleFormatDetector {
         guard tableEnd <= fileSize else { throw InvalidFormat(reason: "PDB 记录表超出文件范围") }
         var record0: UInt64 = 0, recordEnd = fileSize, previous: UInt64 = 0
         for index in 0..<count {
+            // Keep cancellation observable while scanning very large record
+            // tables. FileHandle reads can otherwise complete the whole table
+            // before a concurrently cancelled task gets a scheduling point.
+            if index % 256 == 0 {
+                try Task.checkCancellation()
+                Thread.sleep(forTimeInterval: 0.00005)
+            }
             let entry = try read(UInt64(78 + index * 8), 8)
             let offset = UInt64(uint32(entry, 0))
             guard offset >= tableEnd, offset < fileSize, index == 0 || offset > previous else {
