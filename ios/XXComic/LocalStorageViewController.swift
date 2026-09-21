@@ -94,7 +94,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     }
 
     private func loadData() {
-        Task {
+        Task { [self] in
             // 1. 本地系列
             var loaded: [Item] = []
             let seriesList = (try? await environment.localLibrary.series()) ?? []
@@ -111,7 +111,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
             let downloadTasks = environment.downloadStore.list()
             let grouped = Dictionary(grouping: downloadTasks, by: \.bookId)
             for (bookId, tasks) in grouped {
-                let detail = environment.downloadStore.snapshot(bookId)
+                let detail = environment.downloadStore.snapshot(id: bookId)
                 let firstTask = tasks.first
                 var title = detail?.summary.title ?? "离线漫画"
                 if let first = firstTask, first.isFileTask {
@@ -130,7 +130,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     private func updateStatistics() {
         Task.detached {
             let localDir = await self.environment.localLibrary.directory
-            let downloadsDir = await self.environment.downloadStore.directory
+            let downloadsDir = await self.environment.downloadRuntime.downloadsDirectory
 
             let importedSize = StorageCalculator.directorySize(at: localDir)
             let downloadedSize = StorageCalculator.directorySize(at: downloadsDir)

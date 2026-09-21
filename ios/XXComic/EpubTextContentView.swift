@@ -141,12 +141,12 @@ final class EpubTextContentView: UIView, WKNavigationDelegate, WKUIDelegate {
         case .dark: colors = ["#12161F", "#C8D0E0", "#5E81AC"]
         }
         let css = "*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}html,body{background:\(colors[0])!important;color:\(colors[1])!important;font-size:\(preferences.fontSize)px!important;line-height:\(preferences.lineHeight)!important;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif!important;margin:0;padding:22px 18px 90px 18px;word-break:break-word;text-align:justify}p{margin-top:0!important;margin-bottom:.9em!important;text-indent:2em;line-height:\(preferences.lineHeight)!important}h1,h2,h3,h4,h5,h6{color:\(colors[1])!important;text-indent:0!important;margin-top:1.2em;margin-bottom:.6em;font-weight:bold}img{max-width:100%!important;height:auto!important;display:block!important;margin:14px auto!important;border-radius:4px}a{color:\(colors[2])!important;text-decoration:none}blockquote{margin:12px 0;padding:6px 14px;border-left:3px solid \(colors[2]);opacity:.85}"
-        web.callAsyncJavaScript("let s=document.getElementById('__xxcomic_style');if(!s){s=document.createElement('style');s.id='__xxcomic_style';document.head.appendChild(s)}s.textContent=css;", arguments: ["css": css], in: nil, contentWorld: Self.world) { [weak self, weak web] result in
+        web.callAsyncJavaScript("let s=document.getElementById('__xxcomic_style');if(!s){s=document.createElement('style');s.id='__xxcomic_style';document.head.appendChild(s)}s.textContent=css;", arguments: ["css": css], in: nil, in: Self.world) { [weak self, weak web] result in
             guard let self, let web, self.generation == token, self.layoutGeneration == layoutToken, self.webView === web else { return }
             if case .failure(let error) = result { self.fail(error); return }
             DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(120)) { [weak self, weak web] in
                 guard let self, let web, self.generation == token, self.layoutGeneration == layoutToken, self.webView === web else { return }
-                web.callAsyncJavaScript("const e=anchor ? document.getElementById(anchor) : null;if(window.readerAnchor(e)){e.scrollIntoView()}else{window.scrollTo(0,percent*Math.max(0,document.documentElement.scrollHeight-innerHeight))}return window.readerPosition();", arguments: ["anchor": self.restoreAnchor, "percent": self.restorePercent], in: nil, contentWorld: Self.world) { [weak self, weak web] result in
+                web.callAsyncJavaScript("const e=anchor ? document.getElementById(anchor) : null;if(window.readerAnchor(e)){e.scrollIntoView()}else{window.scrollTo(0,percent*Math.max(0,document.documentElement.scrollHeight-innerHeight))}return window.readerPosition();", arguments: ["anchor": self.restoreAnchor, "percent": self.restorePercent], in: nil, in: Self.world) { [weak self, weak web] result in
                     guard let self, let web, self.generation == token, self.layoutGeneration == layoutToken, self.webView === web else { return }
                     self.restoring = false
                     switch result {
@@ -172,7 +172,7 @@ final class EpubTextContentView: UIView, WKNavigationDelegate, WKUIDelegate {
         if type == "tap", let x = body["x"] as? Double {
             if x >= 0.32 && x <= 0.68 { onToggleControls?() }
             else if preferences.pagedMode {
-                webView?.callAsyncJavaScript("window.scrollBy(0,direction*innerHeight*.88)", arguments: ["direction": x < 0.32 ? -1 : 1], in: nil, contentWorld: Self.world, completionHandler: nil)
+                webView?.callAsyncJavaScript("window.scrollBy(0,direction*innerHeight*.88)", arguments: ["direction": x < 0.32 ? -1 : 1], in: nil, in: Self.world, completionHandler: nil)
                 onUserRead?()
             }
         }

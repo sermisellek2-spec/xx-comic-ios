@@ -287,7 +287,7 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
         let generation = browserGeneration
         job.browser = browser
         // Isolated world keeps the AbortController and fetch primitive out of page script scope.
-        browser.callAsyncJavaScript(Self.fetchScript, arguments: ["url": job.url.absoluteString, "id": job.id.uuidString], in: nil, contentWorld: .defaultClient) { [weak self, weak job] result in
+        browser.callAsyncJavaScript(Self.fetchScript, arguments: ["url": job.url.absoluteString, "id": job.id.uuidString], in: nil, in: .defaultClient) { [weak self, weak job] result in
             guard let self, let job, self.jobs.first === job, generation == self.browserGeneration else { return }
             switch result {
             case .failure:
@@ -315,7 +315,7 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
         job.timeout?.cancel()
         job.work?.cancel()
         job.httpTask?.cancel()
-        job.browser?.callAsyncJavaScript("globalThis.__mh18Requests?.get(id)?.abort(); globalThis.__mh18Requests?.delete(id);", arguments: ["id": job.id.uuidString], in: nil, contentWorld: .defaultClient, completionHandler: nil)
+        job.browser?.callAsyncJavaScript("globalThis.__mh18Requests?.get(id)?.abort(); globalThis.__mh18Requests?.delete(id);", arguments: ["id": job.id.uuidString], in: nil, in: .defaultClient, completionHandler: nil)
         job.continuation.resume(with: result)
         if index == 0, startNext, let next = jobs.first { start(next) }
     }
