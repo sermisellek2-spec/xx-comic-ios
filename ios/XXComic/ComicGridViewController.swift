@@ -257,7 +257,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                     session: session,
                     isReadableImage: LocalImageProbe.isReadable,
                     inspectPdf: PdfRenderer.inspect,
-                    renderCover: { try PdfRenderer.render($0, pageIndex: 0, maximumDimension: 720, quality: 0.85) }
+                    renderPdfCover: { try PdfRenderer.render($0, pageIndex: 0, maximumDimension: 720, quality: 0.85) }
                 )
                 currentWorker = worker
                 let summary = try await worker.execute(groups: groups, urlMap: urlMap) { [weak self] progress in

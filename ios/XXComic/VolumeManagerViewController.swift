@@ -220,7 +220,7 @@ final class VolumeManagerViewController: UIViewController, UITableViewDataSource
         undoContainer.isHidden = false
 
         let timer = Timer.scheduledTimer(withTimeInterval: 3.5, repeats: false) { [weak self] _ in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 self?.commitPendingDeletionImmediately()
             }
         }
@@ -336,7 +336,7 @@ extension VolumeManagerViewController: UIDocumentPickerDelegate {
                     session: session,
                     isReadableImage: LocalImageProbe.isReadable,
                     inspectPdf: PdfRenderer.inspect,
-                    renderCover: { try PdfRenderer.render($0, pageIndex: 0, maximumDimension: 720, quality: 0.85) }
+                    renderPdfCover: { try PdfRenderer.render($0, pageIndex: 0, maximumDimension: 720, quality: 0.85) }
                 )
                 let summary = try await worker.appendVolumes(urls: urls, toSeriesId: self.seriesId, seriesTitle: self.seriesTitle)
                 self.loadVolumes()
