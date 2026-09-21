@@ -267,7 +267,7 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
             if job.useBrowser { self.startBrowserFetch(job) }
             else {
                 let task = self.http.dataTask(with: self.urlRequest(job.url)) { [weak self, weak job] data, response, error in
-                    Task { @MainActor in
+                    Task { @MainActor [weak self, weak job] in
                         guard let self, let job, self.jobs.first === job else { return }
                         if let error { self.finish(job, result: .failure(error)); return }
                         guard let response = response as? HTTPURLResponse, let url = response.url, Mh18BrowserTrust.allowsRequest(url), let data else { self.finish(job, result: .failure(self.failure("页面跳转或响应异常"))); return }
