@@ -92,6 +92,9 @@ final class LocalPdfLibraryTests: XCTestCase {
                      "xxcomic-pdf://page/\(book.id)/%30", "xxcomic-pdf://page/\(book.id)/-1",
                      "xxcomic-pdf://page/\(book.id)/2", "xxcomic-pdf://page/\(book.id)/999999999999999999999",
                      "xxcomic-pdf://page//0", "xxcomic-pdf://page/\(book.id)/0/extra"] {
+            if text.contains("page:/") {
+                print("URL_DIAGNOSTIC input=\(text) absolute=\(String(describing: URL(string: text)?.absoluteString))")
+            }
             XCTAssertThrowsError(try library.pdfPageData(pageURL: XCTUnwrap(URL(string: text))) { _, _ in XCTFail("不安全地址进入渲染器: \(text)"); return Data() })
         }
     }

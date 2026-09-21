@@ -59,6 +59,14 @@ final class PdfRendererTests: XCTestCase {
     }
     func testNativeInspectionRenderingPageOrderRotationAndWhiteBackground() throws {
         let url = try fixture(), publication = try PdfRenderer.inspect(url)
+        let native = try XCTUnwrap(CGPDFDocument(url as CFURL))
+        for index in 1...native.numberOfPages {
+            let page = try XCTUnwrap(native.page(at: index))
+            let box = page.getBoxRect(.cropBox)
+            let target = publication.pages[index - 1]
+            let rect = CGRect(x: 0, y: 0, width: target.width, height: target.height)
+            print("PDF_DIAGNOSTIC page=\(index) crop=\(box) media=\(page.getBoxRect(.mediaBox)) rotation=\(page.rotationAngle) transform=\(page.getDrawingTransform(.cropBox, rect: rect, rotate: 0, preserveAspectRatio: true))")
+        }
         XCTAssertEqual(publication.pages, [.init(width: 80, height: 120), .init(width: 120, height: 80)])
         let first = try pixels(PdfRenderer.render(url, pageIndex: 0))
         let second = try pixels(PdfRenderer.render(url, pageIndex: 1))
@@ -109,6 +117,18 @@ final class PdfRendererTests: XCTestCase {
         let empty = url.deletingLastPathComponent().appendingPathComponent("empty.pdf")
         var box = CGRect(x: 0, y: 0, width: 80, height: 120)
         try XCTUnwrap(CGContext(empty as CFURL, mediaBox: &box, nil)).closePDF()
+        if let native = CGPDFDocument(empty as CFURL) {
+            print("PDF_EMPTY_DIAGNOSTIC pages=\(native.numberOfPages)")
+            if let dictionary = native.page(at: 1)?.dictionary {
+                var stream: CGPDFStreamRef?
+                if CGPDFDictionaryGetStream(dictionary, "Contents", &stream), let stream {
+                    var format = CGPDFDataFormat.raw
+                    if let bytes = CGPDFStreamCopyData(stream, &format) {
+                        print("PDF_EMPTY_DIAGNOSTIC stream=\(String(decoding: (bytes as Data).prefix(512), as: UTF8.self))")
+                    }
+                }
+            }
+        }
         XCTAssertThrowsError(try PdfRenderer.inspect(empty))
         try Data("%PDF-1.7 truncated document".utf8).write(to: url)
         XCTAssertThrowsError(try PdfRenderer.inspect(url))

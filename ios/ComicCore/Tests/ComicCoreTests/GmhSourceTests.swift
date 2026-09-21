@@ -571,6 +571,9 @@ private final class TestURLProtocol: URLProtocol, @unchecked Sendable {
 
     override func startLoading() {
         Self.lock.lock()
+        if request.httpMethod == "POST" {
+            print("POST_DIAGNOSTIC bodyBytes=\(String(describing: request.httpBody?.count)) hasBodyStream=\(request.httpBodyStream != nil)")
+        }
         Self.requests.append(request)
         let behavior = Self.behavior
         let onStart = Self.onStart

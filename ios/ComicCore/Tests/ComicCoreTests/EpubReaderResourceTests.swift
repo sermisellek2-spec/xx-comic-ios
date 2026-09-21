@@ -59,6 +59,7 @@ final class EpubReaderResourceTests: XCTestCase {
 
     func testParserRejectsEmptyPortDelimiter() throws {
         let url = try XCTUnwrap(URL(string: "xxcomic-book://\(host):/OPS/a"))
+        print("URL_DIAGNOSTIC input=xxcomic-book://\(host):/OPS/a absolute=\(url.absoluteString) components=\(String(describing: URLComponents(url: url, resolvingAgainstBaseURL: false)))")
         XCTAssertThrowsError(try EpubReaderResource.path(from: url, bookID: id))
     }
 
