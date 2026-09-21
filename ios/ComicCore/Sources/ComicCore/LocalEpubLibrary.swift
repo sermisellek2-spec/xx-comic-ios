@@ -24,8 +24,10 @@ enum LocalPageURL {
               url.absoluteString.hasPrefix("\(scheme)://page/"),
               parts.port == nil, parts.query == nil, parts.fragment == nil,
               !parts.percentEncodedPath.contains("%") else { throw LocalLibraryError.invalidBook }
-        guard !url.absoluteString.contains("://page:/") else { throw LocalLibraryError.invalidBook }
-        guard !parts.percentEncodedPath.hasPrefix(":/") else { throw LocalLibraryError.invalidBook }
+        guard let marker = url.absoluteString.range(of: "://") else { throw LocalLibraryError.invalidBook }
+        let authorityAndPath = url.absoluteString[marker.upperBound...]
+        let authority = authorityAndPath.split(separator: "/", maxSplits: 1, omittingEmptySubsequences: false).first ?? ""
+        guard !authority.contains(":") else { throw LocalLibraryError.invalidBook }
         let path = parts.percentEncodedPath.split(separator: "/", omittingEmptySubsequences: false)
         guard path.count == 3, path[0].isEmpty, UUID(uuidString: String(path[1])) != nil,
               !path[2].isEmpty, path[2].utf8.allSatisfy({ (48...57).contains($0) }),

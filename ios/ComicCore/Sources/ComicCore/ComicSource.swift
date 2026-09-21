@@ -99,7 +99,6 @@ public struct URLSessionHTTPTransport: HTTPTransport, @unchecked Sendable {
         // applying header fields; keeping the body assignment last also makes
         // it visible to URLProtocol based transports used in tests.
         if let body { request.httpBody = body }
-#if canImport(FoundationNetworking)
         let box = URLSessionTaskBox()
         let (data, response): (Data, URLResponse) = try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
@@ -114,9 +113,6 @@ public struct URLSessionHTTPTransport: HTTPTransport, @unchecked Sendable {
         } onCancel: {
             box.cancel()
         }
-#else
-        let (data, response) = try await session.data(for: request)
-#endif
         guard let response = response as? HTTPURLResponse else { throw HTTPTransportError.invalidResponse }
         let responseHeaders = response.allHeaderFields.reduce(into: [String: String]()) { result, field in
             if let key = field.key as? String { result[key] = String(describing: field.value) }
@@ -125,7 +121,6 @@ public struct URLSessionHTTPTransport: HTTPTransport, @unchecked Sendable {
     }
 }
 
-#if canImport(FoundationNetworking)
 private final class URLSessionTaskBox: @unchecked Sendable {
     private let lock = NSLock()
     private var task: URLSessionTask?
@@ -147,4 +142,3 @@ private final class URLSessionTaskBox: @unchecked Sendable {
         task?.cancel()
     }
 }
-#endif

@@ -26,10 +26,10 @@ public enum EpubReaderResource {
               parts.percentEncodedPath.hasPrefix("/") else { throw LocalLibraryError.invalidBook }
         // URLComponents normalizes an empty port ("host:/path") to nil. Keep
         // the authority strict so that an explicit, malformed port is rejected.
-        guard !url.absoluteString.contains("://\(id.uuidString.lowercased()):/") else {
-            throw LocalLibraryError.invalidBook
-        }
-        guard !parts.percentEncodedPath.hasPrefix(":/") else { throw LocalLibraryError.invalidBook }
+        guard let marker = url.absoluteString.range(of: "://") else { throw LocalLibraryError.invalidBook }
+        let authorityAndPath = url.absoluteString[marker.upperBound...]
+        let authority = authorityAndPath.split(separator: "/", maxSplits: 1, omittingEmptySubsequences: false).first ?? ""
+        guard !authority.contains(":") else { throw LocalLibraryError.invalidBook }
         // Split before decoding so an encoded slash cannot introduce a new ZIP component.
         let components = try parts.percentEncodedPath.dropFirst().split(separator: "/", omittingEmptySubsequences: false).map { encoded in
             guard let decoded = String(encoded).removingPercentEncoding,

@@ -18,7 +18,11 @@ public enum PdfRenderer {
         guard let first = document.page(at: 1),
               let dictionary = first.dictionary else { throw PdfError.invalidDocument }
         var stream: CGPDFStreamRef?
-        guard CGPDFDictionaryGetStream(dictionary, "Contents", &stream), stream != nil else {
+        guard CGPDFDictionaryGetStream(dictionary, "Contents", &stream), let stream else {
+            throw PdfError.invalidDocument
+        }
+        var format = CGPDFDataFormat.raw
+        guard let streamData = CGPDFStreamCopyData(stream, &format), CFDataGetLength(streamData) > 0 else {
             throw PdfError.invalidDocument
         }
         try Task.checkCancellation()
@@ -66,7 +70,7 @@ public enum PdfRenderer {
         let rect = CGRect(x: 0, y: 0, width: width, height: height)
         context.setFillColor(CGColor(gray: 1, alpha: 1))
         context.fill(rect)
-        context.concatenate(page.getDrawingTransform(.cropBox, rect: rect, rotate: 0, preserveAspectRatio: true))
+        context.concatenate(page.getDrawingTransform(.cropBox, rect: rect, rotate: 0, preserveAspectRatio: false))
         // CoreGraphics' page transform is expressed in page points on some
         // Apple SDKs. Apply the final pixel scale explicitly so a 2.5x render
         // does not leave the PDF content at its original point dimensions.
