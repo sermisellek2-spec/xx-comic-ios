@@ -36,7 +36,7 @@ enum SourceAES {
         try ciphertext.write(to: input)
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/openssl")
-        process.arguments = ["enc", "-d", "-aes-\(key.count * 8)-cbc", "-K", key.map { String(format: "%02x", $0) }.joined(),
+        process.arguments = ["enc", "-d", "-aes-\(key.count * 8)-cbc", "-nopad", "-K", key.map { String(format: "%02x", $0) }.joined(),
                              "-iv", iv.map { String(format: "%02x", $0) }.joined(), "-in", input.path, "-out", result.path]
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
@@ -44,7 +44,13 @@ enum SourceAES {
         process.waitUntilExit()
         try Task.checkCancellation()
         guard process.terminationStatus == 0 else { throw DecodeError.decryptionFailed }
-        let output = try Data(contentsOf: result)
+        let padded = try Data(contentsOf: result)
+        guard let padding = padded.last, (1...16).contains(Int(padding)),
+              padded.count >= Int(padding),
+              padded.suffix(Int(padding)).allSatisfy({ $0 == padding }) else {
+            throw DecodeError.decryptionFailed
+        }
+        let output = Data(padded.dropLast(Int(padding)))
 #else
         throw DecodeError.unavailable
 #endif

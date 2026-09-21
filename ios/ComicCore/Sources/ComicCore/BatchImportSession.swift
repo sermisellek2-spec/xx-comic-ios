@@ -198,7 +198,7 @@ public actor BatchImportSession {
         // session format is explicitly UTF-8, so validate the byte sequence
         // itself before decoding rather than relying on JSONDecoder's encoding
         // detection.
-        guard let utf8 = String(data: data, encoding: .utf8),
+        guard !data.contains(0), let utf8 = String(data: data, encoding: .utf8),
               Data(utf8.utf8) == data else { throw SessionError.invalidSnapshot }
         var restored = try JSONDecoder().decode(Snapshot.self, from: data)
         guard restored.version == 1 else { throw SessionError.unsupportedVersion }
