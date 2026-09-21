@@ -180,7 +180,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
     private func startProgressTimer() {
         stopProgressTimer()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 self?.loadTasks()
             }
         }
@@ -266,7 +266,16 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
         // If completed, attempt to open reader
         if let snapshot = environment.downloadRuntime.store.snapshot(id: task.bookId) {
             let summary = snapshot.summary
-            let reader = ReaderViewController(comic: summary, environment: environment, initialChapterId: task.chapterId)
+            guard let chapterIndex = snapshot.chapters.firstIndex(where: { $0.chapterId == task.chapterId }),
+                  environment.source(for: summary) != nil else {
+                let alert = UIAlertController(title: "无法打开章节", message: "下载目录中未找到对应章节或站源，请重新检查下载记录。", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "好的", style: .default))
+                present(alert, animated: true)
+                return
+            }
+            let reader = ReaderViewController(comic: summary, chapters: snapshot.chapters,
+                                              chapterIndex: chapterIndex, directoryIncomplete: false,
+                                              environment: environment)
             navigationController?.pushViewController(reader, animated: true)
         }
     }

@@ -261,7 +261,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                 )
                 currentWorker = worker
                 let summary = try await worker.execute(groups: groups, urlMap: urlMap) { [weak self] progress in
-                    Task { @MainActor in
+                    Task { @MainActor [weak self] in
                         self?.status("正在导入 \(progress.itemName) (\(progress.itemIndex + 1)/\(progress.totalItemsInGroup))…")
                     }
                 }
