@@ -4,6 +4,8 @@
 
 ## 实际执行
 
+- 2026-09-21 UI 测试结果包排查（`iOS-test-results.zip`，`UITests.xcresult`）：该轮 Core 646 项通过、模拟器编译通过；UI 17 项中 5 个用例共 7 次断言失败，尚未通过全部验收。解压 Zstandard 数据后直接核对 XCTest 无障碍树：字号步进器实际是 `epub.fontSize-Increment` / `Decrement` 按钮；DRM 导入项在可滚动菜单可视区域下方；禁用脚本后的 javascript 链接实际暴露为静态文字。已按实际元素调整测试，保留字号修改/重启持久化、DRM 拒绝、安全脚本不执行和外链确认断言。各 EPUB/Kindle 场景使用独立 UUID 数据目录和偏好域，同一场景重启复用 UUID，避免前序用例保存的章节进度污染后续用例；切节竞态测试增加初始“第1章，第1节”断言。此次修改尚待 macOS 重跑，Windows 无 Swift/Apple SDK 且 Docker daemon 不可用，不能据此宣称 UI 已通过或 IPA 已生成。
+
 - 下载安全加固、文件下载Worker、本机HTTP测试服务与动态站源消费（2026-09-20 深夜）：全量 638 项测试通过（2 项 Apple 条件跳过，0 失败，137.464 秒）；全量 XXComic Swift 语法前端解析 0 错误；Android 254 个基准文件 SHA-256 严格一致。
   1. 【本机真实 HTTP 测试服务实现与验证】`LocalTestHTTPServer.swift`（基于纯 Swift POSIX TCP socket），提供真实 `127.0.0.1:0` HTTP/1.1 服务，测试 `LocalTestHTTPServerTests`（2/2 通过）。
   2. 【文件下载 Worker 落地与完整验证】`FileDownloadWorker.swift` 支持 Strong ETag、Range/If-Range、200/206/416 状态码处理、失效链接刷新回调、保留旧版本以及真实格式探测（PDF/EPUB/MOBI/CBZ/ZIP），测试 `FileDownloadWorkerTests`（11/11 通过）。

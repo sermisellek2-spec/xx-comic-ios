@@ -2,8 +2,12 @@ import XCTest
 
 /// These are executable Apple UI scenarios, not source-code assertions. Run with an iOS simulator.
 final class EpubReadingUITests: XCTestCase {
+    // One sandbox per scenario; relaunching the same app preserves its saved state.
+    private let sessionID = UUID().uuidString
     private func launch() -> XCUIApplication {
-        let app = XCUIApplication(); app.launchArguments = ["--ui-testing", "--epub-fixtures"]; app.launch()
+        let app = XCUIApplication(); app.launchArguments = ["--ui-testing", "--epub-fixtures"]
+        app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = sessionID
+        app.launch()
         XCTAssertTrue(app.buttons["本地书架"].waitForExistence(timeout: 20)); app.buttons["本地书架"].tap()
         return app
     }
@@ -87,11 +91,10 @@ final class EpubReadingUITests: XCTestCase {
     func testTextSettingsPersistAfterRelaunch() {
         let app = launch(); open("文字", app: app); ready(app)
         app.buttons["排版"].tap()
-        let font = app.steppers["epub.fontSize"]
-        XCTAssertTrue(font.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["epub.fontSize-Increment"].waitForExistence(timeout: 5))
         let before = app.tables.cells.element(boundBy: 0).staticTexts.firstMatch.label
         let isMaximum = before.contains("32")
-        font.buttons.element(boundBy: isMaximum ? 0 : 1).tap()
+        app.buttons[isMaximum ? "epub.fontSize-Decrement" : "epub.fontSize-Increment"].tap()
         let changed = app.tables.cells.element(boundBy: 0).staticTexts.firstMatch.label
         XCTAssertNotEqual(before, changed)
         app.buttons["护眼"].tap(); app.buttons["点击翻页"].tap()
@@ -115,6 +118,7 @@ final class EpubReadingUITests: XCTestCase {
 
     func testPendingScrollRestoreCannotOverwriteNextDocumentPosition() {
         let app = launch(); open("文字", app: app); ready(app)
+        XCTAssertEqual(app.staticTexts["epub.section"].value as? String, "第1章，第1节")
         app.sliders["epub.progress"].adjust(toNormalizedSliderPosition: 0.8)
         app.buttons["下一节"].tap()
         ready(app)
@@ -133,7 +137,10 @@ final class EpubReadingUITests: XCTestCase {
         XCTAssertTrue(app.webViews.staticTexts["事件未执行"].exists)
         XCTAssertFalse(app.webViews.staticTexts["本书 CSS 未加载"].exists)
         XCTAssertFalse(app.webViews.staticTexts["第二章正文"].exists) // iframe must not render.
-        app.webViews.links["不安全链接"].tap()
+        // With book scripts disabled, WebKit exposes this javascript: target as static text.
+        XCTAssertFalse(app.webViews.links["不安全链接"].exists)
+        XCTAssertTrue(app.webViews.staticTexts["不安全链接"].exists)
+        app.webViews.staticTexts["不安全链接"].tap()
         XCTAssertFalse(app.webViews.staticTexts["JS链接执行"].exists)
         app.webViews.links["外部测试链接"].tap()
         XCTAssertTrue(app.alerts["打开外部链接？"].waitForExistence(timeout: 5))
@@ -172,6 +179,7 @@ final class EpubReadingUITests: XCTestCase {
     private func launchKindle() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--epub-fixtures", "--kindle-fixtures"]
+        app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = sessionID
         app.launch()
         XCTAssertTrue(app.buttons["本地书架"].waitForExistence(timeout: 20)); app.buttons["本地书架"].tap()
         return app
@@ -179,7 +187,13 @@ final class EpubReadingUITests: XCTestCase {
 
     @discardableResult
     private func importKindle(_ kind: String, app: XCUIApplication) -> String {
-        app.navigationBars.buttons["导入"].tap(); app.buttons["验收 Kindle·" + kind].tap()
+        app.navigationBars.buttons["导入"].tap()
+        let item = app.buttons["验收 Kindle·" + kind]
+        let menu = app.scrollViews.containing(.button, identifier: "Kindle 电子书").firstMatch
+        XCTAssertTrue(menu.waitForExistence(timeout: 5))
+        for _ in 0..<4 where !item.isHittable { menu.swipeUp() }
+        XCTAssertTrue(item.isHittable)
+        item.tap()
         let alert = app.alerts["导入 Kindle 电子书"]
         XCTAssertTrue(alert.waitForExistence(timeout: 5))
         let title = "Kindle 验收·\(kind)·\(UUID().uuidString.prefix(6))"
@@ -216,7 +230,7 @@ final class EpubReadingUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["epub.section"].value as? String, "第2章，第1节")
         expectation(for: savedPosition, evaluatedWith: app); waitForExpectations(timeout: 5)
         app.buttons["排版"].tap()
-        XCTAssertTrue(app.steppers["epub.fontSize"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["epub.fontSize-Increment"].waitForExistence(timeout: 5))
     }
 
     func testKindleComicRealImportUsesExistingImageReaderAndResume() {

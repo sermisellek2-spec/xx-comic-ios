@@ -57,7 +57,10 @@ final class AppEnvironment {
         readingHabits = habits
         let base = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         let suffix = ProcessInfo.processInfo.arguments.contains("--ui-testing") ? "XXComic-UITests" : "XXComic"
-        let appDir = base.appendingPathComponent(suffix, isDirectory: true)
+        let sessionBase = EpubUITestFixtures.sessionID.map {
+            base.appendingPathComponent("UITestSessions", isDirectory: true).appendingPathComponent($0, isDirectory: true)
+        } ?? base
+        let appDir = sessionBase.appendingPathComponent(suffix, isDirectory: true)
         library = try LibraryStore(directory: appDir)
         localLibrary = try LocalLibrary(directory: appDir.appendingPathComponent("Local", isDirectory: true))
         localSource = LocalComicSource(library: localLibrary)

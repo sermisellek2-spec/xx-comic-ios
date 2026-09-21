@@ -6,6 +6,11 @@ import UIKit
 /// Real EPUB archives, enabled only in the existing isolated UI test launch path.
 @MainActor
 enum EpubUITestFixtures {
+    static var sessionID: String? {
+        guard ProcessInfo.processInfo.arguments.contains("--ui-testing") else { return nil }
+        return UUID(uuidString: ProcessInfo.processInfo.environment["XXCOMIC_UI_TEST_SESSION"] ?? "")?.uuidString
+    }
+
     static func seed(library: LocalLibrary) throws {
         guard ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--epub-fixtures"),
               library.directory.deletingLastPathComponent().lastPathComponent == "XXComic-UITests" else { return }

@@ -9,7 +9,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let defaults = ProcessInfo.processInfo.arguments.contains("--ui-testing")
-            ? UserDefaults(suiteName: "XXComic.UITests")! : .standard
+            ? UserDefaults(suiteName: "XXComic.UITests" + (EpubUITestFixtures.sessionID.map { "." + $0 } ?? ""))! : .standard
         let tabs = UITabBarController()
         let environment: AppEnvironment
         do { environment = try AppEnvironment(defaults: defaults) }
