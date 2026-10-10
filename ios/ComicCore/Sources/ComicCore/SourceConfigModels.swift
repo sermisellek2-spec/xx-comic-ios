@@ -445,6 +445,57 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func manben(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "manben",
+            name: "漫本",
+            domain: "www.manben.com",
+            baseUrl: "https://www.manben.com",
+            referer: "https://www.manben.com/",
+            latestPath: "/mh-list/pagerdata.ashx",
+            searchPath: "/search?page={page}&title={keyword}&language=1",
+            categoryPath: "/mh-list/pagerdata.ashx",
+            detailPath: "/mh-{comicId}/",
+            enabled: enabled,
+            routes: [
+                "latest": "/mh-list/pagerdata.ashx",
+                "categoryIndex": "/mh-list/",
+                "category": "/mh-list/pagerdata.ashx",
+                "search": "/search?page={page}&title={keyword}&language=1",
+                "detail": "/mh-{comicId}/",
+                "chapter": "/m{chapterId}/",
+                "chapterImages": "/imageshow.ashx?cid={chapterId}&page={page}&showtype=1&ispre=0"
+            ],
+            filters: [
+                "sort.latest": "2",
+                "sort.popular": "4",
+                "state.all": "0",
+                "state.serial": "1",
+                "state.pub": "2",
+                "category.全部": "",
+                "category.题材·搞笑": "tagid:37",
+                "category.题材·奇幻": "tagid:14",
+                "category.题材·热血": "tagid:31",
+                "category.题材·悬疑": "tagid:17",
+                "category.题材·格斗": "tagid:28",
+                "category.题材·科幻": "tagid:25",
+                "category.题材·励志": "tagid:10",
+                "category.题材·校园": "tagid:1",
+                "category.题材·爱情": "tagid:26",
+                "category.题材·日常": "tagid:7",
+                "category.题材·战争": "tagid:12",
+                "category.题材·其他": "tagid:3",
+                "category.受众·少年向": "tgroup:1",
+                "category.受众·少女向": "tgroup:2",
+                "category.受众·青年向": "tgroup:3",
+                "category.地区·港台": "tarea:35",
+                "category.地区·日韩": "tarea:36",
+                "category.地区·大陆": "tarea:37",
+                "category.地区·欧美": "tarea:52"
+            ]
+        )
+    }
+
     public static func defaultConfig(for id: String) -> SourceConfigItem? {
         switch id {
         case "baozimh": return baozi()
@@ -456,6 +507,7 @@ public enum SourceConfigDefaults {
         case "hanman18": return hanman18()
         case "manhuagui": return manhuagui()
         case "d5d6": return d5d6()
+        case "manben": return manben()
         case "manwa": return manwa()
         case "copy4000", "copymanga": return copy4000()
         case "manhuazhan", "five_um": return manhuazhan()

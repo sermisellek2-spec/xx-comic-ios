@@ -3,13 +3,23 @@ import CoreFoundation
 
 public actor ManbenComicSource: ComicSource {
     public nonisolated let id = "manben"
-    public nonisolated let name = "漫本"
-    public nonisolated let referer = "https://www.manben.com/"
+    public nonisolated let name: String
+    public nonisolated let referer: String
+    public nonisolated let config: SourceConfigItem?
+    private let base: String
     private let transport: any HTTPTransport
     private let chapterTransport: any HTTPTransport
-    public init(transport: (any HTTPTransport)? = nil) {
+
+    public init(config: SourceConfigItem? = nil, transport: (any HTTPTransport)? = nil, baseURL: String? = nil) {
+        self.config = config
+        self.name = config?.name ?? "漫本"
+        let baseCandidate = baseURL ?? config?.baseUrl ?? "https://www.manben.com"
+        let trimmedBase = baseCandidate.replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression)
+        let resolvedBase = trimmedBase.isEmpty ? "https://www.manben.com" : trimmedBase
+        self.base = resolvedBase
+        self.referer = config?.referer ?? (resolvedBase + "/")
         self.transport = transport ?? URLSessionHTTPTransport(timeoutInterval: 20)
-        chapterTransport = transport ?? URLSessionHTTPTransport(timeoutInterval: 30)
+        self.chapterTransport = transport ?? URLSessionHTTPTransport(timeoutInterval: 30)
     }
 
     public func latest(page: Int) async throws -> [ComicSummary] { try await category(filters: [:], page: page) }
@@ -22,7 +32,8 @@ public actor ManbenComicSource: ComicSource {
                       ("tagid",value("tag")), ("tst",value("state")), ("tarea",value("region")),
                       ("tgroup",value("audience")), ("tnm",value("letter",fallback: ""))]
         let body = Data(fields.map { form($0.0) + "=" + form($0.1) }.joined(separator: "&").utf8)
-        let json = try await fetch("/mh-list/pagerdata.ashx", body: body)
+        let path = config?.route("latest") ?? "/mh-list/pagerdata.ashx"
+        let json = try await fetch(path, body: body)
         guard let array = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [Any] else { throw error("分类 JSON 非数组") }
         var seen = Set<String>()
         return array.compactMap { entry in
@@ -39,7 +50,11 @@ public actor ManbenComicSource: ComicSource {
         }
     }
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
-        let html = try await fetch("/search?page=\(max(1,page))&title=\(form(SearchRules.trim(keyword)))&language=1")
+        let searchTemplate = config?.route("search") ?? "/search?page={page}&title={keyword}&language=1"
+        let path = searchTemplate
+            .replacingOccurrences(of: "{page}", with: String(max(1, page)))
+            .replacingOccurrences(of: "{keyword}", with: form(SearchRules.trim(keyword)))
+        let html = try await fetch(path)
         let blocks = matches(#"class=["'][^"']*\bitem\b[^"']*["'][^>]*>([\s\S]*?)(?=class=["'][^"']*\b(?:item|pager)\b[^"']*["']|$)"#, html)
         let emptyMessage = clean(first(#"<(?:div|p)\b[^>]*class=["'][^"']*\bsearch-empty\b[^"']*["'][^>]*>([\s\S]*?)</(?:div|p)>"#, html))
         let explicitEmpty = emptyMessage == "没有找到相关漫画"
@@ -60,7 +75,8 @@ public actor ManbenComicSource: ComicSource {
         return result
     }
     public func filterGroups() async throws -> [SourceFilterGroup] {
-        let html = try await fetch("/mh-list/")
+        let path = config?.route("categoryIndex") ?? "/mh-list/"
+        let html = try await fetch(path)
         let keys = ["进度":"state", "标签":"tag", "受众":"audience", "地区":"region", "字母":"letter"]
         let groups: [SourceFilterGroup] = matches(#"<li>\s*<div[^>]*class=["']title["'][^>]*>([\s\S]*?)</div>\s*<div[^>]*class=["']list["'][^>]*>([\s\S]*?)</div>\s*</li>"#, html).compactMap { section in
             let label = clean(section[1])
@@ -77,7 +93,10 @@ public actor ManbenComicSource: ComicSource {
         return groups
     }
     public func detail(comicId: String) async throws -> ComicDetail {
-        let rawID = rawComicID(comicId), html = try await fetch("/mh-\(rawComicID(comicId))/")
+        let rawID = rawComicID(comicId)
+        let detailTemplate = config?.route("detail") ?? "/mh-{comicId}/"
+        let path = detailTemplate.replacingOccurrences(of: "{comicId}", with: rawID)
+        let html = try await fetch(path)
         guard let info = div(attribute: "class", value: "comicInfo", in: html) else { throw error("详情解析失败") }
         let titleHTML = first(#"<p[^>]*class=["']title["'][^>]*>([\s\S]*?)</p>"#, info)
         let tail = titleHTML.range(of: "</span>", options: [.backwards,.caseInsensitive]).map { String(titleHTML[$0.upperBound...]) } ?? titleHTML
@@ -104,7 +123,10 @@ public actor ManbenComicSource: ComicSource {
         return .init(summary: .init(sourceId: id,comicId: id + ":" + rawID,title: title,coverUrl: cover,subtitle: author,tags: tags),author: author,status: status,description: description,latestChapter: latest,chapters: [])
     }
     public func chapters(comicId: String) async throws -> [Chapter] {
-        let html = try await fetch("/mh-\(rawComicID(comicId))/")
+        let rawID = rawComicID(comicId)
+        let detailTemplate = config?.route("detail") ?? "/mh-{comicId}/"
+        let path = detailTemplate.replacingOccurrences(of: "{comicId}", with: rawID)
+        let html = try await fetch(path)
         guard let block = div(attribute: "id",value: "chapterlistload",in: html) else { throw error("目录解析失败") }
         let starts = matches(#"<div\b[^>]*class=["'][^"']*\blist\b[^"']*["'][^>]*>[\s\S]*?(?=<div\b[^>]*class=["'][^"']*\blist\b|$)"#, block).map { $0[0] }
         let groups = starts.isEmpty ? [block] : starts
@@ -127,8 +149,12 @@ public actor ManbenComicSource: ComicSource {
         let chapterID = first(#"/m(\d+)/?"#,url)
         guard !chapterID.isEmpty else { throw error("章节 ID 解析失败") }
         var images: [String] = [], seen = Set<String>(), emptyCount = 0
+        let imgTemplate = config?.route("chapterImages") ?? "/imageshow.ashx?cid={chapterId}&page={page}&showtype=1&ispre=0"
         for page in 1...1000 {
-            let script = try await fetch("/imageshow.ashx?cid=\(chapterID)&page=\(page)&showtype=1&ispre=0", referer: url)
+            let imgPath = imgTemplate
+                .replacingOccurrences(of: "{chapterId}", with: chapterID)
+                .replacingOccurrences(of: "{page}", with: String(page))
+            let script = try await fetch(imgPath, referer: url)
             guard script.contains("chapterimage"), let begin = script.firstIndex(of: "{"), let end = script.lastIndex(of: "}"), begin < end,
                   let root = try? JSONSerialization.jsonObject(with: Data(script[begin...end].utf8)) as? [String:Any],
                   let prefix = root["ImagePix"] as? String, !prefix.isEmpty,
@@ -195,7 +221,7 @@ public actor ManbenComicSource: ComicSource {
         guard !value.isEmpty else { return "" }
         if value.hasPrefix("http://") || value.hasPrefix("https://") { return value }
         if value.hasPrefix("//") { return "https:" + value }
-        return referer + (value.hasPrefix("/") ? String(value.dropFirst()) : value)
+        return base + (value.hasPrefix("/") ? value : "/" + value)
     }
     private func imageURL(_ tag: String) -> String {
         for key in ["data-src","data-original","src"] {

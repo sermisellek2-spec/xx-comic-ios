@@ -8,7 +8,7 @@ hiperdex,dedicated,Hiperdex,https://hiperdex.com,true,通过(站方重构SPA),6,
 hanman18,dedicated,韩漫18,https://www.hanman18.com,true,通过,7,海外线路,,sources/hanman18.md
 manhuagui,dedicated,漫画柜,https://www.manhuagui.com,true,通过,8,部分线路直连,LZString压缩解密,sources/manhuagui.md
 d5d6,dedicated,D5D6漫画,https://www.d5d6.com,true,通过,9,国内直连优先,,sources/d5d6.md
-manben,dedicated,漫本,https://www.manben.com,true,待接入,10,国内直连优先,,
+manben,dedicated,漫本,https://www.manben.com,true,通过,10,国内直连优先,,sources/manben.md
 manhuazhan,dedicated,漫画栈,https://www.manhuazhan.com,true,待接入,11,国内直连优先,5um系列接口,
 bbyin,dedicated,哔哔漫画,https://www.bbyin.com,true,待接入,12,国内直连优先,5um系列接口,
 antbyw,dedicated,蚂蚁不迷路,https://antbyw.com,true,待接入,13,国内直连优先,,

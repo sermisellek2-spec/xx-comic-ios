@@ -148,6 +148,52 @@ final class ManbenSourceTests: XCTestCase {
         let count = await transport.requests.count
         XCTAssertEqual(count, 2)
     }
+
+    func testSourceConfigDefaultsAndConfiguredSource() async throws {
+        let def = SourceConfigDefaults.manben()
+        XCTAssertEqual(def.id, "manben")
+        XCTAssertEqual(def.name, "漫本")
+        XCTAssertEqual(def.domain, "www.manben.com")
+        XCTAssertEqual(def.baseUrl, "https://www.manben.com")
+        XCTAssertEqual(def.referer, "https://www.manben.com/")
+        XCTAssertEqual(def.route("latest"), "/mh-list/pagerdata.ashx")
+        XCTAssertEqual(def.route("categoryIndex"), "/mh-list/")
+        XCTAssertEqual(def.route("search"), "/search?page={page}&title={keyword}&language=1")
+        XCTAssertEqual(def.route("detail"), "/mh-{comicId}/")
+        XCTAssertEqual(def.route("chapter"), "/m{chapterId}/")
+        XCTAssertEqual(def.route("chapterImages"), "/imageshow.ashx?cid={chapterId}&page={page}&showtype=1&ispre=0")
+        XCTAssertEqual(SourceConfigDefaults.defaultConfig(for: "manben")?.id, "manben")
+
+        let custom = SourceConfigItem(
+            id: "manben",
+            name: "漫本镜像",
+            domain: "mirror.manben.com",
+            baseUrl: "https://mirror.manben.com",
+            referer: "https://mirror.manben.com/",
+            latestPath: "/mh-list/pagerdata.ashx",
+            searchPath: "/search?page={page}&title={keyword}&language=1",
+            categoryPath: "/mh-list/pagerdata.ashx",
+            detailPath: "/mh-{comicId}/",
+            enabled: true,
+            routes: [
+                "latest": "/mh-list/pagerdata.ashx",
+                "categoryIndex": "/mh-list/",
+                "search": "/search?page={page}&title={keyword}&language=1",
+                "detail": "/mh-{comicId}/"
+            ],
+            filters: [:]
+        )
+        let transport = ManbenFixtureTransport(["""
+        [{"Url":"/mh-custom/","Title":"自定义漫画","BigPic":"/custom.jpg","Author":["作者"],"TagList":["奇幻"]}]
+        """])
+        let configured = ManbenComicSource(config: custom, transport: transport)
+        let items = try await configured.latest(page: 1)
+        XCTAssertEqual(items.first?.comicId, "manben:custom")
+        XCTAssertEqual(items.first?.coverUrl, "https://mirror.manben.com/custom.jpg")
+        let requests = await transport.requests
+        XCTAssertEqual(requests.first?.url, "https://mirror.manben.com/mh-list/pagerdata.ashx")
+        XCTAssertEqual(requests.first?.headers["Referer"], "https://mirror.manben.com/")
+    }
 }
 
 private struct ManbenLatinTransport: HTTPTransport {

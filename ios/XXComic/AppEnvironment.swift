@@ -37,7 +37,7 @@ final class AppEnvironment {
             HiperdexComicSource(),
             ManhuaguiComicSource(config: preferences.config(for: "manhuagui") ?? SourceConfigDefaults.manhuagui()),
             D5d6ComicSource(config: preferences.config(for: "d5d6") ?? SourceConfigDefaults.d5d6()),
-            ManbenComicSource(),
+            ManbenComicSource(config: preferences.config(for: "manben") ?? SourceConfigDefaults.manben()),
             FiveUmComicSource(config: preferences.config(for: "manhuazhan")),
             FiveUmComicSource(site: .bbyin),
             AntbywComicSource(),
