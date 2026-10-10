@@ -124,7 +124,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
         orderBtn.titleLabel?.font = .systemFont(ofSize: 12)
         let btnTextColor = isReader
             ? (isDarkReader ? UIColor(red: 139/255, green: 148/255, blue: 158/255, alpha: 1.0) : UIColor(red: 101/255, green: 109/255, blue: 118/255, alpha: 1.0))
-            : Palette.textSecondary
+            : Palette.secondaryText
         orderBtn.setTitleColor(btnTextColor, for: .normal)
         orderBtn.backgroundColor = isReader
             ? (isDarkReader ? UIColor(white: 1.0, alpha: 0.15) : UIColor(black: 0.08))

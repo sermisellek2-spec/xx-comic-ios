@@ -536,6 +536,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         }
         if localMode {
             return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+                guard let self else { return nil }
                 let moveAction = UIAction(title: "移动", image: UIImage(systemName: "folder")) { [weak self] _ in
                     guard let self else { return }
                     let sheet = BookshelfGroupSelectSheet(environment: self.environment, scope: .local, comicId: comic.comicId, comicTitle: comic.title)
@@ -611,6 +612,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             }
         }
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+            guard let self else { return nil }
             let moveAction = UIAction(title: "移动", image: UIImage(systemName: "folder")) { [weak self] _ in
                 guard let self else { return }
                 let sheet = BookshelfGroupSelectSheet(environment: self.environment, scope: .online, comicId: comic.comicId, comicTitle: comic.title)
@@ -627,7 +629,19 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             }
             let downloadAction = UIAction(title: "下载", image: UIImage(systemName: "arrow.down.circle")) { [weak self] _ in
                 guard let self else { return }
-                self.navigationController?.pushViewController(DownloadSelectionViewController(comic: comic, environment: self.environment), animated: true)
+                guard let source = self.environment.source(for: comic) else {
+                    self.open(comic)
+                    return
+                }
+                Task {
+                    do {
+                        let detail = try await source.detail(comicId: comic.comicId)
+                        let selectionVC = DownloadSelectionViewController(detail: detail, currentIndex: 0, environment: self.environment)
+                        self.navigationController?.pushViewController(selectionVC, animated: true)
+                    } catch {
+                        self.open(comic)
+                    }
+                }
             }
             let deleteAction = UIAction(title: "移出收藏", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
                 guard let self else { return }
