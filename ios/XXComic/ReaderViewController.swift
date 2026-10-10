@@ -183,6 +183,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         applySettings()
         loadChapter(session.chapterIndex)
         if incompleteDirectory { loadDirectory() }
+        let revision = FavoriteRevision.fromChapters(latestChapterName: chapters.last?.title, chapters: chapters)
+        environment.favoriteUpdateCoordinator.acknowledge(sourceId: comic.sourceId, comicId: comic.comicId, revision: revision)
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -614,11 +616,34 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
 
     private func showReaderSourceSheet() {
-        let sheet = SourceSwitchSheet(comic: comic, environment: environment) { [weak self] target in
+        let sheet = SourceSwitchSheet(comic: comic, environment: environment) { [weak self] targetDetail in
             guard let self else { return }
-            self.switchReaderSource(target: target)
+            self.applySwitchedSource(targetDetail: targetDetail)
         }
         present(sheet, animated: true)
+    }
+
+    private func applySwitchedSource(targetDetail: ComicDetail) {
+        guard let targetSource = environment.source(for: targetDetail.summary) else { return }
+        let currentTitle = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex].title : ""
+        let currentIndex = session.chapterIndex
+        let targetChapters = targetDetail.chapters
+        guard !targetChapters.isEmpty else { return }
+
+        let matchedIndex = ChapterMatching.findMatchingChapterIndex(
+            chapters: targetChapters,
+            currentTitle: currentTitle,
+            defaultIndex: currentIndex
+        )
+
+        self.comic = targetDetail.summary
+        self.source = targetSource
+        self.chapters = targetChapters
+        self.incompleteDirectory = false
+        self.session = ReaderSession(chapterCount: targetChapters.count, chapterIndex: matchedIndex)
+        self.title = targetDetail.summary.title
+        self.chapterTitle = targetChapters.indices.contains(matchedIndex) ? targetChapters[matchedIndex].title : ""
+        self.loadCurrentChapter()
     }
 
     private func switchReaderSource(target: ComicSummary) {

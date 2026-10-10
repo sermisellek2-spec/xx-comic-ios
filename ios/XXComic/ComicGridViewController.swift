@@ -146,6 +146,11 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         super.viewDidLoad()
         title = historyOnly ? "阅读历史" : "书架"
         if !historyOnly {
+            environment.favoriteUpdateCoordinator.onBadgeChanged = { [weak self] _, _, _ in
+                Task { @MainActor [weak self] in
+                    self?.collection.reloadData()
+                }
+            }
             let layoutImg = UIImage(systemName: isListLayout ? "square.grid.2x2" : "list.bullet")
             let layoutButton = UIBarButtonItem(image: layoutImg, style: .plain, target: self, action: #selector(toggleLayoutTapped))
             layoutItem = layoutButton
@@ -293,6 +298,9 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         let recent = environment.library.history.first
         resume.isHidden = recent == nil || historyOnly
         resume.setTitle(recent.map { "继续阅读 · \($0.summary.title)\n\($0.reading?.chapter.title ?? "")" }, for: .normal)
+        if !historyOnly {
+            environment.favoriteUpdateChecker.startAutoCheck()
+        }
     }
     @objc private func showHistory() {
         navigationController?.pushViewController(BookshelfViewController(environment: environment, historyOnly: true), animated: true)
@@ -557,18 +565,31 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                     })
                     self.present(alert, animated: true)
                 }
-                let deleteAction = UIAction(title: "删除本地漫画", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+                let isDownload = comic.sourceId != "local" || (try? DownloadModels.bookId(source: comic.sourceId, comic: comic.comicId)).flatMap { self.environment.downloadStore.snapshot(id: $0) } != nil
+                let deleteTitle = isDownload ? "删除离线漫画" : "删除本地漫画"
+                let deleteMessage = isDownload
+                    ? "将从本地存储中彻底移除离线下载文件与任务。\n（在线收藏与阅读记录将完整保留）"
+                    : "将从书架和 App 本地存储中移除此漫画，原导入文件不受影响。\n（若以后重新导入相同文件，阅读历史和进度将自动恢复）"
+                let deleteAction = UIAction(title: deleteTitle, image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
                     guard let self else { return }
                     let alert = UIAlertController(
-                        title: "删除本地漫画",
-                        message: "将从书架和 App 本地存储中移除此漫画，原导入文件不受影响。\n（若以后重新导入相同文件，阅读历史和进度将自动恢复）",
+                        title: deleteTitle,
+                        message: deleteMessage,
                         preferredStyle: .actionSheet
                     )
-                    alert.addAction(UIAlertAction(title: "删除 App 副本", style: .destructive) { [weak self] _ in
+                    alert.addAction(UIAlertAction(title: isDownload ? "删除离线内容" : "删除 App 副本", style: .destructive) { [weak self] _ in
                         guard let self else { return }
                         Task {
-                            try? await self.environment.localLibrary.deleteSeries(id: comic.comicId)
-                            try? self.environment.setFavorite(comic, favorite: false)
+                            if isDownload {
+                                let bookId = (try? DownloadModels.bookId(source: comic.sourceId, comic: comic.comicId)) ?? comic.comicId
+                                self.environment.downloadRuntime.deleteBook(bookId: bookId)
+                            } else {
+                                do {
+                                    try await self.environment.localLibrary.deleteSeries(id: comic.comicId)
+                                } catch {
+                                    self.status("删除失败: \(error.localizedDescription)")
+                                }
+                            }
                             self.environment.notifyLibraryChanged()
                             self.refresh()
                         }

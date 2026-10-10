@@ -429,6 +429,28 @@ public struct LocalLibrary: Sendable {
         let prepared = try prepareFolder(title: title, folder: folder, isReadableImage: isReadableImage)
         return try await publishImport(prepared, targetSeriesId: targetSeriesId, explicitTitle: title)
     }
+    public func updateFolderSeries(seriesId: String, title: String, folder: URL,
+                                   isReadableImage: @escaping (URL) throws -> Bool) async throws -> (series: LocalSeriesRecord, book: LocalBook) {
+        try await ensureLegacySeeded()
+        guard var s = await catalogStore.getSeries(id: seriesId) else {
+            throw LocalCatalogError.targetNotFound
+        }
+        let prepared = try prepareFolder(title: title, folder: folder, isReadableImage: isReadableImage)
+        let published = try publishPrepared(prepared)
+
+        let oldVolumes = s.volumeIDs
+        for oldVolId in oldVolumes {
+            if oldVolId != published.id {
+                let oldDir = directory.appendingPathComponent(oldVolId)
+                try? deleteOwnedDirectory(oldDir)
+            }
+        }
+
+        s.volumeIDs = [published.id]
+        s.updatedAt = Date().timeIntervalSince1970
+        try await catalogStore.commitNewSeries(s)
+        return (s, published)
+    }
     public func importImagesCoordinated(title: String, files: [URL],
                                         targetSeriesId: String? = nil) async throws -> (series: LocalSeriesRecord, book: LocalBook) {
         let prepared = try prepareImages(title: title, files: files)

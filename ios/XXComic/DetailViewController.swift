@@ -145,6 +145,8 @@ final class DetailViewController: UIViewController {
                 self.cover.loadCover(detail.summary, referer: source.referer, library: self.environment.localLibrary)
                 self.retry.setTitle(nil, for: .normal)
                 self.updateButtons()
+                let revision = FavoriteRevision.fromChapters(latestChapterName: detail.latestChapter, chapters: detail.chapters)
+                self.environment.favoriteUpdateCoordinator.acknowledge(sourceId: detail.summary.sourceId, comicId: detail.summary.comicId, revision: revision)
             } catch {
                 guard let self, !Task.isCancelled else { return }
                 if !(error is CancellationError) {
@@ -202,15 +204,29 @@ final class DetailViewController: UIViewController {
             environment.notifyLibraryChanged()
             updateButtons()
         }
-        let sheet = BookshelfGroupSelectSheet(comicId: comic.comicId, comicTitle: comic.title, scope: .online, environment: environment)
+        let sheet = BookshelfGroupSelectSheet(environment: environment, scope: .online, comicId: comic.comicId, comicTitle: comic.title)
         present(sheet, animated: true)
     }
     @objc private func openSourceSwitchSheet() {
-        let sheet = SourceSwitchSheet(comic: comic, environment: environment) { [weak self] target in
+        let sheet = SourceSwitchSheet(comic: comic, environment: environment) { [weak self] targetDetail in
             guard let self else { return }
-            self.switchToSource(target: target)
+            self.applySwitchedSource(targetDetail: targetDetail)
         }
         present(sheet, animated: true)
+    }
+    private func applySwitchedSource(targetDetail: ComicDetail) {
+        guard let newSource = environment.source(for: targetDetail.summary) else { return }
+        self.comic = targetDetail.summary
+        self.source = newSource
+        self.title = newSource.name
+        self.sourceSwitchButton.setTitle("\(newSource.name) · 切换站源", for: .normal)
+        self.sourceSwitchButton.isEnabled = true
+        self.detail = targetDetail
+        self.chapters = targetDetail.chapters
+        self.incompleteDirectory = false
+        self.renderDetail()
+        self.updateButtons()
+        self.collection.reloadData()
     }
     private func switchToSource(target: ComicSummary) {
         guard target.comicId != comic.comicId else { return }

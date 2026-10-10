@@ -2,7 +2,7 @@ import UIKit
 import ComicCore
 
 @MainActor
-final class LocalStorageViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+final class LocalStorageViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIDocumentPickerDelegate {
     private let environment: AppEnvironment
 
     private struct Item: Equatable {
@@ -13,6 +13,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     }
 
     private var items: [Item] = []
+    private var syncedFolders: [SyncedFolderRecord] = []
     private var selectedIDs = Set<String>()
 
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
@@ -122,6 +123,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
             }
 
             self.items = loaded
+            self.syncedFolders = self.environment.folderBookmarkStore.list()
             self.tableView.reloadData()
             self.updateStatistics()
         }
@@ -210,20 +212,57 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
         }
     }
 
+    // MARK: - Actions
+
+    @objc private func linkNewFolderTapped() {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder], asCopy: false)
+        picker.delegate = self
+        picker.allowsMultipleSelection = false
+        present(picker, animated: true)
+    }
+
+    @objc private func syncAllFoldersTapped() {
+        Task {
+            self.showToast("正在同步关联文件夹...")
+            _ = await self.environment.folderSyncCoordinator.syncAll()
+            self.environment.notifyLibraryChanged()
+            self.showToast("文件夹同步完成")
+            self.loadData()
+        }
+    }
+
+    public func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard let url = urls.first else { return }
+        Task {
+            do {
+                _ = try await self.environment.folderSyncCoordinator.linkFolder(url: url)
+                self.environment.notifyLibraryChanged()
+                self.showToast("已成功关联并索引文件夹")
+                self.loadData()
+            } catch {
+                self.showToast("关联失败: \(error.localizedDescription)")
+            }
+        }
+    }
+
     // MARK: - UITableViewDataSource & Delegate
 
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 3
+        return 4
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 { return 1 } // Wi-Fi Switch
         if section == 1 { return 1 } // Storage Stats
+        if section == 2 { return syncedFolders.count + 1 } // Synced Folders + Add Action
         return items.count // Books List
     }
 
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         if section == 2 {
+            return "关联外部文件夹 (自动同步)"
+        }
+        if section == 3 {
             return "已保存的本地漫画与离线下载"
         }
         return nil
@@ -281,6 +320,62 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
             return cell
         }
 
+        if indexPath.section == 2 {
+            if indexPath.row == 0 {
+                let cell = UITableViewCell(style: .default, reuseIdentifier: "sync_actions")
+                cell.backgroundColor = Palette.card
+                cell.selectionStyle = .none
+
+                let linkButton = UIButton(type: .system)
+                linkButton.setTitle("＋ 关联新外部文件夹", for: .normal)
+                linkButton.setTitleColor(Palette.accent, for: .normal)
+                linkButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
+                linkButton.addTarget(self, action: #selector(linkNewFolderTapped), for: .touchUpInside)
+
+                let syncAllButton = UIButton(type: .system)
+                syncAllButton.setTitle("立即同步全部", for: .normal)
+                syncAllButton.setTitleColor(Palette.accent, for: .normal)
+                syncAllButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
+                syncAllButton.addTarget(self, action: #selector(syncAllFoldersTapped), for: .touchUpInside)
+
+                let stack = UIStackView(arrangedSubviews: [linkButton, syncAllButton])
+                stack.axis = .horizontal
+                stack.distribution = .equalSpacing
+                stack.translatesAutoresizingMaskIntoConstraints = false
+
+                cell.contentView.subviews.forEach { $0.removeFromSuperview() }
+                cell.contentView.addSubview(stack)
+                NSLayoutConstraint.activate([
+                    stack.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 16),
+                    stack.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -16),
+                    stack.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 10),
+                    stack.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -10)
+                ])
+                return cell
+            }
+
+            let folder = syncedFolders[indexPath.row - 1]
+            let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "synced_folder")
+            cell.backgroundColor = Palette.card
+            cell.textLabel?.text = folder.folderName
+            cell.textLabel?.textColor = Palette.text
+            cell.textLabel?.font = .systemFont(ofSize: 15, weight: .bold)
+
+            let statusDesc: String
+            switch folder.status {
+            case .active: statusDesc = "正常同步"
+            case .permissionRevoked: statusDesc = "授权失效"
+            case .folderMissing: statusDesc = "原文件夹丢失"
+            case .syncFailed: statusDesc = "同步失败"
+            }
+            let timeDesc = DateFormatter.localizedString(from: Date(timeIntervalSince1970: folder.lastSyncTimestamp), dateStyle: .short, timeStyle: .short)
+            cell.detailTextLabel?.text = "\(folder.fileCount) 张图片 · \(statusDesc) · 上次同步: \(timeDesc)"
+            cell.detailTextLabel?.textColor = folder.status == .active ? Palette.secondaryText : .systemRed
+            cell.detailTextLabel?.font = .systemFont(ofSize: 12)
+            cell.selectionStyle = .none
+            return cell
+        }
+
         let item = items[indexPath.row]
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "book")
         cell.backgroundColor = Palette.card
@@ -304,7 +399,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        guard indexPath.section == 2 else { return }
+        guard indexPath.section == 3 else { return }
 
         let item = items[indexPath.row]
         if selectedIDs.contains(item.id) {
@@ -313,5 +408,38 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
             selectedIDs.insert(item.id)
         }
         tableView.reloadRows(at: [indexPath], with: .none)
+    }
+
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        guard indexPath.section == 2 && indexPath.row > 0 else { return nil }
+        let folder = syncedFolders[indexPath.row - 1]
+
+        let syncAction = UIContextualAction(style: .normal, title: "立即同步") { [weak self] _, _, completion in
+            guard let self else { completion(false); return }
+            Task {
+                let res = await self.environment.folderSyncCoordinator.sync(id: folder.id)
+                self.environment.notifyLibraryChanged()
+                switch res {
+                case .upToDate(let count): self.showToast("已是最新 (\(count) 张图片)")
+                case .updated(_, let newCount): self.showToast("已更新至 \(newCount) 张图片")
+                case .error(let msg): self.showToast("同步失败: \(msg)")
+                }
+                self.loadData()
+                completion(true)
+            }
+        }
+        syncAction.backgroundColor = Palette.accent
+
+        let unlinkAction = UIContextualAction(style: .destructive, title: "解除关联") { [weak self] _, _, completion in
+            guard let self else { completion(false); return }
+            Task {
+                try? await self.environment.folderSyncCoordinator.unlinkFolder(id: folder.id)
+                self.showToast("已解除文件夹关联")
+                self.loadData()
+                completion(true)
+            }
+        }
+
+        return UISwipeActionsConfiguration(actions: [unlinkAction, syncAction])
     }
 }

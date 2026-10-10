@@ -13,6 +13,9 @@ final class AppEnvironment {
     let bookshelfGroupStore: BookshelfGroupStore
     let sourceGroupStore: SourceGroupStore
     let favoriteUpdateCoordinator: FavoriteUpdateCoordinator
+    let favoriteUpdateChecker: FavoriteUpdateChecker
+    let folderBookmarkStore: FolderBookmarkStore
+    let folderSyncCoordinator: LocalFolderSyncCoordinator
     private let localSource: LocalComicSource
     private(set) var allSources: [any ComicSource]
     let sourcePreferences: SourcePreferences
@@ -85,6 +88,19 @@ final class AppEnvironment {
         bookshelfGroupStore.migrateLegacyDataIfNeeded(legacyOnlineFavorites: library.favorites.map(\.summary.comicId), legacyLocalBookIds: nil)
         sourceGroupStore = SourceGroupStore(directory: appDir)
         favoriteUpdateCoordinator = FavoriteUpdateCoordinator(defaults: defaults)
+        favoriteUpdateChecker = FavoriteUpdateChecker(
+            library: library,
+            coordinator: favoriteUpdateCoordinator,
+            sourceProvider: { [weak resolver] id in
+                resolver?.source(for: id)
+            }
+        )
+        folderBookmarkStore = try FolderBookmarkStore(directory: appDir)
+        folderSyncCoordinator = LocalFolderSyncCoordinator(
+            store: folderBookmarkStore,
+            library: localLibrary,
+            isReadableImage: LocalImageProbe.isReadable
+        )
 
         let downloadsDir = appDir.appendingPathComponent("Downloads", isDirectory: true)
         downloadStore = try DownloadStore(directory: downloadsDir)
@@ -116,6 +132,28 @@ final class AppEnvironment {
                 self?.notifyLibraryChanged()
             }
         }
+
+        #if canImport(UIKit)
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            Task { [weak self] in
+                guard let self else { return }
+                let results = await self.folderSyncCoordinator.syncAll()
+                let hasChanges = results.values.contains {
+                    if case .updated = $0 { return true }
+                    return false
+                }
+                if hasChanges {
+                    await MainActor.run {
+                        self.notifyLibraryChanged()
+                    }
+                }
+            }
+        }
+        #endif
     }
 
     func setFavorite(_ comic: ComicSummary, favorite: Bool) throws {
@@ -175,6 +213,12 @@ final class EnvironmentSourceResolver: DownloadSourceResolverProtocol, @unchecke
         lock.lock()
         defer { lock.unlock() }
         return _sources
+    }
+
+    func source(for id: String) -> (any ComicSource)? {
+        lock.lock()
+        defer { lock.unlock() }
+        return _sources.first { $0.id == id }
     }
 
     func resolveChapter(sourceId: String, url: String) async throws -> ChapterPage {

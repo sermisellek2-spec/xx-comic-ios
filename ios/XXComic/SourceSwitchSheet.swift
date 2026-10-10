@@ -21,10 +21,15 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
 
     var onSourceReplaced: ((ComicDetail) -> Void)?
 
-    init(environment: AppEnvironment, originalComic: ComicSummary) {
+    init(environment: AppEnvironment, originalComic: ComicSummary, onSourceReplaced: ((ComicDetail) -> Void)? = nil) {
         self.environment = environment
         self.originalComic = originalComic
+        self.onSourceReplaced = onSourceReplaced
         super.init(nibName: nil, bundle: nil)
+    }
+
+    convenience init(comic: ComicSummary, environment: AppEnvironment, onSourceReplaced: ((ComicDetail) -> Void)? = nil) {
+        self.init(environment: environment, originalComic: comic, onSourceReplaced: onSourceReplaced)
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
@@ -144,7 +149,7 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
         Task { [weak self] in
             guard let self else { return }
             do {
-                let detail = try await item.source.detail(item.candidate.comicId)
+                let detail = try await item.source.detail(comicId: item.candidate.comicId)
                 guard !detail.chapters.isEmpty else {
                     loadingAlert.dismiss(animated: true) {
                         self.showError(NSError(domain: "XXComic", code: -1, userInfo: [NSLocalizedDescriptionKey: "目标源目录为空，换源已取消，已保留原站源"]))

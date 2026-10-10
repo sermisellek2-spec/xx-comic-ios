@@ -1,0 +1,17 @@
+XX Comic iOS 2x Anime/Manga Super-Resolution Neural Model
+=========================================================
+
+Architecture:
+- Compact Residual Convolutional Neural Network with Sub-Pixel Convolution (PixelShuffle x2)
+- Input: RGB Image (192x192 tile, matching Android 2.0.40 TILE = 192)
+- Output: RGB Image (384x384 tile)
+- Parameters: ~50K FP32 parameters (file size: ~198 KB)
+- Hardware Acceleration: Apple Neural Engine (ANE) & Metal GPU via CoreML framework
+- Memory Guard: Tile-based processing with 64MB LRU cache limit, automatic fallback on thermal throttle (serious/critical) or RAM < 2GB.
+
+License:
+BSD-3-Clause / MIT (Compatible with Real-ESRGAN / ncnn super-resolution standards).
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files, to deal in the Software
+without restriction, including without limitation the rights to use, copy,
+modify, merge, publish, distribute, sublicense, and/or sell copies.

@@ -64,19 +64,38 @@ public final class FavoriteUpdateCoordinator: @unchecked Sendable {
     public func recordObserved(sourceId: String, comicId: String, revision: FavoriteRevision) {
         lock.lock()
         let k = key(sourceId: sourceId, comicId: comicId)
-        var s = states[k] ?? FavoriteUpdateState(sourceId: sourceId, comicId: comicId,
-                                                 pendingUpdate: false, observedRevision: nil,
-                                                 acknowledgedRevision: nil)
-        s.observedRevision = revision
-        let isNew = FavoriteRevision.hasNewChapters(baseline: s.acknowledgedRevision, candidate: revision)
-        let changed = (s.pendingUpdate != isNew)
-        s.pendingUpdate = isNew
-        states[k] = s
-        saveLocked()
-        lock.unlock()
-
-        if changed {
-            onBadgeChanged?(sourceId, comicId, isNew)
+        if var s = states[k] {
+            if s.acknowledgedRevision == nil {
+                s.acknowledgedRevision = revision
+                s.observedRevision = revision
+                s.pendingUpdate = false
+                states[k] = s
+                saveLocked()
+                lock.unlock()
+            } else {
+                let isNew = FavoriteRevision.hasNewChapters(baseline: s.acknowledgedRevision, candidate: revision)
+                let changed = (s.pendingUpdate != isNew)
+                s.observedRevision = revision
+                s.pendingUpdate = isNew
+                states[k] = s
+                saveLocked()
+                lock.unlock()
+                if changed {
+                    onBadgeChanged?(sourceId, comicId, isNew)
+                }
+            }
+        } else {
+            // First observation establishes baseline, do not light up star
+            let s = FavoriteUpdateState(
+                sourceId: sourceId,
+                comicId: comicId,
+                pendingUpdate: false,
+                observedRevision: revision,
+                acknowledgedRevision: revision
+            )
+            states[k] = s
+            saveLocked()
+            lock.unlock()
         }
     }
 
