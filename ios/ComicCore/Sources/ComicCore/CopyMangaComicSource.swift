@@ -1,9 +1,10 @@
 import Foundation
 
 public actor CopyMangaComicSource: ComicSource {
-    public nonisolated let id = "copy4000"
-    public nonisolated let name = "拷贝漫画"
+    public nonisolated let id: String
+    public nonisolated let name: String
     public nonisolated let referer: String
+    public nonisolated let config: SourceConfigItem?
     private let base: String
     private let transport: any HTTPTransport
     private let apiTransport: any HTTPTransport
@@ -12,55 +13,85 @@ public actor CopyMangaComicSource: ComicSource {
     private var workingOrigin: String?
 
     public init(transport: (any HTTPTransport)? = nil, baseURL: String = "https://www.copy4000.com",
-                apiOrigin: String = "https://api.manga2026.xyz", apiFallbackOrigins: [String]? = nil) {
-        self.transport = transport ?? URLSessionHTTPTransport(timeoutInterval:20)
-        self.apiTransport = transport ?? URLSessionHTTPTransport(timeoutInterval:12)
-        self.base = baseURL.replacingOccurrences(of:#"/+$"#,with:"",options:.regularExpression)
-        self.referer = self.base + "/"
+                apiOrigin: String = "https://api.manga2026.xyz", apiFallbackOrigins: [String]? = nil,
+                config: SourceConfigItem? = nil) {
+        self.config = config
+        self.id = config?.id ?? "copy4000"
+        self.name = config?.name ?? "拷贝漫画"
+        self.transport = transport ?? URLSessionHTTPTransport(timeoutInterval: 20)
+        self.apiTransport = transport ?? URLSessionHTTPTransport(timeoutInterval: 12)
+        let resolvedBase = baseURL.replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression)
+        let finalBase = resolvedBase.isEmpty ? "https://www.copy4000.com" : resolvedBase
+        self.base = finalBase
+        self.referer = config?.referer ?? (finalBase + "/")
         self.apiOrigin = apiOrigin
-        self.apiFallbackOrigins = apiFallbackOrigins ?? (apiOrigin == "https://api.manga2026.xyz" ? ["https://mapi.elfgjfghkk.club","https://mapi.fgjfghkkcenter.club"] : [])
+        if let apiFallbackOrigins {
+            self.apiFallbackOrigins = apiFallbackOrigins
+        } else if let fallbackRoute = config?.routes?["apiFallbackUrls"] {
+            self.apiFallbackOrigins = fallbackRoute.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        } else {
+            self.apiFallbackOrigins = (apiOrigin == "https://api.manga2026.xyz" ? ["https://mapi.elfgjfghkk.club", "https://mapi.fgjfghkkcenter.club"] : [])
+        }
     }
 
     public init(config: SourceConfigItem?, transport: (any HTTPTransport)? = nil) {
         let base = (config?.baseUrl.isEmpty == false) ? config!.baseUrl : "https://www.copy4000.com"
         let apiBase = (config?.route("apiBaseUrl").isEmpty == false) ? config!.route("apiBaseUrl") : "https://api.manga2026.xyz"
-        let fallbacksStr = config?.route("apiFallbackUrls")
         let fallbacks: [String]?
-        if let fallbacksStr, !fallbacksStr.isEmpty {
-            fallbacks = fallbacksStr.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        if let fallbackRoute = config?.routes?["apiFallbackUrls"] {
+            fallbacks = fallbackRoute.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         } else {
             fallbacks = nil
         }
-        self.init(transport: transport, baseURL: base, apiOrigin: apiBase, apiFallbackOrigins: fallbacks)
+        self.init(transport: transport, baseURL: base, apiOrigin: apiBase, apiFallbackOrigins: fallbacks, config: config)
     }
+
     public func latest(page: Int) async throws -> [ComicSummary] { try await category(filters:[:],page:page) }
+
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()
         let keyword = SearchRules.trim(keyword)
         guard !keyword.isEmpty else { return [] }
-        let path = "/api/kb/web/searchci/comics?offset=\(try offset(page,12))&platform=2&limit=12&q=\(encode(keyword))&q_type="
-        let data = try results(await request(base+path,api:false))
-        guard let list = data["list"].array else { throw error("搜索响应缺少列表") }
+        let template = config?.route("search") ?? "/api/kb/web/searchci/comics?offset={offset}&platform=2&limit={limit}&q={keyword}&q_type="
+        let path = template.replacingOccurrences(of: "{offset}", with: "\(try offset(page, 12))")
+            .replacingOccurrences(of: "{limit}", with: "12")
+            .replacingOccurrences(of: "{keyword}", with: encode(keyword))
+        let data = try results(await request(base + path, api: false))
+        guard var list = data["list"].array else { throw error("搜索响应缺少列表") }
+        if list.isEmpty && path.contains("searchci") {
+            let clPath = path.replacingOccurrences(of: "searchci", with: "searchcl")
+            if let fallbackData = try? results(await request(base + clPath, api: false)),
+               let fallbackList = fallbackData["list"].array, !fallbackList.isEmpty {
+                list = fallbackList
+            }
+        }
         return try summaries(list)
     }
+
     public func category(filters: [String:String], page: Int) async throws -> [ComicSummary] {
         func selected(_ key: String) -> String { let value = filters[key] ?? ""; return value == "all" ? "" : value }
         let ordering = selected("ordering").isEmpty ? "-datetime_updated" : selected("ordering")
         guard ["-datetime_updated","datetime_updated","-popular","popular"].contains(ordering) else { throw error("排序参数无效") }
-        var path = "/comics?limit=50&offset=\(try offset(page,50))&ordering=\(ordering)"
+        let template = config?.route("category") ?? "/comics?limit={limit}&offset={offset}&ordering={ordering}{filters}"
+        var filterQuery = ""
         for key in ["theme","region","status"] {
             let value = selected(key)
             guard !value.isEmpty else { continue }
             guard key == "theme" || ["0","1","2"].contains(value) else { throw error("筛选参数无效："+key) }
-            path += "&\(key)=\(encode(value))"
+            filterQuery += "&\(key)=\(encode(value))"
         }
+        let path = template.replacingOccurrences(of: "{offset}", with: "\(try offset(page, 50))")
+            .replacingOccurrences(of: "{limit}", with: "50")
+            .replacingOccurrences(of: "{ordering}", with: ordering)
+            .replacingOccurrences(of: "{filters}", with: filterQuery)
         let html = try await request(base+path,api:false)
         let literal = attribute("list",opening("exemptComic-box",html))
         guard !literal.isEmpty, let list = try parseCopyMangaLiteral(literal).array else { throw error("分类响应缺少列表数据") }
         return try summaries(list)
     }
     public func filterGroups() async throws -> [SourceFilterGroup] {
-        let html = try await request(base+"/filter",api:false)
+        let path = config?.route("categoryIndex") ?? "/filter"
+        let html = try await request(base+path,api:false)
         var themes: [(String,String)] = [], seen = Set<String>()
         for link in matches(#"<a\b([^>]*)>([\s\S]*?)</a>"#,html) {
             let href = attribute("href",link[1])
@@ -82,7 +113,9 @@ public actor CopyMangaComicSource: ComicSource {
     }
     public func detail(comicId: String) async throws -> ComicDetail {
         let raw = try rawID(comicId)
-        let html = try await request(base+"/comic/"+encode(raw),api:false)
+        let detailRoute = config?.route("detail") ?? "/comic/{comicId}"
+        let path = detailRoute.replacingOccurrences(of: "{comicId}", with: encode(raw))
+        let html = try await request(base+path,api:false)
         let info = content("comicParticulars-title-right",html)
         let title = clean(first(#"<h6\b[^>]*>([\s\S]*?)</h6>"#,info))
         guard !title.isEmpty else { throw error("详情不可用：缺少标题") }
@@ -102,16 +135,22 @@ public actor CopyMangaComicSource: ComicSource {
     }
     public func chapters(comicId: String) async throws -> [Chapter] {
         let raw = try rawID(comicId)
-        let detail = try await api("/api/v3/comic2/\(encode(raw))?platform=3")
+        let detailRoute = config?.route("apiDetail") ?? "/api/v3/comic2/{comicId}?platform=3"
+        let detailPath = detailRoute.replacingOccurrences(of: "{comicId}", with: encode(raw))
+        let detail = try await api(detailPath)
         try checkComic(detail,raw)
         guard let groups = detail["groups"].object else { throw error("目录缺少分组") }
         var chapters: [Chapter] = [], seen = Set<String>()
+        let chaptersRoute = config?.route("apiChapters") ?? "/api/v3/comic/{comicId}/group/{group}/chapters?limit=100&offset={offset}"
         for (section, pair) in groups.enumerated() {
             guard pair.1.object != nil else { throw error("目录分组格式错误") }
             let group = pair.1["path_word"].string.isEmpty ? pair.0 : pair.1["path_word"].string
             var offset = 0, complete = false
             for _ in 0..<1000 {
-                let data = try await api("/api/v3/comic/\(encode(raw))/group/\(encode(group))/chapters?limit=100&offset=\(offset)")
+                let urlPath = chaptersRoute.replacingOccurrences(of: "{comicId}", with: encode(raw))
+                    .replacingOccurrences(of: "{group}", with: encode(group))
+                    .replacingOccurrences(of: "{offset}", with: "\(offset)")
+                let data = try await api(urlPath)
                 guard let list = data["list"].array, let total = data["total"].integer, total >= 0,
                       data["offset"].integer == offset else { throw error("目录分页响应错误") }
                 if list.isEmpty {
@@ -142,7 +181,9 @@ public actor CopyMangaComicSource: ComicSource {
               let chapterID = ids[2].replacingOccurrences(of:"+",with:" ").removingPercentEncoding else { throw error("章节地址无效或编码错误") }
         let raw = try rawID(comic)
         guard !chapterID.isEmpty else { throw error("章节标识为空") }
-        let data = try await api("/api/v3/comic/\(encode(raw))/chapter/\(encode(chapterID))?platform=3")
+        let chapterRoute = config?.route("apiChapter") ?? "/api/v3/comic/{comicId}/chapter/{chapterId}?platform=3"
+        let path = chapterRoute.replacingOccurrences(of: "{comicId}", with: encode(raw)).replacingOccurrences(of: "{chapterId}", with: encode(chapterID))
+        let data = try await api(path)
         try checkComic(data,raw)
         let chapter = data["chapter"]
         guard chapter["uuid"].string == chapterID, chapter["comic_path_word"].string == raw else { throw error("阅读数据与章节不匹配") }
@@ -153,6 +194,14 @@ public actor CopyMangaComicSource: ComicSource {
             return image
         }
         return .init(chapterId:base+"/comic/\(encode(raw))/chapter/\(encode(chapterID))",title:chapter["name"].string,nextPageUrl:"",imageUrls:images)
+    }
+    public func healthCheck() async -> Bool {
+        do {
+            let list = try await latest(page: 1)
+            return !list.isEmpty
+        } catch {
+            return false
+        }
     }
     private func api(_ path: String) async throws -> CopyMangaValue {
         var origins = [try origin(apiOrigin,fallback:false)]

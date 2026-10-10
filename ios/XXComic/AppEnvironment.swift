@@ -43,7 +43,7 @@ final class AppEnvironment {
             AntbywComicSource(config: preferences.config(for: "antbyw") ?? SourceConfigDefaults.antbyw()),
             CuimhComicSource(config: preferences.config(for: "cuimh") ?? SourceConfigDefaults.cuimh()),
             LiumanhuaComicSource(),
-            CopyMangaComicSource(config: preferences.config(for: "copy4000")),
+            CopyMangaComicSource(config: preferences.config(for: "copy4000") ?? SourceConfigDefaults.copy4000()),
             ManwaComicSource(config: preferences.config(for: "manwa") ?? SourceConfigDefaults.manwa()),
             JmComicSource(config: preferences.config(for: "jmcomic") ?? SourceConfigDefaults.jmcomic(), browserSession: browserSession),
             Hanman18ComicSource(config: preferences.config(for: "hanman18") ?? SourceConfigDefaults.hanman18())

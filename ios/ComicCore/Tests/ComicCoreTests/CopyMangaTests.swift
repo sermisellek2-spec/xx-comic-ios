@@ -308,4 +308,55 @@ final class CopyMangaTests: XCTestCase {
             let calls = await t.captured(); XCTAssertEqual(calls.count,1)
         }
     }
+    func testSourceConfigDefaultsAndConfiguredSource() async throws {
+        let def = SourceConfigDefaults.copy4000()
+        XCTAssertEqual(def.id, "copy4000")
+        XCTAssertEqual(def.name, "拷贝漫画")
+        XCTAssertEqual(def.baseUrl, "https://www.copy4000.com")
+        XCTAssertEqual(def.route("apiBaseUrl"), "https://api.manga2026.xyz")
+        XCTAssertEqual(SourceConfigDefaults.defaultConfig(for: "copy4000"), def)
+
+        let custom = SourceConfigItem(
+            id: "copy4000",
+            name: "拷贝漫画镜像",
+            domain: "mirror.copy.test",
+            baseUrl: "https://mirror.copy.test",
+            referer: "https://mirror.copy.test/ref",
+            latestPath: "",
+            searchPath: "/api/custom/search?q={keyword}&offset={offset}&limit={limit}",
+            categoryPath: "/comics?limit={limit}&offset={offset}&ordering={ordering}{filters}",
+            detailPath: "/comic/{comicId}",
+            enabled: true,
+            routes: [
+                "apiBaseUrl": "https://api.mirror.test",
+                "apiFallbackUrls": "",
+                "search": "/api/custom/search?q={keyword}&offset={offset}&limit={limit}"
+            ],
+            filters: [:]
+        )
+        let t = CopyTransport(body: #"{"code":200,"results":{"list":[{"path_word":"slug1","name":"漫画1"}]}}"#)
+        let s = CopyMangaComicSource(config: custom, transport: t)
+        XCTAssertEqual(s.name, "拷贝漫画镜像")
+        XCTAssertEqual(s.referer, "https://mirror.copy.test/ref")
+        let cards = try await s.search(keyword: "测试", page: 1)
+        XCTAssertEqual(cards.count, 1)
+        let calls = await t.captured()
+        XCTAssertEqual(calls.first?.0.absoluteString, "https://mirror.copy.test/api/custom/search?q=%E6%B5%8B%E8%AF%95&offset=0&limit=12")
+        XCTAssertEqual(calls.first?.1["Referer"], "https://mirror.copy.test/ref")
+    }
+    func testSearchFallsBackToSearchclWhenSearchciReturnsEmpty() async throws {
+        let t = CopyTransport { url, _ in
+            if url.path.contains("searchci") {
+                return copyResponse(#"{"code":200,"results":{"list":[]}}"#)
+            }
+            return copyResponse(#"{"code":200,"results":{"list":[{"path_word":"bajiaolongdediwang","name":"八角籠的帝王"}]}}"#)
+        }
+        let s = CopyMangaComicSource(transport: t)
+        let results = try await s.search(keyword: "八角", page: 1)
+        XCTAssertEqual(results.map(\.comicId), ["copy4000:bajiaolongdediwang"])
+        let calls = await t.captured()
+        XCTAssertEqual(calls.count, 2)
+        XCTAssertTrue(calls[0].0.path.contains("searchci"))
+        XCTAssertTrue(calls[1].0.path.contains("searchcl"))
+    }
 }

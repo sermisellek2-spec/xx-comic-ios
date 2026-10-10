@@ -13,7 +13,7 @@ manhuazhan,dedicated,漫画栈,https://www.manhuazhan.com,true,待实测(站点�
 bbyin,dedicated,哔哔漫画,https://bbyin.com,true,通过,12,国内直连优先,5um系列接口,sources/bbyin.md
 antbyw,dedicated,蚂蚁不迷路,https://antbyw.com,true,通过,13,国内直连优先,,sources/antbyw.md
 cuimh,dedicated,催漫画,https://www.cuimh.com,true,通过,14,国内直连优先,分类阅读(原版无搜索)/AES解密,sources/cuimh.md
-copy4000,dedicated,拷贝漫画,https://www.copy4000.com,true,待接入,15,需要分流/海外,动态线路切换,
+copy4000,dedicated,拷贝漫画,https://www.copy4000.com,true,通过,15,需要分流/海外,动态线路切换,sources/copy4000.md
 manwa,dedicated,漫蛙,https://manwa.me,true,待接入,16,海外线路,,
 liumanhua,dedicated,六漫画,https://www.liumanhua.com,true,待接入,17,国内直连优先,,
 dingmanhua,dedicated,叮漫画,https://www.dingmanhua.com,true,待接入,18,国内直连优先,,
