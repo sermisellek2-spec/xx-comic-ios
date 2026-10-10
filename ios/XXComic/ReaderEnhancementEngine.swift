@@ -19,13 +19,28 @@ private enum ReaderEnhancementError: Error {
 final class ReaderEnhancementEngine {
     static let shared = ReaderEnhancementEngine()
 
-    private let cache = NSCache<NSString, UIImage>()
+    struct Result {
+        enum Method: String { case original, neural, fast, fallback, cancelled }
+        let image: UIImage
+        let method: Method
+        let tilesProcessed: Int
+    }
+    private final class CacheEntry: NSObject {
+        let result: Result
+        init(_ result: Result) { self.result = result }
+    }
+    #if canImport(CoreML)
+    typealias TilePredictor = @Sendable (MLModel, CIContext, CIImage) throws -> CIImage
+    private let tilePredictor: TilePredictor
+    #endif
+    private let cache = NSCache<NSString, CacheEntry>()
     private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
     private var mlModel: AnyObject?
     private var isModelLoaded = false
     private var isClosed = false
 
-    init() {
+    init(tilePredictor: TilePredictor? = nil) {
+        self.tilePredictor = tilePredictor ?? Self.predictTile
         // Limit cache size to 64MB
         cache.totalCostLimit = 64 * 1024 * 1024
     }
@@ -125,8 +140,9 @@ final class ReaderEnhancementEngine {
         width: Int,
         height: Int,
         scale: CGFloat,
-        orientation: UIImage.Orientation
-    ) throws -> UIImage {
+        orientation: UIImage.Orientation,
+        predictor: TilePredictor
+    ) throws -> Result {
         let tile = 192
         let halo = 32
         let inTileSize: CGFloat = 256
@@ -147,6 +163,7 @@ final class ReaderEnhancementEngine {
         }
 
         let clamped = inputCI.clampedToExtent()
+        var tilesProcessed = 0
 
         for y in stride(from: 0, to: height, by: tile) {
             for x in stride(from: 0, to: width, by: tile) {
@@ -160,11 +177,9 @@ final class ReaderEnhancementEngine {
                     .cropped(to: srcRect)
                     .transformed(by: CGAffineTransform(translationX: -CGFloat(x - halo), y: -CGFloat(y - halo)))
 
-                let outputTile512 = try predictTile(
-                    model: model,
-                    ciContext: ciContext,
-                    inputTileCI: tileCI
-                )
+                let outputTile512 = try predictor(model, ciContext, tileCI)
+                tilesProcessed += 1
+                try Task.checkCancellation()
 
                 let interiorRect = CGRect(x: CGFloat(halo * 2), y: CGFloat(halo * 2), width: CGFloat(actualW * 2), height: CGFloat(actualH * 2))
                 guard let tileCG = ciContext.createCGImage(outputTile512, from: interiorRect) else {
@@ -186,28 +201,34 @@ final class ReaderEnhancementEngine {
         guard let finalCG = outputContext.makeImage() else {
             throw ReaderEnhancementError.predictionFailed
         }
-        return UIImage(cgImage: finalCG, scale: scale, orientation: orientation)
+        return Result(image: UIImage(cgImage: finalCG, scale: scale, orientation: orientation), method: .neural, tilesProcessed: tilesProcessed)
     }
     #endif
 
     /// Returns cached enhanced image if available.
     func cached(url: String, original: UIImage, mode: Int) -> UIImage? {
-        guard original.cgImage != nil else { return nil }
+        guard let cgImage = original.cgImage else { return nil }
         let key = ImageEnhancementPolicy.cacheKey(
             sourceKey: url,
             mode: mode,
-            width: Int(original.size.width),
-            height: Int(original.size.height),
+            width: cgImage.width,
+            height: cgImage.height,
             pixelRevision: 0
         )
-        return cache.object(forKey: key as NSString)
+        return cache.object(forKey: key as NSString)?.result.image
     }
 
     /// Enhances an image asynchronously using CoreML / CoreImage / Metal pipeline.
     /// Falls back to original image on cancellation or failure.
     func enhance(url: String, original: UIImage, mode: Int) async -> UIImage {
-        guard mode != ImageEnhancementPolicy.modeOff else { return original }
-        guard let cgImage = original.cgImage else { return original }
+        await enhanceResult(url: url, original: original, mode: mode).image
+    }
+
+    func enhanceResult(url: String, original: UIImage, mode: Int) async -> Result {
+        let unchanged = Result(image: original, method: .original, tilesProcessed: 0)
+        guard !Task.isCancelled else { return Result(image: original, method: .cancelled, tilesProcessed: 0) }
+        guard mode != ImageEnhancementPolicy.modeOff else { return unchanged }
+        guard let cgImage = original.cgImage else { return unchanged }
 
         let width = cgImage.width
         let height = cgImage.height
@@ -219,7 +240,7 @@ final class ReaderEnhancementEngine {
             width: width,
             height: height
         ) else {
-            return original
+            return unchanged
         }
 
         let key = ImageEnhancementPolicy.cacheKey(
@@ -231,7 +252,7 @@ final class ReaderEnhancementEngine {
         ) as NSString
 
         if let cached = cache.object(forKey: key) {
-            return cached
+            return cached.result
         }
 
         // Run enhancement on background thread
@@ -240,11 +261,12 @@ final class ReaderEnhancementEngine {
 
             #if canImport(CoreML)
             let neuralModel = (mode == ImageEnhancementPolicy.modeSmart) ? loadNeuralModel() : nil
+            let predictor = tilePredictor
             #endif
 
-            let subtask = Task.detached(priority: .userInitiated) { [ciContext] () -> UIImage in
+            let subtask = Task.detached(priority: .userInitiated) { [ciContext] () -> Result in
                 try Task.checkCancellation()
-                guard let inputCI = CIImage(image: original) else { return original }
+                guard let inputCI = CIImage(image: original) else { return unchanged }
 
                 var outputCI = inputCI
 
@@ -259,10 +281,11 @@ final class ReaderEnhancementEngine {
                                 width: width,
                                 height: height,
                                 scale: original.scale,
-                                orientation: original.imageOrientation
+                                orientation: original.imageOrientation,
+                                predictor: predictor
                             )
                         } catch is CancellationError {
-                            return original
+                            throw CancellationError()
                         } catch {
                             // Neural inference failed or device out of memory: fall back to 2x bicubic + edge enhancement
                         }
@@ -292,10 +315,10 @@ final class ReaderEnhancementEngine {
                 try Task.checkCancellation()
                 let targetExtent = outputCI.extent
                 guard let renderedCG = ciContext.createCGImage(outputCI, from: targetExtent) else {
-                    return original
+                    return unchanged
                 }
 
-                return UIImage(cgImage: renderedCG, scale: original.scale, orientation: original.imageOrientation)
+                return Result(image: UIImage(cgImage: renderedCG, scale: original.scale, orientation: original.imageOrientation), method: mode == ImageEnhancementPolicy.modeSmart ? .fallback : .fast, tilesProcessed: 0)
             }
 
             let enhanced = try await withTaskCancellationHandler {
@@ -304,13 +327,12 @@ final class ReaderEnhancementEngine {
                 subtask.cancel()
             }
 
-            if !Task.isCancelled {
-                let cost = Int(enhanced.size.width * enhanced.size.height * 4)
-                cache.setObject(enhanced, forKey: key, cost: cost)
-            }
+            try Task.checkCancellation()
+            let cost = (enhanced.image.cgImage?.bytesPerRow ?? 0) * (enhanced.image.cgImage?.height ?? 0)
+            cache.setObject(CacheEntry(enhanced), forKey: key, cost: cost)
             return enhanced
         } catch {
-            return original
+            return Result(image: original, method: Task.isCancelled || error is CancellationError ? .cancelled : .original, tilesProcessed: 0)
         }
     }
 

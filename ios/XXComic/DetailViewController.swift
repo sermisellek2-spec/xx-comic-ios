@@ -47,6 +47,9 @@ final class DetailViewController: UIViewController {
         cover.contentMode = .scaleAspectFit
         cover.heightAnchor.constraint(equalToConstant: 280).isActive = true
         heading.text = comic.title; heading.numberOfLines = 0
+        heading.accessibilityIdentifier = "detail.title"
+        read.accessibilityIdentifier = "detail.read"
+        sourceSwitchButton.accessibilityIdentifier = "detail.switch-source"
         heading.font = .preferredFont(forTextStyle: .title2); heading.textColor = Palette.text
         descriptionLabel.numberOfLines = 0; descriptionLabel.font = .preferredFont(forTextStyle: .body)
         descriptionLabel.textColor = Palette.secondaryText

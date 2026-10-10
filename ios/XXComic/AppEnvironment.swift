@@ -68,7 +68,12 @@ final class AppEnvironment {
         mh18BrowserSession = Mh18BrowserSession(defaults: defaults)
         let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "hanman18", "manhuagui", "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000", "manwa", "dingmanhua", "dongmanla", "zaimanhua", "guazi", "xinmanhua", "jmcomic"] + PublicSourceRegistry.ids()
         sourcePreferences = SourcePreferences(defaults: defaults, defaultIDs: defaultIDs)
-        let available = Self.createSources(preferences: sourcePreferences, browserSession: mh18BrowserSession)
+        var available = Self.createSources(preferences: sourcePreferences, browserSession: mh18BrowserSession)
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--matrix-fixtures") {
+            available = try MatrixUITestFixtures.sources()
+        }
+        #endif
         allSources = available
         preferences = ReaderPreferencesStore(defaults: defaults)
         textPreferences = TextReaderPreferencesStore(defaults: defaults)
@@ -120,18 +125,22 @@ final class AppEnvironment {
         }
         networkMonitor.start()
 
+        #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--ui-testing") {
             if ProcessInfo.processInfo.arguments.contains("--matrix-fixtures") {
-                try EpubUITestFixtures.seedMatrixFixtures(
-                    library: library,
-                    localLibrary: localLibrary,
-                    bookshelfGroupStore: bookshelfGroupStore,
-                    downloadStore: downloadStore
-                )
+                try MatrixUITestFixtures.seed(environment: self)
+                try EpubUITestFixtures.seed(library: localLibrary)
             } else if ProcessInfo.processInfo.arguments.contains("--epub-fixtures") {
                 try EpubUITestFixtures.seed(library: localLibrary)
             }
         }
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--reader-ai-fixture") {
+            var settings = preferences.load()
+            settings.enhancementMode = ImageEnhancementPolicy.modeSmart
+            settings.enhancementComparison = true
+            preferences.save(settings)
+        }
+        #endif
         habits.onChange = { [weak habits, weak defaults] in
             guard let habits, let defaults else { return }
             habits.save(to: defaults)

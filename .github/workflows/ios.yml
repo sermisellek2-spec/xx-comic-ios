@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build:
     runs-on: macos-14
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -43,6 +43,8 @@ jobs:
                               ipad_id = device["udid"]
           if not iphone_id:
               sys.exit("No available iPhone simulator")
+          if not ipad_id:
+              sys.exit("No available iPad simulator")
           print(f"IOS_TEST_DESTINATION=platform=iOS Simulator,id={iphone_id}")
           if ipad_id:
               print(f"IOS_IPAD_DESTINATION=platform=iOS Simulator,id={ipad_id}")
@@ -75,7 +77,7 @@ jobs:
           name: visual-matrix-screenshots
           path: |
             ios/build/evidence/visual-matrix/*.png
-            docs/ios-parity-2.0.40/review-evidence/visual-matrix/*.png
+            ios/build/evidence/*-manifest.json
           if-no-files-found: ignore
           retention-days: 7
 
@@ -84,8 +86,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: reader-enhancement-evidence
-          path: |
-            ios/build/evidence/reader-enhancement/*
-            docs/ios-parity-2.0.40/review-evidence/reader-enhancement/*
+          path: ios/build/evidence/reader-enhancement/*
           if-no-files-found: ignore
           retention-days: 7

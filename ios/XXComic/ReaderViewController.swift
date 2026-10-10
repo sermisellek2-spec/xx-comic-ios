@@ -151,6 +151,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         enhancementBadge.layer.masksToBounds = true
         enhancementBadge.textAlignment = .center
         enhancementBadge.isHidden = true
+        enhancementBadge.accessibilityIdentifier = "reader.enhancement.badge"
 
         for item in [pages, toolbar, status, badge, enhancementBadge] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
         NSLayoutConstraint.activate([
@@ -205,6 +206,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         savePosition()
         if isMovingFromParent {
             loadTask?.cancel(); directoryTask?.cancel()
+            pages.visibleCells.forEach { ($0 as? ReaderImageCell)?.cancel() }
             navigationController?.setNavigationBarHidden(false, animated: false)
             navigationController?.overrideUserInterfaceStyle = oldNavigationStyle
         }
@@ -246,6 +248,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         navigationController?.overrideUserInterfaceStyle = style
         pages.backgroundColor = .systemBackground; view.backgroundColor = .systemBackground
         toolbar.backgroundColor = .secondarySystemBackground
+        [directory, middleButton, preferences].forEach { $0.tintColor = .label }
         badge.textColor = .secondaryLabel
         badge.isHidden = !fullscreen || settings.fullyImmersive
         presentedViewController?.overrideUserInterfaceStyle = style
@@ -483,9 +486,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private func updateBadge() {
         guard !images.isEmpty else { badge.text = nil; enhancementBadge.isHidden = true; return }
         badge.text = "\(session.imageIndex + 1)/\(images.count) · \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short))"
-        if settings.enhancementMode != ImageEnhancementPolicy.modeOff {
+        let cell = pages.cellForItem(at: IndexPath(item: session.imageIndex, section: 0)) as? ReaderImageCell
+        if settings.enhancementMode != ImageEnhancementPolicy.modeOff, let method = cell?.enhancementMethod,
+           method == .neural || method == .fast || method == .fallback {
             enhancementBadge.isHidden = false
-            enhancementBadge.text = settings.enhancementMode == ImageEnhancementPolicy.modeSmart ? " AI 2X " : " 增强 "
+            enhancementBadge.text = method == .neural ? " AI 2X " : (method == .fallback ? " 增强（回退） " : " 增强 ")
         } else {
             enhancementBadge.isHidden = true
         }
@@ -721,6 +726,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 self.updateBadge()
             }
         }
+        cell.onEnhancement = { [weak self] in self?.updateBadge() }
         cell.configure(url: url, referer: source.referer, settings: settings, localPageImage: localPageImage)
         return cell
     }
@@ -755,7 +761,7 @@ private enum ReaderError: LocalizedError {
 }
 
 @MainActor
-private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
+final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
     private let scroll = UIScrollView()
     private let image = RemoteImageView()
     private let retry = UIButton(type: .system)
@@ -766,6 +772,16 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
     private var isComparing = false
     private var currentMode = 0
     private var comparisonEnabled = false
+    private var enhancementTask: Task<Void, Never>?
+    private var enhancementGeneration = UUID()
+    #if DEBUG
+    private var comparisonEvents: [String] = []
+    #endif
+    private(set) var enhancementMethod: ReaderEnhancementEngine.Result.Method = .original
+    var enhancer: @MainActor (String, UIImage, Int) async -> ReaderEnhancementEngine.Result = { url, image, mode in
+        await ReaderEnhancementEngine.shared.enhanceResult(url: url, original: image, mode: mode)
+    }
+    var onEnhancement: (() -> Void)?
     var onComparing: ((Bool) -> Void)?
     var onSize: ((CGSize) -> Void)?
     var onZoom: ((Bool) -> Void)?
@@ -777,6 +793,9 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
         scroll.showsHorizontalScrollIndicator = false; scroll.showsVerticalScrollIndicator = false
         scroll.bouncesZoom = true
         image.contentMode = .scaleAspectFit
+        image.isAccessibilityElement = true
+        image.accessibilityIdentifier = "reader.image"
+        image.accessibilityLabel = "阅读图片"
         contentView.addSubview(scroll); scroll.addSubview(image); contentView.addSubview(retry)
         retry.setTitle("正在加载图片…", for: .normal)
         retry.addTarget(self, action: #selector(reload), for: .touchUpInside)
@@ -788,24 +807,55 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
         image.onLoaded = { [weak self] size in
             guard let self else { return }
             self.retry.isHidden = true
-            self.rawImage = self.image.image
-            if self.currentMode != ImageEnhancementPolicy.modeOff, let raw = self.rawImage {
-                Task { [weak self] in
-                    guard let self, let raw = self.rawImage else { return }
-                    let enhanced = await ReaderEnhancementEngine.shared.enhance(url: self.url, original: raw, mode: self.currentMode)
-                    guard !Task.isCancelled, self.rawImage === raw else { return }
-                    self.enhancedImage = enhanced
-                    if !self.isComparing {
-                        self.image.image = enhanced
-                    }
-                }
-            }
+            if let raw = self.image.image { self.displayLoadedImage(raw) }
             let callback = self.onSize
             DispatchQueue.main.async { callback?(size) }
         }
         image.onFailure = { [weak self] in self?.retry.isHidden = false; self?.retry.setTitle("图片加载失败 · 点击重试", for: .normal) }
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
+
+    func displayLoadedImage(_ raw: UIImage) {
+        stopEnhancement()
+        rawImage = raw
+        image.image = raw
+        updateImageAccessibility()
+        guard currentMode != ImageEnhancementPolicy.modeOff else { return }
+        let token = enhancementGeneration, sourceURL = url, mode = currentMode, enhance = enhancer
+        enhancementTask = Task { [weak self] in
+            let result = await enhance(sourceURL, raw, mode)
+            guard let self, !Task.isCancelled, self.enhancementGeneration == token,
+                  self.url == sourceURL, self.currentMode == mode, self.rawImage === raw else { return }
+            self.enhancementMethod = result.method
+            self.enhancedImage = result.image
+            if !self.isComparing { self.image.image = result.image }
+            self.updateImageAccessibility()
+            self.onEnhancement?()
+        }
+    }
+
+    private func updateImageAccessibility() {
+        let method = isComparing ? "original" : enhancementMethod.rawValue
+        let pixels = image.image?.cgImage
+        image.accessibilityValue = "\(method):\(pixels?.width ?? 0)x\(pixels?.height ?? 0)"
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing"), !comparisonEvents.isEmpty {
+            image.accessibilityValue = (image.accessibilityValue ?? "") + ";comparison=" + comparisonEvents.joined(separator: ">")
+        }
+        #endif
+    }
+
+    private func stopEnhancement() {
+        enhancementGeneration = UUID()
+        enhancementTask?.cancel()
+        enhancementTask = nil
+        if let rawImage { image.image = rawImage }
+        if isComparing { onComparing?(false) }
+        enhancedImage = nil
+        isComparing = false
+        enhancementMethod = .original
+        updateImageAccessibility()
+    }
 
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
         guard comparisonEnabled, enhancedImage != nil, rawImage != nil else { return }
@@ -818,6 +868,13 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
             image.image = enhancedImage ?? rawImage
             onComparing?(false)
         }
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing") {
+            comparisonEvents.append(isComparing ? "original" : enhancementMethod.rawValue)
+            comparisonEvents = Array(comparisonEvents.suffix(8))
+        }
+        #endif
+        updateImageAccessibility()
     }
 
     override func layoutSubviews() {
@@ -827,6 +884,8 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
         retry.frame = CGRect(x: 0, y: max(0, bounds.midY - 22), width: bounds.width, height: 44)
     }
     func configure(url: String, referer: String, settings: ReaderPreferences, localPageImage: (@Sendable (URL) throws -> Data)? = nil) {
+        stopEnhancement()
+        rawImage = nil
         self.url = url; self.referer = referer
         self.localPageImage = localPageImage
         self.currentMode = settings.enhancementMode
@@ -836,10 +895,13 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
         reload()
     }
     func apply(_ settings: ReaderPreferences) {
+        let changedMode = currentMode != settings.enhancementMode
+        if changedMode { stopEnhancement() }
         self.currentMode = settings.enhancementMode
         self.comparisonEnabled = settings.enhancementComparison
         setZoomEnabled(settings.pinchZoom)
         image.setReaderEffects(crop: settings.cropWhiteMargins, vertical: settings.layout == .paged, ink: settings.inkScreen)
+        if changedMode, let raw = rawImage { displayLoadedImage(raw) }
     }
     func setZoomEnabled(_ enabled: Bool) {
         if !enabled { scroll.setZoomScale(1, animated: false) }
@@ -850,18 +912,22 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { image }
     func scrollViewDidZoom(_ scrollView: UIScrollView) { onZoom?(scrollView.zoomScale > 1.05) }
     func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) { onUserAction?() }
-    func cancel() { image.cancel() }
+    func cancel() { stopEnhancement(); image.cancel() }
     override func prepareForReuse() {
         super.prepareForReuse()
-        image.cancel()
+        cancel()
         localPageImage = nil
         onSize = nil
         onZoom = nil
         onUserAction = nil
         onComparing = nil
+        onEnhancement = nil
         rawImage = nil
         enhancedImage = nil
         isComparing = false
+        #if DEBUG
+        comparisonEvents.removeAll()
+        #endif
         scroll.setZoomScale(1, animated: false)
     }
 }

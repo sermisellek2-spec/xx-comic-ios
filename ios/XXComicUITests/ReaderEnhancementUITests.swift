@@ -3,7 +3,8 @@ import XCTest
 final class ReaderEnhancementUITests: XCTestCase {
     func testReaderAIBadgeAndLongPressOriginalComparison() {
         let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing", "--epub-fixtures"]
+        app.launchArguments = ["--ui-testing", "--epub-fixtures", "--reader-ai-fixture"]
+        app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
         app.launch()
 
         // Open local shelf
@@ -27,7 +28,13 @@ final class ReaderEnhancementUITests: XCTestCase {
         let center = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         center.tap()
 
-        // Take screenshot of reader with controls and enhancement badge
+        let badge = app.staticTexts["reader.enhancement.badge"]
+        expectation(for: NSPredicate(format: "label CONTAINS 'AI 2X'"), evaluatedWith: badge)
+        waitForExpectations(timeout: 20)
+        let readerImage = app.images["reader.image"].firstMatch
+        XCTAssertTrue(readerImage.exists)
+        XCTAssertTrue((readerImage.value as? String ?? "").contains("neural:"))
+        // Capture after the actual neural result is displayed.
         let screenshot = XCUIScreen.main.screenshot()
         let attachment = XCTAttachment(screenshot: screenshot)
         attachment.name = "reader_enhancement_badge_view"
@@ -36,5 +43,7 @@ final class ReaderEnhancementUITests: XCTestCase {
 
         // Perform long press gesture to trigger original comparison
         center.press(forDuration: 0.8)
+        XCTAssertTrue((readerImage.value as? String ?? "").contains("comparison=original>neural"))
+        XCTAssertTrue(badge.label.contains("AI 2X"))
     }
 }

@@ -26,14 +26,26 @@ fi
 if [ -n "${IOS_IPAD_DESTINATION:-}" ]; then
   DESTINATIONS+=("$IOS_IPAD_DESTINATION")
 fi
+if [ "${#DESTINATIONS[@]}" -eq 0 ]; then
+  echo 'No actual simulator destination supplied.' >&2
+  exit 1
+fi
 
+test_failed=0
 for dest in "${DESTINATIONS[@]}"; do
   echo "==> Running tests on destination: $dest"
   test_results=$(mktemp -d build/ui-results-XXXXXX)
-  xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Debug \
+  if ! xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Debug \
     -destination "$dest" -derivedDataPath build/simulator \
-    -resultBundlePath "$test_results/UITests.xcresult" CODE_SIGNING_ALLOWED=NO test || true
+    -resultBundlePath "$test_results/UITests.xcresult" CODE_SIGNING_ALLOWED=NO test; then
+    test_failed=1
+  fi
+  python3 scripts/export_evidence.py "$test_results/UITests.xcresult" build/evidence
 done
+if [ "$test_failed" -ne 0 ]; then
+  echo 'Native tests failed; Release IPA will not be packaged.' >&2
+  exit 1
+fi
 
 if [ -d /tmp/matrix_screenshots ]; then
   cp -rf /tmp/matrix_screenshots/*.png build/evidence/visual-matrix/ 2>/dev/null || true
@@ -50,7 +62,9 @@ xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Release \
   -sdk iphoneos -destination 'generic/platform=iOS' \
   -derivedDataPath build/device CODE_SIGNING_ALLOWED=NO build
 
-mkdir -p build/package/Payload
-ditto build/device/Build/Products/Release-iphoneos/XXComic.app build/package/Payload/XXComic.app
-(cd build/package && zip -qry ../XXComic-unsigned.ipa Payload)
+package_dir=$(mktemp -d build/package-XXXXXX)
+mkdir -p "$package_dir/Payload"
+ditto build/device/Build/Products/Release-iphoneos/XXComic.app "$package_dir/Payload/XXComic.app"
+(cd "$package_dir" && zip -qry XXComic-unsigned.ipa Payload)
+mv "$package_dir/XXComic-unsigned.ipa" build/XXComic-unsigned.ipa
 echo '未签名 IPA：ios/build/XXComic-unsigned.ipa；需由用户自行签名安装。'

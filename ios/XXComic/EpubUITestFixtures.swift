@@ -7,10 +7,15 @@ import UIKit
 @MainActor
 enum EpubUITestFixtures {
     static var sessionID: String? {
+        #if DEBUG
         guard ProcessInfo.processInfo.arguments.contains("--ui-testing") else { return nil }
         return UUID(uuidString: ProcessInfo.processInfo.environment["XXCOMIC_UI_TEST_SESSION"] ?? "")?.uuidString
+        #else
+        return nil
+        #endif
     }
 
+    #if DEBUG
     static func seed(library: LocalLibrary) throws {
         guard ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--epub-fixtures"),
               library.directory.deletingLastPathComponent().lastPathComponent == "XXComic-UITests" else { return }
@@ -210,4 +215,5 @@ enum EpubUITestFixtures {
         downloadStore.save(task: task)
         downloadStore.saveSnapshot(downloadDetail)
     }
+    #endif
 }
