@@ -84,19 +84,19 @@ def build_sr_model(output_path: str):
 
     # Conv_34: 64 -> 48
     w34, b34 = read_conv(64, 48)
-    builder.add_convolution('Conv_34', 64, 48, 3, 3, 1, 1, 'same', 1, w34, b34, True, input_name=curr, output_name='blob_105')
+    builder.add_convolution('Conv_34', 64, 48, 3, 3, 1, 1, 'same', 1, w34, b34, True, input_name=curr, output_name='conv_34_out')
 
     # DepthToSpace_35: block_size=4 (48 -> 3 channels, 4x spatial resolution: 1024x1024)
-    builder.add_reorganize_data('DepthToSpace_35', 'blob_105', 'blob_106', mode='DEPTH_TO_SPACE', block_size=4)
+    builder.add_reorganize_data('DepthToSpace_35', 'conv_34_out', 'depth_to_space_out', mode='DEPTH_TO_SPACE', block_size=4)
 
     # Resize_37: input upsampled 4x nearest neighbor
-    builder.add_upsample('Resize_37', 4, 4, 'image', 'blob_111', mode='NN')
+    builder.add_upsample('Resize_37', 4, 4, 'image', 'input_upsample_out', mode='NN')
 
-    # Add_38: blob_106 + blob_111
-    builder.add_elementwise('Add_38', ['blob_106', 'blob_111'], 'blob_112', 'ADD')
+    # Add_38: depth_to_space_out + input_upsample_out
+    builder.add_elementwise('Add_38', ['depth_to_space_out', 'input_upsample_out'], 'residual_add_out', 'ADD')
 
     # Resize_40: resize from 1024x1024 to 512x512 (2x total)
-    builder.add_resize_bilinear('Resize_40', 'blob_112', 'blob_scaled', target_height=out_h, target_width=out_w, mode='UPSAMPLE_MODE')
+    builder.add_resize_bilinear('Resize_40', 'residual_add_out', 'blob_scaled', target_height=out_h, target_width=out_w, mode='UPSAMPLE_MODE')
 
     # Postprocessing: scale [0, 1] back to [0, 255] for image output buffer
     builder.add_activation('scale_output', 'LINEAR', 'blob_scaled', 'output_image', params=[255.0, 0.0])
