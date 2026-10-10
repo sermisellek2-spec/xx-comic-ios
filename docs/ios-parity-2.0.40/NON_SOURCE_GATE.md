@@ -1,5 +1,7 @@
 # 非站源完整验收门槛报告 (NON_SOURCE_GATE)
 
+> 2026-10-11 复验纠偏：下面为历史 Gemini 报告。当前 BASE-05/GATE-02 缺少 Android 同内容截图金标、叠图与逐组件差分，完整非站源门槛 GATE-06 为「待验收」，不能继承下方历史 PASS。本轮重要故障修复及当前原生结果见 [REPAIR_DELIVERY_2026-10-11.md](REPAIR_DELIVERY_2026-10-11.md)。用户本轮已授权修复后提供 SideStore IPA。
+
 - **结论**：**PASS**
 - **验收日期**：2026-10-10
 - **源码版本**：`codex/ios-port` (提交 a29026b 及当前工作区完整实现)

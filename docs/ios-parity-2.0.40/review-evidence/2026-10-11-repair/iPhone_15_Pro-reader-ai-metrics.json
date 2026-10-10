@@ -1,0 +1,13 @@
+{
+  "device" : "iPhone 15 Pro",
+  "durationMs" : 2451.4257499999985,
+  "inputDimensions" : "384x384",
+  "maxGrayEdgeChroma" : 21,
+  "maxSeamStep" : 1,
+  "method" : "neural",
+  "outputDimensions" : "768x768",
+  "residentMemoryAfterMB" : 238.125,
+  "residentMemoryBeforeMB" : 181.140625,
+  "systemVersion" : "17.4",
+  "tilesProcessed" : 4
+}

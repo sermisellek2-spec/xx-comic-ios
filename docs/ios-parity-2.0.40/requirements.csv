@@ -2,8 +2,8 @@ id,gate,area,requirement,android_reference,status,evidence
 BASE-01,P0,基线,核验固定发布提交与527文件快照,baseline/manifest.json,通过,baseline/VERIFICATION.md
 BASE-02,P0,范围,逐页逐入口逐默认值补齐需求矩阵,MainActivity.java,通过,requirements.csv;IOS_2_0_40_GEMINI_PLAN.md
 BASE-03,P0,测试,建立双方共用且Release隔离的确定性fixture,app/src/androidTest,通过,ComicCoreTests;EpubUITestFixtures.swift
-BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,ios/scripts/build.sh,通过,docker swift test 678通过;verify-baseline退出0
-BASE-05,P0,视觉,建立8场景真实Android截图金标和设备元数据,app/src/androidTest,通过,Palette.swift;AppTheme.swift;CoverLayoutHelper.swift
+BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,ios/scripts/build.sh,阻塞,7162e15核心776与双设备各28项通过;8bf6bfa最终Release修复受CI账单限制未启动
+BASE-05,P0,视觉,建立8场景真实Android截图金标和设备元数据,app/src/androidTest,待验收,Android同内容8场景运行截图金标未提供;源代码不能替代截图证据
 VIS-01,P1,主题,完整浅深色token及默认跟随系统且设置落盘,UIHelpers.java;UiContrast.java,通过,Palette.swift;AppTheme.swift;AppThemeController.swift
 VIS-02,P1,素材,启动图标应用图标插画及控件图标按实际原版,app/src/main/res;app/src/main/assets,通过,Resources/rem_*.png;DetailViewController.swift;ComicGridViewController.swift
 VIS-03,P1,导航,底栏标题细线工具区切页返回及安全区,MainActivity.java;NavigationInsets.java,通过,ComicGridViewController.swift;DiscoverViewController.swift;DetailViewController.swift
@@ -40,9 +40,9 @@ READER-06,P3,目录,大目录快速滚动定位当前章末尾位置和返回来
 READER-07,P3,换源,阅读中换源和章节对应保持续读历史,MainActivity.java;reader/ReaderPosition.java,通过,ChapterMatching.swift;ChapterMatchingTests.swift;ReaderViewController.swift
 READER-08,P3,恢复,图内位置旋转前后台重启和跨章恢复,reader/ReaderPosition.java;PagedReaderView.java,通过,ReaderViewController.swift;ReaderSessionTests.swift;ReadingRulesTests.swift
 READER-09,P3,主题,独立阅读主题墨水屏去白边动画及默认值落盘,reader/ReaderSettingsSheet.java;ImageEnhancementPolicy.java,通过,ReaderPreferences.swift;SettingsViewController.swift
-READER-10,P3,图像,普通增强开关原图对照关闭及失败回退,reader/ReaderEnhancementEngine.java,通过,ReaderEnhancementEngine.swift;ReaderViewController.swift
-READER-11,P3,AI,离线2倍AI超分真实本地推理模型许可设备及内存,reader/GpuSuperResolution.java;app/src/main/cpp,通过,ReaderEnhancementEngine.swift;ImageEnhancementPolicy.swift;ImageEnhancementPolicyTests.swift
-READER-12,P3,解码,长图高清透明损坏图多图预取取消和内存保护,reader/ReaderDecodePolicy.java,通过,ReaderImageCell.swift;ReaderEnhancementEngine.swift;ImageEnhancementPolicy.swift
+READER-10,P3,图像,普通增强开关原图对照关闭及失败回退,reader/ReaderEnhancementEngine.java,通过,REPAIR_DELIVERY_2026-10-11.md;7162e15双设备实际失败注入回退与长按对照通过
+READER-11,P3,AI,离线2倍AI超分真实本地推理模型许可设备及内存,reader/GpuSuperResolution.java;app/src/main/cpp,通过,review-evidence/2026-10-11-repair/native-runtime-proof.json;18卷积17激活静态精确;双设备真正neural4瓦片;非实机峰值测量
+READER-12,P3,解码,长图高清透明损坏图多图预取取消和内存保护,reader/ReaderDecodePolicy.java,通过,ReaderViewController.swift;ImageEnhancementPolicy.swift;7162e15生产Cell离屏取消及复用迟到结果隔离双设备通过
 READER-13,P3,文字,文字阅读排版主题目录设置缩放和续读,ebook/TextReaderView.java;TextReaderSettingsSheet.java,通过,EpubTextReaderViewController.swift;TextReaderSettingsViewController.swift;TextReadingTests.swift
 LOCAL-01,P4,格式,按基线实际边界完成图片ZIP与CBZ导入阅读,local/LocalImporter.java,通过,LocalArchive.swift;LocalLibrary.swift;LocalArchiveTests.swift
 LOCAL-02,P4,格式,EPUB图文目录混排资源与拒绝格式提示,ebook/EpubParser.java;local/LocalImporter.java,通过,EpubParser.swift;EpubParserTests.swift;LocalEpubLibraryTests.swift
@@ -61,14 +61,14 @@ DOWNLOAD-05,P4,策略,Wi-Fi开关持久化配额前后台调度和恢复提示,d
 DOWNLOAD-06,P4,文件源,文件型源实际协议消费者enqueue与导入阅读闭环,download/FileDownloadWorker.java;DownloadSources.java,通过,FileDownloadWorker.swift;DownloadRuntime.swift;FileDownloadWorkerTests.swift
 VERIFY-01,P2,验证UI,验证等待成功取消过期和返回重试用fixture贯通,MainActivity.java;source,通过,SourceVerificationUI.swift;Mh18BrowserSession.swift;Mh18VerificationAttemptTests.swift;Mh18VerificationRulesTests.swift
 GATE-01,P5,完整性,逐入口反查全部非站源需求与实际消费者无漏项,MainActivity.java;app/src/main,通过,NON_SOURCE_GATE.md;requirements.csv
-GATE-02,P5,视觉,全应用8场景真截图叠图及逐组件对照,UIHelpers.java;app/src/main/res,通过,NON_SOURCE_GATE.md;Palette.swift;AppTheme.swift
+GATE-02,P5,视觉,全应用8场景真截图叠图及逐组件对照,UIHelpers.java;app/src/main/res,待验收,iOS8场景104实际截图来源已核验;Android同内容叠图与逐组件差分未完成
 GATE-03,P5,交互,全应用正常异常取消恢复长按手势和返回闭环,app/src/androidTest,通过,NON_SOURCE_GATE.md;ComicCoreTests
-GATE-04,P5,平台,当前版本Apple构建及必要UI图像PDFWebKitFiles检查,ios/scripts/build.sh,通过,CI构建38063495564通过;双设备27项原生UI/AI测试全通过;Release IPA打包完成
+GATE-04,P5,平台,当前版本Apple构建及必要UI图像PDFWebKitFiles检查,ios/scripts/build.sh,阻塞,7162e15双设备各28项通过;8bf6bfa待最终Release构建;CI38071472048未启动
 GATE-05,P5,质量,性能恢复旧数据并发和Release无测试内容检查,app/src/main,通过,NON_SOURCE_GATE.md;ComicCoreTests
-GATE-06,P5,门槛,全部非站源必需项通过输出NON_SOURCE_GATE为PASS,docs/IOS_2_0_40_GEMINI_PLAN.md,通过,全部非站源必需项通过;CoreML真实预测与视觉矩阵双设备验证闭环
+GATE-06,P5,门槛,全部非站源必需项通过输出NON_SOURCE_GATE为PASS,docs/IOS_2_0_40_GEMINI_PLAN.md,待验收,不能继承历史PASS;BASE-05与GATE-02缺少Android同内容对照
 SOURCE-01,P6,目录,生成22专用29公共稳定ID排序默认和退役矩阵,DownloadSources.java;source/PublicSourceRegistry.java,通过,sources.csv;PublicSourceRegistry.swift;SourcePreferences.swift
 SOURCE-02,P6,适配,拆为每源需求和报告逐一搜索分类详情目录图片下载,source;sources.csv,通过,sources/*.md;PublicComicSource.swift;PublicComicSourceTests.swift
 SOURCE-03,P6,配置,逐源真实消费routesfilters域名referer及custom边界,source/SourceConfig.java,通过,SourcePreferences.swift;PublicComicSource.swift;PublicComicSourceTests.swift
 SOURCE-04,P6,验证,逐源真实验证还原Cookie超时取消与网络提示,source,通过,PublicComicSource.swift;PublicSourceImages.swift;sources/*.md
-FINAL-01,P7,回归,当前HEAD全量核心AppleUI视觉站源恢复和性能自验,docs/IOS_2_0_40_GEMINI_PLAN.md,通过,核心776项+双设备27项原生UI/AI测试全部通过;0失败;0异常
-FINAL-02,P7,交付,版本一致IPA哈希签名安装说明阶段证据和总验收清单,ios/scripts/build.sh,通过,Release IPA已生成;SHA-256:C74BB6975EDCCC90EB0BE52BF3610712FFED4333E28A09355AAD65C18620AAE7;附签名安装说明
+FINAL-01,P7,回归,当前HEAD全量核心AppleUI视觉站源恢复和性能自验,docs/IOS_2_0_40_GEMINI_PLAN.md,待验收,本轮修复验收见REPAIR_DELIVERY_2026-10-11.md;视觉对照未完成;站源保留历史实测
+FINAL-02,P7,交付,版本一致IPA哈希签名安装说明阶段证据和总验收清单,ios/scripts/build.sh,阻塞,8bf6bfa已推送;GitHub付款或消费上限阻止Apple构建;LAN服务与发布校验脚本准备完成但暂无新IPA

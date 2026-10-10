@@ -1,0 +1,11 @@
+{
+  "trainedConvolutionsExact": 18,
+  "trainedPReLUArraysExact": 17,
+  "sourceBytesConsumed": 1247368,
+  "pixelShuffleMode": "NCNN mode 0 / Core ML PIXEL_SHUFFLE",
+  "bicubicHalfPixelMaxError": 1.7881393432617188e-07,
+  "modelBytes": 2488683,
+  "modelSHA256": "049882ffac1c5ae431b7b484d27de0b4b81786fc0702b9fffe503de294e93399",
+  "specificationVersion": 5,
+  "scope": "weights and graph semantics; actual prediction verified separately by Xcode"
+}

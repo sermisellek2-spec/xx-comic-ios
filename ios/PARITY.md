@@ -1,5 +1,7 @@
 # Android 2.0.40 → iOS 对照进度（含 2.0.29 历史归档）
 
+> 2026-10-11 复验：当前修复状态与运行证据见 [`REPAIR_DELIVERY_2026-10-11.md`](../docs/ios-parity-2.0.40/REPAIR_DELIVERY_2026-10-11.md)。主要页面双设备、双方向、双主题运行矩阵采用确定性数据；Android 同内容逐组件截图、叠图与差分仍缺少，不能将下方历史表格视为纯视觉 1:1 全量验收通过。
+
 > 更新日期：2026-10-10。当前目标为冻结的 **Android 2.0.40 / versionCode 340**（commit `696e80a44ab36b19de6f630565df32978e55a19e`）。完整逐项需求矩阵见 [`docs/ios-parity-2.0.40/requirements.csv`](../docs/ios-parity-2.0.40/requirements.csv)，非站源门槛报告见 [`NON_SOURCE_GATE.md`](../docs/ios-parity-2.0.40/NON_SOURCE_GATE.md)，51 个活跃站源台账与逐源报告见 [`sources.csv`](../docs/ios-parity-2.0.40/sources.csv) 与 [`sources/*.md`](../docs/ios-parity-2.0.40/sources/)，最终总验收包见 [`FINAL_ACCEPTANCE.md`](../docs/ios-parity-2.0.40/FINAL_ACCEPTANCE.md)。
 
 ## 一、Android 2.0.40 当前复刻总表（2026-10-10）

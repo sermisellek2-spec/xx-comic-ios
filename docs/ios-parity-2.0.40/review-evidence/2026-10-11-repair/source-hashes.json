@@ -1,0 +1,23 @@
+{
+  "revision": "8bf6bfaf146019dfee69674f65e61da755414835",
+  "files": {
+    ".github/workflows/ios.yml": "427eb42a093e6eea86fcd5917c2999359dd83da945461dc57e4dc8943997891a",
+    "ios/XXComic/AppEnvironment.swift": "d3ae99deb3041f95dd6d01f76537271cf0ad97768ae5120a4a77a6d91f83dde2",
+    "ios/XXComic/ComicGridViewController.swift": "a4c4562a866c73ab30d37959f6cc0326d2735f5400e51b373033a574ae3523c9",
+    "ios/XXComic/DetailViewController.swift": "30cd95799c3649beef88166740ed3ab49bb0f38eddfbcaec9b5162fe68eb60e5",
+    "ios/XXComic/EpubUITestFixtures.swift": "d982a56a078123ad1a80c393dd566c3c9d5e4c6871f618e793a3175135a9aab0",
+    "ios/XXComic/MatrixUITestSource.swift": "ab76a0fa946db29484fec03a362353f80a2b4918dfd8d5e6bef502d9c792348b",
+    "ios/XXComic/ReaderEnhancementEngine.swift": "d19f8c699ead21e1e65f02b699908d1f2e63dd9530f7bfe55fd8480b18996332",
+    "ios/XXComic/ReaderViewController.swift": "545ca30902cb846235b754d21a4b1cdabd5f990e7def87dce943ef7647157c81",
+    "ios/XXComic/Resources/AnimeSuperResolution2x.mlmodel": "049882ffac1c5ae431b7b484d27de0b4b81786fc0702b9fffe503de294e93399",
+    "ios/XXComic/SourceSwitchSheet.swift": "5163ed0f4b08d7795bfa40308e294439eff7516bcdad515fb3231ac963aa9f8d",
+    "ios/XXComicTests/ReaderEnhancementEngineTests.swift": "b427b5e6016b9d2eb1c02e71c44ed85f66ca06ade47c0783647569c6f53d3e7e",
+    "ios/XXComicUITests/ReaderEnhancementUITests.swift": "5c9a97d3007097d682370bd70d85d41397d601e9277664429f900429e44ba25e",
+    "ios/XXComicUITests/VisualMatrixUITests.swift": "09ab0fcf62ca4b69a8371e4691b4f689e97f2a59fbea245b4a66acd4f7d2ced0",
+    "ios/scripts/build.sh": "9bc00c7d8f32b065a07ab6108ba00641e13f1ab5340682213498355ebada0a35",
+    "ios/scripts/export_evidence.py": "4bc8de19b069567bfaeea1d169caf0b3a09c4bfda98c9b94863998888f09be62",
+    "tools/generate_sr_model.py": "f83d2975a7051428a4856d866a396997b42558bede7633bf30c780e22f64ef3d",
+    "tools/requirements-sr.txt": "4368332b83573bcb902b10f936f73a5471a8b36ec85314f1c02545155ba21311",
+    "tools/verify_sr_conversion.py": "156055ce5d8b977391ec8239fc28c291b3b1b1cac3bc634158669ba29e00da99"
+  }
+}
