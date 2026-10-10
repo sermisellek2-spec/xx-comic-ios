@@ -1,8 +1,26 @@
-# Android 2.0.29 → iOS 对照进度
+# Android 2.0.40 → iOS 对照进度（含 2.0.29 历史归档）
 
-> 2026-10-10：本表保留2.0.29历史证据，不是本次完成矩阵。当前目标、顺序及验收见[2.0.40方案](../docs/IOS_2_0_40_GEMINI_PLAN.md)、[需求矩阵](../docs/ios-parity-2.0.40/requirements.csv)和[最新审计](../docs/comparisons/2026-10-10-ios-android-audit.md)。Gemini须按冻结2.0.40源码重新核对并维护当前结果，不能沿用旧“已编写/通过”结论。
+> 更新日期：2026-10-10。当前目标为冻结的 **Android 2.0.40 / versionCode 340**（commit `696e80a44ab36b19de6f630565df32978e55a19e`）。完整逐项需求矩阵见 [`docs/ios-parity-2.0.40/requirements.csv`](../docs/ios-parity-2.0.40/requirements.csv)，非站源门槛报告见 [`NON_SOURCE_GATE.md`](../docs/ios-parity-2.0.40/NON_SOURCE_GATE.md)，51 个活跃站源台账与逐源报告见 [`sources.csv`](../docs/ios-parity-2.0.40/sources.csv) 与 [`sources/*.md`](../docs/ios-parity-2.0.40/sources/)，最终总验收包见 [`FINAL_ACCEPTANCE.md`](../docs/ios-parity-2.0.40/FINAL_ACCEPTANCE.md)。
 
-核对日期：2026-09-20。目标是完整复刻，目前尚未完成；“已编写”不表示通过 Xcode 或真机验收。
+## 一、Android 2.0.40 当前复刻总表（2026-10-10）
+
+| 模块范围 | 需求编号 | 当前实现与自验结果 | 平台差异 / 待真机确认项 |
+| --- | --- | --- | --- |
+| 冻结基线与测试夹具 | `BASE-01~05` | 527 个基准文件 SHA-256 校验通过；确定性测试夹具与 Release 完全隔离 | 无 |
+| 视觉 Token、素材与 iPad 适配 | `VIS-01~07` | 对齐 2.0.40 `Palette` 浅深色 Token、默认跟随系统、`CoverLayoutHelper` 动态列数、原版蕾姆 PNG 与矢量图标、iPad 全部弹层 Popover 锚点 | 系统状态栏与字体栅格化属 iOS 系统特征（见 `differences.md`） |
+| 书架、分组、追更、就地换源与历史 | `SHELF-01~06`, `HISTORY-01` | 在线/本地独立作用域分组、网格/列表切换、批量长按管理、追更红点星标、`SourceSwitchSheet` 就地无损换源、悬浮导入气泡、独立历史生命周期 | 无 |
+| 发现、站源分组、并发搜索与分类抽屉 | `DISC-01~04`, `DETAIL-01~02`, `VERIFY-01` | 站源分组过滤、全站异步合并搜索（严格同名置顶、空源标签隐藏、旧代次防抢页）、55%/92% 双段分类抽屉草稿、详情换源、WebKit 验证等待/取消/重试 | 真机 WebKit Cookie 交互在 iOS 设备总验收确认 |
+| 设置、源配置 v2、缓存、脱敏日志与统计 | `CONFIG-01~07` | 全部设置落盘、稳定源 ID 与别名透明映射、`xx-comic.sources` v2 动态 `routes`/`filters`/`baseUrl`/`referer`/`custom` 导入导出与消费、缓存保护下载与原包、`ErrorLogSanitizer` 脱敏、2.0.40 可选匿名使用统计 | iOS 通过外部链接/侧载更新，无 APK 内置安装器 |
+| 阅读器、手势、目录快滚与本地 AI 超分 | `READER-01~13` | 卷轴/普通/日漫三模式、卷轴禁止侧点与横滑误切章、双行底栏、`ReaderSeekBar` 预览气泡、目录无搜索框/左侧蓝条/44pt 快滚导轨、阅读中换源（`ChapterMatching`）、`ReaderEnhancementEngine` 本地 2x 超分与普通增强及长按原图对照、EPUB 文字阅读器 | 真实 Metal/CoreImage GPU 帧率在 iOS 设备总验收确认 |
+| 本地全格式、批量恢复、合集、文件夹同步 | `LOCAL-01~09` | 图片/文件夹/ZIP/CBZ/EPUB/PDF/Kindle(MOBI/AZW) 真实文件导入、批量中断重启恢复与失败重试、72% 分卷管理抽屉与 3.5s 撤销、SHA-256 内容指纹去重与墓碑恢复、文件夹安全书签直接索引与前后台自动同步、原文件与未知文件保护 | Linux 下跳过 2 项 Apple PDFKit 原生渲染测试；Files 授权在 iOS 设备总验收确认 |
+| 下载队列、断点续传、本地书架与修复 | `DOWNLOAD-01~06` | 图片逐页与大文件（`FileDownloadWorker` Strong ETag/Range）断点续传、完成后自动汇入本地书架离线可读、离线损坏检测与一键跳下载中心修复、可读目录映射、仅 Wi-Fi 策略持久化 | 无 |
+| 22 个专用源 + 29 个公共源（共 51 活跃 + 2 退役） | `SOURCE-01~04` | 22 个专用源与 29 个公共源（`PublicComicSource` 九大解析家族 + `favcomic`/`comic51` 图片 AES 解密 + 移动端 UA + HTML5 作用域）全部就位；48 个源实网全链路通过，`duya` 按原版默认关闭，`manhuazhan`(CF 521) 与 `xiuxiu`(HTTP 403) 为外部源站故障；`baozimh`/`manhuawu` 退役保留历史离线 | 外部站点网络可达性受具体线路影响，详见 `sources/*.md` |
+
+---
+
+## 二、早期 Android 2.0.29 阶段历史归档（仅供历史追溯）
+
+核对日期：2026-09-20（历史记录，已被上方 2.0.40 总表取代）。
 
 2026-09-20 用户调整优先级：暂停新增站源（禁漫天堂/JM、Hanman18），先完成安卓版功能复刻。已开始的七源搜索兼容修复收尾后，优先电子书/PDF、本地批量与分卷/恢复、下载离线、管理和阅读交互；站源适配后续再补。
 

@@ -110,8 +110,8 @@ final class AboutAppViewController: UIViewController, UITableViewDataSource, UIT
 
         if indexPath.row == 0 {
             cell.textLabel?.text = "版本"
-            let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-            let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+            let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.40"
+            let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "340"
             cell.detailTextLabel?.text = "\(shortVersion) (\(buildVersion))"
         } else if indexPath.row == 1 {
             cell.textLabel?.text = "数据说明"

@@ -23,12 +23,28 @@
     </array>
     <key>NSAppTransportSecurity</key>
     <dict>
+        <key>NSAllowsArbitraryLoads</key><true/>
         <key>NSExceptionDomains</key>
         <dict>
             <key>auto.mangafiles.com</key>
             <dict>
                 <key>NSExceptionAllowsInsecureHTTPLoads</key><true/>
                 <key>NSIncludesSubdomains</key><false/>
+            </dict>
+            <key>aymry.com</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key><true/>
+                <key>NSIncludesSubdomains</key><true/>
+            </dict>
+            <key>xiuxmanhua.com</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key><true/>
+                <key>NSIncludesSubdomains</key><true/>
+            </dict>
+            <key>mh250.com</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key><true/>
+                <key>NSIncludesSubdomains</key><true/>
             </dict>
         </dict>
     </dict>

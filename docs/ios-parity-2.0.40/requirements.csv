@@ -70,5 +70,5 @@ SOURCE-01,P6,目录,生成22专用29公共稳定ID排序默认和退役矩阵,Do
 SOURCE-02,P6,适配,拆为每源需求和报告逐一搜索分类详情目录图片下载,source;sources.csv,通过,sources/*.md;PublicComicSource.swift;PublicComicSourceTests.swift
 SOURCE-03,P6,配置,逐源真实消费routesfilters域名referer及custom边界,source/SourceConfig.java,通过,SourcePreferences.swift;PublicComicSource.swift;PublicComicSourceTests.swift
 SOURCE-04,P6,验证,逐源真实验证还原Cookie超时取消与网络提示,source,通过,PublicComicSource.swift;PublicSourceImages.swift;sources/*.md
-FINAL-01,P7,回归,当前HEAD全量核心AppleUI视觉站源恢复和性能自验,docs/IOS_2_0_40_GEMINI_PLAN.md,待核对,
-FINAL-02,P7,交付,版本一致IPA哈希签名安装说明阶段证据和总验收清单,ios/scripts/build.sh,待核对,
+FINAL-01,P7,回归,当前HEAD全量核心AppleUI视觉站源恢复和性能自验,docs/IOS_2_0_40_GEMINI_PLAN.md,通过,FINAL_ACCEPTANCE.md;VALIDATION.md;PARITY.md
+FINAL-02,P7,交付,版本一致IPA哈希签名安装说明阶段证据和总验收清单,ios/scripts/build.sh,通过,FINAL_ACCEPTANCE.md;project.yml;ios/README.md

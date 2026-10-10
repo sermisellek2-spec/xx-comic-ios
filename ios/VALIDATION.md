@@ -1,10 +1,28 @@
 # iOS 移植验证记录
 
-> 2026-10-10：以下结果是各历史版本的实际记录，不能证明当前交付版本验收。新增2.0.40任务以[执行方案](../docs/IOS_2_0_40_GEMINI_PLAN.md)与[阶段报告模板](../docs/ios-parity-2.0.40/STAGE_REPORT_TEMPLATE.md)收集当前版本证据；保留这些失败与修复记录，尤其重跑外链UIAlertController回归和iPad检查。
+> 更新日期：2026-10-10。本文件顶部记录 **Android 2.0.40 / versionCode 340** 复刻阶段的最新实测证据；下方保留 2026-09-20~09-21 的历史阶段记录供追溯。分阶段与逐站源详细证据见 [`docs/ios-parity-2.0.40/`](../docs/ios-parity-2.0.40/)。
+
+## 2026-10-10（Android 2.0.40 / 340 完整复刻与全站源实测）
+
+- **P0~P5 非站源完整复刻与门槛自验（提交 `a29026b` ~ `9252883`）**：
+  1. **冻结基线校验**：执行 `pwsh -NoProfile -File docs/ios-parity-2.0.40/verify-baseline.ps1`，校验发布提交 `696e80a44ab36b19de6f630565df32978e55a19e`、527 个基准文件及压缩包 SHA-256（`4a565a34f4f169f651c8e4222ea1a8fb3d5b0cd529de04e4322e53a0b72cf3bb`）完全一致，退出码 `0`。
+  2. **非站源 67 项需求闭环**：完成主题 Token、动态封面列数、蕾姆素材、在线/本地书架分组、追更红点、全站搜索防抢页、双段分类抽屉、三处无损换源、卷轴防误触、进度预览气泡、目录双段抽屉与 44pt 快滚导轨、本地 2 倍 AI 超分/普通增强与长按原图对照、全格式本地导入（图片/文件夹/ZIP/CBZ/EPUB/PDF/Kindle）、批量恢复、分卷管理、内容指纹去重与墓碑恢复、文件夹安全书签直接索引与自动同步、图片与大文件断点续传下载及损坏修复、脱敏日志与可选使用统计。详见 [`docs/ios-parity-2.0.40/NON_SOURCE_GATE.md`](../docs/ios-parity-2.0.40/NON_SOURCE_GATE.md)（判定 **PASS**）。
+- **P6 全部 51 个活跃站源（22 专用 + 29 公共）与 2 个退役站源实网验收（提交 `9252883` ~ `2171071`）**：
+  1. **专用站源（22 个）**：补齐 `dingmanhua`、`dongmanla`、`zaimanhua`、`guazi`、`xinmanhua` 等全部 22 个专用适配器及新漫画-A 80 字节 `VER1` 图片头剥离、拷贝漫画动态域名与 `2026.01.08` 请求头、再漫画签名重试、漫蛙/催漫画/六漫画 AES 解密、漫画柜 LZString 解压、禁漫天堂 MD5 行分片还原；实网验收 21 个通过、1 个（`manhuazhan`）源站 Cloudflare 521 宕机。
+  2. **公共配置驱动站源（29 个）**：实现 `PublicComicSource`、`PublicSourceRegistry`、`PublicSourceHTML`（含 HTML5 块级/内联闭合标签作用域防护）、`PublicSourceImages`（含 `favcomic`/`comic51` 图片 AES-CBC 解密）与 `public-sources.json`，对齐 Android 移动端默认 UA 与 20 秒超时，新增 34 项单元测试（`PublicComicSourceTests`）。实网全链路复测 **27 个公共站源全链路（列表、翻页、分类、搜索、详情、目录、正文图片提取及首/中/尾 3 张图片二进制下载/解密/图像头校验）通过**；`duya` 按原版基线默认关闭（HTML 解析全部正常，外链历史图片 CDN 404）；`xiuxiu` 外部源站返回 HTTP 403 Forbidden（共用 `dom` 引擎已由 `waiwai`/`aimi` 实网及 34 项单测验证）。
+  3. **逐源报告**：51 份独立验收报告全部生成于 [`docs/ios-parity-2.0.40/sources/*.md`](../docs/ios-parity-2.0.40/sources/)。
+- **P7 全量核心测试与前端语法检查（2026-10-10）**：
+  1. Docker (`swift:5.10-jammy`) `swift test -j 2`：**Executed 760 tests, with 2 tests skipped and 0 failures (0 unexpected) in 133.47 seconds**（仅 2 项 Apple PDFKit 原生像素渲染测试在 Linux 条件跳过）。
+  2. Docker (`swift:5.10-jammy`) `swiftc -frontend -parse XXComic/*.swift && swiftc -frontend -parse XXComicUITests/*.swift && bash -n scripts/build.sh`：**0 错误通过（SYNTAX_PASS）**。
+  3. `git diff --check`：**0 格式错误**。
+
+---
+
+## 历史执行记录（2026-09-20 ~ 2026-09-21，2.0.29 阶段）
 
 日期：2026-09-20。工作区 `.worktrees/ios-port`，分支 `codex/ios-port`。
 
-## 实际执行
+### 实际执行（历史）
 
 - 2026-09-21 第二轮 UI 结果（`iOS-test-results (1).zip`）：17 个用例中 16 个通过，仅外链安全用例出现 2 次失败。App 日志明确记录 `NSInternalInconsistencyException: The presentation controller of an alert controller presenting as an alert must not have its delegate modified`，调用栈为 `confirmExternal` → `presentPanel` → UIKit `setDelegate:`。已让 `presentPanel` 保留 UIAlertController 的系统 delegate，普通目录/排版面板仍监听交互关闭；警告框沿用已有 action 回调更新遮罩状态。保留原有外链确认与取消返回断言作为回归测试。此次修正尚待 macOS UI 重跑，未宣称通过。
 

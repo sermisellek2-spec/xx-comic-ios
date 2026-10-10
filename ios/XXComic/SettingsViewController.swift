@@ -76,8 +76,8 @@ final class SettingsViewController: UITableViewController {
     }
 
     private var installedVersionLabel: String {
-        let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-        let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.40"
+        let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "340"
         return "\(shortVersion) (\(buildVersion))"
     }
 
@@ -304,8 +304,8 @@ final class SettingsViewController: UITableViewController {
     }
 
     private func checkForUpdate() {
-        let currentCode = Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "229") ?? 229
-        let currentName = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.29"
+        let currentCode = Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "340") ?? 340
+        let currentName = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.40"
 
         let progressAlert = UIAlertController(title: "检查更新中…", message: "正在获取最新版本信息", preferredStyle: .alert)
         present(progressAlert, animated: true)
