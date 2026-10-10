@@ -1,0 +1,292 @@
+{
+  "ui-results-kUz0y1": {
+    "device": "iPad Pro 11-inch (M4)",
+    "osVersion": "17.4",
+    "targetArch": "arm64",
+    "totalTests": 27,
+    "passedCount": 24,
+    "failedCount": 3,
+    "tests": [
+      {
+        "name": "EpubReadingUITests/testLongBodyWithoutIDsResumesByPercentage()",
+        "status": "Success",
+        "duration": "21.798455953598022"
+      },
+      {
+        "name": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+        "status": "Failure",
+        "duration": "8.40687906742096"
+      },
+      {
+        "name": "ReaderEnhancementUITests/testReaderAIBadgeAndLongPressOriginalComparison()",
+        "status": "Success",
+        "duration": "12.63796603679657"
+      },
+      {
+        "name": "Mh18VerificationTests/testManualVerificationCanCloseAndBeOpenedAgain()",
+        "status": "Success",
+        "duration": "16.780629992485046"
+      },
+      {
+        "name": "EpubReadingUITests/testKindleComicRealImportUsesExistingImageReaderAndResume()",
+        "status": "Success",
+        "duration": "23.56163799762726"
+      },
+      {
+        "name": "EpubReadingUITests/testTextSettingsPersistAfterRelaunch()",
+        "status": "Success",
+        "duration": "28.743956923484802"
+      },
+      {
+        "name": "ReaderEnhancementEngineTests/testCancellationReturnsOriginalImageSafely()",
+        "status": "Failure",
+        "duration": "6.862586975097656"
+      },
+      {
+        "name": "ReaderEnhancementEngineTests/testEnhancementPolicyGuards()",
+        "status": "Success",
+        "duration": "0.0005639791488647461"
+      },
+      {
+        "name": "ReaderEnhancementEngineTests/testInferenceFailureFallsBackToBicubic2x()",
+        "status": "Success",
+        "duration": "0.11092603206634521"
+      },
+      {
+        "name": "ReaderEnhancementEngineTests/testLongPressComparisonStateTransitions()",
+        "status": "Success",
+        "duration": "0.0039479732513427734"
+      },
+      {
+        "name": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+        "status": "Failure",
+        "duration": "7.885117053985596"
+      },
+      {
+        "name": "AppNavigationTests/testNavigationAndReaderPreferencesPersist()",
+        "status": "Success",
+        "duration": "11.431402921676636"
+      },
+      {
+        "name": "EpubReadingUITests/testAllSpinesAndRealSecondChapterResumeRoute()",
+        "status": "Success",
+        "duration": "27.54917800426483"
+      },
+      {
+        "name": "EpubReadingUITests/testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker()",
+        "status": "Success",
+        "duration": "17.680073022842407"
+      },
+      {
+        "name": "EpubReadingUITests/testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce()",
+        "status": "Success",
+        "duration": "49.99429500102997"
+      },
+      {
+        "name": "EpubReadingUITests/testKindleMixedRealImportRetainsTextAndImageInExistingTextReader()",
+        "status": "Success",
+        "duration": "20.01108705997467"
+      },
+      {
+        "name": "EpubReadingUITests/testKindleNovelRealImportTextReaderAndSecondChapterResume()",
+        "status": "Success",
+        "duration": "33.78144598007202"
+      },
+      {
+        "name": "EpubReadingUITests/testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks()",
+        "status": "Success",
+        "duration": "26.31174600124359"
+      },
+      {
+        "name": "EpubReadingUITests/testMixedSpineRetainsDirectImageAndPureImageUsesComicReader()",
+        "status": "Success",
+        "duration": "29.775110960006714"
+      },
+      {
+        "name": "EpubReadingUITests/testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks()",
+        "status": "Success",
+        "duration": "22.586936950683594"
+      },
+      {
+        "name": "EpubReadingUITests/testPendingScrollRestoreCannotOverwriteNextDocumentPosition()",
+        "status": "Success",
+        "duration": "22.865206956863403"
+      },
+      {
+        "name": "EpubReadingUITests/testWebKitBlocksBookScriptsAndLoadsSameBookCSS()",
+        "status": "Success",
+        "duration": "17.77464997768402"
+      },
+      {
+        "name": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+        "status": "Success",
+        "duration": "12.529161095619202"
+      },
+      {
+        "name": "SourceDrawerTests/testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm()",
+        "status": "Success",
+        "duration": "10.178262948989868"
+      },
+      {
+        "name": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+        "status": "Success",
+        "duration": "6.9884339570999146"
+      },
+      {
+        "name": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+        "status": "Success",
+        "duration": "6.879658937454224"
+      },
+      {
+        "name": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+        "status": "Success",
+        "duration": "6.352821111679077"
+      }
+    ]
+  },
+  "ui-results-lryFiI": {
+    "device": "iPhone 15 Pro",
+    "osVersion": "17.4",
+    "targetArch": "arm64",
+    "totalTests": 27,
+    "passedCount": 24,
+    "failedCount": 3,
+    "tests": [
+      {
+        "name": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+        "status": "Success",
+        "duration": "5.586371064186096"
+      },
+      {
+        "name": "EpubReadingUITests/testKindleNovelRealImportTextReaderAndSecondChapterResume()",
+        "status": "Success",
+        "duration": "31.615073084831238"
+      },
+      {
+        "name": "ReaderEnhancementEngineTests/testCancellationReturnsOriginalImageSafely()",
+        "status": "Failure",
+        "duration": "15.538799047470093"
+      },
+      {
+        "name": "ReaderEnhancementEngineTests/testEnhancementPolicyGuards()",
+        "status": "Success",
+        "duration": "0.00029599666595458984"
+      },
+      {
+        "name": "ReaderEnhancementEngineTests/testInferenceFailureFallsBackToBicubic2x()",
+        "status": "Success",
+        "duration": "0.17907702922821045"
+      },
+      {
+        "name": "ReaderEnhancementEngineTests/testLongPressComparisonStateTransitions()",
+        "status": "Success",
+        "duration": "0.007258057594299316"
+      },
+      {
+        "name": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+        "status": "Failure",
+        "duration": "16.474848985671997"
+      },
+      {
+        "name": "AppNavigationTests/testNavigationAndReaderPreferencesPersist()",
+        "status": "Success",
+        "duration": "11.499866008758545"
+      },
+      {
+        "name": "EpubReadingUITests/testAllSpinesAndRealSecondChapterResumeRoute()",
+        "status": "Success",
+        "duration": "25.471113085746765"
+      },
+      {
+        "name": "EpubReadingUITests/testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker()",
+        "status": "Success",
+        "duration": "16.335758924484253"
+      },
+      {
+        "name": "EpubReadingUITests/testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce()",
+        "status": "Success",
+        "duration": "47.59497606754303"
+      },
+      {
+        "name": "EpubReadingUITests/testKindleComicRealImportUsesExistingImageReaderAndResume()",
+        "status": "Success",
+        "duration": "23.08568799495697"
+      },
+      {
+        "name": "EpubReadingUITests/testKindleMixedRealImportRetainsTextAndImageInExistingTextReader()",
+        "status": "Success",
+        "duration": "18.71408998966217"
+      },
+      {
+        "name": "EpubReadingUITests/testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks()",
+        "status": "Success",
+        "duration": "26.201688051223755"
+      },
+      {
+        "name": "EpubReadingUITests/testLongBodyWithoutIDsResumesByPercentage()",
+        "status": "Success",
+        "duration": "20.82985293865204"
+      },
+      {
+        "name": "EpubReadingUITests/testMixedSpineRetainsDirectImageAndPureImageUsesComicReader()",
+        "status": "Success",
+        "duration": "29.098950028419495"
+      },
+      {
+        "name": "EpubReadingUITests/testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks()",
+        "status": "Success",
+        "duration": "22.018815994262695"
+      },
+      {
+        "name": "EpubReadingUITests/testPendingScrollRestoreCannotOverwriteNextDocumentPosition()",
+        "status": "Success",
+        "duration": "21.520262956619263"
+      },
+      {
+        "name": "EpubReadingUITests/testTextSettingsPersistAfterRelaunch()",
+        "status": "Success",
+        "duration": "29.00673496723175"
+      },
+      {
+        "name": "EpubReadingUITests/testWebKitBlocksBookScriptsAndLoadsSameBookCSS()",
+        "status": "Success",
+        "duration": "17.434387922286987"
+      },
+      {
+        "name": "Mh18VerificationTests/testManualVerificationCanCloseAndBeOpenedAgain()",
+        "status": "Success",
+        "duration": "17.272516012191772"
+      },
+      {
+        "name": "ReaderEnhancementUITests/testReaderAIBadgeAndLongPressOriginalComparison()",
+        "status": "Success",
+        "duration": "12.920444965362549"
+      },
+      {
+        "name": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+        "status": "Success",
+        "duration": "11.26488196849823"
+      },
+      {
+        "name": "SourceDrawerTests/testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm()",
+        "status": "Success",
+        "duration": "9.892903923988342"
+      },
+      {
+        "name": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+        "status": "Success",
+        "duration": "6.102177023887634"
+      },
+      {
+        "name": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+        "status": "Success",
+        "duration": "6.369415998458862"
+      },
+      {
+        "name": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+        "status": "Failure",
+        "duration": "8.134071946144104"
+      }
+    ]
+  }
+}

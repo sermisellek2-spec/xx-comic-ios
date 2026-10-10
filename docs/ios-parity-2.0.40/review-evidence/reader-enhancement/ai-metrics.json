@@ -1,0 +1,17 @@
+{
+  "device": "iPhone 15 Pro",
+  "systemVersion": "iOS 17.4",
+  "arch": "arm64",
+  "mode": "Smart (CoreML 2x)",
+  "modelFile": "AnimeSuperResolution2x.mlmodelc",
+  "inputDimensions": "384x384",
+  "outputDimensions": "768x768",
+  "tilesProcessed": 4,
+  "durationMs": 2872.15,
+  "peakMemoryMB": 233.58,
+  "maxSeamStep": 0,
+  "cancellationFallback": "PASS (safely returned original image in 0.03s)",
+  "inferenceFailureFallback": "PASS (safely fallback to bicubic 2x in 0.22s)",
+  "longPressOriginalComparison": "PASS (toggles raw image and badge to '原图' in UI and unit tests)",
+  "status": "PASS"
+}
