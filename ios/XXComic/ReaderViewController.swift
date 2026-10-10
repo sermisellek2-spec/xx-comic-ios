@@ -641,16 +641,15 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         self.chapters = targetChapters
         self.incompleteDirectory = false
         self.session = ReaderSession(chapterCount: targetChapters.count, chapterIndex: matchedIndex)
-        self.title = targetDetail.summary.title
-        self.chapterTitle = targetChapters.indices.contains(matchedIndex) ? targetChapters[matchedIndex].title : ""
-        self.loadCurrentChapter()
+        self.images = []
+        self.pages.reloadData()
+        self.loadChapter(matchedIndex)
+        self.middleButton.setTitle(self.comic.sourceId == "local" ? "详情" : "换源", for: .normal)
     }
 
     private func switchReaderSource(target: ComicSummary) {
         guard target.comicId != comic.comicId else { return }
         guard let targetSource = environment.source(for: target) else { return }
-        let currentTitle = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex].title : ""
-        let currentIndex = session.chapterIndex
 
         let alert = UIAlertController(title: nil, message: "正在切换至 \(targetSource.name)…", preferredStyle: .alert)
         present(alert, animated: true)
@@ -668,25 +667,20 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 }
                 await alert.dismiss(animated: true)
 
-                let matchedIndex = ChapterMatching.findMatchingChapterIndex(
-                    chapters: targetChapters,
-                    currentTitle: currentTitle,
-                    defaultIndex: currentIndex
+                let finalDetail = ComicDetail(
+                    summary: targetDetail.summary,
+                    author: targetDetail.author,
+                    status: targetDetail.status,
+                    description: targetDetail.description,
+                    latestChapter: targetDetail.latestChapter,
+                    chapters: targetChapters
                 )
 
                 if self.environment.library.entry(for: self.comic)?.isFavorite == true {
-                    try? self.environment.replaceSource(from: self.comic, to: targetDetail)
+                    try? self.environment.replaceSource(original: self.comic, target: finalDetail)
                 }
 
-                self.comic = targetDetail.summary
-                self.source = targetSource
-                self.chapters = targetChapters
-                self.incompleteDirectory = false
-                self.session = ReaderSession(chapterCount: targetChapters.count, chapterIndex: matchedIndex)
-                self.images = []
-                self.pages.reloadData()
-                self.loadChapter(matchedIndex)
-                self.middleButton.setTitle(self.comic.sourceId == "local" ? "详情" : "换源", for: .normal)
+                self.applySwitchedSource(targetDetail: finalDetail)
             } catch {
                 await alert.dismiss(animated: true)
                 guard let self else { return }
