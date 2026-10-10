@@ -115,6 +115,63 @@ final class FiveUmSourceTests: XCTestCase {
         let source = FiveUmComicSource(transport: FiveUmCancelledTransport())
         do { _ = try await source.latest(page: 1); XCTFail("cancel accepted") } catch { XCTAssertTrue(error is CancellationError) }
     }
+
+    func testSourceConfigDefaultsAndConfiguredSource() async throws {
+        let mhzDef = SourceConfigDefaults.manhuazhan()
+        XCTAssertEqual(mhzDef.id, "manhuazhan")
+        XCTAssertEqual(mhzDef.name, "漫画栈")
+        XCTAssertEqual(mhzDef.domain, "www.60ti.com")
+        XCTAssertEqual(mhzDef.baseUrl, "https://www.60ti.com")
+        XCTAssertEqual(mhzDef.referer, "https://www.60ti.com/")
+        XCTAssertEqual(mhzDef.route("latest"), "/category{pagePath}")
+        XCTAssertEqual(mhzDef.route("search"), "/search?key={keyword}")
+        XCTAssertEqual(mhzDef.route("categoryIndex"), "/category/")
+        XCTAssertEqual(mhzDef.route("detail"), "/comic_{comicId}.html")
+        XCTAssertEqual(SourceConfigDefaults.defaultConfig(for: "manhuazhan")?.id, "manhuazhan")
+
+        let bbyinDef = SourceConfigDefaults.bbyin()
+        XCTAssertEqual(bbyinDef.id, "bbyin")
+        XCTAssertEqual(bbyinDef.name, "比卡漫画")
+        XCTAssertEqual(bbyinDef.domain, "bbyin.com")
+        XCTAssertEqual(bbyinDef.baseUrl, "https://bbyin.com")
+        XCTAssertEqual(bbyinDef.referer, "https://bbyin.com/")
+        XCTAssertEqual(bbyinDef.route("latest"), "/category{pagePath}")
+        XCTAssertEqual(bbyinDef.route("search"), "/search?key={keyword}")
+        XCTAssertEqual(bbyinDef.route("categoryIndex"), "/category/")
+        XCTAssertEqual(bbyinDef.route("detail"), "/comic_{comicId}.html")
+        XCTAssertEqual(SourceConfigDefaults.defaultConfig(for: "bbyin")?.id, "bbyin")
+
+        let custom = SourceConfigItem(
+            id: "bbyin",
+            name: "比卡镜像",
+            domain: "mirror.bbyin.com",
+            baseUrl: "https://mirror.bbyin.com",
+            referer: "https://mirror.bbyin.com/",
+            latestPath: "/category{pagePath}",
+            searchPath: "/search?key={keyword}",
+            categoryPath: "/category{pagePath}",
+            detailPath: "/comic_{comicId}.html",
+            enabled: true,
+            routes: [
+                "search": "/search?key={keyword}",
+                "categoryIndex": "/category/",
+                "detail": "/comic_{comicId}.html"
+            ],
+            filters: [:]
+        )
+        let transport = FiveUmTransport([
+            "https://mirror.bbyin.com/search?key=%E5%A4%A9": cards
+        ])
+        let configured = FiveUmComicSource(config: custom, transport: transport)
+        XCTAssertEqual(configured.id, "bbyin")
+        XCTAssertEqual(configured.name, "比卡镜像")
+        XCTAssertEqual(configured.referer, "https://mirror.bbyin.com/")
+        let search = try await configured.search(keyword: "天", page: 1)
+        XCTAssertEqual(search.count, 2)
+        let reqs = await transport.requests
+        XCTAssertEqual(reqs.first?.0, "https://mirror.bbyin.com/search?key=%E5%A4%A9")
+        XCTAssertEqual(reqs.first?.1["Referer"], "https://mirror.bbyin.com/")
+    }
 }
 
 private actor FiveUmTransport: HTTPTransport {

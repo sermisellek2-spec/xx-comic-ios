@@ -5,16 +5,24 @@ public struct FiveUmComicSource: ComicSource {
     public let id: String
     public let name: String
     public let referer: String
+    public let config: SourceConfigItem?
     private let base: String
     private let transport: any HTTPTransport
 
     public init(site: Site = .manhuazhan, config: SourceConfigItem? = nil, transport: any HTTPTransport = URLSessionHTTPTransport()) {
-        id = site.rawValue
-        name = site == .manhuazhan ? "漫画栈" : "比卡漫画"
-        let defaultBase = site == .manhuazhan ? "https://www.60ti.com" : "https://bbyin.com"
+        let resolvedSite: Site = {
+            if let configId = config?.id, let matched = Site(rawValue: configId) {
+                return matched
+            }
+            return site
+        }()
+        id = config?.id ?? resolvedSite.rawValue
+        name = config?.name ?? (resolvedSite == .manhuazhan ? "漫画栈" : "比卡漫画")
+        let defaultBase = resolvedSite == .manhuazhan ? "https://www.60ti.com" : "https://bbyin.com"
         let resolvedBase = (config?.baseUrl.isEmpty == false) ? config!.baseUrl : defaultBase
         base = resolvedBase.replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression)
         referer = (config?.referer.isEmpty == false) ? config!.referer : (base + "/")
+        self.config = config
         self.transport = transport
     }
 
@@ -26,7 +34,9 @@ public struct FiveUmComicSource: ComicSource {
         try Task.checkCancellation()
         guard page <= 1 else { return [] }
         let trimmed = SearchRules.trim(keyword)
-        return try cards(await fetch("/search?key=" + formEncode(trimmed)))
+        let searchTemplate = config?.route("search") ?? "/search?key={keyword}"
+        let path = searchTemplate.replacingOccurrences(of: "{keyword}", with: formEncode(trimmed))
+        return try cards(await fetch(path))
     }
 
     public func category(filters: [String: String], page: Int) async throws -> [ComicSummary] {
@@ -37,7 +47,8 @@ public struct FiveUmComicSource: ComicSource {
     }
 
     public func filterGroups() async throws -> [SourceFilterGroup] {
-        let html = try await fetch("/category/")
+        let path = config?.route("categoryIndex") ?? "/category/"
+        let html = try await fetch(path)
         let sections = matches(#"<div[^>]*class=["'][^"']*\bfilter-section\b[^"']*["'][^>]*>([\s\S]*?)(?=<div[^>]*class=["'][^"']*\bfilter-section\b|<div[^>]*class=["'][^"']*\bcomic-list\b|$)"#, html)
         var seen = Set<String>()
         var options: [SourceFilterOption] = []
@@ -57,7 +68,9 @@ public struct FiveUmComicSource: ComicSource {
 
     public func detail(comicId: String) async throws -> ComicDetail {
         let rawID = rawComicID(comicId)
-        let html = try await fetch("/comic_\(rawID).html")
+        let detailTemplate = config?.route("detail") ?? "/comic_{comicId}.html"
+        let path = detailTemplate.replacingOccurrences(of: "{comicId}", with: rawID)
+        let html = try await fetch(path)
         let title = bookTitle(clean(first(#"<h1[^>]*>([\s\S]*?)</h1>"#, html)))
         guard !title.isEmpty else { throw parseError("详情解析失败：缺少标题") }
         let info = raw(#"<div[^>]*class=["'][^"']*\bcomic-main-info\b[^"']*["'][^>]*>[\s\S]*?(?=<div[^>]*class=["'][^"']*\bcomic-description\b|$)"#, html)
@@ -79,7 +92,10 @@ public struct FiveUmComicSource: ComicSource {
     }
 
     public func chapters(comicId: String) async throws -> [Chapter] {
-        let html = try await fetch("/comic_\(rawComicID(comicId)).html")
+        let rawID = rawComicID(comicId)
+        let detailTemplate = config?.route("detail") ?? "/comic_{comicId}.html"
+        let path = detailTemplate.replacingOccurrences(of: "{comicId}", with: rawID)
+        let html = try await fetch(path)
         guard !first(#"<h1[^>]*>([\s\S]*?)</h1>"#, html).isEmpty else { throw parseError("目录解析失败：缺少标题") }
         return catalog(html)
     }

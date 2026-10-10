@@ -20,8 +20,20 @@ enum KindleEpubWriter {
     static func write(to url: URL, detection: KindleDetection, html: String, images: [Image]) throws {
         let scan = HTMLScan()
         let plain = try scan.replace(#"<[^>]+>"#, in: html) { _ in "" }
-        let visible = try scan.replace(#"&(?:nbsp|#0*160|#x0*a0);|[ \t\n\x0B\f\r\u00a0\u3000]+"#, in: plain) { _ in "" }
-        let comic = images.count >= 3 && visible.utf16.count < 300
+        let visible: String
+        let comic: Bool
+        if images.count >= 3 {
+            visible = try scan.replace(#"&(?:nbsp|#0*160|#x0*a0);|[ \t\n\x0B\f\r\u00a0\u3000]+"#, in: plain) { _ in "" }
+            comic = visible.utf16.count < 300
+        } else {
+            let trimmed = plain.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty || trimmed.contains("&") {
+                visible = try scan.replace(#"&(?:nbsp|#0*160|#x0*a0);|[ \t\n\x0B\f\r\u00a0\u3000]+"#, in: plain) { _ in "" }
+            } else {
+                visible = trimmed
+            }
+            comic = false
+        }
         var pages: [Page] = []
         let imageMap = Dictionary(uniqueKeysWithValues: images.map { ($0.index, $0) })
         if comic {

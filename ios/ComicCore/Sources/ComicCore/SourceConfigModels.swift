@@ -311,6 +311,30 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func bbyin(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "bbyin",
+            name: "比卡漫画",
+            domain: "bbyin.com",
+            baseUrl: "https://bbyin.com",
+            referer: "https://bbyin.com/",
+            latestPath: "/category{pagePath}",
+            searchPath: "/search?key={keyword}",
+            categoryPath: "/category{pagePath}",
+            detailPath: "/comic_{comicId}.html",
+            enabled: enabled,
+            routes: [
+                "latest": "/category{pagePath}",
+                "search": "/search?key={keyword}",
+                "categoryIndex": "/category/",
+                "category": "/category{pagePath}",
+                "detail": "/comic_{comicId}.html",
+                "chapter": "{chapterUrl}"
+            ],
+            filters: [:]
+        )
+    }
+
     public static func copy4000(enabled: Bool = true) -> SourceConfigItem {
         SourceConfigItem(
             id: "copy4000",
@@ -511,6 +535,7 @@ public enum SourceConfigDefaults {
         case "manwa": return manwa()
         case "copy4000", "copymanga": return copy4000()
         case "manhuazhan", "five_um": return manhuazhan()
+        case "bbyin": return bbyin()
         default: return nil
         }
     }
