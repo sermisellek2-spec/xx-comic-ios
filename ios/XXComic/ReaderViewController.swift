@@ -4,8 +4,8 @@ import ComicCore
 @MainActor
 final class ReaderViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate, UIAdaptivePresentationControllerDelegate {
     private let environment: AppEnvironment
-    private let comic: ComicSummary
-    private let source: any ComicSource
+    private var comic: ComicSummary
+    private var source: any ComicSource
     private let localPageImage: (@Sendable (URL) throws -> Data)?
     private var chapters: [Chapter]
     private var incompleteDirectory: Bool
@@ -28,8 +28,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private let toolbar = UIStackView()
     private let previous = UIButton(type: .system)
     private let nextButton = UIButton(type: .system)
+    private let readerSeekBar = ReaderSeekBar()
+    private let middleButton = UIButton(type: .system)
     private let status = UIButton(type: .system)
     private let badge = UILabel()
+    private let enhancementBadge = UILabel()
     private var retryAction: (() -> Void)?
     private var oldNavigationStyle: UIUserInterfaceStyle = .unspecified
     private var isZoomed = false
@@ -67,28 +70,101 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         pages.register(ReaderImageCell.self, forCellWithReuseIdentifier: "image")
         pages.contentInsetAdjustmentBehavior = .never
         pages.showsHorizontalScrollIndicator = false
-        toolbar.axis = .horizontal; toolbar.distribution = .fillEqually
-        let directory = UIButton(type: .system), preferences = UIButton(type: .system)
-        directory.setTitle("目录", for: .normal); preferences.setTitle("设置", for: .normal)
+
+        // Two-row bottom toolbar aligned with Android 2.0.40
+        toolbar.axis = .vertical
+        toolbar.spacing = 6
+        toolbar.backgroundColor = UIColor(red: 28/255, green: 33/255, blue: 40/255, alpha: 0.94) // Dark translucent
+        toolbar.layer.cornerRadius = 12
+        toolbar.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        toolbar.isLayoutMarginsRelativeArrangement = true
+        toolbar.layoutMargins = UIEdgeInsets(top: 8, left: 14, bottom: 8, right: 14)
+
+        // Row 1: prevChapter | seekbar | nextChapter
+        let row1 = UIStackView()
+        row1.axis = .horizontal
+        row1.alignment = .center
+        row1.spacing = 8
+        previous.setTitle("上一章", for: .normal)
+        previous.titleLabel?.font = .systemFont(ofSize: 13)
+        previous.tintColor = Palette.accent
         previous.addTarget(self, action: #selector(backward), for: .touchUpInside)
+
+        nextButton.setTitle("下一章", for: .normal)
+        nextButton.titleLabel?.font = .systemFont(ofSize: 13)
+        nextButton.tintColor = Palette.accent
         nextButton.addTarget(self, action: #selector(forward), for: .touchUpInside)
+
+        readerSeekBar.onCommit = { [weak self] pageIndex in
+            guard let self, self.images.indices.contains(pageIndex) else { return }
+            self.environment.readingHabits.userDidRead()
+            if self.settings.layout == .paged {
+                let x = CGFloat(pageIndex) * self.pages.bounds.width
+                self.pages.setContentOffset(CGPoint(x: x, y: 0), animated: false)
+            } else {
+                self.pages.scrollToItem(at: IndexPath(item: pageIndex, section: 0), at: .top, animated: false)
+            }
+            self.session.updateImage(pageIndex)
+            self.updateBadge()
+            self.savePosition()
+        }
+
+        row1.addArrangedSubview(previous)
+        row1.addArrangedSubview(readerSeekBar)
+        row1.addArrangedSubview(nextButton)
+        previous.widthAnchor.constraint(equalToConstant: 52).isActive = true
+        nextButton.widthAnchor.constraint(equalToConstant: 52).isActive = true
+
+        // Row 2: 目录 | 换源/详情 | 设置
+        let row2 = UIStackView()
+        row2.axis = .horizontal
+        row2.distribution = .fillEqually
+        let directory = UIButton(type: .system), preferences = UIButton(type: .system)
+        directory.setTitle("目录", for: .normal)
+        directory.titleLabel?.font = .systemFont(ofSize: 14)
+        directory.tintColor = .white
         directory.addTarget(self, action: #selector(showDirectory), for: .touchUpInside)
+
+        middleButton.setTitle(comic.sourceId == "local" ? "详情" : "换源", for: .normal)
+        middleButton.titleLabel?.font = .systemFont(ofSize: 14)
+        middleButton.tintColor = .white
+        middleButton.addTarget(self, action: #selector(middleButtonAction), for: .touchUpInside)
+
+        preferences.setTitle("设置", for: .normal)
+        preferences.titleLabel?.font = .systemFont(ofSize: 14)
+        preferences.tintColor = .white
         preferences.addTarget(self, action: #selector(showSettings), for: .touchUpInside)
-        for button in [previous, directory, preferences, nextButton] { toolbar.addArrangedSubview(button) }
+
+        for btn in [directory, middleButton, preferences] { row2.addArrangedSubview(btn) }
+        toolbar.addArrangedSubview(row1)
+        toolbar.addArrangedSubview(row2)
+
         status.titleLabel?.numberOfLines = 0
         status.addTarget(self, action: #selector(retry), for: .touchUpInside)
         badge.font = .monospacedDigitSystemFont(ofSize: 11, weight: .regular)
         badge.textAlignment = .right; badge.numberOfLines = 2
-        for item in [pages, toolbar, status, badge] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
+
+        enhancementBadge.font = .monospacedDigitSystemFont(ofSize: 10, weight: .bold)
+        enhancementBadge.textColor = .white
+        enhancementBadge.backgroundColor = UIColor(red: 12/255, green: 20/255, blue: 32/255, alpha: 0.8)
+        enhancementBadge.layer.cornerRadius = 4
+        enhancementBadge.layer.masksToBounds = true
+        enhancementBadge.textAlignment = .center
+        enhancementBadge.isHidden = true
+
+        for item in [pages, toolbar, status, badge, enhancementBadge] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
         NSLayoutConstraint.activate([
             pages.topAnchor.constraint(equalTo: view.topAnchor), pages.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             pages.leadingAnchor.constraint(equalTo: view.leadingAnchor), pages.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor), toolbar.heightAnchor.constraint(equalToConstant: 52),
+            toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor), toolbar.heightAnchor.constraint(equalToConstant: 88),
             status.centerYAnchor.constraint(equalTo: view.centerYAnchor), status.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             status.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
             badge.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -10),
-            badge.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8)
+            badge.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
+            enhancementBadge.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
+            enhancementBadge.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
+            enhancementBadge.heightAnchor.constraint(equalToConstant: 20)
         ])
         let tap = UITapGestureRecognizer(target: self, action: #selector(tapped(_:)))
         tap.delegate = self; pages.addGestureRecognizer(tap)
@@ -260,6 +336,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 self.pages.reloadData(); self.layout.invalidateLayout()
                 self.pendingPosition = position; self.view.setNeedsLayout()
                 self.updateBadge()
+                self.readerSeekBar.configure(currentPage: position.imageIndex, total: self.images.count, sessionToken: Int64(self.session.chapterIndex))
             } catch {
                 guard let self, self.requestID == token, !Task.isCancelled else { return }
                 if (error as? LocalLibraryError) == .requiresTextReader {
@@ -402,8 +479,14 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         if settings.theme == .system && overrideUserInterfaceStyle != UIScreen.main.traitCollection.userInterfaceStyle { applySettings() }
     }
     private func updateBadge() {
-        guard !images.isEmpty else { badge.text = nil; return }
+        guard !images.isEmpty else { badge.text = nil; enhancementBadge.isHidden = true; return }
         badge.text = "\(session.imageIndex + 1)/\(images.count) · \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short))"
+        if settings.enhancementMode != ImageEnhancementPolicy.modeOff {
+            enhancementBadge.isHidden = false
+            enhancementBadge.text = settings.enhancementMode == ImageEnhancementPolicy.modeSmart ? " AI 2X " : " 增强 "
+        } else {
+            enhancementBadge.isHidden = true
+        }
     }
     @objc private func retry() { retryAction?() }
     @objc private func backward() { move(-1) }
@@ -506,20 +589,87 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         guard chapters.indices.contains(session.chapterIndex) else { return }
         environment.readingHabits.userDidRead()
         environment.readingHabits.overlayVisibilityChanged(isVisible: true)
-        let id = comic.comicId, current = chapters[session.chapterIndex].chapterId
-        let controller = ChapterListViewController(load: { [source] in try await source.chapters(comicId: id) }, selectedID: current,
-            defaults: environment.defaults, environment: environment, onDismiss: { [weak self] in self?.syncHabitOverlay() }) { [weak self] all, index in
-            guard let self else { return }
+        let isDark = settings.theme == .dark || (settings.theme == .system && traitCollection.userInterfaceStyle == .dark)
+        let drawer = ChapterDrawerSheet(
+            chapters: chapters,
+            currentChapterIndex: session.chapterIndex,
+            hasCurrent: true,
+            isReader: true,
+            isDarkReader: isDark,
+            isDesc: false
+        ) { [weak self] selectedIndex in
+            guard let self, self.chapters.indices.contains(selectedIndex) else { return }
             self.savePosition()
-            self.chapters = all; self.incompleteDirectory = false
-            self.loadState.directoryFinished()
-            self.session = ReaderSession(chapterCount: all.count, chapterIndex: index)
-            self.images = []; self.pages.reloadData(); self.loadChapter(index)
+            self.loadChapter(selectedIndex)
         }
-        let navigation = ChapterListViewController.navigation(controller)
-        navigation.overrideUserInterfaceStyle = overrideUserInterfaceStyle
-        present(navigation, animated: true)
-        navigation.presentationController?.delegate = self
+        present(drawer, animated: false)
+    }
+
+    @objc private func middleButtonAction() {
+        if comic.sourceId == "local" {
+            navigationController?.popViewController(animated: true)
+        } else {
+            showReaderSourceSheet()
+        }
+    }
+
+    private func showReaderSourceSheet() {
+        let sheet = SourceSwitchSheet(comic: comic, environment: environment) { [weak self] target in
+            guard let self else { return }
+            self.switchReaderSource(target: target)
+        }
+        present(sheet, animated: true)
+    }
+
+    private func switchReaderSource(target: ComicSummary) {
+        guard target.comicId != comic.comicId else { return }
+        guard let targetSource = environment.source(for: target) else { return }
+        let currentTitle = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex].title : ""
+        let currentIndex = session.chapterIndex
+
+        let alert = UIAlertController(title: nil, message: "正在切换至 \(targetSource.name)…", preferredStyle: .alert)
+        present(alert, animated: true)
+
+        Task { [weak self] in
+            do {
+                let targetDetail = try await targetSource.detail(comicId: target.comicId)
+                var targetChapters = targetDetail.chapters
+                if targetChapters.isEmpty {
+                    targetChapters = try await targetSource.chapters(comicId: target.comicId)
+                }
+                guard let self, !targetChapters.isEmpty else {
+                    await alert.dismiss(animated: true)
+                    return
+                }
+                await alert.dismiss(animated: true)
+
+                let matchedIndex = ChapterMatching.findMatchingChapterIndex(
+                    chapters: targetChapters,
+                    currentTitle: currentTitle,
+                    defaultIndex: currentIndex
+                )
+
+                if self.environment.library.entry(for: self.comic)?.isFavorite == true {
+                    try? self.environment.replaceSource(from: self.comic, to: targetDetail)
+                }
+
+                self.comic = targetDetail.summary
+                self.source = targetSource
+                self.chapters = targetChapters
+                self.incompleteDirectory = false
+                self.session = ReaderSession(chapterCount: targetChapters.count, chapterIndex: matchedIndex)
+                self.images = []
+                self.pages.reloadData()
+                self.loadChapter(matchedIndex)
+                self.middleButton.setTitle(self.comic.sourceId == "local" ? "详情" : "换源", for: .normal)
+            } catch {
+                await alert.dismiss(animated: true)
+                guard let self else { return }
+                let errAlert = UIAlertController(title: "换源失败", message: error.localizedDescription, preferredStyle: .alert)
+                errAlert.addAction(UIAlertAction(title: "确定", style: .default))
+                self.present(errAlert, animated: true)
+            }
+        }
     }
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) { syncHabitOverlay() }
     private func syncHabitOverlay() {
@@ -543,6 +693,15 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             if self.settings.layout == .strip { self.layout.invalidateLayout(); self.restore(position) }
             self.savePosition()
         }
+        cell.onComparing = { [weak self] isComparing in
+            guard let self else { return }
+            if isComparing {
+                self.enhancementBadge.isHidden = false
+                self.enhancementBadge.text = " 原图 "
+            } else {
+                self.updateBadge()
+            }
+        }
         cell.configure(url: url, referer: source.referer, settings: settings, localPageImage: localPageImage)
         return cell
     }
@@ -558,6 +717,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         guard !restoring else { return }
         session.updateImage(currentPosition().imageIndex); updateBadge()
+        readerSeekBar.configure(currentPage: session.imageIndex, total: images.count, sessionToken: Int64(session.chapterIndex))
     }
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) { environment.readingHabits.userDidRead() }
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { savePosition() }
@@ -582,9 +742,16 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
     private let retry = UIButton(type: .system)
     private var url = "", referer = ""
     private var localPageImage: (@Sendable (URL) throws -> Data)?
+    private var rawImage: UIImage?
+    private var enhancedImage: UIImage?
+    private var isComparing = false
+    private var currentMode = 0
+    private var comparisonEnabled = false
+    var onComparing: ((Bool) -> Void)?
     var onSize: ((CGSize) -> Void)?
     var onZoom: ((Bool) -> Void)?
     var onUserAction: (() -> Void)?
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         scroll.delegate = self; scroll.minimumZoomScale = 1; scroll.maximumZoomScale = 4
@@ -594,14 +761,46 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
         contentView.addSubview(scroll); scroll.addSubview(image); contentView.addSubview(retry)
         retry.setTitle("正在加载图片…", for: .normal)
         retry.addTarget(self, action: #selector(reload), for: .touchUpInside)
+
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        longPress.minimumPressDuration = 0.35
+        contentView.addGestureRecognizer(longPress)
+
         image.onLoaded = { [weak self] size in
-            self?.retry.isHidden = true
-            let callback = self?.onSize
+            guard let self else { return }
+            self.retry.isHidden = true
+            self.rawImage = self.image.image
+            if self.currentMode != ImageEnhancementPolicy.modeOff, let raw = self.rawImage {
+                Task { [weak self] in
+                    guard let self, let raw = self.rawImage else { return }
+                    let enhanced = await ReaderEnhancementEngine.shared.enhance(url: self.url, original: raw, mode: self.currentMode)
+                    guard !Task.isCancelled, self.rawImage === raw else { return }
+                    self.enhancedImage = enhanced
+                    if !self.isComparing {
+                        self.image.image = enhanced
+                    }
+                }
+            }
+            let callback = self.onSize
             DispatchQueue.main.async { callback?(size) }
         }
         image.onFailure = { [weak self] in self?.retry.isHidden = false; self?.retry.setTitle("图片加载失败 · 点击重试", for: .normal) }
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
+
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard comparisonEnabled, enhancedImage != nil, rawImage != nil else { return }
+        if gesture.state == .began {
+            isComparing = true
+            image.image = rawImage
+            onComparing?(true)
+        } else if gesture.state == .ended || gesture.state == .cancelled {
+            isComparing = false
+            image.image = enhancedImage ?? rawImage
+            onComparing?(false)
+        }
+    }
+
     override func layoutSubviews() {
         super.layoutSubviews()
         scroll.frame = contentView.bounds
@@ -611,11 +810,15 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
     func configure(url: String, referer: String, settings: ReaderPreferences, localPageImage: (@Sendable (URL) throws -> Data)? = nil) {
         self.url = url; self.referer = referer
         self.localPageImage = localPageImage
+        self.currentMode = settings.enhancementMode
+        self.comparisonEnabled = settings.enhancementComparison
         scroll.setZoomScale(1, animated: false)
         apply(settings)
         reload()
     }
     func apply(_ settings: ReaderPreferences) {
+        self.currentMode = settings.enhancementMode
+        self.comparisonEnabled = settings.enhancementComparison
         setZoomEnabled(settings.pinchZoom)
         image.setReaderEffects(crop: settings.cropWhiteMargins, vertical: settings.layout == .paged, ink: settings.inkScreen)
     }
@@ -629,5 +832,17 @@ private final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate 
     func scrollViewDidZoom(_ scrollView: UIScrollView) { onZoom?(scrollView.zoomScale > 1.05) }
     func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) { onUserAction?() }
     func cancel() { image.cancel() }
-    override func prepareForReuse() { super.prepareForReuse(); image.cancel(); localPageImage = nil; onSize = nil; onZoom = nil; onUserAction = nil; scroll.setZoomScale(1, animated: false) }
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        image.cancel()
+        localPageImage = nil
+        onSize = nil
+        onZoom = nil
+        onUserAction = nil
+        onComparing = nil
+        rawImage = nil
+        enhancedImage = nil
+        isComparing = false
+        scroll.setZoomScale(1, animated: false)
+    }
 }

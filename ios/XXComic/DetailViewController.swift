@@ -5,7 +5,7 @@ import ComicCore
 final class DetailViewController: UIViewController {
     private let environment: AppEnvironment
     private var comic: ComicSummary
-    private let source: any ComicSource
+    private var source: any ComicSource
     private let cover = RemoteImageView()
     private let heading = UILabel()
     private let descriptionLabel = UILabel()
@@ -13,6 +13,7 @@ final class DetailViewController: UIViewController {
     private let read = UIButton(type: .system)
     private let directory = UIButton(type: .system)
     private let downloadButton = UIButton(type: .system)
+    private let sourceSwitchButton = UIButton(type: .system)
     private let manageVolumes = UIButton(type: .system)
     private let retry = UIButton(type: .system)
     private var cachedDetail: ComicDetail?
@@ -51,12 +52,18 @@ final class DetailViewController: UIViewController {
         descriptionLabel.textColor = Palette.secondaryText
         heading.adjustsFontForContentSizeCategory = true; descriptionLabel.adjustsFontForContentSizeCategory = true
         favorite.addTarget(self, action: #selector(toggleFavorite), for: .touchUpInside)
+        let longFav = UILongPressGestureRecognizer(target: self, action: #selector(favoriteLongPressed(_:)))
+        favorite.addGestureRecognizer(longFav)
         read.addTarget(self, action: #selector(startReading), for: .touchUpInside)
         read.titleLabel?.numberOfLines = 2
         directory.setTitle("章节目录", for: .normal)
         directory.addTarget(self, action: #selector(showDirectory), for: .touchUpInside)
         downloadButton.setTitle("下载章节", for: .normal)
         downloadButton.addTarget(self, action: #selector(openDownloadSelection), for: .touchUpInside)
+        sourceSwitchButton.setTitle("\(source.name) · 切换站源", for: .normal)
+        sourceSwitchButton.setImage(UIImage(systemName: "arrow.triangle.2.circlepath"), for: .normal)
+        sourceSwitchButton.tintColor = Palette.accent
+        sourceSwitchButton.addTarget(self, action: #selector(openSourceSwitchSheet), for: .touchUpInside)
         retry.addTarget(self, action: #selector(retryDetail), for: .touchUpInside)
         retry.titleLabel?.numberOfLines = 0
 
@@ -69,8 +76,8 @@ final class DetailViewController: UIViewController {
             buttons.append(manageVolumes)
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: "管理", style: .plain, target: self, action: #selector(showLocalManagementMenu))
         } else {
-            items.append(downloadButton)
-            buttons.append(downloadButton)
+            items.append(contentsOf: [sourceSwitchButton, downloadButton])
+            buttons.append(contentsOf: [sourceSwitchButton, downloadButton])
             let centerItem = UIBarButtonItem(image: UIImage(systemName: "arrow.down.circle"), style: .plain, target: self, action: #selector(openDownloadCenter))
             navigationItem.rightBarButtonItem = centerItem
         }
@@ -182,6 +189,52 @@ final class DetailViewController: UIViewController {
             try environment.library.setFavorite(comic, favorite: environment.library.entry(for: comic)?.isFavorite != true)
             environment.notifyLibraryChanged(); updateButtons()
         } catch { showError(error) }
+    }
+    @objc private func favoriteLongPressed(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        if environment.library.entry(for: comic)?.isFavorite != true {
+            try? environment.library.setFavorite(comic, favorite: true)
+            environment.notifyLibraryChanged()
+            updateButtons()
+        }
+        let sheet = BookshelfGroupSelectSheet(comicId: comic.comicId, comicTitle: comic.title, scope: .online, environment: environment)
+        present(sheet, animated: true)
+    }
+    @objc private func openSourceSwitchSheet() {
+        let sheet = SourceSwitchSheet(comic: comic, environment: environment) { [weak self] target in
+            guard let self else { return }
+            self.switchToSource(target: target)
+        }
+        present(sheet, animated: true)
+    }
+    private func switchToSource(target: ComicSummary) {
+        guard target.comicId != comic.comicId else { return }
+        guard let newSource = environment.source(for: target) else { return }
+        sourceSwitchButton.setTitle("正在切换至 \(newSource.name)…", for: .normal)
+        sourceSwitchButton.isEnabled = false
+
+        Task { [weak self] in
+            do {
+                let targetDetail = try await newSource.detail(comicId: target.comicId)
+                guard let self else { return }
+                if self.environment.library.entry(for: self.comic)?.isFavorite == true {
+                    try? self.environment.replaceSource(from: self.comic, to: targetDetail)
+                }
+                self.comic = targetDetail.summary
+                self.source = newSource
+                self.title = newSource.name
+                self.sourceSwitchButton.setTitle("\(newSource.name) · 切换站源", for: .normal)
+                self.sourceSwitchButton.isEnabled = true
+                self.loadDetail()
+            } catch {
+                guard let self else { return }
+                self.sourceSwitchButton.setTitle("\(self.source.name) · 切换站源", for: .normal)
+                self.sourceSwitchButton.isEnabled = true
+                let alert = UIAlertController(title: "换源失败", message: error.localizedDescription, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "确定", style: .default))
+                self.present(alert, animated: true)
+            }
+        }
     }
     @objc private func openVolumeManager() {
         let vm = VolumeManagerViewController(seriesId: comic.comicId, seriesTitle: comic.title, environment: environment) { [weak self] in

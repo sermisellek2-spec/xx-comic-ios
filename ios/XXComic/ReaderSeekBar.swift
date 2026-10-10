@@ -1,0 +1,122 @@
+import UIKit
+import ComicCore
+
+/// Shared seekbar with touch preview bubble aligned 1:1 with Android 2.0.40's `ReaderSeekBar`.
+@MainActor
+final class ReaderSeekBar: UIView {
+    private let slider = UISlider()
+    private let bubble = UILabel()
+    private let session = ReaderSeekSession()
+    private var token: Int64 = 0
+    private var committedValue: Int = 0
+    private var totalPages: Int = 1
+
+    var onCommit: ((Int) -> Void)?
+    var onTracking: ((Bool) -> Void)?
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setup()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setup()
+    }
+
+    private func setup() {
+        clipsToBounds = false
+
+        slider.translatesAutoresizingMaskIntoConstraints = false
+        slider.minimumTrackTintColor = Palette.accent
+        slider.thumbTintColor = Palette.accent
+        slider.maximumTrackTintColor = UIColor(white: 0.6, alpha: 0.4)
+        slider.addTarget(self, action: #selector(sliderTouchDown), for: .touchDown)
+        slider.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
+        slider.addTarget(self, action: #selector(sliderTouchUp), for: [.touchUpInside, .touchUpOutside])
+        slider.addTarget(self, action: #selector(sliderTouchCancel), for: .touchCancel)
+        addSubview(slider)
+
+        bubble.font = .boldSystemFont(ofSize: 14)
+        bubble.textColor = .white
+        bubble.textAlignment = .center
+        bubble.backgroundColor = UIColor(red: 12/255, green: 20/255, blue: 32/255, alpha: 0.94) // 0xF00C1420
+        bubble.layer.cornerRadius = 8
+        bubble.layer.masksToBounds = true
+        bubble.isHidden = true
+        addSubview(bubble)
+
+        NSLayoutConstraint.activate([
+            slider.leadingAnchor.constraint(equalTo: leadingAnchor),
+            slider.trailingAnchor.constraint(equalTo: trailingAnchor),
+            slider.centerYAnchor.constraint(equalTo: centerYAnchor),
+            slider.heightAnchor.constraint(equalToConstant: 32)
+        ])
+    }
+
+    func configure(currentPage: Int, total: Int, sessionToken: Int64 = 0) {
+        self.totalPages = max(1, total)
+        self.token = sessionToken
+        self.committedValue = max(0, min(currentPage, totalPages - 1))
+        slider.minimumValue = 0
+        slider.maximumValue = Float(max(0, totalPages - 1))
+        slider.value = Float(committedValue)
+        slider.isEnabled = totalPages > 1
+    }
+
+    @objc private func sliderTouchDown() {
+        let value = Int(round(slider.value))
+        session.start(token: token, value: value)
+        onTracking?(true)
+        updateBubble(value: value)
+        bubble.isHidden = false
+    }
+
+    @objc private func sliderValueChanged() {
+        let value = Int(round(slider.value))
+        let directCommit = session.change(token: token, value: value, fromUser: true)
+        if let directCommit {
+            committedValue = directCommit
+            onCommit?(directCommit)
+        } else if session.isTracking {
+            updateBubble(value: value)
+        }
+    }
+
+    @objc private func sliderTouchUp() {
+        let target = session.stop(token: token)
+        bubble.isHidden = true
+        onTracking?(false)
+        if let target {
+            committedValue = target
+            onCommit?(target)
+        } else {
+            slider.value = Float(committedValue)
+        }
+    }
+
+    @objc private func sliderTouchCancel() {
+        session.cancel()
+        bubble.isHidden = true
+        onTracking?(false)
+        slider.value = Float(committedValue)
+    }
+
+    private func updateBubble(value: Int) {
+        bubble.text = " \(value + 1) / \(totalPages) "
+        bubble.sizeToFit()
+
+        let bubbleW = bubble.bounds.width + 16
+        let bubbleH = max(28, bubble.bounds.height + 8)
+
+        // Calculate thumb center x coordinate
+        let trackRect = slider.trackRect(forBounds: slider.bounds)
+        let thumbRect = slider.thumbRect(forBounds: slider.bounds, trackRect: trackRect, value: slider.value)
+        let thumbCenter = thumbRect.midX
+
+        let viewportW = bounds.width > 0 ? bounds.width : 300
+        let bubbleX = ReaderSeekSession.bubbleLeft(center: Float(thumbCenter), bubbleWidth: Int(bubbleW), viewportWidth: Int(viewportW), margin: 8)
+
+        bubble.frame = CGRect(x: CGFloat(bubbleX), y: slider.frame.minY - bubbleH - 6, width: bubbleW, height: bubbleH)
+    }
+}

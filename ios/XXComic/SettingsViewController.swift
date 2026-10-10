@@ -406,7 +406,8 @@ final class ReaderSettingsViewController: UITableViewController {
         ("墨水屏模式", "reader.display.mode", \.inkScreen),
         ("双指缩放", "reader.pinch.zoom", \.pinchZoom),
         ("禁止动画翻页", "reader.disable.page.animation", \.disablePageAnimation),
-        ("去白边", "reader.crop.white.margins", \.cropWhiteMargins)
+        ("去白边", "reader.crop.white.margins", \.cropWhiteMargins),
+        ("原图对照", "reader.enhancement.comparison", \.enhancementComparison)
     ]
 
     init(store: ReaderPreferencesStore) {
@@ -425,9 +426,9 @@ final class ReaderSettingsViewController: UITableViewController {
     }
 
     override func numberOfSections(in tableView: UITableView) -> Int { 2 }
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { section == 0 ? 3 : toggles.count }
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { section == 0 ? 4 : toggles.count }
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        section == 0 ? "阅读主题的“默认”跟随手机系统，独立于 App 主题。" : "设置保存在本机。"
+        section == 0 ? "阅读主题跟随系统或固定；图像增强支持本地 2 倍 AI 超分与普通增强。" : "设置保存在本机。"
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
@@ -437,9 +438,9 @@ final class ReaderSettingsViewController: UITableViewController {
         cell.textLabel?.adjustsFontForContentSizeCategory = true
         cell.selectionStyle = .none
         if indexPath.section == 0 {
-            let labels = [["条漫", "单页"], ["触碰", "按钮", "滑动"], ["默认", "深色", "浅色"]]
-            let titles = ["阅读布局", "翻页方式", "阅读主题"]
-            let selected = [settings.layout.rawValue, settings.turnMode.rawValue, settings.theme.rawValue]
+            let labels = [["条漫", "单页"], ["触碰", "按钮", "滑动"], ["默认", "深色", "浅色"], ["关闭", "普通", "2倍超分"]]
+            let titles = ["阅读布局", "翻页方式", "阅读主题", "图像增强"]
+            let selected = [settings.layout.rawValue, settings.turnMode.rawValue, settings.theme.rawValue, settings.enhancementMode]
             let segment = UISegmentedControl(items: labels[indexPath.row])
             segment.selectedSegmentIndex = selected[indexPath.row]
             segment.tag = indexPath.row
@@ -481,7 +482,9 @@ final class ReaderSettingsViewController: UITableViewController {
         switch control.tag {
         case 0: settings.layout = ReaderLayout(rawValue: control.selectedSegmentIndex) ?? .strip
         case 1: settings.turnMode = ReaderTurnMode(rawValue: control.selectedSegmentIndex) ?? .tap
-        default: settings.theme = ReaderTheme(rawValue: control.selectedSegmentIndex) ?? .system
+        case 2: settings.theme = ReaderTheme(rawValue: control.selectedSegmentIndex) ?? .system
+        case 3: settings.enhancementMode = control.selectedSegmentIndex
+        default: break
         }
         store.save(settings)
         onChange?()

@@ -13,6 +13,8 @@ public struct ReaderPreferences: Equatable, Sendable {
     public var pinchZoom = true
     public var disablePageAnimation = false
     public var cropWhiteMargins = false
+    public var enhancementMode: Int = 0
+    public var enhancementComparison: Bool = false
     public init() {}
 }
 
@@ -33,6 +35,8 @@ public final class ReaderPreferencesStore {
         settings.pinchZoom = (defaults.object(forKey: "reader.pinch.zoom") as? Bool) ?? true
         settings.disablePageAnimation = defaults.bool(forKey: "reader.disable.page.animation")
         settings.cropWhiteMargins = defaults.bool(forKey: "reader.crop.white.margins")
+        settings.enhancementMode = defaults.integer(forKey: "reader.enhancement.mode")
+        settings.enhancementComparison = defaults.bool(forKey: "reader.enhancement.comparison")
         return settings
     }
 
@@ -46,5 +50,7 @@ public final class ReaderPreferencesStore {
         defaults.set(settings.pinchZoom, forKey: "reader.pinch.zoom")
         defaults.set(settings.disablePageAnimation, forKey: "reader.disable.page.animation")
         defaults.set(settings.cropWhiteMargins, forKey: "reader.crop.white.margins")
+        defaults.set(settings.enhancementMode, forKey: "reader.enhancement.mode")
+        defaults.set(settings.enhancementComparison, forKey: "reader.enhancement.comparison")
     }
 }
