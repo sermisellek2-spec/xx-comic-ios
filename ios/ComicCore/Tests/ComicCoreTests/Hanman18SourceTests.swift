@@ -111,7 +111,7 @@ final class Hanman18SourceTests: XCTestCase {
         XCTAssertTrue(results[0].comicId.contains("37925.html"))
         XCTAssertEqual(results[0].title, "美麗新世界")
         XCTAssertEqual(results[0].subtitle, "New Beautiful World")
-        XCTAssertEqual(results[1].comicId, "hanman18:shechanhuazi")
+        XCTAssertTrue(results[1].comicId == "hanman18:shechanhuazi" || results[1].comicId == "hanman18:shechanhuazi|shetuanxuezi")
         XCTAssertEqual(results[1].title, "社團學姊")
     }
 

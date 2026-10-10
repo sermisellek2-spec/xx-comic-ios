@@ -71,8 +71,14 @@ public final class LocalFolderSyncCoordinator: @unchecked Sendable {
         do {
             folderURL = try BatchImportWorker.resolveBookmark(record.bookmarkData)
         } catch {
-            record.status = .permissionRevoked
-            record.lastError = "权限已失效: \(error.localizedDescription)"
+            let ns = error as NSError
+            if ns.domain == NSCocoaErrorDomain && (ns.code == 260 || ns.code == 4 || ns.code == 256) {
+                record.status = .folderMissing
+                record.lastError = "文件夹不存在"
+            } else {
+                record.status = .permissionRevoked
+                record.lastError = "权限已失效: \(error.localizedDescription)"
+            }
             try? store.save(record: record)
             return .error(record.lastError!)
         }
