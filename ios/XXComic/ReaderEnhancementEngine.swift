@@ -171,7 +171,15 @@ final class ReaderEnhancementEngine {
                     throw ReaderEnhancementError.predictionFailed
                 }
 
-                outputContext.draw(tileCG, in: CGRect(x: x * 2, y: y * 2, width: actualW * 2, actualH * 2))
+                outputContext.draw(
+                    tileCG,
+                    in: CGRect(
+                        x: CGFloat(x * 2),
+                        y: CGFloat(y * 2),
+                        width: CGFloat(actualW * 2),
+                        height: CGFloat(actualH * 2)
+                    )
+                )
             }
         }
 
