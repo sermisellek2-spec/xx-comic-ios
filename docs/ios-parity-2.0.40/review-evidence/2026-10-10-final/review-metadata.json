@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-10",
+  "checkedHead": "5e226a91a42fd377547232e3a7d7692ebbcd1843",
+  "reportedNativeCommit": "19d0178544fb8250a069931096b2238441563e00",
+  "changesBetweenCommits": [
+    "docs/ios-parity-2.0.40/STATUS.md"
+  ],
+  "reportedWorkflowRun": "38057433840",
+  "independentCoreTestEnvironment": "Docker swift:5.10-jammy, Linux",
+  "independentCoreTestCount": 12,
+  "independentCoreTestFailures": 0,
+  "startupProbeExit": 0,
+  "recoveryProbeExit": 0,
+  "baselineVerificationExit": 0,
+  "diffCheckExit": 0,
+  "xcresultRelativePath": "ios/build/ui-results/ui-results-iGB6Mo/UITests.xcresult",
+  "xcresultInfoSHA256": "1c13338d091c5b81adc559d98f2319d548499dfb086ab62671d66378b918672b",
+  "independentNativeUITestCount": 17,
+  "independentNativeUITestFailures": 0,
+  "independentlyRepeatedMacOSTestCount": 0,
+  "actualAIExecutionVerified": false,
+  "fullDeviceThemeVisualMatrixVerified": false
+}

@@ -32,6 +32,17 @@ targets:
         CURRENT_PROJECT_VERSION: '340'
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: XXComic/Info.plist
+  XXComicTests:
+    type: bundle.unit-testing
+    platform: iOS
+    sources:
+      - XXComicTests
+    dependencies:
+      - target: XXComic
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.xxcomic.ios.tests
   XXComicUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -48,6 +59,7 @@ schemes:
     build:
       targets:
         XXComic: all
+        XXComicTests: [test]
         XXComicUITests: [test]
     test:
-      targets: [XXComicUITests]
+      targets: [XXComicTests, XXComicUITests]

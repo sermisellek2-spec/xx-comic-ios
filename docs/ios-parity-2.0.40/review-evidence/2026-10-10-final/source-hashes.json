@@ -1,0 +1,37 @@
+[
+  {
+    "path": "ios/XXComic/AppEnvironment.swift",
+    "bytes": 17668,
+    "sha256": "0813b83832ced92281b5c000a9800064e6207f97158dc89441d48ad052d312cc"
+  },
+  {
+    "path": "ios/XXComic/ReaderEnhancementEngine.swift",
+    "bytes": 11930,
+    "sha256": "0bf4f836892c3fe6e09eb4ab2dfec701ff974179a2f19f63198dea38a6cc31e5"
+  },
+  {
+    "path": "ios/XXComic/Resources/AnimeSuperResolution2x.mlmodel",
+    "bytes": 2488382,
+    "sha256": "13c8fc52b52649ce3dbc611ffef0c202a1986bf3761cdab491c88c5f720f33a1"
+  },
+  {
+    "path": "ios/ComicCore/Sources/ComicCore/LocalLibrary.swift",
+    "bytes": 41257,
+    "sha256": "c3f9abb551af00531b2eebd572d992014147b09e8b539880970a2780c9b67de8"
+  },
+  {
+    "path": "ios/ComicCore/Sources/ComicCore/LocalFolderSync.swift",
+    "bytes": 6898,
+    "sha256": "b045ec17e0e9c6bbbf4fdb55ba2fa65f40b5ca6c22ce40775583e738ad84c577"
+  },
+  {
+    "path": "ios/ComicCore/Sources/ComicCore/FavoriteUpdateChecker.swift",
+    "bytes": 4515,
+    "sha256": "6aad49f2cdf5ffaa4ef7ec8076928fbb87febc8bfb8f6ebcf3a936d7c0c9684c"
+  },
+  {
+    "path": "tools/generate_sr_model.py",
+    "bytes": 6266,
+    "sha256": "3ee6b6984919269039ad6810f492306d1e443c08bac3539f95841bd857823644"
+  }
+]

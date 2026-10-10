@@ -1,0 +1,14 @@
+{
+  "malformedBackupID" : {
+    "externalOriginalPreserved" : true,
+    "libraryRootPreserved" : true,
+    "previousOwnedBookReadable" : true,
+    "recoveryError" : "none",
+    "siblingSentinelPreserved" : true
+  },
+  "missingTargetPage" : {
+    "goodBackupStillExists" : false,
+    "metadataValidationPassedBeforeRecovery" : true,
+    "pageReadableAfterRecovery" : true
+  }
+}

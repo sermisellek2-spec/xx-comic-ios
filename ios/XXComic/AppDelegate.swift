@@ -10,6 +10,13 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let defaults = ProcessInfo.processInfo.arguments.contains("--ui-testing")
             ? UserDefaults(suiteName: "XXComic.UITests" + (EpubUITestFixtures.sessionID.map { "." + $0 } ?? ""))! : .standard
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing") {
+            if ProcessInfo.processInfo.arguments.contains("--dark-mode") {
+                defaults.set(2, forKey: "theme.mode")
+            } else if ProcessInfo.processInfo.arguments.contains("--light-mode") {
+                defaults.set(1, forKey: "theme.mode")
+            }
+        }
         let tabs = UITabBarController()
         let environment: AppEnvironment
         do { environment = try AppEnvironment(defaults: defaults) }

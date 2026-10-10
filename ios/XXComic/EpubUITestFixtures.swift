@@ -130,4 +130,84 @@ enum EpubUITestFixtures {
             try bytes.write(to: url, options: .atomic)
         }
     }
+
+    static func seedMatrixFixtures(
+        library: LibraryStore,
+        localLibrary: LocalLibrary,
+        bookshelfGroupStore: BookshelfGroupStore,
+        downloadStore: DownloadStore
+    ) throws {
+        try seed(library: localLibrary)
+
+        let chainsaw = ComicSummary(
+            comicId: "chainsaw_man",
+            title: "电锯人",
+            coverUrl: "https://example.com/cover1.jpg",
+            author: "藤本树",
+            sourceId: "copymanga",
+            tags: ["热血", "奇幻", "连载中"]
+        )
+        let spyFamily = ComicSummary(
+            comicId: "spy_x_family",
+            title: "间谍过家家",
+            coverUrl: "https://example.com/cover2.jpg",
+            author: "远藤达哉",
+            sourceId: "copymanga",
+            tags: ["搞笑", "动作", "连载中"]
+        )
+        let onePerson = ComicSummary(
+            comicId: "under_one_person",
+            title: "一人之下",
+            coverUrl: "https://example.com/cover3.jpg",
+            author: "米二",
+            sourceId: "manhuagui",
+            tags: ["热血", "修真", "连载中"]
+        )
+
+        try library.setFavorite(chainsaw, favorite: true)
+        try library.setFavorite(spyFamily, favorite: true)
+        try library.setFavorite(onePerson, favorite: true)
+
+        let chapter1 = Chapter(chapterId: "ch_01", title: "第1话 狗与电锯", url: "https://example.com/ch1")
+        try library.saveReading(chainsaw, chapter: chapter1, chapterIndex: 0, position: ReaderPosition(imageIndex: 0, offset: 0))
+
+        let jGroup = try? bookshelfGroupStore.createGroup(scope: .online, rawName: "日漫")
+        if let jGroup {
+            bookshelfGroupStore.addToGroup(groupId: jGroup.id, comicId: chainsaw.comicId)
+            bookshelfGroupStore.addToGroup(groupId: jGroup.id, comicId: spyFamily.comicId)
+        }
+        let cGroup = try? bookshelfGroupStore.createGroup(scope: .online, rawName: "国漫")
+        if let cGroup {
+            bookshelfGroupStore.addToGroup(groupId: cGroup.id, comicId: onePerson.comicId)
+        }
+
+        let downloadSummary = ComicSummary(
+            comicId: "download_spy",
+            title: "间谍过家家 [离线]",
+            coverUrl: "https://example.com/cover_dl.jpg",
+            author: "远藤达哉",
+            sourceId: "copymanga",
+            tags: ["已下载"]
+        )
+        let downloadDetail = ComicDetail(
+            summary: downloadSummary,
+            author: "远藤达哉",
+            status: "连载中",
+            description: "离线已下载漫画",
+            latestChapter: "第1话",
+            chapters: [Chapter(chapterId: "ch_dl_01", title: "第1话 任务名'枭'", url: "https://example.com/ch_dl_1")]
+        )
+        var task = DownloadTask()
+        task.id = "task_01"
+        task.bookId = "download_spy"
+        task.comicId = "download_spy"
+        task.sourceId = "copymanga"
+        task.chapterId = "ch_dl_01"
+        task.title = "间谍过家家 [离线] - 第1话"
+        task.state = .completed
+        task.totalPages = 25
+        task.donePages = 25
+        downloadStore.save(task: task)
+        downloadStore.saveSnapshot(downloadDetail)
+    }
 }

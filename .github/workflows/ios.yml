@@ -25,21 +25,28 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Select iPhone simulator
+      - name: Select iPhone and iPad simulators
         shell: bash
         run: |
-          ID=$(xcrun simctl list devices available -j | python3 -c '
+          xcrun simctl list devices available -j | python3 -c '
           import json, sys
           data = json.load(sys.stdin)
+          iphone_id = None
+          ipad_id = None
           for runtime, devices in data["devices"].items():
               if "iOS" in runtime:
                   for device in devices:
-                      if device["name"].startswith("iPhone") and device["isAvailable"]:
-                          print(device["udid"])
-                          sys.exit(0)
-          sys.exit("No available iPhone simulator")
-          ')
-          echo "IOS_TEST_DESTINATION=platform=iOS Simulator,id=$ID" >> "$GITHUB_ENV"
+                      if device["isAvailable"]:
+                          if device["name"].startswith("iPhone") and not iphone_id:
+                              iphone_id = device["udid"]
+                          elif device["name"].startswith("iPad") and not ipad_id:
+                              ipad_id = device["udid"]
+          if not iphone_id:
+              sys.exit("No available iPhone simulator")
+          print(f"IOS_TEST_DESTINATION=platform=iOS Simulator,id={iphone_id}")
+          if ipad_id:
+              print(f"IOS_IPAD_DESTINATION=platform=iOS Simulator,id={ipad_id}")
+          ' >> "$GITHUB_ENV"
 
       - name: Build and test
         run: bash ios/scripts/build.sh
@@ -58,5 +65,27 @@ jobs:
         with:
           name: iOS-test-results
           path: ios/build/ui-results-*/*.xcresult
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload visual matrix screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-matrix-screenshots
+          path: |
+            ios/build/evidence/visual-matrix/*.png
+            docs/ios-parity-2.0.40/review-evidence/visual-matrix/*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload AI enhancement evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-enhancement-evidence
+          path: |
+            ios/build/evidence/reader-enhancement/*
+            docs/ios-parity-2.0.40/review-evidence/reader-enhancement/*
           if-no-files-found: ignore
           retention-days: 7

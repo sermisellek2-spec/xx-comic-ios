@@ -1,0 +1,226 @@
+{
+  "baselineNCNNBytes": 1247368,
+  "baselineNCNNSHA256": "548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d",
+  "convertedModelBytes": 2488382,
+  "convertedModelSHA256": "13c8fc52b52649ce3dbc611ffef0c202a1986bf3761cdab491c88c5f720f33a1",
+  "compiledWeightsBytes": 2492352,
+  "compiledWeightsSHA256": "a2e013b931a8053b787add979cf6cfa1c5e3d5ba058b96a6120e40697b481c36",
+  "allNCNNBytesConsumed": true,
+  "all18SourceWeightAndBiasArraysMatch": true,
+  "all17SourcePReLUSlopeArraysMatch": true,
+  "all18CompiledWeightAndBiasArraysMatch": true,
+  "all17CompiledPReLUSlopeArraysMatch": true,
+  "layers": [
+    {
+      "layer": "Conv_0",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 6912,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_2",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_4",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_6",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_8",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_10",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_12",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_14",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_16",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_18",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_20",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_22",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_24",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_26",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_28",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_30",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_32",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 147456,
+      "fullSourcePReLUSlopesMatch": true,
+      "fullCompiledPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_34",
+      "fullSourceWeightsMatch": true,
+      "fullSourceBiasMatch": true,
+      "fullCompiledWeightsMatch": true,
+      "fullCompiledBiasMatch": true,
+      "weightBytes": 110592
+    }
+  ],
+  "ipa": {
+    "bytes": 15959013,
+    "sha256": "56781DEE9AB09E51546E58E3CE80C29643C88C00FC4AC5C72528290997A84EDC",
+    "version": "2.0.40",
+    "build": "340",
+    "minimumOS": "16.0",
+    "deviceFamily": [
+      1,
+      2
+    ],
+    "xcode": "1540",
+    "sdk": "iphoneos17.5",
+    "machOCpuType": "0x100000c",
+    "machOBuildVersions": [
+      {
+        "platform": 2,
+        "minimumOS": "16.0.0",
+        "sdk": "17.5.0"
+      }
+    ],
+    "hasCodeSignatureCommand": false,
+    "compiledModelFiles": [
+      "Payload/XXComic.app/AnimeSuperResolution2x.mlmodelc/model.espresso.shape",
+      "Payload/XXComic.app/AnimeSuperResolution2x.mlmodelc/model.espresso.net",
+      "Payload/XXComic.app/AnimeSuperResolution2x.mlmodelc/metadata.json",
+      "Payload/XXComic.app/AnimeSuperResolution2x.mlmodelc/model.espresso.weights",
+      "Payload/XXComic.app/AnimeSuperResolution2x.mlmodelc/model/coremldata.bin",
+      "Payload/XXComic.app/AnimeSuperResolution2x.mlmodelc/neural_network_optionals/coremldata.bin",
+      "Payload/XXComic.app/AnimeSuperResolution2x.mlmodelc/coremldata.bin",
+      "Payload/XXComic.app/AnimeSuperResolution2x.mlmodelc/analytics/coremldata.bin"
+    ]
+  },
+  "limitation": "Weight identity and compiled resource presence do not prove successful CoreML prediction, graph numerical parity, or UI behavior."
+}

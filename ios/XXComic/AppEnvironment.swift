@@ -120,8 +120,17 @@ final class AppEnvironment {
         }
         networkMonitor.start()
 
-        if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--epub-fixtures") {
-            try EpubUITestFixtures.seed(library: localLibrary)
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing") {
+            if ProcessInfo.processInfo.arguments.contains("--matrix-fixtures") {
+                try EpubUITestFixtures.seedMatrixFixtures(
+                    library: library,
+                    localLibrary: localLibrary,
+                    bookshelfGroupStore: bookshelfGroupStore,
+                    downloadStore: downloadStore
+                )
+            } else if ProcessInfo.processInfo.arguments.contains("--epub-fixtures") {
+                try EpubUITestFixtures.seed(library: localLibrary)
+            }
         }
         habits.onChange = { [weak habits, weak defaults] in
             guard let habits, let defaults else { return }
