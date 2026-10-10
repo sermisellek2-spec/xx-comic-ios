@@ -58,10 +58,21 @@ final class ReaderEnhancementEngineTests: XCTestCase {
             }
         }
         XCTAssertLessThan(maxStep, 60)
+        // A black/gray border must not become a colored checkerboard after channel shuffling.
+        // The symmetric top/bottom border also makes this independent of bitmap row orientation.
+        var maxGrayEdgeChroma = 0
+        for y in 30..<60 {
+            for x in 400..<700 {
+                let offset = (y * 768 + x) * 4
+                let rgb = (0..<3).map { Int(pixels[offset + $0]) }
+                maxGrayEdgeChroma = max(maxGrayEdgeChroma, rgb.max()! - rgb.min()!)
+            }
+        }
+        XCTAssertLessThan(maxGrayEdgeChroma, 80, "NCNN PixelShuffle semantics must preserve neutral edges")
         let metrics: [String: Any] = ["device": UIDevice.current.name, "systemVersion": UIDevice.current.systemVersion,
             "method": result.method.rawValue, "tilesProcessed": result.tilesProcessed, "inputDimensions": "384x384",
             "outputDimensions": "768x768", "durationMs": durationMs, "residentMemoryBeforeMB": memoryBefore,
-            "residentMemoryAfterMB": residentMemoryMB(), "maxSeamStep": maxStep]
+            "residentMemoryAfterMB": residentMemoryMB(), "maxSeamStep": maxStep, "maxGrayEdgeChroma": maxGrayEdgeChroma]
         let data = try JSONSerialization.data(withJSONObject: metrics, options: [.prettyPrinted, .sortedKeys])
         let json = XCTAttachment(data: data, uniformTypeIdentifier: "public.json")
         json.name = "reader-ai-metrics"; json.lifetime = .keepAlways; add(json)
