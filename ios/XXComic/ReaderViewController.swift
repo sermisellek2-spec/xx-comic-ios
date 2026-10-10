@@ -122,17 +122,17 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         let directory = UIButton(type: .system), preferences = UIButton(type: .system)
         directory.setTitle("目录", for: .normal)
         directory.titleLabel?.font = .systemFont(ofSize: 14)
-        directory.tintColor = .white
+        directory.tintColor = .label
         directory.addTarget(self, action: #selector(showDirectory), for: .touchUpInside)
 
         middleButton.setTitle(comic.sourceId == "local" ? "详情" : "换源", for: .normal)
         middleButton.titleLabel?.font = .systemFont(ofSize: 14)
-        middleButton.tintColor = .white
+        middleButton.tintColor = .label
         middleButton.addTarget(self, action: #selector(middleButtonAction), for: .touchUpInside)
 
         preferences.setTitle("设置", for: .normal)
         preferences.titleLabel?.font = .systemFont(ofSize: 14)
-        preferences.tintColor = .white
+        preferences.tintColor = .label
         preferences.addTarget(self, action: #selector(showSettings), for: .touchUpInside)
 
         for btn in [directory, middleButton, preferences] { row2.addArrangedSubview(btn) }
@@ -248,7 +248,6 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         navigationController?.overrideUserInterfaceStyle = style
         pages.backgroundColor = .systemBackground; view.backgroundColor = .systemBackground
         toolbar.backgroundColor = .secondarySystemBackground
-        [directory, middleButton, preferences].forEach { $0.tintColor = .label }
         badge.textColor = .secondaryLabel
         badge.isHidden = !fullscreen || settings.fullyImmersive
         presentedViewController?.overrideUserInterfaceStyle = style
