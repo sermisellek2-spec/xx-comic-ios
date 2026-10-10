@@ -1,0 +1,117 @@
+{
+  "all_source_layers_match_seed_42_random_initialization": true,
+  "layers": [
+    {
+      "layer": "conv1",
+      "matches": [
+        {
+          "permutation": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "source_offset": 226,
+          "byte_count": 3456,
+          "compiled_offset": 640
+        }
+      ]
+    },
+    {
+      "layer": "res1_conv1",
+      "matches": [
+        {
+          "permutation": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "source_offset": 3919,
+          "byte_count": 36864,
+          "compiled_offset": 4224
+        }
+      ]
+    },
+    {
+      "layer": "res1_conv2",
+      "matches": [
+        {
+          "permutation": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "source_offset": 41040,
+          "byte_count": 36864,
+          "compiled_offset": 41216
+        }
+      ]
+    },
+    {
+      "layer": "res2_conv1",
+      "matches": [
+        {
+          "permutation": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "source_offset": 78161,
+          "byte_count": 36864,
+          "compiled_offset": 78208
+        }
+      ]
+    },
+    {
+      "layer": "res2_conv2",
+      "matches": [
+        {
+          "permutation": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "source_offset": 115282,
+          "byte_count": 36864,
+          "compiled_offset": 115200
+        }
+      ]
+    },
+    {
+      "layer": "refine_conv",
+      "matches": [
+        {
+          "permutation": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "source_offset": 152408,
+          "byte_count": 36864,
+          "compiled_offset": 152192
+        }
+      ]
+    },
+    {
+      "layer": "subpixel_conv",
+      "matches": [
+        {
+          "permutation": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "source_offset": 189533,
+          "byte_count": 13824,
+          "compiled_offset": 189120
+        }
+      ]
+    }
+  ]
+}

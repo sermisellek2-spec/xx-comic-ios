@@ -95,4 +95,56 @@ final class FavoriteUpdateCheckerTests: XCTestCase {
         )
         XCTAssertFalse(coordinator.hasPendingUpdate(sourceId: "mock_update", comicId: "test_comic_1"))
     }
+
+    func testSplitDetailUpdateQueriesChaptersEndpoint() async throws {
+        final class SplitMockSource: ComicSource, @unchecked Sendable {
+            let id = "split_mock"
+            let name = "Split Mock"
+            let referer = ""
+            var count = 10
+            var chapterCalls = 0
+            func latest(page: Int) async throws -> [ComicSummary] { [] }
+            func search(keyword: String, page: Int) async throws -> [ComicSummary] { [] }
+            func filterGroups() async throws -> [SourceFilterGroup] { [] }
+            func category(filters: [String: String], page: Int) async throws -> [ComicSummary] { [] }
+            func detail(comicId: String) async throws -> ComicDetail {
+                ComicDetail(summary: ComicSummary(sourceId: id, comicId: comicId, title: "Split Comic", coverUrl: ""), author: "", status: "", description: "", latestChapter: "", chapters: [])
+            }
+            func chapters(comicId: String) async throws -> [Chapter] {
+                chapterCalls += 1
+                return (1...count).map { Chapter(chapterId: "\($0)", title: "第\($0)话", url: "split/\($0)", chapterSlot: $0) }
+            }
+            func chapter(url: String) async throws -> ChapterPage {
+                ChapterPage(chapterId: "", title: "", nextPageUrl: "", imageUrls: [])
+            }
+        }
+
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let library = try LibraryStore(directory: tempDir)
+        let coordinator = FavoriteUpdateCoordinator()
+        let splitSource = SplitMockSource()
+
+        let comic = ComicSummary(sourceId: "split_mock", comicId: "split_comic", title: "Split Comic", coverUrl: "")
+        try library.setFavorite(comic, favorite: true)
+
+        let checker = FavoriteUpdateChecker(
+            library: library,
+            coordinator: coordinator,
+            sourceProvider: { id in id == "split_mock" ? splitSource : nil }
+        )
+
+        // Baseline run: queries chapters, sets baseline
+        _ = await checker.checkAllFavorites()
+        XCTAssertEqual(splitSource.chapterCalls, 1)
+        XCTAssertFalse(coordinator.hasPendingUpdate(sourceId: "split_mock", comicId: "split_comic"))
+
+        // Update run: chapter count increases, badge turns on
+        splitSource.count = 11
+        _ = await checker.checkAllFavorites()
+        XCTAssertEqual(splitSource.chapterCalls, 2)
+        XCTAssertTrue(coordinator.hasPendingUpdate(sourceId: "split_mock", comicId: "split_comic"))
+    }
 }

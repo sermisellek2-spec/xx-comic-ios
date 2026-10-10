@@ -391,29 +391,145 @@ public struct LocalLibrary: Sendable {
         }
         try FileManager.default.removeItem(at: url)
     }
-    public func recoverOrphans() async throws {
+    private func isVolumeCompleteAndReadable(at dirURL: URL, expectedID: String) -> Bool {
         let manager = FileManager.default
-        let items = try manager.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey], options: [])
-        for item in items {
-            let name = item.lastPathComponent
-            let values = try item.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
-            guard values.isSymbolicLink != true else { continue }
-            if name.hasPrefix(".import-") && values.isDirectory == true {
-                try? manager.removeItem(at: item)
-                continue
+        var isDir: ObjCBool = false
+        guard manager.fileExists(atPath: dirURL.path, isDirectory: &isDir), isDir.boolValue else {
+            return false
+        }
+        let bookJSONURL = dirURL.appendingPathComponent("book.json")
+        guard manager.fileExists(atPath: bookJSONURL.path),
+              let data = try? Data(contentsOf: bookJSONURL),
+              let book = try? JSONDecoder().decode(LocalBook.self, from: data) else {
+            return false
+        }
+        guard book.id == expectedID, UUID(uuidString: book.id) != nil else {
+            return false
+        }
+        if book.epub != nil {
+            let epubFile = dirURL.appendingPathComponent("content.epub")
+            guard manager.fileExists(atPath: epubFile.path),
+                  let attrs = try? manager.attributesOfItem(atPath: epubFile.path),
+                  (attrs[.size] as? UInt64 ?? 0) > 0,
+                  manager.isReadableFile(atPath: epubFile.path) else {
+                return false
             }
-            if UUID(uuidString: name) != nil && values.isDirectory == true {
-                if await catalogStore.existsOnDisk() {
-                    let allSeries = await catalogStore.listSeries()
-                    let allVolumeIDs = Set(allSeries.flatMap(\.volumeIDs))
-                    if !allVolumeIDs.contains(name) {
-                        try? manager.removeItem(at: item)
-                    }
+        } else if book.pdf != nil {
+            let pdfFile = dirURL.appendingPathComponent("content.pdf")
+            guard manager.fileExists(atPath: pdfFile.path),
+                  let attrs = try? manager.attributesOfItem(atPath: pdfFile.path),
+                  (attrs[.size] as? UInt64 ?? 0) > 0,
+                  manager.isReadableFile(atPath: pdfFile.path) else {
+                return false
+            }
+        } else {
+            if book.importFormat == .zip || book.importFormat == .cbz {
+                let archiveFile = dirURL.appendingPathComponent("source.archive")
+                guard manager.fileExists(atPath: archiveFile.path),
+                      let attrs = try? manager.attributesOfItem(atPath: archiveFile.path),
+                      (attrs[.size] as? UInt64 ?? 0) > 0,
+                      manager.isReadableFile(atPath: archiveFile.path) else {
+                    return false
+                }
+            }
+            guard !book.pages.isEmpty else { return false }
+            for page in book.pages {
+                guard !page.isEmpty, !page.contains("/"), !page.contains("\\"), page != ".", page != ".." else {
+                    return false
+                }
+                let pageFile = dirURL.appendingPathComponent(page)
+                guard manager.fileExists(atPath: pageFile.path),
+                      let attrs = try? manager.attributesOfItem(atPath: pageFile.path),
+                      (attrs[.size] as? UInt64 ?? 0) > 0,
+                      manager.isReadableFile(atPath: pageFile.path) else {
+                    return false
                 }
             }
         }
-        if await catalogStore.existsOnDisk() {
-            let allSeries = await catalogStore.listSeries()
+        if let coverName = book.coverName {
+            guard !coverName.isEmpty, !coverName.contains("/"), !coverName.contains("\\"), coverName != ".", coverName != ".." else {
+                return false
+            }
+            let coverFile = dirURL.appendingPathComponent(coverName)
+            guard manager.fileExists(atPath: coverFile.path),
+                  manager.isReadableFile(atPath: coverFile.path) else {
+                return false
+            }
+        }
+        return true
+    }
+
+    public func recoverOrphans() async throws {
+        let manager = FileManager.default
+        guard manager.fileExists(atPath: directory.path) else { return }
+        let items = try manager.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey], options: [])
+        let catalogExists = await catalogStore.existsOnDisk()
+        let allSeries = catalogExists ? await catalogStore.listSeries() : []
+        let allVolumeIDs = Set(allSeries.flatMap(\.volumeIDs))
+
+        let canonicalLibrary = directory.resolvingSymlinksInPath().standardizedFileURL
+
+        for item in items {
+            let name = item.lastPathComponent
+            let values = try item.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+            guard values.isSymbolicLink != true, values.isDirectory == true else { continue }
+
+            if name.hasPrefix(".import-") {
+                try? manager.removeItem(at: item)
+                continue
+            }
+
+            if name.hasPrefix(".backup-") {
+                let remainder = String(name.dropFirst(".backup-".count))
+                // Must strictly match <36-char-UUID>-<36-char-UUID>
+                guard remainder.count == 73 else { continue }
+                let targetVolId = String(remainder.prefix(36))
+                let sep = remainder[remainder.index(remainder.startIndex, offsetBy: 36)]
+                let nonce = String(remainder.suffix(36))
+                guard sep == "-",
+                      UUID(uuidString: targetVolId) != nil,
+                      UUID(uuidString: nonce) != nil else {
+                    continue
+                }
+
+                // Verify volume ownership against catalog if catalog exists
+                if catalogExists && !allVolumeIDs.contains(targetVolId) {
+                    continue
+                }
+
+                // Verify targetDir is strictly an immediate child within library directory
+                let targetDir = directory.appendingPathComponent(targetVolId, isDirectory: true)
+                let canonicalTarget = targetDir.resolvingSymlinksInPath().standardizedFileURL
+                guard canonicalTarget.deletingLastPathComponent().path == canonicalLibrary.path,
+                      canonicalTarget.lastPathComponent == targetVolId,
+                      canonicalTarget.path != canonicalLibrary.path else {
+                    continue
+                }
+
+                let targetIsComplete = isVolumeCompleteAndReadable(at: targetDir, expectedID: targetVolId)
+                let backupIsComplete = isVolumeCompleteAndReadable(at: item, expectedID: targetVolId)
+
+                if targetIsComplete {
+                    // Target volume is 100% complete and healthy on disk: backup is safe to delete
+                    try? manager.removeItem(at: item)
+                } else if backupIsComplete {
+                    // Target volume is missing or damaged/missing pages, but backup is complete: restore backup!
+                    if manager.fileExists(atPath: targetDir.path) {
+                        try? manager.removeItem(at: targetDir)
+                    }
+                    try? manager.moveItem(at: item, to: targetDir)
+                }
+                // If neither is complete, keep both to avoid data loss.
+                continue
+            }
+
+            if UUID(uuidString: name) != nil {
+                if catalogExists && !allVolumeIDs.contains(name) {
+                    try? manager.removeItem(at: item)
+                }
+            }
+        }
+        if catalogExists {
             for s in allSeries where s.status == "deleting" {
                 try? await deleteSeries(id: s.id)
             }
@@ -435,20 +551,55 @@ public struct LocalLibrary: Sendable {
         guard var s = await catalogStore.getSeries(id: seriesId) else {
             throw LocalCatalogError.targetNotFound
         }
+        let existingVolId = s.volumeIDs.first
         let prepared = try prepareFolder(title: title, folder: folder, isReadableImage: isReadableImage)
-        let published = try publishPrepared(prepared)
+        let targetVolId = existingVolId ?? prepared.book.id
+        let workingPrepared = try prepared.reassigningTargetID(targetVolId, allowExisting: true)
 
-        let oldVolumes = s.volumeIDs
-        for oldVolId in oldVolumes {
-            if oldVolId != published.id {
-                let oldDir = directory.appendingPathComponent(oldVolId)
-                try? deleteOwnedDirectory(oldDir)
-            }
+        let existingDir = directory.appendingPathComponent(targetVolId)
+        let existsOnDisk = FileManager.default.fileExists(atPath: existingDir.path)
+
+        var backupDir: URL? = nil
+        if existsOnDisk {
+            let backupName = ".backup-" + targetVolId + "-" + UUID().uuidString
+            let candidateBackup = directory.appendingPathComponent(backupName)
+            try FileManager.default.moveItem(at: existingDir, to: candidateBackup)
+            backupDir = candidateBackup
         }
 
+        let published: LocalBook
+        do {
+            published = try publishPrepared(workingPrepared)
+        } catch {
+            if let backup = backupDir {
+                try? FileManager.default.moveItem(at: backup, to: existingDir)
+            }
+            throw error
+        }
+
+        let oldVolumes = s.volumeIDs
         s.volumeIDs = [published.id]
         s.updatedAt = Date().timeIntervalSince1970
-        try await catalogStore.commitNewSeries(s)
+
+        do {
+            try await catalogStore.commitNewSeries(s)
+        } catch {
+            let newPublishedDir = directory.appendingPathComponent(published.id)
+            try? FileManager.default.removeItem(at: newPublishedDir)
+            if let backup = backupDir {
+                try? FileManager.default.moveItem(at: backup, to: existingDir)
+            }
+            throw error
+        }
+
+        if let backup = backupDir {
+            try? FileManager.default.removeItem(at: backup)
+        }
+        for oldVol in oldVolumes where oldVol != published.id {
+            let staleDir = directory.appendingPathComponent(oldVol)
+            try? deleteOwnedDirectory(staleDir)
+        }
+
         return (s, published)
     }
     public func importImagesCoordinated(title: String, files: [URL],

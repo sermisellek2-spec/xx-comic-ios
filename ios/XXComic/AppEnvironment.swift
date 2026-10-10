@@ -154,6 +154,10 @@ final class AppEnvironment {
             }
         }
         #endif
+        let syncCoordinator = folderSyncCoordinator
+        Task {
+            await syncCoordinator.recoverInterruptedSyncs()
+        }
     }
 
     func setFavorite(_ comic: ComicSummary, favorite: Bool) throws {

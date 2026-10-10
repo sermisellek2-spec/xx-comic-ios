@@ -8,6 +8,11 @@ import CoreML
 import Vision
 #endif
 
+private enum ReaderEnhancementError: Error {
+    case bufferAllocationFailed
+    case predictionFailed
+}
+
 /// Reader image enhancement engine aligned with Android 2.0.40's `ReaderEnhancementEngine` & `GpuSuperResolution`.
 /// Provides offline 2x AI super-resolution using CoreML/Apple Neural Engine and fast enhancement with memory guards and fallback.
 @MainActor
@@ -75,6 +80,106 @@ final class ReaderEnhancementEngine {
             return nil
         }
     }
+
+    /// Runs official Real-ESRGAN CoreML inference on a single 256x256 tile to produce a 512x512 tile.
+    nonisolated private static func predictTile(
+        model: MLModel,
+        ciContext: CIContext,
+        inputTileCI: CIImage
+    ) throws -> CIImage {
+        var pixelBuffer: CVPixelBuffer?
+        let attrs = [
+            kCVPixelBufferCGImageCompatibilityKey: true,
+            kCVPixelBufferCGBitmapContextCompatibilityKey: true
+        ] as CFDictionary
+        let status = CVPixelBufferCreate(
+            kCFAllocatorDefault,
+            256, 256,
+            kCVPixelFormatType_32BGRA,
+            attrs,
+            &pixelBuffer
+        )
+        guard status == kCVReturnSuccess, let buffer = pixelBuffer else {
+            throw ReaderEnhancementError.bufferAllocationFailed
+        }
+
+        let rgb = CGColorSpaceCreateDeviceRGB()
+        ciContext.render(inputTileCI, to: buffer, bounds: CGRect(x: 0, y: 0, width: 256, height: 256), colorSpace: rgb)
+
+        let provider = try MLDictionaryFeatureProvider(dictionary: ["image": MLFeatureValue(pixelBuffer: buffer)])
+        let prediction = try model.prediction(from: provider)
+
+        guard let outputFeature = prediction.featureValue(for: "output_image"),
+              let outputBuffer = outputFeature.imageBufferValue else {
+            throw ReaderEnhancementError.predictionFailed
+        }
+
+        return CIImage(cvPixelBuffer: outputBuffer)
+    }
+
+    /// Performs tile-based 2x super-resolution inference aligned with Android 2.0.40 GpuSuperResolution.
+    nonisolated private static func enhanceNeural(
+        model: MLModel,
+        ciContext: CIContext,
+        inputCI: CIImage,
+        width: Int,
+        height: Int,
+        scale: CGFloat,
+        orientation: UIImage.Orientation
+    ) throws -> UIImage {
+        let tile = 192
+        let halo = 32
+        let inTileSize: CGFloat = 256
+        let outW = width * 2
+        let outH = height * 2
+
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        guard let outputContext = CGContext(
+            data: nil,
+            width: outW,
+            height: outH,
+            bitsPerComponent: 8,
+            bytesPerRow: outW * 4,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue
+        ) else {
+            throw ReaderEnhancementError.bufferAllocationFailed
+        }
+
+        let clamped = inputCI.clampedToExtent()
+
+        for y in stride(from: 0, to: height, by: tile) {
+            for x in stride(from: 0, to: width, by: tile) {
+                try Task.checkCancellation()
+
+                let actualW = min(tile, width - x)
+                let actualH = min(tile, height - y)
+
+                let srcRect = CGRect(x: CGFloat(x - halo), y: CGFloat(y - halo), width: inTileSize, height: inTileSize)
+                let tileCI = clamped
+                    .cropped(to: srcRect)
+                    .transformed(by: CGAffineTransform(translationX: -CGFloat(x - halo), y: -CGFloat(y - halo)))
+
+                let outputTile512 = try predictTile(
+                    model: model,
+                    ciContext: ciContext,
+                    inputTileCI: tileCI
+                )
+
+                let interiorRect = CGRect(x: CGFloat(halo * 2), y: CGFloat(halo * 2), width: CGFloat(actualW * 2), height: CGFloat(actualH * 2))
+                guard let tileCG = ciContext.createCGImage(outputTile512, from: interiorRect) else {
+                    throw ReaderEnhancementError.predictionFailed
+                }
+
+                outputContext.draw(tileCG, in: CGRect(x: x * 2, y: y * 2, width: actualW * 2, actualH * 2))
+            }
+        }
+
+        guard let finalCG = outputContext.makeImage() else {
+            throw ReaderEnhancementError.predictionFailed
+        }
+        return UIImage(cgImage: finalCG, scale: scale, orientation: orientation)
+    }
     #endif
 
     /// Returns cached enhanced image if available.
@@ -135,33 +240,25 @@ final class ReaderEnhancementEngine {
 
                 if mode == ImageEnhancementPolicy.modeSmart {
                     #if canImport(CoreML)
-                    // If neural model is compiled and available, verify model execution
-                    if let _ = neuralModel {
-                        // Neural 2x super-resolution reconstruction
-                        let scaleTransform = CGAffineTransform(scaleX: 2.0, y: 2.0)
-                        let scaled = inputCI.transformed(by: scaleTransform)
-                        if let unsharpFilter = CIFilter(name: "CIUnsharpMask") {
-                            unsharpFilter.setValue(scaled, forKey: kCIInputImageKey)
-                            unsharpFilter.setValue(0.6, forKey: kCIInputRadiusKey)
-                            unsharpFilter.setValue(0.5, forKey: kCIInputIntensityKey)
-                            outputCI = unsharpFilter.outputImage ?? scaled
-                        } else {
-                            outputCI = scaled
-                        }
-                    } else {
-                        // Fallback: 2x bicubic + edge enhancement
-                        let scaleTransform = CGAffineTransform(scaleX: 2.0, y: 2.0)
-                        let scaled = inputCI.transformed(by: scaleTransform)
-                        if let unsharpFilter = CIFilter(name: "CIUnsharpMask") {
-                            unsharpFilter.setValue(scaled, forKey: kCIInputImageKey)
-                            unsharpFilter.setValue(0.6, forKey: kCIInputRadiusKey)
-                            unsharpFilter.setValue(0.5, forKey: kCIInputIntensityKey)
-                            outputCI = unsharpFilter.outputImage ?? scaled
-                        } else {
-                            outputCI = scaled
+                    if let model = neuralModel {
+                        do {
+                            return try Self.enhanceNeural(
+                                model: model,
+                                ciContext: ciContext,
+                                inputCI: inputCI,
+                                width: width,
+                                height: height,
+                                scale: original.scale,
+                                orientation: original.imageOrientation
+                            )
+                        } catch is CancellationError {
+                            return original
+                        } catch {
+                            // Neural inference failed or device out of memory: fall back to 2x bicubic + edge enhancement
                         }
                     }
-                    #else
+                    #endif
+                    // Fallback / non-CoreML path: 2x bicubic + edge enhancement
                     let scaleTransform = CGAffineTransform(scaleX: 2.0, y: 2.0)
                     let scaled = inputCI.transformed(by: scaleTransform)
                     if let unsharpFilter = CIFilter(name: "CIUnsharpMask") {
@@ -172,7 +269,6 @@ final class ReaderEnhancementEngine {
                     } else {
                         outputCI = scaled
                     }
-                    #endif
                 } else {
                     // Mode Fast: Adaptive sharpness and contrast enhancement
                     if let unsharpFilter = CIFilter(name: "CIUnsharpMask") {

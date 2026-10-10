@@ -1,0 +1,10 @@
+{
+  "interruptedSyncRecovery" : {
+    "backupStillExists" : false,
+    "catalogStillReferencesOldVolume" : true,
+    "oldVolumeReadableAfterRecovery" : true
+  },
+  "singleWriterGate" : {
+    "maximumSimultaneousBlocks" : 1
+  }
+}

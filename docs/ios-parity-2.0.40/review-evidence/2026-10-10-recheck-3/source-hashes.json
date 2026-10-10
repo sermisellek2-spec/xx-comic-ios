@@ -1,0 +1,26 @@
+﻿[
+    {
+        "Path":  "F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port\\ios\\XXComic\\ReaderEnhancementEngine.swift",
+        "Hash":  "BE6D06B9CD239E180FB9502BAFA79F46DAAFB2A2AEF8B1A3A17D8CD3934AB5E6"
+    },
+    {
+        "Path":  "F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port\\ios\\XXComic\\Resources\\AnimeSuperResolution2x.mlmodel",
+        "Hash":  "14F5B4BBCE70FA5C44720D421D2498F721ACAE095E1D5A7C2DFA980E68BBFCA8"
+    },
+    {
+        "Path":  "F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port\\ios\\ComicCore\\Sources\\ComicCore\\LocalLibrary.swift",
+        "Hash":  "C3F9ABB551AF00531B2EEBD572D992014147B09E8B539880970A2780C9B67DE8"
+    },
+    {
+        "Path":  "F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port\\ios\\ComicCore\\Sources\\ComicCore\\LocalFolderSync.swift",
+        "Hash":  "B045EC17E0E9C6BBBF4FDB55BA2FA65F40B5CA6C22CE40775583E738AD84C577"
+    },
+    {
+        "Path":  "F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port\\ios\\ComicCore\\Sources\\ComicCore\\FavoriteUpdateChecker.swift",
+        "Hash":  "6AAD49F2CDF5FFAA4EF7EC8076928FBB87FEBC8BFB8F6EBCF3A936D7C0C9684C"
+    },
+    {
+        "Path":  "F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port\\ios\\XXComic\\AppEnvironment.swift",
+        "Hash":  "0813B83832CED92281B5C000A9800064E6207F97158DC89441D48AD052D312CC"
+    }
+]

@@ -1,0 +1,136 @@
+{
+  "baselineNCNNBytes": 1247368,
+  "baselineNCNNSHA256": "548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d",
+  "convertedModelBytes": 2488320,
+  "convertedModelSHA256": "14f5b4bbce70fa5c44720d421d2498f721acae095e1d5a7c2dfa980e68bbfca8",
+  "allNCNNBytesConsumed": true,
+  "all18FullWeightAndBiasArraysMatch": true,
+  "all17PReLUSlopeArraysMatch": true,
+  "layers": [
+    {
+      "layer": "Conv_0",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 6912,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_2",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_4",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_6",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_8",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_10",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_12",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_14",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_16",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_18",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_20",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_22",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_24",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_26",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_28",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_30",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_32",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 147456,
+      "fullPReLUSlopesMatch": true
+    },
+    {
+      "layer": "Conv_34",
+      "fullWeightsMatch": true,
+      "fullBiasMatch": true,
+      "weightBytes": 110592
+    }
+  ]
+}

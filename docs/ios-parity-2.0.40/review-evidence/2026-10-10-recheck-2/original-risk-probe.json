@@ -1,0 +1,17 @@
+{
+  "folderIdentity" : {
+    "chapterIdStable" : true,
+    "previousChapterStillReadable" : true,
+    "seriesIdStable" : true,
+    "volumeIdStable" : true
+  },
+  "folderWriteFailure" : {
+    "catalogStillReferencesPreviousVolume" : true,
+    "previousVolumeStillReadable" : true,
+    "result" : "error(\"The operation could not be completed. (NSCocoaErrorDomain error 512.)\")"
+  },
+  "splitDetailUpdate" : {
+    "badgeAfterNewChapter" : true,
+    "chapterEndpointCalls" : 2
+  }
+}

@@ -1,5 +1,37 @@
 import Foundation
 
+public actor SingleWriterGate {
+    private var isLocked = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    public init() {}
+
+    public func lock() async {
+        if !isLocked {
+            isLocked = true
+            return
+        }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+
+    public func unlock() {
+        if !waiters.isEmpty {
+            let waiter = waiters.removeFirst()
+            waiter.resume()
+        } else {
+            isLocked = false
+        }
+    }
+
+    public func execute<T>(_ block: () async throws -> T) async rethrows -> T {
+        await lock()
+        defer { unlock() }
+        return try await block()
+    }
+}
+
 public final class LocalFolderSyncCoordinator: @unchecked Sendable {
     public enum SyncResult: Equatable, Sendable {
         case upToDate(fileCount: Int)
@@ -10,6 +42,7 @@ public final class LocalFolderSyncCoordinator: @unchecked Sendable {
     public let store: FolderBookmarkStore
     public let library: LocalLibrary
     private let isReadableImage: @Sendable (URL) throws -> Bool
+    private let syncGate = SingleWriterGate()
 
     public init(
         store: FolderBookmarkStore,
@@ -61,8 +94,21 @@ public final class LocalFolderSyncCoordinator: @unchecked Sendable {
         }
     }
 
+    /// Runs orphan and interrupted backup recovery under the single writer gate to prevent concurrency conflicts.
+    public func recoverInterruptedSyncs() async {
+        await syncGate.execute {
+            try? await library.recoverOrphans()
+        }
+    }
+
     /// Synchronizes a single linked folder: checks for added/removed/renamed images.
     public func sync(id: String) async -> SyncResult {
+        await syncGate.execute {
+            await self.performSync(id: id)
+        }
+    }
+
+    private func performSync(id: String) async -> SyncResult {
         guard var record = store.record(id: id) else {
             return .error("未找到关联记录")
         }

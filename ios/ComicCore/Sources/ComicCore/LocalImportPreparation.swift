@@ -14,11 +14,13 @@ public struct PreparedLocalImport: Sendable {
     public var staging: URL { storage.staging }
     fileprivate let storage: LocalImportDirectory
 
-    func reassigningTargetID(_ targetID: String) throws -> PreparedLocalImport {
+    func reassigningTargetID(_ targetID: String, allowExisting: Bool = false) throws -> PreparedLocalImport {
         guard targetID != book.id else { return self }
         guard UUID(uuidString: targetID) != nil else { throw LocalLibraryError.invalidBook }
-        guard !FileManager.default.fileExists(atPath: storage.root.appendingPathComponent(targetID).path) else {
-            return self
+        if !allowExisting {
+            guard !FileManager.default.fileExists(atPath: storage.root.appendingPathComponent(targetID).path) else {
+                return self
+            }
         }
         return try storage.reassign(targetID: targetID, book: book)
     }

@@ -1,0 +1,156 @@
+{
+  "metrics": {
+    "testsCount": "17"
+  },
+  "actions": [
+    {
+      "status": "succeeded",
+      "metrics": {
+        "testsCount": "17"
+      },
+      "buildStatus": "succeeded",
+      "startedTime": "2026-10-10T10:17:36.916+0000",
+      "endedTime": "2026-10-10T10:24:26.172+0000",
+      "runDestination": {
+        "displayName": "iPhone 15 Pro",
+        "localComputerRecord": {
+          "busSpeedInMHz": "0",
+          "cpuCount": "1",
+          "cpuKind": "Apple M2 Pro (Virtual)",
+          "cpuSpeedInMHz": "0",
+          "identifier": "0000FE00-7CCC9802DA488B9F",
+          "isConcreteDevice": "true",
+          "logicalCPUCoresPerPackage": "5",
+          "modelCode": "VirtualMac2,1",
+          "modelName": "Apple Virtual Machine 1",
+          "modelUTI": "com.apple.virtual-machine",
+          "name": "My Mac",
+          "nativeArchitecture": "arm64e",
+          "operatingSystemVersion": "14.8.9",
+          "operatingSystemVersionWithBuildNumber": "14.8.9 (23J631)",
+          "physicalCPUCoresPerPackage": "5",
+          "platformRecord": {
+            "identifier": "com.apple.platform.macosx",
+            "userDescription": "macOS"
+          },
+          "ramSizeInMegabytes": "14336"
+        },
+        "targetArchitecture": "arm64",
+        "targetDeviceRecord": {
+          "busSpeedInMHz": "0",
+          "cpuCount": "0",
+          "cpuSpeedInMHz": "0",
+          "identifier": "E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+          "isConcreteDevice": "true",
+          "logicalCPUCoresPerPackage": "0",
+          "modelCode": "iPhone16,1",
+          "modelName": "iPhone 15 Pro",
+          "modelUTI": "com.apple.iphone-15-pro-1",
+          "name": "iPhone 15 Pro",
+          "nativeArchitecture": "arm64",
+          "operatingSystemVersion": "17.4",
+          "operatingSystemVersionWithBuildNumber": "17.4 (21E213)",
+          "physicalCPUCoresPerPackage": "0",
+          "platformRecord": {
+            "identifier": "com.apple.platform.iphonesimulator",
+            "userDescription": "iOS Simulator"
+          },
+          "ramSizeInMegabytes": "0"
+        },
+        "targetSDKRecord": {
+          "identifier": "iphonesimulator17.5",
+          "name": "Simulator - iOS 17.5",
+          "operatingSystemVersion": "17.5"
+        }
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "EpubReadingUITests/testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker()",
+      "status": "Success",
+      "duration": "16.315111994743347"
+    },
+    {
+      "name": "EpubReadingUITests/testPendingScrollRestoreCannotOverwriteNextDocumentPosition()",
+      "status": "Success",
+      "duration": "21.61921501159668"
+    },
+    {
+      "name": "Mh18VerificationTests/testManualVerificationCanCloseAndBeOpenedAgain()",
+      "status": "Success",
+      "duration": "16.001109957695007"
+    },
+    {
+      "name": "EpubReadingUITests/testKindleNovelRealImportTextReaderAndSecondChapterResume()",
+      "status": "Success",
+      "duration": "32.05594098567963"
+    },
+    {
+      "name": "EpubReadingUITests/testMixedSpineRetainsDirectImageAndPureImageUsesComicReader()",
+      "status": "Success",
+      "duration": "29.21540904045105"
+    },
+    {
+      "name": "EpubReadingUITests/testWebKitBlocksBookScriptsAndLoadsSameBookCSS()",
+      "status": "Success",
+      "duration": "17.171684980392456"
+    },
+    {
+      "name": "AppNavigationTests/testNavigationAndReaderPreferencesPersist()",
+      "status": "Success",
+      "duration": "11.960057020187378"
+    },
+    {
+      "name": "EpubReadingUITests/testAllSpinesAndRealSecondChapterResumeRoute()",
+      "status": "Success",
+      "duration": "26.376118063926697"
+    },
+    {
+      "name": "EpubReadingUITests/testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce()",
+      "status": "Success",
+      "duration": "47.98133897781372"
+    },
+    {
+      "name": "EpubReadingUITests/testKindleComicRealImportUsesExistingImageReaderAndResume()",
+      "status": "Success",
+      "duration": "22.728206992149353"
+    },
+    {
+      "name": "EpubReadingUITests/testKindleMixedRealImportRetainsTextAndImageInExistingTextReader()",
+      "status": "Success",
+      "duration": "18.631031036376953"
+    },
+    {
+      "name": "EpubReadingUITests/testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks()",
+      "status": "Success",
+      "duration": "25.918403029441833"
+    },
+    {
+      "name": "EpubReadingUITests/testLongBodyWithoutIDsResumesByPercentage()",
+      "status": "Success",
+      "duration": "20.892251014709473"
+    },
+    {
+      "name": "EpubReadingUITests/testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks()",
+      "status": "Success",
+      "duration": "21.889800906181335"
+    },
+    {
+      "name": "EpubReadingUITests/testTextSettingsPersistAfterRelaunch()",
+      "status": "Success",
+      "duration": "28.114174962043762"
+    },
+    {
+      "name": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+      "status": "Success",
+      "duration": "11.019394040107727"
+    },
+    {
+      "name": "SourceDrawerTests/testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm()",
+      "status": "Success",
+      "duration": "9.404624938964844"
+    }
+  ],
+  "decodedObjects": 27
+}

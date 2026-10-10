@@ -20,6 +20,52 @@ public final class FavoriteUpdateChecker: @unchecked Sendable {
         self.sourceProvider = sourceProvider
     }
 
+    /// Checks a single comic against source and optional baseline revision, matching Android's FavoriteUpdateChecker.java.
+    public static func check(
+        source: any ComicSource,
+        comicId: String,
+        baseline: FavoriteRevision?
+    ) async -> FavoriteRevision? {
+        guard !comicId.isEmpty else { return nil }
+        do {
+            let detail = try await source.detail(comicId: comicId)
+            // If detail already contains full chapters, use them
+            if !detail.chapters.isEmpty {
+                return FavoriteRevision.fromChapters(
+                    latestChapterName: detail.latestChapter,
+                    chapters: detail.chapters
+                )
+            }
+
+            // If baseline relied on CHAPTER_SET or detail has no reliable chapter evidence,
+            // call chapters() to obtain reliable chapter IDs
+            let needChapters = baseline != nil && baseline?.mode == FavoriteRevision.modeChapterSet
+            let latestChapterEmpty = detail.latestChapter.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            if needChapters || latestChapterEmpty {
+                do {
+                    let chapters = try await source.chapters(comicId: comicId)
+                    if !chapters.isEmpty {
+                        return FavoriteRevision.fromChapters(
+                            latestChapterName: detail.latestChapter,
+                            chapters: chapters
+                        )
+                    }
+                } catch {
+                    // chapters() failed, fall back to detail if it has comparable info
+                }
+            }
+
+            // Fall back to detail snapshot
+            if !latestChapterEmpty {
+                return FavoriteRevision.fromDetail(detail)
+            }
+            return nil
+        } catch {
+            // All errors (network, timeout, Cloudflare verification, retired source) are captured silently
+            return nil
+        }
+    }
+
     /// Checks all online favorites for new chapter updates.
     /// Returns a dictionary of "sourceId:comicId" -> hasPendingUpdate.
     @discardableResult
@@ -31,26 +77,24 @@ public final class FavoriteUpdateChecker: @unchecked Sendable {
             if Task.isCancelled { break }
             let comic = entry.summary
             guard let source = sourceProvider(comic.sourceId) else { continue }
-            do {
-                let detail = try await source.detail(comicId: comic.comicId)
-                let revision = FavoriteRevision.fromChapters(
-                    latestChapterName: detail.latestChapter,
-                    chapters: detail.chapters
-                )
-                coordinator.recordObserved(
-                    sourceId: comic.sourceId,
-                    comicId: comic.comicId,
-                    revision: revision
-                )
-                let hasUpdate = coordinator.hasPendingUpdate(
-                    sourceId: comic.sourceId,
-                    comicId: comic.comicId
-                )
-                results["\(comic.sourceId):\(comic.comicId)"] = hasUpdate
-            } catch {
-                // Network errors or offline skips gracefully without corrupting baseline
+            let baseline = coordinator.state(sourceId: comic.sourceId, comicId: comic.comicId)?.acknowledgedRevision
+            guard let revision = await Self.check(
+                source: source,
+                comicId: comic.comicId,
+                baseline: baseline
+            ) else {
                 continue
             }
+            coordinator.recordObserved(
+                sourceId: comic.sourceId,
+                comicId: comic.comicId,
+                revision: revision
+            )
+            let hasUpdate = coordinator.hasPendingUpdate(
+                sourceId: comic.sourceId,
+                comicId: comic.comicId
+            )
+            results["\(comic.sourceId):\(comic.comicId)"] = hasUpdate
         }
 
         return results
