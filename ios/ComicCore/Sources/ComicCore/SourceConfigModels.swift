@@ -624,6 +624,43 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func dongmanla(enabled: Bool = true) -> SourceConfigItem {
+        var filters: [String: String] = [
+            "category.all": "/manhua/",
+            "category.jp": "/manhua/japan/",
+            "category.hk": "/manhua/hongkongtaiwan/",
+            "category.west": "/manhua/oumei/",
+            "category.cn": "/manhua/guochan/",
+            "category.kr": "/manhua/hanguo/",
+            "category.finish": "/manhua/finish/",
+            "category.serial": "/manhua/serial/"
+        ]
+        let genres = [83, 82, 81, 62, 56, 53, 52, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16]
+        for g in genres {
+            filters["category.genre.\(g)"] = "/manhua/class/\(g)/"
+        }
+        return SourceConfigItem(
+            id: "dongmanla",
+            name: "动漫啦",
+            domain: "www.dongman.la",
+            baseUrl: "https://www.dongman.la",
+            referer: "https://www.dongman.la/",
+            latestPath: "",
+            searchPath: "",
+            categoryPath: "",
+            detailPath: "",
+            enabled: enabled,
+            routes: [
+                "latest": "/manhua/",
+                "search": "/manhua/so/{keyword}/{page}.html",
+                "category": "{categoryPath}",
+                "detail": "/manhua/detail/{comicId}/",
+                "chapter": "{chapterUrl}"
+            ],
+            filters: filters
+        )
+    }
+
     public static func defaultConfig(for id: String) -> SourceConfigItem? {
         switch id {
         case "baozimh": return baozi()
@@ -644,6 +681,7 @@ public enum SourceConfigDefaults {
         case "cuimh": return cuimh()
         case "liumanhua": return liumanhua()
         case "dingmanhua": return dingmanhua()
+        case "dongmanla": return dongmanla()
         default: return nil
         }
     }

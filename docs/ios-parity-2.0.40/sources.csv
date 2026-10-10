@@ -17,7 +17,7 @@ copy4000,dedicated,拷贝漫画,https://www.copy4000.com,true,通过,15,需要�
 manwa,dedicated,漫蛙,https://manwace.cc,true,通过,16,海外线路,AES图片流解密,sources/manwa.md
 liumanhua,dedicated,六漫画,https://www.liumanhua.com,true,通过,17,国内直连优先,分类阅读(原版无搜索)/AES解密,sources/liumanhua.md
 dingmanhua,dedicated,顶漫画,https://www.dingmanhua.com,true,通过,18,国内直连优先,POST目录/pasd脚本图片解析,sources/dingmanhua.md
-dongmanla,dedicated,动漫啦,https://www.dongmanla.com,true,待接入,19,国内直连优先,,
+dongmanla,dedicated,动漫啦,https://www.dongman.la,true,通过,19,国内直连优先,all.html整章图片/详情HTML复用,sources/dongmanla.md
 zaimanhua,dedicated,在漫画,https://www.zaimanhua.com,true,待接入,20,国内直连优先,动态图片解析,
 guazi,dedicated,瓜子漫画,https://www.guazi.com,true,待接入,21,国内直连优先,,
 xinmanhua,dedicated,新漫画,https://www.xinmanhua.com,true,待接入,22,国内直连优先,,

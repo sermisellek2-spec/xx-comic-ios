@@ -9,6 +9,16 @@ let package = Package(
     targets: [
         .systemLibrary(name: "ComicZlib", pkgConfig: "zlib", providers: [.apt(["zlib1g-dev"])]),
         .target(name: "ComicCore", dependencies: ["ComicZlib", .product(name: "ZIPFoundation", package: "ZIPFoundation")], resources: [.copy("Resources/ZIPFoundation-LICENSE.txt")]),
-        .testTarget(name: "ComicCoreTests", dependencies: ["ComicCore"], resources: [.copy("Fixtures/manwa"), .copy("Fixtures/copy4000")])
+        .testTarget(
+            name: "ComicCoreTests",
+            dependencies: ["ComicCore"],
+            resources: [
+                .copy("Fixtures/manwa"),
+                .copy("Fixtures/copy4000"),
+                .copy("Fixtures/new-sources"),
+                .copy("Fixtures/public-sources"),
+                .copy("Fixtures/dongmanla-44074.html")
+            ]
+        )
     ]
 )
