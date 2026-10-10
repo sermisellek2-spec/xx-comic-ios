@@ -1,15 +1,26 @@
 import Foundation
 
 public struct LiumanhuaComicSource: ComicSource {
-    public let id = "liumanhua"
-    public let name = "六漫画"
-    public let referer = "https://www.liumanhua.com/"
+    public let id: String
+    public let name: String
+    public let domain: String
+    public let referer: String
     public let supportsSearch = false
-    private let baseURL = "https://www.liumanhua.com"
+    private let baseURL: String
+    private let config: SourceConfigItem
     private let transport: any HTTPTransport
     private let chapterTransport: any HTTPTransport
 
-    public init(transport: (any HTTPTransport)? = nil) {
+    public init(config: SourceConfigItem? = nil, transport: (any HTTPTransport)? = nil) {
+        let resolved = config ?? SourceConfigDefaults.liumanhua()
+        self.config = resolved
+        self.id = resolved.id.isEmpty ? "liumanhua" : resolved.id
+        self.name = resolved.name.isEmpty ? "六漫画" : resolved.name
+        self.domain = resolved.domain.isEmpty ? "www.liumanhua.com" : resolved.domain
+        let rawBase = resolved.baseUrl.isEmpty ? "https://www.liumanhua.com" : resolved.baseUrl
+        let cleanBase = rawBase.hasSuffix("/") ? String(rawBase.dropLast()) : rawBase
+        self.baseURL = cleanBase
+        self.referer = resolved.referer.isEmpty ? (cleanBase + "/") : resolved.referer
         self.transport = transport ?? URLSessionHTTPTransport(timeoutInterval: 20)
         chapterTransport = transport ?? URLSessionHTTPTransport(timeoutInterval: 30)
     }
@@ -23,7 +34,8 @@ public struct LiumanhuaComicSource: ComicSource {
     }
 
     public func filterGroups() async throws -> [SourceFilterGroup] {
-        let groups = parseFilterGroups(try await fetch("/category"))
+        let indexRoute = config.route("categoryIndex").isEmpty ? categoryPath(filters: [:], page: 1) : config.route("categoryIndex")
+        let groups = parseFilterGroups(try await fetch(indexRoute))
         guard !groups.isEmpty else { throw error("分类解析失败") }
         return groups
     }
@@ -35,16 +47,23 @@ public struct LiumanhuaComicSource: ComicSource {
     public func detail(comicId: String) async throws -> ComicDetail {
         let rawID = rawComicID(comicId)
         guard !rawID.isEmpty else { throw error("详情 ID 为空") }
-        let html = try await fetch("/" + rawID)
+        let detailRoute = config.route("detail").isEmpty ? "/{comicId}" : config.route("detail")
+        let html = try await fetch(detailRoute.replacingOccurrences(of: "{comicId}", with: rawID))
         return try parseDetail(rawID: rawID, html: html, includeChapters: true)
     }
 
     public func chapters(comicId: String) async throws -> [Chapter] {
         let rawID = rawComicID(comicId)
         guard !rawID.isEmpty else { throw error("目录 ID 为空") }
-        let chapters = parseChapters(try await fetch("/" + rawID), comicID: rawID)
+        let detailRoute = config.route("detail").isEmpty ? "/{comicId}" : config.route("detail")
+        let chapters = parseChapters(try await fetch(detailRoute.replacingOccurrences(of: "{comicId}", with: rawID)), comicID: rawID)
         guard !chapters.isEmpty else { throw error("目录解析失败") }
         return chapters
+    }
+
+    public func healthCheck() async -> Bool {
+        guard let html = try? await fetch(categoryPath(filters: [:], page: 1)) else { return false }
+        return html.contains("cy_list_mh") && html.contains("cy_tag")
     }
 
     public func chapter(url: String) async throws -> ChapterPage {

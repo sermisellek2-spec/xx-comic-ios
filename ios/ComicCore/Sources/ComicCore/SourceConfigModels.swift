@@ -567,6 +567,29 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func liumanhua(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "liumanhua",
+            name: "六漫画",
+            domain: "www.liumanhua.com",
+            baseUrl: "https://www.liumanhua.com",
+            referer: "https://www.liumanhua.com/",
+            latestPath: "/category",
+            searchPath: "",
+            categoryPath: "/category{filterPath}{pagePath}",
+            detailPath: "/{comicId}",
+            enabled: enabled,
+            routes: [
+                "latest": "/category",
+                "categoryIndex": "/category",
+                "category": "/category{filterPath}{pagePath}",
+                "detail": "/{comicId}",
+                "chapter": "{chapterUrl}"
+            ],
+            filters: [:]
+        )
+    }
+
     public static func defaultConfig(for id: String) -> SourceConfigItem? {
         switch id {
         case "baozimh": return baozi()
@@ -585,6 +608,7 @@ public enum SourceConfigDefaults {
         case "bbyin": return bbyin()
         case "antbyw": return antbyw()
         case "cuimh": return cuimh()
+        case "liumanhua": return liumanhua()
         default: return nil
         }
     }

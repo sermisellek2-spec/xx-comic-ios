@@ -145,6 +145,44 @@ final class LiumanhuaSourceTests: XCTestCase {
         catch { XCTAssertTrue(error is CancellationError) }
     }
 
+    func testSourceConfigDefaultsAndHealthCheck() async throws {
+        let def = try XCTUnwrap(SourceConfigDefaults.defaultConfig(for: "liumanhua"))
+        XCTAssertEqual(def.id, "liumanhua")
+        XCTAssertEqual(def.name, "六漫画")
+        XCTAssertEqual(def.domain, "www.liumanhua.com")
+        XCTAssertEqual(def.baseUrl, "https://www.liumanhua.com")
+        XCTAssertEqual(def.route("detail"), "/{comicId}")
+
+        let html = filter("分类", "国产漫画", "/category/list/1") + cards
+        let custom = SourceConfigItem(
+            id: "liumanhua",
+            name: "六漫画镜像",
+            domain: "mirror.liumanhua.test",
+            baseUrl: "https://mirror.liumanhua.test",
+            referer: "https://mirror.liumanhua.test/",
+            latestPath: "/category",
+            searchPath: "",
+            categoryPath: "/category{filterPath}{pagePath}",
+            detailPath: "/mh/{comicId}",
+            enabled: true,
+            routes: ["detail": "/mh/{comicId}", "categoryIndex": "/category"],
+            filters: [:]
+        )
+        let detailHtml = "<div class='cy_title'><h1>可爱过敏原</h1></div><div class='cy_plist'><li class='chapter__item'><a href='/302262/217344.html'>第119话</a></li></div>"
+        let transport = LiumanhuaTransport([
+            "https://mirror.liumanhua.test/category": .html(html),
+            "https://mirror.liumanhua.test/mh/302262": .html(detailHtml)
+        ])
+        let source = LiumanhuaComicSource(config: custom, transport: transport)
+        XCTAssertEqual(source.name, "六漫画镜像")
+        XCTAssertEqual(source.domain, "mirror.liumanhua.test")
+        let healthy = await source.healthCheck()
+        XCTAssertTrue(healthy)
+        let detail = try await source.detail(comicId: "302262")
+        XCTAssertEqual(detail.summary.title, "可爱过敏原")
+        XCTAssertEqual(detail.chapters.count, 1)
+    }
+
     private func filter(_ name: String, _ option: String, _ path: String) -> String {
         "<div class=\"cy_tag\"><span>\(name)</span><ul><li><a href=\"/category/\">全部</a></li><li><a href=\"\(path)\">\(option)</a></li></ul></div>"
     }
