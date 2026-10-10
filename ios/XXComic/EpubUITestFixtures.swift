@@ -140,27 +140,27 @@ enum EpubUITestFixtures {
         try seed(library: localLibrary)
 
         let chainsaw = ComicSummary(
+            sourceId: "copymanga",
             comicId: "chainsaw_man",
             title: "电锯人",
             coverUrl: "https://example.com/cover1.jpg",
-            author: "藤本树",
-            sourceId: "copymanga",
+            subtitle: "藤本树",
             tags: ["热血", "奇幻", "连载中"]
         )
         let spyFamily = ComicSummary(
+            sourceId: "copymanga",
             comicId: "spy_x_family",
             title: "间谍过家家",
             coverUrl: "https://example.com/cover2.jpg",
-            author: "远藤达哉",
-            sourceId: "copymanga",
+            subtitle: "远藤达哉",
             tags: ["搞笑", "动作", "连载中"]
         )
         let onePerson = ComicSummary(
+            sourceId: "manhuagui",
             comicId: "under_one_person",
             title: "一人之下",
             coverUrl: "https://example.com/cover3.jpg",
-            author: "米二",
-            sourceId: "manhuagui",
+            subtitle: "米二",
             tags: ["热血", "修真", "连载中"]
         )
 
@@ -182,11 +182,11 @@ enum EpubUITestFixtures {
         }
 
         let downloadSummary = ComicSummary(
+            sourceId: "copymanga",
             comicId: "download_spy",
             title: "间谍过家家 [离线]",
             coverUrl: "https://example.com/cover_dl.jpg",
-            author: "远藤达哉",
-            sourceId: "copymanga",
+            subtitle: "远藤达哉",
             tags: ["已下载"]
         )
         let downloadDetail = ComicDetail(
