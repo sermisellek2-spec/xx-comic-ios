@@ -219,6 +219,67 @@ final class CuimhSourceTests: XCTestCase {
         catch { XCTAssertTrue(error.localizedDescription.contains("目录")) }
     }
 
+    func testDefaultConfigMatchesBaselineContract() {
+        let config = SourceConfigDefaults.cuimh()
+        XCTAssertEqual(config.id, "cuimh")
+        XCTAssertEqual(config.name, "催漫画")
+        XCTAssertEqual(config.domain, "www.cuimh.com")
+        XCTAssertEqual(config.baseUrl, "https://www.cuimh.com")
+        XCTAssertEqual(config.referer, "https://www.cuimh.com/")
+        XCTAssertEqual(config.route("latest"), "/category{pagePath}")
+        XCTAssertEqual(config.route("category"), "/category{filterPath}{pagePath}")
+        XCTAssertEqual(config.route("detail"), "/{comicId}")
+        XCTAssertEqual(SourceConfigDefaults.defaultConfig(for: "cuimh"), config)
+    }
+
+    func testCustomConfigCustomizesBaseURLAndDetailRoute() async throws {
+        let custom = SourceConfigItem(
+            id: "cuimh_custom",
+            name: "催漫画镜像",
+            domain: "mirror.cuimh.test",
+            baseUrl: "https://mirror.cuimh.test",
+            referer: "https://mirror.cuimh.test/ref",
+            latestPath: "/category{pagePath}",
+            searchPath: "",
+            categoryPath: "/category{filterPath}{pagePath}",
+            detailPath: "/manga/{comicId}",
+            enabled: true,
+            routes: ["detail": "/manga/{comicId}"],
+            filters: [:]
+        )
+        let html = """
+        <div class="cy_info_cover"><img src="/cover/tree.jpg"></div><div class="cy_title"><h1>从大树开始的进化</h1></div>
+        <span class="cy_author">作者：<a>黑鸟社</a></span>
+        <span class="cy_serialize">状态：<font>连载中</font></span>
+        """
+        let transport = CuimhTransport(responses: [
+            "https://mirror.cuimh.test/manga/tree": [.html(html)]
+        ])
+        let source = CuimhComicSource(config: custom, transport: transport)
+        let detail = try await source.detail(comicId: "tree")
+        XCTAssertEqual(detail.summary.title, "从大树开始的进化")
+        XCTAssertEqual(detail.summary.coverUrl, "https://mirror.cuimh.test/cover/tree.jpg")
+        let requests = await transport.requests
+        XCTAssertEqual(requests.first?.0, "https://mirror.cuimh.test/manga/tree")
+        XCTAssertEqual(requests.first?.1["Referer"], "https://mirror.cuimh.test/ref")
+    }
+
+    func testHealthCheckReturnsTrueWhenDocumentContainsMarkers() async {
+        let validTransport = CuimhTransport(responses: [
+            "https://www.cuimh.com/category/": [.html("<div class='cy_list_mh'></div><div class='cy_tag'></div>")]
+        ])
+        let validSource = CuimhComicSource(transport: validTransport)
+        let isHealthy = await validSource.healthCheck()
+        XCTAssertTrue(isHealthy)
+
+        let brokenTransport = CuimhTransport(responses: [
+            "https://www.cuimh.com/category/": [.html("<html><body>404 Not Found</body></html>")]
+        ])
+        let brokenSource = CuimhComicSource(transport: brokenTransport)
+        let isBrokenHealthy = await brokenSource.healthCheck()
+        XCTAssertFalse(isBrokenHealthy)
+    }
+
     private func makeSource(transport: CuimhTransport, clock: TestMillisecondsClock = TestMillisecondsClock()) -> CuimhComicSource {
         CuimhComicSource(transport: transport, nowMilliseconds: { clock.now() }) { milliseconds in
             try Task.checkCancellation()

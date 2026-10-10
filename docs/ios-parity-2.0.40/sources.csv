@@ -12,7 +12,7 @@ manben,dedicated,漫本,https://www.manben.com,true,通过,10,国内直连优先
 manhuazhan,dedicated,漫画栈,https://www.manhuazhan.com,true,待实测(站点源站故障CF 521),11,国内直连优先,5um系列接口,sources/manhuazhan.md
 bbyin,dedicated,哔哔漫画,https://bbyin.com,true,通过,12,国内直连优先,5um系列接口,sources/bbyin.md
 antbyw,dedicated,蚂蚁不迷路,https://antbyw.com,true,通过,13,国内直连优先,,sources/antbyw.md
-cuimh,dedicated,催眠漫画,https://www.cuimh.com,true,待接入,14,国内直连优先,,
+cuimh,dedicated,催漫画,https://www.cuimh.com,true,通过,14,国内直连优先,分类阅读(原版无搜索)/AES解密,sources/cuimh.md
 copy4000,dedicated,拷贝漫画,https://www.copy4000.com,true,待接入,15,需要分流/海外,动态线路切换,
 manwa,dedicated,漫蛙,https://manwa.me,true,待接入,16,海外线路,,
 liumanhua,dedicated,六漫画,https://www.liumanhua.com,true,待接入,17,国内直连优先,,

@@ -359,6 +359,29 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func cuimh(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "cuimh",
+            name: "催漫画",
+            domain: "www.cuimh.com",
+            baseUrl: "https://www.cuimh.com",
+            referer: "https://www.cuimh.com/",
+            latestPath: "/category{pagePath}",
+            searchPath: "",
+            categoryPath: "/category{filterPath}{pagePath}",
+            detailPath: "/{comicId}",
+            enabled: enabled,
+            routes: [
+                "latest": "/category{pagePath}",
+                "search": "",
+                "category": "/category{filterPath}{pagePath}",
+                "detail": "/{comicId}",
+                "chapter": "{chapterUrl}"
+            ],
+            filters: [:]
+        )
+    }
+
     public static func copy4000(enabled: Bool = true) -> SourceConfigItem {
         SourceConfigItem(
             id: "copy4000",
@@ -561,6 +584,7 @@ public enum SourceConfigDefaults {
         case "manhuazhan", "five_um": return manhuazhan()
         case "bbyin": return bbyin()
         case "antbyw": return antbyw()
+        case "cuimh": return cuimh()
         default: return nil
         }
     }

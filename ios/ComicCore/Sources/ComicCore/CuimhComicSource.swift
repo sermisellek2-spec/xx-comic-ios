@@ -1,12 +1,13 @@
 import Foundation
 
 public actor CuimhComicSource: ComicSource {
-    public nonisolated let id = "cuimh"
-    public nonisolated let name = "催漫画"
-    public nonisolated let referer = "https://www.cuimh.com/"
+    public nonisolated let id: String
+    public nonisolated let name: String
+    public nonisolated let referer: String
     public nonisolated let supportsSearch = false
+    public nonisolated let config: SourceConfigItem?
 
-    private let baseURL = "https://www.cuimh.com"
+    private let baseURL: String
     private let transport: any HTTPTransport
     private let nowMilliseconds: @Sendable () -> Int64
     private let sleepMilliseconds: @Sendable (Int64) async throws -> Void
@@ -17,12 +18,21 @@ public actor CuimhComicSource: ComicSource {
     private var forbiddenUntil: Int64 = 0
 
     public init(
+        config: SourceConfigItem? = nil,
         transport: any HTTPTransport = URLSessionHTTPTransport(timeoutInterval: 30),
         nowMilliseconds: @escaping @Sendable () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1_000) },
         sleepMilliseconds: @escaping @Sendable (Int64) async throws -> Void = { milliseconds in
             try await Task.sleep(nanoseconds: UInt64(max(0, milliseconds)) * 1_000_000)
         }
     ) {
+        self.config = config
+        self.id = config?.id ?? "cuimh"
+        self.name = config?.name ?? "催漫画"
+        let baseCandidate = config?.baseUrl ?? "https://www.cuimh.com"
+        let trimmedBase = baseCandidate.replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression)
+        let resolvedBase = trimmedBase.isEmpty ? "https://www.cuimh.com" : trimmedBase
+        self.baseURL = resolvedBase
+        self.referer = config?.referer ?? (resolvedBase + "/")
         self.transport = transport
         self.nowMilliseconds = nowMilliseconds
         self.sleepMilliseconds = sleepMilliseconds
@@ -49,14 +59,18 @@ public actor CuimhComicSource: ComicSource {
     public func detail(comicId: String) async throws -> ComicDetail {
         let rawID = rawComicID(comicId)
         guard !rawID.isEmpty else { throw error("详情 ID 为空") }
-        let html = try await fetch("/" + rawID)
+        let detailRoute = config?.route("detail") ?? "/{comicId}"
+        let path = detailRoute.replacingOccurrences(of: "{comicId}", with: rawID)
+        let html = try await fetch(path)
         return try parseDetail(rawID: rawID, html: html, includeChapters: true)
     }
 
     public func chapters(comicId: String) async throws -> [Chapter] {
         let rawID = rawComicID(comicId)
         guard !rawID.isEmpty else { throw error("目录 ID 为空") }
-        let chapters = parseChapters(try await fetch("/" + rawID))
+        let detailRoute = config?.route("detail") ?? "/{comicId}"
+        let path = detailRoute.replacingOccurrences(of: "{comicId}", with: rawID)
+        let chapters = parseChapters(try await fetch(path))
         guard !chapters.isEmpty else { throw error("目录解析失败") }
         return chapters
     }
@@ -72,6 +86,15 @@ public actor CuimhComicSource: ComicSource {
         var title = clean(first(#"<title[^>]*>([\s\S]*?)</title>"#, html))
         if let range = title.range(of: "-下拉式") { title = String(title[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines) }
         return .init(chapterId: absoluteURL, title: title, nextPageUrl: "", imageUrls: images)
+    }
+
+    public func healthCheck() async -> Bool {
+        do {
+            let html = try await fetch("/category/")
+            return html.contains("cy_list_mh") && html.contains("cy_tag")
+        } catch {
+            return false
+        }
     }
 
     static func decryptPayload(_ payload: Data) async throws -> [String] {
