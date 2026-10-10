@@ -33,7 +33,7 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: XXComic/Info.plist
   XXComicTests:
-    type: bundle.unit-testing
+    type: bundle.unit-test
     platform: iOS
     sources:
       - XXComicTests
