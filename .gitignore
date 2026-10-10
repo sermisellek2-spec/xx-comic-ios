@@ -46,3 +46,5 @@ Thumbs.db
 .gradle-codex/
 release/
 .reference/
+build_artifacts/
+ios/build/
