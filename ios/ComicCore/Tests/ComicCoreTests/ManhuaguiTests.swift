@@ -215,6 +215,48 @@ final class ManhuaguiTests: XCTestCase {
         let result = try await page(body)
         XCTAssertEqual(result.imageUrls,["https://eu2.hamreus.com/legacy/one.jpg?e=&m="])
     }
+    func testSourceConfigDefaultsAndConfiguredSource() async throws {
+        let def = SourceConfigDefaults.manhuagui()
+        XCTAssertEqual(def.id, "manhuagui")
+        XCTAssertEqual(def.name, "漫画柜")
+        XCTAssertEqual(def.domain, "www.manhuagui.com")
+        XCTAssertEqual(def.baseUrl, "https://www.manhuagui.com")
+        XCTAssertEqual(def.referer, "https://www.manhuagui.com/")
+        XCTAssertEqual(def.route("latest"), "/list")
+        XCTAssertEqual(def.route("search"), "/s/{keyword}.html")
+        XCTAssertEqual(def.filter("region.jp"), "japan")
+        XCTAssertEqual(SourceConfigDefaults.defaultConfig(for: "manhuagui")?.id, "manhuagui")
+
+        let custom = SourceConfigItem(
+            id: "manhuagui",
+            name: "漫画柜镜像",
+            domain: "mirror.manhuagui.com",
+            baseUrl: "https://mirror.manhuagui.com",
+            referer: "https://mirror.manhuagui.com/",
+            latestPath: "/list",
+            searchPath: "/s/{keyword}.html",
+            categoryPath: "/list",
+            detailPath: "/comic/{comicId}",
+            enabled: true,
+            routes: ["latest": "/list"],
+            filters: [:]
+        )
+        let t = GuiTransport(cards)
+        let customSource = ManhuaguiComicSource(config: custom, transport: t)
+        XCTAssertEqual(customSource.referer, "https://mirror.manhuagui.com/")
+        _ = try await customSource.latest(page: 1)
+        let calls = await t.captured()
+        XCTAssertEqual(calls[0].0.absoluteString, "https://mirror.manhuagui.com/list")
+        XCTAssertEqual(calls[0].1["Referer"], "https://mirror.manhuagui.com/")
+    }
+    func testLiveChapter61808UnpackYields33Images() async throws {
+        let packed = #"(function(p,a,c,k,e,d){return p}('R.h({"D":c,"C":"B\uFF0CA","z":"c.a","y":x,"w":"g","v":["1.a.b","2.a.b","3.a.b","4.a.b","5.a.b","6.a.b","7.a.b","8.a.b","9.a.b","10.a.b","11.a.b","12.a.b","u.a.b","t.a.b","s.a.b","q.a.b","p.a.b","o.a.b","n.a.b","l.a.b","k.a.b","j.a.b","i.a.b","G.a.b","E.a.b","f.a.b","F.a.b","O.a.b","H.a.b","T.a.b","U.a.b","W.a.b","d.a.b"],"X":Y,"Z":d,"V":"/S/f/10/c/g/","Q":1,"P":"","N":0,"M":0,"L":{"e":K,"m":"J-I"}}).r();',62,65,'"# + "D41hWAODmwO4FMBGlgDYCMAOADF4AzASAExrCA03jhoLvRgXOaDf/sAJYC20AIgIYAuXwJYiRICMAnCAwBOYNlkB2WeUgAnBAEkAdsx6yArLIAss4gDNmAGwQBnYAGNNXVgmBSMhnJnvMAJsBTMdsCAYvKA+K6A3LaA6fqAEfqAvprAgNURgG6xgF+KgGFygG3agBep/o7O/r4CBiSKJMYkMlIcAJ5wABbyAOqwPtUAajgqAMpSAG7QAPIAWpDMClIkuER6YtYWwKoIvep+mggAHjwrAvhIFgD2dgDWAPp2QdZ8PACutl0AsgASC9bEBBIEYpC8dYQi5tprHUEH5TFwLNYXFZNKAgA==" + #"'['split']('|'),0,{}))"#
+        let images = try ManhuaguiReader.images(packed)
+        XCTAssertEqual(images.count, 33)
+        XCTAssertTrue(images[0].hasPrefix("https://eu2.hamreus.com/ps3/26/10/61808/"))
+        XCTAssertTrue(images[0].contains("/1.jpg.webp?e=1792803351&m=dyV0rS9vgOZpi-9Dywh7Wg"))
+        XCTAssertTrue(images[32].contains("/33.jpg.webp?e=1792803351&m=dyV0rS9vgOZpi-9Dywh7Wg"))
+    }
 }
 
 // Verbatim compressed dictionary and full 29-file packed payload from tools/check-manhuagui-parser.js.

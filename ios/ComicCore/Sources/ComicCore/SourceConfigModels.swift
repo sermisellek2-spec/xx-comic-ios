@@ -387,6 +387,40 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func manhuagui(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "manhuagui",
+            name: "漫画柜",
+            domain: "www.manhuagui.com",
+            baseUrl: "https://www.manhuagui.com",
+            referer: "https://www.manhuagui.com/",
+            latestPath: "/list",
+            searchPath: "/s/{keyword}.html",
+            categoryPath: "/list",
+            detailPath: "/comic/{comicId}",
+            enabled: enabled,
+            routes: [
+                "latest": "/list",
+                "search": "/s/{keyword}.html",
+                "category": "/list",
+                "detail": "/comic/{comicId}",
+                "chapter": "/comic/{comicId}/{chapterId}.html"
+            ],
+            filters: [
+                "region.all": "",
+                "region.jp": "japan",
+                "region.cn": "china",
+                "region.kr": "korea",
+                "region.hk": "hongkong",
+                "region.en": "europe",
+                "region.other": "other",
+                "state.all": "",
+                "state.serial": "lianzai",
+                "state.pub": "wanjie"
+            ]
+        )
+    }
+
     public static func defaultConfig(for id: String) -> SourceConfigItem? {
         switch id {
         case "baozimh": return baozi()
@@ -396,6 +430,7 @@ public enum SourceConfigDefaults {
         case "jmcomic": return jmcomic()
         case "mkzhan": return mkzhan()
         case "hanman18": return hanman18()
+        case "manhuagui": return manhuagui()
         case "manwa": return manwa()
         case "copy4000", "copymanga": return copy4000()
         case "manhuazhan", "five_um": return manhuazhan()

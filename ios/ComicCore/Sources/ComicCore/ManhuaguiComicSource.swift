@@ -4,12 +4,15 @@ public struct ManhuaguiComicSource: ComicSource {
     public let id = "manhuagui"
     public let name = "漫画柜"
     public let referer: String
+    public let config: SourceConfigItem?
     private let base: String
     private let transport: any HTTPTransport
     private let readerTransport: any HTTPTransport
-    public init(transport: (any HTTPTransport)? = nil, baseURL: String = "https://www.manhuagui.com") {
-        base = baseURL.replacingOccurrences(of:#"/+$"#,with:"",options:.regularExpression)
-        referer = base + "/"
+    public init(config: SourceConfigItem? = nil, transport: (any HTTPTransport)? = nil, baseURL: String? = nil) {
+        self.config = config
+        let baseCandidate = baseURL ?? config?.baseUrl ?? "https://www.manhuagui.com"
+        base = baseCandidate.replacingOccurrences(of:#"/+$"#,with:"",options:.regularExpression)
+        referer = config?.referer ?? (base + "/")
         self.transport = transport ?? URLSessionHTTPTransport(timeoutInterval:15)
         readerTransport = transport ?? URLSessionHTTPTransport(timeoutInterval:30)
     }
