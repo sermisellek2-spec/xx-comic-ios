@@ -78,7 +78,7 @@ public struct ManwaComicSource: ComicSource {
         return .init(summary: summary, author: author, status: clean(element("status",html)), description: clean(first(#"<p\b[^>]*class=["'][^"']*\bcomic-desc\b[^"']*["'][^>]*>([\s\S]*?)</p>"#,html)), latestChapter: clean(element("newch",html)), chapters: [])
     }
     public func chapters(comicId: String) async throws -> [Chapter] {
-        let raw = try rawID(comicId), detail = base + "/comic/" + raw
+        let raw = try rawID(comicId), detail = try detailURL(raw)
         let path = config.route("chapters").replacingOccurrences(of: "{comicId}", with: raw)
         let payload = try json(await request(path, referer: detail))
         let rows = try array(payload,"list")
@@ -102,7 +102,7 @@ public struct ManwaComicSource: ComicSource {
         let address = try absolute(url)
         guard let path = URL(string: address)?.path,
               let ids = matches(#"^/comic/(\d+)/(\d+)/?$"#,path).first else { throw error("章节链接格式错误") }
-        let comic = ids[1], chapter = ids[2], referer = base + "/comic/" + ids[1] + "/" + ids[2]
+        let comic = ids[1], chapter = ids[2], referer = try detailURL(comic) + "/" + chapter
         let infoRoute = config.route("chapterInfo").replacingOccurrences(of: "{chapterId}", with: chapter)
         let info = try json(await request(infoRoute, referer: referer))
         guard let current = info["current"] as? [String:Any], string(current["comicId"]) == comic, string(current["id"]) == chapter else { throw error("章节信息不匹配") }
@@ -195,6 +195,10 @@ public struct ManwaComicSource: ComicSource {
         guard let url = URL(string: text, relativeTo: URL(string: referer))?.absoluteURL,
               ["http","https"].contains(url.scheme?.lowercased() ?? ""), let host = url.host, !host.isEmpty else { throw error("链接协议或地址无效") }
         return url.absoluteString
+    }
+    private func detailURL(_ comicId: String) throws -> String {
+        let route = config.route("detail").isEmpty ? "/comic/{comicId}" : config.route("detail")
+        return try absolute(route.replacingOccurrences(of: "{comicId}", with: comicId))
     }
     private func rawID(_ text: String) throws -> String {
         let raw = text.hasPrefix(id + ":") ? String(text.dropFirst(id.count + 1)) : text

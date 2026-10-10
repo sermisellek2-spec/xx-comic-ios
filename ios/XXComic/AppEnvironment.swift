@@ -203,7 +203,14 @@ final class EnvironmentSourceResolver: DownloadSourceResolverProtocol, @unchecke
         if FileManager.default.fileExists(atPath: destination.path) {
             try? FileManager.default.removeItem(at: destination)
         }
-        try FileManager.default.moveItem(at: tempURL, to: destination)
+        if ManwaImageDecoder.usesImageHost(coverUrl) {
+            let rawData = try Data(contentsOf: tempURL)
+            try? FileManager.default.removeItem(at: tempURL)
+            let decoded = try ManwaImageDecoder.decode(rawData)
+            try decoded.write(to: destination, options: .atomic)
+        } else {
+            try FileManager.default.moveItem(at: tempURL, to: destination)
+        }
     }
 }
 
