@@ -161,12 +161,6 @@ final class SourceGroupSheet: UIViewController, UITableViewDataSource, UITableVi
         })
         present(alert, animated: true)
     }
-
-    private func showError(_ error: Error) {
-        let alert = UIAlertController(title: "操作失败", message: error.localizedDescription, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "确定", style: .default))
-        present(alert, animated: true)
-    }
 }
 
 // MARK: - SourceGroupCell
