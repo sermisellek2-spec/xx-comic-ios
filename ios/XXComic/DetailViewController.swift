@@ -108,7 +108,12 @@ final class DetailViewController: UIViewController {
         cover.cancel()
     }
     private func updateButtons() {
-        favorite.setTitle(environment.library.entry(for: comic)?.isFavorite == true ? "已收藏 · 点击移除" : "加入书架", for: .normal)
+        let isFav = environment.library.entry(for: comic)?.isFavorite == true
+        favorite.setTitle(isFav ? "已收藏 · 点击移除" : "加入书架", for: .normal)
+        if let favImg = UIImage(named: isFav ? "rem_in_bookshelf" : "rem_not_in_bookshelf") {
+            favorite.setImage(favImg, for: .normal)
+            favorite.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 8)
+        }
         read.setTitle(environment.library.entry(for: comic)?.reading.map { "继续阅读\n上次看到 · \($0.chapter.title)" } ?? "开始阅读", for: .normal)
     }
     @objc private func loadDetail() {

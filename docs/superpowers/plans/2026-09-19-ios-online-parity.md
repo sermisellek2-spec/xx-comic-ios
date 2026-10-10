@@ -1,5 +1,7 @@
 # iOS 在线阅读与数据闭环实施计划
 
+> 2026-10-10：旧Tasks和RED/GREEN记录属于历史版本。不要按“从Task45继续”判断当前状态或依旧顺序提前接站源。当前执行根AGENTS.md、[2.0.40方案](../../IOS_2_0_40_GEMINI_PLAN.md)和新需求矩阵，复用已实现部分并自行核对；用户只负责最后总验收。
+
 **Goal:** 从已测试的基础规则推进到真实站源、书架、详情、目录、阅读及本地保存的完整闭环，然后继续扩展全部安卓版功能。
 **Spec:** docs/superpowers/specs/2026-09-19-ios-parity-baseline.md
 **本地批量/分卷后续设计:** docs/superpowers/specs/2026-09-20-ios-local-library-lifecycle.md（Tasks40–43之后的持久化、导入协调和阅读路由边界；尚未实现）

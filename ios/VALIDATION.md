@@ -1,5 +1,7 @@
 # iOS 移植验证记录
 
+> 2026-10-10：以下结果是各历史版本的实际记录，不能证明当前交付版本验收。新增2.0.40任务以[执行方案](../docs/IOS_2_0_40_GEMINI_PLAN.md)与[阶段报告模板](../docs/ios-parity-2.0.40/STAGE_REPORT_TEMPLATE.md)收集当前版本证据；保留这些失败与修复记录，尤其重跑外链UIAlertController回归和iPad检查。
+
 日期：2026-09-20。工作区 `.worktrees/ios-port`，分支 `codex/ios-port`。
 
 ## 实际执行

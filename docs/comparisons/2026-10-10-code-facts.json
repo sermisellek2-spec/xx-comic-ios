@@ -1,0 +1,116 @@
+{
+  "date": "2026-10-10",
+  "android": {
+    "version": "2.0.40",
+    "commit": "0a90d299525b5ba42b6df2cb55561a2a1041e75c",
+    "dedicatedCount": 22,
+    "publicProfileCount": 29,
+    "totalCatalogCount": 51,
+    "disabledPublicProfiles": [
+      "duya"
+    ]
+  },
+  "ios": {
+    "commit": "409601a1ecb5f00355dc136775fae2e284b90110",
+    "appVersion": "0.1.0",
+    "baselineVersion": "2.0.29",
+    "declared": [
+      "baozimh",
+      "mh160",
+      "gmh",
+      "mh18",
+      "mkzhan",
+      "hiperdex",
+      "manhuagui",
+      "d5d6",
+      "manben",
+      "five_um",
+      "bbyin",
+      "antbyw",
+      "cuimh",
+      "liumanhua",
+      "copymanga",
+      "manwa"
+    ],
+    "registered": [
+      "baozimh",
+      "mh160",
+      "gmh",
+      "mh18",
+      "mkzhan",
+      "hiperdex",
+      "manhuagui",
+      "d5d6",
+      "manben",
+      "manhuazhan",
+      "bbyin",
+      "antbyw",
+      "cuimh",
+      "liumanhua",
+      "copy4000",
+      "manwa"
+    ],
+    "wired": [
+      "baozimh",
+      "mh160",
+      "gmh",
+      "mh18",
+      "mkzhan",
+      "hiperdex",
+      "manhuagui",
+      "d5d6",
+      "manben",
+      "bbyin",
+      "antbyw",
+      "cuimh",
+      "liumanhua",
+      "manwa"
+    ],
+    "unresolvedPreferenceIDs": [
+      "five_um",
+      "copymanga"
+    ],
+    "unreachableRegisteredIDs": [
+      "manhuazhan",
+      "copy4000"
+    ]
+  },
+  "assets": [
+    {
+      "name": "rem_empty.png",
+      "identical": true
+    },
+    {
+      "name": "rem_error.png",
+      "identical": true
+    },
+    {
+      "name": "rem_in_bookshelf.png",
+      "identical": true
+    },
+    {
+      "name": "rem_loading.png",
+      "identical": true
+    },
+    {
+      "name": "rem_not_in_bookshelf.png",
+      "identical": true
+    },
+    {
+      "name": "rem_no_image.png",
+      "identical": true
+    },
+    {
+      "name": "rem_reader_boundary.png",
+      "identical": true
+    },
+    {
+      "name": "rem_reader_resume.png",
+      "identical": true
+    }
+  ],
+  "limitations": [
+    "registry counts are static, not live-site availability",
+    "UIKit and iPad behavior not executed in this audit"
+  ]
+}

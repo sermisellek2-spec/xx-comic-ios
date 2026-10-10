@@ -34,6 +34,16 @@ public enum SourceOrder {
         var seen = Set<String>()
         return (saved + available).filter { valid.contains($0) && seen.insert($0).inserted }
     }
+
+    public static func exactFirst<T>(_ items: [T], isExact: (T) -> Bool) -> [T] {
+        var first: [T] = []
+        var rest: [T] = []
+        for item in items {
+            if isExact(item) { first.append(item) }
+            else { rest.append(item) }
+        }
+        return first + rest
+    }
 }
 
 /// Value state owned by the UI actor; networking carries the returned generation.
@@ -80,5 +90,11 @@ public struct GlobalSearchState: Sendable {
             selectedFirstResult = true
         }
         return true
+    }
+
+    /// Sources with non-empty results, exact-match sources partitioned to front (DISC-03).
+    public var visibleSourceIDs: [String] {
+        let nonEmpty = sourceIDs.filter { !(results[$0]?.isEmpty ?? true) }
+        return SourceOrder.exactFirst(nonEmpty) { exactSourceIDs.contains($0) }
     }
 }

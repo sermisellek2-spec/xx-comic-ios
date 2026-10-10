@@ -82,6 +82,30 @@ final class SearchRulesTests: XCTestCase {
         XCTAssertEqual(state.selectedSourceID, "b")
     }
 
+    func testSourceOrderExactFirst() {
+        let items = ["b", "c", "a", "d"]
+        let partitioned = SourceOrder.exactFirst(items) { $0 == "a" || $0 == "c" }
+        XCTAssertEqual(partitioned, ["c", "a", "b", "d"])
+    }
+
+    func testVisibleSourceIDsHidesEmptySourcesAndOrdersExactMatchesFirst() {
+        var state = GlobalSearchState()
+        let generation = state.begin(query: "陷阱", sourceIDs: ["sourceA", "sourceB", "sourceC", "sourceD"])
+        XCTAssertEqual(state.visibleSourceIDs, [])
+
+        // sourceB has non-exact results
+        _ = state.receive(sourceID: "sourceB", items: [comic("b1", "甜蜜陷阱")], generation: generation)
+        XCTAssertEqual(state.visibleSourceIDs, ["sourceB"])
+
+        // sourceC has empty results (must remain hidden)
+        _ = state.receive(sourceID: "sourceC", items: [], generation: generation)
+        XCTAssertEqual(state.visibleSourceIDs, ["sourceB"])
+
+        // sourceD has exact match (must jump ahead of sourceB)
+        _ = state.receive(sourceID: "sourceD", items: [comic("d1", " 陷阱 ")], generation: generation)
+        XCTAssertEqual(state.visibleSourceIDs, ["sourceD", "sourceB"])
+    }
+
     private func comic(_ id: String, _ title: String) -> ComicSummary {
         ComicSummary(sourceId: "test", comicId: id, title: title)
     }

@@ -27,7 +27,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        sourceIDs = environment.sources.map(\.id)
+        sourceIDs = environment.discoverySources.map(\.id)
         NotificationCenter.default.addObserver(self, selector: #selector(sourcesChanged), name: AppEnvironment.sourcesChanged, object: environment)
         title = "发现"
         searchBar.placeholder = "搜索漫画"
@@ -72,7 +72,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         if presentedViewController != nil { return }
-        needsReload = loading || (isGlobal && !submittedQuery.isEmpty && finished.count < environment.searchSources.count)
+        needsReload = loading || (isGlobal && !submittedQuery.isEmpty && finished.count < environment.discoverySearchSources.count)
         requestID = UUID(); tasks.forEach { $0.cancel() }; tasks = []
         loading = false
     }
@@ -84,18 +84,19 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         }
     }
     private func updateSourceMenu() {
-        filterButton.isEnabled = !environment.sources.isEmpty
-        sourceButton.isEnabled = !environment.sources.isEmpty
-        guard !environment.sources.isEmpty else {
+        filterButton.isEnabled = !environment.discoverySources.isEmpty
+        sourceButton.isEnabled = !environment.discoverySources.isEmpty
+        guard !environment.discoverySources.isEmpty else {
             sourceButton.setTitle("没有已启用的站源", for: .normal)
             return
         }
-        sourceButton.setTitle(environment.sources[sourceIndex].name + " ▾", for: .normal)
+        let name = environment.discoverySources.indices.contains(sourceIndex) ? environment.discoverySources[sourceIndex].name : (environment.discoverySources.first?.name ?? "")
+        sourceButton.setTitle(name + " ▾", for: .normal)
     }
     @objc private func sourcesChanged() {
         let selectedGlobalSourceID = global.selectedSourceID
         let previous = sourceIDs.indices.contains(sourceIndex) ? sourceIDs[sourceIndex] : nil
-        sourceIDs = environment.sources.map(\.id)
+        sourceIDs = environment.discoverySources.map(\.id)
         if let previous, let index = sourceIDs.firstIndex(of: previous) { sourceIndex = index }
         else { sourceIndex = 0; filters = [:] }
         requestID = UUID(); tasks.forEach { $0.cancel() }; tasks = []
@@ -119,7 +120,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         sourceButton.isHidden = isGlobal; filterButton.isHidden = isGlobal
         tabs.isHidden = !isGlobal || submittedQuery.isEmpty
         collection.refreshControl?.endRefreshing()
-        guard !environment.sources.isEmpty else {
+        guard !environment.discoverySources.isEmpty else {
             global = GlobalSearchState()
             errors = [:]; finished = []
             tabRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
@@ -128,7 +129,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
             return
         }
         if isGlobal {
-            guard !environment.searchSources.isEmpty else {
+            guard !environment.discoverySearchSources.isEmpty else {
                 global = GlobalSearchState()
                 errors = [:]; finished = []
                 tabRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
@@ -172,8 +173,8 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     }
 
     private func loadSingle() {
-        guard !loading, !ended, environment.sources.indices.contains(sourceIndex) else { return }
-        let source = environment.sources[sourceIndex]
+        guard !loading, !ended, environment.discoverySources.indices.contains(sourceIndex) else { return }
+        let source = environment.discoverySources[sourceIndex]
         guard submittedQuery.isEmpty || source.supportsSearch else {
             ended = true
             status(source.name + "暂不支持搜索")
@@ -213,10 +214,11 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
 
     private func loadGlobal(restoringSelectedSourceID: String? = nil) {
         let token = requestID
-        let generation = global.begin(query: submittedQuery, sourceIDs: environment.searchSources.map(\.id), restoringSelectedSourceID: restoringSelectedSourceID)
+        let searchSources = environment.discoverySearchSources
+        let generation = global.begin(query: submittedQuery, sourceIDs: searchSources.map(\.id), restoringSelectedSourceID: restoringSelectedSourceID)
         errors = [:]; finished = []
         refreshGlobal()
-        for source in environment.searchSources {
+        for source in searchSources {
             let query = submittedQuery
             tasks.append(Task { [weak self] in
                 do {
@@ -235,24 +237,33 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     }
     private func refreshGlobal() {
         tabRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        for (index, source) in environment.searchSources.enumerated() {
+        let visibleIDs = global.visibleSourceIDs
+        tabs.isHidden = visibleIDs.isEmpty || submittedQuery.isEmpty || !isGlobal
+        for id in visibleIDs {
+            guard let source = environment.discoverySearchSources.first(where: { $0.id == id }) else { continue }
+            let count = global.results[id]?.count ?? 0
             let button = UIButton(type: .system)
             button.accessibilityIdentifier = "discover.global." + source.id
             var configuration = UIButton.Configuration.tinted()
-            configuration.title = source.name
-            configuration.baseBackgroundColor = source.id == global.selectedSourceID ? .systemBlue : .clear
+            configuration.title = source.name + (count > 0 ? " \(count)" : "")
+            let isSelected = (source.id == global.selectedSourceID)
+            configuration.baseBackgroundColor = isSelected ? Palette.accent : .clear
+            configuration.baseForegroundColor = isSelected ? .white : Palette.text
             if global.exactSourceIDs.contains(source.id) {
                 configuration.image = UIImage(systemName: "circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 6))?.withTintColor(.systemRed, renderingMode: .alwaysOriginal)
                 configuration.imagePlacement = .trailing; configuration.imagePadding = 4
                 button.accessibilityValue = "有同名结果"
             }
-            button.configuration = configuration; button.tag = index
-            button.addTarget(self, action: #selector(selectGlobalSource(_:)), for: .touchUpInside)
+            button.configuration = configuration
+            button.addAction(UIAction { [weak self] _ in
+                self?.global.select(source.id)
+                self?.refreshGlobal()
+            }, for: .touchUpInside)
             tabRow.addArrangedSubview(button)
         }
         comics = global.results[global.selectedSourceID ?? ""] ?? []
         collection.reloadData()
-        let progress = "\(finished.count)/\(environment.searchSources.count) 个站源完成"
+        let progress = "\(finished.count)/\(environment.discoverySearchSources.count) 个站源完成"
         if let error = errors[global.selectedSourceID ?? ""] {
             if (error as? Mh18SourceError) == .verificationRequired {
                 status(progress + " · 需要验证 · 去验证") { [weak self] in
@@ -272,17 +283,19 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         }
         else { status(progress + (comics.isEmpty && finished.contains(global.selectedSourceID ?? "") ? " · 没有找到漫画" : "")) }
     }
-    @objc private func selectGlobalSource(_ sender: UIButton) {
-        guard environment.searchSources.indices.contains(sender.tag) else { return }
-        global.select(environment.searchSources[sender.tag].id); refreshGlobal()
-    }
-    @objc private func showSources() { showFilterDrawer(sourceList: true) }
-    @objc private func showFilters() { showFilterDrawer(sourceList: false) }
-    private func showFilterDrawer(sourceList: Bool) {
-        guard environment.sources.indices.contains(sourceIndex) else { return }
-        let source = environment.sources[sourceIndex]
-        let controller = FilterViewController(environment: environment, sources: environment.sources, source: source, selected: filters, sourceList: sourceList) { [weak self] sourceID, selected in
-            guard let self, let index = self.environment.sources.firstIndex(where: { $0.id == sourceID }) else { return }
+    @objc private func showSources() { showFilterDrawer(initialSection: 0) }
+    @objc private func showFilters() { showFilterDrawer(initialSection: 1) }
+    private func showFilterDrawer(initialSection: Int) {
+        guard environment.discoverySources.indices.contains(sourceIndex) else { return }
+        let source = environment.discoverySources[sourceIndex]
+        let controller = FilterViewController(
+            environment: environment,
+            sources: environment.discoverySources,
+            source: source,
+            selected: filters,
+            initialSection: initialSection
+        ) { [weak self] sourceID, selected in
+            guard let self, let index = self.environment.discoverySources.firstIndex(where: { $0.id == sourceID }) else { return }
             self.sourceIndex = index; self.filters = selected
             self.updateSourceMenu(); self.start()
         }
@@ -298,64 +311,133 @@ private final class FilterViewController: UIViewController {
     var source: any ComicSource
     var selected: [String: String]
     let onSelect: (String, [String: String]) -> Void
-    var groups: [SourceFilterGroup] = []
-    var task: Task<Void, Never>?
+
+    // Draft state for cancellation & confirmation
+    private var draftSource: any ComicSource
+    private var draftSelected: [String: String]
+    private var draftGroups: [SourceFilterGroup] = []
+    private var activeSection: Int // 0: 站源, 1: 分类
+    private var activeGroupIndex: Int = 0
+    private var task: Task<Void, Never>?
+
+    private let sectionSegment = UISegmentedControl(items: ["站源", "分类"])
     private let tabs = UIStackView()
     private let tabScroll = UIScrollView()
     private var tabHeight: NSLayoutConstraint?
     private let options = UIStackView()
     private let state = UIButton(type: .system)
-    private var activeGroup: Int
-    init(environment: AppEnvironment, sources: [any ComicSource], source: any ComicSource, selected: [String: String], sourceList: Bool, onSelect: @escaping (String, [String: String]) -> Void) {
+    private let confirmButton = UIButton(type: .system)
+
+    init(environment: AppEnvironment, sources: [any ComicSource], source: any ComicSource, selected: [String: String], initialSection: Int, onSelect: @escaping (String, [String: String]) -> Void) {
         self.environment = environment
-        self.sources = sources; self.source = source; self.selected = selected; self.onSelect = onSelect
-        activeGroup = sourceList ? -1 : 0
+        self.sources = sources
+        self.source = source
+        self.selected = selected
+        self.draftSource = source
+        self.draftSelected = selected
+        self.activeSection = initialSection
+        self.onSelect = onSelect
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
     deinit { task?.cancel() }
+
     override func viewDidLoad() {
-        super.viewDidLoad(); title = "筛选"
+        super.viewDidLoad()
+        title = "站源与分类"
         view.backgroundColor = Palette.card
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(close))
         navigationItem.rightBarButtonItem?.accessibilityIdentifier = "filter.close"
-        let scroll = UIScrollView(), confirm = UIButton(type: .system)
+
+        sectionSegment.selectedSegmentIndex = activeSection
+        sectionSegment.addTarget(self, action: #selector(sectionChanged), for: .valueChanged)
+
+        let scroll = UIScrollView()
         tabs.axis = .horizontal; tabs.spacing = 8
         options.axis = .vertical; options.spacing = 8
         state.titleLabel?.numberOfLines = 0
         state.addTarget(self, action: #selector(stateTapped), for: .touchUpInside)
-        confirm.configuration = .filled(); confirm.setTitle("确认搜索", for: .normal)
-        confirm.accessibilityIdentifier = "filter.confirm"
-        confirm.addTarget(self, action: #selector(done), for: .touchUpInside)
-        for item in [tabScroll, scroll, state, confirm] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
+
+        confirmButton.configuration = .filled()
+        confirmButton.setTitle("应用", for: .normal)
+        confirmButton.accessibilityIdentifier = "filter.confirm"
+        confirmButton.addTarget(self, action: #selector(done), for: .touchUpInside)
+
+        for item in [sectionSegment, tabScroll, scroll, state, confirmButton] {
+            item.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(item)
+        }
         tabs.translatesAutoresizingMaskIntoConstraints = false; tabScroll.addSubview(tabs)
         options.translatesAutoresizingMaskIntoConstraints = false; scroll.addSubview(options)
         tabHeight = tabScroll.heightAnchor.constraint(equalToConstant: 42)
         tabHeight?.isActive = true
+
         NSLayoutConstraint.activate([
-            tabScroll.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            tabScroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12), tabScroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            tabs.leadingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.leadingAnchor), tabs.trailingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.trailingAnchor),
-            tabs.topAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.topAnchor), tabs.bottomAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.bottomAnchor),
+            sectionSegment.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            sectionSegment.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            sectionSegment.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            sectionSegment.heightAnchor.constraint(equalToConstant: 36),
+
+            tabScroll.topAnchor.constraint(equalTo: sectionSegment.bottomAnchor, constant: 8),
+            tabScroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+            tabScroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            tabs.leadingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.leadingAnchor),
+            tabs.trailingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.trailingAnchor),
+            tabs.topAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.topAnchor),
+            tabs.bottomAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.bottomAnchor),
             tabs.heightAnchor.constraint(equalTo: tabScroll.frameLayoutGuide.heightAnchor),
-            state.topAnchor.constraint(equalTo: tabScroll.bottomAnchor), state.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12), state.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            scroll.topAnchor.constraint(equalTo: state.bottomAnchor, constant: 8), scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12), scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            scroll.bottomAnchor.constraint(equalTo: confirm.topAnchor, constant: -12),
-            options.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor), options.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
-            options.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor), options.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+
+            state.topAnchor.constraint(equalTo: tabScroll.bottomAnchor, constant: 4),
+            state.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+            state.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+
+            scroll.topAnchor.constraint(equalTo: state.bottomAnchor, constant: 6),
+            scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+            scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            scroll.bottomAnchor.constraint(equalTo: confirmButton.topAnchor, constant: -12),
+
+            options.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
+            options.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            options.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
+            options.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
             options.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
-            confirm.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12), confirm.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            confirm.heightAnchor.constraint(equalToConstant: 46), confirm.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
+
+            confirmButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            confirmButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            confirmButton.heightAnchor.constraint(equalToConstant: 44),
+            confirmButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
         ])
-        if activeGroup < 0 { render() } else { loadGroups() }
+
+        if activeSection == 0 {
+            render()
+        } else {
+            loadGroups()
+        }
     }
+
+    @objc private func sectionChanged() {
+        activeSection = sectionSegment.selectedSegmentIndex
+        if activeSection == 0 {
+            render()
+        } else {
+            if draftGroups.isEmpty {
+                loadGroups()
+            } else {
+                render()
+            }
+        }
+    }
+
     @objc private func loadGroups() {
         needsVerification = false
-        task?.cancel(); groups = []; render(); state.setTitle("正在加载分类…", for: .normal)
-        task = Task { [weak self, source] in
+        task?.cancel(); draftGroups = []; render(); state.setTitle("正在加载分类…", for: .normal)
+        let candidate = draftSource
+        task = Task { [weak self, candidate] in
             do {
-                let groups = try await source.filterGroups(); try Task.checkCancellation()
-                self?.groups = groups; self?.activeGroup = 0
+                let groups = try await candidate.filterGroups()
+                try Task.checkCancellation()
+                self?.draftGroups = groups
+                self?.activeGroupIndex = 0
                 self?.state.setTitle(groups.isEmpty ? "该站源暂无分类" : nil, for: .normal)
                 self?.render()
             }
@@ -366,64 +448,129 @@ private final class FilterViewController: UIViewController {
             }
         }
     }
+
     @objc private func stateTapped() {
         if needsVerification {
             showSourceManagement(environment: environment) { [weak self] in self?.loadGroups() }
         } else { loadGroups() }
     }
-    override func viewDidDisappear(_ animated: Bool) { super.viewDidDisappear(animated); task?.cancel() }
-    @objc private func close() { task?.cancel(); dismiss(animated: true) }
-    @objc private func done() { task?.cancel(); onSelect(source.id, selected); dismiss(animated: true) }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        task?.cancel()
+    }
+
+    @objc private func close() {
+        task?.cancel()
+        dismiss(animated: true)
+    }
+
+    @objc private func done() {
+        task?.cancel()
+        onSelect(draftSource.id, draftSelected)
+        dismiss(animated: true)
+    }
+
     private func render() {
-        tabScroll.isHidden = activeGroup < 0
-        tabHeight?.constant = activeGroup < 0 ? 0 : 42
+        let isSourceSection = (activeSection == 0)
+        tabScroll.isHidden = isSourceSection
+        tabHeight?.constant = isSourceSection ? 0 : 42
         tabs.arrangedSubviews.forEach { $0.removeFromSuperview() }
         options.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        if activeGroup < 0 {
-            state.setTitle("已启用站源", for: .normal)
+
+        if isSourceSection {
+            let groupName = environment.sourceGroupStore.currentGroup.name
+            state.setTitle("分组 · " + groupName + " · 已启用站源", for: .normal)
             state.isEnabled = false
-            for candidate in sources {
-                let button = UIButton(type: .system)
-                button.accessibilityIdentifier = "filter.source." + candidate.id
-                button.contentHorizontalAlignment = .leading
-                button.setTitle(candidate.name + (candidate.id == source.id ? "  ✓" : ""), for: .normal)
-                button.tintColor = candidate.id == source.id ? Palette.accent : Palette.text
-                button.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
-                button.addAction(UIAction { [weak self] _ in
-                    guard let self else { return }
-                    self.task?.cancel(); self.source = candidate; self.selected = [:]; self.groups = []
-                    if ["mh18", "jmcomic"].contains(candidate.id) { self.render() }
-                    else { self.activeGroup = 0; self.loadGroups() }
-                }, for: .touchUpInside)
-                options.addArrangedSubview(button)
+
+            if sources.isEmpty {
+                let emptyLabel = UILabel()
+                emptyLabel.text = "分组内没有可用站源"
+                emptyLabel.textColor = Palette.secondaryText
+                emptyLabel.textAlignment = .center
+                emptyLabel.font = .systemFont(ofSize: 14)
+                options.addArrangedSubview(emptyLabel)
+                return
+            }
+
+            for start in stride(from: 0, to: sources.count, by: 3) {
+                let row = UIStackView()
+                row.axis = .horizontal; row.spacing = 8; row.distribution = .fillEqually
+                for index in start..<(start + 3) {
+                    guard sources.indices.contains(index) else {
+                        row.addArrangedSubview(UIView())
+                        continue
+                    }
+                    let candidate = sources[index]
+                    let isSelected = (candidate.id == draftSource.id)
+                    let button = UIButton(type: .system)
+                    button.accessibilityIdentifier = "filter.source." + candidate.id
+                    var config = UIButton.Configuration.tinted()
+                    config.title = candidate.name
+                    config.baseBackgroundColor = isSelected ? Palette.accent : .clear
+                    config.baseForegroundColor = isSelected ? .white : Palette.text
+                    config.titleLineBreakMode = .byTruncatingTail
+                    button.configuration = config
+                    button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+                    button.addAction(UIAction { [weak self] _ in
+                        guard let self else { return }
+                        self.task?.cancel()
+                        self.draftSource = candidate
+                        self.draftSelected = [:]
+                        self.draftGroups = []
+                        self.activeSection = 1
+                        self.sectionSegment.selectedSegmentIndex = 1
+                        self.loadGroups()
+                    }, for: .touchUpInside)
+                    row.addArrangedSubview(button)
+                }
+                options.addArrangedSubview(row)
             }
             return
         }
+
+        // Category section
         state.isEnabled = true
-        for (index, group) in groups.enumerated() {
+        for (index, group) in draftGroups.enumerated() {
             let button = UIButton(type: .system)
             button.setTitle(group.label, for: .normal)
-            button.titleLabel?.font = .systemFont(ofSize: 14, weight: index == activeGroup ? .bold : .regular)
-            button.addAction(UIAction { [weak self] _ in self?.activeGroup = index; self?.render() }, for: .touchUpInside)
+            button.titleLabel?.font = .systemFont(ofSize: 14, weight: index == activeGroupIndex ? .bold : .regular)
+            button.tintColor = index == activeGroupIndex ? Palette.accent : Palette.text
+            button.addAction(UIAction { [weak self] _ in
+                self?.activeGroupIndex = index
+                self?.render()
+            }, for: .touchUpInside)
             tabs.addArrangedSubview(button)
         }
-        guard groups.indices.contains(activeGroup) else { return }
-        let group = groups[activeGroup]
+
+        guard draftGroups.indices.contains(activeGroupIndex) else { return }
+        let group = draftGroups[activeGroupIndex]
         for start in stride(from: 0, to: group.options.count, by: 3) {
             let row = UIStackView(); row.axis = .horizontal; row.spacing = 8; row.distribution = .fillEqually
             for index in start..<(start + 3) {
-                guard group.options.indices.contains(index) else { row.addArrangedSubview(UIView()); continue }
-                let option = group.options[index], button = UIButton(type: .system)
+                guard group.options.indices.contains(index) else {
+                    row.addArrangedSubview(UIView())
+                    continue
+                }
+                let option = group.options[index]
+                let button = UIButton(type: .system)
                 var config = UIButton.Configuration.tinted()
                 config.title = option.label
-                config.baseBackgroundColor = (selected[group.key] ?? "all") == option.value ? Palette.accent : .clear
+                let isCurrentOptionSelected = (draftSelected[group.key] ?? "all") == option.value
+                config.baseBackgroundColor = isCurrentOptionSelected ? Palette.accent : .clear
+                config.baseForegroundColor = isCurrentOptionSelected ? .white : Palette.text
                 config.titleLineBreakMode = .byTruncatingTail
                 button.configuration = config
                 button.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
                 button.addAction(UIAction { [weak self] _ in
                     guard let self else { return }
-                    SourceFilterSelection.select(sourceID: self.source.id, key: group.key, value: option.value,
-                                                 groupKeys: self.groups.map(\.key), in: &self.selected)
+                    SourceFilterSelection.select(
+                        sourceID: self.draftSource.id,
+                        key: group.key,
+                        value: option.value,
+                        groupKeys: self.draftGroups.map(\.key),
+                        in: &self.draftSelected
+                    )
                     self.render()
                 }, for: .touchUpInside)
                 row.addArrangedSubview(button)

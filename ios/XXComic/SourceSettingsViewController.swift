@@ -19,7 +19,7 @@ final class SourceSettingsViewController: UITableViewController {
         title = "站源管理"
         tableView.backgroundColor = Palette.background
         tableView.setEditing(true, animated: false)
-        tableView.allowsSelectionDuringEditing = false
+        tableView.allowsSelectionDuringEditing = true
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), style: .plain, target: self, action: #selector(showMoreMenu))
         environment.mh18BrowserSession.statusChanged = { [weak self] in self?.tableView.reloadData() }
     }
@@ -31,11 +31,33 @@ final class SourceSettingsViewController: UITableViewController {
             environment.mh18BrowserSession.statusChanged = nil
         }
     }
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { ids.count }
+    override func numberOfSections(in tableView: UITableView) -> Int { 2 }
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        section == 0 ? 1 : ids.count
+    }
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        section == 0 ? "分组" : "全部站源"
+    }
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        "拖动右侧手柄调整顺序。关闭站源不会删除收藏和阅读记录。" + (ids.contains("mh18") ? "18漫画的“重置”会结束浏览器会话及进行中的请求，保留站点 Cookie。" : "")
+        guard section == 1 else { return nil }
+        return "拖动右侧手柄调整顺序。关闭站源不会删除收藏和阅读记录。" + (ids.contains("mh18") ? "18漫画的“重置”会结束浏览器会话及进行中的请求，保留站点 Cookie。" : "")
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if indexPath.section == 0 {
+            let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+            cell.backgroundColor = Palette.card
+            cell.textLabel?.text = "站源分组"
+            cell.textLabel?.textColor = Palette.text
+            cell.textLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+            let group = environment.sourceGroupStore.currentGroup
+            let customCount = max(0, environment.sourceGroupStore.groups.count - 1)
+            cell.detailTextLabel?.text = "当前：" + group.name + " · \(customCount) 个自定义分组"
+            cell.detailTextLabel?.textColor = Palette.secondaryText
+            cell.accessoryType = .disclosureIndicator
+            cell.showsReorderControl = false
+            return cell
+        }
+
         let id = ids[indexPath.row]
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
         let source = environment.allSources.first { $0.id == id }
@@ -82,15 +104,39 @@ final class SourceSettingsViewController: UITableViewController {
         cell.showsReorderControl = true
         return cell
     }
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        if indexPath.section == 0 {
+            showSourceGroups()
+        }
+    }
     override func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle { .none }
     override func tableView(_ tableView: UITableView, shouldIndentWhileEditingRowAt indexPath: IndexPath) -> Bool { false }
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool { true }
+    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        indexPath.section == 1
+    }
+    override func tableView(_ tableView: UITableView, targetIndexPathForMoveFromRowAt sourceIndexPath: IndexPath, toProposedIndexPath proposedDestinationIndexPath: IndexPath) -> IndexPath {
+        if proposedDestinationIndexPath.section == 0 {
+            return IndexPath(row: 0, section: 1)
+        }
+        return proposedDestinationIndexPath
+    }
     override func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        guard sourceIndexPath.section == 1, destinationIndexPath.section == 1 else { return }
         var reordered = ids
         let id = reordered.remove(at: sourceIndexPath.row)
         reordered.insert(id, at: destinationIndexPath.row)
         environment.sourcePreferences.setOrder(reordered)
         notifyChanged()
+    }
+    private func showSourceGroups() {
+        let sheet = SourceGroupSheet(environment: environment)
+        sheet.onGroupsChanged = { [weak self] in
+            self?.tableView.reloadData()
+            self?.notifyChanged()
+        }
+        let nav = UINavigationController(rootViewController: sheet)
+        present(nav, animated: true)
     }
     @objc private func resetOrder() {
         environment.sourcePreferences.resetOrder()
@@ -99,6 +145,9 @@ final class SourceSettingsViewController: UITableViewController {
     }
     @objc private func showMoreMenu() {
         let alert = UIAlertController(title: "站源管理", message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "站源分组管理", style: .default) { [weak self] _ in
+            self?.showSourceGroups()
+        })
         alert.addAction(UIAlertAction(title: "测试站源可用性", style: .default) { [weak self] _ in
             self?.runHealthCheck()
         })

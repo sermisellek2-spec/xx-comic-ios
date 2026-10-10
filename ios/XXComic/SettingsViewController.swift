@@ -100,7 +100,7 @@ final class SettingsViewController: UITableViewController {
         switch section {
         case 0: return 4 // 主题模式、启动书架、阅读历史、阅读设置
         case 1: return 5 // 站源管理、下载中心、本地存储管理、缓存清理、错误日志
-        case 2: return 2 // 版本更新、关于 App
+        case 2: return 3 // 版本更新、关于 App、匿名统计
         default: return 0
         }
     }
@@ -222,7 +222,7 @@ final class SettingsViewController: UITableViewController {
                 badge.font = .systemFont(ofSize: 13)
                 badge.sizeToFit()
                 cell.accessoryView = badge
-            } else {
+            } else if indexPath.row == 1 {
                 // 关于 App
                 cell.textLabel?.text = "关于 App"
                 cell.detailTextLabel?.text = "多站源漫画浏览与本地阅读工具"
@@ -233,6 +233,24 @@ final class SettingsViewController: UITableViewController {
                 badge.font = .systemFont(ofSize: 13)
                 badge.sizeToFit()
                 cell.accessoryView = badge
+            } else {
+                // 匿名使用统计
+                let statsCell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+                statsCell.backgroundColor = Palette.card
+                statsCell.textLabel?.text = "发送匿名使用统计"
+                statsCell.textLabel?.textColor = Palette.text
+                statsCell.textLabel?.font = .systemFont(ofSize: 15)
+                statsCell.detailTextLabel?.text = "仅包含安装代次与基础版本，不收集阅读内容"
+                statsCell.detailTextLabel?.textColor = Palette.secondaryText
+                statsCell.detailTextLabel?.font = .systemFont(ofSize: 12)
+                let statsToggle = UISwitch()
+                statsToggle.isOn = UsageStatsClient.shared.isEnabled
+                statsToggle.addAction(UIAction { [weak statsToggle] _ in
+                    UsageStatsClient.shared.setEnabled(statsToggle?.isOn ?? true)
+                }, for: .valueChanged)
+                statsCell.accessoryView = statsToggle
+                statsCell.selectionStyle = .none
+                return statsCell
             }
 
         default:

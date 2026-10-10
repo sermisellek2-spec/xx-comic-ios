@@ -11,6 +11,7 @@ final class AppEnvironment {
     let library: LibraryStore
     let localLibrary: LocalLibrary
     let bookshelfGroupStore: BookshelfGroupStore
+    let sourceGroupStore: SourceGroupStore
     let favoriteUpdateCoordinator: FavoriteUpdateCoordinator
     private let localSource: LocalComicSource
     private(set) var allSources: [any ComicSource]
@@ -21,6 +22,8 @@ final class AppEnvironment {
     private let environmentSourceResolver: EnvironmentSourceResolver
     var sources: [any ComicSource] { sourcePreferences.enabledIDs.compactMap { id in allSources.first { $0.id == id } } }
     var searchSources: [any ComicSource] { sources.filter(\.supportsSearch) }
+    var discoverySources: [any ComicSource] { sourceGroupStore.visibleSources(sources, idExtractor: \.id) }
+    var discoverySearchSources: [any ComicSource] { discoverySources.filter(\.supportsSearch) }
     static let libraryChanged = Notification.Name("XXComic.libraryChanged")
     static let sourcesChanged = Notification.Name("XXComic.sourcesChanged")
 
@@ -68,6 +71,7 @@ final class AppEnvironment {
         localSource = LocalComicSource(library: localLibrary)
         bookshelfGroupStore = BookshelfGroupStore(file: appDir.appendingPathComponent("bookshelf_groups.json"))
         bookshelfGroupStore.migrateLegacyDataIfNeeded(legacyOnlineFavorites: library.favorites.map(\.summary.comicId), legacyLocalBookIds: nil)
+        sourceGroupStore = SourceGroupStore(directory: appDir)
         favoriteUpdateCoordinator = FavoriteUpdateCoordinator(defaults: defaults)
 
         let downloadsDir = appDir.appendingPathComponent("Downloads", isDirectory: true)

@@ -45,3 +45,4 @@ Thumbs.db
 # Local Gradle cache and release directory
 .gradle-codex/
 release/
+.reference/
