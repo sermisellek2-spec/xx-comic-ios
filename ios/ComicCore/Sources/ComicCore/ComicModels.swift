@@ -7,14 +7,20 @@ public struct ComicSummary: Codable, Equatable, Sendable {
     public let coverUrl: String
     public let subtitle: String
     public let tags: [String]
+    public let latestChapter: String?
 
-    public init(sourceId: String, comicId: String, title: String, coverUrl: String = "", subtitle: String = "", tags: [String] = []) {
+    public init(sourceId: String, comicId: String, title: String, coverUrl: String = "", subtitle: String = "", tags: [String] = [], latestChapter: String? = nil) {
         self.sourceId = sourceId
         self.comicId = comicId
         self.title = title
         self.coverUrl = coverUrl
         self.subtitle = subtitle
         self.tags = tags
+        self.latestChapter = latestChapter
+    }
+
+    public func withLatestChapter(_ latestChapter: String?) -> ComicSummary {
+        ComicSummary(sourceId: sourceId, comicId: comicId, title: title, coverUrl: coverUrl, subtitle: subtitle, tags: tags, latestChapter: latestChapter)
     }
 }
 

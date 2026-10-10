@@ -47,6 +47,9 @@ final class AppEnvironment {
             ManwaComicSource(config: preferences.config(for: "manwa") ?? SourceConfigDefaults.manwa()),
             DingManhuaComicSource(config: preferences.config(for: "dingmanhua") ?? SourceConfigDefaults.dingmanhua()),
             DongmanLaComicSource(config: preferences.config(for: "dongmanla") ?? SourceConfigDefaults.dongmanla()),
+            ZaimanhuaComicSource(config: preferences.config(for: "zaimanhua") ?? SourceConfigDefaults.zaimanhua()),
+            GuaziComicSource(config: preferences.config(for: "guazi") ?? SourceConfigDefaults.guazi()),
+            XinmanhuaComicSource(config: preferences.config(for: "xinmanhua") ?? SourceConfigDefaults.xinmanhua()),
             JmComicSource(config: preferences.config(for: "jmcomic") ?? SourceConfigDefaults.jmcomic(), browserSession: browserSession),
             Hanman18ComicSource(config: preferences.config(for: "hanman18") ?? SourceConfigDefaults.hanman18())
         ]
@@ -55,7 +58,7 @@ final class AppEnvironment {
     init(defaults: UserDefaults) throws {
         self.defaults = defaults
         mh18BrowserSession = Mh18BrowserSession(defaults: defaults)
-        let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "hanman18", "manhuagui", "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000", "manwa", "dingmanhua", "dongmanla", "jmcomic"]
+        let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "hanman18", "manhuagui", "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000", "manwa", "dingmanhua", "dongmanla", "zaimanhua", "guazi", "xinmanhua", "jmcomic"]
         sourcePreferences = SourcePreferences(defaults: defaults, defaultIDs: defaultIDs)
         let available = Self.createSources(preferences: sourcePreferences, browserSession: mh18BrowserSession)
         allSources = available
@@ -82,6 +85,10 @@ final class AppEnvironment {
         downloadStore = try DownloadStore(directory: downloadsDir)
         let resolver = EnvironmentSourceResolver(sources: available)
         environmentSourceResolver = resolver
+        RemoteImageView.imageUrlResolver = { [weak resolver] imageUrl, force in
+            guard let resolver else { return imageUrl.components(separatedBy: "#")[0] }
+            return try await resolver.resolveImageUrl(sourceId: "", imageUrl: imageUrl, force: force)
+        }
         downloadRuntime = DownloadRuntime(store: downloadStore, downloadsDirectory: downloadsDir, sourceResolver: resolver)
         downloadRuntime.isWifiOnly = defaults.object(forKey: "downloads.wifiOnly") as? Bool ?? true
 
@@ -178,10 +185,20 @@ final class EnvironmentSourceResolver: DownloadSourceResolverProtocol, @unchecke
         }
         if sourceId == "baozimh" || sourceId == "mkzhan" || sourceId == "hiperdex" ||
            sourceId == "hanman18" || sourceId == "d5d6" || sourceId == "antbyw" ||
+           sourceId == "xinmanhua" || sourceId == "zaimanhua" ||
            sourceId == "jmcomic" || chapterUrl.isEmpty {
             return source.referer
         }
         return chapterUrl
+    }
+
+    func resolveImageUrl(sourceId: String, imageUrl: String, force: Bool) async throws -> String {
+        if imageUrl.contains("#xx-zai=") || sourceId == "zaimanhua" {
+            if let zai = sources.first(where: { $0.id == "zaimanhua" }) as? ZaimanhuaComicSource {
+                return try await zai.resolveImageUrl(imageUrl, force: force)
+            }
+        }
+        return imageUrl.components(separatedBy: "#")[0]
     }
 
     func fetchCover(sourceId: String, coverUrl: String, destination: URL, check: @escaping () throws -> Void) async throws {
@@ -205,7 +222,12 @@ final class EnvironmentSourceResolver: DownloadSourceResolverProtocol, @unchecke
         if FileManager.default.fileExists(atPath: destination.path) {
             try? FileManager.default.removeItem(at: destination)
         }
-        if ManwaImageDecoder.usesImageHost(coverUrl) {
+        if XinmanhuaImageDecoder.usesImageHost(coverUrl) {
+            let rawData = try Data(contentsOf: tempURL)
+            try? FileManager.default.removeItem(at: tempURL)
+            let decoded = try XinmanhuaImageDecoder.decode(rawData)
+            try decoded.write(to: destination, options: .atomic)
+        } else if ManwaImageDecoder.usesImageHost(coverUrl) {
             let rawData = try Data(contentsOf: tempURL)
             try? FileManager.default.removeItem(at: tempURL)
             let decoded = try ManwaImageDecoder.decode(rawData)

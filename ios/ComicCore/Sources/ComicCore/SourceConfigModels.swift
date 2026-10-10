@@ -661,6 +661,97 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func zaimanhua(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "zaimanhua",
+            name: "再漫画",
+            domain: "manhua.zaimanhua.com",
+            baseUrl: "https://v4api.zaimanhua.com",
+            referer: "https://manhua.zaimanhua.com/",
+            latestPath: "",
+            searchPath: "",
+            categoryPath: "",
+            detailPath: "",
+            enabled: enabled,
+            routes: [
+                "latest": "/app/v1/comic/update/list/0/{page}",
+                "search": "/app/v1/search/index?source=0&size=20&page={page}&keyword={keyword}",
+                "category": "/app/v1/comic/filter/list?size=20&page={page}",
+                "detail": "/app/v1/comic/detail/{comicId}?_v=2.2.5",
+                "chapter": "/app/v1/comic/chapter/{comicId}/{chapterId}?_v=2.2.5"
+            ],
+            filters: [:]
+        )
+    }
+
+    public static func guazi(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "guazi",
+            name: "瓜子漫画",
+            domain: "www.guazimanhua.com",
+            baseUrl: "https://www.guazimanhua.com",
+            referer: "https://www.guazimanhua.com/",
+            latestPath: "",
+            searchPath: "",
+            categoryPath: "",
+            detailPath: "",
+            enabled: enabled,
+            routes: [
+                "latest": "/category.php?sort=update&page={page}",
+                "search": "/category.php?keyword={keyword}&page={page}",
+                "category": "/category.php?page={page}",
+                "detail": "/comic.php?id={comicId}",
+                "chapter": "/chapter.php?id={chapterId}"
+            ],
+            filters: [:]
+        )
+    }
+
+    public static func xinmanhua(enabled: Bool = true) -> SourceConfigItem {
+        let genres = [
+            "全部:all", "治愈:治愈", "日常:日常", "都市:都市", "悬疑:悬疑",
+            "科幻:科幻", "奇幻:奇幻", "热血:热血", "武侠:武侠", "古风:古风",
+            "恋爱:恋爱", "少年:少年", "日漫:日漫", "原创:原创"
+        ]
+        var filters: [String: String] = [
+            "ischarge.all": "2",
+            "ischarge.free": "0",
+            "ischarge.paid": "1",
+            "isfinish.all": "2",
+            "isfinish.serial": "0",
+            "isfinish.finished": "1",
+            "order.update": "0",
+            "order.popular": "1"
+        ]
+        for item in genres {
+            let parts = item.split(separator: ":", maxSplits: 1).map(String.init)
+            if parts.count == 2 {
+                filters["genre." + parts[0]] = parts[1]
+            }
+        }
+        return SourceConfigItem(
+            id: "xinmanhua",
+            name: "新漫画-A",
+            domain: "xapi.xinmanhua.net",
+            baseUrl: "https://xapi.xinmanhua.net",
+            referer: "https://xapi.xinmanhua.net/",
+            latestPath: "",
+            searchPath: "",
+            categoryPath: "",
+            detailPath: "",
+            enabled: enabled,
+            routes: [
+                "latest": "/search/catalog?keyword=all&ischarge=2&isfinish=2&order=0&page={page}",
+                "search": "/search/selfdefine",
+                "category": "/search/catalog?keyword={keyword}&ischarge={ischarge}&isfinish={isfinish}&order={order}&page={page}",
+                "detail": "/worksinfos/{wid}",
+                "chapters": "/worksinfos/{wid}/chapters",
+                "chapter": "/chapters/{chapterId}/qualitywebs"
+            ],
+            filters: filters
+        )
+    }
+
     public static func defaultConfig(for id: String) -> SourceConfigItem? {
         switch id {
         case "baozimh": return baozi()
@@ -682,8 +773,10 @@ public enum SourceConfigDefaults {
         case "liumanhua": return liumanhua()
         case "dingmanhua": return dingmanhua()
         case "dongmanla": return dongmanla()
+        case "zaimanhua": return zaimanhua()
+        case "guazi": return guazi()
+        case "xinmanhua": return xinmanhua()
         default: return nil
         }
     }
 }
-

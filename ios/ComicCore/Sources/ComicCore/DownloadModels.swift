@@ -169,6 +169,8 @@ public enum DownloadModels {
     }
 
     public static func imageIdentity(_ url: String) -> String {
+        let stable = ZaimanhuaComicSource.imageCacheIdentity(url)
+        if stable != url { return stable }
         let base = url.components(separatedBy: CharacterSet(charactersIn: "?#"))[0]
         if let regex = try? NSRegularExpression(pattern: #"[?&]scramble_id=(\d+)"#),
            let match = regex.firstMatch(in: url, range: NSRange(url.startIndex..., in: url)),

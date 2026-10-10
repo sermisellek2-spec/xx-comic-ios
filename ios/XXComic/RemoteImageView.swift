@@ -5,6 +5,7 @@ import ComicCore
 
 @MainActor
 final class RemoteImageView: UIImageView {
+    static var imageUrlResolver: ((_ imageUrl: String, _ force: Bool) async throws -> String)?
     private static let cache: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
         cache.totalCostLimit = 64 * 1024 * 1024
@@ -46,7 +47,11 @@ final class RemoteImageView: UIImageView {
               ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") || (["xxcomic-epub", "xxcomic-pdf"].contains(url.scheme ?? "") && localPageImage != nil) else {
             onFailure?(); return
         }
-        let key = ((reader ? "reader\n" : "cover\n") + referer + "\n" + text) as NSString
+        var cacheIdentity = ZaimanhuaComicSource.imageCacheIdentity(text)
+        if XinmanhuaImageDecoder.usesImageHost(cacheIdentity) {
+            cacheIdentity = "xinmanhua-jpeg-v2:" + cacheIdentity
+        }
+        let key = ((reader ? "reader\n" : "cover\n") + referer + "\n" + cacheIdentity) as NSString
         if let cached = Self.cache.object(forKey: key) {
             original = cached; render()
             return
@@ -89,8 +94,33 @@ final class RemoteImageView: UIImageView {
                         return try Data(contentsOf: resolved, options: .mappedIfSafe)
                     }.value
                 } else {
-                    let (bytes, response) = try await URLSession.shared.data(for: request)
-                    guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode), bytes.count <= 40 * 1024 * 1024 else {
+                    let isSigned = text.contains("#xx-")
+                    var fetchedBytes: Data?
+                    for attempt in 0..<(isSigned ? 2 : 1) {
+                        let resolvedText: String
+                        if isSigned, let resolver = Self.imageUrlResolver {
+                            resolvedText = try await resolver(text, attempt > 0)
+                        } else {
+                            resolvedText = text.components(separatedBy: "#")[0]
+                        }
+                        guard let resolvedURL = URL(string: resolvedText) else {
+                            throw URLError(.badURL)
+                        }
+                        var req = request
+                        req.url = resolvedURL
+                        let (bytes, response) = try await URLSession.shared.data(for: req)
+                        if let http = response as? HTTPURLResponse {
+                            if isSigned && attempt == 0 && (http.statusCode == 403 || http.statusCode == 410) {
+                                continue
+                            }
+                            if (200..<300).contains(http.statusCode), bytes.count <= 40 * 1024 * 1024 {
+                                fetchedBytes = bytes
+                                break
+                            }
+                        }
+                        throw URLError(.badServerResponse)
+                    }
+                    guard let bytes = fetchedBytes else {
                         throw URLError(.badServerResponse)
                     }
                     data = bytes
@@ -98,7 +128,14 @@ final class RemoteImageView: UIImageView {
                 try Task.checkCancellation()
                 let decoder = Task.detached(priority: .userInitiated) { () throws -> UIImage? in
                     try Task.checkCancellation()
-                    let imageData = ManwaImageDecoder.usesImageHost(text) ? try ManwaImageDecoder.decode(data) : data
+                    let imageData: Data
+                    if XinmanhuaImageDecoder.usesImageHost(text) {
+                        imageData = try XinmanhuaImageDecoder.decode(data)
+                    } else if ManwaImageDecoder.usesImageHost(text) {
+                        imageData = try ManwaImageDecoder.decode(data)
+                    } else {
+                        imageData = data
+                    }
                     guard let source = CGImageSourceCreateWithData(imageData as CFData, nil) else { return nil }
                     var maximumDimension = 4096
                     if reader, let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],

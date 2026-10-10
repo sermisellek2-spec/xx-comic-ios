@@ -14,7 +14,14 @@ public protocol DownloadImageFetcherProtocol: Sendable {
 public protocol DownloadSourceResolverProtocol: Sendable {
     func resolveChapter(sourceId: String, url: String) async throws -> ChapterPage
     func resolveReferer(sourceId: String, chapterUrl: String) -> String
+    func resolveImageUrl(sourceId: String, imageUrl: String, force: Bool) async throws -> String
     func fetchCover(sourceId: String, coverUrl: String, destination: URL, check: @escaping () throws -> Void) async throws
+}
+
+public extension DownloadSourceResolverProtocol {
+    func resolveImageUrl(sourceId: String, imageUrl: String, force: Bool) async throws -> String {
+        imageUrl
+    }
 }
 
 public enum ImageValidator {
@@ -48,7 +55,8 @@ public final class DefaultDownloadImageFetcher: DownloadImageFetcherProtocol, @u
                       destination: URL,
                       check: @escaping () throws -> Void) async throws -> (bytes: Int64, hash: String) {
         try check()
-        guard let requestUrl = URL(string: url) else {
+        let cleanUrl = url.components(separatedBy: "#")[0]
+        guard let requestUrl = URL(string: cleanUrl) else {
             throw DownloadError.corruptedData("无效的图片地址")
         }
         var request = URLRequest(url: requestUrl)
@@ -214,7 +222,13 @@ public final class DefaultDownloadImageFetcher: DownloadImageFetcherProtocol, @u
             }
 
             var rawData = try Data(contentsOf: destination)
-            if sourceId == "manwa" || ManwaImageDecoder.usesImageHost(url) {
+            if sourceId == "xinmanhua" || XinmanhuaImageDecoder.usesImageHost(url) {
+                let decoded = try XinmanhuaImageDecoder.decode(rawData)
+                if decoded != rawData {
+                    try decoded.write(to: destination, options: .atomic)
+                    rawData = decoded
+                }
+            } else if sourceId == "manwa" || ManwaImageDecoder.usesImageHost(url) {
                 let decoded = try ManwaImageDecoder.decode(rawData)
                 if decoded != rawData {
                     try decoded.write(to: destination, options: .atomic)
@@ -522,16 +536,32 @@ public final class DownloadRuntime: @unchecked Sendable {
                     let partFile = taskDir.appendingPathComponent("\(i).\(task.generation).part")
                     let referer = resolver.resolveReferer(sourceId: task.sourceId, chapterUrl: task.url)
 
-                    let fetchResult = try await imageFetcher.fetch(
-                        sourceId: task.sourceId,
-                        url: rawUrl,
-                        referer: referer,
-                        destination: partFile,
-                        check: { [weak self] in
-                            guard let self else { throw DownloadError.taskCancelled }
-                            try self.checkLease(task)
+                    var fetchResult: (bytes: Int64, hash: String)?
+                    let canRefresh = task.sourceId == "zaimanhua" || rawUrl.contains("#xx-")
+                    for attempt in 0..<(canRefresh ? 2 : 1) {
+                        try checkLease(task)
+                        let resolvedUrl = try await resolver.resolveImageUrl(sourceId: task.sourceId, imageUrl: rawUrl, force: attempt > 0)
+                        do {
+                            fetchResult = try await imageFetcher.fetch(
+                                sourceId: task.sourceId,
+                                url: resolvedUrl,
+                                referer: referer,
+                                destination: partFile,
+                                check: { [weak self] in
+                                    guard let self else { throw DownloadError.taskCancelled }
+                                    try self.checkLease(task)
+                                }
+                            )
+                            break
+                        } catch let httpError as DownloadHTTPError {
+                            if !canRefresh || attempt > 0 || (httpError.statusCode != 403 && httpError.statusCode != 410) {
+                                throw httpError
+                            }
                         }
-                    )
+                    }
+                    guard let fetchResult else {
+                        throw DownloadError.corruptedData("图片地址刷新失败")
+                    }
 
                     try checkLease(task)
                     if FileManager.default.fileExists(atPath: targetFile.path) {

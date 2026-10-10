@@ -332,4 +332,22 @@ public actor BaoziComicSource: ComicSource {
         default: return ""
         }
     }
+
+    public nonisolated static func parseDetailSummary(_ id: String, _ html: String) -> ComicSummary {
+        func extractFirst(_ pattern: String, in text: String) -> String {
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+                  let m = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+                  m.numberOfRanges > 1,
+                  let r = Range(m.range(at: 1), in: text) else { return "" }
+            return HTML4EntityDecoder.decode(String(text[r]).replacingOccurrences(of: #"<[^>]+>"#, with: " ", options: .regularExpression))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        var title = extractFirst(#"<h1[^>]*class=["'][^"']*comics-detail__title[^"']*["'][^>]*>([\s\S]*?)</h1>"#, in: html)
+        if title.isEmpty { title = extractFirst(#"<h1[^>]*>([\s\S]*?)</h1>"#, in: html) }
+        if title.isEmpty { title = extractFirst(#"<title[^>]*>([\s\S]*?)</title>"#, in: html) }
+        if let r = title.range(of: " - ") { title = String(title[..<r.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines) }
+        let cover = extractFirst(#"<meta[^>]*(?:property|name)=["']og:image["'][^>]*content=["']([^"']+)"#, in: html)
+        let latest = extractFirst(#"class=["']comics-detail__last-chapter["'][^>]*>([\s\S]*?)</[^>]+>"#, in: html)
+        return ComicSummary(sourceId: "baozimh", comicId: "baozimh:" + id, title: title.isEmpty ? id : title, coverUrl: cover, subtitle: "", tags: [], latestChapter: latest)
+    }
 }
