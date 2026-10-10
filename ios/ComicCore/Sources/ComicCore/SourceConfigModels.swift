@@ -108,6 +108,23 @@ extension SourceConfigItem {
     public func filter(_ key: String) -> String {
         filters?[key] ?? ""
     }
+
+    public func withEnabled(_ value: Bool) -> SourceConfigItem {
+        SourceConfigItem(
+            id: id,
+            name: name,
+            domain: domain,
+            baseUrl: baseUrl,
+            referer: referer,
+            latestPath: latestPath,
+            searchPath: searchPath,
+            categoryPath: categoryPath,
+            detailPath: detailPath,
+            enabled: value,
+            routes: routes,
+            filters: filters
+        )
+    }
 }
 
 public enum SourceConfigDefaults {
@@ -776,7 +793,8 @@ public enum SourceConfigDefaults {
         case "zaimanhua": return zaimanhua()
         case "guazi": return guazi()
         case "xinmanhua": return xinmanhua()
-        default: return nil
+        default:
+            return PublicSourceRegistry.contains(id) ? PublicSourceRegistry.config(id) : nil
         }
     }
 }

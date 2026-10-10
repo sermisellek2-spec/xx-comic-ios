@@ -1,0 +1,6952 @@
+[
+  {
+    "id": "dm5",
+    "name": "动漫屋",
+    "available": true,
+    "base": "https://m.dm5.com",
+    "family": "dm5",
+    "detailPattern": "/manhua-[^/]+/",
+    "cards": ".book-list li, .manga-list li",
+    "catalog": "#detail-list-select-1 a",
+    "reader": "",
+    "search": "/pagerdata.ashx",
+    "latest": "/manhua-list/dm5.ashx",
+    "filters": [
+      {
+        "label": "热门",
+        "path": "/manhua-list/dm5.ashx?sort=10"
+      },
+      {
+        "label": "更新",
+        "path": "/manhua-list/dm5.ashx?sort=2"
+      },
+      {
+        "label": "完结",
+        "path": "/manhua-list/dm5.ashx?status=1"
+      },
+      {
+        "label": "原创",
+        "path": "/manhua-original/"
+      },
+      {
+        "label": "日漫",
+        "path": "/manhua-jpkr/"
+      },
+      {
+        "label": "热血",
+        "path": "/manhua-rexue/"
+      },
+      {
+        "label": "恋爱",
+        "path": "/manhua-aiqing/"
+      },
+      {
+        "label": "校园",
+        "path": "/manhua-xiaoyuan/"
+      },
+      {
+        "label": "百合",
+        "path": "/manhua-baihe/"
+      },
+      {
+        "label": "耽美",
+        "path": "/manhua-danmei/"
+      },
+      {
+        "label": "伪娘",
+        "path": "/manhua-weiniang/"
+      },
+      {
+        "label": "冒险",
+        "path": "/manhua-maoxian/"
+      },
+      {
+        "label": "职场",
+        "path": "/manhua-zhichang/"
+      },
+      {
+        "label": "后宫",
+        "path": "/manhua-hougong/"
+      },
+      {
+        "label": "治愈",
+        "path": "/manhua-zhiyu/"
+      },
+      {
+        "label": "科幻",
+        "path": "/manhua-kehuan/"
+      },
+      {
+        "label": "励志",
+        "path": "/manhua-lizhi/"
+      },
+      {
+        "label": "战争",
+        "path": "/manhua-zhanzheng/"
+      },
+      {
+        "label": "悬疑",
+        "path": "/manhua-xuanyi/"
+      },
+      {
+        "label": "推理",
+        "path": "/manhua-zhentan/"
+      },
+      {
+        "label": "搞笑",
+        "path": "/manhua-gaoxiao/"
+      },
+      {
+        "label": "奇幻",
+        "path": "/manhua-qihuan/"
+      },
+      {
+        "label": "魔法",
+        "path": "/manhua-mofa/"
+      },
+      {
+        "label": "恐怖",
+        "path": "/manhua-kongbu/"
+      },
+      {
+        "label": "萌系",
+        "path": "/manhua-mengxi/"
+      },
+      {
+        "label": "历史",
+        "path": "/manhua-lishi/"
+      },
+      {
+        "label": "美食",
+        "path": "/manhua-meishi/"
+      },
+      {
+        "label": "同人",
+        "path": "/manhua-tongren/"
+      },
+      {
+        "label": "运动",
+        "path": "/manhua-jingji/"
+      },
+      {
+        "label": "绅士",
+        "path": "/manhua-jiecao/"
+      },
+      {
+        "label": "机甲",
+        "path": "/manhua-jizhan/"
+      }
+    ],
+    "network": "部分线路可连接（图片慢）",
+    "notice": "",
+    "sampleDetail": "https://m.dm5.com/manhua-haizeiwang-aisi/",
+    "sampleChapter": "https://m.dm5.com/m1187929/",
+    "decoder": "packed",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 1
+  },
+  {
+    "id": "kkk",
+    "name": "极速漫画",
+    "available": true,
+    "base": "https://m.1kkk.com",
+    "family": "dm5",
+    "detailPattern": "/manhua\\d+/",
+    "cards": ".book-list li, .manga-list li",
+    "catalog": ".chapteritem a, #detail-list-select-1 a",
+    "reader": "",
+    "search": "/pagerdata.ashx",
+    "latest": "/manhua-list/dm5.ashx",
+    "filters": [
+      {
+        "label": "热门",
+        "path": "/manhua-list/dm5.ashx?sort=10"
+      },
+      {
+        "label": "更新",
+        "path": "/manhua-list/dm5.ashx?sort=2"
+      },
+      {
+        "label": "完结",
+        "path": "/manhua-list/dm5.ashx?status=1"
+      },
+      {
+        "label": "原创",
+        "path": "/manhua-original/"
+      },
+      {
+        "label": "日漫",
+        "path": "/manhua-jpkr/"
+      },
+      {
+        "label": "热血",
+        "path": "/manhua-rexue/"
+      },
+      {
+        "label": "恋爱",
+        "path": "/manhua-aiqing/"
+      },
+      {
+        "label": "校园",
+        "path": "/manhua-xiaoyuan/"
+      },
+      {
+        "label": "百合",
+        "path": "/manhua-baihe/"
+      },
+      {
+        "label": "耽美",
+        "path": "/manhua-danmei/"
+      },
+      {
+        "label": "伪娘",
+        "path": "/manhua-weiniang/"
+      },
+      {
+        "label": "冒险",
+        "path": "/manhua-maoxian/"
+      },
+      {
+        "label": "职场",
+        "path": "/manhua-zhichang/"
+      },
+      {
+        "label": "后宫",
+        "path": "/manhua-hougong/"
+      },
+      {
+        "label": "治愈",
+        "path": "/manhua-zhiyu/"
+      },
+      {
+        "label": "科幻",
+        "path": "/manhua-kehuan/"
+      },
+      {
+        "label": "轻小说",
+        "path": "/manhua-qingxiaoshuo1/"
+      },
+      {
+        "label": "励志",
+        "path": "/manhua-lizhi/"
+      },
+      {
+        "label": "生活",
+        "path": "/manhua-shenghuoqinqing/"
+      },
+      {
+        "label": "战争",
+        "path": "/manhua-zhanzheng/"
+      },
+      {
+        "label": "悬疑",
+        "path": "/manhua-xuanyi/"
+      },
+      {
+        "label": "侦探",
+        "path": "/manhua-zhentan/"
+      },
+      {
+        "label": "搞笑",
+        "path": "/manhua-gaoxiao/"
+      },
+      {
+        "label": "奇幻",
+        "path": "/manhua-qihuan/"
+      },
+      {
+        "label": "魔法",
+        "path": "/manhua-mofa/"
+      },
+      {
+        "label": "恐怖",
+        "path": "/manhua-kongbu/"
+      },
+      {
+        "label": "神鬼",
+        "path": "/manhua-dongfangshengui/"
+      },
+      {
+        "label": "萌系",
+        "path": "/manhua-mengxi/"
+      },
+      {
+        "label": "历史",
+        "path": "/manhua-lishi/"
+      },
+      {
+        "label": "美食",
+        "path": "/manhua-meishi/"
+      },
+      {
+        "label": "同人",
+        "path": "/manhua-tongren/"
+      },
+      {
+        "label": "运动",
+        "path": "/manhua-jingji/"
+      },
+      {
+        "label": "绅士",
+        "path": "/manhua-jiecao/"
+      },
+      {
+        "label": "机甲",
+        "path": "/manhua-jizhan/"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://m.1kkk.com/manhua72057/",
+    "sampleChapter": "https://m.1kkk.com/ch1-1187929/",
+    "decoder": "packed",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 2
+  },
+  {
+    "id": "manhuaren",
+    "name": "漫画人",
+    "available": true,
+    "base": "https://www.manhuaren.com",
+    "family": "dm5",
+    "detailPattern": "/manhua-[^/]+/",
+    "cards": ".book-list li, .manga-list li",
+    "catalog": ".chapteritem a, #detail-list-select-1 a",
+    "reader": "",
+    "search": "/pagerdata.ashx",
+    "latest": "/manhua-list/dm5.ashx",
+    "filters": [
+      {
+        "label": "热门",
+        "path": "/manhua-list/dm5.ashx?sort=10"
+      },
+      {
+        "label": "更新",
+        "path": "/manhua-list/dm5.ashx?sort=2"
+      },
+      {
+        "label": "完结",
+        "path": "/manhua-list/dm5.ashx?status=1"
+      },
+      {
+        "label": "原创",
+        "path": "/manhua-original/"
+      },
+      {
+        "label": "日漫",
+        "path": "/manhua-jpkr/"
+      },
+      {
+        "label": "热血",
+        "path": "/manhua-rexue/"
+      },
+      {
+        "label": "恋爱",
+        "path": "/manhua-aiqing/"
+      },
+      {
+        "label": "校园",
+        "path": "/manhua-xiaoyuan/"
+      },
+      {
+        "label": "百合",
+        "path": "/manhua-baihe/"
+      },
+      {
+        "label": "耽美",
+        "path": "/manhua-danmei/"
+      },
+      {
+        "label": "伪娘",
+        "path": "/manhua-weiniang/"
+      },
+      {
+        "label": "冒险",
+        "path": "/manhua-maoxian/"
+      },
+      {
+        "label": "职场",
+        "path": "/manhua-zhichang/"
+      },
+      {
+        "label": "后宫",
+        "path": "/manhua-hougong/"
+      },
+      {
+        "label": "治愈",
+        "path": "/manhua-zhiyu/"
+      },
+      {
+        "label": "科幻",
+        "path": "/manhua-kehuan/"
+      },
+      {
+        "label": "励志",
+        "path": "/manhua-lizhi/"
+      },
+      {
+        "label": "战争",
+        "path": "/manhua-zhanzheng/"
+      },
+      {
+        "label": "悬疑",
+        "path": "/manhua-xuanyi/"
+      },
+      {
+        "label": "推理",
+        "path": "/manhua-zhentan/"
+      },
+      {
+        "label": "搞笑",
+        "path": "/manhua-gaoxiao/"
+      },
+      {
+        "label": "奇幻",
+        "path": "/manhua-qihuan/"
+      },
+      {
+        "label": "魔法",
+        "path": "/manhua-mofa/"
+      },
+      {
+        "label": "恐怖",
+        "path": "/manhua-kongbu/"
+      },
+      {
+        "label": "萌系",
+        "path": "/manhua-mengxi/"
+      },
+      {
+        "label": "历史",
+        "path": "/manhua-lishi/"
+      },
+      {
+        "label": "美食",
+        "path": "/manhua-meishi/"
+      },
+      {
+        "label": "同人",
+        "path": "/manhua-tongren/"
+      },
+      {
+        "label": "运动",
+        "path": "/manhua-jingji/"
+      },
+      {
+        "label": "绅士",
+        "path": "/manhua-jiecao/"
+      },
+      {
+        "label": "机甲",
+        "path": "/manhua-jizhan/"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://www.manhuaren.com/manhua-haizeiwang-aisi/",
+    "sampleChapter": "https://www.manhuaren.com/m1187929/",
+    "decoder": "packed",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 3
+  },
+  {
+    "id": "dongman",
+    "name": "咚漫",
+    "available": true,
+    "base": "https://www.dongmanmanhua.cn",
+    "family": "dongman",
+    "detailPattern": "/episodeList\\?titleNo=\\d+",
+    "cards": ".card_lst li, .card_wrap li, .daily_card li",
+    "catalog": ".detail_lst a",
+    "reader": "#_imageList img",
+    "search": "/search?keyword={keyword}",
+    "latest": "/dailySchedule",
+    "filters": [
+      {
+        "label": "连载和完结",
+        "path": "/dailySchedule"
+      },
+      {
+        "label": "全部分类",
+        "path": "/genre"
+      }
+    ],
+    "network": "国内直连优先",
+    "notice": "仅网页公开章节",
+    "sampleDetail": "https://www.dongmanmanhua.cn/SUSPENSE/ruchuyizhedenver/list?title_no=1954",
+    "sampleChapter": "https://www.dongmanmanhua.cn/SUSPENSE/ruchuyizhedenver/%E7%AC%AC2%E8%AF%9D/viewer?title_no=1954&episode_no=2",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": true,
+    "auditIndex": 4
+  },
+  {
+    "id": "dogemanga",
+    "name": "漫画狗",
+    "available": true,
+    "base": "https://dogemanga.com",
+    "family": "dom",
+    "detailPattern": "/m/[^/]+",
+    "cards": ".col-12",
+    "catalog": "select[data-kind=publication] option",
+    "reader": ".site-page-slide, .site-reader__image",
+    "search": "/?q={keyword}&o={offset}",
+    "latest": "/?s=1",
+    "filters": [
+      {
+        "label": "最新",
+        "path": "/?s=1"
+      },
+      {
+        "label": "热门",
+        "path": "/?s=0"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://dogemanga.com/m/gt9rgUMw",
+    "sampleChapter": "https://dogemanga.com/p/W_-TLMTr",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": true,
+    "auditIndex": 5
+  },
+  {
+    "id": "sisi",
+    "name": "思思漫画",
+    "available": true,
+    "base": "https://m.sisimanhua.com",
+    "family": "dom",
+    "detailPattern": "/manhua/[^/]+/",
+    "cards": ".col_3_1 li, .itemBox, li",
+    "catalog": ".Drama a",
+    "reader": "",
+    "search": "/statics/qingtiancms.ashx",
+    "latest": "/new/",
+    "filters": [
+      {
+        "label": "更新",
+        "path": "/new/"
+      },
+      {
+        "label": "排行",
+        "path": "/paihang/"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "更新/排行为有限列表",
+    "sampleDetail": "https://m.sisimanhua.com/manhua/qxb/",
+    "sampleChapter": "https://m.sisimanhua.com/manhua/qxb/2434899.html",
+    "decoder": "base64",
+    "readerPagination": false,
+    "reverseCatalog": true,
+    "auditIndex": 6
+  },
+  {
+    "id": "manxiaosi",
+    "name": "漫小肆",
+    "available": true,
+    "base": "https://www.pknbc.com",
+    "family": "dom",
+    "detailPattern": "/book/\\d+",
+    "cards": ".manga-list li, .book-list li",
+    "catalog": "#detail-list-select a",
+    "reader": "#cp_img img.lazy",
+    "search": "/search?keyword={keyword}&page={page}",
+    "latest": "/booklist?tag=全部&page={page}",
+    "filters": [
+      {
+        "label": "全部",
+        "path": "/booklist?tag=全部&page={page}"
+      },
+      {
+        "label": "连载",
+        "path": "/booklist?end=0&page={page}"
+      },
+      {
+        "label": "完结",
+        "path": "/booklist?end=1&page={page}"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://www.pknbc.com/book/1224",
+    "sampleChapter": "https://www.pknbc.com/chapter/57217",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 7
+  },
+  {
+    "id": "lele",
+    "name": "乐乐韩漫",
+    "available": true,
+    "base": "https://www.hmwu.cc",
+    "family": "empire",
+    "detailPattern": "/comic\\d+/",
+    "cards": ".book-list li, .manga-list-2 li, .book-item",
+    "catalog": "a[href*=chapter]",
+    "reader": ".font_max img[data-original]",
+    "search": "/e/search/index.php?keyboard={keyword}&show=title%2Cwriter%2Cbyr&searchget=1",
+    "latest": "/mangalist1{lelePage}/",
+    "filters": [
+      {
+        "label": "韩国",
+        "path": "/mangalist1{lelePage}/"
+      },
+      {
+        "label": "日本",
+        "path": "/mangalist2{lelePage}/"
+      },
+      {
+        "label": "3D",
+        "path": "/mangalist3{lelePage}/"
+      },
+      {
+        "label": "欧美",
+        "path": "/mangalist4{lelePage}/"
+      },
+      {
+        "label": "国漫",
+        "path": "/mangalist5{lelePage}/"
+      },
+      {
+        "label": "港台",
+        "path": "/mangalist6{lelePage}/"
+      },
+      {
+        "label": "其他",
+        "path": "/mangalist7{lelePage}/"
+      },
+      {
+        "label": "CG",
+        "path": "/mangalist8{lelePage}/"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://www.hmwu.cc/comic6431/",
+    "sampleChapter": "https://www.hmwu.cc/comic6431/chapter0.html",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 8
+  },
+  {
+    "id": "tuku",
+    "name": "图库漫画",
+    "available": true,
+    "base": "https://www.tuku.cc",
+    "family": "dom",
+    "detailPattern": "/manga-\\d+/",
+    "cards": ".manga-content-item, .rank-item, .swiper-card-item",
+    "catalog": ".chapter-wrap a",
+    "reader": ".container img[data-original]",
+    "search": "/search?title={keyword}&page={page}",
+    "latest": "/comics-order2-p{page}/",
+    "filters": [
+      {
+        "label": "更新",
+        "path": "/comics-order2-p{page}/"
+      },
+      {
+        "label": "热门",
+        "path": "/comics-p{page}/"
+      },
+      {
+        "label": "新品",
+        "path": "/comics-order18-p{page}/"
+      },
+      {
+        "label": "人气榜",
+        "path": "/rank/"
+      },
+      {
+        "label": "完结榜",
+        "path": "/rank/?t=1"
+      },
+      {
+        "label": "少年榜",
+        "path": "/rank/?t=2"
+      },
+      {
+        "label": "少女榜",
+        "path": "/rank/?t=3"
+      },
+      {
+        "label": "热血榜",
+        "path": "/rank/?t=4"
+      },
+      {
+        "label": "恋爱榜",
+        "path": "/rank/?t=5"
+      },
+      {
+        "label": "日韩榜",
+        "path": "/rank/?t=6"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://www.tuku.cc/manga-70923/",
+    "sampleChapter": "https://www.tuku.cc/chapter768187/",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 9
+  },
+  {
+    "id": "ycy",
+    "name": "异次元漫画",
+    "available": true,
+    "base": "https://www.ycymh.com",
+    "family": "dom",
+    "detailPattern": "/comic/\\d+",
+    "cards": ".vbox, .tbox_m li, #list_img li",
+    "catalog": ".list_block.show a",
+    "reader": "",
+    "search": "/search/{keyword}/{page}",
+    "latest": "/category/order/addtime/page/{page}",
+    "filters": [
+      {
+        "label": "更新",
+        "path": "/category/order/addtime/page/{page}"
+      },
+      {
+        "label": "热门",
+        "path": "/category/order/hits/page/{page}"
+      },
+      {
+        "label": "连载",
+        "path": "/category/finish/1/page/{page}"
+      },
+      {
+        "label": "完结",
+        "path": "/category/finish/2/page/{page}"
+      },
+      {
+        "label": "日热门榜",
+        "path": "/custom/top"
+      },
+      {
+        "label": "周热门榜",
+        "path": "/custom/weeks"
+      },
+      {
+        "label": "月热门榜",
+        "path": "/custom/month"
+      },
+      {
+        "label": "总热门榜",
+        "path": "/custom/total"
+      },
+      {
+        "label": "最近更新",
+        "path": "/custom/update"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://www.ycymh.com/comic/418858",
+    "sampleChapter": "https://www.ycymh.com/chapter/418858/132453.html",
+    "decoder": "aes",
+    "readerPagination": false,
+    "reverseCatalog": true,
+    "auditIndex": 10
+  },
+  {
+    "id": "miaoqu",
+    "name": "喵趣漫画",
+    "available": true,
+    "base": "https://www.miaoqumh.org",
+    "family": "dom",
+    "detailPattern": "/[^/?.]+",
+    "cards": "#mangawrap li, .manga-box li",
+    "catalog": "#episodes a",
+    "reader": "",
+    "search": "",
+    "latest": "/category/tags/215/page/{page}",
+    "filters": [
+      {
+        "label": "首页",
+        "path": "/"
+      },
+      {
+        "label": "追新",
+        "path": "/custom/news"
+      },
+      {
+        "label": "排行",
+        "path": "/custom/top"
+      },
+      {
+        "label": "爆笑",
+        "path": "/category/tags/215/page/{page}"
+      },
+      {
+        "label": "生活",
+        "path": "/category/tags/216/page/{page}"
+      },
+      {
+        "label": "修真",
+        "path": "/category/tags/221/page/{page}"
+      },
+      {
+        "label": "神魔",
+        "path": "/category/tags/218/page/{page}"
+      },
+      {
+        "label": "日常",
+        "path": "/category/tags/219/page/{page}"
+      },
+      {
+        "label": "总裁",
+        "path": "/category/tags/220/page/{page}"
+      },
+      {
+        "label": "灵异",
+        "path": "/category/tags/217/page/{page}"
+      },
+      {
+        "label": "精品",
+        "path": "/category/tags/222/page/{page}"
+      },
+      {
+        "label": "战斗",
+        "path": "/category/tags/223/page/{page}"
+      },
+      {
+        "label": "漫改",
+        "path": "/category/tags/224/page/{page}"
+      },
+      {
+        "label": "新作",
+        "path": "/category/tags/225/page/{page}"
+      },
+      {
+        "label": "神仙",
+        "path": "/category/tags/226/page/{page}"
+      },
+      {
+        "label": "改编",
+        "path": "/category/tags/227/page/{page}"
+      },
+      {
+        "label": "校园",
+        "path": "/category/tags/228/page/{page}"
+      },
+      {
+        "label": "治愈",
+        "path": "/category/tags/229/page/{page}"
+      },
+      {
+        "label": "霸总",
+        "path": "/category/tags/230/page/{page}"
+      },
+      {
+        "label": "爆更",
+        "path": "/category/tags/231/page/{page}"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "搜索暂不可用，可从分类阅读",
+    "sampleDetail": "https://www.miaoqumh.org/douluodalu5zhongshengtangsan",
+    "sampleChapter": "https://www.miaoqumh.org/233587/58303.html",
+    "decoder": "xor",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 11
+  },
+  {
+    "id": "aimi",
+    "name": "艾米漫画",
+    "available": true,
+    "base": "http://www.aymry.com",
+    "family": "dom",
+    "detailPattern": "/book/\\d+/",
+    "cards": ".comic-item",
+    "catalog": "#j_chapter_list a, #js_chapter_list a",
+    "reader": ".acgn-reader-chapter__item-box img",
+    "search": "",
+    "latest": "/lists/9/全部/3/{page}.html",
+    "filters": [
+      {
+        "label": "连载中",
+        "path": "/lists/9/全部/4/{page}.html"
+      },
+      {
+        "label": "已完结",
+        "path": "/lists/9/全部/1/{page}.html"
+      },
+      {
+        "label": "更新",
+        "path": "/update/{page}.html"
+      },
+      {
+        "label": "全部",
+        "path": "/lists/9/全部/3/{page}.html"
+      },
+      {
+        "label": "搞笑",
+        "path": "/lists/9/搞笑/3/{page}.html"
+      },
+      {
+        "label": "玄幻",
+        "path": "/lists/9/玄幻/3/{page}.html"
+      },
+      {
+        "label": "生活",
+        "path": "/lists/9/生活/3/{page}.html"
+      },
+      {
+        "label": "恋爱",
+        "path": "/lists/9/恋爱/3/{page}.html"
+      },
+      {
+        "label": "动作",
+        "path": "/lists/9/动作/3/{page}.html"
+      },
+      {
+        "label": "科幻",
+        "path": "/lists/9/科幻/3/{page}.html"
+      },
+      {
+        "label": "战争",
+        "path": "/lists/9/战争/3/{page}.html"
+      },
+      {
+        "label": "悬疑",
+        "path": "/lists/9/悬疑/3/{page}.html"
+      },
+      {
+        "label": "恐怖",
+        "path": "/lists/9/恐怖/3/{page}.html"
+      },
+      {
+        "label": "校园",
+        "path": "/lists/9/校园/3/{page}.html"
+      },
+      {
+        "label": "历史",
+        "path": "/lists/9/历史/3/{page}.html"
+      },
+      {
+        "label": "穿越",
+        "path": "/lists/9/穿越/3/{page}.html"
+      },
+      {
+        "label": "后宫",
+        "path": "/lists/9/后宫/3/{page}.html"
+      },
+      {
+        "label": "体育",
+        "path": "/lists/9/体育/3/{page}.html"
+      },
+      {
+        "label": "都市",
+        "path": "/lists/9/都市/3/{page}.html"
+      },
+      {
+        "label": "萝莉",
+        "path": "/lists/9/萝莉/3/{page}.html"
+      },
+      {
+        "label": "漫改",
+        "path": "/lists/9/漫改/3/{page}.html"
+      },
+      {
+        "label": "修真",
+        "path": "/lists/9/修真/3/{page}.html"
+      },
+      {
+        "label": "霸总",
+        "path": "/lists/9/霸总/3/{page}.html"
+      },
+      {
+        "label": "古风",
+        "path": "/lists/9/古风/3/{page}.html"
+      },
+      {
+        "label": "游戏",
+        "path": "/lists/9/游戏/3/{page}.html"
+      },
+      {
+        "label": "真人",
+        "path": "/lists/9/真人/3/{page}.html"
+      },
+      {
+        "label": "韩漫",
+        "path": "/lists/2/科幻/3/{page}.html"
+      },
+      {
+        "label": "日漫",
+        "path": "/lists/3/科幻/3/{page}.html"
+      }
+    ],
+    "network": "待实测（节点或站点异常）",
+    "notice": "搜索暂不可用，可从分类阅读",
+    "sampleDetail": "http://www.aymry.com/book/10144/",
+    "sampleChapter": "http://www.aymry.com/chapter/10144/423196.html",
+    "decoder": "dom",
+    "readerPagination": true,
+    "reverseCatalog": false,
+    "auditIndex": 12
+  },
+  {
+    "id": "duya",
+    "name": "毒牙漫画",
+    "available": true,
+    "base": "https://www.duya.cc",
+    "family": "dom",
+    "detailPattern": "/comic/[a-z0-9]+/",
+    "cards": "#list li",
+    "catalog": "#ncp3_ul a",
+    "reader": "#cp_img img, .imgpic img",
+    "search": "",
+    "latest": "/sort/{page}/",
+    "filters": [
+      {
+        "label": "全部",
+        "path": "/sort/{page}/"
+      },
+      {
+        "label": "校园",
+        "path": "/sort/xiaoyuan/{page}/"
+      },
+      {
+        "label": "搞笑",
+        "path": "/sort/gaoxiao/{page}/"
+      },
+      {
+        "label": "后宫",
+        "path": "/sort/hougong/{page}/"
+      },
+      {
+        "label": "生活",
+        "path": "/sort/shenghuo/{page}/"
+      },
+      {
+        "label": "恋爱",
+        "path": "/sort/lianai/{page}/"
+      },
+      {
+        "label": "霸总",
+        "path": "/sort/bazong/{page}/"
+      },
+      {
+        "label": "热血",
+        "path": "/sort/rexue/{page}/"
+      },
+      {
+        "label": "科幻",
+        "path": "/sort/kehuan/{page}/"
+      },
+      {
+        "label": "古风",
+        "path": "/sort/gufeng/{page}/"
+      },
+      {
+        "label": "真人",
+        "path": "/sort/zhenren/{page}/"
+      },
+      {
+        "label": "悬疑",
+        "path": "/sort/xuanyi/{page}/"
+      },
+      {
+        "label": "穿越",
+        "path": "/sort/chuanyue/{page}/"
+      },
+      {
+        "label": "耽美",
+        "path": "/sort/danmei/{page}/"
+      },
+      {
+        "label": "恐怖",
+        "path": "/sort/kongbu/{page}/"
+      },
+      {
+        "label": "修真",
+        "path": "/sort/xiuzhen/{page}/"
+      },
+      {
+        "label": "百合",
+        "path": "/sort/baihe/{page}/"
+      },
+      {
+        "label": "韩漫",
+        "path": "/sort/hanman/{page}/"
+      },
+      {
+        "label": "女主",
+        "path": "/sort/nvzhu/{page}/"
+      },
+      {
+        "label": "地区",
+        "path": "/sort/2/diqu_0/{page}/"
+      },
+      {
+        "label": "韩国",
+        "path": "/sort/2/diqu_1/{page}/"
+      },
+      {
+        "label": "日本",
+        "path": "/sort/2/diqu_2/{page}/"
+      },
+      {
+        "label": "国漫",
+        "path": "/sort/2/diqu_3/{page}/"
+      },
+      {
+        "label": "欧美",
+        "path": "/sort/2/diqu_4/{page}/"
+      },
+      {
+        "label": "港台",
+        "path": "/sort/2/diqu_5/{page}/"
+      },
+      {
+        "label": "状态",
+        "path": "/sort/2/{page}/"
+      },
+      {
+        "label": "已完结",
+        "path": "/quanben/sort/2/{page}/"
+      }
+    ],
+    "network": "VPN 优先（页面受阻）",
+    "notice": "阅读页复测连续超时，暂关闭；搜索不可用",
+    "sampleDetail": "https://www.duya.cc/comic/ee14419c79/",
+    "sampleChapter": "https://www.duya.cc/comic/ee14419c79/195669.html",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 13,
+    "defaultEnabled": false
+  },
+  {
+    "id": "xiuxiu",
+    "name": "羞羞漫画",
+    "available": true,
+    "base": "http://www.xiuxmanhua.com",
+    "family": "dom",
+    "detailPattern": "/book/\\d+/",
+    "cards": "#list li, .comic-item",
+    "catalog": "#ncp3_ul a, #detail-list-select-1 a",
+    "reader": "#cp_img img",
+    "search": "",
+    "latest": "/lists/9/全部/3/{page}.html",
+    "filters": [
+      {
+        "label": "总点击",
+        "path": "/top/alldj.html"
+      },
+      {
+        "label": "月点击",
+        "path": "/top/ydj.html"
+      },
+      {
+        "label": "周点击",
+        "path": "/top/zdj.html"
+      },
+      {
+        "label": "日点击",
+        "path": "/top/rdj.html"
+      },
+      {
+        "label": "总收藏",
+        "path": "/top/allfav.html"
+      },
+      {
+        "label": "更新",
+        "path": "/update/"
+      },
+      {
+        "label": "全部",
+        "path": "/lists/9/全部/3/{page}.html"
+      },
+      {
+        "label": "热血",
+        "path": "/lists/9/热血/3/{page}.html"
+      },
+      {
+        "label": "冒险",
+        "path": "/lists/9/冒险/3/{page}.html"
+      },
+      {
+        "label": "科幻",
+        "path": "/lists/9/科幻/3/{page}.html"
+      },
+      {
+        "label": "霸总",
+        "path": "/lists/9/霸总/3/{page}.html"
+      },
+      {
+        "label": "玄幻",
+        "path": "/lists/9/玄幻/3/{page}.html"
+      },
+      {
+        "label": "校园",
+        "path": "/lists/9/校园/3/{page}.html"
+      },
+      {
+        "label": "修真",
+        "path": "/lists/9/修真/3/{page}.html"
+      },
+      {
+        "label": "搞笑",
+        "path": "/lists/9/搞笑/3/{page}.html"
+      },
+      {
+        "label": "穿越",
+        "path": "/lists/9/穿越/3/{page}.html"
+      },
+      {
+        "label": "后宫",
+        "path": "/lists/9/后宫/3/{page}.html"
+      },
+      {
+        "label": "耽美",
+        "path": "/lists/9/耽美/3/{page}.html"
+      },
+      {
+        "label": "恋爱",
+        "path": "/lists/9/恋爱/3/{page}.html"
+      },
+      {
+        "label": "悬疑",
+        "path": "/lists/9/悬疑/3/{page}.html"
+      },
+      {
+        "label": "恐怖",
+        "path": "/lists/9/恐怖/3/{page}.html"
+      },
+      {
+        "label": "战争",
+        "path": "/lists/9/战争/3/{page}.html"
+      },
+      {
+        "label": "动作",
+        "path": "/lists/9/动作/3/{page}.html"
+      },
+      {
+        "label": "同人",
+        "path": "/lists/9/同人/3/{page}.html"
+      },
+      {
+        "label": "竞技",
+        "path": "/lists/9/竞技/3/{page}.html"
+      },
+      {
+        "label": "励志",
+        "path": "/lists/9/励志/3/{page}.html"
+      },
+      {
+        "label": "架空",
+        "path": "/lists/9/架空/3/{page}.html"
+      },
+      {
+        "label": "灵异",
+        "path": "/lists/9/灵异/3/{page}.html"
+      },
+      {
+        "label": "百合",
+        "path": "/lists/9/百合/3/{page}.html"
+      },
+      {
+        "label": "古风",
+        "path": "/lists/9/古风/3/{page}.html"
+      },
+      {
+        "label": "生活",
+        "path": "/lists/9/生活/3/{page}.html"
+      },
+      {
+        "label": "都市",
+        "path": "/lists/9/都市/3/{page}.html"
+      },
+      {
+        "label": "推理",
+        "path": "/lists/9/推理/3/{page}.html"
+      },
+      {
+        "label": "魔幻",
+        "path": "/lists/9/魔幻/3/{page}.html"
+      },
+      {
+        "label": "武侠",
+        "path": "/lists/9/武侠/3/{page}.html"
+      },
+      {
+        "label": "体育",
+        "path": "/lists/9/体育/3/{page}.html"
+      },
+      {
+        "label": "社会",
+        "path": "/lists/9/社会/3/{page}.html"
+      },
+      {
+        "label": "游戏",
+        "path": "/lists/9/游戏/3/{page}.html"
+      },
+      {
+        "label": "御姐",
+        "path": "/lists/9/御姐/3/{page}.html"
+      },
+      {
+        "label": "历史",
+        "path": "/lists/9/历史/3/{page}.html"
+      },
+      {
+        "label": "萝莉",
+        "path": "/lists/9/萝莉/3/{page}.html"
+      },
+      {
+        "label": "韩漫",
+        "path": "/lists/1/全部/3/{page}.html"
+      },
+      {
+        "label": "日漫",
+        "path": "/lists/2/全部/3/{page}.html"
+      },
+      {
+        "label": "国漫",
+        "path": "/lists/3/全部/3/{page}.html"
+      },
+      {
+        "label": "BL",
+        "path": "/lists/4/全部/3/{page}.html"
+      },
+      {
+        "label": "连载中",
+        "path": "/lists/9/全部/4/{page}.html"
+      },
+      {
+        "label": "已完结",
+        "path": "/lists/9/全部/1/{page}.html"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "搜索暂不可用，可从分类阅读",
+    "sampleDetail": "http://www.xiuxmanhua.com/book/257/",
+    "sampleChapter": "http://www.xiuxmanhua.com/chapter/257/16518.html",
+    "decoder": "dom",
+    "readerPagination": true,
+    "reverseCatalog": false,
+    "auditIndex": 14
+  },
+  {
+    "id": "waiwai",
+    "name": "歪歪漫画",
+    "available": true,
+    "base": "https://m.waiwaimhx.com",
+    "family": "dom",
+    "detailPattern": "/book/\\d+/",
+    "cards": "#list li",
+    "catalog": "#detail-list-select-1 a, #ncp3_ul a",
+    "reader": "#cp_img img",
+    "search": "/search?searchkey={keyword}&page={page}",
+    "latest": "/lists/9/全部/3/{page}.html",
+    "filters": [
+      {
+        "label": "总点击",
+        "path": "/top/alldj.html"
+      },
+      {
+        "label": "月点击",
+        "path": "/top/ydj.html"
+      },
+      {
+        "label": "周点击",
+        "path": "/top/zdj.html"
+      },
+      {
+        "label": "日点击",
+        "path": "/top/rdj.html"
+      },
+      {
+        "label": "总收藏",
+        "path": "/top/allfav.html"
+      },
+      {
+        "label": "全部",
+        "path": "/lists/9/全部/3/{page}.html"
+      },
+      {
+        "label": "耽美",
+        "path": "/lists/9/耽美/3/{page}.html"
+      },
+      {
+        "label": "彩虹",
+        "path": "/lists/9/彩虹/3/{page}.html"
+      },
+      {
+        "label": "恋爱",
+        "path": "/lists/9/恋爱/3/{page}.html"
+      },
+      {
+        "label": "玄幻",
+        "path": "/lists/9/玄幻/3/{page}.html"
+      },
+      {
+        "label": "穿越",
+        "path": "/lists/9/穿越/3/{page}.html"
+      },
+      {
+        "label": "韩国",
+        "path": "/lists/1/全部/3/{page}.html"
+      },
+      {
+        "label": "中国",
+        "path": "/lists/2/全部/3/{page}.html"
+      },
+      {
+        "label": "日本",
+        "path": "/lists/3/全部/3/{page}.html"
+      },
+      {
+        "label": "其他",
+        "path": "/lists/4/全部/3/{page}.html"
+      },
+      {
+        "label": "更新",
+        "path": "/update/"
+      },
+      {
+        "label": "连载中",
+        "path": "/lists/9/全部/4/{page}.html"
+      },
+      {
+        "label": "已完结",
+        "path": "/lists/9/全部/1/{page}.html"
+      },
+      {
+        "label": "已太监",
+        "path": "/lists/9/全部/2/{page}.html"
+      }
+    ],
+    "network": "VPN 优先（页面受阻）",
+    "notice": "",
+    "sampleDetail": "https://m.waiwaimhx.com/book/464/",
+    "sampleChapter": "https://m.waiwaimhx.com/chapter/464/25798.html",
+    "decoder": "dom",
+    "readerPagination": true,
+    "reverseCatalog": false,
+    "auditIndex": 15
+  },
+  {
+    "id": "mh250",
+    "name": "250漫画",
+    "available": true,
+    "base": "http://www.mh250.com",
+    "family": "dom",
+    "detailPattern": "/book/[a-z0-9]+/",
+    "cards": "#list li",
+    "catalog": "#ncp3_ul a",
+    "reader": "#cp_img img",
+    "search": "",
+    "latest": "/sort/{page}/",
+    "filters": [
+      {
+        "label": "阅读总榜",
+        "path": "/top.html?type=0"
+      },
+      {
+        "label": "最新上新",
+        "path": "/top.html?type=1"
+      },
+      {
+        "label": "最新更新",
+        "path": "/top.html?type=2"
+      },
+      {
+        "label": "日阅读榜",
+        "path": "/top.html?type=3"
+      },
+      {
+        "label": "周阅读榜",
+        "path": "/top.html?type=4"
+      },
+      {
+        "label": "月阅读榜",
+        "path": "/top.html?type=5"
+      },
+      {
+        "label": "全部",
+        "path": "/sort/{page}/"
+      },
+      {
+        "label": "连载中",
+        "path": "/lianzai/sort/{page}/"
+      },
+      {
+        "label": "已完结",
+        "path": "/quanben/sort/{page}/"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "搜索暂不可用，可从分类阅读",
+    "sampleDetail": "http://www.mh250.com/book/2adeebcd0b/",
+    "sampleChapter": "http://www.mh250.com/book/2adeebcd0b/902452.html",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 16
+  },
+  {
+    "id": "tuhao",
+    "name": "土豪漫画",
+    "available": true,
+    "base": "https://www.larton.cn",
+    "family": "dom",
+    "detailPattern": "/book/\\d+/",
+    "cards": ".comic-item",
+    "catalog": "#chapters a",
+    "reader": ".comic-pic",
+    "search": "/search/{keyword}/{page}/",
+    "latest": "/category/page/{page}.html",
+    "filters": [
+      {
+        "label": "全部",
+        "path": "/category/page/{page}.html"
+      },
+      {
+        "label": "连载中",
+        "path": "/category/end/0/page/{page}.html"
+      },
+      {
+        "label": "已完结",
+        "path": "/category/end/1/page/{page}.html"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://www.larton.cn/book/4887/",
+    "sampleChapter": "https://www.larton.cn/chapter/4887/337452.html",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": true,
+    "auditIndex": 17
+  },
+  {
+    "id": "manshiduo",
+    "name": "漫士多",
+    "available": true,
+    "base": "https://manshiduo.org",
+    "family": "dom",
+    "detailPattern": "/comic/[A-Za-z0-9]+",
+    "cards": ".rankList li",
+    "catalog": ".chapterList a",
+    "reader": "",
+    "search": "",
+    "latest": "/category/order/addtime/page/{page}",
+    "filters": [
+      {
+        "label": "最新更新",
+        "path": "/category/order/addtime/page/{page}"
+      },
+      {
+        "label": "人气排行",
+        "path": "/category/page/{page}"
+      },
+      {
+        "label": "评分排行",
+        "path": "/category/order/score/page/{page}"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "搜索暂不可用，可从分类阅读",
+    "sampleDetail": "https://manshiduo.org/comic/19ZKPLO8JG",
+    "sampleChapter": "https://manshiduo.org/chapter/E5LXzi2EzP.html",
+    "decoder": "aes",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 18
+  },
+  {
+    "id": "dumanwu",
+    "name": "读漫屋",
+    "available": true,
+    "base": "https://m.dumanwu.org",
+    "family": "dom",
+    "detailPattern": "/comic/[A-Za-z0-9]+",
+    "cards": ".rankList li",
+    "catalog": ".chapterList a",
+    "reader": "",
+    "search": "",
+    "latest": "/category/order/addtime/page/{page}",
+    "filters": [
+      {
+        "label": "最新更新",
+        "path": "/category/order/addtime/page/{page}"
+      },
+      {
+        "label": "人气排行",
+        "path": "/category/page/{page}"
+      },
+      {
+        "label": "评分排行",
+        "path": "/category/order/score/page/{page}"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "搜索暂不可用，可从分类阅读",
+    "sampleDetail": "https://m.dumanwu.org/comic/gkx7ZZyw2E",
+    "sampleChapter": "https://m.dumanwu.org/comic/8WWBEtOeBz.html",
+    "decoder": "aes",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 19,
+    "filterGroups": [
+      {
+        "key": "finish",
+        "label": "进度",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "连载",
+            "value": "1"
+          },
+          {
+            "label": "完结",
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "key": "tag",
+        "label": "题材",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "奇幻",
+            "value": "2569"
+          },
+          {
+            "label": "搞笑",
+            "value": "2570"
+          },
+          {
+            "label": "都市",
+            "value": "2571"
+          },
+          {
+            "label": "热血",
+            "value": "2572"
+          },
+          {
+            "label": "穿越",
+            "value": "2573"
+          },
+          {
+            "label": "纯爱",
+            "value": "2574"
+          },
+          {
+            "label": "机甲",
+            "value": "2575"
+          },
+          {
+            "label": "竞技",
+            "value": "2576"
+          },
+          {
+            "label": "病娇",
+            "value": "2577"
+          },
+          {
+            "label": "腹黑",
+            "value": "2578"
+          },
+          {
+            "label": "疯批",
+            "value": "2579"
+          },
+          {
+            "label": "颜控",
+            "value": "2580"
+          },
+          {
+            "label": "反差萌",
+            "value": "2581"
+          },
+          {
+            "label": "反派",
+            "value": "2582"
+          },
+          {
+            "label": "编剧",
+            "value": "2583"
+          },
+          {
+            "label": "双女主",
+            "value": "2584"
+          },
+          {
+            "label": "玄幻",
+            "value": "2585"
+          },
+          {
+            "label": "修仙",
+            "value": "2586"
+          },
+          {
+            "label": "校园",
+            "value": "2587"
+          },
+          {
+            "label": "治愈",
+            "value": "2588"
+          },
+          {
+            "label": "科幻",
+            "value": "2589"
+          },
+          {
+            "label": "美少女",
+            "value": "2590"
+          },
+          {
+            "label": "冒险",
+            "value": "2591"
+          },
+          {
+            "label": "战斗",
+            "value": "2592"
+          },
+          {
+            "label": "古风",
+            "value": "2593"
+          },
+          {
+            "label": "复仇",
+            "value": "2594"
+          },
+          {
+            "label": "修真",
+            "value": "2595"
+          },
+          {
+            "label": "少年",
+            "value": "2596"
+          },
+          {
+            "label": "系统",
+            "value": "2597"
+          },
+          {
+            "label": "大女主",
+            "value": "2598"
+          },
+          {
+            "label": "动作",
+            "value": "2599"
+          },
+          {
+            "label": "悬疑",
+            "value": "2600"
+          },
+          {
+            "label": "武侠",
+            "value": "2601"
+          },
+          {
+            "label": "宫斗",
+            "value": "2602"
+          },
+          {
+            "label": "励志",
+            "value": "2603"
+          },
+          {
+            "label": "撒糖",
+            "value": "2604"
+          },
+          {
+            "label": "秀吉",
+            "value": "2605"
+          },
+          {
+            "label": "狗血",
+            "value": "2606"
+          },
+          {
+            "label": "娱乐圈",
+            "value": "2607"
+          },
+          {
+            "label": "影帝",
+            "value": "2608"
+          },
+          {
+            "label": "占有欲",
+            "value": "2609"
+          },
+          {
+            "label": "古灵精怪",
+            "value": "2610"
+          },
+          {
+            "label": "大小姐",
+            "value": "2611"
+          },
+          {
+            "label": "少女",
+            "value": "2612"
+          },
+          {
+            "label": "爱情",
+            "value": "2613"
+          },
+          {
+            "label": "欢乐向",
+            "value": "2614"
+          },
+          {
+            "label": "重生",
+            "value": "2615"
+          },
+          {
+            "label": "异能",
+            "value": "2616"
+          },
+          {
+            "label": "恋爱",
+            "value": "2617"
+          },
+          {
+            "label": "同人",
+            "value": "2618"
+          },
+          {
+            "label": "生活",
+            "value": "2619"
+          },
+          {
+            "label": "恐怖",
+            "value": "2620"
+          },
+          {
+            "label": "非人类",
+            "value": "2621"
+          },
+          {
+            "label": "日常",
+            "value": "2622"
+          },
+          {
+            "label": "其它",
+            "value": "2623"
+          },
+          {
+            "label": "泛爱",
+            "value": "2624"
+          },
+          {
+            "label": "格斗",
+            "value": "2625"
+          },
+          {
+            "label": "日漫",
+            "value": "2626"
+          },
+          {
+            "label": "异世界",
+            "value": "2627"
+          },
+          {
+            "label": "历史",
+            "value": "2628"
+          },
+          {
+            "label": "江湖",
+            "value": "2629"
+          },
+          {
+            "label": "古代",
+            "value": "2630"
+          },
+          {
+            "label": "魔幻",
+            "value": "2631"
+          },
+          {
+            "label": "萌系",
+            "value": "2632"
+          },
+          {
+            "label": "耽美",
+            "value": "2633"
+          },
+          {
+            "label": "剧情",
+            "value": "2634"
+          },
+          {
+            "label": "学生",
+            "value": "2635"
+          },
+          {
+            "label": "龙傲天",
+            "value": "2636"
+          },
+          {
+            "label": "姐姐",
+            "value": "2637"
+          },
+          {
+            "label": "打工人",
+            "value": "2638"
+          },
+          {
+            "label": "装逼",
+            "value": "2639"
+          },
+          {
+            "label": "爽",
+            "value": "2640"
+          },
+          {
+            "label": "欧风",
+            "value": "2641"
+          },
+          {
+            "label": "宫廷",
+            "value": "2642"
+          },
+          {
+            "label": "长条",
+            "value": "2643"
+          },
+          {
+            "label": "轻小说",
+            "value": "2644"
+          },
+          {
+            "label": "无节操",
+            "value": "2645"
+          },
+          {
+            "label": "扮猪吃虎",
+            "value": "2646"
+          },
+          {
+            "label": "纨绔",
+            "value": "2647"
+          },
+          {
+            "label": "架空",
+            "value": "2648"
+          },
+          {
+            "label": "美强惨",
+            "value": "2649"
+          },
+          {
+            "label": "女强",
+            "value": "2650"
+          },
+          {
+            "label": "御姐",
+            "value": "2651"
+          },
+          {
+            "label": "忠犬",
+            "value": "2652"
+          },
+          {
+            "label": "魔女",
+            "value": "2653"
+          },
+          {
+            "label": "百合",
+            "value": "2654"
+          },
+          {
+            "label": "逆袭",
+            "value": "2655"
+          },
+          {
+            "label": "偶像",
+            "value": "2656"
+          },
+          {
+            "label": "青春",
+            "value": "2657"
+          },
+          {
+            "label": "唯美",
+            "value": "2658"
+          },
+          {
+            "label": "浪漫",
+            "value": "2659"
+          },
+          {
+            "label": "连载中",
+            "value": "2660"
+          },
+          {
+            "label": "惊奇",
+            "value": "2661"
+          },
+          {
+            "label": "彩虹",
+            "value": "2662"
+          },
+          {
+            "label": "友情",
+            "value": "2663"
+          },
+          {
+            "label": "智商在线",
+            "value": "2664"
+          },
+          {
+            "label": "暧昧",
+            "value": "2665"
+          },
+          {
+            "label": "反差",
+            "value": "2666"
+          },
+          {
+            "label": "修罗场",
+            "value": "2667"
+          },
+          {
+            "label": "职场",
+            "value": "2668"
+          }
+        ]
+      },
+      {
+        "key": "region",
+        "label": "地区",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "国产漫画",
+            "value": "1"
+          },
+          {
+            "label": "日本漫画",
+            "value": "2"
+          },
+          {
+            "label": "韩国漫画",
+            "value": "3"
+          },
+          {
+            "label": "欧美漫画",
+            "value": "4"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ciyuan",
+    "name": "次元漫",
+    "available": true,
+    "base": "https://ciyuanman.com",
+    "family": "dom",
+    "detailPattern": "/kan/\\d+",
+    "cards": ".img-list li",
+    "catalog": ".j-chapter-list a",
+    "reader": "",
+    "search": "",
+    "latest": "/category/page/{page}",
+    "filters": [
+      {
+        "label": "更新",
+        "path": "/custom/up"
+      },
+      {
+        "label": "推荐",
+        "path": "/custom/recom"
+      },
+      {
+        "label": "全部",
+        "path": "/category/page/{page}"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "搜索暂不可用，可从分类阅读",
+    "sampleDetail": "https://ciyuanman.com/kan/500903",
+    "sampleChapter": "https://ciyuanman.com/kan/500903-186117.html",
+    "decoder": "aes",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 20,
+    "filterGroups": [
+      {
+        "key": "tag",
+        "label": "分类",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "奇幻",
+            "value": "2569"
+          },
+          {
+            "label": "搞笑",
+            "value": "2570"
+          },
+          {
+            "label": "都市",
+            "value": "2571"
+          },
+          {
+            "label": "热血",
+            "value": "2572"
+          },
+          {
+            "label": "穿越",
+            "value": "2573"
+          },
+          {
+            "label": "纯爱",
+            "value": "2574"
+          },
+          {
+            "label": "机甲",
+            "value": "2575"
+          },
+          {
+            "label": "竞技",
+            "value": "2576"
+          },
+          {
+            "label": "病娇",
+            "value": "2577"
+          },
+          {
+            "label": "腹黑",
+            "value": "2578"
+          },
+          {
+            "label": "疯批",
+            "value": "2579"
+          },
+          {
+            "label": "颜控",
+            "value": "2580"
+          },
+          {
+            "label": "反差萌",
+            "value": "2581"
+          },
+          {
+            "label": "反派",
+            "value": "2582"
+          },
+          {
+            "label": "编剧",
+            "value": "2583"
+          },
+          {
+            "label": "双女主",
+            "value": "2584"
+          },
+          {
+            "label": "玄幻",
+            "value": "2585"
+          },
+          {
+            "label": "修仙",
+            "value": "2586"
+          },
+          {
+            "label": "校园",
+            "value": "2587"
+          },
+          {
+            "label": "治愈",
+            "value": "2588"
+          },
+          {
+            "label": "科幻",
+            "value": "2589"
+          },
+          {
+            "label": "美少女",
+            "value": "2590"
+          },
+          {
+            "label": "冒险",
+            "value": "2591"
+          },
+          {
+            "label": "战斗",
+            "value": "2592"
+          },
+          {
+            "label": "古风",
+            "value": "2593"
+          },
+          {
+            "label": "复仇",
+            "value": "2594"
+          },
+          {
+            "label": "修真",
+            "value": "2595"
+          },
+          {
+            "label": "少年",
+            "value": "2596"
+          },
+          {
+            "label": "系统",
+            "value": "2597"
+          },
+          {
+            "label": "大女主",
+            "value": "2598"
+          },
+          {
+            "label": "动作",
+            "value": "2599"
+          },
+          {
+            "label": "悬疑",
+            "value": "2600"
+          },
+          {
+            "label": "武侠",
+            "value": "2601"
+          },
+          {
+            "label": "宫斗",
+            "value": "2602"
+          },
+          {
+            "label": "励志",
+            "value": "2603"
+          },
+          {
+            "label": "撒糖",
+            "value": "2604"
+          },
+          {
+            "label": "秀吉",
+            "value": "2605"
+          },
+          {
+            "label": "狗血",
+            "value": "2606"
+          },
+          {
+            "label": "娱乐圈",
+            "value": "2607"
+          },
+          {
+            "label": "影帝",
+            "value": "2608"
+          },
+          {
+            "label": "占有欲",
+            "value": "2609"
+          },
+          {
+            "label": "古灵精怪",
+            "value": "2610"
+          },
+          {
+            "label": "大小姐",
+            "value": "2611"
+          },
+          {
+            "label": "少女",
+            "value": "2612"
+          },
+          {
+            "label": "爱情",
+            "value": "2613"
+          },
+          {
+            "label": "欢乐向",
+            "value": "2614"
+          },
+          {
+            "label": "重生",
+            "value": "2615"
+          },
+          {
+            "label": "异能",
+            "value": "2616"
+          },
+          {
+            "label": "恋爱",
+            "value": "2617"
+          },
+          {
+            "label": "同人",
+            "value": "2618"
+          },
+          {
+            "label": "生活",
+            "value": "2619"
+          },
+          {
+            "label": "恐怖",
+            "value": "2620"
+          },
+          {
+            "label": "非人类",
+            "value": "2621"
+          },
+          {
+            "label": "日常",
+            "value": "2622"
+          },
+          {
+            "label": "其它",
+            "value": "2623"
+          },
+          {
+            "label": "泛爱",
+            "value": "2624"
+          },
+          {
+            "label": "格斗",
+            "value": "2625"
+          },
+          {
+            "label": "日漫",
+            "value": "2626"
+          },
+          {
+            "label": "异世界",
+            "value": "2627"
+          },
+          {
+            "label": "历史",
+            "value": "2628"
+          },
+          {
+            "label": "江湖",
+            "value": "2629"
+          },
+          {
+            "label": "古代",
+            "value": "2630"
+          },
+          {
+            "label": "魔幻",
+            "value": "2631"
+          },
+          {
+            "label": "萌系",
+            "value": "2632"
+          },
+          {
+            "label": "耽美",
+            "value": "2633"
+          },
+          {
+            "label": "剧情",
+            "value": "2634"
+          },
+          {
+            "label": "学生",
+            "value": "2635"
+          },
+          {
+            "label": "龙傲天",
+            "value": "2636"
+          },
+          {
+            "label": "姐姐",
+            "value": "2637"
+          },
+          {
+            "label": "打工人",
+            "value": "2638"
+          },
+          {
+            "label": "装逼",
+            "value": "2639"
+          },
+          {
+            "label": "爽",
+            "value": "2640"
+          },
+          {
+            "label": "欧风",
+            "value": "2641"
+          },
+          {
+            "label": "宫廷",
+            "value": "2642"
+          },
+          {
+            "label": "长条",
+            "value": "2643"
+          },
+          {
+            "label": "轻小说",
+            "value": "2644"
+          },
+          {
+            "label": "无节操",
+            "value": "2645"
+          },
+          {
+            "label": "扮猪吃虎",
+            "value": "2646"
+          },
+          {
+            "label": "纨绔",
+            "value": "2647"
+          },
+          {
+            "label": "架空",
+            "value": "2648"
+          },
+          {
+            "label": "美强惨",
+            "value": "2649"
+          },
+          {
+            "label": "女强",
+            "value": "2650"
+          },
+          {
+            "label": "御姐",
+            "value": "2651"
+          },
+          {
+            "label": "忠犬",
+            "value": "2652"
+          },
+          {
+            "label": "魔女",
+            "value": "2653"
+          },
+          {
+            "label": "百合",
+            "value": "2654"
+          },
+          {
+            "label": "逆袭",
+            "value": "2655"
+          },
+          {
+            "label": "偶像",
+            "value": "2656"
+          },
+          {
+            "label": "青春",
+            "value": "2657"
+          },
+          {
+            "label": "唯美",
+            "value": "2658"
+          },
+          {
+            "label": "浪漫",
+            "value": "2659"
+          },
+          {
+            "label": "连载中",
+            "value": "2660"
+          },
+          {
+            "label": "惊奇",
+            "value": "2661"
+          },
+          {
+            "label": "彩虹",
+            "value": "2662"
+          },
+          {
+            "label": "友情",
+            "value": "2663"
+          },
+          {
+            "label": "智商在线",
+            "value": "2664"
+          },
+          {
+            "label": "暧昧",
+            "value": "2665"
+          },
+          {
+            "label": "反差",
+            "value": "2666"
+          },
+          {
+            "label": "修罗场",
+            "value": "2667"
+          },
+          {
+            "label": "职场",
+            "value": "2668"
+          },
+          {
+            "label": "女装大佬",
+            "value": "2669"
+          },
+          {
+            "label": "四格",
+            "value": "2670"
+          },
+          {
+            "label": "黑白漫",
+            "value": "2671"
+          },
+          {
+            "label": "美食",
+            "value": "2672"
+          },
+          {
+            "label": "ゆり",
+            "value": "2673"
+          },
+          {
+            "label": "神鬼",
+            "value": "2674"
+          },
+          {
+            "label": "其他",
+            "value": "2675"
+          },
+          {
+            "label": "东方",
+            "value": "2676"
+          },
+          {
+            "label": "日本",
+            "value": "2677"
+          },
+          {
+            "label": "后宫",
+            "value": "2678"
+          },
+          {
+            "label": "现代言情",
+            "value": "2679"
+          },
+          {
+            "label": "现言脑洞",
+            "value": "2680"
+          },
+          {
+            "label": "高甜",
+            "value": "2681"
+          },
+          {
+            "label": "总裁",
+            "value": "2682"
+          },
+          {
+            "label": "都市脑洞",
+            "value": "2683"
+          },
+          {
+            "label": "投稿",
+            "value": "2684"
+          },
+          {
+            "label": "西方",
+            "value": "2685"
+          },
+          {
+            "label": "热门漫画",
+            "value": "2686"
+          },
+          {
+            "label": "杀伐果断",
+            "value": "2687"
+          },
+          {
+            "label": "逗比",
+            "value": "2688"
+          },
+          {
+            "label": "废材",
+            "value": "2689"
+          },
+          {
+            "label": "善良",
+            "value": "2690"
+          },
+          {
+            "label": "软萌",
+            "value": "2691"
+          },
+          {
+            "label": "战争",
+            "value": "2692"
+          },
+          {
+            "label": "宅斗",
+            "value": "2693"
+          },
+          {
+            "label": "戏精",
+            "value": "2694"
+          },
+          {
+            "label": "综合",
+            "value": "2695"
+          },
+          {
+            "label": "聪颖/智商在线",
+            "value": "2696"
+          },
+          {
+            "label": "救赎",
+            "value": "2697"
+          },
+          {
+            "label": "契约",
+            "value": "2698"
+          },
+          {
+            "label": "先婚后爱",
+            "value": "2699"
+          },
+          {
+            "label": "黑化",
+            "value": "2700"
+          },
+          {
+            "label": "并肩作战",
+            "value": "2701"
+          },
+          {
+            "label": "致郁",
+            "value": "2702"
+          },
+          {
+            "label": "日久生情",
+            "value": "2703"
+          },
+          {
+            "label": "奇遇",
+            "value": "2704"
+          },
+          {
+            "label": "傻白甜",
+            "value": "2705"
+          },
+          {
+            "label": "偏执",
+            "value": "2706"
+          },
+          {
+            "label": "神话",
+            "value": "2707"
+          },
+          {
+            "label": "妖怪",
+            "value": "2708"
+          },
+          {
+            "label": "傲娇",
+            "value": "2709"
+          },
+          {
+            "label": "勇敢",
+            "value": "2710"
+          },
+          {
+            "label": "怪物",
+            "value": "2711"
+          },
+          {
+            "label": "人外",
+            "value": "2712"
+          },
+          {
+            "label": "义气",
+            "value": "2713"
+          },
+          {
+            "label": "白毛",
+            "value": "2714"
+          },
+          {
+            "label": "未来",
+            "value": "2715"
+          },
+          {
+            "label": "末世",
+            "value": "2716"
+          },
+          {
+            "label": "暗黑",
+            "value": "2717"
+          },
+          {
+            "label": "欢喜冤家",
+            "value": "2718"
+          },
+          {
+            "label": "游戏",
+            "value": "2719"
+          },
+          {
+            "label": "甜宠",
+            "value": "2720"
+          },
+          {
+            "label": "魔法少女",
+            "value": "2721"
+          },
+          {
+            "label": "清冷",
+            "value": "2722"
+          },
+          {
+            "label": "追逐梦想",
+            "value": "2723"
+          },
+          {
+            "label": "强强",
+            "value": "2724"
+          },
+          {
+            "label": "明星",
+            "value": "2725"
+          },
+          {
+            "label": "马甲",
+            "value": "2726"
+          },
+          {
+            "label": "萌宠",
+            "value": "2727"
+          },
+          {
+            "label": "变异",
+            "value": "2728"
+          },
+          {
+            "label": "进化",
+            "value": "2729"
+          },
+          {
+            "label": "霸道",
+            "value": "2730"
+          },
+          {
+            "label": "双向暗恋",
+            "value": "2731"
+          },
+          {
+            "label": "狗粮",
+            "value": "2732"
+          },
+          {
+            "label": "轻松",
+            "value": "2733"
+          },
+          {
+            "label": "毒舌",
+            "value": "2734"
+          },
+          {
+            "label": "粘人",
+            "value": "2735"
+          },
+          {
+            "label": "骑士",
+            "value": "2736"
+          },
+          {
+            "label": "无敌流",
+            "value": "2737"
+          },
+          {
+            "label": "掌门流",
+            "value": "2738"
+          },
+          {
+            "label": "霸总",
+            "value": "2739"
+          },
+          {
+            "label": "阴郁/忧郁",
+            "value": "2740"
+          },
+          {
+            "label": "台湾作品",
+            "value": "2741"
+          },
+          {
+            "label": "魔法",
+            "value": "2742"
+          },
+          {
+            "label": "推理",
+            "value": "2743"
+          },
+          {
+            "label": "嚣张",
+            "value": "2744"
+          },
+          {
+            "label": "魔王",
+            "value": "2745"
+          },
+          {
+            "label": "脑洞",
+            "value": "2746"
+          },
+          {
+            "label": "金手指",
+            "value": "2747"
+          },
+          {
+            "label": "求生",
+            "value": "2748"
+          },
+          {
+            "label": "网游",
+            "value": "2749"
+          },
+          {
+            "label": "智斗",
+            "value": "2750"
+          },
+          {
+            "label": "异形",
+            "value": "2751"
+          },
+          {
+            "label": "冷酷",
+            "value": "2752"
+          },
+          {
+            "label": "爽文",
+            "value": "2753"
+          },
+          {
+            "label": "女追男",
+            "value": "2754"
+          },
+          {
+            "label": "久别重逢",
+            "value": "2755"
+          },
+          {
+            "label": "破镜重圆",
+            "value": "2756"
+          },
+          {
+            "label": "追妻",
+            "value": "2757"
+          },
+          {
+            "label": "反套路",
+            "value": "2758"
+          },
+          {
+            "label": "怪谈",
+            "value": "2759"
+          },
+          {
+            "label": "海盗",
+            "value": "2760"
+          },
+          {
+            "label": "白切黑",
+            "value": "2761"
+          },
+          {
+            "label": "爆笑",
+            "value": "2762"
+          },
+          {
+            "label": "武侠仙侠",
+            "value": "2763"
+          },
+          {
+            "label": "克苏鲁",
+            "value": "2764"
+          },
+          {
+            "label": "猎奇",
+            "value": "2765"
+          },
+          {
+            "label": "心机",
+            "value": "2766"
+          },
+          {
+            "label": "无敌",
+            "value": "2767"
+          },
+          {
+            "label": "权谋",
+            "value": "2768"
+          },
+          {
+            "label": "质子",
+            "value": "2769"
+          },
+          {
+            "label": "竹马",
+            "value": "2770"
+          },
+          {
+            "label": "颜艺",
+            "value": "2771"
+          },
+          {
+            "label": "中二",
+            "value": "2772"
+          },
+          {
+            "label": "升级",
+            "value": "2773"
+          },
+          {
+            "label": "魔法师",
+            "value": "2774"
+          },
+          {
+            "label": "迪化",
+            "value": "2775"
+          },
+          {
+            "label": "阳光",
+            "value": "2776"
+          },
+          {
+            "label": "虐恋",
+            "value": "2777"
+          },
+          {
+            "label": "单女主",
+            "value": "2778"
+          },
+          {
+            "label": "精分",
+            "value": "2779"
+          },
+          {
+            "label": "强制爱",
+            "value": "2780"
+          },
+          {
+            "label": "豪门",
+            "value": "2781"
+          },
+          {
+            "label": "独宠",
+            "value": "2782"
+          },
+          {
+            "label": "可盐可甜",
+            "value": "2783"
+          },
+          {
+            "label": "虐心",
+            "value": "2784"
+          },
+          {
+            "label": "刀剑",
+            "value": "2785"
+          },
+          {
+            "label": "领主",
+            "value": "2786"
+          },
+          {
+            "label": "替身梗",
+            "value": "2787"
+          },
+          {
+            "label": "能人异士",
+            "value": "2788"
+          },
+          {
+            "label": "钓系",
+            "value": "2789"
+          },
+          {
+            "label": "高冷",
+            "value": "2790"
+          },
+          {
+            "label": "年上",
+            "value": "2791"
+          },
+          {
+            "label": "道士",
+            "value": "2792"
+          },
+          {
+            "label": "冰山",
+            "value": "2793"
+          },
+          {
+            "label": "画手/画家",
+            "value": "2794"
+          },
+          {
+            "label": "暗恋",
+            "value": "2795"
+          },
+          {
+            "label": "一见钟情",
+            "value": "2796"
+          },
+          {
+            "label": "天才",
+            "value": "2797"
+          },
+          {
+            "label": "种田",
+            "value": "2798"
+          },
+          {
+            "label": "无限流",
+            "value": "2799"
+          },
+          {
+            "label": "复活",
+            "value": "2800"
+          },
+          {
+            "label": "自由",
+            "value": "2801"
+          },
+          {
+            "label": "星际",
+            "value": "2802"
+          },
+          {
+            "label": "护短",
+            "value": "2803"
+          },
+          {
+            "label": "师徒",
+            "value": "2804"
+          },
+          {
+            "label": "升级流",
+            "value": "2805"
+          },
+          {
+            "label": "沉稳",
+            "value": "2806"
+          },
+          {
+            "label": "卡牌",
+            "value": "2807"
+          },
+          {
+            "label": "骷髅",
+            "value": "2808"
+          },
+          {
+            "label": "杀戮",
+            "value": "2809"
+          },
+          {
+            "label": "真人",
+            "value": "2810"
+          },
+          {
+            "label": "影后",
+            "value": "2811"
+          },
+          {
+            "label": "武力值max",
+            "value": "2812"
+          },
+          {
+            "label": "灵异",
+            "value": "2813"
+          },
+          {
+            "label": "年下",
+            "value": "2814"
+          },
+          {
+            "label": "宅系",
+            "value": "2815"
+          },
+          {
+            "label": "惊悚",
+            "value": "2816"
+          },
+          {
+            "label": "穿书",
+            "value": "2817"
+          },
+          {
+            "label": "前世今生",
+            "value": "2818"
+          },
+          {
+            "label": "相爱相杀",
+            "value": "2819"
+          },
+          {
+            "label": "亦正亦邪",
+            "value": "2820"
+          },
+          {
+            "label": "萌",
+            "value": "2821"
+          },
+          {
+            "label": "自强",
+            "value": "2822"
+          },
+          {
+            "label": "乱世",
+            "value": "2823"
+          },
+          {
+            "label": "音乐舞蹈",
+            "value": "2824"
+          },
+          {
+            "label": "蔷薇",
+            "value": "2825"
+          },
+          {
+            "label": "生存",
+            "value": "2826"
+          },
+          {
+            "label": "女神",
+            "value": "2827"
+          },
+          {
+            "label": "直播",
+            "value": "2828"
+          },
+          {
+            "label": "呆萌",
+            "value": "2829"
+          },
+          {
+            "label": "社畜",
+            "value": "2830"
+          },
+          {
+            "label": "原创",
+            "value": "2831"
+          },
+          {
+            "label": "快穿",
+            "value": "2832"
+          },
+          {
+            "label": "女仆",
+            "value": "2833"
+          },
+          {
+            "label": "双马尾",
+            "value": "2834"
+          },
+          {
+            "label": "不死小强",
+            "value": "2835"
+          },
+          {
+            "label": "假戏真做",
+            "value": "2836"
+          },
+          {
+            "label": "双男主",
+            "value": "2837"
+          },
+          {
+            "label": "业界精英",
+            "value": "2838"
+          },
+          {
+            "label": "爽感",
+            "value": "2839"
+          },
+          {
+            "label": "公主",
+            "value": "2840"
+          },
+          {
+            "label": "奇幻爱情",
+            "value": "2841"
+          },
+          {
+            "label": "动作冒险",
+            "value": "2842"
+          },
+          {
+            "label": "国漫",
+            "value": "2843"
+          },
+          {
+            "label": "亲情",
+            "value": "2844"
+          },
+          {
+            "label": "经营",
+            "value": "2845"
+          },
+          {
+            "label": "青梅竹马",
+            "value": "2846"
+          },
+          {
+            "label": "老师",
+            "value": "2847"
+          },
+          {
+            "label": "轻橘",
+            "value": "2848"
+          },
+          {
+            "label": "短篇",
+            "value": "2849"
+          },
+          {
+            "label": "言情",
+            "value": "2850"
+          },
+          {
+            "label": "橘里橘气",
+            "value": "2851"
+          },
+          {
+            "label": "节操",
+            "value": "2852"
+          },
+          {
+            "label": "黑皮",
+            "value": "2853"
+          },
+          {
+            "label": "多女主",
+            "value": "2854"
+          },
+          {
+            "label": "家庭",
+            "value": "2855"
+          },
+          {
+            "label": "限制",
+            "value": "2856"
+          },
+          {
+            "label": "幻想",
+            "value": "2857"
+          },
+          {
+            "label": "韩国",
+            "value": "2858"
+          },
+          {
+            "label": "喜剧",
+            "value": "2859"
+          },
+          {
+            "label": "强者归来",
+            "value": "2860"
+          },
+          {
+            "label": "炸毛",
+            "value": "2861"
+          },
+          {
+            "label": "召唤",
+            "value": "2862"
+          },
+          {
+            "label": "运动",
+            "value": "2863"
+          },
+          {
+            "label": "西方魔幻",
+            "value": "2864"
+          },
+          {
+            "label": "兽人",
+            "value": "2865"
+          },
+          {
+            "label": "养娃",
+            "value": "2866"
+          },
+          {
+            "label": "狼人",
+            "value": "2867"
+          },
+          {
+            "label": "医生",
+            "value": "2868"
+          },
+          {
+            "label": "畅销",
+            "value": "2869"
+          },
+          {
+            "label": "脱线/粗神经",
+            "value": "2870"
+          },
+          {
+            "label": "正义之光",
+            "value": "2871"
+          },
+          {
+            "label": "英雄",
+            "value": "2872"
+          },
+          {
+            "label": "电竞大神",
+            "value": "2873"
+          },
+          {
+            "label": "仙侠",
+            "value": "2874"
+          },
+          {
+            "label": "本子",
+            "value": "2875"
+          },
+          {
+            "label": "高清单行",
+            "value": "2876"
+          },
+          {
+            "label": "非人",
+            "value": "2877"
+          },
+          {
+            "label": "魔物",
+            "value": "2878"
+          },
+          {
+            "label": "小天使",
+            "value": "2879"
+          },
+          {
+            "label": "学校",
+            "value": "2880"
+          },
+          {
+            "label": "倔强",
+            "value": "2881"
+          },
+          {
+            "label": "群像",
+            "value": "2882"
+          },
+          {
+            "label": "萝莉",
+            "value": "2883"
+          },
+          {
+            "label": "内向",
+            "value": "2884"
+          },
+          {
+            "label": "韩漫",
+            "value": "2885"
+          },
+          {
+            "label": "复生",
+            "value": "2886"
+          },
+          {
+            "label": "射击",
+            "value": "2887"
+          },
+          {
+            "label": "杀手",
+            "value": "2888"
+          },
+          {
+            "label": "舰娘",
+            "value": "2889"
+          },
+          {
+            "label": "机战",
+            "value": "2890"
+          },
+          {
+            "label": "神豪",
+            "value": "2891"
+          },
+          {
+            "label": "黑道",
+            "value": "2892"
+          },
+          {
+            "label": "侦探",
+            "value": "2893"
+          },
+          {
+            "label": "解密",
+            "value": "2894"
+          },
+          {
+            "label": "兄弟情",
+            "value": "2895"
+          },
+          {
+            "label": "神魔",
+            "value": "2896"
+          },
+          {
+            "label": "拟人",
+            "value": "2897"
+          },
+          {
+            "label": "佛系",
+            "value": "2898"
+          },
+          {
+            "label": "吸血鬼",
+            "value": "2899"
+          },
+          {
+            "label": "异国",
+            "value": "2900"
+          },
+          {
+            "label": "女巫",
+            "value": "2901"
+          },
+          {
+            "label": "宠物",
+            "value": "2902"
+          },
+          {
+            "label": "诡异",
+            "value": "2903"
+          },
+          {
+            "label": "末日",
+            "value": "2904"
+          },
+          {
+            "label": "神仙",
+            "value": "2905"
+          },
+          {
+            "label": "暴君",
+            "value": "2906"
+          },
+          {
+            "label": "帝王",
+            "value": "2907"
+          },
+          {
+            "label": "皇后",
+            "value": "2908"
+          },
+          {
+            "label": "宫斗宅斗",
+            "value": "2909"
+          },
+          {
+            "label": "古代言情",
+            "value": "2910"
+          },
+          {
+            "label": "恶魔",
+            "value": "2911"
+          },
+          {
+            "label": "天使",
+            "value": "2912"
+          },
+          {
+            "label": "长发",
+            "value": "2913"
+          },
+          {
+            "label": "年下养成",
+            "value": "2914"
+          },
+          {
+            "label": "养成",
+            "value": "2915"
+          },
+          {
+            "label": "女主播",
+            "value": "2916"
+          },
+          {
+            "label": "武术",
+            "value": "2917"
+          },
+          {
+            "label": "宗门",
+            "value": "2918"
+          },
+          {
+            "label": "同居",
+            "value": "2919"
+          },
+          {
+            "label": "女扮男装",
+            "value": "2920"
+          },
+          {
+            "label": "男团",
+            "value": "2921"
+          },
+          {
+            "label": "贵族",
+            "value": "2922"
+          },
+          {
+            "label": "现代",
+            "value": "2923"
+          },
+          {
+            "label": "感人",
+            "value": "2924"
+          },
+          {
+            "label": "小说",
+            "value": "2925"
+          },
+          {
+            "label": "古装",
+            "value": "2926"
+          },
+          {
+            "label": "小说改编",
+            "value": "2927"
+          },
+          {
+            "label": "歐式宮廷",
+            "value": "2928"
+          },
+          {
+            "label": "男神",
+            "value": "2929"
+          },
+          {
+            "label": "正剧",
+            "value": "2930"
+          },
+          {
+            "label": "科技",
+            "value": "2931"
+          },
+          {
+            "label": "伦理",
+            "value": "2932"
+          },
+          {
+            "label": "元气",
+            "value": "2933"
+          },
+          {
+            "label": "猫系",
+            "value": "2934"
+          },
+          {
+            "label": "地位反转",
+            "value": "2935"
+          },
+          {
+            "label": "双穿",
+            "value": "2936"
+          },
+          {
+            "label": "平民",
+            "value": "2937"
+          },
+          {
+            "label": "大叔",
+            "value": "2938"
+          },
+          {
+            "label": "邪恶",
+            "value": "2939"
+          },
+          {
+            "label": "欧式宫廷",
+            "value": "2940"
+          },
+          {
+            "label": "恶役",
+            "value": "2941"
+          },
+          {
+            "label": "梦想",
+            "value": "2942"
+          },
+          {
+            "label": "合集",
+            "value": "2943"
+          },
+          {
+            "label": "哲理",
+            "value": "2944"
+          },
+          {
+            "label": "2021大赛",
+            "value": "2945"
+          },
+          {
+            "label": "废柴",
+            "value": "2946"
+          },
+          {
+            "label": "轮回",
+            "value": "2947"
+          },
+          {
+            "label": "三无",
+            "value": "2948"
+          },
+          {
+            "label": "召唤兽",
+            "value": "2949"
+          },
+          {
+            "label": "老实人",
+            "value": "2950"
+          },
+          {
+            "label": "现实向",
+            "value": "2951"
+          },
+          {
+            "label": "胃疼",
+            "value": "2952"
+          },
+          {
+            "label": "段子",
+            "value": "2953"
+          },
+          {
+            "label": "虚拟世界",
+            "value": "2954"
+          },
+          {
+            "label": "休闲",
+            "value": "2955"
+          },
+          {
+            "label": "活泼",
+            "value": "2956"
+          },
+          {
+            "label": "男扮女装",
+            "value": "2957"
+          },
+          {
+            "label": "校霸",
+            "value": "2958"
+          },
+          {
+            "label": "宅男",
+            "value": "2959"
+          },
+          {
+            "label": "宅",
+            "value": "2960"
+          },
+          {
+            "label": "全能",
+            "value": "2961"
+          },
+          {
+            "label": "皇家权贵",
+            "value": "2962"
+          },
+          {
+            "label": "兽耳",
+            "value": "2963"
+          },
+          {
+            "label": "龙",
+            "value": "2964"
+          },
+          {
+            "label": "王爷",
+            "value": "2965"
+          },
+          {
+            "label": "失忆",
+            "value": "2966"
+          },
+          {
+            "label": "弟控妹控兄控",
+            "value": "2967"
+          },
+          {
+            "label": "温柔",
+            "value": "2968"
+          },
+          {
+            "label": "多攻",
+            "value": "2969"
+          },
+          {
+            "label": "民国",
+            "value": "2970"
+          },
+          {
+            "label": "伪娘",
+            "value": "2971"
+          },
+          {
+            "label": "福瑞",
+            "value": "2972"
+          },
+          {
+            "label": "黑白",
+            "value": "2973"
+          },
+          {
+            "label": "三角恋",
+            "value": "2974"
+          },
+          {
+            "label": "架空世界",
+            "value": "2975"
+          },
+          {
+            "label": "萌娃",
+            "value": "2976"
+          },
+          {
+            "label": "烧脑",
+            "value": "2977"
+          },
+          {
+            "label": "性转",
+            "value": "2978"
+          },
+          {
+            "label": "欧式",
+            "value": "2979"
+          },
+          {
+            "label": "性转换",
+            "value": "2980"
+          },
+          {
+            "label": "都市日常",
+            "value": "2981"
+          },
+          {
+            "label": "灵气复苏",
+            "value": "2982"
+          },
+          {
+            "label": "豪门总裁",
+            "value": "2983"
+          },
+          {
+            "label": "其他漫画",
+            "value": "2984"
+          },
+          {
+            "label": "商战",
+            "value": "2985"
+          },
+          {
+            "label": "颜值逆天",
+            "value": "2986"
+          },
+          {
+            "label": "江湖恩怨",
+            "value": "2987"
+          },
+          {
+            "label": "无口",
+            "value": "2988"
+          },
+          {
+            "label": "都市男女",
+            "value": "2989"
+          },
+          {
+            "label": "黏人",
+            "value": "2990"
+          },
+          {
+            "label": "理智",
+            "value": "2991"
+          },
+          {
+            "label": "纠结",
+            "value": "2992"
+          },
+          {
+            "label": "悬疑灵异",
+            "value": "2993"
+          },
+          {
+            "label": "战士",
+            "value": "2994"
+          },
+          {
+            "label": "男追女",
+            "value": "2995"
+          },
+          {
+            "label": "美女",
+            "value": "2996"
+          },
+          {
+            "label": "恶搞",
+            "value": "2997"
+          },
+          {
+            "label": "兽化",
+            "value": "2998"
+          },
+          {
+            "label": "机器人",
+            "value": "2999"
+          },
+          {
+            "label": "超能力",
+            "value": "3000"
+          },
+          {
+            "label": "王子",
+            "value": "3001"
+          },
+          {
+            "label": "将军",
+            "value": "3002"
+          },
+          {
+            "label": "公会",
+            "value": "3003"
+          },
+          {
+            "label": "打脸",
+            "value": "3004"
+          },
+          {
+            "label": "勇者",
+            "value": "3005"
+          },
+          {
+            "label": "乡村",
+            "value": "3006"
+          },
+          {
+            "label": "保镖",
+            "value": "3007"
+          },
+          {
+            "label": "古言脑洞",
+            "value": "3008"
+          },
+          {
+            "label": "空间",
+            "value": "3009"
+          },
+          {
+            "label": "史诗",
+            "value": "3010"
+          },
+          {
+            "label": "正能量",
+            "value": "3011"
+          },
+          {
+            "label": "栏目",
+            "value": "3012"
+          },
+          {
+            "label": "懒散",
+            "value": "3013"
+          },
+          {
+            "label": "转生",
+            "value": "3014"
+          },
+          {
+            "label": "苟",
+            "value": "3015"
+          },
+          {
+            "label": "西幻",
+            "value": "3016"
+          },
+          {
+            "label": "真人漫画",
+            "value": "3017"
+          },
+          {
+            "label": "惊险",
+            "value": "3018"
+          },
+          {
+            "label": "幽默搞笑",
+            "value": "3019"
+          },
+          {
+            "label": "皇子",
+            "value": "3020"
+          },
+          {
+            "label": "少儿",
+            "value": "3021"
+          },
+          {
+            "label": "乙女",
+            "value": "3022"
+          },
+          {
+            "label": "萌宝",
+            "value": "3023"
+          },
+          {
+            "label": "幻想言情",
+            "value": "3024"
+          },
+          {
+            "label": "宅向",
+            "value": "3025"
+          },
+          {
+            "label": "爱豆",
+            "value": "3026"
+          },
+          {
+            "label": "变态",
+            "value": "3027"
+          },
+          {
+            "label": "电竞选手",
+            "value": "3028"
+          },
+          {
+            "label": "娱乐",
+            "value": "3029"
+          },
+          {
+            "label": "治愈/萌系",
+            "value": "3030"
+          },
+          {
+            "label": "未来漫画家",
+            "value": "3031"
+          },
+          {
+            "label": "特工",
+            "value": "3032"
+          },
+          {
+            "label": "玄幻脑洞",
+            "value": "3033"
+          },
+          {
+            "label": "#热血沸腾",
+            "value": "3034"
+          },
+          {
+            "label": "#横冲直撞",
+            "value": "3035"
+          },
+          {
+            "label": "#动作",
+            "value": "3036"
+          },
+          {
+            "label": "#复仇",
+            "value": "3037"
+          },
+          {
+            "label": "文豪",
+            "value": "3038"
+          },
+          {
+            "label": "影视化",
+            "value": "3039"
+          },
+          {
+            "label": "都市异能",
+            "value": "3040"
+          },
+          {
+            "label": "双胞胎",
+            "value": "3041"
+          },
+          {
+            "label": "中二病",
+            "value": "3042"
+          },
+          {
+            "label": "完结",
+            "value": "3043"
+          },
+          {
+            "label": "逃生",
+            "value": "3044"
+          },
+          {
+            "label": "怪胎",
+            "value": "3045"
+          },
+          {
+            "label": "奇幻冒险",
+            "value": "3046"
+          },
+          {
+            "label": "社会",
+            "value": "3047"
+          },
+          {
+            "label": "刁蛮",
+            "value": "3048"
+          },
+          {
+            "label": "故事漫画",
+            "value": "3049"
+          },
+          {
+            "label": "浪漫爱情",
+            "value": "3050"
+          },
+          {
+            "label": "现言",
+            "value": "3051"
+          },
+          {
+            "label": "学识渊博",
+            "value": "3052"
+          },
+          {
+            "label": "学渣",
+            "value": "3053"
+          },
+          {
+            "label": "网恋奔现",
+            "value": "3054"
+          },
+          {
+            "label": "宠兽",
+            "value": "3055"
+          },
+          {
+            "label": "黑暗",
+            "value": "3056"
+          },
+          {
+            "label": "沙雕",
+            "value": "3057"
+          },
+          {
+            "label": "末日求生",
+            "value": "3058"
+          },
+          {
+            "label": "主仆",
+            "value": "3059"
+          },
+          {
+            "label": "橘味",
+            "value": "3060"
+          },
+          {
+            "label": "情感",
+            "value": "3061"
+          },
+          {
+            "label": "搞笑轻松",
+            "value": "3062"
+          },
+          {
+            "label": "北欧",
+            "value": "3063"
+          },
+          {
+            "label": "感动",
+            "value": "3064"
+          },
+          {
+            "label": "爽流",
+            "value": "3065"
+          },
+          {
+            "label": "军事",
+            "value": "3066"
+          },
+          {
+            "label": "公爵",
+            "value": "3067"
+          },
+          {
+            "label": "游戏体育",
+            "value": "3068"
+          },
+          {
+            "label": "真人漫",
+            "value": "3069"
+          },
+          {
+            "label": "体育",
+            "value": "3070"
+          },
+          {
+            "label": "捉鬼",
+            "value": "3071"
+          },
+          {
+            "label": "鬼怪",
+            "value": "3072"
+          },
+          {
+            "label": "悬疑片",
+            "value": "3073"
+          },
+          {
+            "label": "游戏竞技",
+            "value": "3074"
+          },
+          {
+            "label": "小奶狗",
+            "value": "3075"
+          },
+          {
+            "label": "灵魂互换",
+            "value": "3076"
+          },
+          {
+            "label": "冒险奇幻",
+            "value": "3077"
+          },
+          {
+            "label": "社交障碍",
+            "value": "3078"
+          },
+          {
+            "label": "胆小",
+            "value": "3079"
+          },
+          {
+            "label": "率真",
+            "value": "3080"
+          },
+          {
+            "label": "争霸",
+            "value": "3081"
+          },
+          {
+            "label": "经典",
+            "value": "3082"
+          },
+          {
+            "label": "女战神",
+            "value": "3083"
+          },
+          {
+            "label": "师尊",
+            "value": "3084"
+          },
+          {
+            "label": "白月光",
+            "value": "3085"
+          },
+          {
+            "label": "上班族",
+            "value": "3086"
+          },
+          {
+            "label": "闺蜜",
+            "value": "3087"
+          },
+          {
+            "label": "身高差",
+            "value": "3088"
+          },
+          {
+            "label": "孤儿",
+            "value": "3089"
+          },
+          {
+            "label": "厨师",
+            "value": "3090"
+          },
+          {
+            "label": "和尚",
+            "value": "3091"
+          },
+          {
+            "label": "精灵",
+            "value": "3092"
+          },
+          {
+            "label": "作者/作家",
+            "value": "3093"
+          },
+          {
+            "label": "乐队",
+            "value": "3094"
+          },
+          {
+            "label": "刀客",
+            "value": "3095"
+          },
+          {
+            "label": "致富",
+            "value": "3096"
+          },
+          {
+            "label": "吃货",
+            "value": "3097"
+          },
+          {
+            "label": "阴柔",
+            "value": "3098"
+          },
+          {
+            "label": "妹妹",
+            "value": "3099"
+          },
+          {
+            "label": "丹药",
+            "value": "3100"
+          },
+          {
+            "label": "古穿今",
+            "value": "3101"
+          },
+          {
+            "label": "美女漫画",
+            "value": "3102"
+          },
+          {
+            "label": "自恋",
+            "value": "3103"
+          },
+          {
+            "label": "学霸",
+            "value": "3104"
+          },
+          {
+            "label": "丧尸",
+            "value": "3105"
+          },
+          {
+            "label": "恶霸",
+            "value": "3106"
+          },
+          {
+            "label": "皇帝",
+            "value": "3107"
+          },
+          {
+            "label": "白莲花",
+            "value": "3108"
+          },
+          {
+            "label": "玄幻言情",
+            "value": "3109"
+          },
+          {
+            "label": "独家",
+            "value": "3110"
+          },
+          {
+            "label": "彩色",
+            "value": "3111"
+          },
+          {
+            "label": "斯文",
+            "value": "3112"
+          },
+          {
+            "label": "奶爸",
+            "value": "3113"
+          },
+          {
+            "label": "动画",
+            "value": "3114"
+          },
+          {
+            "label": "克隆人",
+            "value": "3115"
+          },
+          {
+            "label": "虐恋情深",
+            "value": "3116"
+          },
+          {
+            "label": "宮廷",
+            "value": "3117"
+          },
+          {
+            "label": "腐女",
+            "value": "3118"
+          },
+          {
+            "label": "古代宫廷",
+            "value": "3119"
+          },
+          {
+            "label": "少男",
+            "value": "3120"
+          },
+          {
+            "label": "温馨",
+            "value": "3121"
+          },
+          {
+            "label": "人妻",
+            "value": "3122"
+          },
+          {
+            "label": "身体互换",
+            "value": "3123"
+          },
+          {
+            "label": "医术",
+            "value": "3124"
+          },
+          {
+            "label": "佣兵",
+            "value": "3125"
+          },
+          {
+            "label": "武俠",
+            "value": "3126"
+          },
+          {
+            "label": "情有独钟",
+            "value": "3127"
+          },
+          {
+            "label": "异界",
+            "value": "3128"
+          },
+          {
+            "label": "朝廷重臣",
+            "value": "3129"
+          },
+          {
+            "label": "万人迷",
+            "value": "3130"
+          },
+          {
+            "label": "演员",
+            "value": "3131"
+          },
+          {
+            "label": "女帝",
+            "value": "3132"
+          },
+          {
+            "label": "白富美",
+            "value": "3133"
+          },
+          {
+            "label": "氪金",
+            "value": "3134"
+          },
+          {
+            "label": "青年",
+            "value": "3135"
+          },
+          {
+            "label": "婚姻",
+            "value": "3136"
+          },
+          {
+            "label": "豪快",
+            "value": "3137"
+          },
+          {
+            "label": "#热血",
+            "value": "3138"
+          },
+          {
+            "label": "#少年",
+            "value": "3139"
+          },
+          {
+            "label": "#游戏",
+            "value": "3140"
+          },
+          {
+            "label": "神怪",
+            "value": "3141"
+          },
+          {
+            "label": "运动竞技",
+            "value": "3142"
+          },
+          {
+            "label": "年龄差",
+            "value": "3143"
+          },
+          {
+            "label": "功法",
+            "value": "3144"
+          },
+          {
+            "label": "美食休闲",
+            "value": "3145"
+          },
+          {
+            "label": "紧张刺激",
+            "value": "3146"
+          },
+          {
+            "label": "近代",
+            "value": "3147"
+          },
+          {
+            "label": "枪战",
+            "value": "3148"
+          },
+          {
+            "label": "热血/冒险",
+            "value": "3149"
+          },
+          {
+            "label": "大佬",
+            "value": "3150"
+          },
+          {
+            "label": "军阀",
+            "value": "3151"
+          },
+          {
+            "label": "王妃",
+            "value": "3152"
+          },
+          {
+            "label": "血腥",
+            "value": "3153"
+          },
+          {
+            "label": "带球跑",
+            "value": "3154"
+          },
+          {
+            "label": "少侠",
+            "value": "3155"
+          },
+          {
+            "label": "愛情",
+            "value": "3156"
+          },
+          {
+            "label": "生子",
+            "value": "3157"
+          },
+          {
+            "label": "四格多格",
+            "value": "3158"
+          },
+          {
+            "label": "古风穿越",
+            "value": "3166"
+          },
+          {
+            "label": "附身",
+            "value": "3211"
+          },
+          {
+            "label": "刺激",
+            "value": "3213"
+          },
+          {
+            "label": "异界入侵",
+            "value": "3214"
+          },
+          {
+            "label": "强剧情",
+            "value": "3215"
+          },
+          {
+            "label": "犯罪",
+            "value": "3216"
+          },
+          {
+            "label": "台湾原创作品",
+            "value": "3217"
+          },
+          {
+            "label": "权力",
+            "value": "3218"
+          },
+          {
+            "label": "独特",
+            "value": "3219"
+          },
+          {
+            "label": "成长",
+            "value": "3220"
+          },
+          {
+            "label": "悬疑恐怖",
+            "value": "3221"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wmanhua",
+    "name": "W漫画",
+    "available": true,
+    "base": "https://www.wmanhua.com",
+    "family": "wd",
+    "detailPattern": "/comic/\\d+\\.html",
+    "cards": ".card-content, .manga-card",
+    "catalog": "",
+    "reader": "",
+    "search": "/search?query={keyword}&page={page}",
+    "latest": "/sort?category=0&tag=0&page={page}",
+    "filters": [
+      {
+        "label": "全部",
+        "path": "/sort?category=0&tag=0&page={page}"
+      },
+      {
+        "label": "日本漫画",
+        "path": "/sort?category=1&tag=0&page={page}"
+      },
+      {
+        "label": "大陆漫画",
+        "path": "/sort?category=3&tag=0&page={page}"
+      },
+      {
+        "label": "韩国漫画",
+        "path": "/sort?category=4&tag=0&page={page}"
+      },
+      {
+        "label": "港台漫画",
+        "path": "/sort?category=14&tag=0&page={page}"
+      },
+      {
+        "label": "悬疑",
+        "path": "/sort?category=0&tag=1&page={page}"
+      },
+      {
+        "label": "欢乐",
+        "path": "/sort?category=0&tag=2&page={page}"
+      },
+      {
+        "label": "搞笑",
+        "path": "/sort?category=0&tag=3&page={page}"
+      },
+      {
+        "label": "玄幻",
+        "path": "/sort?category=0&tag=4&page={page}"
+      },
+      {
+        "label": "冒险",
+        "path": "/sort?category=0&tag=5&page={page}"
+      },
+      {
+        "label": "爱情",
+        "path": "/sort?category=0&tag=6&page={page}"
+      },
+      {
+        "label": "百合",
+        "path": "/sort?category=0&tag=7&page={page}"
+      },
+      {
+        "label": "推理",
+        "path": "/sort?category=0&tag=8&page={page}"
+      },
+      {
+        "label": "热血",
+        "path": "/sort?category=0&tag=9&page={page}"
+      },
+      {
+        "label": "校园",
+        "path": "/sort?category=0&tag=13&page={page}"
+      },
+      {
+        "label": "后宫",
+        "path": "/sort?category=0&tag=29&page={page}"
+      },
+      {
+        "label": "科幻",
+        "path": "/sort?category=0&tag=32&page={page}"
+      },
+      {
+        "label": "都市",
+        "path": "/sort?category=0&tag=35&page={page}"
+      },
+      {
+        "label": "武侠",
+        "path": "/sort?category=0&tag=46&page={page}"
+      },
+      {
+        "label": "修仙",
+        "path": "/sort?category=0&tag=52&page={page}"
+      },
+      {
+        "label": "耽美",
+        "path": "/sort?category=0&tag=73&page={page}"
+      },
+      {
+        "label": "彩色",
+        "path": "/sort?category=0&tag=74&page={page}"
+      },
+      {
+        "label": "短篇",
+        "path": "/sort?category=0&tag=38&page={page}"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://www.wmanhua.com/comic/5971.html",
+    "sampleChapter": "https://www.wmanhua.com/chapter/5971-931502.html",
+    "decoder": "numbered",
+    "readerPagination": false,
+    "reverseCatalog": true,
+    "auditIndex": 21,
+    "filterGroups": [
+      {
+        "key": "region",
+        "label": "地区",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "日本漫画",
+            "value": "1"
+          },
+          {
+            "label": "韩国漫画",
+            "value": "2"
+          },
+          {
+            "label": "大陆漫画",
+            "value": "3"
+          },
+          {
+            "label": "港台漫画",
+            "value": "4"
+          },
+          {
+            "label": "漫画",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "key": "tag",
+        "label": "题材",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "爱情",
+            "value": "1"
+          },
+          {
+            "label": "百合",
+            "value": "2"
+          },
+          {
+            "label": "搞笑",
+            "value": "3"
+          },
+          {
+            "label": "奇幻",
+            "value": "4"
+          },
+          {
+            "label": "冒险",
+            "value": "5"
+          },
+          {
+            "label": "轻改",
+            "value": "6"
+          },
+          {
+            "label": "欢乐",
+            "value": "7"
+          },
+          {
+            "label": "治愈",
+            "value": "8"
+          },
+          {
+            "label": "妹控",
+            "value": "9"
+          },
+          {
+            "label": "长篇",
+            "value": "10"
+          },
+          {
+            "label": "格斗",
+            "value": "11"
+          },
+          {
+            "label": "节操",
+            "value": "12"
+          },
+          {
+            "label": "校园",
+            "value": "13"
+          },
+          {
+            "label": "悬疑",
+            "value": "14"
+          },
+          {
+            "label": "生活",
+            "value": "15"
+          },
+          {
+            "label": "魔幻",
+            "value": "16"
+          },
+          {
+            "label": "竞技",
+            "value": "17"
+          },
+          {
+            "label": "励志",
+            "value": "18"
+          },
+          {
+            "label": "性转",
+            "value": "19"
+          },
+          {
+            "label": "武侠",
+            "value": "20"
+          },
+          {
+            "label": "玄幻",
+            "value": "21"
+          },
+          {
+            "label": "都市",
+            "value": "22"
+          },
+          {
+            "label": "伪娘",
+            "value": "23"
+          },
+          {
+            "label": "科幻",
+            "value": "24"
+          },
+          {
+            "label": "后宫",
+            "value": "25"
+          },
+          {
+            "label": "异界",
+            "value": "26"
+          },
+          {
+            "label": "穿越",
+            "value": "27"
+          },
+          {
+            "label": "热血",
+            "value": "28"
+          },
+          {
+            "label": "重生",
+            "value": "29"
+          },
+          {
+            "label": "职场",
+            "value": "30"
+          },
+          {
+            "label": "女主",
+            "value": "31"
+          },
+          {
+            "label": "魔法",
+            "value": "32"
+          },
+          {
+            "label": "仙侠",
+            "value": "33"
+          },
+          {
+            "label": "美食",
+            "value": "34"
+          },
+          {
+            "label": "恐怖",
+            "value": "35"
+          },
+          {
+            "label": "生存",
+            "value": "36"
+          },
+          {
+            "label": "四格",
+            "value": "37"
+          },
+          {
+            "label": "历史",
+            "value": "38"
+          },
+          {
+            "label": "修仙",
+            "value": "39"
+          },
+          {
+            "label": "系统",
+            "value": "40"
+          },
+          {
+            "label": "侦探",
+            "value": "41"
+          },
+          {
+            "label": "游戏",
+            "value": "42"
+          },
+          {
+            "label": "异能",
+            "value": "43"
+          },
+          {
+            "label": "同人",
+            "value": "44"
+          },
+          {
+            "label": "东方",
+            "value": "45"
+          },
+          {
+            "label": "战争",
+            "value": "46"
+          },
+          {
+            "label": "舰娘",
+            "value": "47"
+          },
+          {
+            "label": "末世",
+            "value": "48"
+          },
+          {
+            "label": "舞蹈",
+            "value": "49"
+          },
+          {
+            "label": "转生",
+            "value": "50"
+          },
+          {
+            "label": "灵异",
+            "value": "51"
+          },
+          {
+            "label": "机战",
+            "value": "52"
+          },
+          {
+            "label": "复仇",
+            "value": "53"
+          },
+          {
+            "label": "末日",
+            "value": "54"
+          },
+          {
+            "label": "萌系",
+            "value": "55"
+          },
+          {
+            "label": "逆袭",
+            "value": "56"
+          },
+          {
+            "label": "网游",
+            "value": "57"
+          },
+          {
+            "label": "日常",
+            "value": "58"
+          },
+          {
+            "label": "爱倩",
+            "value": "59"
+          },
+          {
+            "label": "推理",
+            "value": "60"
+          },
+          {
+            "label": "音乐",
+            "value": "61"
+          },
+          {
+            "label": "病娇",
+            "value": "63"
+          },
+          {
+            "label": "爆笑",
+            "value": "64"
+          },
+          {
+            "label": "战斗",
+            "value": "65"
+          },
+          {
+            "label": "言情",
+            "value": "66"
+          },
+          {
+            "label": "宫廷",
+            "value": "67"
+          },
+          {
+            "label": "养成",
+            "value": "68"
+          },
+          {
+            "label": "恋爱",
+            "value": "69"
+          },
+          {
+            "label": "诡异",
+            "value": "70"
+          },
+          {
+            "label": "惊悚",
+            "value": "71"
+          },
+          {
+            "label": "耽美",
+            "value": "72"
+          },
+          {
+            "label": "彩色",
+            "value": "73"
+          },
+          {
+            "label": "其他",
+            "value": "74"
+          },
+          {
+            "label": "TL",
+            "value": "75"
+          },
+          {
+            "label": "宅系",
+            "value": "76"
+          },
+          {
+            "label": "FATE",
+            "value": "77"
+          },
+          {
+            "label": "C103",
+            "value": "78"
+          },
+          {
+            "label": "C105",
+            "value": "79"
+          },
+          {
+            "label": "歡樂向",
+            "value": "80"
+          },
+          {
+            "label": "愛情",
+            "value": "81"
+          },
+          {
+            "label": "冒險",
+            "value": "82"
+          },
+          {
+            "label": "神鬼",
+            "value": "83"
+          },
+          {
+            "label": "轻小说",
+            "value": "84"
+          },
+          {
+            "label": "格鬥",
+            "value": "85"
+          },
+          {
+            "label": "後宮",
+            "value": "86"
+          },
+          {
+            "label": "C106",
+            "value": "87"
+          },
+          {
+            "label": "C107",
+            "value": "88"
+          },
+          {
+            "label": "穿越",
+            "value": "89"
+          },
+          {
+            "label": "性转换",
+            "value": "90"
+          },
+          {
+            "label": "AA",
+            "value": "91"
+          },
+          {
+            "label": "C108",
+            "value": "92"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "aba",
+    "name": "阿吧漫画",
+    "available": true,
+    "base": "https://www.abamhc1.click",
+    "family": "dom",
+    "detailPattern": "/book/\\d+",
+    "cards": ".mh-item, .manga-list li, .book-list li",
+    "catalog": "#detail-list-select a",
+    "reader": "#cp_img img.lazy",
+    "search": "/search?keyword={keyword}&page={page}",
+    "latest": "/booklist?end=0&page={page}",
+    "filters": [
+      {
+        "label": "连载",
+        "path": "/booklist?end=0&page={page}"
+      },
+      {
+        "label": "完结",
+        "path": "/booklist?end=1&page={page}"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://www.abamhc1.click/book/3376",
+    "sampleChapter": "https://www.abamhc1.click/chapter/55011",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 22
+  },
+  {
+    "id": "comic51",
+    "name": "51漫画",
+    "available": true,
+    "base": "https://www.favcomic.xyz",
+    "family": "fav",
+    "detailPattern": "/comic/detail/\\d+",
+    "cards": ".comic_li",
+    "catalog": "a.item_box",
+    "reader": "#content img.unlazyload",
+    "search": "/search?keyword={keyword}&page={page}",
+    "latest": "/free?keyword=&tag=0&type=1&sort=1&page={page}",
+    "filters": [
+      {
+        "label": "少年",
+        "path": "/free?keyword=&tag=0&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "奇幻",
+        "path": "/free?keyword=&tag=1&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "冒险",
+        "path": "/free?keyword=&tag=4&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "异世界",
+        "path": "/free?keyword=&tag=7&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "爱情",
+        "path": "/free?keyword=&tag=36&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "神魔",
+        "path": "/free?keyword=&tag=5&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "推理悬疑",
+        "path": "/free?keyword=&tag=2&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "热血",
+        "path": "/free?keyword=&tag=3&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "恐怖·惊悚",
+        "path": "/free?keyword=&tag=11&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "节操",
+        "path": "/free?keyword=&tag=41&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "校园",
+        "path": "/free?keyword=&tag=34&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "搞笑喜剧",
+        "path": "/free?keyword=&tag=6&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "科幻",
+        "path": "/free?keyword=&tag=42&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "后宫",
+        "path": "/free?keyword=&tag=40&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "格斗",
+        "path": "/free?keyword=&tag=32&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "运动竞技",
+        "path": "/free?keyword=&tag=9&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "穿越",
+        "path": "/free?keyword=&tag=88&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "剧情",
+        "path": "/free?keyword=&tag=79&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "美食家",
+        "path": "/free?keyword=&tag=12&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "历史",
+        "path": "/free?keyword=&tag=10&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "职场",
+        "path": "/free?keyword=&tag=43&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "性转换",
+        "path": "/free?keyword=&tag=45&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "伪娘",
+        "path": "/free?keyword=&tag=83&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "黑道",
+        "path": "/free?keyword=&tag=8&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "动作",
+        "path": "/free?keyword=&tag=80&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "战争",
+        "path": "/free?keyword=&tag=16&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "音乐",
+        "path": "/free?keyword=&tag=39&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "轻小说",
+        "path": "/free?keyword=&tag=112&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "励志",
+        "path": "/free?keyword=&tag=15&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "武侠",
+        "path": "/free?keyword=&tag=13&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "短篇",
+        "path": "/free?keyword=&tag=35&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "修真",
+        "path": "/free?keyword=&tag=89&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "其他",
+        "path": "/free?keyword=&tag=14&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "百合",
+        "path": "/free?keyword=&tag=118&type=1&sort=1&page={page}"
+      },
+      {
+        "label": "少女",
+        "path": "/free?keyword=&tag=0&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "恋爱",
+        "path": "/free?keyword=&tag=17&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "TL",
+        "path": "/free?keyword=&tag=33&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "BL",
+        "path": "/free?keyword=&tag=19&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "欢乐向",
+        "path": "/free?keyword=&tag=31&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "校园",
+        "path": "/free?keyword=&tag=18&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "百合",
+        "path": "/free?keyword=&tag=21&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "后宫·宮廷",
+        "path": "/free?keyword=&tag=28&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "轻小说",
+        "path": "/free?keyword=&tag=44&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "剧情",
+        "path": "/free?keyword=&tag=81&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "美食",
+        "path": "/free?keyword=&tag=38&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "职场",
+        "path": "/free?keyword=&tag=26&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "治愈",
+        "path": "/free?keyword=&tag=24&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "舞蹈音乐",
+        "path": "/free?keyword=&tag=20&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "性转换",
+        "path": "/free?keyword=&tag=25&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "伪娘",
+        "path": "/free?keyword=&tag=82&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "萌系",
+        "path": "/free?keyword=&tag=22&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "重生",
+        "path": "/free?keyword=&tag=37&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "生活日常",
+        "path": "/free?keyword=&tag=27&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "宠物",
+        "path": "/free?keyword=&tag=30&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "ABO",
+        "path": "/free?keyword=&tag=125&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "霸道总裁",
+        "path": "/free?keyword=&tag=29&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "古风",
+        "path": "/free?keyword=&tag=23&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "短篇",
+        "path": "/free?keyword=&tag=46&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "其他",
+        "path": "/free?keyword=&tag=75&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "异世界",
+        "path": "/free?keyword=&tag=122&type=2&sort=1&page={page}"
+      },
+      {
+        "label": "绅士",
+        "path": "/free?keyword=&tag=0&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "剧情向",
+        "path": "/free?keyword=&tag=48&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "无修正",
+        "path": "/free?keyword=&tag=47&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "同人",
+        "path": "/free?keyword=&tag=110&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "巨乳",
+        "path": "/free?keyword=&tag=49&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "制服·JK",
+        "path": "/free?keyword=&tag=68&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "口交",
+        "path": "/free?keyword=&tag=52&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "近亲·乱伦",
+        "path": "/free?keyword=&tag=62&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "熟女",
+        "path": "/free?keyword=&tag=50&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "伪娘",
+        "path": "/free?keyword=&tag=93&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "NTR",
+        "path": "/free?keyword=&tag=55&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "贫乳",
+        "path": "/free?keyword=&tag=94&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "束缚·捆绑",
+        "path": "/free?keyword=&tag=108&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "眼镜",
+        "path": "/free?keyword=&tag=56&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "3P·群交",
+        "path": "/free?keyword=&tag=63&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "丝袜",
+        "path": "/free?keyword=&tag=104&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "人外",
+        "path": "/free?keyword=&tag=111&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "辣妹",
+        "path": "/free?keyword=&tag=65&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "情趣内衣",
+        "path": "/free?keyword=&tag=64&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "浪漫爱情",
+        "path": "/free?keyword=&tag=78&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "兽耳",
+        "path": "/free?keyword=&tag=60&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "调教",
+        "path": "/free?keyword=&tag=58&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "百合",
+        "path": "/free?keyword=&tag=90&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "乳交",
+        "path": "/free?keyword=&tag=51&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "触手",
+        "path": "/free?keyword=&tag=91&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "妖精·魅魔",
+        "path": "/free?keyword=&tag=95&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "重口",
+        "path": "/free?keyword=&tag=106&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "兔女郎",
+        "path": "/free?keyword=&tag=109&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "黑肉",
+        "path": "/free?keyword=&tag=59&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "强暴",
+        "path": "/free?keyword=&tag=57&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "扶他",
+        "path": "/free?keyword=&tag=101&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "人妻",
+        "path": "/free?keyword=&tag=54&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "足交",
+        "path": "/free?keyword=&tag=70&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "处女",
+        "path": "/free?keyword=&tag=97&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "痴女",
+        "path": "/free?keyword=&tag=98&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "痴汉·丑男",
+        "path": "/free?keyword=&tag=107&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "性玩具",
+        "path": "/free?keyword=&tag=61&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "颜射",
+        "path": "/free?keyword=&tag=99&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "泳装",
+        "path": "/free?keyword=&tag=100&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "出汗",
+        "path": "/free?keyword=&tag=73&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "多毛",
+        "path": "/free?keyword=&tag=74&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "舔阴",
+        "path": "/free?keyword=&tag=102&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "双马尾",
+        "path": "/free?keyword=&tag=67&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "自慰",
+        "path": "/free?keyword=&tag=69&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "肛交",
+        "path": "/free?keyword=&tag=96&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "中出",
+        "path": "/free?keyword=&tag=53&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "排尿",
+        "path": "/free?keyword=&tag=72&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "AI生成",
+        "path": "/free?keyword=&tag=123&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "男娘",
+        "path": "/free?keyword=&tag=117&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "受孕",
+        "path": "/free?keyword=&tag=124&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "可爱",
+        "path": "/free?keyword=&tag=121&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "护士",
+        "path": "/free?keyword=&tag=105&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "潮吹",
+        "path": "/free?keyword=&tag=71&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "肉感女",
+        "path": "/free?keyword=&tag=120&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "双穴",
+        "path": "/free?keyword=&tag=115&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "长筒袜",
+        "path": "/free?keyword=&tag=66&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "正太",
+        "path": "/free?keyword=&tag=119&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "3D",
+        "path": "/free?keyword=&tag=114&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "露出",
+        "path": "/free?keyword=&tag=103&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "阿黑颜",
+        "path": "/free?keyword=&tag=113&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "yaoi",
+        "path": "/free?keyword=&tag=116&type=4&sort=1&page={page}"
+      },
+      {
+        "label": "写真",
+        "path": "/free?keyword=&tag=0&type=3&sort=1&page={page}"
+      },
+      {
+        "label": "Cosplay",
+        "path": "/free?keyword=&tag=76&type=3&sort=1&page={page}"
+      },
+      {
+        "label": "AI生成",
+        "path": "/free?keyword=&tag=87&type=3&sort=1&page={page}"
+      },
+      {
+        "label": "CG画集",
+        "path": "/free?keyword=&tag=85&type=3&sort=1&page={page}"
+      },
+      {
+        "label": "写真",
+        "path": "/free?keyword=&tag=86&type=3&sort=1&page={page}"
+      },
+      {
+        "label": "OnlyFans",
+        "path": "/free?keyword=&tag=77&type=3&sort=1&page={page}"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "仅明确免费章节",
+    "sampleDetail": "https://www.favcomic.xyz/comic/detail/1263101242312007680",
+    "sampleChapter": "https://www.favcomic.xyz/comic/chapter/1265594257805139968",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 23
+  },
+  {
+    "id": "dmanhua",
+    "name": "D漫画",
+    "available": true,
+    "base": "https://www.dmanhua.com",
+    "family": "wd",
+    "detailPattern": "/comic/\\d+\\.html",
+    "cards": ".card-content, .manga-card",
+    "catalog": "",
+    "reader": "",
+    "search": "/search?query={keyword}&page={page}",
+    "latest": "/sort?category=0&tag=0&page={page}",
+    "filters": [
+      {
+        "label": "最新",
+        "path": "/new/"
+      },
+      {
+        "label": "热门",
+        "path": "/hot/"
+      },
+      {
+        "label": "日本漫画",
+        "path": "/sort/?category=1&tag=&page={page}"
+      },
+      {
+        "label": "大陆漫画",
+        "path": "/sort/?category=3&tag=&page={page}"
+      },
+      {
+        "label": "韩国漫画",
+        "path": "/sort/?category=4&tag=&page={page}"
+      },
+      {
+        "label": "全部",
+        "path": "/sort/?category=&tag=&page={page}"
+      },
+      {
+        "label": "悬疑",
+        "path": "/sort/?category=&tag=1&page={page}"
+      },
+      {
+        "label": "欢乐",
+        "path": "/sort/?category=&tag=2&page={page}"
+      },
+      {
+        "label": "搞笑",
+        "path": "/sort/?category=&tag=3&page={page}"
+      },
+      {
+        "label": "玄幻",
+        "path": "/sort/?category=&tag=4&page={page}"
+      },
+      {
+        "label": "冒险",
+        "path": "/sort/?category=&tag=5&page={page}"
+      },
+      {
+        "label": "爱情",
+        "path": "/sort/?category=&tag=6&page={page}"
+      },
+      {
+        "label": "百合",
+        "path": "/sort/?category=&tag=7&page={page}"
+      },
+      {
+        "label": "推理",
+        "path": "/sort/?category=&tag=8&page={page}"
+      },
+      {
+        "label": "热血",
+        "path": "/sort/?category=&tag=9&page={page}"
+      },
+      {
+        "label": "异界",
+        "path": "/sort/?category=&tag=10&page={page}"
+      },
+      {
+        "label": "轻改",
+        "path": "/sort/?category=&tag=11&page={page}"
+      },
+      {
+        "label": "奇幻",
+        "path": "/sort/?category=&tag=12&page={page}"
+      },
+      {
+        "label": "校园",
+        "path": "/sort/?category=&tag=13&page={page}"
+      },
+      {
+        "label": "妹控",
+        "path": "/sort/?category=&tag=14&page={page}"
+      },
+      {
+        "label": "生活",
+        "path": "/sort/?category=&tag=15&page={page}"
+      },
+      {
+        "label": "竞技",
+        "path": "/sort/?category=&tag=16&page={page}"
+      },
+      {
+        "label": "同人",
+        "path": "/sort/?category=&tag=17&page={page}"
+      },
+      {
+        "label": "伪娘",
+        "path": "/sort/?category=&tag=18&page={page}"
+      },
+      {
+        "label": "东方",
+        "path": "/sort/?category=&tag=19&page={page}"
+      },
+      {
+        "label": "美食",
+        "path": "/sort/?category=&tag=20&page={page}"
+      },
+      {
+        "label": "格斗",
+        "path": "/sort/?category=&tag=21&page={page}"
+      },
+      {
+        "label": "战争",
+        "path": "/sort/?category=&tag=22&page={page}"
+      },
+      {
+        "label": "舰娘",
+        "path": "/sort/?category=&tag=23&page={page}"
+      },
+      {
+        "label": "治愈",
+        "path": "/sort/?category=&tag=24&page={page}"
+      },
+      {
+        "label": "魔幻",
+        "path": "/sort/?category=&tag=25&page={page}"
+      },
+      {
+        "label": "职场",
+        "path": "/sort/?category=&tag=26&page={page}"
+      },
+      {
+        "label": "性转",
+        "path": "/sort/?category=&tag=27&page={page}"
+      },
+      {
+        "label": "萌系",
+        "path": "/sort/?category=&tag=28&page={page}"
+      },
+      {
+        "label": "后宫",
+        "path": "/sort/?category=&tag=29&page={page}"
+      },
+      {
+        "label": "节操",
+        "path": "/sort/?category=&tag=30&page={page}"
+      },
+      {
+        "label": "魔法",
+        "path": "/sort/?category=&tag=31&page={page}"
+      },
+      {
+        "label": "科幻",
+        "path": "/sort/?category=&tag=32&page={page}"
+      },
+      {
+        "label": "穿越",
+        "path": "/sort/?category=&tag=33&page={page}"
+      },
+      {
+        "label": "仙侠",
+        "path": "/sort/?category=&tag=34&page={page}"
+      },
+      {
+        "label": "都市",
+        "path": "/sort/?category=&tag=35&page={page}"
+      },
+      {
+        "label": "异能",
+        "path": "/sort/?category=&tag=36&page={page}"
+      },
+      {
+        "label": "网游",
+        "path": "/sort/?category=&tag=37&page={page}"
+      },
+      {
+        "label": "短篇",
+        "path": "/sort/?category=&tag=38&page={page}"
+      },
+      {
+        "label": "女主",
+        "path": "/sort/?category=&tag=39&page={page}"
+      },
+      {
+        "label": "恐怖",
+        "path": "/sort/?category=&tag=40&page={page}"
+      },
+      {
+        "label": "重生",
+        "path": "/sort/?category=&tag=41&page={page}"
+      },
+      {
+        "label": "日常",
+        "path": "/sort/?category=&tag=42&page={page}"
+      },
+      {
+        "label": "侦探",
+        "path": "/sort/?category=&tag=43&page={page}"
+      },
+      {
+        "label": "言情",
+        "path": "/sort/?category=&tag=44&page={page}"
+      },
+      {
+        "label": "生存",
+        "path": "/sort/?category=&tag=45&page={page}"
+      },
+      {
+        "label": "武侠",
+        "path": "/sort/?category=&tag=46&page={page}"
+      },
+      {
+        "label": "系统",
+        "path": "/sort/?category=&tag=47&page={page}"
+      },
+      {
+        "label": "励志",
+        "path": "/sort/?category=&tag=48&page={page}"
+      },
+      {
+        "label": "末世",
+        "path": "/sort/?category=&tag=49&page={page}"
+      },
+      {
+        "label": "转生",
+        "path": "/sort/?category=&tag=50&page={page}"
+      },
+      {
+        "label": "长篇",
+        "path": "/sort/?category=&tag=51&page={page}"
+      },
+      {
+        "label": "修仙",
+        "path": "/sort/?category=&tag=52&page={page}"
+      },
+      {
+        "label": "末日",
+        "path": "/sort/?category=&tag=53&page={page}"
+      },
+      {
+        "label": "灵异",
+        "path": "/sort/?category=&tag=54&page={page}"
+      },
+      {
+        "label": "游戏",
+        "path": "/sort/?category=&tag=55&page={page}"
+      },
+      {
+        "label": "爱倩",
+        "path": "/sort/?category=&tag=56&page={page}"
+      },
+      {
+        "label": "销毁",
+        "path": "/sort/?category=&tag=57&page={page}"
+      },
+      {
+        "label": "病娇",
+        "path": "/sort/?category=&tag=58&page={page}"
+      },
+      {
+        "label": "音乐",
+        "path": "/sort/?category=&tag=59&page={page}"
+      },
+      {
+        "label": "爆笑",
+        "path": "/sort/?category=&tag=60&page={page}"
+      },
+      {
+        "label": "机战",
+        "path": "/sort/?category=&tag=61&page={page}"
+      },
+      {
+        "label": "复仇",
+        "path": "/sort/?category=&tag=62&page={page}"
+      },
+      {
+        "label": "舞蹈",
+        "path": "/sort/?category=&tag=63&page={page}"
+      },
+      {
+        "label": "战斗",
+        "path": "/sort/?category=&tag=64&page={page}"
+      },
+      {
+        "label": "逆袭",
+        "path": "/sort/?category=&tag=65&page={page}"
+      },
+      {
+        "label": "历史",
+        "path": "/sort/?category=&tag=66&page={page}"
+      },
+      {
+        "label": "恋爱",
+        "path": "/sort/?category=&tag=67&page={page}"
+      },
+      {
+        "label": "养成",
+        "path": "/sort/?category=&tag=68&page={page}"
+      },
+      {
+        "label": "四格",
+        "path": "/sort/?category=&tag=69&page={page}"
+      },
+      {
+        "label": "宫廷",
+        "path": "/sort/?category=&tag=70&page={page}"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://www.dmanhua.com/comic/10369.html",
+    "sampleChapter": "https://www.dmanhua.com/chapter/10369-840563.html",
+    "decoder": "numbered",
+    "readerPagination": false,
+    "reverseCatalog": true,
+    "auditIndex": 24,
+    "filterGroups": [
+      {
+        "key": "region",
+        "label": "地区",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "日本漫画",
+            "value": "1"
+          },
+          {
+            "label": "韩国漫画",
+            "value": "2"
+          },
+          {
+            "label": "大陆漫画",
+            "value": "3"
+          },
+          {
+            "label": "港台漫画",
+            "value": "4"
+          },
+          {
+            "label": "漫画",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "key": "tag",
+        "label": "题材",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "爱情",
+            "value": "1"
+          },
+          {
+            "label": "百合",
+            "value": "2"
+          },
+          {
+            "label": "搞笑",
+            "value": "3"
+          },
+          {
+            "label": "奇幻",
+            "value": "4"
+          },
+          {
+            "label": "冒险",
+            "value": "5"
+          },
+          {
+            "label": "轻改",
+            "value": "6"
+          },
+          {
+            "label": "欢乐",
+            "value": "7"
+          },
+          {
+            "label": "治愈",
+            "value": "8"
+          },
+          {
+            "label": "妹控",
+            "value": "9"
+          },
+          {
+            "label": "长篇",
+            "value": "10"
+          },
+          {
+            "label": "格斗",
+            "value": "11"
+          },
+          {
+            "label": "节操",
+            "value": "12"
+          },
+          {
+            "label": "校园",
+            "value": "13"
+          },
+          {
+            "label": "悬疑",
+            "value": "14"
+          },
+          {
+            "label": "生活",
+            "value": "15"
+          },
+          {
+            "label": "魔幻",
+            "value": "16"
+          },
+          {
+            "label": "竞技",
+            "value": "17"
+          },
+          {
+            "label": "励志",
+            "value": "18"
+          },
+          {
+            "label": "性转",
+            "value": "19"
+          },
+          {
+            "label": "武侠",
+            "value": "20"
+          },
+          {
+            "label": "玄幻",
+            "value": "21"
+          },
+          {
+            "label": "都市",
+            "value": "22"
+          },
+          {
+            "label": "伪娘",
+            "value": "23"
+          },
+          {
+            "label": "科幻",
+            "value": "24"
+          },
+          {
+            "label": "后宫",
+            "value": "25"
+          },
+          {
+            "label": "异界",
+            "value": "26"
+          },
+          {
+            "label": "穿越",
+            "value": "27"
+          },
+          {
+            "label": "热血",
+            "value": "28"
+          },
+          {
+            "label": "重生",
+            "value": "29"
+          },
+          {
+            "label": "职场",
+            "value": "30"
+          },
+          {
+            "label": "女主",
+            "value": "31"
+          },
+          {
+            "label": "魔法",
+            "value": "32"
+          },
+          {
+            "label": "仙侠",
+            "value": "33"
+          },
+          {
+            "label": "美食",
+            "value": "34"
+          },
+          {
+            "label": "恐怖",
+            "value": "35"
+          },
+          {
+            "label": "生存",
+            "value": "36"
+          },
+          {
+            "label": "四格",
+            "value": "37"
+          },
+          {
+            "label": "历史",
+            "value": "38"
+          },
+          {
+            "label": "修仙",
+            "value": "39"
+          },
+          {
+            "label": "系统",
+            "value": "40"
+          },
+          {
+            "label": "侦探",
+            "value": "41"
+          },
+          {
+            "label": "游戏",
+            "value": "42"
+          },
+          {
+            "label": "异能",
+            "value": "43"
+          },
+          {
+            "label": "同人",
+            "value": "44"
+          },
+          {
+            "label": "东方",
+            "value": "45"
+          },
+          {
+            "label": "战争",
+            "value": "46"
+          },
+          {
+            "label": "舰娘",
+            "value": "47"
+          },
+          {
+            "label": "末世",
+            "value": "48"
+          },
+          {
+            "label": "舞蹈",
+            "value": "49"
+          },
+          {
+            "label": "转生",
+            "value": "50"
+          },
+          {
+            "label": "灵异",
+            "value": "51"
+          },
+          {
+            "label": "机战",
+            "value": "52"
+          },
+          {
+            "label": "复仇",
+            "value": "53"
+          },
+          {
+            "label": "末日",
+            "value": "54"
+          },
+          {
+            "label": "萌系",
+            "value": "55"
+          },
+          {
+            "label": "逆袭",
+            "value": "56"
+          },
+          {
+            "label": "网游",
+            "value": "57"
+          },
+          {
+            "label": "日常",
+            "value": "58"
+          },
+          {
+            "label": "爱倩",
+            "value": "59"
+          },
+          {
+            "label": "推理",
+            "value": "60"
+          },
+          {
+            "label": "音乐",
+            "value": "61"
+          },
+          {
+            "label": "病娇",
+            "value": "63"
+          },
+          {
+            "label": "爆笑",
+            "value": "64"
+          },
+          {
+            "label": "战斗",
+            "value": "65"
+          },
+          {
+            "label": "言情",
+            "value": "66"
+          },
+          {
+            "label": "宫廷",
+            "value": "67"
+          },
+          {
+            "label": "养成",
+            "value": "68"
+          },
+          {
+            "label": "恋爱",
+            "value": "69"
+          },
+          {
+            "label": "诡异",
+            "value": "70"
+          },
+          {
+            "label": "惊悚",
+            "value": "71"
+          },
+          {
+            "label": "耽美",
+            "value": "72"
+          },
+          {
+            "label": "彩色",
+            "value": "73"
+          },
+          {
+            "label": "其他",
+            "value": "74"
+          },
+          {
+            "label": "TL",
+            "value": "75"
+          },
+          {
+            "label": "宅系",
+            "value": "76"
+          },
+          {
+            "label": "FATE",
+            "value": "77"
+          },
+          {
+            "label": "C103",
+            "value": "78"
+          },
+          {
+            "label": "C105",
+            "value": "79"
+          },
+          {
+            "label": "歡樂向",
+            "value": "80"
+          },
+          {
+            "label": "愛情",
+            "value": "81"
+          },
+          {
+            "label": "冒險",
+            "value": "82"
+          },
+          {
+            "label": "神鬼",
+            "value": "83"
+          },
+          {
+            "label": "轻小说",
+            "value": "84"
+          },
+          {
+            "label": "格鬥",
+            "value": "85"
+          },
+          {
+            "label": "後宮",
+            "value": "86"
+          },
+          {
+            "label": "C106",
+            "value": "87"
+          },
+          {
+            "label": "C107",
+            "value": "88"
+          },
+          {
+            "label": "穿越",
+            "value": "89"
+          },
+          {
+            "label": "性转换",
+            "value": "90"
+          },
+          {
+            "label": "AA",
+            "value": "91"
+          },
+          {
+            "label": "C108",
+            "value": "92"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "haoman",
+    "name": "好漫网",
+    "available": false,
+    "base": "http://hanman.cyou",
+    "family": "dom",
+    "detailPattern": "/index.php/comic/[^/]+",
+    "cards": ".common-comic-item",
+    "catalog": ".chapter-item a",
+    "reader": ".comic-page img",
+    "search": "",
+    "latest": "/index.php/api/data/comic?page={page}&size=20&order=addtime",
+    "filters": [
+      {
+        "label": "更新",
+        "path": "/index.php/api/data/comic?page={page}&size=20&order=addtime"
+      },
+      {
+        "label": "热门",
+        "path": "/index.php/api/data/comic?page={page}&size=20&order=hits"
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "搜索暂不可用，可从分类阅读",
+    "sampleDetail": "http://hanman.cyou/index.php/comic/mimijiaoxue",
+    "sampleChapter": "http://hanman.cyou/index.php/chapter/18769",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 27
+  },
+  {
+    "id": "mh360",
+    "name": "360漫画",
+    "available": true,
+    "base": "https://www.360mh.cc",
+    "family": "dom",
+    "detailPattern": "/index.php/comic/[^/]+",
+    "cards": ".comic-item, .comic-list-item, .common-comic-item",
+    "catalog": ".chapter-item a, .j-chapter-item a",
+    "reader": ".comic-page img",
+    "search": "/index.php/search?key={keyword}",
+    "latest": "/index.php/category/page/{page}",
+    "filters": [
+      {
+        "label": "全部漫画",
+        "path": "/index.php/category/page/{page}"
+      }
+    ],
+    "filterGroups": [
+      {
+        "key": "type",
+        "label": "分类",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "少年漫画",
+            "value": "1"
+          },
+          {
+            "label": "少女漫画",
+            "value": "2"
+          },
+          {
+            "label": "青年漫画",
+            "value": "3"
+          },
+          {
+            "label": "少儿漫画",
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "key": "tag",
+        "label": "题材",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "热血",
+            "value": "6"
+          },
+          {
+            "label": "冒险",
+            "value": "7"
+          },
+          {
+            "label": "科幻",
+            "value": "8"
+          },
+          {
+            "label": "霸总",
+            "value": "9"
+          },
+          {
+            "label": "玄幻",
+            "value": "10"
+          },
+          {
+            "label": "校园",
+            "value": "11"
+          },
+          {
+            "label": "修真",
+            "value": "12"
+          },
+          {
+            "label": "搞笑",
+            "value": "13"
+          },
+          {
+            "label": "穿越",
+            "value": "14"
+          },
+          {
+            "label": "后宫",
+            "value": "15"
+          },
+          {
+            "label": "耽美",
+            "value": "16"
+          },
+          {
+            "label": "恋爱",
+            "value": "17"
+          },
+          {
+            "label": "悬疑",
+            "value": "18"
+          },
+          {
+            "label": "恐怖",
+            "value": "19"
+          },
+          {
+            "label": "战争",
+            "value": "20"
+          },
+          {
+            "label": "动作",
+            "value": "21"
+          },
+          {
+            "label": "同人",
+            "value": "22"
+          },
+          {
+            "label": "竞技",
+            "value": "23"
+          },
+          {
+            "label": "励志",
+            "value": "24"
+          },
+          {
+            "label": "架空",
+            "value": "25"
+          },
+          {
+            "label": "灵异",
+            "value": "26"
+          },
+          {
+            "label": "百合",
+            "value": "27"
+          },
+          {
+            "label": "古风",
+            "value": "28"
+          },
+          {
+            "label": "生活",
+            "value": "29"
+          },
+          {
+            "label": "真人",
+            "value": "30"
+          },
+          {
+            "label": "都市",
+            "value": "31"
+          },
+          {
+            "label": "其他",
+            "value": "48"
+          },
+          {
+            "label": "日常",
+            "value": "49"
+          },
+          {
+            "label": "其它",
+            "value": "50"
+          },
+          {
+            "label": "纯爱",
+            "value": "51"
+          },
+          {
+            "label": "推理",
+            "value": "52"
+          },
+          {
+            "label": "奇幻",
+            "value": "53"
+          },
+          {
+            "label": "格斗",
+            "value": "54"
+          },
+          {
+            "label": "大女主",
+            "value": "55"
+          },
+          {
+            "label": "剧情",
+            "value": "56"
+          },
+          {
+            "label": "总裁",
+            "value": "57"
+          },
+          {
+            "label": "武侠",
+            "value": "58"
+          },
+          {
+            "label": "异能",
+            "value": "59"
+          },
+          {
+            "label": "少年",
+            "value": "60"
+          },
+          {
+            "label": "韩漫",
+            "value": "61"
+          },
+          {
+            "label": "冒險",
+            "value": "62"
+          },
+          {
+            "label": "熱血",
+            "value": "63"
+          },
+          {
+            "label": "熱血",
+            "value": "64"
+          },
+          {
+            "label": "異能",
+            "value": "65"
+          },
+          {
+            "label": "戀愛",
+            "value": "66"
+          },
+          {
+            "label": "古風",
+            "value": "67"
+          },
+          {
+            "label": "武俠",
+            "value": "68"
+          },
+          {
+            "label": "劇情",
+            "value": "69"
+          },
+          {
+            "label": "韓漫",
+            "value": "70"
+          },
+          {
+            "label": "格鬥",
+            "value": "71"
+          },
+          {
+            "label": "戰爭",
+            "value": "72"
+          },
+          {
+            "label": "純愛",
+            "value": "73"
+          },
+          {
+            "label": "懸疑",
+            "value": "74"
+          },
+          {
+            "label": "總裁",
+            "value": "75"
+          },
+          {
+            "label": "後宮",
+            "value": "76"
+          }
+        ]
+      },
+      {
+        "key": "region",
+        "label": "地区",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "内地",
+            "value": "42"
+          },
+          {
+            "label": "港台",
+            "value": "43"
+          },
+          {
+            "label": "韩国",
+            "value": "44"
+          },
+          {
+            "label": "日本",
+            "value": "45"
+          }
+        ]
+      },
+      {
+        "key": "finish",
+        "label": "进度",
+        "options": [
+          {
+            "label": "全部",
+            "value": "all"
+          },
+          {
+            "label": "连载",
+            "value": "1"
+          },
+          {
+            "label": "完结",
+            "value": "2"
+          }
+        ]
+      }
+    ],
+    "network": "部分线路可直连",
+    "notice": "",
+    "sampleDetail": "https://www.360mh.cc/index.php/comic/yirenzhixia",
+    "sampleChapter": "https://www.360mh.cc/index.php/chapter/1746228",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 28
+  },
+  {
+    "id": "favcomic",
+    "name": "喜漫漫画",
+    "available": true,
+    "base": "https://www.favcomic.com",
+    "family": "fav",
+    "detailPattern": "/comic/detail/\\d+",
+    "cards": ".comic_li",
+    "catalog": "a.item_box",
+    "reader": "#content img.unlazyload",
+    "search": "/search?keyword={keyword}&page={page}",
+    "latest": "/boy?page={page}",
+    "authEndpoint": "https://mcidea.asia/xx-comic/telemetry/fav/token",
+    "filters": [
+      {
+        "label": "免费少年漫画",
+        "path": "/free?type=1&sort=2&page={page}"
+      },
+      {
+        "label": "免费少女漫画",
+        "path": "/free?type=2&sort=2&page={page}"
+      },
+      {
+        "label": "免费绅士漫画",
+        "path": "/free?type=4&sort=2&page={page}"
+      },
+      {
+        "label": "BL连载",
+        "path": "/girl?origin=2&finished=1&tag=19&page={page}"
+      },
+      {
+        "label": "BL完结",
+        "path": "/girl?origin=2&finished=2&tag=19&page={page}"
+      }
+    ],
+    "network": "需要 VPN（页面访问受限）",
+    "notice": "仅明确免费章节",
+    "sampleDetail": "https://www.favcomic.com/comic/detail/871520635283709952",
+    "sampleChapter": "https://www.favcomic.com/comic/chapter/881157146299998208",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 29
+  },
+  {
+    "id": "ttk",
+    "name": "天天看漫画",
+    "available": true,
+    "base": "https://www.ttkmh.com",
+    "family": "dom",
+    "detailPattern": "/manhua/\\d+",
+    "cards": ".vod-list li, .ewave-vodlist li",
+    "catalog": ".ewave-playlist-item a",
+    "reader": "",
+    "search": "",
+    "latest": "/category/order/addtime/page/{page}",
+    "filters": [
+      {
+        "label": "最新更新",
+        "path": "/category/order/addtime/page/{page}"
+      },
+      {
+        "label": "国产漫画",
+        "path": "/category/list/1/order/addtime/page/{page}"
+      },
+      {
+        "label": "日本漫画",
+        "path": "/category/list/2/order/addtime/page/{page}"
+      },
+      {
+        "label": "韩国漫画",
+        "path": "/category/list/3/order/addtime/page/{page}"
+      },
+      {
+        "label": "欧美漫画",
+        "path": "/category/list/4/order/addtime/page/{page}"
+      }
+    ],
+    "network": "国内直连",
+    "notice": "搜索暂不可用，可从分类阅读",
+    "sampleDetail": "https://www.ttkmh.com/manhua/419007",
+    "sampleChapter": "https://www.ttkmh.com/chapter/419007/132599",
+    "decoder": "aes",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 30
+  },
+  {
+    "id": "laiman",
+    "name": "来漫画",
+    "available": true,
+    "base": "https://m.laimanhua.org",
+    "family": "dom",
+    "detailPattern": "/kanmanhua/\\d+",
+    "cards": ".MTagBookList_tagBookItem, .BrowseList_listItem, .FeaturedList_featuredItem",
+    "catalog": ".CatalogList_content a",
+    "reader": "",
+    "search": "/search/{keyword}/{page}",
+    "latest": "/category/page/{page}",
+    "filters": [
+      {
+        "label": "首页",
+        "path": "/"
+      },
+      {
+        "label": "全部",
+        "path": "/category/page/{page}"
+      },
+      {
+        "label": "科幻",
+        "path": "/category/tags/867/page/{page}"
+      },
+      {
+        "label": "后宫",
+        "path": "/category/tags/868/page/{page}"
+      },
+      {
+        "label": "机甲",
+        "path": "/category/tags/869/page/{page}"
+      },
+      {
+        "label": "都市",
+        "path": "/category/tags/870/page/{page}"
+      },
+      {
+        "label": "恋爱生活",
+        "path": "/category/tags/871/page/{page}"
+      },
+      {
+        "label": "恋爱",
+        "path": "/category/tags/872/page/{page}"
+      },
+      {
+        "label": "恋爱",
+        "path": "/category/tags/873/page/{page}"
+      },
+      {
+        "label": "其他",
+        "path": "/category/tags/874/page/{page}"
+      },
+      {
+        "label": "推理悬疑",
+        "path": "/category/tags/875/page/{page}"
+      },
+      {
+        "label": "魔法",
+        "path": "/category/tags/876/page/{page}"
+      },
+      {
+        "label": "奇幻",
+        "path": "/category/tags/877/page/{page}"
+      },
+      {
+        "label": "异世界",
+        "path": "/category/tags/878/page/{page}"
+      },
+      {
+        "label": "滑稽搞笑",
+        "path": "/category/tags/879/page/{page}"
+      },
+      {
+        "label": "重生",
+        "path": "/category/tags/880/page/{page}"
+      },
+      {
+        "label": "励志",
+        "path": "/category/tags/881/page/{page}"
+      },
+      {
+        "label": "浪漫",
+        "path": "/category/tags/882/page/{page}"
+      },
+      {
+        "label": "逆袭",
+        "path": "/category/tags/883/page/{page}"
+      },
+      {
+        "label": "脑洞",
+        "path": "/category/tags/884/page/{page}"
+      },
+      {
+        "label": "日常",
+        "path": "/category/tags/885/page/{page}"
+      },
+      {
+        "label": "热血机战",
+        "path": "/category/tags/886/page/{page}"
+      },
+      {
+        "label": "魔法/奇幻",
+        "path": "/category/tags/887/page/{page}"
+      },
+      {
+        "label": "武侠经典",
+        "path": "/category/tags/888/page/{page}"
+      }
+    ],
+    "network": "国内直连",
+    "notice": "",
+    "sampleDetail": "https://m.laimanhua.org/kanmanhua/617798",
+    "sampleChapter": "https://m.laimanhua.org/chapter/617798/224934.html",
+    "decoder": "aes",
+    "readerPagination": false,
+    "reverseCatalog": false,
+    "auditIndex": 31
+  },
+  {
+    "id": "lmanhua",
+    "name": "L漫画",
+    "available": true,
+    "base": "https://lmanhua.com",
+    "family": "empire",
+    "detailPattern": "/novel\\d+/",
+    "cards": ".home-truyendecu",
+    "catalog": "a[href*=chapter]",
+    "reader": ".chapter-content img[data-original]",
+    "search": "/e/search/index.php?keyboard={keyword}&show=title%2Cwriter%2Cbyr&searchget=1",
+    "latest": "/latest{empirePage}",
+    "filters": [
+      {
+        "label": "最新更新",
+        "path": "/latest{empirePage}"
+      },
+      {
+        "label": "最新入库",
+        "path": "/release{empirePage}"
+      },
+      {
+        "label": "热门排行",
+        "path": "/popular{empirePage}"
+      },
+      {
+        "label": "完本漫画",
+        "path": "/completed{empirePage}"
+      },
+      {
+        "label": "国漫漫画",
+        "path": "/manga1{mangaPage}"
+      },
+      {
+        "label": "日本漫画",
+        "path": "/manga3{mangaPage}"
+      },
+      {
+        "label": "港台漫画",
+        "path": "/manga5{mangaPage}"
+      },
+      {
+        "label": "韩国漫画",
+        "path": "/manga2{mangaPage}"
+      },
+      {
+        "label": "欧美漫画",
+        "path": "/manga4{mangaPage}"
+      }
+    ],
+    "network": "国内直连",
+    "notice": "",
+    "sampleDetail": "https://lmanhua.com/novel7536/",
+    "sampleChapter": "https://lmanhua.com/novel7536/chapter0.html",
+    "decoder": "dom",
+    "readerPagination": false,
+    "reverseCatalog": true,
+    "auditIndex": 32
+  }
+]

@@ -169,6 +169,9 @@ public enum DownloadModels {
     }
 
     public static func imageIdentity(_ url: String) -> String {
+        if !PublicSourceImages.sourceId(url).isEmpty {
+            return PublicSourceImages.cacheIdentity(url)
+        }
         let stable = ZaimanhuaComicSource.imageCacheIdentity(url)
         if stable != url { return stable }
         let base = url.components(separatedBy: CharacterSet(charactersIn: "?#"))[0]

@@ -47,11 +47,14 @@ final class RemoteImageView: UIImageView {
               ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") || (["xxcomic-epub", "xxcomic-pdf"].contains(url.scheme ?? "") && localPageImage != nil) else {
             onFailure?(); return
         }
-        var cacheIdentity = ZaimanhuaComicSource.imageCacheIdentity(text)
+        var cacheIdentity = !PublicSourceImages.sourceId(text).isEmpty
+            ? PublicSourceImages.cacheIdentity(text)
+            : ZaimanhuaComicSource.imageCacheIdentity(text)
         if XinmanhuaImageDecoder.usesImageHost(cacheIdentity) {
             cacheIdentity = "xinmanhua-jpeg-v2:" + cacheIdentity
         }
-        let key = ((reader ? "reader\n" : "cover\n") + referer + "\n" + cacheIdentity) as NSString
+        let effectiveReferer = PublicSourceImages.referer(text, fallback: referer)
+        let key = ((reader ? "reader\n" : "cover\n") + effectiveReferer + "\n" + cacheIdentity) as NSString
         if let cached = Self.cache.object(forKey: key) {
             original = cached; render()
             return
@@ -60,7 +63,9 @@ final class RemoteImageView: UIImageView {
         task = Task { [weak self] in
             do {
                 var request = URLRequest(url: url)
-                request.setValue(referer, forHTTPHeaderField: "Referer")
+                if !effectiveReferer.isEmpty {
+                    request.setValue(effectiveReferer, forHTTPHeaderField: "Referer")
+                }
                 // Match Android SourceImageFetcher.applyHeaders for cover and reader requests.
                 request.setValue("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
                 request.setValue("image/webp,image/apng,image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
@@ -101,13 +106,17 @@ final class RemoteImageView: UIImageView {
                         if isSigned, let resolver = Self.imageUrlResolver {
                             resolvedText = try await resolver(text, attempt > 0)
                         } else {
-                            resolvedText = text.components(separatedBy: "#")[0]
+                            resolvedText = PublicSourceImages.strip(text)
                         }
                         guard let resolvedURL = URL(string: resolvedText) else {
                             throw URLError(.badURL)
                         }
                         var req = request
                         req.url = resolvedURL
+                        let ref = PublicSourceImages.referer(resolvedText, fallback: effectiveReferer)
+                        if !ref.isEmpty {
+                            req.setValue(ref, forHTTPHeaderField: "Referer")
+                        }
                         let (bytes, response) = try await URLSession.shared.data(for: req)
                         if let http = response as? HTTPURLResponse {
                             if isSigned && attempt == 0 && (http.statusCode == 403 || http.statusCode == 410) {
@@ -129,7 +138,9 @@ final class RemoteImageView: UIImageView {
                 let decoder = Task.detached(priority: .userInitiated) { () throws -> UIImage? in
                     try Task.checkCancellation()
                     let imageData: Data
-                    if XinmanhuaImageDecoder.usesImageHost(text) {
+                    if !PublicSourceImages.sourceId(text).isEmpty {
+                        imageData = try PublicSourceImages.decode(data, tagged: text)
+                    } else if XinmanhuaImageDecoder.usesImageHost(text) {
                         imageData = try XinmanhuaImageDecoder.decode(data)
                     } else if ManwaImageDecoder.usesImageHost(text) {
                         imageData = try ManwaImageDecoder.decode(data)

@@ -61,6 +61,50 @@ enum SourceAES {
 #endif
     }
 
+    static func encrypt(_ plaintext: Data, key: Data, iv: Data) throws -> Data {
+        guard [16, 24, 32].contains(key.count), iv.count == 16 else { throw DecodeError.invalidInput }
+#if canImport(CommonCrypto)
+        let capacity = plaintext.count + kCCBlockSizeAES128
+        var output = Data(count: capacity)
+        var written = 0
+        let status = output.withUnsafeMutableBytes { out in
+            plaintext.withUnsafeBytes { bytes in
+                key.withUnsafeBytes { keyBytes in
+                    iv.withUnsafeBytes { ivBytes in
+                        CCCrypt(CCOperation(kCCEncrypt), CCAlgorithm(kCCAlgorithmAES), CCOptions(kCCOptionPKCS7Padding),
+                                keyBytes.baseAddress, key.count, ivBytes.baseAddress,
+                                bytes.baseAddress, plaintext.count, out.baseAddress, capacity, &written)
+                    }
+                }
+            }
+        }
+        guard status == kCCSuccess else { throw DecodeError.decryptionFailed }
+        output.count = written
+        return output
+#elseif os(Linux)
+        let padLen = 16 - (plaintext.count % 16)
+        var padded = plaintext
+        padded.append(contentsOf: repeatElement(UInt8(padLen), count: padLen))
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("xxcomic-aes-enc-" + UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let input = directory.appendingPathComponent("input"), result = directory.appendingPathComponent("output")
+        try padded.write(to: input)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/openssl")
+        process.arguments = ["enc", "-e", "-aes-\(key.count * 8)-cbc", "-nopad", "-K", key.map { String(format: "%02x", $0) }.joined(),
+                             "-iv", iv.map { String(format: "%02x", $0) }.joined(), "-in", input.path, "-out", result.path]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try process.run()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else { throw DecodeError.decryptionFailed }
+        return try Data(contentsOf: result)
+#else
+        throw DecodeError.unavailable
+#endif
+    }
+
     enum DecodeError: Error, Equatable, LocalizedError {
         case invalidInput, decryptionFailed, unavailable
         var errorDescription: String? {

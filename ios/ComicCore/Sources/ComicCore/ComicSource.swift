@@ -1,4 +1,4 @@
-import Foundation
+@preconcurrency import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
@@ -43,12 +43,14 @@ public struct HTTPResponse: Sendable {
     public let statusCode: Int
     public let textEncodingName: String?
     public let headers: [String: String]
+    public let finalURL: URL?
 
-    public init(data: Data, statusCode: Int, textEncodingName: String? = nil, headers: [String: String] = [:]) {
+    public init(data: Data, statusCode: Int, textEncodingName: String? = nil, headers: [String: String] = [:], finalURL: URL? = nil) {
         self.data = data
         self.statusCode = statusCode
         self.textEncodingName = textEncodingName
         self.headers = headers
+        self.finalURL = finalURL
     }
     public func headerValue(for name: String) -> String? {
         headers.first { $0.key.caseInsensitiveCompare(name) == .orderedSame }?.value
@@ -117,7 +119,7 @@ public struct URLSessionHTTPTransport: HTTPTransport, @unchecked Sendable {
         let responseHeaders = response.allHeaderFields.reduce(into: [String: String]()) { result, field in
             if let key = field.key as? String { result[key] = String(describing: field.value) }
         }
-        return HTTPResponse(data: data, statusCode: response.statusCode, textEncodingName: response.textEncodingName, headers: responseHeaders)
+        return HTTPResponse(data: data, statusCode: response.statusCode, textEncodingName: response.textEncodingName, headers: responseHeaders, finalURL: response.url)
     }
 }
 

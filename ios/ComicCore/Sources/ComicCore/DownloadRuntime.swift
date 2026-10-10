@@ -55,7 +55,7 @@ public final class DefaultDownloadImageFetcher: DownloadImageFetcherProtocol, @u
                       destination: URL,
                       check: @escaping () throws -> Void) async throws -> (bytes: Int64, hash: String) {
         try check()
-        let cleanUrl = url.components(separatedBy: "#")[0]
+        let cleanUrl = PublicSourceImages.strip(url)
         guard let requestUrl = URL(string: cleanUrl) else {
             throw DownloadError.corruptedData("无效的图片地址")
         }
@@ -65,8 +65,9 @@ public final class DefaultDownloadImageFetcher: DownloadImageFetcherProtocol, @u
         request.setValue("image/webp,image/apng,image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
         request.setValue("zh-CN,zh;q=0.9,en;q=0.8", forHTTPHeaderField: "Accept-Language")
         request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
-        if !referer.isEmpty {
-            request.setValue(referer, forHTTPHeaderField: "Referer")
+        let effectiveReferer = PublicSourceImages.referer(url, fallback: referer)
+        if !effectiveReferer.isEmpty {
+            request.setValue(effectiveReferer, forHTTPHeaderField: "Referer")
         }
 
         let destDir = destination.deletingLastPathComponent()
@@ -222,7 +223,13 @@ public final class DefaultDownloadImageFetcher: DownloadImageFetcherProtocol, @u
             }
 
             var rawData = try Data(contentsOf: destination)
-            if sourceId == "xinmanhua" || XinmanhuaImageDecoder.usesImageHost(url) {
+            if !PublicSourceImages.sourceId(url).isEmpty || PublicSourceRegistry.contains(sourceId) {
+                let decoded = try PublicSourceImages.decodeForSource(sourceId: sourceId, url: url, data: rawData)
+                if decoded != rawData {
+                    try decoded.write(to: destination, options: .atomic)
+                    rawData = decoded
+                }
+            } else if sourceId == "xinmanhua" || XinmanhuaImageDecoder.usesImageHost(url) {
                 let decoded = try XinmanhuaImageDecoder.decode(rawData)
                 if decoded != rawData {
                     try decoded.write(to: destination, options: .atomic)

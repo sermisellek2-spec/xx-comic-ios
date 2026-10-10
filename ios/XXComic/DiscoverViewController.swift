@@ -434,8 +434,12 @@ private final class FilterViewController: UIViewController {
         let candidate = draftSource
         task = Task { [weak self, candidate] in
             do {
-                let groups = try await candidate.filterGroups()
+                var groups = try await candidate.filterGroups()
                 try Task.checkCancellation()
+                if candidate.id == "favcomic", let fav = candidate as? PublicComicSource,
+                   let selectedType = self?.draftSelected["type"], !selectedType.isEmpty, selectedType != "all" {
+                    groups = fav.filterGroupsForType(selectedType)
+                }
                 self?.draftGroups = groups
                 self?.activeGroupIndex = 0
                 self?.state.setTitle(groups.isEmpty ? "该站源暂无分类" : nil, for: .normal)
@@ -571,6 +575,11 @@ private final class FilterViewController: UIViewController {
                         groupKeys: self.draftGroups.map(\.key),
                         in: &self.draftSelected
                     )
+                    if self.draftSource.id == "favcomic", group.key == "type",
+                       let fav = self.draftSource as? PublicComicSource {
+                        self.draftGroups = fav.filterGroupsForType(option.value)
+                        self.draftSelected["tag"] = "all"
+                    }
                     self.render()
                 }, for: .touchUpInside)
                 row.addArrangedSubview(button)

@@ -28,7 +28,7 @@ final class AppEnvironment {
     static let sourcesChanged = Notification.Name("XXComic.sourcesChanged")
 
     static func createSources(preferences: SourcePreferences, browserSession: (any ComicBrowserSession)?) -> [any ComicSource] {
-        return [
+        var result: [any ComicSource] = [
             BaoziComicSource(config: preferences.config(for: "baozimh") ?? SourceConfigDefaults.baozi()),
             Mh160ComicSource(config: preferences.config(for: "mh160") ?? SourceConfigDefaults.mh160()),
             GmhComicSource(config: preferences.config(for: "gmh") ?? SourceConfigDefaults.gmh()),
@@ -53,12 +53,17 @@ final class AppEnvironment {
             JmComicSource(config: preferences.config(for: "jmcomic") ?? SourceConfigDefaults.jmcomic(), browserSession: browserSession),
             Hanman18ComicSource(config: preferences.config(for: "hanman18") ?? SourceConfigDefaults.hanman18())
         ]
+        for id in PublicSourceRegistry.ids() {
+            let config = preferences.config(for: id) ?? PublicSourceRegistry.config(id)
+            result.append(PublicSourceRegistry.create(config))
+        }
+        return result
     }
 
     init(defaults: UserDefaults) throws {
         self.defaults = defaults
         mh18BrowserSession = Mh18BrowserSession(defaults: defaults)
-        let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "hanman18", "manhuagui", "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000", "manwa", "dingmanhua", "dongmanla", "zaimanhua", "guazi", "xinmanhua", "jmcomic"]
+        let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "hanman18", "manhuagui", "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000", "manwa", "dingmanhua", "dongmanla", "zaimanhua", "guazi", "xinmanhua", "jmcomic"] + PublicSourceRegistry.ids()
         sourcePreferences = SourcePreferences(defaults: defaults, defaultIDs: defaultIDs)
         let available = Self.createSources(preferences: sourcePreferences, browserSession: mh18BrowserSession)
         allSources = available
@@ -183,6 +188,9 @@ final class EnvironmentSourceResolver: DownloadSourceResolverProtocol, @unchecke
         guard let source = sources.first(where: { $0.id == sourceId }) else {
             return ""
         }
+        if PublicSourceRegistry.contains(sourceId) {
+            return source.referer.isEmpty ? chapterUrl : source.referer
+        }
         if sourceId == "baozimh" || sourceId == "mkzhan" || sourceId == "hiperdex" ||
            sourceId == "hanman18" || sourceId == "d5d6" || sourceId == "antbyw" ||
            sourceId == "xinmanhua" || sourceId == "zaimanhua" ||
@@ -193,21 +201,31 @@ final class EnvironmentSourceResolver: DownloadSourceResolverProtocol, @unchecke
     }
 
     func resolveImageUrl(sourceId: String, imageUrl: String, force: Bool) async throws -> String {
+        let pubSourceId = PublicSourceImages.sourceId(imageUrl)
+        if !pubSourceId.isEmpty, let pub = sources.first(where: { $0.id == pubSourceId }) as? PublicComicSource {
+            return try await pub.resolveImageUrl(imageUrl, force: force)
+        }
+        if PublicSourceRegistry.contains(sourceId), let pub = sources.first(where: { $0.id == sourceId }) as? PublicComicSource {
+            return try await pub.resolveImageUrl(imageUrl, force: force)
+        }
         if imageUrl.contains("#xx-zai=") || sourceId == "zaimanhua" {
             if let zai = sources.first(where: { $0.id == "zaimanhua" }) as? ZaimanhuaComicSource {
                 return try await zai.resolveImageUrl(imageUrl, force: force)
             }
         }
-        return imageUrl.components(separatedBy: "#")[0]
+        return PublicSourceImages.strip(imageUrl)
     }
 
     func fetchCover(sourceId: String, coverUrl: String, destination: URL, check: @escaping () throws -> Void) async throws {
         try check()
-        guard let url = URL(string: coverUrl) else { return }
+        let cleanCoverUrl = PublicSourceImages.strip(coverUrl)
+        guard let url = URL(string: cleanCoverUrl) else { return }
         var request = URLRequest(url: url)
         request.timeoutInterval = 20
-        if let source = sources.first(where: { $0.id == sourceId }), !source.referer.isEmpty {
-            request.setValue(source.referer, forHTTPHeaderField: "Referer")
+        let fallbackRef = sources.first(where: { $0.id == sourceId })?.referer ?? ""
+        let effectiveRef = PublicSourceImages.referer(coverUrl, fallback: fallbackRef)
+        if !effectiveRef.isEmpty {
+            request.setValue(effectiveRef, forHTTPHeaderField: "Referer")
         }
         let (tempURL, response) = try await URLSession.shared.download(for: request)
         try check()
@@ -222,7 +240,12 @@ final class EnvironmentSourceResolver: DownloadSourceResolverProtocol, @unchecke
         if FileManager.default.fileExists(atPath: destination.path) {
             try? FileManager.default.removeItem(at: destination)
         }
-        if XinmanhuaImageDecoder.usesImageHost(coverUrl) {
+        if !PublicSourceImages.sourceId(coverUrl).isEmpty || PublicSourceRegistry.contains(sourceId) {
+            let rawData = try Data(contentsOf: tempURL)
+            try? FileManager.default.removeItem(at: tempURL)
+            let decoded = try PublicSourceImages.decodeForSource(sourceId: sourceId, url: coverUrl, data: rawData)
+            try decoded.write(to: destination, options: .atomic)
+        } else if XinmanhuaImageDecoder.usesImageHost(coverUrl) {
             let rawData = try Data(contentsOf: tempURL)
             try? FileManager.default.removeItem(at: tempURL)
             let decoded = try XinmanhuaImageDecoder.decode(rawData)

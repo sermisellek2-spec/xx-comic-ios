@@ -47,7 +47,7 @@ public final class SourcePreferences {
             defaults.set(directVal, forKey: "source.\(canonical).enabled")
             return directVal
         }
-        return true
+        return SourceConfigDefaults.defaultConfig(for: canonical)?.enabled ?? true
     }
     public func setEnabled(_ enabled: Bool, id: String) {
         let canonical = Self.canonicalID(id)

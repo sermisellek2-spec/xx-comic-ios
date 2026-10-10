@@ -66,9 +66,9 @@ GATE-03,P5,交互,全应用正常异常取消恢复长按手势和返回闭环,a
 GATE-04,P5,平台,当前版本Apple构建及必要UI图像PDFWebKitFiles检查,ios/scripts/build.sh,通过,NON_SOURCE_GATE.md;differences.md
 GATE-05,P5,质量,性能恢复旧数据并发和Release无测试内容检查,app/src/main,通过,NON_SOURCE_GATE.md;ComicCoreTests
 GATE-06,P5,门槛,全部非站源必需项通过输出NON_SOURCE_GATE为PASS,docs/IOS_2_0_40_GEMINI_PLAN.md,通过,NON_SOURCE_GATE.md
-SOURCE-01,P6,目录,生成22专用29公共稳定ID排序默认和退役矩阵,DownloadSources.java;source/PublicSourceRegistry.java,通过,sources.csv
-SOURCE-02,P6,适配,拆为每源需求和报告逐一搜索分类详情目录图片下载,source;sources.csv,后置站源,
-SOURCE-03,P6,配置,逐源真实消费routesfilters域名referer及custom边界,source/SourceConfig.java,后置站源,
-SOURCE-04,P6,验证,逐源真实验证还原Cookie超时取消与网络提示,source,后置站源,
+SOURCE-01,P6,目录,生成22专用29公共稳定ID排序默认和退役矩阵,DownloadSources.java;source/PublicSourceRegistry.java,通过,sources.csv;PublicSourceRegistry.swift;SourcePreferences.swift
+SOURCE-02,P6,适配,拆为每源需求和报告逐一搜索分类详情目录图片下载,source;sources.csv,通过,sources/*.md;PublicComicSource.swift;PublicComicSourceTests.swift
+SOURCE-03,P6,配置,逐源真实消费routesfilters域名referer及custom边界,source/SourceConfig.java,通过,SourcePreferences.swift;PublicComicSource.swift;PublicComicSourceTests.swift
+SOURCE-04,P6,验证,逐源真实验证还原Cookie超时取消与网络提示,source,通过,PublicComicSource.swift;PublicSourceImages.swift;sources/*.md
 FINAL-01,P7,回归,当前HEAD全量核心AppleUI视觉站源恢复和性能自验,docs/IOS_2_0_40_GEMINI_PLAN.md,待核对,
 FINAL-02,P7,交付,版本一致IPA哈希签名安装说明阶段证据和总验收清单,ios/scripts/build.sh,待核对,
