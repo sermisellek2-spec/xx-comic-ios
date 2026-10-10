@@ -87,6 +87,17 @@ final class AppEnvironment {
         bookshelfGroupStore = BookshelfGroupStore(file: appDir.appendingPathComponent("bookshelf_groups.json"))
         bookshelfGroupStore.migrateLegacyDataIfNeeded(legacyOnlineFavorites: library.favorites.map(\.summary.comicId), legacyLocalBookIds: nil)
         sourceGroupStore = SourceGroupStore(directory: appDir)
+        let downloadsDir = appDir.appendingPathComponent("Downloads", isDirectory: true)
+        downloadStore = try DownloadStore(directory: downloadsDir)
+        let resolver = EnvironmentSourceResolver(sources: available)
+        environmentSourceResolver = resolver
+        RemoteImageView.imageUrlResolver = { [weak resolver] imageUrl, force in
+            guard let resolver else { return imageUrl.components(separatedBy: "#")[0] }
+            return try await resolver.resolveImageUrl(sourceId: "", imageUrl: imageUrl, force: force)
+        }
+        downloadRuntime = DownloadRuntime(store: downloadStore, downloadsDirectory: downloadsDir, sourceResolver: resolver)
+        downloadRuntime.isWifiOnly = defaults.object(forKey: "downloads.wifiOnly") as? Bool ?? true
+
         favoriteUpdateCoordinator = FavoriteUpdateCoordinator(defaults: defaults)
         favoriteUpdateChecker = FavoriteUpdateChecker(
             library: library,
@@ -101,17 +112,6 @@ final class AppEnvironment {
             library: localLibrary,
             isReadableImage: LocalImageProbe.isReadable
         )
-
-        let downloadsDir = appDir.appendingPathComponent("Downloads", isDirectory: true)
-        downloadStore = try DownloadStore(directory: downloadsDir)
-        let resolver = EnvironmentSourceResolver(sources: available)
-        environmentSourceResolver = resolver
-        RemoteImageView.imageUrlResolver = { [weak resolver] imageUrl, force in
-            guard let resolver else { return imageUrl.components(separatedBy: "#")[0] }
-            return try await resolver.resolveImageUrl(sourceId: "", imageUrl: imageUrl, force: force)
-        }
-        downloadRuntime = DownloadRuntime(store: downloadStore, downloadsDirectory: downloadsDir, sourceResolver: resolver)
-        downloadRuntime.isWifiOnly = defaults.object(forKey: "downloads.wifiOnly") as? Bool ?? true
 
         networkMonitor = SystemNetworkMonitor()
         downloadRuntime.updateNetworkStatus(isConnected: networkMonitor.isConnected, isWifi: networkMonitor.isWifi)
@@ -184,6 +184,10 @@ final class AppEnvironment {
 
         try library.replaceSource(original: original, target: target.summary, matchingChapter: matchingChapter, matchingChapterIndex: matchingChapterIndex)
         notifyLibraryChanged()
+    }
+
+    func replaceSource(from original: ComicSummary, to target: ComicDetail, matchingChapter: Chapter? = nil, matchingChapterIndex: Int = 0) throws {
+        try replaceSource(original: original, target: target, matchingChapter: matchingChapter, matchingChapterIndex: matchingChapterIndex)
     }
 
     func reloadSources() {

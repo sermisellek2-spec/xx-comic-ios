@@ -221,12 +221,16 @@ final class DetailViewController: UIViewController {
         self.title = newSource.name
         self.sourceSwitchButton.setTitle("\(newSource.name) · 切换站源", for: .normal)
         self.sourceSwitchButton.isEnabled = true
-        self.detail = targetDetail
-        self.chapters = targetDetail.chapters
-        self.incompleteDirectory = false
-        self.renderDetail()
+        self.cachedDetail = targetDetail
+        self.cachedChapters = targetDetail.chapters
+        self.detailLoaded = true
+        self.heading.text = targetDetail.summary.title
+        self.descriptionLabel.text = [targetDetail.author, targetDetail.status, targetDetail.description].filter { !$0.isEmpty }.joined(separator: "\n\n")
+        self.cover.loadCover(targetDetail.summary, referer: newSource.referer, library: self.environment.localLibrary)
+        self.retry.setTitle(nil, for: .normal)
         self.updateButtons()
-        self.collection.reloadData()
+        let revision = FavoriteRevision.fromChapters(latestChapterName: targetDetail.latestChapter, chapters: targetDetail.chapters)
+        self.environment.favoriteUpdateCoordinator.acknowledge(sourceId: targetDetail.summary.sourceId, comicId: targetDetail.summary.comicId, revision: revision)
     }
     private func switchToSource(target: ComicSummary) {
         guard target.comicId != comic.comicId else { return }
@@ -239,14 +243,9 @@ final class DetailViewController: UIViewController {
                 let targetDetail = try await newSource.detail(comicId: target.comicId)
                 guard let self else { return }
                 if self.environment.library.entry(for: self.comic)?.isFavorite == true {
-                    try? self.environment.replaceSource(from: self.comic, to: targetDetail)
+                    try? self.environment.replaceSource(original: self.comic, target: targetDetail)
                 }
-                self.comic = targetDetail.summary
-                self.source = newSource
-                self.title = newSource.name
-                self.sourceSwitchButton.setTitle("\(newSource.name) · 切换站源", for: .normal)
-                self.sourceSwitchButton.isEnabled = true
-                self.loadDetail()
+                self.applySwitchedSource(targetDetail: targetDetail)
             } catch {
                 guard let self else { return }
                 self.sourceSwitchButton.setTitle("\(self.source.name) · 切换站源", for: .normal)
