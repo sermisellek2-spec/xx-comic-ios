@@ -590,6 +590,40 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func dingmanhua(enabled: Bool = true) -> SourceConfigItem {
+        let tags = ["悬疑", "欢乐", "搞笑", "玄幻", "冒险", "爱情", "百合", "推理", "热血", "异界", "轻改", "奇幻", "校园", "妹控", "生活", "竞技", "同人", "伪娘", "东方", "美食", "格斗", "战争", "舰娘", "治愈", "魔幻", "职场", "性转", "萌系", "后宫", "节操", "魔法", "科幻", "穿越", "仙侠", "都市", "异能", "网游", "短篇", "女主", "恐怖", "重生", "日常", "侦探", "言情", "生存", "武侠", "系统", "励志", "末世", "转生", "长篇", "修仙", "末日", "灵异", "游戏", "爱倩", "销毁", "病娇", "音乐", "爆笑", "机战", "复仇", "舞蹈"]
+        var filters: [String: String] = [
+            "region.all": "",
+            "region.jp": "1",
+            "region.cn": "3",
+            "region.kr": "4"
+        ]
+        for (i, tag) in tags.enumerated() {
+            filters["tag." + tag] = String(i + 1)
+        }
+        return SourceConfigItem(
+            id: "dingmanhua",
+            name: "顶漫画",
+            domain: "www.dingmanhua.com",
+            baseUrl: "https://www.dingmanhua.com",
+            referer: "https://www.dingmanhua.com/",
+            latestPath: "",
+            searchPath: "",
+            categoryPath: "",
+            detailPath: "",
+            enabled: enabled,
+            routes: [
+                "latest": "/sort/?category=&tag=&page={page}",
+                "search": "/search/?query={keyword}&page={page}",
+                "category": "/sort/?category={category}&tag={tag}&page={page}",
+                "detail": "/comic/{comicId}.html",
+                "chapters": "/comic/{comicId}",
+                "chapter": "/chapter/{contentId}-{chapterId}.html"
+            ],
+            filters: filters
+        )
+    }
+
     public static func defaultConfig(for id: String) -> SourceConfigItem? {
         switch id {
         case "baozimh": return baozi()
@@ -609,6 +643,7 @@ public enum SourceConfigDefaults {
         case "antbyw": return antbyw()
         case "cuimh": return cuimh()
         case "liumanhua": return liumanhua()
+        case "dingmanhua": return dingmanhua()
         default: return nil
         }
     }
