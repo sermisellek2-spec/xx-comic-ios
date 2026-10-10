@@ -2,7 +2,7 @@ id,type,name,base_url,default_enabled,status,priority,network_hint,capability_hi
 mh160,dedicated,漫画160,https://www.mh160mh.com,true,通过(搜索受CF限制),1,国内直连优先,搜索受外部Cloudflare阻断分类阅读正常,sources/mh160.md
 gmh,dedicated,G社漫画,https://m.g-mh.org,true,通过,2,部分线路直连,,sources/gmh.md
 mh18,dedicated,18漫画,https://18mh.org,true,通过(需验证),3,需要验证/WebView交互,受Cloudflare保护需WebView验证,sources/mh18.md
-jmcomic,dedicated,禁漫天堂,https://18comic.vip,true,待接入,4,需要分流/分片图片还原,分片混淆还原,
+jmcomic,dedicated,禁漫天堂,https://18comic.vip,true,通过,4,需要分流/分片图片还原,分片混淆还原,sources/jmcomic.md
 mkzhan,dedicated,漫客栈,https://www.mkzhan.com,true,待接入,5,国内直连优先,,
 hiperdex,dedicated,Hiperdex,https://hiperdex.com,true,待接入,6,海外线路,,
 hanman18,dedicated,韩漫18,https://www.hanman18.com,true,待接入,7,海外线路,,

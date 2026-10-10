@@ -44,14 +44,15 @@ final class AppEnvironment {
             CuimhComicSource(),
             LiumanhuaComicSource(),
             CopyMangaComicSource(config: preferences.config(for: "copy4000")),
-            ManwaComicSource(config: preferences.config(for: "manwa") ?? SourceConfigDefaults.manwa())
+            ManwaComicSource(config: preferences.config(for: "manwa") ?? SourceConfigDefaults.manwa()),
+            JmComicSource(config: preferences.config(for: "jmcomic") ?? SourceConfigDefaults.jmcomic(), browserSession: browserSession)
         ]
     }
 
     init(defaults: UserDefaults) throws {
         self.defaults = defaults
         mh18BrowserSession = Mh18BrowserSession(defaults: defaults)
-        let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "manhuagui", "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000", "manwa"]
+        let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "manhuagui", "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000", "manwa", "jmcomic"]
         sourcePreferences = SourcePreferences(defaults: defaults, defaultIDs: defaultIDs)
         let available = Self.createSources(preferences: sourcePreferences, browserSession: mh18BrowserSession)
         allSources = available
@@ -173,7 +174,8 @@ final class EnvironmentSourceResolver: DownloadSourceResolverProtocol, @unchecke
             return ""
         }
         if sourceId == "baozimh" || sourceId == "mkzhan" || sourceId == "hiperdex" ||
-           sourceId == "hanman18" || sourceId == "d5d6" || sourceId == "antbyw" || chapterUrl.isEmpty {
+           sourceId == "hanman18" || sourceId == "d5d6" || sourceId == "antbyw" ||
+           sourceId == "jmcomic" || chapterUrl.isEmpty {
             return source.referer
         }
         return chapterUrl

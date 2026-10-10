@@ -340,12 +340,36 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func jmcomic(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "jmcomic",
+            name: "禁漫天堂",
+            domain: "18comic.vip",
+            baseUrl: "https://18comic.vip",
+            referer: "https://18comic.vip/",
+            latestPath: "/albums?o=mr",
+            searchPath: "/search/photos?main_tag=0&search_query={keyword}",
+            categoryPath: "/theme/",
+            detailPath: "/album/{comicId}",
+            enabled: enabled,
+            routes: [
+                "latest": "/albums?o=mr",
+                "search": "/search/photos?main_tag=0&search_query={keyword}",
+                "categoryIndex": "/theme/",
+                "detail": "/album/{comicId}",
+                "chapter": "/photo/{chapterId}"
+            ],
+            filters: [:]
+        )
+    }
+
     public static func defaultConfig(for id: String) -> SourceConfigItem? {
         switch id {
         case "baozimh": return baozi()
         case "mh160": return mh160()
         case "gmh": return gmh()
         case "mh18": return mh18()
+        case "jmcomic": return jmcomic()
         case "mkzhan": return mkzhan()
         case "manwa": return manwa()
         case "copy4000", "copymanga": return copy4000()
