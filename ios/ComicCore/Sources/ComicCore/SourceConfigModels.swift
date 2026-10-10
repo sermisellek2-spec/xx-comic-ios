@@ -421,6 +421,30 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func d5d6(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "d5d6",
+            name: "悦看漫画",
+            domain: "www.d5d6.com",
+            baseUrl: "https://www.d5d6.com",
+            referer: "https://www.d5d6.com/",
+            latestPath: "/jiujiucate_jiujiuquanbu_allvisit_0_{page}/",
+            searchPath: "/search/{keyword}/",
+            categoryPath: "/jiujiucate_{slug}_allvisit_{finish}_{page}/",
+            detailPath: "/jiujiucomic_{comicId}/",
+            enabled: enabled,
+            routes: [
+                "latest": "/jiujiucate_jiujiuquanbu_allvisit_0_{page}/",
+                "search": "/search/{keyword}/",
+                "category": "/jiujiucate_{slug}_allvisit_{finish}_{page}/",
+                "categoryIndex": "/jiujiucate_quanbu/",
+                "detail": "/jiujiucomic_{comicId}/",
+                "chapter": "/jiujiucomic_{comicId}/{chapterId}.html"
+            ],
+            filters: [:]
+        )
+    }
+
     public static func defaultConfig(for id: String) -> SourceConfigItem? {
         switch id {
         case "baozimh": return baozi()
@@ -431,6 +455,7 @@ public enum SourceConfigDefaults {
         case "mkzhan": return mkzhan()
         case "hanman18": return hanman18()
         case "manhuagui": return manhuagui()
+        case "d5d6": return d5d6()
         case "manwa": return manwa()
         case "copy4000", "copymanga": return copy4000()
         case "manhuazhan", "five_um": return manhuazhan()

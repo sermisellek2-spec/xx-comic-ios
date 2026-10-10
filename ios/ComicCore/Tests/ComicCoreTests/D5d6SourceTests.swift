@@ -144,6 +144,58 @@ final class D5d6SourceTests: XCTestCase {
         let items = try await D5d6ComicSource(transport: D5d6Transport([url: .init(data: data, statusCode: 200)])).latest(page: 1)
         XCTAssertEqual(items.map(\.title), ["垄"])
     }
+
+    func testSourceConfigDefaultsAndConfiguredSource() async throws {
+        let def = SourceConfigDefaults.d5d6()
+        XCTAssertEqual(def.id, "d5d6")
+        XCTAssertEqual(def.name, "悦看漫画")
+        XCTAssertEqual(def.domain, "www.d5d6.com")
+        XCTAssertEqual(def.baseUrl, "https://www.d5d6.com")
+        XCTAssertEqual(def.referer, "https://www.d5d6.com/")
+        XCTAssertEqual(def.route("latest"), "/jiujiucate_jiujiuquanbu_allvisit_0_{page}/")
+        XCTAssertEqual(def.route("search"), "/search/{keyword}/")
+        XCTAssertEqual(def.route("categoryIndex"), "/jiujiucate_quanbu/")
+        XCTAssertEqual(SourceConfigDefaults.defaultConfig(for: "d5d6")?.id, "d5d6")
+
+        let custom = SourceConfigItem(
+            id: "d5d6",
+            name: "D5D6镜像",
+            domain: "mirror.d5d6.com",
+            baseUrl: "https://mirror.d5d6.com",
+            referer: "https://mirror.d5d6.com/",
+            latestPath: "/jiujiucate_jiujiuquanbu_allvisit_0_{page}/",
+            searchPath: "/search/{keyword}/",
+            categoryPath: "/jiujiucate_{slug}_allvisit_{finish}_{page}/",
+            detailPath: "/jiujiucomic_{comicId}/",
+            enabled: true,
+            routes: [:],
+            filters: [:]
+        )
+        let transport = D5d6Transport(["https://mirror.d5d6.com/jiujiucate_jiujiuquanbu_allvisit_0_1/": .text(cards)])
+        let source = D5d6ComicSource(config: custom, transport: transport)
+        XCTAssertEqual(source.referer, "https://mirror.d5d6.com/")
+        let items = try await source.latest(page: 1)
+        XCTAssertEqual(items.count, 2)
+        let requests = await transport.requests
+        XCTAssertEqual(requests[0].url, "https://mirror.d5d6.com/jiujiucate_jiujiuquanbu_allvisit_0_1/")
+        XCTAssertEqual(requests[0].headers["Referer"], "https://mirror.d5d6.com/")
+    }
+
+    func testHomePageFallbackWhenCategoryIndexEmpty() async throws {
+        let homeCards = """
+        <a href="/jiujiucate_jiujiurexue/">热血</a>
+        <a href="/jiujiucate_jiujiukehuan/">科幻</a>
+        """
+        let transport = D5d6Transport([
+            "https://www.d5d6.com/jiujiucate_quanbu/": .text("<html><body><div class='index-content'></div></body></html>"),
+            "https://www.d5d6.com/": .text(homeCards)
+        ])
+        let source = D5d6ComicSource(transport: transport)
+        let cats = try await source.categories()
+        XCTAssertEqual(cats, ["热血", "科幻"])
+        let groups = try await source.filterGroups()
+        XCTAssertEqual(groups[0].options.map(\.value), ["all", "jiujiurexue", "jiujiukehuan"])
+    }
 }
 
 private struct D5d6Request: Sendable { let url: String; let headers: [String: String] }

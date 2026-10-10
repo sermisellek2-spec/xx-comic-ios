@@ -9,14 +9,23 @@ public enum D5d6SourceError: Error, Equatable, LocalizedError, Sendable {
 public struct D5d6ComicSource: ComicSource {
     public let id = "d5d6"
     public let name = "悦看漫画"
-    public let referer = "https://www.d5d6.com/"
-    private let base = "https://www.d5d6.com"
+    public let referer: String
+    public let config: SourceConfigItem?
+    private let base: String
     private let transport: any HTTPTransport
     private static let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
-    public init(transport: any HTTPTransport = URLSessionHTTPTransport()) { self.transport = transport }
+    public init(config: SourceConfigItem? = nil, transport: any HTTPTransport = URLSessionHTTPTransport()) {
+        self.config = config
+        self.transport = transport
+        let baseCandidate = config?.baseUrl ?? "https://www.d5d6.com"
+        base = baseCandidate.replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression)
+        referer = config?.referer ?? (base + "/")
+    }
 
-    public func latest(page: Int) async throws -> [ComicSummary] { try cards(await fetch(categoryPath(slug: "jiujiuquanbu", state: "all", page: page))) }
+    public func latest(page: Int) async throws -> [ComicSummary] {
+        try cards(await fetch(categoryPath(slug: "jiujiuquanbu", state: "all", page: page)))
+    }
 
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()
@@ -27,7 +36,10 @@ public struct D5d6ComicSource: ComicSource {
     }
 
     public func filterGroups() async throws -> [SourceFilterGroup] {
-        let categories = categoryOptions(try await fetch("/jiujiucate_quanbu/"))
+        var categories = categoryOptions(try await fetch("/jiujiucate_quanbu/"))
+        if categories.isEmpty {
+            categories = categoryOptions(try await fetch("/"))
+        }
         guard !categories.isEmpty else { throw parseError("分类解析失败") }
         return [
             .init(key: "category", label: "题材", options: [.init(label: "全部", value: "all")] + categories),
@@ -36,7 +48,10 @@ public struct D5d6ComicSource: ComicSource {
     }
 
     public func categories() async throws -> [String] {
-        let values = categoryOptions(try await fetch("/jiujiucate_quanbu/")).map(\.label)
+        var values = categoryOptions(try await fetch("/jiujiucate_quanbu/")).map(\.label)
+        if values.isEmpty {
+            values = categoryOptions(try await fetch("/")).map(\.label)
+        }
         return values.isEmpty ? ["大陆", "日本", "韩国", "欧美"] : values
     }
 
@@ -137,7 +152,7 @@ public struct D5d6ComicSource: ComicSource {
         return result
     }
 
-    private func categoryOptions(_ html: String) -> [SourceFilterOption] { var seen = Set<String>(); return matches(#"href=[\"'](?:https?://www\.d5d6\.com)?/jiujiucate_(jiujiu[^_/]+)_allvisit_\d+_\d+/?[\"'][^>]*>([\s\S]*?)</a>"#, html).compactMap { let slug = $0[1], title = clean($0[2]); guard slug != "jiujiuquanbu", !title.isEmpty, seen.insert(title).inserted else { return nil }; return .init(label: title, value: slug) } }
+    private func categoryOptions(_ html: String) -> [SourceFilterOption] { var seen = Set<String>(); return matches(#"href=[\"'](?:https?://www\.d5d6\.com)?/jiujiucate_(jiujiu[^_/]+)(?:_allvisit_\d+_\d+)?/?[\"'][^>]*>([\s\S]*?)</a>"#, html).compactMap { let slug = $0[1], title = clean($0[2]); guard slug != "jiujiuquanbu", !title.isEmpty, seen.insert(title).inserted else { return nil }; return .init(label: title, value: slug) } }
     private func categoryPath(slug: String, state: String, page: Int) -> String { let finish = state == "serial" ? "1" : state == "pub" ? "2" : "0"; return "/jiujiucate_\(slug)_allvisit_\(finish)_\(max(1, page))/" }
     private func rawComicID(_ input: String) -> String { var value = input; if value.hasPrefix("d5d6:") { value.removeFirst(5) }; let found = first(#"jiujiucomic_(\d+)"#, value); return found.isEmpty ? value.filter(\.isNumber) : found }
     private func imageURL(_ tag: String) -> String { for key in ["data-original", "data-src", "src"] { let value = attribute(key, tag); if !value.isEmpty { return cleanURL(value) } }; return "" }
