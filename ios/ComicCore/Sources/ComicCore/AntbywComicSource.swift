@@ -7,27 +7,41 @@ public enum AntbywSourceError: Error, Equatable, LocalizedError, Sendable {
 
 public struct AntbywComicSource: ComicSource {
     public let id = "antbyw"
-    public let name = "tapmanga搬运"
-    public let referer = "https://www.antbyw.com/"
-    private let base = "https://www.antbyw.com"
+    public let name: String
+    public let referer: String
+    public let config: SourceConfigItem?
+    private let base: String
     private let transport: any HTTPTransport
     private static let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    private let libraryPath = "/plugin.php?id=jameson_manhua&c=index&a=ku"
+    private let libraryPath: String
 
-    public init(transport: any HTTPTransport = URLSessionHTTPTransport(timeoutInterval: 25)) { self.transport = transport }
+    public init(config: SourceConfigItem? = nil, transport: any HTTPTransport = URLSessionHTTPTransport(timeoutInterval: 25)) {
+        self.config = config
+        self.name = config?.name ?? "tapmanga搬运"
+        let baseCandidate = config?.baseUrl ?? "https://www.antbyw.com"
+        let trimmedBase = baseCandidate.replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression)
+        self.base = trimmedBase.isEmpty ? "https://www.antbyw.com" : trimmedBase
+        self.referer = config?.referer ?? (self.base + "/")
+        self.libraryPath = config?.route("latest") ?? "/plugin.php?id=jameson_manhua&c=index&a=ku"
+        self.transport = transport
+    }
 
     public func latest(page: Int) async throws -> [ComicSummary] {
-        try cards(await fetch(libraryPath + "&odfie=addtime&order=desc&page=\(max(1, page))"))
+        let path = (config?.route("latest") ?? libraryPath) + "&odfie=addtime&order=desc&page=\(max(1, page))"
+        return try cards(await fetch(path))
     }
 
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()
         guard page <= 1 else { return [] }
-        return try cards(await fetch("/plugin.php?id=jameson_manhua&a=search&c=index&keyword=\(formEncode(SearchRules.trim(keyword)))"))
+        let searchTemplate = config?.route("search") ?? "/plugin.php?id=jameson_manhua&a=search&c=index&keyword={keyword}"
+        let path = searchTemplate.replacingOccurrences(of: "{keyword}", with: formEncode(SearchRules.trim(keyword)))
+        return try cards(await fetch(path))
     }
 
     public func filterGroups() async throws -> [SourceFilterGroup] {
-        let html = try await fetch("/plugin.php?id=jameson_manhua&a=ku")
+        let path = config?.route("categoryIndex") ?? "/plugin.php?id=jameson_manhua&a=ku"
+        let html = try await fetch(path)
         let keyMap = ["分类": ("category_id", "题材"), "进度": ("jindu", "进度"), "地区": ("region", "地区"), "首字母": ("letter", "字母"), "年份": ("search_age", "年份"), "受众": ("shouzhong", "受众")]
         var groups: [SourceFilterGroup] = []
         for section in matches(#"<strong[^>]*>([^<]+)</strong>([\s\S]*?)(?=<div[^>]*class=[\"'][^\"']*\bcl\b|</div>\s*</div>|$)"#, html) {
@@ -49,7 +63,7 @@ public struct AntbywComicSource: ComicSource {
     }
 
     public func category(filters: [String: String], page: Int) async throws -> [ComicSummary] {
-        var path = libraryPath
+        var path = config?.route("category") ?? libraryPath
         for key in ["category_id", "jindu", "region", "letter", "search_age", "shouzhong"] {
             if let value = filters[key], !value.isEmpty, value != "all" { path += "&\(key)=\(value)" }
         }
@@ -138,7 +152,10 @@ public struct AntbywComicSource: ComicSource {
     }
 
     private func tags(_ html: String) -> [String] { var seen = Set<String>(); return matches(#"<a[^>]+a=ku[^>]*>([\s\S]*?)</a>"#, html).map { clean($0[1]) }.filter { !$0.isEmpty && seen.insert($0).inserted } }
-    private func detailPath(_ rawID: String) -> String { "/plugin.php?id=jameson_manhua&c=index&a=bofang&kuid=\(rawID)" }
+    private func detailPath(_ rawID: String) -> String {
+        let detailTemplate = config?.route("detail") ?? "/plugin.php?id=jameson_manhua&c=index&a=bofang&kuid={comicId}"
+        return detailTemplate.replacingOccurrences(of: "{comicId}", with: rawID)
+    }
     private func rawComicID(_ input: String) -> String { var value = input; if value.hasPrefix("antbyw:") { value.removeFirst(7) }; let found = first(#"[?&](?:amp;)?kuid=(\d+)"#, value); return found.isEmpty ? value.filter(\.isNumber) : found }
     private func withoutPage(_ input: String) -> String { input.replacingOccurrences(of: #"([?&])page=\d+&?"#, with: "$1", options: .regularExpression).replacingOccurrences(of: #"[?&]+$"#, with: "", options: .regularExpression) }
     private func pageURL(_ input: String, _ page: Int) -> String { input + (input.contains("?") ? "&" : "?") + "page=\(page)" }

@@ -335,6 +335,30 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func antbyw(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "antbyw",
+            name: "tapmanga搬运",
+            domain: "www.antbyw.com",
+            baseUrl: "https://www.antbyw.com",
+            referer: "https://www.antbyw.com/",
+            latestPath: "/plugin.php?id=jameson_manhua&c=index&a=ku",
+            searchPath: "/plugin.php?id=jameson_manhua&a=search&c=index&keyword={keyword}",
+            categoryPath: "/plugin.php?id=jameson_manhua&c=index&a=ku",
+            detailPath: "/plugin.php?id=jameson_manhua&c=index&a=bofang&kuid={comicId}",
+            enabled: enabled,
+            routes: [
+                "latest": "/plugin.php?id=jameson_manhua&c=index&a=ku",
+                "search": "/plugin.php?id=jameson_manhua&a=search&c=index&keyword={keyword}",
+                "categoryIndex": "/plugin.php?id=jameson_manhua&a=ku",
+                "category": "/plugin.php?id=jameson_manhua&c=index&a=ku",
+                "detail": "/plugin.php?id=jameson_manhua&c=index&a=bofang&kuid={comicId}",
+                "chapter": "{chapterUrl}"
+            ],
+            filters: [:]
+        )
+    }
+
     public static func copy4000(enabled: Bool = true) -> SourceConfigItem {
         SourceConfigItem(
             id: "copy4000",
@@ -536,6 +560,7 @@ public enum SourceConfigDefaults {
         case "copy4000", "copymanga": return copy4000()
         case "manhuazhan", "five_um": return manhuazhan()
         case "bbyin": return bbyin()
+        case "antbyw": return antbyw()
         default: return nil
         }
     }

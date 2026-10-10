@@ -40,7 +40,7 @@ final class AppEnvironment {
             ManbenComicSource(config: preferences.config(for: "manben") ?? SourceConfigDefaults.manben()),
             FiveUmComicSource(site: .manhuazhan, config: preferences.config(for: "manhuazhan") ?? SourceConfigDefaults.manhuazhan()),
             FiveUmComicSource(site: .bbyin, config: preferences.config(for: "bbyin") ?? SourceConfigDefaults.bbyin()),
-            AntbywComicSource(),
+            AntbywComicSource(config: preferences.config(for: "antbyw") ?? SourceConfigDefaults.antbyw()),
             CuimhComicSource(),
             LiumanhuaComicSource(),
             CopyMangaComicSource(config: preferences.config(for: "copy4000")),

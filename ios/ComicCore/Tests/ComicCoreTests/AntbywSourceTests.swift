@@ -101,6 +101,50 @@ final class AntbywSourceTests: XCTestCase {
         let chapters = try await AntbywComicSource(transport: AntbywTransport([url: antResponse(html)])).chapters(comicId: "5")
         XCTAssertEqual(chapters.map(\.chapterId), ["1", "2"])
     }
+
+    func testSourceConfigDefaultsAndConfiguredSource() async throws {
+        let def = SourceConfigDefaults.antbyw()
+        XCTAssertEqual(def.id, "antbyw")
+        XCTAssertEqual(def.name, "tapmanga搬运")
+        XCTAssertEqual(def.domain, "www.antbyw.com")
+        XCTAssertEqual(def.baseUrl, "https://www.antbyw.com")
+        XCTAssertEqual(def.referer, "https://www.antbyw.com/")
+        XCTAssertEqual(def.route("latest"), "/plugin.php?id=jameson_manhua&c=index&a=ku")
+        XCTAssertEqual(def.route("search"), "/plugin.php?id=jameson_manhua&a=search&c=index&keyword={keyword}")
+        XCTAssertEqual(def.route("categoryIndex"), "/plugin.php?id=jameson_manhua&a=ku")
+        XCTAssertEqual(def.route("category"), "/plugin.php?id=jameson_manhua&c=index&a=ku")
+        XCTAssertEqual(def.route("detail"), "/plugin.php?id=jameson_manhua&c=index&a=bofang&kuid={comicId}")
+        XCTAssertEqual(SourceConfigDefaults.defaultConfig(for: "antbyw")?.id, "antbyw")
+
+        let custom = SourceConfigItem(
+            id: "antbyw",
+            name: "蚂蚁镜像",
+            domain: "mirror.antbyw.com",
+            baseUrl: "https://mirror.antbyw.com",
+            referer: "https://mirror.antbyw.com/",
+            latestPath: "/plugin.php?id=jameson_manhua&c=index&a=ku",
+            searchPath: "/plugin.php?id=jameson_manhua&a=search&c=index&keyword={keyword}",
+            categoryPath: "/plugin.php?id=jameson_manhua&c=index&a=ku",
+            detailPath: "/plugin.php?id=jameson_manhua&c=index&a=bofang&kuid={comicId}",
+            enabled: true,
+            routes: [
+                "search": "/plugin.php?id=jameson_manhua&a=search&c=index&keyword={keyword}",
+                "detail": "/plugin.php?id=jameson_manhua&c=index&a=bofang&kuid={comicId}"
+            ],
+            filters: [:]
+        )
+        let searchURL = "https://mirror.antbyw.com/plugin.php?id=jameson_manhua&a=search&c=index&keyword=%E7%8E%8B"
+        let transport = AntbywTransport([searchURL: antResponse(cards)])
+        let configured = AntbywComicSource(config: custom, transport: transport)
+        XCTAssertEqual(configured.id, "antbyw")
+        XCTAssertEqual(configured.name, "蚂蚁镜像")
+        XCTAssertEqual(configured.referer, "https://mirror.antbyw.com/")
+        let search = try await configured.search(keyword: "王", page: 1)
+        XCTAssertEqual(search.count, 1)
+        let reqs = await transport.requests
+        XCTAssertEqual(reqs.first?.url, searchURL)
+        XCTAssertEqual(reqs.first?.headers["Referer"], "https://mirror.antbyw.com/")
+    }
 }
 
 private struct AntbywRequest: Sendable { let url: String; let headers: [String: String] }
