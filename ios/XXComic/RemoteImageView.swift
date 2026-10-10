@@ -189,18 +189,43 @@ final class RemoteImageView: UIImageView {
 final class ComicCell: UICollectionViewCell {
     let cover = RemoteImageView()
     private let nameLabel = UILabel()
+    private let badgeContainer = UIView()
+    private let badgeLabel = UILabel()
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         cover.contentMode = .scaleAspectFill
         cover.clipsToBounds = true
         cover.layer.cornerRadius = 8
+
+        badgeContainer.layer.cornerRadius = 9
+        badgeContainer.clipsToBounds = true
+        badgeContainer.isHidden = true
+
+        badgeLabel.font = .systemFont(ofSize: 10, weight: .bold)
+        badgeLabel.textColor = .white
+        badgeLabel.textAlignment = .center
+        badgeLabel.translatesAutoresizingMaskIntoConstraints = false
+        badgeContainer.addSubview(badgeLabel)
+
+        NSLayoutConstraint.activate([
+            badgeLabel.topAnchor.constraint(equalTo: badgeContainer.topAnchor, constant: 2),
+            badgeLabel.bottomAnchor.constraint(equalTo: badgeContainer.bottomAnchor, constant: -2),
+            badgeLabel.leadingAnchor.constraint(equalTo: badgeContainer.leadingAnchor, constant: 6),
+            badgeLabel.trailingAnchor.constraint(equalTo: badgeContainer.trailingAnchor, constant: -6),
+            badgeContainer.heightAnchor.constraint(equalToConstant: 18)
+        ])
+
         nameLabel.font = .systemFont(ofSize: 13, weight: .medium)
         nameLabel.numberOfLines = 2
         nameLabel.textColor = Palette.text
-        for view in [cover, nameLabel] { view.translatesAutoresizingMaskIntoConstraints = false; contentView.addSubview(view) }
+
+        for view in [cover, nameLabel, badgeContainer] { view.translatesAutoresizingMaskIntoConstraints = false; contentView.addSubview(view) }
         NSLayoutConstraint.activate([
             cover.topAnchor.constraint(equalTo: contentView.topAnchor), cover.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             cover.trailingAnchor.constraint(equalTo: contentView.trailingAnchor), cover.heightAnchor.constraint(equalTo: cover.widthAnchor, multiplier: 4 / 3),
+            badgeContainer.topAnchor.constraint(equalTo: cover.topAnchor, constant: 6),
+            badgeContainer.trailingAnchor.constraint(equalTo: cover.trailingAnchor, constant: -6),
             nameLabel.topAnchor.constraint(equalTo: cover.bottomAnchor, constant: 6), nameLabel.leadingAnchor.constraint(equalTo: cover.leadingAnchor),
             nameLabel.trailingAnchor.constraint(equalTo: cover.trailingAnchor), nameLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
         ])
@@ -208,10 +233,133 @@ final class ComicCell: UICollectionViewCell {
         accessibilityTraits = .button
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
-    func configure(_ comic: ComicCore.ComicSummary, referer: String, library: LocalLibrary) {
+
+    func configure(_ comic: ComicCore.ComicSummary, referer: String, library: LocalLibrary,
+                   badgeText: String? = nil, badgeColor: UIColor? = nil) {
         nameLabel.text = comic.title
         accessibilityLabel = comic.title
         cover.loadCover(comic, referer: referer, library: library)
+
+        if let badgeText, !badgeText.isEmpty {
+            badgeLabel.text = badgeText
+            badgeContainer.backgroundColor = badgeColor ?? Palette.accent
+            badgeContainer.isHidden = false
+        } else {
+            badgeContainer.isHidden = true
+        }
     }
-    override func prepareForReuse() { super.prepareForReuse(); cover.cancel(); cover.image = nil }
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        cover.cancel()
+        cover.image = nil
+        badgeContainer.isHidden = true
+    }
+}
+
+@MainActor
+final class ComicListCell: UICollectionViewCell {
+    let cover = RemoteImageView()
+    private let titleLabel = UILabel()
+    private let subtitleLabel = UILabel()
+    private let detailLabel = UILabel()
+    private let badgeContainer = UIView()
+    private let badgeLabel = UILabel()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = Palette.card
+        contentView.backgroundColor = Palette.card
+        layer.cornerRadius = 8
+        clipsToBounds = true
+
+        cover.contentMode = .scaleAspectFill
+        cover.clipsToBounds = true
+        cover.layer.cornerRadius = 6
+        cover.translatesAutoresizingMaskIntoConstraints = false
+
+        badgeContainer.layer.cornerRadius = 9
+        badgeContainer.clipsToBounds = true
+        badgeContainer.isHidden = true
+        badgeContainer.translatesAutoresizingMaskIntoConstraints = false
+
+        badgeLabel.font = .systemFont(ofSize: 10, weight: .bold)
+        badgeLabel.textColor = .white
+        badgeLabel.textAlignment = .center
+        badgeLabel.translatesAutoresizingMaskIntoConstraints = false
+        badgeContainer.addSubview(badgeLabel)
+
+        NSLayoutConstraint.activate([
+            badgeLabel.topAnchor.constraint(equalTo: badgeContainer.topAnchor, constant: 2),
+            badgeLabel.bottomAnchor.constraint(equalTo: badgeContainer.bottomAnchor, constant: -2),
+            badgeLabel.leadingAnchor.constraint(equalTo: badgeContainer.leadingAnchor, constant: 6),
+            badgeLabel.trailingAnchor.constraint(equalTo: badgeContainer.trailingAnchor, constant: -6),
+            badgeContainer.heightAnchor.constraint(equalToConstant: 18)
+        ])
+
+        titleLabel.font = .systemFont(ofSize: 15, weight: .semibold)
+        titleLabel.textColor = Palette.text
+        titleLabel.numberOfLines = 1
+
+        subtitleLabel.font = .systemFont(ofSize: 13)
+        subtitleLabel.textColor = Palette.text2
+        subtitleLabel.numberOfLines = 1
+
+        detailLabel.font = .systemFont(ofSize: 12)
+        detailLabel.textColor = Palette.accent
+        detailLabel.numberOfLines = 1
+
+        let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, detailLabel])
+        textStack.axis = .vertical
+        textStack.spacing = 4
+        textStack.translatesAutoresizingMaskIntoConstraints = false
+
+        contentView.addSubview(cover)
+        contentView.addSubview(badgeContainer)
+        contentView.addSubview(textStack)
+
+        NSLayoutConstraint.activate([
+            cover.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+            cover.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            cover.widthAnchor.constraint(equalToConstant: 54),
+            cover.heightAnchor.constraint(equalToConstant: 72),
+
+            badgeContainer.topAnchor.constraint(equalTo: cover.topAnchor, constant: -4),
+            badgeContainer.trailingAnchor.constraint(equalTo: cover.trailingAnchor, constant: 4),
+
+            textStack.leadingAnchor.constraint(equalTo: cover.trailingAnchor, constant: 12),
+            textStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            textStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+        ])
+
+        isAccessibilityElement = true
+        accessibilityTraits = .button
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:)") }
+
+    func configure(_ comic: ComicCore.ComicSummary, referer: String, library: LocalLibrary,
+                   subtitle: String? = nil, detail: String? = nil,
+                   badgeText: String? = nil, badgeColor: UIColor? = nil) {
+        titleLabel.text = comic.title
+        accessibilityLabel = comic.title
+        subtitleLabel.text = subtitle ?? (comic.subtitle.isEmpty ? "暂无信息" : comic.subtitle)
+        detailLabel.text = detail ?? (comic.sourceId == "local" ? "本地漫画" : "")
+        detailLabel.isHidden = (detailLabel.text?.isEmpty ?? true)
+        cover.loadCover(comic, referer: referer, library: library)
+
+        if let badgeText, !badgeText.isEmpty {
+            badgeLabel.text = badgeText
+            badgeContainer.backgroundColor = badgeColor ?? Palette.accent
+            badgeContainer.isHidden = false
+        } else {
+            badgeContainer.isHidden = true
+        }
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        cover.cancel()
+        cover.image = nil
+        badgeContainer.isHidden = true
+    }
 }

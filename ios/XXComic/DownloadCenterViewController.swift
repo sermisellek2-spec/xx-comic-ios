@@ -54,6 +54,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
 
     @objc private func toggleWifiOnly() {
         environment.downloadRuntime.isWifiOnly.toggle()
+        environment.defaults.set(environment.downloadRuntime.isWifiOnly, forKey: "downloads.wifiOnly")
         setupNavigationBar()
         let mode = environment.downloadRuntime.isWifiOnly ? "仅 Wi-Fi 下载" : "允许移动网络下载"
         let alert = UIAlertController(title: "下载网络设置", message: "已切换为：\(mode)", preferredStyle: .alert)

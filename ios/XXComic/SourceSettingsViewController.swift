@@ -112,6 +112,9 @@ final class SourceSettingsViewController: UITableViewController {
             self?.resetOrder()
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        if let popover = alert.popoverPresentationController {
+            popover.barButtonItem = navigationItem.rightBarButtonItem
+        }
         present(alert, animated: true)
     }
     private func runHealthCheck() {
@@ -178,6 +181,11 @@ final class SourceSettingsViewController: UITableViewController {
         )
         alert.addAction(UIAlertAction(title: "分享", style: .default) { [weak self] _ in
             let share = UIActivityViewController(activityItems: [json], applicationActivities: nil)
+            if let popover = share.popoverPresentationController {
+                popover.sourceView = self?.view
+                popover.sourceRect = CGRect(x: self?.view.bounds.midX ?? 0, y: self?.view.bounds.midY ?? 0, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
             self?.present(share, animated: true)
         })
         alert.addAction(UIAlertAction(title: "完成", style: .cancel))

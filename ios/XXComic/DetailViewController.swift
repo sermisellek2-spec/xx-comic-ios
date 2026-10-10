@@ -111,7 +111,18 @@ final class DetailViewController: UIViewController {
         let id = comic.comicId
         detailTask = Task { [weak self, source] in
             do {
-                let detail = try await source.detail(comicId: id)
+                let detail: ComicDetail
+                do {
+                    detail = try await source.detail(comicId: id)
+                } catch {
+                    if let self,
+                       let bookId = try? DownloadModels.bookId(source: self.comic.sourceId, comic: id),
+                       let snapshot = self.environment.downloadStore.snapshot(id: bookId) {
+                        detail = snapshot
+                    } else {
+                        throw error
+                    }
+                }
                 try Task.checkCancellation()
                 guard let self else { return }
                 self.comic = detail.summary
@@ -194,6 +205,9 @@ final class DetailViewController: UIViewController {
             self?.confirmDeleteLocalSeries()
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        if let popover = alert.popoverPresentationController {
+            popover.barButtonItem = navigationItem.rightBarButtonItem
+        }
         present(alert, animated: true)
     }
     @objc private func renameLocalSeries() {
@@ -237,6 +251,9 @@ final class DetailViewController: UIViewController {
             }
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        if let popover = alert.popoverPresentationController {
+            popover.barButtonItem = navigationItem.rightBarButtonItem
+        }
         present(alert, animated: true)
     }
     private func chapters() async throws -> [Chapter] {
@@ -244,7 +261,20 @@ final class DetailViewController: UIViewController {
         if directoryTask == nil {
             directoryID = UUID()
             let id = comic.comicId
-            directoryTask = Task { [source] in try await source.chapters(comicId: id) }
+            let sourceId = comic.sourceId
+            directoryTask = Task { [source, weak self] in
+                do {
+                    return try await source.chapters(comicId: id)
+                } catch {
+                    if let self,
+                       let bookId = try? DownloadModels.bookId(source: sourceId, comic: id),
+                       let snapshot = self.environment.downloadStore.snapshot(id: bookId),
+                       !snapshot.chapters.isEmpty {
+                        return snapshot.chapters
+                    }
+                    throw error
+                }
+            }
         }
         let token = directoryID
         do {

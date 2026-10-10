@@ -8,5 +8,9 @@ final class AppThemeTests: XCTestCase {
         }
         XCTAssertFalse(AppTheme.light.isDark(hour: 23))
         XCTAssertTrue(AppTheme.dark.isDark(hour: 12))
+        XCTAssertTrue(AppTheme.automatic.isDark(systemDark: true))
+        XCTAssertFalse(AppTheme.automatic.isDark(systemDark: false))
+        XCTAssertFalse(AppTheme.light.isDark(systemDark: true))
+        XCTAssertTrue(AppTheme.dark.isDark(systemDark: false))
     }
 }

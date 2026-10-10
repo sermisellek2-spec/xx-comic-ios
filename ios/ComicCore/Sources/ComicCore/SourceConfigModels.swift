@@ -287,6 +287,59 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func manhuazhan(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "manhuazhan",
+            name: "漫画栈",
+            domain: "www.60ti.com",
+            baseUrl: "https://www.60ti.com",
+            referer: "https://www.60ti.com/",
+            latestPath: "/category{pagePath}",
+            searchPath: "/search?key={keyword}",
+            categoryPath: "/category{pagePath}",
+            detailPath: "/comic_{comicId}.html",
+            enabled: enabled,
+            routes: [
+                "latest": "/category{pagePath}",
+                "search": "/search?key={keyword}",
+                "categoryIndex": "/category/",
+                "category": "/category{pagePath}",
+                "detail": "/comic_{comicId}.html",
+                "chapter": "{chapterUrl}"
+            ],
+            filters: [:]
+        )
+    }
+
+    public static func copy4000(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "copy4000",
+            name: "拷贝漫画",
+            domain: "www.copy4000.com",
+            baseUrl: "https://www.copy4000.com",
+            referer: "https://www.copy4000.com/",
+            latestPath: "",
+            searchPath: "/api/kb/web/searchci/comics?offset={offset}&platform=2&limit={limit}&q={keyword}&q_type=",
+            categoryPath: "/comics?limit={limit}&offset={offset}&ordering={ordering}{filters}",
+            detailPath: "/comic/{comicId}",
+            enabled: enabled,
+            routes: [
+                "apiBaseUrl": "https://api.manga2026.xyz",
+                "apiFallbackUrls": "https://mapi.elfgjfghkk.club,https://mapi.fgjfghkkcenter.club",
+                "apiDetail": "/api/v3/comic2/{comicId}?platform=3",
+                "apiChapters": "/api/v3/comic/{comicId}/group/{group}/chapters?limit=100&offset={offset}",
+                "apiChapter": "/api/v3/comic/{comicId}/chapter/{chapterId}?platform=3",
+                "search": "/api/kb/web/searchci/comics?offset={offset}&platform=2&limit={limit}&q={keyword}&q_type=",
+                "categoryIndex": "/filter",
+                "category": "/comics?limit={limit}&offset={offset}&ordering={ordering}{filters}",
+                "detail": "/comic/{comicId}",
+                "chapters": "/comicdetail/{comicId}/chapters",
+                "chapter": "{chapterUrl}"
+            ],
+            filters: [:]
+        )
+    }
+
     public static func defaultConfig(for id: String) -> SourceConfigItem? {
         switch id {
         case "baozimh": return baozi()
@@ -295,6 +348,8 @@ public enum SourceConfigDefaults {
         case "mh18": return mh18()
         case "mkzhan": return mkzhan()
         case "manwa": return manwa()
+        case "copy4000", "copymanga": return copy4000()
+        case "manhuazhan", "five_um": return manhuazhan()
         default: return nil
         }
     }

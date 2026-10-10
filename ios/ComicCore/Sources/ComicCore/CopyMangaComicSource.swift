@@ -20,6 +20,19 @@ public actor CopyMangaComicSource: ComicSource {
         self.apiOrigin = apiOrigin
         self.apiFallbackOrigins = apiFallbackOrigins ?? (apiOrigin == "https://api.manga2026.xyz" ? ["https://mapi.elfgjfghkk.club","https://mapi.fgjfghkkcenter.club"] : [])
     }
+
+    public init(config: SourceConfigItem?, transport: (any HTTPTransport)? = nil) {
+        let base = (config?.baseUrl.isEmpty == false) ? config!.baseUrl : "https://www.copy4000.com"
+        let apiBase = (config?.route("apiBaseUrl").isEmpty == false) ? config!.route("apiBaseUrl") : "https://api.manga2026.xyz"
+        let fallbacksStr = config?.route("apiFallbackUrls")
+        let fallbacks: [String]?
+        if let fallbacksStr, !fallbacksStr.isEmpty {
+            fallbacks = fallbacksStr.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        } else {
+            fallbacks = nil
+        }
+        self.init(transport: transport, baseURL: base, apiOrigin: apiBase, apiFallbackOrigins: fallbacks)
+    }
     public func latest(page: Int) async throws -> [ComicSummary] { try await category(filters:[:],page:page) }
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()

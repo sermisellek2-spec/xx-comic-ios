@@ -21,16 +21,13 @@ final class AppThemeController {
     private func refresh() {
         timer?.invalidate()
         let mode = AppTheme(rawValue: defaults.integer(forKey: "theme.mode")) ?? .automatic
-        let now = Date(), calendar = Calendar.current
-        root?.overrideUserInterfaceStyle = mode.isDark(hour: calendar.component(.hour, from: now)) ? .dark : .light
-        guard mode == .automatic else { return }
-        let next = [8, 18].compactMap {
-            calendar.nextDate(after: now, matching: DateComponents(hour: $0, minute: 0, second: 0), matchingPolicy: .nextTime)
-        }.min()
-        if let next {
-            timer = Timer.scheduledTimer(withTimeInterval: max(1, next.timeIntervalSince(now) + 0.25), repeats: false) { [weak self] _ in
-                Task { @MainActor [weak self] in self?.refresh() }
-            }
+        switch mode {
+        case .automatic:
+            root?.overrideUserInterfaceStyle = .unspecified
+        case .light:
+            root?.overrideUserInterfaceStyle = .light
+        case .dark:
+            root?.overrideUserInterfaceStyle = .dark
         }
     }
     deinit { timer?.invalidate(); observers.forEach(NotificationCenter.default.removeObserver) }

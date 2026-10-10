@@ -42,13 +42,17 @@ public struct ReaderPosition: Codable, Equatable, Sendable {
 public enum ReaderTapAction: Equatable, Sendable { case none, toggleControls, move(Int) }
 
 public enum ReaderNavigation {
+    public static func isEdgeTapNavigationPermitted(layout: ReaderLayout, mode: ReaderTurnMode) -> Bool {
+        layout == .paged && mode != .buttons
+    }
+
     public static func tapAction(x: Double, y: Double, controlsVisible: Bool, layout: ReaderLayout,
                                  mode: ReaderTurnMode, leftHand: Bool, zoomed: Bool) -> ReaderTapAction {
         if controlsVisible { return .toggleControls }
         guard x.isFinite, y.isFinite else { return .none }
         let activeY = layout == .paged ? (y >= 0.25 && y <= 0.75) : (y > 0.25 && y < 0.75)
         guard activeY else { return .none }
-        let allowsTap = layout == .paged ? mode != .buttons : mode == .tap
+        let allowsTap = isEdgeTapNavigationPermitted(layout: layout, mode: mode)
         if allowsTap && !zoomed && (x < 0.28 || x > 0.72) {
             return .move(tapDelta(leftSide: x < 0.28, leftHand: leftHand))
         }

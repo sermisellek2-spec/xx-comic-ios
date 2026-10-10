@@ -7,38 +7,95 @@ public final class SourcePreferences {
         self.defaults = defaults
         self.defaultIDs = defaultIDs
     }
+    public static func canonicalID(_ id: String) -> String {
+        switch id {
+        case "five_um": return "manhuazhan"
+        case "copymanga": return "copy4000"
+        default: return id
+        }
+    }
+
+    public static func legacyAliases(for id: String) -> [String] {
+        let canonical = canonicalID(id)
+        switch canonical {
+        case "manhuazhan": return ["five_um"]
+        case "copy4000": return ["copymanga"]
+        default: return []
+        }
+    }
+
     public var orderedIDs: [String] {
         let json = defaults.string(forKey: "source.order") ?? "[]"
         let values = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [Any] ?? []
-        return SourceOrder.normalize(values.compactMap { $0 as? String }, available: defaultIDs)
+        let mapped = values.compactMap { ($0 as? String).map(Self.canonicalID) }
+        return SourceOrder.normalize(mapped, available: defaultIDs)
     }
     public var enabledIDs: [String] { orderedIDs.filter(isEnabled) }
     public func isEnabled(_ id: String) -> Bool {
-        defaultIDs.contains(id) && ((defaults.object(forKey: "source.\(id).enabled") as? Bool) ?? true)
+        let canonical = Self.canonicalID(id)
+        guard defaultIDs.contains(canonical) || defaultIDs.contains(id) else { return false }
+        if let val = defaults.object(forKey: "source.\(canonical).enabled") as? Bool {
+            return val
+        }
+        for alias in Self.legacyAliases(for: id) {
+            if let legacyVal = defaults.object(forKey: "source.\(alias).enabled") as? Bool {
+                defaults.set(legacyVal, forKey: "source.\(canonical).enabled")
+                return legacyVal
+            }
+        }
+        if canonical != id, let directVal = defaults.object(forKey: "source.\(id).enabled") as? Bool {
+            defaults.set(directVal, forKey: "source.\(canonical).enabled")
+            return directVal
+        }
+        return true
     }
     public func setEnabled(_ enabled: Bool, id: String) {
-        guard defaultIDs.contains(id) else { return }
-        defaults.set(enabled, forKey: "source.\(id).enabled")
+        let canonical = Self.canonicalID(id)
+        guard defaultIDs.contains(canonical) || defaultIDs.contains(id) else { return }
+        defaults.set(enabled, forKey: "source.\(canonical).enabled")
+        for alias in Self.legacyAliases(for: id) {
+            defaults.set(enabled, forKey: "source.\(alias).enabled")
+        }
+        if canonical != id {
+            defaults.set(enabled, forKey: "source.\(id).enabled")
+        }
     }
     public func setOrder(_ ids: [String]) {
+        let mapped = ids.map(Self.canonicalID)
         // An array of strings always has a JSON representation.
-        guard let data = try? JSONEncoder().encode(SourceOrder.normalize(ids, available: defaultIDs)), let json = String(data: data, encoding: .utf8) else { return }
+        guard let data = try? JSONEncoder().encode(SourceOrder.normalize(mapped, available: defaultIDs)), let json = String(data: data, encoding: .utf8) else { return }
         defaults.set(json, forKey: "source.order")
     }
     public func resetOrder() { setOrder(defaultIDs) }
 
     public func config(for sourceId: String) -> SourceConfigItem? {
-        if let data = defaults.data(forKey: "source.\(sourceId).config"),
+        let canonical = Self.canonicalID(sourceId)
+        if let data = defaults.data(forKey: "source.\(canonical).config"),
            let item = try? JSONDecoder().decode(SourceConfigItem.self, from: data) {
             return item
         }
-        return SourceConfigDefaults.defaultConfig(for: sourceId)
+        for alias in Self.legacyAliases(for: sourceId) {
+            if let legacyData = defaults.data(forKey: "source.\(alias).config"),
+               let item = try? JSONDecoder().decode(SourceConfigItem.self, from: legacyData) {
+                return item
+            }
+        }
+        if canonical != sourceId,
+           let directData = defaults.data(forKey: "source.\(sourceId).config"),
+           let item = try? JSONDecoder().decode(SourceConfigItem.self, from: directData) {
+            return item
+        }
+        return SourceConfigDefaults.defaultConfig(for: canonical) ?? SourceConfigDefaults.defaultConfig(for: sourceId)
     }
 
     public func setConfig(_ item: SourceConfigItem, for sourceId: String) {
-        guard defaultIDs.contains(sourceId) else { return }
+        let canonical = Self.canonicalID(sourceId)
+        guard defaultIDs.contains(canonical) || defaultIDs.contains(sourceId) else { return }
         if let data = try? JSONEncoder().encode(item) {
-            defaults.set(data, forKey: "source.\(sourceId).config")
+            defaults.set(data, forKey: "source.\(canonical).config")
+            for alias in Self.legacyAliases(for: sourceId) {
+                defaults.set(data, forKey: "source.\(alias).config")
+            }
         }
     }
 
@@ -102,7 +159,9 @@ public final class SourcePreferences {
         var disabledCount = 0
         var total = 0
         for item in sourcesArray {
-            guard let id = item["id"] as? String, defaultIDs.contains(id) else { continue }
+            guard let rawId = item["id"] as? String else { continue }
+            let id = Self.canonicalID(rawId)
+            guard defaultIDs.contains(id) || defaultIDs.contains(rawId) else { continue }
             total += 1
             let enabled = item["enabled"] as? Bool ?? true
             setEnabled(enabled, id: id)

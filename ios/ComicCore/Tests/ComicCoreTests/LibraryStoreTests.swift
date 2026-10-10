@@ -126,4 +126,27 @@ final class LibraryStoreTests: XCTestCase {
         XCTAssertNotNil(store.entry(for: c1))
         XCTAssertTrue(store.entry(for: c1)!.positions.isEmpty)
     }
+
+    func testReplaceSourcePreservesFavoriteAndReadingPosition() throws {
+        let folder = try directory()
+        let store = try LibraryStore(directory: folder)
+        let original = ComicSummary(sourceId: "srcA", comicId: "c1", title: "漫画A")
+        let target = ComicSummary(sourceId: "srcB", comicId: "c2", title: "漫画A")
+        let oldChapter = Chapter(chapterId: "old_1", title: "第1话", url: "/ch1")
+        let targetChapter = Chapter(chapterId: "target_1", title: "第1话", url: "/ch1")
+
+        try store.setFavorite(original, favorite: true, now: 100)
+        try store.saveReading(original, chapter: oldChapter, chapterIndex: 0,
+                              position: ReaderPosition(imageIndex: 8, offset: 0.5), now: 200)
+
+        try store.replaceSource(original: original, target: target, matchingChapter: targetChapter, matchingChapterIndex: 0)
+
+        XCTAssertNil(store.entry(for: original))
+        let targetEntry = try XCTUnwrap(store.entry(for: target))
+        XCTAssertTrue(targetEntry.isFavorite)
+        XCTAssertEqual(targetEntry.favoriteAt, 100)
+        XCTAssertEqual(targetEntry.reading?.chapter.chapterId, "target_1")
+        XCTAssertEqual(targetEntry.reading?.position.imageIndex, 8)
+        XCTAssertEqual(targetEntry.positions["target_1"]?.imageIndex, 8)
+    }
 }

@@ -105,6 +105,9 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
             self?.confirmClearLogs()
         })
         sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+        if let popover = sheet.popoverPresentationController {
+            popover.barButtonItem = navigationItem.rightBarButtonItem
+        }
         present(sheet, animated: true)
     }
 
@@ -115,6 +118,9 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
             return
         }
         let activityVC = UIActivityViewController(activityItems: [allLogs], applicationActivities: nil)
+        if let popover = activityVC.popoverPresentationController {
+            popover.barButtonItem = navigationItem.rightBarButtonItem
+        }
         present(activityVC, animated: true)
     }
 
@@ -298,6 +304,10 @@ final class ErrorLogDetailViewController: UIViewController {
 
     @objc private func exportTapped() {
         let activityVC = UIActivityViewController(activityItems: [entry.fullText], applicationActivities: nil)
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = exportButton
+            popover.sourceRect = exportButton.bounds
+        }
         present(activityVC, animated: true)
     }
 }

@@ -89,6 +89,9 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
             self?.confirmCleanupTapped()
         })
         sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+        if let popover = sheet.popoverPresentationController {
+            popover.barButtonItem = navigationItem.rightBarButtonItem
+        }
         present(sheet, animated: true)
     }
 

@@ -8,7 +8,12 @@ final class ReadingRulesTests: XCTestCase {
         XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.1, controlsVisible: false, layout: .paged, mode: .tap, leftHand: false, zoomed: false), .none)
         XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .paged, mode: .swipe, leftHand: false, zoomed: false), .move(-1))
         XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .strip, mode: .swipe, leftHand: false, zoomed: false), .toggleControls)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .strip, mode: .tap, leftHand: false, zoomed: false), .toggleControls)
         XCTAssertEqual(ReaderNavigation.tapAction(x: 0.9, y: 0.5, controlsVisible: false, layout: .paged, mode: .tap, leftHand: false, zoomed: true), .toggleControls)
+        XCTAssertFalse(ReaderNavigation.isEdgeTapNavigationPermitted(layout: .strip, mode: .tap))
+        XCTAssertFalse(ReaderNavigation.isEdgeTapNavigationPermitted(layout: .strip, mode: .swipe))
+        XCTAssertTrue(ReaderNavigation.isEdgeTapNavigationPermitted(layout: .paged, mode: .tap))
+        XCTAssertFalse(ReaderNavigation.isEdgeTapNavigationPermitted(layout: .paged, mode: .buttons))
     }
     func testLegacyProgressRestoresImageAndOffset() {
         let position = ReaderPosition.fromLegacy(4200, count: 8)

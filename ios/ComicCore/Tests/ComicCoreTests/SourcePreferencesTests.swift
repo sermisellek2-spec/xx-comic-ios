@@ -258,6 +258,20 @@ final class SourcePreferencesTests: XCTestCase {
         XCTAssertEqual(mh18Headers.first?["Referer"], "https://custom-18.test/ref/")
     }
 
+    func testCanonicalIDMappingAndLegacyAliases() {
+        let defaults = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        defaults.set(#"["five_um","copymanga","baozimh"]"#, forKey: "source.order")
+        defaults.set(false, forKey: "source.five_um.enabled")
+        let store = SourcePreferences(defaults: defaults, defaultIDs: ["manhuazhan", "copy4000", "baozimh"])
+        XCTAssertEqual(store.orderedIDs, ["manhuazhan", "copy4000", "baozimh"])
+        XCTAssertFalse(store.isEnabled("manhuazhan"))
+        XCTAssertFalse(store.isEnabled("five_um"))
+        XCTAssertTrue(store.isEnabled("copy4000"))
+        XCTAssertTrue(store.isEnabled("copymanga"))
+        XCTAssertEqual(store.enabledIDs, ["copy4000", "baozimh"])
+    }
+
     private let defaultsName = "SourcePreferencesTests." + UUID().uuidString
     private func makeDefaults() -> UserDefaults { UserDefaults(suiteName: defaultsName)! }
 }

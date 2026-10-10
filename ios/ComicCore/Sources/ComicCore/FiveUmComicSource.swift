@@ -8,11 +8,13 @@ public struct FiveUmComicSource: ComicSource {
     private let base: String
     private let transport: any HTTPTransport
 
-    public init(site: Site = .manhuazhan, transport: any HTTPTransport = URLSessionHTTPTransport()) {
+    public init(site: Site = .manhuazhan, config: SourceConfigItem? = nil, transport: any HTTPTransport = URLSessionHTTPTransport()) {
         id = site.rawValue
         name = site == .manhuazhan ? "漫画栈" : "比卡漫画"
-        base = site == .manhuazhan ? "https://www.60ti.com" : "https://bbyin.com"
-        referer = base + "/"
+        let defaultBase = site == .manhuazhan ? "https://www.60ti.com" : "https://bbyin.com"
+        let resolvedBase = (config?.baseUrl.isEmpty == false) ? config!.baseUrl : defaultBase
+        base = resolvedBase.replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression)
+        referer = (config?.referer.isEmpty == false) ? config!.referer : (base + "/")
         self.transport = transport
     }
 

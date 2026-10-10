@@ -10,6 +10,8 @@ final class AppEnvironment {
     let readingHabits: ReadingHabitTracker
     let library: LibraryStore
     let localLibrary: LocalLibrary
+    let bookshelfGroupStore: BookshelfGroupStore
+    let favoriteUpdateCoordinator: FavoriteUpdateCoordinator
     private let localSource: LocalComicSource
     private(set) var allSources: [any ComicSource]
     let sourcePreferences: SourcePreferences
@@ -33,12 +35,12 @@ final class AppEnvironment {
             ManhuaguiComicSource(),
             D5d6ComicSource(),
             ManbenComicSource(),
-            FiveUmComicSource(),
+            FiveUmComicSource(config: preferences.config(for: "manhuazhan")),
             FiveUmComicSource(site: .bbyin),
             AntbywComicSource(),
             CuimhComicSource(),
             LiumanhuaComicSource(),
-            CopyMangaComicSource(),
+            CopyMangaComicSource(config: preferences.config(for: "copy4000")),
             ManwaComicSource(config: preferences.config(for: "manwa") ?? SourceConfigDefaults.manwa())
         ]
     }
@@ -46,7 +48,7 @@ final class AppEnvironment {
     init(defaults: UserDefaults) throws {
         self.defaults = defaults
         mh18BrowserSession = Mh18BrowserSession(defaults: defaults)
-        let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "manhuagui", "d5d6", "manben", "five_um", "bbyin", "antbyw", "cuimh", "liumanhua", "copymanga", "manwa"]
+        let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "manhuagui", "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000", "manwa"]
         sourcePreferences = SourcePreferences(defaults: defaults, defaultIDs: defaultIDs)
         let available = Self.createSources(preferences: sourcePreferences, browserSession: mh18BrowserSession)
         allSources = available
@@ -64,6 +66,9 @@ final class AppEnvironment {
         library = try LibraryStore(directory: appDir)
         localLibrary = try LocalLibrary(directory: appDir.appendingPathComponent("Local", isDirectory: true))
         localSource = LocalComicSource(library: localLibrary)
+        bookshelfGroupStore = BookshelfGroupStore(file: appDir.appendingPathComponent("bookshelf_groups.json"))
+        bookshelfGroupStore.migrateLegacyDataIfNeeded(legacyOnlineFavorites: library.favorites.map(\.summary.comicId), legacyLocalBookIds: nil)
+        favoriteUpdateCoordinator = FavoriteUpdateCoordinator(defaults: defaults)
 
         let downloadsDir = appDir.appendingPathComponent("Downloads", isDirectory: true)
         downloadStore = try DownloadStore(directory: downloadsDir)
@@ -86,6 +91,41 @@ final class AppEnvironment {
             guard let habits, let defaults else { return }
             habits.save(to: defaults)
         }
+        downloadRuntime.onTaskCompleted = { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.notifyLibraryChanged()
+            }
+        }
+    }
+
+    func setFavorite(_ comic: ComicSummary, favorite: Bool) throws {
+        try library.setFavorite(comic, favorite: favorite)
+        if favorite {
+            bookshelfGroupStore.addToScope(scope: .online, comicId: comic.comicId)
+        } else {
+            bookshelfGroupStore.removeComicFromAllGroups(scope: .online, comicId: comic.comicId)
+            favoriteUpdateCoordinator.clearState(sourceId: comic.sourceId, comicId: comic.comicId)
+        }
+        notifyLibraryChanged()
+    }
+
+    func replaceSource(original: ComicSummary, target: ComicDetail, matchingChapter: Chapter? = nil, matchingChapterIndex: Int = 0) throws {
+        let oldGroups = bookshelfGroupStore.getGroupsForComic(scope: .online, comicId: original.comicId).map(\.id)
+        var targetGroups = Set(oldGroups)
+        for g in bookshelfGroupStore.getGroupsForComic(scope: .online, comicId: target.summary.comicId) {
+            targetGroups.insert(g.id)
+        }
+        bookshelfGroupStore.addToScope(scope: .online, comicId: target.summary.comicId)
+        bookshelfGroupStore.updateComicGroups(scope: .online, comicId: target.summary.comicId, targetGroupIds: targetGroups)
+        bookshelfGroupStore.removeComicFromAllGroups(scope: .online, comicId: original.comicId)
+
+        favoriteUpdateCoordinator.clearState(sourceId: original.sourceId, comicId: original.comicId)
+        if let rev = FavoriteRevision.fromDetail(target) {
+            favoriteUpdateCoordinator.acknowledge(sourceId: target.summary.sourceId, comicId: target.summary.comicId, revision: rev)
+        }
+
+        try library.replaceSource(original: original, target: target.summary, matchingChapter: matchingChapter, matchingChapterIndex: matchingChapterIndex)
+        notifyLibraryChanged()
     }
 
     func reloadSources() {

@@ -10,6 +10,7 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
     let collection: UICollectionView
     var comics: [ComicSummary] = []
     var retry: (() -> Void)?
+    var isListLayout: Bool = false
     private let emptyArtwork = UIImageView(image: UIImage(named: "rem_empty"))
 
     init(environment: AppEnvironment) {
@@ -34,6 +35,7 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
         statusButton.addTarget(self, action: #selector(retryPressed), for: .touchUpInside)
         collection.backgroundColor = Palette.background
         collection.register(ComicCell.self, forCellWithReuseIdentifier: "comic")
+        collection.register(ComicListCell.self, forCellWithReuseIdentifier: "comic_list")
         collection.dataSource = self
         collection.delegate = self
         emptyArtwork.contentMode = .scaleAspectFit
@@ -60,7 +62,10 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         guard presentedViewController == nil else { return }
-        collection.visibleCells.forEach { ($0 as? ComicCell)?.cover.cancel() }
+        collection.visibleCells.forEach {
+            ($0 as? ComicCell)?.cover.cancel()
+            ($0 as? ComicListCell)?.cover.cancel()
+        }
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -73,14 +78,35 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
     }
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int { comics.count }
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "comic", for: indexPath) as! ComicCell
         let comic = comics[indexPath.item]
-        cell.configure(comic, referer: environment.source(for: comic)?.referer ?? "", library: environment.localLibrary)
-        return cell
+        let hasUpdate = environment.favoriteUpdateCoordinator.hasPendingUpdate(sourceId: comic.sourceId, comicId: comic.comicId)
+        let badgeText = hasUpdate ? "更新" : nil
+        let badgeColor = hasUpdate ? Palette.updateBlue : nil
+
+        if isListLayout {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "comic_list", for: indexPath) as! ComicListCell
+            cell.configure(comic, referer: environment.source(for: comic)?.referer ?? "", library: environment.localLibrary,
+                           badgeText: badgeText, badgeColor: badgeColor)
+            return cell
+        } else {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "comic", for: indexPath) as! ComicCell
+            cell.configure(comic, referer: environment.source(for: comic)?.referer ?? "", library: environment.localLibrary,
+                           badgeText: badgeText, badgeColor: badgeColor)
+            return cell
+        }
     }
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let width = floor((collectionView.bounds.width - 48) / 3)
-        return CGSize(width: max(1, width), height: max(1, width) * 4 / 3 + 42)
+        let contentWidth = max(0, collectionView.bounds.width - 28)
+        if isListLayout {
+            return CGSize(width: contentWidth, height: 88)
+        }
+        let spacing: CGFloat = 10
+        let minCardWidth: CGFloat = 105
+        let cols = max(3, Int((contentWidth + spacing) / (minCardWidth + spacing)))
+        let totalSpacing = CGFloat(cols - 1) * spacing
+        let cardWidth = floor(max(1, (contentWidth - totalSpacing) / CGFloat(cols)))
+        let cardHeight = floor(cardWidth * 4 / 3) + 42
+        return CGSize(width: cardWidth, height: cardHeight)
     }
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         open(comics[indexPath.item])
@@ -100,54 +126,172 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     private let historyOnly: Bool
     private let resume = UIButton(type: .system)
     private let shelfMode = UISegmentedControl(items: ["我的书架", "本地书架"])
+    private let groupBar = BookshelfGroupBar()
+    private let floatingBubble = FloatingImportBubble()
+    private var currentGroupId: String = BookshelfGroupStore.builtinOnlineAllId
+    private var currentScope: BookshelfScope { localMode ? .local : .online }
+    private var layoutItem: UIBarButtonItem?
     private var importTask: Task<Void, Never>?
     private enum ImportKind: Sendable { case images, folder, archive, epub, pdf, kindle }
     private var importKind = ImportKind.images
     private var localMode: Bool { !historyOnly && shelfMode.selectedSegmentIndex == 1 }
+
     init(environment: AppEnvironment, historyOnly: Bool = false) {
         self.historyOnly = historyOnly
         super.init(environment: environment)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         title = historyOnly ? "阅读历史" : "书架"
         if !historyOnly {
+            let layoutImg = UIImage(systemName: isListLayout ? "square.grid.2x2" : "list.bullet")
+            let layoutButton = UIBarButtonItem(image: layoutImg, style: .plain, target: self, action: #selector(toggleLayoutTapped))
+            layoutItem = layoutButton
             navigationItem.rightBarButtonItems = [
                 UIBarButtonItem(title: "导入", style: .plain, target: self, action: #selector(importImages)),
+                layoutButton,
                 UIBarButtonItem(title: "历史", style: .plain, target: self, action: #selector(showHistory))
             ]
             shelfMode.selectedSegmentIndex = environment.readingHabits.currentLaunchTab
             shelfMode.addTarget(self, action: #selector(shelfChanged), for: .valueChanged)
             header.addArrangedSubview(shelfMode)
+
+            groupBar.onGroupSelected = { [weak self] group in
+                self?.currentGroupId = group.id
+                self?.refresh()
+            }
+            groupBar.onManageGroups = { [weak self] in
+                self?.showGroupManagementSheet()
+            }
+            header.addArrangedSubview(groupBar)
+
             resume.titleLabel?.numberOfLines = 2
             resume.contentHorizontalAlignment = .leading
             resume.addTarget(self, action: #selector(continueReading), for: .touchUpInside)
             header.addArrangedSubview(resume)
+
+            floatingBubble.onTap = { [weak self] in self?.importImages() }
+            view.addSubview(floatingBubble)
+
+            checkPendingBatchSession()
         } else {
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: "清空", style: .plain, target: self, action: #selector(clearHistoryTapped))
         }
     }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        if !historyOnly {
+            floatingBubble.positionInParent()
+        }
+    }
+
+    @objc private func toggleLayoutTapped() {
+        let nextGrid = isListLayout
+        BookshelfLayoutHelper.setGridMode(defaults: environment.defaults, scope: currentScope, isGrid: nextGrid)
+        isListLayout = !nextGrid
+        let layoutImg = UIImage(systemName: isListLayout ? "square.grid.2x2" : "list.bullet")
+        layoutItem?.image = layoutImg
+        collection.collectionViewLayout.invalidateLayout()
+        collection.reloadData()
+    }
+
+    private func showGroupManagementSheet() {
+        let sheet = BookshelfGroupSheet(environment: environment, scope: currentScope, selectedGroupId: currentGroupId)
+        sheet.onGroupSelected = { [weak self] group in
+            self?.currentGroupId = group.id
+            self?.refresh()
+        }
+        sheet.onGroupsChanged = { [weak self] in
+            self?.refresh()
+        }
+        let nav = UINavigationController(rootViewController: sheet)
+        present(nav, animated: true)
+    }
+
+    private func checkPendingBatchSession() {
+        let sessionURL = environment.localLibrary.directory.appendingPathComponent("batch_import_session.json")
+        guard FileManager.default.fileExists(atPath: sessionURL.path) else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            guard let session = try? BatchImportSession(file: sessionURL),
+                  let current = await session.current(),
+                  current.groups.contains(where: { $0.items.contains { $0.state == .pending || $0.state == .failed } }) else { return }
+            let pendingCount = current.groups.flatMap(\.items).filter { $0.state == .pending || $0.state == .failed }.count
+            guard pendingCount > 0 else { return }
+            let alert = UIAlertController(
+                title: "未完成的批量导入",
+                message: "上次导入有 \(pendingCount) 个项目未完成，是否重新选择文件恢复？",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "忽略", style: .cancel))
+            alert.addAction(UIAlertAction(title: "清除", style: .destructive) { _ in
+                try? FileManager.default.removeItem(at: sessionURL)
+            })
+            alert.addAction(UIAlertAction(title: "选择文件恢复", style: .default) { [weak self] _ in
+                self?.pickBatchImport()
+            })
+            self.present(alert, animated: true)
+        }
+    }
     override func viewWillAppear(_ animated: Bool) { super.viewWillAppear(animated); refresh() }
     private func refresh() {
+        isListLayout = !BookshelfLayoutHelper.isGridMode(defaults: environment.defaults, scope: currentScope)
+        let layoutImg = UIImage(systemName: isListLayout ? "square.grid.2x2" : "list.bullet")
+        layoutItem?.image = layoutImg
+
+        if !historyOnly {
+            floatingBubble.isHidden = !localMode
+            let groups = environment.bookshelfGroupStore.getGroups(scope: currentScope)
+            if !groups.contains(where: { $0.id == currentGroupId }) {
+                currentGroupId = (currentScope == .online) ? BookshelfGroupStore.builtinOnlineAllId : BookshelfGroupStore.builtinLocalAllId
+            }
+            groupBar.configure(groups: groups, selectedId: currentGroupId)
+            groupBar.isHidden = false
+        } else {
+            groupBar.isHidden = true
+            floatingBubble.isHidden = true
+        }
+
         if localMode {
             resume.isHidden = true
             Task { [weak self] in
                 guard let self else { return }
                 do {
                     let series = try await self.environment.localLibrary.series()
-                    self.comics = series.compactMap { try? self.environment.localLibrary.summary(for: $0) }
+                    var list = series.compactMap { try? self.environment.localLibrary.summary(for: $0) }
+                    let tasks = self.environment.downloadStore.list()
+                    let completedBookIDs = Set(tasks.filter { $0.state == .completed }.map(\.bookId))
+                    for bookId in completedBookIDs {
+                        if let snapshot = self.environment.downloadStore.snapshot(id: bookId) {
+                            if !list.contains(where: { $0.comicId == snapshot.summary.comicId && $0.sourceId == snapshot.summary.sourceId }) {
+                                list.append(snapshot.summary)
+                            }
+                        }
+                    }
+                    if self.currentGroupId != BookshelfGroupStore.builtinLocalAllId {
+                        let members = self.environment.bookshelfGroupStore.getMembers(groupId: self.currentGroupId)
+                        list = list.filter { members.contains($0.comicId) }
+                    }
+                    self.comics = list
                     self.collection.reloadData()
                     self.status(self.comics.isEmpty ? "本地书架空空的，点击导入添加图片、文件夹、ZIP/CBZ、EPUB、PDF 或 Kindle" : "")
                 } catch { self.status(error.localizedDescription) }
             }
             return
         }
-        comics = (historyOnly ? environment.library.history : environment.library.favorites).map(\.summary)
+        var list = (historyOnly ? environment.library.history : environment.library.favorites).map(\.summary)
+        if !historyOnly && currentGroupId != BookshelfGroupStore.builtinOnlineAllId {
+            let members = environment.bookshelfGroupStore.getMembers(groupId: currentGroupId)
+            list = list.filter { members.contains($0.comicId) }
+        }
+        comics = list
         collection.reloadData()
         status(comics.isEmpty ? (historyOnly ? "还没有阅读记录" : "书架空空的，去发现页找漫画吧") : "")
         let recent = environment.library.history.first
-        resume.isHidden = recent == nil
+        resume.isHidden = recent == nil || historyOnly
         resume.setTitle(recent.map { "继续阅读 · \($0.summary.title)\n\($0.reading?.chapter.title ?? "")" }, for: .normal)
     }
     @objc private func showHistory() {
@@ -155,6 +299,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     }
     @objc private func shelfChanged() {
         environment.readingHabits.lastManualTab = shelfMode.selectedSegmentIndex
+        currentGroupId = localMode ? BookshelfGroupStore.builtinLocalAllId : BookshelfGroupStore.builtinOnlineAllId
         refresh()
     }
     @objc private func importImages() {
@@ -267,11 +412,41 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                 }
                 self.shelfMode.selectedSegmentIndex = 1
                 self.refresh()
-                self.status(summary.failedCount > 0
-                    ? "导入完成：\(summary.succeededCount) 卷成功，\(summary.failedCount) 卷失败"
-                    : "批量导入完成，共 \(summary.succeededCount) 卷")
+                if summary.failedCount > 0 {
+                    self.status("导入完成：\(summary.succeededCount) 卷成功，\(summary.failedCount) 卷失败")
+                    let alert = UIAlertController(
+                        title: "批量导入完成",
+                        message: "\(summary.succeededCount) 卷成功，\(summary.failedCount) 卷失败。\n是否重试失败项目？",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "稍后", style: .cancel))
+                    alert.addAction(UIAlertAction(title: "重试失败项", style: .default) { [weak self] _ in
+                        self?.retryBatchImport(worker: worker, urlMap: urlMap)
+                    })
+                    self.present(alert, animated: true)
+                } else {
+                    self.status("批量导入完成，共 \(summary.succeededCount) 卷")
+                }
             } catch {
                 self?.status(error is CancellationError ? "已取消导入，原文件未改动" : error.localizedDescription)
+            }
+            self?.importTask = nil
+        }
+    }
+    private func retryBatchImport(worker: BatchImportWorker, urlMap: [String: URL]) {
+        status("正在重试失败项…")
+        importTask = Task { [weak self] in
+            do {
+                guard let self else { return }
+                let summary = try await worker.retryFailed(urlMap: urlMap) { [weak self] progress in
+                    Task { @MainActor [weak self] in
+                        self?.status("正在重试 \(progress.itemName) (\(progress.itemIndex + 1)/\(progress.totalItemsInGroup))…")
+                    }
+                }
+                self.refresh()
+                self.status("重试完成：\(summary.succeededCount) 卷成功，\(summary.failedCount) 卷失败")
+            } catch {
+                self?.status(error is CancellationError ? "已取消重试" : error.localizedDescription)
             }
             self?.importTask = nil
         }
@@ -353,6 +528,13 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         }
         if localMode {
             return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+                let moveAction = UIAction(title: "移动", image: UIImage(systemName: "folder")) { [weak self] _ in
+                    guard let self else { return }
+                    let sheet = BookshelfGroupSelectSheet(environment: self.environment, scope: .local, comicId: comic.comicId, comicTitle: comic.title)
+                    sheet.onGroupsUpdated = { [weak self] _ in self?.refresh() }
+                    let nav = UINavigationController(rootViewController: sheet)
+                    self.present(nav, animated: true)
+                }
                 let manageAction = UIAction(title: "管理分卷", image: UIImage(systemName: "square.stack.3d.up")) { [weak self] _ in
                     guard let self else { return }
                     let vm = VolumeManagerViewController(seriesId: comic.comicId, seriesTitle: comic.title, environment: self.environment) { [weak self] in
@@ -386,30 +568,59 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                         guard let self else { return }
                         Task {
                             try? await self.environment.localLibrary.deleteSeries(id: comic.comicId)
-                            try? self.environment.library.setFavorite(comic, favorite: false)
+                            try? self.environment.setFavorite(comic, favorite: false)
                             self.environment.notifyLibraryChanged()
                             self.refresh()
                         }
                     })
                     alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+                    if let popover = alert.popoverPresentationController {
+                        if let cell = self.collection.cellForItem(at: indexPath) {
+                            popover.sourceView = cell
+                            popover.sourceRect = cell.bounds
+                        } else {
+                            popover.sourceView = self.view
+                            popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+                            popover.permittedArrowDirections = []
+                        }
+                    }
                     self.present(alert, animated: true)
                 }
-                return UIMenu(children: [manageAction, renameAction, deleteAction])
+                return UIMenu(children: [moveAction, manageAction, renameAction, deleteAction])
             }
         }
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
-            UIMenu(children: [UIAction(title: "移出收藏", image: UIImage(systemName: "trash"), attributes: .destructive) { _ in
+            let moveAction = UIAction(title: "移动", image: UIImage(systemName: "folder")) { [weak self] _ in
+                guard let self else { return }
+                let sheet = BookshelfGroupSelectSheet(environment: self.environment, scope: .online, comicId: comic.comicId, comicTitle: comic.title)
+                sheet.onGroupsUpdated = { [weak self] _ in self?.refresh() }
+                let nav = UINavigationController(rootViewController: sheet)
+                self.present(nav, animated: true)
+            }
+            let switchSourceAction = UIAction(title: "换源", image: UIImage(systemName: "arrow.triangle.2.circlepath")) { [weak self] _ in
+                guard let self else { return }
+                let sheet = SourceSwitchSheet(environment: self.environment, originalComic: comic)
+                sheet.onSourceReplaced = { [weak self] _ in self?.refresh() }
+                let nav = UINavigationController(rootViewController: sheet)
+                self.present(nav, animated: true)
+            }
+            let downloadAction = UIAction(title: "下载", image: UIImage(systemName: "arrow.down.circle")) { [weak self] _ in
+                guard let self else { return }
+                self.navigationController?.pushViewController(DownloadSelectionViewController(comic: comic, environment: self.environment), animated: true)
+            }
+            let deleteAction = UIAction(title: "移出收藏", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
                 guard let self else { return }
                 do {
-                    try self.environment.library.setFavorite(comic, favorite: false)
+                    try self.environment.setFavorite(comic, favorite: false)
                     self.refresh()
                     self.status("已移出收藏 · 点击撤销") { [weak self] in
                         guard let self else { return }
-                        do { try self.environment.library.setFavorite(comic, favorite: true); self.refresh() }
+                        do { try self.environment.setFavorite(comic, favorite: true); self.refresh() }
                         catch { self.showError(error) }
                     }
                 } catch { self.showError(error) }
-            }])
+            }
+            return UIMenu(children: [moveAction, switchSourceAction, downloadAction, deleteAction])
         }
     }
 }

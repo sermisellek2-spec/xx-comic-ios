@@ -122,6 +122,40 @@ public final class LibraryStore {
         snapshot = next
     }
 
+    public func replaceSource(original: ComicSummary, target: ComicSummary, matchingChapter: Chapter? = nil, matchingChapterIndex: Int = 0, now: TimeInterval = Date().timeIntervalSince1970) throws {
+        let oldKey = Self.key(original)
+        let newKey = Self.key(target)
+        let oldEntry = snapshot.entries[oldKey]
+
+        var targetEntry = snapshot.entries[newKey] ?? LibraryEntry(summary: target, positions: [:])
+        targetEntry.summary = target
+        if let oldEntry {
+            if oldEntry.isFavorite {
+                targetEntry.favoriteAt = targetEntry.favoriteAt ?? oldEntry.favoriteAt ?? now
+            }
+            if let oldReading = oldEntry.reading {
+                if let matchingChapter {
+                    targetEntry.reading = ReadingRecord(
+                        chapter: matchingChapter,
+                        chapterIndex: max(0, matchingChapterIndex),
+                        position: oldReading.position,
+                        updatedAt: oldReading.updatedAt
+                    )
+                    targetEntry.positions[matchingChapter.chapterId] = oldReading.position
+                } else {
+                    targetEntry.reading = oldReading
+                }
+            }
+        }
+
+        var next = snapshot
+        next.entries.removeValue(forKey: oldKey)
+        next.entries[newKey] = targetEntry
+        let data = try JSONEncoder().encode(next)
+        try data.write(to: file, options: .atomic)
+        snapshot = next
+    }
+
     private func persist(_ entry: LibraryEntry) throws {
         var next = snapshot
         next.entries[Self.key(entry.summary)] = entry

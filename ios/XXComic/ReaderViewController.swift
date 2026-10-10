@@ -468,7 +468,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         cell.toggleZoom()
     }
     @objc private func panned(_ gesture: UIPanGestureRecognizer) {
-        guard gesture.state == .ended, !isZoomed, settings.turnMode == .swipe else { return }
+        guard gesture.state == .ended, !isZoomed, settings.layout == .paged, settings.turnMode == .swipe else { return }
         let translation = gesture.translation(in: pages)
         guard abs(translation.x) > 72, abs(translation.x) > abs(translation.y) * 1.35 else { return }
         move(ReaderNavigation.swipeDelta(dx: Double(translation.x), leftHand: settings.leftHand))
@@ -476,7 +476,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if let pan = gestureRecognizer as? UIPanGestureRecognizer, pan.view === pages {
             let velocity = pan.velocity(in: pages)
-            return settings.turnMode == .swipe && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.35
+            return settings.layout == .paged && settings.turnMode == .swipe && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.35
         }
         return true
     }
