@@ -12,7 +12,9 @@ final class ReaderEnhancementEngineTests: XCTestCase {
 
     /// Helper to create a synthetic comic image with high-contrast line art, speech bubbles, and gradients.
     private func createTestComicImage(width: Int = 384, height: Int = 384) -> UIImage {
-        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height))
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1.0
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format)
         return renderer.image { ctx in
             let cg = ctx.cgContext
 
@@ -191,11 +193,13 @@ final class ReaderEnhancementEngineTests: XCTestCase {
 
     func testCancellationReturnsOriginalImageSafely() async {
         let engine = ReaderEnhancementEngine.shared
+        engine.clearCache()
         let inputImage = createTestComicImage(width: 384, height: 384)
 
+        let testUrl = "fixture://reader-enhancement-cancel-test-\(UUID().uuidString)"
         let task = Task {
             await engine.enhance(
-                url: "fixture://reader-enhancement-cancel-test",
+                url: testUrl,
                 original: inputImage,
                 mode: ImageEnhancementPolicy.modeSmart
             )

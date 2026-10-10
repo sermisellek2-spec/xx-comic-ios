@@ -236,11 +236,13 @@ final class ReaderEnhancementEngine {
 
         // Run enhancement on background thread
         do {
+            try Task.checkCancellation()
+
             #if canImport(CoreML)
             let neuralModel = (mode == ImageEnhancementPolicy.modeSmart) ? loadNeuralModel() : nil
             #endif
 
-            let enhanced = try await Task.detached(priority: .userInitiated) { [ciContext] () -> UIImage in
+            let subtask = Task.detached(priority: .userInitiated) { [ciContext] () -> UIImage in
                 try Task.checkCancellation()
                 guard let inputCI = CIImage(image: original) else { return original }
 
@@ -294,10 +296,18 @@ final class ReaderEnhancementEngine {
                 }
 
                 return UIImage(cgImage: renderedCG, scale: original.scale, orientation: original.imageOrientation)
-            }.value
+            }
 
-            let cost = Int(enhanced.size.width * enhanced.size.height * 4)
-            cache.setObject(enhanced, forKey: key, cost: cost)
+            let enhanced = try await withTaskCancellationHandler {
+                try await subtask.value
+            } onCancel: {
+                subtask.cancel()
+            }
+
+            if !Task.isCancelled {
+                let cost = Int(enhanced.size.width * enhanced.size.height * 4)
+                cache.setObject(enhanced, forKey: key, cost: cost)
+            }
             return enhanced
         } catch {
             return original

@@ -37,7 +37,9 @@ final class VisualMatrixUITests: XCTestCase {
         if app.buttons["本地书架"].waitForExistence(timeout: 5) {
             app.buttons["本地书架"].tap()
             captureScreen(named: "\(prefix)_portrait_light_bookshelf_local")
-            app.buttons["在线书架"].tap()
+            if app.buttons["我的书架"].waitForExistence(timeout: 3) {
+                app.buttons["我的书架"].tap()
+            }
         }
 
         // 2. Discover
@@ -81,6 +83,7 @@ final class VisualMatrixUITests: XCTestCase {
         }
 
         // 4. Settings and Subpages
+        _ = app.tabBars.buttons["设置"].waitForExistence(timeout: 5)
         app.tabBars.buttons["设置"].tap()
         captureScreen(named: "\(prefix)_portrait_light_settings")
 
