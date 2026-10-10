@@ -13,6 +13,12 @@ xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Debug \
   -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
   -derivedDataPath build/simulator CODE_SIGNING_ALLOWED=NO build
 
+# Type-check both configurations before the longer runtime matrix. Packaging still requires all tests.
+echo "==> Building Release scheme for iOS device..."
+xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Release \
+  -sdk iphoneos -destination 'generic/platform=iOS' \
+  -derivedDataPath build/device CODE_SIGNING_ALLOWED=NO build
+
 mkdir -p build/evidence/visual-matrix
 mkdir -p build/evidence/reader-enhancement
 mkdir -p ../docs/ios-parity-2.0.40/review-evidence/visual-matrix
@@ -56,11 +62,6 @@ if [ -d "${TMPDIR:-/tmp}/ReaderEnhancementEvidence" ]; then
   cp -rf "${TMPDIR:-/tmp}/ReaderEnhancementEvidence"/* build/evidence/reader-enhancement/ 2>/dev/null || true
   cp -rf "${TMPDIR:-/tmp}/ReaderEnhancementEvidence"/* ../docs/ios-parity-2.0.40/review-evidence/reader-enhancement/ 2>/dev/null || true
 fi
-
-echo "==> 4. Building Release scheme for iOS device..."
-xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Release \
-  -sdk iphoneos -destination 'generic/platform=iOS' \
-  -derivedDataPath build/device CODE_SIGNING_ALLOWED=NO build
 
 package_dir=$(mktemp -d build/package-XXXXXX)
 mkdir -p "$package_dir/Payload"

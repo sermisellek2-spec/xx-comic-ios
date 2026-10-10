@@ -320,10 +320,12 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         menu.addAction(UIAlertAction(title: "EPUB 电子书", style: .default) { [weak self] _ in self?.pickImport(.epub) })
         menu.addAction(UIAlertAction(title: "PDF 文档", style: .default) { [weak self] _ in self?.pickImport(.pdf) })
         menu.addAction(UIAlertAction(title: "Kindle 电子书", style: .default) { [weak self] _ in self?.pickImport(.kindle) })
+        #if DEBUG
         // Fixture URLs exist only under the isolated UI-test library, using the real import worker.
         for (name, url) in EpubUITestFixtures.kindleImports(library: environment.localLibrary) {
             menu.addAction(UIAlertAction(title: name, style: .default) { [weak self] _ in self?.confirmImport([url], kind: .kindle) })
         }
+        #endif
         menu.addAction(UIAlertAction(title: "取消", style: .cancel))
         menu.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.first
         present(menu, animated: true)
