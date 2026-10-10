@@ -40,10 +40,12 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
         view.backgroundColor = Palette.background
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "取消", style: .plain, target: self, action: #selector(cancelTapped))
+        navigationItem.leftBarButtonItem?.accessibilityIdentifier = "source-switch.cancel"
 
         tableView.backgroundColor = Palette.background
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.accessibilityIdentifier = "source-switch.candidates"
         tableView.register(CandidateCell.self, forCellReuseIdentifier: "candidate_cell")
         tableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tableView)
@@ -60,7 +62,7 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
         view.addSubview(activityIndicator)
 
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),

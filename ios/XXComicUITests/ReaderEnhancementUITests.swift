@@ -42,8 +42,8 @@ final class ReaderEnhancementUITests: XCTestCase {
         add(attachment)
 
         // Perform long press gesture to trigger original comparison
-        center.press(forDuration: 0.8)
-        XCTAssertTrue((readerImage.value as? String ?? "").contains("comparison=original>neural"))
+        readerImage.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.8)
+        XCTAssertTrue((readerImage.value as? String ?? "").contains("comparison=original>neural"), "Actual image result: \(readerImage.value ?? "nil")")
         XCTAssertTrue(badge.label.contains("AI 2X"))
     }
 }

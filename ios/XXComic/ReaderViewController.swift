@@ -624,7 +624,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             guard let self else { return }
             self.applySwitchedSource(targetDetail: targetDetail)
         }
-        present(sheet, animated: true)
+        let navigation = UINavigationController(rootViewController: sheet)
+        navigation.navigationBar.tintColor = Palette.accent
+        present(navigation, animated: true)
     }
 
     private func applySwitchedSource(targetDetail: ComicDetail) {

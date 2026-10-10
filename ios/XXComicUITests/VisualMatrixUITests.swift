@@ -41,9 +41,10 @@ final class VisualMatrixUITests: XCTestCase {
         XCTAssertTrue(app.buttons["detail.read"].waitForExistence(timeout: 5))
         capture(stem + "detail")
         app.buttons["detail.switch-source"].tap()
-        XCTAssertTrue(app.tables.cells.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tables["source-switch.candidates"].cells.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["source-switch.cancel"].waitForExistence(timeout: 5))
         capture(stem + "source_switch")
-        app.buttons["取消"].tap()
+        app.buttons["source-switch.cancel"].tap()
         app.buttons["detail.read"].tap()
         let image = app.images["reader.image"].firstMatch
         expectation(for: NSPredicate(format: "value BEGINSWITH 'neural:'"), evaluatedWith: image)

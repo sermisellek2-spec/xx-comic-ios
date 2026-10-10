@@ -38,6 +38,7 @@ enum MatrixUITestFixtures {
         var preferences = environment.preferences.load()
         preferences.enhancementMode = ImageEnhancementPolicy.modeSmart
         preferences.enhancementComparison = true
+        preferences.theme = ProcessInfo.processInfo.arguments.contains("--dark-mode") ? .dark : .light
         environment.preferences.save(preferences)
     }
 }
