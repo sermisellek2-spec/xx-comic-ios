@@ -363,6 +363,30 @@ public enum SourceConfigDefaults {
         )
     }
 
+    public static func hanman18(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(
+            id: "hanman18",
+            name: "Hanman18",
+            domain: "hanman18.com",
+            baseUrl: "https://hanman18.com",
+            referer: "https://hanman18.com/",
+            latestPath: "/list-manga{pagePath}",
+            searchPath: "/search?search={keyword}",
+            categoryPath: "/list-manga{pagePath}",
+            detailPath: "/manhwa/{comicId}",
+            enabled: enabled,
+            routes: [
+                "latest": "/list-manga{pagePath}",
+                "search": "/search?search={keyword}",
+                "category": "/list-manga{pagePath}",
+                "detail": "/manhwa/{comicId}",
+                "chapter": "/manhwa/{comicId}/{chapterId}",
+                "home": "/"
+            ],
+            filters: ["category.all": ""]
+        )
+    }
+
     public static func defaultConfig(for id: String) -> SourceConfigItem? {
         switch id {
         case "baozimh": return baozi()
@@ -371,6 +395,7 @@ public enum SourceConfigDefaults {
         case "mh18": return mh18()
         case "jmcomic": return jmcomic()
         case "mkzhan": return mkzhan()
+        case "hanman18": return hanman18()
         case "manwa": return manwa()
         case "copy4000", "copymanga": return copy4000()
         case "manhuazhan", "five_um": return manhuazhan()

@@ -45,14 +45,15 @@ final class AppEnvironment {
             LiumanhuaComicSource(),
             CopyMangaComicSource(config: preferences.config(for: "copy4000")),
             ManwaComicSource(config: preferences.config(for: "manwa") ?? SourceConfigDefaults.manwa()),
-            JmComicSource(config: preferences.config(for: "jmcomic") ?? SourceConfigDefaults.jmcomic(), browserSession: browserSession)
+            JmComicSource(config: preferences.config(for: "jmcomic") ?? SourceConfigDefaults.jmcomic(), browserSession: browserSession),
+            Hanman18ComicSource(config: preferences.config(for: "hanman18") ?? SourceConfigDefaults.hanman18())
         ]
     }
 
     init(defaults: UserDefaults) throws {
         self.defaults = defaults
         mh18BrowserSession = Mh18BrowserSession(defaults: defaults)
-        let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "manhuagui", "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000", "manwa", "jmcomic"]
+        let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "hanman18", "manhuagui", "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000", "manwa", "jmcomic"]
         sourcePreferences = SourcePreferences(defaults: defaults, defaultIDs: defaultIDs)
         let available = Self.createSources(preferences: sourcePreferences, browserSession: mh18BrowserSession)
         allSources = available

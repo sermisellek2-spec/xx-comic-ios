@@ -5,7 +5,7 @@ mh18,dedicated,18漫画,https://18mh.org,true,通过(需验证),3,需要验证/W
 jmcomic,dedicated,禁漫天堂,https://18comic.vip,true,通过,4,需要分流/分片图片还原,分片混淆还原,sources/jmcomic.md
 mkzhan,dedicated,漫客栈,https://www.mkzhan.com,true,通过,5,国内直连优先,,sources/mkzhan.md
 hiperdex,dedicated,Hiperdex,https://hiperdex.com,true,通过(站方重构SPA),6,海外线路,,sources/hiperdex.md
-hanman18,dedicated,韩漫18,https://www.hanman18.com,true,待接入,7,海外线路,,
+hanman18,dedicated,韩漫18,https://www.hanman18.com,true,通过,7,海外线路,,sources/hanman18.md
 manhuagui,dedicated,漫画柜,https://www.manhuagui.com,true,待接入,8,部分线路直连,LZString压缩解密,
 d5d6,dedicated,D5D6漫画,https://www.d5d6.com,true,待接入,9,国内直连优先,,
 manben,dedicated,漫本,https://www.manben.com,true,待接入,10,国内直连优先,,
