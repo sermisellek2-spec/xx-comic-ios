@@ -41,9 +41,20 @@ final class DetailViewController: UIViewController {
         let scroll = UIScrollView()
         let content = UIStackView()
         content.axis = .vertical; content.spacing = 18
+        let actions = UIStackView(arrangedSubviews: [favorite, read])
+        actions.axis = .horizontal; actions.spacing = 8
+        actions.backgroundColor = Palette.card
+        actions.isLayoutMarginsRelativeArrangement = true
+        actions.layoutMargins = UIEdgeInsets(top: 8, left: 16, bottom: 10, right: 16)
+        actions.translatesAutoresizingMaskIntoConstraints = false
         scroll.translatesAutoresizingMaskIntoConstraints = false
         content.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(scroll); scroll.addSubview(content)
+        view.addSubview(scroll); scroll.addSubview(content); view.addSubview(actions)
+        favorite.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        favorite.accessibilityIdentifier = "detail.favorite"
+        read.backgroundColor = Palette.accent
+        read.setTitleColor(Palette.onAccent, for: .normal)
+        read.layer.cornerRadius = 12
         cover.contentMode = .scaleAspectFit
         cover.heightAnchor.constraint(equalToConstant: 280).isActive = true
         heading.text = comic.title; heading.numberOfLines = 0
@@ -70,7 +81,7 @@ final class DetailViewController: UIViewController {
         retry.addTarget(self, action: #selector(retryDetail), for: .touchUpInside)
         retry.titleLabel?.numberOfLines = 0
 
-        var items: [UIView] = [cover, heading, descriptionLabel, favorite, directory]
+        var items: [UIView] = [cover, heading, descriptionLabel, directory]
         var buttons = [favorite, directory, read, retry]
         if comic.sourceId == "local" {
             manageVolumes.setTitle("管理分卷", for: .normal)
@@ -84,11 +95,13 @@ final class DetailViewController: UIViewController {
             let centerItem = UIBarButtonItem(image: UIImage(systemName: "arrow.down.circle"), style: .plain, target: self, action: #selector(openDownloadCenter))
             navigationItem.rightBarButtonItem = centerItem
         }
-        items.append(contentsOf: [read, retry])
+        items.append(retry)
         for item in items { content.addArrangedSubview(item) }
         for button in buttons { button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true }
         NSLayoutConstraint.activate([
-            scroll.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), scroll.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            actions.leadingAnchor.constraint(equalTo: view.leadingAnchor), actions.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            actions.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), actions.heightAnchor.constraint(equalToConstant: 62),
+            scroll.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), scroll.bottomAnchor.constraint(equalTo: actions.topAnchor),
             scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor), scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             content.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor, constant: 16), content.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor, constant: -24),
             content.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor, constant: 20), content.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor, constant: -20),
@@ -112,10 +125,11 @@ final class DetailViewController: UIViewController {
     }
     private func updateButtons() {
         let isFav = environment.library.entry(for: comic)?.isFavorite == true
-        favorite.setTitle(isFav ? "已收藏 · 点击移除" : "加入书架", for: .normal)
+        favorite.setTitle(nil, for: .normal)
+        favorite.accessibilityLabel = isFav ? "取消收藏" : "收藏"
         if let favImg = UIImage(named: isFav ? "rem_in_bookshelf" : "rem_not_in_bookshelf") {
-            favorite.setImage(favImg, for: .normal)
-            favorite.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 8)
+            let thumbnail = favImg.preparingThumbnail(of: CGSize(width: 44, height: 44))
+            favorite.setImage(thumbnail?.withRenderingMode(.alwaysOriginal), for: .normal)
         }
         read.setTitle(environment.library.entry(for: comic)?.reading.map { "继续阅读\n上次看到 · \($0.chapter.title)" } ?? "开始阅读", for: .normal)
     }

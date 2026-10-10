@@ -39,6 +39,8 @@ final class VisualMatrixUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["detail.title"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.staticTexts["detail.title"].label, "电锯人")
         XCTAssertTrue(app.buttons["detail.read"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["detail.read"].isHittable)
+        XCTAssertLessThanOrEqual(app.buttons["detail.favorite"].frame.height, 48)
         capture(stem + "detail")
         app.buttons["detail.switch-source"].tap()
         XCTAssertTrue(app.tables["source-switch.candidates"].cells.firstMatch.waitForExistence(timeout: 5))
