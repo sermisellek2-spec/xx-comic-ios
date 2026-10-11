@@ -1,0 +1,160 @@
+[0/1] Planning build
+Building for debugging...
+[0/11] Write sources
+[0/11] Write swift-version-24593BA9C3E375BF.txt
+[4/13] Emitting module ComicCore
+[5/13] Compiling ComicCore DownloadCoordinator.swift
+[6/13] Compiling ComicCore DownloadRuntime.swift
+[7/14] Compiling ComicCore DownloadStore.swift
+[8/15] Wrapping AST for ComicCore for debugging
+[10/38] Emitting module ComicCoreTests
+[11/59] Compiling ComicCoreTests DongmanLaSourceTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[12/59] Compiling ComicCoreTests DownloadCoordinatorTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[13/59] Compiling ComicCoreTests DownloadDeletionTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[14/59] Compiling ComicCoreTests DownloadFileCoordinationTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[15/59] Compiling ComicCoreTests DownloadIdentityTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[16/59] Compiling ComicCoreTests DownloadLocationTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[17/59] Compiling ComicCoreTests DownloadOwnedDirectoryTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[18/59] Compiling ComicCoreTests DownloadPersistenceTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[19/59] Compiling ComicCoreTests DownloadRuntimeTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[20/59] Compiling ComicCoreTests DownloadSchedulingTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[21/59] Compiling ComicCoreTests DownloadStoreTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[22/59] Compiling ComicCoreTests EpubParserTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[23/59] Compiling ComicCoreTests EpubReaderResourceTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[24/59] Compiling ComicCoreTests EpubTextSessionTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[25/59] Compiling ComicCoreTests ErrorLogStoreTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[26/59] Compiling ComicCoreTests FavoriteRevisionTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[27/59] Compiling ComicCoreTests FavoriteUpdateCheckerTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[28/59] Compiling ComicCoreTests FileDownloadWorkerTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[29/59] Compiling ComicCoreTests FiveUmSourceTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[30/59] Compiling ComicCoreTests FolderBookmarkStoreTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[31/59] Compiling ComicCoreTests GmhSourceTests.swift
+/work/Tests/ComicCoreTests/DownloadPersistenceTests.swift:87:59: error: cannot assign to property: 'title' is a 'let' constant
+        var changedDetail = detail; changedDetail.summary.title = "不得假报保存成功"
+[32/80] Compiling ComicCoreTests AntbywSourceTests.swift
+[33/80] Compiling ComicCoreTests AppThemeTests.swift
+[34/80] Compiling ComicCoreTests AppUpdateCheckerTests.swift
+[35/80] Compiling ComicCoreTests BaoziSourceTests.swift
+[36/80] Compiling ComicCoreTests BatchImportPlannerTests.swift
+[37/80] Compiling ComicCoreTests BatchImportSessionTests.swift
+[38/80] Compiling ComicCoreTests BatchImportWorkerTests.swift
+[39/80] Compiling ComicCoreTests BookshelfGroupStoreTests.swift
+[40/80] Compiling ComicCoreTests BookshelfReadingStatusTests.swift
+[41/80] Compiling ComicCoreTests BuiltinSourceCatalogTests.swift
+[42/80] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[43/80] Compiling ComicCoreTests ChapterMatchingTests.swift
+[44/80] Compiling ComicCoreTests ComicDirectoryPreparationTests.swift
+[45/80] Compiling ComicCoreTests ContentFingerprintTests.swift
+[46/80] Compiling ComicCoreTests ContinuousReaderPagesTests.swift
+[47/80] Compiling ComicCoreTests CopyMangaTests.swift
+[48/80] Compiling ComicCoreTests CuimhSourceTests.swift
+[49/80] Compiling ComicCoreTests D5d6SourceTests.swift
+[50/80] Compiling ComicCoreTests DefaultDownloadImageFetcherTests.swift
+[51/80] Compiling ComicCoreTests DeferredDeletionTests.swift
+[52/80] Compiling ComicCoreTests DingManhuaSourceTests.swift
+[53/80] Compiling ComicCoreTests DiscoveryHeaderGestureTests.swift
+[54/101] Compiling ComicCoreTests LocalPdfLibraryTests.swift
+[55/101] Compiling ComicCoreTests LocalReadingRoutingTests.swift
+[56/101] Compiling ComicCoreTests LocalSeriesLifecycleTests.swift
+[57/101] Compiling ComicCoreTests LocalTestHTTPServer.swift
+[58/101] Compiling ComicCoreTests LocalTestHTTPServerTests.swift
+[59/101] Compiling ComicCoreTests ManbenSourceTests.swift
+[60/101] Compiling ComicCoreTests ManhuaguiTests.swift
+[61/101] Compiling ComicCoreTests ManwaImageDecoderTests.swift
+[62/101] Compiling ComicCoreTests ManwaSourceTests.swift
+[63/101] Compiling ComicCoreTests Mh160SourceTests.swift
+[64/101] Compiling ComicCoreTests Mh18BrowserTrustTests.swift
+[65/101] Compiling ComicCoreTests Mh18CookieSynchronizerTests.swift
+[66/101] Compiling ComicCoreTests Mh18SourceTests.swift
+[67/101] Compiling ComicCoreTests Mh18VerificationAttemptTests.swift
+[68/101] Compiling ComicCoreTests Mh18VerificationRulesTests.swift
+[69/101] Compiling ComicCoreTests MkzhanSourceTests.swift
+[70/101] Compiling ComicCoreTests NaturalPathOrderTests.swift
+[71/101] Compiling ComicCoreTests NewPublicSourcesTests.swift
+[72/101] Compiling ComicCoreTests PdfRendererTests.swift
+[73/101] Compiling ComicCoreTests PreferencesTests.swift
+[74/101] Compiling ComicCoreTests PublicComicSourceTests.swift
+[75/122] Compiling ComicCoreTests Hanman18SourceTests.swift
+[76/122] Compiling ComicCoreTests HiperdexSourceTests.swift
+[77/122] Compiling ComicCoreTests IOSUpdatePolicyTests.swift
+[78/122] Compiling ComicCoreTests ImageEnhancementPolicyTests.swift
+[79/122] Compiling ComicCoreTests JmImageTransformTests.swift
+[80/122] Compiling ComicCoreTests JmSourceTests.swift
+[81/122] Compiling ComicCoreTests KindleFormatTests.swift
+[82/122] Compiling ComicCoreTests KindlePublicationTests.swift
+[83/122] Compiling ComicCoreTests LibraryStoreTests.swift
+[84/122] Compiling ComicCoreTests LinkedFolderLibraryTests.swift
+[85/122] Compiling ComicCoreTests LiumanhuaSourceTests.swift
+[86/122] Compiling ComicCoreTests LocalArchiveTests.swift
+[87/122] Compiling ComicCoreTests LocalCatalogTests.swift
+[88/122] Compiling ComicCoreTests LocalEpubLibraryTests.swift
+[89/122] Compiling ComicCoreTests LocalFolderSyncTests.swift
+[90/122] Compiling ComicCoreTests LocalFolderTests.swift
+[91/122] Compiling ComicCoreTests LocalImportFingerprintTests.swift
+[92/122] Compiling ComicCoreTests LocalImportPreparationTests.swift
+[93/122] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+[94/122] Compiling ComicCoreTests LocalLibraryTests.swift
+[95/122] Compiling ComicCoreTests LocalOwnershipRecoveryTests.swift
+[96/122] Compiling ComicCoreTests QuickPublicationInfoTests.swift
+[97/122] Compiling ComicCoreTests ReaderLoadStateTests.swift
+[98/122] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+[99/122] Compiling ComicCoreTests ReaderSessionTests.swift
+[100/122] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+[101/122] Compiling ComicCoreTests ReadingRulesTests.swift
+[102/122] Compiling ComicCoreTests RetiredComicSourceTests.swift
+[103/122] Compiling ComicCoreTests SearchRulesTests.swift
+[104/122] Compiling ComicCoreTests SourceAESTests.swift
+[105/122] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+[106/122] Compiling ComicCoreTests SourceGroupStoreTests.swift
+[107/122] Compiling ComicCoreTests SourceImportContractTests.swift
+[108/122] Compiling ComicCoreTests SourcePreferencesTests.swift
+[109/122] Compiling ComicCoreTests SourceSearchTrimTests.swift
+[110/122] Compiling ComicCoreTests StorageCalculatorTests.swift
+[111/122] Compiling ComicCoreTests TextReadingTests.swift
+[112/122] Compiling ComicCoreTests UsageStatsClientTests.swift
+[113/122] Compiling ComicCoreTests UsageStatsReportingTests.swift
+[114/122] Compiling ComicCoreTests WhiteMarginTests.swift
+[115/122] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+[116/122] Compiling ComicCoreTests resource_bundle_accessor.swift
+error: fatalError
+error: fatalError

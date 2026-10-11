@@ -32,6 +32,7 @@ final class AppEnvironment {
     let downloadRuntime: DownloadRuntime
     let networkMonitor: any NetworkMonitoring
     let responseCache = HTTPResponseCache()
+    lazy var downloadLifecycle = DownloadLifecycleController(runtime: downloadRuntime)
     lazy var localDeletion = LocalDeletionController(environment: self)
     private let environmentSourceResolver: EnvironmentSourceResolver
     var sources: [any ComicSource] { sourcePreferences.enabledIDs.compactMap { id in allSources.first { $0.id == id } } }
@@ -84,7 +85,7 @@ final class AppEnvironment {
         var available = Self.createSources(preferences: sourcePreferences, browserSession: mh18BrowserSession)
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--matrix-fixtures") {
-            available = try MatrixUITestFixtures.sources()
+            available = try MatrixUITestFixtures.sources(defaults: defaults)
         }
         #endif
         allSources = available
@@ -192,6 +193,7 @@ final class AppEnvironment {
             }
         }
         #endif
+        downloadLifecycle.start()
     }
 
     deinit {

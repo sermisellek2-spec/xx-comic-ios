@@ -276,6 +276,12 @@ public struct DownloadHTTPError: LocalizedError, Equatable, Sendable {
     }
 }
 
+public struct DownloadRuntimeActivity: Equatable, Sendable {
+    public let activeWorkers: Int
+    public let suspendedForBackground: Bool
+    public let revision: UInt64
+}
+
 public final class DownloadRuntime: @unchecked Sendable {
     public static let maxActiveWorkers = 2
 
@@ -289,6 +295,11 @@ public final class DownloadRuntime: @unchecked Sendable {
     private var deletingBookIDs = Set<String>()
     private var deletingTaskIDs = Set<String>()
     private var isInitialized = false
+    private var suspendedForBackground = false
+    private var retryWake: Task<Void, Never>?
+    private var retryDeadline: Int64?
+    private var retryWakeID = UUID()
+    private var activityRevision: UInt64 = 0
 
     public var isWifiOnly: Bool = true
     public var isNetworkConnected: Bool = true
@@ -299,6 +310,13 @@ public final class DownloadRuntime: @unchecked Sendable {
     public var sourceResolver: DownloadSourceResolverProtocol?
     public var fileSourceResolver: ((_ sourceId: String) -> FileSourceCapability?)?
     public var onTaskCompleted: ((DownloadTask) -> Void)?
+    public var onActivityChanged: (@Sendable (DownloadRuntimeActivity) -> Void)?
+    public var storageError: DownloadStoreError? { store.persistenceError }
+
+    public var activity: DownloadRuntimeActivity {
+        lock.lock(); defer { lock.unlock() }
+        return DownloadRuntimeActivity(activeWorkers: activeWorkers.count, suspendedForBackground: suspendedForBackground, revision: activityRevision)
+    }
 
     public init(store: DownloadStore,
                 downloadsDirectory: URL,
@@ -326,6 +344,8 @@ public final class DownloadRuntime: @unchecked Sendable {
         let recovered = store.list()
         Task.detached(priority: .utility) { [weak self] in self?.cleanResidualPartFiles(tasks: recovered) }
     }
+
+    deinit { retryWake?.cancel() }
 
     private func cleanResidualPartFiles(tasks: [DownloadTask]) {
         let manager = FileManager.default
@@ -365,26 +385,31 @@ public final class DownloadRuntime: @unchecked Sendable {
 
     public func updateNetworkStatus(isConnected: Bool, isWifi: Bool) {
         lock.lock()
-        let prevAllowed = isNetworkConnected && (!isWifiOnly || isWifiConnected)
+        defer { lock.unlock() }
         self.isNetworkConnected = isConnected
         self.isWifiConnected = isWifi
-        let nowAllowed = isConnected && (!isWifiOnly || isWifi)
-        lock.unlock()
+        applyNetworkRulesLocked()
+    }
 
-        if !nowAllowed {
-            lock.lock()
+    public func updateWifiOnly(_ enabled: Bool) {
+        lock.lock(); defer { lock.unlock() }
+        isWifiOnly = enabled
+        applyNetworkRulesLocked()
+    }
+
+    private func applyNetworkRulesLocked() {
+        if !isNetworkConnected || (isWifiOnly && !isWifiConnected) {
             for t in store.list() {
                 if DownloadModels.active(t.state) || t.state == .queued {
                     queue.waitForNetwork(t)
                 }
             }
-            lock.unlock()
-        } else if !prevAllowed && nowAllowed {
-            lock.lock()
+        } else {
+            // Startup can recover queued work with an unchanged network value.
+            // Resumption must not depend on opening the download centre.
             queue.recoverNetwork()
-            kickLocked()
-            lock.unlock()
         }
+        kickLocked()
     }
 
     public func enqueueFiles(detail: ComicDetail, files: [FileResource], selected: [String]) {
@@ -395,7 +420,7 @@ public final class DownloadRuntime: @unchecked Sendable {
             guard let task = try? DownloadModels.fileTaskId(source: detail.summary.sourceId, comic: detail.summary.comicId, file: id) else { return false }
             return !deletingBookIDs.contains(book) && !deletingTaskIDs.contains(task)
         }
-        store.saveSnapshot(detail)
+        guard store.persistenceError == nil, store.saveSnapshot(detail) else { return }
         queue.enqueueFiles(source: detail.summary.sourceId,
                            comic: detail.summary.comicId,
                            files: files,
@@ -412,11 +437,13 @@ public final class DownloadRuntime: @unchecked Sendable {
         let book = try DownloadModels.bookId(source: detail.summary.sourceId, comic: detail.summary.comicId)
         let selectedTasks = try selectedChapterIds.map { try DownloadModels.key(detail.summary.sourceId, detail.summary.comicId, $0) }
         guard !deletingBookIDs.contains(book), !selectedTasks.contains(where: deletingTaskIDs.contains) else { throw DownloadError.corruptedData("正在删除此下载，请完成后重试") }
-        store.saveSnapshot(detail)
+        if let error = store.persistenceError { throw error }
+        try requireSaved(store.saveSnapshot(detail))
         queue.enqueue(source: detail.summary.sourceId,
                       comic: detail.summary.comicId,
                       chapters: detail.chapters,
                       selected: selectedChapterIds)
+        if let error = store.persistenceError { throw error }
         kickLocked()
     }
 
@@ -434,10 +461,9 @@ public final class DownloadRuntime: @unchecked Sendable {
                 }
             }
             try Task.checkCancellation()
+            try enqueuePrepared(detail: detail, selectedChapterIds: selectedChapterIds)
         }
         try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
-        try Task.checkCancellation()
-        try enqueuePrepared(detail: detail, selectedChapterIds: selectedChapterIds)
     }
     public func bookDirectory(bookID: String) throws -> URL {
         if let storageLocations { return try storageLocations.bookDirectory(bookID: bookID) }
@@ -521,8 +547,83 @@ public final class DownloadRuntime: @unchecked Sendable {
         kickLocked()
     }
 
+    public func suspendForBackground() {
+        lock.lock(); defer { lock.unlock() }
+        guard !suspendedForBackground else { return }
+        suspendedForBackground = true
+        cancelRetryWakeLocked()
+        // Recover only active leases. User-paused/failed/completed work keeps
+        // its state, and already published pages remain available for resumption.
+        queue.recover()
+        notifyActivityChangedLocked()
+    }
+
+    public func resumeFromBackground() {
+        lock.lock(); defer { lock.unlock() }
+        let wasSuspended = suspendedForBackground
+        suspendedForBackground = false
+        if wasSuspended { queue.recover() }
+        kickLocked()
+    }
+
+    /// Called after the user has addressed storage space or permissions. Never
+    /// manufacture a completed task or discard the last durable progress.
+    public func retryStorage() throws {
+        lock.lock(); defer { lock.unlock() }
+        try store.retryPersistence()
+        queue.recover()
+        if let error = store.persistenceError { throw error }
+        kickLocked()
+    }
+
+    private func requireSaved(_ saved: Bool) throws {
+        guard saved else { throw store.persistenceError ?? DownloadStoreError.persistenceFailed }
+    }
+
+    private func notifyActivityChangedLocked() {
+        activityRevision &+= 1
+        guard let callback = onActivityChanged else { return }
+        let snapshot = DownloadRuntimeActivity(activeWorkers: activeWorkers.count, suspendedForBackground: suspendedForBackground, revision: activityRevision)
+        Task.detached(priority: .utility) { callback(snapshot) }
+    }
+
+    private func cancelRetryWakeLocked() {
+        retryWakeID = UUID(); retryWake?.cancel(); retryWake = nil; retryDeadline = nil
+    }
+
+    private func scheduleRetryWakeLocked() {
+        guard store.persistenceError == nil, !suspendedForBackground, isNetworkConnected, (!isWifiOnly || isWifiConnected), activeWorkers.count < Self.maxActiveWorkers else {
+            cancelRetryWakeLocked(); return
+        }
+        let now = Int64(Date().timeIntervalSince1970 * 1000)
+        let deadline = store.list().filter {
+            ($0.state == .queued || $0.state == .waitingNetwork) && !activeWorkers.contains($0.id) && $0.nextAttempt > now
+        }.map(\.nextAttempt).min()
+        guard let deadline else { cancelRetryWakeLocked(); return }
+        guard retryDeadline != deadline else { return }
+        cancelRetryWakeLocked()
+        retryDeadline = deadline
+        let token = retryWakeID
+        // Persisted/untrusted deadlines cannot overflow a nanosecond interval.
+        let delay = UInt64(min(900_000, max(1, deadline - now))) * 1_000_000
+        retryWake = Task.detached(priority: .utility) { [weak self] in
+            do { try await Task.sleep(nanoseconds: delay); try Task.checkCancellation() }
+            catch { return }
+            self?.retryReady(token)
+        }
+    }
+
+    private func retryReady(_ token: UUID) {
+        lock.lock(); defer { lock.unlock() }
+        guard retryWakeID == token else { return }
+        retryWake = nil; retryDeadline = nil
+        kickLocked()
+    }
+
     private func kickLocked() {
-        guard isInitialized else { return }
+        guard isInitialized, !suspendedForBackground else { return }
+        defer { scheduleRetryWakeLocked(); notifyActivityChangedLocked() }
+        guard store.persistenceError == nil else { return }
         while activeWorkers.count < Self.maxActiveWorkers {
             let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
             guard let task = queue.claim(now: nowMs,
@@ -530,7 +631,8 @@ public final class DownloadRuntime: @unchecked Sendable {
                                          wifi: isWifiConnected,
                                          wifiOnly: isWifiOnly,
                                          maxActive: Self.maxActiveWorkers,
-                                         maxPerSource: Self.maxActiveWorkers) else {
+                                         maxPerSource: Self.maxActiveWorkers,
+                                         excludingIDs: activeWorkers) else {
                 return
             }
             activeWorkers.insert(task.id)
@@ -550,7 +652,7 @@ public final class DownloadRuntime: @unchecked Sendable {
 
     public func pauseAll() {
         lock.lock()
-        defer { lock.unlock() }
+        defer { kickLocked(); lock.unlock() }
         for t in store.list() {
             if DownloadModels.active(t.state) || t.state == .queued || t.state == .waitingNetwork {
                 queue.pause(id: t.id)
@@ -596,7 +698,8 @@ public final class DownloadRuntime: @unchecked Sendable {
         let expectedTask = original.isFileTask ? try DownloadModels.fileTaskId(source: original.sourceId, comic: original.comicId, file: original.fileId ?? original.chapterId) : try DownloadModels.key(original.sourceId, original.comicId, original.chapterId)
         guard original.bookId == expectedBook, original.id == expectedTask else { throw DownloadError.invalidIdentity }
         var invalidated = original; invalidated.generation = DownloadCoordinator.nextGeneration(); invalidated.state = .deleting
-        deletingTaskIDs.insert(id); store.save(task: invalidated)
+        try store.saveConfirmedTask(invalidated)
+        deletingTaskIDs.insert(id)
         return original
     }
     private func endChapterDeletion(_ original: DownloadTask, success: Bool, changedFiles: Bool) {
@@ -655,12 +758,14 @@ public final class DownloadRuntime: @unchecked Sendable {
                 : try DownloadModels.key(task.sourceId, task.comicId, task.chapterId)
             guard bookId == expected, task.id == taskID else { throw DownloadError.invalidIdentity }
         }
-        deletingBookIDs.insert(bookId)
-        for var t in tasks {
+        let invalidated = tasks.map { original -> DownloadTask in
+            var t = original
             t.generation = DownloadCoordinator.nextGeneration()
             t.state = .deleting
-            store.save(task: t)
+            return t
         }
+        try store.saveConfirmedTasks(invalidated)
+        deletingBookIDs.insert(bookId)
         return tasks
     }
     private func bookHasActiveWorkers(_ tasks: [DownloadTask]) -> Bool {
@@ -713,6 +818,11 @@ public final class DownloadRuntime: @unchecked Sendable {
     }
 
     private func checkLease(_ task: DownloadTask) throws {
+        lock.lock()
+        let suspended = suspendedForBackground
+        lock.unlock()
+        if suspended { throw DownloadError.taskCancelled }
+        if let error = store.persistenceError { throw error }
         guard queue.isCurrent(task) else {
             throw DownloadError.taskCancelled
         }
@@ -803,27 +913,28 @@ public final class DownloadRuntime: @unchecked Sendable {
                         throw DownloadError.corruptedData("图片地址刷新失败")
                     }
 
-                    try withBookDirectory(task.bookId, access: .write) { book in
-                        let target = try chapterDirectory(task, in: book).appendingPathComponent("\(i).img")
-                        try publish(partFile, to: target, task: task)
-                    }
-
                     let newPage = DownloadPage(index: i,
                                                url: DownloadModels.imageIdentity(rawUrl),
                                                path: "\(task.bookId)/\(task.id)/\(i).img",
                                                hash: fetchResult.hash,
                                                bytes: fetchResult.bytes)
-                    store.savePage(task: task.id, page: newPage)
+                    // Persist ownership before publication. A failed database
+                    // write cannot leave an unrecorded final image behind.
+                    try requireSaved(store.savePage(task: task.id, page: newPage))
+                    try withBookDirectory(task.bookId, access: .write) { book in
+                        let target = try chapterDirectory(task, in: book).appendingPathComponent("\(i).img")
+                        try publish(partFile, to: target, task: task)
+                    }
                     pageToUse = newPage
                 }
 
                 completedPages.append(pageToUse)
                 totalBytes += pageToUse.bytes
-                queue.update(lease: task, state: .downloading, done: i + 1, total: uniqueUrls.count, bytes: totalBytes)
+                if !queue.update(lease: task, state: .downloading, done: i + 1, total: uniqueUrls.count, bytes: totalBytes) { try checkLease(task) }
             }
 
             try checkLease(task)
-            queue.update(lease: task, state: .verifying, done: uniqueUrls.count, total: uniqueUrls.count, bytes: totalBytes)
+            if !queue.update(lease: task, state: .verifying, done: uniqueUrls.count, total: uniqueUrls.count, bytes: totalBytes) { try checkLease(task) }
 
             // Download cover if snapshot is available
             if let snapshot = store.snapshot(id: task.bookId), !snapshot.summary.coverUrl.isEmpty {
@@ -857,9 +968,9 @@ public final class DownloadRuntime: @unchecked Sendable {
             }
 
             try checkLease(task)
-            store.replacePages(task: task.id, pages: completedPages)
-            queue.complete(lease: task)
-            onTaskCompleted?(task)
+            try requireSaved(store.replacePages(task: task.id, pages: completedPages))
+            if queue.complete(lease: task) { onTaskCompleted?(task) }
+            else { try checkLease(task) }
 
         } catch {
             handleDownloadError(error, task: task)
@@ -899,7 +1010,7 @@ public final class DownloadRuntime: @unchecked Sendable {
             )
 
             try checkLease(task)
-            queue.update(lease: task, state: .verifying, done: 0, total: 1, bytes: result.bytes)
+            if !queue.update(lease: task, state: .verifying, done: 0, total: 1, bytes: result.bytes) { try checkLease(task) }
 
             try withBookDirectory(task.bookId, access: .write) { bookDir in
                 if !FileManager.default.fileExists(atPath: bookDir.path) { try FileManager.default.createDirectory(at: bookDir, withIntermediateDirectories: true) }
@@ -916,10 +1027,10 @@ public final class DownloadRuntime: @unchecked Sendable {
             saved.donePages = 1
             saved.totalPages = 1
             saved.expectedFormat = result.detectedFormat
-            store.save(task: saved)
+            try requireSaved(store.save(task: saved))
 
-            queue.complete(lease: task)
-            onTaskCompleted?(saved)
+            if queue.complete(lease: task) { onTaskCompleted?(saved) }
+            else { try checkLease(task) }
 
         } catch {
             handleDownloadError(error, task: task)
@@ -950,6 +1061,7 @@ public final class DownloadRuntime: @unchecked Sendable {
             return
         }
         ErrorLogStore.shared.append(title: "下载失败: \(task.comicId) - \(task.title)", error: error)
+        if store.persistenceError != nil { return }
         if let httpErr = error as? DownloadHTTPError {
             if httpErr.statusCode == 403 || httpErr.statusCode == 401 {
                 lock.lock()

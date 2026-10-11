@@ -3,7 +3,16 @@ import Foundation
 public protocol DownloadRepository: AnyObject, Sendable {
     func list() -> [DownloadTask]
     func get(id: String) -> DownloadTask?
-    func save(task: DownloadTask)
+    @discardableResult func save(task: DownloadTask) -> Bool
+    @discardableResult func save(tasks: [DownloadTask]) -> Bool
+}
+
+public extension DownloadRepository {
+    @discardableResult
+    func save(tasks: [DownloadTask]) -> Bool {
+        for task in tasks where !save(task: task) { return false }
+        return true
+    }
 }
 
 public final class DownloadCoordinator: @unchecked Sendable {
@@ -28,6 +37,7 @@ public final class DownloadCoordinator: @unchecked Sendable {
         stateLock.lock()
         defer { stateLock.unlock() }
         let wanted = Set(selected)
+        var pending: [DownloadTask] = []
         for (i, ch) in chapters.enumerated() {
             guard wanted.contains(ch.chapterId) else { continue }
             guard let id = try? DownloadModels.key(source, comic, ch.chapterId),
@@ -44,8 +54,9 @@ public final class DownloadCoordinator: @unchecked Sendable {
                 order: i,
                 state: .queued
             )
-            repository.save(task: t)
+            pending.append(t)
         }
+        if !pending.isEmpty { repository.save(tasks: pending) }
     }
 
     public func enqueueFiles(source: String, comic: String, files: [FileResource], selected: [String]) {
@@ -53,6 +64,7 @@ public final class DownloadCoordinator: @unchecked Sendable {
         defer { stateLock.unlock() }
         let wanted = Set(selected)
         let sortedFiles = files.sorted { $0.order < $1.order }
+        var pending: [DownloadTask] = []
         for (i, f) in sortedFiles.enumerated() {
             guard wanted.contains(f.fileId) else { continue }
             guard let id = try? DownloadModels.fileTaskId(source: source, comic: comic, file: f.fileId),
@@ -82,15 +94,16 @@ public final class DownloadCoordinator: @unchecked Sendable {
                 expiresAt: f.expiresAt,
                 expectedBytes: f.bytes
             )
-            repository.save(task: t)
+            pending.append(t)
         }
+        if !pending.isEmpty { repository.save(tasks: pending) }
     }
 
     public func claim(now: Int64, connected: Bool, wifi: Bool, wifiOnly: Bool) -> DownloadTask? {
         claim(now: now, connected: connected, wifi: wifi, wifiOnly: wifiOnly, maxActive: 1, maxPerSource: 1)
     }
 
-    public func claim(now: Int64, connected: Bool, wifi: Bool, wifiOnly: Bool, maxActive: Int, maxPerSource: Int) -> DownloadTask? {
+    public func claim(now: Int64, connected: Bool, wifi: Bool, wifiOnly: Bool, maxActive: Int, maxPerSource: Int, excludingIDs: Set<String> = []) -> DownloadTask? {
         stateLock.lock()
         defer { stateLock.unlock() }
         let tasks = repository.list()
@@ -105,6 +118,7 @@ public final class DownloadCoordinator: @unchecked Sendable {
         guard activeCount < max(1, maxActive) else { return nil }
 
         for original in tasks {
+            guard !excludingIDs.contains(original.id) else { continue }
             guard original.state == .queued || original.state == .waitingNetwork else { continue }
             if let count = sourceCounts[original.sourceId], count >= max(1, maxPerSource) {
                 continue
@@ -112,13 +126,13 @@ public final class DownloadCoordinator: @unchecked Sendable {
             var t = original
             if !connected || (wifiOnly && !wifi) {
                 t.state = .waitingNetwork
-                repository.save(task: t)
+                guard repository.save(task: t) else { return nil }
                 continue
             }
             if t.nextAttempt > now { continue }
             t.state = .resolving
             t.generation = Self.nextGeneration()
-            repository.save(task: t)
+            guard repository.save(task: t) else { return nil }
             return t
         }
         return nil
@@ -143,8 +157,7 @@ public final class DownloadCoordinator: @unchecked Sendable {
         updated.donePages = done
         updated.totalPages = total
         updated.bytes = bytes
-        repository.save(task: updated)
-        return true
+        return repository.save(task: updated)
     }
 
     @discardableResult
@@ -157,8 +170,7 @@ public final class DownloadCoordinator: @unchecked Sendable {
         var updated = t
         updated.state = .completed
         updated.error = ""
-        repository.save(task: updated)
-        return true
+        return repository.save(task: updated)
     }
 
     private func change(id: String, state: DownloadState, reset: Bool) {

@@ -1,0 +1,243 @@
+[0/1] Planning build
+Building for debugging...
+[0/11] Write sources
+[0/12] Write swift-version-24593BA9C3E375BF.txt
+[4/12] Compiling ComicCore DownloadCoordinator.swift
+[5/12] Emitting module ComicCore
+[6/13] Compiling ComicCore DownloadRuntime.swift
+[7/14] Compiling ComicCore FileDownloadWorker.swift
+[8/15] Wrapping AST for ComicCore for debugging
+[10/37] Emitting module ComicCoreTests
+[11/37] Compiling ComicCoreTests AntbywSourceTests.swift
+[12/37] Compiling ComicCoreTests AppThemeTests.swift
+[13/37] Compiling ComicCoreTests AppUpdateCheckerTests.swift
+[14/37] Compiling ComicCoreTests BaoziSourceTests.swift
+[15/37] Compiling ComicCoreTests BatchImportPlannerTests.swift
+[16/37] Compiling ComicCoreTests BatchImportSessionTests.swift
+[17/37] Compiling ComicCoreTests BatchImportWorkerTests.swift
+[18/37] Compiling ComicCoreTests BookshelfGroupStoreTests.swift
+[19/37] Compiling ComicCoreTests BookshelfReadingStatusTests.swift
+[20/37] Compiling ComicCoreTests BuiltinSourceCatalogTests.swift
+[21/37] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[22/37] Compiling ComicCoreTests ChapterMatchingTests.swift
+[23/37] Compiling ComicCoreTests ComicDirectoryPreparationTests.swift
+[24/37] Compiling ComicCoreTests ContentFingerprintTests.swift
+[25/37] Compiling ComicCoreTests ContinuousReaderPagesTests.swift
+[26/37] Compiling ComicCoreTests CopyMangaTests.swift
+[27/37] Compiling ComicCoreTests CuimhSourceTests.swift
+[28/37] Compiling ComicCoreTests D5d6SourceTests.swift
+[29/37] Compiling ComicCoreTests DefaultDownloadImageFetcherTests.swift
+[30/37] Compiling ComicCoreTests DeferredDeletionTests.swift
+[31/37] Compiling ComicCoreTests DingManhuaSourceTests.swift
+[32/79] Compiling ComicCoreTests DiscoveryHeaderGestureTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[33/79] Compiling ComicCoreTests DongmanLaSourceTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[34/79] Compiling ComicCoreTests DownloadCoordinatorTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[35/79] Compiling ComicCoreTests DownloadDeletionTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[36/79] Compiling ComicCoreTests DownloadFileCoordinationTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[37/79] Compiling ComicCoreTests DownloadIdentityTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[38/79] Compiling ComicCoreTests DownloadLocationTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[39/79] Compiling ComicCoreTests DownloadOwnedDirectoryTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[40/79] Compiling ComicCoreTests DownloadRuntimeTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[41/79] Compiling ComicCoreTests DownloadSchedulingTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[42/79] Compiling ComicCoreTests DownloadStoreTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[43/79] Compiling ComicCoreTests EpubParserTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[44/79] Compiling ComicCoreTests EpubReaderResourceTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[45/79] Compiling ComicCoreTests EpubTextSessionTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[46/79] Compiling ComicCoreTests ErrorLogStoreTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[47/79] Compiling ComicCoreTests FavoriteRevisionTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[48/79] Compiling ComicCoreTests FavoriteUpdateCheckerTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[49/79] Compiling ComicCoreTests FileDownloadWorkerTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[50/79] Compiling ComicCoreTests FiveUmSourceTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[51/79] Compiling ComicCoreTests FolderBookmarkStoreTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[52/79] Compiling ComicCoreTests GmhSourceTests.swift
+/work/Tests/ComicCoreTests/DownloadSchedulingTests.swift:62:33: error: missing arguments for parameters 'author', 'status', 'description', 'latestChapter' in call
+        let detail = ComicDetail(summary: comic, chapters: [chapter])
+                                ^
+/work/Sources/ComicCore/ComicModels.swift:51:12: note: 'init(summary:author:status:description:latestChapter:chapters:)' declared here
+    public init(summary: ComicSummary, author: String, status: String, description: String, latestChapter: String, chapters: [Chapter]) {
+           ^
+[53/100] Compiling ComicCoreTests LocalPdfLibraryTests.swift
+[54/100] Compiling ComicCoreTests LocalReadingRoutingTests.swift
+[55/100] Compiling ComicCoreTests LocalSeriesLifecycleTests.swift
+[56/100] Compiling ComicCoreTests LocalTestHTTPServer.swift
+[57/100] Compiling ComicCoreTests LocalTestHTTPServerTests.swift
+[58/100] Compiling ComicCoreTests ManbenSourceTests.swift
+[59/100] Compiling ComicCoreTests ManhuaguiTests.swift
+[60/100] Compiling ComicCoreTests ManwaImageDecoderTests.swift
+[61/100] Compiling ComicCoreTests ManwaSourceTests.swift
+[62/100] Compiling ComicCoreTests Mh160SourceTests.swift
+[63/100] Compiling ComicCoreTests Mh18BrowserTrustTests.swift
+[64/100] Compiling ComicCoreTests Mh18CookieSynchronizerTests.swift
+[65/100] Compiling ComicCoreTests Mh18SourceTests.swift
+[66/100] Compiling ComicCoreTests Mh18VerificationAttemptTests.swift
+[67/100] Compiling ComicCoreTests Mh18VerificationRulesTests.swift
+[68/100] Compiling ComicCoreTests MkzhanSourceTests.swift
+[69/100] Compiling ComicCoreTests NaturalPathOrderTests.swift
+[70/100] Compiling ComicCoreTests NewPublicSourcesTests.swift
+[71/100] Compiling ComicCoreTests PdfRendererTests.swift
+[72/100] Compiling ComicCoreTests PreferencesTests.swift
+[73/100] Compiling ComicCoreTests PublicComicSourceTests.swift
+[74/121] Compiling ComicCoreTests Hanman18SourceTests.swift
+[75/121] Compiling ComicCoreTests HiperdexSourceTests.swift
+[76/121] Compiling ComicCoreTests IOSUpdatePolicyTests.swift
+[77/121] Compiling ComicCoreTests ImageEnhancementPolicyTests.swift
+[78/121] Compiling ComicCoreTests JmImageTransformTests.swift
+[79/121] Compiling ComicCoreTests JmSourceTests.swift
+[80/121] Compiling ComicCoreTests KindleFormatTests.swift
+[81/121] Compiling ComicCoreTests KindlePublicationTests.swift
+[82/121] Compiling ComicCoreTests LibraryStoreTests.swift
+[83/121] Compiling ComicCoreTests LinkedFolderLibraryTests.swift
+[84/121] Compiling ComicCoreTests LiumanhuaSourceTests.swift
+[85/121] Compiling ComicCoreTests LocalArchiveTests.swift
+[86/121] Compiling ComicCoreTests LocalCatalogTests.swift
+[87/121] Compiling ComicCoreTests LocalEpubLibraryTests.swift
+[88/121] Compiling ComicCoreTests LocalFolderSyncTests.swift
+[89/121] Compiling ComicCoreTests LocalFolderTests.swift
+[90/121] Compiling ComicCoreTests LocalImportFingerprintTests.swift
+[91/121] Compiling ComicCoreTests LocalImportPreparationTests.swift
+[92/121] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+[93/121] Compiling ComicCoreTests LocalLibraryTests.swift
+[94/121] Compiling ComicCoreTests LocalOwnershipRecoveryTests.swift
+[95/121] Compiling ComicCoreTests QuickPublicationInfoTests.swift
+[96/121] Compiling ComicCoreTests ReaderLoadStateTests.swift
+[97/121] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+[98/121] Compiling ComicCoreTests ReaderSessionTests.swift
+[99/121] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+[100/121] Compiling ComicCoreTests ReadingRulesTests.swift
+[101/121] Compiling ComicCoreTests RetiredComicSourceTests.swift
+[102/121] Compiling ComicCoreTests SearchRulesTests.swift
+[103/121] Compiling ComicCoreTests SourceAESTests.swift
+[104/121] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+[105/121] Compiling ComicCoreTests SourceGroupStoreTests.swift
+[106/121] Compiling ComicCoreTests SourceImportContractTests.swift
+[107/121] Compiling ComicCoreTests SourcePreferencesTests.swift
+[108/121] Compiling ComicCoreTests SourceSearchTrimTests.swift
+[109/121] Compiling ComicCoreTests StorageCalculatorTests.swift
+[110/121] Compiling ComicCoreTests TextReadingTests.swift
+[111/121] Compiling ComicCoreTests UsageStatsClientTests.swift
+[112/121] Compiling ComicCoreTests UsageStatsReportingTests.swift
+[113/121] Compiling ComicCoreTests WhiteMarginTests.swift
+[114/121] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+[115/121] Compiling ComicCoreTests resource_bundle_accessor.swift
+error: fatalError
+error: fatalError

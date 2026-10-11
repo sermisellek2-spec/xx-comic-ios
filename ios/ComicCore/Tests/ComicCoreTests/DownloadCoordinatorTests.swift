@@ -18,13 +18,15 @@ private final class MemoryRepository: DownloadRepository, @unchecked Sendable {
         return data[id]
     }
 
-    func save(task: DownloadTask) {
+    @discardableResult
+    func save(task: DownloadTask) -> Bool {
         lock.lock()
         defer { lock.unlock() }
         if data[task.id] == nil {
             order.append(task.id)
         }
         data[task.id] = task
+        return true
     }
 
     func remove(id: String) {
@@ -36,6 +38,15 @@ private final class MemoryRepository: DownloadRepository, @unchecked Sendable {
 }
 
 final class DownloadCoordinatorTests: XCTestCase {
+    func testClaimDoesNotReuseAnIDWhoseOldWorkerHasNotReleasedIt() throws {
+        let repository = MemoryRepository(), queue = DownloadCoordinator(repository: repository)
+        queue.enqueue(source: "source", comic: "comic", chapters: [chapter("a")], selected: ["a"])
+        let lease = try XCTUnwrap(queue.claim(now: 0, connected: true, wifi: true, wifiOnly: true))
+        queue.pause(id: lease.id); queue.resume(id: lease.id)
+        XCTAssertNil(queue.claim(now: 0, connected: true, wifi: true, wifiOnly: true, maxActive: 2, maxPerSource: 2, excludingIDs: [lease.id]))
+        XCTAssertNotNil(queue.claim(now: 0, connected: true, wifi: true, wifiOnly: true, maxActive: 2, maxPerSource: 2))
+    }
+
     private func chapter(_ id: String) -> Chapter {
         Chapter(chapterId: id, title: id, url: "https://sample/\(id)", sectionSlot: 0, chapterSlot: 0)
     }

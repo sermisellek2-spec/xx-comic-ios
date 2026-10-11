@@ -1,0 +1,87 @@
+[0/1] Planning build
+Building for debugging...
+[0/12] Write sources
+[0/12] Write swift-version-24593BA9C3E375BF.txt
+[4/12] Emitting module ComicCore
+[5/12] Compiling ComicCore DownloadRuntime.swift
+[7/24] Emitting module ComicCoreTests
+[8/34] Compiling ComicCoreTests DiscoveryHeaderGestureTests.swift
+[9/34] Compiling ComicCoreTests DongmanLaSourceTests.swift
+[10/34] Compiling ComicCoreTests DownloadCoordinatorTests.swift
+[11/34] Compiling ComicCoreTests DownloadDeletionTests.swift
+[12/34] Compiling ComicCoreTests DownloadFileCoordinationTests.swift
+[13/34] Compiling ComicCoreTests DownloadIdentityTests.swift
+[14/34] Compiling ComicCoreTests DownloadLocationTests.swift
+[15/34] Compiling ComicCoreTests DownloadOwnedDirectoryTests.swift
+[16/34] Compiling ComicCoreTests DownloadRuntimeTests.swift
+[17/34] Compiling ComicCoreTests DownloadSchedulingTests.swift
+[18/34] Compiling ComicCoreTests DownloadStoreTests.swift
+[19/34] Compiling ComicCoreTests EpubParserTests.swift
+[20/34] Compiling ComicCoreTests EpubReaderResourceTests.swift
+[21/34] Compiling ComicCoreTests EpubTextSessionTests.swift
+[22/34] Compiling ComicCoreTests ErrorLogStoreTests.swift
+[23/34] Compiling ComicCoreTests FavoriteRevisionTests.swift
+[24/34] Compiling ComicCoreTests FavoriteUpdateCheckerTests.swift
+[25/34] Compiling ComicCoreTests FileDownloadWorkerTests.swift
+[26/34] Compiling ComicCoreTests FiveUmSourceTests.swift
+[27/34] Compiling ComicCoreTests FolderBookmarkStoreTests.swift
+[28/34] Compiling ComicCoreTests GmhSourceTests.swift
+[29/37] Wrapping AST for ComicCoreTests for debugging
+[30/37] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[31/38] Write sources
+[33/40] Emitting module ComicCorePackageDiscoveredTests
+[34/40] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[35/41] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[36/42] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[37/42] Write sources
+[38/42] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[40/44] Compiling ComicCorePackageTests runner.swift
+[41/44] Emitting module ComicCorePackageTests
+[42/44] Write Objects.LinkFileList
+[43/44] Linking ComicCorePackageTests.xctest
+Build complete! (43.41s)
+Test Suite 'Selected tests' started at 2026-10-11 22:17:22.470
+Test Suite 'DownloadCoordinatorTests' started at 2026-10-11 22:17:22.486
+Test Case 'DownloadCoordinatorTests.testBoundedClaimsAllowTwoTasksButRejectTheThird' started at 2026-10-11 22:17:22.486
+Test Case 'DownloadCoordinatorTests.testBoundedClaimsAllowTwoTasksButRejectTheThird' passed (0.005 seconds)
+Test Case 'DownloadCoordinatorTests.testCancellationRejectsLatePageAndCompletion' started at 2026-10-11 22:17:22.490
+Test Case 'DownloadCoordinatorTests.testCancellationRejectsLatePageAndCompletion' passed (0.001 seconds)
+Test Case 'DownloadCoordinatorTests.testClaimDoesNotReuseAnIDWhoseOldWorkerHasNotReleasedIt' started at 2026-10-11 22:17:22.491
+Test Case 'DownloadCoordinatorTests.testClaimDoesNotReuseAnIDWhoseOldWorkerHasNotReleasedIt' passed (0.0 seconds)
+Test Case 'DownloadCoordinatorTests.testDeletingAndRecreatingIdentityCannotReviveAnOldWorker' started at 2026-10-11 22:17:22.492
+Test Case 'DownloadCoordinatorTests.testDeletingAndRecreatingIdentityCannotReviveAnOldWorker' passed (0.001 seconds)
+Test Case 'DownloadCoordinatorTests.testDuplicateEnqueueAndReversedDisplayKeepTheSameTask' started at 2026-10-11 22:17:22.492
+Test Case 'DownloadCoordinatorTests.testDuplicateEnqueueAndReversedDisplayKeepTheSameTask' passed (0.001 seconds)
+Test Case 'DownloadCoordinatorTests.testRecoveryPreservesManualPauseAndCompletedAndRequeuesInterruptedWork' started at 2026-10-11 22:17:22.493
+Test Case 'DownloadCoordinatorTests.testRecoveryPreservesManualPauseAndCompletedAndRequeuesInterruptedWork' passed (0.0 seconds)
+Test Case 'DownloadCoordinatorTests.testRetryAfterCoolsDownTheSourceButNotOtherSources' started at 2026-10-11 22:17:22.493
+Test Case 'DownloadCoordinatorTests.testRetryAfterCoolsDownTheSourceButNotOtherSources' passed (0.0 seconds)
+Test Case 'DownloadCoordinatorTests.testSourceLimitDoesNotBlockAnotherSource' started at 2026-10-11 22:17:22.494
+Test Case 'DownloadCoordinatorTests.testSourceLimitDoesNotBlockAnotherSource' passed (0.0 seconds)
+Test Case 'DownloadCoordinatorTests.testThreeAutomaticRetriesThenManualRetryRequired' started at 2026-10-11 22:17:22.494
+Test Case 'DownloadCoordinatorTests.testThreeAutomaticRetriesThenManualRetryRequired' passed (0.0 seconds)
+Test Case 'DownloadCoordinatorTests.testUserPauseWinsOverNetworkRecoveryAndInvalidatesLateCompletion' started at 2026-10-11 22:17:22.494
+Test Case 'DownloadCoordinatorTests.testUserPauseWinsOverNetworkRecoveryAndInvalidatesLateCompletion' passed (0.0 seconds)
+Test Case 'DownloadCoordinatorTests.testVerificationWaitDoesNotBlockAnotherSource' started at 2026-10-11 22:17:22.494
+Test Case 'DownloadCoordinatorTests.testVerificationWaitDoesNotBlockAnotherSource' passed (0.0 seconds)
+Test Case 'DownloadCoordinatorTests.testWifiOnlyWaitsUntilUnmeteredWifiOrExplicitPreferenceChange' started at 2026-10-11 22:17:22.495
+Test Case 'DownloadCoordinatorTests.testWifiOnlyWaitsUntilUnmeteredWifiOrExplicitPreferenceChange' passed (0.0 seconds)
+Test Suite 'DownloadCoordinatorTests' passed at 2026-10-11 22:17:22.495
+Executed 12 tests, with 0 failures (0 unexpected) in 0.009 (0.009) seconds
+Test Suite 'DownloadSchedulingTests' started at 2026-10-11 22:17:22.495
+Test Case 'DownloadSchedulingTests.testBackgroundSuspensionKeepsRetryDeadlineAndStopsTimerUntilForeground' started at 2026-10-11 22:17:22.495
+Test Case 'DownloadSchedulingTests.testBackgroundSuspensionKeepsRetryDeadlineAndStopsTimerUntilForeground' passed (2.191 seconds)
+Test Case 'DownloadSchedulingTests.testChangingWifiPolicyStartsWaitingWorkWithoutManualRetry' started at 2026-10-11 22:17:24.686
+Test Case 'DownloadSchedulingTests.testChangingWifiPolicyStartsWaitingWorkWithoutManualRetry' passed (0.044 seconds)
+Test Case 'DownloadSchedulingTests.testRateLimitRetryRunsWithoutPagePollingOrAnotherKick' started at 2026-10-11 22:17:24.730
+Test Case 'DownloadSchedulingTests.testRateLimitRetryRunsWithoutPagePollingOrAnotherKick' passed (2.042 seconds)
+Test Case 'DownloadSchedulingTests.testRestoredWorkStartsWithAnUnchangedAllowedNetworkAndKeepsManualPause' started at 2026-10-11 22:17:26.773
+Test Case 'DownloadSchedulingTests.testRestoredWorkStartsWithAnUnchangedAllowedNetworkAndKeepsManualPause' passed (0.036 seconds)
+Test Case 'DownloadSchedulingTests.testSuspendedRuntimeDoesNotStartOnNetworkChangesOrManualKick' started at 2026-10-11 22:17:26.808
+Test Case 'DownloadSchedulingTests.testSuspendedRuntimeDoesNotStartOnNetworkChangesOrManualKick' passed (0.239 seconds)
+Test Case 'DownloadSchedulingTests.testSuspensionInvalidatesLeaseAndImmediateResumptionReusesPublishedPages' started at 2026-10-11 22:17:27.047
+Test Case 'DownloadSchedulingTests.testSuspensionInvalidatesLeaseAndImmediateResumptionReusesPublishedPages' passed (0.121 seconds)
+Test Suite 'DownloadSchedulingTests' passed at 2026-10-11 22:17:27.168
+	 Executed 6 tests, with 0 failures (0 unexpected) in 4.673 (4.673) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 22:17:27.168
+Executed 18 tests, with 0 failures (0 unexpected) in 4.682 (4.682) seconds

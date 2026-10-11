@@ -1,9 +1,10 @@
 import Foundation
 
-public enum DownloadStoreError: LocalizedError, Sendable {
+public enum DownloadStoreError: LocalizedError, Sendable, Equatable {
     case storeCorrupted
     case storeTooLarge
     case unsupportedVersion
+    case persistenceFailed
 
     public var errorDescription: String? {
         switch self {
@@ -13,6 +14,8 @@ public enum DownloadStoreError: LocalizedError, Sendable {
             return "下载数据库超出大小限制（16 MiB）"
         case .unsupportedVersion:
             return "下载数据库版本不支持"
+        case .persistenceFailed:
+            return "下载记录保存失败，请检查可用空间或存储权限后重试"
         }
     }
 }
@@ -44,8 +47,13 @@ public final class DownloadStore: DownloadRepository, @unchecked Sendable {
     private let file: URL
     private let lock = NSLock()
     private var data: DownloadStoreData
+    private var writeError: DownloadStoreError?
 
     public var fileURL: URL { file }
+    public var persistenceError: DownloadStoreError? {
+        lock.lock(); defer { lock.unlock() }
+        return writeError
+    }
 
     public convenience init(directory: URL) throws {
         let file = directory.appendingPathComponent("downloads.json")
@@ -122,24 +130,39 @@ public final class DownloadStore: DownloadRepository, @unchecked Sendable {
         return data.tasks[id]
     }
 
-    public func save(task: DownloadTask) {
-        lock.lock()
-        defer { lock.unlock() }
-        if data.tasks[task.id] == nil {
-            data.order.append(task.id)
+    @discardableResult
+    public func save(task: DownloadTask) -> Bool {
+        commit { data in
+            if data.tasks[task.id] == nil { data.order.append(task.id) }
+            data.tasks[task.id] = task
         }
-        data.tasks[task.id] = task
-        try? persistLocked()
     }
 
-    public func saveSnapshot(_ detail: ComicDetail) {
-        lock.lock()
-        defer { lock.unlock() }
-        guard let id = try? DownloadModels.bookId(source: detail.summary.sourceId, comic: detail.summary.comicId) else {
-            return
+    @discardableResult
+    public func save(tasks: [DownloadTask]) -> Bool {
+        commit { data in
+            for task in tasks {
+                if data.tasks[task.id] == nil { data.order.append(task.id) }
+                data.tasks[task.id] = task
+            }
         }
-        data.snapshots[id] = detail
-        try? persistLocked()
+    }
+
+    public func saveConfirmedTasks(_ tasks: [DownloadTask]) throws {
+        try mutate { data in
+            for task in tasks {
+                if data.tasks[task.id] == nil { data.order.append(task.id) }
+                data.tasks[task.id] = task
+            }
+        }
+    }
+
+    @discardableResult
+    public func saveSnapshot(_ detail: ComicDetail) -> Bool {
+        commit { data in
+            let id = try DownloadModels.bookId(source: detail.summary.sourceId, comic: detail.summary.comicId)
+            data.snapshots[id] = detail
+        }
     }
 
     public func snapshot(id: String) -> ComicDetail? {
@@ -154,69 +177,88 @@ public final class DownloadStore: DownloadRepository, @unchecked Sendable {
         return (data.pages[task] ?? []).sorted(by: { $0.index < $1.index })
     }
 
-    public func savePage(task: String, page: DownloadPage) {
-        lock.lock()
-        defer { lock.unlock() }
-        var current = data.pages[task] ?? []
-        if let idx = current.firstIndex(where: { $0.index == page.index }) {
-            current[idx] = page
-        } else {
-            current.append(page)
+    @discardableResult
+    public func savePage(task: String, page: DownloadPage) -> Bool {
+        commit { data in
+            var current = data.pages[task] ?? []
+            if let idx = current.firstIndex(where: { $0.index == page.index }) { current[idx] = page }
+            else { current.append(page) }
+            data.pages[task] = current.sorted(by: { $0.index < $1.index })
         }
-        data.pages[task] = current.sorted(by: { $0.index < $1.index })
-        try? persistLocked()
     }
 
-    public func clearPages(task: String) {
-        lock.lock()
-        defer { lock.unlock() }
-        data.pages.removeValue(forKey: task)
-        try? persistLocked()
+    @discardableResult
+    public func clearPages(task: String) -> Bool {
+        commit { $0.pages.removeValue(forKey: task) }
     }
 
-    public func replacePages(task: String, pages: [DownloadPage]) {
-        lock.lock()
-        defer { lock.unlock() }
-        data.pages[task] = pages.sorted(by: { $0.index < $1.index })
-        try? persistLocked()
+    @discardableResult
+    public func replacePages(task: String, pages: [DownloadPage]) -> Bool {
+        commit { $0.pages[task] = pages.sorted(by: { $0.index < $1.index }) }
     }
 
-    public func remove(task: String) {
-        lock.lock()
-        defer { lock.unlock() }
-        data.pages.removeValue(forKey: task)
-        data.tasks.removeValue(forKey: task)
-        data.order.removeAll(where: { $0 == task })
-        try? persistLocked()
+    @discardableResult
+    public func remove(task: String) -> Bool {
+        commit { data in
+            data.pages.removeValue(forKey: task)
+            data.tasks.removeValue(forKey: task)
+            data.order.removeAll(where: { $0 == task })
+        }
     }
 
     public func removeBook(_ bookId: String) throws {
-        lock.lock(); defer { lock.unlock() }
-        let previous = data
-        let ids = Set(data.tasks.values.filter { $0.bookId == bookId }.map(\.id))
-        for id in ids { data.tasks.removeValue(forKey: id); data.pages.removeValue(forKey: id) }
-        data.order.removeAll { ids.contains($0) }
-        data.snapshots.removeValue(forKey: bookId)
-        do { try persistLocked() } catch { data = previous; throw error }
+        try mutate { data in
+            let ids = Set(data.tasks.values.filter { $0.bookId == bookId }.map(\.id))
+            for id in ids { data.tasks.removeValue(forKey: id); data.pages.removeValue(forKey: id) }
+            data.order.removeAll { ids.contains($0) }
+            data.snapshots.removeValue(forKey: bookId)
+        }
     }
     public func removeConfirmedTask(_ id: String) throws {
-        lock.lock(); defer { lock.unlock() }
-        let previous = data
-        data.tasks.removeValue(forKey: id); data.pages.removeValue(forKey: id); data.order.removeAll { $0 == id }
-        do { try persistLocked() } catch { data = previous; throw error }
+        try mutate { data in
+            data.tasks.removeValue(forKey: id); data.pages.removeValue(forKey: id); data.order.removeAll { $0 == id }
+        }
     }
     public func saveConfirmedTask(_ task: DownloadTask) throws {
-        lock.lock(); defer { lock.unlock() }
-        let previous = data
-        if data.tasks[task.id] == nil { data.order.append(task.id) }
-        data.tasks[task.id] = task
-        do { try persistLocked() } catch { data = previous; throw error }
+        try mutate { data in
+            if data.tasks[task.id] == nil { data.order.append(task.id) }
+            data.tasks[task.id] = task
+        }
     }
 
-    public func close() {
-        lock.lock()
-        defer { lock.unlock() }
-        // Flush any pending changes
-        try? persistLocked()
+    /// A failed mutation is rolled back in memory as well as on disk. Keep its
+    /// error visible until an explicit retry has actually written the store.
+    private func mutate(_ body: (inout DownloadStoreData) throws -> Void) throws {
+        lock.lock(); defer { lock.unlock() }
+        let previous = data
+        do {
+            try body(&data)
+            try persistLocked()
+        } catch {
+            data = previous
+            let failure = error as? DownloadStoreError ?? .persistenceFailed
+            writeError = failure
+            throw failure
+        }
+    }
+
+    private func commit(_ body: (inout DownloadStoreData) throws -> Void) -> Bool {
+        do { try mutate(body); return true }
+        catch { return false }
+    }
+
+    public func retryPersistence() throws {
+        lock.lock(); defer { lock.unlock() }
+        do { try persistLocked(); writeError = nil }
+        catch {
+            let failure = error as? DownloadStoreError ?? .persistenceFailed
+            writeError = failure
+            throw failure
+        }
+    }
+
+    @discardableResult
+    public func close() -> Bool {
+        commit { _ in }
     }
 }

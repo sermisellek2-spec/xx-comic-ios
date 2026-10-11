@@ -17,6 +17,10 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
 
     private var groups: [ComicDownloadGroup] = []
     private var contextMenuVisible = false
+    private let storageErrorLabel = UILabel()
+    private let storageRetryButton = UIButton(type: .system)
+    private let storageFeedback = UIStackView()
+    private var queueMutation: Task<Void, Never>?
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -54,13 +58,19 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
     }
 
     @objc private func toggleWifiOnly() {
-        environment.downloadRuntime.isWifiOnly.toggle()
-        environment.defaults.set(environment.downloadRuntime.isWifiOnly, forKey: "downloads.wifiOnly")
-        setupNavigationBar()
-        let mode = environment.downloadRuntime.isWifiOnly ? "仅 Wi-Fi 下载" : "允许移动网络下载"
-        let alert = UIAlertController(title: "下载网络设置", message: "已切换为：\(mode)", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "确定", style: .default))
-        present(alert, animated: true)
+        let runtime = environment.downloadRuntime, enabled = !runtime.isWifiOnly
+        let defaults = environment.defaults
+        navigationItem.rightBarButtonItem?.isEnabled = false
+        mutateQueue({ runtime.updateWifiOnly(enabled) }) { [weak self] in
+            defaults.set(enabled, forKey: "downloads.wifiOnly")
+            guard let self else { return }
+            self.setupNavigationBar(); self.loadTasks()
+            guard self.viewIfLoaded?.window != nil else { return }
+            let mode = enabled ? "仅 Wi-Fi 下载" : "允许移动网络下载"
+            let alert = UIAlertController(title: "下载网络设置", message: "已切换为：\(mode)", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "确定", style: .default))
+            self.present(alert, animated: true)
+        }
     }
 
     private func setupViews() {
@@ -117,6 +127,35 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
         remLabel.translatesAutoresizingMaskIntoConstraints = false
         remBanner.addSubview(remLabel)
 
+        let backgroundHint = UILabel()
+        backgroundHint.text = "iOS 后台时间有限，暂停后回到 App 会自动继续下载。"
+        backgroundHint.font = .systemFont(ofSize: 12)
+        backgroundHint.textColor = Palette.text3
+        backgroundHint.numberOfLines = 0
+        backgroundHint.accessibilityIdentifier = "download.backgroundHint"
+        backgroundHint.translatesAutoresizingMaskIntoConstraints = false
+
+        storageErrorLabel.font = .systemFont(ofSize: 13)
+        storageErrorLabel.textColor = Palette.text
+        storageErrorLabel.numberOfLines = 0
+        storageErrorLabel.accessibilityIdentifier = "download.storageError"
+        storageRetryButton.setTitle("重试保存并继续", for: .normal)
+        storageRetryButton.accessibilityIdentifier = "download.storageRetry"
+        storageRetryButton.addTarget(self, action: #selector(retryStorage), for: .touchUpInside)
+        let retryHeight = storageRetryButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
+        retryHeight.priority = .defaultHigh
+        retryHeight.isActive = true
+        storageFeedback.addArrangedSubview(storageErrorLabel)
+        storageFeedback.addArrangedSubview(storageRetryButton)
+        storageFeedback.axis = .vertical
+        storageFeedback.spacing = 4
+        let feedbackStack = UIStackView(arrangedSubviews: [backgroundHint, storageFeedback])
+        feedbackStack.axis = .vertical
+        feedbackStack.spacing = 8
+        feedbackStack.translatesAutoresizingMaskIntoConstraints = false
+        headerContainer.addSubview(feedbackStack)
+        storageFeedback.isHidden = true
+
         NSLayoutConstraint.activate([
             toolStack.topAnchor.constraint(equalTo: headerContainer.topAnchor, constant: 12),
             toolStack.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 16),
@@ -126,8 +165,12 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
             remBanner.topAnchor.constraint(equalTo: toolStack.bottomAnchor, constant: 10),
             remBanner.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 16),
             remBanner.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -16),
-            remBanner.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: -8),
             remBanner.heightAnchor.constraint(equalToConstant: 40),
+
+            feedbackStack.topAnchor.constraint(equalTo: remBanner.bottomAnchor, constant: 8),
+            feedbackStack.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 16),
+            feedbackStack.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -16),
+            feedbackStack.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: -10),
 
             remIcon.leadingAnchor.constraint(equalTo: remBanner.leadingAnchor, constant: 12),
             remIcon.centerYAnchor.constraint(equalTo: remBanner.centerYAnchor),
@@ -196,6 +239,10 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
 
     private func loadTasks() {
         guard !contextMenuVisible else { return }
+        let error = environment.downloadRuntime.storageError
+        storageErrorLabel.text = error?.localizedDescription
+        storageFeedback.isHidden = error == nil
+        resizeHeader()
         let allTasks = environment.downloadRuntime.store.list()
         if allTasks.isEmpty {
             groups = []
@@ -230,13 +277,49 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
     // MARK: - Actions
 
     @objc private func pauseAll() {
-        environment.downloadRuntime.pauseAll()
-        loadTasks()
+        let runtime = environment.downloadRuntime
+        mutateQueue { runtime.pauseAll() }
     }
 
     @objc private func resumeAll() {
-        environment.downloadRuntime.resumeAll()
-        loadTasks()
+        let runtime = environment.downloadRuntime
+        mutateQueue { runtime.resumeAll() }
+    }
+
+    @objc private func retryStorage() {
+        let runtime = environment.downloadRuntime
+        storageRetryButton.isEnabled = false
+        mutateQueue({
+            do { try runtime.retryStorage() }
+            catch { /* The retained failure remains visible in the header. */ }
+        }) { [weak self] in
+            self?.storageRetryButton.isEnabled = true
+        }
+    }
+
+    private func mutateQueue(_ action: @escaping @Sendable () -> Void, completion: (() -> Void)? = nil) {
+        let previous = queueMutation
+        queueMutation = Task { [weak self] in
+            await previous?.value
+            await Task.detached(priority: .utility) { action() }.value
+            completion?()
+            self?.loadTasks()
+        }
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        resizeHeader()
+    }
+
+    private func resizeHeader() {
+        guard let header = tableView.tableHeaderView, tableView.bounds.width > 0 else { return }
+        let size = header.systemLayoutSizeFitting(CGSize(width: tableView.bounds.width, height: UIView.layoutFittingCompressedSize.height),
+            withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
+        if header.frame.size != size {
+            header.frame = CGRect(origin: .zero, size: size)
+            tableView.tableHeaderView = header
+        }
     }
 
     // MARK: - UITableViewDataSource & Delegate
@@ -350,18 +433,18 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
             openTask(task)
             return
         case .pause:
-            environment.downloadRuntime.queue.pause(id: task.id)
+            let runtime = environment.downloadRuntime
+            mutateQueue { runtime.queue.pause(id: task.id); runtime.kick() }
         case .resume:
-            environment.downloadRuntime.queue.resume(id: task.id)
-            environment.downloadRuntime.kick()
+            let runtime = environment.downloadRuntime
+            mutateQueue { runtime.queue.resume(id: task.id); runtime.kick() }
         case .retry:
-            environment.downloadRuntime.queue.resume(id: task.id)
-            environment.downloadRuntime.kick()
+            let runtime = environment.downloadRuntime
+            mutateQueue { runtime.queue.resume(id: task.id); runtime.kick() }
         case .cancel:
             removeTask(task)
             return
         }
-        loadTasks()
     }
     private func removeTask(_ task: DownloadTask, completion: ((Bool) -> Void)? = nil) {
         let runtime = environment.downloadRuntime
@@ -451,7 +534,7 @@ final class DownloadTaskCell: UITableViewCell {
         self.onAction = onAction
         titleLabel.text = task.title
         statusLabel.accessibilityIdentifier = "download.task.status"
-        statusLabel.accessibilityValue = task.state.rawValue + ";" + String(task.generation)
+        statusLabel.accessibilityValue = task.state.rawValue + ";" + String(task.generation) + ";done=\(task.donePages);total=\(task.totalPages)"
 
         let progress = task.totalPages > 0 ? Float(task.donePages) / Float(task.totalPages) : 0
         progressView.progress = progress

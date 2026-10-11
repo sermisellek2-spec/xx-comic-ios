@@ -7,8 +7,8 @@ import ComicCore
 @MainActor
 enum MatrixUITestFixtures {
     private static var server: MatrixUITestHTTPServer?
-    static func sources() throws -> [any ComicSource] {
-        server = try MatrixUITestHTTPServer(image: MatrixSharedFixture.png)
+    static func sources(defaults: UserDefaults) throws -> [any ComicSource] {
+        server = try MatrixUITestHTTPServer(image: MatrixSharedFixture.png, defaults: defaults)
         let ids = ProcessInfo.processInfo.arguments.contains("--matrix-catalog-fixtures")
             ? BuiltinSourceCatalog.activeIDs : ["mh160", "copy4000", "gmh"]
         return ids.map { MatrixUITestSource(id: $0) }
@@ -104,20 +104,70 @@ enum MatrixUITestFixtures {
 private final class MatrixUITestHTTPServer: @unchecked Sendable {
     private let listener: NWListener
     private let queue = DispatchQueue(label: "XXComic.UITest.HTTP")
-    init(image: Data) throws {
+    private let lock = NSLock()
+    private let defaults: UserDefaults
+    private let holdDownloadOnce: Bool
+    private var heldConnections: [ObjectIdentifier: NWConnection] = [:]
+    init(image: Data, defaults: UserDefaults) throws {
+        self.defaults = defaults
+        holdDownloadOnce = ProcessInfo.processInfo.arguments.contains("--matrix-held-download-once")
         listener = try NWListener(using: .tcp, on: 8767)
-        listener.newConnectionHandler = { connection in
+        listener.newConnectionHandler = { [weak self] connection in
+            guard let self else { connection.cancel(); return }
             connection.start(queue: DispatchQueue.global(qos: .utility))
-            connection.receive(minimumIncompleteLength: 1, maximumLength: 8192) { _, _, _, error in
-                guard error == nil else { connection.cancel(); return }
-                var response = Data("HTTP/1.1 200 OK\r\nContent-Type: image/png\r\nContent-Length: \(image.count)\r\nConnection: close\r\n\r\n".utf8)
-                response.append(image)
-                connection.send(content: response, completion: .contentProcessed { _ in connection.cancel() })
-            }
+            self.receiveHeaders(connection, image: image, buffer: Data())
         }
         listener.start(queue: queue)
     }
-    deinit { listener.cancel() }
+
+    private func receiveHeaders(_ connection: NWConnection, image: Data, buffer: Data) {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 8192) { [weak self] bytes, _, complete, error in
+            guard let self, error == nil else { connection.cancel(); return }
+            var headers = buffer
+            if let bytes { headers.append(bytes) }
+            guard headers.count <= 16_384 else { connection.cancel(); return }
+            guard headers.range(of: Data("\r\n\r\n".utf8)) != nil else {
+                if complete { connection.cancel() }
+                else { self.receiveHeaders(connection, image: image, buffer: headers) }
+                return
+            }
+            let request = String(decoding: headers, as: UTF8.self)
+            if self.shouldHold(request) {
+                let key = ObjectIdentifier(connection)
+                self.lock.lock(); self.heldConnections[key] = connection; self.lock.unlock()
+                // No fabricated progress: the real downloader must publish its
+                // first page before this second HTTP response remains pending.
+                connection.receive(minimumIncompleteLength: 1, maximumLength: 1) { [weak self] _, _, _, _ in
+                    if let self {
+                        self.lock.lock()
+                        self.heldConnections.removeValue(forKey: key)
+                        self.lock.unlock()
+                    }
+                    connection.cancel()
+                }
+                return
+            }
+            var response = Data("HTTP/1.1 200 OK\r\nContent-Type: image/png\r\nContent-Length: \(image.count)\r\nConnection: close\r\n\r\n".utf8)
+            response.append(image)
+            connection.send(content: response, completion: .contentProcessed { _ in connection.cancel() })
+        }
+    }
+
+    private func shouldHold(_ request: String) -> Bool {
+        guard holdDownloadOnce, request.hasPrefix("GET /page-1-1.png "), request.contains("CPU iPhone OS") else { return false }
+        lock.lock(); defer { lock.unlock() }
+        let key = "ui.matrix.download.held.consumed"
+        guard !defaults.bool(forKey: key) else { return false }
+        defaults.set(true, forKey: key)
+        // This explicit Debug-only marker must survive the process termination
+        // exercised by the recovery test. Download results are still real files.
+        defaults.synchronize()
+        return true
+    }
+    deinit {
+        listener.cancel()
+        for connection in heldConnections.values { connection.cancel() }
+    }
 }
 
 private actor MatrixUITestRequests {

@@ -84,7 +84,12 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         environment?.cancelUsageStatsReport()
     }
 
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        environment?.downloadLifecycle.didEnterBackground()
+    }
+
     func applicationDidBecomeActive(_ application: UIApplication) {
+        environment?.downloadLifecycle.didBecomeActive()
         environment?.readingHabits.appWillEnterForeground()
         environment?.reportUsageStatsIfNeeded()
     }
