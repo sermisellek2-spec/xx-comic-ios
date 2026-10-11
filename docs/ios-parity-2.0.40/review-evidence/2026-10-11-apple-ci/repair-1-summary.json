@@ -1,0 +1,33 @@
+{
+  "recorded_at_utc": "2026-10-11T11:44:47.257051+00:00",
+  "first_ci_run": 38136187992,
+  "first_ci_head": "792b59962d84549b3bf2ce1a49a9b7e9ddd39bab",
+  "first_apple_core_executed": 845,
+  "first_apple_core_failures": 8,
+  "first_apple_core_seconds": 62.838,
+  "first_native_build_executed": false,
+  "first_ipa": false,
+  "first_failure_diagnostics": [
+    "2026-10-11T11:37:31.6689330Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Sources/ComicCore/FileAccessCoordinator.swift:21: error: -[ComicCoreTests.DownloadDeletionTests testCancellingActiveChapterWaitsForActualWriterBeforeRemovingPartFiles] : failed: caught error: \"corruptedData(\"下载目录含未知文件，已保留\")\"",
+    "2026-10-11T11:37:31.6698140Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Sources/ComicCore/FileAccessCoordinator.swift:21: error: -[ComicCoreTests.DownloadDeletionTests testDeleteRemovesOnlyConfirmedBookAndPersistsTaskRemoval] : failed: caught error: \"corruptedData(\"下载目录含未知文件夹，已保留\")\"",
+    "2026-10-11T11:37:31.6701440Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Sources/ComicCore/FileAccessCoordinator.swift:21: error: -[ComicCoreTests.DownloadDeletionTests testDeletingActiveBookWaitsForWorkerAndCannotRecreateFiles] : failed: caught error: \"corruptedData(\"下载目录含未知文件夹，已保留\")\"",
+    "2026-10-11T11:37:31.6709470Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Sources/ComicCore/FileAccessCoordinator.swift:21: error: -[ComicCoreTests.DownloadFileCoordinationTests testCompletedChapterCanRedownloadDamagedBytesWithSameLocationAndIdentity] : failed: caught error: \"corruptedData(\"下载目录含未知文件，已保留\")\"",
+    "2026-10-11T11:37:31.6711380Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Tests/ComicCoreTests/DownloadFileCoordinationTests.swift:199: error: -[ComicCoreTests.DownloadFileCoordinationTests testCompletedChapterCanRedownloadDamagedBytesWithSameLocationAndIdentity] : Failed due to unwaited expectation 'Redownload repaired the original chapter'.",
+    "2026-10-11T11:37:31.6720460Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Sources/ComicCore/FileAccessCoordinator.swift:21: error: -[ComicCoreTests.DownloadFileCoordinationTests testPageAndCoverStagePrivatelyThenCoordinatedFilesCanReadAndDelete] : failed: caught error: \"corruptedData(\"下载目录含未知文件，已保留\")\"",
+    "2026-10-11T11:37:31.6755910Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Sources/ComicCore/FileAccessCoordinator.swift:21: error: -[ComicCoreTests.DownloadLocationTests testUnknownExternalFilePreventsWholeDeletionThenKnownCopyDeletesOnlyItsBook] : failed: caught error: \"corruptedData(\"下载目录含未知文件，已保留\")\"",
+    "2026-10-11T11:37:31.6759990Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Sources/ComicCore/FileAccessCoordinator.swift:21: error: -[ComicCoreTests.DownloadRuntimeTests testDeleteChapterCleansFilesAndStore] : failed: caught error: \"corruptedData(\"下载目录含未知文件，已保留\")\""
+  ],
+  "repair": "Canonical directory enumeration root and explicit child path component containment replace character-offset relative paths. Preserve all unknown file/link guards and original assertions; Apple result pending.",
+  "linux_download_regression": {
+    "executed": 50,
+    "failures": 0,
+    "exit_code": 0,
+    "seconds": 1.123,
+    "log": "linux-download-alias-regression.log"
+  },
+  "build_script_syntax_exit": 0,
+  "working_diff_check_exit": 0,
+  "native_build_order": "Debug and Release SDK builds, Apple ComicCore, both simulator test destinations, then package",
+  "phase_passed": false,
+  "non_source_gate_passed": false
+}

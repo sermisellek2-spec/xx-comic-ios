@@ -12,15 +12,25 @@ enum DownloadOwnedDirectory {
         let keys: Set<URLResourceKey> = [.isDirectoryKey, .isSymbolicLinkKey, .isRegularFileKey]
         let root = try directory.resourceValues(forKeys: keys)
         guard root.isDirectory == true, root.isSymbolicLink != true else { throw DownloadError.corruptedData("删除路径不是 App 拥有的目录，原文件已保留") }
+        // Darwin's enumerator can return canonical file URLs even when the input
+        // contains an OS directory alias (for example /var -> /private/var).
+        // Compare path components inside that same canonical root; byte offsets
+        // into a differently formed URL do not identify its relative children.
+        let enumerationRoot = directory.resolvingSymlinksInPath().standardizedFileURL
+        let rootComponents = enumerationRoot.pathComponents
         var enumerationError: Error?
-        guard let entries = manager.enumerator(at: directory, includingPropertiesForKeys: Array(keys), options: [], errorHandler: { _, error in
+        guard let entries = manager.enumerator(at: enumerationRoot, includingPropertiesForKeys: Array(keys), options: [], errorHandler: { _, error in
             enumerationError = error; return false
         }) else { throw DownloadError.corruptedData("无法检查下载目录") }
         for case let file as URL in entries {
             try Task.checkCancellation()
             let values = try file.resourceValues(forKeys: keys)
-            let relative = String(file.path.dropFirst(directory.path.count + 1))
             guard values.isSymbolicLink != true else { throw DownloadError.corruptedData("下载目录含外部链接，原文件已保留") }
+            let components = file.standardizedFileURL.pathComponents
+            guard components.count > rootComponents.count, components.starts(with: rootComponents) else {
+                throw DownloadError.corruptedData("下载目录检查超出归属范围，原文件已保留")
+            }
+            let relative = components.dropFirst(rootComponents.count).joined(separator: "/")
             if values.isDirectory == true {
                 guard allowedDirectories.contains(relative) else { throw DownloadError.corruptedData("下载目录含未知文件夹，已保留") }
             } else {

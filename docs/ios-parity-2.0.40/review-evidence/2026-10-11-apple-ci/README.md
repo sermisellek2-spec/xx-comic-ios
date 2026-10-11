@@ -11,3 +11,5 @@
 读取CI使用新的`tools/ios-ci.py`，仅调用指定仓库的只读API；凭据由正常Git Credential Manager提供并只驻留进程内存，产物跳转请求不携带认证头。不得运行或读取旧凭据脚本。
 
 完整暂存差分检查返回2，原因仅为保留原始诊断日志的尾空格及历史STATUS末尾空行；源码与当前文档范围检查返回0。[pre-upload-check.json](pre-upload-check.json)逐条记录，不修改历史日志来伪装无诊断。所有历史日志按原字节纳入开发验证提交。
+
+开发验证提交792b599已仅推送到指定仓库；[首轮CI38136187992](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38136187992)实际失败：Apple核心845项执行、8条失败，62.838秒；未进入UIKit构建，无新IPA。下载目录枚举采用原路径长度截取相对路径，无法可靠处理Darwin枚举URL形态，已改为同一规范根下的路径组件及归属校验，保留原8条失败涉及的断言与未知文件保护，并补一个真文件URL形式用例。相关50项Linux回归通过、脚本语法/工作差分通过；Apple修复结果待下一轮CI。见[repair-1-summary.json](repair-1-summary.json)和原始失败日志。构建脚本前移Debug/Release SDK编译，完整核心和两设备原生/UI测试仍为打包前必需项。

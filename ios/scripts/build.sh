@@ -2,22 +2,22 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-echo "==> 1. Running ComicCore unit tests..."
-swift test --package-path ComicCore
-
-echo "==> 2. Generating Xcode project via XcodeGen..."
+echo "==> 1. Generating Xcode project via XcodeGen..."
 xcodegen generate --spec project.yml
 
-echo "==> 3. Building Debug scheme for simulator..."
+echo "==> 2. Building Debug scheme for simulator..."
 xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Debug \
   -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
   -derivedDataPath build/simulator CODE_SIGNING_ALLOWED=NO build
 
 # Type-check both configurations before the longer runtime matrix. Packaging still requires all tests.
-echo "==> Building Release scheme for iOS device..."
+echo "==> 3. Building Release scheme for iOS device..."
 xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Release \
   -sdk iphoneos -destination 'generic/platform=iOS' \
   -derivedDataPath build/device CODE_SIGNING_ALLOWED=NO build
+
+echo "==> 4. Running ComicCore unit tests on Apple..."
+swift test --package-path ComicCore
 
 mkdir -p build/evidence/visual-matrix
 mkdir -p build/evidence/reader-enhancement
