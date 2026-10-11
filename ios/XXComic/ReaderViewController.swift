@@ -370,12 +370,19 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 if let saved {
                     volLocator = saved.toVolumeLocator(volumeId: target.volumeId, volumeChapterIndex: target.volumeChapterIndex)
                 } else if atEnd {
-                    let spineCount = book.chapters?[target.volumeChapterIndex].pages.count ?? 1
+                    let chPages = (book.chapters?.indices.contains(target.volumeChapterIndex) == true) ? book.chapters![target.volumeChapterIndex].pages : []
+                    let targetPage = chPages.last ?? ""
+                    let spineIdx = book.pages.firstIndex(of: targetPage) ?? max(0, book.pages.count - 1)
+                    let href = (book.epub?.spine.indices.contains(spineIdx) == true) ? book.epub!.spine[spineIdx].fullZipPath : targetPage
                     volLocator = TextLocator(bookID: target.volumeId, chapterIndex: target.volumeChapterIndex,
-                                             spineIndex: max(0, spineCount - 1), resourceHref: "", anchorID: "", scrollPercentage: 1.0)
+                                             spineIndex: spineIdx, resourceHref: href, anchorID: "", scrollPercentage: 1.0)
                 } else {
+                    let chPages = (book.chapters?.indices.contains(target.volumeChapterIndex) == true) ? book.chapters![target.volumeChapterIndex].pages : []
+                    let targetPage = chPages.first ?? ""
+                    let spineIdx = book.pages.firstIndex(of: targetPage) ?? 0
+                    let href = (book.epub?.spine.indices.contains(spineIdx) == true) ? book.epub!.spine[spineIdx].fullZipPath : targetPage
                     volLocator = TextLocator(bookID: target.volumeId, chapterIndex: target.volumeChapterIndex,
-                                             spineIndex: 0, resourceHref: "", anchorID: "", scrollPercentage: 0.0)
+                                             spineIndex: spineIdx, resourceHref: href, anchorID: "", scrollPercentage: 0.0)
                 }
                 let session = try EpubTextSession(book: book, chapterIndex: target.volumeChapterIndex, locator: volLocator)
                 let textVC = EpubTextReaderViewController(comic: self.comic, chapters: self.chapters, session: session,

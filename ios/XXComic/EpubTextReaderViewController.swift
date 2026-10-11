@@ -22,7 +22,8 @@ final class EpubTextReaderViewController: UIViewController, UIAdaptivePresentati
     init(comic: ComicSummary, chapters: [Chapter], session: EpubTextSession, locator: TextLocator?, environment: AppEnvironment) {
         self.comic = comic; self.chapters = chapters; self.session = session; self.environment = environment
         let volLocator = locator?.toVolumeLocator(volumeId: session.book.id, volumeChapterIndex: session.chapterIndex)
-        self.locator = volLocator.flatMap { $0.bookID == session.book.id && $0.chapterIndex == session.chapterIndex && $0.spineIndex == session.spineIndex && $0.resourceHref == session.entry.fullZipPath ? $0 : nil }
+        let validated = volLocator.flatMap { $0.bookID == session.book.id && $0.chapterIndex == session.chapterIndex && $0.spineIndex == session.spineIndex && $0.resourceHref == session.entry.fullZipPath ? $0 : nil }
+        self.locator = validated ?? session.locator(anchorID: "", percent: 0.0)
         settings = environment.textPreferences.load()
         super.init(nibName: nil, bundle: nil); hidesBottomBarWhenPushed = true
     }
@@ -175,15 +176,23 @@ final class EpubTextReaderViewController: UIViewController, UIAdaptivePresentati
                 if let saved {
                     volLocator = saved.toVolumeLocator(volumeId: target.volumeId, volumeChapterIndex: target.volumeChapterIndex)
                 } else if atEnd {
-                    let spineCount = book.chapters?[target.volumeChapterIndex].pages.count ?? 1
+                    let chPages = (book.chapters?.indices.contains(target.volumeChapterIndex) == true) ? book.chapters![target.volumeChapterIndex].pages : []
+                    let targetPage = chPages.last ?? ""
+                    let spineIdx = book.pages.firstIndex(of: targetPage) ?? max(0, book.pages.count - 1)
+                    let href = (book.epub?.spine.indices.contains(spineIdx) == true) ? book.epub!.spine[spineIdx].fullZipPath : targetPage
                     volLocator = TextLocator(bookID: target.volumeId, chapterIndex: target.volumeChapterIndex,
-                                             spineIndex: max(0, spineCount - 1), resourceHref: "", anchorID: "", scrollPercentage: 1.0)
+                                             spineIndex: spineIdx, resourceHref: href, anchorID: "", scrollPercentage: 1.0)
                 } else {
+                    let chPages = (book.chapters?.indices.contains(target.volumeChapterIndex) == true) ? book.chapters![target.volumeChapterIndex].pages : []
+                    let targetPage = chPages.first ?? ""
+                    let spineIdx = book.pages.firstIndex(of: targetPage) ?? 0
+                    let href = (book.epub?.spine.indices.contains(spineIdx) == true) ? book.epub!.spine[spineIdx].fullZipPath : targetPage
                     volLocator = TextLocator(bookID: target.volumeId, chapterIndex: target.volumeChapterIndex,
-                                             spineIndex: 0, resourceHref: "", anchorID: "", scrollPercentage: 0.0)
+                                             spineIndex: spineIdx, resourceHref: href, anchorID: "", scrollPercentage: 0.0)
                 }
-                self.session = try EpubTextSession(book: book, chapterIndex: target.volumeChapterIndex, locator: volLocator)
-                self.locator = volLocator
+                let newSession = try EpubTextSession(book: book, chapterIndex: target.volumeChapterIndex, locator: volLocator)
+                self.session = newSession
+                self.locator = volLocator ?? newSession.locator(anchorID: "", percent: atEnd ? 1.0 : 0.0)
                 self.load()
                 self.environment.readingHabits.userDidRead()
             } catch {
@@ -204,7 +213,7 @@ final class EpubTextReaderViewController: UIViewController, UIAdaptivePresentati
     private func move(_ delta: Int) {
         save()
         if session.moveSpine(delta: delta) {
-            locator = nil; load(); environment.readingHabits.userDidRead()
+            locator = session.locator(anchorID: "", percent: 0.0); load(); environment.readingHabits.userDidRead()
             return
         }
         if delta == 1 {
@@ -238,7 +247,12 @@ final class EpubTextReaderViewController: UIViewController, UIAdaptivePresentati
     @objc private func previousSpine() { move(-1) }
     @objc private func nextSpine() { move(1) }
     @objc private func retry() { load() }
-    @objc private func seek() { content.restore(anchor: "", percent: Double(progress.value) / 100); environment.readingHabits.userDidRead() }
+    @objc private func seek() {
+        let percent = Double(progress.value) / 100
+        locator = session.locator(anchorID: "", percent: percent)
+        content.restore(anchor: "", percent: percent)
+        environment.readingHabits.userDidRead()
+    }
     @objc private func detail() {
         save()
         if let nav = navigationController {
