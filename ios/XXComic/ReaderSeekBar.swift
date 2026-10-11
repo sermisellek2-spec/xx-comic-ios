@@ -28,6 +28,8 @@ final class ReaderSeekBar: UIView {
         clipsToBounds = false
 
         slider.translatesAutoresizingMaskIntoConstraints = false
+        slider.accessibilityIdentifier = "reader.seek"
+        slider.accessibilityLabel = "本章阅读进度"
         slider.minimumTrackTintColor = Palette.accent
         slider.thumbTintColor = Palette.accent
         slider.maximumTrackTintColor = UIColor(white: 0.6, alpha: 0.4)

@@ -14,3 +14,5 @@
 [第八轮实际结果](review-evidence/2026-10-11-apple-ci/repair-8-summary.json)、[当前本地候选869项核心/73文件语法的边界](review-evidence/2026-10-12-regression-repair/README.md)。两项Apple PDF在Linux跳过；语法检查不证明UIKit或Files通过。当前仍保留全部原生/UI场景，新增外部Files，CI矩阵限时90分钟，package_ipa=false。
 
 SOURCE-01目录/ID/开关/排序属于前段P2；SOURCE-02~04真实网站最后P6。51源目录、默认启用50已经核对，不因站点失败删减。旧全绿和旧IPA不继承为当前验收。
+
+P3本地下一候选：核心874项/2项Apple PDF跳过/0失败，之后Core输入不变；78文件两配置仅语法通过。新增10阅读UI、完整计划74项/设备尚未Apple执行，第十一轮只验证P1父版本。连续跨章、固定画布、旋转保护和下载修复返回均须实际原生/视觉验证，不作为已过门槛。

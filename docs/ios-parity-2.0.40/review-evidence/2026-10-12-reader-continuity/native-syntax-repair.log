@@ -1,0 +1,5 @@
+Swift 5.10-jammy frontend parser; 78 files including TestSupport/FilesFixtureHost. This is not Apple SDK type checking.
+Configuration=Release Files=78
+ExitCode=0
+Configuration=DEBUG Files=78
+ExitCode=0

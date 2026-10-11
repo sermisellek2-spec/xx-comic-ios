@@ -59,8 +59,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         for layout in [appearance.stackedLayoutAppearance, appearance.inlineLayoutAppearance, appearance.compactInlineLayoutAppearance] {
             layout.normal.iconColor = Palette.text3
             layout.selected.iconColor = Palette.accent
-            layout.normal.titleTextAttributes = [.foregroundColor: Palette.text3, .font: UIFont.systemFont(ofSize: 10, weight: .medium)]
-            layout.selected.titleTextAttributes = [.foregroundColor: Palette.accent, .font: UIFont.systemFont(ofSize: 10, weight: .semibold)]
+            layout.normal.titleTextAttributes = [.foregroundColor: Palette.text3, .font: UIFont.systemFont(ofSize: 12, weight: .medium)]
+            layout.selected.titleTextAttributes = [.foregroundColor: Palette.accent, .font: UIFont.systemFont(ofSize: 12, weight: .semibold)]
         }
         tabs.tabBar.standardAppearance = appearance
         tabs.tabBar.scrollEdgeAppearance = appearance
@@ -93,7 +93,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         root.title = title
         let heading = UILabel()
         heading.text = title; heading.textColor = Palette.text
-        heading.font = .systemFont(ofSize: 20, weight: .bold)
+        heading.font = .systemFont(ofSize: 24, weight: .bold)
         heading.accessibilityTraits = .header
         heading.accessibilityIdentifier = "navigation.title"
         heading.sizeToFit()

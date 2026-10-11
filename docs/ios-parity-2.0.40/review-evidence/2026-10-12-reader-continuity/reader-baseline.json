@@ -1,0 +1,22 @@
+{
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "file": "app/src/main/java/com/xxcomic/MainActivity.java",
+  "fileSHA256": "ebf97fb1e38241916e4a318b495bbe75edb3a6bb3c1e81435e8e0a05ca4ff515",
+  "initialField": "readerFullscreen=false",
+  "explicitTrueCalls": [
+    8157,
+    8370,
+    8521,
+    8769
+  ],
+  "initialAutoHideInference": "withdrawn; true calls are scroll/gesture interactions, renderReader preserves state",
+  "continuousAppend": "next chapter images appended; page/seek/persistence remain chapter local; identity resolves later directories",
+  "prefetchThreshold": "firstVisibleItem + visibleItemCount >= totalItemCount - 5; total includes the footer",
+  "fixedCanvas": "setReaderFullscreen resets content transforms and only animates chrome",
+  "currentP3Apple": "not run",
+  "excerptSHA256": "aec746dc4d2fe7d3f6fa514346588253f7ef417fb9c2ded462dc5ee2892ca0bb",
+  "originalAnnotatedExcerptSHA256": "bc3766f47d673e2c138fc8d47afd8bdc0268b82a2014d335e96c1e0646927582",
+  "originalAnnotatedExcerptArchive": "frozen-reader-excerpts-original.zip",
+  "originalAnnotatedExcerptArchiveSHA256": "a58388a3fdb29ad5e2909cd5a1dfeca160c29a70d9c7a9c00b92b95e75ae25fc",
+  "excerptFormat": "Annotated Git source lines; blank line prefix padding omitted for whitespace check. Original annotation retained in ZIP. The frozen Java blob is unchanged."
+}

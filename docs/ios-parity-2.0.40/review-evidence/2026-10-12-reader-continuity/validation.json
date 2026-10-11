@@ -1,0 +1,44 @@
+{
+  "recordedAtUTC": "2026-10-11T19:29:43.258063+00:00",
+  "parentCommit": "38944aea813014d2002e41f5f48f5c3cab13d644",
+  "candidate": "locally prepared P3; not part of current P1 Apple run",
+  "core": {
+    "executed": 874,
+    "skipped": 2,
+    "failures": 0,
+    "seconds": 137.088,
+    "exitCode": 0,
+    "logSHA256": "fe8382192a748280be86808e3b29946956915b7fb70965f2bd109a54b688cfb2"
+  },
+  "nativeSyntax": {
+    "files": 78,
+    "exitCodes": {
+      "Release": 0,
+      "DEBUG": 0
+    },
+    "logSHA256": "ce61040b128e52387e38026aaed85e197f3c0dfe3f9164dfc8c0a78f023f0cca",
+    "appleTypeCheck": false,
+    "log": "native-syntax-repair.log"
+  },
+  "uiMethodsPrepared": 74,
+  "appleCurrentCandidate": "not run",
+  "visualGatePassed": false,
+  "realSourcesExercised": false,
+  "ipaProduced": false,
+  "exactInputs": 380,
+  "coreInputsStillMatchFullTest": 262,
+  "visualComparisonToolSyntax": "pass; actual Apple paired captures pending",
+  "gitDiffCheckExitCode": 0,
+  "requirementsUniqueIDs": 75,
+  "reviewedAtUTC": "2026-10-11T20:11:21.306029+00:00",
+  "readerUITestsPrepared": 10,
+  "downloadRepairAppleResult": "not run; real truncated owned PNG and local HTTP repair fixtures prepared",
+  "commands": {
+    "core": "docker run --rm --mount type=bind,source=<ios/ComicCore>,target=/work -w /work swift:5.10-jammy swift test -j 2",
+    "syntax": "rg --files ios -g *.swift; exclude ios/ComicCore/ and ios/build/; docker swift:5.10-jammy swiftc -frontend -parse <78 paths>, repeated with -D DEBUG",
+    "whitespace": "git diff --check"
+  },
+  "gitNormalizedInputFile": "git-normalized-inputs.json",
+  "gitNormalizedInputs": 380,
+  "stagedWhitespaceCheckExitCode": 0
+}

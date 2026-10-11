@@ -1,0 +1,217 @@
+1123:     private int readerChapterIndex = 0;
+1124:     private String activeDetailId = "";
+1125:     private boolean readerVisible = false;
+1126:     private boolean readerFullscreen = false;
+1127:     private boolean searchLoading = false;
+1128:     private boolean discoveryAutoLoadPaused;
+
+7917:         top.addView(back, new LinearLayout.LayoutParams(UIHelpers.dp(this, 28), UIHelpers.dp(this, 28)));
+7918:
+7919:         Space space = new Space(this);
+7920:         top.addView(space, new LinearLayout.LayoutParams(UIHelpers.dp(this, 8), 1));
+7921:
+7922:         String titleText = detail.chapters.get(readerChapterIndex).title;
+7923:         if (!TextUtils.isEmpty(detail.summary.title)) {
+7924:             titleText = detail.summary.title + " · " + titleText;
+7925:         }
+7926:         TextView name = UIHelpers.text(this, titleText, 13, textColor, Typeface.NORMAL);
+7927:         name.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+7928:         name.setGravity(Gravity.CENTER_VERTICAL);
+7929:         name.setIncludeFontPadding(false);
+7930:         name.setSingleLine(true);
+7931:         name.setEllipsize(TextUtils.TruncateAt.END);
+7932:         readerToolbarTitle = name;
+7933:         top.addView(name, UIHelpers.weight(1));
+7934:         return top;
+
+8104:             final int[] highestLoadedChapter = {readerChapterIndex};
+8105:             final boolean[] loadingNextChapter = {false};
+8106:             final BaseAdapter listAdapter = continuousAdapter;
+8107:
+8108:             Runnable tryLoadNextChapter = new Runnable() {
+8109:                 @Override
+8110:                 public void run() {
+8111:                     if (loadingNextChapter[0]) return;
+8112:                     int nextIndex = highestLoadedChapter[0] + 1;
+8113:                     if (nextIndex >= detail.chapters.size()) {
+8114:                         if (listFooter.getVisibility() != View.VISIBLE) {
+8115:                             listFooter.setVisibility(View.VISIBLE);
+8116:                         }
+8117:                         return;
+8118:                     }
+8119:                     loadingNextChapter[0] = true;
+8120:                     loadChapterPageAsync(detail, nextIndex, nextChapterPage -> {
+8121:                         if (generation != readerGeneration || readerList != list || !readerVisible) return;
+8122:                         loadingNextChapter[0] = false;
+8123:                         if (nextChapterPage == null || nextChapterPage.imageUrls == null || nextChapterPage.imageUrls.isEmpty()) return;
+8124:                         highestLoadedChapter[0] = nextIndex;
+8125:                         ComicModels.Chapter nextChapter = detail.chapters.get(nextIndex);
+8126:                         String nextChapterUrl = nextChapter.url;
+8127:                         String nextPosKey = readerPositionKey(detail.summary.comicId, nextChapter);
+8128:                         readerLoadedChapterUrls.add(nextChapterUrl);
+8129:                         int newPageCount = nextChapterPage.imageUrls.size();
+8130:                         for (int i = 0; i < newPageCount; i++) {
+8131:                             String u = nextChapterPage.imageUrls.get(i);
+8132:                             imageUrls.add(u);
+8133:                             continuousItems.add(new ContinuousReaderItem(u, nextChapterUrl, nextIndex, i, newPageCount, nextPosKey));
+8134:                         }
+8135:                         listAdapter.notifyDataSetChanged();
+8136:                         prefetchReaderImages(imageUrls, list.getLastVisiblePosition() + 1,
+8137:                                 nextChapterUrl, generation, comicId, cacheOnly);
+8138:                         if (highestLoadedChapter[0] >= detail.chapters.size() - 1) {
+8139:                             listFooter.setVisibility(View.VISIBLE);
+8140:                         }
+8141:                     }, () -> {
+8142:                         if (generation != readerGeneration || readerList != list || !readerVisible) return;
+8143:                         loadingNextChapter[0] = false;
+8144:                     });
+8145:                 }
+
+8150:                 public void onScrollStateChanged(AbsListView view, int scrollState) {
+8151:                     if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL
+8152:                             || scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING) {
+8153:                         if (readingHabitTracker != null) {
+8154:                             readingHabitTracker.onUserAction();
+8155:                         }
+8156:                         if (!readerFullscreen) {
+8157:                             setReaderFullscreen(true, true);
+8158:                         }
+8159:                     }
+
+8162:                 @Override
+8163:                 public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+8164:                     if (generation != readerGeneration || readerList != list) return;
+8165:                     ContinuousReaderItem currentItem = (firstVisibleItem >= 0 && firstVisibleItem < continuousItems.size())
+8166:                             ? continuousItems.get(firstVisibleItem) : null;
+8167:                     if (!restoringPosition[0]) {
+8168:                         saveReaderPosition(list, positionKey);
+8169:                         if (currentItem != null && !TextUtils.equals(currentItem.positionKey, positionKey)) {
+8170:                             saveContinuousReaderPosition(list, currentItem);
+8171:                         }
+8172:                     }
+8173:                     if (!readerSeeking && readerSeekBar != null && totalItemCount > 0) {
+8174:                         int chapterPageCount = currentItem != null ? currentItem.pageCount : totalItemCount;
+8175:                         readerSeekBar.setMax(Math.max(0, chapterPageCount - 1));
+8176:                         readerSeekBar.setEnabled(chapterPageCount > 1);
+8177:                         readerSeekBar.setProgress(currentItem != null ? currentItem.pageIndex : firstVisibleItem);
+8178:                     }
+8179:                     if (currentItem != null) {
+8180:                         if (currentItem.chapterIndex != readerChapterIndex) {
+8181:                             if (readerSeekControl != null) readerSeekControl.cancel();
+8182:                             readerChapterIndex = currentItem.chapterIndex;
+8183:                             progress.put(comicId, readerChapterIndex);
+8184:                             if (isLocalComic(comicId) && readerChapterIndex >= 0 && readerChapterIndex < detail.chapters.size()) {
+8185:                                 getSharedPreferences("xxcomic_local_locators", MODE_PRIVATE).edit()
+8186:                                         .putString(comicId, detail.chapters.get(readerChapterIndex).chapterId).apply();
+8187:                             }
+8188:                             lastViewedAt.put(comicId, System.currentTimeMillis());
+8189:                             saveLocalState();
+8190:                             updateReaderToolbarTitle(detail);
+8191:                         }
+8192:                         int newPage = currentItem.pageIndex + 1;
+8193:                         int newTotal = currentItem.pageCount;
+8194:                         if (newPage != readerCurrentPageNumber || newTotal != readerTotalPages) {
+8195:                             readerCurrentPageNumber = newPage;
+8196:                             readerTotalPages = newTotal;
+8197:                             refreshReaderOverlayBadge();
+8198:                         }
+8199:                     } else if (totalItemCount > 0) {
+8200:                         int newPage = Math.max(1, Math.min(totalItemCount, firstVisibleItem + 1));
+8201:                         if (newPage != readerCurrentPageNumber || totalItemCount != readerTotalPages) {
+8202:                             readerCurrentPageNumber = newPage;
+8203:                             readerTotalPages = totalItemCount;
+8204:                             refreshReaderOverlayBadge();
+8205:                         }
+8206:                     }
+8207:                     if (visibleItemCount > 0) {
+8208:                         prefetchReaderImagesAround(imageUrls, firstVisibleItem, visibleItemCount,
+8209:                                 currentItem != null ? currentItem.chapterUrl : chapterUrl, generation, comicId, cacheOnly);
+8210:                     }
+8211:                     if (totalItemCount > 0 && firstVisibleItem + visibleItemCount >= totalItemCount - 5) {
+8212:                         tryLoadNextChapter.run();
+8213:                     }
+8214:                 }
+
+8370:                         setReaderFullscreen(true, true);
+8371:                     }
+8372:                     return false;
+
+8515:                     @Override public void onNavigate(int delta) { navigateReader(detail, page, delta); }
+8516:                     @Override public void onToggleControls() { toggleReaderFullscreen(); }
+8517:                     @Override public void onInteraction() {
+8518:                         if (readingHabitTracker != null) {
+8519:                             readingHabitTracker.onUserAction();
+8520:                         }
+8521:                         if (!readerFullscreen) setReaderFullscreen(true, true);
+8522:                     }
+8523:                 });
+8524:                 readerPager.setControlsVisible(!readerFullscreen);
+
+8699:         overlayBadge.setPadding(UIHelpers.dp(this, 8), UIHelpers.dp(this, 4), UIHelpers.dp(this, 8), UIHelpers.dp(this, 4));
+8700:         overlayBadge.setSingleLine(true);
+8701:         overlayBadge.setEllipsize(TextUtils.TruncateAt.END);
+8702:         overlayBadge.setGravity(Gravity.CENTER_VERTICAL);
+8703:         readerOverlayBadge = overlayBadge;
+8704:
+8705:         readerCurrentPageNumber = initialPage + 1;
+8706:         readerTotalPages = Math.max(1, page.imageUrls.size());
+8707:         registerReaderBatteryReceiver();
+8708:         main.removeCallbacks(readerTimeUpdateRunnable);
+8709:         main.postDelayed(readerTimeUpdateRunnable, 15000L);
+8710:         refreshReaderOverlayBadge();
+8711:
+8712:         FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
+8713:         badgeParams.rightMargin = UIHelpers.dp(this, 10);
+8714:         badgeParams.bottomMargin = UIHelpers.dp(this, readerButtonMode ? 60 : 8);
+8715:         shell.addView(overlayBadge, badgeParams);
+8716:         addReaderEnhancementBadge(shell);
+8717:         updateReaderOverlayVisibility(false);
+8718:
+8719:         setReaderFullscreen(readerFullscreen, false);
+8720:     }
+
+8766:         boolean tap = moveX < UIHelpers.dp(this, 10) && moveY < UIHelpers.dp(this, 10) && System.currentTimeMillis() - readerDownAt < 300L;
+8767:         if (!tap) return false;
+8768:         if (!readerFullscreen) {
+8769:             setReaderFullscreen(true, true);
+8770:             return true;
+8771:         }
+8772:         boolean activeY = y > height * 0.25f && y < height * 0.75f;
+8773:         if (!activeY) return false;
+8774:         boolean leftSide = x < width * 0.28f;
+8775:         boolean rightSide = x > width * 0.72f;
+8776:         if (ReaderNavigation.isEdgeTapNavigationPermitted(readerLayoutMode, readerPageMode)
+8777:                 && (leftSide || rightSide)) {
+8778:             navigateReader(detail, page, ReaderNavigation.tapDelta(leftSide, readerLeftHand));
+8779:         } else {
+8780:             toggleReaderFullscreen();
+8781:         }
+8782:         return true;
+
+9196:     private void setReaderFullscreen(boolean fullscreen, boolean animated) {
+9197:         readerFullscreen = fullscreen;
+9198:         if (readingHabitTracker != null) {
+9199:             readingHabitTracker.onOverlayVisibilityChanged(!fullscreen);
+9200:         }
+9201:         updateReaderOverlayVisibility(animated);
+9202:         if (readerPager != null) {
+9203:             readerPager.setControlsVisible(!fullscreen);
+9204:         }
+9205:         if (readerTopBar == null || readerBottomBar == null) return;
+9206:
+9207:         int topHeight = readerTopBar.getHeight();
+9208:         if (topHeight <= 0) {
+9209:             topHeight = getStatusBarOrCutoutHeight() + UIHelpers.dp(this, 44);
+9210:         }
+9211:         int bottomHeight = readerBottomBar.getHeight();
+9212:         if (bottomHeight <= 0) {
+9213:             bottomHeight = UIHelpers.dp(this, 88);
+9214:         }
+9215:
+9216:         // Keep reader content view fixed in place: no scaling, no translation, zero jitter!
+9217:         if (readerContentView != null) {
+9218:             readerContentView.animate().cancel();
+9219:             readerContentView.setScaleX(1f);
+9220:             readerContentView.setScaleY(1f);
+9221:             readerContentView.setTranslationY(0f);
+9222:         }

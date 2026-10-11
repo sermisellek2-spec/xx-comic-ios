@@ -50,6 +50,54 @@ enum MatrixUITestFixtures {
             environment.preferences.save(preferences)
             environment.defaults.set(true, forKey: "ui.matrix.preferences.seeded")
         }
+        seedCorruptDownloadIfRequested(environment: environment)
+    }
+
+    private static func seedCorruptDownloadIfRequested(environment: AppEnvironment) {
+        let flags = ProcessInfo.processInfo.arguments
+        let chapterIndex: Int
+        if flags.contains("--matrix-corrupt-first-download") { chapterIndex = 0 }
+        else if flags.contains("--matrix-corrupt-next-download") { chapterIndex = 1 }
+        else { return }
+        guard !environment.defaults.bool(forKey: "ui.matrix.corrupt.download.seeded"),
+              let source = environment.allSources.first(where: { $0.id == "mh160" }) as? MatrixUITestSource,
+              let comic = source.comics.first, source.chapterList.indices.contains(chapterIndex) else { return }
+        let document = MatrixSharedFixture.document
+        let detail = ComicDetail(summary: comic, author: document.author, status: document.status,
+                                 description: document.description, latestChapter: document.latestChapter, chapters: source.chapterList)
+        let chapter = detail.chapters[chapterIndex]
+        let store = environment.downloadStore, locations = environment.downloadLocations
+        let image = MatrixSharedFixture.png, referer = source.referer
+        Task { [weak environment] in
+            do {
+                try await Task.detached(priority: .utility) {
+                    let taskID = try DownloadModels.key(comic.sourceId, comic.comicId, chapter.chapterId)
+                    let bookID = try DownloadModels.bookId(source: comic.sourceId, comic: comic.comicId)
+                    let task = DownloadTask(id: taskID, bookId: bookID, sourceId: comic.sourceId, comicId: comic.comicId,
+                                            chapterId: chapter.chapterId, title: chapter.title, url: chapter.url,
+                                            totalPages: document.pagesPerChapter, donePages: document.pagesPerChapter,
+                                            generation: 1, state: .completed)
+                    try locations.prepare(task, comicTitle: comic.title)
+                    let directory = try locations.chapterDirectory(task, create: true)
+                    let hash = DownloadModels.sha256Hex(image)
+                    let pages = try (0..<document.pagesPerChapter).map { index in
+                        let file = directory.appendingPathComponent("\(index).img")
+                        // Real owned files and metadata deliberately disagree on
+                        // page zero. Production verification must detect this.
+                        let bytes = index == 0 ? Data(image.prefix(12)) : image
+                        try bytes.write(to: file, options: .atomic)
+                        return DownloadPage(index: index, url: "\(referer)page-\(chapterIndex + 1)-\(index).png",
+                                            path: "\(bookID)/\(taskID)/\(index).img", hash: hash, bytes: Int64(image.count))
+                    }
+                    store.saveSnapshot(detail); store.replacePages(task: taskID, pages: pages)
+                    try store.saveConfirmedTask(task)
+                }.value
+                environment?.defaults.set(true, forKey: "ui.matrix.corrupt.download.seeded")
+                environment?.notifyLibraryChanged()
+            } catch {
+                ErrorLogStore.shared.append(title: "损坏下载验收文件准备失败", error: error)
+            }
+        }
     }
 }
 
@@ -75,6 +123,7 @@ private final class MatrixUITestHTTPServer: @unchecked Sendable {
 private actor MatrixUITestRequests {
     private var details: [String: Int] = [:]
     private var directories: [String: Int] = [:]
+    private var pages: [String: Int] = [:]
     func nextDetail(_ comicID: String) -> Int {
         details[comicID, default: 0] += 1
         return details[comicID]!
@@ -84,6 +133,10 @@ private actor MatrixUITestRequests {
         return directories[comicID]!
     }
     func hasRequestedDirectory(_ comicID: String) -> Bool { directories[comicID, default: 0] > 0 }
+    func nextChapter(_ url: String) -> Int {
+        pages[url, default: 0] += 1
+        return pages[url]!
+    }
 }
 
 struct MatrixUITestSource: ComicSource {
@@ -142,6 +195,18 @@ struct MatrixUITestSource: ComicSource {
     func chapter(url: String) async throws -> ChapterPage {
         try Task.checkCancellation()
         let number = URL(string: url)?.lastPathComponent ?? "1"
+        let request = await requests.nextChapter(url)
+        if number == "2", request == 1 {
+            let arguments = ProcessInfo.processInfo.arguments
+            if arguments.contains("--matrix-continuation-fail-once") {
+                try await Task.sleep(nanoseconds: 100_000_000)
+                throw URLError(.networkConnectionLost)
+            }
+            if arguments.contains("--matrix-continuation-held-once") {
+                while true { try await Task.sleep(nanoseconds: 50_000_000) }
+            }
+        }
+        try Task.checkCancellation()
         return ChapterPage(chapterId: "\(id)_chapter_\(number)", title: "第\(number)话", imageUrls: (0..<MatrixSharedFixture.document.pagesPerChapter).map { "\(referer)page-\(number)-\($0).png" })
     }
     func filterGroups() async throws -> [SourceFilterGroup] {

@@ -20,7 +20,7 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         app.buttons["reader.layout.1"].tap(); app.buttons["reader.theme.1"].tap()
         let crop = app.switches["reader.crop.white.margins"]
         XCTAssertTrue(crop.waitForExistence(timeout: 5))
-        for _ in 0..<4 where !crop.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        for _ in 0..<4 where !crop.isHittable { app.scrollViews["reader.settings.content"].swipeUp() }
         XCTAssertTrue(crop.isHittable); crop.tap()
         XCTAssertEqual(crop.value as? String, "1")
         app.buttons["reader.settings.close"].tap()
@@ -35,21 +35,21 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
     func testEnhancementControlsAppearOnlyWhenEnabledAndComparisonReturnsToOriginal() {
         let app = launch()
         let enabled = app.switches["reader.enhancement.enabled"]
-        for _ in 0..<4 where !enabled.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        for _ in 0..<4 where !enabled.isHittable { app.scrollViews["reader.settings.content"].swipeUp() }
         XCTAssertTrue(enabled.isHittable)
         XCTAssertEqual(enabled.value as? String, "0")
         XCTAssertFalse(app.switches["reader.enhancement.comparison"].exists)
         enabled.tap()
         let mode = app.buttons["reader.enhancement.mode.1"]
-        for _ in 0..<4 where !mode.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        for _ in 0..<4 where !mode.isHittable { app.scrollViews["reader.settings.content"].swipeUp() }
         XCTAssertTrue(mode.waitForExistence(timeout: 5)); mode.tap()
         XCTAssertTrue(mode.isSelected)
         let comparison = app.switches["reader.enhancement.comparison"]
         XCTAssertTrue(comparison.exists)
-        for _ in 0..<4 where !comparison.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        for _ in 0..<4 where !comparison.isHittable { app.scrollViews["reader.settings.content"].swipeUp() }
         XCTAssertTrue(comparison.isHittable); comparison.tap()
         XCTAssertEqual(comparison.value as? String, "1")
-        for _ in 0..<4 where !enabled.isHittable { app.scrollViews.firstMatch.swipeDown() }
+        for _ in 0..<4 where !enabled.isHittable { app.scrollViews["reader.settings.content"].swipeDown() }
         enabled.tap()
         XCTAssertFalse(comparison.exists)
         app.buttons["reader.settings.close"].tap()

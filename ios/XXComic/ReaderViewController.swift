@@ -12,6 +12,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var session: ReaderSession
     private var settings: ReaderPreferences
     private var images: [String] = []
+    private var continuousPages = ContinuousReaderPages()
+    private var continuationTask: Task<Void, Never>?
+    private var continuationRequestID = UUID()
+    private var continuationError: Error?
+    private var lastObservedPosition: (chapter: Chapter, position: ReaderPosition)?
     private var sizes: [String: CGSize] = [:]
     private var loadTask: Task<Void, Never>?
     private var directoryTask: Task<Void, Never>?
@@ -20,21 +25,33 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var loading: Bool { loadState.chapterLoading }
     private var chapterRetryAction: (() -> Void)?
     private var restoring = false
+    private var viewportTransitioning = false
     private var fullscreen = false
     private var pendingPosition: ReaderPosition?
     private var lastSaved: ReaderPosition?
     private let layout = UICollectionViewFlowLayout()
     private lazy var pages = UICollectionView(frame: .zero, collectionViewLayout: layout)
     private let toolbar = UIStackView()
+    private let topChrome = ReaderChromeGradientView(edge: .top)
+    private let bottomChrome = ReaderChromeGradientView(edge: .bottom)
+    private let chapterProgress = UIProgressView(progressViewStyle: .bar)
+    private let readerHeading = UILabel()
+    private let badgeTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter(); formatter.dateFormat = "HH:mm"; return formatter
+    }()
+    private var headerWidth: NSLayoutConstraint?
     private let previous = UIButton(type: .system)
     private let nextButton = UIButton(type: .system)
     private let readerSeekBar = ReaderSeekBar()
     private let middleButton = UIButton(type: .system)
     private let status = UIButton(type: .system)
-    private let badge = UILabel()
+    private let badge = ReaderOverlayBadge()
     private let enhancementBadge = UILabel()
     private var retryAction: (() -> Void)?
+    private weak var downloadRepairController: UIViewController?
+    private var downloadRepairAction: (() -> Void)?
     private var oldNavigationStyle: UIUserInterfaceStyle = .unspecified
+    private var oldBatteryMonitoring = false
     private var isZoomed = false
     private var pageAnimating = false
     private var habitTimer: Timer?
@@ -64,14 +81,39 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         hidesBottomBarWhenPushed = true
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
-    deinit { loadTask?.cancel(); directoryTask?.cancel() }
+    deinit { loadTask?.cancel(); directoryTask?.cancel(); continuationTask?.cancel() }
     override var prefersStatusBarHidden: Bool { fullscreen }
+    override var preferredStatusBarStyle: UIStatusBarStyle { overrideUserInterfaceStyle == .dark ? .lightContent : .darkContent }
+    override var prefersHomeIndicatorAutoHidden: Bool { fullscreen }
     override func viewDidLoad() {
         super.viewDidLoad()
         oldNavigationStyle = navigationController?.overrideUserInterfaceStyle ?? .unspecified
+        oldBatteryMonitoring = UIDevice.current.isBatteryMonitoringEnabled
+        UIDevice.current.isBatteryMonitoringEnabled = true
+        // Keep the image canvas fixed while UIKit's navigation/status bars
+        // appear or disappear. The controls are overlays, never content insets.
+        edgesForExtendedLayout = .all; extendedLayoutIncludesOpaqueBars = true
+        let appearance = UINavigationBarAppearance(); appearance.configureWithTransparentBackground()
+        navigationItem.standardAppearance = appearance; navigationItem.scrollEdgeAppearance = appearance
+        navigationItem.compactAppearance = appearance
+        let back = UIButton(type: .system)
+        back.setImage(ParityIcon.back.image(size: 20), for: .normal)
+        back.tintColor = .label; back.accessibilityIdentifier = "reader.back"; back.accessibilityLabel = "返回"
+        back.addTarget(self, action: #selector(returnToDetail), for: .touchUpInside)
+        back.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        back.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        readerHeading.font = .systemFont(ofSize: 13, weight: .medium); readerHeading.textColor = .label
+        readerHeading.lineBreakMode = .byTruncatingTail; readerHeading.accessibilityIdentifier = "reader.title"
+        let header = UIStackView(arrangedSubviews: [back, readerHeading]); header.alignment = .center
+        header.spacing = 0; header.translatesAutoresizingMaskIntoConstraints = false
+        headerWidth = header.widthAnchor.constraint(equalToConstant: 260); headerWidth?.isActive = true
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: header)
+        navigationItem.titleView = UIView(frame: .zero)
         layout.minimumLineSpacing = 0; layout.minimumInteritemSpacing = 0
         pages.dataSource = self; pages.delegate = self
         pages.register(ReaderImageCell.self, forCellWithReuseIdentifier: "image")
+        pages.register(ReaderContinuationFooter.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: "continuation")
+        pages.accessibilityIdentifier = "reader.pages"
         pages.contentInsetAdjustmentBehavior = .never
         pages.showsHorizontalScrollIndicator = false
 
@@ -101,13 +143,17 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         nextButton.addTarget(self, action: #selector(forward), for: .touchUpInside)
 
         readerSeekBar.onCommit = { [weak self] pageIndex in
-            guard let self, self.images.indices.contains(pageIndex) else { return }
+            guard let self, self.chapters.indices.contains(self.session.chapterIndex), pageIndex >= 0, pageIndex < self.session.imageCount else { return }
             self.environment.readingHabits.userDidRead()
+            let chapter = self.chapters[self.session.chapterIndex]
+            let target = self.settings.layout == .strip
+                ? self.continuousPages.globalIndex(for: chapter, position: ReaderPosition(imageIndex: pageIndex, offset: 0)) : pageIndex
+            guard let target else { return }
             if self.settings.layout == .paged {
-                let x = CGFloat(pageIndex) * self.pages.bounds.width
+                let x = CGFloat(target) * self.pages.bounds.width
                 self.pages.setContentOffset(CGPoint(x: x, y: 0), animated: false)
             } else {
-                self.pages.scrollToItem(at: IndexPath(item: pageIndex, section: 0), at: .top, animated: false)
+                self.pages.scrollToItem(at: IndexPath(item: target, section: 0), at: .top, animated: false)
             }
             self.session.updateImage(pageIndex)
             self.updateBadge()
@@ -146,9 +192,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         toolbar.addArrangedSubview(row2)
 
         status.titleLabel?.numberOfLines = 0
+        status.accessibilityIdentifier = "reader.load.status"
         status.addTarget(self, action: #selector(retry), for: .touchUpInside)
-        badge.font = .monospacedDigitSystemFont(ofSize: 11, weight: .regular)
-        badge.textAlignment = .right; badge.numberOfLines = 2
+        badge.textAlignment = .right
+        chapterProgress.isHidden = true; chapterProgress.trackTintColor = .clear; chapterProgress.progressTintColor = .systemBlue
 
         enhancementBadge.font = .monospacedDigitSystemFont(ofSize: 10, weight: .bold)
         enhancementBadge.textColor = .white
@@ -159,15 +206,22 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         enhancementBadge.isHidden = true
         enhancementBadge.accessibilityIdentifier = "reader.enhancement.badge"
 
-        for item in [pages, toolbar, status, badge, enhancementBadge] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
+        for item in [pages, topChrome, bottomChrome, toolbar, chapterProgress, status, badge, enhancementBadge] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
         NSLayoutConstraint.activate([
             pages.topAnchor.constraint(equalTo: view.topAnchor), pages.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             pages.leadingAnchor.constraint(equalTo: view.leadingAnchor), pages.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor), toolbar.heightAnchor.constraint(equalToConstant: 88),
+            topChrome.topAnchor.constraint(equalTo: view.topAnchor), topChrome.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            topChrome.leadingAnchor.constraint(equalTo: view.leadingAnchor), topChrome.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bottomChrome.topAnchor.constraint(equalTo: toolbar.topAnchor), bottomChrome.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            bottomChrome.leadingAnchor.constraint(equalTo: view.leadingAnchor), bottomChrome.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            chapterProgress.bottomAnchor.constraint(equalTo: view.bottomAnchor), chapterProgress.heightAnchor.constraint(equalToConstant: 2),
+            chapterProgress.leadingAnchor.constraint(equalTo: view.leadingAnchor), chapterProgress.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             status.centerYAnchor.constraint(equalTo: view.centerYAnchor), status.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             status.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
             badge.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -10),
+            badge.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
             badge.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
             enhancementBadge.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
             enhancementBadge.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
@@ -185,6 +239,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         pages.panGestureRecognizer.require(toFail: pan)
         NotificationCenter.default.addObserver(self, selector: #selector(saveBeforeBackground), name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(refreshReaderTheme), name: UIApplication.didBecomeActiveNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(refreshBadge), name: UIDevice.batteryLevelDidChangeNotification, object: nil)
         environment.readingHabits.enterReader(comicID: comic.comicId, isLocal: comic.sourceId == "local")
         syncHabitOverlay()
         applySettings()
@@ -202,8 +257,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         habitTimer?.invalidate()
         habitTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             self?.environment.readingHabits.tick()
+            self?.updateBadge()
         }
         syncHabitOverlay()
+        appendNextChapterIfNeeded()
     }
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
@@ -211,10 +268,13 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         leavingReader = isMovingFromParent
         savePosition()
         if isMovingFromParent {
+            downloadRepairAction = nil; downloadRepairController = nil
             loadTask?.cancel(); directoryTask?.cancel()
+            cancelContinuation()
             pages.visibleCells.forEach { ($0 as? ReaderImageCell)?.cancel() }
             navigationController?.setNavigationBarHidden(false, animated: false)
             navigationController?.overrideUserInterfaceStyle = oldNavigationStyle
+            UIDevice.current.isBatteryMonitoringEnabled = oldBatteryMonitoring
         }
     }
     override func viewDidDisappear(_ animated: Bool) {
@@ -226,16 +286,34 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        if let position = pendingPosition, !images.isEmpty, pages.bounds.width > 0 {
+        headerWidth?.constant = max(44, view.bounds.width - view.safeAreaInsets.left - view.safeAreaInsets.right - 32)
+        if let position = pendingPosition, !viewportTransitioning, !images.isEmpty, pages.bounds.width > 0 {
             pendingPosition = nil; restore(position)
         }
+        appendNextChapterIfNeeded()
     }
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        synchronizeContinuousSession()
         let position = currentPosition()
+        let chapter = !loading && chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex] : nil
+        let token = requestID
+        viewportTransitioning = true
         super.viewWillTransition(to: size, with: coordinator)
-        coordinator.animate(alongsideTransition: { _ in self.layout.invalidateLayout() }, completion: { _ in self.restore(position) })
+        coordinator.animate(alongsideTransition: { _ in self.layout.invalidateLayout() }) { _ in
+            self.viewportTransitioning = false
+            if self.requestID == token, let chapter, let segment = self.continuousPages.segment(for: chapter),
+               self.session.loaded(chapter: chapter, in: self.chapters, imageCount: segment.imageURLs.count, position: position) {
+                self.updateReaderHeading(self.chapters[self.session.chapterIndex])
+                self.restore(position)
+            } else if self.pendingPosition != nil {
+                self.view.setNeedsLayout(); self.view.layoutIfNeeded()
+            }
+            self.appendNextChapterIfNeeded()
+        }
     }
     private func applySettings() {
+        synchronizeContinuousSession()
+        savePosition()
         let position = currentPosition()
         let previousSettings = settings
         settings = environment.preferences.load()
@@ -251,18 +329,24 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         overrideUserInterfaceStyle = style
         navigationController?.overrideUserInterfaceStyle = style
         pages.backgroundColor = .systemBackground; view.backgroundColor = .systemBackground
-        toolbar.backgroundColor = UIColor { $0.userInterfaceStyle == .dark
-            ? UIColor(red: 12/255, green: 20/255, blue: 32/255, alpha: 0.94)
-            : UIColor(red: 247/255, green: 249/255, blue: 252/255, alpha: 0.94) }
-        badge.textColor = .secondaryLabel
+        toolbar.backgroundColor = .clear
         badge.isHidden = !fullscreen || settings.fullyImmersive
         presentedViewController?.overrideUserInterfaceStyle = style
         for cell in pages.visibleCells { (cell as? ReaderImageCell)?.apply(settings) }
         if previousSettings.layout != settings.layout {
+            cancelContinuation()
+            if chapters.indices.contains(session.chapterIndex), let segment = continuousPages.segment(for: chapters[session.chapterIndex]) {
+                images = segment.imageURLs
+                continuousPages = ContinuousReaderPages()
+                continuousPages.append(chapter: chapters[session.chapterIndex], imageURLs: images)
+                session.loaded(imageCount: images.count, position: position)
+            }
             layout.invalidateLayout(); pages.reloadData()
             pendingPosition = position
             view.setNeedsLayout()
         }
+        updateContinuationFooter()
+        setNeedsStatusBarAppearanceUpdate()
     }
     private func loadDirectory() {
         directoryTask?.cancel()
@@ -281,10 +365,12 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 let position = self.currentPosition()
                 self.chapters = all
                 self.session = ReaderSession(chapterCount: all.count, chapterIndex: index)
-                self.session.loaded(imageCount: self.images.count, position: position)
+                self.session.loaded(imageCount: self.continuousPages.segment(for: current)?.imageURLs.count ?? self.images.count, position: position)
                 self.incompleteDirectory = false
                 self.loadState.directoryFinished()
                 self.updateLoadStatus()
+                self.updateContinuationFooter()
+                self.appendNextChapterIfNeeded()
             } catch {
                 guard let self, !Task.isCancelled else { return }
                 if !(error is CancellationError) {
@@ -298,46 +384,23 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private func loadChapter(_ index: Int, atEnd: Bool = false, restoreSaved: Bool = true) {
         guard chapters.indices.contains(index) else { return }
         savePosition()
+        cancelContinuation()
+        lastObservedPosition = nil
         loadTask?.cancel(); requestID = UUID()
         let token = requestID, chapter = chapters[index]
+        let requestComic = comic, requestChapters = chapters, requestSource = source
         loadState.chapterStarted()
         chapterRetryAction = { [weak self] in
             guard let self, let currentIndex = self.chapters.firstIndex(where: { $0.chapterId == chapter.chapterId || $0.url == chapter.url }) else { return }
             self.loadChapter(currentIndex, atEnd: atEnd, restoreSaved: restoreSaved)
         }
         updateLoadStatus()
-        loadTask = Task { [weak self, source] in
+        loadTask = Task { [weak self] in
             do {
-                let page: ChapterPage
-                if let self, self.comic.sourceId != "local" {
-                    let runtime = self.environment.downloadRuntime
-                    if let taskId = try? DownloadModels.key(self.comic.sourceId, self.comic.comicId, chapter.chapterId),
-                       let task = runtime.store.get(id: taskId), task.state == .completed {
-                        do {
-                            let detail = ComicDetail(summary: self.comic, author: "", status: "", description: "", latestChapter: "", chapters: self.chapters)
-                            let worker = Task.detached(priority: .userInitiated) {
-                                try Task.checkCancellation()
-                                return try runtime.localChapter(detail: detail, chapterIndex: index)
-                            }
-                            let local = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
-                            guard let local else {
-                                throw DownloadError.corruptedData("本章下载文件需要修复")
-                            }
-                            page = local
-                        } catch {
-                            ErrorLogStore.shared.append(title: "下载文件损坏: \(self.comic.title) - \(chapter.title)", error: error)
-                            throw error
-                        }
-                    } else if !runtime.isNetworkConnected {
-                        throw DownloadError.corruptedData("这一章还没有下载哦")
-                    } else {
-                        page = try await source.chapter(url: chapter.url)
-                    }
-                } else {
-                    page = try await source.chapter(url: chapter.url)
-                }
+                guard let self else { return }
+                let page = try await self.fetchChapterPage(chapter: chapter, index: index, comic: requestComic, chapters: requestChapters, source: requestSource)
                 try Task.checkCancellation()
-                guard let self, self.requestID == token else { return }
+                guard self.requestID == token else { return }
                 guard !page.imageUrls.isEmpty else { throw ReaderError.noImages }
                 let saved = restoreSaved ? self.environment.library.position(for: self.comic, chapterID: chapter.chapterId) : nil
                 let position = atEnd ? ReaderPosition(imageIndex: page.imageUrls.count - 1, offset: 0, atEnd: true)
@@ -345,12 +408,16 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 guard self.session.loaded(chapter: chapter, in: self.chapters, imageCount: page.imageUrls.count, position: position) else { throw ReaderError.chapterMissing }
                 self.session.updateImage(position.index(in: page.imageUrls))
                 self.images = page.imageUrls; self.sizes = [:]
+                self.continuousPages = ContinuousReaderPages()
+                self.continuousPages.append(chapter: chapter, imageURLs: page.imageUrls)
                 self.title = chapter.title
+                self.updateReaderHeading(chapter)
                 self.loadState.chapterFinished(); self.updateLoadStatus(); self.lastSaved = nil
                 self.pages.reloadData(); self.layout.invalidateLayout()
                 self.pendingPosition = position; self.view.setNeedsLayout()
                 self.updateBadge()
                 self.readerSeekBar.configure(currentPage: self.session.imageIndex, total: self.images.count, sessionToken: Int64(self.session.chapterIndex))
+                self.updateContinuationFooter()
             } catch {
                 guard let self, self.requestID == token, !Task.isCancelled else { return }
                 if (error as? LocalLibraryError) == .requiresTextReader {
@@ -365,6 +432,115 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             }
         }
     }
+    private func fetchChapterPage(chapter: Chapter, index: Int, comic: ComicSummary, chapters: [Chapter], source: any ComicSource) async throws -> ChapterPage {
+        guard comic.sourceId != "local" else { return try await source.chapter(url: chapter.url) }
+        let runtime = environment.downloadRuntime
+        if let taskID = try? DownloadModels.key(comic.sourceId, comic.comicId, chapter.chapterId),
+           let task = runtime.store.get(id: taskID), task.state == .completed {
+            do {
+                let detail = ComicDetail(summary: comic, author: "", status: "", description: "", latestChapter: "", chapters: chapters)
+                let worker = Task.detached(priority: .userInitiated) {
+                    try Task.checkCancellation()
+                    return try runtime.localChapter(detail: detail, chapterIndex: index)
+                }
+                let local = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+                guard let local else { throw DownloadError.corruptedData("本章下载文件需要修复") }
+                return local
+            } catch {
+                ErrorLogStore.shared.append(title: "下载文件损坏: \(comic.title) - \(chapter.title)", error: error)
+                throw error
+            }
+        }
+        guard runtime.isNetworkConnected else { throw DownloadError.corruptedData("这一章还没有下载哦") }
+        return try await source.chapter(url: chapter.url)
+    }
+
+    private var nextContinuousChapterIndex: Int? {
+        guard !incompleteDirectory, let last = continuousPages.lastChapter,
+              let index = chapters.firstIndex(where: { ContinuousReaderPages.matches($0, last) }),
+              chapters.indices.contains(index + 1) else { return nil }
+        return index + 1
+    }
+
+    private func cancelContinuation() {
+        continuationRequestID = UUID()
+        continuationTask?.cancel(); continuationTask = nil; continuationError = nil
+    }
+
+    private func appendNextChapterIfNeeded() {
+        guard settings.layout == .strip, !loading, !restoring, !viewportTransitioning, pendingPosition == nil, !isZoomed, !leavingReader,
+              viewIfLoaded?.window != nil, continuationTask == nil, continuationError == nil,
+              pages.contentSize.height > 0, pages.bounds.height > 0,
+              let lastVisible = pages.indexPathsForVisibleItems.map(\.item).max(),
+              lastVisible >= max(0, images.count - 5),
+              let index = nextContinuousChapterIndex else { return }
+        let chapter = chapters[index], token = UUID(), sceneToken = requestID
+        let requestComic = comic, requestChapters = chapters, requestSource = source
+        continuationRequestID = token
+        continuationTask = Task { [weak self] in
+            do {
+                guard let self else { return }
+                let page = try await self.fetchChapterPage(chapter: chapter, index: index, comic: requestComic, chapters: requestChapters, source: requestSource)
+                try Task.checkCancellation()
+                guard self.continuationRequestID == token, self.requestID == sceneToken, self.settings.layout == .strip else { return }
+                guard self.continuousPages.append(chapter: chapter, imageURLs: page.imageUrls) else { throw ReaderError.noImages }
+                let start = self.images.count
+                let appended = self.continuousPages.imageURLs
+                let inserted = (start..<appended.count).map { IndexPath(item: $0, section: 0) }
+                UIView.performWithoutAnimation {
+                    self.pages.performBatchUpdates({
+                        self.images = appended
+                        self.pages.insertItems(at: inserted)
+                    }) { [weak self] _ in
+                        guard let self, self.continuationRequestID == token else { return }
+                        self.continuationTask = nil
+                        self.updateContinuationFooter()
+                        self.appendNextChapterIfNeeded()
+                    }
+                }
+            } catch {
+                guard let self, self.continuationRequestID == token, self.requestID == sceneToken, !Task.isCancelled else { return }
+                self.continuationTask = nil; self.continuationError = error
+                ErrorLogStore.shared.append(title: "下一章加载失败: \(requestComic.title) - \(chapter.title)", error: error)
+                self.updateContinuationFooter()
+            }
+        }
+        updateContinuationFooter()
+    }
+
+    private func updateContinuationFooter() {
+        guard isViewLoaded else { return }
+        for footer in pages.visibleSupplementaryViews(ofKind: UICollectionView.elementKindSectionFooter) {
+            if let footer = footer as? ReaderContinuationFooter { configureContinuationFooter(footer) }
+        }
+    }
+
+    private func configureContinuationFooter(_ footer: ReaderContinuationFooter) {
+        let text: String, canRetry: Bool
+        if let error = continuationError {
+            if (error as? LocalLibraryError) == .requiresTextReader {
+                text = "下一章是文字内容 · 点击继续"
+            } else if let error = error as? DownloadError, case .corruptedData(let message) = error {
+                text = message + " · 打开下载中心"
+            } else { text = "下一章加载失败 · 点击重试" }
+            canRetry = true
+        } else if continuationTask != nil { text = "正在加载下一章…"; canRetry = false }
+        else if incompleteDirectory { text = "等待章节目录"; canRetry = false }
+        else if nextContinuousChapterIndex != nil { text = "继续向下阅读"; canRetry = true }
+        else { text = "已到最后一章"; canRetry = false }
+        footer.configure(text: text, loading: continuationTask != nil, canRetry: canRetry) { [weak self] in
+            guard let self else { return }
+            if (self.continuationError as? LocalLibraryError) == .requiresTextReader,
+               let index = self.nextContinuousChapterIndex {
+                self.loadChapter(index, restoreSaved: false); return
+            }
+            if let error = self.continuationError as? DownloadError, case .corruptedData = error {
+                self.showDownloadCenter(forContinuation: true); return
+            }
+            self.continuationError = nil; self.appendNextChapterIfNeeded(); self.updateContinuationFooter()
+        }
+    }
+
     private func switchToTextReader(chapterIndex: Int, atEnd: Bool, restoreSaved: Bool) {
         guard chapters.indices.contains(chapterIndex) else { return }
         savePosition()
@@ -424,19 +600,13 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         guard let failure = loadState.visibleFailure else { status.isHidden = true; return }
         status.isHidden = false
         if let dlErr = failure.error as? DownloadError, case .corruptedData(let msg) = dlErr {
-            if msg == "本章下载文件需要修复" {
-                status.setTitle("本章下载文件需要修复 · 到下载中心重新下载本章", for: .normal)
-                retryAction = { [weak self] in
-                    self?.showDownloadCenter()
-                }
-                return
-            } else if msg == "这一章还没有下载哦" {
+            if msg == "这一章还没有下载哦" {
                 status.setTitle("这一章还没有下载哦 · 已下载的章节可以在下载中心找到", for: .normal)
-                retryAction = { [weak self] in
-                    self?.showDownloadCenter()
-                }
-                return
+            } else {
+                status.setTitle(msg + " · 打开下载中心", for: .normal)
             }
+            retryAction = { [weak self] in self?.showDownloadCenter() }
+            return
         }
         let retry: () -> Void = failure.kind == .chapter
             ? { [weak self] in self?.chapterRetryAction?() }
@@ -453,11 +623,34 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             retryAction = retry
         }
     }
-    private func showDownloadCenter() {
+    private func showDownloadCenter(forContinuation: Bool = false) {
+        guard presentedViewController == nil else { return }
+        let sceneToken = requestID, retry = chapterRetryAction
+        let nextChapter = nextContinuousChapterIndex.map { chapters[$0] }
+        downloadRepairAction = { [weak self] in
+            guard let self, self.requestID == sceneToken, !self.leavingReader else { return }
+            // Always re-read the owned files and their hashes. Returning from the
+            // center is not evidence that the user completed a repair.
+            if forContinuation {
+                guard self.settings.layout == .strip, let nextChapter,
+                      let nextIndex = self.nextContinuousChapterIndex,
+                      ContinuousReaderPages.matches(self.chapters[nextIndex], nextChapter) else { return }
+                self.continuationError = nil
+                self.appendNextChapterIfNeeded(); self.updateContinuationFooter()
+            } else { retry?() }
+        }
         let centerVC = DownloadCenterViewController(environment: environment)
         let nav = UINavigationController(rootViewController: centerVC)
-        centerVC.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeSheet))
+        // The center owns its right-hand network controls, including after a
+        // network-mode change. Keep the return action in the independent slot.
+        let close = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeSheet))
+        close.accessibilityIdentifier = "download.reader.close"; close.accessibilityLabel = "返回阅读"
+        centerVC.navigationItem.leftBarButtonItem = close
+        downloadRepairController = nav
+        environment.readingHabits.userDidRead()
+        environment.readingHabits.overlayVisibilityChanged(isVisible: true)
         present(nav, animated: true)
+        nav.presentationController?.delegate = self
     }
     private func currentPosition() -> ReaderPosition {
         guard !images.isEmpty, pages.bounds.width > 0 else { return ReaderPosition(imageIndex: 0, offset: 0) }
@@ -466,40 +659,78 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             let index = Int((pages.contentOffset.x / max(1, pages.bounds.width)).rounded())
             return positionAtImage(max(0, min(images.count - 1, index)), offset: 0, atEnd: index == images.count - 1)
         }
-        let visible = pages.indexPathsForVisibleItems.sorted { $0.item < $1.item }
-        let index = visible.first(where: { (layout.layoutAttributesForItem(at: $0)?.frame.maxY ?? 0) > pages.contentOffset.y + 1 }) ?? visible.first
-        guard let index, let frame = layout.layoutAttributesForItem(at: index)?.frame else { return positionAtImage(session.imageIndex, offset: 0) }
+        let index = visibleStripImageIndex()
+        guard let frame = layout.layoutAttributesForItem(at: IndexPath(item: index, section: 0))?.frame else { return positionAtImage(index, offset: 0) }
         let offset = (pages.contentOffset.y - frame.minY) / max(1, frame.height)
         let end = pages.contentSize.height > pages.bounds.height && pages.contentOffset.y + pages.bounds.height >= pages.contentSize.height - 2
-        return positionAtImage(index.item, offset: Double(offset), atEnd: end)
+        return positionAtImage(index, offset: Double(offset), atEnd: end)
     }
     private func positionAtImage(_ index: Int, offset: Double, atEnd: Bool = false) -> ReaderPosition {
-        ReaderPosition(imageIndex: index, offset: offset, atEnd: atEnd,
+        if settings.layout == .strip, let location = continuousPages.location(at: index, offset: offset, atEnd: atEnd) {
+            return location.position
+        }
+        return ReaderPosition(imageIndex: index, offset: offset, atEnd: atEnd,
                        linkedPageID: images.indices.contains(index) ? ReaderPosition.linkedIdentity(in: images[index]) : nil,
                        linkedTailID: images.last.flatMap(ReaderPosition.linkedIdentity(in:)))
+    }
+    private func visibleStripImageIndex() -> Int {
+        let visible = pages.indexPathsForVisibleItems.sorted { $0.item < $1.item }
+        let index = visible.first(where: { (layout.layoutAttributesForItem(at: $0)?.frame.maxY ?? 0) > pages.contentOffset.y + 1 }) ?? visible.first
+        if let index { return index.item }
+        guard chapters.indices.contains(session.chapterIndex) else { return 0 }
+        return continuousPages.globalIndex(for: chapters[session.chapterIndex], position: ReaderPosition(imageIndex: session.imageIndex, offset: 0)) ?? 0
+    }
+    private func synchronizeContinuousSession() {
+        guard settings.layout == .strip, !loading, !restoring, !viewportTransitioning, pendingPosition == nil, !images.isEmpty,
+              let location = continuousPages.location(at: visibleStripImageIndex()),
+              let index = chapters.firstIndex(where: { ContinuousReaderPages.matches($0, location.chapter) }) else { return }
+        let position = currentPosition()
+        if index != session.chapterIndex {
+            if let observed = lastObservedPosition,
+               let oldIndex = chapters.firstIndex(where: { ContinuousReaderPages.matches($0, observed.chapter) }) {
+                persistPosition(observed.position, chapter: chapters[oldIndex], chapterIndex: oldIndex)
+            }
+            session.loaded(chapter: location.chapter, in: chapters, imageCount: location.imageURLs.count, position: position)
+            lastSaved = nil
+            updateReaderHeading(chapters[index])
+            updateLoadStatus()
+        } else { session.updateImage(position.imageIndex) }
+        lastObservedPosition = (chapters[index], position)
     }
     private func restore(_ position: ReaderPosition) {
         guard !images.isEmpty else { return }
         restoring = true
         pages.layoutIfNeeded()
-        let index = position.index(in: images)
+        let chapter = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex] : nil
+        let activeImages = chapter.flatMap { continuousPages.segment(for: $0)?.imageURLs } ?? images
+        let localIndex = position.index(in: activeImages)
+        let index = settings.layout == .strip
+            ? (chapter.flatMap { continuousPages.globalIndex(for: $0, position: position) } ?? localIndex) : localIndex
         if settings.layout == .paged {
             pages.setContentOffset(CGPoint(x: CGFloat(index) * pages.bounds.width, y: 0), animated: false)
         } else if let frame = layout.layoutAttributesForItem(at: IndexPath(item: index, section: 0))?.frame {
             let maxY = max(0, pages.contentSize.height - pages.bounds.height)
-            let target = position.isAtEnd(in: images) ? maxY : frame.minY + frame.height * CGFloat(position.offset)
+            let tailIndex = chapter.flatMap { continuousPages.segment(for: $0)?.range.last } ?? images.count - 1
+            let chapterEnd = layout.layoutAttributesForItem(at: IndexPath(item: tailIndex, section: 0))?.frame.maxY ?? pages.contentSize.height
+            let target = position.isAtEnd(in: activeImages) ? max(0, chapterEnd - pages.bounds.height) : frame.minY + frame.height * CGFloat(position.offset)
             pages.setContentOffset(CGPoint(x: 0, y: max(0, min(maxY, target))), animated: false)
         }
-        session.updateImage(index); restoring = false; updateBadge()
+        session.updateImage(localIndex); restoring = false
+        synchronizeContinuousSession(); updateBadge()
     }
     private func savePosition() {
-        guard !loading, !restoring, !images.isEmpty, chapters.indices.contains(session.chapterIndex) else { return }
+        guard !loading, !restoring, !viewportTransitioning, !images.isEmpty, chapters.indices.contains(session.chapterIndex) else { return }
+        synchronizeContinuousSession()
         let position = currentPosition()
         guard position != lastSaved else { return }
+        if persistPosition(position, chapter: chapters[session.chapterIndex], chapterIndex: session.chapterIndex) { lastSaved = position }
+    }
+    @discardableResult
+    private func persistPosition(_ position: ReaderPosition, chapter: Chapter, chapterIndex: Int) -> Bool {
         do {
-            try environment.library.saveReading(comic, chapter: chapters[session.chapterIndex], chapterIndex: session.chapterIndex, position: position)
-            lastSaved = position
-        } catch { status.isHidden = false; status.setTitle("阅读位置保存失败：" + error.localizedDescription, for: .normal) }
+            try environment.library.saveReading(comic, chapter: chapter, chapterIndex: chapterIndex, position: position)
+            return true
+        } catch { status.isHidden = false; status.setTitle("阅读位置保存失败：" + error.localizedDescription, for: .normal); return false }
     }
     @objc private func saveBeforeBackground() { savePosition() }
     @objc private func refreshReaderTheme() { if viewIfLoaded?.window != nil { applySettings() } }
@@ -510,8 +741,16 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     private func updateBadge() {
         guard !images.isEmpty else { badge.text = nil; enhancementBadge.isHidden = true; return }
-        badge.text = "\(session.imageIndex + 1)/\(images.count) · \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short))"
-        let cell = pages.cellForItem(at: IndexPath(item: session.imageIndex, section: 0)) as? ReaderImageCell
+        let chapter = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex] : nil
+        let chapterTitle = chapter?.title ?? ""
+        let title = chapterTitle.count > 14 ? String(chapterTitle.prefix(13)) + "…" : chapterTitle
+        let battery = UIDevice.current.batteryLevel
+        let batteryText = battery >= 0 ? "  \(Int((battery * 100).rounded()))%" : ""
+        badge.text = "\(title)  \(session.imageIndex + 1)/\(session.imageCount)  \(badgeTimeFormatter.string(from: Date()))\(batteryText)"
+        chapterProgress.progress = Float(session.chapterIndex + 1) / Float(max(1, chapters.count))
+        pages.accessibilityValue = "\(chapterTitle)，第 \(session.imageIndex + 1) 页，共 \(session.imageCount) 页"
+        let index = settings.layout == .strip ? (chapter.flatMap { continuousPages.globalIndex(for: $0, position: ReaderPosition(imageIndex: session.imageIndex, offset: 0)) } ?? 0) : session.imageIndex
+        let cell = pages.cellForItem(at: IndexPath(item: index, section: 0)) as? ReaderImageCell
         if settings.enhancementMode != ImageEnhancementPolicy.modeOff, let method = cell?.enhancementMethod,
            method == .neural || method == .fast || method == .fallback {
             enhancementBadge.isHidden = false
@@ -520,6 +759,12 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             enhancementBadge.isHidden = true
         }
     }
+    @objc private func refreshBadge() { updateBadge() }
+    private func updateReaderHeading(_ chapter: Chapter) {
+        title = chapter.title
+        readerHeading.text = comic.title.isEmpty ? chapter.title : comic.title + " · " + chapter.title
+    }
+    @objc private func returnToDetail() { navigationController?.popViewController(animated: true) }
     @objc private func retry() { retryAction?() }
     private func configureToolbarAction(_ button: UIButton, title: String, image: UIImage?) {
         var config = UIButton.Configuration.plain()
@@ -587,13 +832,18 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         case .move(let delta): move(delta)
         case .toggleControls:
             environment.readingHabits.userDidRead()
-            fullscreen.toggle()
-            toolbar.isHidden = fullscreen
-            badge.isHidden = !fullscreen || settings.fullyImmersive
-            navigationController?.setNavigationBarHidden(fullscreen, animated: true)
-            setNeedsStatusBarAppearanceUpdate()
-            syncHabitOverlay()
+            setFullscreen(!fullscreen, animated: true)
         }
+    }
+    private func setFullscreen(_ hidden: Bool, animated: Bool) {
+        guard fullscreen != hidden else { return }
+        fullscreen = hidden
+        toolbar.isHidden = hidden; topChrome.isHidden = hidden; bottomChrome.isHidden = hidden
+        chapterProgress.isHidden = !hidden || images.isEmpty
+        badge.isHidden = !hidden || settings.fullyImmersive
+        navigationController?.setNavigationBarHidden(hidden, animated: animated)
+        setNeedsStatusBarAppearanceUpdate(); setNeedsUpdateOfHomeIndicatorAutoHidden()
+        syncHabitOverlay()
     }
     @objc private func doubleTapped(_ gesture: UITapGestureRecognizer) {
         guard settings.pinchZoom, !loading, !pageAnimating,
@@ -603,6 +853,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         cell.toggleZoom()
     }
     @objc private func panned(_ gesture: UIPanGestureRecognizer) {
+        if gesture.state == .began { setFullscreen(true, animated: true) }
         guard gesture.state == .ended, !isZoomed, settings.layout == .paged, settings.turnMode == .swipe else { return }
         let translation = gesture.translation(in: pages)
         guard abs(translation.x) > 72, abs(translation.x) > abs(translation.y) * 1.35 else { return }
@@ -635,7 +886,18 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         present(controller, animated: true)
         controller.presentationController?.delegate = self
     }
-    @objc private func closeSheet() { dismiss(animated: true) { [weak self] in self?.syncHabitOverlay() } }
+    @objc private func closeSheet() {
+        guard let controller = presentedViewController else { return }
+        dismiss(animated: true) { [weak self] in self?.sheetDidDismiss(controller) }
+    }
+
+    private func sheetDidDismiss(_ controller: UIViewController) {
+        syncHabitOverlay()
+        guard controller === downloadRepairController else { return }
+        let repair = downloadRepairAction
+        downloadRepairAction = nil; downloadRepairController = nil
+        repair?()
+    }
     @objc private func showDirectory() {
         guard chapters.indices.contains(session.chapterIndex) else { return }
         environment.readingHabits.userDidRead()
@@ -676,6 +938,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
 
     private func applySwitchedSource(targetDetail: ComicDetail) {
         guard let targetSource = environment.source(for: targetDetail.summary) else { return }
+        savePosition()
         let currentTitle = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex].title : ""
         let currentIndex = session.chapterIndex
         let targetChapters = targetDetail.chapters
@@ -693,74 +956,49 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         self.incompleteDirectory = false
         self.session = ReaderSession(chapterCount: targetChapters.count, chapterIndex: matchedIndex)
         self.images = []
+        self.lastObservedPosition = nil
         self.pages.reloadData()
         self.loadChapter(matchedIndex)
         self.updateMiddleButton()
     }
 
-    private func switchReaderSource(target: ComicSummary) {
-        guard target.comicId != comic.comicId else { return }
-        guard let targetSource = environment.source(for: target) else { return }
-
-        let alert = UIAlertController(title: nil, message: "正在切换至 \(targetSource.name)…", preferredStyle: .alert)
-        present(alert, animated: true)
-
-        Task { [weak self] in
-            do {
-                let targetDetail = try await targetSource.detail(comicId: target.comicId)
-                var targetChapters = targetDetail.chapters
-                if targetChapters.isEmpty {
-                    targetChapters = try await targetSource.chapters(comicId: target.comicId)
-                }
-                guard let self, !targetChapters.isEmpty else {
-                    await alert.dismiss(animated: true)
-                    return
-                }
-                await alert.dismiss(animated: true)
-
-                let finalDetail = ComicDetail(
-                    summary: targetDetail.summary,
-                    author: targetDetail.author,
-                    status: targetDetail.status,
-                    description: targetDetail.description,
-                    latestChapter: targetDetail.latestChapter,
-                    chapters: targetChapters
-                )
-
-                if self.environment.library.entry(for: self.comic)?.isFavorite == true {
-                    try? self.environment.replaceSource(original: self.comic, target: finalDetail)
-                }
-
-                self.applySwitchedSource(targetDetail: finalDetail)
-            } catch {
-                await alert.dismiss(animated: true)
-                guard let self else { return }
-                let errAlert = UIAlertController(title: "换源失败", message: error.localizedDescription, preferredStyle: .alert)
-                errAlert.addAction(UIAlertAction(title: "确定", style: .default))
-                self.present(errAlert, animated: true)
-            }
-        }
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        sheetDidDismiss(presentationController.presentedViewController)
     }
-    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) { syncHabitOverlay() }
     private func syncHabitOverlay() {
         environment.readingHabits.overlayVisibilityChanged(isVisible: !fullscreen || presentedViewController != nil)
     }
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int { images.count }
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+        let footer = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "continuation", for: indexPath) as! ReaderContinuationFooter
+        configureContinuationFooter(footer)
+        return footer
+    }
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
+        settings.layout == .strip && !images.isEmpty ? CGSize(width: collectionView.bounds.width, height: 56) : .zero
+    }
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "image", for: indexPath) as! ReaderImageCell
         let url = images[indexPath.item]
         cell.onZoom = { [weak self] zoomed in
             guard let self else { return }; self.isZoomed = zoomed
             self.pages.isScrollEnabled = self.settings.layout == .strip && !zoomed
+            if !zoomed { self.appendNextChapterIfNeeded() }
         }
-        cell.onUserAction = { [weak self] in self?.environment.readingHabits.userDidRead() }
+        cell.onUserAction = { [weak self] in
+            self?.environment.readingHabits.userDidRead(); self?.setFullscreen(true, animated: true)
+        }
         cell.onSize = { [weak self] size in
             guard let self, self.images.contains(url) else { return }
             self.environment.readingHabits.contentBecameReadable()
             guard self.sizes[url] != size else { return }
+            self.synchronizeContinuousSession()
             let position = self.currentPosition()
             self.sizes[url] = size
-            if self.settings.layout == .strip { self.layout.invalidateLayout(); self.restore(position) }
+            if self.settings.layout == .strip {
+                self.layout.invalidateLayout()
+                if !self.viewportTransitioning { self.restore(position) }
+            }
             self.savePosition()
         }
         cell.onComparing = { [weak self] isComparing in
@@ -786,11 +1024,16 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         return CGSize(width: width, height: max(1, width * size.height / max(1, size.width)))
     }
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        guard !restoring else { return }
-        session.updateImage(currentPosition().imageIndex); updateBadge()
-        readerSeekBar.configure(currentPage: session.imageIndex, total: images.count, sessionToken: Int64(session.chapterIndex))
+        guard !restoring, !viewportTransitioning else { return }
+        if settings.layout == .strip { synchronizeContinuousSession() }
+        else { session.updateImage(currentPosition().imageIndex) }
+        updateBadge()
+        readerSeekBar.configure(currentPage: session.imageIndex, total: session.imageCount, sessionToken: Int64(session.chapterIndex))
+        appendNextChapterIfNeeded()
     }
-    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) { environment.readingHabits.userDidRead() }
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        environment.readingHabits.userDidRead(); setFullscreen(true, animated: true)
+    }
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { savePosition() }
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) { pageAnimating = false; savePosition() }
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) { if !decelerate { savePosition() } }

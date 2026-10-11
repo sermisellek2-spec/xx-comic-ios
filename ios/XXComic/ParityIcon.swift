@@ -3,7 +3,7 @@ import UIKit
 /// 24-point paths copied from the frozen Android drawable geometry.
 /// Template rendering lets the same glyph follow the application's theme tokens.
 enum ParityIcon {
-    case bookshelf, search, profile, source, history, download, trash, lightning, automatic, sun, moon, chapterList, detail, layoutList, layoutGrid, swap, readerStrip, readerPage
+    case bookshelf, search, profile, source, history, download, trash, lightning, automatic, sun, moon, chapterList, detail, layoutList, layoutGrid, swap, readerStrip, readerPage, back
 
     func image(size: CGFloat = 24) -> UIImage {
         UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { context in
@@ -40,6 +40,8 @@ enum ParityIcon {
                 }
             }
             switch self {
+            case .back:
+                path.move(to: CGPoint(x: 15, y: 4)); path.addLine(to: CGPoint(x: 8, y: 12)); path.addLine(to: CGPoint(x: 15, y: 20))
             case .bookshelf:
                 for x: CGFloat in [4, 8, 12, 16, 20] { line([(x, 4), (x, 20)]) }
                 line([(3, 4), (21, 4)]); line([(3, 20), (21, 20)])

@@ -32,6 +32,7 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.accessibilityViewIsModal = true
         view.backgroundColor = ReaderSettingColors.panel
         let handle = UIView(); handle.backgroundColor = ReaderSettingColors.border; handle.layer.cornerRadius = 2
         let heading = UILabel(); heading.text = "阅读设置"; heading.font = .systemFont(ofSize: 17, weight: .bold)
@@ -45,6 +46,7 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         header.heightAnchor.constraint(equalToConstant: 40).isActive = true
         header.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(dragHeader(_:))))
         let scroll = UIScrollView(); scroll.contentInsetAdjustmentBehavior = .never; scroll.showsVerticalScrollIndicator = false
+        scroll.accessibilityIdentifier = "reader.settings.content"
         content.axis = .vertical; content.spacing = 0
         content.addArrangedSubview(choiceRow(title: "阅读模式", items: [("卷轴模式", .readerStrip), ("普通模式", .readerPage)], group: 0))
         content.addArrangedSubview(choiceRow(title: "阅读主题", items: [("默认", .automatic), ("深色", .moon), ("浅色", .sun)], group: 1))
