@@ -5,6 +5,52 @@ import FoundationNetworking
 @testable import ComicCore
 
 final class CacheMaintenanceTests: XCTestCase {
+    func testDiskCleanupRestoresLimitsAndAllowsLaterResponses() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let original = directory.appendingPathComponent("original.cbz")
+        try Data([3, 4, 5]).write(to: original)
+        let cache = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 8 * 1024 * 1024, diskPath: directory.appendingPathComponent("responses").path)
+        let url = URL(string: "https://fixture.invalid/disk-page")!, request = URLRequest(url: URL(string: "https://fixture.invalid/disk-page")!)
+        let response = CachedURLResponse(response: HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: ["Cache-Control": "max-age=3600"])!, data: Data(repeating: 7, count: 4096), storagePolicy: .allowed)
+        cache.storeCachedResponse(response, for: request)
+        XCTAssertNotNil(cache.cachedResponse(for: request))
+        let remaining = try await HTTPResponseCache(cache: cache).clear()
+        XCTAssertTrue(remaining.isEmpty)
+        XCTAssertNil(cache.cachedResponse(for: request))
+        XCTAssertEqual(cache.memoryCapacity, 1024 * 1024)
+        XCTAssertEqual(cache.diskCapacity, 8 * 1024 * 1024)
+        XCTAssertEqual(try Data(contentsOf: original), Data([3, 4, 5]), "Cleanup must leave original files alone")
+        cache.storeCachedResponse(response, for: request)
+        XCTAssertNotNil(cache.cachedResponse(for: request), "Later browsing can cache responses again")
+    }
+
+    func testConcurrentCleanupPreservesLimitsForBothCallers() async throws {
+        let cache = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 0, diskPath: nil)
+        let service = HTTPResponseCache(cache: cache)
+        async let first = service.clear()
+        async let second = service.clear()
+        let (a, b) = try await (first, second)
+        XCTAssertTrue(a.isEmpty); XCTAssertTrue(b.isEmpty)
+        XCTAssertEqual(cache.memoryCapacity, 1024 * 1024, "Overlapping operations must not restore the temporary zero capacity")
+        XCTAssertEqual(cache.diskCapacity, 0)
+    }
+
+    func testCancellationAfterCleanupStartsRestoresCapacityAndFinishes() async throws {
+        let cache = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 0, diskPath: nil)
+        let url = URL(string: "https://fixture.invalid/cancel-after-start")!, request = URLRequest(url: URL(string: "https://fixture.invalid/cancel-after-start")!)
+        cache.storeCachedResponse(CachedURLResponse(response: URLResponse(url: url, mimeType: nil, expectedContentLength: 4096, textEncodingName: nil), data: Data(repeating: 1, count: 4096)), for: request)
+        let service = HTTPResponseCache(cache: cache), task = Task { try await service.clear() }
+        for _ in 0..<40 where cache.memoryCapacity != 0 { try await Task.sleep(nanoseconds: 10_000_000) }
+        XCTAssertEqual(cache.memoryCapacity, 0, "The operation must actually start before cancellation")
+        task.cancel()
+        do { _ = try await task.value; XCTFail("The cancelled caller must receive cancellation") }
+        catch { XCTAssertTrue(error is CancellationError) }
+        XCTAssertEqual(cache.memoryCapacity, 1024 * 1024)
+        XCTAssertNil(cache.cachedResponse(for: request))
+    }
+
     func testHTTPResponseCleanupUsesCacheAPIAndReportsRemainingUsage() async throws {
         let cache = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 0, diskPath: nil)
         let url = URL(string: "https://fixture.invalid/page")!

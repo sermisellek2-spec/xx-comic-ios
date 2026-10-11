@@ -1,0 +1,98 @@
+{
+  "recordedAtUTC": "2026-10-11T20:35:47.350140+00:00",
+  "parentIOSCommit": "881214f7620e38af6c8bdfbf3d253d1291ec0868",
+  "captureExitCode": 0,
+  "testApkBuildExitCode": 0,
+  "baselineInputsVerified": 527,
+  "productionAPKUnchanged": true,
+  "actualScreenshots": 64,
+  "sourceCoordinates": "screen; includes actual decor offset",
+  "contentWidthsVerified": true,
+  "avd": "xxcomic-ux-viewport-api34",
+  "serial": "emulator-5568",
+  "hardwareProfile": "Nexus 9; isolated task AVD without Pixel cutout",
+  "visualGatePassed": false,
+  "realWebsitesExercised": false,
+  "captureDirectory": "android-golden-screen-viewport-2",
+  "captures": [
+    {
+      "manifest": "android_phone_landscape_dark-manifest.json",
+      "manifestSHA256": "02e62bb8194b37e11e70746cde9da852be931e0b9baafb2f468f15dc94342ef1",
+      "density": 3,
+      "logicalWidth": 852.0,
+      "logicalHeight": 393.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "3d2cb26f37926079241eb3c68174857ef0d41a1e3e5c38374082790ba2015954"
+    },
+    {
+      "manifest": "android_phone_landscape_light-manifest.json",
+      "manifestSHA256": "5192cbfa45a2bee41b85451c0805a7399f94b6f9c9494ef1507cdd60935892db",
+      "density": 3,
+      "logicalWidth": 852.0,
+      "logicalHeight": 393.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "3d2cb26f37926079241eb3c68174857ef0d41a1e3e5c38374082790ba2015954"
+    },
+    {
+      "manifest": "android_phone_portrait_dark-manifest.json",
+      "manifestSHA256": "b089a1c8e2af3d437f2bc81058490b5add8ba2a5dd02ffe23fe306efc5ce82d8",
+      "density": 3,
+      "logicalWidth": 393.0,
+      "logicalHeight": 852.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "3d2cb26f37926079241eb3c68174857ef0d41a1e3e5c38374082790ba2015954"
+    },
+    {
+      "manifest": "android_phone_portrait_light-manifest.json",
+      "manifestSHA256": "77436ff205c7da4648ec6d05ab5042f5dfa57877f3a8f39398458494fabb518f",
+      "density": 3,
+      "logicalWidth": 393.0,
+      "logicalHeight": 852.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "3d2cb26f37926079241eb3c68174857ef0d41a1e3e5c38374082790ba2015954"
+    },
+    {
+      "manifest": "android_tablet_landscape_dark-manifest.json",
+      "manifestSHA256": "fbaf7b9789e99958de42ced3c6299d963391c6b19cd2ea421326b64b4143000c",
+      "density": 2,
+      "logicalWidth": 1210.0,
+      "logicalHeight": 834.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "3d2cb26f37926079241eb3c68174857ef0d41a1e3e5c38374082790ba2015954"
+    },
+    {
+      "manifest": "android_tablet_landscape_light-manifest.json",
+      "manifestSHA256": "a769bc19fd709bc7c4c0a55f92a16a8700d86061cc57920d318883d8ae245664",
+      "density": 2,
+      "logicalWidth": 1210.0,
+      "logicalHeight": 834.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "3d2cb26f37926079241eb3c68174857ef0d41a1e3e5c38374082790ba2015954"
+    },
+    {
+      "manifest": "android_tablet_portrait_dark-manifest.json",
+      "manifestSHA256": "8b9503dff8cc0a847029c46ac77cc02287ab1c07cec30029d843dbddf0f16505",
+      "density": 2,
+      "logicalWidth": 834.0,
+      "logicalHeight": 1210.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "3d2cb26f37926079241eb3c68174857ef0d41a1e3e5c38374082790ba2015954"
+    },
+    {
+      "manifest": "android_tablet_portrait_light-manifest.json",
+      "manifestSHA256": "59d1d89ec8270e832183efebe225480202a3ffc08456cfa2ef89e0119f961256",
+      "density": 2,
+      "logicalWidth": 834.0,
+      "logicalHeight": 1210.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "3d2cb26f37926079241eb3c68174857ef0d41a1e3e5c38374082790ba2015954"
+    }
+  ],
+  "failedAttempts": [
+    "build-1: conflicting process-local SDK environment; exit 1",
+    "build-2/3: test APK built but runner still ReaderInstrumentation; not a reference capture pass",
+    "screen-viewport: instrumentation not registered; exit 1; no screenshots"
+  ],
+  "runnerUsedSHA256": "582723cc6b1484801d20b8a9951d98c0b2ba4e77b6a3576292948370ba58c885",
+  "sourceProviderSHA256": "010445801cd53c293057757ef4cae8adeeb0a5cff764a7dd21f02d7edc999196"
+}

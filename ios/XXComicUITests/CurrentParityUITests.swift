@@ -165,7 +165,7 @@ final class CurrentParityUITests: ParityUITestCase {
     }
 
     func testStartingDownloadCancelsPendingReadAndReturnsToDetail() {
-        let app = launch("--matrix-lazy-directory", "--matrix-directory-delay")
+        let app = launch("--matrix-lazy-directory", "--matrix-directory-held-until-cancel")
         app.buttons["我的书架"].tap()
         let comic = app.collectionViews.cells["间谍过家家"]
         XCTAssertTrue(comic.waitForExistence(timeout: 5)); comic.tap()
@@ -173,16 +173,16 @@ final class CurrentParityUITests: ParityUITestCase {
         read.tap()
         XCTAssertTrue(app.buttons["正在加载章节…"].waitForExistence(timeout: 3))
         app.buttons["detail.download"].tap()
-        XCTAssertTrue(read.isEnabled)
         XCTAssertTrue(app.tables["download.chapters"].waitForExistence(timeout: 8))
         XCTAssertEqual(app.tables["download.chapters"].cells.count, 6)
         app.buttons["download.close"].tap()
         XCTAssertTrue(read.waitForExistence(timeout: 3))
+        XCTAssertTrue(read.isEnabled)
         XCTAssertFalse(app.images["reader.image"].exists)
     }
 
     func testStartingReadCancelsPendingDownload() {
-        let app = launch("--matrix-lazy-directory", "--matrix-directory-delay")
+        let app = launch("--matrix-lazy-directory", "--matrix-directory-held-until-cancel")
         app.buttons["我的书架"].tap()
         let comic = app.collectionViews.cells["间谍过家家"]
         XCTAssertTrue(comic.waitForExistence(timeout: 5)); comic.tap()
@@ -194,12 +194,14 @@ final class CurrentParityUITests: ParityUITestCase {
     }
 
     func testCancelledDownloadAfterPendingReadCanOpenReaderAgain() {
-        let app = launch("--matrix-lazy-directory", "--matrix-directory-held-until-cancel")
+        let app = launch("--matrix-lazy-directory", "--matrix-directory-held-twice-until-cancel")
         app.buttons["我的书架"].tap()
         let comic = app.collectionViews.cells["间谍过家家"]
         XCTAssertTrue(comic.waitForExistence(timeout: 5)); comic.tap()
         let read = app.buttons["detail.read"], download = app.buttons["detail.download"]
-        read.tap(); download.tap()
+        read.tap()
+        XCTAssertTrue(app.buttons["正在加载章节…"].waitForExistence(timeout: 3))
+        download.tap()
         XCTAssertTrue(app.buttons["正在加载目录 · 点击取消"].waitForExistence(timeout: 3))
         download.tap()
         XCTAssertTrue(read.isEnabled)

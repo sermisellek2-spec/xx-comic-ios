@@ -1,0 +1,60 @@
+{
+  "runID": 38167535899,
+  "runURL": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38167535899",
+  "revision": "38944aea813014d2002e41f5f48f5c3cab13d644",
+  "conclusion": "cancelled",
+  "timeoutMinutes": 90,
+  "debugBuild": "success",
+  "releaseBuild": "success",
+  "appleCore": {
+    "executed": 876,
+    "failures": 0,
+    "seconds": 83.809
+  },
+  "filesFixtureHostBuild": "success",
+  "filesFixtureHostInstall": "success on both actual destinations",
+  "iphone": {
+    "nativeExecuted": 20,
+    "nativeFailures": 0,
+    "nativeSeconds": 4.456,
+    "uiExecuted": 64,
+    "uiFailedCases": 10,
+    "uiFailureAssertions": 24,
+    "uiSeconds": 4153.453,
+    "complete": true
+  },
+  "ipad": {
+    "nativeExecuted": 20,
+    "nativeFailures": 0,
+    "nativeSeconds": 4.987,
+    "uiCompletedCases": 30,
+    "uiFailedCases": 3,
+    "complete": false,
+    "incompleteReason": "90-minute workflow timeout during EPUB UI suite"
+  },
+  "visualCaptureSeconds": 2814.133,
+  "rawResultUpload": "failed: automatic xcresult Staging attachment filename contains quotes",
+  "retainedArtifacts": [
+    {
+      "kind": "logs",
+      "file": "ios/build/apple-ci-38167535899/logs.zip",
+      "bytes": 1367369,
+      "sha256": "df58eb3d888bd0cc2ef114a422b9e43525534c258b41c66318438842610aad2c"
+    },
+    {
+      "kind": "visual",
+      "file": "ios/build/apple-ci-38167535899/visual.zip",
+      "bytes": 25651077,
+      "sha256": "cabb87af14ac3b7938fbc286175200a6f69aced27b334b1c288a574fa22eb782"
+    },
+    {
+      "kind": "enhancement",
+      "file": "ios/build/apple-ci-38167535899/enhancement.zip",
+      "bytes": 643608,
+      "sha256": "5e67fc3b4fae2e6faa6d67354b62f7dcc9f91f0c84c82d955922cce2c3fd1770"
+    }
+  ],
+  "candidate881214fTested": false,
+  "ipaProduced": false,
+  "nonSourceGatePassed": false
+}

@@ -2,7 +2,7 @@ import XCTest
 import UIKit
 
 final class AppNavigationTests: ParityUITestCase {
-    func testInstalledApplicationIconAppearsOnHomeScreenAndOpensTheApp() {
+    func testInstalledApplicationIconAppearsOnHomeScreenAndOpensTheApp() throws {
         XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--light-mode"]
@@ -10,9 +10,20 @@ final class AppNavigationTests: ParityUITestCase {
         XCTAssertTrue(app.buttons["我的书架"].waitForExistence(timeout: 10))
         XCUIDevice.shared.press(.home)
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let icon = springboard.icons["XX Comic"].firstMatch
-        for _ in 0..<4 where !icon.isHittable { springboard.swipeLeft() }
-        XCTAssertTrue(icon.waitForExistence(timeout: 5)); XCTAssertTrue(icon.isHittable)
+        let icons = springboard.icons.matching(identifier: "XX Comic")
+        let home = springboard.windows.firstMatch.frame
+        var visible: XCUIElement?
+        for page in 0..<5 {
+            // iPad can expose an offscreen App Library icon before the visible
+            // home icon. Inspect actual frames before asking for a hit point.
+            visible = icons.allElementsBoundByIndex.first { element in
+                let frame = element.frame
+                return frame.width >= 44 && frame.height >= 44 && home.contains(frame)
+            }
+            if visible != nil { break }
+            if page < 4 { springboard.swipeLeft() }
+        }
+        let icon = try XCTUnwrap(visible, "The installed application must have a visible home-screen icon")
         XCTAssertGreaterThanOrEqual(icon.frame.width, 44)
         let stem = (UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone") + "_portrait_light_app_icon_home"
         let attachment = XCTAttachment(data: XCUIScreen.main.screenshot().pngRepresentation, uniformTypeIdentifier: "public.png")
@@ -25,7 +36,9 @@ final class AppNavigationTests: ParityUITestCase {
             let metadata = XCTAttachment(data: try JSONSerialization.data(withJSONObject: record, options: [.sortedKeys]), uniformTypeIdentifier: "public.json")
             metadata.name = "provenance-" + stem; metadata.lifetime = .keepAlways; add(metadata)
         } catch { XCTFail("Cannot retain actual installed icon provenance: \(error)") }
-        icon.tap()
+        // Tap the observed icon centre. This also proves that this actual image
+        // opens XXComic, without a fragile App Library activation-point lookup.
+        icon.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.buttons["我的书架"].waitForExistence(timeout: 5))
     }
 

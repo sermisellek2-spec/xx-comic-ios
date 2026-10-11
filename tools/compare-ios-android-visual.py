@@ -2,7 +2,9 @@
 
 Requires Pillow in the tooling environment, not in either application.
 Both screenshots must have the same logical window size. Only display density
-is normalized. No application component or system bar is masked or stretched.
+is normalized. A maximum one-physical-pixel raster rounding difference is
+recorded explicitly; outside-capture padding is magenta. No component or system
+bar is masked, cropped or stretched to conceal a difference.
 """
 import argparse
 import csv
@@ -10,9 +12,13 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import sys
 from datetime import datetime, timezone
 
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageOps
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "ios" / "scripts"))
+from visual_snapshot import components_from_provenance
 
 BASELINE = "696e80a44ab36b19de6f630565df32978e55a19e"
 PAGES = {
@@ -59,20 +65,26 @@ def checked_apple(path, records):
 
 
 def logical(image_path, scale, expected, render=True):
-    with Image.open(image_path) as image:
-        actual = [image.width / scale, image.height / scale]
-        if any(abs(a - b) > 0.1 for a, b in zip(actual, expected)):
-            raise ValueError(f"Actual PNG size disagrees with logical provenance: {image_path.name}: {actual} != {expected}")
+    with Image.open(image_path) as encoded:
+        exif_orientation = encoded.getexif().get(274, 1)
+        image = ImageOps.exif_transpose(encoded)
+        expected_pixels = [round(v * scale) for v in expected]
+        actual_pixels = [image.width, image.height]
+        delta = [a - b for a, b in zip(actual_pixels, expected_pixels)]
+        if any(abs(v) > 1 for v in delta):
+            raise ValueError(f"Actual PNG size disagrees with logical provenance: {image_path.name}: {actual_pixels} != {expected_pixels}")
         if not render:
-            return None
+            return {"encodedPixels": [encoded.width, encoded.height], "exifOrientation": exif_orientation,
+                    "actualPixels": actual_pixels, "expectedPixels": expected_pixels, "deltaPixels": delta,
+                    "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"}
         # Uniform density normalization only; preserve the full actual canvas.
-        size = tuple(round(value * 2) for value in expected)
+        size = (round(image.width * 2 / scale), round(image.height * 2 / scale))
         return image.convert("RGB").resize(size, Image.Resampling.LANCZOS)
 
 
 def component_rows(android, apple, density, page, case):
     rows = []
-    candidates = apple.get("components", [])
+    candidates = components_from_provenance(apple)
     labels = [(c.get("text") or c.get("description") or "").strip() for c in android.get("components", [])]
     for component in android.get("components", []):
         label = (component.get("text") or component.get("description") or "").strip()
@@ -130,6 +142,11 @@ def main():
                         android_png = args.android_dir / capture["file"]
                         if sha(android_png) != capture["sha256"]:
                             raise ValueError("Android PNG hash mismatch")
+                        android_bounds = capture.get("decorBoundsOnScreen", [])
+                        if capture.get("componentCoordinates") != "screen" or len(android_bounds) != 4:
+                            raise ValueError("Android screen-coordinate component/window provenance is missing")
+                        if capture.get("activeWindowPackage") != "com.xxcomic":
+                            raise ValueError("Android active application window provenance is missing or obscured")
                         ios_png = args.ios_dir / "visual-matrix" / (name + ".png")
                         ios_json = args.ios_dir / "visual-provenance" / (name + ".json")
                         png_record = checked_apple(ios_png, records)
@@ -144,12 +161,18 @@ def main():
                         ios_size = [float(meta["appFrame"]["width"]), float(meta["appFrame"]["height"])]
                         if any(abs(a - b) > 0.1 for a, b in zip(expected, ios_size)):
                             raise ValueError(f"Logical size mismatch: Android {expected}; Apple {ios_size}")
-                        logical(android_png, density, expected, render=False)
-                        logical(ios_png, float(meta["screenScale"]), expected, render=False)
+                        content_width = (android_bounds[2] - android_bounds[0]) / density
+                        if abs(content_width - ios_size[0]) > 0.1:
+                            raise ValueError(f"Actual application content width mismatch: Android {content_width}; Apple {ios_size[0]}")
+                        android_raster = logical(android_png, density, expected, render=False)
+                        ios_raster = logical(ios_png, float(meta["screenScale"]), expected, render=False)
+                        if "rasterPixelSize" in meta and meta["rasterPixelSize"] != ios_raster["encodedPixels"]:
+                            raise ValueError("Retained Apple raster metadata disagrees with actual PNG")
                         prepared.append((case, android_page, android_png, ios_png, density, float(meta["screenScale"]), expected,
                                          {"androidSHA256": sha(android_png), "iosSHA256": sha(ios_png),
                                           "iosProvenanceSHA256": sha(ios_json), "iosTestStatus": png_record.get("status"),
-                                          "logicalSize": expected, "componentReview": "pending"}))
+                                          "logicalSize": expected, "androidRaster": android_raster, "iosRaster": ios_raster,
+                                          "componentReview": "pending"}))
                         rows.extend(component_rows(capture, meta, density, android_page, case))
                     except (ValueError, KeyError, FileNotFoundError) as error:
                         pending.append({"case": case, "page": android_page, "reason": str(error)})
@@ -158,6 +181,14 @@ def main():
     for case, page, android_path, apple_path, density, screen_scale, expected, proof in prepared:
         android = logical(android_path, density, expected)
         apple = logical(apple_path, screen_scale, expected)
+        # Never discard actual pixels or stretch one axis. Any one-pixel edge
+        # absent from a capture stays visible as a coloured outside-capture edge.
+        canvas_size = (max(android.width, apple.width), max(android.height, apple.height))
+        def canvas(capture):
+            result = Image.new("RGB", canvas_size, (255, 0, 255))
+            result.paste(capture, (0, 0))
+            return result
+        android, apple = canvas(android), canvas(apple)
         name = case + "_" + page
         side = Image.new("RGB", (android.width * 2, android.height))
         side.paste(android, (0, 0)); side.paste(apple, (android.width, 0))
@@ -171,7 +202,7 @@ def main():
         fields = ["case", "page", "label", "androidType", "androidBoundsDP", "androidFontDP", "iosID", "iosBoundsPT", "deltaLTRB", "match", "acceptance"]
         writer = csv.DictWriter(stream, fieldnames=fields); writer.writeheader(); writer.writerows(rows)
     report = {"recordedAtUTC": datetime.now(timezone.utc).isoformat(), "baseline": BASELINE,
-              "iosCommit": args.ios_commit, "policy": "full canvas, 2 pixels per logical point; no masks, no vertical stretching, no automatic PASS",
+              "iosCommit": args.ios_commit, "policy": "full canvas, uniform density at 2 pixels/point; at most one physical pixel of recorded raster rounding; magenta outside-capture edges; no masks/cropping/axis stretching/automatic PASS",
               "systemDifferences": "Visible in derived images; assess real status/navigation/home-indicator areas individually in component review",
               "prepared": len(prepared), "expected": 64, "captures": output_records, "pending": pending,
               "visualGatePassed": False}

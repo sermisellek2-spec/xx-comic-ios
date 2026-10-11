@@ -1,0 +1,791 @@
+{
+  "run": 38167535899,
+  "revision": "38944aea813014d2002e41f5f48f5c3cab13d644",
+  "logsZipSHA256": "df58eb3d888bd0cc2ef114a422b9e43525534c258b41c66318438842610aad2c",
+  "uiCompletedCases": [
+    {
+      "utc": "2026-10-11T19:27:50.2858880Z",
+      "bundle": "XXComicUITests",
+      "suite": "AppNavigationTests",
+      "method": "testInstalledApplicationIconAppearsOnHomeScreenAndOpensTheApp",
+      "result": "passed",
+      "seconds": 11.869
+    },
+    {
+      "utc": "2026-10-11T19:28:32.1656660Z",
+      "bundle": "XXComicUITests",
+      "suite": "AppNavigationTests",
+      "method": "testNavigationAndReaderPreferencesPersist",
+      "result": "passed",
+      "seconds": 41.881
+    },
+    {
+      "utc": "2026-10-11T19:28:47.0183680Z",
+      "bundle": "XXComicUITests",
+      "suite": "BatchImportRecoveryUITests",
+      "method": "testCancellingRecoveryKeepsPendingTaskAvailableAfterRestart",
+      "result": "passed",
+      "seconds": 14.836
+    },
+    {
+      "utc": "2026-10-11T19:28:55.3781820Z",
+      "bundle": "XXComicUITests",
+      "suite": "BatchImportRecoveryUITests",
+      "method": "testExplicitBatchPickerSupportsOneFileThroughBatchConfirmation",
+      "result": "passed",
+      "seconds": 8.359
+    },
+    {
+      "utc": "2026-10-11T19:29:12.5917850Z",
+      "bundle": "XXComicUITests",
+      "suite": "BatchImportRecoveryUITests",
+      "method": "testPartiallyReselectedFilesReportFailureAndRemainingVolumeCanResume",
+      "result": "passed",
+      "seconds": 17.213
+    },
+    {
+      "utc": "2026-10-11T19:29:32.6124440Z",
+      "bundle": "XXComicUITests",
+      "suite": "BatchImportRecoveryUITests",
+      "method": "testRecoveredBookRemainsSingleAndCompletedAfterRelaunch",
+      "result": "passed",
+      "seconds": 20.017
+    },
+    {
+      "utc": "2026-10-11T19:29:39.9124180Z",
+      "bundle": "XXComicUITests",
+      "suite": "BookshelfParityUITests",
+      "method": "testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList",
+      "result": "passed",
+      "seconds": 7.303
+    },
+    {
+      "utc": "2026-10-11T19:29:59.1624850Z",
+      "bundle": "XXComicUITests",
+      "suite": "BookshelfParityUITests",
+      "method": "testResumeRowOpensSavedChapterWithOneTapAndRetainsReturnPath",
+      "result": "passed",
+      "seconds": 19.103
+    },
+    {
+      "utc": "2026-10-11T19:30:10.9038460Z",
+      "bundle": "XXComicUITests",
+      "suite": "BookshelfParityUITests",
+      "method": "testSwitchingGridToListKeepsVisibleComic",
+      "result": "passed",
+      "seconds": 11.885
+    },
+    {
+      "utc": "2026-10-11T19:31:21.8922090Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testBookshelfDownloadLoadsDirectoryAndReturnsToBookshelf",
+      "result": "passed",
+      "seconds": 70.99
+    },
+    {
+      "utc": "2026-10-11T19:31:40.9231640Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testCancelledDownloadAfterPendingReadCanOpenReaderAgain",
+      "result": "passed",
+      "seconds": 19.009
+    },
+    {
+      "utc": "2026-10-11T19:31:54.9255570Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry",
+      "result": "failed",
+      "seconds": 13.622
+    },
+    {
+      "utc": "2026-10-11T19:32:25.0959310Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels",
+      "result": "passed",
+      "seconds": 30.569
+    },
+    {
+      "utc": "2026-10-11T19:32:35.7594210Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testDetailDownloadLoadsOnDemandDirectoryAndCloses",
+      "result": "passed",
+      "seconds": 10.665
+    },
+    {
+      "utc": "2026-10-11T19:32:50.3133800Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag",
+      "result": "passed",
+      "seconds": 14.552
+    },
+    {
+      "utc": "2026-10-11T19:32:58.9061890Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testEmptyDirectoryOffersRetryInsteadOfEmptySelection",
+      "result": "passed",
+      "seconds": 8.593
+    },
+    {
+      "utc": "2026-10-11T19:33:13.8905380Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testEmptyDiscoveryGroupDoesNotBlockGlobalSearch",
+      "result": "passed",
+      "seconds": 14.978
+    },
+    {
+      "utc": "2026-10-11T19:33:26.2914590Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup",
+      "result": "passed",
+      "seconds": 12.407
+    },
+    {
+      "utc": "2026-10-11T19:33:43.3054660Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testLateDetailSuccessKeepsDownloadFailureAndItsRetryAction",
+      "result": "passed",
+      "seconds": 17.013
+    },
+    {
+      "utc": "2026-10-11T19:34:02.1830300Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testStartingDownloadCancelsPendingReadAndReturnsToDetail",
+      "result": "failed",
+      "seconds": 18.879
+    },
+    {
+      "utc": "2026-10-11T19:34:22.1140400Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testStartingReadCancelsPendingDownload",
+      "result": "passed",
+      "seconds": 19.89
+    },
+    {
+      "utc": "2026-10-11T19:34:34.1184420Z",
+      "bundle": "XXComicUITests",
+      "suite": "DownloadLocationParityUITests",
+      "method": "testCancelLocationConfirmationKeepsDefaultAndDoesNotQueueDownloads",
+      "result": "passed",
+      "seconds": 12.042
+    },
+    {
+      "utc": "2026-10-11T19:34:49.0494810Z",
+      "bundle": "XXComicUITests",
+      "suite": "DownloadLocationParityUITests",
+      "method": "testFilesPickerCanCancelWithoutChangingDefault",
+      "result": "passed",
+      "seconds": 14.93
+    },
+    {
+      "utc": "2026-10-11T19:35:16.4054560Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testAllSpinesAndRealSecondChapterResumeRoute",
+      "result": "passed",
+      "seconds": 27.358
+    },
+    {
+      "utc": "2026-10-11T19:35:36.1391810Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker",
+      "result": "passed",
+      "seconds": 19.694
+    },
+    {
+      "utc": "2026-10-11T19:36:25.6267790Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce",
+      "result": "passed",
+      "seconds": 49.524
+    },
+    {
+      "utc": "2026-10-11T19:36:59.1163450Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testKindleComicRealImportUsesExistingImageReaderAndResume",
+      "result": "passed",
+      "seconds": 33.491
+    },
+    {
+      "utc": "2026-10-11T19:37:19.9363330Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testKindleMixedRealImportRetainsTextAndImageInExistingTextReader",
+      "result": "passed",
+      "seconds": 20.819
+    },
+    {
+      "utc": "2026-10-11T19:37:53.8181780Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testKindleNovelRealImportTextReaderAndSecondChapterResume",
+      "result": "passed",
+      "seconds": 33.878
+    },
+    {
+      "utc": "2026-10-11T19:38:23.5082380Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks",
+      "result": "passed",
+      "seconds": 29.693
+    },
+    {
+      "utc": "2026-10-11T19:38:44.7627580Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testLongBodyWithoutIDsResumesByPercentage",
+      "result": "passed",
+      "seconds": 21.254
+    },
+    {
+      "utc": "2026-10-11T19:39:14.7172990Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testMixedSpineRetainsDirectImageAndPureImageUsesComicReader",
+      "result": "passed",
+      "seconds": 29.952
+    },
+    {
+      "utc": "2026-10-11T19:39:37.1584110Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks",
+      "result": "passed",
+      "seconds": 22.441
+    },
+    {
+      "utc": "2026-10-11T19:39:58.9996990Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testPendingScrollRestoreCannotOverwriteNextDocumentPosition",
+      "result": "passed",
+      "seconds": 21.843
+    },
+    {
+      "utc": "2026-10-11T19:40:28.5294430Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testTextSettingsPersistAfterRelaunch",
+      "result": "passed",
+      "seconds": 29.531
+    },
+    {
+      "utc": "2026-10-11T19:40:47.5016150Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testWebKitBlocksBookScriptsAndLoadsSameBookCSS",
+      "result": "passed",
+      "seconds": 18.97
+    },
+    {
+      "utc": "2026-10-11T19:41:41.8707020Z",
+      "bundle": "XXComicUITests",
+      "suite": "ExternalFilesParityUITests",
+      "method": "testMissingExternalFolderCanBeReauthorizedThroughRealFiles",
+      "result": "failed",
+      "seconds": 54.366
+    },
+    {
+      "utc": "2026-10-11T19:42:25.3538280Z",
+      "bundle": "XXComicUITests",
+      "suite": "ExternalFilesParityUITests",
+      "method": "testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch",
+      "result": "failed",
+      "seconds": 43.475
+    },
+    {
+      "utc": "2026-10-11T19:43:06.5579040Z",
+      "bundle": "XXComicUITests",
+      "suite": "ExternalFilesParityUITests",
+      "method": "testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch",
+      "result": "failed",
+      "seconds": 41.206
+    },
+    {
+      "utc": "2026-10-11T19:43:24.6237540Z",
+      "bundle": "XXComicUITests",
+      "suite": "LinkedFolderParityUITests",
+      "method": "testCancellingFolderReauthorizationKeepsTheExistingLink",
+      "result": "passed",
+      "seconds": 18.06
+    },
+    {
+      "utc": "2026-10-11T19:43:36.4734930Z",
+      "bundle": "XXComicUITests",
+      "suite": "LinkedFolderParityUITests",
+      "method": "testIndexedBookReadsRealPageWithoutAFullPrivateCopy",
+      "result": "passed",
+      "seconds": 11.844
+    },
+    {
+      "utc": "2026-10-11T19:43:55.4427740Z",
+      "bundle": "XXComicUITests",
+      "suite": "LinkedFolderParityUITests",
+      "method": "testMovedFolderReauthorizationRestoresReadingAndKeepsOneBook",
+      "result": "passed",
+      "seconds": 18.975
+    },
+    {
+      "utc": "2026-10-11T19:44:11.7959480Z",
+      "bundle": "XXComicUITests",
+      "suite": "LocalDeletionParityUITests",
+      "method": "testWholeBookDeletionWaitsForUndoWindowAndShowsActualCompletion",
+      "result": "passed",
+      "seconds": 16.348
+    },
+    {
+      "utc": "2026-10-11T19:44:31.4083350Z",
+      "bundle": "XXComicUITests",
+      "suite": "LocalDeletionParityUITests",
+      "method": "testWholeBookUndoRestoresSelectionPageAndRealImportedCopy",
+      "result": "passed",
+      "seconds": 19.615
+    },
+    {
+      "utc": "2026-10-11T19:44:48.7383840Z",
+      "bundle": "XXComicUITests",
+      "suite": "Mh18VerificationTests",
+      "method": "testManualVerificationCanCloseAndBeOpenedAgain",
+      "result": "passed",
+      "seconds": 17.321
+    },
+    {
+      "utc": "2026-10-11T19:45:03.3329700Z",
+      "bundle": "XXComicUITests",
+      "suite": "ReaderEnhancementUITests",
+      "method": "testReaderAIBadgeAndLongPressOriginalComparison",
+      "result": "passed",
+      "seconds": 14.597
+    },
+    {
+      "utc": "2026-10-11T19:45:27.3078220Z",
+      "bundle": "XXComicUITests",
+      "suite": "ReaderSettingsParityUITests",
+      "method": "testEnhancementControlsAppearOnlyWhenEnabledAndComparisonReturnsToOriginal",
+      "result": "passed",
+      "seconds": 23.972
+    },
+    {
+      "utc": "2026-10-11T19:45:50.7645280Z",
+      "bundle": "XXComicUITests",
+      "suite": "ReaderSettingsParityUITests",
+      "method": "testModeThemeAndSwitchSelectionPersistAfterRelaunch",
+      "result": "passed",
+      "seconds": 23.455
+    },
+    {
+      "utc": "2026-10-11T19:46:02.9978090Z",
+      "bundle": "XXComicUITests",
+      "suite": "ReaderToolbarParityUITests",
+      "method": "testPagedReaderToolbarChangesChaptersAndKeepsUsableActionTargets",
+      "result": "passed",
+      "seconds": 12.231
+    },
+    {
+      "utc": "2026-10-11T19:46:21.6031270Z",
+      "bundle": "XXComicUITests",
+      "suite": "ReaderToolbarParityUITests",
+      "method": "testStripReaderToolbarRetainsDirectoryAndReaderSettings",
+      "result": "passed",
+      "seconds": 18.609
+    },
+    {
+      "utc": "2026-10-11T19:46:44.3406120Z",
+      "bundle": "XXComicUITests",
+      "suite": "SettingsParityUITests",
+      "method": "testCacheCleanupKeepsLibraryAndFixtureDiscovery",
+      "result": "failed",
+      "seconds": 22.698
+    },
+    {
+      "utc": "2026-10-11T19:46:53.0372910Z",
+      "bundle": "XXComicUITests",
+      "suite": "SettingsParityUITests",
+      "method": "testSettingsUsesCurrentAndroidSectionsAndThemeDrawer",
+      "result": "passed",
+      "seconds": 8.735
+    },
+    {
+      "utc": "2026-10-11T19:47:07.2106760Z",
+      "bundle": "XXComicUITests",
+      "suite": "SettingsParityUITests",
+      "method": "testThemeChoicePersistsAcrossRestart",
+      "result": "passed",
+      "seconds": 14.173
+    },
+    {
+      "utc": "2026-10-11T19:47:20.9376000Z",
+      "bundle": "XXComicUITests",
+      "suite": "SourceDrawerTests",
+      "method": "testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs",
+      "result": "passed",
+      "seconds": 13.726
+    },
+    {
+      "utc": "2026-10-11T19:47:29.4345090Z",
+      "bundle": "XXComicUITests",
+      "suite": "SourceDrawerTests",
+      "method": "testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs",
+      "result": "passed",
+      "seconds": 8.489
+    },
+    {
+      "utc": "2026-10-11T19:47:39.7258900Z",
+      "bundle": "XXComicUITests",
+      "suite": "SourceDrawerTests",
+      "method": "testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm",
+      "result": "passed",
+      "seconds": 10.299
+    },
+    {
+      "utc": "2026-10-11T19:48:13.9488450Z",
+      "bundle": "XXComicUITests",
+      "suite": "VisualMatrixUITests",
+      "method": "testSettingsReferenceLandscapeDark",
+      "result": "failed",
+      "seconds": 34.219
+    },
+    {
+      "utc": "2026-10-11T19:48:47.8544310Z",
+      "bundle": "XXComicUITests",
+      "suite": "VisualMatrixUITests",
+      "method": "testSettingsReferenceLandscapeLight",
+      "result": "failed",
+      "seconds": 33.908
+    },
+    {
+      "utc": "2026-10-11T19:49:22.9389710Z",
+      "bundle": "XXComicUITests",
+      "suite": "VisualMatrixUITests",
+      "method": "testSettingsReferencePortraitDark",
+      "result": "failed",
+      "seconds": 35.052
+    },
+    {
+      "utc": "2026-10-11T19:49:57.8001820Z",
+      "bundle": "XXComicUITests",
+      "suite": "VisualMatrixUITests",
+      "method": "testSettingsReferencePortraitLight",
+      "result": "failed",
+      "seconds": 34.895
+    },
+    {
+      "utc": "2026-10-11T20:00:56.6144130Z",
+      "bundle": "XXComicUITests",
+      "suite": "VisualMatrixUITests",
+      "method": "testVisualMatrixLandscapeDark",
+      "result": "passed",
+      "seconds": 658.814
+    },
+    {
+      "utc": "2026-10-11T20:12:17.4411940Z",
+      "bundle": "XXComicUITests",
+      "suite": "VisualMatrixUITests",
+      "method": "testVisualMatrixLandscapeLight",
+      "result": "passed",
+      "seconds": 680.825
+    },
+    {
+      "utc": "2026-10-11T20:23:50.9925720Z",
+      "bundle": "XXComicUITests",
+      "suite": "VisualMatrixUITests",
+      "method": "testVisualMatrixPortraitDark",
+      "result": "passed",
+      "seconds": 693.549
+    },
+    {
+      "utc": "2026-10-11T20:36:51.9389860Z",
+      "bundle": "XXComicUITests",
+      "suite": "VisualMatrixUITests",
+      "method": "testVisualMatrixPortraitLight",
+      "result": "passed",
+      "seconds": 780.945
+    },
+    {
+      "utc": "2026-10-11T20:40:06.8988920Z",
+      "bundle": "XXComicUITests",
+      "suite": "AppNavigationTests",
+      "method": "testInstalledApplicationIconAppearsOnHomeScreenAndOpensTheApp",
+      "result": "failed",
+      "seconds": 11.919
+    },
+    {
+      "utc": "2026-10-11T20:40:34.5938760Z",
+      "bundle": "XXComicUITests",
+      "suite": "AppNavigationTests",
+      "method": "testNavigationAndReaderPreferencesPersist",
+      "result": "passed",
+      "seconds": 27.682
+    },
+    {
+      "utc": "2026-10-11T20:40:53.5992980Z",
+      "bundle": "XXComicUITests",
+      "suite": "BatchImportRecoveryUITests",
+      "method": "testCancellingRecoveryKeepsPendingTaskAvailableAfterRestart",
+      "result": "passed",
+      "seconds": 19.011
+    },
+    {
+      "utc": "2026-10-11T20:41:05.3272310Z",
+      "bundle": "XXComicUITests",
+      "suite": "BatchImportRecoveryUITests",
+      "method": "testExplicitBatchPickerSupportsOneFileThroughBatchConfirmation",
+      "result": "passed",
+      "seconds": 11.726
+    },
+    {
+      "utc": "2026-10-11T20:41:24.4077210Z",
+      "bundle": "XXComicUITests",
+      "suite": "BatchImportRecoveryUITests",
+      "method": "testPartiallyReselectedFilesReportFailureAndRemainingVolumeCanResume",
+      "result": "passed",
+      "seconds": 19.083
+    },
+    {
+      "utc": "2026-10-11T20:41:46.3077050Z",
+      "bundle": "XXComicUITests",
+      "suite": "BatchImportRecoveryUITests",
+      "method": "testRecoveredBookRemainsSingleAndCompletedAfterRelaunch",
+      "result": "passed",
+      "seconds": 21.89
+    },
+    {
+      "utc": "2026-10-11T20:41:56.3320500Z",
+      "bundle": "XXComicUITests",
+      "suite": "BookshelfParityUITests",
+      "method": "testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList",
+      "result": "passed",
+      "seconds": 10.023
+    },
+    {
+      "utc": "2026-10-11T20:42:10.8149640Z",
+      "bundle": "XXComicUITests",
+      "suite": "BookshelfParityUITests",
+      "method": "testResumeRowOpensSavedChapterWithOneTapAndRetainsReturnPath",
+      "result": "passed",
+      "seconds": 14.475
+    },
+    {
+      "utc": "2026-10-11T20:42:23.7865200Z",
+      "bundle": "XXComicUITests",
+      "suite": "BookshelfParityUITests",
+      "method": "testSwitchingGridToListKeepsVisibleComic",
+      "result": "passed",
+      "seconds": 12.986
+    },
+    {
+      "utc": "2026-10-11T20:42:37.2971140Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testBookshelfDownloadLoadsDirectoryAndReturnsToBookshelf",
+      "result": "passed",
+      "seconds": 13.442
+    },
+    {
+      "utc": "2026-10-11T20:42:51.5661050Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testCancelledDownloadAfterPendingReadCanOpenReaderAgain",
+      "result": "passed",
+      "seconds": 14.259
+    },
+    {
+      "utc": "2026-10-11T20:43:08.6770010Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry",
+      "result": "failed",
+      "seconds": 17.185
+    },
+    {
+      "utc": "2026-10-11T20:43:35.3629750Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels",
+      "result": "passed",
+      "seconds": 26.67
+    },
+    {
+      "utc": "2026-10-11T20:43:48.6571670Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testDetailDownloadLoadsOnDemandDirectoryAndCloses",
+      "result": "passed",
+      "seconds": 13.298
+    },
+    {
+      "utc": "2026-10-11T20:44:03.7326210Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag",
+      "result": "passed",
+      "seconds": 15.075
+    },
+    {
+      "utc": "2026-10-11T20:44:14.2259380Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testEmptyDirectoryOffersRetryInsteadOfEmptySelection",
+      "result": "passed",
+      "seconds": 10.499
+    },
+    {
+      "utc": "2026-10-11T20:44:30.0309290Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testEmptyDiscoveryGroupDoesNotBlockGlobalSearch",
+      "result": "passed",
+      "seconds": 15.8
+    },
+    {
+      "utc": "2026-10-11T20:44:46.5791290Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup",
+      "result": "passed",
+      "seconds": 16.555
+    },
+    {
+      "utc": "2026-10-11T20:45:07.4920400Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testLateDetailSuccessKeepsDownloadFailureAndItsRetryAction",
+      "result": "passed",
+      "seconds": 20.91
+    },
+    {
+      "utc": "2026-10-11T20:45:23.7841200Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testStartingDownloadCancelsPendingReadAndReturnsToDetail",
+      "result": "passed",
+      "seconds": 16.288
+    },
+    {
+      "utc": "2026-10-11T20:45:39.0249870Z",
+      "bundle": "XXComicUITests",
+      "suite": "CurrentParityUITests",
+      "method": "testStartingReadCancelsPendingDownload",
+      "result": "passed",
+      "seconds": 15.198
+    },
+    {
+      "utc": "2026-10-11T20:45:52.1921600Z",
+      "bundle": "XXComicUITests",
+      "suite": "DownloadLocationParityUITests",
+      "method": "testCancelLocationConfirmationKeepsDefaultAndDoesNotQueueDownloads",
+      "result": "passed",
+      "seconds": 13.205
+    },
+    {
+      "utc": "2026-10-11T20:46:10.8490690Z",
+      "bundle": "XXComicUITests",
+      "suite": "DownloadLocationParityUITests",
+      "method": "testFilesPickerCanCancelWithoutChangingDefault",
+      "result": "passed",
+      "seconds": 18.656
+    },
+    {
+      "utc": "2026-10-11T20:46:40.9018840Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testAllSpinesAndRealSecondChapterResumeRoute",
+      "result": "passed",
+      "seconds": 30.051
+    },
+    {
+      "utc": "2026-10-11T20:46:57.5337550Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker",
+      "result": "failed",
+      "seconds": 16.611
+    },
+    {
+      "utc": "2026-10-11T20:47:49.6785260Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce",
+      "result": "passed",
+      "seconds": 52.16
+    },
+    {
+      "utc": "2026-10-11T20:48:16.0947390Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testKindleComicRealImportUsesExistingImageReaderAndResume",
+      "result": "passed",
+      "seconds": 26.419
+    },
+    {
+      "utc": "2026-10-11T20:48:38.4329710Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testKindleMixedRealImportRetainsTextAndImageInExistingTextReader",
+      "result": "passed",
+      "seconds": 22.34
+    },
+    {
+      "utc": "2026-10-11T20:49:14.4975730Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testKindleNovelRealImportTextReaderAndSecondChapterResume",
+      "result": "passed",
+      "seconds": 36.056
+    },
+    {
+      "utc": "2026-10-11T20:49:45.4166610Z",
+      "bundle": "XXComicUITests",
+      "suite": "EpubReadingUITests",
+      "method": "testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks",
+      "result": "passed",
+      "seconds": 30.929
+    }
+  ],
+  "originalFailureLines": [
+    "2026-10-11T19:31:51.7418410Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:133: error: -[XXComicUITests.CurrentParityUITests testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry] : XCTAssertTrue failed",
+    "2026-10-11T19:31:54.1111490Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:134: error: -[XXComicUITests.CurrentParityUITests testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry] : Failed to failed to scroll to visible (by AX action) Button, {{165.0, 253.0}, {44.0, 44.0}}, identifier: 'detail.download', label: '下载章节', error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 30430, elementOrHash.elementID: 4356323392.95. (Underlying Error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 30430, elementOrHash.elementID: 4356323392.95)",
+    "2026-10-11T19:33:59.5674510Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:174: error: -[XXComicUITests.CurrentParityUITests testStartingDownloadCancelsPendingReadAndReturnsToDetail] : XCTAssertTrue failed",
+    "2026-10-11T19:34:01.6882740Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:175: error: -[XXComicUITests.CurrentParityUITests testStartingDownloadCancelsPendingReadAndReturnsToDetail] : Failed to tap \"detail.download\" Button: No matches found for Elements matching predicate '\"detail.download\" IN identifiers' from input {(",
+    "2026-10-11T19:41:10.4238940Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:41: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : XCTAssertTrue failed - The separate app must appear in the real Files provider",
+    "2026-10-11T19:41:25.6374250Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:69: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : XCTAssertTrue failed",
+    "2026-10-11T19:41:39.0233580Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:74: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : XCTAssertTrue failed",
+    "2026-10-11T19:41:41.4583720Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:74: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : Failed to tap Cell (First Match): No matches found for first query match sequence: `Descendants matching type Cell` -> `Elements matching predicate 'identifier BEGINSWITH \"local.folder.\"'`, given input App element pid: 62641",
+    "2026-10-11T19:42:07.3513300Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:41: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : XCTAssertTrue failed - The separate app must appear in the real Files provider",
+    "2026-10-11T19:42:22.4038020Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:87: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : Asynchronous wait failed: Exceeded timeout of 15 seconds, with unfulfilled expectations: \"Expect predicate `label CONTAINS \"Files漫画_AEF57CAE\"` for object \"download.location.current\" Cell\".",
+    "2026-10-11T19:42:22.4461330Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:88: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : XCTAssertTrue failed",
+    "2026-10-11T19:42:24.9686380Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:89: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : Failed to failed to scroll to visible (by AX action) Button, {{16.0, 108.3}, {59.7, 40.4}}, error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 66921, elementOrHash.elementID: 105553151332256.127. (Underlying Error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 66921, elementOrHash.elementID: 105553151332256.127)",
+    "2026-10-11T19:42:48.4193970Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:41: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch] : XCTAssertTrue failed - The separate app must appear in the real Files provider",
+    "2026-10-11T19:43:03.6676390Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:61: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch] : XCTAssertTrue failed",
+    "2026-10-11T19:43:06.1957180Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:62: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch] : Failed to failed to scroll to visible (by AX action) Button, {{16.0, 108.3}, {59.7, 40.4}}, error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 69204, elementOrHash.elementID: 105553151291824.95. (Underlying Error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 69204, elementOrHash.elementID: 105553151291824.95)",
+    "2026-10-11T19:46:39.5028750Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SettingsParityUITests.swift:47: error: -[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery] : XCTAssertTrue failed",
+    "2026-10-11T19:47:58.1302510Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:140: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark] : XCTAssertTrue failed",
+    "2026-10-11T19:48:08.9386110Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:143: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark] : XCTAssertTrue failed",
+    "2026-10-11T19:48:31.9475730Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:140: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertTrue failed",
+    "2026-10-11T19:48:42.8045300Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:143: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertTrue failed",
+    "2026-10-11T19:49:05.8884850Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:140: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertTrue failed",
+    "2026-10-11T19:49:16.7206730Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:143: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertTrue failed",
+    "2026-10-11T19:49:40.4828240Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:140: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight] : XCTAssertTrue failed",
+    "2026-10-11T19:49:51.3466700Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:143: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight] : XCTAssertTrue failed",
+    "2026-10-11T20:40:06.3301030Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/AppNavigationTests.swift:14: error: -[XXComicUITests.AppNavigationTests testInstalledApplicationIconAppearsOnHomeScreenAndOpensTheApp] : Failed to determine hittability of \"XX Comic\" Icon: Activation point invalid and no suggested hit points based on element frame",
+    "2026-10-11T20:43:05.5249160Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:133: error: -[XXComicUITests.CurrentParityUITests testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry] : XCTAssertTrue failed",
+    "2026-10-11T20:43:08.0689970Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:134: error: -[XXComicUITests.CurrentParityUITests testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry] : Failed to failed to scroll to visible (by AX action) Button, {{599.1, 270.7}, {42.4, 42.4}}, identifier: 'detail.download', label: '下载章节', error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 1762, elementOrHash.elementID: 4429534192.97. (Underlying Error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 1762, elementOrHash.elementID: 4429534192.97)",
+    "2026-10-11T20:46:56.9148730Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:171: error: -[XXComicUITests.EpubReadingUITests testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker] : Failed to get matching snapshot: No matches found for Descendants matching type Button from input {("
+  ],
+  "ipadIncomplete": true,
+  "gatePassed": false
+}

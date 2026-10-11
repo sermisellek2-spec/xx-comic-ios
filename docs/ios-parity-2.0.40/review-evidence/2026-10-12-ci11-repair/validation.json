@@ -1,0 +1,75 @@
+{
+  "recordedAtUTC": "2026-10-11T21:24:25.187272+00:00",
+  "parentCommit": "881214f7620e38af6c8bdfbf3d253d1291ec0868",
+  "coreFull": {
+    "executed": 877,
+    "skipped": 2,
+    "failures": 0,
+    "seconds": 141.16,
+    "exitCode": 0,
+    "command": "docker run --rm --mount type=bind,source=<ComicCore>,target=/work -w /work swift:5.10-jammy swift test -j 2",
+    "skippedRequirements": [
+      "native Apple PDF preparation/publication",
+      "native Apple PDF renderer"
+    ]
+  },
+  "cacheContract": {
+    "executed": 9,
+    "failures": 0,
+    "exitCode": 0,
+    "command": "swift test -j 2 --filter CacheMaintenanceTests"
+  },
+  "nativeSyntax": {
+    "files": 78,
+    "ReleaseExitCode": 0,
+    "DebugExitCode": 0,
+    "command": "docker run --rm --mount type=bind,source=<workspace>,target=/work -w /work swift:5.10-jammy bash tools/verify-ios-native-syntax.sh",
+    "appleTypeChecked": false
+  },
+  "tools": {
+    "pythonASTFiles": 6,
+    "yamlValidated": true,
+    "archiveFixtureExitCode": 0,
+    "archiveOriginalQuotedNamePreserved": true,
+    "archiveOriginalBytesPreserved": true,
+    "archiveIncompleteStagingPreserved": true,
+    "archiveOverwriteRejected": true,
+    "snapshotContractSample": "synthetic, not Apple runtime",
+    "actualAppleSnapshotParserValidation": "pending"
+  },
+  "frozenBaselineVerificationExitCode": 0,
+  "gitDiffCheckExitCode": 0,
+  "plannedUI": {
+    "methodsPerDevice": 74,
+    "newReaderMethods": 10,
+    "actualCurrentCandidateRun": false
+  },
+  "comparison": {
+    "actualAppleRevision": "38944aea813014d2002e41f5f48f5c3cab13d644",
+    "pairedPages": 32,
+    "expected": 64,
+    "missingTablet": 32,
+    "strictInitialRasterAttemptExitCode": 1,
+    "rasterRoundingAndEXIFAttemptExitCode": 1,
+    "rawPNGsModified": false,
+    "maximumRecordedRoundingPixels": 1,
+    "visualGatePassed": false
+  },
+  "logs": {
+    "cache-contract-test.log": "aeb25c6d7bb459dfe39621ed904e29dee55dda02ba50dfe772e42673a8708bce",
+    "core-full-test.log": "e1774c040002e63b6c5d4fbbc2a0a3bb516fbdc4935f4ec75a9f9f80447ec0a1",
+    "native-syntax-candidate.log": "d6a7c27f2bbd8d6bf50e3e4d08830c8831c225c3000410a701f005f2b8e0c08d",
+    "evidence-tool-check.log": "03775188986d12b17a3eccc1d6fef716538cf44913be4ad566bbb8a27ddd425f"
+  },
+  "appleCurrentCandidateBuild": "pending",
+  "filesCurrentCandidate": "pending",
+  "performanceAndRecovery": "pending",
+  "ipaProduced": false,
+  "nonSourceGatePassed": false,
+  "coreInputFiles": 262,
+  "coreInputSHA256": "db99d67a1f66ac17cb56d73d74b352ba9ebc9919d8cdd31c16a41a90d31f699c",
+  "candidateInputFiles": 384,
+  "gitCachedDiffCheckExitCode": 0,
+  "capturedProvenanceByteExactInGit": true,
+  "evidenceCRLFHandling": "CR is explicitly a valid line ending; normal blank-at-eol/blank-at-eof/space-before-tab checks remain enabled"
+}

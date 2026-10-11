@@ -26,26 +26,30 @@ final class ExternalFilesParityUITests: ParityUITestCase {
         XCTAssertTrue(app.buttons["local.folder.link"].waitForExistence(timeout: 10))
         return app
     }
-    private func choose(_ name: String, app: XCUIApplication) {
+    private func choose(_ name: String, app: XCUIApplication) throws {
         let hostFolder = app.staticTexts["XXComic Files Fixture"]
-        // Restore the Locations page if Files remembers a previously used folder.
-        for _ in 0..<5 where !hostFolder.exists {
-            let location = app.buttons.matching(NSPredicate(format: "label IN %@", ["浏览", "Browse", "我的 iPhone", "我的 iPad", "On My iPhone", "On My iPad", "在我的 iPhone 上", "在我的 iPad 上"])).firstMatch
-            if location.exists && location.isHittable { location.tap() }
-            else {
-                let back = app.navigationBars.buttons.matching(NSPredicate(format: "label != %@ AND label != %@", "取消", "Cancel")).firstMatch
-                guard back.exists && back.isHittable else { break }
-                back.tap()
-            }
+        let browse = app.tabBars.buttons.matching(NSPredicate(format: "label IN %@", ["浏览", "Browse"])).firstMatch
+        let localNames = ["我的 iPhone", "我的 iPad", "On My iPhone", "On My iPad", "在我的 iPhone 上", "在我的 iPad 上"]
+        let local = app.cells.containing(NSPredicate(format: "label IN %@", localNames)).firstMatch
+        let back = app.navigationBars.buttons.matching(NSPredicate(format: "label IN %@", ["浏览", "Browse", "位置", "Locations", "返回", "Back"] + localNames)).firstMatch
+        let sidebar = app.buttons.matching(NSPredicate(format: "label IN %@", ["显示边栏", "Show Sidebar"])).firstMatch
+        // Files starts in Recents on a fresh simulator. Its Browse item is a
+        // tab button, and its local provider is a cell, not a navigation button.
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label IN %@", ["取消", "Cancel"])).firstMatch.waitForExistence(timeout: 10))
+        for _ in 0..<8 where !hostFolder.exists {
+            if browse.exists && !browse.isSelected { browse.tap() }
+            else if local.exists && local.isHittable { local.tap() }
+            else if back.exists && back.isHittable { back.tap() }
+            else if sidebar.exists && sidebar.isHittable { sidebar.tap() }
+            else { break }
         }
-        XCTAssertTrue(hostFolder.waitForExistence(timeout: 10), "The separate app must appear in the real Files provider")
-        guard hostFolder.exists else { return }
-        hostFolder.tap()
+        let host = try XCTUnwrap(hostFolder.waitForExistence(timeout: 10) ? hostFolder : nil,
+                                 "The separate app must appear in the real Files provider")
+        host.tap()
         let target = app.staticTexts[name]
-        XCTAssertTrue(target.waitForExistence(timeout: 10)); guard target.exists else { return }; target.tap()
+        try XCTUnwrap(target.waitForExistence(timeout: 10) ? target : nil).tap()
         let open = app.buttons.matching(NSPredicate(format: "label IN %@", ["打开", "Open", "完成", "Done"])).firstMatch
-        XCTAssertTrue(open.waitForExistence(timeout: 10)); XCTAssertTrue(open.isEnabled)
-        if open.isEnabled { open.tap() }
+        try XCTUnwrap(open.waitForExistence(timeout: 10) && open.isEnabled ? open : nil).tap()
     }
     private func read(_ app: XCUIApplication) {
         app.tabBars.buttons["书架"].tap(); app.buttons["bookshelf.tab.1"].tap()
@@ -55,17 +59,17 @@ final class ExternalFilesParityUITests: ParityUITestCase {
         let pixels = app.images.matching(identifier: "reader.image").matching(NSPredicate(format: "value CONTAINS %@", "32x48")).firstMatch
         XCTAssertTrue(pixels.waitForExistence(timeout: 15), "Read actual PNG bytes across the separate app's sandbox")
     }
-    func testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch() {
+    func testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch() throws {
         _ = prepareHost(); let app = launch()
-        app.buttons["local.folder.link"].tap(); choose(folderName, app: app)
+        app.buttons["local.folder.link"].tap(); try choose(folderName, app: app)
         XCTAssertTrue(app.staticTexts["已关联文件夹；正文直接读取，原文件保留"].waitForExistence(timeout: 15))
         app.navigationBars.buttons.firstMatch.tap(); read(app)
         app.terminate(); app.launch()
         XCTAssertTrue(app.tabBars.buttons["书架"].waitForExistence(timeout: 10)); read(app)
     }
-    func testMissingExternalFolderCanBeReauthorizedThroughRealFiles() {
+    func testMissingExternalFolderCanBeReauthorizedThroughRealFiles() throws {
         let host = prepareHost(), app = launch()
-        app.buttons["local.folder.link"].tap(); choose(folderName, app: app)
+        app.buttons["local.folder.link"].tap(); try choose(folderName, app: app)
         XCTAssertTrue(app.staticTexts["已关联文件夹；正文直接读取，原文件保留"].waitForExistence(timeout: 15))
         host.activate(); host.buttons["files.fixture.retire"].tap()
         XCTAssertEqual(host.staticTexts["files.fixture.status"].label, "原目录已失效；新目录：" + folderName + "_新")
@@ -73,15 +77,15 @@ final class ExternalFilesParityUITests: ParityUITestCase {
         let folder = app.cells.matching(NSPredicate(format: "identifier BEGINSWITH %@", "local.folder.")).firstMatch
         XCTAssertTrue(folder.waitForExistence(timeout: 10)); folder.tap()
         XCTAssertTrue(app.alerts["重新授权《\(folderName)》"].waitForExistence(timeout: 10))
-        app.alerts.buttons["选择文件夹"].tap(); choose(folderName + "_新", app: app)
+        app.alerts.buttons["选择文件夹"].tap(); try choose(folderName + "_新", app: app)
         XCTAssertTrue(app.staticTexts["已恢复授权；书名和阅读记录保留"].waitForExistence(timeout: 15))
         app.navigationBars.buttons.firstMatch.tap(); read(app)
     }
-    func testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch() {
+    func testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch() throws {
         _ = prepareHost(); let app = launch(emptyLibrary: false)
         app.cells["storage.download-location"].tap()
         app.cells["download.location.choose"].tap(); app.alerts.buttons["选择文件夹"].tap()
-        choose(folderName, app: app)
+        try choose(folderName, app: app)
         let current = app.cells["download.location.current"]
         expectation(for: NSPredicate(format: "label CONTAINS %@", folderName), evaluatedWith: current)
         waitForExpectations(timeout: 15)

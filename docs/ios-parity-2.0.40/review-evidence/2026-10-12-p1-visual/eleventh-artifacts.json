@@ -1,0 +1,19 @@
+{
+  "artifacts": [
+    {
+      "id": 11715410946,
+      "name": "reader-enhancement-evidence",
+      "size_in_bytes": 643608,
+      "expired": false,
+      "created_at": "2026-10-11T20:50:06Z"
+    },
+    {
+      "id": 11715136501,
+      "name": "visual-matrix-screenshots",
+      "size_in_bytes": 25651077,
+      "expired": false,
+      "created_at": "2026-10-11T20:50:04Z"
+    }
+  ],
+  "checked_at_utc": "2026-10-11T20:51:24.512716+00:00"
+}

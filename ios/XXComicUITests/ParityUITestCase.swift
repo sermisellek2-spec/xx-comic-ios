@@ -10,6 +10,10 @@ class ParityUITestCase: XCTestCase {
             attachment.name = "failure-screen"
             attachment.lifetime = .keepAlways
             add(attachment)
+            let hierarchy = XCTAttachment(string: XCUIApplication().debugDescription)
+            hierarchy.name = "failure-accessibility"
+            hierarchy.lifetime = .keepAlways
+            add(hierarchy)
         }
         try super.tearDownWithError()
     }

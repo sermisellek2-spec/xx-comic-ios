@@ -1,0 +1,98 @@
+{
+  "recordedAtUTC": "2026-10-11T20:50:51.663778+00:00",
+  "parentIOSCommit": "881214f7620e38af6c8bdfbf3d253d1291ec0868",
+  "captureExitCode": 0,
+  "testApkBuildExitCode": 0,
+  "baselineInputsVerified": 527,
+  "productionAPKUnchanged": true,
+  "productionAPK_SHA256": "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71",
+  "actualScreenshots": 64,
+  "sourceCoordinates": "screen; actual decor offset recorded",
+  "contentWidthsVerified": true,
+  "activeApplicationWindowVerified": true,
+  "unexpectedSystemOverlay": false,
+  "actualSystemHelpDismissalLogged": true,
+  "avd": "xxcomic-ux-viewport-api34",
+  "serial": "emulator-5568",
+  "hardwareProfile": "Nexus 9; isolated task AVD without Pixel cutout",
+  "visualGatePassed": false,
+  "realWebsitesExercised": false,
+  "captureDirectory": "android-golden-screen-viewport-3",
+  "captures": [
+    {
+      "manifest": "android_phone_landscape_dark-manifest.json",
+      "manifestSHA256": "5b480cd30d8d3386b9f0c66cc05ff1cf7b140b0a84ee4aa2b738de4839ed9fce",
+      "density": 3,
+      "logicalWidth": 852.0,
+      "logicalHeight": 393.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "aa861985c14ecc3a546760b0823ae4afa63498089ce0f3c250645ab845dc731a"
+    },
+    {
+      "manifest": "android_phone_landscape_light-manifest.json",
+      "manifestSHA256": "0f399976cf474a52e12ef307328d2e434e048ff58392f1018782fc8b390f0ad6",
+      "density": 3,
+      "logicalWidth": 852.0,
+      "logicalHeight": 393.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "aa861985c14ecc3a546760b0823ae4afa63498089ce0f3c250645ab845dc731a"
+    },
+    {
+      "manifest": "android_phone_portrait_dark-manifest.json",
+      "manifestSHA256": "67081e64bb484e6fedfcb3ef1bda14e46ae3bd46a45b83d934370d1f7fd4907d",
+      "density": 3,
+      "logicalWidth": 393.0,
+      "logicalHeight": 852.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "aa861985c14ecc3a546760b0823ae4afa63498089ce0f3c250645ab845dc731a"
+    },
+    {
+      "manifest": "android_phone_portrait_light-manifest.json",
+      "manifestSHA256": "13dbb2f596d0742ff5008895bab824311b8da01986d6fa6db93b62969991cb9d",
+      "density": 3,
+      "logicalWidth": 393.0,
+      "logicalHeight": 852.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "aa861985c14ecc3a546760b0823ae4afa63498089ce0f3c250645ab845dc731a"
+    },
+    {
+      "manifest": "android_tablet_landscape_dark-manifest.json",
+      "manifestSHA256": "633126be6924bff11d2b1bbca8b048f47c05579f42469b53c92b8ac70367c8c1",
+      "density": 2,
+      "logicalWidth": 1210.0,
+      "logicalHeight": 834.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "aa861985c14ecc3a546760b0823ae4afa63498089ce0f3c250645ab845dc731a"
+    },
+    {
+      "manifest": "android_tablet_landscape_light-manifest.json",
+      "manifestSHA256": "9566e783791dd73141dfe1918d737787667afebbf9fb421b813c638ed1b1f92c",
+      "density": 2,
+      "logicalWidth": 1210.0,
+      "logicalHeight": 834.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "aa861985c14ecc3a546760b0823ae4afa63498089ce0f3c250645ab845dc731a"
+    },
+    {
+      "manifest": "android_tablet_portrait_dark-manifest.json",
+      "manifestSHA256": "265416f238f3b118f5a2482fd8faab69fe1d8bedc3130a4045b1b71dceb72ad9",
+      "density": 2,
+      "logicalWidth": 834.0,
+      "logicalHeight": 1210.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "aa861985c14ecc3a546760b0823ae4afa63498089ce0f3c250645ab845dc731a"
+    },
+    {
+      "manifest": "android_tablet_portrait_light-manifest.json",
+      "manifestSHA256": "cc6931260e49af556995055d2052b593eaaf2b2d0c2258d400bf95273075750f",
+      "density": 2,
+      "logicalWidth": 834.0,
+      "logicalHeight": 1210.0,
+      "actualScreenshots": 8,
+      "testApkSHA256": "aa861985c14ecc3a546760b0823ae4afa63498089ce0f3c250645ab845dc731a"
+    }
+  ],
+  "rejectedPreviousCapture": "screen-viewport-2-overlay-rejection.json",
+  "runnerUsedSHA256": "2be1bb493305af00b6ca4d80ba0c6ec8b94a335b9d9976a902b84b67a529d960",
+  "sourceProviderSHA256": "42894d40761a90401ccea218288d7f274151b46444b77b4a9fd71cdd47efd8cb"
+}

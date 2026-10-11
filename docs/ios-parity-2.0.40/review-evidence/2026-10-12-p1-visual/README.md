@@ -1,6 +1,6 @@
 # 当前P1视觉与用户闭环修复证据
 
-更新：2026-10-12。当前候选父提交b9f368d，本地改动尚未通过Apple。仅指定sermisellek2-spec仓库做开发验收；未生成或发布IPA，不开放总验收/真实网站。
+更新：2026-10-12。下面各段记录当时候选及执行边界；最新第十一轮38944ae已结束，当前881214f后续修复尚未通过Apple。仅指定sermisellek2-spec仓库做开发验收；未生成或发布IPA，不开放总验收/真实网站。
 
 第九轮实际failure，见apple-9-summary.json与原始摘录：Debug/Release及Files辅助目标构建成功，AppleCore876/0失败/119.260秒；辅助应用安装报缺合法CFBundleVersion，Native/UI未执行，API产物为空。不能继承第八轮或说Files已通过。原始日志ZIP SHA保留，未修改原始包。
 
@@ -15,3 +15,5 @@ Android独立冻结输入527文件与原APK SHA再次核验。android-current-ma
 第十轮ee06b12在Debug编译发现ReaderSettingCard存储属性selected与UIKit继承属性冲突，Release/Core/Files/Native/UI均未执行。apple-10-summary.json与原始日志摘录保留实证；删除冗余状态，使用isSelected统一视觉/无障碍和trait刷新，两配置单文件语法实际退出0。将此最小修复独立上传完整重跑；本地后续P3连续阅读不纳入该修复提交。
 
 历史P1文字保存在historical-P1-before-current-visual.md，不作为当前结果。候选输入SHA记录另附；当前阶段仍未通过。
+
+第十一轮38944ae：90分钟超时取消。两配置SDK、AppleCore876/0失败、Files辅助目标构建/两设备安装、两设备原生20/0失败已实际执行；iPhoneUI64执行/10失败用例/24断言，iPad只完成30/3失败。四完整视觉用例2814.133秒。原始日志、视觉及增强ZIP已完整保留，原始xcresult直接上传因附件名引号失败；新工作流先归档原目录。详见[当前实证](apple-11-summary.json)与[后续修复](../2026-10-12-ci11-repair/README.md)。没有IPA，不继承为阶段通过。

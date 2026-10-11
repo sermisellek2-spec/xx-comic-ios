@@ -1,0 +1,15 @@
+{
+  "archive": "instrumentation-logs-original.zip",
+  "sha256": "19554374d326bf9f9aa7b1a403eed95caf4f2375360ef304dc74d32b203eb4f8",
+  "logs": {
+    "android_phone_landscape_dark.log": "ce2de645bce996323367121381416c703ae83dcc412b5832edb18ac0e770eaf6",
+    "android_phone_landscape_light.log": "ce2de645bce996323367121381416c703ae83dcc412b5832edb18ac0e770eaf6",
+    "android_phone_portrait_dark.log": "ce2de645bce996323367121381416c703ae83dcc412b5832edb18ac0e770eaf6",
+    "android_phone_portrait_light.log": "5963fe9b9b5827da15ada196cae8c70d344bdd3567f506505dde16ac115e689f",
+    "android_tablet_landscape_dark.log": "ce2de645bce996323367121381416c703ae83dcc412b5832edb18ac0e770eaf6",
+    "android_tablet_landscape_light.log": "ce2de645bce996323367121381416c703ae83dcc412b5832edb18ac0e770eaf6",
+    "android_tablet_portrait_dark.log": "ce2de645bce996323367121381416c703ae83dcc412b5832edb18ac0e770eaf6",
+    "android_tablet_portrait_light.log": "ce2de645bce996323367121381416c703ae83dcc412b5832edb18ac0e770eaf6"
+  },
+  "originalBytesPreserved": true
+}

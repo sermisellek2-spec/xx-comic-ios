@@ -6,16 +6,17 @@ final class VisualMatrixUITests: ParityUITestCase {
         let screenshot = XCUIScreen.main.screenshot()
         let attachment = XCTAttachment(data: screenshot.pngRepresentation, uniformTypeIdentifier: "public.png")
         attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+        guard let raster = screenshot.image.cgImage else { XCTFail("Screenshot has no actual raster"); return }
         let frame = XCUIApplication().windows.firstMatch.frame
         let app = XCUIApplication()
-        let visibleTypes: Set<XCUIElement.ElementType> = [.button, .staticText, .image, .switch, .searchField, .textField]
-        let components: [[String: Any]] = app.descendants(matching: .any).allElementsBoundByIndex.compactMap { element in
-            guard visibleTypes.contains(element.elementType) else { return nil }
-            let bounds = element.frame
-            guard bounds.width > 0, bounds.height > 0, frame.intersects(bounds) else { return nil }
-            return ["type": String(describing: element.elementType), "label": element.label, "identifier": element.identifier,
-                    "value": element.value as? String ?? "", "bounds": [Double(bounds.minX), Double(bounds.minY), Double(bounds.maxX), Double(bounds.maxY)]]
-        }
+        // One actual accessibility hierarchy instead of several remote
+        // attribute requests per element (47 minutes for four runs in CI 11).
+        // Keep the original text inside the hashed attachment. Comparison tools
+        // parse it without manufacturing missing or ambiguous components.
+        let collectionStarted = Date()
+        let accessibilitySnapshot = app.debugDescription
+        let collectionSeconds = Date().timeIntervalSince(collectionStarted)
+        XCTAssertFalse(accessibilitySnapshot.isEmpty)
         let record: [String: Any] = [
             "fixtureID": ParityFixtureIdentity.fixtureID,
             "metadataSHA256": ParityFixtureIdentity.metadataSHA256,
@@ -23,9 +24,16 @@ final class VisualMatrixUITests: ParityUITestCase {
             "scene": name,
             "appFrame": ["x": Double(frame.minX), "y": Double(frame.minY), "width": Double(frame.width), "height": Double(frame.height)],
             "screenScale": Double(UIScreen.main.scale),
+            "rasterPixelSize": [raster.width, raster.height],
+            "screenshotImageSizePT": [Double(screenshot.image.size.width), Double(screenshot.image.size.height)],
+            "screenshotImageScale": Double(screenshot.image.scale),
+            "screenshotImageOrientation": screenshot.image.imageOrientation.rawValue,
+            "displayNativePixelSize": [Double(UIScreen.main.nativeBounds.width), Double(UIScreen.main.nativeBounds.height)],
             "preferredContentSizeCategory": UIApplication.shared.preferredContentSizeCategory.rawValue,
             "capturedAtUTC": ISO8601DateFormatter().string(from: Date()),
-            "components": components,
+            "componentCollection": "xcui-debug-description-v1",
+            "componentCollectionSeconds": collectionSeconds,
+            "accessibilitySnapshot": accessibilitySnapshot,
             "steps": "VisualMatrixUITests production navigation with explicitly isolated Debug fixture"
         ]
         do {

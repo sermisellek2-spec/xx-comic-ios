@@ -16,6 +16,7 @@ final class DetailViewController: UIViewController {
     private let favorite = UIButton(type: .system)
     private let read = UIButton(type: .system)
     private let directory = UIButton(type: .system)
+    private let directoryArrow = UIImageView(image: UIImage(systemName: "chevron.right", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .regular)))
     private let downloadButton = UIButton(type: .system)
     private let sourceSwitchButton = UIButton(type: .system)
     private let manageVolumes = UIButton(type: .system)
@@ -61,6 +62,8 @@ final class DetailViewController: UIViewController {
         body.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         let titleRow = UIStackView(arrangedSubviews: [heading, downloadButton, sourceSwitchButton])
         titleRow.spacing = 8; titleRow.alignment = .center
+        heading.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        sourceSwitchButton.setContentHuggingPriority(.required, for: .horizontal)
         sourceSwitchButton.titleLabel?.font = .systemFont(ofSize: 12)
         sourceSwitchButton.titleLabel?.lineBreakMode = .byTruncatingTail
         sourceSwitchButton.widthAnchor.constraint(lessThanOrEqualToConstant: 160).isActive = true
@@ -111,6 +114,15 @@ final class DetailViewController: UIViewController {
         directory.accessibilityLabel = "章节目录"
         directory.heightAnchor.constraint(greaterThanOrEqualToConstant: 58).isActive = true
         directory.addTarget(self, action: #selector(showDirectory), for: .touchUpInside)
+        directoryArrow.translatesAutoresizingMaskIntoConstraints = false
+        directoryArrow.isUserInteractionEnabled = false
+        directoryArrow.contentMode = .scaleAspectFit
+        directory.addSubview(directoryArrow)
+        NSLayoutConstraint.activate([
+            directoryArrow.trailingAnchor.constraint(equalTo: directory.trailingAnchor, constant: -12),
+            directoryArrow.centerYAnchor.constraint(equalTo: directory.centerYAnchor),
+            directoryArrow.widthAnchor.constraint(equalToConstant: 12), directoryArrow.heightAnchor.constraint(equalToConstant: 20)
+        ])
         setDownloadButton(loading: false)
         downloadButton.accessibilityIdentifier = "detail.download"
         downloadButton.addTarget(self, action: #selector(openDownloadSelection), for: .touchUpInside)
@@ -252,13 +264,13 @@ final class DetailViewController: UIViewController {
         configuration.attributedTitle = AttributedString("章节目录", attributes: headingAttributes)
         configuration.attributedSubtitle = AttributedString(subtitle, attributes: subtitleAttributes)
         configuration.titleAlignment = .leading; configuration.titlePadding = 2
-        configuration.image = UIImage(systemName: "chevron.right", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .regular))
-        configuration.imagePlacement = .trailing; configuration.imagePadding = 12
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12)
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 36)
         configuration.background.backgroundColor = Palette.accentSoft; configuration.background.cornerRadius = 8
         configuration.background.strokeColor = Palette.border; configuration.background.strokeWidth = 1 / UIScreen.main.scale
         configuration.baseForegroundColor = Palette.text3
         directory.configuration = configuration; directory.contentHorizontalAlignment = .leading
+        directoryArrow.tintColor = Palette.text3
+        directory.bringSubviewToFront(directoryArrow)
         directory.accessibilityValue = subtitle
     }
     private func updateFeedback() {
@@ -384,7 +396,14 @@ final class DetailViewController: UIViewController {
         feedback.endDownload(); updateFeedback()
     }
     private func cancelPreparingRead() {
+        let wasPreparing = readTask != nil
         readID = UUID(); readTask?.cancel(); readTask = nil
+        if wasPreparing {
+            // The directory worker is a shared unstructured Task. Cancelling
+            // only its reader waiter leaves the request alive and can block the
+            // download that takes over. Invalidate and cancel the actual work.
+            directoryID = UUID(); directoryTask?.cancel(); directoryTask = nil
+        }
         read.isEnabled = true; updateButtons()
     }
     @objc private func openDownloadCenter() {
@@ -539,6 +558,7 @@ final class DetailViewController: UIViewController {
                 do {
                     return try await source.chapters(comicId: id)
                 } catch {
+                    guard !(error is CancellationError), !Task.isCancelled else { throw CancellationError() }
                     if let self,
                        let bookId = try? DownloadModels.bookId(source: sourceId, comic: id),
                        let snapshot = self.environment.downloadStore.snapshot(id: bookId),

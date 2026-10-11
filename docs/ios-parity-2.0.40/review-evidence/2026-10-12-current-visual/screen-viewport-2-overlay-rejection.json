@@ -1,0 +1,32 @@
+{
+  "recordedAtUTC": "2026-10-11T20:44:01.025635+00:00",
+  "captureDirectory": "android-golden-screen-viewport-2",
+  "geometryChecksStillValid": true,
+  "referenceStateAccepted": false,
+  "reason": "Initial system immersive help obscures 16 modal pages; reject as common-state visual reference; original PNGs and manifests retained",
+  "obscuredCaptures": [
+    "android_phone_landscape_dark_reading_settings.png",
+    "android_phone_landscape_dark_reader_directory.png",
+    "android_phone_landscape_light_reading_settings.png",
+    "android_phone_landscape_light_reader_directory.png",
+    "android_phone_portrait_dark_reading_settings.png",
+    "android_phone_portrait_dark_reader_directory.png",
+    "android_phone_portrait_light_reading_settings.png",
+    "android_phone_portrait_light_reader_directory.png",
+    "android_tablet_landscape_dark_reading_settings.png",
+    "android_tablet_landscape_dark_reader_directory.png",
+    "android_tablet_landscape_light_reading_settings.png",
+    "android_tablet_landscape_light_reader_directory.png",
+    "android_tablet_portrait_dark_reading_settings.png",
+    "android_tablet_portrait_dark_reader_directory.png",
+    "android_tablet_portrait_light_reading_settings.png",
+    "android_tablet_portrait_light_reader_directory.png"
+  ],
+  "repair": "Click actual system help button; assert active application package; recapture without masking",
+  "iosGatePassed": false,
+  "originalArchive": {
+    "file": "android-screen-viewport-2-rejected.zip",
+    "sha256": "911155e4ec2cae6159062e5291173c2c7fc5df29084cd09f5fb7479f07034b9c",
+    "bytes": 9196101
+  }
+}

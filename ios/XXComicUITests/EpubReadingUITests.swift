@@ -167,13 +167,16 @@ final class EpubReadingUITests: ParityUITestCase {
         let app = launch(); open("跨书", app: app)
         // The other real book's CSS hides the body if it is loaded; CSP or the scheme handler must refuse it.
         let visible = app.webViews.staticTexts["跨书样式未执行"]
-        let failure = app.buttons["epub.state"]
-        expectation(for: NSPredicate { _, _ in visible.exists || (failure.exists && failure.label.contains("重试")) }, evaluatedWith: app)
+        let failure = app.buttons.matching(identifier: "epub.state").matching(NSPredicate(format: "label CONTAINS %@", "重试")).firstMatch
+        // Query the terminal failure state in one snapshot. The loading button
+        // can disappear between an `exists` lookup and a separate label lookup.
+        expectation(for: NSPredicate { _, _ in visible.exists || failure.exists }, evaluatedWith: app)
         waitForExpectations(timeout: 15)
         back(app); back(app)
         app.buttons["本地书架"].tap(); app.buttons["bookshelf.import"].tap(); app.buttons["EPUB 电子书"].tap()
-        XCTAssertTrue(app.navigationBars.buttons["取消"].waitForExistence(timeout: 5))
-        app.navigationBars.buttons["取消"].tap()
+        let cancel = app.navigationBars.buttons.matching(NSPredicate(format: "label IN %@", ["取消", "Cancel"])).firstMatch
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5)); cancel.tap()
+        XCTAssertTrue(app.buttons["本地书架"].waitForExistence(timeout: 5))
     }
 
     private func launchKindle() -> XCUIApplication {

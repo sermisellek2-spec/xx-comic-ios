@@ -1,0 +1,8 @@
+# Retained screenshot provenance is byte-addressed evidence. Preserve its
+# original line endings on every host so recorded SHA-256 values remain valid.
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/android-golden-screen-viewport-3/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/screen-coordinate-proof*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/parity-runner.init.gradle -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci11-repair/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-p1-visual/apple-11-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-p1-visual/eleventh-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

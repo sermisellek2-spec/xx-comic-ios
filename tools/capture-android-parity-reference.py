@@ -44,7 +44,8 @@ def adb(*arguments, timeout=30):
 
 
 actual_avd = adb("emu", "avd", "name").splitlines()[0].strip()
-if actual_avd != args.avd or args.serial != "emulator-5566":
+task_emulators = {("emulator-5566", "xxcomic-ux-api34"), ("emulator-5568", "xxcomic-ux-viewport-api34")}
+if actual_avd != args.avd or (args.serial, args.avd) not in task_emulators:
     raise ValueError("The explicit task emulator identity does not match")
 if adb("shell", "getprop", "sys.boot_completed").strip() != "1":
     raise RuntimeError("Task emulator has not completed boot")
@@ -110,6 +111,13 @@ for case in cases:
     for capture in proof["captures"]:
         if sha(output / capture["file"]) != capture["sha256"] or capture["pixels"] != expected_pixels:
             raise ValueError("Screenshot hash or actual orientation mismatch: " + capture["file"])
+        bounds = capture.get("decorBoundsOnScreen", [])
+        if capture.get("componentCoordinates") != "screen" or len(bounds) != 4:
+            raise ValueError("Actual screen component/window coordinates are missing: " + capture["file"])
+        if capture.get("activeWindowPackage") != "com.xxcomic" or any("Viewing full screen" in component.get("text", "") or component.get("text") == "GOT IT" for component in capture.get("components", [])):
+            raise ValueError("Unexpected system overlay is not a common application state: " + capture["file"])
+        if bounds[2] - bounds[0] != expected_pixels[0]:
+            raise ValueError("Application content width differs from the common logical window; use the task's matching viewport emulator: " + capture["file"])
         if any(capture["file"].endswith("_" + scene + ".png") for scene in ["reader", "reading_settings", "reader_directory"]):
             state = capture.get("readerState", {})
             if state.get("enhancementMode") != 0 or state.get("enhancementComparison") is not False or state.get("layoutMode") != 0 or state.get("controlsVisible") is not True:
@@ -122,6 +130,8 @@ for case in cases:
                   "theme": theme, "orientation": orientation, "fontScale": 1.0,
                   "airplaneMode": True, "statisticsDisabledBeforeLaunch": True, "realWebsitesExercised": False,
                   "referenceManifestSHA256": sha(proof_path), "actualScreenshots": 8,
+                  "componentCoordinates": "screen", "contentWidthVerified": True,
+                  "activeWindowPackage": "com.xxcomic", "unexpectedSystemOverlay": False,
                   "iosVisualAcceptance": "pending same-content, same-width Apple screenshots and component review"}
     (output / (stem + "-provenance.json")).write_text(json.dumps(provenance, ensure_ascii=False, indent=2), encoding="utf-8")
     print("Saved and verified 8 actual screenshots: " + stem, flush=True)

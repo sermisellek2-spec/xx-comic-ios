@@ -79,6 +79,10 @@ for action in root.get('actions', []):
                 attachment_index += 1
                 suffix = '.png' if item.get('uniformTypeIdentifier') == 'public.png' else '.jpg'
                 target = output / 'ui-failures' / f'{device_slug}-{test_slug}-{attachment_index}{suffix}'
+            elif failed and name == 'failure-accessibility':
+                # Only our explicit isolated-test hierarchy is exported as text;
+                # arbitrary automatic diagnostic logs remain in the raw archive.
+                target = output / 'ui-failures' / f'{device_slug}-{test_slug}-accessibility.txt'
             else:
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)

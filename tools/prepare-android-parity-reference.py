@@ -1,4 +1,9 @@
-"""Add only a test-APK provider to an already verified frozen reference copy."""
+"""Add only a test-APK provider to an already verified frozen reference copy.
+
+Build assembleDebugAndroidTest using -I
+docs/ios-parity-2.0.40/fixtures/android/parity-runner.init.gradle. The init script
+selects only the test runner without editing any frozen production/build input.
+"""
 import argparse
 import hashlib
 import json

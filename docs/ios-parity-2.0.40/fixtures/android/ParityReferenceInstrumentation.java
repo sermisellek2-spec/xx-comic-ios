@@ -178,7 +178,17 @@ public final class ParityReferenceInstrumentation extends Instrumentation {
         if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("Cannot create reference output"); return dir;
     }
     private void shot(String scene) throws Exception {
-        status("capture-" + scene); SystemClock.sleep(800);
+        status("capture-" + scene);
+        // The first-use system cling is delayed after entering immersive mode.
+        // Dismiss its actual button rather than masking it in the screenshot.
+        SystemClock.sleep(scene.equals("reader") || scene.equals("reading_settings") || scene.equals("reader_directory") ? 1800 : 800);
+        dismissFullscreenHelp();
+        AccessibilityNodeInfo active = getUiAutomation().getRootInActiveWindow();
+        if (active == null) throw new AssertionError("Missing active application window: " + scene);
+        String activePackage;
+        try { activePackage = String.valueOf(active.getPackageName()); }
+        finally { active.recycle(); }
+        if (!"com.xxcomic".equals(activePackage)) throw new AssertionError("Unexpected active window " + activePackage + ": " + scene);
         Bitmap screenshot = getUiAutomation().takeScreenshot();
         if (screenshot == null) throw new AssertionError("No actual screenshot");
         String filename = stem + "_" + scene + ".png"; File file = new File(outputDirectory(), filename);
@@ -186,9 +196,18 @@ public final class ParityReferenceInstrumentation extends Instrumentation {
         try (FileOutputStream out = new FileOutputStream(file)) { if (!screenshot.compress(Bitmap.CompressFormat.PNG, 100, out)) throw new IOException("Cannot encode screenshot"); }
         finally { screenshot.recycle(); }
         JSONObject record = new JSONObject(); record.put("file", filename); record.put("sha256", sha(read(file)));
+        record.put("activeWindowPackage", activePackage);
         record.put("pixels", new JSONArray(Arrays.asList(width, height)));
         final JSONArray components = new JSONArray();
-        onMain(() -> component(activity.getWindow().getDecorView(), components));
+        onMain(() -> {
+            View decor = activity.getWindow().getDecorView();
+            int[] position = new int[2]; decor.getLocationOnScreen(position);
+            try {
+                record.put("decorBoundsOnScreen", new JSONArray(Arrays.asList(position[0], position[1], position[0] + decor.getWidth(), position[1] + decor.getHeight())));
+                record.put("componentCoordinates", "screen");
+            } catch (JSONException error) { throw new IllegalStateException(error); }
+            component(decor, components);
+        });
         if (scene.equals("reader") || scene.equals("reading_settings") || scene.equals("reader_directory")) {
             JSONObject state = new JSONObject();
             state.put("enhancementMode", Phase8Checks.get(activity, "readerEnhancementMode"));
@@ -204,6 +223,28 @@ public final class ParityReferenceInstrumentation extends Instrumentation {
             try { modalComponent(root, components); } finally { root.recycle(); }
         }
         record.put("components", components); record.put("capturedAtMillis", System.currentTimeMillis()); captures.add(record);
+    }
+    private void dismissFullscreenHelp() {
+        AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
+        if (root == null) return;
+        List<AccessibilityNodeInfo> heading = root.findAccessibilityNodeInfosByText("Viewing full screen");
+        List<AccessibilityNodeInfo> buttons = root.findAccessibilityNodeInfosByText("GOT IT");
+        boolean dismissed = false;
+        try {
+            if (heading.isEmpty()) return;
+            String owner = String.valueOf(root.getPackageName());
+            if (!"android".equals(owner) && !"com.android.systemui".equals(owner)) throw new AssertionError("Fullscreen help has unexpected owner: " + owner);
+            for (AccessibilityNodeInfo button : buttons) {
+                if (button.isClickable() && button.performAction(AccessibilityNodeInfo.ACTION_CLICK)) { dismissed = true; break; }
+            }
+            if (!dismissed) throw new AssertionError("Cannot dismiss the actual system fullscreen help button");
+            status("system-fullscreen-help-dismissed");
+        } finally {
+            for (AccessibilityNodeInfo node : heading) node.recycle();
+            for (AccessibilityNodeInfo node : buttons) node.recycle();
+            root.recycle();
+        }
+        if (dismissed) SystemClock.sleep(500);
     }
     private void modalComponent(AccessibilityNodeInfo node, JSONArray rows) throws JSONException {
         if (!node.isVisibleToUser()) return;
@@ -222,11 +263,15 @@ public final class ParityReferenceInstrumentation extends Instrumentation {
     }
     private void component(View view, JSONArray rows) {
         Rect visible = new Rect(); if (!view.getGlobalVisibleRect(visible) || view.getAlpha() == 0) return;
+        // getGlobalVisibleRect uses root-view coordinates. Modal accessibility
+        // bounds and screenshots use screen coordinates, including window offset.
+        int[] rootPosition = new int[2]; view.getRootView().getLocationOnScreen(rootPosition);
+        visible.offset(rootPosition[0], rootPosition[1]);
         try {
             String text = view instanceof TextView ? ((TextView) view).getText().toString() : "";
             CharSequence description = view.getContentDescription();
             if (!text.isEmpty() || description != null) {
-                JSONObject row = new JSONObject(); row.put("text", text); row.put("description", description == null ? "" : description.toString());
+                JSONObject row = new JSONObject(); row.put("text", text); row.put("description", description == null ? "" : description.toString()); row.put("origin", "view-screen");
                 row.put("type", view.getClass().getSimpleName()); row.put("bounds", new JSONArray(Arrays.asList(visible.left, visible.top, visible.right, visible.bottom)));
                 if (view instanceof TextView) row.put("fontPx", ((TextView) view).getTextSize()); rows.put(row);
             }

@@ -27,8 +27,8 @@ jobs:
   build:
     if: github.repository == 'sermisellek2-spec/xx-comic-ios'
     runs-on: macos-14
-    # The retained full 57-case/device run used 59 minutes. Real external Files
-    # scenarios extend the same complete matrix, so retain headroom for both.
+    # CI 11 timed out while collecting every element through repeated IPC calls.
+    # Keep the full matrix; one retained hierarchy per scene removes that overhead.
     timeout-minutes: 90
     env:
       IOS_VALIDATION_SCOPE: ${{ github.event.inputs.validation_scope || 'full' }}
@@ -78,12 +78,18 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Archive original UI test results
+        if: always()
+        run: python3 ios/scripts/archive_results.py ios/build
+
       - name: Upload UI test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: iOS-test-results
-          path: ios/build/ui-results-*/*.xcresult
+          path: |
+            ios/build/test-result-archives/*.tar.gz
+            ios/build/test-result-archives/manifest.json
           if-no-files-found: ignore
           retention-days: 7
 
@@ -97,6 +103,7 @@ jobs:
             ios/build/evidence/visual-provenance/*.json
             ios/build/evidence/ui-failures/*.png
             ios/build/evidence/ui-failures/*.jpg
+            ios/build/evidence/ui-failures/*.txt
             ios/build/evidence/*-manifest.json
             ios/build/evidence/*-tests.json
           if-no-files-found: ignore

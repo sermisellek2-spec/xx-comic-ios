@@ -1,0 +1,1923 @@
+{
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "fixtureID": "android-2.0.40-current-pages-v1",
+  "metadataSHA256": "3d95b4c8b820c237907b122b498b7097731165ac745039d75c0d73fc590e948e",
+  "imageSHA256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+  "fontScale": 1,
+  "density": 2,
+  "provider": "test APK only; unchanged frozen production views and consumers",
+  "captures": [
+    {
+      "file": "android_tablet_portrait_dark_bookshelf_online.png",
+      "sha256": "a57cf74b051807e75f141a8f112d90d02d89e46e108edffa1c6b32b45f70019b",
+      "activeWindowPackage": "com.xxcomic",
+      "pixels": [
+        1668,
+        2420
+      ],
+      "decorBoundsOnScreen": [
+        0,
+        0,
+        1668,
+        2420
+      ],
+      "componentCoordinates": "screen",
+      "components": [
+        {
+          "text": "我的书架",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            57,
+            224,
+            127
+          ],
+          "fontPx": 48
+        },
+        {
+          "text": " | ",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            224,
+            70,
+            248,
+            113
+          ],
+          "fontPx": 32
+        },
+        {
+          "text": "本地书架",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            248,
+            68,
+            376,
+            116
+          ],
+          "fontPx": 32
+        },
+        {
+          "text": "",
+          "description": "切换为列表模式",
+          "origin": "view-screen",
+          "type": "ImageView",
+          "bounds": [
+            1522,
+            66,
+            1574,
+            118
+          ]
+        },
+        {
+          "text": "",
+          "description": "蕾姆主题",
+          "origin": "view-screen",
+          "type": "ImageView",
+          "bounds": [
+            1590,
+            69,
+            1636,
+            115
+          ]
+        },
+        {
+          "text": "接着看",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            148,
+            1511,
+            196
+          ],
+          "fontPx": 32
+        },
+        {
+          "text": "阅读历史 ›",
+          "description": "打开阅读历史",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1511,
+            136,
+            1636,
+            208
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "",
+          "description": "电锯人封面",
+          "origin": "view-screen",
+          "type": "ImageView",
+          "bounds": [
+            34,
+            225,
+            102,
+            293
+          ]
+        },
+        {
+          "text": "电锯人",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            122,
+            217,
+            1546,
+            261
+          ],
+          "fontPx": 30
+        },
+        {
+          "text": "上次看到 · 第 1 话",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            122,
+            265,
+            1546,
+            300
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "续读 ›",
+          "description": "继续阅读",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1546,
+            209,
+            1634,
+            309
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "全部",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            48,
+            322,
+            108,
+            366
+          ],
+          "fontPx": 30
+        },
+        {
+          "text": "",
+          "description": "分组管理",
+          "origin": "view-screen",
+          "type": "FrameLayout",
+          "bounds": [
+            1576,
+            321,
+            1636,
+            381
+          ]
+        },
+        {
+          "text": "5",
+          "description": "",
+          "origin": "view-screen",
+          "type": "BookshelfBadgeView",
+          "bounds": [
+            249,
+            400,
+            281,
+            432
+          ],
+          "fontPx": 20
+        },
+        {
+          "text": "更新至 第6话",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            44,
+            691,
+            277,
+            726
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "电锯人",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            742,
+            289,
+            781
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "漫画160",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            785,
+            289,
+            820
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "6",
+          "description": "",
+          "origin": "view-screen",
+          "type": "BookshelfBadgeView",
+          "bounds": [
+            518,
+            400,
+            550,
+            432
+          ],
+          "fontPx": 20
+        },
+        {
+          "text": "更新至 第6话",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            313,
+            691,
+            546,
+            726
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "一人之下",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            301,
+            742,
+            558,
+            781
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "漫画160",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            301,
+            785,
+            558,
+            820
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "6",
+          "description": "",
+          "origin": "view-screen",
+          "type": "BookshelfBadgeView",
+          "bounds": [
+            787,
+            400,
+            819,
+            432
+          ],
+          "fontPx": 20
+        },
+        {
+          "text": "更新至 第6话",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            582,
+            691,
+            815,
+            726
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "间谍过家家",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            570,
+            742,
+            827,
+            781
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "漫画160",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            570,
+            785,
+            827,
+            820
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "书架",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            254,
+            2247,
+            302,
+            2282
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "发现",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            810,
+            2247,
+            858,
+            2282
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "设置",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1366,
+            2247,
+            1414,
+            2282
+          ],
+          "fontPx": 24
+        }
+      ],
+      "capturedAtMillis": 1791751626184
+    },
+    {
+      "file": "android_tablet_portrait_dark_discover.png",
+      "sha256": "fb05baf210ef0b47d30046ea7fa90d87d6a0fef4a78cd1f6b2202024af752f9c",
+      "activeWindowPackage": "com.xxcomic",
+      "pixels": [
+        1668,
+        2420
+      ],
+      "decorBoundsOnScreen": [
+        0,
+        0,
+        1668,
+        2420
+      ],
+      "componentCoordinates": "screen",
+      "components": [
+        {
+          "text": "发现",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            57,
+            1490,
+            127
+          ],
+          "fontPx": 48
+        },
+        {
+          "text": "漫画160",
+          "description": "选择站源和分类，当前漫画160",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1490,
+            56,
+            1636,
+            128
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "单站",
+          "description": "切换搜索模式，当前单站",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1524,
+            152,
+            1628,
+            228
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "类型",
+          "description": "筛选：类型",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            236,
+            128,
+            287
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "全部漫画",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            296,
+            1636,
+            344
+          ],
+          "fontPx": 32
+        },
+        {
+          "text": "电锯人",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            688,
+            286,
+            722
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "间谍过家家",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            302,
+            688,
+            556,
+            722
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "一人之下",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            572,
+            688,
+            826,
+            722
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "书架",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            254,
+            2247,
+            302,
+            2282
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "发现",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            810,
+            2247,
+            858,
+            2282
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "设置",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1366,
+            2247,
+            1414,
+            2282
+          ],
+          "fontPx": 24
+        }
+      ],
+      "capturedAtMillis": 1791751628378
+    },
+    {
+      "file": "android_tablet_portrait_dark_source_drawer.png",
+      "sha256": "379ece6c337ea0d50c6b9932bcd593c941a9f143935a82e78ea25fd90e1ab6ec",
+      "activeWindowPackage": "com.xxcomic",
+      "pixels": [
+        1668,
+        2420
+      ],
+      "decorBoundsOnScreen": [
+        0,
+        0,
+        1668,
+        2420
+      ],
+      "componentCoordinates": "screen",
+      "components": [
+        {
+          "text": "发现",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            57,
+            1490,
+            127
+          ],
+          "fontPx": 48
+        },
+        {
+          "text": "漫画160",
+          "description": "选择站源和分类，当前漫画160",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1490,
+            56,
+            1636,
+            128
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "单站",
+          "description": "切换搜索模式，当前单站",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1524,
+            152,
+            1628,
+            228
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "类型",
+          "description": "筛选：类型",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            236,
+            128,
+            287
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "全部漫画",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            296,
+            1636,
+            344
+          ],
+          "fontPx": 32
+        },
+        {
+          "text": "电锯人",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            688,
+            286,
+            722
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "间谍过家家",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            302,
+            688,
+            556,
+            722
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "一人之下",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            572,
+            688,
+            826,
+            722
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "书架",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            254,
+            2247,
+            302,
+            2282
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "发现",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            810,
+            2247,
+            858,
+            2282
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "设置",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1366,
+            2247,
+            1414,
+            2282
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "站源与分类",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            32,
+            1547,
+            1636,
+            1597
+          ]
+        },
+        {
+          "text": "站源",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            32,
+            1612,
+            826,
+            1700
+          ]
+        },
+        {
+          "text": "分类",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            842,
+            1612,
+            1636,
+            1700
+          ]
+        },
+        {
+          "text": "分组 · 全部 · 已启用站源",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            32,
+            1716,
+            1636,
+            1751
+          ]
+        },
+        {
+          "text": "漫画160",
+          "description": "漫画160，当前站源",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            32,
+            1767,
+            556,
+            1855
+          ]
+        },
+        {
+          "text": "G社漫画",
+          "description": "G社漫画，点击选择",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            572,
+            1767,
+            1096,
+            1855
+          ]
+        },
+        {
+          "text": "18漫画",
+          "description": "18漫画，点击选择",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            1112,
+            1767,
+            1636,
+            1855
+          ]
+        },
+        {
+          "text": "禁漫天堂",
+          "description": "禁漫天堂，点击选择",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            32,
+            1871,
+            556,
+            1959
+          ]
+        },
+        {
+          "text": "漫客栈",
+          "description": "漫客栈，点击选择",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            572,
+            1871,
+            1096,
+            1959
+          ]
+        },
+        {
+          "text": "HiperDEX",
+          "description": "HiperDEX，点击选择",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            1112,
+            1871,
+            1636,
+            1959
+          ]
+        },
+        {
+          "text": "漫画柜",
+          "description": "漫画柜，点击选择",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            32,
+            1975,
+            556,
+            2063
+          ]
+        },
+        {
+          "text": "Hanman18",
+          "description": "Hanman18，点击选择",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            572,
+            1975,
+            1096,
+            2063
+          ]
+        },
+        {
+          "text": "悦看漫画",
+          "description": "悦看漫画，点击选择",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            1112,
+            1975,
+            1636,
+            2063
+          ]
+        },
+        {
+          "text": "漫本",
+          "description": "漫本，点击选择",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            32,
+            2079,
+            556,
+            2167
+          ]
+        },
+        {
+          "text": "漫画栈",
+          "description": "漫画栈，点击选择",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            572,
+            2079,
+            1096,
+            2167
+          ]
+        },
+        {
+          "text": "比卡漫画",
+          "description": "比卡漫画，点击选择",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            1112,
+            2079,
+            1636,
+            2167
+          ]
+        },
+        {
+          "text": "应用",
+          "description": "",
+          "type": "android.widget.Button",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            32,
+            2188,
+            1636,
+            2276
+          ]
+        }
+      ],
+      "capturedAtMillis": 1791751630594
+    },
+    {
+      "file": "android_tablet_portrait_dark_search_results.png",
+      "sha256": "50687f639e941508013480754b4ce29225d7ee7b9cad69ae547deced766bebb8",
+      "activeWindowPackage": "com.xxcomic",
+      "pixels": [
+        1668,
+        2420
+      ],
+      "decorBoundsOnScreen": [
+        0,
+        0,
+        1668,
+        2420
+      ],
+      "componentCoordinates": "screen",
+      "components": [
+        {
+          "text": "发现",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            57,
+            1490,
+            127
+          ],
+          "fontPx": 48
+        },
+        {
+          "text": "漫画160",
+          "description": "选择站源和分类，当前漫画160",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1490,
+            56,
+            1636,
+            128
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "电锯人",
+          "description": "",
+          "origin": "view-screen",
+          "type": "EditText",
+          "bounds": [
+            40,
+            148,
+            1524,
+            232
+          ],
+          "fontPx": 28
+        },
+        {
+          "text": "单站",
+          "description": "切换搜索模式，当前单站",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1524,
+            152,
+            1628,
+            228
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "类型",
+          "description": "筛选：类型",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            236,
+            128,
+            287
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "搜索结果",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            296,
+            1636,
+            344
+          ],
+          "fontPx": 32
+        },
+        {
+          "text": "电锯人",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            688,
+            286,
+            722
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "书架",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            254,
+            2247,
+            302,
+            2282
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "发现",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            810,
+            2247,
+            858,
+            2282
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "设置",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1366,
+            2247,
+            1414,
+            2282
+          ],
+          "fontPx": 24
+        }
+      ],
+      "capturedAtMillis": 1791751633324
+    },
+    {
+      "file": "android_tablet_portrait_dark_detail.png",
+      "sha256": "c6e632296e4c3ad98c03ad05abc858ebcee86f5007b0e4829a8224ccf2b1dee6",
+      "activeWindowPackage": "com.xxcomic",
+      "pixels": [
+        1668,
+        2420
+      ],
+      "decorBoundsOnScreen": [
+        0,
+        0,
+        1668,
+        2420
+      ],
+      "componentCoordinates": "screen",
+      "components": [
+        {
+          "text": "电锯人",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            514,
+            1421,
+            573
+          ],
+          "fontPx": 40
+        },
+        {
+          "text": "",
+          "description": "下载离线章节",
+          "origin": "view-screen",
+          "type": "ImageView",
+          "bounds": [
+            1421,
+            508,
+            1493,
+            580
+          ]
+        },
+        {
+          "text": "漫画160",
+          "description": "切换站源，当前漫画160",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1493,
+            500,
+            1636,
+            588
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "连载中 · 验收作者",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            58,
+            604,
+            1636,
+            639
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "连载中",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            659,
+            144,
+            714
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "确定性同内容漫画：用于页面、交互与离线下载验收。",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            32,
+            738,
+            1636,
+            777
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "章节目录",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            56,
+            815,
+            1568,
+            857
+          ],
+          "fontPx": 28
+        },
+        {
+          "text": "6 话 · 已缓存",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            56,
+            863,
+            1568,
+            898
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "",
+          "description": "取消收藏",
+          "origin": "view-screen",
+          "type": "ImageView",
+          "bounds": [
+            32,
+            2192,
+            120,
+            2280
+          ]
+        },
+        {
+          "text": "",
+          "description": "继续阅读，第 1 话",
+          "origin": "view-screen",
+          "type": "LinearLayout",
+          "bounds": [
+            136,
+            2192,
+            1636,
+            2280
+          ]
+        },
+        {
+          "text": "继续阅读",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            160,
+            2198,
+            1612,
+            2235
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "第 1 话",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            160,
+            2239,
+            1612,
+            2274
+          ],
+          "fontPx": 24
+        }
+      ],
+      "capturedAtMillis": 1791751635554
+    },
+    {
+      "file": "android_tablet_portrait_dark_reader.png",
+      "sha256": "ac1f1c8b33bf7b32952b81e0106959c4c96043fc0f829d3e6aeb425158e02d6b",
+      "activeWindowPackage": "com.xxcomic",
+      "pixels": [
+        1668,
+        2420
+      ],
+      "decorBoundsOnScreen": [
+        0,
+        0,
+        1668,
+        2420
+      ],
+      "componentCoordinates": "screen",
+      "readerState": {
+        "enhancementMode": 0,
+        "enhancementComparison": false,
+        "themeMode": 1,
+        "layoutMode": 0,
+        "controlsVisible": true
+      },
+      "components": [
+        {
+          "text": "",
+          "description": "返回",
+          "origin": "view-screen",
+          "type": "ImageView",
+          "bounds": [
+            24,
+            64,
+            80,
+            120
+          ]
+        },
+        {
+          "text": "电锯人 · 第1话",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            96,
+            73,
+            1644,
+            110
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "上一章",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            24,
+            2256,
+            134,
+            2319
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "下一章",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1534,
+            2256,
+            1644,
+            2319
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "目录",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            275,
+            2374,
+            323,
+            2409
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "换源",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            809,
+            2374,
+            857,
+            2409
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "设置",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1344,
+            2374,
+            1392,
+            2409
+          ],
+          "fontPx": 24
+        }
+      ],
+      "capturedAtMillis": 1791751640409
+    },
+    {
+      "file": "android_tablet_portrait_dark_reading_settings.png",
+      "sha256": "64caa84c0d0609458251a3c220c32ed1d319ec718609dcf6e6f4ca9ed2e10a21",
+      "activeWindowPackage": "com.xxcomic",
+      "pixels": [
+        1668,
+        2420
+      ],
+      "decorBoundsOnScreen": [
+        0,
+        0,
+        1668,
+        2420
+      ],
+      "componentCoordinates": "screen",
+      "readerState": {
+        "enhancementMode": 0,
+        "enhancementComparison": false,
+        "themeMode": 1,
+        "layoutMode": 0,
+        "controlsVisible": true
+      },
+      "components": [
+        {
+          "text": "",
+          "description": "返回",
+          "origin": "view-screen",
+          "type": "ImageView",
+          "bounds": [
+            24,
+            64,
+            80,
+            120
+          ]
+        },
+        {
+          "text": "电锯人 · 第1话",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            96,
+            73,
+            1644,
+            110
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "上一章",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            24,
+            2256,
+            134,
+            2319
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "下一章",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1534,
+            2256,
+            1644,
+            2319
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "目录",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            275,
+            2374,
+            323,
+            2409
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "换源",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            809,
+            2374,
+            857,
+            2409
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "设置",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1344,
+            2374,
+            1392,
+            2409
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "阅读设置",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            1396,
+            1632,
+            1446
+          ]
+        },
+        {
+          "text": "阅读模式",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            1507,
+            172,
+            1547
+          ]
+        },
+        {
+          "text": "卷轴模式",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            362,
+            1533,
+            458,
+            1568
+          ]
+        },
+        {
+          "text": "普通模式",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            854,
+            1533,
+            950,
+            1568
+          ]
+        },
+        {
+          "text": "日漫模式",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            1346,
+            1533,
+            1442,
+            1568
+          ]
+        },
+        {
+          "text": "阅读主题",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            1651,
+            172,
+            1691
+          ]
+        },
+        {
+          "text": "默认",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            386,
+            1677,
+            434,
+            1712
+          ]
+        },
+        {
+          "text": "深色",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            878,
+            1677,
+            926,
+            1712
+          ]
+        },
+        {
+          "text": "浅色",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            1370,
+            1677,
+            1418,
+            1712
+          ]
+        },
+        {
+          "text": "隐藏右下角状态信息",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            1776,
+            1538,
+            1816
+          ]
+        },
+        {
+          "text": "墨水屏模式",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            1870,
+            1538,
+            1910
+          ]
+        },
+        {
+          "text": "搓指放大",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            1964,
+            1538,
+            2004
+          ]
+        },
+        {
+          "text": "禁止动画翻页",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            2051,
+            1538,
+            2091
+          ]
+        },
+        {
+          "text": "开启后直接切页，左右滑动仅在单页模式生效",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            2095,
+            1538,
+            2130
+          ]
+        },
+        {
+          "text": "去白边",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            2170,
+            1538,
+            2210
+          ]
+        },
+        {
+          "text": "自动裁去图片外围白边，原文件不变",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            2214,
+            1538,
+            2249
+          ]
+        },
+        {
+          "text": "图像增强",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            2289,
+            1538,
+            2329
+          ]
+        },
+        {
+          "text": "手机 GPU 本地 2 倍 AI 超分；清晰原图自动跳过",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            36,
+            2333,
+            1538,
+            2368
+          ]
+        }
+      ],
+      "capturedAtMillis": 1791751643639
+    },
+    {
+      "file": "android_tablet_portrait_dark_reader_directory.png",
+      "sha256": "abbdf5f9a82ef735dd90bbdafb65e0c079313528107b7827e0fa7c1f3b232d3b",
+      "activeWindowPackage": "com.xxcomic",
+      "pixels": [
+        1668,
+        2420
+      ],
+      "decorBoundsOnScreen": [
+        0,
+        0,
+        1668,
+        2420
+      ],
+      "componentCoordinates": "screen",
+      "readerState": {
+        "enhancementMode": 0,
+        "enhancementComparison": false,
+        "themeMode": 1,
+        "layoutMode": 0,
+        "controlsVisible": true
+      },
+      "components": [
+        {
+          "text": "",
+          "description": "返回",
+          "origin": "view-screen",
+          "type": "ImageView",
+          "bounds": [
+            24,
+            64,
+            80,
+            120
+          ]
+        },
+        {
+          "text": "电锯人 · 第1话",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            96,
+            73,
+            1644,
+            110
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "上一章",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            24,
+            2256,
+            134,
+            2319
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "下一章",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1534,
+            2256,
+            1644,
+            2319
+          ],
+          "fontPx": 26
+        },
+        {
+          "text": "目录",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            275,
+            2374,
+            323,
+            2409
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "换源",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            809,
+            2374,
+            857,
+            2409
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "设置",
+          "description": "",
+          "origin": "view-screen",
+          "type": "TextView",
+          "bounds": [
+            1344,
+            2374,
+            1392,
+            2409
+          ],
+          "fontPx": 24
+        },
+        {
+          "text": "",
+          "description": "展开或收起章节目录",
+          "type": "android.widget.FrameLayout",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            0,
+            1089,
+            1668,
+            1133
+          ]
+        },
+        {
+          "text": "全部章节",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            40,
+            1141,
+            1540,
+            1205
+          ]
+        },
+        {
+          "text": "正序",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            1540,
+            1145,
+            1628,
+            1201
+          ]
+        },
+        {
+          "text": "第1话",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            67,
+            1238,
+            1544,
+            1280
+          ]
+        },
+        {
+          "text": "第2话",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            67,
+            1330,
+            1544,
+            1372
+          ]
+        },
+        {
+          "text": "第3话",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            67,
+            1422,
+            1544,
+            1464
+          ]
+        },
+        {
+          "text": "第4话",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            67,
+            1514,
+            1544,
+            1556
+          ]
+        },
+        {
+          "text": "第5话",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            67,
+            1606,
+            1544,
+            1648
+          ]
+        },
+        {
+          "text": "第6话",
+          "description": "",
+          "type": "android.widget.TextView",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            67,
+            1698,
+            1544,
+            1740
+          ]
+        },
+        {
+          "text": "",
+          "description": "快速定位章节，上下拖动或使用滚动操作",
+          "type": "android.view.View",
+          "origin": "active-modal-accessibility",
+          "bounds": [
+            1580,
+            1213,
+            1668,
+            2396
+          ]
+        }
+      ],
+      "capturedAtMillis": 1791751647352
+    }
+  ]
+}

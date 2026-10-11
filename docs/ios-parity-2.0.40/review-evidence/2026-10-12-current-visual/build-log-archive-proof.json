@@ -1,0 +1,13 @@
+{
+  "archive": "component-coordinate-build-logs-original.zip",
+  "sha256": "cef79651e3237e91f836eb4ee2dee754ae82d84d6499679038417cb51ca9f302",
+  "originalLogs": {
+    "component-coordinates-build-2.log": "3e610a03516c18b7dc574f773278a0af4f98c4db179cd3c89d411bd842f00aa4",
+    "component-coordinates-build-3.log": "16d8d34660d29cea089aab835df6ab21978b26064e2b447a21a0f2d970d25e80",
+    "component-coordinates-build-4.log": "96121c8398b3f5a7acf548563db967bc459b9e029d4a012e9127c475ca8aa050",
+    "component-coordinates-build-5.log": "e4b75a30675a296edc2af8e1b6280f28686793e5b5613890858f9edbd54a4738",
+    "component-coordinates-build.log": "2f8e853c52d4c3ff3ff4720e3a6d067b3f8fe44786bc6baf806f714546de95d4"
+  },
+  "bytesModified": false,
+  "reason": "Retain real Gradle trailing spaces unchanged inside ZIP; code diff checks remain enforced"
+}

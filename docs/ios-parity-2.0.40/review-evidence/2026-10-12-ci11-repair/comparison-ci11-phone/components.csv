@@ -1,0 +1,481 @@
+﻿case,page,label,androidType,androidBoundsDP,androidFontDP,iosID,iosBoundsPT,deltaLTRB,match,acceptance
+phone_portrait_light,bookshelf_online,我的书架,TextView,"[16.0, 28.333, 112.0, 63.333]",24.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,bookshelf_online,|,TextView,"[112.0, 35.0, 124.0, 56.667]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,bookshelf_online,本地书架,TextView,"[124.0, 34.333, 188.0, 57.667]",16.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,bookshelf_online,切换为列表模式,ImageView,"[320.0, 33.0, 346.0, 59.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,bookshelf_online,蕾姆主题,ImageView,"[354.0, 34.333, 377.0, 57.333]",,rem_reader_resume,"[354, 69.66666666666667, 377, 92.66666666666667]","[0.0, 35.334, 0.0, 35.334]",unique label; needs manual review,pending component review
+phone_portrait_light,bookshelf_online,接着看,TextView,"[16.0, 74.333, 314.333, 97.667]",16.0,,"[16, 111.33333333333333, 65, 130.66666666666666]","[0.0, 37.0, -249.333, 33.0]",unique label; needs manual review,pending component review
+phone_portrait_light,bookshelf_online,阅读历史 ›,TextView,"[314.333, 68.0, 377.0, 104.0]",12.0,,"[319, 113.66666666666667, 377, 128.66666666666669]","[4.667, 45.667, 0.0, 24.667]",unique label; needs manual review,pending component review
+phone_portrait_light,bookshelf_online,电锯人封面,ImageView,"[17.0, 112.333, 51.0, 146.333]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,bookshelf_online,电锯人,TextView,"[61.0, 108.333, 332.0, 130.333]",15.0,,[],[],unresolved (Android 2; Apple 1 label matches),pending component review
+phone_portrait_light,bookshelf_online,上次看到 · 第 1 话,TextView,"[61.0, 132.333, 332.0, 150.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,bookshelf_online,续读 ›,TextView,"[332.0, 104.333, 376.0, 154.333]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,bookshelf_online,全部,TextView,"[24.0, 160.667, 54.0, 182.667]",15.0,,"[24, 199.66666666666666, 54.666666666666664, 217.66666666666666]","[0.0, 39.0, 0.667, 35.0]",unique label; needs manual review,pending component review
+phone_portrait_light,bookshelf_online,分组管理,FrameLayout,"[347.0, 160.0, 377.0, 190.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,bookshelf_online,5,BookshelfBadgeView,"[112.333, 199.667, 128.333, 215.667]",10.0,,"[113, 239, 120, 253]","[0.667, 39.333, -8.333, 37.333]",unique label; needs manual review,pending component review
+phone_portrait_light,bookshelf_online,更新至 第6话,TextView,"[22.0, 329.333, 126.333, 346.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_light,bookshelf_online,电锯人,TextView,"[16.0, 354.667, 132.333, 374.0]",13.0,,[],[],unresolved (Android 2; Apple 1 label matches),pending component review
+phone_portrait_light,bookshelf_online,漫画160,TextView,"[16.0, 376.0, 132.333, 393.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_light,bookshelf_online,6,BookshelfBadgeView,"[234.667, 199.667, 250.667, 215.667]",10.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_light,bookshelf_online,更新至 第6话,TextView,"[144.333, 329.333, 248.667, 346.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_light,bookshelf_online,一人之下,TextView,"[138.333, 354.667, 254.667, 374.0]",13.0,,"[138.66666666666666, 391.6666666666667, 254.66666666666666, 407.3333333333333]","[0.334, 37.0, -0.0, 33.333]",unique label; needs manual review,pending component review
+phone_portrait_light,bookshelf_online,漫画160,TextView,"[138.333, 376.0, 254.667, 393.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_light,bookshelf_online,6,BookshelfBadgeView,"[357.0, 199.667, 373.0, 215.667]",10.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_light,bookshelf_online,更新至 第6话,TextView,"[266.667, 329.333, 371.0, 346.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_light,bookshelf_online,间谍过家家,TextView,"[260.667, 354.667, 377.0, 374.0]",13.0,,"[261, 391.6666666666667, 377, 407.3333333333333]","[0.333, 37.0, 0.0, 33.333]",unique label; needs manual review,pending component review
+phone_portrait_light,bookshelf_online,漫画160,TextView,"[260.667, 376.0, 377.0, 393.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_light,bookshelf_online,书架,TextView,"[53.333, 777.333, 77.333, 795.0]",12.0,,"[2, 770, 129, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_light,bookshelf_online,发现,TextView,"[184.333, 777.333, 208.333, 795.0]",12.0,,"[133, 770, 260, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_light,bookshelf_online,设置,TextView,"[315.333, 777.333, 339.333, 795.0]",12.0,,"[264, 770, 391, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_light,discover,发现,TextView,"[16.0, 28.333, 304.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_light,discover,漫画160,TextView,"[304.0, 28.0, 377.0, 64.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,discover,单站,TextView,"[321.0, 76.0, 373.0, 114.0]",12.0,,"[279, 118.33333333333333, 328, 150.33333333333334]","[-42.0, 42.333, -45.0, 36.333]",unique label; needs manual review,pending component review
+phone_portrait_light,discover,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,discover,全部漫画,TextView,"[16.0, 148.0, 377.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,discover,电锯人,TextView,"[16.0, 327.333, 131.0, 344.667]",13.0,,"[14, 387, 129, 402.6666666666667]","[-2.0, 59.667, -2.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_light,discover,间谍过家家,TextView,"[139.0, 327.333, 254.0, 344.667]",13.0,,"[139, 387, 254, 402.6666666666667]","[0.0, 59.667, 0.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_light,discover,一人之下,TextView,"[262.0, 327.333, 377.0, 344.667]",13.0,,"[264, 387, 379, 402.6666666666667]","[2.0, 59.667, 2.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_light,discover,书架,TextView,"[53.333, 777.333, 77.333, 795.0]",12.0,,"[2, 770, 129, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_light,discover,发现,TextView,"[184.333, 777.333, 208.333, 795.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_light,discover,设置,TextView,"[315.333, 777.333, 339.333, 795.0]",12.0,,"[264, 770, 391, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_light,source_drawer,发现,TextView,"[16.0, 28.333, 304.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,漫画160,TextView,"[304.0, 28.0, 377.0, 64.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,单站,TextView,"[321.0, 76.0, 373.0, 114.0]",12.0,,"[279, 118.33333333333333, 328, 150.33333333333334]","[-42.0, 42.333, -45.0, 36.333]",unique label; needs manual review,pending component review
+phone_portrait_light,source_drawer,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,source_drawer,全部漫画,TextView,"[16.0, 148.0, 377.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,source_drawer,电锯人,TextView,"[16.0, 327.333, 131.0, 344.667]",13.0,,"[14, 387, 129, 402.6666666666667]","[-2.0, 59.667, -2.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_light,source_drawer,间谍过家家,TextView,"[139.0, 327.333, 254.0, 344.667]",13.0,,"[139, 387, 254, 402.6666666666667]","[0.0, 59.667, 0.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_light,source_drawer,一人之下,TextView,"[262.0, 327.333, 377.0, 344.667]",13.0,,"[264, 387, 379, 402.6666666666667]","[2.0, 59.667, 2.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_light,source_drawer,书架,TextView,"[53.333, 777.333, 77.333, 795.0]",12.0,,"[2, 770, 129, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_light,source_drawer,发现,TextView,"[184.333, 777.333, 208.333, 795.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,设置,TextView,"[315.333, 777.333, 339.333, 795.0]",12.0,,"[264, 770, 391, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_light,source_drawer,站源与分类,android.widget.TextView,"[16.0, 427.333, 377.0, 452.333]",,,"[189.66666666666666, 65.33333333333333, 276.3333333333333, 85.66666666666667]","[173.667, -362.0, -100.667, -366.666]",unique label; needs manual review,pending component review
+phone_portrait_light,source_drawer,站源,android.widget.TextView,"[16.0, 460.0, 192.333, 504.0]",,,"[89, 105.66666666666667, 232, 142.66666666666669]","[73.0, -354.333, 39.667, -361.333]",unique label; needs manual review,pending component review
+phone_portrait_light,source_drawer,分类,android.widget.TextView,"[200.333, 460.0, 377.0, 504.0]",,,"[233, 105.66666666666667, 377, 142.66666666666669]","[32.667, -354.333, 0.0, -361.333]",unique label; needs manual review,pending component review
+phone_portrait_light,source_drawer,分组 · 全部 · 已启用站源,android.widget.TextView,"[16.0, 512.0, 377.0, 529.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,漫画160,android.widget.TextView,"[16.0, 537.667, 131.0, 581.667]",,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,G社漫画,android.widget.TextView,"[139.0, 537.667, 254.0, 581.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,18漫画,android.widget.TextView,"[262.0, 537.667, 377.0, 581.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,禁漫天堂,android.widget.TextView,"[16.0, 589.667, 131.0, 633.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,漫客栈,android.widget.TextView,"[139.0, 589.667, 254.0, 633.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,HiperDEX,android.widget.TextView,"[262.0, 589.667, 377.0, 633.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,漫画柜,android.widget.TextView,"[16.0, 641.667, 131.0, 685.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,Hanman18,android.widget.TextView,"[139.0, 641.667, 254.0, 685.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,悦看漫画,android.widget.TextView,"[262.0, 641.667, 377.0, 685.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,漫本,android.widget.TextView,"[16.0, 693.667, 131.0, 737.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,漫画栈,android.widget.TextView,"[139.0, 693.667, 254.0, 737.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,比卡漫画,android.widget.TextView,"[262.0, 693.667, 377.0, 737.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,source_drawer,应用,android.widget.Button,"[16.0, 748.0, 377.0, 792.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,search_results,发现,TextView,"[16.0, 28.333, 304.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_light,search_results,漫画160,TextView,"[304.0, 28.0, 377.0, 64.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,search_results,电锯人,EditText,"[20.0, 74.0, 321.0, 116.0]",14.0,,[],[],unresolved (Android 2; Apple 1 label matches),pending component review
+phone_portrait_light,search_results,单站,TextView,"[321.0, 76.0, 373.0, 114.0]",12.0,,"[279, 118.33333333333333, 328, 150.33333333333334]","[-42.0, 42.333, -45.0, 36.333]",unique label; needs manual review,pending component review
+phone_portrait_light,search_results,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,search_results,搜索结果,TextView,"[16.0, 148.0, 377.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,search_results,电锯人,TextView,"[16.0, 327.333, 131.0, 344.667]",13.0,,[],[],unresolved (Android 2; Apple 1 label matches),pending component review
+phone_portrait_light,search_results,书架,TextView,"[53.333, 777.333, 77.333, 795.0]",12.0,,"[2, 770, 129, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_light,search_results,发现,TextView,"[184.333, 777.333, 208.333, 795.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_light,search_results,设置,TextView,"[315.333, 777.333, 339.333, 795.0]",12.0,,"[264, 770, 391, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_light,detail,电锯人,TextView,"[16.0, 227.333, 269.0, 256.667]",20.0,detail.title,"[16, 263, 157, 287]","[0.0, 35.667, -112.0, 30.333]",unique label; needs manual review,pending component review
+phone_portrait_light,detail,下载离线章节,ImageView,"[269.0, 224.0, 305.0, 260.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,detail,漫画160,TextView,"[305.0, 220.0, 377.0, 264.0]",12.0,,"[261.3333333333333, 268, 306.66666666666663, 282.3333333333333]","[-43.667, 48.0, -70.333, 18.333]",unique label; needs manual review,pending component review
+phone_portrait_light,detail,连载中 · 验收作者,TextView,"[29.0, 272.0, 377.0, 289.667]",12.0,detail.metadata,"[29, 307, 377, 321.3333333333333]","[0.0, 35.0, 0.0, 31.666]",unique label; needs manual review,pending component review
+phone_portrait_light,detail,连载中,TextView,"[16.0, 299.667, 72.0, 327.333]",12.0,,"[16, 331.3333333333333, 73, 357.6666666666667]","[0.0, 31.666, 1.0, 30.334]",unique label; needs manual review,pending component review
+phone_portrait_light,detail,确定性同内容漫画：用于页面、交互与离线下载验收。,TextView,"[16.0, 339.333, 377.0, 358.667]",13.0,,"[16, 367.6666666666667, 377, 383.3333333333333]","[0.0, 28.334, 0.0, 24.666]",unique label; needs manual review,pending component review
+phone_portrait_light,detail,章节目录,TextView,"[28.0, 377.667, 343.0, 398.333]",14.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,detail,6 话 · 已缓存,TextView,"[28.0, 401.333, 343.0, 419.0]",12.0,,"[28, 424.3333333333333, 98.66666666666667, 438.6666666666667]","[0.0, 23.0, -244.333, 19.667]",unique label; needs manual review,pending component review
+phone_portrait_light,detail,取消收藏,ImageView,"[16.0, 750.0, 60.0, 794.0]",,detail.favorite,"[16, 764, 60, 808]","[0.0, 14.0, 0.0, 14.0]",unique label; needs manual review,pending component review
+phone_portrait_light,detail,继续阅读，第 1 话,LinearLayout,"[68.0, 750.0, 377.0, 794.0]",,detail.read,"[68, 764, 377, 808]","[0.0, 14.0, 0.0, 14.0]",unique label; needs manual review,pending component review
+phone_portrait_light,detail,继续阅读,TextView,"[80.0, 753.0, 365.0, 771.667]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,detail,第 1 话,TextView,"[80.0, 773.667, 365.0, 791.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reader,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reader,电锯人 · 第1话,TextView,"[48.0, 36.667, 381.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reader,上一章,TextView,"[12.0, 770.333, 67.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reader,下一章,TextView,"[326.0, 770.333, 381.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reader,目录,TextView,"[64.0, 829.0, 88.0, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reader,换源,TextView,"[184.333, 829.0, 208.333, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reader,设置,TextView,"[304.667, 829.0, 328.667, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reading_settings,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reading_settings,电锯人 · 第1话,TextView,"[48.0, 36.667, 381.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reading_settings,上一章,TextView,"[12.0, 770.333, 67.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reading_settings,下一章,TextView,"[326.0, 770.333, 381.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reading_settings,目录,TextView,"[64.0, 829.0, 88.0, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reading_settings,换源,TextView,"[184.333, 829.0, 208.333, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reading_settings,设置,TextView,"[304.667, 829.0, 328.667, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reading_settings,阅读设置,android.widget.TextView,"[18.0, 339.333, 375.0, 364.333]",,,"[18, 328, 331, 348.3333333333333]","[0.0, -11.333, -44.0, -16.0]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,阅读模式,android.widget.TextView,"[18.0, 394.667, 86.0, 415.0]",,,"[18, 390.6666666666667, 86, 407.6666666666667]","[0.0, -4.0, 0.0, -7.333]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,卷轴模式,android.widget.TextView,"[107.333, 408.333, 155.333, 425.667]",,reader.layout.0,"[86, 370, 226.66666666666666, 428]","[-21.333, -38.333, 71.334, 2.333]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,普通模式,android.widget.TextView,"[206.333, 408.333, 254.333, 425.667]",,reader.layout.1,"[234.66666666666663, 370, 375, 428]","[28.334, -38.333, 120.667, 2.333]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,日漫模式,android.widget.TextView,"[305.333, 408.333, 353.333, 425.667]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reading_settings,阅读主题,android.widget.TextView,"[18.0, 466.667, 86.0, 487.0]",,,"[18, 462.6666666666667, 86, 479.6666666666667]","[0.0, -4.0, 0.0, -7.333]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,默认,android.widget.TextView,"[119.333, 480.333, 143.333, 497.667]",,reader.theme.0,"[86, 442, 177, 500]","[-33.333, -38.333, 33.667, 2.333]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,深色,android.widget.TextView,"[218.333, 480.333, 242.333, 497.667]",,reader.theme.1,"[185, 442, 276, 500]","[-33.333, -38.333, 33.667, 2.333]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,浅色,android.widget.TextView,"[317.333, 480.333, 341.333, 497.667]",,reader.theme.2,"[284, 442, 375, 500]","[-33.333, -38.333, 33.667, 2.333]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,隐藏右下角状态信息,android.widget.TextView,"[18.0, 529.333, 328.333, 549.667]",,reader.fully.immersive,"[326, 516.6666666666666, 377, 547.6666666666666]","[308.0, -12.666, 48.667, -2.0]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,墨水屏模式,android.widget.TextView,"[18.0, 576.333, 328.333, 596.667]",,reader.display.mode,"[326, 560.6666666666667, 377, 591.6666666666667]","[308.0, -15.666, 48.667, -5.0]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,搓指放大,android.widget.TextView,"[18.0, 623.333, 328.333, 643.667]",,reader.pinch.zoom,"[326, 604.6666666666667, 377, 635.6666666666667]","[308.0, -18.666, 48.667, -8.0]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,禁止动画翻页,android.widget.TextView,"[18.0, 667.0, 328.333, 687.333]",,reader.disable.page.animation,"[326, 653.3333333333333, 377, 684.3333333333334]","[308.0, -13.667, 48.667, -3.0]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,开启后直接切页，左右滑动仅在单页模式生效,android.widget.TextView,"[18.0, 689.333, 328.333, 706.667]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reading_settings,去白边,android.widget.TextView,"[18.0, 726.667, 328.333, 747.0]",,reader.crop.white.margins,"[326, 706.6666666666666, 377, 737.6666666666666]","[308.0, -20.0, 48.667, -9.333]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,自动裁去图片外围白边，原文件不变,android.widget.TextView,"[18.0, 749.0, 328.333, 766.333]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reading_settings,图像增强,android.widget.TextView,"[18.0, 786.333, 328.333, 806.667]",,reader.enhancement.enabled,"[326, 760, 377, 791]","[308.0, -26.333, 48.667, -15.667]",unique label; needs manual review,pending component review
+phone_portrait_light,reading_settings,手机 GPU 本地 2 倍 AI 超分；清晰原图自动跳过,android.widget.TextView,"[18.0, 808.667, 328.333, 826.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reader_directory,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reader_directory,电锯人 · 第1话,TextView,"[48.0, 36.667, 381.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reader_directory,上一章,TextView,"[12.0, 770.333, 67.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reader_directory,下一章,TextView,"[326.0, 770.333, 381.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reader_directory,目录,TextView,"[64.0, 829.0, 88.0, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reader_directory,换源,TextView,"[184.333, 829.0, 208.333, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reader_directory,设置,TextView,"[304.667, 829.0, 328.667, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reader_directory,展开或收起章节目录,android.widget.FrameLayout,"[0.0, 383.333, 393.0, 405.333]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_light,reader_directory,全部章节,android.widget.TextView,"[20.0, 409.333, 329.0, 441.333]",,,"[20, 417.3333333333333, 85.33333333333333, 436.6666666666667]","[0.0, 8.0, -243.667, -4.666]",unique label; needs manual review,pending component review
+phone_portrait_light,reader_directory,正序,android.widget.TextView,"[329.0, 411.333, 373.0, 439.333]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reader_directory,第1话,android.widget.TextView,"[33.667, 458.0, 331.0, 478.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_light,reader_directory,第2话,android.widget.TextView,"[33.667, 504.0, 331.0, 524.667]",,,"[33.66666666666666, 507.6666666666667, 333, 524.6666666666666]","[-0.0, 3.667, 2.0, -0.0]",unique label; needs manual review,pending component review
+phone_portrait_light,reader_directory,第3话,android.widget.TextView,"[33.667, 550.0, 331.0, 570.667]",,,"[33.66666666666666, 553.6666666666666, 333, 570.6666666666666]","[-0.0, 3.667, 2.0, -0.0]",unique label; needs manual review,pending component review
+phone_portrait_light,reader_directory,第4话,android.widget.TextView,"[33.667, 596.0, 331.0, 616.667]",,,"[33.66666666666666, 599.6666666666666, 333, 616.6666666666666]","[-0.0, 3.667, 2.0, -0.0]",unique label; needs manual review,pending component review
+phone_portrait_light,reader_directory,第5话,android.widget.TextView,"[33.667, 642.0, 331.0, 662.667]",,,"[33.66666666666666, 645.6666666666666, 333, 662.6666666666666]","[-0.0, 3.667, 2.0, -0.0]",unique label; needs manual review,pending component review
+phone_portrait_light,reader_directory,第6话,android.widget.TextView,"[33.667, 688.0, 331.0, 708.667]",,,"[33.66666666666666, 691.6666666666666, 333, 708.6666666666666]","[-0.0, 3.667, 2.0, -0.0]",unique label; needs manual review,pending component review
+phone_portrait_light,reader_directory,快速定位章节，上下拖动或使用滚动操作,android.view.View,"[349.0, 445.333, 393.0, 840.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,bookshelf_online,我的书架,TextView,"[16.0, 28.333, 112.0, 63.333]",24.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,bookshelf_online,|,TextView,"[112.0, 35.0, 124.0, 56.667]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,bookshelf_online,本地书架,TextView,"[124.0, 34.333, 188.0, 57.667]",16.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,bookshelf_online,切换为列表模式,ImageView,"[320.0, 33.0, 346.0, 59.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,bookshelf_online,蕾姆主题,ImageView,"[354.0, 34.333, 377.0, 57.333]",,rem_reader_resume,"[354, 69.66666666666667, 377, 92.66666666666667]","[0.0, 35.334, 0.0, 35.334]",unique label; needs manual review,pending component review
+phone_portrait_dark,bookshelf_online,接着看,TextView,"[16.0, 74.333, 314.333, 97.667]",16.0,,"[16, 111.33333333333333, 65, 130.66666666666666]","[0.0, 37.0, -249.333, 33.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,bookshelf_online,阅读历史 ›,TextView,"[314.333, 68.0, 377.0, 104.0]",12.0,,"[319, 113.66666666666667, 377, 128.66666666666669]","[4.667, 45.667, 0.0, 24.667]",unique label; needs manual review,pending component review
+phone_portrait_dark,bookshelf_online,电锯人封面,ImageView,"[17.0, 112.333, 51.0, 146.333]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,bookshelf_online,电锯人,TextView,"[61.0, 108.333, 332.0, 130.333]",15.0,,[],[],unresolved (Android 2; Apple 1 label matches),pending component review
+phone_portrait_dark,bookshelf_online,上次看到 · 第 1 话,TextView,"[61.0, 132.333, 332.0, 150.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,bookshelf_online,续读 ›,TextView,"[332.0, 104.333, 376.0, 154.333]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,bookshelf_online,全部,TextView,"[24.0, 160.667, 54.0, 182.667]",15.0,,"[24, 199.66666666666666, 54.666666666666664, 217.66666666666666]","[0.0, 39.0, 0.667, 35.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,bookshelf_online,分组管理,FrameLayout,"[347.0, 160.0, 377.0, 190.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,bookshelf_online,5,BookshelfBadgeView,"[112.333, 199.667, 128.333, 215.667]",10.0,,"[113, 239, 120, 253]","[0.667, 39.333, -8.333, 37.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,bookshelf_online,更新至 第6话,TextView,"[22.0, 329.333, 126.333, 346.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_dark,bookshelf_online,电锯人,TextView,"[16.0, 354.667, 132.333, 374.0]",13.0,,[],[],unresolved (Android 2; Apple 1 label matches),pending component review
+phone_portrait_dark,bookshelf_online,漫画160,TextView,"[16.0, 376.0, 132.333, 393.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_dark,bookshelf_online,6,BookshelfBadgeView,"[234.667, 199.667, 250.667, 215.667]",10.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_dark,bookshelf_online,更新至 第6话,TextView,"[144.333, 329.333, 248.667, 346.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_dark,bookshelf_online,一人之下,TextView,"[138.333, 354.667, 254.667, 374.0]",13.0,,"[138.66666666666666, 391.6666666666667, 254.66666666666666, 407.3333333333333]","[0.334, 37.0, -0.0, 33.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,bookshelf_online,漫画160,TextView,"[138.333, 376.0, 254.667, 393.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_dark,bookshelf_online,6,BookshelfBadgeView,"[357.0, 199.667, 373.0, 215.667]",10.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_dark,bookshelf_online,更新至 第6话,TextView,"[266.667, 329.333, 371.0, 346.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_dark,bookshelf_online,间谍过家家,TextView,"[260.667, 354.667, 377.0, 374.0]",13.0,,"[261, 391.6666666666667, 377, 407.3333333333333]","[0.333, 37.0, 0.0, 33.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,bookshelf_online,漫画160,TextView,"[260.667, 376.0, 377.0, 393.667]",12.0,,[],[],unresolved (Android 3; Apple 3 label matches),pending component review
+phone_portrait_dark,bookshelf_online,书架,TextView,"[53.333, 777.333, 77.333, 795.0]",12.0,,"[2, 770, 129, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,bookshelf_online,发现,TextView,"[184.333, 777.333, 208.333, 795.0]",12.0,,"[133, 770, 260, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,bookshelf_online,设置,TextView,"[315.333, 777.333, 339.333, 795.0]",12.0,,"[264, 770, 391, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,discover,发现,TextView,"[16.0, 28.333, 304.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_dark,discover,漫画160,TextView,"[304.0, 28.0, 377.0, 64.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,discover,单站,TextView,"[321.0, 76.0, 373.0, 114.0]",12.0,,"[279, 118.33333333333333, 328, 150.33333333333334]","[-42.0, 42.333, -45.0, 36.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,discover,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,discover,全部漫画,TextView,"[16.0, 148.0, 377.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,discover,电锯人,TextView,"[16.0, 327.333, 131.0, 344.667]",13.0,,"[14, 387, 129, 402.6666666666667]","[-2.0, 59.667, -2.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,discover,间谍过家家,TextView,"[139.0, 327.333, 254.0, 344.667]",13.0,,"[139, 387, 254, 402.6666666666667]","[0.0, 59.667, 0.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,discover,一人之下,TextView,"[262.0, 327.333, 377.0, 344.667]",13.0,,"[264, 387, 379, 402.6666666666667]","[2.0, 59.667, 2.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,discover,书架,TextView,"[53.333, 777.333, 77.333, 795.0]",12.0,,"[2, 770, 129, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,discover,发现,TextView,"[184.333, 777.333, 208.333, 795.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_dark,discover,设置,TextView,"[315.333, 777.333, 339.333, 795.0]",12.0,,"[264, 770, 391, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,source_drawer,发现,TextView,"[16.0, 28.333, 304.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,漫画160,TextView,"[304.0, 28.0, 377.0, 64.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,单站,TextView,"[321.0, 76.0, 373.0, 114.0]",12.0,,"[279, 118.33333333333333, 328, 150.33333333333334]","[-42.0, 42.333, -45.0, 36.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,source_drawer,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,source_drawer,全部漫画,TextView,"[16.0, 148.0, 377.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,source_drawer,电锯人,TextView,"[16.0, 327.333, 131.0, 344.667]",13.0,,"[14, 387, 129, 402.6666666666667]","[-2.0, 59.667, -2.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,source_drawer,间谍过家家,TextView,"[139.0, 327.333, 254.0, 344.667]",13.0,,"[139, 387, 254, 402.6666666666667]","[0.0, 59.667, 0.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,source_drawer,一人之下,TextView,"[262.0, 327.333, 377.0, 344.667]",13.0,,"[264, 387, 379, 402.6666666666667]","[2.0, 59.667, 2.0, 58.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,source_drawer,书架,TextView,"[53.333, 777.333, 77.333, 795.0]",12.0,,"[2, 770, 129, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,source_drawer,发现,TextView,"[184.333, 777.333, 208.333, 795.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,设置,TextView,"[315.333, 777.333, 339.333, 795.0]",12.0,,"[264, 770, 391, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,source_drawer,站源与分类,android.widget.TextView,"[16.0, 427.333, 377.0, 452.333]",,,"[189.66666666666666, 65.33333333333333, 276.3333333333333, 85.66666666666667]","[173.667, -362.0, -100.667, -366.666]",unique label; needs manual review,pending component review
+phone_portrait_dark,source_drawer,站源,android.widget.TextView,"[16.0, 460.0, 192.333, 504.0]",,,"[89, 105.66666666666667, 232, 142.66666666666669]","[73.0, -354.333, 39.667, -361.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,source_drawer,分类,android.widget.TextView,"[200.333, 460.0, 377.0, 504.0]",,,"[233, 105.66666666666667, 377, 142.66666666666669]","[32.667, -354.333, 0.0, -361.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,source_drawer,分组 · 全部 · 已启用站源,android.widget.TextView,"[16.0, 512.0, 377.0, 529.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,漫画160,android.widget.TextView,"[16.0, 537.667, 131.0, 581.667]",,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,G社漫画,android.widget.TextView,"[139.0, 537.667, 254.0, 581.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,18漫画,android.widget.TextView,"[262.0, 537.667, 377.0, 581.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,禁漫天堂,android.widget.TextView,"[16.0, 589.667, 131.0, 633.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,漫客栈,android.widget.TextView,"[139.0, 589.667, 254.0, 633.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,HiperDEX,android.widget.TextView,"[262.0, 589.667, 377.0, 633.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,漫画柜,android.widget.TextView,"[16.0, 641.667, 131.0, 685.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,Hanman18,android.widget.TextView,"[139.0, 641.667, 254.0, 685.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,悦看漫画,android.widget.TextView,"[262.0, 641.667, 377.0, 685.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,漫本,android.widget.TextView,"[16.0, 693.667, 131.0, 737.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,漫画栈,android.widget.TextView,"[139.0, 693.667, 254.0, 737.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,比卡漫画,android.widget.TextView,"[262.0, 693.667, 377.0, 737.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,source_drawer,应用,android.widget.Button,"[16.0, 748.0, 377.0, 792.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,search_results,发现,TextView,"[16.0, 28.333, 304.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_dark,search_results,漫画160,TextView,"[304.0, 28.0, 377.0, 64.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,search_results,电锯人,EditText,"[20.0, 74.0, 321.0, 116.0]",14.0,,[],[],unresolved (Android 2; Apple 1 label matches),pending component review
+phone_portrait_dark,search_results,单站,TextView,"[321.0, 76.0, 373.0, 114.0]",12.0,,"[279, 118.33333333333333, 328, 150.33333333333334]","[-42.0, 42.333, -45.0, 36.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,search_results,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,search_results,搜索结果,TextView,"[16.0, 148.0, 377.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,search_results,电锯人,TextView,"[16.0, 327.333, 131.0, 344.667]",13.0,,[],[],unresolved (Android 2; Apple 1 label matches),pending component review
+phone_portrait_dark,search_results,书架,TextView,"[53.333, 777.333, 77.333, 795.0]",12.0,,"[2, 770, 129, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,search_results,发现,TextView,"[184.333, 777.333, 208.333, 795.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_portrait_dark,search_results,设置,TextView,"[315.333, 777.333, 339.333, 795.0]",12.0,,"[264, 770, 391, 818]","[-51.333, -7.333, 51.667, 23.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,detail,电锯人,TextView,"[16.0, 227.333, 269.0, 256.667]",20.0,detail.title,"[16, 263, 157, 287]","[0.0, 35.667, -112.0, 30.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,detail,下载离线章节,ImageView,"[269.0, 224.0, 305.0, 260.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,detail,漫画160,TextView,"[305.0, 220.0, 377.0, 264.0]",12.0,,"[261.3333333333333, 268, 306.66666666666663, 282.3333333333333]","[-43.667, 48.0, -70.333, 18.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,detail,连载中 · 验收作者,TextView,"[29.0, 272.0, 377.0, 289.667]",12.0,detail.metadata,"[29, 307, 377, 321.3333333333333]","[0.0, 35.0, 0.0, 31.666]",unique label; needs manual review,pending component review
+phone_portrait_dark,detail,连载中,TextView,"[16.0, 299.667, 72.0, 327.333]",12.0,,"[16, 331.3333333333333, 73, 357.6666666666667]","[0.0, 31.666, 1.0, 30.334]",unique label; needs manual review,pending component review
+phone_portrait_dark,detail,确定性同内容漫画：用于页面、交互与离线下载验收。,TextView,"[16.0, 339.333, 377.0, 358.667]",13.0,,"[16, 367.6666666666667, 377, 383.3333333333333]","[0.0, 28.334, 0.0, 24.666]",unique label; needs manual review,pending component review
+phone_portrait_dark,detail,章节目录,TextView,"[28.0, 377.667, 343.0, 398.333]",14.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,detail,6 话 · 已缓存,TextView,"[28.0, 401.333, 343.0, 419.0]",12.0,,"[28, 424.3333333333333, 98.66666666666667, 438.6666666666667]","[0.0, 23.0, -244.333, 19.667]",unique label; needs manual review,pending component review
+phone_portrait_dark,detail,取消收藏,ImageView,"[16.0, 750.0, 60.0, 794.0]",,detail.favorite,"[16, 764, 60, 808]","[0.0, 14.0, 0.0, 14.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,detail,继续阅读，第 1 话,LinearLayout,"[68.0, 750.0, 377.0, 794.0]",,detail.read,"[68, 764, 377, 808]","[0.0, 14.0, 0.0, 14.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,detail,继续阅读,TextView,"[80.0, 753.0, 365.0, 771.667]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,detail,第 1 话,TextView,"[80.0, 773.667, 365.0, 791.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reader,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reader,电锯人 · 第1话,TextView,"[48.0, 36.667, 381.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reader,上一章,TextView,"[12.0, 770.333, 67.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reader,下一章,TextView,"[326.0, 770.333, 381.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reader,目录,TextView,"[64.0, 829.0, 88.0, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reader,换源,TextView,"[184.333, 829.0, 208.333, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reader,设置,TextView,"[304.667, 829.0, 328.667, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reading_settings,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reading_settings,电锯人 · 第1话,TextView,"[48.0, 36.667, 381.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reading_settings,上一章,TextView,"[12.0, 770.333, 67.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reading_settings,下一章,TextView,"[326.0, 770.333, 381.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reading_settings,目录,TextView,"[64.0, 829.0, 88.0, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reading_settings,换源,TextView,"[184.333, 829.0, 208.333, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reading_settings,设置,TextView,"[304.667, 829.0, 328.667, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reading_settings,阅读设置,android.widget.TextView,"[18.0, 339.333, 375.0, 364.333]",,,"[18, 328, 331, 348.3333333333333]","[0.0, -11.333, -44.0, -16.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,阅读模式,android.widget.TextView,"[18.0, 394.667, 86.0, 415.0]",,,"[18, 390.6666666666667, 86, 407.6666666666667]","[0.0, -4.0, 0.0, -7.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,卷轴模式,android.widget.TextView,"[107.333, 408.333, 155.333, 425.667]",,reader.layout.0,"[86, 370, 226.66666666666666, 428]","[-21.333, -38.333, 71.334, 2.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,普通模式,android.widget.TextView,"[206.333, 408.333, 254.333, 425.667]",,reader.layout.1,"[234.66666666666663, 370, 375, 428]","[28.334, -38.333, 120.667, 2.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,日漫模式,android.widget.TextView,"[305.333, 408.333, 353.333, 425.667]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reading_settings,阅读主题,android.widget.TextView,"[18.0, 466.667, 86.0, 487.0]",,,"[18, 462.6666666666667, 86, 479.6666666666667]","[0.0, -4.0, 0.0, -7.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,默认,android.widget.TextView,"[119.333, 480.333, 143.333, 497.667]",,reader.theme.0,"[86, 442, 177, 500]","[-33.333, -38.333, 33.667, 2.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,深色,android.widget.TextView,"[218.333, 480.333, 242.333, 497.667]",,reader.theme.1,"[185, 442, 276, 500]","[-33.333, -38.333, 33.667, 2.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,浅色,android.widget.TextView,"[317.333, 480.333, 341.333, 497.667]",,reader.theme.2,"[284, 442, 375, 500]","[-33.333, -38.333, 33.667, 2.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,隐藏右下角状态信息,android.widget.TextView,"[18.0, 529.333, 328.333, 549.667]",,reader.fully.immersive,"[326, 516.6666666666666, 377, 547.6666666666666]","[308.0, -12.666, 48.667, -2.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,墨水屏模式,android.widget.TextView,"[18.0, 576.333, 328.333, 596.667]",,reader.display.mode,"[326, 560.6666666666667, 377, 591.6666666666667]","[308.0, -15.666, 48.667, -5.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,搓指放大,android.widget.TextView,"[18.0, 623.333, 328.333, 643.667]",,reader.pinch.zoom,"[326, 604.6666666666667, 377, 635.6666666666667]","[308.0, -18.666, 48.667, -8.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,禁止动画翻页,android.widget.TextView,"[18.0, 667.0, 328.333, 687.333]",,reader.disable.page.animation,"[326, 653.3333333333333, 377, 684.3333333333334]","[308.0, -13.667, 48.667, -3.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,开启后直接切页，左右滑动仅在单页模式生效,android.widget.TextView,"[18.0, 689.333, 328.333, 706.667]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reading_settings,去白边,android.widget.TextView,"[18.0, 726.667, 328.333, 747.0]",,reader.crop.white.margins,"[326, 706.6666666666666, 377, 737.6666666666666]","[308.0, -20.0, 48.667, -9.333]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,自动裁去图片外围白边，原文件不变,android.widget.TextView,"[18.0, 749.0, 328.333, 766.333]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reading_settings,图像增强,android.widget.TextView,"[18.0, 786.333, 328.333, 806.667]",,reader.enhancement.enabled,"[326, 760, 377, 791]","[308.0, -26.333, 48.667, -15.667]",unique label; needs manual review,pending component review
+phone_portrait_dark,reading_settings,手机 GPU 本地 2 倍 AI 超分；清晰原图自动跳过,android.widget.TextView,"[18.0, 808.667, 328.333, 826.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reader_directory,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reader_directory,电锯人 · 第1话,TextView,"[48.0, 36.667, 381.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reader_directory,上一章,TextView,"[12.0, 770.333, 67.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reader_directory,下一章,TextView,"[326.0, 770.333, 381.0, 801.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reader_directory,目录,TextView,"[64.0, 829.0, 88.0, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reader_directory,换源,TextView,"[184.333, 829.0, 208.333, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reader_directory,设置,TextView,"[304.667, 829.0, 328.667, 846.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reader_directory,展开或收起章节目录,android.widget.FrameLayout,"[0.0, 383.333, 393.0, 405.333]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_portrait_dark,reader_directory,全部章节,android.widget.TextView,"[20.0, 409.333, 329.0, 441.333]",,,"[20, 417.3333333333333, 85.33333333333333, 436.6666666666667]","[0.0, 8.0, -243.667, -4.666]",unique label; needs manual review,pending component review
+phone_portrait_dark,reader_directory,正序,android.widget.TextView,"[329.0, 411.333, 373.0, 439.333]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reader_directory,第1话,android.widget.TextView,"[33.667, 458.0, 331.0, 478.667]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_portrait_dark,reader_directory,第2话,android.widget.TextView,"[33.667, 504.0, 331.0, 524.667]",,,"[33.66666666666666, 507.6666666666667, 333, 524.6666666666666]","[-0.0, 3.667, 2.0, -0.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,reader_directory,第3话,android.widget.TextView,"[33.667, 550.0, 331.0, 570.667]",,,"[33.66666666666666, 553.6666666666666, 333, 570.6666666666666]","[-0.0, 3.667, 2.0, -0.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,reader_directory,第4话,android.widget.TextView,"[33.667, 596.0, 331.0, 616.667]",,,"[33.66666666666666, 599.6666666666666, 333, 616.6666666666666]","[-0.0, 3.667, 2.0, -0.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,reader_directory,第5话,android.widget.TextView,"[33.667, 642.0, 331.0, 662.667]",,,"[33.66666666666666, 645.6666666666666, 333, 662.6666666666666]","[-0.0, 3.667, 2.0, -0.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,reader_directory,第6话,android.widget.TextView,"[33.667, 688.0, 331.0, 708.667]",,,"[33.66666666666666, 691.6666666666666, 333, 708.6666666666666]","[-0.0, 3.667, 2.0, -0.0]",unique label; needs manual review,pending component review
+phone_portrait_dark,reader_directory,快速定位章节，上下拖动或使用滚动操作,android.view.View,"[349.0, 445.333, 393.0, 840.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,bookshelf_online,我的书架,TextView,"[16.0, 28.333, 112.0, 63.333]",24.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,bookshelf_online,|,TextView,"[112.0, 35.0, 124.0, 56.667]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,bookshelf_online,本地书架,TextView,"[124.0, 34.333, 188.0, 57.667]",16.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,bookshelf_online,切换为列表模式,ImageView,"[731.0, 33.0, 757.0, 59.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,bookshelf_online,蕾姆主题,ImageView,"[765.0, 34.333, 788.0, 57.333]",,rem_reader_resume,"[754, 10.666666666666686, 777, 33.666666666666686]","[-11.0, -23.666, -11.0, -23.666]",unique label; needs manual review,pending component review
+phone_landscape_light,bookshelf_online,接着看,TextView,"[16.0, 74.333, 725.333, 97.667]",16.0,,"[75, 52.333333333333314, 124, 71.66666666666669]","[59.0, -22.0, -601.333, -26.0]",unique label; needs manual review,pending component review
+phone_landscape_light,bookshelf_online,阅读历史 ›,TextView,"[725.333, 68.0, 788.0, 104.0]",12.0,,"[719, 54.666666666666686, 777, 69.66666666666669]","[-6.333, -13.333, -11.0, -34.333]",unique label; needs manual review,pending component review
+phone_landscape_light,bookshelf_online,电锯人封面,ImageView,"[17.0, 112.333, 51.0, 146.333]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,bookshelf_online,电锯人,TextView,"[61.0, 108.333, 743.0, 130.333]",15.0,,"[16, 327.33333333333337, 128, 343.00000000000006]","[-45.0, 219.0, -615.0, 212.667]",unique label; needs manual review,pending component review
+phone_landscape_light,bookshelf_online,上次看到 · 第 1 话,TextView,"[61.0, 132.333, 743.0, 150.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,bookshelf_online,续读 ›,TextView,"[743.0, 104.333, 787.0, 154.333]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,bookshelf_online,全部,TextView,"[24.0, 160.667, 54.0, 182.667]",15.0,,"[83, 140.66666666666666, 113.66666666666667, 158.66666666666666]","[59.0, -20.0, 59.667, -24.0]",unique label; needs manual review,pending component review
+phone_landscape_light,bookshelf_online,分组管理,FrameLayout,"[758.0, 160.0, 788.0, 190.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,bookshelf_online,5,BookshelfBadgeView,"[119.667, 199.667, 135.667, 215.667]",10.0,,"[109, 180, 116, 194]","[-10.667, -19.667, -19.667, -21.667]",unique label; needs manual review,pending component review
+phone_landscape_light,bookshelf_online,6,BookshelfBadgeView,"[249.333, 199.667, 265.333, 215.667]",10.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_light,bookshelf_online,6,BookshelfBadgeView,"[379.0, 199.667, 395.0, 215.667]",10.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_light,bookshelf_online,书架,TextView,"[122.0, 366.333, 146.0, 384.0]",12.0,,"[91, 341, 312.0000000099341, 372]","[-31.0, -25.333, 166.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_light,bookshelf_online,发现,TextView,"[390.0, 366.333, 414.0, 384.0]",12.0,,"[316.00000000993407, 341, 535.9999999900658, 372]","[-74.0, -25.333, 122.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_light,bookshelf_online,设置,TextView,"[658.0, 366.333, 682.0, 384.0]",12.0,,"[539.9999999900659, 341, 761, 372]","[-118.0, -25.333, 79.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_light,discover,发现,TextView,"[16.0, 28.333, 715.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_light,discover,漫画160,TextView,"[715.0, 28.0, 788.0, 64.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,discover,单站,TextView,"[732.0, 76.0, 784.0, 114.0]",12.0,,"[679, 64.66666666666669, 728, 96.66666666666669]","[-53.0, -11.333, -56.0, -17.333]",unique label; needs manual review,pending component review
+phone_landscape_light,discover,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,discover,全部漫画,TextView,"[16.0, 148.0, 788.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,discover,书架,TextView,"[122.0, 366.333, 146.0, 384.0]",12.0,,"[91, 341, 312.0000000099341, 372]","[-31.0, -25.333, 166.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_light,discover,发现,TextView,"[390.0, 366.333, 414.0, 384.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_light,discover,设置,TextView,"[658.0, 366.333, 682.0, 384.0]",12.0,,"[539.9999999900659, 341, 761, 372]","[-118.0, -25.333, 79.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_light,source_drawer,发现,TextView,"[16.0, 28.333, 715.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_light,source_drawer,漫画160,TextView,"[715.0, 28.0, 788.0, 64.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_light,source_drawer,单站,TextView,"[732.0, 76.0, 784.0, 114.0]",12.0,,"[679, 64.66666666666669, 728, 96.66666666666669]","[-53.0, -11.333, -56.0, -17.333]",unique label; needs manual review,pending component review
+phone_landscape_light,source_drawer,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,source_drawer,全部漫画,TextView,"[16.0, 148.0, 788.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,source_drawer,书架,TextView,"[122.0, 366.333, 146.0, 384.0]",12.0,,"[91, 341, 312.0000000099341, 372]","[-31.0, -25.333, 166.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_light,source_drawer,发现,TextView,"[390.0, 366.333, 414.0, 384.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_light,source_drawer,设置,TextView,"[658.0, 366.333, 682.0, 384.0]",12.0,,"[539.9999999900659, 341, 761, 372]","[-118.0, -25.333, 79.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_light,source_drawer,站源与分类,android.widget.TextView,"[16.0, 172.667, 788.0, 197.667]",,,"[619.3333333333333, 11.666666666666686, 705.9999999999999, 32]","[603.333, -161.0, -82.0, -165.667]",unique label; needs manual review,pending component review
+phone_landscape_light,source_drawer,站源,android.widget.TextView,"[16.0, 205.333, 398.0, 249.333]",,,"[548, 52, 691, 89]","[532.0, -153.333, 293.0, -160.333]",unique label; needs manual review,pending component review
+phone_landscape_light,source_drawer,分类,android.widget.TextView,"[406.0, 205.333, 788.0, 249.333]",,,"[692, 52, 836, 89]","[286.0, -153.333, 48.0, -160.333]",unique label; needs manual review,pending component review
+phone_landscape_light,source_drawer,分组 · 全部 · 已启用站源,android.widget.TextView,"[16.0, 257.333, 788.0, 275.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,source_drawer,漫画160,android.widget.TextView,"[16.0, 283.0, 268.0, 327.0]",,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_light,source_drawer,G社漫画,android.widget.TextView,"[276.0, 283.0, 528.0, 327.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,source_drawer,18漫画,android.widget.TextView,"[536.0, 283.0, 788.0, 327.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,source_drawer,应用,android.widget.Button,"[16.0, 337.0, 788.0, 381.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,search_results,发现,TextView,"[16.0, 28.333, 715.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_light,search_results,漫画160,TextView,"[715.0, 28.0, 788.0, 64.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,search_results,电锯人,EditText,"[20.0, 74.0, 732.0, 116.0]",14.0,,"[14, 325.33333333333337, 123, 341.00000000000006]","[-6.0, 251.333, -609.0, 225.0]",unique label; needs manual review,pending component review
+phone_landscape_light,search_results,单站,TextView,"[732.0, 76.0, 784.0, 114.0]",12.0,,"[679, 64.66666666666669, 728, 96.66666666666669]","[-53.0, -11.333, -56.0, -17.333]",unique label; needs manual review,pending component review
+phone_landscape_light,search_results,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,search_results,搜索结果,TextView,"[16.0, 148.0, 788.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,search_results,书架,TextView,"[122.0, 366.333, 146.0, 384.0]",12.0,,"[91, 341, 312.0000000099341, 372]","[-31.0, -25.333, 166.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_light,search_results,发现,TextView,"[390.0, 366.333, 414.0, 384.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_light,search_results,设置,TextView,"[658.0, 366.333, 682.0, 384.0]",12.0,,"[539.9999999900659, 341, 761, 372]","[-118.0, -25.333, 79.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_light,detail,电锯人,TextView,"[16.0, 257.333, 680.0, 286.667]",20.0,detail.title,"[75, 234, 557, 258]","[59.0, -23.333, -123.0, -28.667]",unique label; needs manual review,pending component review
+phone_landscape_light,detail,下载离线章节,ImageView,"[680.0, 254.0, 716.0, 290.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,detail,漫画160,TextView,"[716.0, 250.0, 788.0, 294.0]",12.0,,"[661.3333333333334, 239, 706.6666666666666, 253.33333333333334]","[-54.667, -11.0, -81.333, -40.667]",unique label; needs manual review,pending component review
+phone_landscape_light,detail,连载中 · 验收作者,TextView,"[29.0, 302.0, 788.0, 319.667]",12.0,detail.metadata,"[88, 278, 777, 292.3333333333333]","[59.0, -24.0, -11.0, -27.334]",unique label; needs manual review,pending component review
+phone_landscape_light,detail,连载中,TextView,"[16.0, 329.667, 72.0, 357.333]",12.0,,"[75, 302.3333333333333, 132, 328.66666666666663]","[59.0, -27.334, 60.0, -28.666]",unique label; needs manual review,pending component review
+phone_landscape_light,detail,确定性同内容漫画：用于页面、交互与离线下载验收。,TextView,"[16.0, 369.333, 788.0, 388.667]",13.0,,"[75, 338.6666666666667, 777, 354.33333333333337]","[59.0, -30.666, -11.0, -34.334]",unique label; needs manual review,pending component review
+phone_landscape_light,detail,取消收藏,ImageView,"[16.0, 339.0, 60.0, 383.0]",,detail.favorite,"[75, 318, 119, 362]","[59.0, -21.0, 59.0, -21.0]",unique label; needs manual review,pending component review
+phone_landscape_light,detail,继续阅读，第 1 话,LinearLayout,"[68.0, 339.0, 788.0, 383.0]",,detail.read,"[127, 318, 777, 362]","[59.0, -21.0, -11.0, -21.0]",unique label; needs manual review,pending component review
+phone_landscape_light,detail,继续阅读,TextView,"[80.0, 342.0, 776.0, 360.667]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,detail,第 1 话,TextView,"[80.0, 362.667, 776.0, 380.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,reader,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,reader,电锯人 · 第1话,TextView,"[48.0, 36.667, 840.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,reader,上一章,TextView,"[12.0, 311.333, 67.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reader,下一章,TextView,"[785.0, 311.333, 840.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reader,目录,TextView,"[140.667, 370.0, 164.667, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reader,换源,TextView,"[414.0, 370.0, 438.0, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reader,设置,TextView,"[687.333, 370.0, 711.333, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reading_settings,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,reading_settings,电锯人 · 第1话,TextView,"[48.0, 36.667, 840.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,reading_settings,上一章,TextView,"[12.0, 311.333, 67.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reading_settings,下一章,TextView,"[785.0, 311.333, 840.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reading_settings,目录,TextView,"[140.667, 370.0, 164.667, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reading_settings,换源,TextView,"[414.0, 370.0, 438.0, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reading_settings,设置,TextView,"[687.333, 370.0, 711.333, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reading_settings,阅读设置,android.widget.TextView,"[18.0, 89.0, 834.0, 114.0]",,,"[18, 30, 790, 50.333333333333314]","[0.0, -59.0, -44.0, -63.667]",unique label; needs manual review,pending component review
+phone_landscape_light,reading_settings,阅读模式,android.widget.TextView,"[18.0, 144.333, 86.0, 164.667]",,,"[59, 92.66666666666669, 127, 109.66666666666669]","[41.0, -51.666, 41.0, -55.0]",unique label; needs manual review,pending component review
+phone_landscape_light,reading_settings,卷轴模式,android.widget.TextView,"[184.0, 158.0, 232.0, 175.333]",,reader.layout.0,"[127, 72, 456, 130]","[-57.0, -86.0, 224.0, -45.333]",unique label; needs manual review,pending component review
+phone_landscape_light,reading_settings,普通模式,android.widget.TextView,"[436.0, 158.0, 484.0, 175.333]",,reader.layout.1,"[464, 72, 793, 130]","[28.0, -86.0, 309.0, -45.333]",unique label; needs manual review,pending component review
+phone_landscape_light,reading_settings,日漫模式,android.widget.TextView,"[688.0, 158.0, 736.0, 175.333]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,reading_settings,阅读主题,android.widget.TextView,"[18.0, 216.333, 86.0, 236.667]",,,"[59, 164.66666666666666, 127, 181.66666666666666]","[41.0, -51.666, 41.0, -55.0]",unique label; needs manual review,pending component review
+phone_landscape_light,reading_settings,默认,android.widget.TextView,"[196.0, 230.0, 220.0, 247.333]",,reader.theme.0,"[127, 144, 343.6666666666667, 202]","[-69.0, -86.0, 123.667, -45.333]",unique label; needs manual review,pending component review
+phone_landscape_light,reading_settings,深色,android.widget.TextView,"[448.0, 230.0, 472.0, 247.333]",,reader.theme.1,"[351.6666666666667, 144, 568.3333333333334, 202]","[-96.333, -86.0, 96.333, -45.333]",unique label; needs manual review,pending component review
+phone_landscape_light,reading_settings,浅色,android.widget.TextView,"[700.0, 230.0, 724.0, 247.333]",,reader.theme.2,"[576.3333333333335, 144, 793.0000000000001, 202]","[-123.667, -86.0, 69.0, -45.333]",unique label; needs manual review,pending component review
+phone_landscape_light,reading_settings,隐藏右下角状态信息,android.widget.TextView,"[18.0, 279.0, 787.333, 299.333]",,reader.fully.immersive,"[785, 218.66666666666666, 836, 249.66666666666666]","[767.0, -60.333, 48.667, -49.666]",unique label; needs manual review,pending component review
+phone_landscape_light,reading_settings,墨水屏模式,android.widget.TextView,"[18.0, 326.0, 787.333, 346.333]",,reader.display.mode,"[785, 262.6666666666667, 836, 293.6666666666667]","[767.0, -63.333, 48.667, -52.666]",unique label; needs manual review,pending component review
+phone_landscape_light,reading_settings,搓指放大,android.widget.TextView,"[18.0, 373.0, 787.333, 377.0]",,reader.pinch.zoom,"[785, 306.6666666666667, 836, 337.6666666666667]","[767.0, -66.333, 48.667, -39.333]",unique label; needs manual review,pending component review
+phone_landscape_light,reader_directory,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,reader_directory,电锯人 · 第1话,TextView,"[48.0, 36.667, 840.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,reader_directory,上一章,TextView,"[12.0, 311.333, 67.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reader_directory,下一章,TextView,"[785.0, 311.333, 840.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reader_directory,目录,TextView,"[140.667, 370.0, 164.667, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reader_directory,换源,TextView,"[414.0, 370.0, 438.0, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reader_directory,设置,TextView,"[687.333, 370.0, 711.333, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reader_directory,展开或收起章节目录,android.widget.FrameLayout,"[0.0, 177.0, 852.0, 199.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_light,reader_directory,全部章节,android.widget.TextView,"[20.0, 203.0, 788.0, 235.0]",,,"[20, 211.33333333333334, 85.33333333333333, 230.66666666666666]","[0.0, 8.333, -702.667, -4.333]",unique label; needs manual review,pending component review
+phone_landscape_light,reader_directory,正序,android.widget.TextView,"[788.0, 205.0, 832.0, 233.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reader_directory,第1话,android.widget.TextView,"[33.667, 251.667, 790.0, 272.333]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_light,reader_directory,第2话,android.widget.TextView,"[33.667, 297.667, 790.0, 318.333]",,,"[92.66666666666669, 301.66666666666663, 777, 318.66666666666663]","[59.0, 4.0, -13.0, 0.334]",unique label; needs manual review,pending component review
+phone_landscape_light,reader_directory,第3话,android.widget.TextView,"[33.667, 343.667, 790.0, 364.333]",,,"[92.66666666666669, 347.66666666666663, 777, 364.66666666666663]","[59.0, 4.0, -13.0, 0.334]",unique label; needs manual review,pending component review
+phone_landscape_light,reader_directory,快速定位章节，上下拖动或使用滚动操作,android.view.View,"[808.0, 239.0, 852.0, 381.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,bookshelf_online,我的书架,TextView,"[16.0, 28.333, 112.0, 63.333]",24.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,bookshelf_online,|,TextView,"[112.0, 35.0, 124.0, 56.667]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,bookshelf_online,本地书架,TextView,"[124.0, 34.333, 188.0, 57.667]",16.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,bookshelf_online,切换为列表模式,ImageView,"[731.0, 33.0, 757.0, 59.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,bookshelf_online,蕾姆主题,ImageView,"[765.0, 34.333, 788.0, 57.333]",,rem_reader_resume,"[754, 10.666666666666686, 777, 33.666666666666686]","[-11.0, -23.666, -11.0, -23.666]",unique label; needs manual review,pending component review
+phone_landscape_dark,bookshelf_online,接着看,TextView,"[16.0, 74.333, 725.333, 97.667]",16.0,,"[75, 52.333333333333314, 124, 71.66666666666669]","[59.0, -22.0, -601.333, -26.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,bookshelf_online,阅读历史 ›,TextView,"[725.333, 68.0, 788.0, 104.0]",12.0,,"[719, 54.666666666666686, 777, 69.66666666666669]","[-6.333, -13.333, -11.0, -34.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,bookshelf_online,电锯人封面,ImageView,"[17.0, 112.333, 51.0, 146.333]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,bookshelf_online,电锯人,TextView,"[61.0, 108.333, 743.0, 130.333]",15.0,,"[16, 327.33333333333337, 128, 343.00000000000006]","[-45.0, 219.0, -615.0, 212.667]",unique label; needs manual review,pending component review
+phone_landscape_dark,bookshelf_online,上次看到 · 第 1 话,TextView,"[61.0, 132.333, 743.0, 150.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,bookshelf_online,续读 ›,TextView,"[743.0, 104.333, 787.0, 154.333]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,bookshelf_online,全部,TextView,"[24.0, 160.667, 54.0, 182.667]",15.0,,"[83, 140.66666666666666, 113.66666666666667, 158.66666666666666]","[59.0, -20.0, 59.667, -24.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,bookshelf_online,分组管理,FrameLayout,"[758.0, 160.0, 788.0, 190.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,bookshelf_online,5,BookshelfBadgeView,"[119.667, 199.667, 135.667, 215.667]",10.0,,"[109, 180, 116, 194]","[-10.667, -19.667, -19.667, -21.667]",unique label; needs manual review,pending component review
+phone_landscape_dark,bookshelf_online,6,BookshelfBadgeView,"[249.333, 199.667, 265.333, 215.667]",10.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_dark,bookshelf_online,6,BookshelfBadgeView,"[379.0, 199.667, 395.0, 215.667]",10.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_dark,bookshelf_online,书架,TextView,"[122.0, 366.333, 146.0, 384.0]",12.0,,"[91, 341, 312.0000000099341, 372]","[-31.0, -25.333, 166.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,bookshelf_online,发现,TextView,"[390.0, 366.333, 414.0, 384.0]",12.0,,"[316.00000000993407, 341, 535.9999999900658, 372]","[-74.0, -25.333, 122.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,bookshelf_online,设置,TextView,"[658.0, 366.333, 682.0, 384.0]",12.0,,"[539.9999999900659, 341, 761, 372]","[-118.0, -25.333, 79.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,discover,发现,TextView,"[16.0, 28.333, 715.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_dark,discover,漫画160,TextView,"[715.0, 28.0, 788.0, 64.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,discover,单站,TextView,"[732.0, 76.0, 784.0, 114.0]",12.0,,"[679, 64.66666666666669, 728, 96.66666666666669]","[-53.0, -11.333, -56.0, -17.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,discover,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,discover,全部漫画,TextView,"[16.0, 148.0, 788.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,discover,书架,TextView,"[122.0, 366.333, 146.0, 384.0]",12.0,,"[91, 341, 312.0000000099341, 372]","[-31.0, -25.333, 166.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,discover,发现,TextView,"[390.0, 366.333, 414.0, 384.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_dark,discover,设置,TextView,"[658.0, 366.333, 682.0, 384.0]",12.0,,"[539.9999999900659, 341, 761, 372]","[-118.0, -25.333, 79.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,source_drawer,发现,TextView,"[16.0, 28.333, 715.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_dark,source_drawer,漫画160,TextView,"[715.0, 28.0, 788.0, 64.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_dark,source_drawer,单站,TextView,"[732.0, 76.0, 784.0, 114.0]",12.0,,"[679, 64.66666666666669, 728, 96.66666666666669]","[-53.0, -11.333, -56.0, -17.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,source_drawer,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,source_drawer,全部漫画,TextView,"[16.0, 148.0, 788.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,source_drawer,书架,TextView,"[122.0, 366.333, 146.0, 384.0]",12.0,,"[91, 341, 312.0000000099341, 372]","[-31.0, -25.333, 166.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,source_drawer,发现,TextView,"[390.0, 366.333, 414.0, 384.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_dark,source_drawer,设置,TextView,"[658.0, 366.333, 682.0, 384.0]",12.0,,"[539.9999999900659, 341, 761, 372]","[-118.0, -25.333, 79.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,source_drawer,站源与分类,android.widget.TextView,"[16.0, 172.667, 788.0, 197.667]",,,"[619.3333333333333, 11.666666666666686, 705.9999999999999, 32]","[603.333, -161.0, -82.0, -165.667]",unique label; needs manual review,pending component review
+phone_landscape_dark,source_drawer,站源,android.widget.TextView,"[16.0, 205.333, 398.0, 249.333]",,,"[548, 52, 691, 89]","[532.0, -153.333, 293.0, -160.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,source_drawer,分类,android.widget.TextView,"[406.0, 205.333, 788.0, 249.333]",,,"[692, 52, 836, 89]","[286.0, -153.333, 48.0, -160.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,source_drawer,分组 · 全部 · 已启用站源,android.widget.TextView,"[16.0, 257.333, 788.0, 275.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,source_drawer,漫画160,android.widget.TextView,"[16.0, 283.0, 268.0, 327.0]",,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_dark,source_drawer,G社漫画,android.widget.TextView,"[276.0, 283.0, 528.0, 327.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,source_drawer,18漫画,android.widget.TextView,"[536.0, 283.0, 788.0, 327.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,source_drawer,应用,android.widget.Button,"[16.0, 337.0, 788.0, 381.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,search_results,发现,TextView,"[16.0, 28.333, 715.0, 63.333]",24.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_dark,search_results,漫画160,TextView,"[715.0, 28.0, 788.0, 64.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,search_results,电锯人,EditText,"[20.0, 74.0, 732.0, 116.0]",14.0,,"[14, 325.33333333333337, 123, 341.00000000000006]","[-6.0, 251.333, -609.0, 225.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,search_results,单站,TextView,"[732.0, 76.0, 784.0, 114.0]",12.0,,"[679, 64.66666666666669, 728, 96.66666666666669]","[-53.0, -11.333, -56.0, -17.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,search_results,类型,TextView,"[16.0, 118.0, 64.0, 143.667]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,search_results,搜索结果,TextView,"[16.0, 148.0, 788.0, 171.333]",16.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,search_results,书架,TextView,"[122.0, 366.333, 146.0, 384.0]",12.0,,"[91, 341, 312.0000000099341, 372]","[-31.0, -25.333, 166.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,search_results,发现,TextView,"[390.0, 366.333, 414.0, 384.0]",12.0,,[],[],unresolved (Android 2; Apple 2 label matches),pending component review
+phone_landscape_dark,search_results,设置,TextView,"[658.0, 366.333, 682.0, 384.0]",12.0,,"[539.9999999900659, 341, 761, 372]","[-118.0, -25.333, 79.0, -12.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,detail,电锯人,TextView,"[16.0, 257.333, 680.0, 286.667]",20.0,detail.title,"[75, 234, 557, 258]","[59.0, -23.333, -123.0, -28.667]",unique label; needs manual review,pending component review
+phone_landscape_dark,detail,下载离线章节,ImageView,"[680.0, 254.0, 716.0, 290.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,detail,漫画160,TextView,"[716.0, 250.0, 788.0, 294.0]",12.0,,"[661.3333333333334, 239, 706.6666666666666, 253.33333333333334]","[-54.667, -11.0, -81.333, -40.667]",unique label; needs manual review,pending component review
+phone_landscape_dark,detail,连载中 · 验收作者,TextView,"[29.0, 302.0, 788.0, 319.667]",12.0,detail.metadata,"[88, 278, 777, 292.3333333333333]","[59.0, -24.0, -11.0, -27.334]",unique label; needs manual review,pending component review
+phone_landscape_dark,detail,连载中,TextView,"[16.0, 329.667, 72.0, 357.333]",12.0,,"[75, 302.3333333333333, 132, 328.66666666666663]","[59.0, -27.334, 60.0, -28.666]",unique label; needs manual review,pending component review
+phone_landscape_dark,detail,确定性同内容漫画：用于页面、交互与离线下载验收。,TextView,"[16.0, 369.333, 788.0, 388.667]",13.0,,"[75, 338.6666666666667, 777, 354.33333333333337]","[59.0, -30.666, -11.0, -34.334]",unique label; needs manual review,pending component review
+phone_landscape_dark,detail,取消收藏,ImageView,"[16.0, 339.0, 60.0, 383.0]",,detail.favorite,"[75, 318, 119, 362]","[59.0, -21.0, 59.0, -21.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,detail,继续阅读，第 1 话,LinearLayout,"[68.0, 339.0, 788.0, 383.0]",,detail.read,"[127, 318, 777, 362]","[59.0, -21.0, -11.0, -21.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,detail,继续阅读,TextView,"[80.0, 342.0, 776.0, 360.667]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,detail,第 1 话,TextView,"[80.0, 362.667, 776.0, 380.0]",12.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,reader,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,reader,电锯人 · 第1话,TextView,"[48.0, 36.667, 840.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,reader,上一章,TextView,"[12.0, 311.333, 67.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reader,下一章,TextView,"[785.0, 311.333, 840.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reader,目录,TextView,"[140.667, 370.0, 164.667, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reader,换源,TextView,"[414.0, 370.0, 438.0, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reader,设置,TextView,"[687.333, 370.0, 711.333, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reading_settings,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,reading_settings,电锯人 · 第1话,TextView,"[48.0, 36.667, 840.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,reading_settings,上一章,TextView,"[12.0, 311.333, 67.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reading_settings,下一章,TextView,"[785.0, 311.333, 840.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reading_settings,目录,TextView,"[140.667, 370.0, 164.667, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reading_settings,换源,TextView,"[414.0, 370.0, 438.0, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reading_settings,设置,TextView,"[687.333, 370.0, 711.333, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reading_settings,阅读设置,android.widget.TextView,"[18.0, 89.0, 834.0, 114.0]",,,"[18, 30, 790, 50.333333333333314]","[0.0, -59.0, -44.0, -63.667]",unique label; needs manual review,pending component review
+phone_landscape_dark,reading_settings,阅读模式,android.widget.TextView,"[18.0, 144.333, 86.0, 164.667]",,,"[59, 92.66666666666669, 127, 109.66666666666669]","[41.0, -51.666, 41.0, -55.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,reading_settings,卷轴模式,android.widget.TextView,"[184.0, 158.0, 232.0, 175.333]",,reader.layout.0,"[127, 72, 456, 130]","[-57.0, -86.0, 224.0, -45.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,reading_settings,普通模式,android.widget.TextView,"[436.0, 158.0, 484.0, 175.333]",,reader.layout.1,"[464, 72, 793, 130]","[28.0, -86.0, 309.0, -45.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,reading_settings,日漫模式,android.widget.TextView,"[688.0, 158.0, 736.0, 175.333]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,reading_settings,阅读主题,android.widget.TextView,"[18.0, 216.333, 86.0, 236.667]",,,"[59, 164.66666666666666, 127, 181.66666666666666]","[41.0, -51.666, 41.0, -55.0]",unique label; needs manual review,pending component review
+phone_landscape_dark,reading_settings,默认,android.widget.TextView,"[196.0, 230.0, 220.0, 247.333]",,reader.theme.0,"[127, 144, 343.6666666666667, 202]","[-69.0, -86.0, 123.667, -45.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,reading_settings,深色,android.widget.TextView,"[448.0, 230.0, 472.0, 247.333]",,reader.theme.1,"[351.6666666666667, 144, 568.3333333333334, 202]","[-96.333, -86.0, 96.333, -45.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,reading_settings,浅色,android.widget.TextView,"[700.0, 230.0, 724.0, 247.333]",,reader.theme.2,"[576.3333333333335, 144, 793.0000000000001, 202]","[-123.667, -86.0, 69.0, -45.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,reading_settings,隐藏右下角状态信息,android.widget.TextView,"[18.0, 279.0, 787.333, 299.333]",,reader.fully.immersive,"[785, 218.66666666666666, 836, 249.66666666666666]","[767.0, -60.333, 48.667, -49.666]",unique label; needs manual review,pending component review
+phone_landscape_dark,reading_settings,墨水屏模式,android.widget.TextView,"[18.0, 326.0, 787.333, 346.333]",,reader.display.mode,"[785, 262.6666666666667, 836, 293.6666666666667]","[767.0, -63.333, 48.667, -52.666]",unique label; needs manual review,pending component review
+phone_landscape_dark,reading_settings,搓指放大,android.widget.TextView,"[18.0, 373.0, 787.333, 377.0]",,reader.pinch.zoom,"[785, 306.6666666666667, 836, 337.6666666666667]","[767.0, -66.333, 48.667, -39.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,reader_directory,返回,ImageView,"[12.0, 32.0, 40.0, 60.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,reader_directory,电锯人 · 第1话,TextView,"[48.0, 36.667, 840.0, 55.333]",13.0,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,reader_directory,上一章,TextView,"[12.0, 311.333, 67.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reader_directory,下一章,TextView,"[785.0, 311.333, 840.0, 342.667]",13.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reader_directory,目录,TextView,"[140.667, 370.0, 164.667, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reader_directory,换源,TextView,"[414.0, 370.0, 438.0, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reader_directory,设置,TextView,"[687.333, 370.0, 711.333, 387.667]",12.0,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reader_directory,展开或收起章节目录,android.widget.FrameLayout,"[0.0, 177.0, 852.0, 199.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
+phone_landscape_dark,reader_directory,全部章节,android.widget.TextView,"[20.0, 203.0, 788.0, 235.0]",,,"[20, 211.33333333333334, 85.33333333333333, 230.66666666666666]","[0.0, 8.333, -702.667, -4.333]",unique label; needs manual review,pending component review
+phone_landscape_dark,reader_directory,正序,android.widget.TextView,"[788.0, 205.0, 832.0, 233.0]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reader_directory,第1话,android.widget.TextView,"[33.667, 251.667, 790.0, 272.333]",,,[],[],unresolved (Android 1; Apple 2 label matches),pending component review
+phone_landscape_dark,reader_directory,第2话,android.widget.TextView,"[33.667, 297.667, 790.0, 318.333]",,,"[92.66666666666669, 301.66666666666663, 777, 318.66666666666663]","[59.0, 4.0, -13.0, 0.334]",unique label; needs manual review,pending component review
+phone_landscape_dark,reader_directory,第3话,android.widget.TextView,"[33.667, 343.667, 790.0, 364.333]",,,"[92.66666666666669, 347.66666666666663, 777, 364.66666666666663]","[59.0, 4.0, -13.0, 0.334]",unique label; needs manual review,pending component review
+phone_landscape_dark,reader_directory,快速定位章节，上下拖动或使用滚动操作,android.view.View,"[808.0, 239.0, 852.0, 381.0]",,,[],[],unresolved (Android 1; Apple 0 label matches),pending component review
