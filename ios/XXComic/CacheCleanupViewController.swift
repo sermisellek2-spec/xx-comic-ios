@@ -139,6 +139,9 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
             do {
                 let remaining = try await environment.clearCaches()
                 guard let self, !Task.isCancelled else { return }
+                #if DEBUG
+                self.feedbackLabel.accessibilityValue = "memory=\(remaining.memoryBytes); disk=\(remaining.diskBytes)"
+                #endif
                 self.calculateCacheSize()
                 if remaining.isEmpty {
                     self.showToast("缓存已清理，收藏与本地漫画已保留")

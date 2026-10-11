@@ -65,8 +65,10 @@ for action in root.get('actions', []):
             name = item.get('name', '')
             if not payload:
                 continue
-            if re.fullmatch(r'(iphone|ipad)_(portrait|landscape)_(light|dark)_[A-Za-z0-9_]+', name):
+            if re.fullmatch(r'(iphone|ipad)_(portrait|landscape)_(light|dark)_[A-Za-z0-9_]+', name) and item.get('uniformTypeIdentifier') == 'public.png':
                 target = output / 'visual-matrix' / (name + '.png')
+            elif re.fullmatch(r'provenance-(iphone|ipad)_(portrait|landscape)_(light|dark)_[A-Za-z0-9_]+', name) and item.get('uniformTypeIdentifier') == 'public.json':
+                target = output / 'visual-provenance' / (name.removeprefix('provenance-') + '.json')
             elif name in ('real-input-384x384', 'coreml-output-768x768', 'reader-ai-metrics'):
                 suffix = '.json' if name == 'reader-ai-metrics' else '.png'
                 target = output / 'reader-enhancement' / (device_slug + '-' + name + suffix)

@@ -124,7 +124,7 @@ final class CurrentParityUITests: ParityUITestCase {
     }
 
     func testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry() {
-        let app = launch("--matrix-lazy-directory", "--matrix-directory-delay")
+        let app = launch("--matrix-lazy-directory", "--matrix-directory-held-until-cancel")
         app.buttons["我的书架"].tap()
         let comic = app.collectionViews.cells["电锯人"]
         XCTAssertTrue(comic.waitForExistence(timeout: 5)); comic.tap()

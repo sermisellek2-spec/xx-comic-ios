@@ -1,5 +1,8 @@
 # 当前代码 Apple 开发验证
 
+最新完成结果：[第八轮b69517c](repair-8-summary.json)实际failure，SDK/Core875/两设备原生各20通过，UI各57执行、7/9个失败用例。16张实际失败屏和当前修复见[2026-10-12候选](../2026-10-12-regression-repair/README.md)。当前非站源门槛未通过，未生成IPA；下文为各轮历史证据。
+
+
 日期：2026-10-11。唯一仓库：`sermisellek2-spec/xx-comic-ios`，可见性见当前只读记录，分支`codex/ios-port`。这是代理阶段自验，不是最终总验收或正式发布。
 
 用户正常登录命令提示已保存账号凭据后，代理显式选择目标账号进行非交互Git访问，退出0，目标远端HEAD为a5aeec90a1d47b9670b859150cb89f78c9856fbb。API进一步确认账号sermisellek2-spec、仓库为私有、push权限为true；[auth-proof.json](auth-proof.json)记录过滤后的实际结果，不保存Token、Cookie或凭据助手原始输出。

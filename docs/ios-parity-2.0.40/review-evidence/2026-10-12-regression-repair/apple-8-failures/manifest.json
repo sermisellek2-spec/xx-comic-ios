@@ -1,0 +1,114 @@
+[
+  {
+    "file": "iPad_Pro_11-inch__M4_-CurrentParityUITests_testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry__-1.png",
+    "sha256": "e9c1c3a4e0417eb523d20bbca54e47d0836e06435abc9f6cfcad3d5e14fd9af5",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPad_Pro_11-inch__M4_-EpubReadingUITests_testTextSettingsPersistAfterRelaunch__-1.png",
+    "sha256": "903817e204b717e528a1eb5fc9e9da1b8714562d53aecde668f5bf2808f26184",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPad_Pro_11-inch__M4_-LinkedFolderParityUITests_testCancellingFolderReauthorizationKeepsTheExistingLink__-1.png",
+    "sha256": "625c82468fb0ed37ba22e5fec6c1abc549dd0d419af94009ce79677a358990a3",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPad_Pro_11-inch__M4_-LinkedFolderParityUITests_testIndexedBookReadsRealPageWithoutAFullPrivateCopy__-1.png",
+    "sha256": "625c82468fb0ed37ba22e5fec6c1abc549dd0d419af94009ce79677a358990a3",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPad_Pro_11-inch__M4_-SettingsParityUITests_testCacheCleanupKeepsLibraryAndFixtureDiscovery__-1.png",
+    "sha256": "17b2ea97b52fe74236ba71a11260eb5ab579028a5d2acd2bd4880f029ab9e5a3",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferenceLandscapeDark__-1.png",
+    "sha256": "5ac35bb382622de36bc8f1a3115fe23ed906382d3959469ad08da2a59f7fa436",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferenceLandscapeLight__-1.png",
+    "sha256": "13599478dc933a8d8c96b31e712b1a087b2b89044e8db9fc91f68776d27ef592",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferencePortraitDark__-1.png",
+    "sha256": "8b45681abd0881c664e7d12c299d4ebb733a4c2af898b8aff827512932f2e512",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferencePortraitLight__-1.png",
+    "sha256": "b1b970c7f9ee85724b8d70f604f102ccf21af8af408aea2458cd8224190399fd",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPhone_15_Pro-BookshelfParityUITests_testSwitchingGridToListKeepsVisibleComic__-1.png",
+    "sha256": "b99d0b347937ba6cd1f776b6ff3f66594e7ac34bb0c4e07abcd9368a6fec87b8",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPhone_15_Pro-EpubReadingUITests_testTextSettingsPersistAfterRelaunch__-1.png",
+    "sha256": "0a07c8db8045aa14473f5a10dfcabe3297848ee2e542196c1fed5ff79ecd4226",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPhone_15_Pro-SettingsParityUITests_testCacheCleanupKeepsLibraryAndFixtureDiscovery__-1.png",
+    "sha256": "2506b2bab9cdb570668fb5c1222ca75dde4f516f082e28db51b301636a264d0a",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPhone_15_Pro-VisualMatrixUITests_testSettingsReferenceLandscapeDark__-1.png",
+    "sha256": "a2c9385d2457d40ad593bbb2f063e288d07bb0741e4584185c86e26e7d2d84d6",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPhone_15_Pro-VisualMatrixUITests_testSettingsReferenceLandscapeLight__-1.png",
+    "sha256": "8e3c76ec31522597d855d96b8d0b214849b966c2cacc31b34828a65c3cbb9bcb",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPhone_15_Pro-VisualMatrixUITests_testSettingsReferencePortraitDark__-1.png",
+    "sha256": "6b98b4db43c058af3566cd46adc6a1657ee00adf099901abeee85b2618a2893a",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  },
+  {
+    "file": "iPhone_15_Pro-VisualMatrixUITests_testSettingsReferencePortraitLight__-1.png",
+    "sha256": "f4a76bd8dac69d20b72250274d38b5ad0c3b9a102138441cafa511165addfded",
+    "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+    "run": 38155816449,
+    "purpose": "actual failed screen; not current candidate acceptance"
+  }
+]

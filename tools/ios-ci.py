@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read the designated private iOS CI using the account's normal Git credentials.
+"""Read the designated iOS CI using the account's normal Git credentials.
 
 Credentials stay in memory. Redirected artifact requests receive no authorization
 header. This tool never uploads files, dispatches jobs, or changes authentication.
@@ -107,7 +107,7 @@ def run_summary(run):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="读取唯一指定的私有 iOS CI，不输出认证信息。")
+    parser = argparse.ArgumentParser(description="读取唯一指定的 iOS CI，不输出认证信息。")
     parser.add_argument("--json-output", help="在工作区中保存过滤后的 JSON 证据")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("auth")

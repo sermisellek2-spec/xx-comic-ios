@@ -286,13 +286,12 @@ final class AppEnvironment {
     func source(for comic: ComicSummary) -> (any ComicSource)? { comic.sourceId == "local" ? localSource : allSources.first { $0.id == comic.sourceId } }
     func clearCaches() async throws -> HTTPResponseCacheUsage {
         try Task.checkCancellation()
-        _ = try await responseCache.clear()
         RemoteImageView.clearMemoryCache()
         ReaderEnhancementEngine.shared.clearCache()
         await mh18BrowserSession.clearCache()
         reloadSources()
         NotificationCenter.default.post(name: Self.sourcesChanged, object: self)
-        return try await responseCache.usage()
+        return try await responseCache.clear()
     }
     func setUsageStatsEnabled(_ enabled: Bool) throws {
         try usageStats.setEnabled(enabled)

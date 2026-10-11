@@ -8,20 +8,7 @@ import ComicCore
 enum MatrixUITestFixtures {
     private static var server: MatrixUITestHTTPServer?
     static func sources() throws -> [any ComicSource] {
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        let image = UIGraphicsImageRenderer(size: CGSize(width: 384, height: 384), format: format).image { context in
-            UIColor.white.setFill(); context.fill(CGRect(x: 0, y: 0, width: 384, height: 384))
-            UIColor.black.setStroke(); context.cgContext.setLineWidth(3)
-            context.cgContext.stroke(CGRect(x: 20, y: 20, width: 344, height: 344))
-            for n in 0..<8 {
-                UIColor(hue: CGFloat(n) / 8, saturation: 0.7, brightness: 0.8, alpha: 1).setFill()
-                context.fill(CGRect(x: 40 + n * 36, y: 90, width: 24, height: 170))
-            }
-            ("XX Comic 2.0.40" as NSString).draw(at: CGPoint(x: 40, y: 300), withAttributes: [.font: UIFont.boldSystemFont(ofSize: 24), .foregroundColor: UIColor.black])
-        }
-        guard let png = image.pngData() else { throw CocoaError(.fileWriteUnknown) }
-        server = try MatrixUITestHTTPServer(image: png)
+        server = try MatrixUITestHTTPServer(image: MatrixSharedFixture.png)
         let ids = ProcessInfo.processInfo.arguments.contains("--matrix-catalog-fixtures")
             ? BuiltinSourceCatalog.activeIDs : ["mh160", "copy4000", "gmh"]
         return ids.map { MatrixUITestSource(id: $0) }
@@ -47,14 +34,16 @@ enum MatrixUITestFixtures {
                         revision: FavoriteRevision.fromChapters(latestChapterName: "第6话", chapters: fixture.chapterList))
                 }
                 if let comic = fixture.comics.first {
-                    try environment.library.saveReading(comic, chapter: fixture.chapterList[0], chapterIndex: 0, position: ReaderPosition(imageIndex: 0, offset: 0))
+                    let index = MatrixSharedFixture.document.readChapterIndex
+                    try environment.library.saveReading(comic, chapter: fixture.chapterList[index], chapterIndex: index, position: ReaderPosition(imageIndex: 0, offset: 0))
                 }
             }
         }
         var preferences = environment.preferences.load()
         if arguments.contains("--matrix-paged-reader") { preferences.layout = .paged }
-        preferences.enhancementMode = ImageEnhancementPolicy.modeSmart
-        preferences.enhancementComparison = true
+        let originalPixels = arguments.contains("--matrix-reader-original")
+        preferences.enhancementMode = originalPixels ? ImageEnhancementPolicy.modeOff : ImageEnhancementPolicy.modeSmart
+        preferences.enhancementComparison = !originalPixels
         preferences.theme = ProcessInfo.processInfo.arguments.contains("--dark-mode") ? .dark : .light
         environment.preferences.save(preferences)
     }
@@ -100,14 +89,14 @@ struct MatrixUITestSource: ComicSource {
     var supportsSearch: Bool { id != "cuimh" && id != "liumanhua" }
     var referer: String { "http://127.0.0.1:8767/" }
     var comics: [ComicSummary] {
-        let titles = ["电锯人", "间谍过家家", "一人之下"] + (ProcessInfo.processInfo.arguments.contains("--matrix-large-bookshelf") ? (4...36).map { "验收漫画\($0)" } : [])
+        let titles = MatrixSharedFixture.document.titles + (ProcessInfo.processInfo.arguments.contains("--matrix-large-bookshelf") ? (4...36).map { "验收漫画\($0)" } : [])
         return titles.enumerated().map { index, title in
             ComicSummary(sourceId: id, comicId: "\(id)_comic_\(index)", title: title,
-                         coverUrl: "\(referer)cover-\(index).png", subtitle: "第3话", tags: ["连载中"])
+                         coverUrl: "\(referer)cover-\(index).png", subtitle: MatrixSharedFixture.document.subtitle, tags: MatrixSharedFixture.document.tags)
         }
     }
     var chapterList: [Chapter] {
-        (1...6).map { Chapter(chapterId: "\(id)_chapter_\($0)", title: "第\($0)话", url: "\(referer)\(id)/chapter/\($0)") }
+        (1...MatrixSharedFixture.document.chapterCount).map { Chapter(chapterId: "\(id)_chapter_\($0)", title: "第\($0)话", url: "\(referer)\(id)/chapter/\($0)") }
     }
     func latest(page: Int) async throws -> [ComicSummary] { try Task.checkCancellation(); return page == 1 ? comics : [] }
     func search(keyword: String, page: Int) async throws -> [ComicSummary] {
@@ -129,7 +118,8 @@ struct MatrixUITestSource: ComicSource {
         }
         try Task.checkCancellation()
         guard let comic = comics.first(where: { $0.comicId == comicId }) else { throw URLError(.resourceUnavailable) }
-        return ComicDetail(summary: comic, author: "验收作者", status: "连载中", description: "确定性同内容漫画：用于页面、交互与离线下载验收。", latestChapter: "第6话", chapters: ProcessInfo.processInfo.arguments.contains("--matrix-lazy-directory") ? [] : chapterList)
+        let fixture = MatrixSharedFixture.document
+        return ComicDetail(summary: comic, author: fixture.author, status: fixture.status, description: fixture.description, latestChapter: fixture.latestChapter, chapters: ProcessInfo.processInfo.arguments.contains("--matrix-lazy-directory") ? [] : chapterList)
     }
     func chapters(comicId: String) async throws -> [Chapter] {
         let request = await requests.nextDirectory(comicId)
@@ -148,10 +138,12 @@ struct MatrixUITestSource: ComicSource {
     func chapter(url: String) async throws -> ChapterPage {
         try Task.checkCancellation()
         let number = URL(string: url)?.lastPathComponent ?? "1"
-        return ChapterPage(chapterId: "\(id)_chapter_\(number)", title: "第\(number)话", imageUrls: (0..<4).map { "\(referer)page-\(number)-\($0).png" })
+        return ChapterPage(chapterId: "\(id)_chapter_\(number)", title: "第\(number)话", imageUrls: (0..<MatrixSharedFixture.document.pagesPerChapter).map { "\(referer)page-\(number)-\($0).png" })
     }
     func filterGroups() async throws -> [SourceFilterGroup] {
-        [SourceFilterGroup(key: "genre", label: "类型", options: [SourceFilterOption(label: "全部", value: ""), SourceFilterOption(label: "热血", value: "hot")])]
+        let fixture = MatrixSharedFixture.document
+        return [SourceFilterGroup(key: fixture.filterKey, label: fixture.filterLabel,
+                                  options: fixture.filterOptions.map { SourceFilterOption(label: $0.label, value: $0.value) })]
     }
     func category(filters: [String: String], page: Int) async throws -> [ComicSummary] { try await latest(page: page) }
 }

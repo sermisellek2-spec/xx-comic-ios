@@ -1,0 +1,9 @@
+// Only the explicit reference-test command loads this script. The frozen
+// application's source, build files and installed APK remain unchanged.
+allprojects { referenceProject ->
+    referenceProject.plugins.withId('com.android.application') {
+        referenceProject.extensions.getByName('androidComponents').finalizeDsl { androidDsl ->
+            androidDsl.defaultConfig.testInstrumentationRunner = 'com.xxcomic.ParityReferenceInstrumentation'
+        }
+    }
+}

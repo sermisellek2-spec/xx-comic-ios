@@ -1,15 +1,34 @@
 import XCTest
+import UIKit
 
 final class VisualMatrixUITests: ParityUITestCase {
     private func capture(_ name: String) {
-        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        let screenshot = XCUIScreen.main.screenshot()
+        let attachment = XCTAttachment(data: screenshot.pngRepresentation, uniformTypeIdentifier: "public.png")
         attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+        let frame = XCUIApplication().windows.firstMatch.frame
+        let record: [String: Any] = [
+            "fixtureID": ParityFixtureIdentity.fixtureID,
+            "metadataSHA256": ParityFixtureIdentity.metadataSHA256,
+            "imageSHA256": ParityFixtureIdentity.imageSHA256,
+            "scene": name,
+            "appFrame": ["x": Double(frame.minX), "y": Double(frame.minY), "width": Double(frame.width), "height": Double(frame.height)],
+            "screenScale": Double(UIScreen.main.scale),
+            "preferredContentSizeCategory": UIApplication.shared.preferredContentSizeCategory.rawValue,
+            "capturedAtUTC": ISO8601DateFormatter().string(from: Date()),
+            "steps": "VisualMatrixUITests production navigation with explicitly isolated Debug fixture"
+        ]
+        do {
+            let data = try JSONSerialization.data(withJSONObject: record, options: [.sortedKeys])
+            let metadata = XCTAttachment(data: data, uniformTypeIdentifier: "public.json")
+            metadata.name = "provenance-" + name; metadata.lifetime = .keepAlways; add(metadata)
+        } catch { XCTFail("Cannot retain actual screenshot provenance: \(error)") }
     }
     private func exercise(landscape: Bool, dark: Bool) {
         XCUIDevice.shared.orientation = landscape ? .landscapeLeft : .portrait
         defer { XCUIDevice.shared.orientation = .portrait }
         let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--epub-fixtures", dark ? "--dark-mode" : "--light-mode"]
+        app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-catalog-fixtures", "--epub-fixtures", dark ? "--dark-mode" : "--light-mode"]
         app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
         app.launch()
         XCTAssertTrue(app.tabBars.buttons["书架"].waitForExistence(timeout: 10))

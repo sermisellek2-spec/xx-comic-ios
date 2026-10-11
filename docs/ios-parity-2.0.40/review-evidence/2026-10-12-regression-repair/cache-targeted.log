@@ -1,0 +1,40 @@
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[0/5] Write swift-version-24593BA9C3E375BF.txt
+[4/6] Compiling ComicCore HTTPResponseCache.swift
+[5/6] Emitting module ComicCore
+[7/14] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[8/14] Emitting module ComicCoreTests
+[9/17] Wrapping AST for ComicCoreTests for debugging
+[10/17] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[11/18] Write sources
+[13/20] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[14/20] Emitting module ComicCorePackageDiscoveredTests
+[15/21] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[16/22] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[17/22] Write sources
+[18/22] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[20/24] Emitting module ComicCorePackageTests
+[21/24] Compiling ComicCorePackageTests runner.swift
+[22/24] Write Objects.LinkFileList
+[23/24] Linking ComicCorePackageTests.xctest
+Build complete! (40.85s)
+Test Suite 'Selected tests' started at 2026-10-11 17:44:22.196
+Test Suite 'CacheMaintenanceTests' started at 2026-10-11 17:44:22.212
+Test Case 'CacheMaintenanceTests.testCancelledCleanupDoesNotRemoveCachedResponse' started at 2026-10-11 17:44:22.213
+Test Case 'CacheMaintenanceTests.testCancelledCleanupDoesNotRemoveCachedResponse' passed (0.005 seconds)
+Test Case 'CacheMaintenanceTests.testCancelledSizeCalculationFailsInsteadOfReportingEmpty' started at 2026-10-11 17:44:22.217
+Test Case 'CacheMaintenanceTests.testCancelledSizeCalculationFailsInsteadOfReportingEmpty' passed (0.001 seconds)
+Test Case 'CacheMaintenanceTests.testCleanupRemovesAResponseThatFinishesAfterTheFirstRemoval' started at 2026-10-11 17:44:22.218
+Test Case 'CacheMaintenanceTests.testCleanupRemovesAResponseThatFinishesAfterTheFirstRemoval' passed (0.508 seconds)
+Test Case 'CacheMaintenanceTests.testDirectorySizeIncludesHiddenFilesAndDoesNotFollowSymlinks' started at 2026-10-11 17:44:22.726
+Test Case 'CacheMaintenanceTests.testDirectorySizeIncludesHiddenFilesAndDoesNotFollowSymlinks' passed (0.011 seconds)
+Test Case 'CacheMaintenanceTests.testHTTPResponseCleanupUsesCacheAPIAndReportsRemainingUsage' started at 2026-10-11 17:44:22.737
+Test Case 'CacheMaintenanceTests.testHTTPResponseCleanupUsesCacheAPIAndReportsRemainingUsage' passed (0.407 seconds)
+Test Case 'CacheMaintenanceTests.testMissingDirectoryHasNoBytes' started at 2026-10-11 17:44:23.143
+Test Case 'CacheMaintenanceTests.testMissingDirectoryHasNoBytes' passed (0.001 seconds)
+Test Suite 'CacheMaintenanceTests' passed at 2026-10-11 17:44:23.144
+Executed 6 tests, with 0 failures (0 unexpected) in 0.932 (0.932) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 17:44:23.144
+Executed 6 tests, with 0 failures (0 unexpected) in 0.932 (0.932) seconds

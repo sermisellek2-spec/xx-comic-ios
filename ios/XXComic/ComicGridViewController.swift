@@ -138,9 +138,13 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
     }
     func captureAnchor() -> ComicGridAnchor? {
         let top = collection.contentOffset.y + collection.adjustedContentInset.top
+        let bottom = collection.contentOffset.y + collection.bounds.height - collection.adjustedContentInset.bottom
         let visible = collection.indexPathsForVisibleItems.sorted { $0.item < $1.item }
         guard let index = visible.first(where: {
-            (collection.layoutAttributesForItem(at: $0)?.frame.maxY ?? 0) > top
+            guard let frame = collection.layoutAttributesForItem(at: $0)?.frame else { return false }
+            // Anchor a book whose activation point is actually visible, rather
+            // than a clipped row that UIKit cannot tap at the top of the grid.
+            return frame.midY >= top && frame.midY < bottom
         }), comics.indices.contains(index.item), let frame = collection.layoutAttributesForItem(at: index)?.frame else { return nil }
         let comic = comics[index.item]
         return ComicGridAnchor(sourceID: comic.sourceId, comicID: comic.comicId, previousIndex: index.item, offset: top - frame.minY)
@@ -154,7 +158,8 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
         let index = comics.firstIndex { $0.sourceId == anchor.sourceID && $0.comicId == anchor.comicID } ?? min(anchor.previousIndex, comics.count - 1)
         guard let frame = collection.layoutAttributesForItem(at: IndexPath(item: index, section: 0))?.frame else { return }
         let maximum = max(minimum, collection.contentSize.height - collection.bounds.height + collection.adjustedContentInset.bottom)
-        let target = min(maximum, max(minimum, frame.minY + anchor.offset - collection.adjustedContentInset.top))
+        let offset = min(anchor.offset, max(0, frame.height / 2 - 1))
+        let target = min(maximum, max(minimum, frame.minY + offset - collection.adjustedContentInset.top))
         collection.setContentOffset(CGPoint(x: 0, y: target), animated: false)
     }
 }
@@ -391,8 +396,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     }
     private func refresh() {
         refreshID = UUID(); refreshTask?.cancel(); refreshTask = nil
-        let token = refreshID, currentContext = context
-        let anchor = renderedContext == currentContext ? captureAnchor() : nil
+        let token = refreshID
         isListLayout = !BookshelfLayoutHelper.isGridMode(defaults: environment.defaults, scope: currentScope)
         let layoutImg = UIImage(systemName: isListLayout ? "square.grid.2x2" : "list.bullet")
         layoutControl?.setImage(layoutImg, for: .normal)
@@ -410,6 +414,12 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             groupBar.isHidden = true
             floatingBubble.isHidden = true
         }
+
+        // A relaunch may open the local tab while the initial group ID still
+        // belongs to the online tab. Capture only the normalized context or the
+        // async local result would incorrectly be discarded as obsolete.
+        let currentContext = context
+        let anchor = renderedContext == currentContext ? captureAnchor() : nil
 
         if localMode {
             resume.isHidden = true

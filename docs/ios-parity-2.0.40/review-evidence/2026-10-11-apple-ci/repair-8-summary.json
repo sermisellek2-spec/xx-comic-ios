@@ -1,0 +1,1216 @@
+{
+  "revision": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+  "run": 38155816449,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38155816449",
+  "conclusion": "failure",
+  "logSHA256": "614f3f0ffa37e560c2ed090d4fd67b0825dabde8cec6e987bf6f00dc19d82f2c",
+  "cases": [
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "BuiltinSourceRegistrationTests testCurrentCatalogHasOneProductionAdapterPerAndroidSource",
+      "status": "passed",
+      "seconds": 0.037
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "BuiltinSourceRegistrationTests testHiperdexRegistrationConsumesStoredConfiguration",
+      "status": "passed",
+      "seconds": 0.007
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "CoverFallbackTests testEmptyCoverUsesArtworkInsteadOfAnUnexplainedBlankCard",
+      "status": "passed",
+      "seconds": 0.244
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "CoverFallbackTests testLocalCoverUsesItsLibraryInstanceInsideAnIsolatedSession",
+      "status": "passed",
+      "seconds": 0.125
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "CoverFallbackTests testReaderFailureKeepsItsOwnRetryStateWithoutCoverArtwork",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "CoverFallbackTests testSuccessfulImageReplacesFallbackAndRestoresTheCoverLayout",
+      "status": "passed",
+      "seconds": 0.105
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testCancellingDownloadRestoresLatestDetailFailureAndAction",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testCancellingFailedDownloadRestoresDetailRetry",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testDownloadLoadingSuppressesDetailRetryUntilItEnds",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testLateDetailCompletionCannotEraseQueuedConfirmationOrMakeItRetry",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testLateDetailFailureDoesNotChangeDownloadRetryAction",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testLateDetailSuccessPreservesDownloadFailureAndRetry",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "OfflineDownloadImageTests testDownloadedFileOutsideLocalImportsDecodesThroughRecordedDownloadAccess",
+      "status": "passed",
+      "seconds": 0.127
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testCancellationStopsBeforeNextPredictionTile",
+      "status": "passed",
+      "seconds": 0.451
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testEnhancementPolicyGuards",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testInferenceFailureFallsBackToBicubic2x",
+      "status": "passed",
+      "seconds": 0.544
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testReaderCellCancelsEnhancementWhenLeavingScreen",
+      "status": "passed",
+      "seconds": 0.212
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testReaderCellReuseRejectsLateResult",
+      "status": "passed",
+      "seconds": 0.113
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testRealCoreMLSuperResolutionInferenceAndTileStitching",
+      "status": "passed",
+      "seconds": 4.346
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicTests",
+      "test": "TestHostIsolationTests testHostedUnitTestsDoNotBootstrapTheProductionApplication",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "AppNavigationTests testNavigationAndReaderPreferencesPersist",
+      "status": "passed",
+      "seconds": 54.773
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "BatchImportRecoveryUITests testCancellingRecoveryKeepsPendingTaskAvailableAfterRestart",
+      "status": "passed",
+      "seconds": 16.856
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "BatchImportRecoveryUITests testExplicitBatchPickerSupportsOneFileThroughBatchConfirmation",
+      "status": "passed",
+      "seconds": 9.85
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "BatchImportRecoveryUITests testPartiallyReselectedFilesReportFailureAndRemainingVolumeCanResume",
+      "status": "passed",
+      "seconds": 18.809
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "BatchImportRecoveryUITests testRecoveredBookRemainsSingleAndCompletedAfterRelaunch",
+      "status": "passed",
+      "seconds": 20.124
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "BookshelfParityUITests testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList",
+      "status": "passed",
+      "seconds": 8.221
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "BookshelfParityUITests testSwitchingGridToListKeepsVisibleComic",
+      "status": "failed",
+      "seconds": 15.941
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testBookshelfDownloadLoadsDirectoryAndReturnsToBookshelf",
+      "status": "passed",
+      "seconds": 13.648
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testCancelledDownloadAfterPendingReadCanOpenReaderAgain",
+      "status": "passed",
+      "seconds": 23.228
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry",
+      "status": "passed",
+      "seconds": 14.608
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels",
+      "status": "passed",
+      "seconds": 94.123
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testDetailDownloadLoadsOnDemandDirectoryAndCloses",
+      "status": "passed",
+      "seconds": 14.182
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag",
+      "status": "passed",
+      "seconds": 15.945
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testEmptyDirectoryOffersRetryInsteadOfEmptySelection",
+      "status": "passed",
+      "seconds": 9.252
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testEmptyDiscoveryGroupDoesNotBlockGlobalSearch",
+      "status": "passed",
+      "seconds": 14.18
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup",
+      "status": "passed",
+      "seconds": 12.712
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testLateDetailSuccessKeepsDownloadFailureAndItsRetryAction",
+      "status": "passed",
+      "seconds": 17.873
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testStartingDownloadCancelsPendingReadAndReturnsToDetail",
+      "status": "passed",
+      "seconds": 12.437
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testStartingReadCancelsPendingDownload",
+      "status": "passed",
+      "seconds": 20.716
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "DownloadLocationParityUITests testCancelLocationConfirmationKeepsDefaultAndDoesNotQueueDownloads",
+      "status": "passed",
+      "seconds": 12.09
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "DownloadLocationParityUITests testFilesPickerCanCancelWithoutChangingDefault",
+      "status": "passed",
+      "seconds": 16.246
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testAllSpinesAndRealSecondChapterResumeRoute",
+      "status": "passed",
+      "seconds": 28.835
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker",
+      "status": "passed",
+      "seconds": 23.208
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce",
+      "status": "passed",
+      "seconds": 54.469
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testKindleComicRealImportUsesExistingImageReaderAndResume",
+      "status": "passed",
+      "seconds": 44.247
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testKindleMixedRealImportRetainsTextAndImageInExistingTextReader",
+      "status": "passed",
+      "seconds": 21.908
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testKindleNovelRealImportTextReaderAndSecondChapterResume",
+      "status": "passed",
+      "seconds": 36.174
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks",
+      "status": "passed",
+      "seconds": 32.141
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testLongBodyWithoutIDsResumesByPercentage",
+      "status": "passed",
+      "seconds": 23.126
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testMixedSpineRetainsDirectImageAndPureImageUsesComicReader",
+      "status": "passed",
+      "seconds": 33.117
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks",
+      "status": "passed",
+      "seconds": 24.255
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testPendingScrollRestoreCannotOverwriteNextDocumentPosition",
+      "status": "passed",
+      "seconds": 24.15
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testTextSettingsPersistAfterRelaunch",
+      "status": "failed",
+      "seconds": 52.207
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testWebKitBlocksBookScriptsAndLoadsSameBookCSS",
+      "status": "passed",
+      "seconds": 21.318
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "LinkedFolderParityUITests testCancellingFolderReauthorizationKeepsTheExistingLink",
+      "status": "passed",
+      "seconds": 19.927
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "LinkedFolderParityUITests testIndexedBookReadsRealPageWithoutAFullPrivateCopy",
+      "status": "passed",
+      "seconds": 12.754
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "LinkedFolderParityUITests testMovedFolderReauthorizationRestoresReadingAndKeepsOneBook",
+      "status": "passed",
+      "seconds": 20.711
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "LocalDeletionParityUITests testWholeBookDeletionWaitsForUndoWindowAndShowsActualCompletion",
+      "status": "passed",
+      "seconds": 18.433
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "LocalDeletionParityUITests testWholeBookUndoRestoresSelectionPageAndRealImportedCopy",
+      "status": "passed",
+      "seconds": 22.281
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "Mh18VerificationTests testManualVerificationCanCloseAndBeOpenedAgain",
+      "status": "passed",
+      "seconds": 21.027
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "ReaderEnhancementUITests testReaderAIBadgeAndLongPressOriginalComparison",
+      "status": "passed",
+      "seconds": 18.614
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "ReaderToolbarParityUITests testPagedReaderToolbarChangesChaptersAndKeepsUsableActionTargets",
+      "status": "passed",
+      "seconds": 13.94
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "ReaderToolbarParityUITests testStripReaderToolbarRetainsDirectoryAndReaderSettings",
+      "status": "passed",
+      "seconds": 19.536
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery",
+      "status": "failed",
+      "seconds": 23.707
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "SettingsParityUITests testSettingsUsesCurrentAndroidSectionsAndThemeDrawer",
+      "status": "passed",
+      "seconds": 10.829
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "SettingsParityUITests testThemeChoicePersistsAcrossRestart",
+      "status": "passed",
+      "seconds": 15.725
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "SourceDrawerTests testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs",
+      "status": "passed",
+      "seconds": 15.248
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "SourceDrawerTests testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs",
+      "status": "passed",
+      "seconds": 9.656
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "SourceDrawerTests testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm",
+      "status": "passed",
+      "seconds": 11.603
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testSettingsReferenceLandscapeDark",
+      "status": "failed",
+      "seconds": 32.398
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testSettingsReferenceLandscapeLight",
+      "status": "failed",
+      "seconds": 31.291
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testSettingsReferencePortraitDark",
+      "status": "failed",
+      "seconds": 30.673
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testSettingsReferencePortraitLight",
+      "status": "failed",
+      "seconds": 30.209
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testVisualMatrixLandscapeDark",
+      "status": "passed",
+      "seconds": 50.036
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testVisualMatrixLandscapeLight",
+      "status": "passed",
+      "seconds": 50.339
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testVisualMatrixPortraitDark",
+      "status": "passed",
+      "seconds": 56.799
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testVisualMatrixPortraitLight",
+      "status": "passed",
+      "seconds": 58.871
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "BuiltinSourceRegistrationTests testCurrentCatalogHasOneProductionAdapterPerAndroidSource",
+      "status": "passed",
+      "seconds": 0.033
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "BuiltinSourceRegistrationTests testHiperdexRegistrationConsumesStoredConfiguration",
+      "status": "passed",
+      "seconds": 0.005
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "CoverFallbackTests testEmptyCoverUsesArtworkInsteadOfAnUnexplainedBlankCard",
+      "status": "passed",
+      "seconds": 0.166
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "CoverFallbackTests testLocalCoverUsesItsLibraryInstanceInsideAnIsolatedSession",
+      "status": "passed",
+      "seconds": 0.12
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "CoverFallbackTests testReaderFailureKeepsItsOwnRetryStateWithoutCoverArtwork",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "CoverFallbackTests testSuccessfulImageReplacesFallbackAndRestoresTheCoverLayout",
+      "status": "passed",
+      "seconds": 0.102
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testCancellingDownloadRestoresLatestDetailFailureAndAction",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testCancellingFailedDownloadRestoresDetailRetry",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testDownloadLoadingSuppressesDetailRetryUntilItEnds",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testLateDetailCompletionCannotEraseQueuedConfirmationOrMakeItRetry",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testLateDetailFailureDoesNotChangeDownloadRetryAction",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "DetailFeedbackStateTests testLateDetailSuccessPreservesDownloadFailureAndRetry",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "OfflineDownloadImageTests testDownloadedFileOutsideLocalImportsDecodesThroughRecordedDownloadAccess",
+      "status": "passed",
+      "seconds": 0.113
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testCancellationStopsBeforeNextPredictionTile",
+      "status": "passed",
+      "seconds": 0.356
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testEnhancementPolicyGuards",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testInferenceFailureFallsBackToBicubic2x",
+      "status": "passed",
+      "seconds": 0.317
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testReaderCellCancelsEnhancementWhenLeavingScreen",
+      "status": "passed",
+      "seconds": 0.212
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testReaderCellReuseRejectsLateResult",
+      "status": "passed",
+      "seconds": 0.106
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "ReaderEnhancementEngineTests testRealCoreMLSuperResolutionInferenceAndTileStitching",
+      "status": "passed",
+      "seconds": 2.872
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicTests",
+      "test": "TestHostIsolationTests testHostedUnitTestsDoNotBootstrapTheProductionApplication",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "AppNavigationTests testNavigationAndReaderPreferencesPersist",
+      "status": "passed",
+      "seconds": 35.661
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "BatchImportRecoveryUITests testCancellingRecoveryKeepsPendingTaskAvailableAfterRestart",
+      "status": "passed",
+      "seconds": 19.487
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "BatchImportRecoveryUITests testExplicitBatchPickerSupportsOneFileThroughBatchConfirmation",
+      "status": "passed",
+      "seconds": 10.362
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "BatchImportRecoveryUITests testPartiallyReselectedFilesReportFailureAndRemainingVolumeCanResume",
+      "status": "passed",
+      "seconds": 19.107
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "BatchImportRecoveryUITests testRecoveredBookRemainsSingleAndCompletedAfterRelaunch",
+      "status": "passed",
+      "seconds": 18.797
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "BookshelfParityUITests testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList",
+      "status": "passed",
+      "seconds": 8.804
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "BookshelfParityUITests testSwitchingGridToListKeepsVisibleComic",
+      "status": "passed",
+      "seconds": 11.189
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testBookshelfDownloadLoadsDirectoryAndReturnsToBookshelf",
+      "status": "passed",
+      "seconds": 14.604
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testCancelledDownloadAfterPendingReadCanOpenReaderAgain",
+      "status": "passed",
+      "seconds": 15.491
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry",
+      "status": "failed",
+      "seconds": 16.48
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels",
+      "status": "passed",
+      "seconds": 89.363
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testDetailDownloadLoadsOnDemandDirectoryAndCloses",
+      "status": "passed",
+      "seconds": 14.13
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag",
+      "status": "passed",
+      "seconds": 14.334
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testEmptyDirectoryOffersRetryInsteadOfEmptySelection",
+      "status": "passed",
+      "seconds": 9.493
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testEmptyDiscoveryGroupDoesNotBlockGlobalSearch",
+      "status": "passed",
+      "seconds": 14.021
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup",
+      "status": "passed",
+      "seconds": 13.817
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testLateDetailSuccessKeepsDownloadFailureAndItsRetryAction",
+      "status": "passed",
+      "seconds": 17.248
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testStartingDownloadCancelsPendingReadAndReturnsToDetail",
+      "status": "passed",
+      "seconds": 13.816
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "CurrentParityUITests testStartingReadCancelsPendingDownload",
+      "status": "passed",
+      "seconds": 12.709
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "DownloadLocationParityUITests testCancelLocationConfirmationKeepsDefaultAndDoesNotQueueDownloads",
+      "status": "passed",
+      "seconds": 12.672
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "DownloadLocationParityUITests testFilesPickerCanCancelWithoutChangingDefault",
+      "status": "passed",
+      "seconds": 15.794
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testAllSpinesAndRealSecondChapterResumeRoute",
+      "status": "passed",
+      "seconds": 28.988
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker",
+      "status": "passed",
+      "seconds": 21.858
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce",
+      "status": "passed",
+      "seconds": 53.285
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testKindleComicRealImportUsesExistingImageReaderAndResume",
+      "status": "passed",
+      "seconds": 27.608
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testKindleMixedRealImportRetainsTextAndImageInExistingTextReader",
+      "status": "passed",
+      "seconds": 23.636
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testKindleNovelRealImportTextReaderAndSecondChapterResume",
+      "status": "passed",
+      "seconds": 39.478
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks",
+      "status": "passed",
+      "seconds": 32.922
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testLongBodyWithoutIDsResumesByPercentage",
+      "status": "passed",
+      "seconds": 24.452
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testMixedSpineRetainsDirectImageAndPureImageUsesComicReader",
+      "status": "passed",
+      "seconds": 32.613
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks",
+      "status": "passed",
+      "seconds": 24.911
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testPendingScrollRestoreCannotOverwriteNextDocumentPosition",
+      "status": "passed",
+      "seconds": 25.119
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testTextSettingsPersistAfterRelaunch",
+      "status": "failed",
+      "seconds": 53.754
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "EpubReadingUITests testWebKitBlocksBookScriptsAndLoadsSameBookCSS",
+      "status": "passed",
+      "seconds": 20.681
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "LinkedFolderParityUITests testCancellingFolderReauthorizationKeepsTheExistingLink",
+      "status": "failed",
+      "seconds": 28.866
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "LinkedFolderParityUITests testIndexedBookReadsRealPageWithoutAFullPrivateCopy",
+      "status": "failed",
+      "seconds": 22.091
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "LinkedFolderParityUITests testMovedFolderReauthorizationRestoresReadingAndKeepsOneBook",
+      "status": "passed",
+      "seconds": 20.289
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "LocalDeletionParityUITests testWholeBookDeletionWaitsForUndoWindowAndShowsActualCompletion",
+      "status": "passed",
+      "seconds": 16.131
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "LocalDeletionParityUITests testWholeBookUndoRestoresSelectionPageAndRealImportedCopy",
+      "status": "passed",
+      "seconds": 21.068
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "Mh18VerificationTests testManualVerificationCanCloseAndBeOpenedAgain",
+      "status": "passed",
+      "seconds": 19.509
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "ReaderEnhancementUITests testReaderAIBadgeAndLongPressOriginalComparison",
+      "status": "passed",
+      "seconds": 15.89
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "ReaderToolbarParityUITests testPagedReaderToolbarChangesChaptersAndKeepsUsableActionTargets",
+      "status": "passed",
+      "seconds": 12.846
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "ReaderToolbarParityUITests testStripReaderToolbarRetainsDirectoryAndReaderSettings",
+      "status": "passed",
+      "seconds": 13.67
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery",
+      "status": "failed",
+      "seconds": 22.484
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "SettingsParityUITests testSettingsUsesCurrentAndroidSectionsAndThemeDrawer",
+      "status": "passed",
+      "seconds": 8.881
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "SettingsParityUITests testThemeChoicePersistsAcrossRestart",
+      "status": "passed",
+      "seconds": 14.46
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "SourceDrawerTests testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs",
+      "status": "passed",
+      "seconds": 15.236
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "SourceDrawerTests testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs",
+      "status": "passed",
+      "seconds": 9.098
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "SourceDrawerTests testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm",
+      "status": "passed",
+      "seconds": 10.949
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testSettingsReferenceLandscapeDark",
+      "status": "failed",
+      "seconds": 32.593
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testSettingsReferenceLandscapeLight",
+      "status": "failed",
+      "seconds": 31.513
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testSettingsReferencePortraitDark",
+      "status": "failed",
+      "seconds": 29.953
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testSettingsReferencePortraitLight",
+      "status": "failed",
+      "seconds": 30.39
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testVisualMatrixLandscapeDark",
+      "status": "passed",
+      "seconds": 54.334
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testVisualMatrixLandscapeLight",
+      "status": "passed",
+      "seconds": 55.066
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testVisualMatrixPortraitDark",
+      "status": "passed",
+      "seconds": 52.381
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "module": "XXComicUITests",
+      "test": "VisualMatrixUITests testVisualMatrixPortraitLight",
+      "status": "passed",
+      "seconds": 51.213
+    }
+  ],
+  "assertions": [
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T16:43:12.3876160Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BookshelfParityUITests.swift:32: error: -[XXComicUITests.BookshelfParityUITests testSwitchingGridToListKeepsVisibleComic] : XCTAssertTrue failed - Layout switching must keep a visible book instead of returning to the top"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T16:54:39.3694430Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:17: error: -[XXComicUITests.EpubReadingUITests testTextSettingsPersistAfterRelaunch] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T16:54:41.4825150Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:17: error: -[XXComicUITests.EpubReadingUITests testTextSettingsPersistAfterRelaunch] : Failed to tap \"EPUB 验收·文字\" Cell: No matches found for Descendants matching type Cell from input {("
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T16:58:09.0230720Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SettingsParityUITests.swift:47: error: -[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T16:59:37.2482580Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:97: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T16:59:48.1792120Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:100: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T17:00:08.5304930Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:97: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T17:00:19.4361510Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:100: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T17:00:40.1773410Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:97: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T17:00:51.0812700Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:100: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T17:01:10.3397410Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:97: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B",
+      "line": "2026-10-11T17:01:21.2719490Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:100: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:09:55.5306690Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:136: error: -[XXComicUITests.CurrentParityUITests testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry] : XCTAssertFalse failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:09:58.0360290Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:137: error: -[XXComicUITests.CurrentParityUITests testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry] : Failed to failed to scroll to visible (by AX action) Button, {{599.1, 330.4}, {42.4, 42.4}}, identifier: 'detail.download', label: '下载章节', error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 5357, elementOrHash.elementID: 4331251488.92. (Underlying Error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 5357, elementOrHash.elementID: 4331251488.92)"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:20:12.0481500Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:17: error: -[XXComicUITests.EpubReadingUITests testTextSettingsPersistAfterRelaunch] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:20:14.1706220Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:17: error: -[XXComicUITests.EpubReadingUITests testTextSettingsPersistAfterRelaunch] : Failed to tap \"EPUB 验收·文字\" Cell: No matches found for Descendants matching type Cell from input {("
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:21:03.8186670Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/LinkedFolderParityUITests.swift:20: error: -[XXComicUITests.LinkedFolderParityUITests testCancellingFolderReauthorizationKeepsTheExistingLink] : XCTAssertTrue failed - Read a real external-index page through the production image consumer"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:21:25.7853670Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/LinkedFolderParityUITests.swift:20: error: -[XXComicUITests.LinkedFolderParityUITests testIndexedBookReadsRealPageWithoutAFullPrivateCopy] : XCTAssertTrue failed - Read a real external-index page through the production image consumer"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:23:43.5461760Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SettingsParityUITests.swift:47: error: -[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:25:06.8829290Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:97: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:25:17.8349310Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:100: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:25:38.3575120Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:97: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:25:49.3851130Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:100: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:26:09.2590030Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:97: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:26:20.2075810Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:100: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:26:39.1911660Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:97: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight] : XCTAssertTrue failed"
+    },
+    {
+      "destination": "platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76",
+      "line": "2026-10-11T17:26:50.1133990Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:100: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight] : XCTAssertTrue failed"
+    }
+  ],
+  "ipaProduced": false,
+  "builds": {
+    "DebugSimulator": "success",
+    "ReleaseDevice": "success"
+  },
+  "appleCore": {
+    "executed": 875,
+    "skipped": 0,
+    "failures": 0,
+    "seconds": 88.817
+  },
+  "logsArchive": {
+    "bytes": 921088,
+    "sha256": "d3b691bf3d1885256d589d7d711042412f79170e4b188efb8022546c5b7c8066"
+  },
+  "visualArchive": {
+    "bytes": 26255300,
+    "sha256": "544f976d6500104f3bf2a08550e40f8534744fc451ee80fd2ecdbf5cae9aeaad"
+  }
+}

@@ -33,6 +33,21 @@ final class CacheMaintenanceTests: XCTestCase {
         XCTAssertNotNil(cache.cachedResponse(for: request))
     }
 
+    func testCleanupRemovesAResponseThatFinishesAfterTheFirstRemoval() async throws {
+        let cache = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 0, diskPath: nil)
+        let url = URL(string: "https://fixture.invalid/finishing-page")!
+        let request = URLRequest(url: url)
+        let response = CachedURLResponse(response: URLResponse(url: url, mimeType: "image/png", expectedContentLength: 4096, textEncodingName: nil), data: Data(repeating: 2, count: 4096))
+        let writer = Task {
+            try await Task.sleep(nanoseconds: 100_000_000)
+            cache.storeCachedResponse(response, for: request)
+        }
+        let remaining = try await HTTPResponseCache(cache: cache).clear()
+        try await writer.value
+        XCTAssertTrue(remaining.isEmpty)
+        XCTAssertNil(cache.cachedResponse(for: request), "A finishing response must not immediately undo cleanup")
+    }
+
     func testDirectorySizeIncludesHiddenFilesAndDoesNotFollowSymlinks() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let outside = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

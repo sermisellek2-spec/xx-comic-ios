@@ -27,7 +27,9 @@ jobs:
   build:
     if: github.repository == 'sermisellek2-spec/xx-comic-ios'
     runs-on: macos-14
-    timeout-minutes: 60
+    # The retained full 57-case/device run used 59 minutes. Real external Files
+    # scenarios extend the same complete matrix, so retain headroom for both.
+    timeout-minutes: 90
     env:
       IOS_VALIDATION_SCOPE: ${{ github.event.inputs.validation_scope || 'full' }}
       IOS_PACKAGE_IPA: ${{ github.event.inputs.package_ipa || 'false' }}
@@ -92,6 +94,7 @@ jobs:
           name: visual-matrix-screenshots
           path: |
             ios/build/evidence/visual-matrix/*.png
+            ios/build/evidence/visual-provenance/*.json
             ios/build/evidence/ui-failures/*.png
             ios/build/evidence/ui-failures/*.jpg
             ios/build/evidence/*-manifest.json

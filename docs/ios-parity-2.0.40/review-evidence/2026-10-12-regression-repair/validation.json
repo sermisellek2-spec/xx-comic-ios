@@ -1,0 +1,51 @@
+{
+  "checkedAtUTC": "2026-10-11T17:50:18.100724+00:00",
+  "parentCommit": "b69517c1ea6aa5815158ee4a0a4c0a0b6d42f621",
+  "candidate": "local uncommitted changes; exact code inputs recorded",
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "core": {
+    "executed": 869,
+    "skipped": 2,
+    "failures": 0,
+    "seconds": 137.128,
+    "exitCode": 0,
+    "log": "core-full.log",
+    "sha256": "e656dc2f7109ebd69fffd28500839575fbafac6b6d5be2f043aca0bf4969ed82"
+  },
+  "cacheRegression": {
+    "executed": 6,
+    "failures": 0,
+    "seconds": 0.932,
+    "exitCode": 0,
+    "log": "cache-targeted.log",
+    "sha256": "115004223d2d6494971995bdd19972027307dcbc49b7c7a2c7a72523b608eef5"
+  },
+  "nativeSyntax": {
+    "files": 73,
+    "releaseExitCode": 0,
+    "debugExitCode": 0,
+    "appleTypeCheck": false,
+    "log": "native-syntax.log",
+    "sha256": "f46d3e4deeacb309c759b2f2d93107e01e2a5389a5a2a1891133a406b8222ed2"
+  },
+  "sourceCatalog": {
+    "current": 51,
+    "defaultEnabled": 50,
+    "exitCode": 0,
+    "proof": "source-catalog.json"
+  },
+  "baselineVerification": {
+    "exitCode": 0,
+    "log": "baseline.log",
+    "sha256": "4682d6f80735e33b3e366f51963ee3c36be0000e3757b9b4011e013d98807f02"
+  },
+  "scripts": {
+    "pythonAST": true,
+    "yamlParsed": true,
+    "fixtureHostExcludedFromProductionScheme": true
+  },
+  "appleCandidateRun": "pending",
+  "phaseGatePassed": false,
+  "realSourcesExercised": false,
+  "ipaProduced": false
+}

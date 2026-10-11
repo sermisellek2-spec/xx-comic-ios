@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "fixtureID": "android-2.0.40-current-pages-v1",
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "titles": ["电锯人", "间谍过家家", "一人之下"],
+  "subtitle": "第3话",
+  "tags": ["连载中"],
+  "author": "验收作者",
+  "status": "连载中",
+  "description": "确定性同内容漫画：用于页面、交互与离线下载验收。",
+  "latestChapter": "第6话",
+  "chapterCount": 6,
+  "readChapterIndex": 0,
+  "pagesPerChapter": 4,
+  "filterKey": "genre",
+  "filterLabel": "类型",
+  "filterOptions": [{"label": "全部", "value": ""}, {"label": "热血", "value": "hot"}]
+}

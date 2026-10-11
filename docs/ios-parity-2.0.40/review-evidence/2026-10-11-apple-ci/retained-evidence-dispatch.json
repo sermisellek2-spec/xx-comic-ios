@@ -1,0 +1,10 @@
+{
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "workflow": "ios-diagnostics.yml",
+  "ref": "codex/ios-port",
+  "original_run_id": 38150387778,
+  "original_tested_revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+  "purpose": "extract existing test evidence only; no build or package",
+  "http_status": 204,
+  "requested_at_utc": "2026-10-11T16:32:26.841793+00:00"
+}

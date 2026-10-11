@@ -1,0 +1,16 @@
+REFERENCE STEP: fixture-ready
+REFERENCE STEP: activity-ready
+REFERENCE STEP: library-seeded
+REFERENCE STEP: capture-bookshelf_online
+REFERENCE STEP: capture-discover
+REFERENCE STEP: capture-source_drawer
+REFERENCE STEP: capture-search_results
+REFERENCE STEP: capture-detail
+REFERENCE STEP: capture-reader
+REFERENCE STEP: capture-reading_settings
+REFERENCE STEP: capture-reader_directory
+PASS: 8 actual frozen UI reference captures
+
+s_glBindAttribLocation: bind attrib 0 name position
+s_glBindAttribLocation: bind attrib 1 name color
+s_glBindAttribLocation: bind attrib 2 name localCoord

@@ -55,9 +55,23 @@ case "$validation_scope" in
 esac
 echo "==> Native validation scope: $validation_scope (partial validation never produces an IPA)"
 
+# This separate application provides real Files-provider directories outside
+# XXComic's sandbox. It is not a dependency of the production app or IPA.
+if [ "$validation_scope" = full ]; then
+  xcodebuild -project XXComic.xcodeproj -scheme FilesFixtureHost -configuration Debug \
+    -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+    -derivedDataPath build/files-fixture CODE_SIGNING_ALLOWED=NO build
+fi
+
 test_failed=0
 for dest in "${DESTINATIONS[@]}"; do
   echo "==> Running tests on destination: $dest"
+  if [ "$validation_scope" = full ]; then
+    simulator_id="${dest##*id=}"
+    xcrun simctl boot "$simulator_id" 2>/dev/null || true
+    xcrun simctl bootstatus "$simulator_id" -b
+    xcrun simctl install "$simulator_id" build/files-fixture/Build/Products/Debug-iphonesimulator/FilesFixtureHost.app
+  fi
   test_results=$(mktemp -d build/ui-results-XXXXXX)
   if ! xcodebuild "${test_arguments[@]}" -destination "$dest" -derivedDataPath build/simulator \
     -resultBundlePath "$test_results/UITests.xcresult" test; then

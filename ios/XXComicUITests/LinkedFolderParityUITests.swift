@@ -3,7 +3,7 @@ import XCTest
 final class LinkedFolderParityUITests: ParityUITestCase {
     private func launch(flags: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-empty-library", "--linked-folder-fixture", "--light-mode"] + flags
+        app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-reader-original", "--matrix-empty-library", "--linked-folder-fixture", "--light-mode"] + flags
         app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
         app.launch(); XCTAssertTrue(app.buttons["bookshelf.tab.1"].waitForExistence(timeout: 10))
         app.buttons["bookshelf.tab.1"].tap()

@@ -1,0 +1,11 @@
+{
+  "source": "../review-evidence/2026-10-11-apple-ci/reader-enhancement/iPhone_15_Pro-real-input-384x384.png",
+  "origin": "retained actual Apple native-test input; bytes copied unchanged",
+  "dimensions": [
+    384,
+    384
+  ],
+  "bytes": 70556,
+  "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+  "purpose": "identical offline protocol response bytes for both platform fixture providers; not a visual acceptance screenshot"
+}
