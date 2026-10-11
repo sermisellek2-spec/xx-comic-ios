@@ -2,6 +2,8 @@
 
 更新：2026-10-11。维护者：Codex。
 
+当前本地修复（待提交至新 GitHub 仓库）：已新增完整 `AppIcon.appiconset` 并配置 Xcode 编译键；18 个 iPhone/iPad/App Store 图层的文件和像素规格已静态核验。阅读器设置、偏好存储和手势映射已删除产品确认淘汰的“左手翻页”，旧 `reader.left.hand` 数据会被忽略且有回归测试。2026-10-11 在 Swift 5.10 容器完成当前 ComicCore 全量回归：770 项执行、2 项跳过、0 失败（131.027 秒）。新远端为 `https://github.com/sermisellek2-spec/xx-comic-ios.git`，但当前改动尚未推送，Apple 构建、IPA 图标和 UIKit 回归仍待新 CI 实际运行。
+
 最新重试：用户告知权限恢复后，已运行修复版本 `8bf6bfa` 的 CI `38100215863`。GitHub 仍在启动前返回付款／消费上限错误，构建步骤为零，暂无新 IPA。仓库保持私有，远端代码版本已核对；具体响应见 `review-evidence/2026-10-11-repair/release-ci-retry-38100215863.json`。
 
 **本轮状态：主要修复的原生运行验收通过，最终 Release/IPA 受 GitHub 账单或消费上限阻塞。CI `38069643191`（代码 `7162e15`）核心 776 项、双设备各 28 项全部通过，104 张截图来源核验通过；该运行最终在 Release 夹具调用处失败。调用隔离已在 `8bf6bfa` 修复并推送，新 CI `38071472048` 在任何构建步骤启动前被 GitHub 拒绝，不能宣称新 IPA 已交付。已向用户请求恢复现有 CI 运行权限或提供 Mac。此前整体验收 PASS 为历史声明，不能证明纯视觉 1:1 全量通过。**

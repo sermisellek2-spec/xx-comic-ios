@@ -3,13 +3,13 @@ import XCTest
 
 final class ReadingRulesTests: XCTestCase {
     func testTapZonesHonorControlsMiddleHeightAndPageInputMode() {
-        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: true, layout: .paged, mode: .tap, leftHand: false, zoomed: false), .toggleControls)
-        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.29, y: 0.5, controlsVisible: false, layout: .paged, mode: .tap, leftHand: false, zoomed: false), .toggleControls)
-        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.1, controlsVisible: false, layout: .paged, mode: .tap, leftHand: false, zoomed: false), .none)
-        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .paged, mode: .swipe, leftHand: false, zoomed: false), .move(-1))
-        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .strip, mode: .swipe, leftHand: false, zoomed: false), .toggleControls)
-        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .strip, mode: .tap, leftHand: false, zoomed: false), .toggleControls)
-        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.9, y: 0.5, controlsVisible: false, layout: .paged, mode: .tap, leftHand: false, zoomed: true), .toggleControls)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: true, layout: .paged, mode: .tap, zoomed: false), .toggleControls)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.29, y: 0.5, controlsVisible: false, layout: .paged, mode: .tap, zoomed: false), .toggleControls)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.1, controlsVisible: false, layout: .paged, mode: .tap, zoomed: false), .none)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .paged, mode: .swipe, zoomed: false), .move(-1))
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .strip, mode: .swipe, zoomed: false), .toggleControls)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .strip, mode: .tap, zoomed: false), .toggleControls)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.9, y: 0.5, controlsVisible: false, layout: .paged, mode: .tap, zoomed: true), .toggleControls)
         XCTAssertFalse(ReaderNavigation.isEdgeTapNavigationPermitted(layout: .strip, mode: .tap))
         XCTAssertFalse(ReaderNavigation.isEdgeTapNavigationPermitted(layout: .strip, mode: .swipe))
         XCTAssertTrue(ReaderNavigation.isEdgeTapNavigationPermitted(layout: .paged, mode: .tap))
@@ -42,11 +42,11 @@ final class ReadingRulesTests: XCTestCase {
         XCTAssertEqual(decoded.offset, 1)
     }
 
-    func testHandednessChangesGestureNotLogicalOrder() {
-        XCTAssertEqual(ReaderNavigation.tapDelta(leftSide: true, leftHand: true), 1)
-        XCTAssertEqual(ReaderNavigation.tapDelta(leftSide: false, leftHand: false), 1)
-        XCTAssertEqual(ReaderNavigation.swipeDelta(dx: 100, leftHand: true), 1)
-        XCTAssertEqual(ReaderNavigation.swipeDelta(dx: -100, leftHand: false), 1)
+    func testDefaultGestureDirectionKeepsLogicalPageOrder() {
+        XCTAssertEqual(ReaderNavigation.tapDelta(leftSide: true), -1)
+        XCTAssertEqual(ReaderNavigation.tapDelta(leftSide: false), 1)
+        XCTAssertEqual(ReaderNavigation.swipeDelta(dx: 100), -1)
+        XCTAssertEqual(ReaderNavigation.swipeDelta(dx: -100), 1)
         XCTAssertFalse(ReaderNavigation.crossesChapter(index: 0, count: 3, delta: 1))
         XCTAssertTrue(ReaderNavigation.crossesChapter(index: 2, count: 3, delta: 1))
         XCTAssertTrue(ReaderNavigation.crossesChapter(index: 0, count: 3, delta: -1))

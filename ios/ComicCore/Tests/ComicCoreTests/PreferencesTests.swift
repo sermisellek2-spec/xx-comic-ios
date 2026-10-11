@@ -18,6 +18,17 @@ final class PreferencesTests: XCTestCase {
         defaults.set(0, forKey: "reader.page.mode")
         XCTAssertEqual(store.load().turnMode, .tap)
     }
+
+    func testRetiredLeftHandPreferenceDoesNotChangeCurrentReaderSettings() {
+        let name = "XXComicTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+
+        defaults.set(true, forKey: "reader.left.hand")
+
+        XCTAssertEqual(ReaderPreferencesStore(defaults: defaults).load(), ReaderPreferences())
+    }
+
     func testPersistedReaderChoicesSurviveNewStoreAndDoNotChangeAppTheme() {
         let name = "XXComicTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!
@@ -31,7 +42,6 @@ final class PreferencesTests: XCTestCase {
         settings.theme = .dark
         settings.disablePageAnimation = true
         settings.cropWhiteMargins = true
-        settings.leftHand = true
         settings.layout = .paged
         store.save(settings)
         let restored = ReaderPreferencesStore(defaults: defaults).load()

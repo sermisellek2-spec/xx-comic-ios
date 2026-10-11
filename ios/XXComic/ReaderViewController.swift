@@ -542,7 +542,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             x: Double((location.x - pages.bounds.minX) / max(1, pages.bounds.width)),
             y: Double((location.y - pages.bounds.minY) / max(1, pages.bounds.height)),
             controlsVisible: !fullscreen, layout: settings.layout, mode: settings.turnMode,
-            leftHand: settings.leftHand, zoomed: isZoomed)
+            zoomed: isZoomed)
         switch action {
         case .none: break
         case .move(let delta): move(delta)
@@ -567,7 +567,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         guard gesture.state == .ended, !isZoomed, settings.layout == .paged, settings.turnMode == .swipe else { return }
         let translation = gesture.translation(in: pages)
         guard abs(translation.x) > 72, abs(translation.x) > abs(translation.y) * 1.35 else { return }
-        move(ReaderNavigation.swipeDelta(dx: Double(translation.x), leftHand: settings.leftHand))
+        move(ReaderNavigation.swipeDelta(dx: Double(translation.x)))
     }
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if let pan = gestureRecognizer as? UIPanGestureRecognizer, pan.view === pages {

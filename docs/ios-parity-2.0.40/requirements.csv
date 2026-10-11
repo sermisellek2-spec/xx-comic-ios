@@ -2,10 +2,10 @@ id,gate,area,requirement,android_reference,status,evidence
 BASE-01,P0,基线,核验固定发布提交与527文件快照,baseline/manifest.json,通过,baseline/VERIFICATION.md
 BASE-02,P0,范围,逐页逐入口逐默认值补齐需求矩阵,MainActivity.java,通过,requirements.csv;IOS_2_0_40_GEMINI_PLAN.md
 BASE-03,P0,测试,建立双方共用且Release隔离的确定性fixture,app/src/androidTest,通过,ComicCoreTests;EpubUITestFixtures.swift
-BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,ios/scripts/build.sh,阻塞,7162e15核心776与双设备各28项通过;8bf6bfa最终Release修复受CI账单限制未启动
+BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,ios/scripts/build.sh,阻塞,2026-10-11当前工作树ComicCore全量770项执行/2项跳过/0失败;AppIcon和淘汰左右手模式待新GitHub仓库实际Apple构建与IPA核验
 BASE-05,P0,视觉,建立8场景真实Android截图金标和设备元数据,app/src/androidTest,待验收,Android同内容8场景运行截图金标未提供;源代码不能替代截图证据
 VIS-01,P1,主题,完整浅深色token及默认跟随系统且设置落盘,UIHelpers.java;UiContrast.java,通过,Palette.swift;AppTheme.swift;AppThemeController.swift
-VIS-02,P1,素材,启动图标应用图标插画及控件图标按实际原版,app/src/main/res;app/src/main/assets,通过,Resources/rem_*.png;DetailViewController.swift;ComicGridViewController.swift
+VIS-02,P1,素材,启动图标应用图标插画及控件图标按实际原版,app/src/main/res;app/src/main/assets,待验收,AppIcon.appiconset含18个iPhone/iPad/营销规格图层并已配置ASSETCATALOG_COMPILER_APPICON_NAME;待当前提交Apple编译IPA后核验CFBundleIcons和真机主屏显示
 VIS-03,P1,导航,底栏标题细线工具区切页返回及安全区,MainActivity.java;NavigationInsets.java,通过,ComicGridViewController.swift;DiscoverViewController.swift;DetailViewController.swift
 VIS-04,P1,布局,封面密度动态列数卡片边距圆角文本与截断,CoverLayoutHelper.java;bookshelf/BookshelfLayoutHelper.java,通过,ComicGridViewController.swift;BookshelfLayoutHelper.swift
 VIS-05,P1,组件,底部抽屉展开收回遮罩和弹窗按钮布局,UIHelpers.java;MainActivity.java,通过,BookshelfGroupSheet.swift;BookshelfGroupSelectSheet.swift;SourceSwitchSheet.swift

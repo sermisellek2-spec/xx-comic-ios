@@ -419,7 +419,6 @@ final class ReaderSettingsViewController: UITableViewController {
     private let store: ReaderPreferencesStore
     private var settings: ReaderPreferences
     private let toggles: [(String, String, WritableKeyPath<ReaderPreferences, Bool>)] = [
-        ("左手翻页", "reader.left.hand", \.leftHand),
         ("完全沉浸", "reader.fully.immersive", \.fullyImmersive),
         ("墨水屏模式", "reader.display.mode", \.inkScreen),
         ("双指缩放", "reader.pinch.zoom", \.pinchZoom),
