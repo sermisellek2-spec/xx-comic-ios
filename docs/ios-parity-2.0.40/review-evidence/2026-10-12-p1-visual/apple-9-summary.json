@@ -1,0 +1,26 @@
+{
+  "run": 38161679412,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38161679412",
+  "headSHA": "b9f368d1074f19bceafe15ead6a03d7c5ce65326",
+  "conclusion": "failure",
+  "debugBuild": "success",
+  "releaseBuild": "success",
+  "appleCore": {
+    "executed": 876,
+    "failures": 0,
+    "seconds": 119.26
+  },
+  "filesFixtureHostBuild": "success",
+  "fixtureHostInstall": "failed: missing valid CFBundleVersion",
+  "nativeTests": "not executed",
+  "uiTests": "not executed",
+  "artifacts": [],
+  "ipaProduced": false,
+  "rawLogsZIP": {
+    "path": "ios/build/apple-ci-38161679412/logs.zip",
+    "bytes": 566194,
+    "sha256": "fd548a4818e01cc9b224bb16f9e2ee36db2e01fbc867b59ea6867c157a02259b"
+  },
+  "excerpt": "apple-9-result-excerpt.log",
+  "observedAtUTC": "2026-10-11T18:14:56.152564+00:00"
+}

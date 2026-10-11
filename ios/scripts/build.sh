@@ -61,6 +61,9 @@ if [ "$validation_scope" = full ]; then
   xcodebuild -project XXComic.xcodeproj -scheme FilesFixtureHost -configuration Debug \
     -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
     -derivedDataPath build/files-fixture CODE_SIGNING_ALLOWED=NO build
+  fixture_info=build/files-fixture/Build/Products/Debug-iphonesimulator/FilesFixtureHost.app/Info.plist
+  /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$fixture_info"
+  /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$fixture_info"
 fi
 
 test_failed=0

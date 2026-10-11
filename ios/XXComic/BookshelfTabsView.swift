@@ -4,7 +4,7 @@ import UIKit
 /// A plain view keeps both visible and independently tappable.
 @MainActor
 final class BookshelfTabsView: UIView {
-    private let buttons = [UIButton(type: .system), UIButton(type: .system)]
+    private let buttons = [UIButton(type: .custom), UIButton(type: .custom)]
     private let divider = UILabel()
     var onSelectionChanged: (() -> Void)?
     var selectedSegmentIndex = 0 { didSet { updateSelection() } }

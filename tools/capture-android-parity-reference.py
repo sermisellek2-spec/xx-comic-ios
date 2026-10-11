@@ -110,6 +110,10 @@ for case in cases:
     for capture in proof["captures"]:
         if sha(output / capture["file"]) != capture["sha256"] or capture["pixels"] != expected_pixels:
             raise ValueError("Screenshot hash or actual orientation mismatch: " + capture["file"])
+        if any(capture["file"].endswith("_" + scene + ".png") for scene in ["reader", "reading_settings", "reader_directory"]):
+            state = capture.get("readerState", {})
+            if state.get("enhancementMode") != 0 or state.get("enhancementComparison") is not False or state.get("layoutMode") != 0 or state.get("controlsVisible") is not True:
+                raise ValueError("Actual common original-reader state differs: " + capture["file"])
     provenance = {"capturedAtUTC": datetime.now(timezone.utc).isoformat(), "serial": args.serial, "avd": actual_avd,
                   "baseline": BASELINE, "apkSHA256": APK_SHA, "testApkSHA256": sha(test_apk),
                   "providerSHA256": sha(fixture_root / "android/ParityReferenceInstrumentation.java"),

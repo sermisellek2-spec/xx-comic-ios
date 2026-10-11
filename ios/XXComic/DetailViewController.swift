@@ -12,6 +12,7 @@ final class DetailViewController: UIViewController {
     private let metadataLabel = UILabel()
     private let tagsRow = UIStackView()
     private var heroHeight: NSLayoutConstraint!
+    private var heroTopInset: NSLayoutConstraint!
     private let favorite = UIButton(type: .system)
     private let read = UIButton(type: .system)
     private let directory = UIButton(type: .system)
@@ -30,9 +31,11 @@ final class DetailViewController: UIViewController {
     private var downloadTask: Task<Void, Never>?
     private var downloadID = UUID()
     private var feedback = DetailFeedbackState()
+    private var resumeOnAppear: Bool
 
-    init(comic: ComicSummary, environment: AppEnvironment) {
+    init(comic: ComicSummary, environment: AppEnvironment, resumeOnAppear: Bool = false) {
         self.comic = comic; self.environment = environment
+        self.resumeOnAppear = resumeOnAppear
         source = environment.source(for: comic)!
         super.init(nibName: nil, bundle: nil)
         hidesBottomBarWhenPushed = true
@@ -42,8 +45,12 @@ final class DetailViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = source.name
-        view.backgroundColor = Palette.background
+        navigationItem.titleView = UIView(frame: .zero)
+        let appearance = UINavigationBarAppearance(); appearance.configureWithTransparentBackground()
+        navigationItem.standardAppearance = appearance; navigationItem.scrollEdgeAppearance = appearance; navigationItem.compactAppearance = appearance
+        view.backgroundColor = Palette.card
         let scroll = UIScrollView()
+        scroll.contentInsetAdjustmentBehavior = .never
         let content = UIStackView()
         content.axis = .vertical; content.spacing = 0
         let body = UIStackView()
@@ -51,6 +58,7 @@ final class DetailViewController: UIViewController {
         body.isLayoutMarginsRelativeArrangement = true
         body.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 24, right: 16)
         body.backgroundColor = Palette.card; body.layer.cornerRadius = 12
+        body.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         let titleRow = UIStackView(arrangedSubviews: [heading, downloadButton, sourceSwitchButton])
         titleRow.spacing = 8; titleRow.alignment = .center
         sourceSwitchButton.titleLabel?.font = .systemFont(ofSize: 12)
@@ -79,6 +87,7 @@ final class DetailViewController: UIViewController {
         read.backgroundColor = Palette.accent
         read.setTitleColor(Palette.onAccent, for: .normal)
         read.layer.cornerRadius = 12
+        read.titleLabel?.textAlignment = .center
         cover.contentMode = .scaleAspectFill; cover.clipsToBounds = true
         cover.accessibilityIdentifier = "detail.cover"; cover.isAccessibilityElement = true
         cover.accessibilityLabel = "封面"
@@ -98,14 +107,24 @@ final class DetailViewController: UIViewController {
         favorite.addGestureRecognizer(longFav)
         read.addTarget(self, action: #selector(startReading), for: .touchUpInside)
         read.titleLabel?.numberOfLines = 2
-        directory.setTitle("章节目录", for: .normal)
+        directory.accessibilityIdentifier = "detail.directory"
+        directory.accessibilityLabel = "章节目录"
+        directory.heightAnchor.constraint(greaterThanOrEqualToConstant: 58).isActive = true
         directory.addTarget(self, action: #selector(showDirectory), for: .touchUpInside)
         setDownloadButton(loading: false)
         downloadButton.accessibilityIdentifier = "detail.download"
         downloadButton.addTarget(self, action: #selector(openDownloadSelection), for: .touchUpInside)
         sourceSwitchButton.setTitle(source.name, for: .normal)
         sourceSwitchButton.accessibilityLabel = "切换站源，当前" + source.name
-        sourceSwitchButton.setImage(UIImage(systemName: "arrow.triangle.2.circlepath"), for: .normal)
+        var sourceConfiguration = UIButton.Configuration.plain()
+        sourceConfiguration.title = source.name; sourceConfiguration.image = ParityIcon.swap.image(size: 20)
+        sourceConfiguration.imagePlacement = .trailing; sourceConfiguration.imagePadding = 6
+        sourceConfiguration.baseForegroundColor = Palette.accent
+        sourceConfiguration.contentInsets = .zero
+        sourceConfiguration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
+            var updated = attributes; updated.font = .systemFont(ofSize: 12); return updated
+        }
+        sourceSwitchButton.configuration = sourceConfiguration
         sourceSwitchButton.tintColor = Palette.accent
         sourceSwitchButton.addTarget(self, action: #selector(openSourceSwitchSheet), for: .touchUpInside)
         retry.addTarget(self, action: #selector(retryDetail), for: .touchUpInside)
@@ -128,17 +147,26 @@ final class DetailViewController: UIViewController {
             navigationItem.rightBarButtonItem = centerItem
         }
         items.append(retry)
-        content.addArrangedSubview(cover); content.addArrangedSubview(body)
+        let topInset = UIView(); topInset.backgroundColor = Palette.background
+        heroTopInset = topInset.heightAnchor.constraint(equalToConstant: 0); heroTopInset.isActive = true
+        content.addArrangedSubview(topInset); content.addArrangedSubview(cover); content.addArrangedSubview(body)
+        content.setCustomSpacing(-12, after: cover)
         for item in items { body.addArrangedSubview(item) }
-        for button in buttons { button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true }
+        let bodyFill = UIView(); bodyFill.setContentHuggingPriority(.defaultLow, for: .vertical)
+        body.addArrangedSubview(bodyFill)
+        for button in buttons {
+            let height = button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
+            height.priority = .init(999); height.isActive = true
+        }
         NSLayoutConstraint.activate([
             actions.leadingAnchor.constraint(equalTo: view.leadingAnchor), actions.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             actions.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), actions.heightAnchor.constraint(equalToConstant: 62),
-            scroll.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), scroll.bottomAnchor.constraint(equalTo: actions.topAnchor),
+            scroll.topAnchor.constraint(equalTo: view.topAnchor), scroll.bottomAnchor.constraint(equalTo: actions.topAnchor),
             scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor), scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             content.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor), content.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
             content.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor), content.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
-            content.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor)
+            content.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
+            content.heightAnchor.constraint(greaterThanOrEqualTo: scroll.frameLayoutGuide.heightAnchor)
         ])
         cover.loadCover(comic, referer: source.referer, library: environment.localLibrary)
         loadDetail()
@@ -146,6 +174,8 @@ final class DetailViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         let width = view.bounds.width
+        let topInset = view.window?.safeAreaInsets.top ?? 0
+        if heroTopInset.constant != topInset { heroTopInset.constant = topInset }
         let height: CGFloat = width > 900 ? 250 : (width > 600 ? 220 : 190)
         if heroHeight.constant != height { heroHeight.constant = height }
     }
@@ -160,9 +190,10 @@ final class DetailViewController: UIViewController {
         descriptionLabel.text = detail.description.isEmpty ? "暂无简介" : detail.description
         tagsRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
         for tag in detail.summary.tags.prefix(5) {
-            let label = UILabel(); label.text = " " + tag + " "
-            label.font = .systemFont(ofSize: 10); label.textColor = Palette.accent
-            label.backgroundColor = Palette.accentSoft; label.layer.cornerRadius = 4; label.clipsToBounds = true
+            let label = DetailTagLabel(); label.text = tag
+            label.font = .systemFont(ofSize: 12); label.textColor = Palette.text2
+            label.backgroundColor = Palette.card; label.layer.cornerRadius = 14; label.clipsToBounds = true
+            label.layer.borderWidth = 1 / UIScreen.main.scale; label.layer.borderColor = Palette.border.cgColor
             tagsRow.addArrangedSubview(label)
         }
         let spacer = UIView(); spacer.setContentHuggingPriority(.defaultLow, for: .horizontal); tagsRow.addArrangedSubview(spacer)
@@ -172,6 +203,13 @@ final class DetailViewController: UIViewController {
         super.viewWillAppear(animated); updateButtons()
         if !detailLoaded && detailTask == nil { loadDetail() }
         if cover.needsReload { cover.loadCover(comic, referer: source.referer, library: environment.localLibrary) }
+    }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if resumeOnAppear {
+            resumeOnAppear = false
+            startReading()
+        }
     }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
@@ -190,7 +228,38 @@ final class DetailViewController: UIViewController {
             let thumbnail = favImg.preparingThumbnail(of: CGSize(width: 44, height: 44))
             favorite.setImage(thumbnail?.withRenderingMode(.alwaysOriginal), for: .normal)
         }
-        read.setTitle(environment.library.entry(for: comic)?.reading.map { "继续阅读\n上次看到 · \($0.chapter.title)" } ?? "开始阅读", for: .normal)
+        let saved = environment.library.entry(for: comic)?.reading
+        read.setTitle(nil, for: .normal)
+        let title = saved.map { "继续阅读\n第 \($0.chapterIndex + 1) 话" } ?? "开始阅读"
+        let text = NSMutableAttributedString(string: title, attributes: [.font: UIFont.systemFont(ofSize: saved == nil ? 15 : 13, weight: .semibold), .foregroundColor: Palette.onAccent])
+        if let newline = title.firstIndex(of: "\n") {
+            let start = title.distance(from: title.startIndex, to: newline) + 1
+            text.addAttributes([.font: UIFont.systemFont(ofSize: 12), .foregroundColor: Palette.onAccent.withAlphaComponent(0.85)], range: NSRange(location: start, length: text.length - start))
+        }
+        read.setAttributedTitle(text, for: .normal)
+        read.accessibilityLabel = saved.map { "继续阅读，第 \($0.chapterIndex + 1) 话" } ?? "开始阅读"
+        updateDirectoryButton()
+    }
+    private func setReadStatus(_ text: String) {
+        read.setAttributedTitle(nil, for: .normal); read.setTitle(text, for: .normal); read.accessibilityLabel = text
+    }
+    private func updateDirectoryButton() {
+        let count = (cachedChapters ?? cachedDetail?.chapters ?? []).count
+        let subtitle = count > 0 ? "\(count) 话 · 已缓存" : (detailLoaded ? "点击加载章节" : "正在加载…")
+        var configuration = UIButton.Configuration.plain()
+        var headingAttributes = AttributeContainer(); headingAttributes.font = .systemFont(ofSize: 14, weight: .bold); headingAttributes.foregroundColor = Palette.text
+        var subtitleAttributes = AttributeContainer(); subtitleAttributes.font = .systemFont(ofSize: 12); subtitleAttributes.foregroundColor = Palette.text3
+        configuration.attributedTitle = AttributedString("章节目录", attributes: headingAttributes)
+        configuration.attributedSubtitle = AttributedString(subtitle, attributes: subtitleAttributes)
+        configuration.titleAlignment = .leading; configuration.titlePadding = 2
+        configuration.image = UIImage(systemName: "chevron.right", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .regular))
+        configuration.imagePlacement = .trailing; configuration.imagePadding = 12
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12)
+        configuration.background.backgroundColor = Palette.accentSoft; configuration.background.cornerRadius = 8
+        configuration.background.strokeColor = Palette.border; configuration.background.strokeWidth = 1 / UIScreen.main.scale
+        configuration.baseForegroundColor = Palette.text3
+        directory.configuration = configuration; directory.contentHorizontalAlignment = .leading
+        directory.accessibilityValue = subtitle
     }
     private func updateFeedback() {
         retry.setTitle(feedback.message, for: .normal)
@@ -485,6 +554,7 @@ final class DetailViewController: UIViewController {
             let result = try await directoryTask!.value
             guard directoryID == token else { throw CancellationError() }
             cachedChapters = result.isEmpty ? nil : result; directoryTask = nil
+            updateDirectoryButton()
             return result
         } catch { if directoryID == token { directoryTask = nil }; throw error }
     }
@@ -511,14 +581,14 @@ final class DetailViewController: UIViewController {
             guard readTask == nil else { return }
             readID = UUID()
             let token = readID
-            read.isEnabled = false; read.setTitle("正在加载章节…", for: .normal)
+            read.isEnabled = false; setReadStatus("正在加载章节…")
             readTask = Task { [weak self] in
                 guard let self else { return }
                 var independentlyCancelled = false
                 defer {
                     if self.readID == token && !Task.isCancelled {
                         self.readTask = nil; self.read.isEnabled = true; self.updateButtons()
-                        if independentlyCancelled { self.read.setTitle("已取消 · 点击重试", for: .normal) }
+                        if independentlyCancelled { self.setReadStatus("已取消 · 点击重试") }
                     }
                 }
                 do {
@@ -545,7 +615,7 @@ final class DetailViewController: UIViewController {
         if comic.sourceId == "local" {
             readID = UUID(); readTask?.cancel()
             let token = readID, targetChapter = chapters[index], library = environment.localLibrary, id = comic.comicId
-            read.isEnabled = false; read.setTitle("正在打开本地书籍…", for: .normal)
+            read.isEnabled = false; setReadStatus("正在打开本地书籍…")
             readTask = Task { [weak self] in
                 do {
                     let target = try await library.readingTarget(seriesId: id, chapterId: targetChapter.chapterId)
@@ -582,6 +652,18 @@ final class DetailViewController: UIViewController {
         }
         navigationController?.pushViewController(ReaderViewController(comic: comic, chapters: chapters,
             chapterIndex: index, directoryIncomplete: incomplete, environment: environment), animated: true)
+    }
+}
+
+@MainActor
+private final class DetailTagLabel: UILabel {
+    override var intrinsicContentSize: CGSize {
+        let size = super.intrinsicContentSize; return CGSize(width: size.width + 20, height: size.height + 12)
+    }
+    override func drawText(in rect: CGRect) { super.drawText(in: rect.insetBy(dx: 10, dy: 6)) }
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        layer.borderColor = Palette.border.resolvedColor(with: traitCollection).cgColor
     }
 }
 

@@ -1,0 +1,21 @@
+{
+  "capturedAtUTC": "2026-10-11T18:41:40.299541+00:00",
+  "serial": "emulator-5566",
+  "avd": "xxcomic-ux-api34",
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "apkSHA256": "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71",
+  "testApkSHA256": "56e346cb2471244d2c17356b659590a70b4b6d5cda38a44e0b85c11efdfd296e",
+  "providerSHA256": "b9cce66c0a7d5b7a6b07a48c82a63e742469d6d5a24733dc6084648071884a5a",
+  "fixtureID": "android-2.0.40-current-pages-v1",
+  "logicalWidth": 834.0,
+  "logicalHeight": 1210.0,
+  "theme": "light",
+  "orientation": "portrait",
+  "fontScale": 1.0,
+  "airplaneMode": true,
+  "statisticsDisabledBeforeLaunch": true,
+  "realWebsitesExercised": false,
+  "referenceManifestSHA256": "6b087ed9589d4005e7fb3b38676d86c489b30418ca0f65f04b285ff0226c9d04",
+  "actualScreenshots": 8,
+  "iosVisualAcceptance": "pending same-content, same-width Apple screenshots and component review"
+}

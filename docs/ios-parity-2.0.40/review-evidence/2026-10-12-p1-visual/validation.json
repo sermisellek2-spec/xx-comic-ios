@@ -1,0 +1,104 @@
+{
+  "recordedAtUTC": "2026-10-11T18:47:20.343004+00:00",
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "candidateParentCommit": "b9f368d1074f19bceafe15ead6a03d7c5ce65326",
+  "candidate": "local uncommitted P1/fixture-host changes; exact inputs recorded",
+  "coreChangedSinceVerified869TestCandidate": false,
+  "matchingCoreInputs": 260,
+  "androidReference": {
+    "actualCases": 8,
+    "actualScreenshots": 64,
+    "source": "../2026-10-12-current-visual/android-golden-current",
+    "cases": [
+      {
+        "file": "android_phone_landscape_dark-provenance.json",
+        "sha256": "636be04ebde99a288eba2215a7032c2bbda6e908a7e2ae79451ca3c52be8008a",
+        "screenshots": 8,
+        "logicalSize": [
+          852.0,
+          393.0
+        ]
+      },
+      {
+        "file": "android_phone_landscape_light-provenance.json",
+        "sha256": "7d4ebabc2e5bd7381d2cd2783e702e4b2082594c2fa49e0a82a892738900e7fb",
+        "screenshots": 8,
+        "logicalSize": [
+          852.0,
+          393.0
+        ]
+      },
+      {
+        "file": "android_phone_portrait_dark-provenance.json",
+        "sha256": "1e254a40720283ad533079631b374ab2fd49fef27037f0cd1457714982cfccca",
+        "screenshots": 8,
+        "logicalSize": [
+          393.0,
+          852.0
+        ]
+      },
+      {
+        "file": "android_phone_portrait_light-provenance.json",
+        "sha256": "b76426afa760388e2fdb29384d345f25b14313a8578c1df04fd09a0fea7c0a29",
+        "screenshots": 8,
+        "logicalSize": [
+          393.0,
+          852.0
+        ]
+      },
+      {
+        "file": "android_tablet_landscape_dark-provenance.json",
+        "sha256": "ae976b3186bdde1e02c0edcd39c70380225ec83881b59036752ac4d3c7c93fdc",
+        "screenshots": 8,
+        "logicalSize": [
+          1210.0,
+          834.0
+        ]
+      },
+      {
+        "file": "android_tablet_landscape_light-provenance.json",
+        "sha256": "2c9f0f7ee665161f970bd96f01424db4caf1c0acedce153075c1eb95dcc7b0d3",
+        "screenshots": 8,
+        "logicalSize": [
+          1210.0,
+          834.0
+        ]
+      },
+      {
+        "file": "android_tablet_portrait_dark-provenance.json",
+        "sha256": "82db81f061c619a87e81d3fb606ec2bfca7f7b1b13851c29981934f50c0c54d3",
+        "screenshots": 8,
+        "logicalSize": [
+          834.0,
+          1210.0
+        ]
+      },
+      {
+        "file": "android_tablet_portrait_light-provenance.json",
+        "sha256": "1f5d69dfbbd08edda1630ff444fc62b37206829918f836d4d4d58ff723d0ffd1",
+        "screenshots": 8,
+        "logicalSize": [
+          834.0,
+          1210.0
+        ]
+      }
+    ],
+    "realWebsites": false
+  },
+  "pythonAST": "pass",
+  "yamlAndTestHostIsolation": "pass",
+  "requirementsUniqueIDs": 74,
+  "appleCurrentCandidate": "not yet run; ninth run only validated previous b9 SDK/Core and then failed host installation",
+  "visualGatePassed": false,
+  "ipaProduced": false,
+  "nativeSyntax": {
+    "files": 76,
+    "releaseExitCode": 0,
+    "debugExitCode": 0,
+    "appleTypeCheck": false,
+    "log": "native-syntax-candidate.log",
+    "sha256": "c2b799371db0f7389f058bf8a99bdc28721cf8ee2a0305319aa4904870876484"
+  },
+  "gitDiffCheckExitCode": 0,
+  "swiftTestMethodsPlannedPerSimulator": 64
+}

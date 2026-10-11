@@ -1,6 +1,7 @@
 package com.xxcomic;
 
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
@@ -10,6 +11,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.TextView;
 import com.xxcomic.source.ComicModels.*;
 import com.xxcomic.source.ComicSource;
@@ -54,6 +56,9 @@ public final class ParityReferenceInstrumentation extends Instrumentation {
             File stats = new File(getTargetContext().getNoBackupFilesDir(), "usage-stats.json");
             stats.getParentFile().mkdirs();
             try (FileOutputStream out = new FileOutputStream(stats)) { out.write("{\"enabled\":false,\"decided\":true}".getBytes(StandardCharsets.UTF_8)); }
+            int rotation = stem.contains("_landscape_") ? UiAutomation.ROTATION_FREEZE_90 : UiAutomation.ROTATION_FREEZE_0;
+            if (!getUiAutomation().setRotation(rotation)) throw new AssertionError("Cannot set actual reference display rotation");
+            SystemClock.sleep(500);
             activity = (MainActivity) startActivitySync(new Intent(getTargetContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             status("activity-ready");
             SystemClock.sleep(600); seed();
@@ -71,7 +76,9 @@ public final class ParityReferenceInstrumentation extends Instrumentation {
             String id = "mh160:comic_0";
             onMain(() -> Phase8Checks.call(activity, "showDetail", id)); shot("detail");
             ComicDetail detail = (ComicDetail) ((Map) Phase8Checks.get(activity, "details")).get(id);
-            onMain(() -> Phase8Checks.call(activity, "showReader", detail, 0)); shot("reader");
+            onMain(() -> Phase8Checks.call(activity, "showReader", detail, 0));
+            SystemClock.sleep(1000);
+            onMain(() -> Phase8Checks.call(activity, "setReaderFullscreen", false, false)); shot("reader");
             onMain(() -> Phase8Checks.call(activity, "showReaderSettings")); shot("reading_settings");
             dismissDialogs();
             onMain(() -> Phase8Checks.call(activity, "showChapterDrawer", detail)); shot("reader_directory");
@@ -123,8 +130,10 @@ public final class ParityReferenceInstrumentation extends Instrumentation {
             Phase8Checks.set(activity, "discoveryErrorMessage", "");
             Phase8Checks.set(activity, "searchLoading", false);
             Phase8Checks.set(activity, "selectedSourceId", "mh160");
-            Phase8Checks.set(activity, "readerEnhancementMode", 2);
-            Phase8Checks.set(activity, "readerEnhancementComparisonEnabled", true);
+            // The cross-platform visual reference uses actual original pixels.
+            // GPU availability and the separate AI evidence do not alter this state.
+            Phase8Checks.set(activity, "readerEnhancementMode", 0);
+            Phase8Checks.set(activity, "readerEnhancementComparisonEnabled", false);
             Phase8Checks.set(activity, "readerThemeMode", stem.endsWith("dark") ? MainActivity.READER_THEME_DARK : MainActivity.READER_THEME_LIGHT);
             for (String id : Arrays.asList("mh160", "copy4000", "gmh")) {
                 ComicSource old = (ComicSource) Phase8Checks.get(activity, id + "Client");
@@ -180,7 +189,36 @@ public final class ParityReferenceInstrumentation extends Instrumentation {
         record.put("pixels", new JSONArray(Arrays.asList(width, height)));
         final JSONArray components = new JSONArray();
         onMain(() -> component(activity.getWindow().getDecorView(), components));
+        if (scene.equals("reader") || scene.equals("reading_settings") || scene.equals("reader_directory")) {
+            JSONObject state = new JSONObject();
+            state.put("enhancementMode", Phase8Checks.get(activity, "readerEnhancementMode"));
+            state.put("enhancementComparison", Phase8Checks.get(activity, "readerEnhancementComparisonEnabled"));
+            state.put("themeMode", Phase8Checks.get(activity, "readerThemeMode"));
+            state.put("layoutMode", Phase8Checks.get(activity, "readerLayoutMode"));
+            state.put("controlsVisible", !((Boolean) Phase8Checks.get(activity, "readerFullscreen")));
+            record.put("readerState", state);
+        }
+        if (scene.equals("source_drawer") || scene.equals("reading_settings") || scene.equals("reader_directory")) {
+            AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
+            if (root == null) throw new AssertionError("Missing actual modal accessibility tree: " + scene);
+            try { modalComponent(root, components); } finally { root.recycle(); }
+        }
         record.put("components", components); record.put("capturedAtMillis", System.currentTimeMillis()); captures.add(record);
+    }
+    private void modalComponent(AccessibilityNodeInfo node, JSONArray rows) throws JSONException {
+        if (!node.isVisibleToUser()) return;
+        Rect bounds = new Rect(); node.getBoundsInScreen(bounds);
+        CharSequence text = node.getText(), description = node.getContentDescription();
+        if (text != null || description != null) {
+            JSONObject row = new JSONObject(); row.put("text", text == null ? "" : text.toString());
+            row.put("description", description == null ? "" : description.toString());
+            row.put("type", String.valueOf(node.getClassName())); row.put("origin", "active-modal-accessibility");
+            row.put("bounds", new JSONArray(Arrays.asList(bounds.left, bounds.top, bounds.right, bounds.bottom))); rows.put(row);
+        }
+        for (int n = 0; n < node.getChildCount(); n++) {
+            AccessibilityNodeInfo child = node.getChild(n);
+            if (child != null) try { modalComponent(child, rows); } finally { child.recycle(); }
+        }
     }
     private void component(View view, JSONArray rows) {
         Rect visible = new Rect(); if (!view.getGlobalVisibleRect(visible) || view.getAlpha() == 0) return;

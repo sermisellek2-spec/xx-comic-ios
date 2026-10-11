@@ -31,4 +31,17 @@ final class BookshelfParityUITests: ParityUITestCase {
         app.buttons["bookshelf.layout"].tap()
         XCTAssertTrue(list.cells[title].isHittable, "Layout switching must keep a visible book instead of returning to the top")
     }
+
+    func testResumeRowOpensSavedChapterWithOneTapAndRetainsReturnPath() {
+        let app = launch()
+        let resume = app.buttons["bookshelf.resume"]
+        XCTAssertTrue(resume.waitForExistence(timeout: 5))
+        XCTAssertEqual(resume.value as? String, "电锯人，上次看到 · 第 1 话")
+        resume.tap()
+        XCTAssertTrue(app.navigationBars["第1话"].waitForExistence(timeout: 10), "A single resume action must enter the saved chapter")
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(app.buttons["detail.read"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(app.buttons["bookshelf.resume"].waitForExistence(timeout: 5))
+    }
 }

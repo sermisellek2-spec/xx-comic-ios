@@ -1,0 +1,8 @@
+2026-10-11T17:58:20.8746400Z ** BUILD SUCCEEDED **
+2026-10-11T18:00:50.8794890Z ** BUILD SUCCEEDED **
+2026-10-11T18:04:06.5729180Z 	 Executed 876 tests, with 0 failures (0 unexpected) in 119.189 (119.257) seconds
+2026-10-11T18:04:06.5731160Z 	 Executed 876 tests, with 0 failures (0 unexpected) in 119.189 (119.260) seconds
+2026-10-11T18:04:21.6680380Z ** BUILD SUCCEEDED **
+2026-10-11T18:05:56.5642350Z The application's Info.plist does not contain a valid CFBundleVersion.
+2026-10-11T18:05:56.5876770Z 	The application's Info.plist does not contain a valid CFBundleVersion.
+2026-10-11T18:05:56.6253900Z ##[error]Process completed with exit code 22.

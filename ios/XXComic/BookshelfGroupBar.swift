@@ -49,12 +49,12 @@ final class BookshelfGroupBar: UIView {
 
             tabsStack.topAnchor.constraint(equalTo: scrollView.topAnchor),
             tabsStack.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            tabsStack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 14),
-            tabsStack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -14),
+            tabsStack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 4),
+            tabsStack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -4),
             tabsStack.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
 
             addGroupButton.centerYAnchor.constraint(equalTo: centerYAnchor),
-            addGroupButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            addGroupButton.trailingAnchor.constraint(equalTo: trailingAnchor),
             addGroupButton.widthAnchor.constraint(equalToConstant: 36),
             addGroupButton.heightAnchor.constraint(equalToConstant: 36),
 

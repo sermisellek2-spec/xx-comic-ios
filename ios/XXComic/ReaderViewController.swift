@@ -630,12 +630,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         environment.readingHabits.overlayVisibilityChanged(isVisible: true)
         let controller = ReaderSettingsViewController(store: environment.preferences)
         controller.onChange = { [weak self] in self?.applySettings() }
-        let navigation = UINavigationController(rootViewController: controller)
-        controller.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeSheet))
-        controller.navigationItem.rightBarButtonItem?.accessibilityIdentifier = "reader.settings.close"
-        navigation.overrideUserInterfaceStyle = overrideUserInterfaceStyle
-        present(navigation, animated: true)
-        navigation.presentationController?.delegate = self
+        controller.onClose = { [weak self] in self?.closeSheet() }
+        controller.overrideUserInterfaceStyle = overrideUserInterfaceStyle
+        present(controller, animated: true)
+        controller.presentationController?.delegate = self
     }
     @objc private func closeSheet() { dismiss(animated: true) { [weak self] in self?.syncHabitOverlay() } }
     @objc private func showDirectory() {

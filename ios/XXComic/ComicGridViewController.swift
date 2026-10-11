@@ -34,6 +34,11 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
     override func viewDidLoad() {
         super.viewDidLoad()
+        if usesBookshelfLayout, let layout = collection.collectionViewLayout as? UICollectionViewFlowLayout {
+            layout.minimumInteritemSpacing = 6
+            layout.sectionInset.top = 0
+            layout.sectionInset.left = 16; layout.sectionInset.right = 16
+        }
         view.backgroundColor = Palette.background
         header.axis = .vertical
         header.spacing = 8
@@ -112,16 +117,16 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
         }
     }
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let contentWidth = max(0, collectionView.bounds.width - 28)
+        let contentWidth = max(0, collectionView.bounds.width - (usesBookshelfLayout ? 32 : 28))
         if isListLayout {
             return CGSize(width: contentWidth, height: usesBookshelfLayout ? 111 : 88)
         }
-        let spacing: CGFloat = 10
-        let minCardWidth: CGFloat = 105
+        let spacing: CGFloat = usesBookshelfLayout ? 6 : 10
+        let minCardWidth: CGFloat = usesBookshelfLayout ? 110 : 105
         let cols = max(3, Int((contentWidth + spacing) / (minCardWidth + spacing)))
         let totalSpacing = CGFloat(cols - 1) * spacing
         let cardWidth = floor(max(1, (contentWidth - totalSpacing) / CGFloat(cols)))
-        let cardHeight = floor(cardWidth * 4 / 3) + 42
+        let cardHeight = (cardWidth * 4 / 3).rounded() + 42
         return CGSize(width: cardWidth, height: cardHeight)
     }
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -167,13 +172,15 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
 @MainActor
 final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDelegate {
     private let historyOnly: Bool
-    private let resume = UIButton(type: .system)
+    private let resume = BookshelfResumeView()
+    private let resumeSection = UIStackView()
     private let shelfMode = BookshelfTabsView()
     private let groupBar = BookshelfGroupBar()
     private let floatingBubble = FloatingImportBubble()
     private var currentGroupId: String = BookshelfGroupStore.builtinOnlineAllId
     private var currentScope: BookshelfScope { localMode ? .local : .online }
     private var layoutControl: UIButton?
+    private var layoutIconOutline: UIView?
     private var importTask: Task<Void, Never>?
     private var downloadSelectionTask: Task<Void, Never>?
     private var downloadSelectionID = UUID()
@@ -215,10 +222,19 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                     self.restoreAnchor(anchor)
                 }
             }
-            let layoutImg = UIImage(systemName: isListLayout ? "square.grid.2x2" : "list.bullet")
+            let layoutImg = (isListLayout ? ParityIcon.layoutGrid : .layoutList).image(size: 26)
             let layoutButton = UIButton(type: .system)
             layoutButton.setImage(layoutImg, for: .normal)
-            layoutButton.tintColor = Palette.accent
+            layoutButton.tintColor = Palette.text3
+            let iconOutline = UIView(); iconOutline.isUserInteractionEnabled = false
+            iconOutline.layer.cornerRadius = 13; iconOutline.layer.borderWidth = 1 / UIScreen.main.scale
+            iconOutline.layer.borderColor = Palette.border.cgColor
+            layoutIconOutline = iconOutline
+            iconOutline.translatesAutoresizingMaskIntoConstraints = false; layoutButton.addSubview(iconOutline)
+            NSLayoutConstraint.activate([
+                iconOutline.centerXAnchor.constraint(equalTo: layoutButton.centerXAnchor), iconOutline.centerYAnchor.constraint(equalTo: layoutButton.centerYAnchor),
+                iconOutline.widthAnchor.constraint(equalToConstant: 26), iconOutline.heightAnchor.constraint(equalToConstant: 26)
+            ])
             layoutButton.addTarget(self, action: #selector(toggleLayoutTapped), for: .touchUpInside)
             layoutButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
             layoutButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
@@ -237,7 +253,21 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             let heading = UIStackView(arrangedSubviews: [shelfMode, UIView(), layoutButton, artwork])
             heading.axis = .horizontal; heading.alignment = .center; heading.spacing = 8
             header.layoutMargins.left = 16; header.layoutMargins.right = 16
+            header.layoutMargins.top = 0; header.layoutMargins.bottom = 0; header.spacing = 0
             header.addArrangedSubview(heading)
+
+            let continueTitle = UILabel(); continueTitle.text = "接着看"
+            continueTitle.font = .systemFont(ofSize: 16, weight: .medium); continueTitle.textColor = Palette.text
+            let history = UIButton(type: .system); history.setTitle("阅读历史 ›", for: .normal)
+            history.titleLabel?.font = .systemFont(ofSize: 12); history.tintColor = Palette.accent
+            history.accessibilityIdentifier = "bookshelf.history"; history.accessibilityLabel = "打开阅读历史"
+            history.addTarget(self, action: #selector(showHistory), for: .touchUpInside)
+            let resumeHeading = UIStackView(arrangedSubviews: [continueTitle, UIView(), history])
+            resumeHeading.alignment = .center; resumeHeading.heightAnchor.constraint(equalToConstant: 36).isActive = true
+            resumeSection.axis = .vertical; resumeSection.spacing = 0
+            resumeSection.addArrangedSubview(resumeHeading); resumeSection.addArrangedSubview(resume)
+            resume.addTarget(self, action: #selector(continueReading), for: .touchUpInside)
+            header.addArrangedSubview(resumeSection)
 
             groupBar.onGroupSelected = { [weak self] group in
                 self?.currentGroupId = group.id
@@ -247,11 +277,6 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                 self?.showGroupManagementSheet()
             }
             header.addArrangedSubview(groupBar)
-
-            resume.titleLabel?.numberOfLines = 2
-            resume.contentHorizontalAlignment = .leading
-            resume.addTarget(self, action: #selector(continueReading), for: .touchUpInside)
-            header.addArrangedSubview(resume)
 
             floatingBubble.onTap = { [weak self] in self?.importImages() }
             view.addSubview(floatingBubble)
@@ -267,13 +292,17 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             floatingBubble.positionInParent()
         }
     }
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        layoutIconOutline?.layer.borderColor = Palette.border.resolvedColor(with: traitCollection).cgColor
+    }
 
     @objc private func toggleLayoutTapped() {
         let anchor = captureAnchor()
         let nextGrid = isListLayout
         BookshelfLayoutHelper.setGridMode(defaults: environment.defaults, scope: currentScope, isGrid: nextGrid)
         isListLayout = !nextGrid
-        let layoutImg = UIImage(systemName: isListLayout ? "square.grid.2x2" : "list.bullet")
+        let layoutImg = (isListLayout ? ParityIcon.layoutGrid : .layoutList).image(size: 26)
         layoutControl?.setImage(layoutImg, for: .normal)
         layoutControl?.accessibilityLabel = isListLayout ? "网格" : "列表"
         collection.collectionViewLayout.invalidateLayout()
@@ -398,7 +427,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         refreshID = UUID(); refreshTask?.cancel(); refreshTask = nil
         let token = refreshID
         isListLayout = !BookshelfLayoutHelper.isGridMode(defaults: environment.defaults, scope: currentScope)
-        let layoutImg = UIImage(systemName: isListLayout ? "square.grid.2x2" : "list.bullet")
+        let layoutImg = (isListLayout ? ParityIcon.layoutGrid : .layoutList).image(size: 26)
         layoutControl?.setImage(layoutImg, for: .normal)
         layoutControl?.accessibilityLabel = isListLayout ? "网格" : "列表"
 
@@ -422,7 +451,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         let anchor = renderedContext == currentContext ? captureAnchor() : nil
 
         if localMode {
-            resume.isHidden = true
+            resumeSection.isHidden = true
             let local = environment.localLibrary, downloads = environment.downloadStore
             let members = currentGroupId == BookshelfGroupStore.builtinLocalAllId ? nil : environment.bookshelfGroupStore.getMembers(groupId: currentGroupId)
             let worker = Task.detached(priority: .userInitiated) { () async throws -> [ComicSummary] in
@@ -475,9 +504,11 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         collection.reloadData()
         restoreAnchor(anchor)
         status(comics.isEmpty ? (historyOnly ? "还没有阅读记录" : "书架空空的，去发现页找漫画吧") : "")
-        let recent = environment.library.history.first
-        resume.isHidden = recent == nil || historyOnly
-        resume.setTitle(recent.map { "继续阅读 · \($0.summary.title)\n\($0.reading?.chapter.title ?? "")" }, for: .normal)
+        let recent = environment.library.history.first { $0.summary.sourceId != "local" }
+        resumeSection.isHidden = recent == nil || historyOnly
+        if let recent {
+            resume.configure(comic: recent.summary, chapterIndex: recent.reading?.chapterIndex ?? 0, environment: environment)
+        }
         if !historyOnly {
             environment.favoriteUpdateChecker.startAutoCheck()
         }
@@ -737,7 +768,11 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         }
     }
     deinit { importTask?.cancel(); downloadSelectionTask?.cancel() }
-    @objc private func continueReading() { if let recent = environment.library.history.first { open(recent.summary) } }
+    @objc private func continueReading() {
+        guard let recent = environment.library.history.first(where: { $0.summary.sourceId != "local" }) else { return }
+        guard environment.source(for: recent.summary) != nil else { status("该站源暂不可用，已保留阅读记录。"); return }
+        navigationController?.pushViewController(DetailViewController(comic: recent.summary, environment: environment, resumeOnAppear: true), animated: true)
+    }
     @objc private func clearHistoryTapped() {
         guard !comics.isEmpty else { return }
         let alert = UIAlertController(

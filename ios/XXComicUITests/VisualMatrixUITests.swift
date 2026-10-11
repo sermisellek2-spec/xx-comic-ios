@@ -7,6 +7,15 @@ final class VisualMatrixUITests: ParityUITestCase {
         let attachment = XCTAttachment(data: screenshot.pngRepresentation, uniformTypeIdentifier: "public.png")
         attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
         let frame = XCUIApplication().windows.firstMatch.frame
+        let app = XCUIApplication()
+        let visibleTypes: Set<XCUIElement.ElementType> = [.button, .staticText, .image, .switch, .searchField, .textField]
+        let components: [[String: Any]] = app.descendants(matching: .any).allElementsBoundByIndex.compactMap { element in
+            guard visibleTypes.contains(element.elementType) else { return nil }
+            let bounds = element.frame
+            guard bounds.width > 0, bounds.height > 0, frame.intersects(bounds) else { return nil }
+            return ["type": String(describing: element.elementType), "label": element.label, "identifier": element.identifier,
+                    "value": element.value as? String ?? "", "bounds": [Double(bounds.minX), Double(bounds.minY), Double(bounds.maxX), Double(bounds.maxY)]]
+        }
         let record: [String: Any] = [
             "fixtureID": ParityFixtureIdentity.fixtureID,
             "metadataSHA256": ParityFixtureIdentity.metadataSHA256,
@@ -16,6 +25,7 @@ final class VisualMatrixUITests: ParityUITestCase {
             "screenScale": Double(UIScreen.main.scale),
             "preferredContentSizeCategory": UIApplication.shared.preferredContentSizeCategory.rawValue,
             "capturedAtUTC": ISO8601DateFormatter().string(from: Date()),
+            "components": components,
             "steps": "VisualMatrixUITests production navigation with explicitly isolated Debug fixture"
         ]
         do {
@@ -74,6 +84,20 @@ final class VisualMatrixUITests: ParityUITestCase {
         app.buttons["reader.settings"].tap()
         XCTAssertTrue(app.switches["reader.disable.page.animation"].waitForExistence(timeout: 5))
         capture(stem + "reading_settings")
+        let comparison = app.switches["reader.enhancement.comparison"]
+        for _ in 0..<4 where !comparison.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        XCTAssertTrue(comparison.isHittable)
+        XCTAssertEqual(comparison.value as? String, "1"); comparison.tap()
+        let enhancement = app.switches["reader.enhancement.enabled"]
+        for _ in 0..<4 where !enhancement.isHittable { app.scrollViews.firstMatch.swipeDown() }
+        XCTAssertTrue(enhancement.isHittable); enhancement.tap()
+        app.buttons["reader.settings.close"].tap()
+        expectation(for: NSPredicate(format: "value CONTAINS ':384x384' AND NOT (value BEGINSWITH 'neural:')"), evaluatedWith: image)
+        waitForExpectations(timeout: 15)
+        capture(stem + "reader_original")
+        app.buttons["reader.settings"].tap()
+        XCTAssertEqual(app.switches["reader.enhancement.enabled"].value as? String, "0")
+        capture(stem + "reading_settings_original")
         app.buttons["reader.settings.close"].tap()
         app.buttons["目录"].tap()
         XCTAssertTrue(app.tables.cells.firstMatch.waitForExistence(timeout: 5))

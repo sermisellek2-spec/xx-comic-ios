@@ -25,27 +25,31 @@ enum MatrixUITestFixtures {
             try environment.sourceGroupStore.select(id: group.id)
         }
         if arguments.contains("--matrix-disabled-statistics") { try environment.usageStats.setEnabled(false) }
-        for source in environment.allSources where !arguments.contains("--matrix-empty-library") {
+        for source in environment.allSources where !arguments.contains("--matrix-empty-library") && !environment.defaults.bool(forKey: "ui.matrix.library.seeded") {
             guard let fixture = source as? MatrixUITestSource else { continue }
             if fixture.id == "mh160" {
-                for comic in fixture.comics {
-                    try environment.library.setFavorite(comic, favorite: true)
+                for (index, comic) in fixture.comics.enumerated() {
+                    try environment.library.setFavorite(comic, favorite: true, now: 1000 + Double(index))
                     environment.favoriteUpdateCoordinator.recordObserved(sourceId: comic.sourceId, comicId: comic.comicId,
                         revision: FavoriteRevision.fromChapters(latestChapterName: "第6话", chapters: fixture.chapterList))
                 }
                 if let comic = fixture.comics.first {
                     let index = MatrixSharedFixture.document.readChapterIndex
-                    try environment.library.saveReading(comic, chapter: fixture.chapterList[index], chapterIndex: index, position: ReaderPosition(imageIndex: 0, offset: 0))
+                    try environment.library.saveReading(comic, chapter: fixture.chapterList[index], chapterIndex: index, position: ReaderPosition(imageIndex: 0, offset: 0), now: 2000)
                 }
             }
         }
-        var preferences = environment.preferences.load()
-        if arguments.contains("--matrix-paged-reader") { preferences.layout = .paged }
-        let originalPixels = arguments.contains("--matrix-reader-original")
-        preferences.enhancementMode = originalPixels ? ImageEnhancementPolicy.modeOff : ImageEnhancementPolicy.modeSmart
-        preferences.enhancementComparison = !originalPixels
-        preferences.theme = ProcessInfo.processInfo.arguments.contains("--dark-mode") ? .dark : .light
-        environment.preferences.save(preferences)
+        environment.defaults.set(true, forKey: "ui.matrix.library.seeded")
+        if !environment.defaults.bool(forKey: "ui.matrix.preferences.seeded") {
+            var preferences = environment.preferences.load()
+            if arguments.contains("--matrix-paged-reader") { preferences.layout = .paged }
+            let originalPixels = arguments.contains("--matrix-reader-original")
+            preferences.enhancementMode = originalPixels ? ImageEnhancementPolicy.modeOff : ImageEnhancementPolicy.modeSmart
+            preferences.enhancementComparison = !originalPixels
+            preferences.theme = ProcessInfo.processInfo.arguments.contains("--dark-mode") ? .dark : .light
+            environment.preferences.save(preferences)
+            environment.defaults.set(true, forKey: "ui.matrix.preferences.seeded")
+        }
     }
 }
 
