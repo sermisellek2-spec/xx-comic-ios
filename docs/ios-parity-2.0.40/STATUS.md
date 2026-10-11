@@ -4,7 +4,9 @@
 
 最近完整执行UI的版本仍为b69517c，第八轮结论failure：Debug/Release构建、Apple核心875/0失败、两设备原生各20/0失败；UI各57执行，iPhone7个失败用例/12条断言，iPad9个失败用例/15条断言。[实际结果](review-evidence/2026-10-11-apple-ci/repair-8-summary.json)及16张实际失败截图已保留。下载重选/重新下载、整本删除撤销、批量导入等此前失败流程已在本轮对应场景通过；不能扩大为完整P4通过。
 
-第九轮b9f368d SDK两配置成功，Apple核心876项0失败；辅助Files应用缺构建号导致安装失败，Native/UI未执行，没有测试产物/IPA。当前已补该独立测试目标的版本字段，同时完成书架续读、详情卡片和阅读设置本地修正，新增行为/主屏图标/原图视觉用例；76个Swift文件两配置仅语法通过，当前Apple待运行。[本批证据](review-evidence/2026-10-12-p1-visual/README.md)。Core没有再修改，Linux869/2跳过/0失败及缓存6/0仍是已执行结果。
+第九轮b9f368d SDK两配置成功，Apple核心876项0失败；辅助Files应用缺构建号导致安装失败，Native/UI未执行，没有测试产物/IPA。当前已补该独立测试目标的版本字段，同时完成书架续读、详情卡片和阅读设置本地修正，新增行为/主屏图标/原图视觉用例；76个Swift文件两配置仅语法通过，当前Apple待运行。[本批证据](review-evidence/2026-10-12-p1-visual/README.md)。第十轮交付Core未改变，Linux869/2跳过/0失败及缓存6/0仍是对应已执行结果；本地下一批P3连续阅读已开始实现，尚未纳入本轮Apple。
+
+第十轮ee06b12在Debug编译失败：阅读设置卡片的stored selected与UIKit继承属性冲突，Release/Core/Files/Native/UI全部未执行。已删除冗余状态，统一使用isSelected；此最小修复两配置语法退出0，独立重跑Apple。失败原始日志和未执行边界见[实际证据](review-evidence/2026-10-12-p1-visual/apple-10-summary.json)。
 
 | 阶段 | 已取得证据 | 尚未关闭事项 |
 | --- | --- | --- |

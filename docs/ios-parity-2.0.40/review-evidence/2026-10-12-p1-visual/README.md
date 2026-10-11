@@ -12,4 +12,6 @@ native-syntax-candidate.log为当前候选76个源码两配置语法实际退出
 
 Android独立冻结输入527文件与原APK SHA再次核验。android-current-matrix早期横屏文件实际竖屏，保留为拒绝组；android-current-matrix-rotated为尺寸正确64图，但增强请求处于设备检测状态。android-golden-original以显式关闭增强且关闭对照重采；android-golden-current再按真实生产动作展开控件，并严格核对controlsVisible；真实图/manifest/设备及每图SHA保留。iOS当前共同原图金标/叠图/组件差分仍待完成，不能记视觉通过。
 
+第十轮ee06b12在Debug编译发现ReaderSettingCard存储属性selected与UIKit继承属性冲突，Release/Core/Files/Native/UI均未执行。apple-10-summary.json与原始日志摘录保留实证；删除冗余状态，使用isSelected统一视觉/无障碍和trait刷新，两配置单文件语法实际退出0。将此最小修复独立上传完整重跑；本地后续P3连续阅读不纳入该修复提交。
+
 历史P1文字保存在historical-P1-before-current-visual.md，不作为当前结果。候选输入SHA记录另附；当前阶段仍未通过。

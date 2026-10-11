@@ -188,7 +188,6 @@ private final class ReaderSettingSwitchRow: UIControl {
 private final class ReaderSettingCard: UIControl {
     private let icon: UIImageView
     private let label = UILabel()
-    private var selected = false
     init(title: String, icon: ParityIcon) {
         self.icon = UIImageView(image: icon.image(size: 22)); super.init(frame: .zero)
         isAccessibilityElement = true; accessibilityLabel = title; accessibilityTraits = .button
@@ -204,7 +203,6 @@ private final class ReaderSettingCard: UIControl {
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
     func setSelection(_ selected: Bool) {
-        self.selected = selected
         isSelected = selected
         backgroundColor = selected ? ReaderSettingColors.selected : ReaderSettingColors.unselected
         icon.tintColor = selected ? ReaderSettingColors.accent : ReaderSettingColors.secondary
@@ -214,7 +212,7 @@ private final class ReaderSettingCard: UIControl {
         accessibilityTraits = selected ? [.button, .selected] : .button
     }
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection); setSelection(selected)
+        super.traitCollectionDidChange(previousTraitCollection); setSelection(isSelected)
     }
 }
 

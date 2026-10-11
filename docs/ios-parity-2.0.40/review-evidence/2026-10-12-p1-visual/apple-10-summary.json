@@ -1,0 +1,23 @@
+{
+  "run": 38166152440,
+  "revision": "ee06b126a105f59ff19677e15580c1af9ac25f10",
+  "runURL": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38166152440",
+  "conclusion": "failure",
+  "debugBuild": "failed: ReaderSettingCard stored selected conflicts with UIKit inherited property",
+  "releaseBuild": "not executed",
+  "appleCore": "not executed",
+  "filesFixtureHost": "not executed",
+  "nativeTests": "not executed",
+  "uiTests": "not executed",
+  "ipaProduced": false,
+  "rawLogsZIP": {
+    "path": "ios/build/apple-ci-38166152440/logs.zip",
+    "bytes": 342772,
+    "sha256": "5a7e1624723288da199917326787d75faf036743ab51a39e49b36d8e8b08cfb6"
+  },
+  "excerpt": "apple-10-failure-excerpt.log",
+  "fix": "Remove redundant stored selected, use UIControl.isSelected for visual/accessibility and trait refresh",
+  "fixSyntaxExitCode": 0,
+  "fixAppleAcceptance": "pending new run",
+  "observedAtUTC": "2026-10-11T19:18:07.965625+00:00"
+}

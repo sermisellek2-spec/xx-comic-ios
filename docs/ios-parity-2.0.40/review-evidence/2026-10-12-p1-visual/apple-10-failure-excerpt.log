@@ -1,0 +1,36 @@
+2026-10-11T19:01:34.8831940Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComic/ReaderSettingsViewController.swift:191:17: error: overriding property must be as accessible as its enclosing type
+2026-10-11T19:01:34.8833360Z     private var selected = false
+2026-10-11T19:01:34.8834200Z     ~~~~~~~     ^
+2026-10-11T19:01:34.8834360Z     fileprivate
+2026-10-11T19:01:34.8834640Z UIKit.UIControl:12:14: note: overridden declaration is here
+2026-10-11T19:01:34.8835050Z     open var selected: Bool { get set }
+2026-10-11T19:01:34.8836270Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComic/ReaderSettingsViewController.swift:191:17: error: cannot override with a stored property 'selected'
+2026-10-11T19:01:34.8836970Z     private var selected = false
+2026-10-11T19:01:34.8858100Z                 ^
+2026-10-11T19:01:34.8858460Z UIKit.UIControl:12:14: note: attempt to override property here
+2026-10-11T19:01:34.8858840Z     open var selected: Bool { get set }
+2026-10-11T19:01:34.8859070Z              ^
+2026-10-11T19:01:35.9484970Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComic/ReaderSettingsViewController.swift:191:17: error: overriding property must be as accessible as its enclosing type
+2026-10-11T19:01:35.9485630Z     private var selected = false
+2026-10-11T19:01:35.9485940Z     ~~~~~~~     ^
+2026-10-11T19:01:35.9486170Z     fileprivate
+2026-10-11T19:01:35.9486500Z UIKit.UIControl:12:14: note: overridden declaration is here
+2026-10-11T19:01:35.9486910Z     open var selected: Bool { get set }
+2026-10-11T19:01:35.9487770Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComic/ReaderSettingsViewController.swift:191:17: error: cannot override with a stored property 'selected'
+2026-10-11T19:01:35.9488410Z     private var selected = false
+2026-10-11T19:01:35.9488740Z                 ^
+2026-10-11T19:01:35.9489060Z UIKit.UIControl:12:14: note: attempt to override property here
+2026-10-11T19:01:35.9489420Z     open var selected: Bool { get set }
+2026-10-11T19:01:35.9489700Z              ^
+2026-10-11T19:01:40.2664670Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComic/ReaderSettingsViewController.swift:191:17: error: overriding property must be as accessible as its enclosing type
+2026-10-11T19:01:40.2665650Z     private var selected = false
+2026-10-11T19:01:40.2665890Z     ~~~~~~~     ^
+2026-10-11T19:01:40.2666110Z     fileprivate
+2026-10-11T19:01:40.2666330Z UIKit.UIControl:12:14: note: overridden declaration is here
+2026-10-11T19:01:40.2666950Z     open var selected: Bool { get set }
+2026-10-11T19:01:40.2667770Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComic/ReaderSettingsViewController.swift:191:17: error: cannot override with a stored property 'selected'
+2026-10-11T19:01:40.2668370Z     private var selected = false
+2026-10-11T19:01:40.2668550Z                 ^
+2026-10-11T19:01:40.2668770Z UIKit.UIControl:12:14: note: attempt to override property here
+2026-10-11T19:01:40.2669300Z     open var selected: Bool { get set }
+2026-10-11T19:01:40.2669510Z              ^
