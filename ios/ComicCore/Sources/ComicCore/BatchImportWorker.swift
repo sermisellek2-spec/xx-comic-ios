@@ -43,6 +43,9 @@ public actor BatchImportWorker {
 
     private var activeTaskId: String?
     private var isCancelled: Bool = false
+    private var isRunning = false
+
+    public enum WorkerError: Error { case alreadyRunning }
 
     public init(library: LocalLibrary,
                 session: BatchImportSession,
@@ -91,6 +94,9 @@ public actor BatchImportWorker {
     public func execute(groups: [BatchImportGroup],
                         urlMap: [String: URL],
                         progress: ProgressHandler? = nil) async throws -> ResultSummary {
+        try beginRun()
+        defer { endRun() }
+        try Task.checkCancellation()
         let sessionGroups: [BatchImportSession.Group] = groups.map { group in
             let items = group.volumes.map { cand in
                 BatchImportSession.Item(
@@ -120,6 +126,9 @@ public actor BatchImportWorker {
                               toSeriesId seriesId: String,
                               seriesTitle: String,
                               progress: ProgressHandler? = nil) async throws -> ResultSummary {
+        try beginRun()
+        defer { endRun() }
+        try Task.checkCancellation()
         guard let existingSeries = try await library.series(id: seriesId), existingSeries.status == "ready" else {
             throw LocalCatalogError.targetNotFound
         }
@@ -163,9 +172,14 @@ public actor BatchImportWorker {
     /// Resumes or retries any unfinished/failed items in the active or loaded session.
     public func resumeSession(urlMap: [String: URL],
                               progress: ProgressHandler? = nil) async throws -> ResultSummary {
+        try beginRun()
+        defer { endRun() }
+        try Task.checkCancellation()
         guard let current = await session.current() else {
             throw BatchImportSession.SessionError.invalidSnapshot
         }
+        guard !current.cancelled else { throw BatchImportSession.SessionError.cancelled }
+        try await session.retryFailed(taskID: current.taskId)
         self.activeTaskId = current.taskId
         self.isCancelled = false
         return try await runImportLoop(taskId: current.taskId, urlMap: urlMap, progress: progress)
@@ -174,9 +188,13 @@ public actor BatchImportWorker {
     /// Retries failed items in the current session.
     public func retryFailed(urlMap: [String: URL],
                             progress: ProgressHandler? = nil) async throws -> ResultSummary {
+        try beginRun()
+        defer { endRun() }
+        try Task.checkCancellation()
         guard let current = await session.current() else {
             throw BatchImportSession.SessionError.invalidSnapshot
         }
+        guard !current.cancelled else { throw BatchImportSession.SessionError.cancelled }
         try await session.retryFailed(taskID: current.taskId)
         self.activeTaskId = current.taskId
         self.isCancelled = false
@@ -203,11 +221,11 @@ public actor BatchImportWorker {
         var touchedSeriesIds: Set<String> = []
 
         for (groupIndex, group) in snapshot.groups.enumerated() {
-            if isCancelled { break }
+            if isCancelled || Task.isCancelled { break }
             var currentTargetSeriesId: String? = group.targetBookId.isEmpty ? nil : group.targetBookId
 
             for (itemIndex, item) in group.items.enumerated() {
-                if isCancelled { break }
+                if isCancelled || Task.isCancelled { break }
 
                 // Check live state in session before processing
                 let liveSnapshot = await session.current()
@@ -219,7 +237,7 @@ public actor BatchImportWorker {
                 // Resolve URL
                 guard let url = resolveURL(uri: item.uri, urlMap: urlMap) else {
                     let missingMsg = "无法定位待导入文件: \(item.name)"
-                    try? await session.fail(taskID: taskId, group: groupIndex, item: itemIndex, error: missingMsg)
+                    try await session.fail(taskID: taskId, group: groupIndex, item: itemIndex, error: missingMsg)
                     progress?(ProgressUpdate(
                         taskId: taskId, groupIndex: groupIndex, totalGroups: snapshot.groups.count,
                         itemIndex: itemIndex, totalItemsInGroup: group.items.count, itemName: item.name,
@@ -229,26 +247,22 @@ public actor BatchImportWorker {
                 }
 
                 // Mark item running
-                do {
-                    try await session.start(taskID: taskId, group: groupIndex, item: itemIndex)
-                    progress?(ProgressUpdate(
-                        taskId: taskId, groupIndex: groupIndex, totalGroups: snapshot.groups.count,
-                        itemIndex: itemIndex, totalItemsInGroup: group.items.count, itemName: item.name,
-                        state: .running, errorDescription: nil, targetSeriesId: currentTargetSeriesId
-                    ))
-                } catch {
-                    if isCancelled { break }
-                    continue
-                }
+                try await session.start(taskID: taskId, group: groupIndex, item: itemIndex)
+                progress?(ProgressUpdate(
+                    taskId: taskId, groupIndex: groupIndex, totalGroups: snapshot.groups.count,
+                    itemIndex: itemIndex, totalItemsInGroup: group.items.count, itemName: item.name,
+                    state: .running, errorDescription: nil, targetSeriesId: currentTargetSeriesId
+                ))
 
                 // Prepare and Publish
                 do {
+                    try Task.checkCancellation()
                     let cleanedName = cleanItemTitle(item.name)
                     let prepared = try withSecurityScopeAndCoordination(for: url) { coordinatedURL in
                         try self.prepareItem(url: coordinatedURL, name: cleanedName, format: item.format)
                     }
 
-                    if isCancelled {
+                    if isCancelled || Task.isCancelled {
                         try library.discardPrepared(prepared)
                         try await session.cancel(taskID: taskId)
                         break
@@ -263,7 +277,6 @@ public actor BatchImportWorker {
                     touchedSeriesIds.insert(series.id)
                     if currentTargetSeriesId == nil {
                         currentTargetSeriesId = series.id
-                        try? await session.setTargetBookID(taskID: taskId, group: groupIndex, bookID: series.id)
                     }
 
                     try await session.complete(taskID: taskId, group: groupIndex, item: itemIndex, bookID: currentTargetSeriesId ?? book.id)
@@ -273,13 +286,13 @@ public actor BatchImportWorker {
                         state: .completed, errorDescription: nil, targetSeriesId: currentTargetSeriesId
                     ))
                 } catch is CancellationError {
-                    try? await session.cancel(taskID: taskId)
+                    try await session.cancel(taskID: taskId)
                     isCancelled = true
                     break
                 } catch {
                     let errDesc = error.localizedDescription
                     ErrorLogStore.shared.append(title: "批量导入失败: \(item.name)", error: error)
-                    try? await session.fail(taskID: taskId, group: groupIndex, item: itemIndex, error: errDesc)
+                    try await session.fail(taskID: taskId, group: groupIndex, item: itemIndex, error: errDesc)
                     progress?(ProgressUpdate(
                         taskId: taskId, groupIndex: groupIndex, totalGroups: snapshot.groups.count,
                         itemIndex: itemIndex, totalItemsInGroup: group.items.count, itemName: item.name,
@@ -289,6 +302,7 @@ public actor BatchImportWorker {
             }
         }
 
+        if isCancelled || Task.isCancelled { try await session.cancel(taskID: taskId); isCancelled = true }
         let finalSnapshot = await session.current() ?? snapshot
         var total = 0
         var succeeded = 0
@@ -319,6 +333,16 @@ public actor BatchImportWorker {
 
     // MARK: - Helpers
 
+    private func beginRun() throws {
+        guard !isRunning else { throw WorkerError.alreadyRunning }
+        isRunning = true
+    }
+
+    private func endRun() {
+        isRunning = false
+        activeTaskId = nil
+    }
+
     private func cleanItemTitle(_ name: String) -> String {
         var result = (name as NSString).deletingPathExtension
         if result.isEmpty { result = name }
@@ -326,10 +350,8 @@ public actor BatchImportWorker {
     }
 
     private func resolveURL(uri: String, urlMap: [String: URL]) -> URL? {
-        if let mapped = urlMap[uri] { return mapped }
-        if let direct = URL(string: uri), direct.scheme != nil { return direct }
-        if uri.hasPrefix("/") { return URL(fileURLWithPath: uri) }
-        return nil
+        guard let mapped = urlMap[uri], mapped.isFileURL else { return nil }
+        return mapped
     }
 
     private func prepareItem(url: URL, name: String, format: String) throws -> PreparedLocalImport {

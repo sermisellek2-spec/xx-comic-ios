@@ -44,11 +44,17 @@ public final class FolderBookmarkStore: @unchecked Sendable {
     }
 
     private let file: URL
+    private let write: @Sendable (Data, URL) throws -> Void
     private let lock = NSLock()
     private var folders: [SyncedFolderRecord] = []
 
-    public init(directory: URL) throws {
+    public convenience init(directory: URL) throws {
+        try self.init(directory: directory, write: { try $0.write(to: $1, options: .atomic) })
+    }
+
+    init(directory: URL, write: @escaping @Sendable (Data, URL) throws -> Void) throws {
         self.file = directory.appendingPathComponent("synced_folders.json")
+        self.write = write
         if FileManager.default.fileExists(atPath: file.path) {
             let data = try Data(contentsOf: file)
             let decoded = try JSONDecoder().decode(FileData.self, from: data)
@@ -80,23 +86,26 @@ public final class FolderBookmarkStore: @unchecked Sendable {
     public func save(record: SyncedFolderRecord) throws {
         lock.lock()
         defer { lock.unlock() }
-        if let idx = folders.firstIndex(where: { $0.id == record.id }) {
-            folders[idx] = record
+        var next = folders
+        if let idx = next.firstIndex(where: { $0.id == record.id }) {
+            next[idx] = record
         } else {
-            folders.append(record)
+            next.append(record)
         }
-        try persistLocked()
+        try persistLocked(next)
+        folders = next
     }
 
     public func remove(id: String) throws {
         lock.lock()
         defer { lock.unlock() }
-        folders.removeAll { $0.id == id }
-        try persistLocked()
+        let next = folders.filter { $0.id != id }
+        try persistLocked(next)
+        folders = next
     }
 
-    private func persistLocked() throws {
-        let data = try JSONEncoder().encode(FileData(folders: folders))
-        try data.write(to: file, options: [.atomic])
+    private func persistLocked(_ next: [SyncedFolderRecord]) throws {
+        let data = try JSONEncoder().encode(FileData(folders: next))
+        try write(data, file)
     }
 }

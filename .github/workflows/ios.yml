@@ -2,6 +2,12 @@ name: iOS manual build
 
 on:
   workflow_dispatch:
+    inputs:
+      validation_scope:
+        description: 阶段验证不产出IPA，完整回归通过后才允许打包
+        type: choice
+        options: [foundation-import, full]
+        default: foundation-import
   push:
     branches:
       - codex/ios-port
@@ -18,6 +24,8 @@ jobs:
     if: github.repository == 'sermisellek2-spec/xx-comic-ios'
     runs-on: macos-14
     timeout-minutes: 60
+    env:
+      IOS_VALIDATION_SCOPE: ${{ github.event.inputs.validation_scope || 'foundation-import' }}
 
     steps:
       - name: Checkout
@@ -55,6 +63,7 @@ jobs:
         run: bash ios/scripts/build.sh
 
       - name: Upload unsigned IPA
+        if: success() && env.IOS_VALIDATION_SCOPE == 'full'
         uses: actions/upload-artifact@v4
         with:
           name: XXComic-unsigned

@@ -183,7 +183,13 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         return BookshelfReadingStatus(comic: comic, reading: environment.library.entry(for: comic)?.reading, revision: state?.observedRevision)
     }
     private enum ImportKind: Sendable { case images, folder, archive, epub, pdf, kindle }
-    private var importKind = ImportKind.images
+    private enum ImportPickerIntent { case single(ImportKind), batch, resume(String) }
+    private enum BatchAction { case start([BatchImportGroup]), resume(String), retry(BatchImportWorker) }
+    private var importPickerIntent = ImportPickerIntent.single(.images)
+    private var checkedPendingBatch = false
+    private var pendingBatchTaskID: String?
+    private var importGeneration = UUID()
+    private var importFeedback: String?
     private var localMode: Bool { !historyOnly && shelfMode.selectedSegmentIndex == 1 }
 
     init(environment: AppEnvironment, historyOnly: Bool = false) {
@@ -215,9 +221,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             navigationItem.rightBarButtonItems = [UIBarButtonItem(customView: artwork), layoutButton]
             shelfMode.selectedSegmentIndex = environment.readingHabits.currentLaunchTab
             shelfMode.addTarget(self, action: #selector(shelfChanged), for: .valueChanged)
-            let shelfTabsItem = UIBarButtonItem(customView: shelfMode)
-            shelfTabsItem.isAccessibilityElement = false
-            navigationItem.leftBarButtonItem = shelfTabsItem
+            navigationItem.leftBarButtonItems = shelfMode.navigationItems
 
             groupBar.onGroupSelected = { [weak self] group in
                 self?.currentGroupId = group.id
@@ -236,7 +240,6 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             floatingBubble.onTap = { [weak self] in self?.importImages() }
             view.addSubview(floatingBubble)
 
-            checkPendingBatchSession()
         } else {
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: "清空", style: .plain, target: self, action: #selector(clearHistoryTapped))
         }
@@ -274,32 +277,47 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         present(nav, animated: true)
     }
 
+    private func batchSession() async throws -> BatchImportSession {
+        let file = environment.localLibrary.directory.appendingPathComponent("batch_import_session.json")
+        return try await Task.detached { try BatchImportSession(file: file) }.value
+    }
+
     private func checkPendingBatchSession() {
-        let sessionURL = environment.localLibrary.directory.appendingPathComponent("batch_import_session.json")
-        guard FileManager.default.fileExists(atPath: sessionURL.path) else { return }
         Task { [weak self] in
             guard let self else { return }
-            guard let session = try? BatchImportSession(file: sessionURL),
-                  let current = await session.current(),
-                  current.groups.contains(where: { $0.items.contains { $0.state == .pending || $0.state == .failed } }) else { return }
-            let pendingCount = current.groups.flatMap(\.items).filter { $0.state == .pending || $0.state == .failed }.count
-            guard pendingCount > 0 else { return }
-            let alert = UIAlertController(
-                title: "未完成的批量导入",
-                message: "上次导入有 \(pendingCount) 个项目未完成，是否重新选择文件恢复？",
-                preferredStyle: .alert
-            )
-            alert.addAction(UIAlertAction(title: "忽略", style: .cancel))
-            alert.addAction(UIAlertAction(title: "清除", style: .destructive) { _ in
-                try? FileManager.default.removeItem(at: sessionURL)
-            })
-            alert.addAction(UIAlertAction(title: "选择文件恢复", style: .default) { [weak self] _ in
-                self?.pickBatchImport()
-            })
-            self.present(alert, animated: true)
+            do {
+                let session = try await self.batchSession()
+                guard let current = await session.current(), !current.cancelled else { return }
+                let pending = current.groups.flatMap(\.items).filter { $0.state == .pending || $0.state == .failed || $0.state == .running }
+                guard !pending.isEmpty else { return }
+                self.pendingBatchTaskID = current.taskId
+                guard self.viewIfLoaded?.window != nil, self.presentedViewController == nil else { return }
+                let alert = UIAlertController(title: "未完成的批量导入", message: "上次有 \(pending.count) 个项目未完成。重新选择原文件可以继续导入，已完成的分卷会保留。", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "稍后", style: .cancel))
+                alert.addAction(UIAlertAction(title: "结束这次导入", style: .destructive) { [weak self] _ in
+                    Task { @MainActor [weak self] in
+                        do {
+                            try await session.cancel(taskID: current.taskId)
+                            self?.pendingBatchTaskID = nil
+                            self?.status("未完成项目已取消，已导入的分卷保留")
+                        } catch { self?.status("取消记录保存失败：" + error.localizedDescription) }
+                    }
+                })
+                alert.addAction(UIAlertAction(title: "选择文件恢复", style: .default) { [weak self] _ in self?.pickBatchImport(resuming: current.taskId) })
+                self.present(alert, animated: true)
+            } catch {
+                self.status("上次导入记录读取失败，原记录已保留：" + error.localizedDescription)
+            }
         }
     }
     override func viewWillAppear(_ animated: Bool) { super.viewWillAppear(animated); refresh() }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if !historyOnly, !checkedPendingBatch {
+            checkedPendingBatch = true
+            checkPendingBatchSession()
+        }
+    }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         if presentedViewController == nil {
@@ -400,7 +418,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                     self.renderedContext = currentContext
                     self.collection.reloadData()
                     self.restoreAnchor(anchor)
-                    self.status(self.comics.isEmpty ? "本地书架空空的，点击导入添加图片、文件夹、ZIP/CBZ、EPUB、PDF 或 Kindle" : "")
+                    self.status(self.importFeedback ?? (self.comics.isEmpty ? "本地书架空空的，点击导入添加图片、文件夹、ZIP/CBZ、EPUB、PDF 或 Kindle" : ""))
                 } catch {
                     guard self.refreshID == token, !Task.isCancelled else { return }
                     self.status(error.localizedDescription) { [weak self] in self?.refresh() }
@@ -434,9 +452,12 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         refresh()
     }
     @objc private func importImages() {
-        if let importTask { importTask.cancel(); return }
+        if let importTask { importTask.cancel(); importStatus("正在取消导入…"); return }
         let menu = UIAlertController(title: "导入本地漫画", message: nil, preferredStyle: .actionSheet)
         menu.addAction(UIAlertAction(title: "批量导入多文件 (ZIP/EPUB/PDF)", style: .default) { [weak self] _ in self?.pickBatchImport() })
+        if let taskID = pendingBatchTaskID {
+            menu.addAction(UIAlertAction(title: "继续上次批量导入", style: .default) { [weak self] _ in self?.pickBatchImport(resuming: taskID) })
+        }
         menu.addAction(UIAlertAction(title: "图片文件 (合并为一卷)", style: .default) { [weak self] _ in self?.pickImport(.images) })
         menu.addAction(UIAlertAction(title: "图片文件夹", style: .default) { [weak self] _ in self?.pickImport(.folder) })
         menu.addAction(UIAlertAction(title: "ZIP / CBZ 压缩包", style: .default) { [weak self] _ in self?.pickImport(.archive) })
@@ -453,15 +474,21 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         menu.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.first
         present(menu, animated: true)
     }
-    private func pickBatchImport() {
-        let types: [UTType] = [.zip, .epub, .pdf, .data]
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: false)
+    private func pickBatchImport(resuming taskID: String? = nil) {
+        importPickerIntent = taskID.map { .resume($0) } ?? .batch
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.zip, .epub, .pdf, .data], asCopy: false)
         picker.allowsMultipleSelection = true
         picker.delegate = self
+        #if DEBUG
+        if let urls = BatchImportUITestFixtures.selectedURLs(library: environment.localLibrary) {
+            DispatchQueue.main.async { [weak self] in self?.documentPicker(picker, didPickDocumentsAt: urls) }
+            return
+        }
+        #endif
         present(picker, animated: true)
     }
     private func pickImport(_ kind: ImportKind) {
-        importKind = kind
+        importPickerIntent = .single(kind)
         let types: [UTType]
         switch kind {
         case .images: types = [.image]
@@ -478,26 +505,65 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         picker.delegate = self
         present(picker, animated: true)
     }
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        importPickerIntent = .single(.images)
+    }
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard !urls.isEmpty else { return }
-        if urls.count > 1 && importKind != .images {
+        let intent = importPickerIntent
+        importPickerIntent = .single(.images)
+        switch intent {
+        case .resume(let taskID):
+            if presentedViewController === controller {
+                controller.dismiss(animated: true) { [weak self] in self?.confirmBatchRecovery(taskID: taskID, urls: urls) }
+            } else { confirmBatchRecovery(taskID: taskID, urls: urls) }
+        case .batch:
+            showBatchConfirmation(urls: urls, picker: controller)
+        case .single(let kind):
+            if urls.count > 1, kind != .images { showBatchConfirmation(urls: urls, picker: controller) }
+            else { confirmImport(urls, kind: kind, picker: controller) }
+        }
+    }
+    private func showBatchConfirmation(urls: [URL], picker: UIViewController? = nil) {
+        do {
             var urlMap: [String: URL] = [:]
-            let candidates = urls.enumerated().compactMap { idx, url -> BatchImportCandidate? in
+            let candidates = try urls.enumerated().map { index, url in
                 urlMap[url.path] = url
-                return try? BatchImportCandidate(
-                    fileName: url.lastPathComponent,
-                    fileId: url.path,
-                    format: url.pathExtension,
-                    selectionIndex: idx
-                )
+                return try BatchImportCandidate(fileName: url.lastPathComponent, fileId: url.path, format: url.pathExtension, selectionIndex: index)
             }
-            let confirmVC = BatchImportConfirmationViewController(candidates: candidates, urlMap: urlMap) { [weak self] groups, finalUrlMap in
-                self?.beginBatchImport(groups: groups, urlMap: finalUrlMap)
+            let confirmation = BatchImportConfirmationViewController(candidates: candidates, urlMap: urlMap) { [weak self] groups, selected in
+                self?.beginBatchImport(groups: groups, urlMap: selected)
             }
-            let nav = UINavigationController(rootViewController: confirmVC)
-            present(nav, animated: true)
-        } else {
-            confirmImport(urls, kind: importKind, picker: controller)
+            let navigation = UINavigationController(rootViewController: confirmation)
+            if let picker, presentedViewController === picker {
+                picker.dismiss(animated: true) { [weak self] in self?.present(navigation, animated: true) }
+            } else { present(navigation, animated: true) }
+        } catch { status("无法准备批量导入：" + error.localizedDescription) }
+    }
+    private func confirmBatchRecovery(taskID: String, urls: [URL]) {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let session = try await self.batchSession()
+                guard let current = await session.current(), current.taskId == taskID else { throw BatchImportSession.SessionError.taskMismatch }
+                let plan = BatchImportRecoveryPlan(snapshot: current, selectedURLs: urls)
+                let matched = plan.pendingCount - plan.unresolvedNames.count
+                var message = "匹配到 \(matched) 个未完成项目，已完成分卷不会重复导入。"
+                if !plan.unresolvedNames.isEmpty {
+                    message += "\n\n尚未匹配：\n" + plan.unresolvedNames.prefix(10).joined(separator: "\n")
+                    if plan.unresolvedNames.count > 10 { message += "\n另有 \(plan.unresolvedNames.count - 10) 个项目" }
+                }
+                if !plan.ambiguousNames.isEmpty { message += "\n\n同名文件无法确定对应关系，请按原位置重新选择。" }
+                let alert = UIAlertController(title: "恢复批量导入", message: message, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+                alert.addAction(UIAlertAction(title: "重新选择", style: .default) { [weak self] _ in self?.pickBatchImport(resuming: taskID) })
+                if matched > 0 {
+                    alert.addAction(UIAlertAction(title: "恢复已匹配项目", style: .default) { [weak self] _ in
+                        self?.runBatchImport(.resume(taskID), urlMap: plan.urlMap)
+                    })
+                }
+                self.present(alert, animated: true)
+            } catch { self.status("恢复记录读取失败，原任务已保留：" + error.localizedDescription) }
         }
     }
     private func confirmImport(_ urls: [URL], kind: ImportKind, picker: UIViewController? = nil) {
@@ -522,71 +588,74 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         } else { present(alert, animated: true) }
     }
     private func beginBatchImport(groups: [BatchImportGroup], urlMap: [String: URL]) {
+        runBatchImport(.start(groups), urlMap: urlMap)
+    }
+    private func importStatus(_ text: String) {
+        importFeedback = text
+        status(text)
+    }
+    private func runBatchImport(_ action: BatchAction, urlMap: [String: URL]) {
+        guard importTask == nil else { return }
         let library = environment.localLibrary
-        status("正在准备批量导入…，再次点击导入可取消")
-        var currentWorker: BatchImportWorker?
+        importGeneration = UUID()
+        let generation = importGeneration
+        importStatus("正在准备批量导入…，再次点击导入可取消")
         importTask = Task { [weak self] in
+            guard let self else { return }
+            defer { if self.importGeneration == generation { self.importTask = nil } }
             do {
-                guard let self else { return }
-                let sessionURL = library.directory.appendingPathComponent("batch_import_session.json")
-                let session = try BatchImportSession(file: sessionURL)
-                let worker = BatchImportWorker(
-                    library: library,
-                    session: session,
-                    isReadableImage: LocalImageProbe.isReadable,
-                    inspectPdf: PdfRenderer.inspect,
-                    renderPdfCover: { try PdfRenderer.render($0, pageIndex: 0, maximumDimension: 720, quality: 0.85) }
-                )
-                currentWorker = worker
-                let summary = try await worker.execute(groups: groups, urlMap: urlMap) { [weak self] progress in
+                let worker: BatchImportWorker
+                if case .retry(let existing) = action { worker = existing }
+                else {
+                    let session = try await self.batchSession()
+                    if case .resume(let taskID) = action {
+                        guard let current = await session.current(), current.taskId == taskID else { throw BatchImportSession.SessionError.taskMismatch }
+                    }
+                    worker = BatchImportWorker(library: library, session: session,
+                        isReadableImage: LocalImageProbe.isReadable, inspectPdf: PdfRenderer.inspect,
+                        renderPdfCover: { try PdfRenderer.render($0, pageIndex: 0, maximumDimension: 720, quality: 0.85) })
+                }
+                let progress: BatchImportWorker.ProgressHandler = { [weak self] update in
                     Task { @MainActor [weak self] in
-                        self?.status("正在导入 \(progress.itemName) (\(progress.itemIndex + 1)/\(progress.totalItemsInGroup))…")
+                        guard let self, self.importGeneration == generation, self.importTask?.isCancelled == false else { return }
+                        self.importStatus("正在导入 \(update.itemName) (\(update.itemIndex + 1)/\(update.totalItemsInGroup))…")
                     }
                 }
+                let summary: BatchImportWorker.ResultSummary
+                switch action {
+                case .start(let groups): summary = try await worker.execute(groups: groups, urlMap: urlMap, progress: progress)
+                case .resume: summary = try await worker.resumeSession(urlMap: urlMap, progress: progress)
+                case .retry: summary = try await worker.retryFailed(urlMap: urlMap, progress: progress)
+                }
+                guard self.importGeneration == generation else { return }
                 self.shelfMode.selectedSegmentIndex = 1
+                self.currentGroupId = BookshelfGroupStore.builtinLocalAllId
+                self.environment.notifyLibraryChanged()
                 self.refresh()
-                if summary.failedCount > 0 {
-                    self.status("导入完成：\(summary.succeededCount) 卷成功，\(summary.failedCount) 卷失败")
-                    let alert = UIAlertController(
-                        title: "批量导入完成",
-                        message: "\(summary.succeededCount) 卷成功，\(summary.failedCount) 卷失败。\n是否重试失败项目？",
-                        preferredStyle: .alert
-                    )
+                self.pendingBatchTaskID = summary.failedCount > 0 && !summary.cancelled ? summary.taskId : nil
+                if summary.cancelled {
+                    self.importStatus("已取消导入，保留 \(summary.succeededCount) 个已完成分卷，原文件未改动")
+                } else if summary.failedCount > 0 {
+                    let snapshot = await worker.session.current()
+                    let failures = snapshot?.groups.flatMap(\.items).filter { $0.state == .failed }.map { "\($0.name)：\($0.error)" } ?? []
+                    self.importStatus("导入结果：\(summary.succeededCount) 卷成功，\(summary.failedCount) 卷失败")
+                    guard self.viewIfLoaded?.window != nil else { return }
+                    let alert = UIAlertController(title: "批量导入结果", message: "\(summary.succeededCount) 卷成功，\(summary.failedCount) 卷失败。\n\n" + failures.prefix(10).joined(separator: "\n"), preferredStyle: .alert)
                     alert.addAction(UIAlertAction(title: "稍后", style: .cancel))
-                    alert.addAction(UIAlertAction(title: "重试失败项", style: .default) { [weak self] _ in
-                        self?.retryBatchImport(worker: worker, urlMap: urlMap)
-                    })
+                    alert.addAction(UIAlertAction(title: "重试失败项", style: .default) { [weak self] _ in self?.runBatchImport(.retry(worker), urlMap: urlMap) })
+                    alert.addAction(UIAlertAction(title: "重新选择失败文件", style: .default) { [weak self] _ in self?.pickBatchImport(resuming: summary.taskId) })
                     self.present(alert, animated: true)
                 } else {
-                    self.status("批量导入完成，共 \(summary.succeededCount) 卷")
+                    self.importStatus("批量导入完成，共 \(summary.succeededCount) 卷")
                 }
             } catch {
-                self?.status(error is CancellationError ? "已取消导入，原文件未改动" : error.localizedDescription)
+                self.importStatus(error is CancellationError ? "已取消导入，原文件未改动" : "导入失败，原任务记录已保留：" + error.localizedDescription)
             }
-            self?.importTask = nil
-        }
-    }
-    private func retryBatchImport(worker: BatchImportWorker, urlMap: [String: URL]) {
-        status("正在重试失败项…")
-        importTask = Task { [weak self] in
-            do {
-                guard let self else { return }
-                let summary = try await worker.retryFailed(urlMap: urlMap) { [weak self] progress in
-                    Task { @MainActor [weak self] in
-                        self?.status("正在重试 \(progress.itemName) (\(progress.itemIndex + 1)/\(progress.totalItemsInGroup))…")
-                    }
-                }
-                self.refresh()
-                self.status("重试完成：\(summary.succeededCount) 卷成功，\(summary.failedCount) 卷失败")
-            } catch {
-                self?.status(error is CancellationError ? "已取消重试" : error.localizedDescription)
-            }
-            self?.importTask = nil
         }
     }
     private func beginImport(_ urls: [URL], title: String, kind: ImportKind) {
         let library = environment.localLibrary
-        status(kind == .archive ? "正在校验并导入压缩包…，再次点击导入可取消" : "正在导入…，再次点击导入可取消")
+        importStatus(kind == .archive ? "正在校验并导入压缩包…，再次点击导入可取消" : "正在导入…，再次点击导入可取消")
         let worker = Task.detached(priority: .userInitiated) {
             let scoped = urls.filter { $0.startAccessingSecurityScopedResource() }
             defer { scoped.forEach { $0.stopAccessingSecurityScopedResource() } }
@@ -618,9 +687,9 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                 _ = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
                 guard let self else { return }
                 self.shelfMode.selectedSegmentIndex = 1; self.refresh()
-                self.status("导入完成")
+                self.importStatus("导入完成")
             } catch {
-                self?.status(error is CancellationError ? "已取消导入，原文件未改动" : error.localizedDescription)
+                self?.importStatus(error is CancellationError ? "已取消导入，原文件未改动" : error.localizedDescription)
             }
             self?.importTask = nil
         }

@@ -37,13 +37,29 @@ if [ "${#DESTINATIONS[@]}" -eq 0 ]; then
   exit 1
 fi
 
+validation_scope="${IOS_VALIDATION_SCOPE:-full}"
+test_filters=()
+case "$validation_scope" in
+  full) ;;
+  foundation-import)
+    test_filters=(
+      -only-testing:XXComicTests
+      -only-testing:XXComicUITests/AppNavigationTests
+      -only-testing:XXComicUITests/BookshelfParityUITests
+      -only-testing:XXComicUITests/BatchImportRecoveryUITests
+    )
+    ;;
+  *) echo "Unknown validation scope: $validation_scope" >&2; exit 2 ;;
+esac
+echo "==> Native validation scope: $validation_scope (partial validation never produces an IPA)"
+
 test_failed=0
 for dest in "${DESTINATIONS[@]}"; do
   echo "==> Running tests on destination: $dest"
   test_results=$(mktemp -d build/ui-results-XXXXXX)
   if ! xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Debug \
     -destination "$dest" -derivedDataPath build/simulator \
-    -resultBundlePath "$test_results/UITests.xcresult" CODE_SIGNING_ALLOWED=NO test; then
+    -resultBundlePath "$test_results/UITests.xcresult" CODE_SIGNING_ALLOWED=NO "${test_filters[@]}" test; then
     test_failed=1
   fi
   python3 scripts/export_evidence.py "$test_results/UITests.xcresult" build/evidence
@@ -61,6 +77,11 @@ fi
 if [ -d "${TMPDIR:-/tmp}/ReaderEnhancementEvidence" ]; then
   cp -rf "${TMPDIR:-/tmp}/ReaderEnhancementEvidence"/* build/evidence/reader-enhancement/ 2>/dev/null || true
   cp -rf "${TMPDIR:-/tmp}/ReaderEnhancementEvidence"/* ../docs/ios-parity-2.0.40/review-evidence/reader-enhancement/ 2>/dev/null || true
+fi
+
+if [ "$validation_scope" != full ]; then
+  echo '阶段原生验证结束；其他UI/视觉/Files及完整回归仍待运行，不生成IPA。'
+  exit 0
 fi
 
 package_dir=$(mktemp -d build/package-XXXXXX)

@@ -4,9 +4,9 @@
 
 **当前功能/视觉/交互尚未完整对齐，非站源门槛未通过。** 具体缺口、已作本地修正和证据边界见 [PARITY.md](PARITY.md) 与 [当前差异核对](../docs/comparisons/2026-10-11-ios-android-current-assessment.md)。
 
-当前源目录51个=22专用+29公共，默认启用50，duya默认关闭；baozimh/mhua5仅保留旧身份与离线兼容。数量/顺序/默认开关静态及核心通过，生产注册Apple测试待验收；真实网站验收最后进行。
+当前源目录51个=22专用+29公共，默认启用50，duya默认关闭；baozimh/mhua5仅保留旧身份与离线兼容。数量/顺序/默认开关静态及核心通过，生产注册两设备原生测试通过，完整目录管理UI待验收；真实网站验收最后进行。
 
-新仓库 [xx-comic-ios](https://github.com/sermisellek2-spec/xx-comic-ios) 的CI38104946234、代码a5aeec9已成功并产出未签名IPA。原额度限制已解决；该旧包实际没有应用图标资源。当前图标/淘汰设置、搜索/下载/封面及本批视觉、缓存/配置/统计、书架/阅读/本地删除/Files目录改动没有对应Apple产物。只用该仓库；指定账号正常Git凭据与写入权限已核验，c6363d7两配置SDK、核心846及iPhone18原生通过，首UI失败后停止；当前新增修复待复验，完整阶段及总验收未开放。
+新仓库 [xx-comic-ios](https://github.com/sermisellek2-spec/xx-comic-ios) 的CI38104946234、代码a5aeec9已成功并产出未签名IPA。原额度限制已解决；该旧包实际没有应用图标资源。当前图标/淘汰设置、搜索/下载/封面及本批视觉、缓存/配置/统计、书架/阅读/本地删除/Files目录改动没有对应Apple产物。只用该仓库；指定账号正常Git凭据与写入权限已核验，9b1d4a2两配置SDK、核心847及两设备原生各19通过，完整UI仍失败；当前标准导航/批量恢复等修复待复验，完整阶段及总验收未开放。
 
 [分阶段方案](../docs/IOS_2_0_40_PHASED_DEVELOPMENT.md)、[本批阶段证据](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/README.md)。
 
@@ -21,7 +21,7 @@ $comicCorePath = (Resolve-Path ios/ComicCore).Path
 docker run --rm --mount "type=bind,source=$comicCorePath,target=/work" -w /work swift:5.10-jammy swift test -j 2
 ```
 
-当前核心全量838项执行、2项Apple PDF跳过、0失败；独立反馈状态6项历史通过；63个原生/测试Swift文件两配置仅语法通过。最新文件协调/私有暂存发布/离线图片读取接线和下载相关49项记录见[接续证据](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-download-files/README.md)。Linux核心或独立状态测试、Swift语法解析不替代Apple SDK类型检查、UIKit、CoreML、图像/PDF、WebKit、Files、后台调度和iPad验收。
+当前Linux核心全量846项执行、2项Apple PDF跳过、0失败；66个原生/测试Swift文件两配置仅语法通过。最新恢复/同步修复见[接续恢复证据](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-import-recovery/README.md)。最新文件协调/私有暂存发布/离线图片读取接线和下载相关49项记录见[接续证据](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-download-files/README.md)。Linux核心或独立状态测试、Swift语法解析不替代Apple SDK类型检查、UIKit、CoreML、图像/PDF、WebKit、Files、后台调度和iPad验收。
 
 ## macOS/私有CI
 

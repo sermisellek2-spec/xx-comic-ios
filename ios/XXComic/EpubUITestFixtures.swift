@@ -19,6 +19,10 @@ enum EpubUITestFixtures {
     static func seed(library: LocalLibrary) throws {
         guard ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--epub-fixtures"),
               library.directory.deletingLastPathComponent().lastPathComponent == "XXComic-UITests" else { return }
+        if ProcessInfo.processInfo.arguments.contains("--batch-import-fixtures") {
+            try BatchImportUITestFixtures.seed(library: library)
+            return
+        }
         if ProcessInfo.processInfo.arguments.contains("--kindle-fixtures") {
             try seedKindleImports(library: library)
             return

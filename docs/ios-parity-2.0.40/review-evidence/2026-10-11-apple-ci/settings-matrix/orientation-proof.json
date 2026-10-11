@@ -1,0 +1,118 @@
+{
+  "ci_head": "9b1d4a2c3c3402f568eefa6521b64fe7658f3645",
+  "method": "Read PNG EXIF orientation and validate display dimensions; original files remain unchanged.",
+  "records": [
+    {
+      "file": "ipad_landscape_dark_settings_reference_empty.png",
+      "raw_pixels": [
+        1668,
+        2420
+      ],
+      "exif_orientation": 8,
+      "display_pixels": [
+        2420,
+        1668
+      ],
+      "expected_landscape": true,
+      "orientation_matches": true
+    },
+    {
+      "file": "ipad_landscape_light_settings_reference_empty.png",
+      "raw_pixels": [
+        1668,
+        2420
+      ],
+      "exif_orientation": 8,
+      "display_pixels": [
+        2420,
+        1668
+      ],
+      "expected_landscape": true,
+      "orientation_matches": true
+    },
+    {
+      "file": "ipad_portrait_dark_settings_reference_empty.png",
+      "raw_pixels": [
+        1668,
+        2420
+      ],
+      "exif_orientation": 1,
+      "display_pixels": [
+        1668,
+        2420
+      ],
+      "expected_landscape": false,
+      "orientation_matches": true
+    },
+    {
+      "file": "ipad_portrait_light_settings_reference_empty.png",
+      "raw_pixels": [
+        1668,
+        2420
+      ],
+      "exif_orientation": 1,
+      "display_pixels": [
+        1668,
+        2420
+      ],
+      "expected_landscape": false,
+      "orientation_matches": true
+    },
+    {
+      "file": "iphone_landscape_dark_settings_reference_empty.png",
+      "raw_pixels": [
+        1178,
+        2556
+      ],
+      "exif_orientation": 8,
+      "display_pixels": [
+        2556,
+        1178
+      ],
+      "expected_landscape": true,
+      "orientation_matches": true
+    },
+    {
+      "file": "iphone_landscape_light_settings_reference_empty.png",
+      "raw_pixels": [
+        1178,
+        2556
+      ],
+      "exif_orientation": 8,
+      "display_pixels": [
+        2556,
+        1178
+      ],
+      "expected_landscape": true,
+      "orientation_matches": true
+    },
+    {
+      "file": "iphone_portrait_dark_settings_reference_empty.png",
+      "raw_pixels": [
+        1178,
+        2556
+      ],
+      "exif_orientation": 1,
+      "display_pixels": [
+        1178,
+        2556
+      ],
+      "expected_landscape": false,
+      "orientation_matches": true
+    },
+    {
+      "file": "iphone_portrait_light_settings_reference_empty.png",
+      "raw_pixels": [
+        1178,
+        2556
+      ],
+      "exif_orientation": 1,
+      "display_pixels": [
+        1178,
+        2556
+      ],
+      "expected_landscape": false,
+      "orientation_matches": true
+    }
+  ]
+}

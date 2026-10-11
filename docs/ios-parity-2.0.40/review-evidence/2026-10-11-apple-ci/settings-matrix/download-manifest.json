@@ -1,0 +1,57 @@
+{
+  "ci_head": "9b1d4a2c3c3402f568eefa6521b64fe7658f3645",
+  "run_id": 38138407173,
+  "artifact": "visual",
+  "files": [
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\settings-matrix\\ui-results-D3jqVa-manifest.json",
+      "sha256": "2ba5eb51735e69212e28de303694caec55fae68934db214313091525be4798f5",
+      "bytes": 17301
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\settings-matrix\\ipad_landscape_dark_settings_reference_empty.png",
+      "sha256": "fb8934847b0389a8e73117557b2ff40b803d282e74a52e309e589b5f727cbba1",
+      "bytes": 193268
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\settings-matrix\\ui-results-wzWvA6-manifest.json",
+      "sha256": "e7f7a56311c3e582c2a34d9c5b644b6f64c5311507240cd8570b7171e490cbab",
+      "bytes": 17505
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\settings-matrix\\ipad_landscape_light_settings_reference_empty.png",
+      "sha256": "4fbb015cb765c5d69ef928e6886268c4261219206fff5fab3f1c5ee27cfd0fc3",
+      "bytes": 195610
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\settings-matrix\\ipad_portrait_dark_settings_reference_empty.png",
+      "sha256": "87c3611035e6bd72a2f69279655369dbed9a21a26ba8e8739ff5a4bc8ee0fb38",
+      "bytes": 249295
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\settings-matrix\\ipad_portrait_light_settings_reference_empty.png",
+      "sha256": "c12056947141301cc5d8154191b5c0c31d6f9da860f7b1c822be664b37b5ef27",
+      "bytes": 251883
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\settings-matrix\\iphone_landscape_dark_settings_reference_empty.png",
+      "sha256": "f0670be7de18b022fd14fca396422381bc5ac580e2813cd6f06836b46a71778a",
+      "bytes": 135019
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\settings-matrix\\iphone_landscape_light_settings_reference_empty.png",
+      "sha256": "116ebadb81454c342a891047ee31900d9eb3dd88bec508749b8f143956039e08",
+      "bytes": 136514
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\settings-matrix\\iphone_portrait_dark_settings_reference_empty.png",
+      "sha256": "3c8ad56b5bc7dccb42745e41b47a19f75c18fe5bc228605c4bac772674fd8cca",
+      "bytes": 244285
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\settings-matrix\\iphone_portrait_light_settings_reference_empty.png",
+      "sha256": "8db42579ee3087b152b581cce90705e4b49ef0945e2553813b9827b671562acd",
+      "bytes": 247116
+    }
+  ]
+}

@@ -23,6 +23,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     private let deleteSelectedButton = UIButton(type: .system)
     private var loadTask: Task<Void, Never>?
     private var loadGeneration = UUID()
+    private var folderSyncTask: Task<Void, Never>?
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -227,13 +228,43 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     }
 
     @objc private func syncAllFoldersTapped() {
-        Task {
-            self.showToast("正在同步关联文件夹...")
-            _ = await self.environment.folderSyncCoordinator.syncAll()
+        if let folderSyncTask { folderSyncTask.cancel(); return }
+        syncFolders(ids: nil)
+    }
+
+    private func syncFolders(ids: Set<String>?) {
+        guard folderSyncTask == nil else { return }
+        let folders = environment.folderSyncCoordinator.store.list().filter { ids?.contains($0.id) ?? true }
+        guard !folders.isEmpty else { showToast("没有需要同步的关联文件夹"); return }
+        folderSyncTask = Task { [weak self] in
+            guard let self else { return }
+            defer {
+                self.folderSyncTask = nil
+                self.tableView.reloadSections(IndexSet(integer: 2), with: .none)
+            }
+            var failed: [(id: String, name: String, error: String)] = []
+            var succeeded = 0
+            for folder in folders {
+                if Task.isCancelled { break }
+                let result = await self.environment.folderSyncCoordinator.sync(id: folder.id)
+                switch result {
+                case .upToDate, .updated: succeeded += 1
+                case .error(let message): failed.append((folder.id, folder.folderName, message))
+                }
+            }
             self.environment.notifyLibraryChanged()
-            self.showToast("文件夹同步完成")
             self.loadData()
+            guard self.viewIfLoaded?.window != nil else { return }
+            if Task.isCancelled { self.showToast("已取消同步，已完成的结果保留"); return }
+            guard !failed.isEmpty else { self.showToast("已同步 \(succeeded) 个文件夹"); return }
+            let failures = failed.map { "\($0.name)：\($0.error)" }.joined(separator: "\n")
+            let retryIDs = Set(failed.map(\.id))
+            let alert = UIAlertController(title: "部分文件夹同步失败", message: "成功 \(succeeded) 个，失败 \(failed.count) 个。\n\n" + failures, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "稍后", style: .cancel))
+            alert.addAction(UIAlertAction(title: "重试失败项", style: .default) { [weak self] _ in self?.syncFolders(ids: retryIDs) })
+            self.present(alert, animated: true)
         }
+        tableView.reloadSections(IndexSet(integer: 2), with: .none)
     }
 
     public func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
@@ -347,7 +378,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
                 linkButton.addTarget(self, action: #selector(linkNewFolderTapped), for: .touchUpInside)
 
                 let syncAllButton = UIButton(type: .system)
-                syncAllButton.setTitle("立即同步全部", for: .normal)
+                syncAllButton.setTitle(folderSyncTask == nil ? "立即同步全部" : "取消同步", for: .normal)
                 syncAllButton.setTitleColor(Palette.accent, for: .normal)
                 syncAllButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
                 syncAllButton.addTarget(self, action: #selector(syncAllFoldersTapped), for: .touchUpInside)
@@ -451,10 +482,15 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
         let unlinkAction = UIContextualAction(style: .destructive, title: "解除关联") { [weak self] _, _, completion in
             guard let self else { completion(false); return }
             Task {
-                try? await self.environment.folderSyncCoordinator.unlinkFolder(id: folder.id)
-                self.showToast("已解除文件夹关联")
-                self.loadData()
-                completion(true)
+                do {
+                    try await self.environment.folderSyncCoordinator.unlinkFolder(id: folder.id)
+                    self.showToast("已解除文件夹关联")
+                    self.loadData()
+                    completion(true)
+                } catch {
+                    self.showToast("解除关联失败：\(error.localizedDescription)")
+                    completion(false)
+                }
             }
         }
 

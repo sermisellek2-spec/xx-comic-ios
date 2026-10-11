@@ -1,0 +1,13 @@
+{
+  "device" : "iPad Pro 11-inch (M4)",
+  "durationMs" : 1775.3282083333488,
+  "inputDimensions" : "384x384",
+  "maxGrayEdgeChroma" : 21,
+  "maxSeamStep" : 1,
+  "method" : "neural",
+  "outputDimensions" : "768x768",
+  "residentMemoryAfterMB" : 226.25,
+  "residentMemoryBeforeMB" : 169.171875,
+  "systemVersion" : "17.4",
+  "tilesProcessed" : 4
+}

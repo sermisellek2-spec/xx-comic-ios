@@ -1,0 +1,37 @@
+{
+  "ci_head": "9b1d4a2c3c3402f568eefa6521b64fe7658f3645",
+  "run_id": 38138407173,
+  "artifact": "enhancement",
+  "files": [
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\reader-enhancement\\iPad_Pro_11-inch__M4_-coreml-output-768x768.png",
+      "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+      "bytes": 583242
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\reader-enhancement\\iPad_Pro_11-inch__M4_-reader-ai-metrics.json",
+      "sha256": "4be3dcec491ab8292b9de9a8b7dc73e300a1da9bbbb851b3d3480e792056427a",
+      "bytes": 345
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\reader-enhancement\\iPad_Pro_11-inch__M4_-real-input-384x384.png",
+      "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+      "bytes": 70556
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\reader-enhancement\\iPhone_15_Pro-coreml-output-768x768.png",
+      "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+      "bytes": 583242
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\reader-enhancement\\iPhone_15_Pro-reader-ai-metrics.json",
+      "sha256": "dc69a355a719775b92c50417c66bb589a3846649ed0c10117d383499ef5b0790",
+      "bytes": 341
+    },
+    {
+      "file": "docs\\ios-parity-2.0.40\\review-evidence\\2026-10-11-apple-ci\\reader-enhancement\\iPhone_15_Pro-real-input-384x384.png",
+      "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+      "bytes": 70556
+    }
+  ]
+}

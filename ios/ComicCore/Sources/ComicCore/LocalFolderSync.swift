@@ -87,10 +87,12 @@ public final class LocalFolderSyncCoordinator: @unchecked Sendable {
 
     /// Unlinks an external folder and optionally deletes its imported local series.
     public func unlinkFolder(id: String, deleteSeries: Bool = false) async throws {
-        guard let record = store.record(id: id) else { return }
-        try store.remove(id: id)
-        if deleteSeries {
-            try? await library.deleteSeries(id: record.seriesId)
+        try await syncGate.execute {
+            guard let record = store.record(id: id) else { return }
+            if deleteSeries {
+                try await library.deleteSeries(id: record.seriesId)
+            }
+            try store.remove(id: id)
         }
     }
 

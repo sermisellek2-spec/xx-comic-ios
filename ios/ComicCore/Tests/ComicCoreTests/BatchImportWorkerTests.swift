@@ -244,4 +244,108 @@ final class BatchImportWorkerTests: XCTestCase {
         let resolvedURL = try BatchImportWorker.resolveBookmark(bookmarkData)
         XCTAssertEqual(resolvedURL.standardizedFileURL.path, testFile.standardizedFileURL.path)
     }
+
+    func testRestartRecoveryUsesReselectedFileAndPreservesSessionSeriesAndFirstVolume() async throws {
+        let library = try LocalLibrary(directory: tempDirectory)
+        let session = try BatchImportSession(file: sessionFile)
+        let first = try createTestZip(name: "续作01.zip", entries: ["1.png": [1]])
+        let missing = outsideDirectory.appendingPathComponent("续作02.zip")
+        let candidates = try [first, missing].enumerated().map { index, url in
+            try BatchImportCandidate(seriesTitle: "续作", fileName: url.lastPathComponent, fileId: url.path, format: "zip", selectionIndex: index)
+        }
+        let worker = BatchImportWorker(library: library, session: session, isReadableImage: { _ in true })
+        let original = try await worker.planAndExecute(candidates: candidates, urlMap: [first.path: first])
+        XCTAssertEqual(original.succeededCount, 1)
+        XCTAssertEqual(original.failedCount, 1)
+        let seriesID = try XCTUnwrap(original.seriesIds.first)
+        let firstSeries = try await library.series(id: seriesID)
+        let firstVolumeID = try XCTUnwrap(firstSeries?.volumeIDs.first)
+        let originalSession = await session.current()
+        let taskID = try XCTUnwrap(originalSession?.taskId)
+
+        let pickedDirectory = outsideDirectory.appendingPathComponent("重新授权")
+        try FileManager.default.createDirectory(at: pickedDirectory, withIntermediateDirectories: true)
+        let picked = pickedDirectory.appendingPathComponent(missing.lastPathComponent)
+        try ZIPFixture.make([ZIPFixture.Item("2.png", [2])]).write(to: picked)
+        let restoredSession = try BatchImportSession(file: sessionFile)
+        let loaded = await restoredSession.current()
+        let plan = BatchImportRecoveryPlan(snapshot: try XCTUnwrap(loaded), selectedURLs: [picked, first])
+        XCTAssertEqual(plan.pendingCount, 1)
+        XCTAssertEqual(plan.urlMap[missing.path], picked)
+        XCTAssertTrue(plan.unresolvedNames.isEmpty)
+        XCTAssertNil(plan.urlMap[first.path], "已完成文件不应重新排队")
+        let restoredLibrary = try LocalLibrary(directory: tempDirectory)
+        let restoredWorker = BatchImportWorker(library: restoredLibrary, session: restoredSession, isReadableImage: { _ in true })
+        let result = try await restoredWorker.resumeSession(urlMap: plan.urlMap)
+        XCTAssertEqual(result.taskId, taskID)
+        XCTAssertEqual(result.succeededCount, 2)
+        XCTAssertEqual(result.failedCount, 0)
+        let finalSeries = try await restoredLibrary.series(id: seriesID)
+        XCTAssertEqual(finalSeries?.volumeIDs.count, 2)
+        XCTAssertEqual(finalSeries?.volumeIDs.first, firstVolumeID)
+        let allSeries = try await restoredLibrary.series()
+        XCTAssertEqual(allSeries.count, 1)
+        let finalSession = await restoredSession.current()
+        XCTAssertEqual(finalSession?.groups.first?.targetBookId, seriesID)
+        XCTAssertTrue(finalSession?.groups.first?.items.allSatisfy { $0.state == .completed } == true)
+    }
+
+    func testSavedPathAloneCannotAuthorizeRestartImport() async throws {
+        let zip = try createTestZip(name: "仍在原位置.zip", entries: ["1.png": [1]])
+        let library = try LocalLibrary(directory: tempDirectory)
+        let session = try BatchImportSession(file: sessionFile)
+        let saved = try await session.create(groups: [.init(key: "old", title: "未授权", targetBookId: "", items: [.init(uri: zip.path, name: zip.lastPathComponent, format: "zip", selectionIndex: 0)])])
+        let worker = BatchImportWorker(library: library, session: session, isReadableImage: { _ in true })
+        let summary = try await worker.resumeSession(urlMap: [:])
+        XCTAssertEqual(summary.taskId, saved.taskId)
+        XCTAssertEqual(summary.failedCount, 1)
+        XCTAssertEqual(summary.succeededCount, 0)
+        let series = try await library.series()
+        XCTAssertTrue(series.isEmpty)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: zip.path), "原文件不得被删除")
+    }
+
+    func testRecoveryNeverAssignsAmbiguousSameNameFilesBySelectionOrder() async throws {
+        let session = try BatchImportSession(file: sessionFile)
+        let snapshot = try await session.create(groups: [.init(key: "two", title: "同名", targetBookId: "", items: [
+            .init(uri: "/original/a/卷01.zip", name: "卷01.zip", format: "zip", selectionIndex: 0),
+            .init(uri: "/original/b/卷01.zip", name: "卷01.zip", format: "zip", selectionIndex: 1)
+        ])])
+        let selected = [URL(fileURLWithPath: "/picked/b/卷01.zip"), URL(fileURLWithPath: "/picked/a/卷01.zip")]
+        let ambiguous = BatchImportRecoveryPlan(snapshot: snapshot, selectedURLs: selected)
+        XCTAssertTrue(ambiguous.urlMap.isEmpty)
+        XCTAssertEqual(ambiguous.unresolvedNames.count, 2)
+        XCTAssertEqual(ambiguous.ambiguousNames, ["卷01.zip"])
+        let exact = BatchImportRecoveryPlan(snapshot: snapshot, selectedURLs: [URL(fileURLWithPath: "/original/b/卷01.zip"), URL(fileURLWithPath: "/original/a/卷01.zip")])
+        XCTAssertEqual(exact.urlMap.count, 2)
+        XCTAssertTrue(exact.unresolvedNames.isEmpty)
+    }
+
+    func testCancellingCallingTaskAfterFirstVolumeStopsAndPersistsRemainingSkippedItems() async throws {
+        let library = try LocalLibrary(directory: tempDirectory)
+        let session = try BatchImportSession(file: sessionFile)
+        let urls = try (1...3).map { try createTestZip(name: "取消测试0\($0).zip", entries: ["\($0).png": [UInt8($0)]]) }
+        let candidates = try urls.enumerated().map { index, url in
+            try BatchImportCandidate(seriesTitle: "取消测试", fileName: url.lastPathComponent, fileId: url.path, format: "zip", selectionIndex: index)
+        }
+        let urlMap = Dictionary(uniqueKeysWithValues: urls.map { ($0.path, $0) })
+        let worker = BatchImportWorker(library: library, session: session, isReadableImage: { _ in true })
+        let job = Task {
+            try await worker.planAndExecute(candidates: candidates, urlMap: urlMap) { progress in
+                if progress.state == .completed { withUnsafeCurrentTask { $0?.cancel() } }
+            }
+        }
+        let result = try await job.value
+        XCTAssertTrue(result.cancelled)
+        XCTAssertEqual(result.succeededCount, 1)
+        XCTAssertEqual(result.skippedCount, 2)
+        let restored = try BatchImportSession(file: sessionFile)
+        let snapshot = await restored.current()
+        XCTAssertTrue(snapshot?.cancelled == true)
+        XCTAssertEqual(snapshot?.groups.first?.items.map(\.state), [.completed, .skipped, .skipped])
+        let series = try await library.series()
+        XCTAssertEqual(series.first?.volumeIDs.count, 1)
+        XCTAssertEqual(series.count, 1)
+        for url in urls { XCTAssertTrue(FileManager.default.fileExists(atPath: url.path)) }
+    }
 }
