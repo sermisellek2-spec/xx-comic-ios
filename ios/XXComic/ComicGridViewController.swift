@@ -168,7 +168,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     private let floatingBubble = FloatingImportBubble()
     private var currentGroupId: String = BookshelfGroupStore.builtinOnlineAllId
     private var currentScope: BookshelfScope { localMode ? .local : .online }
-    private var layoutItem: UIBarButtonItem?
+    private var layoutControl: UIButton?
     private var importTask: Task<Void, Never>?
     private var downloadSelectionTask: Task<Void, Never>?
     private var downloadSelectionID = UUID()
@@ -211,17 +211,28 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                 }
             }
             let layoutImg = UIImage(systemName: isListLayout ? "square.grid.2x2" : "list.bullet")
-            let layoutButton = UIBarButtonItem(image: layoutImg, style: .plain, target: self, action: #selector(toggleLayoutTapped))
-            layoutItem = layoutButton
+            let layoutButton = UIButton(type: .system)
+            layoutButton.setImage(layoutImg, for: .normal)
+            layoutButton.tintColor = Palette.accent
+            layoutButton.addTarget(self, action: #selector(toggleLayoutTapped), for: .touchUpInside)
+            layoutButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
+            layoutButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+            layoutControl = layoutButton
             layoutButton.accessibilityIdentifier = "bookshelf.layout"
+            layoutButton.accessibilityLabel = isListLayout ? "网格" : "列表"
             let artwork = UIImageView(image: UIImage(named: "rem_reader_resume"))
             artwork.contentMode = .scaleAspectFill; artwork.clipsToBounds = true; artwork.layer.cornerRadius = 11.5
             artwork.frame = CGRect(x: 0, y: 0, width: 23, height: 23)
+            artwork.widthAnchor.constraint(equalToConstant: 23).isActive = true
+            artwork.heightAnchor.constraint(equalToConstant: 23).isActive = true
             artwork.isAccessibilityElement = true; artwork.accessibilityLabel = "蕾姆主题"
-            navigationItem.rightBarButtonItems = [UIBarButtonItem(customView: artwork), layoutButton]
             shelfMode.selectedSegmentIndex = environment.readingHabits.currentLaunchTab
-            shelfMode.addTarget(self, action: #selector(shelfChanged), for: .valueChanged)
-            navigationItem.leftBarButtonItems = shelfMode.navigationItems
+            shelfMode.onSelectionChanged = { [weak self] in self?.shelfChanged() }
+            shelfMode.setContentHuggingPriority(.required, for: .horizontal)
+            let heading = UIStackView(arrangedSubviews: [shelfMode, UIView(), layoutButton, artwork])
+            heading.axis = .horizontal; heading.alignment = .center; heading.spacing = 8
+            header.layoutMargins.left = 16; header.layoutMargins.right = 16
+            header.addArrangedSubview(heading)
 
             groupBar.onGroupSelected = { [weak self] group in
                 self?.currentGroupId = group.id
@@ -258,7 +269,8 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         BookshelfLayoutHelper.setGridMode(defaults: environment.defaults, scope: currentScope, isGrid: nextGrid)
         isListLayout = !nextGrid
         let layoutImg = UIImage(systemName: isListLayout ? "square.grid.2x2" : "list.bullet")
-        layoutItem?.image = layoutImg
+        layoutControl?.setImage(layoutImg, for: .normal)
+        layoutControl?.accessibilityLabel = isListLayout ? "网格" : "列表"
         collection.collectionViewLayout.invalidateLayout()
         collection.reloadData()
         restoreAnchor(anchor)
@@ -310,7 +322,16 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             }
         }
     }
-    override func viewWillAppear(_ animated: Bool) { super.viewWillAppear(animated); refresh() }
+    override func viewWillAppear(_ animated: Bool) {
+        navigationController?.setNavigationBarHidden(!historyOnly, animated: animated)
+        super.viewWillAppear(animated); refresh()
+    }
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if !historyOnly, navigationController?.topViewController !== self {
+            navigationController?.setNavigationBarHidden(false, animated: animated)
+        }
+    }
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         if !historyOnly, !checkedPendingBatch {
@@ -374,7 +395,8 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         let anchor = renderedContext == currentContext ? captureAnchor() : nil
         isListLayout = !BookshelfLayoutHelper.isGridMode(defaults: environment.defaults, scope: currentScope)
         let layoutImg = UIImage(systemName: isListLayout ? "square.grid.2x2" : "list.bullet")
-        layoutItem?.image = layoutImg
+        layoutControl?.setImage(layoutImg, for: .normal)
+        layoutControl?.accessibilityLabel = isListLayout ? "网格" : "列表"
 
         if !historyOnly {
             floatingBubble.isHidden = !localMode

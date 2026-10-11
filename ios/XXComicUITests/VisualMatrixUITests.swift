@@ -88,6 +88,17 @@ final class VisualMatrixUITests: XCTestCase {
         app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
         app.launch()
         XCTAssertTrue(app.tabBars.buttons["设置"].waitForExistence(timeout: 10)); app.tabBars.buttons["设置"].tap()
+        // Match the reference's empty cache through the actual cleanup UI.
+        // URLCache can otherwise retain responses from earlier UI-test sessions.
+        app.tables.cells["settings.cache"].tap()
+        app.buttons["确认清理"].tap()
+        app.buttons["立即清理"].tap()
+        let cleared = app.staticTexts["缓存已清理，收藏与本地漫画已保留"]
+        XCTAssertTrue(cleared.waitForExistence(timeout: 10))
+        let dismissed = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: cleared)
+        wait(for: [dismissed], timeout: 5)
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(app.tables.cells["settings.cache"].staticTexts["0 B"].waitForExistence(timeout: 10))
         XCTAssertEqual(app.tables.cells.count, 11)
         XCTAssertTrue(app.tables.cells["settings.theme"].staticTexts["自动"].exists)
         XCTAssertTrue(app.tables.cells["settings.sources"].staticTexts["50 个开启"].exists)

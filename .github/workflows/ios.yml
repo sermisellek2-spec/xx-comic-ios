@@ -7,7 +7,11 @@ on:
         description: 阶段验证不产出IPA，完整回归通过后才允许打包
         type: choice
         options: [foundation-import, full]
-        default: foundation-import
+        default: full
+      package_ipa:
+        description: 仅全部阶段自验通过后生成最终未签名IPA
+        type: boolean
+        default: false
   push:
     branches:
       - codex/ios-port
@@ -25,7 +29,8 @@ jobs:
     runs-on: macos-14
     timeout-minutes: 60
     env:
-      IOS_VALIDATION_SCOPE: ${{ github.event.inputs.validation_scope || 'foundation-import' }}
+      IOS_VALIDATION_SCOPE: ${{ github.event.inputs.validation_scope || 'full' }}
+      IOS_PACKAGE_IPA: ${{ github.event.inputs.package_ipa || 'false' }}
 
     steps:
       - name: Checkout
@@ -63,7 +68,7 @@ jobs:
         run: bash ios/scripts/build.sh
 
       - name: Upload unsigned IPA
-        if: success() && env.IOS_VALIDATION_SCOPE == 'full'
+        if: success() && env.IOS_VALIDATION_SCOPE == 'full' && env.IOS_PACKAGE_IPA == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: XXComic-unsigned

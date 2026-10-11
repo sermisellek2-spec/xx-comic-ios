@@ -335,7 +335,9 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
                 }
             }
         }
-        else { status(progress + (comics.isEmpty && finished.contains(global.selectedSourceID ?? "") ? " · 没有找到漫画" : "")) }
+        else if comics.isEmpty {
+            status(progress + (finished.count == environment.searchSources.count ? " · 没有找到漫画" : " · 正在搜索…"))
+        } else { status(progress) }
     }
     @objc private func showSources() { showFilterDrawer(initialSection: 0) }
     @objc private func showFilters() { showFilterDrawer(initialSection: 1) }

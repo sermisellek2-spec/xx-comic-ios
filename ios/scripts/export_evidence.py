@@ -35,6 +35,7 @@ def walk(value):
 
 root = unwrap(get())
 records = []
+test_results = []
 seen = set()
 revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
 for action in root.get('actions', []):
@@ -51,6 +52,12 @@ for action in root.get('actions', []):
             continue
         seen.add(summary_id)
         summary = unwrap(get(summary_id))
+        failed = test.get('testStatus') not in ('Success', 'Skipped')
+        identifier = test.get('identifier', test.get('name', 'test'))
+        test_slug = re.sub(r'[^A-Za-z0-9_-]', '_', identifier)[:128]
+        test_results.append({'test': identifier, 'status': test.get('testStatus'),
+                             'revision': revision, 'device': device})
+        attachment_index = 0
         for item in walk(summary):
             payload = item.get('payloadRef', {}).get('id')
             name = item.get('name', '')
@@ -61,6 +68,12 @@ for action in root.get('actions', []):
             elif name in ('real-input-384x384', 'coreml-output-768x768', 'reader-ai-metrics'):
                 suffix = '.json' if name == 'reader-ai-metrics' else '.png'
                 target = output / 'reader-enhancement' / (device_slug + '-' + name + suffix)
+            elif failed and item.get('uniformTypeIdentifier') == 'public.png':
+                # Preserve actual failure screenshots, rather than guessing a
+                # UI state from the assertion line. Do not export log/archive
+                # attachments that can include browser or permission data.
+                attachment_index += 1
+                target = output / 'ui-failures' / f'{device_slug}-{test_slug}-{attachment_index}.png'
             else:
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -72,4 +85,5 @@ for action in root.get('actions', []):
                             'attachment': name, 'timestamp': item.get('timestamp'), 'payload': payload})
 output.mkdir(parents=True, exist_ok=True)
 (output / (bundle.parent.name + '-manifest.json')).write_text(json.dumps(records, indent=2), encoding='utf-8')
+(output / (bundle.parent.name + '-tests.json')).write_text(json.dumps(test_results, indent=2), encoding='utf-8')
 print(f'Exported {len(records)} kept evidence attachments from {bundle}')

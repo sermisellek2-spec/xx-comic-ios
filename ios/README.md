@@ -1,5 +1,7 @@
 # XX Comic iOS
 
+最新已运行f4eaf93第四轮foundation-import：两配置SDK、Apple核心853项0失败及两设备原生各19通过；两设备UI各7项执行/3条失败。我的书架、阅读偏好、未读/列表切换及部分恢复重启通过，本地标题仍未找到。当前应用内容区单标题行提供两真实44pt按钮，修设置边距/分组/右值；下载预选与空结果tab两项测试前提按冻结规则纠正，关闭/重下载/不支持搜索原断言保留。下一轮默认full完整Apple自验，package_ipa显式最终打包开关默认false，不生成IPA。非站源及真实51源完整门槛仍未通过。 [第四轮实际记录](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/repair-4-summary.json)。下文各提交结果按其版本保留，不继承当前通过。
+
 原生 UIKit + ComicCore Swift Package，iOS16+，支持iPhone/iPad。当前Android冻结基线为2.0.40/340，提交 `696e80a44ab36b19de6f630565df32978e55a19e`。iOS checkout里的app/是旧Android副本，不能用作当前基线。
 
 **当前功能/视觉/交互尚未完整对齐，非站源门槛未通过。** 具体缺口、已作本地修正和证据边界见 [PARITY.md](PARITY.md) 与 [当前差异核对](../docs/comparisons/2026-10-11-ios-android-current-assessment.md)。

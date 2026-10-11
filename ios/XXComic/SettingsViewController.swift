@@ -20,7 +20,7 @@ final class SettingsViewController: UITableViewController {
         self.store = environment.preferences
         self.habitTracker = environment.readingHabits
         self.defaults = environment.defaults
-        super.init(style: .insetGrouped)
+        super.init(style: .grouped)
     }
 
     required init?(coder: NSCoder) {
@@ -32,6 +32,9 @@ final class SettingsViewController: UITableViewController {
         title = "设置"
         tableView.backgroundColor = Palette.background
         tableView.separatorColor = Palette.borderSoft
+        tableView.separatorStyle = .none
+        tableView.sectionHeaderTopPadding = 0
+        tableView.tableHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: 1, height: .leastNormalMagnitude))
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 56
     }
@@ -113,16 +116,33 @@ final class SettingsViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         [3, 6, 2][section]
     }
-    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        ["阅读与外观", "站源与本地数据", "App"][section]
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let header = UIView()
+        let label = UILabel()
+        label.text = ["阅读与外观", "站源与本地数据", "App"][section]
+        label.font = UIFontMetrics(forTextStyle: .caption1).scaledFont(for: .systemFont(ofSize: 12))
+        label.adjustsFontForContentSizeCategory = true
+        label.textColor = Palette.text3
+        label.translatesAutoresizingMaskIntoConstraints = false
+        header.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 18),
+            label.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -18),
+            label.topAnchor.constraint(equalTo: header.topAnchor, constant: 10),
+            label.bottomAnchor.constraint(equalTo: header.bottomAnchor, constant: -5)
+        ])
+        return header
     }
-    override func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
-        guard let header = view as? UITableViewHeaderFooterView else { return }
-        header.textLabel?.font = .systemFont(ofSize: 12)
-        header.textLabel?.textColor = Palette.text3
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        UIFontMetrics(forTextStyle: .caption1).scaledFont(for: .systemFont(ofSize: 12)).lineHeight + 15
     }
-    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat { 4 }
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat { 10 }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = settingsCell(at: indexPath)
+        cell.setGroupPosition(first: indexPath.row == 0, last: indexPath.row == [3, 6, 2][indexPath.section] - 1)
+        return cell
+    }
+    private func settingsCell(at indexPath: IndexPath) -> SettingsMenuCell {
         switch (indexPath.section, indexPath.row) {
         case (0, 0):
             let label = ["自动", "白天", "黑夜"][currentTheme.rawValue]

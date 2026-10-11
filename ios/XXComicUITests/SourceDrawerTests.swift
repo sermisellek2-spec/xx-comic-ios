@@ -1,6 +1,22 @@
 import XCTest
 
 final class SourceDrawerTests: XCTestCase {
+    func testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-catalog-fixtures"]
+        app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
+        app.launch()
+        app.tabBars.buttons["发现"].tap()
+        app.segmentedControls.buttons["全站"].tap()
+        let search = app.searchFields.firstMatch
+        search.tap(); search.typeText("未匹配的验收关键词\n")
+        let empty = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "没有找到漫画")).firstMatch
+        XCTAssertTrue(empty.waitForExistence(timeout: 10))
+        XCTAssertEqual(app.collectionViews.cells.count, 0)
+        for id in ["mh160", "copy4000", "gmh", "cuimh", "liumanhua"] {
+            XCTAssertFalse(app.buttons["discover.global." + id].exists)
+        }
+    }
     func testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-catalog-fixtures"]
@@ -14,7 +30,9 @@ final class SourceDrawerTests: XCTestCase {
         app.buttons["filter.confirm"].tap()
         let search = app.searchFields.firstMatch
         search.tap()
-        search.typeText("测试\n")
+        // Android exposes only sources that returned results. Use a title in
+        // the shared fixture so the supported-source assertions have results.
+        search.typeText("电锯人\n")
         XCTAssertTrue(app.buttons["催漫画暂不支持搜索"].waitForExistence(timeout: 5))
         app.segmentedControls.buttons["全站"].tap()
         XCTAssertTrue(app.buttons["discover.global.mh160"].waitForExistence(timeout: 5))

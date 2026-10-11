@@ -1,0 +1,385 @@
+2026-10-11T12:13:47.6644180Z ** BUILD SUCCEEDED **
+2026-10-11T12:14:58.5736340Z ** BUILD SUCCEEDED **
+2026-10-11T12:15:40.4980110Z Test Suite 'AntbywSourceTests' passed at 2026-10-11 12:15:31.368.
+2026-10-11T12:15:40.4981030Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.014 (0.014) seconds
+2026-10-11T12:15:40.4982990Z Test Suite 'AppThemeTests' passed at 2026-10-11 12:15:31.368.
+2026-10-11T12:15:40.4987150Z Test Suite 'AppUpdateCheckerTests' passed at 2026-10-11 12:15:31.368.
+2026-10-11T12:15:40.5001760Z Test Suite 'BaoziSourceTests' passed at 2026-10-11 12:15:31.376.
+2026-10-11T12:15:40.5002070Z 	 Executed 11 tests, with 0 failures (0 unexpected) in 0.007 (0.007) seconds
+2026-10-11T12:15:40.5071660Z Test Suite 'BatchImportPlannerTests' passed at 2026-10-11 12:15:31.884.
+2026-10-11T12:15:40.5072050Z 	 Executed 19 tests, with 0 failures (0 unexpected) in 0.508 (0.508) seconds
+2026-10-11T12:15:40.5095210Z Test Suite 'BatchImportSessionTests' passed at 2026-10-11 12:15:32.653.
+2026-10-11T12:15:40.5095600Z 	 Executed 14 tests, with 0 failures (0 unexpected) in 0.769 (0.769) seconds
+2026-10-11T12:15:40.5104770Z Test Suite 'BatchImportWorkerTests' passed at 2026-10-11 12:15:32.803.
+2026-10-11T12:15:40.5105210Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.149 (0.149) seconds
+2026-10-11T12:15:40.5113660Z Test Suite 'BookshelfGroupStoreTests' passed at 2026-10-11 12:15:32.814.
+2026-10-11T12:15:40.5114060Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.011 (0.011) seconds
+2026-10-11T12:15:40.5123990Z Test Suite 'BookshelfReadingStatusTests' passed at 2026-10-11 12:15:32.815.
+2026-10-11T12:15:40.5124330Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T12:15:40.5129520Z Test Suite 'BuiltinSourceCatalogTests' passed at 2026-10-11 12:15:32.826.
+2026-10-11T12:15:40.5129850Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.011 (0.011) seconds
+2026-10-11T12:15:40.5137400Z Test Suite 'CacheMaintenanceTests' passed at 2026-10-11 12:15:32.831.
+2026-10-11T12:15:40.5137720Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+2026-10-11T12:15:40.5144020Z Test Suite 'ChapterMatchingTests' passed at 2026-10-11 12:15:32.831.
+2026-10-11T12:15:40.5144490Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T12:15:40.5154280Z Test Suite 'ComicDirectoryPreparationTests' passed at 2026-10-11 12:15:32.832.
+2026-10-11T12:15:40.5154640Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T12:15:40.5176590Z Test Suite 'ContentFingerprintTests' passed at 2026-10-11 12:15:33.353.
+2026-10-11T12:15:40.5176920Z 	 Executed 13 tests, with 0 failures (0 unexpected) in 0.521 (0.521) seconds
+2026-10-11T12:15:40.5208930Z Test Suite 'CopyMangaTests' passed at 2026-10-11 12:15:34.225.
+2026-10-11T12:15:40.5209230Z 	 Executed 26 tests, with 0 failures (0 unexpected) in 0.871 (0.872) seconds
+2026-10-11T12:15:40.5233870Z Test Suite 'CuimhSourceTests' passed at 2026-10-11 12:15:34.251.
+2026-10-11T12:15:40.5234180Z 	 Executed 16 tests, with 0 failures (0 unexpected) in 0.025 (0.026) seconds
+2026-10-11T12:15:40.5247650Z Test Suite 'D5d6SourceTests' passed at 2026-10-11 12:15:34.269.
+2026-10-11T12:15:40.5247960Z 	 Executed 10 tests, with 0 failures (0 unexpected) in 0.018 (0.018) seconds
+2026-10-11T12:15:40.5259710Z Test Suite 'DefaultDownloadImageFetcherTests' passed at 2026-10-11 12:15:34.292.
+2026-10-11T12:15:40.5260070Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.023 (0.023) seconds
+2026-10-11T12:15:40.5265670Z Test Suite 'DeferredDeletionTests' passed at 2026-10-11 12:15:34.991.
+2026-10-11T12:15:40.5266000Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.699 (0.699) seconds
+2026-10-11T12:15:40.5271630Z Test Suite 'DingManhuaSourceTests' passed at 2026-10-11 12:15:34.997.
+2026-10-11T12:15:40.5271950Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.006 (0.006) seconds
+2026-10-11T12:15:40.5279260Z Test Suite 'DiscoveryHeaderGestureTests' passed at 2026-10-11 12:15:34.998.
+2026-10-11T12:15:40.5279600Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T12:15:40.5285360Z Test Suite 'DongmanLaSourceTests' passed at 2026-10-11 12:15:35.014.
+2026-10-11T12:15:40.5285680Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.016 (0.016) seconds
+2026-10-11T12:15:40.5301800Z Test Suite 'DownloadCoordinatorTests' passed at 2026-10-11 12:15:35.017.
+2026-10-11T12:15:40.5302140Z 	 Executed 11 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+2026-10-11T12:15:40.5316160Z Test Suite 'DownloadDeletionTests' passed at 2026-10-11 12:15:35.676.
+2026-10-11T12:15:40.5316480Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.658 (0.658) seconds
+2026-10-11T12:15:40.5336840Z Test Suite 'DownloadFileCoordinationTests' passed at 2026-10-11 12:15:37.404.
+2026-10-11T12:15:40.5337190Z 	 Executed 10 tests, with 0 failures (0 unexpected) in 1.728 (1.728) seconds
+2026-10-11T12:15:40.5341820Z Test Suite 'DownloadIdentityTests' passed at 2026-10-11 12:15:37.405.
+2026-10-11T12:15:40.5342140Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T12:15:40.5355820Z Test Suite 'DownloadLocationTests' passed at 2026-10-11 12:15:38.200.
+2026-10-11T12:15:40.5356210Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.795 (0.795) seconds
+2026-10-11T12:15:40.5358990Z Test Suite 'DownloadOwnedDirectoryTests' passed at 2026-10-11 12:15:38.203.
+2026-10-11T12:15:40.5364420Z Test Suite 'DownloadRuntimeTests' passed at 2026-10-11 12:15:38.986.
+2026-10-11T12:15:40.5364740Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.783 (0.783) seconds
+2026-10-11T12:15:40.5372870Z Test Suite 'DownloadStoreTests' passed at 2026-10-11 12:15:38.995.
+2026-10-11T12:15:40.5373170Z 	 Executed 7 tests, with 0 failures (0 unexpected) in 0.009 (0.010) seconds
+2026-10-11T12:16:14.4859670Z Test Suite 'EpubParserTests' passed at 2026-10-11 12:15:41.039.
+2026-10-11T12:16:14.4860000Z 	 Executed 26 tests, with 0 failures (0 unexpected) in 2.042 (2.043) seconds
+2026-10-11T12:16:14.4887510Z Test Suite 'EpubReaderResourceTests' passed at 2026-10-11 12:15:41.040.
+2026-10-11T12:16:14.4887880Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+2026-10-11T12:16:14.4903930Z Test Suite 'EpubTextSessionTests' passed at 2026-10-11 12:15:41.057.
+2026-10-11T12:16:14.4904300Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.016 (0.016) seconds
+2026-10-11T12:16:14.4909430Z Test Suite 'ErrorLogStoreTests' passed at 2026-10-11 12:15:41.066.
+2026-10-11T12:16:14.4909870Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.009 (0.009) seconds
+2026-10-11T12:16:14.4917440Z Test Suite 'FavoriteRevisionTests' passed at 2026-10-11 12:15:41.070.
+2026-10-11T12:16:14.4917770Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+2026-10-11T12:16:14.4920920Z Test Suite 'FavoriteUpdateCheckerTests' passed at 2026-10-11 12:15:41.074.
+2026-10-11T12:16:14.4921260Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+2026-10-11T12:16:14.4936630Z Test Suite 'FileDownloadWorkerTests' passed at 2026-10-11 12:15:41.109.
+2026-10-11T12:16:14.4939970Z 	 Executed 11 tests, with 0 failures (0 unexpected) in 0.035 (0.035) seconds
+2026-10-11T12:16:14.4949650Z Test Suite 'FiveUmSourceTests' passed at 2026-10-11 12:15:41.117.
+2026-10-11T12:16:14.4950080Z 	 Executed 7 tests, with 0 failures (0 unexpected) in 0.008 (0.008) seconds
+2026-10-11T12:16:14.4985990Z Test Suite 'GmhSourceTests' passed at 2026-10-11 12:15:41.487.
+2026-10-11T12:16:14.4986290Z 	 Executed 30 tests, with 0 failures (0 unexpected) in 0.369 (0.370) seconds
+2026-10-11T12:16:14.4995710Z Test Suite 'Hanman18SourceTests' passed at 2026-10-11 12:15:41.533.
+2026-10-11T12:16:14.4996020Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.046 (0.046) seconds
+2026-10-11T12:16:14.5008270Z Test Suite 'HiperdexSourceTests' passed at 2026-10-11 12:15:41.547.
+2026-10-11T12:16:14.5008660Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.013 (0.013) seconds
+2026-10-11T12:16:14.5012310Z Test Suite 'IOSUpdatePolicyTests' passed at 2026-10-11 12:15:41.547.
+2026-10-11T12:16:14.5012630Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T12:16:14.5017730Z Test Suite 'ImageEnhancementPolicyTests' passed at 2026-10-11 12:15:41.547.
+2026-10-11T12:16:14.5018080Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T12:16:14.5020310Z Test Suite 'JmImageRestoreTests' passed at 2026-10-11 12:15:41.548.
+2026-10-11T12:16:14.5029370Z Test Suite 'JmImageTransformTests' passed at 2026-10-11 12:15:41.551.
+2026-10-11T12:16:14.5029710Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+2026-10-11T12:16:14.5040090Z Test Suite 'JmSourceTests' passed at 2026-10-11 12:15:41.558.
+2026-10-11T12:16:14.5040390Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.007 (0.007) seconds
+2026-10-11T12:16:14.5067480Z Test Suite 'KindleFormatTests' passed at 2026-10-11 12:15:44.668.
+2026-10-11T12:16:14.5067790Z 	 Executed 21 tests, with 0 failures (0 unexpected) in 3.109 (3.110) seconds
+2026-10-11T12:16:14.5104140Z Test Suite 'KindlePublicationTests' passed at 2026-10-11 12:15:48.936.
+2026-10-11T12:16:14.5104520Z 	 Executed 25 tests, with 0 failures (0 unexpected) in 4.267 (4.268) seconds
+2026-10-11T12:16:14.5115090Z Test Suite 'LibraryStoreTests' passed at 2026-10-11 12:15:48.946.
+2026-10-11T12:16:14.5115410Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.010 (0.010) seconds
+2026-10-11T12:16:14.5129650Z Test Suite 'LiumanhuaSourceTests' passed at 2026-10-11 12:15:48.957.
+2026-10-11T12:16:14.5130050Z 	 Executed 10 tests, with 0 failures (0 unexpected) in 0.011 (0.011) seconds
+2026-10-11T12:16:14.5157890Z Test Suite 'LocalArchiveTests' passed at 2026-10-11 12:15:55.868.
+2026-10-11T12:16:14.5158200Z 	 Executed 17 tests, with 0 failures (0 unexpected) in 6.910 (6.910) seconds
+2026-10-11T12:16:14.5169310Z Test Suite 'LocalCatalogTests' passed at 2026-10-11 12:15:55.877.
+2026-10-11T12:16:14.5169640Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.009 (0.010) seconds
+2026-10-11T12:16:14.5192480Z Test Suite 'LocalEpubLibraryTests' passed at 2026-10-11 12:16:02.299.
+2026-10-11T12:16:14.5192880Z 	 Executed 16 tests, with 0 failures (0 unexpected) in 6.421 (6.421) seconds
+2026-10-11T12:16:14.5204290Z Test Suite 'LocalFolderSyncTests' passed at 2026-10-11 12:16:03.028.
+2026-10-11T12:16:14.5204620Z 	 Executed 7 tests, with 0 failures (0 unexpected) in 0.729 (0.729) seconds
+2026-10-11T12:16:14.5214900Z Test Suite 'LocalFolderTests' passed at 2026-10-11 12:16:14.382.
+2026-10-11T12:16:14.5215220Z 	 Executed 7 tests, with 0 failures (0 unexpected) in 11.353 (11.353) seconds
+2026-10-11T12:16:14.5218220Z Test Suite 'LocalImageProbeTests' passed at 2026-10-11 12:16:14.385.
+2026-10-11T12:16:14.5218540Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+2026-10-11T12:16:14.5234320Z Test Suite 'LocalImportFingerprintTests' passed at 2026-10-11 12:16:14.414.
+2026-10-11T12:16:14.5234690Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.029 (0.029) seconds
+2026-10-11T12:16:43.1210750Z Test Suite 'LocalImportPreparationTests' passed at 2026-10-11 12:16:14.538.
+2026-10-11T12:16:43.1211070Z 	 Executed 21 tests, with 0 failures (0 unexpected) in 0.123 (0.124) seconds
+2026-10-11T12:16:43.1245820Z Test Suite 'LocalKindleLibraryTests' passed at 2026-10-11 12:16:18.700.
+2026-10-11T12:16:43.1246160Z 	 Executed 14 tests, with 0 failures (0 unexpected) in 4.161 (4.162) seconds
+2026-10-11T12:16:43.1254770Z Test Suite 'LocalLibraryTests' passed at 2026-10-11 12:16:18.995.
+2026-10-11T12:16:43.1255080Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.295 (0.295) seconds
+2026-10-11T12:16:43.1266990Z Test Suite 'LocalPdfLibraryTests' passed at 2026-10-11 12:16:19.790.
+2026-10-11T12:16:43.1267300Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.795 (0.795) seconds
+2026-10-11T12:16:43.1279970Z Test Suite 'LocalReadingRoutingTests' passed at 2026-10-11 12:16:19.841.
+2026-10-11T12:16:43.1280310Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.051 (0.051) seconds
+2026-10-11T12:16:43.1299870Z Test Suite 'LocalSeriesLifecycleTests' passed at 2026-10-11 12:16:19.887.
+2026-10-11T12:16:43.1300210Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.046 (0.046) seconds
+2026-10-11T12:16:43.1303870Z Test Suite 'LocalTestHTTPServerTests' passed at 2026-10-11 12:16:19.952.
+2026-10-11T12:16:43.1304290Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.065 (0.065) seconds
+2026-10-11T12:16:43.1320510Z Test Suite 'ManbenSourceTests' passed at 2026-10-11 12:16:19.974.
+2026-10-11T12:16:43.1320830Z 	 Executed 11 tests, with 0 failures (0 unexpected) in 0.021 (0.021) seconds
+2026-10-11T12:16:43.1356980Z Test Suite 'ManhuaguiTests' passed at 2026-10-11 12:16:40.805.
+2026-10-11T12:16:43.1357280Z 	 Executed 25 tests, with 0 failures (0 unexpected) in 20.830 (20.831) seconds
+2026-10-11T12:16:43.1362800Z Test Suite 'ManwaImageDecoderTests' passed at 2026-10-11 12:16:40.806.
+2026-10-11T12:16:43.1363180Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+2026-10-11T12:16:43.1380960Z Test Suite 'ManwaSourceTests' passed at 2026-10-11 12:16:40.842.
+2026-10-11T12:16:43.1381270Z 	 Executed 13 tests, with 0 failures (0 unexpected) in 0.036 (0.037) seconds
+2026-10-11T12:16:43.1395740Z Test Suite 'Mh160SourceTests' passed at 2026-10-11 12:16:40.853.
+2026-10-11T12:16:43.1396050Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.010 (0.011) seconds
+2026-10-11T12:16:43.1398300Z Test Suite 'Mh18BrowserContentRulesTests' passed at 2026-10-11 12:16:40.895.
+2026-10-11T12:16:43.1403950Z Test Suite 'Mh18BrowserTrustTests' passed at 2026-10-11 12:16:40.896.
+2026-10-11T12:16:43.1404270Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T12:16:43.1410850Z Test Suite 'Mh18CookieSynchronizerTests' passed at 2026-10-11 12:16:42.102.
+2026-10-11T12:16:43.1411270Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 1.206 (1.206) seconds
+2026-10-11T12:16:43.1435260Z Test Suite 'Mh18SourceTests' passed at 2026-10-11 12:16:42.186.
+2026-10-11T12:16:43.1435570Z 	 Executed 17 tests, with 0 failures (0 unexpected) in 0.084 (0.084) seconds
+2026-10-11T12:16:43.1443340Z Test Suite 'Mh18VerificationAttemptTests' passed at 2026-10-11 12:16:42.187.
+2026-10-11T12:16:43.1443730Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T12:16:43.1467930Z Test Suite 'Mh18VerificationRulesTests' passed at 2026-10-11 12:16:42.189.
+2026-10-11T12:16:43.1468270Z 	 Executed 14 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+2026-10-11T12:16:43.1479400Z Test Suite 'MkzhanSourceTests' passed at 2026-10-11 12:16:42.199.
+2026-10-11T12:16:43.1479740Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.009 (0.009) seconds
+2026-10-11T12:16:43.1484820Z Test Suite 'NaturalPathOrderTests' passed at 2026-10-11 12:16:42.199.
+2026-10-11T12:16:43.1485150Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T12:16:43.1497930Z Test Suite 'NewPublicSourcesTests' passed at 2026-10-11 12:16:42.350.
+2026-10-11T12:16:43.1498250Z 	 Executed 10 tests, with 0 failures (0 unexpected) in 0.150 (0.150) seconds
+2026-10-11T12:16:43.1503550Z Test Suite 'PdfRendererTests' passed at 2026-10-11 12:16:42.453.
+2026-10-11T12:16:43.1503860Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.103 (0.103) seconds
+2026-10-11T12:16:43.1512750Z Test Suite 'PreferencesTests' passed at 2026-10-11 12:16:42.463.
+2026-10-11T12:16:43.1513060Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.010 (0.010) seconds
+2026-10-11T12:16:43.1562580Z Test Suite 'PublicComicSourceTests' passed at 2026-10-11 12:16:42.510.
+2026-10-11T12:16:43.1562920Z 	 Executed 34 tests, with 0 failures (0 unexpected) in 0.046 (0.047) seconds
+2026-10-11T12:16:43.1592740Z Test Suite 'QuickPublicationInfoTests' passed at 2026-10-11 12:16:43.119.
+2026-10-11T12:16:43.1593080Z 	 Executed 18 tests, with 0 failures (0 unexpected) in 0.608 (0.609) seconds
+2026-10-11T12:16:43.1598470Z Test Suite 'ReaderLoadStateTests' passed at 2026-10-11 12:16:43.119.
+2026-10-11T12:16:43.1598780Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T12:16:43.2683280Z Test Suite 'ReaderSeekSessionTests' passed at 2026-10-11 12:16:43.120.
+2026-10-11T12:16:43.2683830Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T12:16:43.2697440Z Test Suite 'ReaderSessionTests' passed at 2026-10-11 12:16:43.120.
+2026-10-11T12:16:43.2697790Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T12:16:43.2717280Z Test Suite 'ReadingHabitTrackerTests' passed at 2026-10-11 12:16:43.125.
+2026-10-11T12:16:43.2717630Z 	 Executed 11 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+2026-10-11T12:16:43.2727290Z Test Suite 'ReadingRulesTests' passed at 2026-10-11 12:16:43.126.
+2026-10-11T12:16:43.2727620Z 	 Executed 7 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T12:16:43.2730250Z Test Suite 'RetiredComicSourceTests' passed at 2026-10-11 12:16:43.126.
+2026-10-11T12:16:43.2745620Z Test Suite 'SearchRulesTests' passed at 2026-10-11 12:16:43.128.
+2026-10-11T12:16:43.2746020Z 	 Executed 10 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+2026-10-11T12:16:43.2755550Z Test Suite 'SourceAESTests' passed at 2026-10-11 12:16:43.129.
+2026-10-11T12:16:43.2755870Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T12:16:43.2762260Z Test Suite 'SourceFilterSelectionTests' passed at 2026-10-11 12:16:43.129.
+2026-10-11T12:16:43.2762660Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T12:16:43.2772030Z Test Suite 'SourceGroupStoreTests' passed at 2026-10-11 12:16:43.139.
+2026-10-11T12:16:43.2772420Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.009 (0.009) seconds
+2026-10-11T12:16:43.2781420Z Test Suite 'SourceImportContractTests' passed at 2026-10-11 12:16:43.144.
+2026-10-11T12:16:43.2781760Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+2026-10-11T12:16:43.2791350Z Test Suite 'SourcePreferencesTests' passed at 2026-10-11 12:16:43.159.
+2026-10-11T12:16:43.2791690Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.015 (0.015) seconds
+2026-10-11T12:16:43.2804190Z Test Suite 'SourceSearchTrimTests' passed at 2026-10-11 12:16:43.164.
+2026-10-11T12:16:43.2804520Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+2026-10-11T12:16:43.2811840Z Test Suite 'StorageCalculatorTests' passed at 2026-10-11 12:16:43.166.
+2026-10-11T12:16:43.2812160Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+2026-10-11T12:16:43.2825200Z Test Suite 'TextReadingTests' passed at 2026-10-11 12:16:43.180.
+2026-10-11T12:16:43.2825570Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.014 (0.015) seconds
+2026-10-11T12:16:43.2830630Z Test Suite 'UsageStatsClientTests' passed at 2026-10-11 12:16:43.186.
+2026-10-11T12:16:43.2830940Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+2026-10-11T12:16:43.2841160Z Test Suite 'UsageStatsReportingTests' passed at 2026-10-11 12:16:43.205.
+2026-10-11T12:16:43.2841530Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.019 (0.019) seconds
+2026-10-11T12:16:43.2847250Z Test Suite 'WhiteMarginTests' passed at 2026-10-11 12:16:43.251.
+2026-10-11T12:16:43.2847550Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.046 (0.046) seconds
+2026-10-11T12:16:43.2854350Z Test Suite 'XinmanhuaSourceTests' passed at 2026-10-11 12:16:43.255.
+2026-10-11T12:16:43.2854700Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+2026-10-11T12:16:43.2855050Z Test Suite 'ComicCorePackageTests.xctest' passed at 2026-10-11 12:16:43.255.
+2026-10-11T12:16:43.2858400Z 	 Executed 847 tests, with 0 failures (0 unexpected) in 71.869 (71.901) seconds
+2026-10-11T12:16:43.2858700Z Test Suite 'All tests' passed at 2026-10-11 12:16:43.255.
+2026-10-11T12:16:43.2858980Z 	 Executed 847 tests, with 0 failures (0 unexpected) in 71.869 (71.902) seconds
+2026-10-11T12:16:43.2861670Z ==> Running tests on destination: platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B
+2026-10-11T12:17:19.7428490Z Test Suite 'BuiltinSourceRegistrationTests' passed at 2026-10-11 12:17:19.682.
+2026-10-11T12:17:19.7789360Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.024 (0.025) seconds
+2026-10-11T12:17:19.9388910Z Test Suite 'CoverFallbackTests' passed at 2026-10-11 12:17:19.924.
+2026-10-11T12:17:19.9489340Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.241 (0.242) seconds
+2026-10-11T12:17:20.0975240Z Test Suite 'DetailFeedbackStateTests' passed at 2026-10-11 12:17:19.927.
+2026-10-11T12:17:20.1082680Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+2026-10-11T12:17:20.1490790Z Test Suite 'OfflineDownloadImageTests' passed at 2026-10-11 12:17:20.037.
+2026-10-11T12:17:22.8711300Z Test Suite 'ReaderEnhancementEngineTests' passed at 2026-10-11 12:17:22.775.
+2026-10-11T12:17:22.8715930Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 2.737 (2.739) seconds
+2026-10-11T12:17:22.8722500Z Test Suite 'TestHostIsolationTests' passed at 2026-10-11 12:17:22.776.
+2026-10-11T12:17:22.8723270Z Test Suite 'XXComicTests.xctest' passed at 2026-10-11 12:17:22.776.
+2026-10-11T12:17:22.8723640Z 	 Executed 19 tests, with 0 failures (0 unexpected) in 3.115 (3.119) seconds
+2026-10-11T12:17:22.8723950Z Test Suite 'All tests' passed at 2026-10-11 12:17:22.776.
+2026-10-11T12:17:22.8724300Z 	 Executed 19 tests, with 0 failures (0 unexpected) in 3.115 (3.120) seconds
+2026-10-11T12:17:30.3513850Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/AppNavigationTests.swift:9: error: -[XXComicUITests.AppNavigationTests testNavigationAndReaderPreferencesPersist] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:17:30.6947200Z Test Suite 'AppNavigationTests' failed at 2026-10-11 12:17:30.684.
+2026-10-11T12:17:43.7222150Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BookshelfParityUITests.swift:9: error: -[XXComicUITests.BookshelfParityUITests testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList] : XCTAssertTrue failed
+2026-10-11T12:17:45.8278120Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BookshelfParityUITests.swift:9: error: -[XXComicUITests.BookshelfParityUITests testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:17:59.3575670Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BookshelfParityUITests.swift:9: error: -[XXComicUITests.BookshelfParityUITests testSwitchingGridToListKeepsVisibleComic] : XCTAssertTrue failed
+2026-10-11T12:18:01.4994140Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BookshelfParityUITests.swift:9: error: -[XXComicUITests.BookshelfParityUITests testSwitchingGridToListKeepsVisibleComic] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:18:01.8152220Z Test Suite 'BookshelfParityUITests' failed at 2026-10-11 12:18:01.801.
+2026-10-11T12:18:01.8153930Z 	 Executed 2 tests, with 4 failures (0 unexpected) in 31.116 (31.117) seconds
+2026-10-11T12:18:08.0017120Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:95: error: -[XXComicUITests.CurrentParityUITests testBookshelfDownloadLoadsDirectoryAndReturnsToBookshelf] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:18:14.4210310Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:189: error: -[XXComicUITests.CurrentParityUITests testCancelledDownloadAfterPendingReadCanOpenReaderAgain] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:18:20.7593770Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:119: error: -[XXComicUITests.CurrentParityUITests testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:18:33.7451460Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:35: error: -[XXComicUITests.CurrentParityUITests testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels] : Asynchronous wait failed: Exceeded timeout of 5 seconds, with unfulfilled expectations: "Expect predicate `exists == 0` for object "download.chapters" Table".
+2026-10-11T12:18:37.1052740Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:37: error: -[XXComicUITests.CurrentParityUITests testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels] : Failed to failed to scroll to visible (by AX action) Button, {{0.0, 53.7}, {65.0, 44.0}}, error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 15787, elementOrHash.elementID: 105553151287344.65. (Underlying Error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 15787, elementOrHash.elementID: 105553151287344.65)
+2026-10-11T12:18:43.4470490Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:82: error: -[XXComicUITests.CurrentParityUITests testDetailDownloadLoadsOnDemandDirectoryAndCloses] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:19:03.2717420Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:109: error: -[XXComicUITests.CurrentParityUITests testEmptyDirectoryOffersRetryInsteadOfEmptySelection] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:19:45.4430420Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:160: error: -[XXComicUITests.CurrentParityUITests testStartingDownloadCancelsPendingReadAndReturnsToDetail] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:19:51.7888280Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:177: error: -[XXComicUITests.CurrentParityUITests testStartingReadCancelsPendingDownload] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:19:52.0872540Z Test Suite 'CurrentParityUITests' failed at 2026-10-11 12:19:52.082.
+2026-10-11T12:19:52.0880380Z 	 Executed 12 tests, with 9 failures (0 unexpected) in 110.272 (110.281) seconds
+2026-10-11T12:20:15.5514890Z Test Suite 'DownloadLocationParityUITests' passed at 2026-10-11 12:20:15.550.
+2026-10-11T12:20:15.5527670Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 23.467 (23.468) seconds
+2026-10-11T12:20:38.8171320Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testAllSpinesAndRealSecondChapterResumeRoute] : XCTAssertTrue failed
+2026-10-11T12:20:40.9198660Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testAllSpinesAndRealSecondChapterResumeRoute] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:21:04.6070170Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker] : XCTAssertTrue failed
+2026-10-11T12:21:06.6771030Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:21:30.2859150Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce] : XCTAssertTrue failed
+2026-10-11T12:21:32.3673290Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:21:55.6678350Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleComicRealImportUsesExistingImageReaderAndResume] : XCTAssertTrue failed
+2026-10-11T12:21:57.7954450Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleComicRealImportUsesExistingImageReaderAndResume] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:22:21.0419980Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleMixedRealImportRetainsTextAndImageInExistingTextReader] : XCTAssertTrue failed
+2026-10-11T12:22:23.1623220Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleMixedRealImportRetainsTextAndImageInExistingTextReader] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:22:46.4451060Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleNovelRealImportTextReaderAndSecondChapterResume] : XCTAssertTrue failed
+2026-10-11T12:22:48.5246720Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleNovelRealImportTextReaderAndSecondChapterResume] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:23:11.9374520Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks] : XCTAssertTrue failed
+2026-10-11T12:23:14.0675780Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:23:37.6373930Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testLongBodyWithoutIDsResumesByPercentage] : XCTAssertTrue failed
+2026-10-11T12:23:39.7422110Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testLongBodyWithoutIDsResumesByPercentage] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:24:03.3425460Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testMixedSpineRetainsDirectImageAndPureImageUsesComicReader] : XCTAssertTrue failed
+2026-10-11T12:24:05.4642310Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testMixedSpineRetainsDirectImageAndPureImageUsesComicReader] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:24:28.9181240Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks] : XCTAssertTrue failed
+2026-10-11T12:24:31.0466410Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:24:54.5886590Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testPendingScrollRestoreCannotOverwriteNextDocumentPosition] : XCTAssertTrue failed
+2026-10-11T12:24:56.7060500Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testPendingScrollRestoreCannotOverwriteNextDocumentPosition] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:25:20.3560730Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testTextSettingsPersistAfterRelaunch] : XCTAssertTrue failed
+2026-10-11T12:25:22.4409710Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testTextSettingsPersistAfterRelaunch] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:25:46.0177450Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testWebKitBlocksBookScriptsAndLoadsSameBookCSS] : XCTAssertTrue failed
+2026-10-11T12:25:48.0851160Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testWebKitBlocksBookScriptsAndLoadsSameBookCSS] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:25:48.4002930Z Test Suite 'EpubReadingUITests' failed at 2026-10-11 12:25:48.397.
+2026-10-11T12:25:48.4007740Z 	 Executed 13 tests, with 26 failures (0 unexpected) in 332.839 (332.846) seconds
+2026-10-11T12:26:04.1974770Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/LocalDeletionParityUITests.swift:42: error: -[XXComicUITests.LocalDeletionParityUITests testWholeBookDeletionWaitsForUndoWindowAndShowsActualCompletion] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:26:18.7774440Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/LocalDeletionParityUITests.swift:25: error: -[XXComicUITests.LocalDeletionParityUITests testWholeBookUndoRestoresSelectionPageAndRealImportedCopy] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:26:19.0830320Z Test Suite 'LocalDeletionParityUITests' failed at 2026-10-11 12:26:19.077.
+2026-10-11T12:26:19.0835880Z 	 Executed 2 tests, with 2 failures (0 unexpected) in 30.679 (30.680) seconds
+2026-10-11T12:26:34.7210700Z Test Suite 'Mh18VerificationTests' passed at 2026-10-11 12:26:34.715.
+2026-10-11T12:26:47.9848650Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderEnhancementUITests.swift:11: error: -[XXComicUITests.ReaderEnhancementUITests testReaderAIBadgeAndLongPressOriginalComparison] : XCTAssertTrue failed
+2026-10-11T12:26:50.1160750Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderEnhancementUITests.swift:12: error: -[XXComicUITests.ReaderEnhancementUITests testReaderAIBadgeAndLongPressOriginalComparison] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:26:50.4579020Z Test Suite 'ReaderEnhancementUITests' failed at 2026-10-11 12:26:50.444.
+2026-10-11T12:27:13.1907530Z Test Suite 'ReaderToolbarParityUITests' passed at 2026-10-11 12:27:13.190.
+2026-10-11T12:27:13.1913810Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 22.744 (22.745) seconds
+2026-10-11T12:27:29.8568820Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SettingsParityUITests.swift:47: error: -[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery] : XCTAssertTrue failed
+2026-10-11T12:27:34.6452670Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SettingsParityUITests.swift:52: error: -[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:27:56.0314650Z Test Suite 'SettingsParityUITests' failed at 2026-10-11 12:27:56.027.
+2026-10-11T12:27:56.0320500Z 	 Executed 3 tests, with 2 failures (0 unexpected) in 42.834 (42.837) seconds
+2026-10-11T12:28:10.8916820Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SourceDrawerTests.swift:20: error: -[XXComicUITests.SourceDrawerTests testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs] : XCTAssertTrue failed
+2026-10-11T12:28:20.4779310Z Test Suite 'SourceDrawerTests' failed at 2026-10-11 12:28:20.473.
+2026-10-11T12:28:48.2304230Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:20: error: -[XXComicUITests.VisualMatrixUITests testVisualMatrixLandscapeDark] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:28:55.1182140Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:20: error: -[XXComicUITests.VisualMatrixUITests testVisualMatrixLandscapeLight] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:29:02.2648530Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:20: error: -[XXComicUITests.VisualMatrixUITests testVisualMatrixPortraitDark] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:29:09.1087250Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:20: error: -[XXComicUITests.VisualMatrixUITests testVisualMatrixPortraitLight] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:29:09.4304570Z Test Suite 'VisualMatrixUITests' failed at 2026-10-11 12:29:09.413.
+2026-10-11T12:29:09.4305620Z 	 Executed 8 tests, with 4 failures (0 unexpected) in 48.934 (48.940) seconds
+2026-10-11T12:29:09.4306510Z Test Suite 'XXComicUITests.xctest' failed at 2026-10-11 12:29:09.415.
+2026-10-11T12:29:09.4307420Z 	 Executed 49 tests, with 51 failures (0 unexpected) in 703.780 (703.818) seconds
+2026-10-11T12:29:09.4308210Z Test Suite 'All tests' failed at 2026-10-11 12:29:09.416.
+2026-10-11T12:29:09.4308970Z 	 Executed 49 tests, with 51 failures (0 unexpected) in 703.780 (703.820) seconds
+2026-10-11T12:29:19.9285210Z ** TEST FAILED **
+2026-10-11T12:29:25.6479300Z ==> Running tests on destination: platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76
+2026-10-11T12:29:57.7744660Z Test Suite 'BuiltinSourceRegistrationTests' passed at 2026-10-11 12:29:57.719.
+2026-10-11T12:29:57.7847480Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.020 (0.020) seconds
+2026-10-11T12:29:57.9798050Z Test Suite 'CoverFallbackTests' passed at 2026-10-11 12:29:57.963.
+2026-10-11T12:29:57.9899410Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.243 (0.243) seconds
+2026-10-11T12:29:58.0056550Z Test Suite 'DetailFeedbackStateTests' passed at 2026-10-11 12:29:57.966.
+2026-10-11T12:29:58.0057220Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+2026-10-11T12:29:58.0767860Z Test Suite 'OfflineDownloadImageTests' passed at 2026-10-11 12:29:58.075.
+2026-10-11T12:30:00.6291660Z Test Suite 'ReaderEnhancementEngineTests' passed at 2026-10-11 12:30:00.618.
+2026-10-11T12:30:00.6393700Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 2.541 (2.543) seconds
+2026-10-11T12:30:00.6426340Z Test Suite 'TestHostIsolationTests' passed at 2026-10-11 12:30:00.619.
+2026-10-11T12:30:00.6429390Z Test Suite 'XXComicTests.xctest' passed at 2026-10-11 12:30:00.619.
+2026-10-11T12:30:00.6429730Z 	 Executed 19 tests, with 0 failures (0 unexpected) in 2.915 (2.920) seconds
+2026-10-11T12:30:00.6430120Z Test Suite 'All tests' passed at 2026-10-11 12:30:00.619.
+2026-10-11T12:30:00.6435050Z 	 Executed 19 tests, with 0 failures (0 unexpected) in 2.915 (2.921) seconds
+2026-10-11T12:30:07.6689240Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/AppNavigationTests.swift:9: error: -[XXComicUITests.AppNavigationTests testNavigationAndReaderPreferencesPersist] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:30:07.8916140Z Test Suite 'AppNavigationTests' failed at 2026-10-11 12:30:07.890.
+2026-10-11T12:30:21.3339340Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BookshelfParityUITests.swift:9: error: -[XXComicUITests.BookshelfParityUITests testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList] : XCTAssertTrue failed
+2026-10-11T12:30:23.4716940Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BookshelfParityUITests.swift:9: error: -[XXComicUITests.BookshelfParityUITests testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:30:37.9842680Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BookshelfParityUITests.swift:9: error: -[XXComicUITests.BookshelfParityUITests testSwitchingGridToListKeepsVisibleComic] : XCTAssertTrue failed
+2026-10-11T12:30:40.3387800Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BookshelfParityUITests.swift:9: error: -[XXComicUITests.BookshelfParityUITests testSwitchingGridToListKeepsVisibleComic] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:30:40.6799960Z Test Suite 'BookshelfParityUITests' failed at 2026-10-11 12:30:40.672.
+2026-10-11T12:30:40.6802620Z 	 Executed 2 tests, with 4 failures (0 unexpected) in 32.781 (32.782) seconds
+2026-10-11T12:30:47.0491250Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:95: error: -[XXComicUITests.CurrentParityUITests testBookshelfDownloadLoadsDirectoryAndReturnsToBookshelf] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:30:53.5993190Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:189: error: -[XXComicUITests.CurrentParityUITests testCancelledDownloadAfterPendingReadCanOpenReaderAgain] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:31:00.2005690Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:119: error: -[XXComicUITests.CurrentParityUITests testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:31:13.4218620Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:35: error: -[XXComicUITests.CurrentParityUITests testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels] : Asynchronous wait failed: Exceeded timeout of 5 seconds, with unfulfilled expectations: "Expect predicate `exists == 0` for object "download.chapters" Table".
+2026-10-11T12:31:16.7806940Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:37: error: -[XXComicUITests.CurrentParityUITests testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels] : Failed to failed to scroll to visible (by AX action) Button, {{15.2, 57.7}, {67.0, 42.4}}, error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 68138, elementOrHash.elementID: 105553151249296.66. (Underlying Error: Error kAXErrorCannotComplete performing AXAction kAXScrollToVisibleAction on element AX element pid: 68138, elementOrHash.elementID: 105553151249296.66)
+2026-10-11T12:31:23.4125280Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:82: error: -[XXComicUITests.CurrentParityUITests testDetailDownloadLoadsOnDemandDirectoryAndCloses] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:31:41.7610970Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:109: error: -[XXComicUITests.CurrentParityUITests testEmptyDirectoryOffersRetryInsteadOfEmptySelection] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:32:25.9986990Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:160: error: -[XXComicUITests.CurrentParityUITests testStartingDownloadCancelsPendingReadAndReturnsToDetail] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:32:32.4703720Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/CurrentParityUITests.swift:177: error: -[XXComicUITests.CurrentParityUITests testStartingReadCancelsPendingDownload] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:32:32.8360710Z Test Suite 'CurrentParityUITests' failed at 2026-10-11 12:32:32.827.
+2026-10-11T12:32:32.8364120Z 	 Executed 12 tests, with 9 failures (0 unexpected) in 112.148 (112.155) seconds
+2026-10-11T12:32:56.6373020Z Test Suite 'DownloadLocationParityUITests' passed at 2026-10-11 12:32:56.629.
+2026-10-11T12:32:56.6375660Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 23.799 (23.801) seconds
+2026-10-11T12:33:20.0219720Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testAllSpinesAndRealSecondChapterResumeRoute] : XCTAssertTrue failed
+2026-10-11T12:33:22.1304860Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testAllSpinesAndRealSecondChapterResumeRoute] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:33:46.1472740Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker] : XCTAssertTrue failed
+2026-10-11T12:33:48.2657750Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:34:12.1103440Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce] : XCTAssertTrue failed
+2026-10-11T12:34:14.1859420Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:34:37.7536090Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleComicRealImportUsesExistingImageReaderAndResume] : XCTAssertTrue failed
+2026-10-11T12:34:39.8365800Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleComicRealImportUsesExistingImageReaderAndResume] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:35:03.4434510Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleMixedRealImportRetainsTextAndImageInExistingTextReader] : XCTAssertTrue failed
+2026-10-11T12:35:05.5553220Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleMixedRealImportRetainsTextAndImageInExistingTextReader] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:35:29.0349680Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleNovelRealImportTextReaderAndSecondChapterResume] : XCTAssertTrue failed
+2026-10-11T12:35:31.1097030Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleNovelRealImportTextReaderAndSecondChapterResume] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:35:54.4948710Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks] : XCTAssertTrue failed
+2026-10-11T12:35:56.6060190Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:184: error: -[XXComicUITests.EpubReadingUITests testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:36:20.4066960Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testLongBodyWithoutIDsResumesByPercentage] : XCTAssertTrue failed
+2026-10-11T12:36:22.4974740Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testLongBodyWithoutIDsResumesByPercentage] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:36:46.3608570Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testMixedSpineRetainsDirectImageAndPureImageUsesComicReader] : XCTAssertTrue failed
+2026-10-11T12:36:48.4569730Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testMixedSpineRetainsDirectImageAndPureImageUsesComicReader] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:37:12.3096390Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks] : XCTAssertTrue failed
+2026-10-11T12:37:14.4093660Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:37:38.2327540Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testPendingScrollRestoreCannotOverwriteNextDocumentPosition] : XCTAssertTrue failed
+2026-10-11T12:37:40.3193160Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testPendingScrollRestoreCannotOverwriteNextDocumentPosition] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:38:04.2252890Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testTextSettingsPersistAfterRelaunch] : XCTAssertTrue failed
+2026-10-11T12:38:06.3288980Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testTextSettingsPersistAfterRelaunch] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:38:30.0281670Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testWebKitBlocksBookScriptsAndLoadsSameBookCSS] : XCTAssertTrue failed
+2026-10-11T12:38:32.1422350Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/EpubReadingUITests.swift:11: error: -[XXComicUITests.EpubReadingUITests testWebKitBlocksBookScriptsAndLoadsSameBookCSS] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:38:32.5090300Z Test Suite 'EpubReadingUITests' failed at 2026-10-11 12:38:32.508.
+2026-10-11T12:38:32.5091290Z 	 Executed 13 tests, with 26 failures (0 unexpected) in 335.869 (335.877) seconds
+2026-10-11T12:38:47.6706880Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/LocalDeletionParityUITests.swift:42: error: -[XXComicUITests.LocalDeletionParityUITests testWholeBookDeletionWaitsForUndoWindowAndShowsActualCompletion] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:39:01.7720290Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/LocalDeletionParityUITests.swift:25: error: -[XXComicUITests.LocalDeletionParityUITests testWholeBookUndoRestoresSelectionPageAndRealImportedCopy] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:39:02.1103580Z Test Suite 'LocalDeletionParityUITests' failed at 2026-10-11 12:39:02.102.
+2026-10-11T12:39:02.1109640Z 	 Executed 2 tests, with 2 failures (0 unexpected) in 29.593 (29.594) seconds
+2026-10-11T12:39:18.5979360Z Test Suite 'Mh18VerificationTests' passed at 2026-10-11 12:39:18.592.
+2026-10-11T12:39:32.0852140Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderEnhancementUITests.swift:11: error: -[XXComicUITests.ReaderEnhancementUITests testReaderAIBadgeAndLongPressOriginalComparison] : XCTAssertTrue failed
+2026-10-11T12:39:34.1860980Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderEnhancementUITests.swift:12: error: -[XXComicUITests.ReaderEnhancementUITests testReaderAIBadgeAndLongPressOriginalComparison] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T12:39:34.5475510Z Test Suite 'ReaderEnhancementUITests' failed at 2026-10-11 12:39:34.537.
+2026-10-11T12:39:58.6805450Z Test Suite 'ReaderToolbarParityUITests' passed at 2026-10-11 12:39:58.676.
+2026-10-11T12:39:58.6834200Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 24.137 (24.138) seconds
+2026-10-11T12:40:15.5741860Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SettingsParityUITests.swift:47: error: -[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery] : XCTAssertTrue failed
+2026-10-11T12:40:19.8613520Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SettingsParityUITests.swift:52: error: -[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:40:41.6736740Z Test Suite 'SettingsParityUITests' failed at 2026-10-11 12:40:41.672.
+2026-10-11T12:40:41.6738070Z 	 Executed 3 tests, with 2 failures (0 unexpected) in 42.994 (42.995) seconds
+2026-10-11T12:40:57.1218550Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SourceDrawerTests.swift:20: error: -[XXComicUITests.SourceDrawerTests testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs] : XCTAssertTrue failed
+2026-10-11T12:41:07.1232600Z Test Suite 'SourceDrawerTests' failed at 2026-10-11 12:41:07.122.
+2026-10-11T12:41:36.6079920Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:20: error: -[XXComicUITests.VisualMatrixUITests testVisualMatrixLandscapeDark] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:41:43.6069040Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:20: error: -[XXComicUITests.VisualMatrixUITests testVisualMatrixLandscapeLight] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:41:51.1828440Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:20: error: -[XXComicUITests.VisualMatrixUITests testVisualMatrixPortraitDark] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:41:58.1935490Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:20: error: -[XXComicUITests.VisualMatrixUITests testVisualMatrixPortraitLight] : Failed to tap "我的书架" Button: No matches found for Elements matching predicate '"我的书架" IN identifiers' from input {(
+2026-10-11T12:41:58.5526590Z Test Suite 'VisualMatrixUITests' failed at 2026-10-11 12:41:58.545.
+2026-10-11T12:41:58.5527980Z 	 Executed 8 tests, with 4 failures (0 unexpected) in 51.420 (51.423) seconds
+2026-10-11T12:41:58.5529470Z Test Suite 'XXComicUITests.xctest' failed at 2026-10-11 12:41:58.546.
+2026-10-11T12:41:58.5532970Z 	 Executed 49 tests, with 51 failures (0 unexpected) in 715.630 (715.666) seconds
+2026-10-11T12:41:58.5533880Z Test Suite 'All tests' failed at 2026-10-11 12:41:58.547.
+2026-10-11T12:41:58.5534800Z 	 Executed 49 tests, with 51 failures (0 unexpected) in 715.630 (715.668) seconds
+2026-10-11T12:42:07.3191030Z ** TEST FAILED **
+2026-10-11T12:42:12.3370220Z Native tests failed; Release IPA will not be packaged.

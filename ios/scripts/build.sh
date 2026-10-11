@@ -83,6 +83,10 @@ if [ "$validation_scope" != full ]; then
   echo '阶段原生验证结束；其他UI/视觉/Files及完整回归仍待运行，不生成IPA。'
   exit 0
 fi
+if [ "${IOS_PACKAGE_IPA:-false}" != true ]; then
+  echo '完整Apple运行结束；视觉/Files/性能及站源门槛由阶段台账另验。本次不生成IPA。'
+  exit 0
+fi
 
 package_dir=$(mktemp -d build/package-XXXXXX)
 mkdir -p "$package_dir/Payload"

@@ -15,6 +15,11 @@ final class AppNavigationTests: XCTestCase {
         }
         app.launch()
         XCTAssertTrue(app.tabBars.buttons["书架"].exists)
+        XCTAssertTrue(app.buttons["我的书架"].isHittable)
+        XCTAssertTrue(app.buttons["本地书架"].isHittable)
+        app.buttons["本地书架"].tap()
+        XCTAssertTrue(app.buttons["我的书架"].isHittable)
+        XCTAssertTrue(app.buttons["本地书架"].isSelected)
         openReadingSettings()
         let toggle = app.switches["reader.disable.page.animation"]
         XCTAssertTrue(toggle.waitForExistence(timeout: 5))

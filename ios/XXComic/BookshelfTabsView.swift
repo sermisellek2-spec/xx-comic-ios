@@ -1,44 +1,55 @@
 import UIKit
 
-/// Android's two text tabs share the header; there is no extra segmented row.
+/// Android's two text tabs share one application header.
+/// A plain view keeps both visible and independently tappable.
 @MainActor
-final class BookshelfTabsView: UIControl {
-    private var tabs: [UIBarButtonItem] = []
+final class BookshelfTabsView: UIView {
+    private let buttons = [UIButton(type: .system), UIButton(type: .system)]
     private let divider = UILabel()
-    private(set) var navigationItems: [UIBarButtonItem] = []
+    var onSelectionChanged: (() -> Void)?
     var selectedSegmentIndex = 0 { didSet { updateSelection() } }
     override init(frame: CGRect) {
         super.init(frame: frame)
         isAccessibilityElement = false
+        accessibilityElements = buttons
         divider.text = " | "; divider.textColor = Palette.text3; divider.font = .systemFont(ofSize: 16)
         divider.isAccessibilityElement = false
-        // UINavigationBar exposes a composite custom control as one bar item.
-        // Standard bar items give each tab its own accessible activation target.
-        tabs = ["我的书架", "本地书架"].enumerated().map { index, title in
-            let item = UIBarButtonItem(title: title, style: .plain, target: self, action: #selector(selectTab(_:)))
-            item.tag = index
-            item.accessibilityLabel = title
-            item.accessibilityIdentifier = "bookshelf.tab.\(index)"
-            item.isAccessibilityElement = true
-            return item
+        for (index, button) in buttons.enumerated() {
+            button.setTitle(index == 0 ? "我的书架" : "本地书架", for: .normal)
+            button.tag = index
+            button.accessibilityIdentifier = "bookshelf.tab.\(index)"
+            button.isAccessibilityElement = true
+            button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+            button.setContentHuggingPriority(.required, for: .horizontal)
+            button.setContentCompressionResistancePriority(.required, for: .horizontal)
+            button.addTarget(self, action: #selector(selectTab(_:)), for: .touchUpInside)
         }
-        divider.sizeToFit()
-        let separator = UIBarButtonItem(customView: divider)
-        separator.isAccessibilityElement = false
-        navigationItems = [tabs[0], separator, tabs[1]]
+        let row = UIStackView(arrangedSubviews: [buttons[0], divider, buttons[1]])
+        row.alignment = .center
+        row.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(row)
+        NSLayoutConstraint.activate([
+            row.leadingAnchor.constraint(equalTo: leadingAnchor), row.trailingAnchor.constraint(equalTo: trailingAnchor),
+            row.topAnchor.constraint(equalTo: topAnchor), row.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
         updateSelection()
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
-    @objc private func selectTab(_ sender: UIBarButtonItem) {
+    override var intrinsicContentSize: CGSize {
+        CGSize(width: buttons.reduce(divider.intrinsicContentSize.width) { $0 + $1.intrinsicContentSize.width }, height: 44)
+    }
+    @objc private func selectTab(_ sender: UIButton) {
         guard selectedSegmentIndex != sender.tag else { return }
-        selectedSegmentIndex = sender.tag; sendActions(for: .valueChanged)
+        selectedSegmentIndex = sender.tag; onSelectionChanged?()
     }
     private func updateSelection() {
-        for (index, item) in tabs.enumerated() {
+        for (index, button) in buttons.enumerated() {
             let selected = index == selectedSegmentIndex
-            item.setTitleTextAttributes([.font: UIFont.systemFont(ofSize: selected ? 24 : 16, weight: selected ? .bold : .regular),
-                .foregroundColor: selected ? Palette.text : Palette.text3], for: .normal)
-            item.accessibilityTraits = selected ? [.button, .selected] : [.button]
+            button.titleLabel?.font = .systemFont(ofSize: selected ? 24 : 16, weight: selected ? .bold : .regular)
+            button.setTitleColor(selected ? Palette.text : Palette.text3, for: .normal)
+            button.isSelected = selected
+            button.accessibilityTraits = selected ? [.button, .selected] : [.button]
         }
+        invalidateIntrinsicContentSize()
     }
 }

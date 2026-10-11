@@ -100,6 +100,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         root.navigationItem.leftBarButtonItem = UIBarButtonItem(customView: heading)
         root.navigationItem.titleView = UIView(frame: .zero)
         let navigation = UINavigationController(rootViewController: root)
+        // The bookshelf owns the complete Android-style text-tab header.
+        // A system bar may omit left items when sufficient space is unavailable.
+        if root is BookshelfViewController { navigation.setNavigationBarHidden(true, animated: false) }
         navigation.tabBarItem = UITabBarItem(title: title, image: icon.image(size: 20), selectedImage: nil)
         navigation.navigationBar.tintColor = Palette.accent
         let appearance = UINavigationBarAppearance()

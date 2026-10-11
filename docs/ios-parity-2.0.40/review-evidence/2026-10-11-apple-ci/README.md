@@ -25,3 +25,7 @@
 取得设置8真实参考及双设备CoreML实际输入/输出/指标。横屏原像素竖向但EXIF=8，按显示方向为横屏，原文件不变，[方向核验](settings-matrix/orientation-proof.json)通过；此前仅按原尺寸判断方向的人工判断已纠正。设置参考/cache状态不同且留白/字体/右值对齐仍有差异，完整视觉门槛不通过。
 
 当前修复独立导航项、批量恢复/取消/失败再选择、同步实际反馈与书签回滚，详见[接续证据](../2026-10-11-import-recovery/README.md)。新的foundation-import范围仅做当前阶段原生自验，不生成/上传IPA；全部其他原测试保留，full范围仍需全部运行成功，P5及真实站源顺序不变。
+
+[第四轮38147326917](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38147326917)实际failure。f4eaf93两配置SDK、Apple853项/0失败/71.174秒、两设备原生各19通过；部分范围UI各7执行/3条失败。我的书架/阅读偏好/未读/切列表及部分恢复重启通过，其他批量UI仍在本地标题失败。当前改应用内容区真实标题按钮；系统导航左项仅在有空间时显示见[Apple UINavigationItem](https://developer.apple.com/documentation/uikit/uinavigationitem)。[repair-4-summary.json](repair-4-summary.json)记录实际版本、范围、错误、条数和原日志SHA。
+
+下一轮默认full包含全部UI，并导出实际失败PNG/逐用例状态；package_ipa显式开关默认false，只有最终全部自验后才启用。不生成IPA不改变完整测试门槛，不提前连接真实源。

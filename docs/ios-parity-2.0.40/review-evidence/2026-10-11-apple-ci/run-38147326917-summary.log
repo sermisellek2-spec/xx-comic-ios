@@ -1,0 +1,157 @@
+2026-10-11T14:29:35.7395740Z ** BUILD SUCCEEDED **
+2026-10-11T14:30:49.8239810Z ** BUILD SUCCEEDED **
+2026-10-11T14:31:34.9189600Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.016 (0.016) seconds
+2026-10-11T14:31:34.9192380Z 	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T14:31:34.9196840Z 	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T14:31:34.9212350Z 	 Executed 11 tests, with 0 failures (0 unexpected) in 0.008 (0.008) seconds
+2026-10-11T14:31:34.9241850Z 	 Executed 19 tests, with 0 failures (0 unexpected) in 0.542 (0.543) seconds
+2026-10-11T14:31:34.9265680Z 	 Executed 14 tests, with 0 failures (0 unexpected) in 0.777 (0.778) seconds
+2026-10-11T14:31:34.9286010Z 	 Executed 10 tests, with 0 failures (0 unexpected) in 0.100 (0.100) seconds
+2026-10-11T14:31:34.9294150Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.013 (0.013) seconds
+2026-10-11T14:31:34.9300220Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:31:34.9305900Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.013 (0.013) seconds
+2026-10-11T14:31:34.9313780Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.008 (0.009) seconds
+2026-10-11T14:31:34.9320440Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:31:34.9333610Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:31:34.9352140Z 	 Executed 13 tests, with 0 failures (0 unexpected) in 0.517 (0.518) seconds
+2026-10-11T14:31:34.9388260Z 	 Executed 26 tests, with 0 failures (0 unexpected) in 0.950 (0.951) seconds
+2026-10-11T14:31:34.9410560Z 	 Executed 16 tests, with 0 failures (0 unexpected) in 0.029 (0.030) seconds
+2026-10-11T14:31:34.9424280Z 	 Executed 10 tests, with 0 failures (0 unexpected) in 0.019 (0.020) seconds
+2026-10-11T14:31:34.9439840Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.026 (0.026) seconds
+2026-10-11T14:31:34.9445980Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.487 (0.487) seconds
+2026-10-11T14:31:34.9452200Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.005 (0.006) seconds
+2026-10-11T14:31:34.9456610Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T14:31:34.9462870Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.019 (0.019) seconds
+2026-10-11T14:31:34.9479420Z 	 Executed 11 tests, with 0 failures (0 unexpected) in 0.006 (0.007) seconds
+2026-10-11T14:31:34.9496240Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.550 (0.551) seconds
+2026-10-11T14:31:34.9514270Z 	 Executed 10 tests, with 0 failures (0 unexpected) in 1.427 (1.428) seconds
+2026-10-11T14:31:34.9519460Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:31:34.9533270Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.546 (0.546) seconds
+2026-10-11T14:31:34.9536030Z 	 Executed 1 test, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+2026-10-11T14:31:34.9544230Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.627 (0.627) seconds
+2026-10-11T14:31:34.9552760Z 	 Executed 7 tests, with 0 failures (0 unexpected) in 0.011 (0.012) seconds
+2026-10-11T14:32:08.1522390Z 	 Executed 26 tests, with 0 failures (0 unexpected) in 2.142 (2.143) seconds
+2026-10-11T14:32:08.1534390Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+2026-10-11T14:32:08.1540080Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.018 (0.018) seconds
+2026-10-11T14:32:08.1545610Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.011 (0.011) seconds
+2026-10-11T14:32:08.1552540Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+2026-10-11T14:32:08.1555870Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+2026-10-11T14:32:08.1570760Z 	 Executed 11 tests, with 0 failures (0 unexpected) in 0.043 (0.043) seconds
+2026-10-11T14:32:08.1585750Z 	 Executed 7 tests, with 0 failures (0 unexpected) in 0.007 (0.008) seconds
+2026-10-11T14:32:08.1589700Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+2026-10-11T14:32:08.1626540Z 	 Executed 30 tests, with 0 failures (0 unexpected) in 0.357 (0.358) seconds
+2026-10-11T14:32:08.1637930Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.051 (0.051) seconds
+2026-10-11T14:32:08.1650810Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.012 (0.013) seconds
+2026-10-11T14:32:08.1655460Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+2026-10-11T14:32:08.1660730Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+2026-10-11T14:32:08.1663090Z 	 Executed 1 test, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:32:08.1672150Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+2026-10-11T14:32:08.1679060Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.007 (0.007) seconds
+2026-10-11T14:32:08.1710280Z 	 Executed 21 tests, with 0 failures (0 unexpected) in 3.086 (3.087) seconds
+2026-10-11T14:32:08.1746600Z 	 Executed 25 tests, with 0 failures (0 unexpected) in 4.242 (4.243) seconds
+2026-10-11T14:32:08.1757350Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.012 (0.012) seconds
+2026-10-11T14:32:08.1771660Z 	 Executed 10 tests, with 0 failures (0 unexpected) in 0.012 (0.013) seconds
+2026-10-11T14:32:08.1798660Z 	 Executed 17 tests, with 0 failures (0 unexpected) in 7.350 (7.351) seconds
+2026-10-11T14:32:08.1809680Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.008 (0.008) seconds
+2026-10-11T14:32:08.1831810Z 	 Executed 16 tests, with 0 failures (0 unexpected) in 6.840 (6.841) seconds
+2026-10-11T14:32:08.1868300Z 	 Executed 7 tests, with 0 failures (0 unexpected) in 0.263 (0.264) seconds
+2026-10-11T14:32:08.1879390Z 	 Executed 7 tests, with 0 failures (0 unexpected) in 10.081 (10.081) seconds
+2026-10-11T14:32:08.1883350Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+2026-10-11T14:32:08.1900550Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.028 (0.029) seconds
+2026-10-11T14:32:37.7942430Z 	 Executed 21 tests, with 0 failures (0 unexpected) in 0.106 (0.106) seconds
+2026-10-11T14:32:37.7975370Z 	 Executed 14 tests, with 0 failures (0 unexpected) in 4.058 (4.059) seconds
+2026-10-11T14:32:37.8008750Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.192 (0.192) seconds
+2026-10-11T14:32:37.8023260Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.814 (0.815) seconds
+2026-10-11T14:32:37.8038930Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.063 (0.063) seconds
+2026-10-11T14:32:37.8056260Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.072 (0.072) seconds
+2026-10-11T14:32:37.8060360Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.058 (0.059) seconds
+2026-10-11T14:32:37.8083960Z 	 Executed 11 tests, with 0 failures (0 unexpected) in 0.022 (0.022) seconds
+2026-10-11T14:32:37.8148120Z 	 Executed 25 tests, with 0 failures (0 unexpected) in 22.150 (22.151) seconds
+2026-10-11T14:32:37.8161090Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:32:37.8183210Z 	 Executed 13 tests, with 0 failures (0 unexpected) in 0.042 (0.043) seconds
+2026-10-11T14:32:37.8198890Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.011 (0.012) seconds
+2026-10-11T14:32:37.8203050Z 	 Executed 1 test, with 0 failures (0 unexpected) in 0.035 (0.035) seconds
+2026-10-11T14:32:37.8217020Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:32:37.8224120Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.783 (0.784) seconds
+2026-10-11T14:32:37.8262830Z 	 Executed 17 tests, with 0 failures (0 unexpected) in 0.112 (0.113) seconds
+2026-10-11T14:32:37.8272400Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+2026-10-11T14:32:37.8298230Z 	 Executed 14 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+2026-10-11T14:32:37.8331050Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.012 (0.013) seconds
+2026-10-11T14:32:37.8343600Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+2026-10-11T14:32:37.8383440Z 	 Executed 10 tests, with 0 failures (0 unexpected) in 0.174 (0.175) seconds
+2026-10-11T14:32:37.8391080Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.115 (0.115) seconds
+2026-10-11T14:32:37.8402810Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.013 (0.014) seconds
+2026-10-11T14:32:37.8466760Z 	 Executed 34 tests, with 0 failures (0 unexpected) in 0.051 (0.052) seconds
+2026-10-11T14:32:38.0454810Z 	 Executed 18 tests, with 0 failures (0 unexpected) in 0.759 (0.760) seconds
+2026-10-11T14:32:38.0462450Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+2026-10-11T14:32:38.0468750Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:32:38.0478140Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+2026-10-11T14:32:38.0498870Z 	 Executed 11 tests, with 0 failures (0 unexpected) in 0.008 (0.008) seconds
+2026-10-11T14:32:38.0515710Z 	 Executed 7 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:32:38.0518430Z 	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+2026-10-11T14:32:38.0533210Z 	 Executed 10 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+2026-10-11T14:32:38.0539430Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:32:38.0546890Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+2026-10-11T14:32:38.0560660Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.014 (0.014) seconds
+2026-10-11T14:32:38.0569480Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.008 (0.008) seconds
+2026-10-11T14:32:38.0578970Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.029 (0.029) seconds
+2026-10-11T14:32:38.0591490Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.009 (0.009) seconds
+2026-10-11T14:32:38.0595670Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+2026-10-11T14:32:38.0614130Z 	 Executed 9 tests, with 0 failures (0 unexpected) in 0.026 (0.027) seconds
+2026-10-11T14:32:38.0619860Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.017 (0.017) seconds
+2026-10-11T14:32:38.0631360Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.056 (0.056) seconds
+2026-10-11T14:32:38.0638050Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.051 (0.051) seconds
+2026-10-11T14:32:38.0646910Z 	 Executed 5 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+2026-10-11T14:32:38.0647700Z 	 Executed 853 tests, with 0 failures (0 unexpected) in 71.174 (71.215) seconds
+2026-10-11T14:32:38.0648520Z 	 Executed 853 tests, with 0 failures (0 unexpected) in 71.174 (71.216) seconds
+2026-10-11T14:32:38.0651830Z ==> Native validation scope: foundation-import (partial validation never produces an IPA)
+2026-10-11T14:32:38.0652420Z ==> Running tests on destination: platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B
+2026-10-11T14:33:15.2674450Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.029 (0.030) seconds
+2026-10-11T14:33:15.4448810Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.244 (0.244) seconds
+2026-10-11T14:33:15.6287700Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.008) seconds
+2026-10-11T14:33:15.6728590Z 	 Executed 1 test, with 0 failures (0 unexpected) in 0.110 (0.111) seconds
+2026-10-11T14:33:18.3730530Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 2.835 (2.836) seconds
+2026-10-11T14:33:18.3868830Z 	 Executed 1 test, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:33:18.3888070Z 	 Executed 19 tests, with 0 failures (0 unexpected) in 3.222 (3.231) seconds
+2026-10-11T14:33:18.3891510Z 	 Executed 19 tests, with 0 failures (0 unexpected) in 3.222 (3.232) seconds
+2026-10-11T14:33:40.6748090Z Test Case '-[XXComicUITests.AppNavigationTests testNavigationAndReaderPreferencesPersist]' passed (19.602 seconds).
+2026-10-11T14:33:40.6989500Z 	 Executed 1 test, with 0 failures (0 unexpected) in 19.602 (19.602) seconds
+2026-10-11T14:33:54.3787570Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BatchImportRecoveryUITests.swift:45: error: -[XXComicUITests.BatchImportRecoveryUITests testCancellingRecoveryKeepsPendingTaskAvailableAfterRestart] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T14:33:54.7284860Z Test Case '-[XXComicUITests.BatchImportRecoveryUITests testCancellingRecoveryKeepsPendingTaskAvailableAfterRestart]' failed (14.059 seconds).
+2026-10-11T14:34:04.0964590Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BatchImportRecoveryUITests.swift:66: error: -[XXComicUITests.BatchImportRecoveryUITests testExplicitBatchPickerSupportsOneFileThroughBatchConfirmation] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T14:34:04.4191810Z Test Case '-[XXComicUITests.BatchImportRecoveryUITests testExplicitBatchPickerSupportsOneFileThroughBatchConfirmation]' failed (9.684 seconds).
+2026-10-11T14:34:20.5506090Z Test Case '-[XXComicUITests.BatchImportRecoveryUITests testPartiallyReselectedFilesReportFailureAndRemainingVolumeCanResume]' passed (16.138 seconds).
+2026-10-11T14:34:37.4295080Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BatchImportRecoveryUITests.swift:29: error: -[XXComicUITests.BatchImportRecoveryUITests testRecoveredBookRemainsSingleAndCompletedAfterRelaunch] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T14:34:37.7734060Z Test Case '-[XXComicUITests.BatchImportRecoveryUITests testRecoveredBookRemainsSingleAndCompletedAfterRelaunch]' failed (17.225 seconds).
+2026-10-11T14:34:37.7838650Z 	 Executed 4 tests, with 3 failures (0 unexpected) in 57.106 (57.107) seconds
+2026-10-11T14:34:44.7035510Z Test Case '-[XXComicUITests.BookshelfParityUITests testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList]' passed (6.929 seconds).
+2026-10-11T14:34:56.2335280Z Test Case '-[XXComicUITests.BookshelfParityUITests testSwitchingGridToListKeepsVisibleComic]' passed (11.530 seconds).
+2026-10-11T14:34:56.2433340Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 18.459 (18.460) seconds
+2026-10-11T14:34:56.2434050Z 	 Executed 7 tests, with 3 failures (0 unexpected) in 95.167 (95.171) seconds
+2026-10-11T14:34:56.2434690Z 	 Executed 7 tests, with 3 failures (0 unexpected) in 95.167 (95.172) seconds
+2026-10-11T14:35:16.3076940Z ** TEST FAILED **
+2026-10-11T14:35:20.4362660Z ==> Running tests on destination: platform=iOS Simulator,id=11EFB8C6-ED66-489F-A458-204D59C42F76
+2026-10-11T14:35:54.2317270Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.027 (0.027) seconds
+2026-10-11T14:35:54.4473570Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.259 (0.260) seconds
+2026-10-11T14:35:54.6211610Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+2026-10-11T14:35:54.6727120Z 	 Executed 1 test, with 0 failures (0 unexpected) in 0.109 (0.110) seconds
+2026-10-11T14:35:57.3883650Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 2.850 (2.852) seconds
+2026-10-11T14:35:57.3957270Z 	 Executed 1 test, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+2026-10-11T14:35:57.4183510Z 	 Executed 19 tests, with 0 failures (0 unexpected) in 3.248 (3.254) seconds
+2026-10-11T14:35:57.4186990Z 	 Executed 19 tests, with 0 failures (0 unexpected) in 3.248 (3.255) seconds
+2026-10-11T14:36:21.5564210Z Test Case '-[XXComicUITests.AppNavigationTests testNavigationAndReaderPreferencesPersist]' passed (21.605 seconds).
+2026-10-11T14:36:21.5875650Z 	 Executed 1 test, with 0 failures (0 unexpected) in 21.605 (21.605) seconds
+2026-10-11T14:36:35.1867270Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BatchImportRecoveryUITests.swift:45: error: -[XXComicUITests.BatchImportRecoveryUITests testCancellingRecoveryKeepsPendingTaskAvailableAfterRestart] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T14:36:35.5030430Z Test Case '-[XXComicUITests.BatchImportRecoveryUITests testCancellingRecoveryKeepsPendingTaskAvailableAfterRestart]' failed (13.958 seconds).
+2026-10-11T14:36:41.1433940Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BatchImportRecoveryUITests.swift:66: error: -[XXComicUITests.BatchImportRecoveryUITests testExplicitBatchPickerSupportsOneFileThroughBatchConfirmation] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T14:36:41.5999110Z Test Case '-[XXComicUITests.BatchImportRecoveryUITests testExplicitBatchPickerSupportsOneFileThroughBatchConfirmation]' failed (6.069 seconds).
+2026-10-11T14:36:58.0845790Z Test Case '-[XXComicUITests.BatchImportRecoveryUITests testPartiallyReselectedFilesReportFailureAndRemainingVolumeCanResume]' passed (16.466 seconds).
+2026-10-11T14:37:15.0246660Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BatchImportRecoveryUITests.swift:29: error: -[XXComicUITests.BatchImportRecoveryUITests testRecoveredBookRemainsSingleAndCompletedAfterRelaunch] : Failed to tap "本地书架" Button: No matches found for Elements matching predicate '"本地书架" IN identifiers' from input {(
+2026-10-11T14:37:15.3731470Z Test Case '-[XXComicUITests.BatchImportRecoveryUITests testRecoveredBookRemainsSingleAndCompletedAfterRelaunch]' failed (17.327 seconds).
+2026-10-11T14:37:15.3737280Z 	 Executed 4 tests, with 3 failures (0 unexpected) in 53.821 (53.822) seconds
+2026-10-11T14:37:22.3542180Z Test Case '-[XXComicUITests.BookshelfParityUITests testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList]' passed (6.987 seconds).
+2026-10-11T14:37:32.1855480Z Test Case '-[XXComicUITests.BookshelfParityUITests testSwitchingGridToListKeepsVisibleComic]' passed (9.831 seconds).
+2026-10-11T14:37:32.1871420Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 16.819 (16.820) seconds
+2026-10-11T14:37:32.1876660Z 	 Executed 7 tests, with 3 failures (0 unexpected) in 92.244 (92.248) seconds
+2026-10-11T14:37:32.1884120Z 	 Executed 7 tests, with 3 failures (0 unexpected) in 92.244 (92.249) seconds
+2026-10-11T14:37:45.5233780Z ** TEST FAILED **

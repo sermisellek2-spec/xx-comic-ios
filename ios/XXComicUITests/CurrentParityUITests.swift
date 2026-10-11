@@ -29,8 +29,17 @@ final class CurrentParityUITests: XCTestCase {
         app.buttons["detail.download"].tap()
         let chapters = app.tables["download.chapters"]
         XCTAssertTrue(chapters.waitForExistence(timeout: 8))
+        let start = app.buttons["download.start"]
+        XCTAssertEqual(start.label, "下载选中章节 (1)")
+        XCTAssertTrue(start.isEnabled)
+        // Android preselects the current chapter. Verify clear/reselect instead
+        // of toggling that chapter off and trying to activate a disabled button.
+        app.buttons["清空"].tap()
+        XCTAssertFalse(start.isEnabled)
         chapters.cells.firstMatch.tap()
-        app.buttons["download.start"].tap()
+        XCTAssertEqual(start.label, "下载选中章节 (1)")
+        XCTAssertTrue(start.isEnabled)
+        start.tap()
         expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: chapters)
         waitForExpectations(timeout: 5)
         XCTAssertTrue(app.buttons["detail.download"].waitForExistence(timeout: 5))
