@@ -2,7 +2,7 @@ import Foundation
 
 public struct ManhuaguiComicSource: ComicSource {
     public let id = "manhuagui"
-    public let name = "漫画柜"
+    public var name: String { config?.name ?? "漫画柜" }
     public let referer: String
     public let config: SourceConfigItem?
     private let base: String
@@ -20,16 +20,17 @@ public struct ManhuaguiComicSource: ComicSource {
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()
         if page > 1 { return [] }
-        return try cards(await fetch("/s/"+guiEncode(SearchRules.trim(keyword))+".html"))
+        let path = route("search", fallback: "/s/{keyword}.html").replacingOccurrences(of: "{keyword}", with: guiEncode(SearchRules.trim(keyword)))
+        return try cards(await fetch(path))
     }
     public func category(filters: [String:String], page: Int) async throws -> [ComicSummary] {
         let segment = ["region","genre","audience","year","letter","state"].compactMap { key -> String? in
             let value = filters[key] ?? "all"; return value.isEmpty || value == "all" ? nil : value
         }.joined(separator:"-")
-        return try cards(await fetch("/list"+(segment.isEmpty ? "" : "/"+segment)+(page > 1 ? "/index_p\(page).html" : "")))
+        return try cards(await fetch(categoryRoot+(segment.isEmpty ? "" : "/"+segment)+(page > 1 ? "/index_p\(page).html" : "")))
     }
     public func filterGroups() async throws -> [SourceFilterGroup] {
-        let html = try await fetch("/list")
+        let html = try await fetch(categoryRoot)
         var result: [SourceFilterGroup] = []
         for (kind,key,label) in [("area","region","地区"),("genre","genre","剧情"),("age","audience","受众"),("year","year","年份"),("letter","letter","字母"),("status","state","状态")] {
             let block = guiFirst("<div[^>]*class=[\"'][^\"']*\\bfilter\\b[^\"']*\\b"+kind+"\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)</div>",html)
@@ -45,7 +46,7 @@ public struct ManhuaguiComicSource: ComicSource {
         guard !result.isEmpty else { throw guiError("分类解析失败") }; return result
     }
     public func detail(comicId: String) async throws -> ComicDetail {
-        let raw = rawID(comicId), html = try await fetch("/comic/"+raw)
+        let raw = rawID(comicId), html = try await fetch(detailPath(raw))
         var cover = cleanURL(guiFirst(#"<meta[^>]+(?:property|name)=["']og:image["'][^>]+content=["']([^"']*)["']"#,html))
         if cover.isEmpty { cover = image(guiFirst(#"(<a[^>]+class=["'][^"']*bcover[^"']*["'][\s\S]*?<img[^>]+>)"#,html)) }
         if cover.isEmpty { cover = image(guiFirst(#"(<div[^>]+class=["'][^"']*(?:cover|thumb|book)[^"']*["'][\s\S]*?<img\b[^>]*>)"#,html)) }
@@ -57,7 +58,7 @@ public struct ManhuaguiComicSource: ComicSource {
                      latestChapter:guiClean(guiFirst(#"更新至\s*\[\s*<a[^>]*>([\s\S]*?)</a>"#,html)),chapters:[])
     }
     public func chapters(comicId: String) async throws -> [Chapter] {
-        let raw = rawID(comicId), html = try await fetch("/comic/"+raw)
+        let raw = rawID(comicId), html = try await fetch(detailPath(raw))
         var result: [Chapter] = [], seen = Set<String>()
         for link in guiMatches(#"<a[^>]*href=["'](/comic/(\d+)/(\d+)\.html)["'][^>]*>([\s\S]*?)</a>"#,html) {
             try Task.checkCancellation()
@@ -71,6 +72,18 @@ public struct ManhuaguiComicSource: ComicSource {
         let target = absolute(url), html = try await fetch(target,reader:true)
         let images = try ManhuaguiReader.images(html)
         return .init(chapterId:target,title:guiClean(guiFirst(#"<h2[^>]*>([\s\S]*?)</h2>"#,html)),nextPageUrl:"",imageUrls:images)
+    }
+    private func route(_ key: String, fallback: String) -> String {
+        let value = config?.route(key) ?? ""
+        return value.isEmpty ? fallback : value
+    }
+    private var categoryRoot: String {
+        route("category", fallback: "/list").replacingOccurrences(of: #"\{[^}]*\}"#, with: "", options: .regularExpression)
+            .replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression)
+    }
+    private func detailPath(_ id: String) -> String {
+        route("detail", fallback: "/comic/{comicId}").replacingOccurrences(of: "{comicId}", with: id)
+            .replacingOccurrences(of: #"/+$"#, with: "", options: .regularExpression)
     }
     private func cards(_ html: String) throws -> [ComicSummary] {
         var result: [ComicSummary] = [], seen = Set<String>()

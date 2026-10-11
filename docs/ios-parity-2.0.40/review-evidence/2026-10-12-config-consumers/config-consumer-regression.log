@@ -1,0 +1,21 @@
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[0/5] Write swift-version-24593BA9C3E375BF.txt
+[4/7] Compiling ComicCore D5d6ComicSource.swift
+[5/7] Compiling ComicCore ManhuaguiComicSource.swift
+[6/7] Emitting module ComicCore
+[7/8] Compiling ComicCore SourcePreferences.swift
+[9/12] Emitting module ComicCoreTests
+[10/14] Compiling ComicCoreTests D5d6SourceTests.swift
+/work/Tests/ComicCoreTests/D5d6SourceTests.swift:37:45: error: value of type 'D5d6Request' has no member '1'
+        XCTAssertTrue(calls.allSatisfy { $0.1["Referer"] == "https://fixture.invalid/ref/" })
+                                         ~~ ^
+[11/14] Compiling ComicCoreTests ManhuaguiTests.swift
+/work/Tests/ComicCoreTests/D5d6SourceTests.swift:37:45: error: value of type 'D5d6Request' has no member '1'
+        XCTAssertTrue(calls.allSatisfy { $0.1["Referer"] == "https://fixture.invalid/ref/" })
+                                         ~~ ^
+[12/14] Compiling ComicCoreTests SourceImportContractTests.swift
+[13/14] Compiling ComicCoreTests SourceSearchTrimTests.swift
+error: fatalError
+error: fatalError

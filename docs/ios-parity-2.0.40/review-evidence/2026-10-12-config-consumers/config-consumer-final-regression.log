@@ -1,0 +1,170 @@
+[0/1] Planning build
+Building for debugging...
+[0/3] Write sources
+[1/3] Write swift-version-24593BA9C3E375BF.txt
+[3/5] Emitting module ComicCore
+[4/5] Compiling ComicCore Mh160ComicSource.swift
+[5/6] Compiling ComicCore MkzhanComicSource.swift
+[6/8] Write Objects.LinkFileList
+[7/8] Linking ComicCorePackageTests.xctest
+Build complete! (15.78s)
+Test Suite 'Selected tests' started at 2026-10-11 23:19:15.554
+Test Suite 'D5d6SourceTests' started at 2026-10-11 23:19:15.555
+Test Case 'D5d6SourceTests.testCardFallsBackToBlockTitleAttribute' started at 2026-10-11 23:19:15.555
+Test Case 'D5d6SourceTests.testCardFallsBackToBlockTitleAttribute' passed (0.133 seconds)
+Test Case 'D5d6SourceTests.testCatalogAndCoverFallbackDistinguishSiteDetailFromErrorHeading' started at 2026-10-11 23:19:15.688
+Test Case 'D5d6SourceTests.testCatalogAndCoverFallbackDistinguishSiteDetailFromErrorHeading' passed (0.032 seconds)
+Test Case 'D5d6SourceTests.testDefaultGBKResponseDecodesChineseCards' started at 2026-10-11 23:19:15.720
+Test Case 'D5d6SourceTests.testDefaultGBKResponseDecodesChineseCards' passed (0.014 seconds)
+Test Case 'D5d6SourceTests.testDetailCatalogReaderAndEmptySearchMatchAndroidContracts' started at 2026-10-11 23:19:15.734
+Test Case 'D5d6SourceTests.testDetailCatalogReaderAndEmptySearchMatchAndroidContracts' passed (0.029 seconds)
+Test Case 'D5d6SourceTests.testHomePageFallbackWhenCategoryIndexEmpty' started at 2026-10-11 23:19:15.763
+Test Case 'D5d6SourceTests.testHomePageFallbackWhenCategoryIndexEmpty' passed (0.012 seconds)
+Test Case 'D5d6SourceTests.testImportedRoutesStateMappingNameAndRefererReachRequestsAndRelativeChapter' started at 2026-10-11 23:19:15.775
+Test Case 'D5d6SourceTests.testImportedRoutesStateMappingNameAndRefererReachRequestsAndRelativeChapter' passed (0.124 seconds)
+Test Case 'D5d6SourceTests.testLatestSearchFiltersAndCategoryKeepRequestsFallbackAndOrdering' started at 2026-10-11 23:19:15.899
+Test Case 'D5d6SourceTests.testLatestSearchFiltersAndCategoryKeepRequestsFallbackAndOrdering' passed (0.073 seconds)
+Test Case 'D5d6SourceTests.testMissingCharsetDefaultsToGBKEvenWhenBytesAreValidUTF8' started at 2026-10-11 23:19:15.972
+Test Case 'D5d6SourceTests.testMissingCharsetDefaultsToGBKEvenWhenBytesAreValidUTF8' passed (0.014 seconds)
+Test Case 'D5d6SourceTests.testResponseHeaderCharsetTakesPriority' started at 2026-10-11 23:19:15.986
+Test Case 'D5d6SourceTests.testResponseHeaderCharsetTakesPriority' passed (0.012 seconds)
+Test Case 'D5d6SourceTests.testSourceConfigDefaultsAndConfiguredSource' started at 2026-10-11 23:19:15.998
+Test Case 'D5d6SourceTests.testSourceConfigDefaultsAndConfiguredSource' passed (0.023 seconds)
+Test Case 'D5d6SourceTests.testValidEmptyContainersDifferFromErrorsAndTransportFailuresPropagate' started at 2026-10-11 23:19:16.021
+Test Case 'D5d6SourceTests.testValidEmptyContainersDifferFromErrorsAndTransportFailuresPropagate' passed (0.011 seconds)
+Test Suite 'D5d6SourceTests' passed at 2026-10-11 23:19:16.032
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.476 (0.476) seconds
+Test Suite 'ManhuaguiTests' started at 2026-10-11 23:19:16.032
+Test Case 'ManhuaguiTests.testActualDictionaryAndValidPayloadExpansionBudgets' started at 2026-10-11 23:19:16.032
+Test Case 'ManhuaguiTests.testActualDictionaryAndValidPayloadExpansionBudgets' passed (0.271 seconds)
+Test Case 'ManhuaguiTests.testCardsPathsHeadersAndSearchPagination' started at 2026-10-11 23:19:16.303
+Test Case 'ManhuaguiTests.testCardsPathsHeadersAndSearchPagination' passed (0.078 seconds)
+Test Case 'ManhuaguiTests.testChapterRequestKeepsCanonicalPathAndNavigationHeaders' started at 2026-10-11 23:19:16.382
+Test Case 'ManhuaguiTests.testChapterRequestKeepsCanonicalPathAndNavigationHeaders' passed (0.006 seconds)
+Test Case 'ManhuaguiTests.testCleanedEmptyCardAndChapterTitlesFallBack' started at 2026-10-11 23:19:16.388
+Test Case 'ManhuaguiTests.testCleanedEmptyCardAndChapterTitlesFallBack' passed (0.03 seconds)
+Test Case 'ManhuaguiTests.testCoverURLCleanupAndImageAttributePriority' started at 2026-10-11 23:19:16.419
+Test Case 'ManhuaguiTests.testCoverURLCleanupAndImageAttributePriority' passed (0.03 seconds)
+Test Case 'ManhuaguiTests.testDirectLooseBracketsAndInvalidTokenSkip' started at 2026-10-11 23:19:16.449
+Test Case 'ManhuaguiTests.testDirectLooseBracketsAndInvalidTokenSkip' passed (0.022 seconds)
+Test Case 'ManhuaguiTests.testDirectoryOwnershipDedupTitleAndInt32Fallback' started at 2026-10-11 23:19:16.471
+Test Case 'ManhuaguiTests.testDirectoryOwnershipDedupTitleAndInt32Fallback' passed (0.019 seconds)
+Test Case 'ManhuaguiTests.testFiltersAndDetailCoverAndLazyDirectory' started at 2026-10-11 23:19:16.490
+Test Case 'ManhuaguiTests.testFiltersAndDetailCoverAndLazyDirectory' passed (0.195 seconds)
+Test Case 'ManhuaguiTests.testFullRecordedLZDictionaryProducesAll29Images' started at 2026-10-11 23:19:16.685
+Test Case 'ManhuaguiTests.testFullRecordedLZDictionaryProducesAll29Images' passed (0.013 seconds)
+Test Case 'ManhuaguiTests.testImportedNameBaseRefererAndRoutesReachActualRequestConsumers' started at 2026-10-11 23:19:16.698
+Test Case 'ManhuaguiTests.testImportedNameBaseRefererAndRoutesReachActualRequestConsumers' passed (0.141 seconds)
+Test Case 'ManhuaguiTests.testLegacyInvocationFallbackWithoutFunctionMarker' started at 2026-10-11 23:19:16.838
+Test Case 'ManhuaguiTests.testLegacyInvocationFallbackWithoutFunctionMarker' passed (0.011 seconds)
+Test Case 'ManhuaguiTests.testLiveChapter61808UnpackYields33Images' started at 2026-10-11 23:19:16.849
+Test Case 'ManhuaguiTests.testLiveChapter61808UnpackYields33Images' passed (0.011 seconds)
+Test Case 'ManhuaguiTests.testLooseModeDoesNotRewriteQuotedTextOrRelaxStrictDefault' started at 2026-10-11 23:19:16.860
+Test Case 'ManhuaguiTests.testLooseModeDoesNotRewriteQuotedTextOrRelaxStrictDefault' passed (0.001 seconds)
+Test Case 'ManhuaguiTests.testMalformedPackedParametersDepthBudgetAndCancellationFail' started at 2026-10-11 23:19:16.861
+Test Case 'ManhuaguiTests.testMalformedPackedParametersDepthBudgetAndCancellationFail' passed (0.714 seconds)
+Test Case 'ManhuaguiTests.testNestedDoubleQuotedPackerAndSinglePassSparseDictionary' started at 2026-10-11 23:19:17.575
+Test Case 'ManhuaguiTests.testNestedDoubleQuotedPackerAndSinglePassSparseDictionary' passed (0.029 seconds)
+Test Case 'ManhuaguiTests.testOrdinaryHTMLQuotesDoNotHideReaderConfiguration' started at 2026-10-11 23:19:17.604
+Test Case 'ManhuaguiTests.testOrdinaryHTMLQuotesDoNotHideReaderConfiguration' passed (0.006 seconds)
+Test Case 'ManhuaguiTests.testPackerSelectionSinglePassAndRawSeparatorPriority' started at 2026-10-11 23:19:17.610
+Test Case 'ManhuaguiTests.testPackerSelectionSinglePassAndRawSeparatorPriority' passed (0.017 seconds)
+Test Case 'ManhuaguiTests.testPrecedingJavaScriptStringCannotPolluteObjectBoundary' started at 2026-10-11 23:19:17.627
+Test Case 'ManhuaguiTests.testPrecedingJavaScriptStringCannotPolluteObjectBoundary' passed (0.005 seconds)
+Test Case 'ManhuaguiTests.testReaderRejectsPartialBadURLsAndPreservesEscapedData' started at 2026-10-11 23:19:17.632
+Test Case 'ManhuaguiTests.testReaderRejectsPartialBadURLsAndPreservesEscapedData' passed (0.006 seconds)
+Test Case 'ManhuaguiTests.testRedirectsUpgradeMainDomainAndStopAfterFive' started at 2026-10-11 23:19:17.638
+Test Case 'ManhuaguiTests.testRedirectsUpgradeMainDomainAndStopAfterFive' passed (0.014 seconds)
+Test Case 'ManhuaguiTests.testRepeatedInvalidMarkerScanCanBeCancelled' started at 2026-10-11 23:19:17.652
+Test Case 'ManhuaguiTests.testRepeatedInvalidMarkerScanCanBeCancelled' passed (0.102 seconds)
+Test Case 'ManhuaguiTests.testRepeatedInvalidMarkersExhaustSharedScanBudget' started at 2026-10-11 23:19:17.754
+Test Case 'ManhuaguiTests.testRepeatedInvalidMarkersExhaustSharedScanBudget' passed (7.568 seconds)
+Test Case 'ManhuaguiTests.testSearchTrimsOnlyJavaControlAndASCIISpaces' started at 2026-10-11 23:19:25.322
+Test Case 'ManhuaguiTests.testSearchTrimsOnlyJavaControlAndASCIISpaces' passed (0.013 seconds)
+Test Case 'ManhuaguiTests.testShapeFallbackUsesInputOrderAndJavaPercentEncoding' started at 2026-10-11 23:19:25.335
+Test Case 'ManhuaguiTests.testShapeFallbackUsesInputOrderAndJavaPercentEncoding' passed (0.011 seconds)
+Test Case 'ManhuaguiTests.testSourceConfigDefaultsAndConfiguredSource' started at 2026-10-11 23:19:25.346
+Test Case 'ManhuaguiTests.testSourceConfigDefaultsAndConfiguredSource' passed (0.013 seconds)
+Test Case 'ManhuaguiTests.testValidImageListExpansionIsBoundedBeforePublishing' started at 2026-10-11 23:19:25.359
+Test Case 'ManhuaguiTests.testValidImageListExpansionIsBoundedBeforePublishing' passed (17.955 seconds)
+Test Suite 'ManhuaguiTests' passed at 2026-10-11 23:19:43.314
+	 Executed 26 tests, with 0 failures (0 unexpected) in 27.281 (27.281) seconds
+Test Suite 'Mh160SourceTests' started at 2026-10-11 23:19:43.314
+Test Case 'Mh160SourceTests.testChapterDecodesPayloadFiltersNoiseDeduplicatesAndSwitchesImageHosts' started at 2026-10-11 23:19:43.314
+Test Case 'Mh160SourceTests.testChapterDecodesPayloadFiltersNoiseDeduplicatesAndSwitchesImageHosts' passed (0.008 seconds)
+Test Case 'Mh160SourceTests.testDetailNormalizesLegacyIDAndIncludesOldestFirstScopedCatalog' started at 2026-10-11 23:19:43.322
+Test Case 'Mh160SourceTests.testDetailNormalizesLegacyIDAndIncludesOldestFirstScopedCatalog' passed (0.035 seconds)
+Test Case 'Mh160SourceTests.testDetailRejectsEmptyBusinessShellButKeepsTitleFallbackWithRealMetadata' started at 2026-10-11 23:19:43.357
+Test Case 'Mh160SourceTests.testDetailRejectsEmptyBusinessShellButKeepsTitleFallbackWithRealMetadata' passed (0.076 seconds)
+Test Case 'Mh160SourceTests.testExplicitEmptyListAndCatalogContainersAreAccepted' started at 2026-10-11 23:19:43.433
+Test Case 'Mh160SourceTests.testExplicitEmptyListAndCatalogContainersAreAccepted' passed (0.008 seconds)
+Test Case 'Mh160SourceTests.testFilterGroupsPreserveDocumentOrderAndCategoryUsesFirstSelectedPriority' started at 2026-10-11 23:19:43.441
+Test Case 'Mh160SourceTests.testFilterGroupsPreserveDocumentOrderAndCategoryUsesFirstSelectedPriority' passed (0.023 seconds)
+Test Case 'Mh160SourceTests.testHTTPUTF8AndCancellationErrorsPropagate' started at 2026-10-11 23:19:43.465
+Test Case 'Mh160SourceTests.testHTTPUTF8AndCancellationErrorsPropagate' passed (0.0 seconds)
+Test Case 'Mh160SourceTests.testIdentityLatestSearchAndCardsMatchAndroidContracts' started at 2026-10-11 23:19:43.465
+Test Case 'Mh160SourceTests.testIdentityLatestSearchAndCardsMatchAndroidContracts' passed (0.03 seconds)
+Test Case 'Mh160SourceTests.testImportedAndroidCategoryTemplateKeepsPathSeparatorAndPagination' started at 2026-10-11 23:19:43.495
+Test Case 'Mh160SourceTests.testImportedAndroidCategoryTemplateKeepsPathSeparatorAndPagination' passed (0.011 seconds)
+Test Case 'Mh160SourceTests.testMalformedHTMLAndErrorShellsThrowInsteadOfLookingEmpty' started at 2026-10-11 23:19:43.506
+Test Case 'Mh160SourceTests.testMalformedHTMLAndErrorShellsThrowInsteadOfLookingEmpty' passed (0.01 seconds)
+Test Case 'Mh160SourceTests.testReaderRejectsEmptyOrFilteredToEmptyPayloadLikeAndroid' started at 2026-10-11 23:19:43.517
+Test Case 'Mh160SourceTests.testReaderRejectsEmptyOrFilteredToEmptyPayloadLikeAndroid' passed (0.0 seconds)
+Test Suite 'Mh160SourceTests' passed at 2026-10-11 23:19:43.517
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.203 (0.203) seconds
+Test Suite 'MkzhanSourceTests' started at 2026-10-11 23:19:43.517
+Test Case 'MkzhanSourceTests.testDetailHasSameResponseCatalogWithCompoundIDsAndNoReadShortcut' started at 2026-10-11 23:19:43.517
+Test Case 'MkzhanSourceTests.testDetailHasSameResponseCatalogWithCompoundIDsAndNoReadShortcut' passed (0.022 seconds)
+Test Case 'MkzhanSourceTests.testErrorShellAndHTTPFailureAreNotEmptySuccess' started at 2026-10-11 23:19:43.539
+Test Case 'MkzhanSourceTests.testErrorShellAndHTTPFailureAreNotEmptySuccess' passed (0.0 seconds)
+Test Case 'MkzhanSourceTests.testFilterLabelsAndQueryValuesFollowPageOrder' started at 2026-10-11 23:19:43.539
+Test Case 'MkzhanSourceTests.testFilterLabelsAndQueryValuesFollowPageOrder' passed (0.023 seconds)
+Test Case 'MkzhanSourceTests.testImportedAndroidQueryTemplateKeepsQuestionMarkAndPagination' started at 2026-10-11 23:19:43.562
+Test Case 'MkzhanSourceTests.testImportedAndroidQueryTemplateKeepsQuestionMarkAndPagination' passed (0.075 seconds)
+Test Case 'MkzhanSourceTests.testLatestAndCategoryDifferAndSearchOnlyRequestsPageOne' started at 2026-10-11 23:19:43.638
+Test Case 'MkzhanSourceTests.testLatestAndCategoryDifferAndSearchOnlyRequestsPageOne' passed (0.078 seconds)
+Test Case 'MkzhanSourceTests.testListsRequireTargetContainerAndDoNotLeakRecommendationsWithoutPagination' started at 2026-10-11 23:19:43.716
+Test Case 'MkzhanSourceTests.testListsRequireTargetContainerAndDoNotLeakRecommendationsWithoutPagination' passed (0.023 seconds)
+Test Case 'MkzhanSourceTests.testPreCancelledRequestDoesNotReachTransport' started at 2026-10-11 23:19:43.739
+Test Case 'MkzhanSourceTests.testPreCancelledRequestDoesNotReachTransport' passed (0.001 seconds)
+Test Case 'MkzhanSourceTests.testReaderRequestsAPIAndUpgradesHTTPDeduplicatesImages' started at 2026-10-11 23:19:43.740
+Test Case 'MkzhanSourceTests.testReaderRequestsAPIAndUpgradesHTTPDeduplicatesImages' passed (0.001 seconds)
+Test Case 'MkzhanSourceTests.testTitledErrorShellIsRejectedButStructuredEmptyCatalogIsValid' started at 2026-10-11 23:19:43.741
+Test Case 'MkzhanSourceTests.testTitledErrorShellIsRejectedButStructuredEmptyCatalogIsValid' passed (0.025 seconds)
+Test Suite 'MkzhanSourceTests' passed at 2026-10-11 23:19:43.765
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.248 (0.248) seconds
+Test Suite 'SourceImportContractTests' started at 2026-10-11 23:19:43.765
+Test Case 'SourceImportContractTests.testFlatLegacyPathsReachRoutesAndExplicitV2RoutesTakePrecedence' started at 2026-10-11 23:19:43.765
+Test Case 'SourceImportContractTests.testFlatLegacyPathsReachRoutesAndExplicitV2RoutesTakePrecedence' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' started at 2026-10-11 23:19:43.767
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' passed (0.0 seconds)
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' started at 2026-10-11 23:19:43.767
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' started at 2026-10-11 23:19:43.768
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testUnconsumedCompatibilityOverridesAreReportedAndDoNotReplaceStoredValues' started at 2026-10-11 23:19:43.769
+Test Case 'SourceImportContractTests.testUnconsumedCompatibilityOverridesAreReportedAndDoNotReplaceStoredValues' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' started at 2026-10-11 23:19:43.770
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' passed (0.0 seconds)
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' started at 2026-10-11 23:19:43.770
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' passed (0.001 seconds)
+Test Suite 'SourceImportContractTests' passed at 2026-10-11 23:19:43.771
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+Test Suite 'SourcePreferencesTests' started at 2026-10-11 23:19:43.771
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' started at 2026-10-11 23:19:43.771
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' started at 2026-10-11 23:19:43.772
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' started at 2026-10-11 23:19:43.773
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' passed (0.005 seconds)
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' started at 2026-10-11 23:19:43.778
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' passed (0.041 seconds)
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' started at 2026-10-11 23:19:43.820
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' started at 2026-10-11 23:19:43.820
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' passed (0.0 seconds)
+Test Suite 'SourcePreferencesTests' passed at 2026-10-11 23:19:43.821
+Executed 6 tests, with 0 failures (0 unexpected) in 0.05 (0.05) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 23:19:43.821
+Executed 69 tests, with 0 failures (0 unexpected) in 28.264 (28.264) seconds
+exit_code=0

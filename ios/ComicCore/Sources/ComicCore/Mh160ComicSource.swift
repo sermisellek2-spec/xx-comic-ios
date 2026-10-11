@@ -115,7 +115,10 @@ public actor Mh160ComicSource: ComicSource {
             break
         }
         let pagePath = page > 1 ? "\(page).html" : ""
-        let path = config.route("category")
+        let route = config.route("category")
+        // Android's exported template joins placeholders; its filter value owns the slash.
+        if route.contains("{filterPath}{pagePath}"), !filterPath.hasSuffix("/") { filterPath += "/" }
+        let path = route
             .replacingOccurrences(of: "{filterPath}", with: filterPath)
             .replacingOccurrences(of: "{pagePath}", with: pagePath)
             .replacingOccurrences(of: "{page}", with: String(page))

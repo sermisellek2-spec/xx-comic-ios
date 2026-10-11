@@ -163,11 +163,29 @@ public final class SourcePreferences {
             let encoder = JSONEncoder()
             let baseData = try encoder.encode(fallback)
             var normalized = try JSONSerialization.jsonObject(with: baseData) as! [String: Any]
+            let originalFields = normalized
+            let supported = SourceConfigDefaults.defaultConfig(for: id) ?? fallback
+            // These exported fields have no consumer in the current source
+            // interface. Preserve unchanged compatibility values, but report
+            // attempted overrides rather than pretending they affect requests.
+            let unusedRoutes: Set<String> = id == "manhuagui" ? ["latest", "chapter"] : id == "d5d6" ? ["latest"] : []
             for key in ["name", "domain", "baseUrl", "referer", "latestPath", "searchPath", "categoryPath", "detailPath", "enabled"] {
                 if let value = item[key] { normalized[key] = value }
             }
             normalized["id"] = id
-            let supported = SourceConfigDefaults.defaultConfig(for: id) ?? fallback
+            // Old flat paths must reach the same route consumers as v2 routes.
+            // An explicit v2 route takes precedence over its legacy flat field.
+            var legacyRoutes = normalized["routes"] as? [String: String] ?? [:]
+            let explicitRoutes = item["routes"] as? [String: String] ?? [:]
+            for (field, route) in [("latestPath", "latest"), ("searchPath", "search"), ("categoryPath", "category"), ("detailPath", "detail")] {
+                if let path = item[field] as? String {
+                    if unusedRoutes.contains(route), path != supported.route(route) {
+                        warnings.append("已跳过不支持的字段：" + id + "." + field + "（当前请求不消费该字段）")
+                        normalized[field] = originalFields[field]
+                    } else if explicitRoutes[route] == nil { legacyRoutes[route] = path }
+                }
+            }
+            normalized["routes"] = legacyRoutes
             for key in ["routes", "filters"] {
                 guard let overrides = item[key] else { continue }
                 guard let mapping = overrides as? [String: String] else { throw SourceConfigError.invalidFields }
@@ -177,6 +195,10 @@ public final class SourcePreferences {
                 for (field, value) in mapping {
                     guard allowed.contains(field) else {
                         warnings.append("已跳过不支持的字段：" + id + "." + key + "." + field); continue
+                    }
+                    let unusedFilter = key == "filters" && (id == "manhuagui" || (id == "d5d6" && (field.hasPrefix("category.") || field == "state.all")))
+                    if (key == "routes" && unusedRoutes.contains(field) || unusedFilter), value != defaultsMapping?[field] {
+                        warnings.append("已跳过不支持的字段：" + id + "." + key + "." + field + "（当前请求不消费该字段）"); continue
                     }
                     // HiperDEX uses chapter URLs returned by the directory; this route is export compatibility only.
                     if id == "hiperdex", key == "routes", field == "chapter", value != supported.route("chapter") {

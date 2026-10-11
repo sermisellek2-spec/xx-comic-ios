@@ -8,7 +8,7 @@ public enum D5d6SourceError: Error, Equatable, LocalizedError, Sendable {
 
 public struct D5d6ComicSource: ComicSource {
     public let id = "d5d6"
-    public let name = "悦看漫画"
+    public var name: String { config?.name ?? "悦看漫画" }
     public let referer: String
     public let config: SourceConfigItem?
     private let base: String
@@ -30,13 +30,14 @@ public struct D5d6ComicSource: ComicSource {
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try Task.checkCancellation()
         guard page <= 1 else { return [] }
-        let html = try await fetch("/search/\(formEncode(SearchRules.trim(keyword)))/")
+        let path = route("search", fallback: "/search/{keyword}/").replacingOccurrences(of: "{keyword}", with: formEncode(SearchRules.trim(keyword)))
+        let html = try await fetch(path)
         if clean(html).range(of: #"搜索《[^》]+》结果为空，以下是为您推荐的热门作品"#, options: .regularExpression) != nil { return [] }
         return try cards(html)
     }
 
     public func filterGroups() async throws -> [SourceFilterGroup] {
-        var categories = categoryOptions(try await fetch("/jiujiucate_quanbu/"))
+        var categories = categoryOptions(try await fetch(route("categoryIndex", fallback: "/jiujiucate_quanbu/")))
         if categories.isEmpty {
             categories = categoryOptions(try await fetch("/"))
         }
@@ -48,7 +49,7 @@ public struct D5d6ComicSource: ComicSource {
     }
 
     public func categories() async throws -> [String] {
-        var values = categoryOptions(try await fetch("/jiujiucate_quanbu/")).map(\.label)
+        var values = categoryOptions(try await fetch(route("categoryIndex", fallback: "/jiujiucate_quanbu/"))).map(\.label)
         if values.isEmpty {
             values = categoryOptions(try await fetch("/")).map(\.label)
         }
@@ -62,7 +63,7 @@ public struct D5d6ComicSource: ComicSource {
     }
 
     public func detail(comicId: String) async throws -> ComicDetail {
-        let rawID = rawComicID(comicId), html = try await fetch("/jiujiucomic_\(rawID)/")
+        let rawID = rawComicID(comicId), html = try await fetch(detailPath(rawID))
         guard html.range(of: #"article-info-item|cover-box|chapter-list"#, options: [.regularExpression, .caseInsensitive]) != nil else { throw parseError("详情解析失败") }
         let info = raw(#"<div[^>]+class=[\"'][^\"']*article-info-item[^\"']*[\"'][^>]*>[\s\S]*?<div[^>]+class=[\"'][^\"']*mt20[^\"']*[\"'][^>]*>"#, html).isEmpty ? html : raw(#"<div[^>]+class=[\"'][^\"']*article-info-item[^\"']*[\"'][^>]*>[\s\S]*?<div[^>]+class=[\"'][^\"']*mt20[^\"']*[\"'][^>]*>"#, html)
         var title = clean(first(#"<h1[^>]+class=[\"'][^\"']*title[^\"']*[\"'][^>]*>([\s\S]*?)</h1>"#, info))
@@ -78,14 +79,16 @@ public struct D5d6ComicSource: ComicSource {
     }
 
     public func chapters(comicId: String) async throws -> [Chapter] {
-        let rawID = rawComicID(comicId), html = try await fetch("/jiujiucomic_\(rawID)/")
+        let rawID = rawComicID(comicId), html = try await fetch(detailPath(rawID))
         var block = raw(#"<ul[^>]+class=[\"'][^\"']*chapter-list[^\"']*[\"'][^>]*>[\s\S]*?</ul>"#, html)
         if block.isEmpty { block = html }
         var seen = Set<String>(), result: [Chapter] = []
         for match in matches(#"<li>\s*<a[^>]+href=[\"']([^\"']+\.html)[\"'][^>]*>([\s\S]*?)</a>\s*</li>"#, block) {
             let href = decode(match[1]), title = clean(match[2]), chapterID = href.split(separator: "/").last.map(String.init)?.replacingOccurrences(of: ".html", with: "") ?? ""
             guard !title.isEmpty, seen.insert(href).inserted else { continue }
-            let url = href.hasPrefix("http") || href.hasPrefix("/") ? absolute(href) : absolute("/jiujiucomic_\(rawID)/\(chapterID).html")
+            let chapterPath = route("chapter", fallback: "/jiujiucomic_{comicId}/{chapterId}.html")
+                .replacingOccurrences(of: "{comicId}", with: rawID).replacingOccurrences(of: "{chapterId}", with: chapterID)
+            let url = href.hasPrefix("http") || href.hasPrefix("/") ? absolute(href) : absolute(chapterPath)
             result.append(.init(chapterId: chapterID, title: title, url: url, chapterSlot: result.count))
         }
         guard !result.isEmpty || html.range(of: #"chapter-list|article-info-item"#, options: [.regularExpression, .caseInsensitive]) != nil else { throw parseError("目录解析失败") }
@@ -153,7 +156,20 @@ public struct D5d6ComicSource: ComicSource {
     }
 
     private func categoryOptions(_ html: String) -> [SourceFilterOption] { var seen = Set<String>(); return matches(#"href=[\"'](?:https?://www\.d5d6\.com)?/jiujiucate_(jiujiu[^_/]+)(?:_allvisit_\d+_\d+)?/?[\"'][^>]*>([\s\S]*?)</a>"#, html).compactMap { let slug = $0[1], title = clean($0[2]); guard slug != "jiujiuquanbu", !title.isEmpty, seen.insert(title).inserted else { return nil }; return .init(label: title, value: slug) } }
-    private func categoryPath(slug: String, state: String, page: Int) -> String { let finish = state == "serial" ? "1" : state == "pub" ? "2" : "0"; return "/jiujiucate_\(slug)_allvisit_\(finish)_\(max(1, page))/" }
+    private func route(_ key: String, fallback: String) -> String {
+        let value = config?.route(key) ?? ""
+        return value.isEmpty ? fallback : value
+    }
+    private func detailPath(_ id: String) -> String {
+        route("detail", fallback: "/jiujiucomic_{comicId}/").replacingOccurrences(of: "{comicId}", with: id)
+    }
+    private func categoryPath(slug: String, state: String, page: Int) -> String {
+        let mapped = config?.filter("state." + state) ?? ""
+        let finish = !mapped.isEmpty ? mapped : state == "serial" ? "1" : state == "pub" ? "2" : "0"
+        return route("category", fallback: "/jiujiucate_{slug}_allvisit_{finish}_{page}/")
+            .replacingOccurrences(of: "{slug}", with: slug).replacingOccurrences(of: "{finish}", with: finish)
+            .replacingOccurrences(of: "{page}", with: String(max(1, page)))
+    }
     private func rawComicID(_ input: String) -> String { var value = input; if value.hasPrefix("d5d6:") { value.removeFirst(5) }; let found = first(#"jiujiucomic_(\d+)"#, value); return found.isEmpty ? value.filter(\.isNumber) : found }
     private func imageURL(_ tag: String) -> String { for key in ["data-original", "data-src", "src"] { let value = attribute(key, tag); if !value.isEmpty { return cleanURL(value) } }; return "" }
     private func readerImage(_ value: String) -> Bool { let lower = value.lowercased(); return lower.range(of: #"\.(?:jpe?g|png|webp)(?:\?|$)"#, options: .regularExpression) != nil && !lower.contains("logo") && !lower.contains("avatar") && !lower.contains("icon") }

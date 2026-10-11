@@ -36,8 +36,9 @@ public struct MkzhanComicSource: ComicSource {
         }
         if page > 1 { query += "&page=\(page)" }
         let route = config.route("category").isEmpty ? "/category?{query}" : config.route("category")
+        let queryValue = route.contains("?") ? query : "?" + query
         let path = route
-            .replacingOccurrences(of: "{query}", with: query)
+            .replacingOccurrences(of: "{query}", with: queryValue)
             .replacingOccurrences(of: "{page}", with: String(page))
         return try cards(await fetch(path.contains("?") ? path : path + "?" + query))
     }

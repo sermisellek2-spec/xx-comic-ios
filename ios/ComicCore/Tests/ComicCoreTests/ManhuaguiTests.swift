@@ -18,6 +18,27 @@ final class ManhuaguiTests: XCTestCase {
     private func page(_ body: String) async throws -> ChapterPage {
         try await ManhuaguiComicSource(transport:GuiTransport(body)).chapter(url:"/comic/67890/111.html")
     }
+    func testImportedNameBaseRefererAndRoutesReachActualRequestConsumers() async throws {
+        let suite = "gui-config-" + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let preferences = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.activeIDs)
+        _ = try preferences.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"manhuagui","name":"本机漫画柜","baseUrl":"https://fixture.invalid","referer":"https://fixture.invalid/ref/","routes":{"search":"/lookup?q={keyword}","category":"/browse/{obsolete}/","detail":"/book/{comicId}/"}}]}"#)
+        let body = cards + "<div class='filter area'><a href='/list/japan'>日本</a></div><h1>作品</h1><a href='/comic/42/11.html'>第1话</a>"
+        let transport = GuiTransport(body), source = ManhuaguiComicSource(config: try XCTUnwrap(preferences.config(for: "manhuagui")), transport: transport)
+        XCTAssertEqual(source.name, "本机漫画柜")
+        _ = try await source.search(keyword: " 标题 ", page: 1)
+        _ = try await source.latest(page: 2)
+        _ = try await source.category(filters: ["region": "japan", "state": "wanjie"], page: 3)
+        _ = try await source.filterGroups()
+        _ = try await source.detail(comicId: "manhuagui:42")
+        _ = try await source.chapters(comicId: "manhuagui:42")
+        let calls = await transport.captured()
+        XCTAssertEqual(calls.map { $0.0.host }, Array(repeating: "fixture.invalid", count: 6))
+        XCTAssertEqual(calls.map { $0.0.path }, ["/lookup", "/browse/index_p2.html", "/browse/japan-wanjie/index_p3.html", "/browse", "/book/42", "/book/42"])
+        XCTAssertEqual(URLComponents(url: calls[0].0, resolvingAgainstBaseURL: false)?.queryItems?.first?.value, "标题")
+        XCTAssertTrue(calls.allSatisfy { $0.1["Referer"] == "https://fixture.invalid/ref/" })
+    }
     func testCardsPathsHeadersAndSearchPagination() async throws {
         let t = GuiTransport(cards+cards), s = ManhuaguiComicSource(transport:t)
         let result = try await s.latest(page:1)

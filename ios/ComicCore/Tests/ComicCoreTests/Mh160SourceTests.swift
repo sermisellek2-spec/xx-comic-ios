@@ -2,6 +2,31 @@ import XCTest
 @testable import ComicCore
 
 final class Mh160SourceTests: XCTestCase {
+    func testImportedAndroidCategoryTemplateKeepsPathSeparatorAndPagination() async throws {
+        XCTAssertEqual(SourceConfigDefaults.mh160().route("category"), "/kanmanhua/{filterPath}{pagePath}")
+        let suite = "mh160-config-" + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let preferences = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.activeIDs)
+        _ = try preferences.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"mh160","baseUrl":"https://fixture.invalid","routes":{"category":"/kanmanhua/{filterPath}{pagePath}"}}]}"#)
+        let body = "<ul class='mh-search-list'></ul>"
+        let expectedURLs = ["https://fixture.invalid/kanmanhua/all/", "https://fixture.invalid/kanmanhua/rexue/2.html"]
+        let transport = Mh160StubTransport(responses: Dictionary(uniqueKeysWithValues: expectedURLs.map { ($0, mh160Response(body)) }))
+        let source = Mh160ComicSource(config: try XCTUnwrap(preferences.config(for: "mh160")), transport: transport)
+        let first = try await source.category(filters: [:], page: 1)
+        let filtered = try await source.category(filters: ["subject": "/rexue"], page: 2)
+        XCTAssertEqual(first, [])
+        XCTAssertEqual(filtered, [])
+        let requests = await transport.requests()
+        XCTAssertEqual(requests.map(\.url), expectedURLs)
+        _ = try preferences.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"mh160","routes":{"category":"/kanmanhua/{filterPath}/{pagePath}"}}]}"#)
+        let legacy = Mh160ComicSource(config: try XCTUnwrap(preferences.config(for: "mh160")), transport: transport)
+        _ = try await legacy.category(filters: [:], page: 1)
+        _ = try await legacy.category(filters: ["subject": "/rexue"], page: 2)
+        let allRequests = await transport.requests()
+        XCTAssertEqual(allRequests.map(\.url), expectedURLs + expectedURLs)
+    }
+
     func testIdentityLatestSearchAndCardsMatchAndroidContracts() async throws {
         let html = """
         <html><body><ul class="mh-search-list clearfix">

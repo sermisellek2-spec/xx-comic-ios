@@ -1,0 +1,50 @@
+{
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "android_blob_sha256": "5036fd47e7f5bfaf651a2521603604af1f5b56d990bef40daecce32c209b43ac",
+  "ios_input": "ios/ComicCore/Sources/ComicCore/SourceConfigModels.swift",
+  "ios_sha256": "32e5a7a6b1a96606abc63c4491c53c2436abcbc1153566f5ac772ddda873f8e1",
+  "scope": "两源默认路由字面量核对；旧配置实际请求另有离线回归，不是网站可用性验收",
+  "items": [
+    {
+      "id": "mh160",
+      "android_routes": {
+        "latest": "/kanmanhua/all/{pagePath}",
+        "search": "/statics/searchelxt1e1.aspx?key={keyword}{pageQuery}",
+        "category": "/kanmanhua/{filterPath}{pagePath}",
+        "detail": "/kanmanhua/{comicId}/",
+        "chapter": "{chapterUrl}"
+      },
+      "ios_routes": {
+        "latest": "/kanmanhua/all/{pagePath}",
+        "search": "/statics/searchelxt1e1.aspx?key={keyword}{pageQuery}",
+        "category": "/kanmanhua/{filterPath}{pagePath}",
+        "detail": "/kanmanhua/{comicId}/",
+        "chapter": "{chapterUrl}"
+      },
+      "literal_routes_match": true,
+      "actual_request_regression": "config-consumer-aligned-regression.log"
+    },
+    {
+      "id": "mkzhan",
+      "android_routes": {
+        "latest": "/category{query}",
+        "search": "/search/?keyword={keyword}",
+        "category": "/category{query}",
+        "detail": "/{comicId}/",
+        "chapter": "/{comicId}/{chapterId}.html",
+        "chapterApi": "https://comic.mkzcdn.com/chapter/content/v1/?chapter_id={chapterId}&comic_id={comicId}&quality=1&type=1&format=0&uid=&sign="
+      },
+      "ios_routes": {
+        "latest": "/category{query}",
+        "search": "/search/?keyword={keyword}",
+        "category": "/category{query}",
+        "detail": "/{comicId}/",
+        "chapter": "/{comicId}/{chapterId}.html",
+        "chapterApi": "https://comic.mkzcdn.com/chapter/content/v1/?chapter_id={chapterId}&comic_id={comicId}&quality=1&type=1&format=0&uid=&sign="
+      },
+      "literal_routes_match": true,
+      "actual_request_regression": "config-consumer-aligned-regression.log"
+    }
+  ],
+  "real_website_requests": 0
+}

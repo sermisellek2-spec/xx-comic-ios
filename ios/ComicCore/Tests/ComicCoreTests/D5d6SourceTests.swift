@@ -8,6 +8,35 @@ final class D5d6SourceTests: XCTestCase {
     <li><div class="cart-item"><a class="cart-cover" href="/jiujiucomic_7/"><img data-src="/b.webp" alt="月"></a><div class="cart-info"><p><a>月</a></p></div></div></li></ul>
     """
 
+    func testImportedRoutesStateMappingNameAndRefererReachRequestsAndRelativeChapter() async throws {
+        let suite = "d5-config-" + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let preferences = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.activeIDs)
+        _ = try preferences.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"d5d6","name":"本机悦看","baseUrl":"https://fixture.invalid","referer":"https://fixture.invalid/ref/","routes":{"search":"/lookup/{keyword}/","category":"/browse/{slug}/{finish}/{page}/","categoryIndex":"/genres/","detail":"/book/{comicId}/","chapter":"/read/{comicId}/{chapterId}.html"},"filters":{"state.pub":"8"}}]}"#)
+        let index = "<a href='/jiujiucate_jiujiuriben_allvisit_0_1/'>日本</a>"
+        let detail = "<div class='article-info-item'><h1>作品</h1></div><ul class='chapter-list'><li><a href='11.html'>第1话</a></li><li><a href='/original/12.html'>第2话</a></li></ul>"
+        let transport = D5d6Transport([
+            "https://fixture.invalid/lookup/title/": .text(cards),
+            "https://fixture.invalid/browse/jiujiuquanbu/0/2/": .text(cards),
+            "https://fixture.invalid/browse/jiujiuriben/8/3/": .text(cards),
+            "https://fixture.invalid/genres/": .text(index),
+            "https://fixture.invalid/book/42/": .text(detail)
+        ])
+        let source = D5d6ComicSource(config: try XCTUnwrap(preferences.config(for: "d5d6")), transport: transport)
+        XCTAssertEqual(source.name, "本机悦看")
+        _ = try await source.search(keyword: " title ", page: 1)
+        _ = try await source.latest(page: 2)
+        _ = try await source.category(filters: ["category": "jiujiuriben", "state": "pub"], page: 3)
+        _ = try await source.filterGroups()
+        _ = try await source.detail(comicId: "d5d6:42")
+        let chapters = try await source.chapters(comicId: "d5d6:42")
+        XCTAssertEqual(chapters.map(\.url), ["https://fixture.invalid/read/42/11.html", "https://fixture.invalid/original/12.html"])
+        let calls = await transport.requests
+        XCTAssertEqual(calls.count, 6)
+        XCTAssertTrue(calls.allSatisfy { $0.headers["Referer"] == "https://fixture.invalid/ref/" })
+    }
+
     func testLatestSearchFiltersAndCategoryKeepRequestsFallbackAndOrdering() async throws {
         let index = """
         <a href="/jiujiucate_jiujiuquanbu_allvisit_0_1/">全部</a>

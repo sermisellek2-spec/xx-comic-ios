@@ -191,13 +191,13 @@ public enum SourceConfigDefaults {
             referer: "https://www.mh160mh.com/",
             latestPath: "/kanmanhua/all/{pagePath}",
             searchPath: "/statics/searchelxt1e1.aspx?key={keyword}{pageQuery}",
-            categoryPath: "/kanmanhua/{filterPath}/{pagePath}",
+            categoryPath: "/kanmanhua/{filterPath}{pagePath}",
             detailPath: "/kanmanhua/{comicId}/",
             enabled: enabled,
             routes: [
                 "latest": "/kanmanhua/all/{pagePath}",
                 "search": "/statics/searchelxt1e1.aspx?key={keyword}{pageQuery}",
-                "category": "/kanmanhua/{filterPath}/{pagePath}",
+                "category": "/kanmanhua/{filterPath}{pagePath}",
                 "detail": "/kanmanhua/{comicId}/",
                 "chapter": "{chapterUrl}"
             ],
@@ -275,15 +275,15 @@ public enum SourceConfigDefaults {
             domain: "www.mkzhan.com",
             baseUrl: "https://www.mkzhan.com",
             referer: "https://www.mkzhan.com/",
-            latestPath: "/category{pageQuery}",
+            latestPath: "/category{query}",
             searchPath: "/search/?keyword={keyword}",
-            categoryPath: "/category?{query}",
+            categoryPath: "/category{query}",
             detailPath: "/{comicId}/",
             enabled: enabled,
             routes: [
-                "latest": "/category{pageQuery}",
+                "latest": "/category{query}",
                 "search": "/search/?keyword={keyword}",
-                "category": "/category?{query}",
+                "category": "/category{query}",
                 "detail": "/{comicId}/",
                 "chapter": "/{comicId}/{chapterId}.html",
                 "chapterApi": "https://comic.mkzcdn.com/chapter/content/v1/?chapter_id={chapterId}&comic_id={comicId}&quality=1&type=1&format=0&uid=&sign="
@@ -550,7 +550,11 @@ public enum SourceConfigDefaults {
                 "detail": "/jiujiucomic_{comicId}/",
                 "chapter": "/jiujiucomic_{comicId}/{chapterId}.html"
             ],
-            filters: [:]
+            filters: [
+                "category.all": "jiujiuquanbu", "category.cn": "jiujiudalu",
+                "category.jp": "jiujiuriben", "category.kr": "jiujiuhanguo", "category.en": "jiujiuoumei",
+                "state.all": "0", "state.serial": "1", "state.pub": "2"
+            ]
         )
     }
 

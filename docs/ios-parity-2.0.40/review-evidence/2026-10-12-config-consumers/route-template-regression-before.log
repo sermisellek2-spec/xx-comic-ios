@@ -1,0 +1,71 @@
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[0/4] Write swift-version-24593BA9C3E375BF.txt
+[3/5] Compiling ComicCoreTests Mh160SourceTests.swift
+[4/5] Emitting module ComicCoreTests
+[5/6] Compiling ComicCoreTests MkzhanSourceTests.swift
+[6/14] Wrapping AST for ComicCoreTests for debugging
+[7/14] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[8/15] Write sources
+[10/17] Emitting module ComicCorePackageDiscoveredTests
+[11/17] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[12/18] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[13/19] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[14/19] Write sources
+[15/19] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[17/21] Emitting module ComicCorePackageTests
+[18/21] Compiling ComicCorePackageTests runner.swift
+[19/21] Write Objects.LinkFileList
+[20/21] Linking ComicCorePackageTests.xctest
+Build complete! (36.20s)
+Test Suite 'Selected tests' started at 2026-10-11 23:18:41.666
+Test Suite 'Mh160SourceTests' started at 2026-10-11 23:18:41.683
+Test Case 'Mh160SourceTests.testChapterDecodesPayloadFiltersNoiseDeduplicatesAndSwitchesImageHosts' started at 2026-10-11 23:18:41.683
+Test Case 'Mh160SourceTests.testChapterDecodesPayloadFiltersNoiseDeduplicatesAndSwitchesImageHosts' passed (0.016 seconds)
+Test Case 'Mh160SourceTests.testDetailNormalizesLegacyIDAndIncludesOldestFirstScopedCatalog' started at 2026-10-11 23:18:41.699
+Test Case 'Mh160SourceTests.testDetailNormalizesLegacyIDAndIncludesOldestFirstScopedCatalog' passed (0.036 seconds)
+Test Case 'Mh160SourceTests.testDetailRejectsEmptyBusinessShellButKeepsTitleFallbackWithRealMetadata' started at 2026-10-11 23:18:41.735
+Test Case 'Mh160SourceTests.testDetailRejectsEmptyBusinessShellButKeepsTitleFallbackWithRealMetadata' passed (0.075 seconds)
+Test Case 'Mh160SourceTests.testExplicitEmptyListAndCatalogContainersAreAccepted' started at 2026-10-11 23:18:41.810
+Test Case 'Mh160SourceTests.testExplicitEmptyListAndCatalogContainersAreAccepted' passed (0.008 seconds)
+Test Case 'Mh160SourceTests.testFilterGroupsPreserveDocumentOrderAndCategoryUsesFirstSelectedPriority' started at 2026-10-11 23:18:41.818
+Test Case 'Mh160SourceTests.testFilterGroupsPreserveDocumentOrderAndCategoryUsesFirstSelectedPriority' passed (0.024 seconds)
+Test Case 'Mh160SourceTests.testHTTPUTF8AndCancellationErrorsPropagate' started at 2026-10-11 23:18:41.842
+Test Case 'Mh160SourceTests.testHTTPUTF8AndCancellationErrorsPropagate' passed (0.001 seconds)
+Test Case 'Mh160SourceTests.testIdentityLatestSearchAndCardsMatchAndroidContracts' started at 2026-10-11 23:18:41.842
+Test Case 'Mh160SourceTests.testIdentityLatestSearchAndCardsMatchAndroidContracts' passed (0.032 seconds)
+Test Case 'Mh160SourceTests.testImportedAndroidCategoryTemplateKeepsPathSeparatorAndPagination' started at 2026-10-11 23:18:41.875
+<EXPR>:0: error: Mh160SourceTests.testImportedAndroidCategoryTemplateKeepsPathSeparatorAndPagination : threw error "missingResponse("https://fixture.invalid/kanmanhua/all")"
+Test Case 'Mh160SourceTests.testImportedAndroidCategoryTemplateKeepsPathSeparatorAndPagination' failed (0.086 seconds)
+Test Case 'Mh160SourceTests.testMalformedHTMLAndErrorShellsThrowInsteadOfLookingEmpty' started at 2026-10-11 23:18:41.960
+Test Case 'Mh160SourceTests.testMalformedHTMLAndErrorShellsThrowInsteadOfLookingEmpty' passed (0.01 seconds)
+Test Case 'Mh160SourceTests.testReaderRejectsEmptyOrFilteredToEmptyPayloadLikeAndroid' started at 2026-10-11 23:18:41.971
+Test Case 'Mh160SourceTests.testReaderRejectsEmptyOrFilteredToEmptyPayloadLikeAndroid' passed (0.0 seconds)
+Test Suite 'Mh160SourceTests' failed at 2026-10-11 23:18:41.971
+	 Executed 10 tests, with 1 failure (1 unexpected) in 0.288 (0.288) seconds
+Test Suite 'MkzhanSourceTests' started at 2026-10-11 23:18:41.971
+Test Case 'MkzhanSourceTests.testDetailHasSameResponseCatalogWithCompoundIDsAndNoReadShortcut' started at 2026-10-11 23:18:41.971
+Test Case 'MkzhanSourceTests.testDetailHasSameResponseCatalogWithCompoundIDsAndNoReadShortcut' passed (0.023 seconds)
+Test Case 'MkzhanSourceTests.testErrorShellAndHTTPFailureAreNotEmptySuccess' started at 2026-10-11 23:18:41.994
+Test Case 'MkzhanSourceTests.testErrorShellAndHTTPFailureAreNotEmptySuccess' passed (0.001 seconds)
+Test Case 'MkzhanSourceTests.testFilterLabelsAndQueryValuesFollowPageOrder' started at 2026-10-11 23:18:41.995
+Test Case 'MkzhanSourceTests.testFilterLabelsAndQueryValuesFollowPageOrder' passed (0.023 seconds)
+Test Case 'MkzhanSourceTests.testImportedAndroidQueryTemplateKeepsQuestionMarkAndPagination' started at 2026-10-11 23:18:42.018
+<EXPR>:0: error: MkzhanSourceTests.testImportedAndroidQueryTemplateKeepsQuestionMarkAndPagination : threw error "Error Domain=NSURLErrorDomain Code=-1000 "(null)""
+Test Case 'MkzhanSourceTests.testImportedAndroidQueryTemplateKeepsQuestionMarkAndPagination' failed (0.027 seconds)
+Test Case 'MkzhanSourceTests.testLatestAndCategoryDifferAndSearchOnlyRequestsPageOne' started at 2026-10-11 23:18:42.045
+Test Case 'MkzhanSourceTests.testLatestAndCategoryDifferAndSearchOnlyRequestsPageOne' passed (0.076 seconds)
+Test Case 'MkzhanSourceTests.testListsRequireTargetContainerAndDoNotLeakRecommendationsWithoutPagination' started at 2026-10-11 23:18:42.120
+Test Case 'MkzhanSourceTests.testListsRequireTargetContainerAndDoNotLeakRecommendationsWithoutPagination' passed (0.021 seconds)
+Test Case 'MkzhanSourceTests.testPreCancelledRequestDoesNotReachTransport' started at 2026-10-11 23:18:42.141
+Test Case 'MkzhanSourceTests.testPreCancelledRequestDoesNotReachTransport' passed (0.001 seconds)
+Test Case 'MkzhanSourceTests.testReaderRequestsAPIAndUpgradesHTTPDeduplicatesImages' started at 2026-10-11 23:18:42.142
+Test Case 'MkzhanSourceTests.testReaderRequestsAPIAndUpgradesHTTPDeduplicatesImages' passed (0.0 seconds)
+Test Case 'MkzhanSourceTests.testTitledErrorShellIsRejectedButStructuredEmptyCatalogIsValid' started at 2026-10-11 23:18:42.142
+Test Case 'MkzhanSourceTests.testTitledErrorShellIsRejectedButStructuredEmptyCatalogIsValid' passed (0.025 seconds)
+Test Suite 'MkzhanSourceTests' failed at 2026-10-11 23:18:42.167
+	 Executed 9 tests, with 1 failure (1 unexpected) in 0.196 (0.196) seconds
+Test Suite 'Selected tests' failed at 2026-10-11 23:18:42.167
+Executed 19 tests, with 2 failures (2 unexpected) in 0.484 (0.484) seconds
+exit_code=1

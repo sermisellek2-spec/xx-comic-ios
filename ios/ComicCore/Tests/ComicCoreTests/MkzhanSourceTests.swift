@@ -11,6 +11,37 @@ final class MkzhanSourceTests: XCTestCase {
     <div id="Pagination"></div></div><div class="common-comic-item" data-cid="999"><img alt="推荐"></div>
     """
 
+    func testImportedAndroidQueryTemplateKeepsQuestionMarkAndPagination() async throws {
+        XCTAssertEqual(SourceConfigDefaults.mkzhan().route("latest"), "/category{query}")
+        XCTAssertEqual(SourceConfigDefaults.mkzhan().route("category"), "/category{query}")
+        let suite = "mkzhan-config-" + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let preferences = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.activeIDs)
+        _ = try preferences.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"mkzhan","baseUrl":"https://fixture.invalid","routes":{"latest":"/category{query}","category":"/category{query}"}}]}"#)
+        let expectedURLs = [
+            "https://fixture.invalid/category?page=2",
+            "https://fixture.invalid/category?is_free=1",
+            "https://fixture.invalid/category?is_free=1&theme_id=9&finish=2&page=4"
+        ]
+        let transport = MkzhanTransport(Dictionary(uniqueKeysWithValues: expectedURLs.map { ($0, cards) }))
+        let source = MkzhanComicSource(config: try XCTUnwrap(preferences.config(for: "mkzhan")), transport: transport)
+        let latest = try await source.latest(page: 2)
+        let first = try await source.category(filters: [:], page: 1)
+        let filtered = try await source.category(filters: ["finish": "2", "theme_id": "9"], page: 4)
+        XCTAssertEqual(first, latest)
+        XCTAssertEqual(filtered, latest)
+        let requests = await transport.requests
+        XCTAssertEqual(requests.map { $0.0 }, expectedURLs)
+        _ = try preferences.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"mkzhan","routes":{"latest":"/category{pageQuery}","category":"/category?{query}"}}]}"#)
+        let legacy = MkzhanComicSource(config: try XCTUnwrap(preferences.config(for: "mkzhan")), transport: transport)
+        _ = try await legacy.latest(page: 2)
+        _ = try await legacy.category(filters: [:], page: 1)
+        _ = try await legacy.category(filters: ["finish": "2", "theme_id": "9"], page: 4)
+        let allRequests = await transport.requests
+        XCTAssertEqual(allRequests.map { $0.0 }, expectedURLs + expectedURLs)
+    }
+
     func testLatestAndCategoryDifferAndSearchOnlyRequestsPageOne() async throws {
         let transport = MkzhanTransport([
             "https://www.mkzhan.com/category?page=2": cards,

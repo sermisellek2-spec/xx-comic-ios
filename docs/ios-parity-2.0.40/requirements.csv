@@ -25,8 +25,8 @@ DISC-04,P2,分类,分类条件底部抽屉草稿确认取消和工具区收放,M
 DETAIL-01,P2,详情,封面文案布局卷信息收藏继续阅读与失败恢复,MainActivity.java;CoverLayoutHelper.java,待验收,D29：全宽190/220/250封面、圆角信息区/内联动作/标签与底部收藏阅读已修改；反馈状态6项通过；封面及控制器原生/视觉待验收
 DETAIL-02,P2,换源,详情换源搜索候选选择取消与范围不限发现分组,MainActivity.java,待验收,D21/D63：换源/离开取消旧请求；阅读取消进一步传至实际目录worker，阻止下载接管等待旧任务；受控悬挂取消/重试/双向接管完整UI当前待Apple
 CONFIG-01,P2,配置,所有设置入口默认值取值范围即时生效与重启持久化,MainActivity.java,待验收,3+6+2当前设置/主题选择面板、自动跟随文案及淘汰左右手已修；SettingsParity持久化/即时生效未原生运行；其余默认值继续核对
-CONFIG-02,P2,源协议,稳定ID注册开关排序分组和配置消费者一致,DownloadSources.java;source/SourceConfig.java,待核对,HiperDEX默认配置与生产51注册2项Apple通过；其余适配器实际字段消费者仍需审计
-CONFIG-03,P2,源配置,xx-comic.sources导入导出及不支持字段真实提示,source/SourceConfig.java,待验收,导入整体预检/未来版本及非法URL拒绝/未知退役自定义及不支持字段报告跳过；22项配置导入相关核心通过；完整字段消费和UI待验收
+CONFIG-02,P2,源协议,稳定ID注册开关排序分组和配置消费者一致,DownloadSources.java;source/SourceConfig.java,待核对,D71：漫画柜/悦看名称及路由状态消费、漫画160/漫客栈安卓与旧iOS模板兼容已补；默认字面量与冻结一致，离线影响回归77项通过；51/默认50目录不变；其余字段与完整UI仍需审计；review-evidence/2026-10-12-config-consumers/README.md
+CONFIG-03,P2,源配置,xx-comic.sources导入导出及不支持字段真实提示,source/SourceConfig.java,待验收,D71：旧平铺字段接入实际routes，显式v2优先；已确认无消费者的兼容字段改动提示跳过；整体验证/未来版本及非法URL拒绝继续保留；当前77项影响回归通过，全部字段和Apple导入UI仍待验收
 CONFIG-04,P2,缓存,缓存查看清理确认与下载原包数据保护,MainActivity.java,失败,当前由HTTPResponseCache/URLCache归属API后台清理、合并并发并恢复容量，不写假0；c55d4a3 Apple磁盘清空占用断言失败，继续记录真实残留、响应命中与等待结果；原包/下载/未知文件保护仍须完整原生验收
 CONFIG-05,P2,日志,日志查看导出清理与敏感字段脱敏,MainActivity.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：ErrorLogStore.swift;ErrorLogSanitizer.swift;ErrorLogsViewController.swift;ErrorLogStoreTests.swift
 CONFIG-06,P2,关于更新,关于版本外链更新提示及iOS分发等效流程,update;MainActivity.java,待验收,仅指定iOS仓库HTTPS Releases/IPA链接；APK及旧仓库回退iOS Releases；失败可重试/浏览器查看；IOSUpdatePolicy2项核心通过；UI未运行
@@ -60,10 +60,10 @@ DOWNLOAD-02,P4,续传,Range与ETag断网重启任务恢复及损坏修复,downlo
 DOWNLOAD-03,P4,书架,下载完成接入本地书架断网阅读和删除任务协调,download/DownloadStorageManager.java;MainActivity.java,待验收,D25：离线图像只读取完成任务已记录页并后台校验；9b1d4a2两设备离线解码各1项通过；断网/取消/重启及损坏修复完整UI仍待验收；D61统一真实损坏入口及返回重校验，独立关闭不被网络设置覆盖，当前章/连续下一章两个真文件修复UI待Apple
 DOWNLOAD-04,P4,位置,自定义目录授权映射可读命名和冲突处理,download/DownloadLocation.java;DownloadDirMapping.java;DownloadNamingPolicy.java,待验收,自定义位置和协调消费者已接，下载/重新下载对应第八轮UI通过；新增真实跨应用Files目录选择/重启保留/离线384×384像素用例尚待Apple运行，不以注入授权测试冒充外部提供器
 DOWNLOAD-05,P4,策略,Wi-Fi开关持久化配额前后台调度和恢复提示,download/DownloadRuntime.java;DownloadService.java,待验收,D69：独立重试计时、启动/网络策略调度、有限后台授权与有序前后台交接已补；真实文件调度6项通过；Linux当前全量889项/2个Apple PDF跳过/0失败；新增3原生与2真实HTTP UI未运行，不等于系统后台配额通过；review-evidence/2026-10-12-download-lifecycle/README.md
-DOWNLOAD-06,P4,能力范围,核对当前源实际文件下载能力并剔除不可达旧入口,download/FileDownloadWorker.java;DownloadSources.java,待核对,冻结source包只声明FileSourceCapability，没有当前实现；生产工厂与51源无可达文件型入口，旧完整/缺失断言撤回，不新增预留功能；stages/SOURCE_FILE_SCOPE.md与file-source-scope-proof.json；本地电子书导入仍在范围
+DOWNLOAD-06,P4,能力范围,核对当前源实际文件下载能力并剔除不可达旧入口,download/FileDownloadWorker.java;DownloadSources.java,通过,已从冻结Git对象完成静态范围核对：source包只声明FileSourceCapability，没有当前实现；正式工厂51源无可达文件型入口，旧完整/缺失断言撤回，不新增预留功能；stages/SOURCE_FILE_SCOPE.md与file-source-scope-proof.json；本地电子书导入仍在范围；此通过仅为范围核对，不代表队列/Files/后台或网站验收
 DOWNLOAD-07,P4,记录保护,下载写入失败回滚真实反馈与保存后恢复，不假报排队/完成,download/DownloadStore.java;DownloadRuntime.java,待验收,D70：真实downloads.json写入失败5项、下载影响回归53项通过，原断言保留；下载中心可见错误及实际重试入口已补，Apple界面/磁盘满/权限恢复待验收；review-evidence/2026-10-12-download-lifecycle/README.md
 VERIFY-01,P2,验证UI,验证等待成功取消过期和返回重试用fixture贯通,MainActivity.java;source,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：SourceVerificationUI.swift;Mh18BrowserSession.swift;Mh18VerificationAttemptTests.swift;Mh18VerificationRulesTests.swift
-GATE-01,P5,完整性,逐入口反查全部非站源需求与实际消费者无漏项,MainActivity.java;app/src/main,待核对,新确认LOCAL04/07/08实际入口缺实现，继续补齐；配置消费者/默认值/共同fixture未完整；entry-consumer-audit.md
+GATE-01,P5,完整性,逐入口反查全部非站源需求与实际消费者无漏项,MainActivity.java;app/src/main,待核对,已补LOCAL04/07/08接线及下载D69/D70；配置D71局部请求通过，全部消费者/默认值/共同fixture和Apple完整闭环未齐，继续逐入口审计；entry-consumer-audit.md
 GATE-02,P5,视觉,全应用8场景真截图叠图及逐组件对照,UIHelpers.java;app/src/main/res,待验收,设置页两端8参考取得，但缓存状态不同且其他页面金标/叠图/组件差分未完成；分组留白/字体/右值对齐视觉仍有差异
 GATE-03,P5,交互,全应用正常异常取消恢复长按手势和返回闭环,app/src/androidTest,待验收,9b1d4a2两设备UI各49/51条失败，主要标题按钮亦有下载关闭/空结果tab待定位；当前根因修复及新恢复UI待阶段回归
 GATE-04,P5,平台,当前版本Apple构建及必要UI图像PDFWebKitFiles检查,ios/scripts/build.sh,待验收,第八轮b69517c完整UI有7/9失败用例；第九轮b9f368d SDK/Core876通过，但辅助Files目标缺版本字段安装失败，Native/UI未执行。当前已修、增加P1/主屏/原图用例，76源码仅语法通过，完整Apple待运行

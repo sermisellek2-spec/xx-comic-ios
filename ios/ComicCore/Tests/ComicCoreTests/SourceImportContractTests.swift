@@ -61,4 +61,28 @@ final class SourceImportContractTests: XCTestCase {
             XCTAssertTrue(store.isEnabled("hiperdex"))
         }
     }
+
+    func testFlatLegacyPathsReachRoutesAndExplicitV2RoutesTakePrecedence() throws {
+        try withStore { store in
+            _ = try store.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":1,"sources":[{"id":"hiperdex","searchPath":"/legacy?q={keyword}","detailPath":"/legacy/{comicId}"}]}"#)
+            XCTAssertEqual(store.config(for: "hiperdex")?.route("search"), "/legacy?q={keyword}")
+            XCTAssertEqual(store.config(for: "hiperdex")?.route("detail"), "/legacy/{comicId}")
+            _ = try store.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"hiperdex","searchPath":"/old","routes":{"search":"/v2?q={keyword}"}}]}"#)
+            XCTAssertEqual(store.config(for: "hiperdex")?.route("search"), "/v2?q={keyword}")
+        }
+    }
+
+    func testUnconsumedCompatibilityOverridesAreReportedAndDoNotReplaceStoredValues() throws {
+        try withStore { store in
+            let result = try store.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"manhuagui","latestPath":"/unused-flat","routes":{"latest":"/unused","chapter":"/unused/{chapterId}","search":"/supported?q={keyword}"},"filters":{"region.jp":"unused"}},{"id":"d5d6","latestPath":"/unused","routes":{"latest":"/unused"},"filters":{"category.jp":"unused","state.all":"9","state.pub":"8"}}]}"#)
+            XCTAssertEqual(result.totalSources, 2)
+            for field in ["manhuagui.routes.latest", "manhuagui.routes.chapter", "manhuagui.filters.region.jp", "d5d6.latestPath", "d5d6.routes.latest", "d5d6.filters.category.jp", "d5d6.filters.state.all"] {
+                XCTAssertTrue(result.warnings.contains { $0.contains(field) }, field)
+            }
+            XCTAssertEqual(store.config(for: "manhuagui")?.route("latest"), SourceConfigDefaults.manhuagui().route("latest"))
+            XCTAssertEqual(store.config(for: "manhuagui")?.route("search"), "/supported?q={keyword}")
+            XCTAssertEqual(store.config(for: "manhuagui")?.filter("region.jp"), "japan")
+            XCTAssertEqual(store.config(for: "d5d6")?.filter("state.pub"), "8")
+        }
+    }
 }
