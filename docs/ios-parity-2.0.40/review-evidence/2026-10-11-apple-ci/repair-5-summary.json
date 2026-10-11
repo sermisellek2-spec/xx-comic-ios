@@ -1,0 +1,19 @@
+{
+  "run": 38149042092,
+  "commit": "e29824a6e04f3fd7ed1821a55f0ec1c70c0b15b8",
+  "conclusion": "failure",
+  "scope": "full",
+  "package_ipa": false,
+  "debug_sdk": "failed",
+  "release_sdk": "not_run",
+  "apple_core": "not_run",
+  "iphone_native_ui": "not_run",
+  "ipad_native_ui": "not_run",
+  "errors": [
+    "2026-10-11T14:54:46.9883830Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComic/SettingsViewController.swift:37:89: error: ambiguous use of 'leastNormalMagnitude'"
+  ],
+  "raw_log_sha256": "93ba5f5b2a36c8be79cebda590e5ffa9e868083862d11083d3da50b2b5febc88",
+  "local_fix": "CGFloat.leastNormalMagnitude explicitly selects the UIKit scalar type; failure screenshots and per-test JSON added to evidence artifact paths.",
+  "fix_apple_result": "not_run",
+  "non_source_gate": false
+}

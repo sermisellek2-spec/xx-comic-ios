@@ -1,6 +1,6 @@
 # Android 2.0.40 → iOS 当前对照状态
 
-最新已运行f4eaf93第四轮foundation-import：两配置SDK、Apple核心853项0失败及两设备原生各19通过；两设备UI各7项执行/3条失败。我的书架、阅读偏好、未读/列表切换及部分恢复重启通过，本地标题仍未找到。当前应用内容区单标题行提供两真实44pt按钮，修设置边距/分组/右值；下载预选与空结果tab两项测试前提按冻结规则纠正，关闭/重下载/不支持搜索原断言保留。下一轮默认full完整Apple自验，package_ipa显式最终打包开关默认false，不生成IPA。非站源及真实51源完整门槛仍未通过。 [第四轮实际记录](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/repair-4-summary.json)。下文各提交结果按其版本保留，不继承当前通过。
+最新第五轮e29824a完整范围CI在Debug SDK编译失败：SettingsViewController的leastNormalMagnitude类型歧义；Release、核心、两设备原生/UI均未运行，不能继承第四轮结果为该版本通过。已显式改为CGFloat，并补失败PNG/逐用例JSON上传路径，接下来重跑完整Apple自验。package_ipa仍为false，不生成IPA；非站源及真实51源完整门槛仍未通过。 [第五轮实际记录](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/repair-5-summary.json)。下文历史结果仅对应各自提交。
 
 冻结基线696e80a44ab36b19de6f630565df32978e55a19e、2.0.40/340。iOS最新已运行快照9b1d4a2，完整UI仍失败；当前标准导航/批量恢复/同步反馈修复待Apple回归。**尚未完整1:1，非站源门槛未通过。**
 

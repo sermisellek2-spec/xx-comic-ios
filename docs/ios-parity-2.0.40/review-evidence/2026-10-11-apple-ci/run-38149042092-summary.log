@@ -1,0 +1,3 @@
+2026-10-11T14:54:46.9883830Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComic/SettingsViewController.swift:37:89: error: ambiguous use of 'leastNormalMagnitude'
+2026-10-11T14:54:47.0885310Z ** BUILD FAILED **
+2026-10-11T14:54:47.0885470Z The following build commands failed:

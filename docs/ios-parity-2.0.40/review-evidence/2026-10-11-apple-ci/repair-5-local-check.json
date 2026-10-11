@@ -1,0 +1,36 @@
+{
+  "base_commit": "e29824a6e04f3fd7ed1821a55f0ec1c70c0b15b8",
+  "native_syntax": {
+    "files": 66,
+    "release_exit": 0,
+    "debug_exit": 0,
+    "scope": "parse only; no Apple type or runtime claim"
+  },
+  "core_changed": false,
+  "apple_fix": "not_run",
+  "non_source_gate": false,
+  "task_files_sha256": {
+    ".github/workflows/ios.yml": "9866a0b5ebe066b42e807607765504c3173b295ba18b77b3d95f6a8abe230720",
+    "docs/IOS_2_0_40_PHASED_DEVELOPMENT.md": "b40c5574fef03ad6da913689487d7b812fc9ee8c80912b6ef7eee14094936b5b",
+    "docs/comparisons/2026-10-11-ios-android-current-assessment.md": "cf69e7f5a4fc4642789e25dd9eb281980136a721a999c95fe6724ba5a03608e4",
+    "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md": "4eb19bfffedfab6ad9e2d150c3d837a4a2085b6e5ddc15d6ef2d2de3f986c0c4",
+    "docs/ios-parity-2.0.40/STATUS.md": "6717449ef67e4c01591ef91578bce5dd0bb5d6ec7e87cbc564f1bff5daaf54cc",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/README.md": "086ca66ac19782bab2cc89c91ced02b8700ffa6fa2f34bd50d0a1b8ea935a158",
+    "ios/PARITY.md": "652f988797c8bd18c02b4c13c04819dfb4e6d24ddd15520f5ca880615a3abcdc",
+    "ios/README.md": "51045ace439a4505107afcefe285dcb541742d852a57ed79bb9a7de7d9d1616e",
+    "ios/XXComic/SettingsViewController.swift": "bdd5d6471fca5f47647c402546098c0f408ea14653e79575233262c1f432bd18",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/fifth-runs.json": "95d26a55612b0a8849eb9a04343ebf901ff2e46d362e9629011242fb14590f68",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/fifth-run-current.json": "2a45de21eef44348237fd831303d8d8d2e19f4eb940e3173e9437dda453e9f41",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/fifth-log-download.json": "3ee77234829763d0e6fbcb22a6c2b9d0c813ed3809e8ee3dec56b72c9d45323f",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/repair-5-summary.json": "3303a2d99375aa0e9cc3bec3c92844e138fbbb85076a3afc64eb1b29606d3069",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/run-38149042092-summary.log": "2910b49f68813d4f7a39199de5c81053e2311fdd8e1fa2de1b9c6e63b5faac67"
+  },
+  "excluded": [
+    "tools/check-job.ps1",
+    "tools/find-errors.ps1",
+    "tools/get-job-logs.ps1",
+    "tools/wait-and-publish-ci.ps1",
+    "**/__pycache__/",
+    "Android caches"
+  ]
+}

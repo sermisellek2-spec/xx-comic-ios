@@ -29,3 +29,5 @@
 [第四轮38147326917](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38147326917)实际failure。f4eaf93两配置SDK、Apple853项/0失败/71.174秒、两设备原生各19通过；部分范围UI各7执行/3条失败。我的书架/阅读偏好/未读/切列表及部分恢复重启通过，其他批量UI仍在本地标题失败。当前改应用内容区真实标题按钮；系统导航左项仅在有空间时显示见[Apple UINavigationItem](https://developer.apple.com/documentation/uikit/uinavigationitem)。[repair-4-summary.json](repair-4-summary.json)记录实际版本、范围、错误、条数和原日志SHA。
 
 下一轮默认full包含全部UI，并导出实际失败PNG/逐用例状态；package_ipa显式开关默认false，只有最终全部自验后才启用。不生成IPA不改变完整测试门槛，不提前连接真实源。
+
+第五轮e29824a的[CI38149042092](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38149042092)在Debug SDK编译时报`SettingsViewController.swift:37:89: ambiguous use of leastNormalMagnitude`，后续Release/核心/UI未运行、没有IPA。修复显式CGFloat标量后重跑完整范围；失败PNG及逐用例结果JSON现加入可下载证据目录。见[repair-5-summary.json](repair-5-summary.json)，旧成功结果不继承。

@@ -34,7 +34,7 @@ final class SettingsViewController: UITableViewController {
         tableView.separatorColor = Palette.borderSoft
         tableView.separatorStyle = .none
         tableView.sectionHeaderTopPadding = 0
-        tableView.tableHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: 1, height: .leastNormalMagnitude))
+        tableView.tableHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: 1, height: CGFloat.leastNormalMagnitude))
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 56
     }

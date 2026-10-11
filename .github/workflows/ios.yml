@@ -92,7 +92,9 @@ jobs:
           name: visual-matrix-screenshots
           path: |
             ios/build/evidence/visual-matrix/*.png
+            ios/build/evidence/ui-failures/*.png
             ios/build/evidence/*-manifest.json
+            ios/build/evidence/*-tests.json
           if-no-files-found: ignore
           retention-days: 7
 
