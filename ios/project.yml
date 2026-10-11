@@ -64,3 +64,5 @@ schemes:
         XXComicUITests: [test]
     test:
       targets: [XXComicTests, XXComicUITests]
+      environmentVariables:
+        XXCOMIC_NATIVE_TEST_HOST: '1'

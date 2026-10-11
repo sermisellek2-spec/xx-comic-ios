@@ -8,11 +8,15 @@ final class BookshelfTabsView: UIControl {
     var selectedSegmentIndex = 0 { didSet { updateSelection() } }
     override init(frame: CGRect) {
         super.init(frame: frame)
+        isAccessibilityElement = false
+        accessibilityElements = buttons
         divider.text = " | "; divider.textColor = Palette.text3; divider.font = .systemFont(ofSize: 16)
         divider.isAccessibilityElement = false
         for (index, button) in buttons.enumerated() {
             button.setTitle(index == 0 ? "我的书架" : "本地书架", for: .normal)
             button.tag = index; button.accessibilityIdentifier = "bookshelf.tab.\(index)"
+            button.isAccessibilityElement = true
+            button.heightAnchor.constraint(equalToConstant: 44).isActive = true
             button.addTarget(self, action: #selector(selectTab(_:)), for: .touchUpInside)
         }
         let row = UIStackView(arrangedSubviews: [buttons[0], divider, buttons[1]])

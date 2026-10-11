@@ -1,0 +1,8 @@
+{
+  "run": 38136705260,
+  "head_sha": "c6363d7b9765fc5930d2514a7d509461d0948eb1",
+  "status_before": "in_progress",
+  "reason": "Native XCTest application host must be isolated from production telemetry before runtime tests",
+  "checked_at_utc": "2026-10-11T11:50:22.851604+00:00",
+  "cancel_http_status": 202
+}

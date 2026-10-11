@@ -1,0 +1,8 @@
+{
+  "explicit_staged_files": 32,
+  "source_and_docs_diff_check_exit": 0,
+  "whole_snapshot_diff_check_exit": 2,
+  "raw_log_trailing_whitespace_locations": 1003,
+  "raw_logs_preserved": true,
+  "credential_files_excluded": true
+}

@@ -1,0 +1,48 @@
+[0/1] Planning build
+Building for debugging...
+[0/2] Write swift-version-24593BA9C3E375BF.txt
+Build complete! (3.77s)
+Test Suite 'Selected tests' started at 2026-10-11 12:05:37.554
+Test Suite 'ImageEnhancementPolicyTests' started at 2026-10-11 12:05:37.573
+Test Case 'ImageEnhancementPolicyTests.testCacheKeyFormat' started at 2026-10-11 12:05:37.573
+Test Case 'ImageEnhancementPolicyTests.testCacheKeyFormat' passed (0.002 seconds)
+Test Case 'ImageEnhancementPolicyTests.testLowRamLimits' started at 2026-10-11 12:05:37.575
+Test Case 'ImageEnhancementPolicyTests.testLowRamLimits' passed (0.0 seconds)
+Test Case 'ImageEnhancementPolicyTests.testModeOffNeverRuns' started at 2026-10-11 12:05:37.576
+Test Case 'ImageEnhancementPolicyTests.testModeOffNeverRuns' passed (0.0 seconds)
+Test Case 'ImageEnhancementPolicyTests.testTooSmallOrTooLargeImagesRejected' started at 2026-10-11 12:05:37.576
+Test Case 'ImageEnhancementPolicyTests.testTooSmallOrTooLargeImagesRejected' passed (0.0 seconds)
+Test Suite 'ImageEnhancementPolicyTests' passed at 2026-10-11 12:05:37.576
+Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'PreferencesTests' started at 2026-10-11 12:05:37.576
+Test Case 'PreferencesTests.testAndroidPageModeValuesKeepTheirMeaning' started at 2026-10-11 12:05:37.576
+Test Case 'PreferencesTests.testAndroidPageModeValuesKeepTheirMeaning' passed (0.001 seconds)
+Test Case 'PreferencesTests.testInvalidSettingsFallBackToUsableModes' started at 2026-10-11 12:05:37.577
+Test Case 'PreferencesTests.testInvalidSettingsFallBackToUsableModes' passed (0.003 seconds)
+Test Case 'PreferencesTests.testLegacyButtonPreferenceIsUsedOnlyUntilExplicitModeExists' started at 2026-10-11 12:05:37.579
+Test Case 'PreferencesTests.testLegacyButtonPreferenceIsUsedOnlyUntilExplicitModeExists' passed (0.001 seconds)
+Test Case 'PreferencesTests.testPersistedReaderChoicesSurviveNewStoreAndDoNotChangeAppTheme' started at 2026-10-11 12:05:37.580
+Test Case 'PreferencesTests.testPersistedReaderChoicesSurviveNewStoreAndDoNotChangeAppTheme' passed (0.001 seconds)
+Test Case 'PreferencesTests.testRetiredLeftHandPreferenceDoesNotChangeCurrentReaderSettings' started at 2026-10-11 12:05:37.581
+Test Case 'PreferencesTests.testRetiredLeftHandPreferenceDoesNotChangeCurrentReaderSettings' passed (0.001 seconds)
+Test Case 'PreferencesTests.testUnknownPersistedEnhancementModesReopenWithOffWithoutOverwritingOldData' started at 2026-10-11 12:05:37.581
+Test Case 'PreferencesTests.testUnknownPersistedEnhancementModesReopenWithOffWithoutOverwritingOldData' passed (0.002 seconds)
+Test Suite 'PreferencesTests' passed at 2026-10-11 12:05:37.584
+Executed 6 tests, with 0 failures (0 unexpected) in 0.008 (0.008) seconds
+Test Suite 'SourcePreferencesTests' started at 2026-10-11 12:05:37.584
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' started at 2026-10-11 12:05:37.584
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' passed (0.004 seconds)
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' started at 2026-10-11 12:05:37.587
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' passed (0.027 seconds)
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' started at 2026-10-11 12:05:37.614
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' passed (0.008 seconds)
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' started at 2026-10-11 12:05:37.623
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' passed (0.047 seconds)
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' started at 2026-10-11 12:05:37.670
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' started at 2026-10-11 12:05:37.671
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' passed (0.001 seconds)
+Test Suite 'SourcePreferencesTests' passed at 2026-10-11 12:05:37.671
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.087 (0.087) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 12:05:37.671
+Executed 16 tests, with 0 failures (0 unexpected) in 0.098 (0.098) seconds

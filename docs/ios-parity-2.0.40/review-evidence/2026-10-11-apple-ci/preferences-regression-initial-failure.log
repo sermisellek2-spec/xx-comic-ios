@@ -1,0 +1,69 @@
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[0/5] Write swift-version-24593BA9C3E375BF.txt
+[4/6] Compiling ComicCore ReaderPreferences.swift
+[5/6] Emitting module ComicCore
+[7/9] Compiling ComicCoreTests PreferencesTests.swift
+[8/9] Emitting module ComicCoreTests
+[9/10] Compiling ComicCoreTests TextReadingTests.swift
+[10/19] Wrapping AST for ComicCoreTests for debugging
+[11/19] Wrapping AST for ComicCore for debugging
+[12/19] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[13/20] Write sources
+[15/22] Emitting module ComicCorePackageDiscoveredTests
+[16/22] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[17/23] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[18/24] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[19/24] Write sources
+[20/24] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[22/26] Emitting module ComicCorePackageTests
+[23/26] Compiling ComicCorePackageTests runner.swift
+[24/26] Write Objects.LinkFileList
+[25/26] Linking ComicCorePackageTests.xctest
+Build complete! (24.31s)
+Test Suite 'Selected tests' started at 2026-10-11 11:57:16.969
+Test Suite 'ImageEnhancementPolicyTests' started at 2026-10-11 11:57:16.985
+Test Case 'ImageEnhancementPolicyTests.testCacheKeyFormat' started at 2026-10-11 11:57:16.985
+Test Case 'ImageEnhancementPolicyTests.testCacheKeyFormat' passed (0.002 seconds)
+Test Case 'ImageEnhancementPolicyTests.testLowRamLimits' started at 2026-10-11 11:57:16.987
+Test Case 'ImageEnhancementPolicyTests.testLowRamLimits' passed (0.001 seconds)
+Test Case 'ImageEnhancementPolicyTests.testModeOffNeverRuns' started at 2026-10-11 11:57:16.988
+Test Case 'ImageEnhancementPolicyTests.testModeOffNeverRuns' passed (0.0 seconds)
+Test Case 'ImageEnhancementPolicyTests.testTooSmallOrTooLargeImagesRejected' started at 2026-10-11 11:57:16.988
+Test Case 'ImageEnhancementPolicyTests.testTooSmallOrTooLargeImagesRejected' passed (0.0 seconds)
+Test Suite 'ImageEnhancementPolicyTests' passed at 2026-10-11 11:57:16.988
+Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'PreferencesTests' started at 2026-10-11 11:57:16.988
+Test Case 'PreferencesTests.testAndroidPageModeValuesKeepTheirMeaning' started at 2026-10-11 11:57:16.988
+Test Case 'PreferencesTests.testAndroidPageModeValuesKeepTheirMeaning' passed (0.001 seconds)
+Test Case 'PreferencesTests.testInvalidSettingsFallBackToUsableModes' started at 2026-10-11 11:57:16.989
+Test Case 'PreferencesTests.testInvalidSettingsFallBackToUsableModes' passed (0.003 seconds)
+Test Case 'PreferencesTests.testLegacyButtonPreferenceIsUsedOnlyUntilExplicitModeExists' started at 2026-10-11 11:57:16.992
+Test Case 'PreferencesTests.testLegacyButtonPreferenceIsUsedOnlyUntilExplicitModeExists' passed (0.0 seconds)
+Test Case 'PreferencesTests.testPersistedReaderChoicesSurviveNewStoreAndDoNotChangeAppTheme' started at 2026-10-11 11:57:16.992
+Test Case 'PreferencesTests.testPersistedReaderChoicesSurviveNewStoreAndDoNotChangeAppTheme' passed (0.001 seconds)
+Test Case 'PreferencesTests.testRetiredLeftHandPreferenceDoesNotChangeCurrentReaderSettings' started at 2026-10-11 11:57:16.993
+Test Case 'PreferencesTests.testRetiredLeftHandPreferenceDoesNotChangeCurrentReaderSettings' passed (0.0 seconds)
+Test Case 'PreferencesTests.testUnknownPersistedEnhancementModesReopenWithOffWithoutOverwritingOldData' started at 2026-10-11 11:57:16.993
+/work/Tests/ComicCoreTests/PreferencesTests.swift:74: error: PreferencesTests.testUnknownPersistedEnhancementModesReopenWithOffWithoutOverwritingOldData : XCTAssertEqual failed: ("0") is not equal to ("9223372036854775807") - 读取旧设置不得暗中改写其原始值。
+Test Case 'PreferencesTests.testUnknownPersistedEnhancementModesReopenWithOffWithoutOverwritingOldData' failed (0.002 seconds)
+Test Suite 'PreferencesTests' failed at 2026-10-11 11:57:16.995
+Executed 6 tests, with 1 failure (0 unexpected) in 0.006 (0.006) seconds
+Test Suite 'SourcePreferencesTests' started at 2026-10-11 11:57:16.995
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' started at 2026-10-11 11:57:16.995
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' passed (0.003 seconds)
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' started at 2026-10-11 11:57:16.997
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' passed (0.083 seconds)
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' started at 2026-10-11 11:57:17.080
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' passed (0.006 seconds)
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' started at 2026-10-11 11:57:17.087
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' passed (0.041 seconds)
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' started at 2026-10-11 11:57:17.128
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' passed (0.0 seconds)
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' started at 2026-10-11 11:57:17.128
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' passed (0.0 seconds)
+Test Suite 'SourcePreferencesTests' passed at 2026-10-11 11:57:17.129
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.134 (0.134) seconds
+Test Suite 'Selected tests' failed at 2026-10-11 11:57:17.129
+	 Executed 16 tests, with 1 failure (0 unexpected) in 0.143 (0.143) seconds

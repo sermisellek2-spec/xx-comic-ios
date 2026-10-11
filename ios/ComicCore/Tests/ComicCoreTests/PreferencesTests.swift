@@ -61,4 +61,24 @@ final class PreferencesTests: XCTestCase {
         XCTAssertEqual(settings.layout, .strip)
         XCTAssertEqual(settings.turnMode, .swipe)
     }
+
+    func testUnknownPersistedEnhancementModesReopenWithOffWithoutOverwritingOldData() {
+        let name = "XXComicTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        let store = ReaderPreferencesStore(defaults: defaults)
+        for value in [-1, 3, 99, Int.min, Int.max] {
+            defaults.set(value, forKey: "reader.enhancement.mode")
+            let originalValue = defaults.object(forKey: "reader.enhancement.mode") as? NSNumber
+            let loaded = store.load()
+            XCTAssertEqual(loaded.enhancementMode, ImageEnhancementPolicy.modeOff)
+            XCTAssertEqual(defaults.object(forKey: "reader.enhancement.mode") as? NSNumber, originalValue, "读取旧设置不得暗中改写其原始值。")
+        }
+        for value in [ImageEnhancementPolicy.modeOff, ImageEnhancementPolicy.modeFast, ImageEnhancementPolicy.modeSmart] {
+            var settings = store.load()
+            settings.enhancementMode = value
+            store.save(settings)
+            XCTAssertEqual(ReaderPreferencesStore(defaults: defaults).load().enhancementMode, value)
+        }
+    }
 }

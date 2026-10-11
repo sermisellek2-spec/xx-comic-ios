@@ -6,7 +6,7 @@
 
 当前源目录51个=22专用+29公共，默认启用50，duya默认关闭；baozimh/mhua5仅保留旧身份与离线兼容。数量/顺序/默认开关静态及核心通过，生产注册Apple测试待验收；真实网站验收最后进行。
 
-新仓库 [xx-comic-ios](https://github.com/sermisellek2-spec/xx-comic-ios) 的CI38104946234、代码a5aeec9已成功并产出未签名IPA。原额度限制已解决；该旧包实际没有应用图标资源。当前图标/淘汰设置、搜索/下载/封面及本批视觉、缓存/配置/统计、书架/阅读/本地删除/Files目录改动没有对应Apple产物。只用该仓库；指定账号正常Git凭据与写入权限已核验，Apple自验待运行，阶段及总验收均未开放。
+新仓库 [xx-comic-ios](https://github.com/sermisellek2-spec/xx-comic-ios) 的CI38104946234、代码a5aeec9已成功并产出未签名IPA。原额度限制已解决；该旧包实际没有应用图标资源。当前图标/淘汰设置、搜索/下载/封面及本批视觉、缓存/配置/统计、书架/阅读/本地删除/Files目录改动没有对应Apple产物。只用该仓库；指定账号正常Git凭据与写入权限已核验，c6363d7两配置SDK、核心846及iPhone18原生通过，首UI失败后停止；当前新增修复待复验，完整阶段及总验收未开放。
 
 [分阶段方案](../docs/IOS_2_0_40_PHASED_DEVELOPMENT.md)、[本批阶段证据](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/README.md)。
 

@@ -215,7 +215,9 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             navigationItem.rightBarButtonItems = [UIBarButtonItem(customView: artwork), layoutButton]
             shelfMode.selectedSegmentIndex = environment.readingHabits.currentLaunchTab
             shelfMode.addTarget(self, action: #selector(shelfChanged), for: .valueChanged)
-            navigationItem.leftBarButtonItem = UIBarButtonItem(customView: shelfMode)
+            let shelfTabsItem = UIBarButtonItem(customView: shelfMode)
+            shelfTabsItem.isAccessibilityElement = false
+            navigationItem.leftBarButtonItem = shelfTabsItem
 
             groupBar.onGroupSelected = { [weak self] group in
                 self?.currentGroupId = group.id

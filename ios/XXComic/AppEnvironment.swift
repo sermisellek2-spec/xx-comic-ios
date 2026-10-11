@@ -260,6 +260,8 @@ final class AppEnvironment {
     func reportUsageStatsIfNeeded() {
         #if DEBUG
         guard !ProcessInfo.processInfo.arguments.contains("--ui-testing") else { return }
+        let testEnvironment = ProcessInfo.processInfo.environment
+        guard testEnvironment["XXCOMIC_NATIVE_TEST_HOST"] != "1", testEnvironment["XCTestConfigurationFilePath"] == nil else { return }
         #endif
         guard usageStatsTask == nil else { return }
         let info = UsageStatsApplicationInfo(

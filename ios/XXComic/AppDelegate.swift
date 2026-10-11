@@ -8,6 +8,19 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     private var environment: AppEnvironment?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        #if DEBUG
+        let process = ProcessInfo.processInfo
+        if !process.arguments.contains("--ui-testing"),
+           process.environment["XXCOMIC_NATIVE_TEST_HOST"] == "1" || process.environment["XCTestConfigurationFilePath"] != nil {
+            // Hosted unit tests exercise the real components without starting the
+            // production library, source refresh, or launch statistics reporter.
+            let window = UIWindow(frame: UIScreen.main.bounds)
+            window.rootViewController = UIViewController()
+            window.makeKeyAndVisible()
+            self.window = window
+            return true
+        }
+        #endif
         let defaults = ProcessInfo.processInfo.arguments.contains("--ui-testing")
             ? UserDefaults(suiteName: "XXComic.UITests" + (EpubUITestFixtures.sessionID.map { "." + $0 } ?? ""))! : .standard
         if ProcessInfo.processInfo.arguments.contains("--ui-testing") {

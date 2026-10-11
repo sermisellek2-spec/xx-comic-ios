@@ -1,0 +1,48 @@
+{
+  "snapshot": "c6363d7b9765fc5930d2514a7d509461d0948eb1",
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "run_id": 38136705260,
+  "run_url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38136705260",
+  "run_conclusion": "cancelled",
+  "build_log_sha256": "08dd75872e3ba1543a4653b338b2eefbe523f9a67bea6959d4b8ea1229e8a45e",
+  "actual_results": {
+    "debug_simulator_sdk_build": "succeeded",
+    "release_device_sdk_build": "succeeded",
+    "apple_core": {
+      "executed": 846,
+      "failures": 0,
+      "wall_seconds": 80.435
+    },
+    "iphone_native": {
+      "executed": 18,
+      "failures": 0,
+      "wall_seconds": 3.615,
+      "device": "iPhone 15 Pro",
+      "os": "iOS 17.4"
+    },
+    "ui_first_failure": "AppNavigationTests: My Bookshelf custom control buttons were not separately exposed",
+    "ipad": "not_run",
+    "complete_ui": "not_run",
+    "new_ipa": "not_produced"
+  },
+  "cancel_reason": "发现原生XCTest宿主可能初始化正式启动统计，停止旧快照并补Debug隔离；不能断言旧宿主未发出生产请求。",
+  "next_snapshot_fixes": [
+    "原生测试宿主及统计Debug隔离",
+    "书架两个按钮单独可访问并保持44pt命中",
+    "未知阅读增强模式回退关闭且读取不改旧数据"
+  ],
+  "current_targeted_tests": {
+    "command": "swift test -j 2 --filter PreferencesTests|ImageEnhancementPolicyTests",
+    "platform": "Linux swift:5.10-jammy",
+    "executed": 16,
+    "failures": 0,
+    "exit_code": 0,
+    "wall_seconds": 0.098,
+    "log": "preferences-regression.log",
+    "initial_failed_log": "preferences-regression-initial-failure.log",
+    "initial_failure_resolution": "极值由Foundation存取后未必仍由integer返回原Int；保留全部极值及关闭断言，改为比较load前后真实保存的NSNumber，证明无改写。"
+  },
+  "stage_complete": false,
+  "non_source_gate_passed": false,
+  "real_sources_started": false
+}
