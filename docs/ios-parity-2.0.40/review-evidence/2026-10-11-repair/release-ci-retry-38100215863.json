@@ -1,0 +1,32 @@
+{
+  "observedAt": "2026-10-11T00:59:21.613497+00:00",
+  "revision": "8bf6bfaf146019dfee69674f65e61da755414835",
+  "run": 38100215863,
+  "jobStarted": false,
+  "apiRun": {
+    "id": 38100215863,
+    "sha": "8bf6bfaf146019dfee69674f65e61da755414835",
+    "status": "completed",
+    "conclusion": "failure",
+    "jobs": [
+      {
+        "name": "build",
+        "status": "completed",
+        "conclusion": "failure",
+        "steps": []
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "build",
+      "conclusion": "failure",
+      "title": null,
+      "summary": null,
+      "annotations": [
+        "The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings",
+        "Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times."
+      ]
+    }
+  ]
+}
