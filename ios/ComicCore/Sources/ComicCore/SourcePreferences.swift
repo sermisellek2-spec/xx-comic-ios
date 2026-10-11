@@ -137,51 +137,74 @@ public final class SourcePreferences {
 
     public func importConfig(jsonString: String) throws -> SourceImportResult {
         guard let data = jsonString.data(using: .utf8),
-              let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
-            throw SourceConfigError.invalidJSON
-        }
-        guard (json["schema"] as? String) == "xx-comic.sources" else {
-            throw SourceConfigError.invalidSchema
-        }
-        let sourcesArray = json["sources"] as? [[String: Any]] ?? []
-        let sourceOrderArray = json["sourceOrder"] as? [String] ?? []
-        if sourcesArray.isEmpty && sourceOrderArray.isEmpty {
-            throw SourceConfigError.emptyPackage
-        }
+              let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { throw SourceConfigError.invalidJSON }
+        guard (json["schema"] as? String) == "xx-comic.sources" else { throw SourceConfigError.invalidSchema }
+        struct Header: Decodable { let version: Int? }
+        guard let header = try? JSONDecoder().decode(Header.self, from: data) else { throw SourceConfigError.invalidFields }
+        guard header.version == nil || [1, 2].contains(header.version!) else { throw SourceConfigError.unsupportedVersion }
+        if let sources = json["sources"], !(sources is [[String: Any]]) { throw SourceConfigError.invalidFields }
+        if let order = json["sourceOrder"], !(order is [String]) { throw SourceConfigError.invalidFields }
+        if let custom = json["custom"], !(custom is [[String: Any]]) { throw SourceConfigError.invalidFields }
+        let sources = json["sources"] as? [[String: Any]] ?? []
+        let order = json["sourceOrder"] as? [String] ?? []
+        let custom = json["custom"] as? [[String: Any]] ?? []
+        guard !sources.isEmpty || !order.isEmpty || !custom.isEmpty else { throw SourceConfigError.emptyPackage }
 
-        var orderUpdated = false
-        if !sourceOrderArray.isEmpty {
-            setOrder(sourceOrderArray)
-            orderUpdated = true
-        }
-
-        var enabledCount = 0
-        var disabledCount = 0
-        var total = 0
-        for item in sourcesArray {
-            guard let rawId = item["id"] as? String else { continue }
-            let id = Self.canonicalID(rawId)
-            guard defaultIDs.contains(id) || defaultIDs.contains(rawId) else { continue }
-            total += 1
-            let enabled = item["enabled"] as? Bool ?? true
-            setEnabled(enabled, id: id)
-            if enabled {
-                enabledCount += 1
-            } else {
-                disabledCount += 1
+        // Prepare and validate the entire import before persisting any order, switch or endpoint.
+        var prepared: [SourceConfigItem] = [], seen = Set<String>(), skipped: [String] = [], warnings: [String] = []
+        for item in sources {
+            guard let rawID = item["id"] as? String, !rawID.isEmpty else { throw SourceConfigError.invalidFields }
+            let id = Self.canonicalID(rawID)
+            guard defaultIDs.contains(id) || defaultIDs.contains(rawID) else {
+                skipped.append(rawID); warnings.append("已跳过非当前站源：" + rawID); continue
             }
-
-            if let itemData = try? JSONSerialization.data(withJSONObject: item),
-               let configItem = try? JSONDecoder().decode(SourceConfigItem.self, from: itemData) {
-                setConfig(configItem, for: id)
+            guard seen.insert(id).inserted else { throw SourceConfigError.invalidFields }
+            let fallback = (config(for: id) ?? SourceConfigItem(id: id, name: id)).withEnabled(isEnabled(id))
+            let encoder = JSONEncoder()
+            let baseData = try encoder.encode(fallback)
+            var normalized = try JSONSerialization.jsonObject(with: baseData) as! [String: Any]
+            for key in ["name", "domain", "baseUrl", "referer", "latestPath", "searchPath", "categoryPath", "detailPath", "enabled"] {
+                if let value = item[key] { normalized[key] = value }
             }
+            normalized["id"] = id
+            let supported = SourceConfigDefaults.defaultConfig(for: id) ?? fallback
+            for key in ["routes", "filters"] {
+                guard let overrides = item[key] else { continue }
+                guard let mapping = overrides as? [String: String] else { throw SourceConfigError.invalidFields }
+                let defaultsMapping = key == "routes" ? supported.routes : supported.filters
+                let allowed = Set(defaultsMapping?.keys.map { $0 } ?? [])
+                var merged = (normalized[key] as? [String: String]) ?? [:]
+                for (field, value) in mapping {
+                    guard allowed.contains(field) else {
+                        warnings.append("已跳过不支持的字段：" + id + "." + key + "." + field); continue
+                    }
+                    // HiperDEX uses chapter URLs returned by the directory; this route is export compatibility only.
+                    if id == "hiperdex", key == "routes", field == "chapter", value != supported.route("chapter") {
+                        warnings.append("已跳过不支持的字段：hiperdex.routes.chapter（目录提供章节地址）"); continue
+                    }
+                    merged[field] = value
+                }
+                normalized[key] = merged
+            }
+            let normalizedData = try JSONSerialization.data(withJSONObject: normalized)
+            guard let config = try? JSONDecoder().decode(SourceConfigItem.self, from: normalizedData) else { throw SourceConfigError.invalidFields }
+            for address in [config.baseUrl, config.referer] where !address.isEmpty {
+                guard let url = URL(string: address), ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.host != nil else { throw SourceConfigError.invalidFields }
+            }
+            prepared.append(config)
         }
-
-        return SourceImportResult(
-            totalSources: total,
-            enabledCount: enabledCount,
-            disabledCount: disabledCount,
-            orderUpdated: orderUpdated
-        )
+        for (index, item) in custom.enumerated() {
+            let id = item["id"] as? String ?? "自定义站源（第\(index + 1)项）"
+            skipped.append(id)
+            warnings.append("已跳过自定义站源：" + id + "（当前版本尚不支持自定义解析器）")
+        }
+        for config in prepared {
+            setConfig(config, for: config.id)
+            setEnabled(config.enabled, id: config.id)
+        }
+        if !order.isEmpty { setOrder(order) }
+        let enabledCount = prepared.filter(\.enabled).count
+        return SourceImportResult(totalSources: prepared.count, enabledCount: enabledCount, disabledCount: prepared.count - enabledCount,
+                                  orderUpdated: !order.isEmpty, skippedSources: skipped, warnings: warnings)
     }
 }

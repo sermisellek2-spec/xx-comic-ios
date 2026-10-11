@@ -1,0 +1,115 @@
+{
+  "android_baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "ios_base_commit": "1e2287c7e5bcd51d84507a477ff68db3b66a6421",
+  "ios_uncommitted": true,
+  "code_input_sha256": "e585a92ff10bc5342b715abe58708e4f92ad7f31fcfade0e119c4347ef33e6c0",
+  "core_input_sha256": "16358cbb1d923aa44898328c19be725157738dd62f7178c83c0a46dd162bae1d",
+  "checks": [
+    {
+      "command": "docker run --rm --mount type=bind,source=<ComicCore>,target=/work -w /work swift:5.10-jammy swift test -j 2",
+      "log": "core-full-test.log",
+      "exit_code": 0,
+      "executed": 827,
+      "skipped": 2,
+      "failures": 0,
+      "seconds": 134.734
+    },
+    {
+      "command": "swift test -j 2 --filter 'DownloadLocationTests|DownloadDeletionTests|DownloadRuntimeTests'",
+      "log": "download-cancellation-tests.log",
+      "exit_code": 0,
+      "executed": 21,
+      "failures": 0
+    },
+    {
+      "command": "docker run --rm --mount type=bind,source=<checkout>,target=/work -w /work swift:5.10-jammy bash tools/verify-ios-native-syntax.sh",
+      "log": "native-syntax.log",
+      "exit_code": 0,
+      "swift_files": 62,
+      "release_parse": true,
+      "debug_parse": true,
+      "apple_type_check": false
+    },
+    {
+      "command": "pwsh -NoProfile -File docs/ios-parity-2.0.40/verify-baseline.ps1",
+      "log": "baseline-verification.log",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit-ios-source-catalog.py --output <evidence>/source-catalog-proof.json",
+      "log": "source-catalog-audit.log",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "log": "git-diff-check.log",
+      "exit_code": 0
+    }
+  ],
+  "core_skipped_evidence": [
+    "Test Case 'LocalArchiveTests.testBadFirstImageIsSkippedAndNextImageBecomesCover' started at 2026-10-11 09:06:09.732",
+    "Test Case 'LocalArchiveTests.testBadFirstImageIsSkippedAndNextImageBecomesCover' passed (0.065 seconds)",
+    "Test Case 'LocalFolderTests.testSingleNestedFolderBecomesBodyAndUnreadableOrMetadataAreSkipped' started at 2026-10-11 09:06:53.892",
+    "Test Case 'LocalFolderTests.testSingleNestedFolderBecomesBodyAndUnreadableOrMetadataAreSkipped' passed (0.125 seconds)",
+    "/work/Tests/ComicCoreTests/LocalImportPreparationTests.swift:158: LocalImportPreparationTests.testNativePdfPreparationAndPublicationUseRealRenderer : Test skipped - Real PDF prepare/publish requires Apple CoreGraphics and ImageIO; Linux injection checks storage only.",
+    "Test Case 'LocalImportPreparationTests.testNativePdfPreparationAndPublicationUseRealRenderer' skipped (0.0 seconds)",
+    "/work/Tests/ComicCoreTests/PdfRendererTests.swift:158: PdfRendererTests.testNativePDFRenderingRequiresAppleFrameworks : Test skipped - CoreGraphics / ImageIO / PDFKit native PDF tests require an Apple host; injected dimensions do not verify PDF decoding.",
+    "Test Case 'PdfRendererTests.testNativePDFRenderingRequiresAppleFrameworks' skipped (0.0 seconds)"
+  ],
+  "detail_feedback_independent_tests": {
+    "executed": 6,
+    "failures": 0,
+    "log": "detail-feedback-tests.log",
+    "uses_uikit": false
+  },
+  "android_build_proof": "android-reference-build-proof.json",
+  "android_settings_references": {
+    "count": 8,
+    "manifest": "android-settings-matrix/android-settings-manifest.json",
+    "apple_comparison_executed": false
+  },
+  "metadata_proof": "metadata-verification.json",
+  "source_catalog": {
+    "current": 51,
+    "default_enabled": 50,
+    "real_sources_deferred": true,
+    "proof": "source-catalog-proof.json"
+  },
+  "file_source_scope": "file-source-scope-proof.json",
+  "initial_failures_preserved": [
+    {
+      "log": "cache-config-compile-failure.log",
+      "repair": "Add try at tests calling the newly throwing storage calculator; no expected result weakened"
+    },
+    {
+      "log": "download-location-initial-failure.log",
+      "repair": "Fixture URL now explicitly denotes a directory, preserving exact URL equality and file contents assertions"
+    },
+    {
+      "log": "android-settings-capture.log",
+      "repair": "Navigate to settings based on actual UI state after each size/density change; original partial captures kept"
+    }
+  ],
+  "apple_current_build": false,
+  "native_tests_executed": false,
+  "ui_tests_executed": false,
+  "current_ipa_produced": false,
+  "all_stages_passed": false,
+  "non_source_gate_passed": false,
+  "only_ci_repository": "sermisellek2-spec/xx-comic-ios",
+  "ci_access_summary": "ci-access-summary.json",
+  "remaining_development": [
+    "Whole entry/default-value/consumer audit",
+    "File-provider NSFileCoordinator I/O integration",
+    "Shared full-page Android/iOS deterministic content and matched logical width",
+    "Full import/download/reader/AI recovery and performance validation"
+  ],
+  "mandatory_unrun": [
+    "Apple SDK type checking and Debug/Release build",
+    "iPhone/iPad portrait/landscape light/dark UI and component comparison",
+    "ImageIO/CoreML/PDF/WebKit/Files persistent permission",
+    "Background/weak-network/disk-failure recovery and peak performance",
+    "Current IPA icons/version/SHA256 and installed main-screen appearance",
+    "51 live sources after the complete non-source gate"
+  ]
+}

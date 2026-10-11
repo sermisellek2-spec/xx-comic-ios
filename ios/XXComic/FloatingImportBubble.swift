@@ -19,6 +19,8 @@ final class FloatingImportBubble: UIView {
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
 
     private func setupView() {
+        isAccessibilityElement = true; accessibilityTraits = .button
+        accessibilityLabel = "导入"; accessibilityIdentifier = "bookshelf.import"
         backgroundColor = Palette.accent
         layer.cornerRadius = bubbleSize / 2
         layer.shadowColor = UIColor.black.cgColor
@@ -50,6 +52,7 @@ final class FloatingImportBubble: UIView {
     @objc private func handleTap() {
         onTap?()
     }
+    override func accessibilityActivate() -> Bool { onTap?(); return true }
 
     @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
         guard let superview else { return }

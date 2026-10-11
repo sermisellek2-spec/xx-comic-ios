@@ -22,20 +22,37 @@ enum MatrixUITestFixtures {
         }
         guard let png = image.pngData() else { throw CocoaError(.fileWriteUnknown) }
         server = try MatrixUITestHTTPServer(image: png)
-        return ["mh160", "copy4000", "gmh"].map { MatrixUITestSource(id: $0) }
+        let ids = ProcessInfo.processInfo.arguments.contains("--matrix-catalog-fixtures")
+            ? BuiltinSourceCatalog.activeIDs : ["mh160", "copy4000", "gmh"]
+        return ids.map { MatrixUITestSource(id: $0) }
     }
 
     static func seed(environment: AppEnvironment) throws {
-        for source in environment.allSources {
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--matrix-download-network") {
+            environment.downloadRuntime.updateNetworkStatus(isConnected: true, isWifi: true)
+        }
+        if arguments.contains("--matrix-empty-group") || arguments.contains("--matrix-single-source-group") {
+            let ids = arguments.contains("--matrix-empty-group") ? [] : ["mh160"]
+            let group = try environment.sourceGroupStore.create(name: "验收发现分组", sourceIds: ids)
+            try environment.sourceGroupStore.select(id: group.id)
+        }
+        if arguments.contains("--matrix-disabled-statistics") { try environment.usageStats.setEnabled(false) }
+        for source in environment.allSources where !arguments.contains("--matrix-empty-library") {
             guard let fixture = source as? MatrixUITestSource else { continue }
             if fixture.id == "mh160" {
-                for comic in fixture.comics { try environment.library.setFavorite(comic, favorite: true) }
+                for comic in fixture.comics {
+                    try environment.library.setFavorite(comic, favorite: true)
+                    environment.favoriteUpdateCoordinator.recordObserved(sourceId: comic.sourceId, comicId: comic.comicId,
+                        revision: FavoriteRevision.fromChapters(latestChapterName: "第6话", chapters: fixture.chapterList))
+                }
                 if let comic = fixture.comics.first {
                     try environment.library.saveReading(comic, chapter: fixture.chapterList[0], chapterIndex: 0, position: ReaderPosition(imageIndex: 0, offset: 0))
                 }
             }
         }
         var preferences = environment.preferences.load()
+        if arguments.contains("--matrix-paged-reader") { preferences.layout = .paged }
         preferences.enhancementMode = ImageEnhancementPolicy.modeSmart
         preferences.enhancementComparison = true
         preferences.theme = ProcessInfo.processInfo.arguments.contains("--dark-mode") ? .dark : .light
@@ -62,12 +79,29 @@ private final class MatrixUITestHTTPServer: @unchecked Sendable {
     deinit { listener.cancel() }
 }
 
+private actor MatrixUITestRequests {
+    private var details: [String: Int] = [:]
+    private var directories: [String: Int] = [:]
+    func nextDetail(_ comicID: String) -> Int {
+        details[comicID, default: 0] += 1
+        return details[comicID]!
+    }
+    func nextDirectory(_ comicID: String) -> Int {
+        directories[comicID, default: 0] += 1
+        return directories[comicID]!
+    }
+    func hasRequestedDirectory(_ comicID: String) -> Bool { directories[comicID, default: 0] > 0 }
+}
+
 struct MatrixUITestSource: ComicSource {
     let id: String
-    var name: String { ["mh160": "漫画160", "copy4000": "拷贝漫画", "gmh": "G社漫画"][id] ?? id }
+    private let requests = MatrixUITestRequests()
+    var name: String { SourceConfigDefaults.defaultConfig(for: id)?.name ?? id }
+    var supportsSearch: Bool { id != "cuimh" && id != "liumanhua" }
     var referer: String { "http://127.0.0.1:8767/" }
     var comics: [ComicSummary] {
-        ["电锯人", "间谍过家家", "一人之下"].enumerated().map { index, title in
+        let titles = ["电锯人", "间谍过家家", "一人之下"] + (ProcessInfo.processInfo.arguments.contains("--matrix-large-bookshelf") ? (4...36).map { "验收漫画\($0)" } : [])
+        return titles.enumerated().map { index, title in
             ComicSummary(sourceId: id, comicId: "\(id)_comic_\(index)", title: title,
                          coverUrl: "\(referer)cover-\(index).png", subtitle: "第3话", tags: ["连载中"])
         }
@@ -81,11 +115,31 @@ struct MatrixUITestSource: ComicSource {
         return page == 1 ? comics.filter { $0.title.contains(keyword) } : []
     }
     func detail(comicId: String) async throws -> ComicDetail {
+        let request = await requests.nextDetail(comicId)
+        if id == "copy4000", request == 1, ProcessInfo.processInfo.arguments.contains("--matrix-initial-detail-after-directory") {
+            // Hold only the initial request; download's detail completes first.
+            // This scenario opens an unfavorited copy4000 discovery result, so
+            // bookshelf auto-update cannot consume its first detail request.
+            // Cancellation is checked on each suspension, including when no
+            // directory is requested because the user has left the page.
+            while !(await requests.hasRequestedDirectory(comicId)) {
+                try await Task.sleep(nanoseconds: 50_000_000)
+            }
+            try await Task.sleep(nanoseconds: 1_000_000_000)
+        }
         try Task.checkCancellation()
         guard let comic = comics.first(where: { $0.comicId == comicId }) else { throw URLError(.resourceUnavailable) }
-        return ComicDetail(summary: comic, author: "验收作者", status: "连载中", description: "确定性同内容漫画：用于页面、交互与离线下载验收。", latestChapter: "第6话", chapters: chapterList)
+        return ComicDetail(summary: comic, author: "验收作者", status: "连载中", description: "确定性同内容漫画：用于页面、交互与离线下载验收。", latestChapter: "第6话", chapters: ProcessInfo.processInfo.arguments.contains("--matrix-lazy-directory") ? [] : chapterList)
     }
-    func chapters(comicId: String) async throws -> [Chapter] { try Task.checkCancellation(); return chapterList }
+    func chapters(comicId: String) async throws -> [Chapter] {
+        let request = await requests.nextDirectory(comicId)
+        if ProcessInfo.processInfo.arguments.contains("--matrix-directory-delay") {
+            try await Task.sleep(nanoseconds: 2_000_000_000)
+        }
+        try Task.checkCancellation()
+        let arguments = ProcessInfo.processInfo.arguments
+        return arguments.contains("--matrix-empty-directory") || (request == 1 && arguments.contains("--matrix-directory-empty-once")) ? [] : chapterList
+    }
     func chapter(url: String) async throws -> ChapterPage {
         try Task.checkCancellation()
         let number = URL(string: url)?.lastPathComponent ?? "1"

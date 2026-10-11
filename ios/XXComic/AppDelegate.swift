@@ -17,6 +17,10 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
                 defaults.set(1, forKey: "theme.mode")
             }
         }
+        #if DEBUG
+        let referenceSystemTheme = ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--matrix-reference-automatic-theme")
+        if referenceSystemTheme { defaults.set(0, forKey: "theme.mode") }
+        #endif
         let tabs = UITabBarController()
         let environment: AppEnvironment
         do { environment = try AppEnvironment(defaults: defaults) }
@@ -30,18 +34,31 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         let discover = DiscoverViewController(environment: environment)
         let settings = SettingsViewController(environment: environment)
         tabs.viewControllers = [
-            navigation(shelf, title: "书架", image: "books.vertical"),
-            navigation(discover, title: "发现", image: "safari"),
-            navigation(settings, title: "设置", image: "gearshape")
+            navigation(shelf, title: "书架", icon: .bookshelf),
+            navigation(discover, title: "发现", icon: .search),
+            navigation(settings, title: "设置", icon: .profile)
         ]
         tabs.tabBar.tintColor = Palette.accent
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = Palette.card
+        appearance.shadowColor = Palette.borderSoft
+        for layout in [appearance.stackedLayoutAppearance, appearance.inlineLayoutAppearance, appearance.compactInlineLayoutAppearance] {
+            layout.normal.iconColor = Palette.text3
+            layout.selected.iconColor = Palette.accent
+            layout.normal.titleTextAttributes = [.foregroundColor: Palette.text3, .font: UIFont.systemFont(ofSize: 10, weight: .medium)]
+            layout.selected.titleTextAttributes = [.foregroundColor: Palette.accent, .font: UIFont.systemFont(ofSize: 10, weight: .semibold)]
+        }
         tabs.tabBar.standardAppearance = appearance
         tabs.tabBar.scrollEdgeAppearance = appearance
         let window = UIWindow(frame: UIScreen.main.bounds)
         window.rootViewController = tabs
+        #if DEBUG
+        if referenceSystemTheme {
+            // Inject the window's system appearance while the app preference stays automatic.
+            window.overrideUserInterfaceStyle = ProcessInfo.processInfo.arguments.contains("--dark-mode") ? .dark : .light
+        }
+        #endif
         window.makeKeyAndVisible()
         self.window = window
         self.environment = environment
@@ -51,17 +68,35 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillResignActive(_ application: UIApplication) {
         environment?.readingHabits.appDidEnterBackground()
+        environment?.cancelUsageStatsReport()
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         environment?.readingHabits.appWillEnterForeground()
+        environment?.reportUsageStatsIfNeeded()
     }
 
-    private func navigation(_ root: UIViewController, title: String, image: String) -> UINavigationController {
+    private func navigation(_ root: UIViewController, title: String, icon: ParityIcon) -> UINavigationController {
         root.title = title
+        let heading = UILabel()
+        heading.text = title; heading.textColor = Palette.text
+        heading.font = .systemFont(ofSize: 20, weight: .bold)
+        heading.accessibilityTraits = .header
+        heading.accessibilityIdentifier = "navigation.title"
+        heading.sizeToFit()
+        root.navigationItem.leftBarButtonItem = UIBarButtonItem(customView: heading)
+        root.navigationItem.titleView = UIView(frame: .zero)
         let navigation = UINavigationController(rootViewController: root)
-        navigation.tabBarItem = UITabBarItem(title: title, image: UIImage(systemName: image), selectedImage: nil)
+        navigation.tabBarItem = UITabBarItem(title: title, image: icon.image(size: 20), selectedImage: nil)
         navigation.navigationBar.tintColor = Palette.accent
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = Palette.background
+        appearance.shadowColor = Palette.borderSoft
+        appearance.titleTextAttributes = [.foregroundColor: Palette.text, .font: UIFont.systemFont(ofSize: 20, weight: .medium)]
+        navigation.navigationBar.standardAppearance = appearance
+        navigation.navigationBar.scrollEdgeAppearance = appearance
+        navigation.navigationBar.compactAppearance = appearance
         return navigation
     }
 }

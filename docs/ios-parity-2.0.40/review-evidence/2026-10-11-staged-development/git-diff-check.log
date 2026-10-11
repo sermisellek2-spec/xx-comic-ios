@@ -1,0 +1,10 @@
+warning: in the working copy of '.github/workflows/ios.yml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/IOS_2_0_40_GEMINI_PLAN.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/ios-parity-2.0.40/FINAL_ACCEPTANCE.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/ios-parity-2.0.40/FINAL_ACCEPTANCE_TEMPLATE.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/ios-parity-2.0.40/requirements.csv', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/ios-parity-2.0.40/sources.csv', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/ComicCore/Sources/ComicCore/SourcePreferences.swift', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ios/XXComic/DetailViewController.swift', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ios/XXComic/SettingsViewController.swift', CRLF will be replaced by LF the next time Git touches it
+ACTUAL_EXIT_CODE=0

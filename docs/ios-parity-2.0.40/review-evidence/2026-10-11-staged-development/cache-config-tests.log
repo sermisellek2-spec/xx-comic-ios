@@ -1,0 +1,85 @@
+[0/1] Planning build
+Building for debugging...
+[0/11] Write sources
+[0/10] Write swift-version-24593BA9C3E375BF.txt
+[3/20] Emitting module ComicCoreTests
+[4/31] Compiling ComicCoreTests SourceAESTests.swift
+[5/31] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+[6/31] Compiling ComicCoreTests SourceGroupStoreTests.swift
+[7/31] Compiling ComicCoreTests SourcePreferencesTests.swift
+[8/31] Compiling ComicCoreTests SourceSearchTrimTests.swift
+[9/31] Compiling ComicCoreTests StorageCalculatorTests.swift
+[10/31] Compiling ComicCoreTests TextReadingTests.swift
+[11/31] Compiling ComicCoreTests UsageStatsClientTests.swift
+[12/31] Compiling ComicCoreTests WhiteMarginTests.swift
+[13/31] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+[14/31] Compiling ComicCoreTests resource_bundle_accessor.swift
+[15/31] Compiling ComicCoreTests PdfRendererTests.swift
+[16/31] Compiling ComicCoreTests PreferencesTests.swift
+[17/31] Compiling ComicCoreTests PublicComicSourceTests.swift
+[18/31] Compiling ComicCoreTests QuickPublicationInfoTests.swift
+[19/31] Compiling ComicCoreTests ReaderLoadStateTests.swift
+[20/31] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+[21/31] Compiling ComicCoreTests ReaderSessionTests.swift
+[22/31] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+[23/31] Compiling ComicCoreTests ReadingRulesTests.swift
+[24/31] Compiling ComicCoreTests RetiredComicSourceTests.swift
+[25/31] Compiling ComicCoreTests SearchRulesTests.swift
+[26/34] Wrapping AST for ComicCoreTests for debugging
+[27/34] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[28/35] Write sources
+[30/37] Emitting module ComicCorePackageDiscoveredTests
+[31/37] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[32/38] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[33/39] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[34/39] Write sources
+[35/39] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[37/41] Emitting module ComicCorePackageTests
+[38/41] Compiling ComicCorePackageTests runner.swift
+[39/41] Write Objects.LinkFileList
+[40/41] Linking ComicCorePackageTests.xctest
+Build complete! (29.71s)
+Test Suite 'Selected tests' started at 2026-10-11 07:36:34.721
+Test Suite 'CacheMaintenanceTests' started at 2026-10-11 07:36:34.740
+Test Case 'CacheMaintenanceTests.testCancelledCleanupDoesNotRemoveCachedResponse' started at 2026-10-11 07:36:34.740
+Test Case 'CacheMaintenanceTests.testCancelledCleanupDoesNotRemoveCachedResponse' passed (0.006 seconds)
+Test Case 'CacheMaintenanceTests.testCancelledSizeCalculationFailsInsteadOfReportingEmpty' started at 2026-10-11 07:36:34.746
+Test Case 'CacheMaintenanceTests.testCancelledSizeCalculationFailsInsteadOfReportingEmpty' passed (0.001 seconds)
+Test Case 'CacheMaintenanceTests.testDirectorySizeIncludesHiddenFilesAndDoesNotFollowSymlinks' started at 2026-10-11 07:36:34.747
+Test Case 'CacheMaintenanceTests.testDirectorySizeIncludesHiddenFilesAndDoesNotFollowSymlinks' passed (0.014 seconds)
+Test Case 'CacheMaintenanceTests.testHTTPResponseCleanupUsesCacheAPIAndReportsRemainingUsage' started at 2026-10-11 07:36:34.761
+Test Case 'CacheMaintenanceTests.testHTTPResponseCleanupUsesCacheAPIAndReportsRemainingUsage' passed (0.001 seconds)
+Test Case 'CacheMaintenanceTests.testMissingDirectoryHasNoBytes' started at 2026-10-11 07:36:34.762
+Test Case 'CacheMaintenanceTests.testMissingDirectoryHasNoBytes' passed (0.0 seconds)
+Test Suite 'CacheMaintenanceTests' passed at 2026-10-11 07:36:34.763
+Executed 5 tests, with 0 failures (0 unexpected) in 0.022 (0.022) seconds
+Test Suite 'HiperdexSourceTests' started at 2026-10-11 07:36:34.763
+Test Case 'HiperdexSourceTests.testCatalogDistinguishesRecognizedEmptyDetailFromErrorHeading' started at 2026-10-11 07:36:34.763
+Test Case 'HiperdexSourceTests.testCatalogDistinguishesRecognizedEmptyDetailFromErrorHeading' passed (0.012 seconds)
+Test Case 'HiperdexSourceTests.testDefaultExportContainsAndroidHiperdexRoutesAndFilters' started at 2026-10-11 07:36:34.774
+Test Case 'HiperdexSourceTests.testDefaultExportContainsAndroidHiperdexRoutesAndFilters' passed (0.005 seconds)
+Test Case 'HiperdexSourceTests.testDetailCatalogAndReaderDecodeEntitiesWithoutPreloadingCatalog' started at 2026-10-11 07:36:34.780
+Test Case 'HiperdexSourceTests.testDetailCatalogAndReaderDecodeEntitiesWithoutPreloadingCatalog' passed (0.032 seconds)
+Test Case 'HiperdexSourceTests.testDetailRejectsErrorHeadingAndStripsSuffixAfterH1Fallback' started at 2026-10-11 07:36:34.811
+Test Case 'HiperdexSourceTests.testDetailRejectsErrorHeadingAndStripsSuffixAfterH1Fallback' passed (0.019 seconds)
+Test Case 'HiperdexSourceTests.testFallbackLinksRunWhenRecognizedCardBlocksProduceNoItems' started at 2026-10-11 07:36:34.830
+Test Case 'HiperdexSourceTests.testFallbackLinksRunWhenRecognizedCardBlocksProduceNoItems' passed (0.006 seconds)
+Test Case 'HiperdexSourceTests.testImportedConfigurationControlsRequestsHeadersFiltersAndRelativeImages' started at 2026-10-11 07:36:34.836
+Test Case 'HiperdexSourceTests.testImportedConfigurationControlsRequestsHeadersFiltersAndRelativeImages' passed (0.067 seconds)
+Test Case 'HiperdexSourceTests.testLatestSearchCategoryAndFiltersPreserveAndroidURLsAndOrder' started at 2026-10-11 07:36:34.904
+Test Case 'HiperdexSourceTests.testLatestSearchCategoryAndFiltersPreserveAndroidURLsAndOrder' passed (0.04 seconds)
+Test Case 'HiperdexSourceTests.testValidEmptyListDiffersFromErrorShellAndTransportFailuresPropagate' started at 2026-10-11 07:36:34.944
+Test Case 'HiperdexSourceTests.testValidEmptyListDiffersFromErrorShellAndTransportFailuresPropagate' passed (0.011 seconds)
+Test Suite 'HiperdexSourceTests' passed at 2026-10-11 07:36:34.955
+Executed 8 tests, with 0 failures (0 unexpected) in 0.192 (0.192) seconds
+Test Suite 'StorageCalculatorTests' started at 2026-10-11 07:36:34.955
+Test Case 'StorageCalculatorTests.testDirectorySizeWithNestedFiles' started at 2026-10-11 07:36:34.955
+Test Case 'StorageCalculatorTests.testDirectorySizeWithNestedFiles' passed (0.005 seconds)
+Test Case 'StorageCalculatorTests.testEmptyDirectorySize' started at 2026-10-11 07:36:34.960
+Test Case 'StorageCalculatorTests.testEmptyDirectorySize' passed (0.001 seconds)
+Test Case 'StorageCalculatorTests.testFormatBytes' started at 2026-10-11 07:36:34.961
+Test Case 'StorageCalculatorTests.testFormatBytes' passed (0.0 seconds)
+Test Suite 'StorageCalculatorTests' passed at 2026-10-11 07:36:34.961
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.006 (0.006) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 07:36:34.961
+Executed 16 tests, with 0 failures (0 unexpected) in 0.22 (0.22) seconds

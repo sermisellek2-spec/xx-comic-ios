@@ -1,0 +1,154 @@
+[0/1] Planning build
+Building for debugging...
+[0/12] Write sources
+[0/11] Write swift-version-24593BA9C3E375BF.txt
+[4/12] Compiling ComicCore DiscoveryHeaderGesture.swift
+[5/13] Compiling ComicCore UsageStatsClient.swift
+[6/13] Emitting module ComicCore
+[7/14] Wrapping AST for ComicCore for debugging
+[9/39] Emitting module ComicCoreTests
+[10/63] Compiling ComicCoreTests AntbywSourceTests.swift
+[11/63] Compiling ComicCoreTests AppThemeTests.swift
+[12/63] Compiling ComicCoreTests AppUpdateCheckerTests.swift
+[13/63] Compiling ComicCoreTests BaoziSourceTests.swift
+[14/63] Compiling ComicCoreTests BatchImportPlannerTests.swift
+[15/63] Compiling ComicCoreTests BatchImportSessionTests.swift
+[16/63] Compiling ComicCoreTests BatchImportWorkerTests.swift
+[17/63] Compiling ComicCoreTests BookshelfGroupStoreTests.swift
+[18/63] Compiling ComicCoreTests BookshelfReadingStatusTests.swift
+[19/63] Compiling ComicCoreTests BuiltinSourceCatalogTests.swift
+[20/63] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[21/63] Compiling ComicCoreTests ChapterMatchingTests.swift
+[22/63] Compiling ComicCoreTests ComicDirectoryPreparationTests.swift
+[23/63] Compiling ComicCoreTests ContentFingerprintTests.swift
+[24/63] Compiling ComicCoreTests CopyMangaTests.swift
+[25/63] Compiling ComicCoreTests CuimhSourceTests.swift
+[26/63] Compiling ComicCoreTests D5d6SourceTests.swift
+[27/63] Compiling ComicCoreTests DefaultDownloadImageFetcherTests.swift
+[28/63] Compiling ComicCoreTests DingManhuaSourceTests.swift
+[29/63] Compiling ComicCoreTests DiscoveryHeaderGestureTests.swift
+[30/63] Compiling ComicCoreTests DongmanLaSourceTests.swift
+[31/63] Compiling ComicCoreTests DownloadCoordinatorTests.swift
+[32/63] Compiling ComicCoreTests DownloadIdentityTests.swift
+[33/63] Compiling ComicCoreTests DownloadRuntimeTests.swift
+[34/87] Compiling ComicCoreTests DownloadStoreTests.swift
+[35/87] Compiling ComicCoreTests EpubParserTests.swift
+[36/87] Compiling ComicCoreTests EpubReaderResourceTests.swift
+[37/87] Compiling ComicCoreTests EpubTextSessionTests.swift
+[38/87] Compiling ComicCoreTests ErrorLogStoreTests.swift
+[39/87] Compiling ComicCoreTests FavoriteRevisionTests.swift
+[40/87] Compiling ComicCoreTests FavoriteUpdateCheckerTests.swift
+[41/87] Compiling ComicCoreTests FileDownloadWorkerTests.swift
+[42/87] Compiling ComicCoreTests FiveUmSourceTests.swift
+[43/87] Compiling ComicCoreTests GmhSourceTests.swift
+[44/87] Compiling ComicCoreTests Hanman18SourceTests.swift
+[45/87] Compiling ComicCoreTests HiperdexSourceTests.swift
+[46/87] Compiling ComicCoreTests IOSUpdatePolicyTests.swift
+[47/87] Compiling ComicCoreTests ImageEnhancementPolicyTests.swift
+[48/87] Compiling ComicCoreTests JmImageTransformTests.swift
+[49/87] Compiling ComicCoreTests JmSourceTests.swift
+[50/87] Compiling ComicCoreTests KindleFormatTests.swift
+[51/87] Compiling ComicCoreTests KindlePublicationTests.swift
+[52/87] Compiling ComicCoreTests LibraryStoreTests.swift
+[53/87] Compiling ComicCoreTests LiumanhuaSourceTests.swift
+[54/87] Compiling ComicCoreTests LocalArchiveTests.swift
+[55/87] Compiling ComicCoreTests LocalCatalogTests.swift
+[56/87] Compiling ComicCoreTests LocalEpubLibraryTests.swift
+[57/87] Compiling ComicCoreTests LocalFolderSyncTests.swift
+[58/110] Compiling ComicCoreTests LocalFolderTests.swift
+[59/110] Compiling ComicCoreTests LocalImportFingerprintTests.swift
+[60/110] Compiling ComicCoreTests LocalImportPreparationTests.swift
+[61/110] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+[62/110] Compiling ComicCoreTests LocalLibraryTests.swift
+[63/110] Compiling ComicCoreTests LocalPdfLibraryTests.swift
+[64/110] Compiling ComicCoreTests LocalReadingRoutingTests.swift
+[65/110] Compiling ComicCoreTests LocalSeriesLifecycleTests.swift
+[66/110] Compiling ComicCoreTests LocalTestHTTPServer.swift
+[67/110] Compiling ComicCoreTests LocalTestHTTPServerTests.swift
+[68/110] Compiling ComicCoreTests ManbenSourceTests.swift
+[69/110] Compiling ComicCoreTests ManhuaguiTests.swift
+[70/110] Compiling ComicCoreTests ManwaImageDecoderTests.swift
+[71/110] Compiling ComicCoreTests ManwaSourceTests.swift
+[72/110] Compiling ComicCoreTests Mh160SourceTests.swift
+[73/110] Compiling ComicCoreTests Mh18BrowserTrustTests.swift
+[74/110] Compiling ComicCoreTests Mh18CookieSynchronizerTests.swift
+[75/110] Compiling ComicCoreTests Mh18SourceTests.swift
+[76/110] Compiling ComicCoreTests Mh18VerificationAttemptTests.swift
+[77/110] Compiling ComicCoreTests Mh18VerificationRulesTests.swift
+[78/110] Compiling ComicCoreTests MkzhanSourceTests.swift
+[79/110] Compiling ComicCoreTests NaturalPathOrderTests.swift
+[80/110] Compiling ComicCoreTests NewPublicSourcesTests.swift
+[81/110] Compiling ComicCoreTests PdfRendererTests.swift
+[82/110] Compiling ComicCoreTests PreferencesTests.swift
+[83/110] Compiling ComicCoreTests PublicComicSourceTests.swift
+[84/110] Compiling ComicCoreTests QuickPublicationInfoTests.swift
+[85/110] Compiling ComicCoreTests ReaderLoadStateTests.swift
+[86/110] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+[87/110] Compiling ComicCoreTests ReaderSessionTests.swift
+[88/110] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+[89/110] Compiling ComicCoreTests ReadingRulesTests.swift
+[90/110] Compiling ComicCoreTests RetiredComicSourceTests.swift
+[91/110] Compiling ComicCoreTests SearchRulesTests.swift
+[92/110] Compiling ComicCoreTests SourceAESTests.swift
+[93/110] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+[94/110] Compiling ComicCoreTests SourceGroupStoreTests.swift
+[95/110] Compiling ComicCoreTests SourceImportContractTests.swift
+[96/110] Compiling ComicCoreTests SourcePreferencesTests.swift
+[97/110] Compiling ComicCoreTests SourceSearchTrimTests.swift
+[98/110] Compiling ComicCoreTests StorageCalculatorTests.swift
+[99/110] Compiling ComicCoreTests TextReadingTests.swift
+[100/110] Compiling ComicCoreTests UsageStatsClientTests.swift
+[101/110] Compiling ComicCoreTests UsageStatsReportingTests.swift
+[102/110] Compiling ComicCoreTests WhiteMarginTests.swift
+[103/110] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+[104/110] Compiling ComicCoreTests resource_bundle_accessor.swift
+[105/113] Wrapping AST for ComicCoreTests for debugging
+[106/113] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[107/114] Write sources
+[109/116] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[110/116] Emitting module ComicCorePackageDiscoveredTests
+[111/117] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[112/118] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[113/118] Write sources
+[114/118] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[116/120] Emitting module ComicCorePackageTests
+[117/120] Compiling ComicCorePackageTests runner.swift
+[118/120] Write Objects.LinkFileList
+[119/120] Linking ComicCorePackageTests.xctest
+Build complete! (40.37s)
+Test Suite 'Selected tests' started at 2026-10-11 08:15:19.331
+Test Suite 'DiscoveryHeaderGestureTests' started at 2026-10-11 08:15:19.348
+Test Case 'DiscoveryHeaderGestureTests.testHorizontalSmallAndEndedGesturesDoNotCollapseTools' started at 2026-10-11 08:15:19.348
+Test Case 'DiscoveryHeaderGestureTests.testHorizontalSmallAndEndedGesturesDoNotCollapseTools' passed (0.002 seconds)
+Test Case 'DiscoveryHeaderGestureTests.testReversingFingerDirectionExpandsToolsWithoutDependingOnScrollOffset' started at 2026-10-11 08:15:19.349
+Test Case 'DiscoveryHeaderGestureTests.testReversingFingerDirectionExpandsToolsWithoutDependingOnScrollOffset' passed (0.0 seconds)
+Test Suite 'DiscoveryHeaderGestureTests' passed at 2026-10-11 08:15:19.350
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'UsageStatsClientTests' started at 2026-10-11 08:15:19.350
+Test Case 'UsageStatsClientTests.testBeijingDayFormatting' started at 2026-10-11 08:15:19.350
+Test Case 'UsageStatsClientTests.testBeijingDayFormatting' passed (0.002 seconds)
+Test Case 'UsageStatsClientTests.testDefaultStateIsEnabledAndGeneratesPayload' started at 2026-10-11 08:15:19.352
+Test Case 'UsageStatsClientTests.testDefaultStateIsEnabledAndGeneratesPayload' passed (0.01 seconds)
+Test Case 'UsageStatsClientTests.testDisablingUsageStatsReturnsNilPayload' started at 2026-10-11 08:15:19.362
+Test Case 'UsageStatsClientTests.testDisablingUsageStatsReturnsNilPayload' passed (0.006 seconds)
+Test Case 'UsageStatsClientTests.testMarkDayReportedPersists' started at 2026-10-11 08:15:19.367
+Test Case 'UsageStatsClientTests.testMarkDayReportedPersists' passed (0.004 seconds)
+Test Suite 'UsageStatsClientTests' passed at 2026-10-11 08:15:19.372
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.022 (0.022) seconds
+Test Suite 'UsageStatsReportingTests' started at 2026-10-11 08:15:19.372
+Test Case 'UsageStatsReportingTests.testConcurrentForegroundAndDisablingDuringRequestDoNotCommitReport' started at 2026-10-11 08:15:19.372
+Test Case 'UsageStatsReportingTests.testConcurrentForegroundAndDisablingDuringRequestDoNotCommitReport' passed (0.008 seconds)
+Test Case 'UsageStatsReportingTests.testCorruptSettingIsPreservedWithoutSilentEnableOrNetwork' started at 2026-10-11 08:15:19.380
+Test Case 'UsageStatsReportingTests.testCorruptSettingIsPreservedWithoutSilentEnableOrNetwork' passed (0.005 seconds)
+Test Case 'UsageStatsReportingTests.testDailySuccessPersistsAcrossRestartWithExactlyOriginalFiveFields' started at 2026-10-11 08:15:19.385
+Test Case 'UsageStatsReportingTests.testDailySuccessPersistsAcrossRestartWithExactlyOriginalFiveFields' passed (0.011 seconds)
+Test Case 'UsageStatsReportingTests.testDisabledStatisticsNeverSendsAndReenableUsesSameSettingFile' started at 2026-10-11 08:15:19.396
+Test Case 'UsageStatsReportingTests.testDisabledStatisticsNeverSendsAndReenableUsesSameSettingFile' passed (0.012 seconds)
+Test Case 'UsageStatsReportingTests.testFailureDoesNotMarkDayAndRetriesOnlyOnLaterForegroundAfterCooldown' started at 2026-10-11 08:15:19.408
+Test Case 'UsageStatsReportingTests.testFailureDoesNotMarkDayAndRetriesOnlyOnLaterForegroundAfterCooldown' passed (0.006 seconds)
+Test Case 'UsageStatsReportingTests.testRealIsolatedHTTPPostSucceedsAndRedirectIsNotFollowed' started at 2026-10-11 08:15:19.415
+Test Case 'UsageStatsReportingTests.testRealIsolatedHTTPPostSucceedsAndRedirectIsNotFollowed' passed (0.019 seconds)
+Test Suite 'UsageStatsReportingTests' passed at 2026-10-11 08:15:19.434
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.062 (0.062) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 08:15:19.434
+Executed 12 tests, with 0 failures (0 unexpected) in 0.086 (0.086) seconds

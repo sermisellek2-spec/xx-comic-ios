@@ -38,6 +38,7 @@ final class ReaderEnhancementEngine {
     private var mlModel: AnyObject?
     private var isModelLoaded = false
     private var isClosed = false
+    private var cacheGeneration = UUID()
 
     init(tilePredictor: TilePredictor? = nil) {
         self.tilePredictor = tilePredictor ?? Self.predictTile
@@ -225,6 +226,7 @@ final class ReaderEnhancementEngine {
     }
 
     func enhanceResult(url: String, original: UIImage, mode: Int) async -> Result {
+        let cacheToken = cacheGeneration
         let unchanged = Result(image: original, method: .original, tilesProcessed: 0)
         guard !Task.isCancelled else { return Result(image: original, method: .cancelled, tilesProcessed: 0) }
         guard mode != ImageEnhancementPolicy.modeOff else { return unchanged }
@@ -329,7 +331,7 @@ final class ReaderEnhancementEngine {
 
             try Task.checkCancellation()
             let cost = (enhanced.image.cgImage?.bytesPerRow ?? 0) * (enhanced.image.cgImage?.height ?? 0)
-            cache.setObject(CacheEntry(enhanced), forKey: key, cost: cost)
+            if cacheToken == cacheGeneration { cache.setObject(CacheEntry(enhanced), forKey: key, cost: cost) }
             return enhanced
         } catch {
             return Result(image: original, method: Task.isCancelled || error is CancellationError ? .cancelled : .original, tilesProcessed: 0)
@@ -337,6 +339,7 @@ final class ReaderEnhancementEngine {
     }
 
     func clearCache() {
+        cacheGeneration = UUID()
         cache.removeAllObjects()
     }
 }

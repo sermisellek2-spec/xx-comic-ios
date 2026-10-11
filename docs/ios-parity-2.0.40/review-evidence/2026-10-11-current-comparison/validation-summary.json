@@ -1,0 +1,134 @@
+{
+  "generated_at_utc": "2026-10-11T06:00:59.159479+00:00",
+  "android_baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "ios_parent_revision": "1e2287c7e5bcd51d84507a477ff68db3b66a6421",
+  "branch": "codex/ios-port",
+  "current_tree_uncommitted": true,
+  "non_source_gate": "not_passed",
+  "checks": [
+    {
+      "id": "baseline",
+      "command": "pwsh -NoProfile -File docs/ios-parity-2.0.40/verify-baseline.ps1",
+      "exit_code": 0,
+      "files": 527,
+      "log": "baseline-check.log",
+      "scope": "frozen file and ZIP hashes",
+      "log_sha256": "4682d6f80735e33b3e366f51963ee3c36be0000e3757b9b4011e013d98807f02"
+    },
+    {
+      "id": "source_catalog",
+      "command": "python tools/audit-ios-source-catalog.py --output docs/ios-parity-2.0.40/review-evidence/2026-10-11-current-comparison/source-catalog-proof.json",
+      "exit_code": 0,
+      "current_sources": 51,
+      "default_enabled": 50,
+      "proof": "source-catalog-proof.json",
+      "scope": "static metadata, not live-site availability",
+      "proof_sha256": "3e28ab3b3f28e2732e1e76e374b52e418fd72be1be46dd86c95264e0c1d01bc8"
+    },
+    {
+      "id": "comic_core_full",
+      "command": "docker run --rm --mount type=bind,source=<ios/ComicCore>,target=/work -w /work swift:5.10-jammy swift test -j 2",
+      "exit_code": 0,
+      "executed": 780,
+      "skipped": 2,
+      "failures": 0,
+      "elapsed_seconds": 134.772,
+      "log": "core-full-test.log",
+      "inputs_unchanged_after_run": true,
+      "scope": "ComicCore Linux; Apple PDF branches skipped",
+      "log_sha256": "12de95df9cb74c2b8c955bc43159c614c969830f7823afc660d61a70797151d8"
+    },
+    {
+      "id": "feedback_red",
+      "command": "docker run --rm --mount type=bind,source=<checkout>,target=/repo,readonly -w /repo swift:5.10-jammy bash tools/verify-ios-detail-feedback.sh",
+      "exit_code": 1,
+      "executed": 6,
+      "failed_tests": 6,
+      "assertion_failures": 13,
+      "log": "detail-feedback-red.log",
+      "scope": "new state API empty implementation; not original UIKit failure reproduction",
+      "log_sha256": "ebb0d5726c80b819b697e4a0c3ab8cd3f787ee11a5c04abd05f8f5d5800cdd39"
+    },
+    {
+      "id": "feedback_green",
+      "command": "same feedback command",
+      "exit_code": 0,
+      "executed": 6,
+      "failures": 0,
+      "log": "detail-feedback-green.log",
+      "scope": "exact app feedback source and exact native tests in isolated Linux package; UIKit not compiled",
+      "log_sha256": "00b0210b6707e2cd3f4a0bf55453ae4b5b38b64148a7332ba1ce33af0bfb5e10"
+    },
+    {
+      "id": "native_syntax",
+      "command": "swiftc -frontend -parse -swift-version 5 [-D DEBUG] ios/XXComic/*.swift ios/XXComicTests/*.swift ios/XXComicUITests/*.swift",
+      "exit_codes": {
+        "Release": 0,
+        "DEBUG": 0
+      },
+      "swift_files": 51,
+      "log": "native-syntax.log",
+      "scope": "syntax only, not Apple types or runtime",
+      "log_sha256": "fdcc7f277b8d1e429ad695aec432b7cc9870cb1522e157d9a32bca7190b0d478"
+    },
+    {
+      "id": "icons_static",
+      "exit_code": 0,
+      "assets": 18,
+      "proof": "icon-static-proof.json",
+      "scope": "actual sizes, opaque RGB, hashes and compiler key; compiled icon/IPA pending",
+      "proof_sha256": "14deccfd2a2c674642133d5a232f7fdcce66f734648ab12e2a3e1f52f60898db"
+    },
+    {
+      "id": "matrix_consistency",
+      "exit_code": 0,
+      "requirement_rows": 74,
+      "status_counts": {
+        "通过": 1,
+        "待核对": 4,
+        "待实现": 11,
+        "阻塞": 3,
+        "待验收": 52,
+        "后置站源": 3
+      },
+      "current_source_rows": 51,
+      "retired_rows": 2,
+      "scope": "metadata consistency only; no acceptance percentage"
+    },
+    {
+      "id": "git_diff_check",
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "skipped_core_tests": [
+    "LocalImportPreparationTests.testNativePdfPreparationAndPublicationUseRealRenderer",
+    "PdfRendererTests.testNativePDFRenderingRequiresAppleFrameworks"
+  ],
+  "not_run": [
+    "current Apple SDK typecheck and Xcode build",
+    "current native app unit-test host",
+    "10 CurrentParityUITests (2 global search + 8 download)",
+    "current iPhone/iPad portrait/landscape light/dark same-content visual matrix",
+    "current Files/background/performance/recovery acceptance",
+    "current compiled IPA/home-screen icon acceptance",
+    "live-site tests (deferred until non-source gate passes)"
+  ],
+  "independent_readonly_review": {
+    "confirmed_product_p2": 2,
+    "confirmed_fixture_p2": 1,
+    "local_fixes_reviewed": true,
+    "new_important_source_issues_in_final_review": 0,
+    "report": "code-review.md",
+    "scope": "source review, not native runtime acceptance"
+  },
+  "old_successful_ci": {
+    "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38104946234",
+    "head_sha": "a5aeec90a1d47b9670b859150cb89f78c9856fbb",
+    "conclusion": "success",
+    "ipa_sha256": "cb18338e00e8cf9b7bb1dab1a4c639a67936ece8db1541c25b56e29aec5c984d",
+    "does_not_contain_current_fixes": true
+  },
+  "inputs": "input-hashes.json",
+  "input_manifest_sha256": "8f71823db2657c4e7c2e87af4690a0e2dd5cc16bef123a010b326216a18383c8"
+}

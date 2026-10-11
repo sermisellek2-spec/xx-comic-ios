@@ -190,6 +190,29 @@ public final class DownloadStore: DownloadRepository, @unchecked Sendable {
         try? persistLocked()
     }
 
+    public func removeBook(_ bookId: String) throws {
+        lock.lock(); defer { lock.unlock() }
+        let previous = data
+        let ids = Set(data.tasks.values.filter { $0.bookId == bookId }.map(\.id))
+        for id in ids { data.tasks.removeValue(forKey: id); data.pages.removeValue(forKey: id) }
+        data.order.removeAll { ids.contains($0) }
+        data.snapshots.removeValue(forKey: bookId)
+        do { try persistLocked() } catch { data = previous; throw error }
+    }
+    public func removeConfirmedTask(_ id: String) throws {
+        lock.lock(); defer { lock.unlock() }
+        let previous = data
+        data.tasks.removeValue(forKey: id); data.pages.removeValue(forKey: id); data.order.removeAll { $0 == id }
+        do { try persistLocked() } catch { data = previous; throw error }
+    }
+    public func saveConfirmedTask(_ task: DownloadTask) throws {
+        lock.lock(); defer { lock.unlock() }
+        let previous = data
+        if data.tasks[task.id] == nil { data.order.append(task.id) }
+        data.tasks[task.id] = task
+        do { try persistLocked() } catch { data = previous; throw error }
+    }
+
     public func close() {
         lock.lock()
         defer { lock.unlock() }

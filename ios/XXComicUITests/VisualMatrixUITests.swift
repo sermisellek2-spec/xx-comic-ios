@@ -52,6 +52,10 @@ final class VisualMatrixUITests: XCTestCase {
         expectation(for: NSPredicate(format: "value BEGINSWITH 'neural:'"), evaluatedWith: image)
         waitForExpectations(timeout: 30)
         capture(stem + "reader")
+        app.buttons["reader.settings"].tap()
+        XCTAssertTrue(app.switches["reader.disable.page.animation"].waitForExistence(timeout: 5))
+        capture(stem + "reading_settings")
+        app.buttons["reader.settings.close"].tap()
         app.buttons["目录"].tap()
         XCTAssertTrue(app.tables.cells.firstMatch.waitForExistence(timeout: 5))
         capture(stem + "reader_directory")
@@ -61,7 +65,7 @@ final class VisualMatrixUITests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["设置"].waitForExistence(timeout: 5))
         app.tabBars.buttons["设置"].tap()
         capture(stem + "settings")
-        for (label, name) in [("下载中心", "downloads"), ("阅读设置", "reading_settings"), ("缓存清理", "cache_cleanup")] {
+        for (label, name) in [("下载中心", "downloads"), ("缓存清理", "cache_cleanup")] {
             let item = app.tables.staticTexts[label]
             XCTAssertTrue(item.waitForExistence(timeout: 5)); item.tap()
             XCTAssertTrue(app.navigationBars.buttons.firstMatch.waitForExistence(timeout: 5))
@@ -73,4 +77,28 @@ final class VisualMatrixUITests: XCTestCase {
     func testVisualMatrixPortraitDark() { exercise(landscape: false, dark: true) }
     func testVisualMatrixLandscapeLight() { exercise(landscape: true, dark: false) }
     func testVisualMatrixLandscapeDark() { exercise(landscape: true, dark: true) }
+
+    // Matches the empty library / 51 sources / disabled statistics Android reference.
+    // Attachments become comparison evidence only after this actually runs on Apple.
+    private func settingsReference(landscape: Bool, dark: Bool) {
+        XCUIDevice.shared.orientation = landscape ? .landscapeLeft : .portrait
+        defer { XCUIDevice.shared.orientation = .portrait }
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-catalog-fixtures", "--matrix-empty-library", "--matrix-disabled-statistics", "--matrix-reference-automatic-theme", dark ? "--dark-mode" : "--light-mode"]
+        app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
+        app.launch()
+        XCTAssertTrue(app.tabBars.buttons["设置"].waitForExistence(timeout: 10)); app.tabBars.buttons["设置"].tap()
+        XCTAssertEqual(app.tables.cells.count, 11)
+        XCTAssertTrue(app.tables.cells["settings.theme"].staticTexts["自动"].exists)
+        XCTAssertTrue(app.tables.cells["settings.sources"].staticTexts["50 个开启"].exists)
+        XCTAssertTrue(app.tables.cells["settings.history"].staticTexts["0 条"].exists)
+        let frame = app.windows.firstMatch.frame
+        XCTAssertEqual(frame.width > frame.height, landscape)
+        let idiom = UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
+        capture("\(idiom)_\(landscape ? "landscape" : "portrait")_\(dark ? "dark" : "light")_settings_reference_empty")
+    }
+    func testSettingsReferencePortraitLight() { settingsReference(landscape: false, dark: false) }
+    func testSettingsReferencePortraitDark() { settingsReference(landscape: false, dark: true) }
+    func testSettingsReferenceLandscapeLight() { settingsReference(landscape: true, dark: false) }
+    func testSettingsReferenceLandscapeDark() { settingsReference(landscape: true, dark: true) }
 }

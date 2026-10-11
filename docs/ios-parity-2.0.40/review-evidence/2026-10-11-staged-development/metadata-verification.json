@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "android_reference_count": 8,
+  "screenshot_hashes_verified": true,
+  "source_current_count": 51,
+  "source_default_enabled": 50,
+  "requirement_count": 74,
+  "duplicate_ids": [],
+  "real_sources_all_deferred": true,
+  "task_scope_excludes_credential_scripts": true,
+  "apple_validation": false,
+  "final_code_hashes_reverified": true,
+  "source_csv_matches_frozen_names_order": true,
+  "non_source_gate_passed": false
+}

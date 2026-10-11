@@ -49,10 +49,20 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 switch url.scheme {
                 case "xxcomic-epub": return try library.epubImageData(pageURL: url)
                 case "xxcomic-pdf": return try library.pdfPageData(pageURL: url) { try PdfRenderer.render($0, pageIndex: $1) }
+                case "file":
+                    let resolved = url.resolvingSymlinksInPath().standardizedFileURL
+                    let root = library.directory.resolvingSymlinksInPath().standardizedFileURL
+                    guard resolved.path.hasPrefix(root.path + "/") else { throw LocalLibraryError.invalidBook }
+                    return try FileAccessCoordinator.system.coordinate(resolved, access: .read) {
+                        try FileAccessCoordinator.readRegularFile($0, maximumBytes: Int64(LocalLibrary.maximumImageBytes))
+                    }
                 default: throw LocalLibraryError.invalidBook
                 }
             }
-        } else { localPageImage = nil }
+        } else {
+            let runtime = environment.downloadRuntime
+            localPageImage = { try runtime.offlineImageData(at: $0) }
+        }
         incompleteDirectory = directoryIncomplete
         session = ReaderSession(chapterCount: chapters.count, chapterIndex: chapterIndex)
         settings = environment.preferences.load()
@@ -73,26 +83,27 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
 
         // Two-row bottom toolbar aligned with Android 2.0.40
         toolbar.axis = .vertical
-        toolbar.spacing = 6
-        toolbar.backgroundColor = UIColor(red: 28/255, green: 33/255, blue: 40/255, alpha: 0.94) // Dark translucent
-        toolbar.layer.cornerRadius = 12
-        toolbar.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        toolbar.isLayoutMarginsRelativeArrangement = true
-        toolbar.layoutMargins = UIEdgeInsets(top: 8, left: 14, bottom: 8, right: 14)
+        toolbar.spacing = 0
+        toolbar.accessibilityIdentifier = "reader.toolbar"
 
         // Row 1: prevChapter | seekbar | nextChapter
         let row1 = UIStackView()
         row1.axis = .horizontal
         row1.alignment = .center
-        row1.spacing = 8
+        row1.spacing = 10
+        row1.isLayoutMarginsRelativeArrangement = true
+        row1.layoutMargins = UIEdgeInsets(top: 2, left: 12, bottom: 0, right: 12)
+        row1.heightAnchor.constraint(equalToConstant: 42).isActive = true
         previous.setTitle("上一章", for: .normal)
-        previous.titleLabel?.font = .systemFont(ofSize: 13)
-        previous.tintColor = Palette.accent
+        previous.titleLabel?.font = .systemFont(ofSize: 13, weight: .medium)
+        previous.tintColor = .label
+        previous.accessibilityIdentifier = "reader.previous.chapter"
         previous.addTarget(self, action: #selector(backward), for: .touchUpInside)
 
         nextButton.setTitle("下一章", for: .normal)
-        nextButton.titleLabel?.font = .systemFont(ofSize: 13)
-        nextButton.tintColor = Palette.accent
+        nextButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .medium)
+        nextButton.tintColor = .label
+        nextButton.accessibilityIdentifier = "reader.next.chapter"
         nextButton.addTarget(self, action: #selector(forward), for: .touchUpInside)
 
         readerSeekBar.onCommit = { [weak self] pageIndex in
@@ -112,27 +123,28 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         row1.addArrangedSubview(previous)
         row1.addArrangedSubview(readerSeekBar)
         row1.addArrangedSubview(nextButton)
-        previous.widthAnchor.constraint(equalToConstant: 52).isActive = true
-        nextButton.widthAnchor.constraint(equalToConstant: 52).isActive = true
+        previous.widthAnchor.constraint(equalToConstant: 60).isActive = true
+        nextButton.widthAnchor.constraint(equalToConstant: 60).isActive = true
+        previous.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        nextButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
 
         // Row 2: 目录 | 换源/详情 | 设置
         let row2 = UIStackView()
         row2.axis = .horizontal
         row2.distribution = .fillEqually
+        row2.heightAnchor.constraint(equalToConstant: 46).isActive = true
+        row2.isLayoutMarginsRelativeArrangement = true
+        row2.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         let directory = UIButton(type: .system), preferences = UIButton(type: .system)
-        directory.setTitle("目录", for: .normal)
-        directory.titleLabel?.font = .systemFont(ofSize: 14)
-        directory.tintColor = .label
+        configureToolbarAction(directory, title: "目录", image: ParityIcon.chapterList.image(size: 20))
+        directory.accessibilityIdentifier = "reader.directory"
         directory.addTarget(self, action: #selector(showDirectory), for: .touchUpInside)
 
-        middleButton.setTitle(comic.sourceId == "local" ? "详情" : "换源", for: .normal)
-        middleButton.titleLabel?.font = .systemFont(ofSize: 14)
-        middleButton.tintColor = .label
+        updateMiddleButton()
         middleButton.addTarget(self, action: #selector(middleButtonAction), for: .touchUpInside)
 
-        preferences.setTitle("设置", for: .normal)
-        preferences.titleLabel?.font = .systemFont(ofSize: 14)
-        preferences.tintColor = .label
+        configureToolbarAction(preferences, title: "设置", image: UIImage(systemName: "gearshape", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20)))
+        preferences.accessibilityIdentifier = "reader.settings"
         preferences.addTarget(self, action: #selector(showSettings), for: .touchUpInside)
 
         for btn in [directory, middleButton, preferences] { row2.addArrangedSubview(btn) }
@@ -241,13 +253,13 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         layout.scrollDirection = settings.layout == .strip ? .vertical : .horizontal
         pages.isPagingEnabled = settings.layout == .paged
         pages.isScrollEnabled = settings.layout == .strip && !isZoomed
-        previous.setTitle(settings.layout == .strip ? "上一章" : "上一页", for: .normal)
-        nextButton.setTitle(settings.layout == .strip ? "下一章" : "下一页", for: .normal)
         let style: UIUserInterfaceStyle = settings.theme == .system ? UIScreen.main.traitCollection.userInterfaceStyle : (settings.theme == .dark ? .dark : .light)
         overrideUserInterfaceStyle = style
         navigationController?.overrideUserInterfaceStyle = style
         pages.backgroundColor = .systemBackground; view.backgroundColor = .systemBackground
-        toolbar.backgroundColor = .secondarySystemBackground
+        toolbar.backgroundColor = UIColor { $0.userInterfaceStyle == .dark
+            ? UIColor(red: 12/255, green: 20/255, blue: 32/255, alpha: 0.94)
+            : UIColor(red: 247/255, green: 249/255, blue: 252/255, alpha: 0.94) }
         badge.textColor = .secondaryLabel
         badge.isHidden = !fullscreen || settings.fullyImmersive
         presentedViewController?.overrideUserInterfaceStyle = style
@@ -308,16 +320,19 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                     if let taskId = try? DownloadModels.key(self.comic.sourceId, self.comic.comicId, chapter.chapterId),
                        let task = runtime.store.get(id: taskId), task.state == .completed {
                         do {
-                            guard let local = try runtime.localChapter(
-                                detail: ComicDetail(summary: self.comic, author: "", status: "", description: "", latestChapter: "", chapters: self.chapters),
-                                chapterIndex: index
-                            ) else {
+                            let detail = ComicDetail(summary: self.comic, author: "", status: "", description: "", latestChapter: "", chapters: self.chapters)
+                            let worker = Task.detached(priority: .userInitiated) {
+                                try Task.checkCancellation()
+                                return try runtime.localChapter(detail: detail, chapterIndex: index)
+                            }
+                            let local = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+                            guard let local else {
                                 throw DownloadError.corruptedData("本章下载文件需要修复")
                             }
                             page = local
                         } catch {
                             ErrorLogStore.shared.append(title: "下载文件损坏: \(self.comic.title) - \(chapter.title)", error: error)
-                            throw DownloadError.corruptedData("本章下载文件需要修复")
+                            throw error
                         }
                     } else if !runtime.isNetworkConnected {
                         throw DownloadError.corruptedData("这一章还没有下载哦")
@@ -401,6 +416,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         }
     }
     private func updateLoadStatus() {
+        previous.isEnabled = !loading && (incompleteDirectory || session.chapterIndex > 0)
+        nextButton.isEnabled = !loading && (incompleteDirectory || session.chapterIndex + 1 < chapters.count)
+        previous.alpha = previous.isEnabled ? 1 : 0.35
+        nextButton.alpha = nextButton.isEnabled ? 1 : 0.35
         retryAction = nil
         if loading {
             status.isHidden = false
@@ -502,8 +521,28 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         }
     }
     @objc private func retry() { retryAction?() }
-    @objc private func backward() { move(-1) }
-    @objc private func forward() { move(1) }
+    private func configureToolbarAction(_ button: UIButton, title: String, image: UIImage?) {
+        var config = UIButton.Configuration.plain()
+        config.title = title; config.image = image; config.imagePlacement = .top; config.imagePadding = 2
+        config.baseForegroundColor = .label
+        config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0)
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
+            var result = attributes; result.font = .systemFont(ofSize: 11, weight: .medium); return result
+        }
+        button.configuration = config
+        button.accessibilityLabel = title
+    }
+    private func updateMiddleButton() {
+        let local = comic.sourceId == "local"
+        configureToolbarAction(middleButton, title: local ? "详情" : "换源", image: (local ? ParityIcon.detail : .source).image(size: 20))
+    }
+    private func moveChapterFromToolbar(_ delta: Int) {
+        guard !loading, !isZoomed, !pageAnimating else { return }
+        environment.readingHabits.userDidRead()
+        changeChapter(delta)
+    }
+    @objc private func backward() { moveChapterFromToolbar(-1) }
+    @objc private func forward() { moveChapterFromToolbar(1) }
     private func move(_ delta: Int) {
         guard !loading, !isZoomed, !pageAnimating else { return }
         environment.readingHabits.userDidRead()
@@ -593,6 +632,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         controller.onChange = { [weak self] in self?.applySettings() }
         let navigation = UINavigationController(rootViewController: controller)
         controller.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeSheet))
+        controller.navigationItem.rightBarButtonItem?.accessibilityIdentifier = "reader.settings.close"
         navigation.overrideUserInterfaceStyle = overrideUserInterfaceStyle
         present(navigation, animated: true)
         navigation.presentationController?.delegate = self
@@ -657,7 +697,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         self.images = []
         self.pages.reloadData()
         self.loadChapter(matchedIndex)
-        self.middleButton.setTitle(self.comic.sourceId == "local" ? "详情" : "换源", for: .normal)
+        self.updateMiddleButton()
     }
 
     private func switchReaderSource(target: ComicSummary) {

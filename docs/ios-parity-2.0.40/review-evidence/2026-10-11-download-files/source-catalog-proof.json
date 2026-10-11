@@ -1,0 +1,463 @@
+{
+  "android_baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "ios_parent_revision": "1e2287c7e5bcd51d84507a477ff68db3b66a6421",
+  "evidence_kind": "static catalog metadata; native adapter registration test not executed here; live sites not contacted",
+  "checks": {
+    "dedicated_count_22": true,
+    "public_count_29": true,
+    "dedicated_order": true,
+    "public_order_names_and_defaults": true,
+    "unique_active_ids_51": true,
+    "retired_ids": true,
+    "default_enabled_50": true
+  },
+  "current_count": 51,
+  "default_enabled_count": 50,
+  "default_disabled_ids": [
+    "duya"
+  ],
+  "excluded_public_profiles": [
+    "haoman"
+  ],
+  "retired_compatibility_only": [
+    "baozimh",
+    "mhua5"
+  ],
+  "current_sources": [
+    {
+      "id": "mh160",
+      "name": "漫画160",
+      "domain": "www.mh160mh.com",
+      "base_url": "https://www.mh160mh.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "gmh",
+      "name": "G社漫画",
+      "domain": "m.g-mh.org",
+      "base_url": "https://m.g-mh.org",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 2
+    },
+    {
+      "id": "mh18",
+      "name": "18漫画",
+      "domain": "18mh.org",
+      "base_url": "https://18mh.org",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 3
+    },
+    {
+      "id": "jmcomic",
+      "name": "禁漫天堂",
+      "domain": "18comic.vip",
+      "base_url": "https://18comic.vip",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 4
+    },
+    {
+      "id": "mkzhan",
+      "name": "漫客栈",
+      "domain": "www.mkzhan.com",
+      "base_url": "https://www.mkzhan.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 5
+    },
+    {
+      "id": "hiperdex",
+      "name": "HiperDEX",
+      "domain": "hiperdex.com",
+      "base_url": "https://hiperdex.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 6
+    },
+    {
+      "id": "manhuagui",
+      "name": "漫画柜",
+      "domain": "www.manhuagui.com",
+      "base_url": "https://www.manhuagui.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "hanman18",
+      "name": "Hanman18",
+      "domain": "hanman18.com",
+      "base_url": "https://hanman18.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "d5d6",
+      "name": "悦看漫画",
+      "domain": "www.d5d6.com",
+      "base_url": "https://www.d5d6.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 9
+    },
+    {
+      "id": "manben",
+      "name": "漫本",
+      "domain": "www.manben.com",
+      "base_url": "https://www.manben.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 10
+    },
+    {
+      "id": "manhuazhan",
+      "name": "漫画栈",
+      "domain": "www.60ti.com",
+      "base_url": "https://www.60ti.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 11
+    },
+    {
+      "id": "bbyin",
+      "name": "比卡漫画",
+      "domain": "bbyin.com",
+      "base_url": "https://bbyin.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 12
+    },
+    {
+      "id": "antbyw",
+      "name": "tapmanga搬运",
+      "domain": "www.antbyw.com",
+      "base_url": "https://www.antbyw.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 13
+    },
+    {
+      "id": "cuimh",
+      "name": "催漫画",
+      "domain": "www.cuimh.com",
+      "base_url": "https://www.cuimh.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 14
+    },
+    {
+      "id": "liumanhua",
+      "name": "六漫画",
+      "domain": "www.liumanhua.com",
+      "base_url": "https://www.liumanhua.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 15
+    },
+    {
+      "id": "copy4000",
+      "name": "拷贝漫画",
+      "domain": "www.copy4000.com",
+      "base_url": "https://www.copy4000.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 16
+    },
+    {
+      "id": "manwa",
+      "name": "漫蛙",
+      "domain": "manwace.cc",
+      "base_url": "https://manwace.cc",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 17
+    },
+    {
+      "id": "dingmanhua",
+      "name": "顶漫画",
+      "domain": "www.dingmanhua.com",
+      "base_url": "https://www.dingmanhua.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 18
+    },
+    {
+      "id": "dongmanla",
+      "name": "动漫啦",
+      "domain": "www.dongman.la",
+      "base_url": "https://www.dongman.la",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 19
+    },
+    {
+      "id": "xinmanhua",
+      "name": "新漫画-A",
+      "domain": "xapi.xinmanhua.net",
+      "base_url": "https://xapi.xinmanhua.net",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 20
+    },
+    {
+      "id": "zaimanhua",
+      "name": "再漫画",
+      "domain": "manhua.zaimanhua.com",
+      "base_url": "https://v4api.zaimanhua.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 21
+    },
+    {
+      "id": "guazi",
+      "name": "瓜子漫画",
+      "domain": "www.guazimanhua.com",
+      "base_url": "https://www.guazimanhua.com",
+      "type": "dedicated",
+      "default_enabled": true,
+      "priority": 22
+    },
+    {
+      "id": "dm5",
+      "name": "动漫屋",
+      "base_url": "https://m.dm5.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 23
+    },
+    {
+      "id": "kkk",
+      "name": "极速漫画",
+      "base_url": "https://m.1kkk.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 24
+    },
+    {
+      "id": "manhuaren",
+      "name": "漫画人",
+      "base_url": "https://www.manhuaren.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 25
+    },
+    {
+      "id": "dongman",
+      "name": "咚漫",
+      "base_url": "https://www.dongmanmanhua.cn",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 26
+    },
+    {
+      "id": "dogemanga",
+      "name": "漫画狗",
+      "base_url": "https://dogemanga.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 27
+    },
+    {
+      "id": "sisi",
+      "name": "思思漫画",
+      "base_url": "https://m.sisimanhua.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 28
+    },
+    {
+      "id": "manxiaosi",
+      "name": "漫小肆",
+      "base_url": "https://www.pknbc.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 29
+    },
+    {
+      "id": "lele",
+      "name": "乐乐韩漫",
+      "base_url": "https://www.hmwu.cc",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 30
+    },
+    {
+      "id": "tuku",
+      "name": "图库漫画",
+      "base_url": "https://www.tuku.cc",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 31
+    },
+    {
+      "id": "ycy",
+      "name": "异次元漫画",
+      "base_url": "https://www.ycymh.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 32
+    },
+    {
+      "id": "miaoqu",
+      "name": "喵趣漫画",
+      "base_url": "https://www.miaoqumh.org",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 33
+    },
+    {
+      "id": "aimi",
+      "name": "艾米漫画",
+      "base_url": "http://www.aymry.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 34
+    },
+    {
+      "id": "duya",
+      "name": "毒牙漫画",
+      "base_url": "https://www.duya.cc",
+      "type": "public",
+      "default_enabled": false,
+      "priority": 35
+    },
+    {
+      "id": "xiuxiu",
+      "name": "羞羞漫画",
+      "base_url": "http://www.xiuxmanhua.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 36
+    },
+    {
+      "id": "waiwai",
+      "name": "歪歪漫画",
+      "base_url": "https://m.waiwaimhx.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 37
+    },
+    {
+      "id": "mh250",
+      "name": "250漫画",
+      "base_url": "http://www.mh250.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 38
+    },
+    {
+      "id": "tuhao",
+      "name": "土豪漫画",
+      "base_url": "https://www.larton.cn",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 39
+    },
+    {
+      "id": "manshiduo",
+      "name": "漫士多",
+      "base_url": "https://manshiduo.org",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 40
+    },
+    {
+      "id": "dumanwu",
+      "name": "读漫屋",
+      "base_url": "https://m.dumanwu.org",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 41
+    },
+    {
+      "id": "ciyuan",
+      "name": "次元漫",
+      "base_url": "https://ciyuanman.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 42
+    },
+    {
+      "id": "wmanhua",
+      "name": "W漫画",
+      "base_url": "https://www.wmanhua.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 43
+    },
+    {
+      "id": "aba",
+      "name": "阿吧漫画",
+      "base_url": "https://www.abamhc1.click",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 44
+    },
+    {
+      "id": "comic51",
+      "name": "51漫画",
+      "base_url": "https://www.favcomic.xyz",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 45
+    },
+    {
+      "id": "dmanhua",
+      "name": "D漫画",
+      "base_url": "https://www.dmanhua.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 46
+    },
+    {
+      "id": "mh360",
+      "name": "360漫画",
+      "base_url": "https://www.360mh.cc",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 47
+    },
+    {
+      "id": "favcomic",
+      "name": "喜漫漫画",
+      "base_url": "https://www.favcomic.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 48
+    },
+    {
+      "id": "ttk",
+      "name": "天天看漫画",
+      "base_url": "https://www.ttkmh.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 49
+    },
+    {
+      "id": "laiman",
+      "name": "来漫画",
+      "base_url": "https://m.laimanhua.org",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 50
+    },
+    {
+      "id": "lmanhua",
+      "name": "L漫画",
+      "base_url": "https://lmanhua.com",
+      "type": "public",
+      "default_enabled": true,
+      "priority": 51
+    }
+  ],
+  "ios_inputs_sha256": {
+    "ios/ComicCore/Sources/ComicCore/BuiltinSourceCatalog.swift": "2bdf73b370a9b6013ac99c5d2cc5ee59bc11b7e8a999574c52608970bc82929f",
+    "ios/ComicCore/Sources/ComicCore/Resources/public-sources.json": "f7e2a6498150335179ee2f044aa6dd1a9591f09cba807c7f04cb9f6198ecf7b3",
+    "ios/XXComic/AppEnvironment.swift": "aa47406a779cd7b6b08841a088bb0b0103dc7e0f6d8b44c95e39da09c87386eb"
+  }
+}

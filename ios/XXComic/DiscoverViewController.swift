@@ -10,6 +10,11 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     private let tabs = UIScrollView()
     private let tabRow = UIStackView()
     private let history = UIStackView()
+    private let tools = UIStackView()
+    private let toolsHost = UIView()
+    private var collapsedToolsHeight: NSLayoutConstraint!
+    private var toolsHidden = false
+    private var headerGesture = DiscoveryHeaderGesture()
     private var sourceIndex = 0
     private var sourceIDs: [String] = []
     private var filters: [String: String] = [:]
@@ -30,6 +35,19 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         sourceIDs = environment.discoverySources.map(\.id)
         NotificationCenter.default.addObserver(self, selector: #selector(sourcesChanged), name: AppEnvironment.sourcesChanged, object: environment)
         title = "发现"
+        tools.axis = .vertical; tools.spacing = 8
+        tools.accessibilityIdentifier = "discover.tools"
+        tools.translatesAutoresizingMaskIntoConstraints = false
+        toolsHost.clipsToBounds = true; toolsHost.addSubview(tools)
+        let bottom = tools.bottomAnchor.constraint(equalTo: toolsHost.bottomAnchor)
+        // Content keeps its own dimensions while the host animates to zero.
+        bottom.priority = .defaultHigh
+        NSLayoutConstraint.activate([tools.topAnchor.constraint(equalTo: toolsHost.topAnchor),
+            tools.leadingAnchor.constraint(equalTo: toolsHost.leadingAnchor),
+            tools.trailingAnchor.constraint(equalTo: toolsHost.trailingAnchor), bottom])
+        collapsedToolsHeight = toolsHost.heightAnchor.constraint(equalToConstant: 0)
+        header.addArrangedSubview(toolsHost)
+        collection.panGestureRecognizer.addTarget(self, action: #selector(discoveryDrag(_:)))
         searchBar.placeholder = "搜索漫画"
         searchBar.delegate = self
         searchBar.searchBarStyle = .minimal
@@ -38,7 +56,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         let top = UIStackView(arrangedSubviews: [searchBar, mode])
         top.alignment = .center
         mode.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        header.addArrangedSubview(top)
+        tools.addArrangedSubview(top)
         sourceButton.addTarget(self, action: #selector(showSources), for: .touchUpInside)
         sourceButton.accessibilityIdentifier = "discover.source"
         updateSourceMenu()
@@ -46,13 +64,15 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         filterButton.addTarget(self, action: #selector(showFilters), for: .touchUpInside)
         let sourceRow = UIStackView(arrangedSubviews: [sourceButton, filterButton])
         sourceRow.distribution = .fillEqually
-        header.addArrangedSubview(sourceRow)
-        header.addArrangedSubview(tabs)
+        tools.addArrangedSubview(sourceRow)
+        tools.addArrangedSubview(tabs)
         tabs.showsHorizontalScrollIndicator = false
         tabRow.axis = .horizontal; tabRow.spacing = 6
         tabRow.translatesAutoresizingMaskIntoConstraints = false; tabs.addSubview(tabRow)
+        let tabsHeight = tabs.heightAnchor.constraint(equalToConstant: 38)
+        tabsHeight.priority = .defaultHigh
         NSLayoutConstraint.activate([
-            tabs.heightAnchor.constraint(equalToConstant: 38),
+            tabsHeight,
             tabRow.leadingAnchor.constraint(equalTo: tabs.contentLayoutGuide.leadingAnchor),
             tabRow.trailingAnchor.constraint(equalTo: tabs.contentLayoutGuide.trailingAnchor),
             tabRow.topAnchor.constraint(equalTo: tabs.contentLayoutGuide.topAnchor),
@@ -61,7 +81,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         ])
         history.axis = .vertical
         history.spacing = 4
-        header.addArrangedSubview(history)
+        tools.addArrangedSubview(history)
         let refresh = UIRefreshControl()
         refresh.addTarget(self, action: #selector(refreshResults), for: .valueChanged)
         collection.refreshControl = refresh
@@ -71,8 +91,9 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     deinit { tasks.forEach { $0.cancel() } }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        headerGesture.end()
         if presentedViewController != nil { return }
-        needsReload = loading || (isGlobal && !submittedQuery.isEmpty && finished.count < environment.discoverySearchSources.count)
+        needsReload = loading || (isGlobal && !submittedQuery.isEmpty && finished.count < environment.searchSources.count)
         requestID = UUID(); tasks.forEach { $0.cancel() }; tasks = []
         loading = false
     }
@@ -110,7 +131,38 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) { searchBar.resignFirstResponder(); start() }
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) { if searchText.isEmpty { start() } }
 
+    @objc private func discoveryDrag(_ gesture: UIPanGestureRecognizer) {
+        guard gesture.numberOfTouches <= 1, !searchBar.searchTextField.isFirstResponder else { headerGesture.end(); return }
+        let point = gesture.location(in: nil)
+        switch gesture.state {
+        case .began: headerGesture.begin(x: Double(point.x), y: Double(point.y))
+        case .changed:
+            let direction = headerGesture.move(x: Double(point.x), y: Double(point.y))
+            let canScroll = collection.contentSize.height > collection.bounds.height || collection.contentOffset.y > -collection.adjustedContentInset.top
+            if direction < 0 && canScroll { setToolsHidden(true, animated: true) }
+            else if direction > 0 { setToolsHidden(false, animated: true) }
+        default: headerGesture.end()
+        }
+    }
+    private func setToolsHidden(_ hidden: Bool, animated: Bool) {
+        guard hidden != toolsHidden else { return }
+        toolsHidden = hidden
+        tools.accessibilityElementsHidden = hidden
+        let anchor = captureAnchor()
+        view.layoutIfNeeded()
+        let update = {
+            self.collapsedToolsHeight.isActive = hidden
+            self.tools.alpha = hidden ? 0 : 1
+            self.view.layoutIfNeeded()
+            self.restoreAnchor(anchor)
+        }
+        if animated {
+            UIView.animate(withDuration: 0.18, delay: 0, options: [.beginFromCurrentState, .curveEaseOut], animations: update)
+        } else { update() }
+    }
+
     private func start(query: String? = nil, restoringGlobalSourceID: String? = nil) {
+        setToolsHidden(false, animated: false)
         requestID = UUID()
         tasks.forEach { $0.cancel() }; tasks = []
         loading = false; ended = false; nextPage = 1
@@ -120,16 +172,8 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         sourceButton.isHidden = isGlobal; filterButton.isHidden = isGlobal
         tabs.isHidden = !isGlobal || submittedQuery.isEmpty
         collection.refreshControl?.endRefreshing()
-        guard !environment.discoverySources.isEmpty else {
-            global = GlobalSearchState()
-            errors = [:]; finished = []
-            tabRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
-            tabs.isHidden = true
-            status("没有已启用的站源")
-            return
-        }
         if isGlobal {
-            guard !environment.discoverySearchSources.isEmpty else {
+            guard !environment.searchSources.isEmpty else {
                 global = GlobalSearchState()
                 errors = [:]; finished = []
                 tabRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
@@ -142,7 +186,17 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
             saved.removeAll { $0 == submittedQuery }; saved.insert(submittedQuery, at: 0)
             environment.defaults.set(Array(saved.prefix(60)), forKey: "global.search.history")
             loadGlobal(restoringSelectedSourceID: restoringGlobalSourceID)
-        } else { loadSingle() }
+        } else {
+            guard !environment.discoverySources.isEmpty else {
+                global = GlobalSearchState()
+                errors = [:]; finished = []
+                tabRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
+                tabs.isHidden = true
+                status("当前分组没有已启用的站源")
+                return
+            }
+            loadSingle()
+        }
     }
 
     private func showHistory() {
@@ -214,7 +268,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
 
     private func loadGlobal(restoringSelectedSourceID: String? = nil) {
         let token = requestID
-        let searchSources = environment.discoverySearchSources
+        let searchSources = environment.searchSources
         let generation = global.begin(query: submittedQuery, sourceIDs: searchSources.map(\.id), restoringSelectedSourceID: restoringSelectedSourceID)
         errors = [:]; finished = []
         refreshGlobal()
@@ -240,7 +294,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         let visibleIDs = global.visibleSourceIDs
         tabs.isHidden = visibleIDs.isEmpty || submittedQuery.isEmpty || !isGlobal
         for id in visibleIDs {
-            guard let source = environment.discoverySearchSources.first(where: { $0.id == id }) else { continue }
+            guard let source = environment.searchSources.first(where: { $0.id == id }) else { continue }
             let count = global.results[id]?.count ?? 0
             let button = UIButton(type: .system)
             button.accessibilityIdentifier = "discover.global." + source.id
@@ -263,7 +317,7 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         }
         comics = global.results[global.selectedSourceID ?? ""] ?? []
         collection.reloadData()
-        let progress = "\(finished.count)/\(environment.discoverySearchSources.count) 个站源完成"
+        let progress = "\(finished.count)/\(environment.searchSources.count) 个站源完成"
         if let error = errors[global.selectedSourceID ?? ""] {
             if (error as? Mh18SourceError) == .verificationRequired {
                 status(progress + " · 需要验证 · 去验证") { [weak self] in

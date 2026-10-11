@@ -18,8 +18,8 @@ final class StorageCalculatorTests: XCTestCase {
         try super.tearDownWithError()
     }
 
-    func testEmptyDirectorySize() {
-        let size = StorageCalculator.directorySize(at: tempDir)
+    func testEmptyDirectorySize() throws {
+        let size = try StorageCalculator.directorySize(at: tempDir)
         XCTAssertEqual(size, 0)
     }
 
@@ -34,7 +34,7 @@ final class StorageCalculatorTests: XCTestCase {
         try data1.write(to: file1)
         try data2.write(to: file2)
 
-        let size = StorageCalculator.directorySize(at: tempDir)
+        let size = try StorageCalculator.directorySize(at: tempDir)
         XCTAssertEqual(size, 3072)
     }
 

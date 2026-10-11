@@ -7,6 +7,9 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
     private var cacheSizeText: String = "正在计算..."
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let confirmButton = UIButton(type: .system)
+    private var sizeTask: Task<Void, Never>?
+    private var cleanupTask: Task<Void, Never>?
+    private var sizeGeneration = UUID()
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -67,13 +70,18 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
     }
 
     private func calculateCacheSize() {
-        Task.detached {
-            let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
-            let totalBytes = cacheURL != nil ? StorageCalculator.directorySize(at: cacheURL!) : 0
-            let formatted = StorageCalculator.formatBytes(totalBytes)
-
-            await MainActor.run {
-                self.cacheSizeText = formatted
+        sizeTask?.cancel()
+        let token = UUID(); sizeGeneration = token
+        let cache = environment.responseCache
+        sizeTask = Task { [weak self] in
+            do {
+                let usage = try await cache.usage()
+                guard let self, self.sizeGeneration == token, !Task.isCancelled else { return }
+                self.cacheSizeText = StorageCalculator.formatBytes(usage.totalBytes)
+                self.tableView.reloadData()
+            } catch {
+                guard let self, self.sizeGeneration == token, !Task.isCancelled else { return }
+                self.cacheSizeText = "计算失败，可重试"
                 self.tableView.reloadData()
             }
         }
@@ -83,7 +91,6 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
         let sheet = UIAlertController(title: "缓存操作", message: nil, preferredStyle: .actionSheet)
         sheet.addAction(UIAlertAction(title: "重新计算大小", style: .default) { [weak self] _ in
             self?.calculateCacheSize()
-            self?.showToast("缓存大小已更新")
         })
         sheet.addAction(UIAlertAction(title: "清理全部缓存", style: .destructive) { [weak self] _ in
             self?.confirmCleanupTapped()
@@ -109,17 +116,37 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
     }
 
     private func performCleanup() {
-        URLCache.shared.removeAllCachedResponses()
-        if let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
-            let fileManager = FileManager.default
-            if let files = try? fileManager.contentsOfDirectory(at: cacheURL, includingPropertiesForKeys: nil) {
-                for file in files {
-                    try? fileManager.removeItem(at: file)
+        guard cleanupTask == nil else { return }
+        confirmButton.isEnabled = false
+        confirmButton.setTitle("正在清理…", for: .normal)
+        let environment = environment
+        cleanupTask = Task { [weak self] in
+            defer {
+                self?.cleanupTask = nil
+                self?.confirmButton.isEnabled = true
+                self?.confirmButton.setTitle("确认清理", for: .normal)
+            }
+            do {
+                let remaining = try await environment.clearCaches()
+                guard let self, !Task.isCancelled else { return }
+                self.calculateCacheSize()
+                if remaining.isEmpty {
+                    self.showToast("缓存已清理，收藏与本地漫画已保留")
+                } else {
+                    self.showToast("仍有 \(StorageCalculator.formatBytes(remaining.totalBytes)) 缓存未清理，请重试")
                 }
+            } catch {
+                guard let self, !Task.isCancelled else { return }
+                self.showToast("清理失败，请重试")
             }
         }
-        calculateCacheSize()
-        showToast("缓存已清理，收藏与本地漫画已保留")
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        sizeTask?.cancel()
+        // Once started, cleanup finishes safely; a departed page receives no result.
+        cleanupTask?.cancel()
     }
 
     private func showToast(_ message: String) {

@@ -1,0 +1,112 @@
+[0/1] Planning build
+Building for debugging...
+[0/11] Write sources
+[0/10] Write swift-version-24593BA9C3E375BF.txt
+[3/10] Emitting module ComicCoreTests
+/work/Tests/ComicCoreTests/DownloadFileCoordinationTests.swift:38:9: warning: stored property 'privateRoot' of 'Sendable'-conforming struct 'ProviderSource' has non-sendable type 'URL'
+    let privateRoot: URL
+        ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Tests/ComicCoreTests/DownloadFileCoordinationTests.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import XCTest
+^
+@preconcurrency 
+[4/10] Compiling ComicCoreTests DownloadFileCoordinationTests.swift
+/work/Tests/ComicCoreTests/DownloadFileCoordinationTests.swift:38:9: warning: stored property 'privateRoot' of 'Sendable'-conforming struct 'ProviderSource' has non-sendable type 'URL'
+    let privateRoot: URL
+        ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Tests/ComicCoreTests/DownloadFileCoordinationTests.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import XCTest
+^
+@preconcurrency 
+[5/13] Wrapping AST for ComicCoreTests for debugging
+[6/13] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[7/14] Write sources
+[9/16] Emitting module ComicCorePackageDiscoveredTests
+[10/16] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[11/17] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[12/18] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[13/18] Write sources
+[14/18] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[16/20] Emitting module ComicCorePackageTests
+[17/20] Compiling ComicCorePackageTests runner.swift
+[18/20] Write Objects.LinkFileList
+[19/20] Linking ComicCorePackageTests.xctest
+Build complete! (16.56s)
+Test Suite 'Selected tests' started at 2026-10-11 10:22:08.428
+Test Suite 'DownloadDeletionTests' started at 2026-10-11 10:22:08.443
+Test Case 'DownloadDeletionTests.testBookDirectorySymlinkCannotDeleteExternalOriginal' started at 2026-10-11 10:22:08.443
+Test Case 'DownloadDeletionTests.testBookDirectorySymlinkCannotDeleteExternalOriginal' passed (0.019 seconds)
+Test Case 'DownloadDeletionTests.testCancellingActiveChapterWaitsForActualWriterBeforeRemovingPartFiles' started at 2026-10-11 10:22:08.462
+Test Case 'DownloadDeletionTests.testCancellingActiveChapterWaitsForActualWriterBeforeRemovingPartFiles' passed (0.091 seconds)
+Test Case 'DownloadDeletionTests.testChapterDeletionCannotFollowBookAncestorSymbolicLink' started at 2026-10-11 10:22:08.553
+Test Case 'DownloadDeletionTests.testChapterDeletionCannotFollowBookAncestorSymbolicLink' passed (0.01 seconds)
+Test Case 'DownloadDeletionTests.testChapterRemovalPersistenceFailureDoesNotDropDatabaseRecord' started at 2026-10-11 10:22:08.563
+Test Case 'DownloadDeletionTests.testChapterRemovalPersistenceFailureDoesNotDropDatabaseRecord' passed (0.007 seconds)
+Test Case 'DownloadDeletionTests.testCorruptIdentityCannotSelectParentOrUnknownDirectory' started at 2026-10-11 10:22:08.570
+Test Case 'DownloadDeletionTests.testCorruptIdentityCannotSelectParentOrUnknownDirectory' passed (0.006 seconds)
+Test Case 'DownloadDeletionTests.testDeleteRemovesOnlyConfirmedBookAndPersistsTaskRemoval' started at 2026-10-11 10:22:08.576
+Test Case 'DownloadDeletionTests.testDeleteRemovesOnlyConfirmedBookAndPersistsTaskRemoval' passed (0.01 seconds)
+Test Case 'DownloadDeletionTests.testDeletingActiveBookWaitsForWorkerAndCannotRecreateFiles' started at 2026-10-11 10:22:08.586
+Test Case 'DownloadDeletionTests.testDeletingActiveBookWaitsForWorkerAndCannotRecreateFiles' passed (0.087 seconds)
+Test Case 'DownloadDeletionTests.testUnknownChapterFileKeepsRecordAndReturnsVisibleDeletionFailure' started at 2026-10-11 10:22:08.673
+Test Case 'DownloadDeletionTests.testUnknownChapterFileKeepsRecordAndReturnsVisibleDeletionFailure' passed (0.01 seconds)
+Test Case 'DownloadDeletionTests.testUnknownFileRefusesDeletionAndKeepsCompletedBookReadable' started at 2026-10-11 10:22:08.683
+Test Case 'DownloadDeletionTests.testUnknownFileRefusesDeletionAndKeepsCompletedBookReadable' passed (0.01 seconds)
+Test Suite 'DownloadDeletionTests' passed at 2026-10-11 10:22:08.693
+Executed 9 tests, with 0 failures (0 unexpected) in 0.249 (0.249) seconds
+Test Suite 'DownloadFileCoordinationTests' started at 2026-10-11 10:22:08.693
+Test Case 'DownloadFileCoordinationTests.testOfflineReadReportsProviderDenialWithoutDroppingCompletedRecords' started at 2026-10-11 10:22:08.693
+Test Case 'DownloadFileCoordinationTests.testOfflineReadReportsProviderDenialWithoutDroppingCompletedRecords' passed (0.036 seconds)
+Test Case 'DownloadFileCoordinationTests.testOfflineReaderRejectsUnrecordedFilesAndSameSizeChangedBytes' started at 2026-10-11 10:22:08.730
+Test Case 'DownloadFileCoordinationTests.testOfflineReaderRejectsUnrecordedFilesAndSameSizeChangedBytes' passed (0.039 seconds)
+Test Case 'DownloadFileCoordinationTests.testPageAndCoverStagePrivatelyThenCoordinatedFilesCanReadAndDelete' started at 2026-10-11 10:22:08.769
+Test Case 'DownloadFileCoordinationTests.testPageAndCoverStagePrivatelyThenCoordinatedFilesCanReadAndDelete' passed (0.039 seconds)
+Test Case 'DownloadFileCoordinationTests.testPageReplacedBySymlinkWhileWaitingForReadCannotExposeOriginal' started at 2026-10-11 10:22:08.808
+Test Case 'DownloadFileCoordinationTests.testPageReplacedBySymlinkWhileWaitingForReadCannotExposeOriginal' passed (0.035 seconds)
+Test Case 'DownloadFileCoordinationTests.testProviderRefusesPublicationKeepsOldBytesAndReportsFailedTask' started at 2026-10-11 10:22:08.842
+/work/Tests/ComicCoreTests/DownloadFileCoordinationTests.swift:124: error: DownloadFileCoordinationTests.testProviderRefusesPublicationKeepsOldBytesAndReportsFailedTask : XCTAssertEqual failed: ("Optional(ComicCore.DownloadState.queued)") is not equal to ("Optional(ComicCore.DownloadState.failed)") -
+Test Case 'DownloadFileCoordinationTests.testProviderRefusesPublicationKeepsOldBytesAndReportsFailedTask' failed (2.08 seconds)
+Test Case 'DownloadFileCoordinationTests.testStartupCleanupOnlyRemovesConfirmedStagingAndPreservesUserPartFiles' started at 2026-10-11 10:22:10.923
+Test Case 'DownloadFileCoordinationTests.testStartupCleanupOnlyRemovesConfirmedStagingAndPreservesUserPartFiles' passed (0.027 seconds)
+Test Case 'DownloadFileCoordinationTests.testUnknownFileAppearingWhileWaitingForDeletionPreventsRemoval' started at 2026-10-11 10:22:10.949
+Test Case 'DownloadFileCoordinationTests.testUnknownFileAppearingWhileWaitingForDeletionPreventsRemoval' passed (0.037 seconds)
+Test Suite 'DownloadFileCoordinationTests' failed at 2026-10-11 10:22:10.986
+	 Executed 7 tests, with 1 failure (0 unexpected) in 2.293 (2.293) seconds
+Test Suite 'DownloadLocationTests' started at 2026-10-11 10:22:10.986
+Test Case 'DownloadLocationTests.testCancelledPreparationAndVirtualTraversalCannotSelectPaths' started at 2026-10-11 10:22:10.986
+Test Case 'DownloadLocationTests.testCancelledPreparationAndVirtualTraversalCannotSelectPaths' passed (0.001 seconds)
+Test Case 'DownloadLocationTests.testLegacyPrivateBookKeepsIdentityAndFilesWhenNewDefaultIsExternal' started at 2026-10-11 10:22:10.988
+Test Case 'DownloadLocationTests.testLegacyPrivateBookKeepsIdentityAndFilesWhenNewDefaultIsExternal' passed (0.011 seconds)
+Test Case 'DownloadLocationTests.testPermissionLossRejectsEnqueueWithoutFallingBackOrChangingRecords' started at 2026-10-11 10:22:10.999
+Test Case 'DownloadLocationTests.testPermissionLossRejectsEnqueueWithoutFallingBackOrChangingRecords' passed (0.005 seconds)
+Test Case 'DownloadLocationTests.testRealQueueWritesCustomPathAndRestartReadsOriginalAfterDefaultChanges' started at 2026-10-11 10:22:11.004
+Test Case 'DownloadLocationTests.testRealQueueWritesCustomPathAndRestartReadsOriginalAfterDefaultChanges' passed (0.062 seconds)
+Test Case 'DownloadLocationTests.testReauthorizationRejectsDifferentFolderAndKeepsOriginalMapping' started at 2026-10-11 10:22:11.066
+Test Case 'DownloadLocationTests.testReauthorizationRejectsDifferentFolderAndKeepsOriginalMapping' passed (0.017 seconds)
+Test Case 'DownloadLocationTests.testSelectionPersistsPermissionBookmarkAndProbeIsRemoved' started at 2026-10-11 10:22:11.083
+Test Case 'DownloadLocationTests.testSelectionPersistsPermissionBookmarkAndProbeIsRemoved' passed (0.005 seconds)
+Test Case 'DownloadLocationTests.testSymbolicLinkBelowSelectedRootAndCorruptMappingArePreserved' started at 2026-10-11 10:22:11.088
+Test Case 'DownloadLocationTests.testSymbolicLinkBelowSelectedRootAndCorruptMappingArePreserved' passed (0.004 seconds)
+Test Case 'DownloadLocationTests.testUnknownExternalFilePreventsWholeDeletionThenKnownCopyDeletesOnlyItsBook' started at 2026-10-11 10:22:11.092
+Test Case 'DownloadLocationTests.testUnknownExternalFilePreventsWholeDeletionThenKnownCopyDeletesOnlyItsBook' passed (0.062 seconds)
+Test Suite 'DownloadLocationTests' passed at 2026-10-11 10:22:11.154
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.167 (0.167) seconds
+Test Suite 'DownloadRuntimeTests' started at 2026-10-11 10:22:11.154
+Test Case 'DownloadRuntimeTests.testDeleteChapterCleansFilesAndStore' started at 2026-10-11 10:22:11.154
+Test Case 'DownloadRuntimeTests.testDeleteChapterCleansFilesAndStore' passed (0.026 seconds)
+Test Case 'DownloadRuntimeTests.testEnqueueAndDownloadCompletion' started at 2026-10-11 10:22:11.180
+Test Case 'DownloadRuntimeTests.testEnqueueAndDownloadCompletion' passed (0.026 seconds)
+Test Case 'DownloadRuntimeTests.testPauseAndResume' started at 2026-10-11 10:22:11.207
+Test Case 'DownloadRuntimeTests.testPauseAndResume' passed (0.011 seconds)
+Test Case 'DownloadRuntimeTests.testResumeSkipsAlreadyDownloadedPages' started at 2026-10-11 10:22:11.218
+Test Case 'DownloadRuntimeTests.testResumeSkipsAlreadyDownloadedPages' passed (0.038 seconds)
+Test Suite 'DownloadRuntimeTests' passed at 2026-10-11 10:22:11.256
+Executed 4 tests, with 0 failures (0 unexpected) in 0.102 (0.102) seconds
+Test Suite 'Selected tests' failed at 2026-10-11 10:22:11.256
+Executed 28 tests, with 1 failure (0 unexpected) in 2.812 (2.812) seconds

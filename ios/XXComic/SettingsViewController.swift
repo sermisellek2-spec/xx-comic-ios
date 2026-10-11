@@ -8,6 +8,12 @@ final class SettingsViewController: UITableViewController {
     private let defaults: UserDefaults
 
     private var cachedSizeString: String = ""
+    private var cacheSizeTask: Task<Void, Never>?
+    private var cacheSizeGeneration = UUID()
+    private var updateTask: Task<Void, Never>?
+    private var updateGeneration = UUID()
+
+    deinit { cacheSizeTask?.cancel(); updateTask?.cancel() }
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -25,6 +31,9 @@ final class SettingsViewController: UITableViewController {
         super.viewDidLoad()
         title = "设置"
         tableView.backgroundColor = Palette.background
+        tableView.separatorColor = Palette.borderSoft
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 56
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -34,15 +43,32 @@ final class SettingsViewController: UITableViewController {
     }
 
     private func updateCacheSizeText() {
-        Task.detached {
-            let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
-            let totalBytes = cacheURL != nil ? StorageCalculator.directorySize(at: cacheURL!) : 0
-            let text = StorageCalculator.formatBytes(totalBytes)
-            await MainActor.run {
-                self.cachedSizeString = text
+        cacheSizeTask?.cancel()
+        let token = UUID(); cacheSizeGeneration = token
+        let cache = environment.responseCache
+        cacheSizeTask = Task { [weak self] in
+            do {
+                let usage = try await cache.usage()
+                guard let self, self.cacheSizeGeneration == token, !Task.isCancelled else { return }
+                self.cachedSizeString = StorageCalculator.formatBytes(usage.totalBytes)
+                self.tableView.reloadData()
+            } catch {
+                guard let self, self.cacheSizeGeneration == token, !Task.isCancelled else { return }
+                self.cachedSizeString = "计算失败"
                 self.tableView.reloadData()
             }
         }
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        cacheSizeTask?.cancel()
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        guard presentedViewController == nil else { return }
+        updateGeneration = UUID(); updateTask?.cancel(); updateTask = nil
     }
 
     private var downloadSummaryText: String {
@@ -69,7 +95,7 @@ final class SettingsViewController: UITableViewController {
 
     private var launchBookshelfModeLabel: String {
         switch habitTracker.launchMode {
-        case .automatic: return "自动"
+        case .automatic: return "自动跟随"
         case .my: return "我的书架"
         case .local: return "本地书架"
         }
@@ -81,252 +107,113 @@ final class SettingsViewController: UITableViewController {
         return "\(shortVersion) (\(buildVersion))"
     }
 
-    // MARK: - UITableViewDataSource & Delegate
+    private var currentTheme: AppTheme { AppTheme(rawValue: defaults.integer(forKey: "theme.mode")) ?? .automatic }
 
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        return 3
-    }
-
-    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        switch section {
-        case 0: return "阅读与外观"
-        case 1: return "站源与本地数据"
-        case 2: return "App"
-        default: return nil
-        }
-    }
-
+    override func numberOfSections(in tableView: UITableView) -> Int { 3 }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        switch section {
-        case 0: return 4 // 主题模式、启动书架、阅读历史、阅读设置
-        case 1: return 5 // 站源管理、下载中心、本地存储管理、缓存清理、错误日志
-        case 2: return 3 // 版本更新、关于 App、匿名统计
-        default: return 0
-        }
+        [3, 6, 2][section]
     }
-
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        ["阅读与外观", "站源与本地数据", "App"][section]
+    }
+    override func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+        guard let header = view as? UITableViewHeaderFooterView else { return }
+        header.textLabel?.font = .systemFont(ofSize: 12)
+        header.textLabel?.textColor = Palette.text3
+    }
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat { 4 }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
-        cell.backgroundColor = Palette.card
-        cell.textLabel?.textColor = Palette.text
-        cell.textLabel?.font = .systemFont(ofSize: 15, weight: .regular)
-        cell.detailTextLabel?.textColor = Palette.secondaryText
-        cell.detailTextLabel?.font = .systemFont(ofSize: 12)
-        cell.accessoryType = .disclosureIndicator
-
-        switch indexPath.section {
-        case 0:
-            if indexPath.row == 0 {
-                // 主题模式
-                let themeCell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
-                themeCell.backgroundColor = Palette.card
-                themeCell.textLabel?.text = "主题模式"
-                themeCell.textLabel?.textColor = Palette.text
-                themeCell.textLabel?.font = .systemFont(ofSize: 15)
-                themeCell.detailTextLabel?.text = "跟随系统、浅色或深色"
-                themeCell.detailTextLabel?.textColor = Palette.secondaryText
-                themeCell.detailTextLabel?.font = .systemFont(ofSize: 12)
-
-                let control = UISegmentedControl(items: ["跟随系统", "浅色", "深色"])
-                control.selectedSegmentIndex = (AppTheme(rawValue: defaults.integer(forKey: "theme.mode")) ?? .automatic).rawValue
-                control.addTarget(self, action: #selector(themeChanged(_:)), for: .valueChanged)
-                themeCell.accessoryView = control
-                themeCell.selectionStyle = .none
-                return themeCell
-            } else if indexPath.row == 1 {
-                // 启动书架
-                cell.textLabel?.text = "启动书架"
-                cell.detailTextLabel?.text = launchBookshelfSubtitle
-                let badge = UILabel()
-                badge.text = launchBookshelfModeLabel
-                badge.textColor = Palette.secondaryText
-                badge.font = .systemFont(ofSize: 13)
-                badge.sizeToFit()
-                cell.accessoryView = badge
-            } else if indexPath.row == 2 {
-                // 阅读历史
-                cell.textLabel?.text = "阅读历史"
-                cell.detailTextLabel?.text = "章节与阅读位置"
-                let countBadge = UILabel()
-                countBadge.text = "\(environment.library.history.count) 条"
-                countBadge.textColor = Palette.secondaryText
-                countBadge.font = .systemFont(ofSize: 13)
-                countBadge.sizeToFit()
-                cell.accessoryView = countBadge
-            } else {
-                // 阅读设置
-                cell.textLabel?.text = "阅读设置"
-                cell.detailTextLabel?.text = "切换阅读页左右触控区"
-            }
-
-        case 1:
-            if indexPath.row == 0 {
-                // 站源管理
-                cell.textLabel?.text = "站源管理"
-                cell.detailTextLabel?.text = "启停、导入导出与检测"
-                let badge = UILabel()
-                badge.text = "\(environment.sources.count) 个开启"
-                badge.textColor = Palette.secondaryText
-                badge.font = .systemFont(ofSize: 13)
-                badge.sizeToFit()
-                cell.accessoryView = badge
-            } else if indexPath.row == 1 {
-                // 下载中心
-                cell.textLabel?.text = "下载中心"
-                cell.detailTextLabel?.text = "任务进度、暂停与章节重试"
-                let summary = downloadSummaryText
-                if !summary.isEmpty {
-                    let badge = UILabel()
-                    badge.text = summary
-                    badge.textColor = Palette.secondaryText
-                    badge.font = .systemFont(ofSize: 13)
-                    badge.sizeToFit()
-                    cell.accessoryView = badge
-                }
-            } else if indexPath.row == 2 {
-                // 本地存储管理
-                cell.textLabel?.text = "本地存储管理"
-                cell.detailTextLabel?.text = "仅 Wi-Fi 下载 · 副本与空间统计"
-            } else if indexPath.row == 3 {
-                // 缓存清理
-                cell.textLabel?.text = "缓存清理"
-                cell.detailTextLabel?.text = "保留收藏与阅读历史"
-                if !cachedSizeString.isEmpty {
-                    let badge = UILabel()
-                    badge.text = cachedSizeString
-                    badge.textColor = Palette.secondaryText
-                    badge.font = .systemFont(ofSize: 13)
-                    badge.sizeToFit()
-                    cell.accessoryView = badge
-                }
-            } else {
-                // 错误日志
-                cell.textLabel?.text = "错误日志"
-                cell.detailTextLabel?.text = "只保存在本机"
-                let badge = UILabel()
-                badge.text = errorLogSummaryText
-                badge.textColor = Palette.secondaryText
-                badge.font = .systemFont(ofSize: 13)
-                badge.sizeToFit()
-                cell.accessoryView = badge
-            }
-
-        case 2:
-            if indexPath.row == 0 {
-                // 版本更新
-                cell.textLabel?.text = "版本更新"
-                cell.detailTextLabel?.text = "包含最新的界面优化与稳定性修复"
-                let badge = UILabel()
-                badge.text = installedVersionLabel
-                badge.textColor = Palette.secondaryText
-                badge.font = .systemFont(ofSize: 13)
-                badge.sizeToFit()
-                cell.accessoryView = badge
-            } else if indexPath.row == 1 {
-                // 关于 App
-                cell.textLabel?.text = "关于 App"
-                cell.detailTextLabel?.text = "多站源漫画浏览与本地阅读工具"
-                let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-                let badge = UILabel()
-                badge.text = shortVersion
-                badge.textColor = Palette.secondaryText
-                badge.font = .systemFont(ofSize: 13)
-                badge.sizeToFit()
-                cell.accessoryView = badge
-            } else {
-                // 匿名使用统计
-                let statsCell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
-                statsCell.backgroundColor = Palette.card
-                statsCell.textLabel?.text = "发送匿名使用统计"
-                statsCell.textLabel?.textColor = Palette.text
-                statsCell.textLabel?.font = .systemFont(ofSize: 15)
-                statsCell.detailTextLabel?.text = "仅包含安装代次与基础版本，不收集阅读内容"
-                statsCell.detailTextLabel?.textColor = Palette.secondaryText
-                statsCell.detailTextLabel?.font = .systemFont(ofSize: 12)
-                let statsToggle = UISwitch()
-                statsToggle.isOn = UsageStatsClient.shared.isEnabled
-                statsToggle.addAction(UIAction { [weak statsToggle] _ in
-                    UsageStatsClient.shared.setEnabled(statsToggle?.isOn ?? true)
-                }, for: .valueChanged)
-                statsCell.accessoryView = statsToggle
-                statsCell.selectionStyle = .none
-                return statsCell
-            }
-
+        switch (indexPath.section, indexPath.row) {
+        case (0, 0):
+            let label = ["自动", "白天", "黑夜"][currentTheme.rawValue]
+            let icon: ParityIcon = currentTheme == .automatic ? .automatic : (currentTheme == .light ? .sun : .moon)
+            return SettingsMenuCell(icon: icon, title: "主题模式", subtitle: "跟随系统、浅色或深色", value: label, identifier: "settings.theme")
+        case (0, 1):
+            return SettingsMenuCell(icon: .bookshelf, title: "启动书架", subtitle: launchBookshelfSubtitle, value: launchBookshelfModeLabel, identifier: "settings.launch")
+        case (0, 2):
+            return SettingsMenuCell(icon: .history, title: "阅读历史", subtitle: "章节与阅读位置", value: "\(environment.library.history.count) 条", identifier: "settings.history")
+        case (1, 0):
+            return SettingsMenuCell(icon: .source, title: "站源管理", subtitle: "拖动排序、启停与导入导出", value: "\(environment.sources.count) 个开启", identifier: "settings.sources")
+        case (1, 1):
+            return SettingsMenuCell(icon: .download, title: "下载中心", subtitle: "任务进度、暂停与章节重试", value: downloadSummaryText, identifier: "settings.downloads")
+        case (1, 2):
+            return SettingsMenuCell(icon: .bookshelf, title: "本地存储管理", subtitle: "仅 Wi-Fi 下载 · 副本与空间统计", identifier: "settings.storage")
+        case (1, 3):
+            return SettingsMenuCell(icon: .trash, title: "缓存清理", subtitle: "保留收藏与阅读历史", value: cachedSizeString, identifier: "settings.cache")
+        case (1, 4):
+            return SettingsMenuCell(icon: .lightning, title: "错误日志", subtitle: "只保存在本机", value: errorLogSummaryText, identifier: "settings.errors")
+        case (1, 5):
+            return SettingsMenuCell(icon: .profile, title: "使用统计", subtitle: "可选 · 不上传阅读内容", value: environment.usageStats.isEnabled ? "已开启" : "已关闭", identifier: "settings.statistics")
+        case (2, 0):
+            return SettingsMenuCell(icon: .automatic, title: "版本更新", value: installedVersionLabel, identifier: "settings.update")
         default:
-            break
+            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.40"
+            return SettingsMenuCell(icon: .profile, title: "关于 App", value: version, identifier: "settings.about")
         }
-
-        return cell
     }
-
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-
-        switch indexPath.section {
-        case 0:
-            if indexPath.row == 1 {
-                navigationController?.pushViewController(LaunchBookshelfSettingsViewController(tracker: habitTracker), animated: true)
-            } else if indexPath.row == 2 {
-                navigationController?.pushViewController(BookshelfViewController(environment: environment, historyOnly: true), animated: true)
-            } else if indexPath.row == 3 {
-                navigationController?.pushViewController(ReaderSettingsViewController(store: store), animated: true)
-            }
-
-        case 1:
-            if indexPath.row == 0 {
-                navigationController?.pushViewController(SourceSettingsViewController(environment: environment), animated: true)
-            } else if indexPath.row == 1 {
-                navigationController?.pushViewController(DownloadCenterViewController(environment: environment), animated: true)
-            } else if indexPath.row == 2 {
-                navigationController?.pushViewController(LocalStorageViewController(environment: environment), animated: true)
-            } else if indexPath.row == 3 {
-                navigationController?.pushViewController(CacheCleanupViewController(environment: environment), animated: true)
-            } else if indexPath.row == 4 {
-                navigationController?.pushViewController(ErrorLogsViewController(environment: environment), animated: true)
-            }
-
-        case 2:
-            if indexPath.row == 0 {
-                checkForUpdate()
-            } else {
-                navigationController?.pushViewController(AboutAppViewController(environment: environment), animated: true)
-            }
-
-        default:
-            break
+        switch (indexPath.section, indexPath.row) {
+        case (0, 0):
+            present(ThemeChoiceSheet(selected: currentTheme) { [weak self] theme in
+                guard let self else { return }
+                self.defaults.set(theme.rawValue, forKey: "theme.mode")
+                NotificationCenter.default.post(name: AppThemeController.changed, object: nil)
+                self.tableView.reloadData()
+            }, animated: true)
+        case (0, 1): navigationController?.pushViewController(LaunchBookshelfSettingsViewController(tracker: habitTracker), animated: true)
+        case (0, 2): navigationController?.pushViewController(BookshelfViewController(environment: environment, historyOnly: true), animated: true)
+        case (1, 0): navigationController?.pushViewController(SourceSettingsViewController(environment: environment), animated: true)
+        case (1, 1): navigationController?.pushViewController(DownloadCenterViewController(environment: environment), animated: true)
+        case (1, 2): navigationController?.pushViewController(LocalStorageViewController(environment: environment), animated: true)
+        case (1, 3): navigationController?.pushViewController(CacheCleanupViewController(environment: environment), animated: true)
+        case (1, 4): navigationController?.pushViewController(ErrorLogsViewController(environment: environment), animated: true)
+        case (1, 5): showStatisticsChoice()
+        case (2, 0): checkForUpdate()
+        case (2, 1): navigationController?.pushViewController(AboutAppViewController(environment: environment), animated: true)
+        default: break
         }
     }
-
-    @objc private func themeChanged(_ sender: UISegmentedControl) {
-        defaults.set(sender.selectedSegmentIndex, forKey: "theme.mode")
-        NotificationCenter.default.post(name: AppThemeController.changed, object: nil)
+    private func showStatisticsChoice() {
+        let enabled = environment.usageStats.isEnabled
+        let alert = UIAlertController(title: "使用统计", message: "开启后用于统计使用规模和版本兼容性。仅包含随机安装标识、应用版本、系统版本和设备型号，不上传阅读内容、搜索词、书架或本地文件。", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: enabled ? "关闭统计" : "开启统计", style: .default) { [weak self] _ in
+            guard let self else { return }
+            do { try self.environment.setUsageStatsEnabled(!enabled); self.tableView.reloadData() }
+            catch { self.showError(error) }
+        })
+        present(alert, animated: true)
     }
 
     private func checkForUpdate() {
+        updateTask?.cancel()
+        let token = UUID(); updateGeneration = token
         let currentCode = Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "340") ?? 340
         let currentName = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.40"
 
         let progressAlert = UIAlertController(title: "检查更新中…", message: "正在获取最新版本信息", preferredStyle: .alert)
+        progressAlert.addAction(UIAlertAction(title: "取消", style: .cancel) { [weak self] _ in
+            self?.updateGeneration = UUID(); self?.updateTask?.cancel(); self?.updateTask = nil
+        })
         present(progressAlert, animated: true)
 
-        Task { [weak self] in
+        updateTask = Task { [weak self] in
             guard let self else { return }
+            defer { if self.updateGeneration == token { self.updateTask = nil } }
             do {
                 let release = try await AppUpdateChecker.shared.fetchRelease()
+                guard self.updateGeneration == token, !Task.isCancelled else { return }
                 progressAlert.dismiss(animated: true) {
+                    guard self.updateGeneration == token, self.viewIfLoaded?.window != nil, self.presentedViewController == nil else { return }
                     if release.hasNewVersion(currentVersionCode: currentCode) {
                         let alert = UIAlertController(
                             title: "发现新版本 XX Comic \(release.versionName)",
-                            message: "当前版本: \(currentName)\n\n\(release.releaseNotes.isEmpty ? "包含最新的界面优化与稳定性修复" : release.releaseNotes)",
+                            message: "当前版本: \(currentName)\n\n\(release.releaseNotes.isEmpty ? "包含最新的界面优化与稳定性修复" : release.releaseNotes)\n\n\(IOSUpdatePolicy.installationHint)",
                             preferredStyle: .alert
                         )
-                        alert.addAction(UIAlertAction(title: "前往更新", style: .default) { _ in
-                            if let urlStr = release.downloadUrl, let targetURL = URL(string: urlStr) {
-                                UIApplication.shared.open(targetURL)
-                            } else if let githubURL = URL(string: "https://github.com/lxcodinglove/xx-comic/releases") {
-                                UIApplication.shared.open(githubURL)
-                            }
+                        alert.addAction(UIAlertAction(title: "浏览器更新", style: .default) { [weak self] _ in
+                            self?.openReleasePage(IOSUpdatePolicy.browserURL(for: release))
                         })
                         alert.addAction(UIAlertAction(title: "稍后", style: .cancel))
                         self.present(alert, animated: true)
@@ -341,18 +228,35 @@ final class SettingsViewController: UITableViewController {
                     }
                 }
             } catch {
+                guard self.updateGeneration == token, !Task.isCancelled else { return }
                 progressAlert.dismiss(animated: true) {
+                    guard self.updateGeneration == token, self.viewIfLoaded?.window != nil, self.presentedViewController == nil else { return }
                     let alert = UIAlertController(
                         title: "检查更新失败",
-                        message: "无法连接到更新服务器，请检查网络连接后重试。\n(\(error.localizedDescription))",
+                        message: "暂时无法查询最新版本，可重试或自行查看发布页。\n\n\(IOSUpdatePolicy.installationHint)",
                         preferredStyle: .alert
                     )
                     alert.addAction(UIAlertAction(title: "重试", style: .default) { [weak self] _ in
                         self?.checkForUpdate()
                     })
+                    alert.addAction(UIAlertAction(title: "查看发布页", style: .default) { [weak self] _ in
+                        self?.openReleasePage(IOSUpdatePolicy.releasesURL)
+                    })
                     alert.addAction(UIAlertAction(title: "取消", style: .cancel))
                     self.present(alert, animated: true)
                 }
+            }
+        }
+    }
+
+    private func openReleasePage(_ url: URL) {
+        UIApplication.shared.open(url) { [weak self] opened in
+            guard !opened else { return }
+            Task { @MainActor [weak self] in
+                guard let self, self.viewIfLoaded?.window != nil else { return }
+                let alert = UIAlertController(title: "无法打开浏览器", message: "请稍后重试。发布地址：\(IOSUpdatePolicy.releasesURL.absoluteString)", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "知道了", style: .default))
+                self.present(alert, animated: true)
             }
         }
     }

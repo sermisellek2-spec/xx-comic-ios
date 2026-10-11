@@ -1,4 +1,9 @@
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
@@ -277,9 +282,12 @@ public final class DownloadRuntime: @unchecked Sendable {
     public let store: DownloadStore
     public let queue: DownloadCoordinator
     public let downloadsDirectory: URL
+    public let storageLocations: DownloadStorageLocations?
 
     private let lock = NSLock()
     private var activeWorkers = Set<String>()
+    private var deletingBookIDs = Set<String>()
+    private var deletingTaskIDs = Set<String>()
     private var isInitialized = false
 
     public var isWifiOnly: Bool = true
@@ -297,10 +305,12 @@ public final class DownloadRuntime: @unchecked Sendable {
                 imageFetcher: DownloadImageFetcherProtocol = DefaultDownloadImageFetcher.shared,
                 fileWorker: FileDownloadWorker = FileDownloadWorker(),
                 sourceResolver: DownloadSourceResolverProtocol? = nil,
-                fileSourceResolver: ((_ sourceId: String) -> FileSourceCapability?)? = nil) {
+                fileSourceResolver: ((_ sourceId: String) -> FileSourceCapability?)? = nil,
+                storageLocations: DownloadStorageLocations? = nil) {
         self.store = store
         self.queue = DownloadCoordinator(repository: store)
         self.downloadsDirectory = downloadsDirectory
+        self.storageLocations = storageLocations
         self.imageFetcher = imageFetcher
         self.fileWorker = fileWorker
         self.sourceResolver = sourceResolver
@@ -312,20 +322,45 @@ public final class DownloadRuntime: @unchecked Sendable {
 
         // Recover interrupted tasks on startup
         queue.recover()
-        cleanResidualPartFiles()
         isInitialized = true
+        let recovered = store.list()
+        Task.detached(priority: .utility) { [weak self] in self?.cleanResidualPartFiles(tasks: recovered) }
     }
 
-    private func cleanResidualPartFiles() {
+    private func cleanResidualPartFiles(tasks: [DownloadTask]) {
         let manager = FileManager.default
-        guard let enumerator = manager.enumerator(at: downloadsDirectory, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) else {
-            return
-        }
-        for case let fileURL as URL in enumerator {
-            if fileURL.pathExtension == "part" {
-                try? manager.removeItem(at: fileURL)
+        // Never recursively scan the downloads root or delete arbitrary user .part files.
+        guard (try? validateDirectoryIfPresent(downloadsDirectory)) != nil,
+              let entries = try? manager.contentsOfDirectory(at: downloadsDirectory, includingPropertiesForKeys: nil) else { return }
+        for entry in entries {
+            for task in tasks where entry.lastPathComponent.hasPrefix("stage_" + task.id + "_") {
+                let generation = String(entry.lastPathComponent.dropFirst(("stage_" + task.id + "_").count))
+                guard let value = Int64(generation), value != task.generation else { continue }
+                try? removeStagingDirectory(entry)
             }
         }
+    }
+
+    private func stagingDirectory(_ task: DownloadTask) throws -> URL {
+        guard task.id == (try DownloadModels.key(task.sourceId, task.comicId, task.chapterId)) else { throw DownloadError.invalidIdentity }
+        try validateDirectoryIfPresent(downloadsDirectory)
+        let directory = downloadsDirectory.appendingPathComponent("stage_" + task.id + "_" + String(task.generation), isDirectory: true)
+        try validateDirectoryIfPresent(directory)
+        if !FileManager.default.fileExists(atPath: directory.path) { try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false) }
+        return directory
+    }
+    private func removeStagingDirectory(_ directory: URL) throws {
+        try validateDirectoryIfPresent(downloadsDirectory)
+        try validateDirectoryIfPresent(directory)
+        guard directory.deletingLastPathComponent().standardizedFileURL == downloadsDirectory.standardizedFileURL,
+              directory.lastPathComponent.range(of: #"^stage_[a-f0-9]{64}_\d+$"#, options: .regularExpression) != nil else { throw DownloadError.invalidIdentity }
+        if !FileManager.default.fileExists(atPath: directory.path) { return }
+        let entries = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+        for entry in entries {
+            guard entry.lastPathComponent == "cover.part" || entry.lastPathComponent.range(of: #"^\d+\.part$"#, options: .regularExpression) != nil else { throw DownloadLocationError.unsafePath }
+            try validateRegularFileIfPresent(entry)
+        }
+        try FileManager.default.removeItem(at: directory)
     }
 
     public func updateNetworkStatus(isConnected: Bool, isWifi: Bool) {
@@ -355,23 +390,129 @@ public final class DownloadRuntime: @unchecked Sendable {
     public func enqueueFiles(detail: ComicDetail, files: [FileResource], selected: [String]) {
         lock.lock()
         defer { lock.unlock() }
+        let available = selected.filter { id in
+            guard let book = try? DownloadModels.fileBookId(source: detail.summary.sourceId, comic: detail.summary.comicId, file: id) else { return false }
+            guard let task = try? DownloadModels.fileTaskId(source: detail.summary.sourceId, comic: detail.summary.comicId, file: id) else { return false }
+            return !deletingBookIDs.contains(book) && !deletingTaskIDs.contains(task)
+        }
         store.saveSnapshot(detail)
         queue.enqueueFiles(source: detail.summary.sourceId,
                            comic: detail.summary.comicId,
                            files: files,
-                           selected: selected)
+                           selected: available)
         kickLocked()
     }
 
     public func enqueue(detail: ComicDetail, selectedChapterIds: [String]) {
+        try? enqueuePrepared(detail: detail, selectedChapterIds: selectedChapterIds)
+    }
+    private func enqueuePrepared(detail: ComicDetail, selectedChapterIds: [String]) throws {
         lock.lock()
         defer { lock.unlock() }
+        let book = try DownloadModels.bookId(source: detail.summary.sourceId, comic: detail.summary.comicId)
+        let selectedTasks = try selectedChapterIds.map { try DownloadModels.key(detail.summary.sourceId, detail.summary.comicId, $0) }
+        guard !deletingBookIDs.contains(book), !selectedTasks.contains(where: deletingTaskIDs.contains) else { throw DownloadError.corruptedData("正在删除此下载，请完成后重试") }
         store.saveSnapshot(detail)
         queue.enqueue(source: detail.summary.sourceId,
                       comic: detail.summary.comicId,
                       chapters: detail.chapters,
                       selected: selectedChapterIds)
         kickLocked()
+    }
+
+    /// Prepare persistent ownership and permission on a worker before showing enqueue success.
+    public func enqueueWithLocation(detail: ComicDetail, selectedChapterIds: [String]) async throws {
+        let requestedLocation = storageLocations?.selectedID
+        let worker = Task.detached(priority: .utility) { [self] in
+            try Task.checkCancellation()
+            if let storageLocations {
+                for chapter in detail.chapters where selectedChapterIds.contains(chapter.chapterId) {
+                    let task = DownloadTask(id: try DownloadModels.key(detail.summary.sourceId, detail.summary.comicId, chapter.chapterId),
+                        bookId: try DownloadModels.bookId(source: detail.summary.sourceId, comic: detail.summary.comicId),
+                        sourceId: detail.summary.sourceId, comicId: detail.summary.comicId, chapterId: chapter.chapterId, title: chapter.title)
+                    try storageLocations.prepare(task, comicTitle: detail.summary.title, locationID: requestedLocation)
+                }
+            }
+            try Task.checkCancellation()
+        }
+        try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+        try Task.checkCancellation()
+        try enqueuePrepared(detail: detail, selectedChapterIds: selectedChapterIds)
+    }
+    public func bookDirectory(bookID: String) throws -> URL {
+        if let storageLocations { return try storageLocations.bookDirectory(bookID: bookID) }
+        guard !bookID.isEmpty, !bookID.contains("/"), !bookID.contains("\\"), bookID != ".", bookID != ".." else { throw DownloadError.invalidIdentity }
+        try validateDirectoryIfPresent(downloadsDirectory)
+        let book = downloadsDirectory.appendingPathComponent(bookID, isDirectory: true)
+        try validateDirectoryIfPresent(book)
+        return book
+    }
+    private func validateDirectoryIfPresent(_ directory: URL) throws {
+        let attributes: [FileAttributeKey: Any]
+        do { attributes = try FileManager.default.attributesOfItem(atPath: directory.path) }
+        catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError { return }
+        let type = attributes[.type] as? FileAttributeType
+        guard type == .typeDirectory else { throw DownloadLocationError.unsafePath }
+    }
+    private func validateRegularFileIfPresent(_ file: URL) throws {
+        let attributes: [FileAttributeKey: Any]
+        do { attributes = try FileManager.default.attributesOfItem(atPath: file.path) }
+        catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError { return }
+        guard attributes[.type] as? FileAttributeType == .typeRegular else { throw DownloadLocationError.unsafePath }
+    }
+    private func chapterDirectory(_ task: DownloadTask, create: Bool = false) throws -> URL {
+        if let storageLocations { return try storageLocations.chapterDirectory(task, create: create) }
+        let chapter = try bookDirectory(bookID: task.bookId).appendingPathComponent(task.id, isDirectory: true)
+        try validateDirectoryIfPresent(chapter)
+        return chapter
+    }
+    private func pageURL(_ page: DownloadPage, task: DownloadTask) throws -> URL {
+        if let storageLocations { return try storageLocations.pageURL(page, task: task) }
+        guard page.path == "\(task.bookId)/\(task.id)/\(page.index).img", page.index >= 0 else { throw DownloadError.invalidIdentity }
+        return try chapterDirectory(task).appendingPathComponent("\(page.index).img")
+    }
+
+    private func withBookDirectory<T>(_ bookID: String, access: FileAccessCoordinator.Access, body: (URL) throws -> T) throws -> T {
+        if let storageLocations { return try storageLocations.withBookDirectory(bookID: bookID, access: access, body: body) }
+        let book = try bookDirectory(bookID: bookID)
+        return try FileAccessCoordinator.system.coordinate(book, access: access) { coordinated in
+            guard coordinated.standardizedFileURL == book.standardizedFileURL else { throw DownloadError.invalidIdentity }
+            try validateDirectoryIfPresent(downloadsDirectory); try validateDirectoryIfPresent(coordinated)
+            return try body(coordinated)
+        }
+    }
+    private func chapterDirectory(_ task: DownloadTask, in book: URL, create: Bool = false) throws -> URL {
+        if let storageLocations { return try storageLocations.chapterDirectory(task, in: book, create: create) }
+        guard !task.id.isEmpty, !task.id.contains("/"), !task.id.contains("\\"), task.id != ".", task.id != ".." else { throw DownloadError.invalidIdentity }
+        let chapter = book.appendingPathComponent(task.id, isDirectory: true)
+        try validateDirectoryIfPresent(chapter)
+        if create, !FileManager.default.fileExists(atPath: chapter.path) { try FileManager.default.createDirectory(at: chapter, withIntermediateDirectories: true) }
+        return chapter
+    }
+
+    private func publish(_ staged: URL, to target: URL, task: DownloadTask) throws {
+        try checkLease(task)
+        try validateRegularFileIfPresent(staged); try validateRegularFileIfPresent(target)
+        // Copy to the provider's volume, then atomically publish without first unlinking the old page.
+        let publicationName = task.isFileTask ? ".xxcomic-publish-" + task.id
+            : target.lastPathComponent == "cover.img" ? ".xxcomic-cover-" + task.id + ".part"
+            : target.deletingPathExtension().lastPathComponent + "." + String(task.generation) + ".part"
+        let publication = target.deletingLastPathComponent().appendingPathComponent(publicationName)
+        try validateRegularFileIfPresent(publication)
+        if FileManager.default.fileExists(atPath: publication.path) { try FileManager.default.removeItem(at: publication) }
+        try FileManager.default.copyItem(at: staged, to: publication)
+        do {
+            try checkLease(task); try validateRegularFileIfPresent(target)
+            try Self.renameReplacing(publication, target)
+        } catch { try? FileManager.default.removeItem(at: publication); throw error }
+        try FileManager.default.removeItem(at: staged)
+    }
+    private static func renameReplacing(_ source: URL, _ destination: URL) throws {
+        // POSIX rename is atomic on one volume and preserves the old target if publication fails.
+        let status = source.withUnsafeFileSystemRepresentation { from in
+            destination.withUnsafeFileSystemRepresentation { to in rename(from!, to!) }
+        }
+        if status != 0 { throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
     }
 
     public func kick() {
@@ -428,57 +569,147 @@ public final class DownloadRuntime: @unchecked Sendable {
         kickLocked()
     }
 
-    public func cancel(id: String) {
-        lock.lock()
-        queue.cancel(id: id)
-        guard let task = store.get(id: id) else {
-            lock.unlock()
-            return
+    public func cancel(id: String) async throws { try await deleteChapter(id: id) }
+    /// Android's completed-chapter action deletes the owned copy and requeues the
+    /// same identity. Online favorites and reading positions belong to another store.
+    public func redownloadChapter(id: String) async throws {
+        guard let original = store.get(id: id), original.state == .completed else { throw DownloadError.corruptedData("此章节尚未完成，请使用继续或重试") }
+        try await deleteChapter(id: id)
+        try requeueCompleted(original)
+    }
+    private func requeueCompleted(_ original: DownloadTask) throws {
+        lock.lock(); defer { lock.unlock() }
+        guard !deletingBookIDs.contains(original.bookId), !deletingTaskIDs.contains(original.id) else { throw DownloadError.corruptedData("正在删除下载书籍，请稍后重新下载") }
+        if store.get(id: original.id) == nil {
+            var retry = original
+            retry.state = .queued; retry.generation = DownloadCoordinator.nextGeneration()
+            retry.failures = 0; retry.donePages = 0; retry.totalPages = 0; retry.bytes = 0
+            retry.error = ""; retry.nextAttempt = 0
+            try store.saveConfirmedTask(retry)
         }
-        lock.unlock()
-
-        deleteTaskFiles(task: task)
-        store.remove(task: id)
+        kickLocked()
+    }
+    private func beginChapterDeletion(_ id: String) throws -> DownloadTask {
+        lock.lock(); defer { lock.unlock() }
+        guard let original = store.get(id: id), !deletingTaskIDs.contains(id), !deletingBookIDs.contains(original.bookId) else { throw DownloadError.corruptedData("任务不存在或正在删除") }
+        let expectedBook = original.isFileTask ? try DownloadModels.fileBookId(source: original.sourceId, comic: original.comicId, file: original.fileId ?? original.chapterId) : try DownloadModels.bookId(source: original.sourceId, comic: original.comicId)
+        let expectedTask = original.isFileTask ? try DownloadModels.fileTaskId(source: original.sourceId, comic: original.comicId, file: original.fileId ?? original.chapterId) : try DownloadModels.key(original.sourceId, original.comicId, original.chapterId)
+        guard original.bookId == expectedBook, original.id == expectedTask else { throw DownloadError.invalidIdentity }
+        var invalidated = original; invalidated.generation = DownloadCoordinator.nextGeneration(); invalidated.state = .deleting
+        deletingTaskIDs.insert(id); store.save(task: invalidated)
+        return original
+    }
+    private func endChapterDeletion(_ original: DownloadTask, success: Bool, changedFiles: Bool) {
+        lock.lock(); defer { lock.unlock() }; deletingTaskIDs.remove(original.id)
+        guard !success else { return }
+        var restored = original; restored.generation = DownloadCoordinator.nextGeneration()
+        if changedFiles { restored.state = .failed; restored.error = "删除未完成，请重试" }
+        else if DownloadModels.active(restored.state) || restored.state == .queued || restored.state == .waitingNetwork { restored.state = .pausedUser }
+        store.save(task: restored)
+    }
+    public func deleteChapter(id: String) async throws {
+        try Task.checkCancellation()
+        let original = try beginChapterDeletion(id)
+        var success = false, changedFiles = false
+        defer { endChapterDeletion(original, success: success, changedFiles: changedFiles) }
+        let deadline = ProcessInfo.processInfo.systemUptime + 30
+        while bookHasActiveWorkers([original]) {
+            guard ProcessInfo.processInfo.systemUptime < deadline else { throw DownloadError.corruptedData("下载尚未停止，请稍后重试") }
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+        let work = downloadsDirectory.appendingPathComponent("work_" + original.id, isDirectory: true)
+        if original.isFileTask {
+            try validateDirectoryIfPresent(downloadsDirectory)
+            try DownloadOwnedDirectory.validate(work, allowedDirectories: [], allowedFiles: [], taskIDs: [], partPrefix: original.chapterId)
+        }
+        try withBookDirectory(original.bookId, access: original.isFileTask ? .delete : .write) { book in
+            let directory = original.isFileTask ? book : try chapterDirectory(original, in: book)
+            if original.isFileTask {
+                try DownloadOwnedDirectory.validate(directory, allowedDirectories: [], allowedFiles: Set([original.chapterId + "." + original.expectedFormat,
+                    ".xxcomic-publish-" + original.id, "cover.img"]).union(storageLocations?.hasOwnershipMarker(bookID: original.bookId) == true ? [DownloadStorageLocations.ownershipFile] : []), taskIDs: [])
+            } else {
+                try DownloadOwnedDirectory.validate(directory, allowedDirectories: [], allowedFiles: [], taskIDs: [], pageFilesAtRoot: true)
+            }
+            try Task.checkCancellation(); changedFiles = true
+            if FileManager.default.fileExists(atPath: directory.path) { try FileManager.default.removeItem(at: directory) }
+        }
+        if original.isFileTask, FileManager.default.fileExists(atPath: work.path) { try FileManager.default.removeItem(at: work) }
+        try store.removeConfirmedTask(id)
+        if original.isFileTask { try storageLocations?.removeMapping(bookID: original.bookId) }
+        success = true
     }
 
-    public func deleteChapter(id: String) {
+    private func beginBookDeletion(_ bookId: String) throws -> [DownloadTask] {
         lock.lock()
-        guard var task = store.get(id: id) else {
-            lock.unlock()
-            return
-        }
-        task.generation = DownloadCoordinator.nextGeneration()
-        task.state = .deleting
-        store.save(task: task)
-        lock.unlock()
-
-        deleteTaskFiles(task: task)
-        store.remove(task: id)
-    }
-
-    public func deleteBook(bookId: String) {
-        lock.lock()
+        defer { lock.unlock() }
+        guard !deletingBookIDs.contains(bookId) else { throw DownloadError.corruptedData("正在删除此下载书籍") }
         let tasks = store.list().filter { $0.bookId == bookId }
+        guard !tasks.isEmpty else { throw DownloadError.invalidIdentity }
+        guard !tasks.contains(where: { deletingTaskIDs.contains($0.id) }) else { throw DownloadError.corruptedData("章节正在删除，请稍后重试") }
+        for task in tasks {
+            let expected = task.isFileTask
+                ? try DownloadModels.fileBookId(source: task.sourceId, comic: task.comicId, file: task.fileId ?? task.chapterId)
+                : try DownloadModels.bookId(source: task.sourceId, comic: task.comicId)
+            let taskID = task.isFileTask
+                ? try DownloadModels.fileTaskId(source: task.sourceId, comic: task.comicId, file: task.fileId ?? task.chapterId)
+                : try DownloadModels.key(task.sourceId, task.comicId, task.chapterId)
+            guard bookId == expected, task.id == taskID else { throw DownloadError.invalidIdentity }
+        }
+        deletingBookIDs.insert(bookId)
         for var t in tasks {
             t.generation = DownloadCoordinator.nextGeneration()
             t.state = .deleting
             store.save(task: t)
         }
-        lock.unlock()
-
-        let bookDir = downloadsDirectory.appendingPathComponent(bookId, isDirectory: true)
-        try? FileManager.default.removeItem(at: bookDir)
-
-        for t in tasks {
-            store.remove(task: t.id)
+        return tasks
+    }
+    private func bookHasActiveWorkers(_ tasks: [DownloadTask]) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        return tasks.contains { activeWorkers.contains($0.id) }
+    }
+    private func endBookDeletion(_ bookId: String, failedTasks: [DownloadTask]?, changedFiles: Bool) {
+        lock.lock(); defer { lock.unlock() }
+        deletingBookIDs.remove(bookId)
+        for var task in failedTasks ?? [] {
+            task.generation = DownloadCoordinator.nextGeneration()
+            if changedFiles { task.state = .failed; task.error = "删除未完成，请重试" }
+            else if DownloadModels.active(task.state) || task.state == .queued || task.state == .waitingNetwork { task.state = .pausedUser }
+            store.save(task: task)
         }
     }
-
-    private func deleteTaskFiles(task: DownloadTask) {
-        let taskDir = downloadsDirectory
-            .appendingPathComponent(task.bookId, isDirectory: true)
-            .appendingPathComponent(task.id, isDirectory: true)
-        try? FileManager.default.removeItem(at: taskDir)
+    public func deleteBook(bookId: String) async throws {
+        try Task.checkCancellation()
+        let tasks = try beginBookDeletion(bookId)
+        var success = false, changedFiles = false
+        defer { endBookDeletion(bookId, failedTasks: success ? nil : tasks, changedFiles: changedFiles) }
+        let deadline = ProcessInfo.processInfo.systemUptime + 30
+        while bookHasActiveWorkers(tasks) {
+            guard ProcessInfo.processInfo.systemUptime < deadline else { throw DownloadError.corruptedData("下载任务尚未停止，请稍后重试删除") }
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+        let root = downloadsDirectory.standardizedFileURL
+        let rootValues = try root.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+        guard rootValues.isDirectory == true, rootValues.isSymbolicLink != true else { throw DownloadError.invalidIdentity }
+        let taskIDs = Set(tasks.map { storageLocations?.chapterName($0) ?? $0.id })
+        let knownPages = try tasks.flatMap { task in try store.pages(task: task.id).map { page in
+            guard page.path == "\(task.bookId)/\(task.id)/\(page.index).img", page.index >= 0 else { throw DownloadError.invalidIdentity }
+            return (storageLocations?.chapterName(task) ?? task.id) + "/\(page.index).img"
+        } }
+        let fileNames = tasks.filter(\.isFileTask).flatMap { [$0.chapterId + "." + $0.expectedFormat, ".xxcomic-publish-" + $0.id] }
+        let known = Set(knownPages + fileNames + tasks.map { ".xxcomic-cover-" + $0.id + ".part" } + ["cover.img"] + (storageLocations?.hasOwnershipMarker(bookID: bookId) == true ? [DownloadStorageLocations.ownershipFile] : []))
+        let work = tasks.filter(\.isFileTask).map { (root.appendingPathComponent("work_" + $0.id, isDirectory: true), $0.chapterId) }
+        for (directory, prefix) in work { try DownloadOwnedDirectory.validate(directory, allowedDirectories: [], allowedFiles: [], taskIDs: [], partPrefix: prefix) }
+        try withBookDirectory(bookId, access: .delete) { bookDir in
+            try DownloadOwnedDirectory.validate(bookDir, allowedDirectories: taskIDs, allowedFiles: known, taskIDs: taskIDs)
+            try Task.checkCancellation()
+            // Once deletion starts, finish the database transaction before observing cancellation.
+            changedFiles = true
+            if FileManager.default.fileExists(atPath: bookDir.path) { try FileManager.default.removeItem(at: bookDir) }
+        }
+        for (directory, _) in work where FileManager.default.fileExists(atPath: directory.path) { try FileManager.default.removeItem(at: directory) }
+        try store.removeBook(bookId)
+        try storageLocations?.removeMapping(bookID: bookId)
+        success = true
     }
 
     private func checkLease(_ task: DownloadTask) throws {
@@ -496,8 +727,11 @@ public final class DownloadRuntime: @unchecked Sendable {
             await downloadFileTask(task)
             return
         }
+        var staging: URL?
+        defer { if let staging { try? removeStagingDirectory(staging) } }
         do {
             try checkLease(task)
+            try storageLocations?.prepare(task, comicTitle: store.snapshot(id: task.bookId)?.summary.title ?? task.comicId)
             guard let resolver = sourceResolver else {
                 throw DownloadError.corruptedData("站源解析器未配置")
             }
@@ -521,26 +755,25 @@ public final class DownloadRuntime: @unchecked Sendable {
             var completedPages: [DownloadPage] = []
             var totalBytes: Int64 = 0
 
-            let taskDir = downloadsDirectory
-                .appendingPathComponent(task.bookId, isDirectory: true)
-                .appendingPathComponent(task.id, isDirectory: true)
-
-            if !FileManager.default.fileExists(atPath: taskDir.path) {
-                try FileManager.default.createDirectory(at: taskDir, withIntermediateDirectories: true)
+            try withBookDirectory(task.bookId, access: .write) { book in
+                try checkLease(task)
+                _ = try chapterDirectory(task, in: book, create: true)
             }
+            let stagingDirectory = try stagingDirectory(task)
+            staging = stagingDirectory
 
             for (i, rawUrl) in uniqueUrls.enumerated() {
                 try checkLease(task)
-                let targetFile = taskDir.appendingPathComponent("\(i).img")
                 let existingPage = savedPages[i]
 
                 let pageToUse: DownloadPage
                 if let existing = existingPage,
                    DownloadModels.sameImage(existing.url, rawUrl),
-                   isValidPage(existing, targetFile: targetFile) {
+                   try isValidPage(existing, task: task) {
                     pageToUse = existing
                 } else {
-                    let partFile = taskDir.appendingPathComponent("\(i).\(task.generation).part")
+                    let partFile = stagingDirectory.appendingPathComponent("\(i).part")
+                    try validateRegularFileIfPresent(partFile)
                     let referer = resolver.resolveReferer(sourceId: task.sourceId, chapterUrl: task.url)
 
                     var fetchResult: (bytes: Int64, hash: String)?
@@ -570,11 +803,10 @@ public final class DownloadRuntime: @unchecked Sendable {
                         throw DownloadError.corruptedData("图片地址刷新失败")
                     }
 
-                    try checkLease(task)
-                    if FileManager.default.fileExists(atPath: targetFile.path) {
-                        try? FileManager.default.removeItem(at: targetFile)
+                    try withBookDirectory(task.bookId, access: .write) { book in
+                        let target = try chapterDirectory(task, in: book).appendingPathComponent("\(i).img")
+                        try publish(partFile, to: target, task: task)
                     }
-                    try FileManager.default.moveItem(at: partFile, to: targetFile)
 
                     let newPage = DownloadPage(index: i,
                                                url: DownloadModels.imageIdentity(rawUrl),
@@ -595,17 +827,32 @@ public final class DownloadRuntime: @unchecked Sendable {
 
             // Download cover if snapshot is available
             if let snapshot = store.snapshot(id: task.bookId), !snapshot.summary.coverUrl.isEmpty {
-                let coverTarget = downloadsDirectory
-                    .appendingPathComponent(task.bookId, isDirectory: true)
-                    .appendingPathComponent("cover.img")
-                if !FileManager.default.fileExists(atPath: coverTarget.path) {
-                    try? await resolver.fetchCover(sourceId: task.sourceId,
+                let needsCover = try withBookDirectory(task.bookId, access: .read) { book in
+                    let cover = book.appendingPathComponent("cover.img")
+                    try validateRegularFileIfPresent(cover)
+                    return !FileManager.default.fileExists(atPath: cover.path)
+                }
+                if needsCover {
+                    let stagedCover = stagingDirectory.appendingPathComponent("cover.part")
+                    try validateRegularFileIfPresent(stagedCover)
+                    var coverFetched = false
+                    do {
+                        try await resolver.fetchCover(sourceId: task.sourceId,
                                                    coverUrl: snapshot.summary.coverUrl,
-                                                   destination: coverTarget,
+                                                   destination: stagedCover,
                                                    check: { [weak self] in
                         guard let self else { throw DownloadError.taskCancelled }
                         try self.checkLease(task)
-                    })
+                        })
+                        coverFetched = true
+                    } catch { /* The chapter remains usable when its optional cover fails. */ }
+                    if coverFetched, FileManager.default.fileExists(atPath: stagedCover.path) {
+                        try withBookDirectory(task.bookId, access: .write) { book in
+                            let cover = book.appendingPathComponent("cover.img")
+                            try validateRegularFileIfPresent(cover)
+                            if !FileManager.default.fileExists(atPath: cover.path) { try publish(stagedCover, to: cover, task: task) }
+                        }
+                    }
                 }
             }
 
@@ -623,15 +870,19 @@ public final class DownloadRuntime: @unchecked Sendable {
         var mutableTask = task
         do {
             try checkLease(task)
+            guard !task.chapterId.isEmpty, !task.chapterId.contains("/"), !task.chapterId.contains("\\"), task.chapterId != ".", task.chapterId != ".." else { throw DownloadError.invalidIdentity }
+            try storageLocations?.prepare(task, comicTitle: store.snapshot(id: task.bookId)?.summary.title ?? task.comicId)
             guard let fileSource = fileSourceResolver?(task.sourceId) else {
                 throw DownloadError.corruptedData("站源不支持文件下载")
             }
 
             let workDir = downloadsDirectory.appendingPathComponent("work_\(task.id)", isDirectory: true)
+            try validateDirectoryIfPresent(downloadsDirectory); try validateDirectoryIfPresent(workDir)
             if !FileManager.default.fileExists(atPath: workDir.path) {
                 try FileManager.default.createDirectory(at: workDir, withIntermediateDirectories: true)
             }
             let partFile = workDir.appendingPathComponent("\(task.chapterId).\(task.generation).part")
+            try validateRegularFileIfPresent(partFile)
 
             let result = try await fileWorker.download(
                 task: &mutableTask,
@@ -650,16 +901,10 @@ public final class DownloadRuntime: @unchecked Sendable {
             try checkLease(task)
             queue.update(lease: task, state: .verifying, done: 0, total: 1, bytes: result.bytes)
 
-            let bookDir = downloadsDirectory.appendingPathComponent(task.bookId, isDirectory: true)
-            if !FileManager.default.fileExists(atPath: bookDir.path) {
-                try FileManager.default.createDirectory(at: bookDir, withIntermediateDirectories: true)
+            try withBookDirectory(task.bookId, access: .write) { bookDir in
+                if !FileManager.default.fileExists(atPath: bookDir.path) { try FileManager.default.createDirectory(at: bookDir, withIntermediateDirectories: true) }
+                try publish(partFile, to: bookDir.appendingPathComponent("\(task.chapterId).\(result.detectedFormat)"), task: task)
             }
-            let targetFile = bookDir.appendingPathComponent("\(task.chapterId).\(result.detectedFormat)")
-
-            if FileManager.default.fileExists(atPath: targetFile.path) {
-                try? FileManager.default.removeItem(at: targetFile)
-            }
-            try FileManager.default.moveItem(at: partFile, to: targetFile)
             try? FileManager.default.removeItem(at: workDir)
 
             try checkLease(task)
@@ -681,13 +926,22 @@ public final class DownloadRuntime: @unchecked Sendable {
         }
     }
 
-    private func isValidPage(_ page: DownloadPage, targetFile: URL) -> Bool {
-        guard FileManager.default.fileExists(atPath: targetFile.path) else { return false }
-        guard let attr = try? FileManager.default.attributesOfItem(atPath: targetFile.path),
-              let size = (attr[FileAttributeKey.size] as? NSNumber)?.int64Value,
-              size == page.bytes else { return false }
-        guard let data = try? Data(contentsOf: targetFile) else { return false }
-        return DownloadModels.sha256Hex(data) == page.hash
+    private func readPage(_ page: DownloadPage, task: DownloadTask, maximumBytes: Int64) throws -> Data {
+        guard page.path == "\(task.bookId)/\(task.id)/\(page.index).img", page.index >= 0 else { throw DownloadError.invalidIdentity }
+        return try withBookDirectory(task.bookId, access: .read) { book in
+            let target = try chapterDirectory(task, in: book).appendingPathComponent("\(page.index).img")
+            let bytes = try FileAccessCoordinator.readRegularFile(target, maximumBytes: maximumBytes)
+            guard bytes.count == page.bytes, DownloadModels.sha256Hex(bytes) == page.hash else { throw DownloadError.corruptedData("下载图片损坏，请到下载中心重试本章") }
+            return bytes
+        }
+    }
+    private func isValidPage(_ page: DownloadPage, task: DownloadTask) throws -> Bool {
+        do { _ = try readPage(page, task: task, maximumBytes: DefaultDownloadImageFetcher.maxPageBytes); return true }
+        catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError { return false }
+        catch let error as DownloadError {
+            if case .corruptedData = error { return false }
+            throw error
+        }
     }
 
     private func handleDownloadError(_ error: Error, task: DownloadTask) {
@@ -713,14 +967,43 @@ public final class DownloadRuntime: @unchecked Sendable {
                          error: error.localizedDescription,
                          retryAfter: httpErr.retryAfterMs)
         } else {
+            let fileError = error as NSError
+            let needsFileAction = error is DownloadLocationError ||
+                (fileError.domain == NSCocoaErrorDomain && [NSFileReadNoPermissionError, NSFileWriteNoPermissionError, NSFileWriteOutOfSpaceError].contains(fileError.code)) ||
+                (fileError.domain == NSPOSIXErrorDomain && [Int(EACCES), Int(EPERM), Int(EROFS), Int(ENOSPC)].contains(fileError.code))
             queue.failed(lease: task,
                          now: Int64(Date().timeIntervalSince1970 * 1000),
                          error: error.localizedDescription,
-                         retryAfter: 0)
+                         retryAfter: 0,
+                         retryAutomatically: !needsFileAction)
         }
     }
 
     // MARK: - Offline Reading
+
+    /// The image view receives file URLs, but access is restricted to recorded,
+    /// completed download pages; a caller cannot use this to read user originals.
+    public func offlineImageData(at url: URL, maximumBytes: Int64 = Int64(LocalLibrary.maximumImageBytes)) throws -> Data {
+        guard url.isFileURL else { throw DownloadError.invalidIdentity }
+        var permissionError: Error?
+        for task in store.list() where !task.isFileTask && task.state == .completed {
+            let relative: String?
+            if let storageLocations {
+                do { relative = try storageLocations.relativePath(of: url, bookID: task.bookId) }
+                catch { permissionError = error; continue }
+            } else {
+                let prefix = downloadsDirectory.appendingPathComponent(task.bookId).standardizedFileURL.path + "/"
+                let path = url.standardizedFileURL.path
+                relative = path.hasPrefix(prefix) ? String(path.dropFirst(prefix.count)) : nil
+            }
+            guard let relative else { continue }
+            let chapterName = storageLocations?.chapterName(task) ?? task.id
+            guard let page = store.pages(task: task.id).first(where: { relative == chapterName + "/\($0.index).img" }) else { continue }
+            return try readPage(page, task: task, maximumBytes: maximumBytes)
+        }
+        if let permissionError { throw permissionError }
+        throw DownloadError.corruptedData("这张图片不属于已完成的下载，请到下载中心检查本章")
+    }
 
     public func localChapter(detail: ComicDetail, chapterIndex: Int) throws -> ChapterPage? {
         guard detail.chapters.indices.contains(chapterIndex) else { return nil }
@@ -737,8 +1020,9 @@ public final class DownloadRuntime: @unchecked Sendable {
         }
         var urls: [String] = []
         for page in pages {
-            let fileURL = downloadsDirectory.appendingPathComponent(page.path)
-            guard isValidPage(page, targetFile: fileURL) else {
+            try Task.checkCancellation()
+            let fileURL = try pageURL(page, task: task)
+            guard try isValidPage(page, task: task) else {
                 throw DownloadError.corruptedData("下载文件缺失或损坏，请到下载中心重新下载本章")
             }
             urls.append(fileURL.absoluteString)

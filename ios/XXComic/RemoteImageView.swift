@@ -11,21 +11,52 @@ final class RemoteImageView: UIImageView {
         cache.totalCostLimit = 64 * 1024 * 1024
         return cache
     }()
+    private static var cacheGeneration = UUID()
+    static func clearMemoryCache() {
+        cacheGeneration = UUID()
+        cache.removeAllObjects()
+    }
     private var task: Task<Void, Never>?
     private var generation = UUID()
     private var original: UIImage?
     private var effectsTask: Task<Void, Never>?
     private var effectsID = UUID()
     private var cropMargins = false, cropVertical = false, inkScreen = false
+    private var loadedContentMode: UIView.ContentMode = .scaleToFill
+    private var showingCoverPlaceholder = false
     var onLoaded: ((CGSize) -> Void)?
     var onFailure: (() -> Void)?
+    var needsReload: Bool { original == nil && task == nil }
+
+    private func beginLoad(reader: Bool) {
+        cancel()
+        if !showingCoverPlaceholder { loadedContentMode = contentMode }
+        original = nil
+        backgroundColor = Palette.card
+        showingCoverPlaceholder = !reader
+        if reader {
+            image = nil
+            contentMode = loadedContentMode
+        } else {
+            image = UIImage(named: "rem_no_image")
+            contentMode = .scaleAspectFit
+        }
+    }
 
     func loadCover(_ comic: ComicSummary, referer: String, library: LocalLibrary) {
         guard comic.sourceId == "local", comic.coverUrl.isEmpty else { load(comic.coverUrl, referer: referer); return }
-        cancel(); image = nil; original = nil
+        beginLoad(reader: false)
         let token = generation
-        let worker = Task.detached { try library.book(id: comic.comicId) }
+        let worker = Task.detached { () async throws -> LocalBook in
+            try Task.checkCancellation()
+            // A collection has its own stable ID; its cover belongs to the first volume.
+            if let series = try await library.series(id: comic.comicId), let volumeID = series.volumeIDs.first {
+                return try library.book(id: volumeID)
+            }
+            return try library.book(id: comic.comicId)
+        }
         task = Task { [weak self] in
+            defer { if self?.generation == token { self?.task = nil } }
             do {
                 let book = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
                 guard let self, self.generation == token, !Task.isCancelled else { return }
@@ -40,9 +71,7 @@ final class RemoteImageView: UIImageView {
     }
 
     func load(_ text: String, referer: String, reader: Bool = false, localPageImage: (@Sendable (URL) throws -> Data)? = nil) {
-        cancel()
-        image = nil; original = nil
-        backgroundColor = Palette.card
+        beginLoad(reader: reader)
         guard let url = URL(string: text),
               ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") || (["xxcomic-epub", "xxcomic-pdf"].contains(url.scheme ?? "") && localPageImage != nil) else {
             onFailure?(); return
@@ -60,7 +89,9 @@ final class RemoteImageView: UIImageView {
             return
         }
         let token = generation
+        let cacheToken = Self.cacheGeneration
         task = Task { [weak self] in
+            defer { if self?.generation == token { self?.task = nil } }
             do {
                 var request = URLRequest(url: url)
                 if !effectiveReferer.isEmpty {
@@ -75,7 +106,7 @@ final class RemoteImageView: UIImageView {
                 request.setValue("cross-site", forHTTPHeaderField: "Sec-Fetch-Site")
                 request.timeoutInterval = 30
                 let data: Data
-                if ["xxcomic-epub", "xxcomic-pdf"].contains(url.scheme ?? "") {
+                if ["xxcomic-epub", "xxcomic-pdf"].contains(url.scheme ?? "") || (url.isFileURL && localPageImage != nil) {
                     guard let localPageImage else { throw URLError(.unsupportedURL) }
                     let worker = Task.detached(priority: .userInitiated) {
                         try Task.checkCancellation()
@@ -93,11 +124,12 @@ final class RemoteImageView: UIImageView {
                     let suffix = ProcessInfo.processInfo.arguments.contains("--ui-testing") ? "XXComic-UITests" : "XXComic"
                     let allowed = support.appendingPathComponent(suffix).appendingPathComponent("Local").resolvingSymlinksInPath()
                     guard resolved.path.hasPrefix(allowed.path + "/") else { throw URLError(.noPermissionsToReadFile) }
-                    data = try await Task.detached(priority: .userInitiated) {
-                        let size = try resolved.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
-                        guard size <= LocalLibrary.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
-                        return try Data(contentsOf: resolved, options: .mappedIfSafe)
-                    }.value
+                    let worker = Task.detached(priority: .userInitiated) {
+                        try FileAccessCoordinator.system.coordinate(resolved, access: .read) {
+                            try FileAccessCoordinator.readRegularFile($0, maximumBytes: Int64(LocalLibrary.maximumImageBytes))
+                        }
+                    }
+                    data = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
                 } else {
                     let isSigned = text.contains("#xx-")
                     var fetchedBytes: Data?
@@ -170,7 +202,9 @@ final class RemoteImageView: UIImageView {
                 try Task.checkCancellation()
                 guard let self, self.generation == token else { return }
                 guard let decoded else { self.onFailure?(); return }
-                Self.cache.setObject(decoded, forKey: key, cost: Int(decoded.size.width * decoded.size.height * 4))
+                if cacheToken == Self.cacheGeneration {
+                    Self.cache.setObject(decoded, forKey: key, cost: Int(decoded.size.width * decoded.size.height * 4))
+                }
                 self.original = decoded
                 self.render()
             } catch {
@@ -188,6 +222,8 @@ final class RemoteImageView: UIImageView {
     private func render() {
         effectsTask?.cancel(); effectsID = UUID()
         guard let original else { return }
+        showingCoverPlaceholder = false
+        contentMode = loadedContentMode
         guard cropMargins || inkScreen else { image = original; onLoaded?(original.size); return }
         let token = effectsID, crop = cropMargins, vertical = cropVertical, ink = inkScreen
         effectsTask = Task { [weak self] in
@@ -237,6 +273,9 @@ final class RemoteImageView: UIImageView {
 final class ComicCell: UICollectionViewCell {
     let cover = RemoteImageView()
     private let nameLabel = UILabel()
+    private let sourceLabel = UILabel()
+    private let latestOverlay = UIView()
+    private let latestLabel = UILabel()
     private let badgeContainer = UIView()
     private let badgeLabel = UILabel()
 
@@ -265,17 +304,28 @@ final class ComicCell: UICollectionViewCell {
         ])
 
         nameLabel.font = .systemFont(ofSize: 13, weight: .medium)
-        nameLabel.numberOfLines = 2
+        nameLabel.numberOfLines = 1
         nameLabel.textColor = Palette.text
+        sourceLabel.font = .systemFont(ofSize: 11); sourceLabel.textColor = Palette.text3
+        latestOverlay.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        latestLabel.font = .systemFont(ofSize: 10); latestLabel.textColor = .white
+        latestLabel.translatesAutoresizingMaskIntoConstraints = false; latestOverlay.addSubview(latestLabel)
 
-        for view in [cover, nameLabel, badgeContainer] { view.translatesAutoresizingMaskIntoConstraints = false; contentView.addSubview(view) }
+        for view in [cover, nameLabel, sourceLabel, latestOverlay, badgeContainer] { view.translatesAutoresizingMaskIntoConstraints = false; contentView.addSubview(view) }
         NSLayoutConstraint.activate([
             cover.topAnchor.constraint(equalTo: contentView.topAnchor), cover.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             cover.trailingAnchor.constraint(equalTo: contentView.trailingAnchor), cover.heightAnchor.constraint(equalTo: cover.widthAnchor, multiplier: 4 / 3),
             badgeContainer.topAnchor.constraint(equalTo: cover.topAnchor, constant: 6),
             badgeContainer.trailingAnchor.constraint(equalTo: cover.trailingAnchor, constant: -6),
             nameLabel.topAnchor.constraint(equalTo: cover.bottomAnchor, constant: 6), nameLabel.leadingAnchor.constraint(equalTo: cover.leadingAnchor),
-            nameLabel.trailingAnchor.constraint(equalTo: cover.trailingAnchor), nameLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
+            nameLabel.trailingAnchor.constraint(equalTo: cover.trailingAnchor),
+            sourceLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
+            sourceLabel.leadingAnchor.constraint(equalTo: cover.leadingAnchor), sourceLabel.trailingAnchor.constraint(equalTo: cover.trailingAnchor),
+            sourceLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor),
+            latestOverlay.leadingAnchor.constraint(equalTo: cover.leadingAnchor), latestOverlay.trailingAnchor.constraint(equalTo: cover.trailingAnchor),
+            latestOverlay.bottomAnchor.constraint(equalTo: cover.bottomAnchor), latestOverlay.heightAnchor.constraint(equalToConstant: 20),
+            latestLabel.leadingAnchor.constraint(equalTo: latestOverlay.leadingAnchor, constant: 6), latestLabel.trailingAnchor.constraint(equalTo: latestOverlay.trailingAnchor, constant: -6),
+            latestLabel.centerYAnchor.constraint(equalTo: latestOverlay.centerYAnchor)
         ])
         isAccessibilityElement = true
         accessibilityTraits = .button
@@ -283,9 +333,12 @@ final class ComicCell: UICollectionViewCell {
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
 
     func configure(_ comic: ComicCore.ComicSummary, referer: String, library: LocalLibrary,
-                   badgeText: String? = nil, badgeColor: UIColor? = nil) {
+                   badgeText: String? = nil, badgeColor: UIColor? = nil, sourceName: String? = nil, latestChapter: String? = nil) {
         nameLabel.text = comic.title
         accessibilityLabel = comic.title
+        sourceLabel.text = sourceName; sourceLabel.isHidden = sourceName == nil
+        latestOverlay.isHidden = latestChapter?.isEmpty != false
+        latestLabel.text = latestChapter.map { BookshelfLayoutHelper.formatOnlineLatestChapter($0) }
         cover.loadCover(comic, referer: referer, library: library)
 
         if let badgeText, !badgeText.isEmpty {
@@ -301,6 +354,8 @@ final class ComicCell: UICollectionViewCell {
         cover.cancel()
         cover.image = nil
         badgeContainer.isHidden = true
+        latestOverlay.isHidden = true
+        accessibilityValue = nil
     }
 }
 
@@ -312,6 +367,8 @@ final class ComicListCell: UICollectionViewCell {
     private let detailLabel = UILabel()
     private let badgeContainer = UIView()
     private let badgeLabel = UILabel()
+    private var coverWidth: NSLayoutConstraint!
+    private var coverHeight: NSLayoutConstraint!
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -354,7 +411,7 @@ final class ComicListCell: UICollectionViewCell {
 
         detailLabel.font = .systemFont(ofSize: 12)
         detailLabel.textColor = Palette.accent
-        detailLabel.numberOfLines = 1
+        detailLabel.numberOfLines = 2
 
         let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, detailLabel])
         textStack.axis = .vertical
@@ -365,11 +422,12 @@ final class ComicListCell: UICollectionViewCell {
         contentView.addSubview(badgeContainer)
         contentView.addSubview(textStack)
 
+        coverWidth = cover.widthAnchor.constraint(equalToConstant: 54)
+        coverHeight = cover.heightAnchor.constraint(equalToConstant: 72)
         NSLayoutConstraint.activate([
             cover.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
             cover.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            cover.widthAnchor.constraint(equalToConstant: 54),
-            cover.heightAnchor.constraint(equalToConstant: 72),
+            coverWidth, coverHeight,
 
             badgeContainer.topAnchor.constraint(equalTo: cover.topAnchor, constant: -4),
             badgeContainer.trailingAnchor.constraint(equalTo: cover.trailingAnchor, constant: 4),
@@ -387,12 +445,14 @@ final class ComicListCell: UICollectionViewCell {
 
     func configure(_ comic: ComicCore.ComicSummary, referer: String, library: LocalLibrary,
                    subtitle: String? = nil, detail: String? = nil,
-                   badgeText: String? = nil, badgeColor: UIColor? = nil) {
+                   badgeText: String? = nil, badgeColor: UIColor? = nil, largeCover: Bool = false) {
         titleLabel.text = comic.title
         accessibilityLabel = comic.title
         subtitleLabel.text = subtitle ?? (comic.subtitle.isEmpty ? "暂无信息" : comic.subtitle)
         detailLabel.text = detail ?? (comic.sourceId == "local" ? "本地漫画" : "")
         detailLabel.isHidden = (detailLabel.text?.isEmpty ?? true)
+        coverWidth.constant = largeCover ? 68 : 54
+        coverHeight.constant = largeCover ? 91 : 72
         cover.loadCover(comic, referer: referer, library: library)
 
         if let badgeText, !badgeText.isEmpty {
@@ -409,5 +469,6 @@ final class ComicListCell: UICollectionViewCell {
         cover.cancel()
         cover.image = nil
         badgeContainer.isHidden = true
+        accessibilityValue = nil
     }
 }

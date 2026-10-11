@@ -1,0 +1,373 @@
+{
+  "raw_evidence_included": true,
+  "unfiltered_staged_diff_check_exit": 2,
+  "raw_historical_whitespace_diagnostics": [
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-current-comparison/detail-feedback-red.log",
+      "line": 33,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-current-comparison/detail-feedback-red.log",
+      "line": 34,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-current-comparison/detail-feedback-red.log",
+      "line": 45,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-current-comparison/historical-STATUS.md",
+      "line": 62,
+      "diagnostic": "new blank line at EOF."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-download-files/download-file-coordination-initial-failure.log",
+      "line": 15,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-download-files/download-file-coordination-initial-failure.log",
+      "line": 26,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/android-reference-build.log",
+      "line": 2,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 83,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 87,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 91,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 102,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 106,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 110,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 121,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 125,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 129,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 140,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 144,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 148,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 159,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 163,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 167,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 178,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 182,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 186,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 197,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 201,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 205,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 216,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 220,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 224,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 235,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 239,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 243,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 254,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 258,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 262,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 273,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 277,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 281,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 292,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 296,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 300,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 311,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 315,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 319,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 330,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 334,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 338,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 349,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 353,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 357,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 368,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 372,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 376,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 387,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 391,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 395,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 406,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 410,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 414,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 425,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 429,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 433,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 444,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 448,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 452,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 463,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 467,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 471,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 482,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 486,
+      "diagnostic": "trailing whitespace."
+    },
+    {
+      "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/cache-config-compile-failure.log",
+      "line": 490,
+      "diagnostic": "trailing whitespace."
+    }
+  ],
+  "current_source_and_document_diff_check_exit": 0,
+  "reason": "Raw historical logs and snapshots retain exact original bytes; current code/current documents have no whitespace errors. No test assertions or original evidence were changed."
+}

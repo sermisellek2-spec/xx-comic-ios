@@ -1,0 +1,106 @@
+{
+  "id": 38104946234,
+  "html_url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38104946234",
+  "head_sha": "a5aeec90a1d47b9670b859150cb89f78c9856fbb",
+  "status": "completed",
+  "conclusion": "success",
+  "created_at": "2026-10-11T02:22:32Z",
+  "updated_at": "2026-10-11T02:47:38Z",
+  "jobs": [
+    {
+      "name": "build",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-11T02:22:38Z",
+      "completed_at": "2026-10-11T02:47:37Z",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install XcodeGen",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Select iPhone and iPad simulators",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build and test",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload unsigned IPA",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload UI test results",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload visual matrix screenshots",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload AI enhancement evidence",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "ipa": {
+    "path": "ios/build/repair-ci-38104946234/XXComic-unsigned/XXComic-unsigned.ipa",
+    "bytes": 15953890,
+    "sha256": "cb18338e00e8cf9b7bb1dab1a4c639a67936ece8db1541c25b56e29aec5c984d",
+    "bundleId": "com.xxcomic.ios",
+    "version": "2.0.40",
+    "build": "340",
+    "hasCFBundleIcons": false,
+    "hasIPadIcons": false,
+    "assetCatalogFiles": [],
+    "appIconPNGFiles": []
+  },
+  "screenshotManifests": [
+    {
+      "path": "ios/build/repair-ci-38104946234/visual-matrix-screenshots/ui-results-cCOEbM-manifest.json",
+      "sha256": "bddd4da9f99a70dae72527bd92ef277dde1fbbabeaba696a2d1076afa05f30e4",
+      "recordCount": 55,
+      "revisions": [
+        "a5aeec90a1d47b9670b859150cb89f78c9856fbb"
+      ]
+    },
+    {
+      "path": "ios/build/repair-ci-38104946234/visual-matrix-screenshots/ui-results-NFl3nC-manifest.json",
+      "sha256": "3f88ee5b86f4aae4c9e670ec2b735bb66e9a911820044ee7de0755daea5b9f3c",
+      "recordCount": 55,
+      "revisions": [
+        "a5aeec90a1d47b9670b859150cb89f78c9856fbb"
+      ]
+    }
+  ],
+  "screenshotCount": 104
+}

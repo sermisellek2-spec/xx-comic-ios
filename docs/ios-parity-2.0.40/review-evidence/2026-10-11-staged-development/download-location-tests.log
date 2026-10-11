@@ -1,0 +1,65 @@
+[0/1] Planning build
+Building for debugging...
+[0/5] Write sources
+[0/4] Write swift-version-24593BA9C3E375BF.txt
+[4/6] Compiling ComicCore DownloadRuntime.swift
+[5/6] Emitting module ComicCore
+[6/7] Compiling ComicCore DownloadStorageLocations.swift
+[7/14] Wrapping AST for ComicCore for debugging
+[9/16] Emitting module ComicCoreTests
+[10/16] Compiling ComicCoreTests DownloadLocationTests.swift
+[11/16] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[12/17] Write sources
+[14/19] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[15/19] Emitting module ComicCorePackageDiscoveredTests
+[16/20] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[17/19] Write Objects.LinkFileList
+[18/19] Linking ComicCorePackageTests.xctest
+Build complete! (16.76s)
+Test Suite 'Selected tests' started at 2026-10-11 08:46:33.595
+Test Suite 'DownloadDeletionTests' started at 2026-10-11 08:46:33.613
+Test Case 'DownloadDeletionTests.testBookDirectorySymlinkCannotDeleteExternalOriginal' started at 2026-10-11 08:46:33.613
+Test Case 'DownloadDeletionTests.testBookDirectorySymlinkCannotDeleteExternalOriginal' passed (0.021 seconds)
+Test Case 'DownloadDeletionTests.testCorruptIdentityCannotSelectParentOrUnknownDirectory' started at 2026-10-11 08:46:33.634
+Test Case 'DownloadDeletionTests.testCorruptIdentityCannotSelectParentOrUnknownDirectory' passed (0.008 seconds)
+Test Case 'DownloadDeletionTests.testDeleteRemovesOnlyConfirmedBookAndPersistsTaskRemoval' started at 2026-10-11 08:46:33.642
+Test Case 'DownloadDeletionTests.testDeleteRemovesOnlyConfirmedBookAndPersistsTaskRemoval' passed (0.014 seconds)
+Test Case 'DownloadDeletionTests.testDeletingActiveBookWaitsForWorkerAndCannotRecreateFiles' started at 2026-10-11 08:46:33.656
+Test Case 'DownloadDeletionTests.testDeletingActiveBookWaitsForWorkerAndCannotRecreateFiles' passed (0.091 seconds)
+Test Case 'DownloadDeletionTests.testUnknownFileRefusesDeletionAndKeepsCompletedBookReadable' started at 2026-10-11 08:46:33.748
+Test Case 'DownloadDeletionTests.testUnknownFileRefusesDeletionAndKeepsCompletedBookReadable' passed (0.016 seconds)
+Test Suite 'DownloadDeletionTests' passed at 2026-10-11 08:46:33.763
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.15 (0.15) seconds
+Test Suite 'DownloadLocationTests' started at 2026-10-11 08:46:33.763
+Test Case 'DownloadLocationTests.testCancelledPreparationAndVirtualTraversalCannotSelectPaths' started at 2026-10-11 08:46:33.763
+Test Case 'DownloadLocationTests.testCancelledPreparationAndVirtualTraversalCannotSelectPaths' passed (0.003 seconds)
+Test Case 'DownloadLocationTests.testLegacyPrivateBookKeepsIdentityAndFilesWhenNewDefaultIsExternal' started at 2026-10-11 08:46:33.766
+Test Case 'DownloadLocationTests.testLegacyPrivateBookKeepsIdentityAndFilesWhenNewDefaultIsExternal' passed (0.014 seconds)
+Test Case 'DownloadLocationTests.testPermissionLossRejectsEnqueueWithoutFallingBackOrChangingRecords' started at 2026-10-11 08:46:33.780
+Test Case 'DownloadLocationTests.testPermissionLossRejectsEnqueueWithoutFallingBackOrChangingRecords' passed (0.008 seconds)
+Test Case 'DownloadLocationTests.testRealQueueWritesCustomPathAndRestartReadsOriginalAfterDefaultChanges' started at 2026-10-11 08:46:33.788
+Test Case 'DownloadLocationTests.testRealQueueWritesCustomPathAndRestartReadsOriginalAfterDefaultChanges' passed (0.067 seconds)
+Test Case 'DownloadLocationTests.testReauthorizationRejectsDifferentFolderAndKeepsOriginalMapping' started at 2026-10-11 08:46:33.855
+Test Case 'DownloadLocationTests.testReauthorizationRejectsDifferentFolderAndKeepsOriginalMapping' passed (0.02 seconds)
+Test Case 'DownloadLocationTests.testSelectionPersistsPermissionBookmarkAndProbeIsRemoved' started at 2026-10-11 08:46:33.875
+Test Case 'DownloadLocationTests.testSelectionPersistsPermissionBookmarkAndProbeIsRemoved' passed (0.006 seconds)
+Test Case 'DownloadLocationTests.testSymbolicLinkBelowSelectedRootAndCorruptMappingArePreserved' started at 2026-10-11 08:46:33.881
+Test Case 'DownloadLocationTests.testSymbolicLinkBelowSelectedRootAndCorruptMappingArePreserved' passed (0.005 seconds)
+Test Case 'DownloadLocationTests.testUnknownExternalFilePreventsWholeDeletionThenKnownCopyDeletesOnlyItsBook' started at 2026-10-11 08:46:33.886
+Test Case 'DownloadLocationTests.testUnknownExternalFilePreventsWholeDeletionThenKnownCopyDeletesOnlyItsBook' passed (0.077 seconds)
+Test Suite 'DownloadLocationTests' passed at 2026-10-11 08:46:33.963
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.2 (0.2) seconds
+Test Suite 'DownloadRuntimeTests' started at 2026-10-11 08:46:33.963
+Test Case 'DownloadRuntimeTests.testDeleteChapterCleansFilesAndStore' started at 2026-10-11 08:46:33.964
+Test Case 'DownloadRuntimeTests.testDeleteChapterCleansFilesAndStore' passed (0.031 seconds)
+Test Case 'DownloadRuntimeTests.testEnqueueAndDownloadCompletion' started at 2026-10-11 08:46:33.994
+Test Case 'DownloadRuntimeTests.testEnqueueAndDownloadCompletion' passed (0.029 seconds)
+Test Case 'DownloadRuntimeTests.testPauseAndResume' started at 2026-10-11 08:46:34.023
+Test Case 'DownloadRuntimeTests.testPauseAndResume' passed (0.006 seconds)
+Test Case 'DownloadRuntimeTests.testResumeSkipsAlreadyDownloadedPages' started at 2026-10-11 08:46:34.030
+Test Case 'DownloadRuntimeTests.testResumeSkipsAlreadyDownloadedPages' passed (0.041 seconds)
+Test Suite 'DownloadRuntimeTests' passed at 2026-10-11 08:46:34.071
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.107 (0.107) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 08:46:34.071
+Executed 17 tests, with 0 failures (0 unexpected) in 0.457 (0.457) seconds
+ACTUAL_EXIT_CODE=0

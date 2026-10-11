@@ -5,7 +5,7 @@ import ComicCore
 final class LocalStorageViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIDocumentPickerDelegate {
     private let environment: AppEnvironment
 
-    private struct Item: Equatable {
+    private struct Item: Equatable, Sendable {
         let id: String
         let title: String
         let isDownload: Bool
@@ -21,6 +21,8 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     private let statsLabel = UILabel()
     private let clearCacheButton = UIButton(type: .system)
     private let deleteSelectedButton = UIButton(type: .system)
+    private var loadTask: Task<Void, Never>?
+    private var loadGeneration = UUID()
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -37,7 +39,8 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
         view.backgroundColor = Palette.background
 
         setupViews()
-        loadData()
+        NotificationCenter.default.addObserver(self, selector: #selector(reloadTapped), name: AppEnvironment.libraryChanged, object: nil)
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "arrow.clockwise"), style: .plain, target: self, action: #selector(reloadTapped))
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -94,58 +97,76 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
         ])
     }
 
+    @objc private func reloadTapped() { loadData() }
+
     private func loadData() {
-        Task { [self] in
-            // 1. 本地系列
+        loadTask?.cancel()
+        let token = UUID(); loadGeneration = token
+        let library = environment.localLibrary
+        let localDir = library.directory
+        let locations = environment.downloadLocations
+        let cache = environment.responseCache
+        let folders = environment.folderBookmarkStore.list()
+        let groups = Dictionary(grouping: environment.downloadStore.list(), by: \.bookId)
+        let downloadedItems = groups.map { bookID, tasks -> Item in
+            var title = environment.downloadStore.snapshot(id: bookID)?.summary.title ?? "离线漫画"
+            if let first = tasks.first, first.isFileTask { title += " · " + first.title }
+            return Item(id: bookID, title: title, isDownload: true, size: tasks.reduce(0) { $0 + $1.bytes })
+        }
+        statsLabel.text = "正在统计空间…"
+        let worker = Task.detached(priority: .utility) { () async throws -> ([Item], String) in
             var loaded: [Item] = []
-            let seriesList = (try? await environment.localLibrary.series()) ?? []
-            for s in seriesList {
-                var totalBytes: Int64 = 0
-                for volId in s.volumeIDs {
-                    let volDir = environment.localLibrary.directory.appendingPathComponent(volId, isDirectory: true)
-                    totalBytes += StorageCalculator.directorySize(at: volDir)
+            for series in try await library.series() {
+                try Task.checkCancellation()
+                var bytes: Int64 = 0
+                for volumeID in series.volumeIDs {
+                    bytes += try StorageCalculator.directorySize(at: localDir.appendingPathComponent(volumeID, isDirectory: true))
                 }
-                loaded.append(Item(id: s.id, title: s.displayTitle, isDownload: false, size: totalBytes))
+                loaded.append(Item(id: series.id, title: series.displayTitle, isDownload: false, size: bytes))
             }
-
-            // 2. 离线下载任务分组
-            let downloadTasks = environment.downloadStore.list()
-            let grouped = Dictionary(grouping: downloadTasks, by: \.bookId)
-            for (bookId, tasks) in grouped {
-                let detail = environment.downloadStore.snapshot(id: bookId)
-                let firstTask = tasks.first
-                var title = detail?.summary.title ?? "离线漫画"
-                if let first = firstTask, first.isFileTask {
-                    title += " · " + first.title
+            loaded += downloadedItems
+            let importedSize = try StorageCalculator.directorySize(at: localDir)
+            // Include each mapped book in its real location, without traversing a user's directory root.
+            var downloadSummary: String
+            do {
+                var downloadedSize: Int64 = 0
+                for bookID in groups.keys {
+                    try Task.checkCancellation()
+                    downloadedSize += try locations.withBookDirectory(bookID: bookID, access: .read) {
+                        try StorageCalculator.directorySize(at: $0)
+                    }
                 }
-                let totalBytes = tasks.reduce(0) { $0 + $1.bytes }
-                loaded.append(Item(id: bookId, title: title, isDownload: true, size: totalBytes))
+                downloadSummary = "离线下载: " + StorageCalculator.formatBytes(downloadedSize)
+            } catch is CancellationError { throw CancellationError() }
+            catch { downloadSummary = "离线下载统计未完成：" + error.localizedDescription }
+            let usage = try await cache.usage()
+            let usableSpace = StorageCalculator.usableSpace()
+            try Task.checkCancellation()
+            let summary = "本地导入: \(StorageCalculator.formatBytes(importedSize))  ·  \(downloadSummary)\n可清缓存: \(StorageCalculator.formatBytes(usage.totalBytes))  ·  剩余空间: \(StorageCalculator.formatBytes(usableSpace))"
+            return (loaded, summary)
+        }
+        loadTask = Task { [weak self] in
+            do {
+                let (loaded, summary) = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+                guard let self, self.loadGeneration == token, !Task.isCancelled else { return }
+                self.items = loaded.filter { item in
+                    item.isDownload ? !self.environment.localDeletion.containsDownloadBook(item.id) : !self.environment.localDeletion.containsLocalSeries(item.id)
+                }
+                self.syncedFolders = folders
+                self.selectedIDs.formIntersection(Set(self.items.map(\.id)))
+                self.statsLabel.text = summary
+                self.tableView.reloadData()
+            } catch {
+                guard let self, self.loadGeneration == token, !Task.isCancelled else { return }
+                self.statsLabel.text = "空间统计失败，点击右上角重试"
+                self.tableView.reloadData()
             }
-
-            self.items = loaded
-            self.syncedFolders = self.environment.folderBookmarkStore.list()
-            self.tableView.reloadData()
-            self.updateStatistics()
         }
     }
 
-    private func updateStatistics() {
-        Task.detached {
-            let localDir = await self.environment.localLibrary.directory
-            let downloadsDir = await self.environment.downloadRuntime.downloadsDirectory
-
-            let importedSize = StorageCalculator.directorySize(at: localDir)
-            let downloadedSize = StorageCalculator.directorySize(at: downloadsDir)
-            let usableSpace = StorageCalculator.usableSpace()
-
-            // 缓存大小：图片缓存和派生缓存
-            let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
-            let cacheSize = cacheURL != nil ? StorageCalculator.directorySize(at: cacheURL!) : 0
-
-            await MainActor.run {
-                self.statsLabel.text = "本地导入: \(StorageCalculator.formatBytes(importedSize))  ·  离线下载: \(StorageCalculator.formatBytes(downloadedSize))\n可清缓存: \(StorageCalculator.formatBytes(cacheSize))  ·  剩余空间: \(StorageCalculator.formatBytes(usableSpace))"
-            }
-        }
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        loadTask?.cancel()
     }
 
     // MARK: - Actions
@@ -156,17 +177,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     }
 
     @objc private func clearCacheTapped() {
-        URLCache.shared.removeAllCachedResponses()
-        if let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
-            let fileManager = FileManager.default
-            if let files = try? fileManager.contentsOfDirectory(at: cacheURL, includingPropertiesForKeys: nil) {
-                for file in files {
-                    try? fileManager.removeItem(at: file)
-                }
-            }
-        }
-        updateStatistics()
-        showToast("缓存已清理")
+        navigationController?.pushViewController(CacheCleanupViewController(environment: environment), animated: true)
     }
 
     @objc private func deleteSelectedTapped() {
@@ -189,19 +200,13 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
 
     private func performDelete() {
         let targets = items.filter { selectedIDs.contains($0.id) }
-        Task {
-            for item in targets {
-                if item.isDownload {
-                    self.environment.downloadRuntime.deleteBook(bookId: item.id)
-                } else {
-                    try? await self.environment.localLibrary.deleteSeries(id: item.id)
-                }
-            }
-            self.selectedIDs.removeAll()
-            self.environment.notifyLibraryChanged()
-            self.showToast("已清理本地副本")
-            self.loadData()
+        let requests = targets.map { item in
+            LocalDeletionController.Request(target: item.isDownload ? .downloadBook(item.id) : .localSeries(item.id), title: item.title,
+                groupComicID: item.isDownload ? (environment.downloadStore.snapshot(id: item.id)?.summary.comicId ?? environment.downloadStore.list().first { $0.bookId == item.id }?.comicId ?? item.id) : item.id)
         }
+        selectedIDs.removeAll()
+        environment.localDeletion.schedule(requests, from: self)
+        loadData()
     }
 
     private func showToast(_ message: String) {
@@ -252,7 +257,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if section == 0 { return 1 } // Wi-Fi Switch
+        if section == 0 { return 2 } // Wi-Fi and actual download location
         if section == 1 { return 1 } // Storage Stats
         if section == 2 { return syncedFolders.count + 1 } // Synced Folders + Add Action
         return items.count // Books List
@@ -270,6 +275,15 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if indexPath.section == 0 {
+            if indexPath.row == 1 {
+                let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+                cell.backgroundColor = Palette.card; cell.textLabel?.text = "离线下载位置"
+                cell.textLabel?.textColor = Palette.text; cell.textLabel?.font = .systemFont(ofSize: 14, weight: .bold)
+                cell.detailTextLabel?.text = environment.downloadLocations.selectedName
+                cell.detailTextLabel?.numberOfLines = 0; cell.detailTextLabel?.textColor = Palette.secondaryText
+                cell.accessoryType = .disclosureIndicator; cell.accessibilityIdentifier = "storage.download-location"
+                return cell
+            }
             let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "wifi")
             cell.backgroundColor = Palette.card
             cell.textLabel?.text = "仅 Wi-Fi 下载"
@@ -399,6 +413,10 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        if indexPath.section == 0, indexPath.row == 1 {
+            navigationController?.pushViewController(DownloadLocationViewController(locations: environment.downloadLocations), animated: true)
+            return
+        }
         guard indexPath.section == 3 else { return }
 
         let item = items[indexPath.row]

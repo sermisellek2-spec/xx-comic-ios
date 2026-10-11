@@ -1,0 +1,11 @@
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+android-settings-phone-portrait-light captured
+android-settings-phone-portrait-dark captured
+android-settings-phone-landscape-light captured
+android-settings-phone-landscape-dark captured
+Traceback (most recent call last):
+  File "F:\softForCode\codex-project\xx-comic\.worktrees\ios-port\tools\capture-android-settings-reference.py", line 94, in <module>
+    main()
+  File "F:\softForCode\codex-project\xx-comic\.worktrees\ios-port\tools\capture-android-settings-reference.py", line 59, in main
+    raise RuntimeError("Settings page did not survive the configuration change")
+RuntimeError: Settings page did not survive the configuration change

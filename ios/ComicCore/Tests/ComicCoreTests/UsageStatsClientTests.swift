@@ -29,9 +29,9 @@ final class UsageStatsClientTests: XCTestCase {
         XCTAssertFalse((payload?["installId"] as? String ?? "").isEmpty)
     }
 
-    func testDisablingUsageStatsReturnsNilPayload() {
+    func testDisablingUsageStatsReturnsNilPayload() throws {
         let client = UsageStatsClient(directory: tempDirectory)
-        client.setEnabled(false)
+        try client.setEnabled(false)
         XCTAssertFalse(client.isEnabled)
         XCTAssertTrue(client.isDecided)
         XCTAssertNil(client.payload())

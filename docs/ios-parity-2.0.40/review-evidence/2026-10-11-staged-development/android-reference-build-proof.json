@@ -1,0 +1,19 @@
+{
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "command": "gradlew.bat testDebugUnitTest assembleDebug --no-daemon --console=plain",
+  "exit_code": 0,
+  "log": "android-reference-build.log",
+  "unit_reports": 101,
+  "unit_results": {
+    "tests": 702,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 2
+  },
+  "apk_path": ".reference/android-2.0.40/app/build/outputs/apk/debug/app-debug.apk",
+  "apk_bytes": 37608787,
+  "apk_sha256": "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71",
+  "production_stats_disabled_before_launch": true,
+  "airplane_mode": true,
+  "real_websites_exercised": false
+}

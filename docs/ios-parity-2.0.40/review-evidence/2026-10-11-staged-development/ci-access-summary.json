@@ -1,0 +1,32 @@
+{
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "upload_attempted": false,
+  "current_ci_triggered": false,
+  "current_ipa_produced": false,
+  "checks": [
+    {
+      "method": "Git credential helper, terminal prompts disabled",
+      "result": "no usable credential; exit 128"
+    },
+    {
+      "method": "standard GitHub environment authentication presence",
+      "result": "not configured; no values exposed"
+    },
+    {
+      "method": "available GitHub connector inventory",
+      "result": "no write/Actions connector"
+    },
+    {
+      "method": "available browser inventory and exact repo page",
+      "result": "only empty Codex IAB; Sign in link and anonymous 404; temporary tab closed"
+    },
+    {
+      "method": "local Apple environment",
+      "result": "Windows, Xcode unavailable"
+    }
+  ],
+  "old_quota_blocker": false,
+  "anonymous_404_proves_repository_missing": false,
+  "normal_login_required": true,
+  "secret_scripts_used": false
+}

@@ -1,0 +1,169 @@
+[0/1] Planning build
+Building for debugging...
+[0/12] Write sources
+[0/12] Write swift-version-24593BA9C3E375BF.txt
+[4/12] Compiling ComicCore DownloadRuntime.swift
+[5/12] Emitting module ComicCore
+[6/13] Compiling ComicCore DownloadStorageLocations.swift
+[7/14] Wrapping AST for ComicCore for debugging
+[9/40] Emitting module ComicCoreTests
+[10/65] Compiling ComicCoreTests AntbywSourceTests.swift
+[11/65] Compiling ComicCoreTests AppThemeTests.swift
+[12/65] Compiling ComicCoreTests AppUpdateCheckerTests.swift
+[13/65] Compiling ComicCoreTests BaoziSourceTests.swift
+[14/65] Compiling ComicCoreTests BatchImportPlannerTests.swift
+[15/65] Compiling ComicCoreTests BatchImportSessionTests.swift
+[16/65] Compiling ComicCoreTests BatchImportWorkerTests.swift
+[17/65] Compiling ComicCoreTests BookshelfGroupStoreTests.swift
+[18/65] Compiling ComicCoreTests BookshelfReadingStatusTests.swift
+[19/65] Compiling ComicCoreTests BuiltinSourceCatalogTests.swift
+[20/65] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[21/65] Compiling ComicCoreTests ChapterMatchingTests.swift
+[22/65] Compiling ComicCoreTests ComicDirectoryPreparationTests.swift
+[23/65] Compiling ComicCoreTests ContentFingerprintTests.swift
+[24/65] Compiling ComicCoreTests CopyMangaTests.swift
+[25/65] Compiling ComicCoreTests CuimhSourceTests.swift
+[26/65] Compiling ComicCoreTests D5d6SourceTests.swift
+[27/65] Compiling ComicCoreTests DefaultDownloadImageFetcherTests.swift
+[28/65] Compiling ComicCoreTests DeferredDeletionTests.swift
+[29/65] Compiling ComicCoreTests DingManhuaSourceTests.swift
+[30/65] Compiling ComicCoreTests DiscoveryHeaderGestureTests.swift
+[31/65] Compiling ComicCoreTests DongmanLaSourceTests.swift
+[32/65] Compiling ComicCoreTests DownloadCoordinatorTests.swift
+[33/65] Compiling ComicCoreTests DownloadDeletionTests.swift
+[34/65] Compiling ComicCoreTests DownloadIdentityTests.swift
+[35/89] Compiling ComicCoreTests DownloadLocationTests.swift
+[36/89] Compiling ComicCoreTests DownloadRuntimeTests.swift
+[37/89] Compiling ComicCoreTests DownloadStoreTests.swift
+[38/89] Compiling ComicCoreTests EpubParserTests.swift
+[39/89] Compiling ComicCoreTests EpubReaderResourceTests.swift
+[40/89] Compiling ComicCoreTests EpubTextSessionTests.swift
+[41/89] Compiling ComicCoreTests ErrorLogStoreTests.swift
+[42/89] Compiling ComicCoreTests FavoriteRevisionTests.swift
+[43/89] Compiling ComicCoreTests FavoriteUpdateCheckerTests.swift
+[44/89] Compiling ComicCoreTests FileDownloadWorkerTests.swift
+[45/89] Compiling ComicCoreTests FiveUmSourceTests.swift
+[46/89] Compiling ComicCoreTests GmhSourceTests.swift
+[47/89] Compiling ComicCoreTests Hanman18SourceTests.swift
+[48/89] Compiling ComicCoreTests HiperdexSourceTests.swift
+[49/89] Compiling ComicCoreTests IOSUpdatePolicyTests.swift
+[50/89] Compiling ComicCoreTests ImageEnhancementPolicyTests.swift
+[51/89] Compiling ComicCoreTests JmImageTransformTests.swift
+[52/89] Compiling ComicCoreTests JmSourceTests.swift
+[53/89] Compiling ComicCoreTests KindleFormatTests.swift
+[54/89] Compiling ComicCoreTests KindlePublicationTests.swift
+[55/89] Compiling ComicCoreTests LibraryStoreTests.swift
+[56/89] Compiling ComicCoreTests LiumanhuaSourceTests.swift
+[57/89] Compiling ComicCoreTests LocalArchiveTests.swift
+[58/89] Compiling ComicCoreTests LocalCatalogTests.swift
+[59/89] Compiling ComicCoreTests LocalEpubLibraryTests.swift
+[60/113] Compiling ComicCoreTests LocalFolderSyncTests.swift
+[61/113] Compiling ComicCoreTests LocalFolderTests.swift
+[62/113] Compiling ComicCoreTests LocalImportFingerprintTests.swift
+[63/113] Compiling ComicCoreTests LocalImportPreparationTests.swift
+[64/113] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+[65/113] Compiling ComicCoreTests LocalLibraryTests.swift
+[66/113] Compiling ComicCoreTests LocalPdfLibraryTests.swift
+[67/113] Compiling ComicCoreTests LocalReadingRoutingTests.swift
+[68/113] Compiling ComicCoreTests LocalSeriesLifecycleTests.swift
+[69/113] Compiling ComicCoreTests LocalTestHTTPServer.swift
+[70/113] Compiling ComicCoreTests LocalTestHTTPServerTests.swift
+[71/113] Compiling ComicCoreTests ManbenSourceTests.swift
+[72/113] Compiling ComicCoreTests ManhuaguiTests.swift
+[73/113] Compiling ComicCoreTests ManwaImageDecoderTests.swift
+[74/113] Compiling ComicCoreTests ManwaSourceTests.swift
+[75/113] Compiling ComicCoreTests Mh160SourceTests.swift
+[76/113] Compiling ComicCoreTests Mh18BrowserTrustTests.swift
+[77/113] Compiling ComicCoreTests Mh18CookieSynchronizerTests.swift
+[78/113] Compiling ComicCoreTests Mh18SourceTests.swift
+[79/113] Compiling ComicCoreTests Mh18VerificationAttemptTests.swift
+[80/113] Compiling ComicCoreTests Mh18VerificationRulesTests.swift
+[81/113] Compiling ComicCoreTests MkzhanSourceTests.swift
+[82/113] Compiling ComicCoreTests NaturalPathOrderTests.swift
+[83/113] Compiling ComicCoreTests NewPublicSourcesTests.swift
+[84/113] Compiling ComicCoreTests PdfRendererTests.swift
+[85/113] Compiling ComicCoreTests PreferencesTests.swift
+[86/113] Compiling ComicCoreTests PublicComicSourceTests.swift
+[87/113] Compiling ComicCoreTests QuickPublicationInfoTests.swift
+[88/113] Compiling ComicCoreTests ReaderLoadStateTests.swift
+[89/113] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+[90/113] Compiling ComicCoreTests ReaderSessionTests.swift
+[91/113] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+[92/113] Compiling ComicCoreTests ReadingRulesTests.swift
+[93/113] Compiling ComicCoreTests RetiredComicSourceTests.swift
+[94/113] Compiling ComicCoreTests SearchRulesTests.swift
+[95/113] Compiling ComicCoreTests SourceAESTests.swift
+[96/113] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+[97/113] Compiling ComicCoreTests SourceGroupStoreTests.swift
+[98/113] Compiling ComicCoreTests SourceImportContractTests.swift
+[99/113] Compiling ComicCoreTests SourcePreferencesTests.swift
+[100/113] Compiling ComicCoreTests SourceSearchTrimTests.swift
+[101/113] Compiling ComicCoreTests StorageCalculatorTests.swift
+[102/113] Compiling ComicCoreTests TextReadingTests.swift
+[103/113] Compiling ComicCoreTests UsageStatsClientTests.swift
+[104/113] Compiling ComicCoreTests UsageStatsReportingTests.swift
+[105/113] Compiling ComicCoreTests WhiteMarginTests.swift
+[106/113] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+[107/113] Compiling ComicCoreTests resource_bundle_accessor.swift
+[108/116] Wrapping AST for ComicCoreTests for debugging
+[109/116] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[110/117] Write sources
+[112/119] Emitting module ComicCorePackageDiscoveredTests
+[113/119] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[114/120] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[115/121] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[116/121] Write sources
+[117/121] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[119/123] Emitting module ComicCorePackageTests
+[120/123] Compiling ComicCorePackageTests runner.swift
+[121/123] Write Objects.LinkFileList
+[122/123] Linking ComicCorePackageTests.xctest
+Build complete! (42.73s)
+Test Suite 'Selected tests' started at 2026-10-11 08:43:10.034
+Test Suite 'DownloadDeletionTests' started at 2026-10-11 08:43:10.050
+Test Case 'DownloadDeletionTests.testBookDirectorySymlinkCannotDeleteExternalOriginal' started at 2026-10-11 08:43:10.050
+Test Case 'DownloadDeletionTests.testBookDirectorySymlinkCannotDeleteExternalOriginal' passed (0.02 seconds)
+Test Case 'DownloadDeletionTests.testCorruptIdentityCannotSelectParentOrUnknownDirectory' started at 2026-10-11 08:43:10.070
+Test Case 'DownloadDeletionTests.testCorruptIdentityCannotSelectParentOrUnknownDirectory' passed (0.007 seconds)
+Test Case 'DownloadDeletionTests.testDeleteRemovesOnlyConfirmedBookAndPersistsTaskRemoval' started at 2026-10-11 08:43:10.077
+Test Case 'DownloadDeletionTests.testDeleteRemovesOnlyConfirmedBookAndPersistsTaskRemoval' passed (0.013 seconds)
+Test Case 'DownloadDeletionTests.testDeletingActiveBookWaitsForWorkerAndCannotRecreateFiles' started at 2026-10-11 08:43:10.091
+Test Case 'DownloadDeletionTests.testDeletingActiveBookWaitsForWorkerAndCannotRecreateFiles' passed (0.091 seconds)
+Test Case 'DownloadDeletionTests.testUnknownFileRefusesDeletionAndKeepsCompletedBookReadable' started at 2026-10-11 08:43:10.182
+Test Case 'DownloadDeletionTests.testUnknownFileRefusesDeletionAndKeepsCompletedBookReadable' passed (0.012 seconds)
+Test Suite 'DownloadDeletionTests' passed at 2026-10-11 08:43:10.195
+Executed 5 tests, with 0 failures (0 unexpected) in 0.145 (0.145) seconds
+Test Suite 'DownloadLocationTests' started at 2026-10-11 08:43:10.195
+Test Case 'DownloadLocationTests.testCancelledPreparationAndVirtualTraversalCannotSelectPaths' started at 2026-10-11 08:43:10.195
+Test Case 'DownloadLocationTests.testCancelledPreparationAndVirtualTraversalCannotSelectPaths' passed (0.002 seconds)
+Test Case 'DownloadLocationTests.testLegacyPrivateBookKeepsIdentityAndFilesWhenNewDefaultIsExternal' started at 2026-10-11 08:43:10.197
+/work/Tests/ComicCoreTests/DownloadLocationTests.swift:83: error: DownloadLocationTests.testLegacyPrivateBookKeepsIdentityAndFilesWhenNewDefaultIsExternal : XCTAssertEqual failed: ("file:///tmp/3B97111E-061C-4994-8370-F964BEA5E3BF/private/local_dl_680c038312aded889cddcea97219cd8cf0533f993bc1a21bc4d5dbcfbe037b14/ede9728d130cc93f62f67edda35286c97055e2809395bacdb3a90e2f369f157b/") is not equal to ("file:///tmp/3B97111E-061C-4994-8370-F964BEA5E3BF/private/local_dl_680c038312aded889cddcea97219cd8cf0533f993bc1a21bc4d5dbcfbe037b14/ede9728d130cc93f62f67edda35286c97055e2809395bacdb3a90e2f369f157b") -
+Test Case 'DownloadLocationTests.testLegacyPrivateBookKeepsIdentityAndFilesWhenNewDefaultIsExternal' failed (0.014 seconds)
+Test Case 'DownloadLocationTests.testPermissionLossRejectsEnqueueWithoutFallingBackOrChangingRecords' started at 2026-10-11 08:43:10.211
+Test Case 'DownloadLocationTests.testPermissionLossRejectsEnqueueWithoutFallingBackOrChangingRecords' passed (0.007 seconds)
+Test Case 'DownloadLocationTests.testRealQueueWritesCustomPathAndRestartReadsOriginalAfterDefaultChanges' started at 2026-10-11 08:43:10.218
+Test Case 'DownloadLocationTests.testRealQueueWritesCustomPathAndRestartReadsOriginalAfterDefaultChanges' passed (0.065 seconds)
+Test Case 'DownloadLocationTests.testReauthorizationRejectsDifferentFolderAndKeepsOriginalMapping' started at 2026-10-11 08:43:10.283
+Test Case 'DownloadLocationTests.testReauthorizationRejectsDifferentFolderAndKeepsOriginalMapping' passed (0.018 seconds)
+Test Case 'DownloadLocationTests.testSelectionPersistsPermissionBookmarkAndProbeIsRemoved' started at 2026-10-11 08:43:10.302
+Test Case 'DownloadLocationTests.testSelectionPersistsPermissionBookmarkAndProbeIsRemoved' passed (0.006 seconds)
+Test Case 'DownloadLocationTests.testSymbolicLinkBelowSelectedRootAndCorruptMappingArePreserved' started at 2026-10-11 08:43:10.307
+Test Case 'DownloadLocationTests.testSymbolicLinkBelowSelectedRootAndCorruptMappingArePreserved' passed (0.005 seconds)
+Test Case 'DownloadLocationTests.testUnknownExternalFilePreventsWholeDeletionThenKnownCopyDeletesOnlyItsBook' started at 2026-10-11 08:43:10.312
+Test Case 'DownloadLocationTests.testUnknownExternalFilePreventsWholeDeletionThenKnownCopyDeletesOnlyItsBook' passed (0.077 seconds)
+Test Suite 'DownloadLocationTests' failed at 2026-10-11 08:43:10.389
+	 Executed 8 tests, with 1 failure (0 unexpected) in 0.194 (0.194) seconds
+Test Suite 'DownloadRuntimeTests' started at 2026-10-11 08:43:10.389
+Test Case 'DownloadRuntimeTests.testDeleteChapterCleansFilesAndStore' started at 2026-10-11 08:43:10.389
+Test Case 'DownloadRuntimeTests.testDeleteChapterCleansFilesAndStore' passed (0.037 seconds)
+Test Case 'DownloadRuntimeTests.testEnqueueAndDownloadCompletion' started at 2026-10-11 08:43:10.427
+Test Case 'DownloadRuntimeTests.testEnqueueAndDownloadCompletion' passed (0.025 seconds)
+Test Case 'DownloadRuntimeTests.testPauseAndResume' started at 2026-10-11 08:43:10.452
+Test Case 'DownloadRuntimeTests.testPauseAndResume' passed (0.008 seconds)
+Test Case 'DownloadRuntimeTests.testResumeSkipsAlreadyDownloadedPages' started at 2026-10-11 08:43:10.460
+Test Case 'DownloadRuntimeTests.testResumeSkipsAlreadyDownloadedPages' passed (0.042 seconds)
+Test Suite 'DownloadRuntimeTests' passed at 2026-10-11 08:43:10.502
+Executed 4 tests, with 0 failures (0 unexpected) in 0.113 (0.113) seconds
+Test Suite 'Selected tests' failed at 2026-10-11 08:43:10.502
+Executed 17 tests, with 1 failure (0 unexpected) in 0.451 (0.451) seconds
+ACTUAL_EXIT_CODE=1

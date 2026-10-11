@@ -8,6 +8,48 @@ final class HiperdexSourceTests: XCTestCase {
     <div class="manga-item"><a href="/manga/moon/"><img data-lazy-src="/moon.webp"></a><h2><a>Moon</a></h2></div></main>
     """
 
+    func testImportedConfigurationControlsRequestsHeadersFiltersAndRelativeImages() async throws {
+        let config = SourceConfigItem(id: "hiperdex", name: "Fixture HiperDEX", domain: "fixture.invalid",
+            baseUrl: "https://fixture.invalid/", referer: "https://fixture.invalid/ref/",
+            routes: ["latest": "/recent/{page}", "search": "/find/{keyword}?p={page}",
+                     "category": "/genre/{genrePath}{pagePath}", "detail": "/book/{comicId}"],
+            filters: ["genre.webtoon": "custom-webtoon"])
+        let detailHTML = "<meta property=\"og:title\" content=\"Star - HiperDEX\"><meta property=\"og:image\" content=\"/cover.jpg\"><a href=\"/manga/star/chapter-1/\">Chapter 1</a>"
+        let transport = HiperdexTransport([
+            "https://fixture.invalid/recent/2": cards,
+            "https://fixture.invalid/find/star%20%26%20sea?p=3": cards,
+            "https://fixture.invalid/genre/custom-webtoon/page/4/": cards,
+            "https://fixture.invalid/book/star": detailHTML
+        ])
+        let source = HiperdexComicSource(config: config, transport: transport)
+        XCTAssertEqual(source.name, "Fixture HiperDEX")
+        let latest = try await source.latest(page: 2)
+        XCTAssertEqual(latest.last?.coverUrl, "https://fixture.invalid/moon.webp")
+        _ = try await source.search(keyword: " star & sea ", page: 3)
+        _ = try await source.category(filters: ["region": "all", "state": "webtoon"], page: 4)
+        let detail = try await source.detail(comicId: "hiperdex:star")
+        XCTAssertEqual(detail.summary.coverUrl, "https://fixture.invalid/cover.jpg")
+        XCTAssertEqual(detail.chapters, [])
+        let chapters = try await source.chapters(comicId: "hiperdex:star")
+        XCTAssertEqual(chapters.first?.url, "https://fixture.invalid/manga/star/chapter-1/")
+        let requests = await transport.requests
+        XCTAssertEqual(requests.count, 5)
+        XCTAssertTrue(requests.allSatisfy { $0.headers["Referer"] == config.referer })
+        XCTAssertTrue(requests.allSatisfy { $0.url.hasPrefix("https://fixture.invalid/") })
+    }
+
+    func testDefaultExportContainsAndroidHiperdexRoutesAndFilters() throws {
+        let suite = "HiperdexSourceTests." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let preferences = SourcePreferences(defaults: defaults, defaultIDs: ["hiperdex"])
+        let exported = preferences.exportConfig(sources: [("hiperdex", "HiperDEX", "hiperdex.com", "https://hiperdex.com/")])
+        let package = try JSONDecoder().decode(SourceExportPackage.self, from: Data(exported.utf8))
+        XCTAssertEqual(package.sources.first, SourceConfigDefaults.hiperdex())
+        XCTAssertEqual(package.sources.first?.route("chapter"), "/manga/{comicId}/{chapterSlug}/")
+        XCTAssertEqual(package.sources.first?.filter("genre.webtoon"), "webtoon")
+    }
+
     func testLatestSearchCategoryAndFiltersPreserveAndroidURLsAndOrder() async throws {
         let transport = HiperdexTransport([
             "https://hiperdex.com/manga/?m_orderby=latest&paged=2": cards,

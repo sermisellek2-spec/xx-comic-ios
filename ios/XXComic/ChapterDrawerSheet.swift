@@ -15,7 +15,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
     private let onChapterSelected: (Int) -> Void
 
     private var orderIndexes: [Int] = []
-    private let backdrop = UIView()
+    private let backdrop = UIButton(type: .custom)
     private let panel = UIView()
     private let handle = UIView()
     private let headerTitle = UILabel()
@@ -73,8 +73,9 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
         backdrop.alpha = 0
         backdrop.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(backdrop)
-        let tapBackdrop = UITapGestureRecognizer(target: self, action: #selector(dismissSheet))
-        backdrop.addGestureRecognizer(tapBackdrop)
+        backdrop.accessibilityLabel = "关闭目录"
+        backdrop.accessibilityIdentifier = "chapter.drawer.dismiss"
+        backdrop.addTarget(self, action: #selector(dismissSheet), for: .touchUpInside)
 
         // Panel
         panel.translatesAutoresizingMaskIntoConstraints = false

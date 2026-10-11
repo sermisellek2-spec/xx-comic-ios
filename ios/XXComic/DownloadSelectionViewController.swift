@@ -15,6 +15,7 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let startButton = UIButton(type: .system)
     private let hintLabel = UILabel()
+    private var enqueueTask: Task<Void, Never>?
 
     init(detail: ComicDetail, currentIndex: Int = 0, environment: AppEnvironment, onAdded: (() -> Void)? = nil) {
         self.detail = detail
@@ -90,6 +91,8 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
         let wifiHint = isWifiOnly ? "仅 Wi-Fi" : "允许移动网络"
         hintLabel.text = "仅保存本次选择的章节 · \(wifiHint)"
         hintLabel.font = .systemFont(ofSize: 12)
+        hintLabel.numberOfLines = 0
+        hintLabel.accessibilityIdentifier = "download.feedback"
         hintLabel.textColor = Palette.secondaryText
         hintLabel.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(hintLabel)
@@ -97,6 +100,8 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
         let closeButton = UIButton(type: .system)
         closeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
         closeButton.tintColor = Palette.secondaryText
+        closeButton.accessibilityLabel = "关闭下载选择"
+        closeButton.accessibilityIdentifier = "download.close"
         closeButton.addTarget(self, action: #selector(dismissSelf), for: .touchUpInside)
         closeButton.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(closeButton)
@@ -119,6 +124,7 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.backgroundColor = .clear
         tableView.dataSource = self
+        tableView.accessibilityIdentifier = "download.chapters"
         tableView.delegate = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "ChapterCell")
         tableView.separatorColor = Palette.secondaryText.withAlphaComponent(0.2)
@@ -126,6 +132,7 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
 
         // Bottom start button
         startButton.translatesAutoresizingMaskIntoConstraints = false
+        startButton.accessibilityIdentifier = "download.start"
         startButton.backgroundColor = Palette.accent
         startButton.setTitleColor(.white, for: .normal)
         startButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
@@ -145,12 +152,13 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
 
             hintLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             hintLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
+            hintLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
             hintLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor),
 
             closeButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
             closeButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
-            closeButton.widthAnchor.constraint(equalToConstant: 28),
-            closeButton.heightAnchor.constraint(equalToConstant: 28),
+            closeButton.widthAnchor.constraint(equalToConstant: 44),
+            closeButton.heightAnchor.constraint(equalToConstant: 44),
 
             toolsStack.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 12),
             toolsStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
@@ -182,14 +190,19 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
 
     private func updateStartButton() {
         startButton.setTitle("下载选中章节 (\(selectedChapterIds.count))", for: .normal)
-        startButton.isEnabled = !selectedChapterIds.isEmpty
+        startButton.isEnabled = !selectedChapterIds.isEmpty && enqueueTask == nil
         startButton.alpha = selectedChapterIds.isEmpty ? 0.5 : 1.0
     }
 
     // MARK: - Actions
 
     @objc private func dismissSelf() {
+        enqueueTask?.cancel()
         dismiss(animated: true)
+    }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if presentedViewController == nil { enqueueTask?.cancel() }
     }
 
     @objc private func selectCurrentOnly() {
@@ -255,14 +268,27 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
     }
 
     @objc private func startDownload() {
-        guard !selectedChapterIds.isEmpty else { return }
+        guard !selectedChapterIds.isEmpty, enqueueTask == nil else { return }
         let toDownload = visibleChapters.filter { selectedChapterIds.contains($0.chapterId) }
         guard !toDownload.isEmpty else { return }
 
-        environment.downloadRuntime.enqueue(detail: detail, selectedChapterIds: toDownload.map(\.chapterId))
-        dismiss(animated: true) { [weak self] in
-            self?.onAdded?()
+        let runtime = environment.downloadRuntime, detail = detail, ids = toDownload.map(\.chapterId)
+        hintLabel.text = "正在检查下载目录…"; tableView.isUserInteractionEnabled = false
+        enqueueTask = Task { [weak self] in
+            do {
+                try await runtime.enqueueWithLocation(detail: detail, selectedChapterIds: ids)
+                guard let self, !Task.isCancelled else { return }
+                self.enqueueTask = nil
+                let added = self.onAdded
+                self.dismiss(animated: true) { added?() }
+            } catch {
+                guard let self, !Task.isCancelled else { return }
+                self.enqueueTask = nil; self.tableView.isUserInteractionEnabled = true
+                self.hintLabel.text = "未加入下载：" + error.localizedDescription
+                self.updateStartButton()
+            }
         }
+        updateStartButton()
     }
 
     // MARK: - UITableViewDataSource & Delegate

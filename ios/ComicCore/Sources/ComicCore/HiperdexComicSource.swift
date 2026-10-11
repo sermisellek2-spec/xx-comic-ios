@@ -7,21 +7,25 @@ public enum HiperdexSourceError: Error, Equatable, LocalizedError, Sendable {
 
 public struct HiperdexComicSource: ComicSource {
     public let id = "hiperdex"
-    public let name = "HiperDEX"
-    public let referer = "https://hiperdex.com/"
-    private let base = "https://hiperdex.com"
+    public var name: String { config.name }
+    public var referer: String { config.referer }
+    private var base: String { config.baseUrl.hasSuffix("/") ? String(config.baseUrl.dropLast()) : config.baseUrl }
+    private let config: SourceConfigItem
     private let transport: any HTTPTransport
     private static let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
-    public init(transport: any HTTPTransport = URLSessionHTTPTransport()) { self.transport = transport }
+    public init(config: SourceConfigItem = SourceConfigDefaults.hiperdex(), transport: any HTTPTransport = URLSessionHTTPTransport()) {
+        self.config = config
+        self.transport = transport
+    }
 
     public func latest(page: Int) async throws -> [ComicSummary] {
-        try cards(await fetch("/manga/?m_orderby=latest" + (page > 1 ? "&paged=\(page)" : "")))
+        try cards(await fetch(route("latest", values: ["pageQuery": page > 1 ? "&paged=\(page)" : "", "page": "\(page)"])))
     }
 
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         let query = percentEncode(SearchRules.trim(keyword))
-        return try cards(await fetch("/?s=\(query)&post_type=wp-manga" + (page > 1 ? "&paged=\(page)" : "")))
+        return try cards(await fetch(route("search", values: ["keyword": query, "pageQuery": page > 1 ? "&paged=\(page)" : "", "page": "\(page)"])))
     }
 
     public func filterGroups() async throws -> [SourceFilterGroup] {[
@@ -33,12 +37,12 @@ public struct HiperdexComicSource: ComicSource {
 
     public func category(filters: [String: String], page: Int) async throws -> [ComicSummary] {
         let selected = normalized(filters["region"]) == "all" ? normalized(filters["state"]) : normalized(filters["region"])
-        let genre = ["manhwa", "webtoon", "romance", "drama"].contains(selected) ? selected + "/" : ""
-        return try cards(await fetch("/manga/\(genre)" + (page > 1 ? "page/\(page)/" : "")))
+        let genre = selected == "all" ? "" : config.filter("genre." + selected)
+        return try cards(await fetch(route("category", values: ["genrePath": genre.isEmpty ? "" : genre + "/", "pagePath": page > 1 ? "page/\(page)/" : "", "page": "\(page)"])))
     }
 
     public func detail(comicId: String) async throws -> ComicDetail {
-        let rawID = rawComicID(comicId), html = try await fetch("/manga/\(rawID)/")
+        let rawID = rawComicID(comicId), html = try await fetch(route("detail", values: ["comicId": rawID]))
         let metaTitle = meta("og:title", html)
         let escapedID = NSRegularExpression.escapedPattern(for: rawID)
         guard !metaTitle.isEmpty || html.range(of: #"class=[\"'][^\"']*(?:summary__|profile-manga|chapter-list)[^\"']*[\"']|href=[\"'][^\"']*/manga/"# + escapedID + #"/"#, options: [.regularExpression, .caseInsensitive]) != nil else { throw parseError("详情解析失败") }
@@ -54,7 +58,7 @@ public struct HiperdexComicSource: ComicSource {
     }
 
     public func chapters(comicId: String) async throws -> [Chapter] {
-        let rawID = rawComicID(comicId), html = try await fetch("/manga/\(rawID)/")
+        let rawID = rawComicID(comicId), html = try await fetch(route("detail", values: ["comicId": rawID]))
         var seen = Set<String>(), result: [Chapter] = []
         let pattern = #"<a[^>]+href=\"([^\"]*/manga/"# + NSRegularExpression.escapedPattern(for: rawID) + #"/[^\"]+/)\"[^>]*>([\s\S]*?)</a>"#
         for match in matches(pattern, html) {
@@ -113,6 +117,11 @@ public struct HiperdexComicSource: ComicSource {
         return result
     }
 
+    private func route(_ key: String, values: [String: String]) -> String {
+        var result = config.route(key)
+        for (key, value) in values { result = result.replacingOccurrences(of: "{" + key + "}", with: value) }
+        return result
+    }
     private func normalized(_ value: String?) -> String { guard let value, !value.isEmpty else { return "all" }; return value }
     private func rawComicID(_ input: String) -> String { var value = decode(input); if value.hasPrefix("hiperdex:") { value.removeFirst(9) }; if let range = value.range(of: "/manga/") { value = String(value[range.upperBound...]) }; return value.split(separator: "/").first.map(String.init) ?? value.trimmingCharacters(in: .whitespacesAndNewlines) }
     private func imageURL(_ tag: String) -> String { for key in ["data-src", "data-lazy-src", "src"] { let value = attribute(key, tag); if !value.isEmpty { return cleanURL(value) } }; return "" }

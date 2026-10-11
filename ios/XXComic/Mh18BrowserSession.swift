@@ -77,7 +77,17 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
         }
     }
 
-    /// Also used when clearing application caches. Cookies remain scoped to their real domains.
+    func clearCache() async {
+        reset()
+        HTTPCookieStorage.shared.cookies?.forEach { HTTPCookieStorage.shared.deleteCookie($0) }
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            WKWebsiteDataStore.default().removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) {
+                continuation.resume()
+            }
+        }
+    }
+
+    /// Reset active browser work before invalidating verification data.
     func reset() {
         for job in jobs { finish(job, result: .failure(CancellationError()), startNext: false) }
         if let item = interactive { finishInteractive(item.id, result: .failure(CancellationError())) }
@@ -93,6 +103,20 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
         defaults.removeObject(forKey: "mh18.verifiedAt")
         item.screen.setStatus("正在检查站点")
         statusChanged?()
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--ui-testing"), arguments.contains("--verification-fixtures") {
+            // Exercise the real presentation/retry/cancel lifetime without a live site.
+            // This document never marks verification complete or copies any cookies.
+            let config = WKWebViewConfiguration()
+            config.websiteDataStore = .nonPersistent()
+            let view = WKWebView(frame: .zero, configuration: config)
+            browser = view; item.screen.install(view)
+            view.loadHTMLString("<meta http-equiv='Content-Security-Policy' content=\"default-src 'none'\"><h1>隔离验证页面</h1><p>用于关闭、重开与重试验收。</p>", baseURL: nil)
+            item.screen.setStatus("等待验证 · 隔离验收页面")
+            return
+        }
+        #endif
         let token = item.attempt.token
         let remaining = max(0, item.attempt.deadline - now)
         item.timeout = Task { [weak self, weak item] in

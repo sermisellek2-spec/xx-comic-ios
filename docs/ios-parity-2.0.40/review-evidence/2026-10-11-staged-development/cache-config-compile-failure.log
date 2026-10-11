@@ -1,0 +1,514 @@
+[0/1] Planning build
+Building for debugging...
+[0/11] Write sources
+[0/11] Write swift-version-24593BA9C3E375BF.txt
+[4/13] Compiling ComicCore HTTPResponseCache.swift
+[5/13] Compiling ComicCore HiperdexComicSource.swift
+[6/15] Compiling ComicCore SourceConfigModels.swift
+[7/15] Compiling ComicCore StorageCalculator.swift
+[8/23] Emitting module ComicCore
+[9/30] Compiling ComicCore ManwaComicSource.swift
+[10/30] Compiling ComicCore Mh160ComicSource.swift
+[11/30] Compiling ComicCore Mh18ComicSource.swift
+[12/30] Compiling ComicCore MkzhanComicSource.swift
+[13/30] Compiling ComicCore SourcePreferences.swift
+[14/30] Compiling ComicCore XinmanhuaComicSource.swift
+[15/30] Compiling ComicCore ZaimanhuaComicSource.swift
+[16/30] Compiling ComicCore BaoziComicSource.swift
+[17/30] Compiling ComicCore DingManhuaComicSource.swift
+[18/30] Compiling ComicCore DongmanLaComicSource.swift
+[19/30] Compiling ComicCore GmhComicSource.swift
+[20/30] Compiling ComicCore GuaziComicSource.swift
+[21/30] Compiling ComicCore Hanman18ComicSource.swift
+[22/30] Compiling ComicCore JmComicSource.swift
+[23/30] Compiling ComicCore LiumanhuaComicSource.swift
+[24/31] Wrapping AST for ComicCore for debugging
+[26/55] Emitting module ComicCoreTests
+[27/78] Compiling ComicCoreTests AntbywSourceTests.swift
+[28/78] Compiling ComicCoreTests AppThemeTests.swift
+[29/78] Compiling ComicCoreTests AppUpdateCheckerTests.swift
+[30/78] Compiling ComicCoreTests BaoziSourceTests.swift
+[31/78] Compiling ComicCoreTests BatchImportPlannerTests.swift
+[32/78] Compiling ComicCoreTests BatchImportSessionTests.swift
+[33/78] Compiling ComicCoreTests BatchImportWorkerTests.swift
+[34/78] Compiling ComicCoreTests BookshelfGroupStoreTests.swift
+[35/78] Compiling ComicCoreTests BuiltinSourceCatalogTests.swift
+[36/78] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[37/78] Compiling ComicCoreTests ChapterMatchingTests.swift
+[38/78] Compiling ComicCoreTests ComicDirectoryPreparationTests.swift
+[39/78] Compiling ComicCoreTests ContentFingerprintTests.swift
+[40/78] Compiling ComicCoreTests CopyMangaTests.swift
+[41/78] Compiling ComicCoreTests CuimhSourceTests.swift
+[42/78] Compiling ComicCoreTests D5d6SourceTests.swift
+[43/78] Compiling ComicCoreTests DefaultDownloadImageFetcherTests.swift
+[44/78] Compiling ComicCoreTests DingManhuaSourceTests.swift
+[45/78] Compiling ComicCoreTests DongmanLaSourceTests.swift
+[46/78] Compiling ComicCoreTests DownloadCoordinatorTests.swift
+[47/78] Compiling ComicCoreTests DownloadIdentityTests.swift
+[48/78] Compiling ComicCoreTests DownloadRuntimeTests.swift
+[49/78] Compiling ComicCoreTests DownloadStoreTests.swift
+[50/100] Compiling ComicCoreTests EpubParserTests.swift
+[51/100] Compiling ComicCoreTests EpubReaderResourceTests.swift
+[52/100] Compiling ComicCoreTests EpubTextSessionTests.swift
+[53/100] Compiling ComicCoreTests ErrorLogStoreTests.swift
+[54/100] Compiling ComicCoreTests FavoriteRevisionTests.swift
+[55/100] Compiling ComicCoreTests FavoriteUpdateCheckerTests.swift
+[56/100] Compiling ComicCoreTests FileDownloadWorkerTests.swift
+[57/100] Compiling ComicCoreTests FiveUmSourceTests.swift
+[58/100] Compiling ComicCoreTests GmhSourceTests.swift
+[59/100] Compiling ComicCoreTests Hanman18SourceTests.swift
+[60/100] Compiling ComicCoreTests HiperdexSourceTests.swift
+[61/100] Compiling ComicCoreTests ImageEnhancementPolicyTests.swift
+[62/100] Compiling ComicCoreTests JmImageTransformTests.swift
+[63/100] Compiling ComicCoreTests JmSourceTests.swift
+[64/100] Compiling ComicCoreTests KindleFormatTests.swift
+[65/100] Compiling ComicCoreTests KindlePublicationTests.swift
+[66/100] Compiling ComicCoreTests LibraryStoreTests.swift
+[67/100] Compiling ComicCoreTests LiumanhuaSourceTests.swift
+[68/100] Compiling ComicCoreTests LocalArchiveTests.swift
+[69/100] Compiling ComicCoreTests LocalCatalogTests.swift
+[70/100] Compiling ComicCoreTests LocalEpubLibraryTests.swift
+[71/100] Compiling ComicCoreTests LocalFolderSyncTests.swift
+[72/100] Compiling ComicCoreTests LocalFolderTests.swift
+[73/122] Compiling ComicCoreTests PdfRendererTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[74/122] Compiling ComicCoreTests PreferencesTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[75/122] Compiling ComicCoreTests PublicComicSourceTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[76/122] Compiling ComicCoreTests QuickPublicationInfoTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[77/122] Compiling ComicCoreTests ReaderLoadStateTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[78/122] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[79/122] Compiling ComicCoreTests ReaderSessionTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[80/122] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[81/122] Compiling ComicCoreTests ReadingRulesTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[82/122] Compiling ComicCoreTests RetiredComicSourceTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[83/122] Compiling ComicCoreTests SearchRulesTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[84/122] Compiling ComicCoreTests SourceAESTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[85/122] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[86/122] Compiling ComicCoreTests SourceGroupStoreTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[87/122] Compiling ComicCoreTests SourcePreferencesTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[88/122] Compiling ComicCoreTests SourceSearchTrimTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[89/122] Compiling ComicCoreTests StorageCalculatorTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[90/122] Compiling ComicCoreTests TextReadingTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[91/122] Compiling ComicCoreTests UsageStatsClientTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[92/122] Compiling ComicCoreTests WhiteMarginTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[93/122] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[94/122] Compiling ComicCoreTests resource_bundle_accessor.swift
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:22:20: error: call can throw, but it is not marked with 'try' and the error is not handled
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: error: call can throw but is not marked with 'try'
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to use 'try'?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to handle error as optional value?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try? 
+/work/Tests/ComicCoreTests/StorageCalculatorTests.swift:37:20: note: did you mean to disable error propagation?
+        let size = StorageCalculator.directorySize(at: tempDir)
+                   ^
+                   try! 
+[95/122] Compiling ComicCoreTests LocalImportFingerprintTests.swift
+[96/122] Compiling ComicCoreTests LocalImportPreparationTests.swift
+[97/122] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+[98/122] Compiling ComicCoreTests LocalLibraryTests.swift
+[99/122] Compiling ComicCoreTests LocalPdfLibraryTests.swift
+[100/122] Compiling ComicCoreTests LocalReadingRoutingTests.swift
+[101/122] Compiling ComicCoreTests LocalSeriesLifecycleTests.swift
+[102/122] Compiling ComicCoreTests LocalTestHTTPServer.swift
+[103/122] Compiling ComicCoreTests LocalTestHTTPServerTests.swift
+[104/122] Compiling ComicCoreTests ManbenSourceTests.swift
+[105/122] Compiling ComicCoreTests ManhuaguiTests.swift
+[106/122] Compiling ComicCoreTests ManwaImageDecoderTests.swift
+[107/122] Compiling ComicCoreTests ManwaSourceTests.swift
+[108/122] Compiling ComicCoreTests Mh160SourceTests.swift
+[109/122] Compiling ComicCoreTests Mh18BrowserTrustTests.swift
+[110/122] Compiling ComicCoreTests Mh18CookieSynchronizerTests.swift
+[111/122] Compiling ComicCoreTests Mh18SourceTests.swift
+[112/122] Compiling ComicCoreTests Mh18VerificationAttemptTests.swift
+[113/122] Compiling ComicCoreTests Mh18VerificationRulesTests.swift
+[114/122] Compiling ComicCoreTests MkzhanSourceTests.swift
+[115/122] Compiling ComicCoreTests NaturalPathOrderTests.swift
+[116/122] Compiling ComicCoreTests NewPublicSourcesTests.swift
+error: fatalError
+error: fatalError

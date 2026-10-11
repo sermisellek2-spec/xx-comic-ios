@@ -1,0 +1,13 @@
+{
+  "checked_utc": "2026-10-11T10:28:19.0212250Z",
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "git_credential_exit_code": 128,
+  "normal_git_credential_available": false,
+  "interactive_prompts": false,
+  "credential_values_logged": false,
+  "credential_scripts_read": false,
+  "current_upload": false,
+  "current_ci": false,
+  "current_ipa": false,
+  "xcode_on_windows": false
+}

@@ -171,7 +171,7 @@ final class EpubReadingUITests: XCTestCase {
         expectation(for: NSPredicate { _, _ in visible.exists || (failure.exists && failure.label.contains("重试")) }, evaluatedWith: app)
         waitForExpectations(timeout: 15)
         back(app); back(app)
-        app.navigationBars.buttons["导入"].tap(); app.buttons["EPUB 电子书"].tap()
+        app.buttons["本地书架"].tap(); app.buttons["bookshelf.import"].tap(); app.buttons["EPUB 电子书"].tap()
         XCTAssertTrue(app.navigationBars.buttons["取消"].waitForExistence(timeout: 5))
         app.navigationBars.buttons["取消"].tap()
     }
@@ -187,7 +187,7 @@ final class EpubReadingUITests: XCTestCase {
 
     @discardableResult
     private func importKindle(_ kind: String, app: XCUIApplication) -> String {
-        app.navigationBars.buttons["导入"].tap()
+        app.buttons["本地书架"].tap(); app.buttons["bookshelf.import"].tap()
         let item = app.buttons["验收 Kindle·" + kind]
         let menu = app.scrollViews.containing(.button, identifier: "Kindle 电子书").firstMatch
         XCTAssertTrue(menu.waitForExistence(timeout: 5))
@@ -265,7 +265,7 @@ final class EpubReadingUITests: XCTestCase {
             XCTAssertTrue(error.waitForExistence(timeout: 15))
             XCTAssertFalse(app.collectionViews.cells[title].exists)
         }
-        app.navigationBars.buttons["导入"].tap(); app.buttons["Kindle 电子书"].tap()
+        app.buttons["本地书架"].tap(); app.buttons["bookshelf.import"].tap(); app.buttons["Kindle 电子书"].tap()
         XCTAssertTrue(app.navigationBars.buttons["取消"].waitForExistence(timeout: 5))
         app.navigationBars.buttons["取消"].tap()
     }

@@ -174,7 +174,7 @@ final class DownloadRuntimeTests: XCTestCase {
         let taskDir = downloadsDir.appendingPathComponent(bookId).appendingPathComponent(taskId)
         XCTAssertTrue(FileManager.default.fileExists(atPath: taskDir.path))
 
-        runtime.deleteChapter(id: taskId)
+        try await runtime.deleteChapter(id: taskId)
 
         XCTAssertNil(store.get(id: taskId))
         XCTAssertFalse(FileManager.default.fileExists(atPath: taskDir.path))

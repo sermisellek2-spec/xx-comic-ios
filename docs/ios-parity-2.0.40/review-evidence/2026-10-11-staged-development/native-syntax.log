@@ -1,0 +1,4 @@
+Swift 5 syntax only; 62 files; Apple types and runtime are not checked.
+Release syntax: PASS
+Debug syntax: PASS
+ACTUAL_EXIT_CODE=0

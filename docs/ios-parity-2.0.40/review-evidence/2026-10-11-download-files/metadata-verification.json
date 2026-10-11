@@ -1,0 +1,21 @@
+{
+  "requirements_count": 74,
+  "unique_requirement_ids": true,
+  "valid_csv_fields": true,
+  "statuses": {
+    "后置站源": 3,
+    "失败": 0,
+    "待实现": 1,
+    "待核对": 4,
+    "待验收": 62,
+    "通过": 1,
+    "阻塞": 3
+  },
+  "current_sources": 51,
+  "default_enabled_sources": 50,
+  "catalog_proof": "source-catalog-proof.json",
+  "non_source_gate_passed": false,
+  "real_sources_started": false,
+  "code_inputs_rehashed": true,
+  "credential_scripts_read": false
+}

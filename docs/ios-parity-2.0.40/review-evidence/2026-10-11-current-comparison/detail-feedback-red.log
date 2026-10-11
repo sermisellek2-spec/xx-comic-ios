@@ -1,0 +1,57 @@
+Building for debugging...
+[0/13] Write sources
+[2/13] Write swift-version-24593BA9C3E375BF.txt
+[4/15] Emitting module XXComic
+[5/15] Compiling XXComic DetailFeedbackState.swift
+[6/16] Wrapping AST for XXComic for debugging
+[8/18] Emitting module XXComicTests
+[9/18] Compiling XXComicTests DetailFeedbackStateTests.swift
+[10/19] /tmp/tmp.iEGMxAUGMD/.build/x86_64-unknown-linux-gnu/debug/DetailFeedbackCheckPackageDiscoveredTests.derived/all-discovered-tests.swift
+[11/19] Write sources
+[12/19] Wrapping AST for XXComicTests for debugging
+[14/21] Compiling DetailFeedbackCheckPackageDiscoveredTests XXComicTests.swift
+[15/21] Emitting module DetailFeedbackCheckPackageDiscoveredTests
+[16/22] Compiling DetailFeedbackCheckPackageDiscoveredTests all-discovered-tests.swift
+[17/23] /tmp/tmp.iEGMxAUGMD/.build/x86_64-unknown-linux-gnu/debug/DetailFeedbackCheckPackageTests.derived/runner.swift
+[18/23] Write sources
+[19/23] Wrapping AST for DetailFeedbackCheckPackageDiscoveredTests for debugging
+[21/25] Emitting module DetailFeedbackCheckPackageTests
+[22/25] Compiling DetailFeedbackCheckPackageTests runner.swift
+[23/26] Wrapping AST for DetailFeedbackCheckPackageTests for debugging
+[24/26] Write Objects.LinkFileList
+[25/26] Linking DetailFeedbackCheckPackageTests.xctest
+Build complete! (3.59s)
+Test Suite 'All tests' started at 2026-10-11 05:51:22.801
+Test Suite 'debug.xctest' started at 2026-10-11 05:51:22.802
+Test Suite 'DetailFeedbackStateTests' started at 2026-10-11 05:51:22.802
+Test Case 'DetailFeedbackStateTests.testCancellingDownloadRestoresLatestDetailFailureAndAction' started at 2026-10-11 05:51:22.802
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:29: error: DetailFeedbackStateTests.testCancellingDownloadRestoresLatestDetailFailureAndAction : XCTAssertEqual failed: ("nil") is not equal to ("Optional("需要验证 · 去验证")") -
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:30: error: DetailFeedbackStateTests.testCancellingDownloadRestoresLatestDetailFailureAndAction : XCTAssertEqual failed: ("none") is not equal to ("verifyDetail") -
+Test Case 'DetailFeedbackStateTests.testCancellingDownloadRestoresLatestDetailFailureAndAction' failed (0.001 seconds)
+Test Case 'DetailFeedbackStateTests.testCancellingFailedDownloadRestoresDetailRetry' started at 2026-10-11 05:51:22.803
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:36: error: DetailFeedbackStateTests.testCancellingFailedDownloadRestoresDetailRetry : XCTAssertEqual failed: ("nil") is not equal to ("Optional("详情失败 · 点击重试")") -
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:37: error: DetailFeedbackStateTests.testCancellingFailedDownloadRestoresDetailRetry : XCTAssertEqual failed: ("none") is not equal to ("reloadDetail") - 
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:41: error: DetailFeedbackStateTests.testCancellingFailedDownloadRestoresDetailRetry : XCTAssertEqual failed: ("nil") is not equal to ("Optional("详情失败 · 点击重试")") - 
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:42: error: DetailFeedbackStateTests.testCancellingFailedDownloadRestoresDetailRetry : XCTAssertEqual failed: ("none") is not equal to ("reloadDetail") -
+Test Case 'DetailFeedbackStateTests.testCancellingFailedDownloadRestoresDetailRetry' failed (0.0 seconds)
+Test Case 'DetailFeedbackStateTests.testDownloadLoadingSuppressesDetailRetryUntilItEnds' started at 2026-10-11 05:51:22.803
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:48: error: DetailFeedbackStateTests.testDownloadLoadingSuppressesDetailRetryUntilItEnds : XCTAssertEqual failed: ("nil") is not equal to ("Optional("详情失败 · 点击重试")") -
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:49: error: DetailFeedbackStateTests.testDownloadLoadingSuppressesDetailRetryUntilItEnds : XCTAssertEqual failed: ("none") is not equal to ("reloadDetail") -
+Test Case 'DetailFeedbackStateTests.testDownloadLoadingSuppressesDetailRetryUntilItEnds' failed (0.0 seconds)
+Test Case 'DetailFeedbackStateTests.testLateDetailCompletionCannotEraseQueuedConfirmationOrMakeItRetry' started at 2026-10-11 05:51:22.803
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:65: error: DetailFeedbackStateTests.testLateDetailCompletionCannotEraseQueuedConfirmationOrMakeItRetry : XCTAssertEqual failed: ("nil") is not equal to ("Optional("已加入下载队列")") -
+Test Case 'DetailFeedbackStateTests.testLateDetailCompletionCannotEraseQueuedConfirmationOrMakeItRetry' failed (0.0 seconds)
+Test Case 'DetailFeedbackStateTests.testLateDetailFailureDoesNotChangeDownloadRetryAction' started at 2026-10-11 05:51:22.803
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:20: error: DetailFeedbackStateTests.testLateDetailFailureDoesNotChangeDownloadRetryAction : XCTAssertEqual failed: ("nil") is not equal to ("Optional("下载目录失败 · 点击重试")") - 
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:21: error: DetailFeedbackStateTests.testLateDetailFailureDoesNotChangeDownloadRetryAction : XCTAssertEqual failed: ("none") is not equal to ("retryDownload") -
+Test Case 'DetailFeedbackStateTests.testLateDetailFailureDoesNotChangeDownloadRetryAction' failed (0.0 seconds)
+Test Case 'DetailFeedbackStateTests.testLateDetailSuccessPreservesDownloadFailureAndRetry' started at 2026-10-11 05:51:22.803
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:11: error: DetailFeedbackStateTests.testLateDetailSuccessPreservesDownloadFailureAndRetry : XCTAssertEqual failed: ("nil") is not equal to ("Optional("暂无章节，请稍后重试 · 点击重试")") -
+/tmp/tmp.iEGMxAUGMD/Tests/XXComicTests/DetailFeedbackStateTests.swift:12: error: DetailFeedbackStateTests.testLateDetailSuccessPreservesDownloadFailureAndRetry : XCTAssertEqual failed: ("none") is not equal to ("retryDownload") -
+Test Case 'DetailFeedbackStateTests.testLateDetailSuccessPreservesDownloadFailureAndRetry' failed (0.0 seconds)
+Test Suite 'DetailFeedbackStateTests' failed at 2026-10-11 05:51:22.803
+	 Executed 6 tests, with 13 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'debug.xctest' failed at 2026-10-11 05:51:22.803
+	 Executed 6 tests, with 13 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'All tests' failed at 2026-10-11 05:51:22.803
+	 Executed 6 tests, with 13 failures (0 unexpected) in 0.001 (0.001) seconds

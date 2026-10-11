@@ -1,24 +1,37 @@
 import Foundation
 
 public enum StorageCalculator {
-    public static func directorySize(at url: URL) -> Int64 {
-        guard let enumerator = FileManager.default.enumerator(
+    /// Synchronous I/O: call from a worker, never from the UI actor.
+    public static func directorySize(at url: URL) throws -> Int64 {
+        try Task.checkCancellation()
+        let manager = FileManager.default
+        guard manager.fileExists(atPath: url.path) else { return 0 }
+        let keys: Set<URLResourceKey> = [.fileSizeKey, .isDirectoryKey, .isSymbolicLinkKey]
+        let root = try url.resourceValues(forKeys: keys)
+        guard root.isSymbolicLink != true else { return 0 }
+        guard root.isDirectory == true else { return Int64(root.fileSize ?? 0) }
+        var enumerationError: Error?
+        guard let enumerator = manager.enumerator(
             at: url,
-            includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey],
-            options: [.skipsHiddenFiles]
+            includingPropertiesForKeys: Array(keys),
+            options: [],
+            errorHandler: { _, error in enumerationError = error; return false }
         ) else {
-            return 0
+            throw CocoaError(.fileReadUnknown)
         }
 
         var total: Int64 = 0
         for case let fileURL as URL in enumerator {
-            guard let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey]),
-                  values.isDirectory == false,
-                  let size = values.fileSize else {
+            try Task.checkCancellation()
+            let values = try fileURL.resourceValues(forKeys: keys)
+            if values.isSymbolicLink == true {
+                enumerator.skipDescendants()
                 continue
             }
-            total += Int64(size)
+            if values.isDirectory == false { total += Int64(values.fileSize ?? 0) }
         }
+        if let enumerationError { throw enumerationError }
+        try Task.checkCancellation()
         return total
     }
 

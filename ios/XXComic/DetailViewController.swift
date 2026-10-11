@@ -9,6 +9,9 @@ final class DetailViewController: UIViewController {
     private let cover = RemoteImageView()
     private let heading = UILabel()
     private let descriptionLabel = UILabel()
+    private let metadataLabel = UILabel()
+    private let tagsRow = UIStackView()
+    private var heroHeight: NSLayoutConstraint!
     private let favorite = UIButton(type: .system)
     private let read = UIButton(type: .system)
     private let directory = UIButton(type: .system)
@@ -24,7 +27,9 @@ final class DetailViewController: UIViewController {
     private var directoryID = UUID()
     private var readTask: Task<Void, Never>?
     private var readID = UUID()
-    private var needsVerification = false
+    private var downloadTask: Task<Void, Never>?
+    private var downloadID = UUID()
+    private var feedback = DetailFeedbackState()
 
     init(comic: ComicSummary, environment: AppEnvironment) {
         self.comic = comic; self.environment = environment
@@ -33,14 +38,33 @@ final class DetailViewController: UIViewController {
         hidesBottomBarWhenPushed = true
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
-    deinit { detailTask?.cancel(); directoryTask?.cancel(); readTask?.cancel() }
+    deinit { detailTask?.cancel(); directoryTask?.cancel(); readTask?.cancel(); downloadTask?.cancel() }
     override func viewDidLoad() {
         super.viewDidLoad()
         title = source.name
         view.backgroundColor = Palette.background
         let scroll = UIScrollView()
         let content = UIStackView()
-        content.axis = .vertical; content.spacing = 18
+        content.axis = .vertical; content.spacing = 0
+        let body = UIStackView()
+        body.axis = .vertical; body.spacing = 10
+        body.isLayoutMarginsRelativeArrangement = true
+        body.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 24, right: 16)
+        body.backgroundColor = Palette.card; body.layer.cornerRadius = 12
+        let titleRow = UIStackView(arrangedSubviews: [heading, downloadButton, sourceSwitchButton])
+        titleRow.spacing = 8; titleRow.alignment = .center
+        sourceSwitchButton.titleLabel?.font = .systemFont(ofSize: 12)
+        sourceSwitchButton.titleLabel?.lineBreakMode = .byTruncatingTail
+        sourceSwitchButton.widthAnchor.constraint(lessThanOrEqualToConstant: 160).isActive = true
+        downloadButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        let dot = UIView(); dot.backgroundColor = Palette.accent; dot.layer.cornerRadius = 3
+        dot.widthAnchor.constraint(equalToConstant: 6).isActive = true
+        dot.heightAnchor.constraint(equalToConstant: 6).isActive = true
+        metadataLabel.font = .systemFont(ofSize: 12); metadataLabel.textColor = Palette.text2
+        metadataLabel.numberOfLines = 2; metadataLabel.accessibilityIdentifier = "detail.metadata"
+        metadataLabel.text = "未知状态 · 未知作者"
+        let metadata = UIStackView(arrangedSubviews: [dot, metadataLabel]); metadata.spacing = 7; metadata.alignment = .center
+        tagsRow.spacing = 6; tagsRow.alignment = .leading; tagsRow.isHidden = true
         let actions = UIStackView(arrangedSubviews: [favorite, read])
         actions.axis = .horizontal; actions.spacing = 8
         actions.backgroundColor = Palette.card
@@ -55,14 +79,18 @@ final class DetailViewController: UIViewController {
         read.backgroundColor = Palette.accent
         read.setTitleColor(Palette.onAccent, for: .normal)
         read.layer.cornerRadius = 12
-        cover.contentMode = .scaleAspectFit
-        cover.heightAnchor.constraint(equalToConstant: 280).isActive = true
-        heading.text = comic.title; heading.numberOfLines = 0
+        cover.contentMode = .scaleAspectFill; cover.clipsToBounds = true
+        cover.accessibilityIdentifier = "detail.cover"; cover.isAccessibilityElement = true
+        cover.accessibilityLabel = "封面"
+        heroHeight = cover.heightAnchor.constraint(equalToConstant: 190)
+        heroHeight.isActive = true
+        heading.text = comic.title; heading.numberOfLines = 2
         heading.accessibilityIdentifier = "detail.title"
         read.accessibilityIdentifier = "detail.read"
         sourceSwitchButton.accessibilityIdentifier = "detail.switch-source"
-        heading.font = .preferredFont(forTextStyle: .title2); heading.textColor = Palette.text
-        descriptionLabel.numberOfLines = 0; descriptionLabel.font = .preferredFont(forTextStyle: .body)
+        heading.font = UIFontMetrics(forTextStyle: .title2).scaledFont(for: .systemFont(ofSize: 20, weight: .bold)); heading.textColor = Palette.text
+        descriptionLabel.numberOfLines = 0; descriptionLabel.font = UIFontMetrics(forTextStyle: .footnote).scaledFont(for: .systemFont(ofSize: 13))
+        descriptionLabel.text = "暂无简介"
         descriptionLabel.textColor = Palette.secondaryText
         heading.adjustsFontForContentSizeCategory = true; descriptionLabel.adjustsFontForContentSizeCategory = true
         favorite.addTarget(self, action: #selector(toggleFavorite), for: .touchUpInside)
@@ -72,48 +100,78 @@ final class DetailViewController: UIViewController {
         read.titleLabel?.numberOfLines = 2
         directory.setTitle("章节目录", for: .normal)
         directory.addTarget(self, action: #selector(showDirectory), for: .touchUpInside)
-        downloadButton.setTitle("下载章节", for: .normal)
+        setDownloadButton(loading: false)
+        downloadButton.accessibilityIdentifier = "detail.download"
         downloadButton.addTarget(self, action: #selector(openDownloadSelection), for: .touchUpInside)
-        sourceSwitchButton.setTitle("\(source.name) · 切换站源", for: .normal)
+        sourceSwitchButton.setTitle(source.name, for: .normal)
+        sourceSwitchButton.accessibilityLabel = "切换站源，当前" + source.name
         sourceSwitchButton.setImage(UIImage(systemName: "arrow.triangle.2.circlepath"), for: .normal)
         sourceSwitchButton.tintColor = Palette.accent
         sourceSwitchButton.addTarget(self, action: #selector(openSourceSwitchSheet), for: .touchUpInside)
         retry.addTarget(self, action: #selector(retryDetail), for: .touchUpInside)
+        retry.accessibilityIdentifier = "detail.feedback"
         retry.titleLabel?.numberOfLines = 0
 
-        var items: [UIView] = [cover, heading, descriptionLabel, directory]
+        var items: [UIView] = [titleRow, metadata, tagsRow, descriptionLabel, directory]
         var buttons = [favorite, directory, read, retry]
         if comic.sourceId == "local" {
+            sourceSwitchButton.isHidden = true; downloadButton.isHidden = true
             manageVolumes.setTitle("管理分卷", for: .normal)
             manageVolumes.addTarget(self, action: #selector(openVolumeManager), for: .touchUpInside)
             items.append(manageVolumes)
             buttons.append(manageVolumes)
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: "管理", style: .plain, target: self, action: #selector(showLocalManagementMenu))
         } else {
-            items.append(contentsOf: [sourceSwitchButton, downloadButton])
+            sourceSwitchButton.isHidden = false
             buttons.append(contentsOf: [sourceSwitchButton, downloadButton])
             let centerItem = UIBarButtonItem(image: UIImage(systemName: "arrow.down.circle"), style: .plain, target: self, action: #selector(openDownloadCenter))
             navigationItem.rightBarButtonItem = centerItem
         }
         items.append(retry)
-        for item in items { content.addArrangedSubview(item) }
+        content.addArrangedSubview(cover); content.addArrangedSubview(body)
+        for item in items { body.addArrangedSubview(item) }
         for button in buttons { button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true }
         NSLayoutConstraint.activate([
             actions.leadingAnchor.constraint(equalTo: view.leadingAnchor), actions.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             actions.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), actions.heightAnchor.constraint(equalToConstant: 62),
             scroll.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), scroll.bottomAnchor.constraint(equalTo: actions.topAnchor),
             scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor), scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            content.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor, constant: 16), content.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor, constant: -24),
-            content.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor, constant: 20), content.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor, constant: -20),
-            content.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor, constant: -40)
+            content.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor), content.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            content.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor), content.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+            content.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor)
         ])
         cover.loadCover(comic, referer: source.referer, library: environment.localLibrary)
         loadDetail()
     }
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let width = view.bounds.width
+        let height: CGFloat = width > 900 ? 250 : (width > 600 ? 220 : 190)
+        if heroHeight.constant != height { heroHeight.constant = height }
+    }
+    private func setDownloadButton(loading: Bool) {
+        downloadButton.setTitle(nil, for: .normal)
+        downloadButton.setImage(loading ? UIImage(systemName: "xmark.circle") : ParityIcon.download.image(), for: .normal)
+        downloadButton.tintColor = Palette.accent
+        downloadButton.accessibilityLabel = loading ? "正在加载目录 · 点击取消" : "下载章节"
+    }
+    private func updateDetailText(_ detail: ComicDetail) {
+        metadataLabel.text = (detail.status.isEmpty ? "未知状态" : detail.status) + " · " + (detail.author.isEmpty ? "未知作者" : detail.author)
+        descriptionLabel.text = detail.description.isEmpty ? "暂无简介" : detail.description
+        tagsRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        for tag in detail.summary.tags.prefix(5) {
+            let label = UILabel(); label.text = " " + tag + " "
+            label.font = .systemFont(ofSize: 10); label.textColor = Palette.accent
+            label.backgroundColor = Palette.accentSoft; label.layer.cornerRadius = 4; label.clipsToBounds = true
+            tagsRow.addArrangedSubview(label)
+        }
+        let spacer = UIView(); spacer.setContentHuggingPriority(.defaultLow, for: .horizontal); tagsRow.addArrangedSubview(spacer)
+        tagsRow.isHidden = detail.summary.tags.isEmpty
+    }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated); updateButtons()
         if !detailLoaded && detailTask == nil { loadDetail() }
-        if cover.image == nil { cover.loadCover(comic, referer: source.referer, library: environment.localLibrary) }
+        if cover.needsReload { cover.loadCover(comic, referer: source.referer, library: environment.localLibrary) }
     }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
@@ -121,6 +179,7 @@ final class DetailViewController: UIViewController {
         detailTask?.cancel(); detailTask = nil
         directoryID = UUID(); directoryTask?.cancel(); directoryTask = nil
         readID = UUID(); readTask?.cancel(); readTask = nil; read.isEnabled = true
+        cancelDownloadSelection()
         cover.cancel()
     }
     private func updateButtons() {
@@ -133,10 +192,15 @@ final class DetailViewController: UIViewController {
         }
         read.setTitle(environment.library.entry(for: comic)?.reading.map { "继续阅读\n上次看到 · \($0.chapter.title)" } ?? "开始阅读", for: .normal)
     }
+    private func updateFeedback() {
+        retry.setTitle(feedback.message, for: .normal)
+        retry.isHidden = feedback.message == nil
+        retry.isEnabled = feedback.action != .none
+    }
     @objc private func loadDetail() {
-        needsVerification = false
         detailTask?.cancel()
-        retry.setTitle("正在加载详情…", for: .normal)
+        feedback.setDetail("正在加载详情…")
+        updateFeedback()
         let id = comic.comicId
         detailTask = Task { [weak self, source] in
             do {
@@ -158,9 +222,10 @@ final class DetailViewController: UIViewController {
                 self.cachedDetail = detail
                 self.detailLoaded = true
                 self.heading.text = detail.summary.title
-                self.descriptionLabel.text = [detail.author, detail.status, detail.description].filter { !$0.isEmpty }.joined(separator: "\n\n")
+                self.updateDetailText(detail)
                 self.cover.loadCover(detail.summary, referer: source.referer, library: self.environment.localLibrary)
-                self.retry.setTitle(nil, for: .normal)
+                self.feedback.setDetail(nil)
+                self.updateFeedback()
                 self.updateButtons()
                 let revision = FavoriteRevision.fromChapters(latestChapterName: detail.latestChapter, chapters: detail.chapters)
                 self.environment.favoriteUpdateCoordinator.acknowledge(sourceId: detail.summary.sourceId, comicId: detail.summary.comicId, revision: revision)
@@ -169,40 +234,89 @@ final class DetailViewController: UIViewController {
                 if !(error is CancellationError) {
                     ErrorLogStore.shared.append(title: "详情加载失败: \(self.comic.title)", error: error)
                 }
-                self.needsVerification = (error as? Mh18SourceError) == .verificationRequired
+                let needsVerification = (error as? Mh18SourceError) == .verificationRequired
                 if (error as? LocalCatalogError) == .targetNotFound {
-                    self.retry.setTitle("书籍已删除 · 重新导入相同内容即可恢复", for: .normal)
+                    self.feedback.setDetail("书籍已删除 · 重新导入相同内容即可恢复")
                 } else {
-                    self.retry.setTitle(self.needsVerification ? "需要验证 · 去验证" : (error is CancellationError ? "已取消" : error.localizedDescription) + " · 点击重试", for: .normal)
+                    self.feedback.setDetail(needsVerification ? "需要验证 · 去验证" : (error is CancellationError ? "已取消" : error.localizedDescription) + " · 点击重试", action: needsVerification ? .verifyDetail : .reloadDetail)
                 }
+                self.updateFeedback()
             }
         }
     }
     @objc private func retryDetail() {
-        if needsVerification {
+        switch feedback.action {
+        case .retryDownload: openDownloadSelection()
+        case .verifyDetail:
             showSourceManagement(environment: environment) { [weak self] in self?.loadDetail() }
-        } else { loadDetail() }
+        case .reloadDetail: loadDetail()
+        case .none: return
+        }
     }
     @objc private func openDownloadSelection() {
-        if let detail = cachedDetail {
-            let selectionVC = DownloadSelectionViewController(detail: detail, currentIndex: 0, environment: environment) { [weak self] in
-                let alert = UIAlertController(title: "提示", message: "已加入下载队列", preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "确定", style: .default))
-                self?.present(alert, animated: true)
+        if downloadTask != nil { cancelDownloadSelection(); return }
+        cancelPreparingRead()
+        downloadID = UUID()
+        let token = downloadID, target = comic, targetSource = source, cached = cachedDetail
+        feedback.beginDownload(message: "正在加载目录…")
+        setDownloadButton(loading: true)
+        updateFeedback()
+        downloadTask = Task { [weak self] in
+            guard let self else { return }
+            defer {
+                if self.downloadID == token {
+                    self.downloadTask = nil
+                    self.setDownloadButton(loading: false)
+                }
             }
-            present(selectionVC, animated: true)
-        } else {
-            Task {
-                do {
-                    let detail = try await source.detail(comicId: comic.comicId)
-                    self.cachedDetail = detail
-                    let selectionVC = DownloadSelectionViewController(detail: detail, currentIndex: 0, environment: environment)
-                    present(selectionVC, animated: true)
-                } catch {
-                    showError(error)
+            do {
+                let detail: ComicDetail
+                if let cached { detail = cached }
+                else { detail = try await targetSource.detail(comicId: target.comicId) }
+                try Task.checkCancellation()
+                guard self.downloadID == token else { return }
+                let prepared = try await detail.ensuringChapters { [weak self] in
+                    guard let self, self.downloadID == token else { throw CancellationError() }
+                    return try await self.chapters()
+                }
+                try Task.checkCancellation()
+                guard self.downloadID == token else { return }
+                guard self.comic.sourceId == target.sourceId, self.comic.comicId == target.comicId,
+                      self.viewIfLoaded?.window != nil, self.presentedViewController == nil else {
+                    self.feedback.endDownload(); self.updateFeedback()
+                    return
+                }
+                self.cachedDetail = prepared
+                self.cachedChapters = prepared.chapters
+                let saved = self.environment.library.entry(for: target)?.reading
+                let current = prepared.chapters.firstIndex { $0.chapterId == saved?.chapter.chapterId } ?? saved?.chapterIndex ?? 0
+                let selection = DownloadSelectionViewController(detail: prepared, currentIndex: current, environment: self.environment) { [weak self] in
+                    guard let self, self.downloadID == token else { return }
+                    self.feedback.downloadQueued(); self.updateFeedback()
+                }
+                self.feedback.endDownload(); self.updateFeedback()
+                self.present(selection, animated: true)
+            } catch {
+                guard self.downloadID == token, !Task.isCancelled else { return }
+                if (error as? Mh18SourceError) == .verificationRequired {
+                    self.feedback.endDownload(); self.updateFeedback()
+                    self.showSourceError(error, environment: self.environment) { [weak self] in self?.openDownloadSelection() }
+                } else {
+                    self.feedback.failDownload((error is CancellationError ? "已取消" : error.localizedDescription) + " · 点击重试")
+                    self.updateFeedback()
                 }
             }
         }
+    }
+    private func cancelDownloadSelection() {
+        downloadID = UUID(); downloadTask?.cancel(); downloadTask = nil
+        setDownloadButton(loading: false)
+        directoryID = UUID(); directoryTask?.cancel(); directoryTask = nil
+        feedback.endDownload(); updateFeedback()
+    }
+    private func cancelPreparingRead() {
+        readID = UUID(); readTask?.cancel(); readTask = nil
+        read.isEnabled = true; updateButtons()
     }
     @objc private func openDownloadCenter() {
         let centerVC = DownloadCenterViewController(environment: environment)
@@ -225,6 +339,7 @@ final class DetailViewController: UIViewController {
         present(sheet, animated: true)
     }
     @objc private func openSourceSwitchSheet() {
+        cancelDownloadSelection()
         let sheet = SourceSwitchSheet(comic: comic, environment: environment) { [weak self] targetDetail in
             guard let self else { return }
             self.applySwitchedSource(targetDetail: targetDetail)
@@ -235,18 +350,23 @@ final class DetailViewController: UIViewController {
     }
     private func applySwitchedSource(targetDetail: ComicDetail) {
         guard let newSource = environment.source(for: targetDetail.summary) else { return }
+        cancelDownloadSelection()
+        detailTask?.cancel(); detailTask = nil
+        cancelPreparingRead()
+        feedback = DetailFeedbackState()
         self.comic = targetDetail.summary
         self.source = newSource
         self.title = newSource.name
-        self.sourceSwitchButton.setTitle("\(newSource.name) · 切换站源", for: .normal)
+        self.sourceSwitchButton.setTitle(newSource.name, for: .normal)
+        self.sourceSwitchButton.accessibilityLabel = "切换站源，当前" + newSource.name
         self.sourceSwitchButton.isEnabled = true
         self.cachedDetail = targetDetail
-        self.cachedChapters = targetDetail.chapters
+        self.cachedChapters = targetDetail.chapters.isEmpty ? nil : targetDetail.chapters
         self.detailLoaded = true
         self.heading.text = targetDetail.summary.title
-        self.descriptionLabel.text = [targetDetail.author, targetDetail.status, targetDetail.description].filter { !$0.isEmpty }.joined(separator: "\n\n")
+        self.updateDetailText(targetDetail)
         self.cover.loadCover(targetDetail.summary, referer: newSource.referer, library: self.environment.localLibrary)
-        self.retry.setTitle(nil, for: .normal)
+        self.updateFeedback()
         self.updateButtons()
         let revision = FavoriteRevision.fromChapters(latestChapterName: targetDetail.latestChapter, chapters: targetDetail.chapters)
         self.environment.favoriteUpdateCoordinator.acknowledge(sourceId: targetDetail.summary.sourceId, comicId: targetDetail.summary.comicId, revision: revision)
@@ -267,7 +387,7 @@ final class DetailViewController: UIViewController {
                 self.applySwitchedSource(targetDetail: targetDetail)
             } catch {
                 guard let self else { return }
-                self.sourceSwitchButton.setTitle("\(self.source.name) · 切换站源", for: .normal)
+                self.sourceSwitchButton.setTitle(self.source.name, for: .normal)
                 self.sourceSwitchButton.isEnabled = true
                 let alert = UIAlertController(title: "换源失败", message: error.localizedDescription, preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "确定", style: .default))
@@ -331,16 +451,8 @@ final class DetailViewController: UIViewController {
         )
         alert.addAction(UIAlertAction(title: "删除 App 副本", style: .destructive) { [weak self] _ in
             guard let self else { return }
-            Task {
-                do {
-                    try await self.environment.localLibrary.deleteSeries(id: self.comic.comicId)
-                    try? self.environment.library.setFavorite(self.comic, favorite: false)
-                    self.environment.notifyLibraryChanged()
-                    self.navigationController?.popViewController(animated: true)
-                } catch {
-                    self.showError(error)
-                }
-            }
+            self.environment.localDeletion.schedule([.init(target: .localSeries(self.comic.comicId), title: self.comic.title, groupComicID: self.comic.comicId)], from: self)
+            self.navigationController?.popViewController(animated: true)
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         if let popover = alert.popoverPresentationController {
@@ -377,7 +489,9 @@ final class DetailViewController: UIViewController {
         } catch { if directoryID == token { directoryTask = nil }; throw error }
     }
     @objc private func showDirectory() {
-        readID = UUID(); readTask?.cancel(); readTask = nil; read.isEnabled = true; updateButtons()
+        if downloadTask != nil { cancelDownloadSelection() }
+        feedback.endDownload(); updateFeedback()
+        cancelPreparingRead()
         let controller = ChapterListViewController(load: { [weak self] in
             guard let self else { throw CancellationError() }
             return try await self.chapters()
@@ -388,6 +502,8 @@ final class DetailViewController: UIViewController {
         present(ChapterListViewController.navigation(controller), animated: true)
     }
     @objc private func startReading() {
+        if downloadTask != nil { cancelDownloadSelection() }
+        feedback.endDownload(); updateFeedback()
         if let saved = environment.library.entry(for: comic)?.reading {
             // Saved chapter URL is sufficient; do not block resume on directory loading.
             openReader(chapters: [saved.chapter], index: 0, incomplete: true)
@@ -409,7 +525,8 @@ final class DetailViewController: UIViewController {
                     let items = try await self.chapters(); try Task.checkCancellation()
                     guard self.readID == token else { return }
                     guard !items.isEmpty else {
-                        self.retry.setTitle("暂无章节 · 点击章节目录刷新", for: .normal)
+                        self.feedback.setDetail("暂无章节 · 点击章节目录刷新")
+                        self.updateFeedback()
                         return
                     }
                     self.openReader(chapters: items, index: 0, incomplete: false)

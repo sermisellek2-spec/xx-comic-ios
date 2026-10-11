@@ -207,8 +207,8 @@ final class SourceSettingsViewController: UITableViewController {
                 self.tableView.reloadData()
                 self.notifyChanged()
                 let successAlert = UIAlertController(
-                    title: "导入成功",
-                    message: "成功导入 \(result.totalSources) 个站源配置（启用 \(result.enabledCount)，禁用 \(result.disabledCount)）",
+                    title: result.warnings.isEmpty ? "导入完成" : (result.totalSources > 0 || result.orderUpdated ? "部分配置已导入" : "未导入配置"),
+                    message: "已导入 \(result.totalSources) 个站源配置（启用 \(result.enabledCount)，禁用 \(result.disabledCount)）" + (result.orderUpdated ? "\n已更新排序" : "") + (result.warnings.isEmpty ? "" : "\n\n" + result.warnings.joined(separator: "\n")),
                     preferredStyle: .alert
                 )
                 successAlert.addAction(UIAlertAction(title: "确定", style: .default))
@@ -220,7 +220,8 @@ final class SourceSettingsViewController: UITableViewController {
         present(alert, animated: true)
     }
     private func exportConfig() {
-        let tuples = environment.allSources.map { ($0.id, $0.name, URL(string: $0.referer)?.host ?? "", $0.referer) }
+        let tuples = ids.compactMap { id in environment.allSources.first { $0.id == id } }
+            .map { ($0.id, $0.name, URL(string: $0.referer)?.host ?? "", $0.referer) }
         let json = environment.sourcePreferences.exportConfig(sources: tuples)
         UIPasteboard.general.string = json
         let alert = UIAlertController(

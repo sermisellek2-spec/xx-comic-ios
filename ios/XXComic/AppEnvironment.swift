@@ -8,6 +8,9 @@ final class AppEnvironment {
     let defaults: UserDefaults
     let mh18BrowserSession: Mh18BrowserSession
     let readingHabits: ReadingHabitTracker
+    let usageStats: UsageStatsClient
+    private var usageStatsTask: Task<Void, Never>?
+    private var usageStatsGeneration = UUID()
     let library: LibraryStore
     let localLibrary: LocalLibrary
     let bookshelfGroupStore: BookshelfGroupStore
@@ -20,24 +23,25 @@ final class AppEnvironment {
     private(set) var allSources: [any ComicSource]
     let sourcePreferences: SourcePreferences
     let downloadStore: DownloadStore
+    let downloadLocations: DownloadStorageLocations
     let downloadRuntime: DownloadRuntime
     let networkMonitor: any NetworkMonitoring
+    let responseCache = HTTPResponseCache()
+    lazy var localDeletion = LocalDeletionController(environment: self)
     private let environmentSourceResolver: EnvironmentSourceResolver
     var sources: [any ComicSource] { sourcePreferences.enabledIDs.compactMap { id in allSources.first { $0.id == id } } }
     var searchSources: [any ComicSource] { sources.filter(\.supportsSearch) }
     var discoverySources: [any ComicSource] { sourceGroupStore.visibleSources(sources, idExtractor: \.id) }
-    var discoverySearchSources: [any ComicSource] { discoverySources.filter(\.supportsSearch) }
     static let libraryChanged = Notification.Name("XXComic.libraryChanged")
     static let sourcesChanged = Notification.Name("XXComic.sourcesChanged")
 
     static func createSources(preferences: SourcePreferences, browserSession: (any ComicBrowserSession)?) -> [any ComicSource] {
         var result: [any ComicSource] = [
-            BaoziComicSource(config: preferences.config(for: "baozimh") ?? SourceConfigDefaults.baozi()),
             Mh160ComicSource(config: preferences.config(for: "mh160") ?? SourceConfigDefaults.mh160()),
             GmhComicSource(config: preferences.config(for: "gmh") ?? SourceConfigDefaults.gmh()),
             Mh18ComicSource(config: preferences.config(for: "mh18") ?? SourceConfigDefaults.mh18(), browserSession: browserSession),
             MkzhanComicSource(config: preferences.config(for: "mkzhan") ?? SourceConfigDefaults.mkzhan()),
-            HiperdexComicSource(),
+            HiperdexComicSource(config: preferences.config(for: "hiperdex") ?? SourceConfigDefaults.hiperdex()),
             ManhuaguiComicSource(config: preferences.config(for: "manhuagui") ?? SourceConfigDefaults.manhuagui()),
             D5d6ComicSource(config: preferences.config(for: "d5d6") ?? SourceConfigDefaults.d5d6()),
             ManbenComicSource(config: preferences.config(for: "manben") ?? SourceConfigDefaults.manben()),
@@ -60,13 +64,17 @@ final class AppEnvironment {
             let config = preferences.config(for: id) ?? PublicSourceRegistry.config(id)
             result.append(PublicSourceRegistry.create(config))
         }
-        return result
+        let active = BuiltinSourceCatalog.activeIDs.compactMap { id in result.first { $0.id == id } }
+        return active + [
+            RetiredComicSource(id: "baozimh", name: "包子漫画（已移除）"),
+            RetiredComicSource(id: "mhua5", name: "漫画屋（已下线）")
+        ]
     }
 
     init(defaults: UserDefaults) throws {
         self.defaults = defaults
         mh18BrowserSession = Mh18BrowserSession(defaults: defaults)
-        let defaultIDs = ["baozimh", "mh160", "gmh", "mh18", "mkzhan", "hiperdex", "hanman18", "manhuagui", "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000", "manwa", "dingmanhua", "dongmanla", "zaimanhua", "guazi", "xinmanhua", "jmcomic"] + PublicSourceRegistry.ids()
+        let defaultIDs = BuiltinSourceCatalog.activeIDs
         sourcePreferences = SourcePreferences(defaults: defaults, defaultIDs: defaultIDs)
         var available = Self.createSources(preferences: sourcePreferences, browserSession: mh18BrowserSession)
         #if DEBUG
@@ -86,6 +94,7 @@ final class AppEnvironment {
             base.appendingPathComponent("UITestSessions", isDirectory: true).appendingPathComponent($0, isDirectory: true)
         } ?? base
         let appDir = sessionBase.appendingPathComponent(suffix, isDirectory: true)
+        usageStats = UsageStatsClient(directory: ProcessInfo.processInfo.arguments.contains("--ui-testing") ? appDir : base)
         library = try LibraryStore(directory: appDir)
         localLibrary = try LocalLibrary(directory: appDir.appendingPathComponent("Local", isDirectory: true))
         localSource = LocalComicSource(library: localLibrary)
@@ -94,13 +103,14 @@ final class AppEnvironment {
         sourceGroupStore = SourceGroupStore(directory: appDir)
         let downloadsDir = appDir.appendingPathComponent("Downloads", isDirectory: true)
         downloadStore = try DownloadStore(directory: downloadsDir)
+        downloadLocations = try DownloadStorageLocations(file: appDir.appendingPathComponent("download-locations.json"), privateDirectory: downloadsDir)
         let resolver = EnvironmentSourceResolver(sources: available)
         environmentSourceResolver = resolver
         RemoteImageView.imageUrlResolver = { [weak resolver] imageUrl, force in
             guard let resolver else { return imageUrl.components(separatedBy: "#")[0] }
             return try await resolver.resolveImageUrl(sourceId: "", imageUrl: imageUrl, force: force)
         }
-        downloadRuntime = DownloadRuntime(store: downloadStore, downloadsDirectory: downloadsDir, sourceResolver: resolver)
+        downloadRuntime = DownloadRuntime(store: downloadStore, downloadsDirectory: downloadsDir, sourceResolver: resolver, storageLocations: downloadLocations)
         downloadRuntime.isWifiOnly = defaults.object(forKey: "downloads.wifiOnly") as? Bool ?? true
 
         favoriteUpdateCoordinator = FavoriteUpdateCoordinator(defaults: defaults)
@@ -121,6 +131,13 @@ final class AppEnvironment {
         networkMonitor = SystemNetworkMonitor()
         downloadRuntime.updateNetworkStatus(isConnected: networkMonitor.isConnected, isWifi: networkMonitor.isWifi)
         networkMonitor.onStatusChange = { [weak downloadRuntime] isConnected, isWifi in
+            #if DEBUG
+            let flags = ProcessInfo.processInfo.arguments
+            if flags.contains("--ui-testing"), flags.contains("--matrix-fixtures"), flags.contains("--matrix-download-network") {
+                downloadRuntime?.updateNetworkStatus(isConnected: true, isWifi: true)
+                return
+            }
+            #endif
             downloadRuntime?.updateNetworkStatus(isConnected: isConnected, isWifi: isWifi)
         }
         networkMonitor.start()
@@ -147,6 +164,9 @@ final class AppEnvironment {
         }
         downloadRuntime.onTaskCompleted = { [weak self] _ in
             Task { @MainActor [weak self] in
+                // A repaired page keeps its file URL; discard images decoded before publication.
+                RemoteImageView.clearMemoryCache()
+                ReaderEnhancementEngine.shared.clearCache()
                 self?.notifyLibraryChanged()
             }
         }
@@ -213,11 +233,48 @@ final class AppEnvironment {
     }
 
     func reloadSources() {
+        #if DEBUG
+        // Test sources stay deterministic when settings or cache operations reload the registry.
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--matrix-fixtures") { return }
+        #endif
         allSources = Self.createSources(preferences: sourcePreferences, browserSession: mh18BrowserSession)
         environmentSourceResolver.updateSources(allSources)
     }
 
     func source(for comic: ComicSummary) -> (any ComicSource)? { comic.sourceId == "local" ? localSource : allSources.first { $0.id == comic.sourceId } }
+    func clearCaches() async throws -> HTTPResponseCacheUsage {
+        try Task.checkCancellation()
+        _ = try await responseCache.clear()
+        RemoteImageView.clearMemoryCache()
+        ReaderEnhancementEngine.shared.clearCache()
+        await mh18BrowserSession.clearCache()
+        reloadSources()
+        NotificationCenter.default.post(name: Self.sourcesChanged, object: self)
+        return try await responseCache.usage()
+    }
+    func setUsageStatsEnabled(_ enabled: Bool) throws {
+        try usageStats.setEnabled(enabled)
+        if enabled { reportUsageStatsIfNeeded() }
+        else { cancelUsageStatsReport() }
+    }
+    func reportUsageStatsIfNeeded() {
+        #if DEBUG
+        guard !ProcessInfo.processInfo.arguments.contains("--ui-testing") else { return }
+        #endif
+        guard usageStatsTask == nil else { return }
+        let info = UsageStatsApplicationInfo(
+            appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.40",
+            versionCode: Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "340") ?? 340,
+            osVersion: UIDevice.current.systemVersion, deviceModel: "Apple " + UIDevice.current.model)
+        let client = usageStats
+        let token = UUID(); usageStatsGeneration = token
+        usageStatsTask = Task.detached(priority: .utility) { [weak self] in
+            _ = await client.reportIfNeeded(info: info)
+            await self?.finishUsageStatsReport(token)
+        }
+    }
+    private func finishUsageStatsReport(_ token: UUID) { if usageStatsGeneration == token { usageStatsTask = nil } }
+    func cancelUsageStatsReport() { usageStatsGeneration = UUID(); usageStatsTask?.cancel(); usageStatsTask = nil }
     func notifyLibraryChanged() { NotificationCenter.default.post(name: Self.libraryChanged, object: nil) }
 }
 

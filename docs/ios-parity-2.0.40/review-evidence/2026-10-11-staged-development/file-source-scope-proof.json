@@ -1,0 +1,22 @@
+{
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "checked_source_java_files": 44,
+  "reference_kind": "immutable Git objects, source package and production download source factory",
+  "references_in_source_package": [
+    {
+      "path": "app/src/main/java/com/xxcomic/source/FileSourceCapability.java",
+      "sha256": "dada12cc062db4fde60042ad5202a586ec056ccb98b893c99f5c03eac9aa2e98",
+      "matched_lines": [
+        {
+          "line": 10,
+          "text": "public interface FileSourceCapability {"
+        }
+      ]
+    }
+  ],
+  "factory_path": "app/src/main/java/com/xxcomic/DownloadSources.java",
+  "factory_sha256": "9a7afc49cd0f15fc92bb49547fc7861a1b69f42d3880098e63b17a556c73cc92",
+  "current_concrete_file_source_implementations": 0,
+  "meaning": "Optional interface and guarded branches exist; current registered source classes do not implement it. Do not invent a file-source UI as a current Android feature. Local EPUB/PDF/Kindle imports remain in scope.",
+  "live_site_validation": false
+}

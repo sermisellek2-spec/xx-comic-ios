@@ -25,6 +25,21 @@ final class DownloadStoreTests: XCTestCase {
         XCTAssertTrue(store.pages(task: "nonexistent").isEmpty)
     }
 
+    func testConfirmedTaskWriteFailureCannotInventOrReplaceQueueRecords() throws {
+        let store = try DownloadStore(directory: tempDir)
+        let original = DownloadTask(id: "existing", bookId: "book", sourceId: "source", comicId: "comic", chapterId: "chapter", state: .completed)
+        try store.saveConfirmedTask(original)
+        try FileManager.default.removeItem(at: store.fileURL)
+        try FileManager.default.createDirectory(at: store.fileURL, withIntermediateDirectories: false)
+        var changed = original; changed.state = .queued
+        XCTAssertThrowsError(try store.saveConfirmedTask(changed))
+        XCTAssertEqual(store.get(id: original.id), original)
+        XCTAssertThrowsError(try store.saveConfirmedTask(DownloadTask(id: "new", state: .queued)))
+        XCTAssertNil(store.get(id: "new"))
+        XCTAssertEqual(store.list(), [original])
+        XCTAssertTrue(FileManager.default.fileExists(atPath: store.fileURL.path))
+    }
+
     func testPreservesFIFOOrderOnTaskUpdate() throws {
         let store = try DownloadStore(directory: tempDir)
         var t1 = DownloadTask(id: "task1", bookId: "b1", sourceId: "s1", comicId: "c1", chapterId: "ch1", title: "Chapter 1", order: 1)

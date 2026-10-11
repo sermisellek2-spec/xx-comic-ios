@@ -1,0 +1,1125 @@
+{
+  "purpose": "Actual frozen Android settings component references; Apple comparisons remain pending",
+  "records": [
+    {
+      "file": "android-settings-phone-portrait-light.png",
+      "sha256": "1a02ff676482a1ebc69bbef580c5cfff4a56833c52a6ca200d0bacbca42b267f",
+      "baselineCommit": "696e80a44ab36b19de6f630565df32978e55a19e",
+      "apkSHA256": "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71",
+      "build": "2.0.40-debug / 340",
+      "device": "dedicated API34 emulator with phone size override",
+      "serial": "emulator-5560",
+      "size": "Physical size: 1080x2340",
+      "density": "Physical density: 440",
+      "fontScale": "1.0",
+      "rotation": "0",
+      "orientation": "portrait",
+      "theme": "light",
+      "themeMode": "automatic",
+      "fixture": "empty isolated library, 51 current sources, 50 enabled, telemetry disabled",
+      "steps": "launch > settings; override emulator size/density; set rotation and system night mode",
+      "capturedAtUTC": "2026-10-11T08:10:14Z",
+      "sameContentCrossPlatformProof": false,
+      "components": [
+        {
+          "text": "设置",
+          "bounds": "[44,148][1036,245]"
+        },
+        {
+          "text": "阅读与外观",
+          "bounds": "[44,257][1036,348]"
+        },
+        {
+          "text": "主题模式",
+          "bounds": "[171,371][890,427]"
+        },
+        {
+          "text": "跟随系统、浅色或深色",
+          "bounds": "[171,430][890,479]"
+        },
+        {
+          "text": "自动",
+          "bounds": "[890,400][956,449]"
+        },
+        {
+          "text": "启动书架",
+          "bounds": "[171,526][824,582]"
+        },
+        {
+          "text": "学习中 · 启动显示我的书架",
+          "bounds": "[171,585][824,634]"
+        },
+        {
+          "text": "自动跟随",
+          "bounds": "[824,555][956,604]"
+        },
+        {
+          "text": "阅读历史",
+          "bounds": "[171,681][896,737]"
+        },
+        {
+          "text": "章节与阅读位置",
+          "bounds": "[171,740][896,789]"
+        },
+        {
+          "text": "0 条",
+          "bounds": "[896,710][956,759]"
+        },
+        {
+          "text": "站源与本地数据",
+          "bounds": "[44,840][1036,931]"
+        },
+        {
+          "text": "站源管理",
+          "bounds": "[171,954][811,1010]"
+        },
+        {
+          "text": "拖动排序、启停与导入导出",
+          "bounds": "[171,1013][811,1062]"
+        },
+        {
+          "text": "50 个开启",
+          "bounds": "[811,983][956,1032]"
+        },
+        {
+          "text": "下载中心",
+          "bounds": "[171,1109][956,1165]"
+        },
+        {
+          "text": "任务进度、暂停与章节重试",
+          "bounds": "[171,1168][956,1217]"
+        },
+        {
+          "text": "本地存储管理",
+          "bounds": "[171,1264][956,1320]"
+        },
+        {
+          "text": "仅 Wi-Fi 下载 · 副本与空间统计",
+          "bounds": "[171,1323][956,1372]"
+        },
+        {
+          "text": "缓存清理",
+          "bounds": "[171,1419][908,1475]"
+        },
+        {
+          "text": "保留收藏与阅读历史",
+          "bounds": "[171,1478][908,1527]"
+        },
+        {
+          "text": "0 B",
+          "bounds": "[908,1451][956,1495]"
+        },
+        {
+          "text": "错误日志",
+          "bounds": "[171,1574][923,1630]"
+        },
+        {
+          "text": "只保存在本机",
+          "bounds": "[171,1633][923,1682]"
+        },
+        {
+          "text": "无",
+          "bounds": "[923,1603][956,1652]"
+        },
+        {
+          "text": "使用统计",
+          "bounds": "[171,1729][857,1785]"
+        },
+        {
+          "text": "可选 · 不上传阅读内容",
+          "bounds": "[171,1788][857,1837]"
+        },
+        {
+          "text": "已关闭",
+          "bounds": "[857,1758][956,1807]"
+        },
+        {
+          "text": "App",
+          "bounds": "[44,1888][1036,1974]"
+        },
+        {
+          "text": "版本更新",
+          "bounds": "[171,2009][730,2043]"
+        },
+        {
+          "text": "2.0.40-debug (340)",
+          "bounds": "[730,2015][956,2043]"
+        },
+        {
+          "text": "书架",
+          "bounds": "[147,2134][213,2183]"
+        },
+        {
+          "text": "发现",
+          "bounds": "[507,2134][573,2183]"
+        },
+        {
+          "text": "设置",
+          "bounds": "[867,2134][933,2183]"
+        }
+      ]
+    },
+    {
+      "file": "android-settings-phone-portrait-dark.png",
+      "sha256": "5f72dcbeab6f850698ba53b87546bd51ba807a635a1c65f6a49a078b448bef73",
+      "baselineCommit": "696e80a44ab36b19de6f630565df32978e55a19e",
+      "apkSHA256": "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71",
+      "build": "2.0.40-debug / 340",
+      "device": "dedicated API34 emulator with phone size override",
+      "serial": "emulator-5560",
+      "size": "Physical size: 1080x2340",
+      "density": "Physical density: 440",
+      "fontScale": "1.0",
+      "rotation": "0",
+      "orientation": "portrait",
+      "theme": "dark",
+      "themeMode": "automatic",
+      "fixture": "empty isolated library, 51 current sources, 50 enabled, telemetry disabled",
+      "steps": "launch > settings; override emulator size/density; set rotation and system night mode",
+      "capturedAtUTC": "2026-10-11T08:10:18Z",
+      "sameContentCrossPlatformProof": false,
+      "components": [
+        {
+          "text": "设置",
+          "bounds": "[44,148][1036,245]"
+        },
+        {
+          "text": "阅读与外观",
+          "bounds": "[44,257][1036,348]"
+        },
+        {
+          "text": "主题模式",
+          "bounds": "[171,371][890,427]"
+        },
+        {
+          "text": "跟随系统、浅色或深色",
+          "bounds": "[171,430][890,479]"
+        },
+        {
+          "text": "自动",
+          "bounds": "[890,400][956,449]"
+        },
+        {
+          "text": "启动书架",
+          "bounds": "[171,526][824,582]"
+        },
+        {
+          "text": "学习中 · 启动显示我的书架",
+          "bounds": "[171,585][824,634]"
+        },
+        {
+          "text": "自动跟随",
+          "bounds": "[824,555][956,604]"
+        },
+        {
+          "text": "阅读历史",
+          "bounds": "[171,681][896,737]"
+        },
+        {
+          "text": "章节与阅读位置",
+          "bounds": "[171,740][896,789]"
+        },
+        {
+          "text": "0 条",
+          "bounds": "[896,710][956,759]"
+        },
+        {
+          "text": "站源与本地数据",
+          "bounds": "[44,840][1036,931]"
+        },
+        {
+          "text": "站源管理",
+          "bounds": "[171,954][811,1010]"
+        },
+        {
+          "text": "拖动排序、启停与导入导出",
+          "bounds": "[171,1013][811,1062]"
+        },
+        {
+          "text": "50 个开启",
+          "bounds": "[811,983][956,1032]"
+        },
+        {
+          "text": "下载中心",
+          "bounds": "[171,1109][956,1165]"
+        },
+        {
+          "text": "任务进度、暂停与章节重试",
+          "bounds": "[171,1168][956,1217]"
+        },
+        {
+          "text": "本地存储管理",
+          "bounds": "[171,1264][956,1320]"
+        },
+        {
+          "text": "仅 Wi-Fi 下载 · 副本与空间统计",
+          "bounds": "[171,1323][956,1372]"
+        },
+        {
+          "text": "缓存清理",
+          "bounds": "[171,1419][908,1475]"
+        },
+        {
+          "text": "保留收藏与阅读历史",
+          "bounds": "[171,1478][908,1527]"
+        },
+        {
+          "text": "0 B",
+          "bounds": "[908,1451][956,1495]"
+        },
+        {
+          "text": "错误日志",
+          "bounds": "[171,1574][923,1630]"
+        },
+        {
+          "text": "只保存在本机",
+          "bounds": "[171,1633][923,1682]"
+        },
+        {
+          "text": "无",
+          "bounds": "[923,1603][956,1652]"
+        },
+        {
+          "text": "使用统计",
+          "bounds": "[171,1729][857,1785]"
+        },
+        {
+          "text": "可选 · 不上传阅读内容",
+          "bounds": "[171,1788][857,1837]"
+        },
+        {
+          "text": "已关闭",
+          "bounds": "[857,1758][956,1807]"
+        },
+        {
+          "text": "App",
+          "bounds": "[44,1888][1036,1974]"
+        },
+        {
+          "text": "版本更新",
+          "bounds": "[171,2009][730,2043]"
+        },
+        {
+          "text": "2.0.40-debug (340)",
+          "bounds": "[730,2015][956,2043]"
+        },
+        {
+          "text": "书架",
+          "bounds": "[147,2134][213,2183]"
+        },
+        {
+          "text": "发现",
+          "bounds": "[507,2134][573,2183]"
+        },
+        {
+          "text": "设置",
+          "bounds": "[867,2134][933,2183]"
+        }
+      ]
+    },
+    {
+      "file": "android-settings-phone-landscape-light.png",
+      "sha256": "f915cd7e1e3e65be7822cb94cebb1dbe0be0505c739f682a46b921d1c1ee89ce",
+      "baselineCommit": "696e80a44ab36b19de6f630565df32978e55a19e",
+      "apkSHA256": "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71",
+      "build": "2.0.40-debug / 340",
+      "device": "dedicated API34 emulator with phone size override",
+      "serial": "emulator-5560",
+      "size": "Physical size: 1080x2340",
+      "density": "Physical density: 440",
+      "fontScale": "1.0",
+      "rotation": "1",
+      "orientation": "landscape",
+      "theme": "light",
+      "themeMode": "automatic",
+      "fixture": "empty isolated library, 51 current sources, 50 enabled, telemetry disabled",
+      "steps": "launch > settings; override emulator size/density; set rotation and system night mode",
+      "capturedAtUTC": "2026-10-11T08:10:21Z",
+      "sameContentCrossPlatformProof": false,
+      "components": [
+        {
+          "text": "设置",
+          "bounds": "[180,78][2164,175]"
+        },
+        {
+          "text": "阅读与外观",
+          "bounds": "[180,187][2164,278]"
+        },
+        {
+          "text": "主题模式",
+          "bounds": "[307,301][2018,357]"
+        },
+        {
+          "text": "跟随系统、浅色或深色",
+          "bounds": "[307,360][2018,409]"
+        },
+        {
+          "text": "自动",
+          "bounds": "[2018,330][2084,379]"
+        },
+        {
+          "text": "启动书架",
+          "bounds": "[307,456][1952,512]"
+        },
+        {
+          "text": "学习中 · 启动显示我的书架",
+          "bounds": "[307,515][1952,564]"
+        },
+        {
+          "text": "自动跟随",
+          "bounds": "[1952,485][2084,534]"
+        },
+        {
+          "text": "阅读历史",
+          "bounds": "[307,611][2024,667]"
+        },
+        {
+          "text": "章节与阅读位置",
+          "bounds": "[307,670][2024,719]"
+        },
+        {
+          "text": "0 条",
+          "bounds": "[2024,640][2084,689]"
+        },
+        {
+          "text": "站源与本地数据",
+          "bounds": "[180,770][2164,861]"
+        },
+        {
+          "text": "站源管理",
+          "bounds": "[307,884][1939,915]"
+        },
+        {
+          "text": "50 个开启",
+          "bounds": "[1939,913][2084,915]"
+        },
+        {
+          "text": "书架",
+          "bounds": "[448,1006][514,1055]"
+        },
+        {
+          "text": "发现",
+          "bounds": "[1138,1006][1204,1055]"
+        },
+        {
+          "text": "设置",
+          "bounds": "[1829,1006][1895,1055]"
+        }
+      ]
+    },
+    {
+      "file": "android-settings-phone-landscape-dark.png",
+      "sha256": "24e614ed870b68cb654fa93e1ab553bb22d17af9896e38f48105667c1cdba46c",
+      "baselineCommit": "696e80a44ab36b19de6f630565df32978e55a19e",
+      "apkSHA256": "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71",
+      "build": "2.0.40-debug / 340",
+      "device": "dedicated API34 emulator with phone size override",
+      "serial": "emulator-5560",
+      "size": "Physical size: 1080x2340",
+      "density": "Physical density: 440",
+      "fontScale": "1.0",
+      "rotation": "1",
+      "orientation": "landscape",
+      "theme": "dark",
+      "themeMode": "automatic",
+      "fixture": "empty isolated library, 51 current sources, 50 enabled, telemetry disabled",
+      "steps": "launch > settings; override emulator size/density; set rotation and system night mode",
+      "capturedAtUTC": "2026-10-11T08:10:25Z",
+      "sameContentCrossPlatformProof": false,
+      "components": [
+        {
+          "text": "设置",
+          "bounds": "[180,78][2164,175]"
+        },
+        {
+          "text": "阅读与外观",
+          "bounds": "[180,187][2164,278]"
+        },
+        {
+          "text": "主题模式",
+          "bounds": "[307,301][2018,357]"
+        },
+        {
+          "text": "跟随系统、浅色或深色",
+          "bounds": "[307,360][2018,409]"
+        },
+        {
+          "text": "自动",
+          "bounds": "[2018,330][2084,379]"
+        },
+        {
+          "text": "启动书架",
+          "bounds": "[307,456][1952,512]"
+        },
+        {
+          "text": "学习中 · 启动显示我的书架",
+          "bounds": "[307,515][1952,564]"
+        },
+        {
+          "text": "自动跟随",
+          "bounds": "[1952,485][2084,534]"
+        },
+        {
+          "text": "阅读历史",
+          "bounds": "[307,611][2024,667]"
+        },
+        {
+          "text": "章节与阅读位置",
+          "bounds": "[307,670][2024,719]"
+        },
+        {
+          "text": "0 条",
+          "bounds": "[2024,640][2084,689]"
+        },
+        {
+          "text": "站源与本地数据",
+          "bounds": "[180,770][2164,861]"
+        },
+        {
+          "text": "站源管理",
+          "bounds": "[307,884][1939,915]"
+        },
+        {
+          "text": "50 个开启",
+          "bounds": "[1939,913][2084,915]"
+        },
+        {
+          "text": "书架",
+          "bounds": "[448,1006][514,1055]"
+        },
+        {
+          "text": "发现",
+          "bounds": "[1138,1006][1204,1055]"
+        },
+        {
+          "text": "设置",
+          "bounds": "[1829,1006][1895,1055]"
+        }
+      ]
+    },
+    {
+      "file": "android-settings-tablet-portrait-light.png",
+      "sha256": "98105312c4622b430c2d80a6f9b590ce21e000a699c199ba3c689a642a390bb2",
+      "baselineCommit": "696e80a44ab36b19de6f630565df32978e55a19e",
+      "apkSHA256": "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71",
+      "build": "2.0.40-debug / 340",
+      "device": "dedicated API34 emulator with tablet size override",
+      "serial": "emulator-5560",
+      "size": "Physical size: 1080x2340\nOverride size: 1536x2048",
+      "density": "Physical density: 440\nOverride density: 320",
+      "fontScale": "1.0",
+      "rotation": "0",
+      "orientation": "portrait",
+      "theme": "light",
+      "themeMode": "automatic",
+      "fixture": "empty isolated library, 51 current sources, 50 enabled, telemetry disabled",
+      "steps": "launch > settings; override emulator size/density; set rotation and system night mode",
+      "capturedAtUTC": "2026-10-11T08:10:31Z",
+      "sameContentCrossPlatformProof": false,
+      "components": [
+        {
+          "text": "设置",
+          "bounds": "[32,128][1504,198]"
+        },
+        {
+          "text": "阅读与外观",
+          "bounds": "[32,207][1504,272]"
+        },
+        {
+          "text": "主题模式",
+          "bounds": "[124,288][1398,330]"
+        },
+        {
+          "text": "跟随系统、浅色或深色",
+          "bounds": "[124,332][1398,367]"
+        },
+        {
+          "text": "自动",
+          "bounds": "[1398,310][1446,345]"
+        },
+        {
+          "text": "启动书架",
+          "bounds": "[124,401][1350,443]"
+        },
+        {
+          "text": "学习中 · 启动显示我的书架",
+          "bounds": "[124,445][1350,480]"
+        },
+        {
+          "text": "自动跟随",
+          "bounds": "[1350,423][1446,458]"
+        },
+        {
+          "text": "阅读历史",
+          "bounds": "[124,514][1403,556]"
+        },
+        {
+          "text": "章节与阅读位置",
+          "bounds": "[124,558][1403,593]"
+        },
+        {
+          "text": "0 条",
+          "bounds": "[1403,536][1446,571]"
+        },
+        {
+          "text": "站源与本地数据",
+          "bounds": "[32,630][1504,695]"
+        },
+        {
+          "text": "站源管理",
+          "bounds": "[124,711][1342,753]"
+        },
+        {
+          "text": "拖动排序、启停与导入导出",
+          "bounds": "[124,755][1342,790]"
+        },
+        {
+          "text": "50 个开启",
+          "bounds": "[1342,733][1446,768]"
+        },
+        {
+          "text": "下载中心",
+          "bounds": "[124,824][1446,866]"
+        },
+        {
+          "text": "任务进度、暂停与章节重试",
+          "bounds": "[124,868][1446,903]"
+        },
+        {
+          "text": "本地存储管理",
+          "bounds": "[124,937][1446,979]"
+        },
+        {
+          "text": "仅 Wi-Fi 下载 · 副本与空间统计",
+          "bounds": "[124,981][1446,1016]"
+        },
+        {
+          "text": "缓存清理",
+          "bounds": "[124,1050][1412,1092]"
+        },
+        {
+          "text": "保留收藏与阅读历史",
+          "bounds": "[124,1094][1412,1129]"
+        },
+        {
+          "text": "0 B",
+          "bounds": "[1412,1073][1446,1106]"
+        },
+        {
+          "text": "错误日志",
+          "bounds": "[124,1163][1422,1205]"
+        },
+        {
+          "text": "只保存在本机",
+          "bounds": "[124,1207][1422,1242]"
+        },
+        {
+          "text": "无",
+          "bounds": "[1422,1185][1446,1220]"
+        },
+        {
+          "text": "使用统计",
+          "bounds": "[124,1276][1374,1318]"
+        },
+        {
+          "text": "可选 · 不上传阅读内容",
+          "bounds": "[124,1320][1374,1355]"
+        },
+        {
+          "text": "已关闭",
+          "bounds": "[1374,1298][1446,1333]"
+        },
+        {
+          "text": "App",
+          "bounds": "[32,1392][1504,1455]"
+        },
+        {
+          "text": "版本更新",
+          "bounds": "[124,1480][1282,1522]"
+        },
+        {
+          "text": "2.0.40-debug (340)",
+          "bounds": "[1282,1484][1446,1517]"
+        },
+        {
+          "text": "关于 App",
+          "bounds": "[124,1573][1309,1615]"
+        },
+        {
+          "text": "2.0.40-debug",
+          "bounds": "[1309,1577][1446,1610]"
+        },
+        {
+          "text": "书架",
+          "bounds": "[232,1875][280,1910]"
+        },
+        {
+          "text": "发现",
+          "bounds": "[744,1875][792,1910]"
+        },
+        {
+          "text": "设置",
+          "bounds": "[1256,1875][1304,1910]"
+        }
+      ]
+    },
+    {
+      "file": "android-settings-tablet-portrait-dark.png",
+      "sha256": "eea7b3d13594452edeebd93381625cad5c0ae3b30de885a7e9ad3fa30954a052",
+      "baselineCommit": "696e80a44ab36b19de6f630565df32978e55a19e",
+      "apkSHA256": "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71",
+      "build": "2.0.40-debug / 340",
+      "device": "dedicated API34 emulator with tablet size override",
+      "serial": "emulator-5560",
+      "size": "Physical size: 1080x2340\nOverride size: 1536x2048",
+      "density": "Physical density: 440\nOverride density: 320",
+      "fontScale": "1.0",
+      "rotation": "0",
+      "orientation": "portrait",
+      "theme": "dark",
+      "themeMode": "automatic",
+      "fixture": "empty isolated library, 51 current sources, 50 enabled, telemetry disabled",
+      "steps": "launch > settings; override emulator size/density; set rotation and system night mode",
+      "capturedAtUTC": "2026-10-11T08:10:37Z",
+      "sameContentCrossPlatformProof": false,
+      "components": [
+        {
+          "text": "设置",
+          "bounds": "[32,128][1504,198]"
+        },
+        {
+          "text": "阅读与外观",
+          "bounds": "[32,207][1504,272]"
+        },
+        {
+          "text": "主题模式",
+          "bounds": "[124,288][1398,330]"
+        },
+        {
+          "text": "跟随系统、浅色或深色",
+          "bounds": "[124,332][1398,367]"
+        },
+        {
+          "text": "自动",
+          "bounds": "[1398,310][1446,345]"
+        },
+        {
+          "text": "启动书架",
+          "bounds": "[124,401][1350,443]"
+        },
+        {
+          "text": "学习中 · 启动显示我的书架",
+          "bounds": "[124,445][1350,480]"
+        },
+        {
+          "text": "自动跟随",
+          "bounds": "[1350,423][1446,458]"
+        },
+        {
+          "text": "阅读历史",
+          "bounds": "[124,514][1403,556]"
+        },
+        {
+          "text": "章节与阅读位置",
+          "bounds": "[124,558][1403,593]"
+        },
+        {
+          "text": "0 条",
+          "bounds": "[1403,536][1446,571]"
+        },
+        {
+          "text": "站源与本地数据",
+          "bounds": "[32,630][1504,695]"
+        },
+        {
+          "text": "站源管理",
+          "bounds": "[124,711][1342,753]"
+        },
+        {
+          "text": "拖动排序、启停与导入导出",
+          "bounds": "[124,755][1342,790]"
+        },
+        {
+          "text": "50 个开启",
+          "bounds": "[1342,733][1446,768]"
+        },
+        {
+          "text": "下载中心",
+          "bounds": "[124,824][1446,866]"
+        },
+        {
+          "text": "任务进度、暂停与章节重试",
+          "bounds": "[124,868][1446,903]"
+        },
+        {
+          "text": "本地存储管理",
+          "bounds": "[124,937][1446,979]"
+        },
+        {
+          "text": "仅 Wi-Fi 下载 · 副本与空间统计",
+          "bounds": "[124,981][1446,1016]"
+        },
+        {
+          "text": "缓存清理",
+          "bounds": "[124,1050][1412,1092]"
+        },
+        {
+          "text": "保留收藏与阅读历史",
+          "bounds": "[124,1094][1412,1129]"
+        },
+        {
+          "text": "0 B",
+          "bounds": "[1412,1073][1446,1106]"
+        },
+        {
+          "text": "错误日志",
+          "bounds": "[124,1163][1422,1205]"
+        },
+        {
+          "text": "只保存在本机",
+          "bounds": "[124,1207][1422,1242]"
+        },
+        {
+          "text": "无",
+          "bounds": "[1422,1185][1446,1220]"
+        },
+        {
+          "text": "使用统计",
+          "bounds": "[124,1276][1374,1318]"
+        },
+        {
+          "text": "可选 · 不上传阅读内容",
+          "bounds": "[124,1320][1374,1355]"
+        },
+        {
+          "text": "已关闭",
+          "bounds": "[1374,1298][1446,1333]"
+        },
+        {
+          "text": "App",
+          "bounds": "[32,1392][1504,1455]"
+        },
+        {
+          "text": "版本更新",
+          "bounds": "[124,1480][1282,1522]"
+        },
+        {
+          "text": "2.0.40-debug (340)",
+          "bounds": "[1282,1484][1446,1517]"
+        },
+        {
+          "text": "关于 App",
+          "bounds": "[124,1573][1309,1615]"
+        },
+        {
+          "text": "2.0.40-debug",
+          "bounds": "[1309,1577][1446,1610]"
+        },
+        {
+          "text": "书架",
+          "bounds": "[232,1875][280,1910]"
+        },
+        {
+          "text": "发现",
+          "bounds": "[744,1875][792,1910]"
+        },
+        {
+          "text": "设置",
+          "bounds": "[1256,1875][1304,1910]"
+        }
+      ]
+    },
+    {
+      "file": "android-settings-tablet-landscape-light.png",
+      "sha256": "03fbd064e802f4c5106d217b2f744d88db635a2c7a7887fe3042878abc0995e5",
+      "baselineCommit": "696e80a44ab36b19de6f630565df32978e55a19e",
+      "apkSHA256": "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71",
+      "build": "2.0.40-debug / 340",
+      "device": "dedicated API34 emulator with tablet size override",
+      "serial": "emulator-5560",
+      "size": "Physical size: 1080x2340\nOverride size: 1536x2048",
+      "density": "Physical density: 440\nOverride density: 320",
+      "fontScale": "1.0",
+      "rotation": "1",
+      "orientation": "landscape",
+      "theme": "light",
+      "themeMode": "automatic",
+      "fixture": "empty isolated library, 51 current sources, 50 enabled, telemetry disabled",
+      "steps": "launch > settings; override emulator size/density; set rotation and system night mode",
+      "capturedAtUTC": "2026-10-11T08:10:43Z",
+      "sameContentCrossPlatformProof": false,
+      "components": [
+        {
+          "text": "设置",
+          "bounds": "[151,57][2016,127]"
+        },
+        {
+          "text": "阅读与外观",
+          "bounds": "[151,136][2016,201]"
+        },
+        {
+          "text": "主题模式",
+          "bounds": "[243,217][1910,259]"
+        },
+        {
+          "text": "跟随系统、浅色或深色",
+          "bounds": "[243,261][1910,296]"
+        },
+        {
+          "text": "自动",
+          "bounds": "[1910,239][1958,274]"
+        },
+        {
+          "text": "启动书架",
+          "bounds": "[243,330][1862,372]"
+        },
+        {
+          "text": "学习中 · 启动显示我的书架",
+          "bounds": "[243,374][1862,409]"
+        },
+        {
+          "text": "自动跟随",
+          "bounds": "[1862,352][1958,387]"
+        },
+        {
+          "text": "阅读历史",
+          "bounds": "[243,443][1915,485]"
+        },
+        {
+          "text": "章节与阅读位置",
+          "bounds": "[243,487][1915,522]"
+        },
+        {
+          "text": "0 条",
+          "bounds": "[1915,465][1958,500]"
+        },
+        {
+          "text": "站源与本地数据",
+          "bounds": "[151,559][2016,624]"
+        },
+        {
+          "text": "站源管理",
+          "bounds": "[243,640][1854,682]"
+        },
+        {
+          "text": "拖动排序、启停与导入导出",
+          "bounds": "[243,684][1854,719]"
+        },
+        {
+          "text": "50 个开启",
+          "bounds": "[1854,662][1958,697]"
+        },
+        {
+          "text": "下载中心",
+          "bounds": "[243,753][1958,795]"
+        },
+        {
+          "text": "任务进度、暂停与章节重试",
+          "bounds": "[243,797][1958,832]"
+        },
+        {
+          "text": "本地存储管理",
+          "bounds": "[243,866][1958,908]"
+        },
+        {
+          "text": "仅 Wi-Fi 下载 · 副本与空间统计",
+          "bounds": "[243,910][1958,945]"
+        },
+        {
+          "text": "缓存清理",
+          "bounds": "[243,979][1924,1021]"
+        },
+        {
+          "text": "保留收藏与阅读历史",
+          "bounds": "[243,1023][1924,1058]"
+        },
+        {
+          "text": "0 B",
+          "bounds": "[1924,1002][1958,1035]"
+        },
+        {
+          "text": "错误日志",
+          "bounds": "[243,1092][1934,1134]"
+        },
+        {
+          "text": "只保存在本机",
+          "bounds": "[243,1136][1934,1171]"
+        },
+        {
+          "text": "无",
+          "bounds": "[1934,1114][1958,1149]"
+        },
+        {
+          "text": "使用统计",
+          "bounds": "[243,1205][1886,1247]"
+        },
+        {
+          "text": "可选 · 不上传阅读内容",
+          "bounds": "[243,1249][1886,1284]"
+        },
+        {
+          "text": "已关闭",
+          "bounds": "[1886,1227][1958,1262]"
+        },
+        {
+          "text": "书架",
+          "bounds": "[416,1363][464,1398]"
+        },
+        {
+          "text": "发现",
+          "bounds": "[1059,1363][1107,1398]"
+        },
+        {
+          "text": "设置",
+          "bounds": "[1702,1363][1750,1398]"
+        }
+      ]
+    },
+    {
+      "file": "android-settings-tablet-landscape-dark.png",
+      "sha256": "ba1ab1964f48a01340e2f67885047db4b1e6dba8dd3eaf1ba77c53d9fe0255f2",
+      "baselineCommit": "696e80a44ab36b19de6f630565df32978e55a19e",
+      "apkSHA256": "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71",
+      "build": "2.0.40-debug / 340",
+      "device": "dedicated API34 emulator with tablet size override",
+      "serial": "emulator-5560",
+      "size": "Physical size: 1080x2340\nOverride size: 1536x2048",
+      "density": "Physical density: 440\nOverride density: 320",
+      "fontScale": "1.0",
+      "rotation": "1",
+      "orientation": "landscape",
+      "theme": "dark",
+      "themeMode": "automatic",
+      "fixture": "empty isolated library, 51 current sources, 50 enabled, telemetry disabled",
+      "steps": "launch > settings; override emulator size/density; set rotation and system night mode",
+      "capturedAtUTC": "2026-10-11T08:10:48Z",
+      "sameContentCrossPlatformProof": false,
+      "components": [
+        {
+          "text": "设置",
+          "bounds": "[151,57][2016,127]"
+        },
+        {
+          "text": "阅读与外观",
+          "bounds": "[151,136][2016,201]"
+        },
+        {
+          "text": "主题模式",
+          "bounds": "[243,217][1910,259]"
+        },
+        {
+          "text": "跟随系统、浅色或深色",
+          "bounds": "[243,261][1910,296]"
+        },
+        {
+          "text": "自动",
+          "bounds": "[1910,239][1958,274]"
+        },
+        {
+          "text": "启动书架",
+          "bounds": "[243,330][1862,372]"
+        },
+        {
+          "text": "学习中 · 启动显示我的书架",
+          "bounds": "[243,374][1862,409]"
+        },
+        {
+          "text": "自动跟随",
+          "bounds": "[1862,352][1958,387]"
+        },
+        {
+          "text": "阅读历史",
+          "bounds": "[243,443][1915,485]"
+        },
+        {
+          "text": "章节与阅读位置",
+          "bounds": "[243,487][1915,522]"
+        },
+        {
+          "text": "0 条",
+          "bounds": "[1915,465][1958,500]"
+        },
+        {
+          "text": "站源与本地数据",
+          "bounds": "[151,559][2016,624]"
+        },
+        {
+          "text": "站源管理",
+          "bounds": "[243,640][1854,682]"
+        },
+        {
+          "text": "拖动排序、启停与导入导出",
+          "bounds": "[243,684][1854,719]"
+        },
+        {
+          "text": "50 个开启",
+          "bounds": "[1854,662][1958,697]"
+        },
+        {
+          "text": "下载中心",
+          "bounds": "[243,753][1958,795]"
+        },
+        {
+          "text": "任务进度、暂停与章节重试",
+          "bounds": "[243,797][1958,832]"
+        },
+        {
+          "text": "本地存储管理",
+          "bounds": "[243,866][1958,908]"
+        },
+        {
+          "text": "仅 Wi-Fi 下载 · 副本与空间统计",
+          "bounds": "[243,910][1958,945]"
+        },
+        {
+          "text": "缓存清理",
+          "bounds": "[243,979][1924,1021]"
+        },
+        {
+          "text": "保留收藏与阅读历史",
+          "bounds": "[243,1023][1924,1058]"
+        },
+        {
+          "text": "0 B",
+          "bounds": "[1924,1002][1958,1035]"
+        },
+        {
+          "text": "错误日志",
+          "bounds": "[243,1092][1934,1134]"
+        },
+        {
+          "text": "只保存在本机",
+          "bounds": "[243,1136][1934,1171]"
+        },
+        {
+          "text": "无",
+          "bounds": "[1934,1114][1958,1149]"
+        },
+        {
+          "text": "使用统计",
+          "bounds": "[243,1205][1886,1247]"
+        },
+        {
+          "text": "可选 · 不上传阅读内容",
+          "bounds": "[243,1249][1886,1284]"
+        },
+        {
+          "text": "已关闭",
+          "bounds": "[1886,1227][1958,1262]"
+        },
+        {
+          "text": "书架",
+          "bounds": "[416,1363][464,1398]"
+        },
+        {
+          "text": "发现",
+          "bounds": "[1059,1363][1107,1398]"
+        },
+        {
+          "text": "设置",
+          "bounds": "[1702,1363][1750,1398]"
+        }
+      ]
+    }
+  ]
+}

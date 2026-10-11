@@ -2,6 +2,34 @@ import XCTest
 @testable import ComicCore
 
 final class FavoriteRevisionTests: XCTestCase {
+    func testRevisionListenerReceivesFirstObservationAndChangesWhileBadgeStaysSet() {
+        let coordinator = FavoriteUpdateCoordinator()
+        final class RevisionBox: @unchecked Sendable {
+            private let lock = NSLock()
+            private var values: [Int] = []
+            func append(_ count: Int) { lock.lock(); values.append(count); lock.unlock() }
+            var counts: [Int] { lock.lock(); defer { lock.unlock() }; return values }
+        }
+        let box = RevisionBox()
+        coordinator.onRevisionObserved = { source, comic in
+            // Reading the state here also verifies that callbacks run outside its lock.
+            box.append(coordinator.state(sourceId: source, comicId: comic)?.observedRevision?.chapterCount ?? -1)
+        }
+        func revision(_ count: Int) -> FavoriteRevision {
+            FavoriteRevision.fromChapters(latestChapterName: "第\(count)话", chapters: (1...count).map {
+                Chapter(chapterId: String($0), title: "第\($0)话", url: "/\($0)")
+            })
+        }
+        coordinator.recordObserved(sourceId: "source", comicId: "comic", revision: revision(1))
+        XCTAssertFalse(coordinator.hasPendingUpdate(sourceId: "source", comicId: "comic"))
+        coordinator.recordObserved(sourceId: "source", comicId: "comic", revision: revision(2))
+        coordinator.recordObserved(sourceId: "source", comicId: "comic", revision: revision(3))
+        XCTAssertTrue(coordinator.hasPendingUpdate(sourceId: "source", comicId: "comic"))
+        coordinator.acknowledge(sourceId: "source", comicId: "comic", revision: revision(3))
+        XCTAssertFalse(coordinator.hasPendingUpdate(sourceId: "source", comicId: "comic"))
+        XCTAssertEqual(box.counts, [1, 2, 3, 3])
+    }
+
     func testChapterNumberExtractionAndNormalization() {
         XCTAssertEqual(FavoriteRevision.extractChapterNumber("第12话"), 12)
         XCTAssertEqual(FavoriteRevision.extractChapterNumber("Chapter 45 - Finale"), 45)

@@ -9,6 +9,7 @@ public final class FavoriteUpdateCoordinator: @unchecked Sendable {
     private let defaults: UserDefaults?
     private var states: [String: FavoriteUpdateState] = [:]
     public var onBadgeChanged: BadgeChangeListener?
+    public var onRevisionObserved: (@Sendable (String, String) -> Void)?
 
     public init(defaults: UserDefaults? = nil) {
         self.defaults = defaults
@@ -59,6 +60,7 @@ public final class FavoriteUpdateCoordinator: @unchecked Sendable {
         if wasPending {
             onBadgeChanged?(sourceId, comicId, false)
         }
+        onRevisionObserved?(sourceId, comicId)
     }
 
     public func recordObserved(sourceId: String, comicId: String, revision: FavoriteRevision) {
@@ -97,6 +99,7 @@ public final class FavoriteUpdateCoordinator: @unchecked Sendable {
             saveLocked()
             lock.unlock()
         }
+        onRevisionObserved?(sourceId, comicId)
     }
 
     public func clearState(sourceId: String, comicId: String) {

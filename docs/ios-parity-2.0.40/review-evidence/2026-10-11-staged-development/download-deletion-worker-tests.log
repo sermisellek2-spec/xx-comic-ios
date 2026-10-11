@@ -1,0 +1,36 @@
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[0/3] Write swift-version-24593BA9C3E375BF.txt
+[3/5] Compiling ComicCoreTests DownloadDeletionTests.swift
+[4/5] Emitting module ComicCoreTests
+[5/13] Wrapping AST for ComicCoreTests for debugging
+[6/13] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[7/14] Write sources
+[9/16] Emitting module ComicCorePackageDiscoveredTests
+[10/16] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[11/17] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[12/18] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[13/18] Write sources
+[14/18] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[16/20] Emitting module ComicCorePackageTests
+[17/20] Compiling ComicCorePackageTests runner.swift
+[18/20] Write Objects.LinkFileList
+[19/20] Linking ComicCorePackageTests.xctest
+Build complete! (31.52s)
+Test Suite 'Selected tests' started at 2026-10-11 08:26:02.307
+Test Suite 'DownloadDeletionTests' started at 2026-10-11 08:26:02.323
+Test Case 'DownloadDeletionTests.testBookDirectorySymlinkCannotDeleteExternalOriginal' started at 2026-10-11 08:26:02.324
+Test Case 'DownloadDeletionTests.testBookDirectorySymlinkCannotDeleteExternalOriginal' passed (0.022 seconds)
+Test Case 'DownloadDeletionTests.testCorruptIdentityCannotSelectParentOrUnknownDirectory' started at 2026-10-11 08:26:02.345
+Test Case 'DownloadDeletionTests.testCorruptIdentityCannotSelectParentOrUnknownDirectory' passed (0.007 seconds)
+Test Case 'DownloadDeletionTests.testDeleteRemovesOnlyConfirmedBookAndPersistsTaskRemoval' started at 2026-10-11 08:26:02.353
+Test Case 'DownloadDeletionTests.testDeleteRemovesOnlyConfirmedBookAndPersistsTaskRemoval' passed (0.013 seconds)
+Test Case 'DownloadDeletionTests.testDeletingActiveBookWaitsForWorkerAndCannotRecreateFiles' started at 2026-10-11 08:26:02.366
+Test Case 'DownloadDeletionTests.testDeletingActiveBookWaitsForWorkerAndCannotRecreateFiles' passed (0.093 seconds)
+Test Case 'DownloadDeletionTests.testUnknownFileRefusesDeletionAndKeepsCompletedBookReadable' started at 2026-10-11 08:26:02.458
+Test Case 'DownloadDeletionTests.testUnknownFileRefusesDeletionAndKeepsCompletedBookReadable' passed (0.011 seconds)
+Test Suite 'DownloadDeletionTests' passed at 2026-10-11 08:26:02.470
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.146 (0.146) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 08:26:02.470
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.146 (0.146) seconds

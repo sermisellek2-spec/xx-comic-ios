@@ -1,0 +1,44 @@
+Building for debugging...
+[0/13] Write sources
+[2/13] Write swift-version-24593BA9C3E375BF.txt
+[4/15] Emitting module XXComic
+[5/15] Compiling XXComic DetailFeedbackState.swift
+[6/16] Wrapping AST for XXComic for debugging
+[8/18] Compiling XXComicTests DetailFeedbackStateTests.swift
+[9/18] Emitting module XXComicTests
+[10/19] /tmp/tmp.YxhMOpUA2x/.build/x86_64-unknown-linux-gnu/debug/DetailFeedbackCheckPackageDiscoveredTests.derived/all-discovered-tests.swift
+[11/19] Write sources
+[12/19] Wrapping AST for XXComicTests for debugging
+[14/21] Emitting module DetailFeedbackCheckPackageDiscoveredTests
+[15/21] Compiling DetailFeedbackCheckPackageDiscoveredTests XXComicTests.swift
+[16/22] Compiling DetailFeedbackCheckPackageDiscoveredTests all-discovered-tests.swift
+[17/23] /tmp/tmp.YxhMOpUA2x/.build/x86_64-unknown-linux-gnu/debug/DetailFeedbackCheckPackageTests.derived/runner.swift
+[18/23] Write sources
+[19/23] Wrapping AST for DetailFeedbackCheckPackageDiscoveredTests for debugging
+[21/25] Emitting module DetailFeedbackCheckPackageTests
+[22/25] Compiling DetailFeedbackCheckPackageTests runner.swift
+[23/26] Wrapping AST for DetailFeedbackCheckPackageTests for debugging
+[24/26] Write Objects.LinkFileList
+[25/26] Linking DetailFeedbackCheckPackageTests.xctest
+Build complete! (5.11s)
+Test Suite 'All tests' started at 2026-10-11 08:10:35.176
+Test Suite 'debug.xctest' started at 2026-10-11 08:10:35.195
+Test Suite 'DetailFeedbackStateTests' started at 2026-10-11 08:10:35.195
+Test Case 'DetailFeedbackStateTests.testCancellingDownloadRestoresLatestDetailFailureAndAction' started at 2026-10-11 08:10:35.195
+Test Case 'DetailFeedbackStateTests.testCancellingDownloadRestoresLatestDetailFailureAndAction' passed (0.001 seconds)
+Test Case 'DetailFeedbackStateTests.testCancellingFailedDownloadRestoresDetailRetry' started at 2026-10-11 08:10:35.196
+Test Case 'DetailFeedbackStateTests.testCancellingFailedDownloadRestoresDetailRetry' passed (0.0 seconds)
+Test Case 'DetailFeedbackStateTests.testDownloadLoadingSuppressesDetailRetryUntilItEnds' started at 2026-10-11 08:10:35.197
+Test Case 'DetailFeedbackStateTests.testDownloadLoadingSuppressesDetailRetryUntilItEnds' passed (0.0 seconds)
+Test Case 'DetailFeedbackStateTests.testLateDetailCompletionCannotEraseQueuedConfirmationOrMakeItRetry' started at 2026-10-11 08:10:35.197
+Test Case 'DetailFeedbackStateTests.testLateDetailCompletionCannotEraseQueuedConfirmationOrMakeItRetry' passed (0.0 seconds)
+Test Case 'DetailFeedbackStateTests.testLateDetailFailureDoesNotChangeDownloadRetryAction' started at 2026-10-11 08:10:35.197
+Test Case 'DetailFeedbackStateTests.testLateDetailFailureDoesNotChangeDownloadRetryAction' passed (0.0 seconds)
+Test Case 'DetailFeedbackStateTests.testLateDetailSuccessPreservesDownloadFailureAndRetry' started at 2026-10-11 08:10:35.197
+Test Case 'DetailFeedbackStateTests.testLateDetailSuccessPreservesDownloadFailureAndRetry' passed (0.0 seconds)
+Test Suite 'DetailFeedbackStateTests' passed at 2026-10-11 08:10:35.197
+Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'debug.xctest' passed at 2026-10-11 08:10:35.197
+Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'All tests' passed at 2026-10-11 08:10:35.197
+Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds

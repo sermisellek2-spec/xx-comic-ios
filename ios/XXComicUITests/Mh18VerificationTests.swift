@@ -3,7 +3,8 @@ import XCTest
 final class Mh18VerificationTests: XCTestCase {
     func testManualVerificationCanCloseAndBeOpenedAgain() {
         let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing"]
+        app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-catalog-fixtures", "--verification-fixtures"]
+        app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
         app.launch()
         app.tabBars.buttons["设置"].tap()
         app.tables.staticTexts["站源管理"].tap()

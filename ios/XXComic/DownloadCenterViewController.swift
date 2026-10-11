@@ -63,6 +63,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
     }
 
     private func setupViews() {
+        tableView.accessibilityIdentifier = "download.tasks"
         // Top Tools & Rem banner in table header
         let headerContainer = UIView()
         headerContainer.translatesAutoresizingMaskIntoConstraints = false
@@ -262,6 +263,9 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let task = groups[indexPath.section].tasks[indexPath.row]
+        openTask(task)
+    }
+    private func openTask(_ task: DownloadTask) {
         guard task.state == .completed else { return }
 
         // If completed, attempt to open reader
@@ -281,18 +285,53 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
         }
     }
 
+    func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        let task = groups[indexPath.section].tasks[indexPath.row]
+        guard task.state == .completed else { return nil }
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+            UIMenu(title: task.title, children: [
+                UIAction(title: "删除此章", attributes: .destructive) { _ in self?.confirmCompletedAction(task, redownload: false) },
+                UIAction(title: "重新下载此章") { _ in self?.confirmCompletedAction(task, redownload: true) }
+            ])
+        }
+    }
+    private func confirmCompletedAction(_ task: DownloadTask, redownload: Bool) {
+        let alert = UIAlertController(title: "删除此章的下载文件？", message: "阅读进度和在线收藏会保留。", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: redownload ? "重新下载此章" : "删除此章", style: .destructive) { [weak self] _ in
+            guard let self else { return }
+            if !redownload { self.removeTask(task); return }
+            let runtime = self.environment.downloadRuntime
+            Task { [weak self] in
+                do { try await runtime.redownloadChapter(id: task.id) }
+                catch {
+                    if let self, self.viewIfLoaded?.window != nil {
+                        let failed = UIAlertController(title: "未能重新下载", message: error.localizedDescription, preferredStyle: .alert)
+                        failed.addAction(UIAlertAction(title: "关闭", style: .cancel))
+                        self.present(failed, animated: true)
+                    }
+                }
+                self?.loadTasks(); self?.environment.notifyLibraryChanged()
+            }
+        })
+        present(alert, animated: true)
+    }
+
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let task = groups[indexPath.section].tasks[indexPath.row]
         let deleteAction = UIContextualAction(style: .destructive, title: "删除") { [weak self] _, _, completion in
-            self?.environment.downloadRuntime.deleteChapter(id: task.id)
-            self?.loadTasks()
-            completion(true)
+            guard let self else { completion(false); return }
+            self.removeTask(task, completion: completion)
         }
         return UISwipeActionsConfiguration(actions: [deleteAction])
     }
 
     private func handleTaskAction(_ action: TaskCellAction, task: DownloadTask) {
+        guard task.state != .deleting else { return }
         switch action {
+        case .read:
+            openTask(task)
+            return
         case .pause:
             environment.downloadRuntime.queue.pause(id: task.id)
         case .resume:
@@ -302,13 +341,32 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
             environment.downloadRuntime.queue.resume(id: task.id)
             environment.downloadRuntime.kick()
         case .cancel:
-            environment.downloadRuntime.cancel(id: task.id)
+            removeTask(task)
+            return
+        }
+        loadTasks()
+    }
+    private func removeTask(_ task: DownloadTask, completion: ((Bool) -> Void)? = nil) {
+        let runtime = environment.downloadRuntime
+        Task { [weak self] in
+            do {
+                try await runtime.deleteChapter(id: task.id)
+                self?.loadTasks(); self?.environment.notifyLibraryChanged(); completion?(true)
+            } catch {
+                self?.loadTasks(); completion?(false)
+                guard let self, self.viewIfLoaded?.window != nil else { return }
+                let alert = UIAlertController(title: "下载未删除", message: error.localizedDescription + "；原记录已保留，可重试。", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "关闭", style: .cancel))
+                alert.addAction(UIAlertAction(title: "重试", style: .destructive) { [weak self] _ in self?.removeTask(task) })
+                self.present(alert, animated: true)
+            }
         }
         loadTasks()
     }
 }
 
 enum TaskCellAction {
+    case read
     case pause, resume, retry, cancel
 }
 
@@ -366,13 +424,15 @@ final class DownloadTaskCell: UITableViewCell {
             actionButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             actionButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             actionButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 54),
-            actionButton.heightAnchor.constraint(equalToConstant: 30)
+            actionButton.heightAnchor.constraint(equalToConstant: 44)
         ])
     }
 
     func configure(with task: DownloadTask, onAction: @escaping (TaskCellAction) -> Void) {
         self.onAction = onAction
         titleLabel.text = task.title
+        statusLabel.accessibilityIdentifier = "download.task.status"
+        statusLabel.accessibilityValue = task.state.rawValue + ";" + String(task.generation)
 
         let progress = task.totalPages > 0 ? Float(task.donePages) / Float(task.totalPages) : 0
         progressView.progress = progress
@@ -397,7 +457,7 @@ final class DownloadTaskCell: UITableViewCell {
         case .completed:
             statusLabel.text = "已完成 · \(task.totalPages) 页"
             progressView.isHidden = true
-            setupActionButton(title: "阅读", action: nil, tint: Palette.accent)
+            setupActionButton(title: "阅读", action: .read, tint: Palette.accent)
         case .pausedUser:
             statusLabel.text = "已暂停 (\(task.donePages)/\(task.totalPages) 页)"
             progressView.isHidden = false

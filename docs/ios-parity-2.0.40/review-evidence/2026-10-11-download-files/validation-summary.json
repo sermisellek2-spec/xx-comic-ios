@@ -1,0 +1,90 @@
+{
+  "android_baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "ios_base_commit": "1e2287c7e5bcd51d84507a477ff68db3b66a6421",
+  "ios_uncommitted": true,
+  "code_input_sha256": "7318f82561ae4aa3dccb60d6a3e95c08bbfc8704cc3e14269165ebe51ab62824",
+  "core_input_sha256": "ec30b3b9b32ef78bef0fa9a27be49b34d5dac3c5c5bf9c982ce7c4d2a1cd9ab3",
+  "checks": [
+    {
+      "command": "docker run --rm --mount type=bind,source=<ComicCore>,target=/work -w /work swift:5.10-jammy swift test -j 2",
+      "log": "core-full-test.log",
+      "exit_code": 0,
+      "executed": 838,
+      "skipped": 2,
+      "failures": 0,
+      "seconds": 133.842
+    },
+    {
+      "command": "swift test -j 2 --filter 'DownloadFileCoordinationTests|DownloadLocationTests|DownloadDeletionTests|DownloadRuntimeTests|DownloadCoordinatorTests|DownloadStoreTests'",
+      "log": "download-file-coordination-tests.log",
+      "exit_code": 0,
+      "executed": 49,
+      "failures": 0,
+      "injected_provider_and_bookmark_interfaces": true
+    },
+    {
+      "command": "docker run --rm --mount type=bind,source=<checkout>,target=/work -w /work swift:5.10-jammy bash tools/verify-ios-native-syntax.sh",
+      "log": "native-syntax.log",
+      "exit_code": 0,
+      "swift_files": 63,
+      "apple_type_check": false
+    },
+    {
+      "command": "pwsh -NoProfile -File docs/ios-parity-2.0.40/verify-baseline.ps1",
+      "log": "baseline-verification.log",
+      "exit_code": 0
+    },
+    {
+      "command": "python tools/audit-ios-source-catalog.py --output <evidence>/source-catalog-proof.json",
+      "log": "source-catalog-audit.log",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "log": "git-diff-check.log",
+      "exit_code": 0
+    }
+  ],
+  "core_skipped_evidence": [
+    "/work/Tests/ComicCoreTests/LocalImportPreparationTests.swift:158: LocalImportPreparationTests.testNativePdfPreparationAndPublicationUseRealRenderer : Test skipped - Real PDF prepare/publish requires Apple CoreGraphics and ImageIO; Linux injection checks storage only.",
+    "/work/Tests/ComicCoreTests/PdfRendererTests.swift:158: PdfRendererTests.testNativePDFRenderingRequiresAppleFrameworks : Test skipped - CoreGraphics / ImageIO / PDFKit native PDF tests require an Apple host; injected dimensions do not verify PDF decoding."
+  ],
+  "initial_failure": {
+    "log": "download-file-coordination-initial-failure.log",
+    "executed": 28,
+    "failures": 1,
+    "repair": "File permission/path/space errors require manual action; retain failed state and original bytes instead of HTTP automatic retry; original assertion retained"
+  },
+  "before_redownload": {
+    "full_test_log": "core-full-test-before-redownload.log",
+    "executed": 835,
+    "failures": 0,
+    "inputs": "inputs-before-redownload.json"
+  },
+  "source_catalog": {
+    "current": 51,
+    "default_enabled": 50,
+    "live_sites_deferred": true
+  },
+  "only_ci_repository": "sermisellek2-spec/xx-comic-ios",
+  "ci_access_summary": "ci-access-summary.json",
+  "current_apple_build": false,
+  "native_tests_executed": false,
+  "ui_tests_executed": false,
+  "new_ipa": false,
+  "all_stages_passed": false,
+  "non_source_gate_passed": false,
+  "mandatory_unrun": [
+    "Apple SDK type check, Darwin NSFileCoordinator and Debug/Release builds",
+    "Native offline UIImage decode and completed chapter redownload menu UI",
+    "Files provider access across restart, permission revocation and reauthorization",
+    "iPhone/iPad portrait/landscape light/dark same-content visual comparisons",
+    "Full import/download/reader/AI recovery, background and performance",
+    "Current IPA icons/version/SHA256 and installed appearance",
+    "51 live sources after the non-source gate"
+  ],
+  "remaining_development": [
+    "Complete entry/default-value/config-consumer audit",
+    "Full non-source recovery and same-content Android/iOS fixtures"
+  ]
+}

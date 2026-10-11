@@ -1,0 +1,299 @@
+{
+  "kind": "static pixel sizes, opaque RGB and compiler key only; IPA compilation/home-screen display pending",
+  "android_baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "background": "#4AAEFB",
+  "background_source": "app/src/main/res/drawable/ic_launcher_background.xml",
+  "background_source_sha256": "8d578808364dc44e4082d71c7b84b7d7db2f4ee81faa17975e76e4686298f83a",
+  "original_master_sha256": "55295f247a9888c7b2e7bd047e9832200c3e493b0859b91ec0451de57e231b4c",
+  "asset_path": "ios/XXComic/Assets.xcassets/AppIcon.appiconset",
+  "images": [
+    {
+      "filename": "Icon-20@2x.png",
+      "idiom": "iphone",
+      "scale": "2x",
+      "size": "20x20",
+      "pixels": [
+        40,
+        40
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        222,
+        255
+      ],
+      "sha256": "919dfb823a0345db49bc745a8af35de2046cfe1c5a11270baad8d434694af6ef"
+    },
+    {
+      "filename": "Icon-20@3x.png",
+      "idiom": "iphone",
+      "scale": "3x",
+      "size": "20x20",
+      "pixels": [
+        60,
+        60
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        222,
+        255
+      ],
+      "sha256": "9656d18569f4120bcc0c69720d04abd759a17eee542674d30045eac2eb8e8572"
+    },
+    {
+      "filename": "Icon-29@2x.png",
+      "idiom": "iphone",
+      "scale": "2x",
+      "size": "29x29",
+      "pixels": [
+        58,
+        58
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        220,
+        255
+      ],
+      "sha256": "c47df11741eb3a5e7ac14cd43756fa7d8f4f3bb5e778b3897dcd047a1b6bfded"
+    },
+    {
+      "filename": "Icon-29@3x.png",
+      "idiom": "iphone",
+      "scale": "3x",
+      "size": "29x29",
+      "pixels": [
+        87,
+        87
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        222,
+        255
+      ],
+      "sha256": "5152294e6eb9c637ac6225fca3adedf98ed56da8410bc101691deacbe32605df"
+    },
+    {
+      "filename": "Icon-40@2x.png",
+      "idiom": "iphone",
+      "scale": "2x",
+      "size": "40x40",
+      "pixels": [
+        80,
+        80
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        220,
+        255
+      ],
+      "sha256": "738d53b7a6e7abfb9853fda50349171b74214726d8b3a36585cb79f462da4014"
+    },
+    {
+      "filename": "Icon-40@3x.png",
+      "idiom": "iphone",
+      "scale": "3x",
+      "size": "40x40",
+      "pixels": [
+        120,
+        120
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        220,
+        255
+      ],
+      "sha256": "852c4b1f626707a7222dfb322c3c6d306d9eacf5be56cfae7143d76d1cca0605"
+    },
+    {
+      "filename": "Icon-60@2x.png",
+      "idiom": "iphone",
+      "scale": "2x",
+      "size": "60x60",
+      "pixels": [
+        120,
+        120
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        220,
+        255
+      ],
+      "sha256": "852c4b1f626707a7222dfb322c3c6d306d9eacf5be56cfae7143d76d1cca0605"
+    },
+    {
+      "filename": "Icon-60@3x.png",
+      "idiom": "iphone",
+      "scale": "3x",
+      "size": "60x60",
+      "pixels": [
+        180,
+        180
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        222,
+        255
+      ],
+      "sha256": "c8eb40c49ca87249fe88360cb6aff2cd6d84b854e8a87a477ab5f6bf87bf98f9"
+    },
+    {
+      "filename": "Icon-20-ipad.png",
+      "idiom": "ipad",
+      "scale": "1x",
+      "size": "20x20",
+      "pixels": [
+        20,
+        20
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        220,
+        255
+      ],
+      "sha256": "008a7ad832baeb48fe163abf6f1a5eac5a346a5861b8939eb2b8f49af3b518e6"
+    },
+    {
+      "filename": "Icon-20@2x-ipad.png",
+      "idiom": "ipad",
+      "scale": "2x",
+      "size": "20x20",
+      "pixels": [
+        40,
+        40
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        222,
+        255
+      ],
+      "sha256": "919dfb823a0345db49bc745a8af35de2046cfe1c5a11270baad8d434694af6ef"
+    },
+    {
+      "filename": "Icon-29-ipad.png",
+      "idiom": "ipad",
+      "scale": "1x",
+      "size": "29x29",
+      "pixels": [
+        29,
+        29
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        220,
+        255
+      ],
+      "sha256": "7833c6c1cbe22c5a1c5ec1828de41cef1a4bdd42022f3522828c9a24eeb025e4"
+    },
+    {
+      "filename": "Icon-29@2x-ipad.png",
+      "idiom": "ipad",
+      "scale": "2x",
+      "size": "29x29",
+      "pixels": [
+        58,
+        58
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        220,
+        255
+      ],
+      "sha256": "c47df11741eb3a5e7ac14cd43756fa7d8f4f3bb5e778b3897dcd047a1b6bfded"
+    },
+    {
+      "filename": "Icon-40-ipad.png",
+      "idiom": "ipad",
+      "scale": "1x",
+      "size": "40x40",
+      "pixels": [
+        40,
+        40
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        222,
+        255
+      ],
+      "sha256": "919dfb823a0345db49bc745a8af35de2046cfe1c5a11270baad8d434694af6ef"
+    },
+    {
+      "filename": "Icon-40@2x-ipad.png",
+      "idiom": "ipad",
+      "scale": "2x",
+      "size": "40x40",
+      "pixels": [
+        80,
+        80
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        220,
+        255
+      ],
+      "sha256": "738d53b7a6e7abfb9853fda50349171b74214726d8b3a36585cb79f462da4014"
+    },
+    {
+      "filename": "Icon-76-ipad.png",
+      "idiom": "ipad",
+      "scale": "1x",
+      "size": "76x76",
+      "pixels": [
+        76,
+        76
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        220,
+        255
+      ],
+      "sha256": "b042ba11152bffd2f76b3361e0b81803fa1b4d94ffc1b71a129d2b17f27d751f"
+    },
+    {
+      "filename": "Icon-76@2x-ipad.png",
+      "idiom": "ipad",
+      "scale": "2x",
+      "size": "76x76",
+      "pixels": [
+        152,
+        152
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        221,
+        255
+      ],
+      "sha256": "19e779cf0a982920edcdeb022a2c928fa89f975100b2a5055c0c49de0d3b1b5f"
+    },
+    {
+      "filename": "Icon-83.5@2x-ipad.png",
+      "idiom": "ipad",
+      "scale": "2x",
+      "size": "83.5x83.5",
+      "pixels": [
+        167,
+        167
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        220,
+        255
+      ],
+      "sha256": "f88fd4db854be2ae3dbe11ee88da2672a59350e48e9087daeff67d669701797e"
+    },
+    {
+      "filename": "Icon-1024.png",
+      "idiom": "ios-marketing",
+      "scale": "1x",
+      "size": "1024x1024",
+      "pixels": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "previous_alpha_extrema": [
+        88,
+        255
+      ],
+      "sha256": "1bf587f05767245043ed5ab9394aa25cbda92e35a66da359de08e6c5a5fa8b99"
+    }
+  ]
+}

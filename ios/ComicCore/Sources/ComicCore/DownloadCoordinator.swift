@@ -219,7 +219,7 @@ public final class DownloadCoordinator: @unchecked Sendable {
         }
     }
 
-    public func failed(lease: DownloadTask, now: Int64, error: String, retryAfter: Int64) {
+    public func failed(lease: DownloadTask, now: Int64, error: String, retryAfter: Int64, retryAutomatically: Bool = true) {
         stateLock.lock()
         defer { stateLock.unlock() }
         guard let current = repository.get(id: lease.id), current.generation == lease.generation && DownloadModels.active(current.state) else { return }
@@ -228,13 +228,13 @@ public final class DownloadCoordinator: @unchecked Sendable {
         t.generation = Self.nextGeneration()
         t.error = error
         let delays: [Int64] = [2000, 5000, 15000]
-        t.state = t.failures > delays.count ? .failed : .queued
+        t.state = !retryAutomatically || t.failures > delays.count ? .failed : .queued
         let baseDelay: Int64 = t.failures <= delays.count ? delays[t.failures - 1] : 0
         let boundedRetryAfter = min(Int64(15 * 60 * 1000), max(0, retryAfter))
-        t.nextAttempt = now + max(baseDelay, boundedRetryAfter)
+        t.nextAttempt = retryAutomatically ? now + max(baseDelay, boundedRetryAfter) : 0
         repository.save(task: t)
 
-        if retryAfter > 0 {
+        if retryAutomatically && retryAfter > 0 {
             for other in repository.list() {
                 if other.sourceId == t.sourceId && (other.state == .queued || other.state == .waitingNetwork) {
                     var delayed = other

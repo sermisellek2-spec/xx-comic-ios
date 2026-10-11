@@ -1,0 +1,17 @@
+{
+  "authenticated": true,
+  "login": "sermisellek2-spec",
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "private": true,
+  "permissions": {
+    "admin": true,
+    "maintain": true,
+    "push": true,
+    "triage": true,
+    "pull": true
+  },
+  "branch": "codex/ios-port",
+  "branch_head": "a5aeec90a1d47b9670b859150cb89f78c9856fbb",
+  "credential_source": "normal Git Credential Manager; credentials kept in process memory",
+  "checked_at_utc": "2026-10-11T11:31:35.185379+00:00"
+}

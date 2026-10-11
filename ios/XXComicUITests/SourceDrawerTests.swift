@@ -3,7 +3,8 @@ import XCTest
 final class SourceDrawerTests: XCTestCase {
     func testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs() {
         let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing"]
+        app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-catalog-fixtures"]
+        app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
         app.launch()
         app.tabBars.buttons["发现"].tap()
         app.buttons["discover.source"].tap()
@@ -16,14 +17,16 @@ final class SourceDrawerTests: XCTestCase {
         search.typeText("测试\n")
         XCTAssertTrue(app.buttons["催漫画暂不支持搜索"].waitForExistence(timeout: 5))
         app.segmentedControls.buttons["全站"].tap()
-        XCTAssertTrue(app.buttons["discover.global.baozimh"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["discover.global.mh160"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["discover.global.baozimh"].exists)
         XCTAssertFalse(app.buttons["discover.global.cuimh"].exists)
         XCTAssertFalse(app.buttons["discover.global.liumanhua"].exists)
     }
 
     func testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm() {
         let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing"]
+        app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-catalog-fixtures"]
+        app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
         app.launch()
         app.tabBars.buttons["发现"].tap()
         let source = app.buttons["discover.source"]

@@ -68,6 +68,8 @@ public enum SourceConfigError: LocalizedError, Equatable {
     case invalidSchema
     case invalidJSON
     case emptyPackage
+    case unsupportedVersion
+    case invalidFields
 
     public var errorDescription: String? {
         switch self {
@@ -77,6 +79,10 @@ public enum SourceConfigError: LocalizedError, Equatable {
             return "无效的 JSON 格式"
         case .emptyPackage:
             return "站源配置文件为空"
+        case .unsupportedVersion:
+            return "暂不支持该站源配置版本"
+        case .invalidFields:
+            return "站源配置字段格式错误，未修改现有配置"
         }
     }
 }
@@ -86,12 +92,16 @@ public struct SourceImportResult: Equatable, Sendable {
     public let enabledCount: Int
     public let disabledCount: Int
     public let orderUpdated: Bool
+    public let skippedSources: [String]
+    public let warnings: [String]
 
-    public init(totalSources: Int, enabledCount: Int, disabledCount: Int, orderUpdated: Bool) {
+    public init(totalSources: Int, enabledCount: Int, disabledCount: Int, orderUpdated: Bool, skippedSources: [String] = [], warnings: [String] = []) {
         self.totalSources = totalSources
         self.enabledCount = enabledCount
         self.disabledCount = disabledCount
         self.orderUpdated = orderUpdated
+        self.skippedSources = skippedSources
+        self.warnings = warnings
     }
 }
 
@@ -128,6 +138,17 @@ extension SourceConfigItem {
 }
 
 public enum SourceConfigDefaults {
+    public static func hiperdex(enabled: Bool = true) -> SourceConfigItem {
+        SourceConfigItem(id: "hiperdex", name: "HiperDEX", domain: "hiperdex.com",
+                         baseUrl: "https://hiperdex.com", referer: "https://hiperdex.com/", enabled: enabled,
+                         routes: ["latest": "/manga/?m_orderby=latest{pageQuery}",
+                                  "search": "/?s={keyword}&post_type=wp-manga{pageQuery}",
+                                  "category": "/manga/{genrePath}{pagePath}",
+                                  "detail": "/manga/{comicId}/", "chapter": "/manga/{comicId}/{chapterSlug}/"],
+                         filters: ["genre.all": "", "genre.manhwa": "manhwa", "genre.webtoon": "webtoon",
+                                   "genre.romance": "romance", "genre.drama": "drama"])
+    }
+
     public static func baozi(enabled: Bool = true) -> SourceConfigItem {
         SourceConfigItem(
             id: "baozimh",
@@ -777,6 +798,7 @@ public enum SourceConfigDefaults {
         case "mh18": return mh18()
         case "jmcomic": return jmcomic()
         case "mkzhan": return mkzhan()
+        case "hiperdex": return hiperdex()
         case "hanman18": return hanman18()
         case "manhuagui": return manhuagui()
         case "d5d6": return d5d6()

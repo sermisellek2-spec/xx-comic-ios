@@ -3,11 +3,19 @@ import XCTest
 final class AppNavigationTests: XCTestCase {
     func testNavigationAndReaderPreferencesPersist() {
         let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing"]
+        app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--light-mode"]
+        app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
+        func openReadingSettings() {
+            app.buttons["我的书架"].tap()
+            let comic = app.collectionViews.cells["电锯人"]
+            XCTAssertTrue(comic.waitForExistence(timeout: 5)); comic.tap()
+            app.buttons["detail.read"].tap()
+            let settings = app.buttons["reader.settings"]
+            XCTAssertTrue(settings.waitForExistence(timeout: 10)); settings.tap()
+        }
         app.launch()
         XCTAssertTrue(app.tabBars.buttons["书架"].exists)
-        app.tabBars.buttons["设置"].tap()
-        app.tables.staticTexts["阅读设置"].tap()
+        openReadingSettings()
         let toggle = app.switches["reader.disable.page.animation"]
         XCTAssertTrue(toggle.waitForExistence(timeout: 5))
         let original = toggle.value as? String
@@ -16,8 +24,7 @@ final class AppNavigationTests: XCTestCase {
         XCTAssertNotEqual(original, changed)
         app.terminate()
         app.launch()
-        app.tabBars.buttons["设置"].tap()
-        app.tables.staticTexts["阅读设置"].tap()
+        openReadingSettings()
         XCTAssertEqual(app.switches["reader.disable.page.animation"].value as? String, changed)
         app.switches["reader.disable.page.animation"].tap()
     }

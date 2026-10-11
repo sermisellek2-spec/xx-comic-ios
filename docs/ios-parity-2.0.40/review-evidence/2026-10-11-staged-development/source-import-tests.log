@@ -1,0 +1,84 @@
+[0/1] Planning build
+Building for debugging...
+[0/12] Write sources
+[0/11] Write swift-version-24593BA9C3E375BF.txt
+[4/12] Compiling ComicCore SourceConfigModels.swift
+[5/13] Compiling ComicCore SourcePreferences.swift
+[6/13] Emitting module ComicCore
+[7/14] Wrapping AST for ComicCore for debugging
+[9/16] Compiling ComicCoreTests SourceImportContractTests.swift
+[10/17] Emitting module ComicCoreTests
+[11/17] Compiling ComicCoreTests SourcePreferencesTests.swift
+[12/20] Wrapping AST for ComicCoreTests for debugging
+[13/20] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[14/21] Write sources
+[16/23] Emitting module ComicCorePackageDiscoveredTests
+[17/23] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[18/24] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[19/25] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[20/25] Write sources
+[21/25] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[23/27] Emitting module ComicCorePackageTests
+[24/27] Compiling ComicCorePackageTests runner.swift
+[25/27] Write Objects.LinkFileList
+[26/27] Linking ComicCorePackageTests.xctest
+Build complete! (33.82s)
+Test Suite 'Selected tests' started at 2026-10-11 07:41:27.586
+Test Suite 'BuiltinSourceCatalogTests' started at 2026-10-11 07:41:27.587
+Test Case 'BuiltinSourceCatalogTests.testFreshSourceManagementShowsExactlyAndroidCurrentSourcesAndOrder' started at 2026-10-11 07:41:27.587
+Test Case 'BuiltinSourceCatalogTests.testFreshSourceManagementShowsExactlyAndroidCurrentSourcesAndOrder' passed (0.096 seconds)
+Test Case 'BuiltinSourceCatalogTests.testOldRetiredSwitchCannotReappearInDiscoveryOrGlobalSearch' started at 2026-10-11 07:41:27.683
+Test Case 'BuiltinSourceCatalogTests.testOldRetiredSwitchCannotReappearInDiscoveryOrGlobalSearch' passed (0.003 seconds)
+Test Case 'BuiltinSourceCatalogTests.testResetOrderRestoresAndroidOrderAfterUserReordering' started at 2026-10-11 07:41:27.686
+Test Case 'BuiltinSourceCatalogTests.testResetOrderRestoresAndroidOrderAfterUserReordering' passed (0.001 seconds)
+Test Suite 'BuiltinSourceCatalogTests' passed at 2026-10-11 07:41:27.687
+Executed 3 tests, with 0 failures (0 unexpected) in 0.1 (0.1) seconds
+Test Suite 'HiperdexSourceTests' started at 2026-10-11 07:41:27.687
+Test Case 'HiperdexSourceTests.testCatalogDistinguishesRecognizedEmptyDetailFromErrorHeading' started at 2026-10-11 07:41:27.687
+Test Case 'HiperdexSourceTests.testCatalogDistinguishesRecognizedEmptyDetailFromErrorHeading' passed (0.009 seconds)
+Test Case 'HiperdexSourceTests.testDefaultExportContainsAndroidHiperdexRoutesAndFilters' started at 2026-10-11 07:41:27.696
+Test Case 'HiperdexSourceTests.testDefaultExportContainsAndroidHiperdexRoutesAndFilters' passed (0.002 seconds)
+Test Case 'HiperdexSourceTests.testDetailCatalogAndReaderDecodeEntitiesWithoutPreloadingCatalog' started at 2026-10-11 07:41:27.698
+Test Case 'HiperdexSourceTests.testDetailCatalogAndReaderDecodeEntitiesWithoutPreloadingCatalog' passed (0.03 seconds)
+Test Case 'HiperdexSourceTests.testDetailRejectsErrorHeadingAndStripsSuffixAfterH1Fallback' started at 2026-10-11 07:41:27.728
+Test Case 'HiperdexSourceTests.testDetailRejectsErrorHeadingAndStripsSuffixAfterH1Fallback' passed (0.018 seconds)
+Test Case 'HiperdexSourceTests.testFallbackLinksRunWhenRecognizedCardBlocksProduceNoItems' started at 2026-10-11 07:41:27.746
+Test Case 'HiperdexSourceTests.testFallbackLinksRunWhenRecognizedCardBlocksProduceNoItems' passed (0.006 seconds)
+Test Case 'HiperdexSourceTests.testImportedConfigurationControlsRequestsHeadersFiltersAndRelativeImages' started at 2026-10-11 07:41:27.752
+Test Case 'HiperdexSourceTests.testImportedConfigurationControlsRequestsHeadersFiltersAndRelativeImages' passed (0.056 seconds)
+Test Case 'HiperdexSourceTests.testLatestSearchCategoryAndFiltersPreserveAndroidURLsAndOrder' started at 2026-10-11 07:41:27.809
+Test Case 'HiperdexSourceTests.testLatestSearchCategoryAndFiltersPreserveAndroidURLsAndOrder' passed (0.038 seconds)
+Test Case 'HiperdexSourceTests.testValidEmptyListDiffersFromErrorShellAndTransportFailuresPropagate' started at 2026-10-11 07:41:27.847
+Test Case 'HiperdexSourceTests.testValidEmptyListDiffersFromErrorShellAndTransportFailuresPropagate' passed (0.011 seconds)
+Test Suite 'HiperdexSourceTests' passed at 2026-10-11 07:41:27.858
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.17 (0.17) seconds
+Test Suite 'SourceImportContractTests' started at 2026-10-11 07:41:27.858
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' started at 2026-10-11 07:41:27.858
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' started at 2026-10-11 07:41:27.859
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' passed (0.002 seconds)
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' started at 2026-10-11 07:41:27.861
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' started at 2026-10-11 07:41:27.862
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' started at 2026-10-11 07:41:27.863
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' passed (0.001 seconds)
+Test Suite 'SourceImportContractTests' passed at 2026-10-11 07:41:27.864
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.006 (0.006) seconds
+Test Suite 'SourcePreferencesTests' started at 2026-10-11 07:41:27.864
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' started at 2026-10-11 07:41:27.864
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' started at 2026-10-11 07:41:27.865
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' started at 2026-10-11 07:41:27.866
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' passed (0.006 seconds)
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' started at 2026-10-11 07:41:27.872
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' passed (0.042 seconds)
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' started at 2026-10-11 07:41:27.914
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' started at 2026-10-11 07:41:27.915
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' passed (0.0 seconds)
+Test Suite 'SourcePreferencesTests' passed at 2026-10-11 07:41:27.915
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.051 (0.051) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 07:41:27.915
+Executed 22 tests, with 0 failures (0 unexpected) in 0.327 (0.327) seconds
