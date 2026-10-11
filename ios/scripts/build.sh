@@ -38,11 +38,13 @@ if [ "${#DESTINATIONS[@]}" -eq 0 ]; then
 fi
 
 validation_scope="${IOS_VALIDATION_SCOPE:-full}"
-test_filters=()
+# macOS's Bash 3.2 treats an empty array expansion as unset under `set -u`.
+# Keep common xcodebuild arguments in the same, always nonempty array.
+test_arguments=(-project XXComic.xcodeproj -scheme XXComic -configuration Debug CODE_SIGNING_ALLOWED=NO)
 case "$validation_scope" in
   full) ;;
   foundation-import)
-    test_filters=(
+    test_arguments+=(
       -only-testing:XXComicTests
       -only-testing:XXComicUITests/AppNavigationTests
       -only-testing:XXComicUITests/BookshelfParityUITests
@@ -57,9 +59,8 @@ test_failed=0
 for dest in "${DESTINATIONS[@]}"; do
   echo "==> Running tests on destination: $dest"
   test_results=$(mktemp -d build/ui-results-XXXXXX)
-  if ! xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Debug \
-    -destination "$dest" -derivedDataPath build/simulator \
-    -resultBundlePath "$test_results/UITests.xcresult" CODE_SIGNING_ALLOWED=NO "${test_filters[@]}" test; then
+  if ! xcodebuild "${test_arguments[@]}" -destination "$dest" -derivedDataPath build/simulator \
+    -resultBundlePath "$test_results/UITests.xcresult" test; then
     test_failed=1
   fi
   python3 scripts/export_evidence.py "$test_results/UITests.xcresult" build/evidence

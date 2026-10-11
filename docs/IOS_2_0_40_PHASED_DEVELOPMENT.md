@@ -1,6 +1,6 @@
 # iOS 对齐 Android 2.0.40：分阶段开发与自主验收方案
 
-最新第五轮e29824a完整范围CI在Debug SDK编译失败：SettingsViewController的leastNormalMagnitude类型歧义；Release、核心、两设备原生/UI均未运行，不能继承第四轮结果为该版本通过。已显式改为CGFloat，并补失败PNG/逐用例JSON上传路径，接下来重跑完整Apple自验。package_ipa仍为false，不生成IPA；非站源及真实51源完整门槛仍未通过。 [第五轮实际记录](ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/repair-5-summary.json)。下文历史结果仅对应各自提交。
+最新第六轮301dc11的Debug/Release Apple SDK编译及Apple核心853项0失败通过（68.134秒），随后macOS Bash展开空test_filters数组时报unbound variable，两设备原生/UI均未运行、没有IPA。构建脚本已改为始终非空的公共参数数组，完整full测试范围保留，继续Apple自验。非站源/51真实源门槛仍未通过。 [第六轮实际记录](ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/repair-6-summary.json)。下文历史结果仅对应各自提交。
 
 执行日期：2026-10-11。此方案落实用户最新指令：先写完整方案，再按阶段开发和自验；阶段通过后自动推进，用户只负责最终总验收。实施问题集中记录，最终汇总，不在中间要求用户试包、选择实现方式或批准下一阶段。
 

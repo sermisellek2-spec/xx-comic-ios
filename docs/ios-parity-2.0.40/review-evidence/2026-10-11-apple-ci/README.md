@@ -31,3 +31,5 @@
 下一轮默认full包含全部UI，并导出实际失败PNG/逐用例状态；package_ipa显式开关默认false，只有最终全部自验后才启用。不生成IPA不改变完整测试门槛，不提前连接真实源。
 
 第五轮e29824a的[CI38149042092](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38149042092)在Debug SDK编译时报`SettingsViewController.swift:37:89: ambiguous use of leastNormalMagnitude`，后续Release/核心/UI未运行、没有IPA。修复显式CGFloat标量后重跑完整范围；失败PNG及逐用例结果JSON现加入可下载证据目录。见[repair-5-summary.json](repair-5-summary.json)，旧成功结果不继承。
+
+第六轮301dc11的[CI38149699847](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38149699847)两配置SDK和Apple核心853项0失败/68.134秒通过；macOS Bash空参数数组展开报unbound variable，两设备原生/UI未运行，无IPA。修为始终非空公共参数数组后继续full，未缩减任何测试。见[repair-6-summary.json](repair-6-summary.json)。

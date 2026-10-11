@@ -1,0 +1,8 @@
+2026-10-11T15:04:38.9547800Z ** BUILD SUCCEEDED **
+2026-10-11T15:05:48.6442390Z ** BUILD SUCCEEDED **
+2026-10-11T15:07:29.2055900Z 	 Executed 853 tests, with 0 failures (0 unexpected) in 68.134 (68.176) seconds
+2026-10-11T15:07:29.2056430Z 	 Executed 853 tests, with 0 failures (0 unexpected) in 68.134 (68.177) seconds
+2026-10-11T15:07:29.2060930Z ios/scripts/build.sh: line 60: test_filters[@]: unbound variable
+2026-10-11T15:07:29.2061250Z ==> Native validation scope: full (partial validation never produces an IPA)
+2026-10-11T15:07:29.2061620Z ==> Running tests on destination: platform=iOS Simulator,id=E63A4C69-8ADF-4037-A5EE-AE47A98E069B
+2026-10-11T15:07:29.2073620Z ##[error]Process completed with exit code 1.

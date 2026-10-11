@@ -1,0 +1,21 @@
+{
+  "run": 38149699847,
+  "commit": "301dc11b6fd3b69f7fcae4ca8936a964b8f6360d",
+  "conclusion": "failure",
+  "scope": "full",
+  "package_ipa": false,
+  "debug_sdk": "passed",
+  "release_sdk": "passed",
+  "apple_core": {
+    "executed": 853,
+    "failures": 0,
+    "seconds": 68.134
+  },
+  "iphone_native_ui": "not_run",
+  "ipad_native_ui": "not_run",
+  "error": "macOS Bash 3.2 with set -u rejected the empty test_filters array expansion",
+  "raw_log_sha256": "3764c984bace37bcd6f557d12d47dd15ccf46e5d0ef3ae14bd1b2020925f4a04",
+  "fix": "always nonempty common xcodebuild test_arguments array; complete full scope retained",
+  "fix_apple_result": "not_run",
+  "non_source_gate": false
+}
