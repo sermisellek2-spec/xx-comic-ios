@@ -25,7 +25,16 @@ final class ReaderContinuityUITests: ParityUITestCase {
         if !app.buttons["reader.settings"].isHittable {
             app.collectionViews["reader.pages"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         }
+        waitForControls(app, visible: true)
         XCTAssertTrue(app.buttons["reader.settings"].isHittable)
+    }
+    private func waitForControls(_ app: XCUIApplication, visible: Bool) {
+        // A single tap waits for the production double-tap recognizer to fail.
+        // Synchronize that transition without removing the visibility assertion.
+        let settings = app.buttons["reader.settings"]
+        let predicate = NSPredicate { _, _ in (settings.exists && settings.isHittable) == visible }
+        let changed = XCTNSPredicateExpectation(predicate: predicate, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 3), .completed)
     }
     private func scrollToChapter(_ chapter: String, in app: XCUIApplication) {
         let pages = app.collectionViews["reader.pages"]
@@ -54,6 +63,7 @@ final class ReaderContinuityUITests: ParityUITestCase {
         let canvas = pages.frame, imageFrame = image.frame
         let center = pages.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         center.tap()
+        waitForControls(app, visible: false)
         XCTAssertFalse(app.buttons["reader.settings"].isHittable)
         XCTAssertEqual(pages.frame.minY, canvas.minY, accuracy: 1)
         XCTAssertEqual(pages.frame.height, canvas.height, accuracy: 1)

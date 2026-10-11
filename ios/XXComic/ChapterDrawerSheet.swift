@@ -357,6 +357,9 @@ private final class ChapterRowCell: UITableViewCell {
 
     func configure(title: String, isCurrent: Bool, isReader: Bool, isDarkReader: Bool) {
         titleLabel.text = title
+        isAccessibilityElement = true
+        accessibilityLabel = title
+        accessibilityTraits = isCurrent ? [.selected] : []
 
         let indicatorColor = isReader && !isDarkReader
             ? UIColor(red: 9/255, green: 105/255, blue: 218/255, alpha: 1.0) // #0969DA

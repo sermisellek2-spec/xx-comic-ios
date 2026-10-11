@@ -1,0 +1,4 @@
+Plist source checks: PASS (compiled plist and Files registration remain pending Apple)
+Swift native sources: 83; full planned UI methods: 76; native methods: 24; recovery UI methods: 18
+ComicCore unchanged from a41b28a: PASS
+exit_code=0

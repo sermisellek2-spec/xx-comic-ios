@@ -14,6 +14,12 @@ final class ReaderSeekBar: UIView {
     var onCommit: ((Int) -> Void)?
     var onTracking: ((Bool) -> Void)?
 
+    // A centered stack gives a plain UIView no height. The slider then draws
+    // outside a zero-height parent, losing hit testing and accessibility.
+    override var intrinsicContentSize: CGSize {
+        CGSize(width: UIView.noIntrinsicMetric, height: 40)
+    }
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setup()

@@ -8,17 +8,28 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     private var environment: AppEnvironment?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        true
+    }
+
+    func configureMainWindow(_ window: UIWindow) {
+        // Reconnecting the sole scene reuses its library, running tasks and UI.
+        if let previous = self.window, let root = previous.rootViewController {
+            window.rootViewController = root
+            window.overrideUserInterfaceStyle = previous.overrideUserInterfaceStyle
+            self.window = window
+            window.makeKeyAndVisible()
+            return
+        }
+        self.window = window
         #if DEBUG
         let process = ProcessInfo.processInfo
         if !process.arguments.contains("--ui-testing"),
            process.environment["XXCOMIC_NATIVE_TEST_HOST"] == "1" || process.environment["XCTestConfigurationFilePath"] != nil {
             // Hosted unit tests exercise the real components without starting the
             // production library, source refresh, or launch statistics reporter.
-            let window = UIWindow(frame: UIScreen.main.bounds)
             window.rootViewController = UIViewController()
             window.makeKeyAndVisible()
-            self.window = window
-            return true
+            return
         }
         #endif
         let defaults = ProcessInfo.processInfo.arguments.contains("--ui-testing")
@@ -38,10 +49,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         let environment: AppEnvironment
         do { environment = try AppEnvironment(defaults: defaults) }
         catch {
-            let window = UIWindow(frame: UIScreen.main.bounds)
             window.rootViewController = DevelopmentPage(title: "本地数据读取失败", message: "书架数据无法读取，原文件已保留。\n\n" + error.localizedDescription)
-            window.makeKeyAndVisible(); self.window = window
-            return true
+            window.makeKeyAndVisible()
+            return
         }
         let shelf = BookshelfViewController(environment: environment)
         let discover = DiscoverViewController(environment: environment)
@@ -64,7 +74,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         tabs.tabBar.standardAppearance = appearance
         tabs.tabBar.scrollEdgeAppearance = appearance
-        let window = UIWindow(frame: UIScreen.main.bounds)
         window.rootViewController = tabs
         #if DEBUG
         if referenceSystemTheme {
@@ -73,10 +82,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         #endif
         window.makeKeyAndVisible()
-        self.window = window
         self.environment = environment
         themeController = AppThemeController(root: tabs, defaults: defaults)
-        return true
     }
 
     func applicationWillResignActive(_ application: UIApplication) {

@@ -6,7 +6,7 @@ on:
       validation_scope:
         description: 阶段验证不产出IPA，完整回归通过后才允许打包
         type: choice
-        options: [foundation-import, full]
+        options: [foundation-import, recovery-regression, full]
         default: full
       package_ipa:
         description: 仅全部阶段自验通过后生成最终未签名IPA
@@ -31,7 +31,9 @@ jobs:
     # Keep the full matrix; one retained hierarchy per scene removes that overhead.
     timeout-minutes: 90
     env:
-      IOS_VALIDATION_SCOPE: ${{ github.event.inputs.validation_scope || 'full' }}
+      # Pushes collect the current recovery repair evidence. Full validation is
+      # still required and available through workflow_dispatch before packaging.
+      IOS_VALIDATION_SCOPE: ${{ github.event.inputs.validation_scope || 'recovery-regression' }}
       IOS_PACKAGE_IPA: ${{ github.event.inputs.package_ipa || 'false' }}
 
     steps:

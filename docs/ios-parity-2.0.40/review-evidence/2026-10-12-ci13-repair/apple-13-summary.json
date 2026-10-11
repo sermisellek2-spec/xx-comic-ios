@@ -1,0 +1,165 @@
+{
+  "run_id": 38178699287,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38178699287",
+  "head_sha": "49446de7480c2405bcfaae4b2f389223d6e69998",
+  "conclusion": "failure",
+  "debug_build": "success",
+  "release_build": "success",
+  "core": {
+    "executed": 884,
+    "failed": 1,
+    "seconds": 140.718
+  },
+  "native": {
+    "iphone": {
+      "executed": 20,
+      "failed": 0,
+      "seconds": 7.895
+    },
+    "ipad": {
+      "executed": 20,
+      "failed": 0,
+      "seconds": 4.873
+    }
+  },
+  "ui": {
+    "iphone": {
+      "executed": 74,
+      "failed_cases": 14,
+      "failed_assertions": 21,
+      "seconds": 1981.06
+    },
+    "ipad": {
+      "executed": 74,
+      "failed_cases": 13,
+      "failed_assertions": 18,
+      "seconds": 2144.155
+    }
+  },
+  "failed_cases": {
+    "core": [
+      "2026-10-11T22:08:09.1687360Z Test Case '-[ComicCoreTests.CacheMaintenanceTests testDiskCleanupRestoresLimitsAndAllowsLaterResponses]' failed (7.659 seconds)."
+    ],
+    "iphone": [
+      "2026-10-11T22:16:44.5384460Z Test Case '-[XXComicUITests.BookshelfParityUITests testSwitchingGridToListKeepsVisibleComic]' failed (16.817 seconds).",
+      "2026-10-11T22:30:33.9137880Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles]' failed (48.117 seconds).",
+      "2026-10-11T22:31:25.2587930Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch]' failed (51.384 seconds).",
+      "2026-10-11T22:32:13.8087200Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch]' failed (48.513 seconds).",
+      "2026-10-11T22:34:21.6344440Z Test Case '-[XXComicUITests.ReaderContinuityUITests testContinuousChapterLocalSeekModeSwitchAndRelaunchResume]' failed (20.687 seconds).",
+      "2026-10-11T22:35:41.6767000Z Test Case '-[XXComicUITests.ReaderContinuityUITests testLastChapterHasEndStateWithoutDiscardingImages]' failed (17.252 seconds).",
+      "2026-10-11T22:36:38.9433040Z Test Case '-[XXComicUITests.ReaderContinuityUITests testPagedControlsDoNotMoveOrResizeImages]' failed (12.229 seconds).",
+      "2026-10-11T22:36:58.6636180Z Test Case '-[XXComicUITests.ReaderContinuityUITests testRotationKeepsChapterAndLocalImageAfterContinuousAppend]' failed (19.742 seconds).",
+      "2026-10-11T22:37:11.9939510Z Test Case '-[XXComicUITests.ReaderContinuityUITests testStripControlsDoNotMoveOrResizeImages]' failed (12.896 seconds).",
+      "2026-10-11T22:39:36.4095550Z Test Case '-[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery]' failed (24.710 seconds).",
+      "2026-10-11T22:41:14.3962920Z Test Case '-[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark]' failed (33.895 seconds).",
+      "2026-10-11T22:41:46.1207600Z Test Case '-[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight]' failed (31.717 seconds).",
+      "2026-10-11T22:42:16.7578400Z Test Case '-[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark]' failed (30.645 seconds).",
+      "2026-10-11T22:42:47.5242560Z Test Case '-[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight]' failed (30.761 seconds)."
+    ],
+    "ipad": [
+      "2026-10-11T23:05:34.8575310Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles]' failed (41.185 seconds).",
+      "2026-10-11T23:06:14.5964820Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch]' failed (39.739 seconds).",
+      "2026-10-11T23:06:52.5563550Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch]' failed (37.960 seconds).",
+      "2026-10-11T23:09:25.2167990Z Test Case '-[XXComicUITests.ReaderContinuityUITests testContinuousChapterLocalSeekModeSwitchAndRelaunchResume]' failed (31.348 seconds).",
+      "2026-10-11T23:11:07.5530720Z Test Case '-[XXComicUITests.ReaderContinuityUITests testLastChapterHasEndStateWithoutDiscardingImages]' failed (20.971 seconds).",
+      "2026-10-11T23:12:44.2590310Z Test Case '-[XXComicUITests.ReaderContinuityUITests testPagedControlsDoNotMoveOrResizeImages]' failed (15.321 seconds).",
+      "2026-10-11T23:13:14.3523860Z Test Case '-[XXComicUITests.ReaderContinuityUITests testRotationKeepsChapterAndLocalImageAfterContinuousAppend]' failed (30.091 seconds).",
+      "2026-10-11T23:13:33.2536360Z Test Case '-[XXComicUITests.ReaderContinuityUITests testStripControlsDoNotMoveOrResizeImages]' failed (18.864 seconds).",
+      "2026-10-11T23:16:19.7364900Z Test Case '-[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery]' failed (32.070 seconds).",
+      "2026-10-11T23:18:37.7155460Z Test Case '-[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark]' failed (43.415 seconds).",
+      "2026-10-11T23:19:15.6062020Z Test Case '-[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight]' failed (37.886 seconds).",
+      "2026-10-11T23:19:51.8661370Z Test Case '-[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark]' failed (36.232 seconds).",
+      "2026-10-11T23:20:29.1992910Z Test Case '-[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight]' failed (37.313 seconds)."
+    ]
+  },
+  "failure_assertion_lines": {
+    "core": [
+      "2026-10-11T22:08:09.1671360Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Tests/ComicCoreTests/CacheMaintenanceTests.swift:24: error: -[ComicCoreTests.CacheMaintenanceTests testDiskCleanupRestoresLimitsAndAllowsLaterResponses] : XCTAssertTrue failed - Actual remaining cache: memory=0, disk=36864"
+    ],
+    "iphone": [
+      "2026-10-11T22:16:43.7825470Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/BookshelfParityUITests.swift:32: error: -[XXComicUITests.BookshelfParityUITests testSwitchingGridToListKeepsVisibleComic] : XCTAssertTrue failed - Layout switching must keep a visible book instead of returning to the top",
+      "2026-10-11T22:30:32.7571980Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:46: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : XCTUnwrap failed: expected non-nil value of type \"XCUIElement\" - The separate app must appear in the real Files provider",
+      "2026-10-11T22:30:59.8675480Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:38: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : XCTAssertTrue failed",
+      "2026-10-11T22:31:24.4740290Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:46: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : XCTUnwrap failed: expected non-nil value of type \"XCUIElement\" - The separate app must appear in the real Files provider",
+      "2026-10-11T22:31:48.6081010Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:38: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch] : XCTAssertTrue failed",
+      "2026-10-11T22:32:13.1238310Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:46: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch] : XCTUnwrap failed: expected non-nil value of type \"XCUIElement\" - The separate app must appear in the real Files provider",
+      "2026-10-11T22:34:21.0901750Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:79: error: -[XXComicUITests.ReaderContinuityUITests testContinuousChapterLocalSeekModeSwitchAndRelaunchResume] : Failed to get matching snapshot: No matches found for Descendants matching type Slider from input {(",
+      "2026-10-11T22:35:38.9047660Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:122: error: -[XXComicUITests.ReaderContinuityUITests testLastChapterHasEndStateWithoutDiscardingImages] : XCTAssertTrue failed",
+      "2026-10-11T22:35:41.0633520Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:122: error: -[XXComicUITests.ReaderContinuityUITests testLastChapterHasEndStateWithoutDiscardingImages] : Failed to tap \"第6话\" Cell: No matches found for Elements matching predicate '\"第6话\" IN identifiers' from input {(",
+      "2026-10-11T22:36:36.2285180Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:57: error: -[XXComicUITests.ReaderContinuityUITests testPagedControlsDoNotMoveOrResizeImages] : XCTAssertFalse failed",
+      "2026-10-11T22:36:58.0422950Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:145: error: -[XXComicUITests.ReaderContinuityUITests testRotationKeepsChapterAndLocalImageAfterContinuousAppend] : Failed to get matching snapshot: No matches found for Descendants matching type Slider from input {(",
+      "2026-10-11T22:37:08.7351300Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:57: error: -[XXComicUITests.ReaderContinuityUITests testStripControlsDoNotMoveOrResizeImages] : XCTAssertFalse failed",
+      "2026-10-11T22:39:30.9707350Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SettingsParityUITests.swift:47: error: -[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery] : XCTAssertTrue failed",
+      "2026-10-11T22:41:01.4886100Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:148: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark] : XCTAssertTrue failed",
+      "2026-10-11T22:41:12.4151150Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:151: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark] : XCTAssertTrue failed",
+      "2026-10-11T22:41:33.1638360Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:148: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertTrue failed",
+      "2026-10-11T22:41:44.1225010Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:151: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertTrue failed",
+      "2026-10-11T22:42:04.9300660Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:148: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertTrue failed",
+      "2026-10-11T22:42:15.9364700Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:151: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertTrue failed",
+      "2026-10-11T22:42:35.5690100Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:148: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight] : XCTAssertTrue failed",
+      "2026-10-11T22:42:46.4973720Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:151: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight] : XCTAssertTrue failed"
+    ],
+    "ipad": [
+      "2026-10-11T23:05:33.7869440Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:46: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : XCTUnwrap failed: expected non-nil value of type \"XCUIElement\" - The separate app must appear in the real Files provider",
+      "2026-10-11T23:06:13.5291160Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:46: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : XCTUnwrap failed: expected non-nil value of type \"XCUIElement\" - The separate app must appear in the real Files provider",
+      "2026-10-11T23:06:51.5357160Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:46: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch] : XCTUnwrap failed: expected non-nil value of type \"XCUIElement\" - The separate app must appear in the real Files provider",
+      "2026-10-11T23:09:24.4063780Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:79: error: -[XXComicUITests.ReaderContinuityUITests testContinuousChapterLocalSeekModeSwitchAndRelaunchResume] : Failed to get matching snapshot: No matches found for Descendants matching type Slider from input {(",
+      "2026-10-11T23:11:04.3964190Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:122: error: -[XXComicUITests.ReaderContinuityUITests testLastChapterHasEndStateWithoutDiscardingImages] : XCTAssertTrue failed",
+      "2026-10-11T23:11:06.5844310Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:122: error: -[XXComicUITests.ReaderContinuityUITests testLastChapterHasEndStateWithoutDiscardingImages] : Failed to tap \"第6话\" Cell: No matches found for Elements matching predicate '\"第6话\" IN identifiers' from input {(",
+      "2026-10-11T23:12:40.9259720Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:57: error: -[XXComicUITests.ReaderContinuityUITests testPagedControlsDoNotMoveOrResizeImages] : XCTAssertFalse failed",
+      "2026-10-11T23:13:13.2946760Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:145: error: -[XXComicUITests.ReaderContinuityUITests testRotationKeepsChapterAndLocalImageAfterContinuousAppend] : Failed to get matching snapshot: No matches found for Descendants matching type Slider from input {(",
+      "2026-10-11T23:13:28.6813500Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:57: error: -[XXComicUITests.ReaderContinuityUITests testStripControlsDoNotMoveOrResizeImages] : XCTAssertFalse failed",
+      "2026-10-11T23:16:13.6596330Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SettingsParityUITests.swift:47: error: -[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery] : XCTAssertTrue failed",
+      "2026-10-11T23:18:22.8328080Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:148: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark] : XCTAssertTrue failed",
+      "2026-10-11T23:18:33.7158210Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:151: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeDark] : XCTAssertTrue failed",
+      "2026-10-11T23:19:00.7269470Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:148: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertTrue failed",
+      "2026-10-11T23:19:12.0266760Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:151: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertTrue failed",
+      "2026-10-11T23:19:39.2853980Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:148: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertTrue failed",
+      "2026-10-11T23:19:50.0408770Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:151: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertTrue failed",
+      "2026-10-11T23:20:15.9947830Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:148: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight] : XCTAssertTrue failed",
+      "2026-10-11T23:20:26.7512190Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:151: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitLight] : XCTAssertTrue failed"
+    ]
+  },
+  "cache_diagnostic": [
+    "2026-10-11T22:10:09.9261160Z HTTP_CACHE_DIAGNOSTIC stage=fresh memory=0 disk=81920",
+    "2026-10-11T22:10:09.9261440Z HTTP_CACHE_DIAGNOSTIC stage=stored memory=4096 disk=81920",
+    "2026-10-11T22:10:09.9261800Z HTTP_CACHE_DIAGNOSTIC stage=cleared memory=0 disk=36864 cached=false",
+    "2026-10-11T22:10:09.9262500Z HTTP_CACHE_DIAGNOSTIC stage=settled sample=1 memory=0 disk=144016 cached=false",
+    "2026-10-11T22:10:09.9262950Z HTTP_CACHE_DIAGNOSTIC stage=settled sample=2 memory=0 disk=144016 cached=false",
+    "2026-10-11T22:10:09.9263420Z HTTP_CACHE_DIAGNOSTIC stage=settled sample=3 memory=0 disk=144016 cached=false",
+    "2026-10-11T22:10:09.9263830Z HTTP_CACHE_DIAGNOSTIC stage=settled sample=4 memory=0 disk=144016 cached=false",
+    "2026-10-11T22:10:09.9264300Z HTTP_CACHE_DIAGNOSTIC stage=settled sample=5 memory=0 disk=144016 cached=false",
+    "2026-10-11T22:10:09.9264780Z HTTP_CACHE_DIAGNOSTIC stage=settled sample=6 memory=0 disk=144016 cached=false",
+    "2026-10-11T22:10:09.9265180Z HTTP_CACHE_DIAGNOSTIC stage=settled sample=7 memory=0 disk=144016 cached=false",
+    "2026-10-11T22:10:09.9265610Z HTTP_CACHE_DIAGNOSTIC stage=settled sample=8 memory=0 disk=144016 cached=false",
+    "2026-10-11T22:10:09.9265990Z HTTP_CACHE_DIAGNOSTIC stage=reused memory=4096 disk=144016"
+  ],
+  "archives": [
+    {
+      "file": "ios/build/apple-ci-38178699287/original-logs.zip",
+      "bytes": 1102922,
+      "sha256": "7ee23e4996dacfa71e25e65bb2193986f720c99f2a29a806a070ea05d08c5740"
+    },
+    {
+      "file": "ios/build/apple-ci-38178699287/visual-matrix-screenshots.zip",
+      "bytes": 72758052,
+      "sha256": "2ef201600a878291565839d4f426e3bc1f333d06b154d594369e5605bda4469c"
+    },
+    {
+      "file": "ios/build/apple-ci-38178699287/iOS-test-results.zip",
+      "bytes": 394083189,
+      "sha256": "78831bf42a284f6733a90a8b219576bf70ae58c2f7b94c134292d646ee872734"
+    }
+  ],
+  "visual_comparison": {
+    "file": "../2026-10-12-current-visual/ci13-comparison/comparison.json",
+    "prepared": 32,
+    "expected": 64,
+    "pending": 32,
+    "visual_gate_passed": false,
+    "ipad_reason": "Logical size mismatch: Android [834.0, 1210.0]; Apple [803.6727272727273, 1150.581818181818]"
+  },
+  "ipa_produced": false,
+  "contains_download_lifecycle_or_config_consumer_repairs": false,
+  "non_source_gate_passed": false
+}

@@ -147,9 +147,9 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
         let visible = collection.indexPathsForVisibleItems.sorted { $0.item < $1.item }
         guard let index = visible.first(where: {
             guard let frame = collection.layoutAttributesForItem(at: $0)?.frame else { return false }
-            // Anchor a book whose activation point is actually visible, rather
-            // than a clipped row that UIKit cannot tap at the top of the grid.
-            return frame.midY >= top && frame.midY < bottom
+            // A partially visible first row is still the user's current book.
+            // restoreAnchor clamps its offset so the new cell remains tappable.
+            return frame.maxY > top && frame.minY < bottom
         }), comics.indices.contains(index.item), let frame = collection.layoutAttributesForItem(at: index)?.frame else { return nil }
         let comic = comics[index.item]
         return ComicGridAnchor(sourceID: comic.sourceId, comicID: comic.comicId, previousIndex: index.item, offset: top - frame.minY)

@@ -1,0 +1,2 @@
+bash -n ios/scripts/build.sh
+exit_code=0

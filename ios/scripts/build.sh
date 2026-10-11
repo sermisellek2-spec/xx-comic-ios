@@ -55,25 +55,40 @@ case "$validation_scope" in
       -only-testing:XXComicUITests/BatchImportRecoveryUITests
     )
     ;;
+  recovery-regression)
+    test_arguments+=(
+      -only-testing:XXComicTests
+      -only-testing:XXComicUITests/BookshelfParityUITests
+      -only-testing:XXComicUITests/ExternalFilesParityUITests
+      -only-testing:XXComicUITests/ReaderContinuityUITests
+      -only-testing:XXComicUITests/DownloadLifecycleUITests
+    )
+    ;;
   *) echo "Unknown validation scope: $validation_scope" >&2; exit 2 ;;
 esac
 echo "==> Native validation scope: $validation_scope (partial validation never produces an IPA)"
 
 # This separate application provides real Files-provider directories outside
 # XXComic's sandbox. It is not a dependency of the production app or IPA.
-if [ "$validation_scope" = full ]; then
+if [ "$validation_scope" = full ] || [ "$validation_scope" = recovery-regression ]; then
   xcodebuild -project XXComic.xcodeproj -scheme FilesFixtureHost -configuration Debug \
     -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
     -derivedDataPath build/files-fixture CODE_SIGNING_ALLOWED=NO build
   fixture_info=build/files-fixture/Build/Products/Debug-iphonesimulator/FilesFixtureHost.app/Info.plist
   /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$fixture_info"
   /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$fixture_info"
+  sharing=$(/usr/libexec/PlistBuddy -c 'Print :UIFileSharingEnabled' "$fixture_info")
+  in_place=$(/usr/libexec/PlistBuddy -c 'Print :LSSupportsOpeningDocumentsInPlace' "$fixture_info")
+  if [ "$sharing" != true ] || [ "$in_place" != true ]; then
+    echo 'The separate Files fixture must actually publish its Documents directory.' >&2
+    exit 1
+  fi
 fi
 
 test_failed=$validation_failed
 for dest in "${DESTINATIONS[@]}"; do
   echo "==> Running tests on destination: $dest"
-  if [ "$validation_scope" = full ]; then
+  if [ "$validation_scope" = full ] || [ "$validation_scope" = recovery-regression ]; then
     simulator_id="${dest##*id=}"
     xcrun simctl boot "$simulator_id" 2>/dev/null || true
     xcrun simctl bootstatus "$simulator_id" -b
