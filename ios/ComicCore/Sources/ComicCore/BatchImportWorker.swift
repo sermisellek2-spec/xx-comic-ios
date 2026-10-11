@@ -66,6 +66,8 @@ public actor BatchImportWorker {
 
     public static func createBookmark(for url: URL) throws -> Data {
         #if canImport(Darwin)
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         return try url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
         #else
         return Data(url.path.utf8)
@@ -73,12 +75,17 @@ public actor BatchImportWorker {
     }
 
     public static func resolveBookmark(_ data: Data) throws -> URL {
+        try resolveBookmarkWithState(data).url
+    }
+
+    static func resolveBookmarkWithState(_ data: Data) throws -> (url: URL, isStale: Bool) {
         #if canImport(Darwin)
         var isStale = false
-        return try URL(resolvingBookmarkData: data, options: [], relativeTo: nil, bookmarkDataIsStale: &isStale)
+        let url = try URL(resolvingBookmarkData: data, options: [], relativeTo: nil, bookmarkDataIsStale: &isStale)
+        return (url, isStale)
         #else
-        guard let path = String(data: data, encoding: .utf8) else { throw LocalLibraryError.invalidBook }
-        return URL(fileURLWithPath: path)
+        guard let path = String(data: data, encoding: .utf8), path.hasPrefix("/"), !path.contains("\0") else { throw LocalLibraryError.invalidBook }
+        return (URL(fileURLWithPath: path), false)
         #endif
     }
 
@@ -229,6 +236,7 @@ public actor BatchImportWorker {
 
                 // Check live state in session before processing
                 let liveSnapshot = await session.current()
+                if isCancelled || Task.isCancelled || liveSnapshot?.cancelled == true { isCancelled = true; break }
                 if let liveItem = liveSnapshot?.groups[groupIndex].items[itemIndex],
                    liveItem.state == .completed || liveItem.state == .skipped {
                     continue
@@ -246,17 +254,18 @@ public actor BatchImportWorker {
                     continue
                 }
 
-                // Mark item running
-                try await session.start(taskID: taskId, group: groupIndex, item: itemIndex)
-                progress?(ProgressUpdate(
-                    taskId: taskId, groupIndex: groupIndex, totalGroups: snapshot.groups.count,
-                    itemIndex: itemIndex, totalItemsInGroup: group.items.count, itemName: item.name,
-                    state: .running, errorDescription: nil, targetSeriesId: currentTargetSeriesId
-                ))
-
                 // Prepare and Publish
                 do {
                     try Task.checkCancellation()
+                    // Cancellation can arrive during this actor hop, after the
+                    // live snapshot check. Treat it as the same user cancellation.
+                    try await session.start(taskID: taskId, group: groupIndex, item: itemIndex)
+                    progress?(ProgressUpdate(
+                        taskId: taskId, groupIndex: groupIndex, totalGroups: snapshot.groups.count,
+                        itemIndex: itemIndex, totalItemsInGroup: group.items.count, itemName: item.name,
+                        state: .running, errorDescription: nil, targetSeriesId: currentTargetSeriesId
+                    ))
+                    if isCancelled || Task.isCancelled { throw CancellationError() }
                     let cleanedName = cleanItemTitle(item.name)
                     let prepared = try withSecurityScopeAndCoordination(for: url) { coordinatedURL in
                         try self.prepareItem(url: coordinatedURL, name: cleanedName, format: item.format)
@@ -287,6 +296,9 @@ public actor BatchImportWorker {
                     ))
                 } catch is CancellationError {
                     try await session.cancel(taskID: taskId)
+                    isCancelled = true
+                    break
+                } catch BatchImportSession.SessionError.cancelled {
                     isCancelled = true
                     break
                 } catch {

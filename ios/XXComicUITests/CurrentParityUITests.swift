@@ -1,6 +1,6 @@
 import XCTest
 
-final class CurrentParityUITests: XCTestCase {
+final class CurrentParityUITests: ParityUITestCase {
     private func launch(_ flags: String...) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--light-mode"] + flags
@@ -194,7 +194,7 @@ final class CurrentParityUITests: XCTestCase {
     }
 
     func testCancelledDownloadAfterPendingReadCanOpenReaderAgain() {
-        let app = launch("--matrix-lazy-directory", "--matrix-directory-delay")
+        let app = launch("--matrix-lazy-directory", "--matrix-directory-held-until-cancel")
         app.buttons["我的书架"].tap()
         let comic = app.collectionViews.cells["间谍过家家"]
         XCTAssertTrue(comic.waitForExistence(timeout: 5)); comic.tap()

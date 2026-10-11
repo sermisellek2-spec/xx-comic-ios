@@ -1,6 +1,6 @@
 import XCTest
 
-final class LocalDeletionParityUITests: XCTestCase {
+final class LocalDeletionParityUITests: ParityUITestCase {
     private func selectRealImportedBook() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--epub-fixtures", "--light-mode"]

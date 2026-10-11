@@ -250,18 +250,19 @@ final class LocalSeriesLifecycleTests: XCTestCase {
         let prep = try library.prepareArchive(title: "正经书", archive: zip, isReadableImage: { _ in true })
         let (_, legitBook) = try await library.publishImport(prep)
 
-        // 2. Simulate abandoned staging directory
-        let abandonedStaging = tempDirectory.appendingPathComponent(".import-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: abandonedStaging, withIntermediateDirectories: false)
-        try Data("garbage".utf8).write(to: abandonedStaging.appendingPathComponent("trash.txt"))
-
-        // 3. Simulate uncommitted published volume directory
-        let uncommittedVolume = tempDirectory.appendingPathComponent(UUID().uuidString)
-        try FileManager.default.createDirectory(at: uncommittedVolume, withIntermediateDirectories: false)
-        try Data("lost".utf8).write(to: uncommittedVolume.appendingPathComponent("book.json"))
+        // Crash simulation uses the production preparation/publication writers.
+        // The previous fixture's arbitrary trash/lost files had no app ownership.
+        var abandoned: PreparedLocalImport? = try library.prepareArchive(title: "中断准备", archive: zip, isReadableImage: { _ in true })
+        let abandonedStaging = try XCTUnwrap(abandoned?.staging)
+        abandoned = nil // Release the live transaction lock, as a process exit would.
+        var uncommitted: PreparedLocalImport? = try library.prepareArchive(title: "未提交", archive: zip, isReadableImage: { _ in true })
+        let pending = try library.publishPrepared(XCTUnwrap(uncommitted), pendingCatalog: true)
+        let uncommittedVolume = tempDirectory.appendingPathComponent(pending.id)
+        uncommitted = nil
 
         // Recover orphans
-        try await library.recoverOrphans()
+        let restarted = try LocalLibrary(directory: tempDirectory)
+        try await restarted.recoverOrphans()
 
         // Abandoned staging and uncommitted volume cleaned
         XCTAssertFalse(FileManager.default.fileExists(atPath: abandonedStaging.path))
@@ -269,5 +270,7 @@ final class LocalSeriesLifecycleTests: XCTestCase {
 
         // Legit book untouched
         XCTAssertTrue(FileManager.default.fileExists(atPath: tempDirectory.appendingPathComponent(legitBook.id).path))
+        XCTAssertEqual(try restarted.book(id: legitBook.id), legitBook)
+        try await restarted.recoverOrphans() // Recovery is repeatable.
     }
 }

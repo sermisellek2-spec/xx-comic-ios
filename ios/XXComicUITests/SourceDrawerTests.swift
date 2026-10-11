@@ -1,6 +1,6 @@
 import XCTest
 
-final class SourceDrawerTests: XCTestCase {
+final class SourceDrawerTests: ParityUITestCase {
     func testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-catalog-fixtures"]

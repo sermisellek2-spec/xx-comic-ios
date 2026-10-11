@@ -1,6 +1,6 @@
 import XCTest
 
-final class Mh18VerificationTests: XCTestCase {
+final class Mh18VerificationTests: ParityUITestCase {
     func testManualVerificationCanCloseAndBeOpenedAgain() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-catalog-fixtures", "--verification-fixtures"]

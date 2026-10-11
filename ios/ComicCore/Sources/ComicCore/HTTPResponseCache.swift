@@ -22,9 +22,16 @@ public actor HTTPResponseCache {
         return HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))
     }
 
-    public func clear() throws -> HTTPResponseCacheUsage {
+    public func clear() async throws -> HTTPResponseCacheUsage {
         try Task.checkCancellation()
         cache.removeAllCachedResponses()
+        // Give framework disk accounting a bounded opportunity to settle without
+        // blocking the UI. Remaining bytes still produce an honest retry result.
+        for _ in 0..<40 {
+            try Task.checkCancellation()
+            if cache.currentMemoryUsage == 0, cache.currentDiskUsage == 0 { break }
+            try await Task.sleep(nanoseconds: 50_000_000)
+        }
         // Report remaining usage instead of claiming success if the framework retained data.
         return HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))
     }

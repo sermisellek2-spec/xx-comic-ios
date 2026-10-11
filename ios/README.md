@@ -1,6 +1,6 @@
 # XX Comic iOS
 
-最新第六轮301dc11的Debug/Release Apple SDK编译及Apple核心853项0失败通过（68.134秒），随后macOS Bash展开空test_filters数组时报unbound variable，两设备原生/UI均未运行、没有IPA。构建脚本已改为始终非空的公共参数数组，完整full测试范围保留，继续Apple自验。非站源/51真实源门槛仍未通过。 [第六轮实际记录](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/repair-6-summary.json)。下文历史结果仅对应各自提交。
+第七轮e2f53b5已完成完整Apple运行：Debug/Release构建及核心853项0失败通过；iPhone/iPad原生各19项通过，UI各54项执行，分别10/17个失败用例（16/27条失败断言）。当前正在补P4直接索引/授权/稳定页续读、持久归属恢复，以及iPad导入弹出位置、下载长按刷新、缓存反馈和批量取消竞争。非站源门槛仍未通过，不进入真实站源，不生成IPA。 [最新台账](../docs/ios-parity-2.0.40/STATUS.md)。下文旧版本结果仅是历史证据，不代表当前候选通过。
 
 原生 UIKit + ComicCore Swift Package，iOS16+，支持iPhone/iPad。当前Android冻结基线为2.0.40/340，提交 `696e80a44ab36b19de6f630565df32978e55a19e`。iOS checkout里的app/是旧Android副本，不能用作当前基线。
 
@@ -25,7 +25,7 @@ docker run --rm --mount "type=bind,source=$comicCorePath,target=/work" -w /work 
 
 当前Linux核心全量846项执行、2项Apple PDF跳过、0失败；66个原生/测试Swift文件两配置仅语法通过。最新恢复/同步修复见[接续恢复证据](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-import-recovery/README.md)。最新文件协调/私有暂存发布/离线图片读取接线和下载相关49项记录见[接续证据](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-download-files/README.md)。Linux核心或独立状态测试、Swift语法解析不替代Apple SDK类型检查、UIKit、CoreML、图像/PDF、WebKit、Files、后台调度和iPad验收。
 
-## macOS/私有CI
+## macOS/指定仓库CI
 
 安装Xcode与XcodeGen，用 `xcrun simctl list devices available` 获取真实iPhone和iPad模拟器UDID，再从checkout根目录运行：
 
@@ -37,8 +37,10 @@ bash ios/scripts/build.sh
 
 当前脚本按序接受两个目的设备，原生测试失败不打包。成功的未签名产物位于 `ios/build/XXComic-unsigned.ipa`，安装需用户自己的SideStore等工具签名。新包需解包核对CFBundleIcons、Assets.car/AppIcon资源、版本、SHA-256，并实际验收主屏图标。
 
-本批未发布，指定账号Git凭据与私有仓库写入权限已实际核验，正在准备Apple开发验证提交。唯一远端 `github` 的workflow支持手动触发及 `codex/ios-port` 推送触发，只有上传当前代码并完成必需检查后才能取得对应版本的新证据。
+本批未发布，指定账号Git凭据及仓库写入权限已实际核验，正在准备Apple开发验证提交。唯一远端 `github` 的workflow支持手动触发及 `codex/ios-port` 推送触发，只有上传当前代码并完成必需检查后才能取得对应版本的新证据。
 
 ## 进度与历史
 
 [requirements.csv](../docs/ios-parity-2.0.40/requirements.csv)、[STATUS.md](../docs/ios-parity-2.0.40/STATUS.md)、[NON_SOURCE_GATE.md](../docs/ios-parity-2.0.40/NON_SOURCE_GATE.md) 和 [differences.md](../docs/ios-parity-2.0.40/differences.md) 是当前口径。旧逐源报告、2.0.29脚本和全绿声明只供追溯，更新前README保留为 [historical-README.md](../docs/ios-parity-2.0.40/review-evidence/2026-10-11-current-comparison/historical-README.md)。
+
+当前未提交候选补直接索引/重新授权/稳定页与末页续读、旧复制记录迁移及自动同步生命周期；Linux最终全量858项/2个Apple PDF跳过/0失败，68源码两配置仅语法通过，候选Apple未运行。第七轮e2f53b5正在完整自验；D44旧孤儿恢复持久归属、真实外部Files/视觉/性能仍未完成，非站源门槛未通过。

@@ -1,6 +1,6 @@
 import XCTest
 
-final class DownloadLocationParityUITests: XCTestCase {
+final class DownloadLocationParityUITests: ParityUITestCase {
     private func launch() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--light-mode"]

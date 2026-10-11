@@ -1,6 +1,6 @@
 import XCTest
 
-final class BookshelfParityUITests: XCTestCase {
+final class BookshelfParityUITests: ParityUITestCase {
     private func launch(large: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--light-mode"] + (large ? ["--matrix-large-bookshelf"] : [])
@@ -16,7 +16,7 @@ final class BookshelfParityUITests: XCTestCase {
         XCTAssertTrue(read.waitForExistence(timeout: 5))
         XCTAssertEqual(read.value as? String, "未读 5 · 更新至 第6话")
         XCTAssertEqual(unread.value as? String, "未读 6 · 更新至 第6话")
-        app.navigationBars.buttons["bookshelf.layout"].tap()
+        app.buttons["bookshelf.layout"].tap()
         XCTAssertEqual(read.value as? String, "未读 5 · 更新至 第6话")
         XCTAssertEqual(unread.value as? String, "未读 6 · 更新至 第6话")
     }
@@ -28,7 +28,7 @@ final class BookshelfParityUITests: XCTestCase {
         let visible = list.cells.allElementsBoundByIndex.first { $0.isHittable && $0.label.hasPrefix("验收漫画") }
         XCTAssertNotNil(visible)
         guard let title = visible?.label else { return }
-        app.navigationBars.buttons["bookshelf.layout"].tap()
+        app.buttons["bookshelf.layout"].tap()
         XCTAssertTrue(list.cells[title].isHittable, "Layout switching must keep a visible book instead of returning to the top")
     }
 }

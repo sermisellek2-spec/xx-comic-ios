@@ -1,7 +1,7 @@
 import XCTest
 
 /// These are executable Apple UI scenarios, not source-code assertions. Run with an iOS simulator.
-final class EpubReadingUITests: XCTestCase {
+final class EpubReadingUITests: ParityUITestCase {
     // One sandbox per scenario; relaunching the same app preserves its saved state.
     private let sessionID = UUID().uuidString
     private func launch() -> XCUIApplication {

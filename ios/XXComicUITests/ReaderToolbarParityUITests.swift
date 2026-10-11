@@ -1,6 +1,6 @@
 import XCTest
 
-final class ReaderToolbarParityUITests: XCTestCase {
+final class ReaderToolbarParityUITests: ParityUITestCase {
     private func openReader(paged: Bool) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--light-mode"] + (paged ? ["--matrix-paged-reader"] : [])

@@ -47,7 +47,7 @@ extension LocalLibrary {
         }
     }
 
-    func publishPrepared(_ prepared: PreparedLocalImport) throws -> LocalBook {
+    func publishPrepared(_ prepared: PreparedLocalImport, pendingCatalog: Bool = false) throws -> LocalBook {
         let storage = prepared.storage
         guard storage.owner == importOwner else { throw LocalLibraryError.invalidBook }
         storage.lock.lock()
@@ -58,6 +58,7 @@ extension LocalLibrary {
             try beforeImportPublish()
             try storage.validate(prepared.book)
             try Task.checkCancellation()
+            try storage.journal.willPublish(targetID: storage.id, pendingCatalog: pendingCatalog)
             // A single same-volume rename makes the complete volume visible, without overwriting.
             #if canImport(Darwin)
             let result = renameatx_np(storage.rootFD, storage.name, storage.rootFD, storage.id, UInt32(RENAME_EXCL))
@@ -68,6 +69,7 @@ extension LocalLibrary {
             // Never clean an unknown object if an external actor renamed the source during the syscall.
             try storage.validateLocation(name: storage.id)
             storage.finished = true
+            if !pendingCatalog { try storage.journal.remove() }
             return prepared.book
         } catch {
             try storage.discard()
@@ -82,6 +84,25 @@ extension LocalLibrary {
         defer { storage.lock.unlock() }
         try storage.discard()
     }
+
+    func finishImportPublication(_ prepared: PreparedLocalImport) throws {
+        let storage = prepared.storage
+        guard storage.owner == importOwner else { throw LocalLibraryError.invalidBook }
+        storage.lock.lock()
+        defer { storage.lock.unlock() }
+        guard storage.finished else { throw LocalLibraryError.invalidBook }
+        try storage.validateLocation(name: storage.id)
+        try storage.journal.remove()
+    }
+
+    func rollbackImportPublication(_ prepared: PreparedLocalImport) throws {
+        let storage = prepared.storage
+        guard storage.owner == importOwner else { throw LocalLibraryError.invalidBook }
+        storage.lock.lock()
+        defer { storage.lock.unlock() }
+        guard storage.finished else { throw LocalLibraryError.invalidBook }
+        try storage.removePublished()
+    }
 }
 
 private func importSystemError() -> NSError { NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
@@ -94,6 +115,7 @@ final class LocalImportDirectory: @unchecked Sendable {
     let root: URL
     let rootFD: Int32
     let stagingFD: Int32
+    let journal: LocalImportJournal
     let lock = NSLock()
     var finished = false
     var manifestBytes = 0
@@ -124,6 +146,8 @@ final class LocalImportDirectory: @unchecked Sendable {
             throw error
         }
         self.stagingFD = stagingFD
+        do { journal = try LocalImportJournal(rootFD: rootFD, folderFD: stagingFD, token: token) }
+        catch { close(stagingFD); close(rootFD); throw error }
     }
 
     deinit { close(stagingFD); close(rootFD) }
@@ -156,7 +180,7 @@ final class LocalImportDirectory: @unchecked Sendable {
         let data = try manifest.read(upToCount: manifestBytes + 1) ?? Data()
         guard data.count == manifestBytes else { throw LocalLibraryError.invalidBook }
         guard try JSONDecoder().decode(LocalBook.self, from: data) == book else { throw LocalLibraryError.invalidBook }
-        var names = book.epub != nil ? ["content.epub"] : book.pdf != nil ? ["content.pdf"] : book.pages
+        var names = book.linkedFolder != nil ? [] : book.epub != nil ? ["content.epub"] : book.pdf != nil ? ["content.pdf"] : book.pages
         if book.kindleFormat != nil { names.append("source.kindle") }
         if book.importFormat == .zip || book.importFormat == .cbz { names.append("source.archive") }
         if let cover = book.coverName { names.append(cover) }
@@ -185,22 +209,27 @@ final class LocalImportDirectory: @unchecked Sendable {
         guard url.deletingLastPathComponent().standardizedFileURL == staging.standardizedFileURL else { throw LocalLibraryError.invalidBook }
         let name = url.lastPathComponent, current = try identity(name)
         if let current, let previous = ownedFiles[name], previous != current { throw LocalLibraryError.invalidBook }
+        if let current, ownedFiles[name] == nil { try journal.record(name: name, identity: current) }
+        if current == nil, ownedFiles[name] != nil { try journal.forget(name: name) }
         ownedFiles[name] = current
     }
 
     func removeFile(_ url: URL) throws {
         guard url.deletingLastPathComponent().standardizedFileURL == staging.standardizedFileURL else { throw LocalLibraryError.invalidBook }
         let name = url.lastPathComponent
+        try journal.validate()
         if let current = try identity(name) {
             guard ownedFiles[name] == current else { throw LocalLibraryError.invalidBook }
             guard unlinkat(stagingFD, name, 0) == 0 else { throw importSystemError() }
         }
+        if ownedFiles[name] != nil { try journal.forget(name: name) }
         ownedFiles[name] = nil
     }
 
     /// Staging is invisible: exclusive creation avoids atomic-write replacement of foreign files.
     func write(_ data: Data, name: String) throws {
         try validateLocation()
+        guard LocalImportJournal.validName(name), name != LocalImportJournal.name else { throw LocalLibraryError.invalidBook }
         let fd = openat(stagingFD, name, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600)
         guard fd >= 0 else { throw importSystemError() }
         let handle = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
@@ -210,6 +239,7 @@ final class LocalImportDirectory: @unchecked Sendable {
 
     /// Check the entire set before deleting anything; a matching name alone is not ownership.
     private func validateFiles() throws {
+        try journal.validate()
         let descriptor = dup(stagingFD)
         guard descriptor >= 0 else { throw importSystemError() }
         guard let entries = fdopendir(descriptor) else {
@@ -227,6 +257,7 @@ final class LocalImportDirectory: @unchecked Sendable {
                 $0.withMemoryRebound(to: CChar.self, capacity: MemoryLayout.size(ofValue: entry.pointee.d_name)) { String(cString: $0) }
             }
             if name == "." || name == ".." { continue }
+            if name == LocalImportJournal.name { continue }
             guard let owned = ownedFiles[name], try identity(name) == owned else { throw LocalLibraryError.invalidBook }
         }
     }
@@ -243,7 +274,8 @@ final class LocalImportDirectory: @unchecked Sendable {
         }
         let updatedBook = LocalBook(id: targetID, title: book.title, createdAt: book.createdAt, pages: book.pages,
                                     chapters: newChapters, epub: book.epub, pdf: book.pdf, coverName: book.coverName,
-                                    kindleFormat: book.kindleFormat, importFormat: book.importFormat, fingerprint: book.fingerprint)
+                                    kindleFormat: book.kindleFormat, importFormat: book.importFormat, fingerprint: book.fingerprint,
+                                    linkedFolder: book.linkedFolder)
         try updatedBook.validateMetadata()
         try removeFile(staging.appendingPathComponent("book.json"))
         self.id = targetID
@@ -260,7 +292,22 @@ final class LocalImportDirectory: @unchecked Sendable {
         try validateFiles()
         for name in Array(ownedFiles.keys) { try removeFile(staging.appendingPathComponent(name)) }
         try validateLocation()
+        try journal.remove()
         guard unlinkat(rootFD, name, AT_REMOVEDIR) == 0 else { throw importSystemError() }
         finished = true
+    }
+
+    func removePublished() throws {
+        try validateLocation(name: id)
+        try validateFiles()
+        for name in Array(ownedFiles.keys) {
+            if let current = try identity(name) {
+                guard ownedFiles[name] == current else { throw LocalLibraryError.invalidBook }
+                guard unlinkat(stagingFD, name, 0) == 0 else { throw importSystemError() }
+            }
+        }
+        try validateLocation(name: id)
+        try journal.remove()
+        guard unlinkat(rootFD, id, AT_REMOVEDIR) == 0 else { throw importSystemError() }
     }
 }

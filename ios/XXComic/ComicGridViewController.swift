@@ -413,24 +413,31 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
 
         if localMode {
             resume.isHidden = true
+            let local = environment.localLibrary, downloads = environment.downloadStore
+            let members = currentGroupId == BookshelfGroupStore.builtinLocalAllId ? nil : environment.bookshelfGroupStore.getMembers(groupId: currentGroupId)
+            let worker = Task.detached(priority: .userInitiated) { () async throws -> [ComicSummary] in
+                let series = try await local.series()
+                var list: [ComicSummary] = []
+                for record in series {
+                    try Task.checkCancellation()
+                    list.append(try local.summary(for: record))
+                }
+                let completedBookIDs = Set(downloads.list().filter { $0.state == .completed }.map(\.bookId))
+                for bookId in completedBookIDs {
+                    try Task.checkCancellation()
+                    if let snapshot = downloads.snapshot(id: bookId),
+                       !list.contains(where: { $0.comicId == snapshot.summary.comicId && $0.sourceId == snapshot.summary.sourceId }) {
+                        list.append(snapshot.summary)
+                    }
+                }
+                if let members { list = list.filter { members.contains($0.comicId) } }
+                try Task.checkCancellation()
+                return list
+            }
             refreshTask = Task { [weak self] in
-                guard let self else { return }
+                guard let self else { worker.cancel(); return }
                 do {
-                    let series = try await self.environment.localLibrary.series()
-                    var list = series.compactMap { try? self.environment.localLibrary.summary(for: $0) }
-                    let tasks = self.environment.downloadStore.list()
-                    let completedBookIDs = Set(tasks.filter { $0.state == .completed }.map(\.bookId))
-                    for bookId in completedBookIDs {
-                        if let snapshot = self.environment.downloadStore.snapshot(id: bookId) {
-                            if !list.contains(where: { $0.comicId == snapshot.summary.comicId && $0.sourceId == snapshot.summary.sourceId }) {
-                                list.append(snapshot.summary)
-                            }
-                        }
-                    }
-                    if self.currentGroupId != BookshelfGroupStore.builtinLocalAllId {
-                        let members = self.environment.bookshelfGroupStore.getMembers(groupId: self.currentGroupId)
-                        list = list.filter { members.contains($0.comicId) }
-                    }
+                    let list = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
                     guard self.refreshID == token, self.context == currentContext, !Task.isCancelled else { return }
                     self.comics = list.filter { comic in
                         if comic.sourceId == "local" { return !self.environment.localDeletion.containsLocalSeries(comic.comicId) }
@@ -493,7 +500,10 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         }
         #endif
         menu.addAction(UIAlertAction(title: "取消", style: .cancel))
-        menu.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.first
+        if let popover = menu.popoverPresentationController {
+            popover.sourceView = floatingBubble
+            popover.sourceRect = floatingBubble.bounds
+        }
         present(menu, animated: true)
     }
     private func pickBatchImport(resuming taskID: String? = nil) {

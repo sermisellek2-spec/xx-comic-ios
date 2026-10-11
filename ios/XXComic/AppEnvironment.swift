@@ -19,6 +19,11 @@ final class AppEnvironment {
     let favoriteUpdateChecker: FavoriteUpdateChecker
     let folderBookmarkStore: FolderBookmarkStore
     let folderSyncCoordinator: LocalFolderSyncCoordinator
+    private var folderSyncTask: Task<Void, Never>?
+    private var folderSyncGeneration = UUID()
+    private var folderObservers: [NSObjectProtocol] = []
+    private var folderRecoveryNeeded = true
+    private(set) var folderSynchronizationError: String?
     private let localSource: LocalComicSource
     private(set) var allSources: [any ComicSource]
     let sourcePreferences: SourcePreferences
@@ -171,31 +176,68 @@ final class AppEnvironment {
             }
         }
 
-        #if canImport(UIKit)
-        NotificationCenter.default.addObserver(
-            forName: UIApplication.willEnterForegroundNotification,
-            object: nil,
-            queue: nil
-        ) { [weak self] _ in
+        folderObservers.append(NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.startFolderSynchronization() }
+        })
+        folderObservers.append(NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.cancelFolderSynchronization() }
+        })
+        startFolderSynchronization(recover: true)
+        #if DEBUG
+        if LinkedFolderUITestFixtures.enabled {
             Task { [weak self] in
                 guard let self else { return }
-                let results = await self.folderSyncCoordinator.syncAll()
-                let hasChanges = results.values.contains {
-                    if case .updated = $0 { return true }
-                    return false
-                }
-                if hasChanges {
-                    await MainActor.run {
-                        self.notifyLibraryChanged()
-                    }
-                }
+                do { try await LinkedFolderUITestFixtures.seed(environment: self) }
+                catch { self.folderSynchronizationError = "文件夹验收数据准备失败：" + error.localizedDescription; self.notifyLibraryChanged() }
             }
         }
         #endif
-        let syncCoordinator = folderSyncCoordinator
-        Task {
-            await syncCoordinator.recoverInterruptedSyncs()
+    }
+
+    deinit {
+        folderSyncTask?.cancel()
+        for token in folderObservers { NotificationCenter.default.removeObserver(token) }
+        usageStatsTask?.cancel()
+    }
+
+    func cancelFolderSynchronization() {
+        folderSyncGeneration = UUID()
+        folderSyncTask?.cancel(); folderSyncTask = nil
+    }
+
+    func startFolderSynchronization(recover: Bool = false) {
+        guard folderSyncTask == nil else { return }
+        let token = UUID(); folderSyncGeneration = token
+        let coordinator = folderSyncCoordinator
+        let requiresRecovery = recover || folderRecoveryNeeded
+        let worker = Task.detached(priority: .utility) {
+            if requiresRecovery { try await coordinator.recoverInterruptedSyncs() }
+            try Task.checkCancellation()
+            return await coordinator.syncAll()
         }
+        folderSyncTask = Task { [weak self] in
+            defer { if self?.folderSyncGeneration == token { self?.folderSyncTask = nil } }
+            do {
+                let results = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+                guard let self, self.folderSyncGeneration == token, !Task.isCancelled else { return }
+                self.folderSynchronizationError = nil
+                self.folderRecoveryNeeded = false
+                self.folderSynchronizationFinished(results)
+            } catch is CancellationError {
+                // An interrupted scan preserves the previous index and resumes on activation.
+            } catch {
+                guard let self, self.folderSyncGeneration == token, !Task.isCancelled else { return }
+                self.folderSynchronizationError = "关联文件夹恢复失败：" + error.localizedDescription
+                self.notifyLibraryChanged()
+            }
+        }
+    }
+
+    func folderSynchronizationFinished(_ results: [String: LocalFolderSyncCoordinator.SyncResult]) {
+        if results.values.contains(where: { if case .updated = $0 { return true }; return false }) {
+            RemoteImageView.clearMemoryCache(); ReaderEnhancementEngine.shared.clearCache()
+        }
+        if !results.isEmpty { notifyLibraryChanged() }
     }
 
     func setFavorite(_ comic: ComicSummary, favorite: Bool) throws {

@@ -24,6 +24,10 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     private var loadTask: Task<Void, Never>?
     private var loadGeneration = UUID()
     private var folderSyncTask: Task<Void, Never>?
+    private var folderAccessTask: Task<Void, Never>?
+    private var folderAccessGeneration = UUID()
+    private var reauthorizingFolderID: String?
+    private var folderFeedback: String?
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -33,6 +37,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    deinit { loadTask?.cancel(); folderSyncTask?.cancel(); folderAccessTask?.cancel() }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -168,6 +173,10 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         loadTask?.cancel()
+        if isMovingFromParent {
+            folderAccessGeneration = UUID(); folderAccessTask?.cancel()
+            folderSyncTask?.cancel()
+        }
     }
 
     // MARK: - Actions
@@ -221,7 +230,18 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
     // MARK: - Actions
 
     @objc private func linkNewFolderTapped() {
+        if let folderAccessTask { folderAccessTask.cancel(); return }
+        guard folderSyncTask == nil else { return }
+        reauthorizingFolderID = nil
+        pickFolder()
+    }
+    private func pickFolder() {
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder], asCopy: false)
+        #if DEBUG
+        if reauthorizingFolderID != nil, let selected = LinkedFolderUITestFixtures.reauthorizationSelection(library: environment.localLibrary) {
+            documentPicker(picker, didPickDocumentsAt: [selected]); return
+        }
+        #endif
         picker.delegate = self
         picker.allowsMultipleSelection = false
         present(picker, animated: true)
@@ -229,6 +249,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
 
     @objc private func syncAllFoldersTapped() {
         if let folderSyncTask { folderSyncTask.cancel(); return }
+        guard folderAccessTask == nil else { return }
         syncFolders(ids: nil)
     }
 
@@ -244,15 +265,17 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
             }
             var failed: [(id: String, name: String, error: String)] = []
             var succeeded = 0
+            var results: [String: LocalFolderSyncCoordinator.SyncResult] = [:]
             for folder in folders {
                 if Task.isCancelled { break }
                 let result = await self.environment.folderSyncCoordinator.sync(id: folder.id)
+                results[folder.id] = result
                 switch result {
                 case .upToDate, .updated: succeeded += 1
                 case .error(let message): failed.append((folder.id, folder.folderName, message))
                 }
             }
-            self.environment.notifyLibraryChanged()
+            self.environment.folderSynchronizationFinished(results)
             self.loadData()
             guard self.viewIfLoaded?.window != nil else { return }
             if Task.isCancelled { self.showToast("已取消同步，已完成的结果保留"); return }
@@ -269,22 +292,56 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
 
     public func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let url = urls.first else { return }
-        Task {
+        let reauthorizingID = reauthorizingFolderID; reauthorizingFolderID = nil
+        let token = UUID(); folderAccessGeneration = token
+        let coordinator = environment.folderSyncCoordinator
+        folderFeedback = reauthorizingID == nil ? "正在建立文件夹索引…" : "正在恢复文件夹授权…"
+        tableView.reloadSections(IndexSet(integer: 2), with: .none)
+        folderAccessTask = Task { [weak self] in
+            defer {
+                if self?.folderAccessGeneration == token {
+                    self?.folderAccessTask = nil
+                    self?.tableView.reloadSections(IndexSet(integer: 2), with: .none)
+                }
+            }
             do {
-                _ = try await self.environment.folderSyncCoordinator.linkFolder(url: url)
+                if let reauthorizingID { _ = try await coordinator.reauthorize(id: reauthorizingID, url: url) }
+                else { _ = try await coordinator.linkFolder(url: url) }
+                guard let self, self.folderAccessGeneration == token, !Task.isCancelled else { return }
+                RemoteImageView.clearMemoryCache(); ReaderEnhancementEngine.shared.clearCache()
                 self.environment.notifyLibraryChanged()
-                self.showToast("已成功关联并索引文件夹")
+                self.folderFeedback = reauthorizingID == nil ? "已关联文件夹；正文直接读取，原文件保留" : "已恢复授权；书名和阅读记录保留"
                 self.loadData()
+            } catch is CancellationError {
+                guard let self, self.folderAccessGeneration == token else { return }
+                self.folderFeedback = "已取消，原索引和原文件保留"
             } catch {
-                self.showToast("关联失败: \(error.localizedDescription)")
+                guard let self, self.folderAccessGeneration == token else { return }
+                self.folderFeedback = "文件夹操作失败：\(error.localizedDescription)；可重新选择重试"
             }
         }
+        tableView.reloadSections(IndexSet(integer: 2), with: .none)
+    }
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) { reauthorizingFolderID = nil }
+
+    private func reauthorizeFolder(_ folder: SyncedFolderRecord) {
+        guard folderAccessTask == nil, folderSyncTask == nil else { return }
+        let alert = UIAlertController(title: "重新授权《\(folder.folderName)》", message: "请选择原文件夹或移动后的文件夹。保留书名、卷和阅读记录，原文件不移动。", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "选择文件夹", style: .default) { [weak self] _ in
+            self?.reauthorizingFolderID = folder.id; self?.pickFolder()
+        })
+        present(alert, animated: true)
     }
 
     // MARK: - UITableViewDataSource & Delegate
 
     func numberOfSections(in tableView: UITableView) -> Int {
         return 4
+    }
+    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        guard section == 2 else { return nil }
+        return folderFeedback ?? environment.folderSynchronizationError ?? "正文直接读取所选文件夹；只保存索引和封面。进入应用时检查变化，授权失效可点按文件夹重新授权。解除关联仅停止自动同步，原文件保留。"
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -372,13 +429,17 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
                 cell.selectionStyle = .none
 
                 let linkButton = UIButton(type: .system)
-                linkButton.setTitle("＋ 关联新外部文件夹", for: .normal)
+                linkButton.setTitle(folderAccessTask == nil ? "＋ 关联新外部文件夹" : "取消索引", for: .normal)
+                linkButton.accessibilityIdentifier = "local.folder.link"
+                linkButton.isEnabled = folderSyncTask == nil
                 linkButton.setTitleColor(Palette.accent, for: .normal)
                 linkButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
                 linkButton.addTarget(self, action: #selector(linkNewFolderTapped), for: .touchUpInside)
 
                 let syncAllButton = UIButton(type: .system)
                 syncAllButton.setTitle(folderSyncTask == nil ? "立即同步全部" : "取消同步", for: .normal)
+                syncAllButton.accessibilityIdentifier = "local.folder.sync"
+                syncAllButton.isEnabled = folderAccessTask == nil
                 syncAllButton.setTitleColor(Palette.accent, for: .normal)
                 syncAllButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
                 syncAllButton.addTarget(self, action: #selector(syncAllFoldersTapped), for: .touchUpInside)
@@ -401,6 +462,8 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
 
             let folder = syncedFolders[indexPath.row - 1]
             let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "synced_folder")
+            cell.accessibilityIdentifier = "local.folder." + folder.id
+            cell.accessoryType = .disclosureIndicator
             cell.backgroundColor = Palette.card
             cell.textLabel?.text = folder.folderName
             cell.textLabel?.textColor = Palette.text
@@ -414,10 +477,11 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
             case .syncFailed: statusDesc = "同步失败"
             }
             let timeDesc = DateFormatter.localizedString(from: Date(timeIntervalSince1970: folder.lastSyncTimestamp), dateStyle: .short, timeStyle: .short)
-            cell.detailTextLabel?.text = "\(folder.fileCount) 张图片 · \(statusDesc) · 上次同步: \(timeDesc)"
+            cell.detailTextLabel?.text = "\(folder.fileCount) 张图片 · \(statusDesc) · 上次同步: \(timeDesc)\n点按重新授权" + (folder.lastError.map { "\n" + $0 } ?? "")
+            cell.detailTextLabel?.numberOfLines = 0
             cell.detailTextLabel?.textColor = folder.status == .active ? Palette.secondaryText : .systemRed
             cell.detailTextLabel?.font = .systemFont(ofSize: 12)
-            cell.selectionStyle = .none
+            cell.selectionStyle = .default
             return cell
         }
 
@@ -444,6 +508,9 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        if indexPath.section == 2, indexPath.row > 0 {
+            reauthorizeFolder(syncedFolders[indexPath.row - 1]); return
+        }
         if indexPath.section == 0, indexPath.row == 1 {
             navigationController?.pushViewController(DownloadLocationViewController(locations: environment.downloadLocations), animated: true)
             return
@@ -464,18 +531,22 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
         let folder = syncedFolders[indexPath.row - 1]
 
         let syncAction = UIContextualAction(style: .normal, title: "立即同步") { [weak self] _, _, completion in
-            guard let self else { completion(false); return }
-            Task {
+            guard let self, self.folderSyncTask == nil, self.folderAccessTask == nil else { completion(false); return }
+            self.folderSyncTask = Task {
+                defer { self.folderSyncTask = nil; self.tableView.reloadSections(IndexSet(integer: 2), with: .none) }
                 let res = await self.environment.folderSyncCoordinator.sync(id: folder.id)
-                self.environment.notifyLibraryChanged()
+                self.environment.folderSynchronizationFinished([folder.id: res])
+                guard self.viewIfLoaded?.window != nil else { completion(false); return }
+                var succeeded = true
                 switch res {
                 case .upToDate(let count): self.showToast("已是最新 (\(count) 张图片)")
                 case .updated(_, let newCount): self.showToast("已更新至 \(newCount) 张图片")
-                case .error(let msg): self.showToast("同步失败: \(msg)")
+                case .error(let msg): succeeded = false; self.showToast("同步失败: \(msg)")
                 }
                 self.loadData()
-                completion(true)
+                completion(succeeded)
             }
+            self.tableView.reloadSections(IndexSet(integer: 2), with: .none)
         }
         syncAction.backgroundColor = Palette.accent
 

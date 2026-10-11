@@ -1,0 +1,701 @@
+{
+  "run": 38150387778,
+  "commit": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+  "conclusion": "failure",
+  "scope": "full",
+  "package_ipa": false,
+  "debug_sdk": "passed",
+  "release_sdk": "passed",
+  "apple_core": {
+    "executed": 853,
+    "failures": 0,
+    "seconds": 69.764
+  },
+  "raw_log_sha256": "9b8c339ac83b53f03395daf5d9d4706de12ff972df5e60a5b65ccf3816491198",
+  "log_zip_sha256": "aaeb72a2993ade85866479b1f86405c97b22ed42569c0b1ed37ad5fbcf867e1a",
+  "visual_zip_sha256": "3676808f0a097e1cbce0de8ae8319bae9cab37e9dc27071d54fa2b51b53fd752",
+  "devices": {
+    "iPhone 15 Pro": {
+      "native": {
+        "executed": 19,
+        "failures": 0
+      },
+      "ui": {
+        "executed": 54,
+        "failure_assertions": 16,
+        "failed_cases": 10,
+        "passed_cases": 44
+      },
+      "statuses": [
+        {
+          "test": "AppNavigationTests/testNavigationAndReaderPreferencesPersist()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "BatchImportRecoveryUITests/testCancellingRecoveryKeepsPendingTaskAvailableAfterRestart()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "BatchImportRecoveryUITests/testExplicitBatchPickerSupportsOneFileThroughBatchConfirmation()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "BatchImportRecoveryUITests/testPartiallyReselectedFilesReportFailureAndRemainingVolumeCanResume()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "BatchImportRecoveryUITests/testRecoveredBookRemainsSingleAndCompletedAfterRelaunch()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "BookshelfParityUITests/testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "BookshelfParityUITests/testSwitchingGridToListKeepsVisibleComic()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testBookshelfDownloadLoadsDirectoryAndReturnsToBookshelf()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testCancelledDownloadAfterPendingReadCanOpenReaderAgain()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testDetailDownloadLoadsOnDemandDirectoryAndCloses()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testEmptyDirectoryOffersRetryInsteadOfEmptySelection()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testEmptyDiscoveryGroupDoesNotBlockGlobalSearch()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testLateDetailSuccessKeepsDownloadFailureAndItsRetryAction()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testStartingDownloadCancelsPendingReadAndReturnsToDetail()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testStartingReadCancelsPendingDownload()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "DownloadLocationParityUITests/testCancelLocationConfirmationKeepsDefaultAndDoesNotQueueDownloads()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "DownloadLocationParityUITests/testFilesPickerCanCancelWithoutChangingDefault()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testAllSpinesAndRealSecondChapterResumeRoute()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testKindleComicRealImportUsesExistingImageReaderAndResume()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testKindleMixedRealImportRetainsTextAndImageInExistingTextReader()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testKindleNovelRealImportTextReaderAndSecondChapterResume()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testLongBodyWithoutIDsResumesByPercentage()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testMixedSpineRetainsDirectImageAndPureImageUsesComicReader()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testPendingScrollRestoreCannotOverwriteNextDocumentPosition()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testTextSettingsPersistAfterRelaunch()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "EpubReadingUITests/testWebKitBlocksBookScriptsAndLoadsSameBookCSS()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "LocalDeletionParityUITests/testWholeBookDeletionWaitsForUndoWindowAndShowsActualCompletion()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "LocalDeletionParityUITests/testWholeBookUndoRestoresSelectionPageAndRealImportedCopy()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "Mh18VerificationTests/testManualVerificationCanCloseAndBeOpenedAgain()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "ReaderEnhancementUITests/testReaderAIBadgeAndLongPressOriginalComparison()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "ReaderToolbarParityUITests/testPagedReaderToolbarChangesChaptersAndKeepsUsableActionTargets()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "ReaderToolbarParityUITests/testStripReaderToolbarRetainsDirectoryAndReaderSettings()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SettingsParityUITests/testSettingsUsesCurrentAndroidSectionsAndThemeDrawer()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SettingsParityUITests/testThemeChoicePersistsAcrossRestart()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SourceDrawerTests/testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SourceDrawerTests/testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPhone 15 Pro"
+        }
+      ]
+    },
+    "iPad Pro 11-inch (M4)": {
+      "native": {
+        "executed": 19,
+        "failures": 0
+      },
+      "ui": {
+        "executed": 54,
+        "failure_assertions": 27,
+        "failed_cases": 17,
+        "passed_cases": 37
+      },
+      "statuses": [
+        {
+          "test": "AppNavigationTests/testNavigationAndReaderPreferencesPersist()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "BatchImportRecoveryUITests/testCancellingRecoveryKeepsPendingTaskAvailableAfterRestart()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "BatchImportRecoveryUITests/testExplicitBatchPickerSupportsOneFileThroughBatchConfirmation()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "BatchImportRecoveryUITests/testPartiallyReselectedFilesReportFailureAndRemainingVolumeCanResume()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "BatchImportRecoveryUITests/testRecoveredBookRemainsSingleAndCompletedAfterRelaunch()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "BookshelfParityUITests/testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "BookshelfParityUITests/testSwitchingGridToListKeepsVisibleComic()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testBookshelfDownloadLoadsDirectoryAndReturnsToBookshelf()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testCancelledDownloadAfterPendingReadCanOpenReaderAgain()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testDetailDownloadLoadsOnDemandDirectoryAndCloses()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testEmptyDirectoryOffersRetryInsteadOfEmptySelection()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testEmptyDiscoveryGroupDoesNotBlockGlobalSearch()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testLateDetailSuccessKeepsDownloadFailureAndItsRetryAction()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testStartingDownloadCancelsPendingReadAndReturnsToDetail()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testStartingReadCancelsPendingDownload()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "DownloadLocationParityUITests/testCancelLocationConfirmationKeepsDefaultAndDoesNotQueueDownloads()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "DownloadLocationParityUITests/testFilesPickerCanCancelWithoutChangingDefault()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testAllSpinesAndRealSecondChapterResumeRoute()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testCrossBookResourceCannotRenderAndImportEntryOpensDocumentPicker()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testEncodedFragmentsReachSameBodyAndCrossSpineTargetsExactlyOnce()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testKindleComicRealImportUsesExistingImageReaderAndResume()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testKindleMixedRealImportRetainsTextAndImageInExistingTextReader()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testKindleNovelRealImportTextReaderAndSecondChapterResume()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testKindleUnsupportedImportShowsRealParserReasonAndPickerEntryWorks()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testLongBodyWithoutIDsResumesByPercentage()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testMixedSpineRetainsDirectImageAndPureImageUsesComicReader()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testOversizedDocumentFailsAndCanSwitchAwayWithoutLateCallbacks()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testPendingScrollRestoreCannotOverwriteNextDocumentPosition()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testTextSettingsPersistAfterRelaunch()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "EpubReadingUITests/testWebKitBlocksBookScriptsAndLoadsSameBookCSS()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "LocalDeletionParityUITests/testWholeBookDeletionWaitsForUndoWindowAndShowsActualCompletion()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "LocalDeletionParityUITests/testWholeBookUndoRestoresSelectionPageAndRealImportedCopy()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "Mh18VerificationTests/testManualVerificationCanCloseAndBeOpenedAgain()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "ReaderEnhancementUITests/testReaderAIBadgeAndLongPressOriginalComparison()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "ReaderToolbarParityUITests/testPagedReaderToolbarChangesChaptersAndKeepsUsableActionTargets()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "ReaderToolbarParityUITests/testStripReaderToolbarRetainsDirectoryAndReaderSettings()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SettingsParityUITests/testSettingsUsesCurrentAndroidSectionsAndThemeDrawer()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SettingsParityUITests/testThemeChoicePersistsAcrossRestart()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SourceDrawerTests/testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SourceDrawerTests/testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+          "status": "Failure",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+          "status": "Success",
+          "revision": "e2f53b5867f4f9acb0bdef2bc2729d2ebcaf6190",
+          "device": "iPad Pro 11-inch (M4)"
+        }
+      ]
+    }
+  },
+  "non_source_gate": false,
+  "evidence_limits": [
+    "8 setting reference screenshots are actual failed-case attachments; cache is nonzero and is not matched reference state",
+    "automatic screenshots of other failed cases were not exported by the previous PNG-only filter; retained xcresult archive is preserved for Apple diagnostics",
+    "this run predates the linked-folder/ownership and interaction fixes"
+  ]
+}

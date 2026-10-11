@@ -6,6 +6,11 @@ import CryptoKit
 /// Hash owned, stable copies before publishing their identity. Metadata checks do not
 /// promise detection of hostile replacements that preserve size and timestamps.
 public enum ContentFingerprint {
+    /// Bounded metadata identity, separate from fingerprints of copied content.
+    static func metadata(_ data: Data) throws -> String {
+        guard data.count <= 16 * 1024 * 1024 else { throw Failure.limitExceeded }
+        return try digest { try $0(data) }
+    }
     public static func file(_ url: URL, maximumBytes: Int64 = 20 * 1024 * 1024 * 1024) throws -> String {
         try file(url, maximumBytes: maximumBytes, readChunk: { try $0.read(upToCount: $1) })
     }

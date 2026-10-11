@@ -1,6 +1,6 @@
 # 当前代码 Apple 开发验证
 
-日期：2026-10-11。唯一仓库：`sermisellek2-spec/xx-comic-ios`，私有仓库，分支`codex/ios-port`。这是代理阶段自验，不是最终总验收或正式发布。
+日期：2026-10-11。唯一仓库：`sermisellek2-spec/xx-comic-ios`，可见性见当前只读记录，分支`codex/ios-port`。这是代理阶段自验，不是最终总验收或正式发布。
 
 用户正常登录命令提示已保存账号凭据后，代理显式选择目标账号进行非交互Git访问，退出0，目标远端HEAD为a5aeec90a1d47b9670b859150cb89f78c9856fbb。API进一步确认账号sermisellek2-spec、仓库为私有、push权限为true；[auth-proof.json](auth-proof.json)记录过滤后的实际结果，不保存Token、Cookie或凭据助手原始输出。
 
@@ -33,3 +33,8 @@
 第五轮e29824a的[CI38149042092](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38149042092)在Debug SDK编译时报`SettingsViewController.swift:37:89: ambiguous use of leastNormalMagnitude`，后续Release/核心/UI未运行、没有IPA。修复显式CGFloat标量后重跑完整范围；失败PNG及逐用例结果JSON现加入可下载证据目录。见[repair-5-summary.json](repair-5-summary.json)，旧成功结果不继承。
 
 第六轮301dc11的[CI38149699847](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38149699847)两配置SDK和Apple核心853项0失败/68.134秒通过；macOS Bash空参数数组展开报unbound variable，两设备原生/UI未运行，无IPA。修为始终非空公共参数数组后继续full，未缩减任何测试。见[repair-6-summary.json](repair-6-summary.json)。
+
+
+[第七轮38150387778](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38150387778)结论failure。e2f53b5两配置SDK/Apple核心853项0失败69.764秒、原生两设备各19通过；UI两设备各54执行，iPhone10个用例失败/16条断言，iPad17个失败/27条断言。原始xcresult保留，8张设置参考来自失败用例且缓存140.6KB等非零状态，不作通过金标。原PNG过滤未提取其他自动失败附件，当前加显式PNG失败屏和保留结果的Apple诊断流程。[repair-7-summary.json](repair-7-summary.json)、筛选原日志及逐用例JSON保留版本和实际结果。当前候选直接索引/持久归属及交互修复均尚未由此轮验证。
+
+[repository-current-state.json](repository-current-state.json)记录当前private=false；历史auth-proof保持原观察，代理未修改仓库可见性。

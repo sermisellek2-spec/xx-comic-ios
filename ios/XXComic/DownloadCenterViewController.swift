@@ -8,7 +8,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
     private let emptyView = UIView()
     private var timer: Timer?
 
-    private struct ComicDownloadGroup {
+    private struct ComicDownloadGroup: Equatable {
         let bookId: String
         let title: String
         let coverUrl: String?
@@ -16,6 +16,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
     }
 
     private var groups: [ComicDownloadGroup] = []
+    private var contextMenuVisible = false
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -194,6 +195,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
     }
 
     private func loadTasks() {
+        guard !contextMenuVisible else { return }
         let allTasks = environment.downloadRuntime.store.list()
         if allTasks.isEmpty {
             groups = []
@@ -213,13 +215,15 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
             grouped[t.bookId]?.append(t)
         }
 
-        groups = groupOrder.compactMap { bookId in
+        let nextGroups: [ComicDownloadGroup] = groupOrder.compactMap { bookId in
             guard let tasks = grouped[bookId], !tasks.isEmpty else { return nil }
             let snapshot = environment.downloadRuntime.store.snapshot(id: bookId)
             let title = snapshot?.summary.title ?? tasks.first?.title ?? "离线漫画"
             let cover = snapshot?.summary.coverUrl
             return ComicDownloadGroup(bookId: bookId, title: title, coverUrl: cover, tasks: tasks)
         }
+        guard groups != nextGroups else { return }
+        groups = nextGroups
         tableView.reloadData()
     }
 
@@ -294,6 +298,19 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
                 UIAction(title: "重新下载此章") { _ in self?.confirmCompletedAction(task, redownload: true) }
             ])
         }
+    }
+    func tableView(_ tableView: UITableView, willDisplayContextMenu configuration: UIContextMenuConfiguration,
+                   animator: UIContextMenuInteractionAnimating?) {
+        contextMenuVisible = true
+    }
+    func tableView(_ tableView: UITableView, willEndContextMenuInteraction configuration: UIContextMenuConfiguration,
+                   animator: UIContextMenuInteractionAnimating?) {
+        let refresh: () -> Void = { [weak self] in
+            self?.contextMenuVisible = false
+            self?.loadTasks()
+        }
+        if let animator { animator.addCompletion(refresh) }
+        else { refresh() }
     }
     private func confirmCompletedAction(_ task: DownloadTask, redownload: Bool) {
         let alert = UIAlertController(title: "删除此章的下载文件？", message: "阅读进度和在线收藏会保留。", preferredStyle: .alert)
@@ -403,6 +420,8 @@ final class DownloadTaskCell: UITableViewCell {
 
         actionButton.translatesAutoresizingMaskIntoConstraints = false
         actionButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .medium)
+        actionButton.setContentHuggingPriority(.required, for: .horizontal)
+        actionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         actionButton.addTarget(self, action: #selector(actionTapped), for: .touchUpInside)
         contentView.addSubview(actionButton)
 

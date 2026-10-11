@@ -1,0 +1,89 @@
+[0/1] Planning build
+Building for debugging...
+[0/3] Write sources
+[1/3] Write swift-version-24593BA9C3E375BF.txt
+[3/5] Compiling ComicCore BatchImportWorker.swift
+[4/5] Emitting module ComicCore
+[5/7] Write Objects.LinkFileList
+[6/7] Linking ComicCorePackageTests.xctest
+Build complete! (12.44s)
+Test Suite 'Selected tests' started at 2026-10-11 16:18:55.325
+Test Suite 'BatchImportSessionTests' started at 2026-10-11 16:18:55.326
+Test Case 'BatchImportSessionTests.testActiveAndFailedBatchCannotBeReplacedButFinishedBatchCan' started at 2026-10-11 16:18:55.326
+Test Case 'BatchImportSessionTests.testActiveAndFailedBatchCannotBeReplacedButFinishedBatchCan' passed (0.016 seconds)
+Test Case 'BatchImportSessionTests.testCancelSkipsAllUnfinishedAndLateCallbacksCannotReviveOrTouchSource' started at 2026-10-11 16:18:55.342
+Test Case 'BatchImportSessionTests.testCancelSkipsAllUnfinishedAndLateCallbacksCannotReviveOrTouchSource' passed (0.017 seconds)
+Test Case 'BatchImportSessionTests.testCorruptUnsupportedInvalidAndNonUTF8FilesArePreserved' started at 2026-10-11 16:18:55.359
+Test Case 'BatchImportSessionTests.testCorruptUnsupportedInvalidAndNonUTF8FilesArePreserved' passed (0.013 seconds)
+Test Case 'BatchImportSessionTests.testDirectoriesSymlinksAndNonDirectoryParentsAreNotEmptySessions' started at 2026-10-11 16:18:55.372
+Test Case 'BatchImportSessionTests.testDirectoriesSymlinksAndNonDirectoryParentsAreNotEmptySessions' passed (0.004 seconds)
+Test Case 'BatchImportSessionTests.testExact16MiBReadLimitAndOneByteOverPreserveFile' started at 2026-10-11 16:18:55.376
+Test Case 'BatchImportSessionTests.testExact16MiBReadLimitAndOneByteOverPreserveFile' passed (0.31 seconds)
+Test Case 'BatchImportSessionTests.testExact16MiBSaveLimitRollsBackOversizedMutationAndCreate' started at 2026-10-11 16:18:55.686
+Test Case 'BatchImportSessionTests.testExact16MiBSaveLimitRollsBackOversizedMutationAndCreate' passed (0.745 seconds)
+Test Case 'BatchImportSessionTests.testFailedFirstCreateAndReplacementKeepPreviousSnapshot' started at 2026-10-11 16:18:56.431
+Test Case 'BatchImportSessionTests.testFailedFirstCreateAndReplacementKeepPreviousSnapshot' passed (0.007 seconds)
+Test Case 'BatchImportSessionTests.testFinishedItemsNeverRestartAndFailedItemsDoNotBlockOtherGroups' started at 2026-10-11 16:18:56.438
+Test Case 'BatchImportSessionTests.testFinishedItemsNeverRestartAndFailedItemsDoNotBlockOtherGroups' passed (0.016 seconds)
+Test Case 'BatchImportSessionTests.testInvalidIndicesAndMissingTaskThrowWithoutMutation' started at 2026-10-11 16:18:56.454
+Test Case 'BatchImportSessionTests.testInvalidIndicesAndMissingTaskThrowWithoutMutation' passed (0.003 seconds)
+Test Case 'BatchImportSessionTests.testLegacyMissingRequiresExistingBookDefaultsFalse' started at 2026-10-11 16:18:56.457
+Test Case 'BatchImportSessionTests.testLegacyMissingRequiresExistingBookDefaultsFalse' passed (0.003 seconds)
+Test Case 'BatchImportSessionTests.testRealDirectoryBlockingAtomicWritePreservesMemoryAndFailurePath' started at 2026-10-11 16:18:56.459
+Test Case 'BatchImportSessionTests.testRealDirectoryBlockingAtomicWritePreservesMemoryAndFailurePath' passed (0.007 seconds)
+Test Case 'BatchImportSessionTests.testRestartResetsRunningOnlyInMemoryAndPreservesMetadata' started at 2026-10-11 16:18:56.467
+Test Case 'BatchImportSessionTests.testRestartResetsRunningOnlyInMemoryAndPreservesMetadata' passed (0.006 seconds)
+Test Case 'BatchImportSessionTests.testUTF16AndUTF32WithoutBOMAreRejectedAsNonUTF8JSON' started at 2026-10-11 16:18:56.473
+Test Case 'BatchImportSessionTests.testUTF16AndUTF32WithoutBOMAreRejectedAsNonUTF8JSON' passed (0.008 seconds)
+Test Case 'BatchImportSessionTests.testWriteFailurePreservesDurableBytesAndAllMemoryFields' started at 2026-10-11 16:18:56.481
+Test Case 'BatchImportSessionTests.testWriteFailurePreservesDurableBytesAndAllMemoryFields' passed (0.004 seconds)
+Test Suite 'BatchImportSessionTests' passed at 2026-10-11 16:18:56.485
+Executed 14 tests, with 0 failures (0 unexpected) in 1.159 (1.159) seconds
+Test Suite 'BatchImportWorkerTests' started at 2026-10-11 16:18:56.486
+Test Case 'BatchImportWorkerTests.testAppendVolumesToExistingSeries' started at 2026-10-11 16:18:56.486
+Test Case 'BatchImportWorkerTests.testAppendVolumesToExistingSeries' passed (0.073 seconds)
+Test Case 'BatchImportWorkerTests.testBatchImportMultipleDistinctSeriesGroupedCorrectly' started at 2026-10-11 16:18:56.558
+Test Case 'BatchImportWorkerTests.testBatchImportMultipleDistinctSeriesGroupedCorrectly' passed (0.064 seconds)
+Test Case 'BatchImportWorkerTests.testBatchImportMultipleVolumesMergesIntoSingleSeries' started at 2026-10-11 16:18:56.622
+Test Case 'BatchImportWorkerTests.testBatchImportMultipleVolumesMergesIntoSingleSeries' passed (0.061 seconds)
+Test Case 'BatchImportWorkerTests.testBookmarkRoundTrip' started at 2026-10-11 16:18:56.683
+Test Case 'BatchImportWorkerTests.testBookmarkRoundTrip' passed (0.002 seconds)
+Test Case 'BatchImportWorkerTests.testCancellationStopsSubsequentItemsAndCleansStaging' started at 2026-10-11 16:18:56.685
+Test Case 'BatchImportWorkerTests.testCancellationStopsSubsequentItemsAndCleansStaging' passed (0.027 seconds)
+Test Case 'BatchImportWorkerTests.testCancellingCallingTaskAfterFirstVolumeStopsAndPersistsRemainingSkippedItems' started at 2026-10-11 16:18:56.712
+Test Case 'BatchImportWorkerTests.testCancellingCallingTaskAfterFirstVolumeStopsAndPersistsRemainingSkippedItems' passed (0.029 seconds)
+Test Case 'BatchImportWorkerTests.testRecoveryNeverAssignsAmbiguousSameNameFilesBySelectionOrder' started at 2026-10-11 16:18:56.741
+Test Case 'BatchImportWorkerTests.testRecoveryNeverAssignsAmbiguousSameNameFilesBySelectionOrder' passed (0.003 seconds)
+Test Case 'BatchImportWorkerTests.testRestartRecoveryUsesReselectedFileAndPreservesSessionSeriesAndFirstVolume' started at 2026-10-11 16:18:56.744
+Test Case 'BatchImportWorkerTests.testRestartRecoveryUsesReselectedFileAndPreservesSessionSeriesAndFirstVolume' passed (0.042 seconds)
+Test Case 'BatchImportWorkerTests.testSavedPathAloneCannotAuthorizeRestartImport' started at 2026-10-11 16:18:56.786
+Test Case 'BatchImportWorkerTests.testSavedPathAloneCannotAuthorizeRestartImport' passed (0.009 seconds)
+Test Case 'BatchImportWorkerTests.testSingleItemFailureDoesNotBlockRemainingAndCanRetry' started at 2026-10-11 16:18:56.795
+Test Case 'BatchImportWorkerTests.testSingleItemFailureDoesNotBlockRemainingAndCanRetry' passed (0.07 seconds)
+Test Suite 'BatchImportWorkerTests' passed at 2026-10-11 16:18:56.866
+Executed 10 tests, with 0 failures (0 unexpected) in 0.38 (0.38) seconds
+Test Suite 'LocalOwnershipRecoveryTests' started at 2026-10-11 16:18:56.866
+Test Case 'LocalOwnershipRecoveryTests.testCommittedCatalogAndLegacyVolumesSurvivePendingJournalRecovery' started at 2026-10-11 16:18:56.866
+Test Case 'LocalOwnershipRecoveryTests.testCommittedCatalogAndLegacyVolumesSurvivePendingJournalRecovery' passed (0.019 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testCopiedDirectoryJournalAndReplacedPageCannotAuthorizeCleanup' started at 2026-10-11 16:18:56.885
+Test Case 'LocalOwnershipRecoveryTests.testCopiedDirectoryJournalAndReplacedPageCannotAuthorizeCleanup' passed (0.01 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testInterruptedDeletionRestoresTombstoneAndCompletesOnRestart' started at 2026-10-11 16:18:56.895
+Test Case 'LocalOwnershipRecoveryTests.testInterruptedDeletionRestoresTombstoneAndCompletesOnRestart' passed (0.141 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testPartialPreparationWithDurableOwnershipIsCleanedOnRestart' started at 2026-10-11 16:18:57.036
+Test Case 'LocalOwnershipRecoveryTests.testPartialPreparationWithDurableOwnershipIsCleanedOnRestart' passed (0.005 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testRecoveryDoesNotRemoveActiveImportFromAnotherLibraryInstance' started at 2026-10-11 16:18:57.041
+Test Case 'LocalOwnershipRecoveryTests.testRecoveryDoesNotRemoveActiveImportFromAnotherLibraryInstance' passed (0.009 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testSymlinkAndMalformedJournalDoNotAuthorizeOutsideAccess' started at 2026-10-11 16:18:57.050
+Test Case 'LocalOwnershipRecoveryTests.testSymlinkAndMalformedJournalDoNotAuthorizeOutsideAccess' passed (0.01 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testUncommittedFirstVolumeRecoversEvenBeforeCatalogExists' started at 2026-10-11 16:18:57.060
+Test Case 'LocalOwnershipRecoveryTests.testUncommittedFirstVolumeRecoversEvenBeforeCatalogExists' passed (0.009 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testUnknownContentsReportRecoveryFailureBeforeDeletingKnownFiles' started at 2026-10-11 16:18:57.069
+Test Case 'LocalOwnershipRecoveryTests.testUnknownContentsReportRecoveryFailureBeforeDeletingKnownFiles' passed (0.012 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testUnknownPrefixedAndUUIDDirectoriesAreNeverOrphansByNameAlone' started at 2026-10-11 16:18:57.081
+Test Case 'LocalOwnershipRecoveryTests.testUnknownPrefixedAndUUIDDirectoriesAreNeverOrphansByNameAlone' passed (0.016 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testWholeSeriesUnknownFilePreflightKeepsEveryVolumeReadyAndReadable' started at 2026-10-11 16:18:57.097
+Test Case 'LocalOwnershipRecoveryTests.testWholeSeriesUnknownFilePreflightKeepsEveryVolumeReadyAndReadable' passed (0.036 seconds)
+Test Suite 'LocalOwnershipRecoveryTests' passed at 2026-10-11 16:18:57.134
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.268 (0.268) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 16:18:57.134
+Executed 34 tests, with 0 failures (0 unexpected) in 1.807 (1.807) seconds

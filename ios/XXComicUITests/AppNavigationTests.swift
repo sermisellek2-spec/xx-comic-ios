@@ -1,6 +1,6 @@
 import XCTest
 
-final class AppNavigationTests: XCTestCase {
+final class AppNavigationTests: ParityUITestCase {
     func testNavigationAndReaderPreferencesPersist() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--light-mode"]

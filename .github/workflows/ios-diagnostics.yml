@@ -1,0 +1,58 @@
+name: iOS retained test evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 指定仓库已结束开发CI的运行编号；只提取原生测试证据
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  export:
+    if: github.repository == 'sermisellek2-spec/xx-comic-ios'
+    runs-on: macos-14
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original run and tested revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ORIGINAL_RUN: ${{ inputs.run_id }}
+        run: |
+          python3 -c 'import os,re; assert re.fullmatch(r"[0-9]+",os.environ["ORIGINAL_RUN"])'
+          gh api "repos/sermisellek2-spec/xx-comic-ios/actions/runs/$ORIGINAL_RUN" > original-run.json
+          python3 -c '
+          import json,os
+          run=json.load(open("original-run.json"))
+          assert run["repository"]["full_name"]=="sermisellek2-spec/xx-comic-ios" and run["status"]=="completed"
+          with open(os.environ["GITHUB_ENV"],"a") as output:
+              output.write("TESTED_REVISION="+run["head_sha"]+"\n")
+          '
+      - uses: actions/download-artifact@v4
+        with:
+          name: iOS-test-results
+          path: retained-results
+          github-token: ${{ github.token }}
+          repository: sermisellek2-spec/xx-comic-ios
+          run-id: ${{ inputs.run_id }}
+      - name: Export retained screenshots and actual statuses
+        run: |
+          for result in retained-results/*/UITests.xcresult; do
+            python3 ios/scripts/export_evidence.py "$result" retained-evidence "$TESTED_REVISION"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: retained-ui-evidence
+          path: |
+            retained-evidence/visual-matrix/*.png
+            retained-evidence/ui-failures/*.png
+            retained-evidence/ui-failures/*.jpg
+            retained-evidence/*-manifest.json
+            retained-evidence/*-tests.json
+          if-no-files-found: error
+          retention-days: 7

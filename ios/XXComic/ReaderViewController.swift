@@ -49,13 +49,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 switch url.scheme {
                 case "xxcomic-epub": return try library.epubImageData(pageURL: url)
                 case "xxcomic-pdf": return try library.pdfPageData(pageURL: url) { try PdfRenderer.render($0, pageIndex: $1) }
-                case "file":
-                    let resolved = url.resolvingSymlinksInPath().standardizedFileURL
-                    let root = library.directory.resolvingSymlinksInPath().standardizedFileURL
-                    guard resolved.path.hasPrefix(root.path + "/") else { throw LocalLibraryError.invalidBook }
-                    return try FileAccessCoordinator.system.coordinate(resolved, access: .read) {
-                        try FileAccessCoordinator.readRegularFile($0, maximumBytes: Int64(LocalLibrary.maximumImageBytes))
-                    }
+                case "file", "xxcomic-folder": return try library.ownedImageData(at: url)
                 default: throw LocalLibraryError.invalidBook
                 }
             }
@@ -349,13 +343,14 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 let position = atEnd ? ReaderPosition(imageIndex: page.imageUrls.count - 1, offset: 0, atEnd: true)
                     : (saved ?? ReaderPosition(imageIndex: 0, offset: 0))
                 guard self.session.loaded(chapter: chapter, in: self.chapters, imageCount: page.imageUrls.count, position: position) else { throw ReaderError.chapterMissing }
+                self.session.updateImage(position.index(in: page.imageUrls))
                 self.images = page.imageUrls; self.sizes = [:]
                 self.title = chapter.title
                 self.loadState.chapterFinished(); self.updateLoadStatus(); self.lastSaved = nil
                 self.pages.reloadData(); self.layout.invalidateLayout()
                 self.pendingPosition = position; self.view.setNeedsLayout()
                 self.updateBadge()
-                self.readerSeekBar.configure(currentPage: position.imageIndex, total: self.images.count, sessionToken: Int64(self.session.chapterIndex))
+                self.readerSeekBar.configure(currentPage: self.session.imageIndex, total: self.images.count, sessionToken: Int64(self.session.chapterIndex))
             } catch {
                 guard let self, self.requestID == token, !Task.isCancelled else { return }
                 if (error as? LocalLibraryError) == .requiresTextReader {
@@ -469,25 +464,30 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         if let pendingPosition { return pendingPosition }
         if settings.layout == .paged {
             let index = Int((pages.contentOffset.x / max(1, pages.bounds.width)).rounded())
-            return ReaderPosition(imageIndex: max(0, min(images.count - 1, index)), offset: 0, atEnd: index == images.count - 1)
+            return positionAtImage(max(0, min(images.count - 1, index)), offset: 0, atEnd: index == images.count - 1)
         }
         let visible = pages.indexPathsForVisibleItems.sorted { $0.item < $1.item }
         let index = visible.first(where: { (layout.layoutAttributesForItem(at: $0)?.frame.maxY ?? 0) > pages.contentOffset.y + 1 }) ?? visible.first
-        guard let index, let frame = layout.layoutAttributesForItem(at: index)?.frame else { return ReaderPosition(imageIndex: session.imageIndex, offset: 0) }
+        guard let index, let frame = layout.layoutAttributesForItem(at: index)?.frame else { return positionAtImage(session.imageIndex, offset: 0) }
         let offset = (pages.contentOffset.y - frame.minY) / max(1, frame.height)
         let end = pages.contentSize.height > pages.bounds.height && pages.contentOffset.y + pages.bounds.height >= pages.contentSize.height - 2
-        return ReaderPosition(imageIndex: index.item, offset: Double(offset), atEnd: end)
+        return positionAtImage(index.item, offset: Double(offset), atEnd: end)
+    }
+    private func positionAtImage(_ index: Int, offset: Double, atEnd: Bool = false) -> ReaderPosition {
+        ReaderPosition(imageIndex: index, offset: offset, atEnd: atEnd,
+                       linkedPageID: images.indices.contains(index) ? ReaderPosition.linkedIdentity(in: images[index]) : nil,
+                       linkedTailID: images.last.flatMap(ReaderPosition.linkedIdentity(in:)))
     }
     private func restore(_ position: ReaderPosition) {
         guard !images.isEmpty else { return }
         restoring = true
         pages.layoutIfNeeded()
-        let index = position.index(for: images.count)
+        let index = position.index(in: images)
         if settings.layout == .paged {
             pages.setContentOffset(CGPoint(x: CGFloat(index) * pages.bounds.width, y: 0), animated: false)
         } else if let frame = layout.layoutAttributesForItem(at: IndexPath(item: index, section: 0))?.frame {
             let maxY = max(0, pages.contentSize.height - pages.bounds.height)
-            let target = position.atEnd ? maxY : frame.minY + frame.height * CGFloat(position.offset)
+            let target = position.isAtEnd(in: images) ? maxY : frame.minY + frame.height * CGFloat(position.offset)
             pages.setContentOffset(CGPoint(x: 0, y: max(0, min(maxY, target))), animated: false)
         }
         session.updateImage(index); restoring = false; updateBadge()

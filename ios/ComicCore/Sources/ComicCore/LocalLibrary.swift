@@ -1,4 +1,9 @@
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
 
 public enum LocalImportFormat: String, Codable, Sendable {
     case images, folder, zip, cbz, epub, pdf, mobi, azw, azw3
@@ -16,13 +21,15 @@ public struct LocalBook: Codable, Equatable, Sendable {
     public let kindleFormat: LocalKindleFormat?
     public let importFormat: LocalImportFormat?
     public let fingerprint: String?
+    public let linkedFolder: LinkedFolderReference?
 
-    public init(id: String, title: String, createdAt: TimeInterval, pages: [String], chapters: [LocalBookChapter]? = nil, epub: EpubPublication? = nil, pdf: PdfPublication? = nil, coverName: String? = nil, kindleFormat: LocalKindleFormat? = nil, importFormat: LocalImportFormat? = nil, fingerprint: String? = nil) {
+    public init(id: String, title: String, createdAt: TimeInterval, pages: [String], chapters: [LocalBookChapter]? = nil, epub: EpubPublication? = nil, pdf: PdfPublication? = nil, coverName: String? = nil, kindleFormat: LocalKindleFormat? = nil, importFormat: LocalImportFormat? = nil, fingerprint: String? = nil, linkedFolder: LinkedFolderReference? = nil) {
         self.id = id; self.title = title; self.createdAt = createdAt; self.pages = pages; self.chapters = chapters
         self.epub = epub; self.pdf = pdf; self.coverName = coverName
         self.kindleFormat = kindleFormat
         self.importFormat = importFormat
         self.fingerprint = fingerprint
+        self.linkedFolder = linkedFolder
     }
 }
 
@@ -34,6 +41,11 @@ public struct LocalBookChapter: Codable, Equatable, Sendable {
 
 extension LocalBook {
     func validateMetadata() throws {
+        if let linkedFolder {
+            guard importFormat == .folder, epub == nil, pdf == nil, kindleFormat == nil,
+                  coverName == nil || coverName == "cover.bin" else { throw LocalLibraryError.invalidBook }
+            try linkedFolder.validate(pages: pages)
+        }
         if let fingerprint {
             guard fingerprint.count == 64,
                   fingerprint.utf8.allSatisfy({ (0x30...0x39).contains($0) || (0x61...0x66).contains($0) }) else {
@@ -130,6 +142,10 @@ public struct LocalLibrary: Sendable {
             try validatePdf(book)
             return try book.pages.indices.map { try LocalPageURL.make(bookID: book.id, index: $0, scheme: "xxcomic-pdf") }
         }
+        if book.linkedFolder != nil {
+            if let cover = book.coverName { _ = try ownedFile(bookID: book.id, name: cover) }
+            return try book.pages.map { try LinkedFolderPageURL.make(bookID: book.id, pageID: $0) }
+        }
         guard book.coverName == nil else { throw LocalLibraryError.invalidBook }
         return try book.pages.map { name in
             guard name != ".", name != "..", !name.contains("/"), !name.contains("\\"), !name.isEmpty else { throw LocalLibraryError.invalidBook }
@@ -138,7 +154,7 @@ public struct LocalLibrary: Sendable {
     }
     public func summary(for book: LocalBook) throws -> ComicSummary {
         let pages = try pageURLs(for: book)
-        let cover = book.epub == nil && book.pdf == nil ? pages.first?.absoluteString ?? ""
+        let cover = book.epub == nil && book.pdf == nil && book.linkedFolder == nil ? pages.first?.absoluteString ?? ""
             : try book.coverName.map { try ownedFile(bookID: book.id, name: $0).absoluteString } ?? ""
         return ComicSummary(sourceId: "local", comicId: book.id, title: book.title,
                             coverUrl: cover, subtitle: "\(book.pages.count) 页")
@@ -148,7 +164,7 @@ public struct LocalLibrary: Sendable {
             let allVolumes = series.volumeIDs.compactMap { try? book(id: $0) }
             let totalPages = allVolumes.reduce(0) { $0 + $1.pages.count }
             let pages = try pageURLs(for: firstBook)
-            let cover = firstBook.epub == nil && firstBook.pdf == nil ? pages.first?.absoluteString ?? ""
+            let cover = firstBook.epub == nil && firstBook.pdf == nil && firstBook.linkedFolder == nil ? pages.first?.absoluteString ?? ""
                 : try firstBook.coverName.map { try ownedFile(bookID: firstBook.id, name: $0).absoluteString } ?? ""
             let volumePrefix = series.volumeIDs.count > 1 ? "\(series.volumeIDs.count) 卷 · " : ""
             return ComicSummary(sourceId: "local", comicId: series.id, title: series.displayTitle,
@@ -267,6 +283,7 @@ public struct LocalLibrary: Sendable {
                                   kind: kind, totalChapters: allChapters.count)
     }
     public func publishImport(_ prepared: PreparedLocalImport, targetSeriesId: String? = nil, explicitTitle: String? = nil) async throws -> (series: LocalSeriesRecord, book: LocalBook) {
+        defer { try? discardPrepared(prepared) }
         try await ensureLegacySeeded()
         if let fp = prepared.book.fingerprint {
             if let existing = try await findReadySeries(byFingerprint: fp) {
@@ -303,7 +320,8 @@ public struct LocalLibrary: Sendable {
                 throw LocalCatalogError.targetNotReady
             }
         }
-        let publishedBook = try publishPrepared(workingPrepared)
+        let publishedBook = try publishPrepared(workingPrepared, pendingCatalog: true)
+        let committedSeries: LocalSeriesRecord
         do {
             if let targetId = targetSeriesId {
                 let removingFPs = [publishedBook.fingerprint].compactMap { $0 }
@@ -311,7 +329,7 @@ public struct LocalLibrary: Sendable {
                 guard let updatedSeries = await catalogStore.getSeries(id: targetId) else {
                     throw LocalCatalogError.targetNotFound
                 }
-                return (updatedSeries, publishedBook)
+                committedSeries = updatedSeries
             } else {
                 let title = explicitTitle ?? publishedBook.title
                 let series = LocalSeriesRecord(id: seriesId, originalTitle: title, userTitle: userTitle,
@@ -319,20 +337,39 @@ public struct LocalLibrary: Sendable {
                                                updatedAt: Date().timeIntervalSince1970, status: "ready")
                 let removingFPs = [publishedBook.fingerprint].compactMap { $0 }
                 try await catalogStore.commitNewSeries(series, removingFingerprints: removingFPs)
-                return (series, publishedBook)
+                committedSeries = series
             }
         } catch {
-            let volumeDir = directory.appendingPathComponent(publishedBook.id)
-            try? FileManager.default.removeItem(at: volumeDir)
+            try rollbackImportPublication(workingPrepared)
             throw error
         }
+        // Catalog commit is already durable: a journal-cleanup error must never roll it back.
+        try finishImportPublication(workingPrepared)
+        return (committedSeries, publishedBook)
     }
     public func deleteSeries(id: String) async throws {
         try await ensureLegacySeeded()
         guard let series = await catalogStore.getSeries(id: id) else {
             throw LocalCatalogError.targetNotFound
         }
-        try await catalogStore.markSeriesDeleting(seriesId: id)
+        if series.status == "deleting" {
+            for volID in series.volumeIDs {
+                _ = try LocalImportJournal.recover(root: directory, folder: directory.appendingPathComponent(volID),
+                                                   catalogVolumeIDs: Set(series.volumeIDs))
+            }
+        }
+        var pendingVolumeIDs: [String] = []
+        // Validate the whole series before changing visibility or removing any volume.
+        for volID in series.volumeIDs {
+            let url = directory.appendingPathComponent(volID)
+            var info = stat()
+            if lstat(url.path, &info) != 0 {
+                if errno == ENOENT, series.status == "deleting" { continue }
+                throw LocalLibraryError.invalidBook
+            }
+            try removeOwnedVolumeDirectory(url, expectedID: volID, remove: false)
+            pendingVolumeIDs.append(volID)
+        }
         var tombstones: [LocalDeletedFingerprintRecord] = []
         let now = Date().timeIntervalSince1970
         for volId in series.volumeIDs {
@@ -342,9 +379,10 @@ public struct LocalLibrary: Sendable {
                 ))
             }
         }
-        for volId in series.volumeIDs {
+        try await catalogStore.markSeriesDeleting(seriesId: id, newTombstones: tombstones)
+        for volId in pendingVolumeIDs {
             let volURL = directory.appendingPathComponent(volId)
-            try deleteOwnedDirectory(volURL)
+            try deleteOwnedDirectory(volURL, recordDeletion: true)
         }
         try await catalogStore.completeSeriesDeletion(seriesId: id, newTombstones: tombstones)
     }
@@ -379,9 +417,19 @@ public struct LocalLibrary: Sendable {
         try await ensureLegacySeeded()
         try await catalogStore.reorderVolumes(seriesId: seriesId, newVolumeIDs: newVolumeIDs)
     }
-    func deleteOwnedDirectory(_ url: URL) throws {
+    func deleteOwnedDirectory(_ url: URL, recordDeletion: Bool = false) throws {
         let name = url.lastPathComponent
         guard UUID(uuidString: name) != nil else { throw LocalLibraryError.invalidBook }
+        try removeOwnedVolumeDirectory(url, expectedID: name, recordDeletion: recordDeletion)
+    }
+    func removeOwnedVolumeDirectory(_ url: URL, expectedID: String, remove: Bool = true, recordDeletion: Bool = false) throws {
+        guard UUID(uuidString: expectedID) != nil else { throw LocalLibraryError.invalidBook }
+        let name = url.lastPathComponent
+        if name != expectedID {
+            let marker = ".backup-" + expectedID + "-"
+            let suffix = String(name.dropFirst(marker.count))
+            guard UUID(uuidString: suffix) != nil, name == marker + suffix else { throw LocalLibraryError.invalidBook }
+        }
         guard url.deletingLastPathComponent().standardizedFileURL == directory.standardizedFileURL else {
             throw LocalLibraryError.invalidBook
         }
@@ -389,7 +437,65 @@ public struct LocalLibrary: Sendable {
         guard values.isDirectory == true, values.isSymbolicLink != true else {
             throw LocalLibraryError.invalidBook
         }
-        try FileManager.default.removeItem(at: url)
+        let manifest = url.appendingPathComponent("book.json")
+        let book = try JSONDecoder().decode(LocalBook.self, from: FileAccessCoordinator.readRegularFile(manifest, maximumBytes: 32 * 1024 * 1024))
+        guard book.id == expectedID else { throw LocalLibraryError.invalidBook }
+        try book.validateMetadata()
+        var known: Set<String> = ["book.json"]
+        if book.linkedFolder == nil, book.epub == nil, book.pdf == nil { known.formUnion(book.pages) }
+        if book.epub != nil { known.insert("content.epub") }
+        if book.pdf != nil { known.insert("content.pdf") }
+        if book.kindleFormat != nil { known.insert("source.kindle") }
+        if book.importFormat == .zip || book.importFormat == .cbz { known.insert("source.archive") }
+        if let cover = book.coverName { known.insert(cover) }
+        guard known.allSatisfy({ !$0.isEmpty && $0 != "." && $0 != ".." && !$0.contains("/") && !$0.contains("\\") }) else { throw LocalLibraryError.invalidBook }
+        let files = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+        // Preflight the complete set. Unknown files/directories and links survive.
+        for file in files {
+            let info = try file.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+            guard known.contains(file.lastPathComponent), info.isRegularFile == true, info.isSymbolicLink != true else { throw LocalLibraryError.invalidBook }
+        }
+        let rootFD = open(directory.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)
+        guard rootFD >= 0 else { throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
+        defer { close(rootFD) }
+        let folderFD = openat(rootFD, name, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)
+        guard folderFD >= 0 else { throw LocalLibraryError.invalidBook }
+        defer { close(folderFD) }
+        var pinned = stat(), current = stat()
+        guard fstat(folderFD, &pinned) == 0, lstat(url.path, &current) == 0,
+              pinned.st_dev == current.st_dev, pinned.st_ino == current.st_ino else { throw LocalLibraryError.invalidBook }
+        var fileIdentities: [String: [UInt64]] = [:]
+        for file in files {
+            var info = stat()
+            guard fstatat(folderFD, file.lastPathComponent, &info, AT_SYMLINK_NOFOLLOW) == 0,
+                  info.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw LocalLibraryError.invalidBook }
+            fileIdentities[file.lastPathComponent] = [UInt64(info.st_dev), UInt64(info.st_ino)]
+        }
+        if !remove { return }
+        var deletionJournal: LocalImportJournal?
+        if recordDeletion {
+            let journal = try LocalImportJournal(rootFD: rootFD, folderFD: folderFD, token: expectedID)
+            do {
+                for (file, identity) in fileIdentities { try journal.record(name: file, identity: identity) }
+                try journal.willDelete(targetID: expectedID)
+            } catch {
+                try journal.remove()
+                throw error
+            }
+            deletionJournal = journal
+        }
+        for file in files.sorted(by: { $0.lastPathComponent == "book.json" ? false : $1.lastPathComponent == "book.json" ? true : $0.lastPathComponent < $1.lastPathComponent }) {
+            var info = stat(), location = stat()
+            guard fstatat(rootFD, name, &location, AT_SYMLINK_NOFOLLOW) == 0,
+                  location.st_dev == pinned.st_dev, location.st_ino == pinned.st_ino,
+                  fstatat(folderFD, file.lastPathComponent, &info, AT_SYMLINK_NOFOLLOW) == 0,
+                  info.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG),
+                  fileIdentities[file.lastPathComponent] == [UInt64(info.st_dev), UInt64(info.st_ino)] else { throw LocalLibraryError.invalidBook }
+            guard unlinkat(folderFD, file.lastPathComponent, 0) == 0 else { throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
+        }
+        try deletionJournal?.remove()
+        // Never recursively remove a directory if a new unknown entry appears.
+        guard unlinkat(rootFD, name, AT_REMOVEDIR) == 0 else { throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
     }
     private func isVolumeCompleteAndReadable(at dirURL: URL, expectedID: String) -> Bool {
         let manager = FileManager.default
@@ -406,7 +512,11 @@ public struct LocalLibrary: Sendable {
         guard book.id == expectedID, UUID(uuidString: book.id) != nil else {
             return false
         }
-        if book.epub != nil {
+        guard (try? book.validateMetadata()) != nil else { return false }
+        if book.linkedFolder != nil {
+            // External permission loss does not invalidate an owned index/backup.
+            // Authorization and individual page availability are checked on access.
+        } else if book.epub != nil {
             let epubFile = dirURL.appendingPathComponent("content.epub")
             guard manager.fileExists(atPath: epubFile.path),
                   let attrs = try? manager.attributesOfItem(atPath: epubFile.path),
@@ -466,6 +576,7 @@ public struct LocalLibrary: Sendable {
         let catalogExists = await catalogStore.existsOnDisk()
         let allSeries = catalogExists ? await catalogStore.listSeries() : []
         let allVolumeIDs = Set(allSeries.flatMap(\.volumeIDs))
+        var recoveryFailed = false
 
         let canonicalLibrary = directory.resolvingSymlinksInPath().standardizedFileURL
 
@@ -474,8 +585,9 @@ public struct LocalLibrary: Sendable {
             let values = try item.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
             guard values.isSymbolicLink != true, values.isDirectory == true else { continue }
 
-            if name.hasPrefix(".import-") {
-                try? manager.removeItem(at: item)
+            if name.hasPrefix(".import-") || UUID(uuidString: name) != nil {
+                do { _ = try LocalImportJournal.recover(root: directory, folder: item, catalogVolumeIDs: allVolumeIDs) }
+                catch { recoveryFailed = true }
                 continue
             }
 
@@ -510,30 +622,33 @@ public struct LocalLibrary: Sendable {
                 let backupIsComplete = isVolumeCompleteAndReadable(at: item, expectedID: targetVolId)
 
                 if targetIsComplete {
-                    // Target volume is 100% complete and healthy on disk: backup is safe to delete
-                    try? manager.removeItem(at: item)
+                    // A complete target does not authorize deleting unknown backup files.
+                    do { try removeOwnedVolumeDirectory(item, expectedID: targetVolId) }
+                    catch { recoveryFailed = true }
                 } else if backupIsComplete {
                     // Target volume is missing or damaged/missing pages, but backup is complete: restore backup!
                     if manager.fileExists(atPath: targetDir.path) {
-                        try? manager.removeItem(at: targetDir)
+                        do { try deleteOwnedDirectory(targetDir) }
+                        catch {
+                            // Keep an unrecognized/corrupt directory intact before restoring.
+                            let retained = directory.appendingPathComponent(".retained-" + targetVolId + "-" + UUID().uuidString)
+                            try manager.moveItem(at: targetDir, to: retained)
+                        }
                     }
-                    try? manager.moveItem(at: item, to: targetDir)
+                    try manager.moveItem(at: item, to: targetDir)
                 }
                 // If neither is complete, keep both to avoid data loss.
                 continue
             }
 
-            if UUID(uuidString: name) != nil {
-                if catalogExists && !allVolumeIDs.contains(name) {
-                    try? manager.removeItem(at: item)
-                }
-            }
         }
         if catalogExists {
             for s in allSeries where s.status == "deleting" {
-                try? await deleteSeries(id: s.id)
+                do { try await deleteSeries(id: s.id) }
+                catch { recoveryFailed = true }
             }
         }
+        if recoveryFailed { throw LocalLibraryError.recoveryIncomplete }
     }
     public func importArchiveCoordinated(title: String, archive: URL, isReadableImage: @escaping (URL) throws -> Bool,
                                          targetSeriesId: String? = nil) async throws -> (series: LocalSeriesRecord, book: LocalBook) {
@@ -547,12 +662,19 @@ public struct LocalLibrary: Sendable {
     }
     public func updateFolderSeries(seriesId: String, title: String, folder: URL,
                                    isReadableImage: @escaping (URL) throws -> Bool) async throws -> (series: LocalSeriesRecord, book: LocalBook) {
+        let prepared = try prepareFolder(title: title, folder: folder, isReadableImage: isReadableImage)
+        return try await replaceFolderVolume(seriesId: seriesId, prepared: prepared)
+    }
+    func replaceFolderVolume(seriesId: String, prepared: PreparedLocalImport,
+                             commitRecord: @Sendable (LocalSeriesRecord, LocalBook) throws -> Void = { _, _ in }) async throws -> (series: LocalSeriesRecord, book: LocalBook) {
+        defer { try? discardPrepared(prepared) }
         try await ensureLegacySeeded()
-        guard var s = await catalogStore.getSeries(id: seriesId) else {
+        guard var s = await catalogStore.getSeries(id: seriesId), s.status == "ready" else {
+            try discardPrepared(prepared)
             throw LocalCatalogError.targetNotFound
         }
+        let originalSeries = s
         let existingVolId = s.volumeIDs.first
-        let prepared = try prepareFolder(title: title, folder: folder, isReadableImage: isReadableImage)
         let targetVolId = existingVolId ?? prepared.book.id
         let workingPrepared = try prepared.reassigningTargetID(targetVolId, allowExisting: true)
 
@@ -577,29 +699,28 @@ public struct LocalLibrary: Sendable {
             throw error
         }
 
-        let oldVolumes = s.volumeIDs
-        s.volumeIDs = [published.id]
+        if s.volumeIDs.isEmpty { s.volumeIDs = [published.id] }
+        else { s.volumeIDs[0] = published.id }
         s.updatedAt = Date().timeIntervalSince1970
 
+        var catalogCommitted = false
         do {
             try await catalogStore.commitNewSeries(s)
+            catalogCommitted = true
+            try commitRecord(s, published)
         } catch {
+            if catalogCommitted { try await catalogStore.commitNewSeries(originalSeries) }
             let newPublishedDir = directory.appendingPathComponent(published.id)
-            try? FileManager.default.removeItem(at: newPublishedDir)
+            try deleteOwnedDirectory(newPublishedDir)
             if let backup = backupDir {
-                try? FileManager.default.moveItem(at: backup, to: existingDir)
+                try FileManager.default.moveItem(at: backup, to: existingDir)
             }
             throw error
         }
 
         if let backup = backupDir {
-            try? FileManager.default.removeItem(at: backup)
+            try? removeOwnedVolumeDirectory(backup, expectedID: targetVolId)
         }
-        for oldVol in oldVolumes where oldVol != published.id {
-            let staleDir = directory.appendingPathComponent(oldVol)
-            try? deleteOwnedDirectory(staleDir)
-        }
-
         return (s, published)
     }
     public func importImagesCoordinated(title: String, files: [URL],
@@ -733,7 +854,7 @@ public struct LocalLibrary: Sendable {
 }
 
 public enum LocalLibraryError: LocalizedError {
-    case invalidBook, emptyImport, imageTooLarge, folderTooDeep, folderTooLarge, invalidArchive, archiveTooLarge, requiresTextReader
+    case invalidBook, emptyImport, imageTooLarge, folderTooDeep, folderTooLarge, invalidArchive, archiveTooLarge, requiresTextReader, recoveryIncomplete
     public var errorDescription: String? {
         switch self {
         case .invalidBook: return "本地漫画数据无效或文件不可用，原文件已保留。"
@@ -744,6 +865,7 @@ public enum LocalLibraryError: LocalizedError {
         case .invalidArchive: return "压缩包损坏、路径不安全、已加密或格式不支持，本次未导入，原文件已保留。仅支持 ZIP/CBZ。"
         case .archiveTooLarge: return "压缩包超过安全限制：最多 50000 项、单项 128 MiB、总量 20 GiB。本次未导入，原文件已保留。"
         case .requiresTextReader: return "该 EPUB 章节包含文字内容，需要使用文字阅读器。"
+        case .recoveryIncomplete: return "部分本地恢复未完成：未知或被替换的文件已保留，请检查本地存储后重试。"
         }
     }
 }

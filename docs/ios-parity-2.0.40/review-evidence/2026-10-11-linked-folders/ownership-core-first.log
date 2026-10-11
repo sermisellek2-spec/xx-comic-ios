@@ -1,0 +1,281 @@
+[0/1] Planning build
+Building for debugging...
+[0/12] Write sources
+[0/11] Write swift-version-24593BA9C3E375BF.txt
+[4/13] Compiling ComicCore LocalCatalogStore.swift
+[5/13] Compiling ComicCore LocalImportJournal.swift
+[6/13] Emitting module ComicCore
+[7/19] Compiling ComicCore BatchImportWorker.swift
+[8/19] Compiling ComicCore LinkedFolderLibrary.swift
+[9/19] Compiling ComicCore LocalComicSource.swift
+[10/19] Compiling ComicCore LocalEpubLibrary.swift
+[11/22] Compiling ComicCore LocalFolderSync.swift
+[12/22] Compiling ComicCore LocalKindleLibrary.swift
+[13/22] Compiling ComicCore LocalPdfLibrary.swift
+[14/25] Compiling ComicCore LocalImportPreparation.swift
+[15/25] Compiling ComicCore LocalLibrary.swift
+[16/27] Compiling ComicCore LocalFolderIndex.swift
+[17/27] Compiling ComicCore ZIPDirectory.swift
+[18/29] Compiling ComicCore EpubReaderResource.swift
+[19/29] Compiling ComicCore EpubTextSession.swift
+[20/31] Compiling ComicCore FileAccessCoordinator.swift
+[21/31] Compiling ComicCore ZIPDeflate.swift
+[22/31] Compiling ComicCore DownloadRuntime.swift
+[23/31] Compiling ComicCore EpubArchive.swift
+[24/31] Compiling ComicCore LocalArchiveIndex.swift
+[25/32] Wrapping AST for ComicCore for debugging
+[27/54] Emitting module ComicCoreTests
+[28/54] Compiling ComicCoreTests AntbywSourceTests.swift
+[29/54] Compiling ComicCoreTests AppThemeTests.swift
+[30/54] Compiling ComicCoreTests AppUpdateCheckerTests.swift
+[31/54] Compiling ComicCoreTests BaoziSourceTests.swift
+[32/54] Compiling ComicCoreTests BatchImportPlannerTests.swift
+[33/54] Compiling ComicCoreTests BatchImportSessionTests.swift
+[34/54] Compiling ComicCoreTests BatchImportWorkerTests.swift
+[35/54] Compiling ComicCoreTests BookshelfGroupStoreTests.swift
+[36/54] Compiling ComicCoreTests BookshelfReadingStatusTests.swift
+[37/54] Compiling ComicCoreTests BuiltinSourceCatalogTests.swift
+[38/54] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[39/54] Compiling ComicCoreTests ChapterMatchingTests.swift
+[40/54] Compiling ComicCoreTests ComicDirectoryPreparationTests.swift
+[41/54] Compiling ComicCoreTests ContentFingerprintTests.swift
+[42/54] Compiling ComicCoreTests CopyMangaTests.swift
+[43/54] Compiling ComicCoreTests CuimhSourceTests.swift
+[44/54] Compiling ComicCoreTests D5d6SourceTests.swift
+[45/54] Compiling ComicCoreTests DefaultDownloadImageFetcherTests.swift
+[46/54] Compiling ComicCoreTests DeferredDeletionTests.swift
+[47/54] Compiling ComicCoreTests DingManhuaSourceTests.swift
+[48/54] Compiling ComicCoreTests DiscoveryHeaderGestureTests.swift
+[49/96] Compiling ComicCoreTests DongmanLaSourceTests.swift
+[50/96] Compiling ComicCoreTests DownloadCoordinatorTests.swift
+[51/96] Compiling ComicCoreTests DownloadDeletionTests.swift
+[52/96] Compiling ComicCoreTests DownloadFileCoordinationTests.swift
+[53/96] Compiling ComicCoreTests DownloadIdentityTests.swift
+[54/96] Compiling ComicCoreTests DownloadLocationTests.swift
+[55/96] Compiling ComicCoreTests DownloadOwnedDirectoryTests.swift
+[56/96] Compiling ComicCoreTests DownloadRuntimeTests.swift
+[57/96] Compiling ComicCoreTests DownloadStoreTests.swift
+[58/96] Compiling ComicCoreTests EpubParserTests.swift
+[59/96] Compiling ComicCoreTests EpubReaderResourceTests.swift
+[60/96] Compiling ComicCoreTests EpubTextSessionTests.swift
+[61/96] Compiling ComicCoreTests ErrorLogStoreTests.swift
+[62/96] Compiling ComicCoreTests FavoriteRevisionTests.swift
+[63/96] Compiling ComicCoreTests FavoriteUpdateCheckerTests.swift
+[64/96] Compiling ComicCoreTests FileDownloadWorkerTests.swift
+[65/96] Compiling ComicCoreTests FiveUmSourceTests.swift
+[66/96] Compiling ComicCoreTests FolderBookmarkStoreTests.swift
+[67/96] Compiling ComicCoreTests GmhSourceTests.swift
+[68/96] Compiling ComicCoreTests Hanman18SourceTests.swift
+[69/96] Compiling ComicCoreTests HiperdexSourceTests.swift
+[70/116] Compiling ComicCoreTests LocalSeriesLifecycleTests.swift
+[71/116] Compiling ComicCoreTests LocalTestHTTPServer.swift
+[72/116] Compiling ComicCoreTests LocalTestHTTPServerTests.swift
+[73/116] Compiling ComicCoreTests ManbenSourceTests.swift
+[74/116] Compiling ComicCoreTests ManhuaguiTests.swift
+[75/116] Compiling ComicCoreTests ManwaImageDecoderTests.swift
+[76/116] Compiling ComicCoreTests ManwaSourceTests.swift
+[77/116] Compiling ComicCoreTests Mh160SourceTests.swift
+[78/116] Compiling ComicCoreTests Mh18BrowserTrustTests.swift
+[79/116] Compiling ComicCoreTests Mh18CookieSynchronizerTests.swift
+[80/116] Compiling ComicCoreTests Mh18SourceTests.swift
+[81/116] Compiling ComicCoreTests Mh18VerificationAttemptTests.swift
+[82/116] Compiling ComicCoreTests Mh18VerificationRulesTests.swift
+[83/116] Compiling ComicCoreTests MkzhanSourceTests.swift
+[84/116] Compiling ComicCoreTests NaturalPathOrderTests.swift
+[85/116] Compiling ComicCoreTests NewPublicSourcesTests.swift
+[86/116] Compiling ComicCoreTests PdfRendererTests.swift
+[87/116] Compiling ComicCoreTests PreferencesTests.swift
+[88/116] Compiling ComicCoreTests PublicComicSourceTests.swift
+[89/116] Compiling ComicCoreTests QuickPublicationInfoTests.swift
+[90/136] Compiling ComicCoreTests ReaderLoadStateTests.swift
+[91/136] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+[92/136] Compiling ComicCoreTests ReaderSessionTests.swift
+[93/136] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+[94/136] Compiling ComicCoreTests ReadingRulesTests.swift
+[95/136] Compiling ComicCoreTests RetiredComicSourceTests.swift
+[96/136] Compiling ComicCoreTests SearchRulesTests.swift
+[97/136] Compiling ComicCoreTests SourceAESTests.swift
+[98/136] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+[99/136] Compiling ComicCoreTests SourceGroupStoreTests.swift
+[100/136] Compiling ComicCoreTests SourceImportContractTests.swift
+[101/136] Compiling ComicCoreTests SourcePreferencesTests.swift
+[102/136] Compiling ComicCoreTests SourceSearchTrimTests.swift
+[103/136] Compiling ComicCoreTests StorageCalculatorTests.swift
+[104/136] Compiling ComicCoreTests TextReadingTests.swift
+[105/136] Compiling ComicCoreTests UsageStatsClientTests.swift
+[106/136] Compiling ComicCoreTests UsageStatsReportingTests.swift
+[107/136] Compiling ComicCoreTests WhiteMarginTests.swift
+[108/136] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+[109/136] Compiling ComicCoreTests resource_bundle_accessor.swift
+[110/136] Compiling ComicCoreTests IOSUpdatePolicyTests.swift
+[111/136] Compiling ComicCoreTests ImageEnhancementPolicyTests.swift
+[112/136] Compiling ComicCoreTests JmImageTransformTests.swift
+[113/136] Compiling ComicCoreTests JmSourceTests.swift
+[114/136] Compiling ComicCoreTests KindleFormatTests.swift
+[115/136] Compiling ComicCoreTests KindlePublicationTests.swift
+[116/136] Compiling ComicCoreTests LibraryStoreTests.swift
+[117/136] Compiling ComicCoreTests LinkedFolderLibraryTests.swift
+[118/136] Compiling ComicCoreTests LiumanhuaSourceTests.swift
+[119/136] Compiling ComicCoreTests LocalArchiveTests.swift
+[120/136] Compiling ComicCoreTests LocalCatalogTests.swift
+[121/136] Compiling ComicCoreTests LocalEpubLibraryTests.swift
+[122/136] Compiling ComicCoreTests LocalFolderSyncTests.swift
+[123/136] Compiling ComicCoreTests LocalFolderTests.swift
+[124/136] Compiling ComicCoreTests LocalImportFingerprintTests.swift
+[125/136] Compiling ComicCoreTests LocalImportPreparationTests.swift
+[126/136] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+[127/136] Compiling ComicCoreTests LocalLibraryTests.swift
+[128/136] Compiling ComicCoreTests LocalOwnershipRecoveryTests.swift
+[129/136] Compiling ComicCoreTests LocalPdfLibraryTests.swift
+[130/136] Compiling ComicCoreTests LocalReadingRoutingTests.swift
+[131/139] Wrapping AST for ComicCoreTests for debugging
+[132/139] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[133/140] Write sources
+[135/142] Emitting module ComicCorePackageDiscoveredTests
+[136/142] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[137/143] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[138/144] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[139/144] Write sources
+[140/144] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[142/146] Emitting module ComicCorePackageTests
+[143/146] Compiling ComicCorePackageTests runner.swift
+[144/146] Write Objects.LinkFileList
+[145/146] Linking ComicCorePackageTests.xctest
+Build complete! (40.09s)
+Test Suite 'Selected tests' started at 2026-10-11 16:01:31.310
+Test Suite 'LinkedFolderLibraryTests' started at 2026-10-11 16:01:31.325
+Test Case 'LinkedFolderLibraryTests.testAddedChapterDoesNotStealExistingChapterAndRenamedPageKeepsIdentity' started at 2026-10-11 16:01:31.325
+Test Case 'LinkedFolderLibraryTests.testAddedChapterDoesNotStealExistingChapterAndRenamedPageKeepsIdentity' passed (0.064 seconds)
+Test Case 'LinkedFolderLibraryTests.testAddingAnotherFolderPreservesTheFormerWrapperChapter' started at 2026-10-11 16:01:31.390
+Test Case 'LinkedFolderLibraryTests.testAddingAnotherFolderPreservesTheFormerWrapperChapter' passed (0.041 seconds)
+Test Case 'LinkedFolderLibraryTests.testAuthorizationWriteFailureRollsBackBookAndCatalog' started at 2026-10-11 16:01:31.430
+Test Case 'LinkedFolderLibraryTests.testAuthorizationWriteFailureRollsBackBookAndCatalog' passed (0.038 seconds)
+Test Case 'LinkedFolderLibraryTests.testCancellationDuringIndexKeepsOldBookAndAuthorizationRecord' started at 2026-10-11 16:01:31.468
+Test Case 'LinkedFolderLibraryTests.testCancellationDuringIndexKeepsOldBookAndAuthorizationRecord' passed (0.03 seconds)
+Test Case 'LinkedFolderLibraryTests.testConcurrentLinkUsesOneSeriesAndDeletionPreservesOriginalFiles' started at 2026-10-11 16:01:31.499
+Test Case 'LinkedFolderLibraryTests.testConcurrentLinkUsesOneSeriesAndDeletionPreservesOriginalFiles' passed (0.087 seconds)
+Test Case 'LinkedFolderLibraryTests.testIndexOwnsOnlyMetadataAndOneCoverAndReadsPagesThroughRestart' started at 2026-10-11 16:01:31.585
+Test Case 'LinkedFolderLibraryTests.testIndexOwnsOnlyMetadataAndOneCoverAndReadsPagesThroughRestart' passed (0.026 seconds)
+Test Case 'LinkedFolderLibraryTests.testLegacyCopiedFolderMigratesWithoutChangingVolumeOrChapterIdentity' started at 2026-10-11 16:01:31.611
+Test Case 'LinkedFolderLibraryTests.testLegacyCopiedFolderMigratesWithoutChangingVolumeOrChapterIdentity' passed (0.143 seconds)
+Test Case 'LinkedFolderLibraryTests.testOwnedCoverAndImageReaderUsesExactLibraryAndRejectsUnknownFile' started at 2026-10-11 16:01:31.754
+Test Case 'LinkedFolderLibraryTests.testOwnedCoverAndImageReaderUsesExactLibraryAndRejectsUnknownFile' passed (0.015 seconds)
+Test Case 'LinkedFolderLibraryTests.testPageAccessRejectsLinksTraversalAndPrivateMetadata' started at 2026-10-11 16:01:31.770
+Test Case 'LinkedFolderLibraryTests.testPageAccessRejectsLinksTraversalAndPrivateMetadata' passed (0.025 seconds)
+Test Case 'LinkedFolderLibraryTests.testReauthorizationOfMovedFolderPreservesIDsAndSavedReading' started at 2026-10-11 16:01:31.794
+Test Case 'LinkedFolderLibraryTests.testReauthorizationOfMovedFolderPreservesIDsAndSavedReading' passed (0.048 seconds)
+Test Case 'LinkedFolderLibraryTests.testSavedPageIdentityResumesTheSamePageAfterAnEarlierInsertion' started at 2026-10-11 16:01:31.842
+Test Case 'LinkedFolderLibraryTests.testSavedPageIdentityResumesTheSamePageAfterAnEarlierInsertion' passed (0.052 seconds)
+Test Case 'LinkedFolderLibraryTests.testUnlinkRetainsReadableBookAndRelinkDoesNotDuplicateIt' started at 2026-10-11 16:01:31.894
+Test Case 'LinkedFolderLibraryTests.testUnlinkRetainsReadableBookAndRelinkDoesNotDuplicateIt' passed (0.042 seconds)
+Test Suite 'LinkedFolderLibraryTests' passed at 2026-10-11 16:01:31.936
+Executed 12 tests, with 0 failures (0 unexpected) in 0.61 (0.61) seconds
+Test Suite 'LocalFolderSyncTests' started at 2026-10-11 16:01:31.936
+Test Case 'LocalFolderSyncTests.testFolderIdentityStabilityAndRollbackOnFailure' started at 2026-10-11 16:01:31.936
+Test Case 'LocalFolderSyncTests.testFolderIdentityStabilityAndRollbackOnFailure' passed (0.052 seconds)
+Test Case 'LocalFolderSyncTests.testInterruptedSyncRecoveryRestoresBackup' started at 2026-10-11 16:01:31.988
+Test Case 'LocalFolderSyncTests.testInterruptedSyncRecoveryRestoresBackup' passed (0.123 seconds)
+Test Case 'LocalFolderSyncTests.testLinkFolderAndSyncLifecycle' started at 2026-10-11 16:01:32.111
+Test Case 'LocalFolderSyncTests.testLinkFolderAndSyncLifecycle' passed (0.073 seconds)
+Test Case 'LocalFolderSyncTests.testMalformedBackupDirectoryNamePreservesLibraryAndIgnored' started at 2026-10-11 16:01:32.184
+Test Case 'LocalFolderSyncTests.testMalformedBackupDirectoryNamePreservesLibraryAndIgnored' passed (0.069 seconds)
+Test Case 'LocalFolderSyncTests.testSingleWriterGateMutualExclusion' started at 2026-10-11 16:01:32.253
+Test Case 'LocalFolderSyncTests.testSingleWriterGateMutualExclusion' passed (0.162 seconds)
+Test Case 'LocalFolderSyncTests.testSyncAllBatchesMultipleFolders' started at 2026-10-11 16:01:32.415
+Test Case 'LocalFolderSyncTests.testSyncAllBatchesMultipleFolders' passed (0.059 seconds)
+Test Case 'LocalFolderSyncTests.testTargetMissingPageRestoresCompleteBackup' started at 2026-10-11 16:01:32.475
+Test Case 'LocalFolderSyncTests.testTargetMissingPageRestoresCompleteBackup' passed (0.123 seconds)
+Test Suite 'LocalFolderSyncTests' passed at 2026-10-11 16:01:32.597
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.661 (0.661) seconds
+Test Suite 'LocalImportPreparationTests' started at 2026-10-11 16:01:32.597
+Test Case 'LocalImportPreparationTests.testCancellationAtFinalPublishBoundaryStillReclaimsPreparedDirectory' started at 2026-10-11 16:01:32.597
+Test Case 'LocalImportPreparationTests.testCancellationAtFinalPublishBoundaryStillReclaimsPreparedDirectory' passed (0.007 seconds)
+Test Case 'LocalImportPreparationTests.testCancellationInPreparationAndAfterPreparationCleansOnlyCurrentImport' started at 2026-10-11 16:01:32.604
+Test Case 'LocalImportPreparationTests.testCancellationInPreparationAndAfterPreparationCleansOnlyCurrentImport' passed (0.02 seconds)
+Test Case 'LocalImportPreparationTests.testConcurrentPublishAndDiscardCopiesHaveOneTerminalOutcome' started at 2026-10-11 16:01:32.624
+Test Case 'LocalImportPreparationTests.testConcurrentPublishAndDiscardCopiesHaveOneTerminalOutcome' passed (0.008 seconds)
+Test Case 'LocalImportPreparationTests.testCrossLibraryIncludingSameDirectoryCannotPublishOrDiscardPreparation' started at 2026-10-11 16:01:32.632
+Test Case 'LocalImportPreparationTests.testCrossLibraryIncludingSameDirectoryCannotPublishOrDiscardPreparation' passed (0.009 seconds)
+Test Case 'LocalImportPreparationTests.testDiscardIOFailureIsReportedAndDoesNotRecurseIntoForeignContents' started at 2026-10-11 16:01:32.641
+Test Case 'LocalImportPreparationTests.testDiscardIOFailureIsReportedAndDoesNotRecurseIntoForeignContents' passed (0.008 seconds)
+Test Case 'LocalImportPreparationTests.testDiscardIsIdempotentAndCannotRemoveAnotherPreparationOrPublishedBook' started at 2026-10-11 16:01:32.648
+Test Case 'LocalImportPreparationTests.testDiscardIsIdempotentAndCannotRemoveAnotherPreparationOrPublishedBook' passed (0.012 seconds)
+Test Case 'LocalImportPreparationTests.testFinalPublishBoundaryPreservesExistingTargetsIncludingEmptyDirectoryAndSymlink' started at 2026-10-11 16:01:32.660
+Test Case 'LocalImportPreparationTests.testFinalPublishBoundaryPreservesExistingTargetsIncludingEmptyDirectoryAndSymlink' passed (0.029 seconds)
+Test Case 'LocalImportPreparationTests.testFinalPublishBoundaryRejectsReplacementSymlinkAndManifestMutation' started at 2026-10-11 16:01:32.689
+Test Case 'LocalImportPreparationTests.testFinalPublishBoundaryRejectsReplacementSymlinkAndManifestMutation' passed (0.034 seconds)
+Test Case 'LocalImportPreparationTests.testFolderAndRealZipKeepNaturalChapterOrderThroughPreparation' started at 2026-10-11 16:01:32.723
+Test Case 'LocalImportPreparationTests.testFolderAndRealZipKeepNaturalChapterOrderThroughPreparation' passed (0.3 seconds)
+Test Case 'LocalImportPreparationTests.testForeignDirectFileAndEmptyDirectorySurviveDiscardAndFailedPublication' started at 2026-10-11 16:01:33.023
+Test Case 'LocalImportPreparationTests.testForeignDirectFileAndEmptyDirectorySurviveDiscardAndFailedPublication' passed (0.028 seconds)
+Test Case 'LocalImportPreparationTests.testForeignEntriesAndReplacedOwnedFileSurvivePreparationFailure' started at 2026-10-11 16:01:33.051
+Test Case 'LocalImportPreparationTests.testForeignEntriesAndReplacedOwnedFileSurvivePreparationFailure' passed (0.031 seconds)
+Test Case 'LocalImportPreparationTests.testGrownManifestCannotExpandThePreparationReadBudget' started at 2026-10-11 16:01:33.082
+Test Case 'LocalImportPreparationTests.testGrownManifestCannotExpandThePreparationReadBudget' passed (0.014 seconds)
+Test Case 'LocalImportPreparationTests.testKnownFilenameReplacementIsNotOwnedForDiscardOrFailureCleanup' started at 2026-10-11 16:01:33.096
+Test Case 'LocalImportPreparationTests.testKnownFilenameReplacementIsNotOwnedForDiscardOrFailureCleanup' passed (0.018 seconds)
+Test Case 'LocalImportPreparationTests.testManifestIdentityTamperingAndMissingOrSymlinkResourcesAreRejectedAndCleaned' started at 2026-10-11 16:01:33.113
+Test Case 'LocalImportPreparationTests.testManifestIdentityTamperingAndMissingOrSymlinkResourcesAreRejectedAndCleaned' passed (0.034 seconds)
+Test Case 'LocalImportPreparationTests.testNativePdfPreparationAndPublicationUseRealRenderer' started at 2026-10-11 16:01:33.148
+/work/Tests/ComicCoreTests/LocalImportPreparationTests.swift:158: LocalImportPreparationTests.testNativePdfPreparationAndPublicationUseRealRenderer : Test skipped - Real PDF prepare/publish requires Apple CoreGraphics and ImageIO; Linux injection checks storage only.
+Test Case 'LocalImportPreparationTests.testNativePdfPreparationAndPublicationUseRealRenderer' skipped (0.0 seconds)
+Test Case 'LocalImportPreparationTests.testPdfInjectedStoragePreparationCopiesBeforeInspectAndOnlyRendersAtImport' started at 2026-10-11 16:01:33.148
+Test Case 'LocalImportPreparationTests.testPdfInjectedStoragePreparationCopiesBeforeInspectAndOnlyRendersAtImport' passed (0.068 seconds)
+Test Case 'LocalImportPreparationTests.testPreparedImagesAndRealEpubStayInvisibleUntilPublishedAndReopen' started at 2026-10-11 16:01:33.216
+Test Case 'LocalImportPreparationTests.testPreparedImagesAndRealEpubStayInvisibleUntilPublishedAndReopen' passed (0.082 seconds)
+Test Case 'LocalImportPreparationTests.testRealKindleRetainsOriginalAndDerivedArchiveBeforePublishingText' started at 2026-10-11 16:01:33.298
+Test Case 'LocalImportPreparationTests.testRealKindleRetainsOriginalAndDerivedArchiveBeforePublishingText' passed (0.079 seconds)
+Test Case 'LocalImportPreparationTests.testRealManifestWriteFailureRetainsForeignDirectoryAndReportsFailure' started at 2026-10-11 16:01:33.377
+Test Case 'LocalImportPreparationTests.testRealManifestWriteFailureRetainsForeignDirectoryAndReportsFailure' passed (0.06 seconds)
+Test Case 'LocalImportPreparationTests.testReplacedLibraryRootCannotPublishOrDeleteReplacementOrParkedPreparation' started at 2026-10-11 16:01:33.437
+Test Case 'LocalImportPreparationTests.testReplacedLibraryRootCannotPublishOrDeleteReplacementOrParkedPreparation' passed (0.008 seconds)
+Test Case 'LocalImportPreparationTests.testReplacedMovedAndExternalSymlinkStagingIsNeitherPublishedNorDeleted' started at 2026-10-11 16:01:33.445
+Test Case 'LocalImportPreparationTests.testReplacedMovedAndExternalSymlinkStagingIsNeitherPublishedNorDeleted' passed (0.021 seconds)
+Test Suite 'LocalImportPreparationTests' passed at 2026-10-11 16:01:33.467
+Executed 21 tests, with 1 test skipped and 0 failures (0 unexpected) in 0.869 (0.869) seconds
+Test Suite 'LocalOwnershipRecoveryTests' started at 2026-10-11 16:01:33.467
+Test Case 'LocalOwnershipRecoveryTests.testCommittedCatalogAndLegacyVolumesSurvivePendingJournalRecovery' started at 2026-10-11 16:01:33.467
+Test Case 'LocalOwnershipRecoveryTests.testCommittedCatalogAndLegacyVolumesSurvivePendingJournalRecovery' passed (0.019 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testCopiedDirectoryJournalAndReplacedPageCannotAuthorizeCleanup' started at 2026-10-11 16:01:33.486
+Test Case 'LocalOwnershipRecoveryTests.testCopiedDirectoryJournalAndReplacedPageCannotAuthorizeCleanup' passed (0.01 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testInterruptedDeletionRestoresTombstoneAndCompletesOnRestart' started at 2026-10-11 16:01:33.496
+Test Case 'LocalOwnershipRecoveryTests.testInterruptedDeletionRestoresTombstoneAndCompletesOnRestart' passed (0.136 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testPartialPreparationWithDurableOwnershipIsCleanedOnRestart' started at 2026-10-11 16:01:33.633
+Test Case 'LocalOwnershipRecoveryTests.testPartialPreparationWithDurableOwnershipIsCleanedOnRestart' passed (0.007 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testRecoveryDoesNotRemoveActiveImportFromAnotherLibraryInstance' started at 2026-10-11 16:01:33.640
+Test Case 'LocalOwnershipRecoveryTests.testRecoveryDoesNotRemoveActiveImportFromAnotherLibraryInstance' passed (0.009 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testSymlinkAndMalformedJournalDoNotAuthorizeOutsideAccess' started at 2026-10-11 16:01:33.649
+Test Case 'LocalOwnershipRecoveryTests.testSymlinkAndMalformedJournalDoNotAuthorizeOutsideAccess' passed (0.008 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testUncommittedFirstVolumeRecoversEvenBeforeCatalogExists' started at 2026-10-11 16:01:33.657
+Test Case 'LocalOwnershipRecoveryTests.testUncommittedFirstVolumeRecoversEvenBeforeCatalogExists' passed (0.008 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testUnknownContentsReportRecoveryFailureBeforeDeletingKnownFiles' started at 2026-10-11 16:01:33.665
+Test Case 'LocalOwnershipRecoveryTests.testUnknownContentsReportRecoveryFailureBeforeDeletingKnownFiles' passed (0.008 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testUnknownPrefixedAndUUIDDirectoriesAreNeverOrphansByNameAlone' started at 2026-10-11 16:01:33.672
+Test Case 'LocalOwnershipRecoveryTests.testUnknownPrefixedAndUUIDDirectoriesAreNeverOrphansByNameAlone' passed (0.014 seconds)
+Test Case 'LocalOwnershipRecoveryTests.testWholeSeriesUnknownFilePreflightKeepsEveryVolumeReadyAndReadable' started at 2026-10-11 16:01:33.687
+Test Case 'LocalOwnershipRecoveryTests.testWholeSeriesUnknownFilePreflightKeepsEveryVolumeReadyAndReadable' passed (0.031 seconds)
+Test Suite 'LocalOwnershipRecoveryTests' passed at 2026-10-11 16:01:33.718
+Executed 10 tests, with 0 failures (0 unexpected) in 0.251 (0.251) seconds
+Test Suite 'LocalSeriesLifecycleTests' started at 2026-10-11 16:01:33.718
+Test Case 'LocalSeriesLifecycleTests.testAppendToNonExistentOrDeletingSeriesFailsAndDiscardsStaging' started at 2026-10-11 16:01:33.718
+Test Case 'LocalSeriesLifecycleTests.testAppendToNonExistentOrDeletingSeriesFailsAndDiscardsStaging' passed (0.113 seconds)
+Test Case 'LocalSeriesLifecycleTests.testAppendVolumeIncreasesVolumeCountAndPreservesStableChapterIDs' started at 2026-10-11 16:01:33.831
+Test Case 'LocalSeriesLifecycleTests.testAppendVolumeIncreasesVolumeCountAndPreservesStableChapterIDs' passed (0.043 seconds)
+Test Case 'LocalSeriesLifecycleTests.testConcurrentImportWithSameFingerprintReturnsExistingSeries' started at 2026-10-11 16:01:33.874
+Test Case 'LocalSeriesLifecycleTests.testConcurrentImportWithSameFingerprintReturnsExistingSeries' passed (0.025 seconds)
+Test Case 'LocalSeriesLifecycleTests.testExplicitAppendWithSameFingerprintToDifferentSeriesThrowsAlreadyImported' started at 2026-10-11 16:01:33.899
+Test Case 'LocalSeriesLifecycleTests.testExplicitAppendWithSameFingerprintToDifferentSeriesThrowsAlreadyImported' passed (0.037 seconds)
+Test Case 'LocalSeriesLifecycleTests.testLegacySingleVolumeBooksDiscoveredAsImplicitSeries' started at 2026-10-11 16:01:33.936
+Test Case 'LocalSeriesLifecycleTests.testLegacySingleVolumeBooksDiscoveredAsImplicitSeries' passed (0.019 seconds)
+Test Case 'LocalSeriesLifecycleTests.testReimportingSameFingerprintRestoresSeriesIDVolumeIDAndUserTitle' started at 2026-10-11 16:01:33.955
+Test Case 'LocalSeriesLifecycleTests.testReimportingSameFingerprintRestoresSeriesIDVolumeIDAndUserTitle' passed (0.044 seconds)
+Test Case 'LocalSeriesLifecycleTests.testSeriesDeletionRemovesPhysicalFilesAndCreatesTombstone' started at 2026-10-11 16:01:33.999
+Test Case 'LocalSeriesLifecycleTests.testSeriesDeletionRemovesPhysicalFilesAndCreatesTombstone' passed (0.026 seconds)
+Test Case 'LocalSeriesLifecycleTests.testSingleVolumeDeletionInMultiVolumeSeriesDeletesOnlyTargetVolume' started at 2026-10-11 16:01:34.025
+Test Case 'LocalSeriesLifecycleTests.testSingleVolumeDeletionInMultiVolumeSeriesDeletesOnlyTargetVolume' passed (0.049 seconds)
+Test Case 'LocalSeriesLifecycleTests.testStartupOrphanRecoveryCleansAbandonedStagingAndUncommittedVolumes' started at 2026-10-11 16:01:34.074
+Test Case 'LocalSeriesLifecycleTests.testStartupOrphanRecoveryCleansAbandonedStagingAndUncommittedVolumes' passed (0.046 seconds)
+Test Suite 'LocalSeriesLifecycleTests' passed at 2026-10-11 16:01:34.121
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.403 (0.403) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 16:01:34.121
+Executed 59 tests, with 1 test skipped and 0 failures (0 unexpected) in 2.794 (2.794) seconds

@@ -7,6 +7,7 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
     private var cacheSizeText: String = "正在计算..."
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let confirmButton = UIButton(type: .system)
+    private let feedbackLabel = UILabel()
     private var sizeTask: Task<Void, Never>?
     private var cleanupTask: Task<Void, Never>?
     private var sizeGeneration = UUID()
@@ -54,17 +55,25 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
         confirmButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .bold)
         confirmButton.layer.cornerRadius = 10
         confirmButton.addTarget(self, action: #selector(confirmCleanupTapped), for: .touchUpInside)
-        view.addSubview(confirmButton)
+        feedbackLabel.font = .systemFont(ofSize: 14)
+        feedbackLabel.textColor = Palette.secondaryText
+        feedbackLabel.numberOfLines = 0
+        feedbackLabel.accessibilityIdentifier = "cache.feedback"
+        feedbackLabel.isHidden = true
+        let footer = UIStackView(arrangedSubviews: [feedbackLabel, confirmButton])
+        footer.axis = .vertical; footer.spacing = 8
+        footer.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(footer)
 
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: confirmButton.topAnchor, constant: -12),
+            tableView.bottomAnchor.constraint(equalTo: footer.topAnchor, constant: -12),
 
-            confirmButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            confirmButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            confirmButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
+            footer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            footer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            footer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
             confirmButton.heightAnchor.constraint(equalToConstant: 48)
         ])
     }
@@ -118,6 +127,7 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
     private func performCleanup() {
         guard cleanupTask == nil else { return }
         confirmButton.isEnabled = false
+        feedbackLabel.text = "正在清理缓存…"; feedbackLabel.isHidden = false
         confirmButton.setTitle("正在清理…", for: .normal)
         let environment = environment
         cleanupTask = Task { [weak self] in
@@ -150,11 +160,10 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
     }
 
     private func showToast(_ message: String) {
-        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
-        present(alert, animated: true)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            alert.dismiss(animated: true)
-        }
+        // A durable result remains readable and does not compete with the
+        // confirmation alert's dismissal transition.
+        feedbackLabel.text = message
+        feedbackLabel.isHidden = false
     }
 
     // MARK: - UITableViewDataSource & Delegate

@@ -4,15 +4,38 @@ public struct ReaderPosition: Codable, Equatable, Sendable {
     public let imageIndex: Int
     public let offset: Double
     public let atEnd: Bool
+    public let linkedPageID: String?
+    public let linkedTailID: String?
 
-    public init(imageIndex: Int, offset: Double, atEnd: Bool = false) {
+    public init(imageIndex: Int, offset: Double, atEnd: Bool = false, linkedPageID: String? = nil, linkedTailID: String? = nil) {
         self.imageIndex = max(0, imageIndex)
         self.offset = offset.isNaN ? 0 : max(0, min(1, offset))
         self.atEnd = atEnd
+        self.linkedPageID = linkedPageID.flatMap { UUID(uuidString: $0) != nil ? $0 : nil }
+        self.linkedTailID = linkedTailID.flatMap { UUID(uuidString: $0) != nil ? $0 : nil }
     }
 
     public func index(for count: Int) -> Int {
         min(max(0, count > 0 ? count - 1 : 0), imageIndex)
+    }
+
+    public func index(in imageURLs: [String]) -> Int {
+        if let linkedPageID, let retained = imageURLs.firstIndex(where: {
+            guard let url = URL(string: $0), let identity = try? LinkedFolderPageURL.parse(url) else { return false }
+            return identity.pageID == linkedPageID
+        }) { return retained }
+        return index(for: imageURLs.count)
+    }
+
+    public static func linkedIdentity(in imageURL: String) -> String? {
+        guard let url = URL(string: imageURL) else { return nil }
+        return (try? LinkedFolderPageURL.parse(url))?.pageID
+    }
+
+    public func isAtEnd(in imageURLs: [String]) -> Bool {
+        guard atEnd else { return false }
+        guard let linkedTailID else { return true }
+        return imageURLs.last.flatMap(Self.linkedIdentity(in:)) == linkedTailID
     }
 
     public func legacyProgress(count: Int) -> Int {
@@ -30,12 +53,14 @@ public struct ReaderPosition: Codable, Equatable, Sendable {
         return ReaderPosition(imageIndex: index, offset: row - Double(index))
     }
 
-    private enum CodingKeys: String, CodingKey { case imageIndex, offset, atEnd }
+    private enum CodingKeys: String, CodingKey { case imageIndex, offset, atEnd, linkedPageID, linkedTailID }
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         self.init(imageIndex: try values.decode(Int.self, forKey: .imageIndex),
                   offset: try values.decode(Double.self, forKey: .offset),
-                  atEnd: try values.decode(Bool.self, forKey: .atEnd))
+                  atEnd: try values.decode(Bool.self, forKey: .atEnd),
+                  linkedPageID: try values.decodeIfPresent(String.self, forKey: .linkedPageID),
+                  linkedTailID: try values.decodeIfPresent(String.self, forKey: .linkedTailID))
     }
 }
 

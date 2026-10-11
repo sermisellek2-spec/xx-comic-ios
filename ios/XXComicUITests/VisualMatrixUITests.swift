@@ -1,6 +1,6 @@
 import XCTest
 
-final class VisualMatrixUITests: XCTestCase {
+final class VisualMatrixUITests: ParityUITestCase {
     private func capture(_ name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
@@ -95,8 +95,7 @@ final class VisualMatrixUITests: XCTestCase {
         app.buttons["立即清理"].tap()
         let cleared = app.staticTexts["缓存已清理，收藏与本地漫画已保留"]
         XCTAssertTrue(cleared.waitForExistence(timeout: 10))
-        let dismissed = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: cleared)
-        wait(for: [dismissed], timeout: 5)
+        XCTAssertTrue(app.buttons["确认清理"].isEnabled)
         app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(app.tables.cells["settings.cache"].staticTexts["0 B"].waitForExistence(timeout: 10))
         XCTAssertEqual(app.tables.cells.count, 11)

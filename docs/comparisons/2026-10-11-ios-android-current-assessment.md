@@ -1,6 +1,6 @@
 # iOS 与 Android 2.0.40 当前差异核对
 
-最新第六轮301dc11的Debug/Release Apple SDK编译及Apple核心853项0失败通过（68.134秒），随后macOS Bash展开空test_filters数组时报unbound variable，两设备原生/UI均未运行、没有IPA。构建脚本已改为始终非空的公共参数数组，完整full测试范围保留，继续Apple自验。非站源/51真实源门槛仍未通过。 [第六轮实际记录](../ios-parity-2.0.40/review-evidence/2026-10-11-apple-ci/repair-6-summary.json)。下文历史结果仅对应各自提交。
+第七轮e2f53b5已完成完整Apple运行：Debug/Release构建及核心853项0失败通过；iPhone/iPad原生各19项通过，UI各54项执行，分别10/17个失败用例（16/27条失败断言）。当前正在补P4直接索引/授权/稳定页续读、持久归属恢复，以及iPad导入弹出位置、下载长按刷新、缓存反馈和批量取消竞争。非站源门槛仍未通过，不进入真实站源，不生成IPA。 [最新台账](../ios-parity-2.0.40/STATUS.md)。下文旧版本结果仅是历史证据，不代表当前候选通过。
 
 更新：2026-10-11。固定Android 2.0.40/340、696e80a44ab36b19de6f630565df32978e55a19e；iOS最新已运行9b1d4a2，完整UI仍失败；当前补标准书架导航、批量恢复/取消/重试与同步反馈。先写[阶段开发与自主验收方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md)，再实施以下修正。**尚未完整1:1，P0~P4均未完成全部原生/视觉验收，非站源门槛未通过。**
 
@@ -62,3 +62,5 @@ Android设置8场景的APK/尺寸/字体/旋转/主题/步骤/哈希/UI边界见
 [本轮命令、退出码、失败修复、输入哈希及验证汇总](../ios-parity-2.0.40/review-evidence/2026-10-11-staged-development/README.md)。阶段分别见[P0](../ios-parity-2.0.40/stages/P0.md)、[P1](../ios-parity-2.0.40/stages/P1.md)、[P2](../ios-parity-2.0.40/stages/P2.md)、[P3](../ios-parity-2.0.40/stages/P3.md)、[P4](../ios-parity-2.0.40/stages/P4.md)。
 
 指定仓库[CI38104946234](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38104946234)历史成功，代码a5aeec9，现有未签名IPA 15,953,890字节，2.0.40/340，SHA-256 cb18338e00e8cf9b7bb1dab1a4c639a67936ece8db1541c25b56e29aec5c984d；实际无CFBundleIcons/iPad图标/Assets.car/AppIcon PNG。它不含当前修正，不是本轮交付，安装仍需用户签名。先完成全部非站源自验，再按51源逐一真实验收，最后仅指定仓库产出对应版本总验收包。
+
+当前未提交候选补直接索引/重新授权/稳定页与末页续读、旧复制记录迁移及自动同步生命周期；Linux最终全量858项/2个Apple PDF跳过/0失败，68源码两配置仅语法通过，候选Apple未运行。第七轮e2f53b5正在完整自验；D44旧孤儿恢复持久归属、真实外部Files/视觉/性能仍未完成，非站源门槛未通过。

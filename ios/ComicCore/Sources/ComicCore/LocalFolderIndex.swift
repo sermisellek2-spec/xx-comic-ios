@@ -6,7 +6,7 @@ struct LocalFolderIndex {
     let relativePaths: [String]
     let groups: [Group]
 
-    init(folder: URL, isReadableImage: (URL) throws -> Bool) throws {
+    init(folder: URL, metadataOnly: Bool = false, isReadableImage: (URL) throws -> Bool) throws {
         var found: [(path: String, url: URL)] = []
         var entryCount = 0, totalBytes: Int64 = 0
         let keys: Set<URLResourceKey> = [.isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey]
@@ -30,7 +30,9 @@ struct LocalFolderIndex {
                 guard size <= LocalLibrary.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
                 totalBytes += Int64(size)
                 guard totalBytes <= LocalLibrary.maximumImportBytes else { throw LocalLibraryError.folderTooLarge }
-                if try isReadableImage(url) { found.append((relative, url)) }
+                if metadataOnly {
+                    if size > 0 { found.append((relative, url)) }
+                } else if try isReadableImage(url) { found.append((relative, url)) }
             }
         }
         try scan(folder, prefix: "", depth: 0)

@@ -133,6 +133,11 @@ struct MatrixUITestSource: ComicSource {
     }
     func chapters(comicId: String) async throws -> [Chapter] {
         let request = await requests.nextDirectory(comicId)
+        if request == 1, ProcessInfo.processInfo.arguments.contains("--matrix-directory-held-until-cancel") {
+            // A deterministic pending request lets XCTest verify actual cancellation,
+            // independent of accessibility/animation timing on either simulator.
+            while true { try await Task.sleep(nanoseconds: 50_000_000) }
+        }
         if ProcessInfo.processInfo.arguments.contains("--matrix-directory-delay") {
             try await Task.sleep(nanoseconds: 2_000_000_000)
         }

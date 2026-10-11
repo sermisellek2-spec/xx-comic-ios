@@ -1,6 +1,6 @@
 import XCTest
 
-final class BatchImportRecoveryUITests: XCTestCase {
+final class BatchImportRecoveryUITests: ParityUITestCase {
     private func launch(session: String, flags: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-empty-library", "--epub-fixtures", "--batch-import-fixtures", "--light-mode"] + flags

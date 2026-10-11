@@ -21,10 +21,10 @@ final class LocalDeletionController {
     private let action = UIButton(type: .system)
 
     private lazy var queue: DeferredDeletionQueue = {
-        let local = environment.localLibrary, downloads = environment.downloadRuntime
+        let folders = environment.folderSyncCoordinator, downloads = environment.downloadRuntime
         return DeferredDeletionQueue(operation: { target in
             switch target {
-            case .localSeries(let id): try await local.deleteSeries(id: id)
+            case .localSeries(let id): try await folders.deleteSeries(id: id)
             case .downloadBook(let id): try await downloads.deleteBook(bookId: id)
             }
         }, onChange: { [weak self] waiting, committing in

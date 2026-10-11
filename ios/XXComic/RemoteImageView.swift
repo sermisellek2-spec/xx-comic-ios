@@ -44,7 +44,11 @@ final class RemoteImageView: UIImageView {
     }
 
     func loadCover(_ comic: ComicSummary, referer: String, library: LocalLibrary) {
-        guard comic.sourceId == "local", comic.coverUrl.isEmpty else { load(comic.coverUrl, referer: referer); return }
+        guard comic.sourceId == "local" else { load(comic.coverUrl, referer: referer); return }
+        if !comic.coverUrl.isEmpty {
+            load(comic.coverUrl, referer: referer, localPageImage: { try library.ownedImageData(at: $0) })
+            return
+        }
         beginLoad(reader: false)
         let token = generation
         let worker = Task.detached { () async throws -> LocalBook in
@@ -73,7 +77,7 @@ final class RemoteImageView: UIImageView {
     func load(_ text: String, referer: String, reader: Bool = false, localPageImage: (@Sendable (URL) throws -> Data)? = nil) {
         beginLoad(reader: reader)
         guard let url = URL(string: text),
-              ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") || (["xxcomic-epub", "xxcomic-pdf"].contains(url.scheme ?? "") && localPageImage != nil) else {
+              ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") || (["xxcomic-epub", "xxcomic-pdf", "xxcomic-folder"].contains(url.scheme ?? "") && localPageImage != nil) else {
             onFailure?(); return
         }
         var cacheIdentity = !PublicSourceImages.sourceId(text).isEmpty
@@ -106,7 +110,7 @@ final class RemoteImageView: UIImageView {
                 request.setValue("cross-site", forHTTPHeaderField: "Sec-Fetch-Site")
                 request.timeoutInterval = 30
                 let data: Data
-                if ["xxcomic-epub", "xxcomic-pdf"].contains(url.scheme ?? "") || (url.isFileURL && localPageImage != nil) {
+                if ["xxcomic-epub", "xxcomic-pdf", "xxcomic-folder"].contains(url.scheme ?? "") || (url.isFileURL && localPageImage != nil) {
                     guard let localPageImage else { throw URLError(.unsupportedURL) }
                     let worker = Task.detached(priority: .userInitiated) {
                         try Task.checkCancellation()

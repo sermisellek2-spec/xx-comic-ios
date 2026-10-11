@@ -37,7 +37,9 @@ root = unwrap(get())
 records = []
 test_results = []
 seen = set()
-revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+revision = sys.argv[3] if len(sys.argv) == 4 else subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+if not re.fullmatch(r'[0-9a-f]{40}', revision):
+    raise ValueError('Evidence must identify the tested Git commit')
 for action in root.get('actions', []):
     destination = action.get('runDestination', {})
     device = destination.get('displayName', 'device')
@@ -68,12 +70,13 @@ for action in root.get('actions', []):
             elif name in ('real-input-384x384', 'coreml-output-768x768', 'reader-ai-metrics'):
                 suffix = '.json' if name == 'reader-ai-metrics' else '.png'
                 target = output / 'reader-enhancement' / (device_slug + '-' + name + suffix)
-            elif failed and item.get('uniformTypeIdentifier') == 'public.png':
+            elif failed and item.get('uniformTypeIdentifier') in ('public.png', 'public.jpeg'):
                 # Preserve actual failure screenshots, rather than guessing a
                 # UI state from the assertion line. Do not export log/archive
                 # attachments that can include browser or permission data.
                 attachment_index += 1
-                target = output / 'ui-failures' / f'{device_slug}-{test_slug}-{attachment_index}.png'
+                suffix = '.png' if item.get('uniformTypeIdentifier') == 'public.png' else '.jpg'
+                target = output / 'ui-failures' / f'{device_slug}-{test_slug}-{attachment_index}{suffix}'
             else:
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)

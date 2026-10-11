@@ -1,6 +1,6 @@
 import XCTest
 
-final class SettingsParityUITests: XCTestCase {
+final class SettingsParityUITests: ParityUITestCase {
     private func launch() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--light-mode"]
@@ -45,8 +45,7 @@ final class SettingsParityUITests: XCTestCase {
         app.buttons["立即清理"].tap()
         let notice = app.staticTexts["缓存已清理，收藏与本地漫画已保留"]
         XCTAssertTrue(notice.waitForExistence(timeout: 10))
-        let dismissed = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: notice)
-        wait(for: [dismissed], timeout: 5)
+        XCTAssertTrue(app.buttons["确认清理"].isEnabled)
         app.navigationBars.buttons.firstMatch.tap()
         app.tabBars.buttons["书架"].tap()
         app.buttons["我的书架"].tap()

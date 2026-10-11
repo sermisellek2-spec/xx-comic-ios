@@ -1,6 +1,6 @@
 import XCTest
 
-final class ReaderEnhancementUITests: XCTestCase {
+final class ReaderEnhancementUITests: ParityUITestCase {
     func testReaderAIBadgeAndLongPressOriginalComparison() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--epub-fixtures", "--reader-ai-fixture"]

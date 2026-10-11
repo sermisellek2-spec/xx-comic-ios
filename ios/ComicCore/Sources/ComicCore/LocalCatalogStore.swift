@@ -175,7 +175,7 @@ public actor LocalCatalogStore {
         try persist(next)
     }
 
-    public func markSeriesDeleting(seriesId: String) throws {
+    public func markSeriesDeleting(seriesId: String, newTombstones: [LocalDeletedFingerprintRecord] = []) throws {
         guard let index = catalog.series.firstIndex(where: { $0.id == seriesId }) else {
             throw LocalCatalogError.targetNotFound
         }
@@ -185,6 +185,11 @@ public actor LocalCatalogStore {
 
         var next = catalog
         next.series[index] = updated
+        for tombstone in newTombstones {
+            if let existing = next.tombstones.firstIndex(where: { $0.fingerprint == tombstone.fingerprint }) {
+                next.tombstones[existing] = tombstone
+            } else { next.tombstones.append(tombstone) }
+        }
         try persist(next)
     }
 
