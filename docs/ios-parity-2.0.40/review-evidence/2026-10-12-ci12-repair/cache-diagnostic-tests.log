@@ -1,0 +1,42 @@
+[0/1] Planning build
+Building for debugging...
+[0/3] Write sources
+[0/4] Write swift-version-24593BA9C3E375BF.txt
+[3/5] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[4/5] Emitting module ComicCoreTests
+[5/10] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[6/11] Write sources
+[8/13] Emitting module ComicCorePackageDiscoveredTests
+[9/13] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[10/14] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[11/13] Write Objects.LinkFileList
+[12/13] Linking ComicCorePackageTests.xctest
+Build complete! (33.77s)
+Test Suite 'Selected tests' started at 2026-10-11 21:53:27.851
+Test Suite 'CacheMaintenanceTests' started at 2026-10-11 21:53:27.868
+Test Case 'CacheMaintenanceTests.testCancellationAfterCleanupStartsRestoresCapacityAndFinishes' started at 2026-10-11 21:53:27.868
+Test Case 'CacheMaintenanceTests.testCancellationAfterCleanupStartsRestoresCapacityAndFinishes' passed (0.41 seconds)
+Test Case 'CacheMaintenanceTests.testCancelledCleanupDoesNotRemoveCachedResponse' started at 2026-10-11 21:53:28.278
+Test Case 'CacheMaintenanceTests.testCancelledCleanupDoesNotRemoveCachedResponse' passed (0.001 seconds)
+Test Case 'CacheMaintenanceTests.testCancelledSizeCalculationFailsInsteadOfReportingEmpty' started at 2026-10-11 21:53:28.278
+Test Case 'CacheMaintenanceTests.testCancelledSizeCalculationFailsInsteadOfReportingEmpty' passed (0.001 seconds)
+Test Case 'CacheMaintenanceTests.testCleanupRemovesAResponseThatFinishesAfterTheFirstRemoval' started at 2026-10-11 21:53:28.279
+Test Case 'CacheMaintenanceTests.testCleanupRemovesAResponseThatFinishesAfterTheFirstRemoval' passed (0.403 seconds)
+Test Case 'CacheMaintenanceTests.testConcurrentCleanupPreservesLimitsForBothCallers' started at 2026-10-11 21:53:28.683
+Test Case 'CacheMaintenanceTests.testConcurrentCleanupPreservesLimitsForBothCallers' passed (0.406 seconds)
+Test Case 'CacheMaintenanceTests.testDirectorySizeIncludesHiddenFilesAndDoesNotFollowSymlinks' started at 2026-10-11 21:53:29.089
+Test Case 'CacheMaintenanceTests.testDirectorySizeIncludesHiddenFilesAndDoesNotFollowSymlinks' passed (0.015 seconds)
+Test Case 'CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses' started at 2026-10-11 21:53:29.104
+HTTP_CACHE_DIAGNOSTIC stage=fresh memory=0 disk=0
+HTTP_CACHE_DIAGNOSTIC stage=stored memory=5266 disk=5266
+HTTP_CACHE_DIAGNOSTIC stage=cleared memory=0 disk=0 cached=false
+HTTP_CACHE_DIAGNOSTIC stage=reused memory=5266 disk=5266
+Test Case 'CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses' passed (0.419 seconds)
+Test Case 'CacheMaintenanceTests.testHTTPResponseCleanupUsesCacheAPIAndReportsRemainingUsage' started at 2026-10-11 21:53:29.523
+Test Case 'CacheMaintenanceTests.testHTTPResponseCleanupUsesCacheAPIAndReportsRemainingUsage' passed (0.409 seconds)
+Test Case 'CacheMaintenanceTests.testMissingDirectoryHasNoBytes' started at 2026-10-11 21:53:29.932
+Test Case 'CacheMaintenanceTests.testMissingDirectoryHasNoBytes' passed (0.0 seconds)
+Test Suite 'CacheMaintenanceTests' passed at 2026-10-11 21:53:29.932
+Executed 9 tests, with 0 failures (0 unexpected) in 2.064 (2.064) seconds
+Test Suite 'Selected tests' passed at 2026-10-11 21:53:29.932
+Executed 9 tests, with 0 failures (0 unexpected) in 2.064 (2.064) seconds

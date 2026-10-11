@@ -2,7 +2,7 @@ id,gate,area,requirement,android_reference,status,evidence
 BASE-01,P0,基线,核验固定发布提交与527文件快照,baseline/manifest.json,通过,verify-baseline.ps1退出0；527文件与冻结ZIP哈希匹配；baseline/VERIFICATION.md
 BASE-02,P0,范围,逐页逐入口逐默认值补齐需求矩阵,MainActivity.java,待核对,完整方案/P0~P4报告已写；范围审计确认当前源无文件型站源实现，不新增预留协议入口；其余入口/默认值继续核对
 BASE-03,P0,测试,建立双方共用且Release隔离的确定性fixture,app/src/androidTest,待验收,共同JSON/真实384×384 PNG及Debug隔离；初始化不覆盖重启。screen-viewport-3重采64图，屏幕坐标/内容宽度/活动应用窗口/SHA核验，冻结527输入及APK不改；第二次16遮挡图拒绝并保留原ZIP。第十一轮iPhone32/64对照，iPad缺32，当前完整视觉待验收
-BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,ios/scripts/build.sh,待验收,38944ae第十一轮Debug/Release、AppleCore876/0、Files辅助构建安装及两设备原生各20/0；iPhoneUI64/10失败用例/24断言，iPad完成30/3失败后90分钟超时。当前本地877/2跳过/0失败、78文件两配置语法，当前Apple待运行
+BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,ios/scripts/build.sh,待验收,第十二轮c55d4a3 Debug/Release通过，Apple核心884项/1缓存失败，100.612秒；原生/UI与Files辅助未启动，无IPA。第十一轮iPhone64/10失败，iPad完成30/3失败后超时。当前本地缓存专项9/0、78文件两配置仅语法通过；保留失败断言并继续独立UI取证
 BASE-05,P0,视觉,建立8场景真实Android截图金标和设备元数据,app/src/androidTest,待验收,当前Android冻结独立APK完整8种状态64图，实际尺寸/哈希/夹具均验；早期横屏误采竖屏组保留失败。共用原图金标重采；iOS同宽实拍/叠图/逐组件尚未齐
 VIS-01,P1,主题,完整浅深色token及默认跟随系统且设置落盘,UIHelpers.java;UiContrast.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：Palette.swift;AppTheme.swift;AppThemeController.swift
 VIS-02,P1,素材,启动图标应用图标插画及控件图标按实际原版,app/src/main/res;app/src/main/assets,待验收,18规格不透明RGB及SDK资源编译已补；新增实际两设备主屏图标/点击截图与位置记录，用例未运行；旧IPA无资源不能交付
@@ -27,7 +27,7 @@ DETAIL-02,P2,换源,详情换源搜索候选选择取消与范围不限发现分
 CONFIG-01,P2,配置,所有设置入口默认值取值范围即时生效与重启持久化,MainActivity.java,待验收,3+6+2当前设置/主题选择面板、自动跟随文案及淘汰左右手已修；SettingsParity持久化/即时生效未原生运行；其余默认值继续核对
 CONFIG-02,P2,源协议,稳定ID注册开关排序分组和配置消费者一致,DownloadSources.java;source/SourceConfig.java,待核对,HiperDEX默认配置与生产51注册2项Apple通过；其余适配器实际字段消费者仍需审计
 CONFIG-03,P2,源配置,xx-comic.sources导入导出及不支持字段真实提示,source/SourceConfig.java,待验收,导入整体预检/未来版本及非法URL拒绝/未知退役自定义及不支持字段报告跳过；22项配置导入相关核心通过；完整字段消费和UI待验收
-CONFIG-04,P2,缓存,缓存查看清理确认与下载原包数据保护,MainActivity.java,待验收,D26：后台URLCache真实统计清理、WebKit等待、图片/增强缓存与迟到写入失效、空间后台统计；5项缓存核心通过；失败/恢复/原生UI待验收；D47页面持久反馈/URLCache有界结算候选已补，第七轮缓存UI失败，待Apple复验
+CONFIG-04,P2,缓存,缓存查看清理确认与下载原包数据保护,MainActivity.java,待验收,当前由HTTPResponseCache/URLCache归属API后台清理、合并并发并恢复容量，不写假0；c55d4a3 Apple磁盘清空占用断言失败，继续记录真实残留、响应命中与等待结果；原包/下载/未知文件保护仍须完整原生验收
 CONFIG-05,P2,日志,日志查看导出清理与敏感字段脱敏,MainActivity.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：ErrorLogStore.swift;ErrorLogSanitizer.swift;ErrorLogsViewController.swift;ErrorLogStoreTests.swift
 CONFIG-06,P2,关于更新,关于版本外链更新提示及iOS分发等效流程,update;MainActivity.java,待验收,仅指定iOS仓库HTTPS Releases/IPA链接；APK及旧仓库回退iOS Releases；失败可重试/浏览器查看；IOSUpdatePolicy2项核心通过；UI未运行
 CONFIG-07,P2,统计,原版可选使用统计默认设置字段与关闭行为,UsageStatsClient.java;MainActivity.java,待验收,原5字段/默认开启/北京时间每日1次/15分钟重试/关闭持久化与取消/损坏保留已接真实消费者；6项隔离报告及4项既有核心通过；Apple前后台/设置待验收

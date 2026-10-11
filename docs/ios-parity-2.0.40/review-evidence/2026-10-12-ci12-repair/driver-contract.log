@@ -1,0 +1,2 @@
+SYNTHETIC_DRIVER_CONTRACT core-failure exit=1 independentUI=2 IPA=false
+SYNTHETIC_DRIVER_CONTRACT sdk-failure exit=23 independentUI=0 IPA=false

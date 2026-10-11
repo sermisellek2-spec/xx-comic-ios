@@ -2,6 +2,10 @@
 
 更新：2026-10-12。按[阶段方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md)自主开发、修复和阶段验收，用户只做最后总验收。GitHub认证及推送已打通；仅使用sermisellek2-spec/xx-comic-ios，无需再次登录或提供Token。
 
+最新第十二轮c55d4a3：Debug/Release构建成功，Apple核心884项/1失败，100.612秒。失败为CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses的真实剩余占用断言；原生宿主/UI、Files辅助构建安装均未启动，没有IPA。[实际记录](review-evidence/2026-10-12-ci12-repair/README.md)。下一轮保留失败断言，记录新缓存/已存响应/清理后/等待后的实际占用和命中，同时继续独立UI取证；任何核心失败仍导致总体失败、禁止打包。
+
+当前目录取消测试改为从未收藏作品进入，避免书架自动追更消费同一个悬挂请求；真实页面与取消/重试断言保留。新本地缓存专项9项/0失败，78文件两配置语法通过，尚不能证明Apple缓存或UI已修好。
+
 第十一轮38944ae已结束，结论cancelled：90分钟超时。Debug/Release成功，Apple核心876项/0失败，独立Files辅助应用构建和两设备安装成功，两设备原生各20项/0失败。iPhone完整64项UI中10个用例失败、24条失败断言；iPad仅完成30项，其中3个失败，后续未执行或未完成。[实际摘要](review-evidence/2026-10-12-p1-visual/apple-11-summary.json)及原始日志/视觉/增强ZIP保留。不能把这轮作为阶段通过。
 
 四个完整视觉用例实际耗时2814.133秒。现已改成每个场景保留一个真实无障碍树，避免逐元素多次远程读取；原图、界面尺寸、原始树及耗时仍留证，原有UI断言不删。原始xcresult附件名中的引号导致上传失败，已改成先归档原始结果，不改附件或删除失败。

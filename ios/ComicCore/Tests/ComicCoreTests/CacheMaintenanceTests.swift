@@ -13,17 +13,28 @@ final class CacheMaintenanceTests: XCTestCase {
         try Data([3, 4, 5]).write(to: original)
         let cache = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 8 * 1024 * 1024, diskPath: directory.appendingPathComponent("responses").path)
         let url = URL(string: "https://fixture.invalid/disk-page")!, request = URLRequest(url: URL(string: "https://fixture.invalid/disk-page")!)
+        XCTAssertNil(cache.cachedResponse(for: request), "The new cache must start without any responses")
+        print("HTTP_CACHE_DIAGNOSTIC stage=fresh memory=\(cache.currentMemoryUsage) disk=\(cache.currentDiskUsage)")
         let response = CachedURLResponse(response: HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: ["Cache-Control": "max-age=3600"])!, data: Data(repeating: 7, count: 4096), storagePolicy: .allowed)
         cache.storeCachedResponse(response, for: request)
         XCTAssertNotNil(cache.cachedResponse(for: request))
+        print("HTTP_CACHE_DIAGNOSTIC stage=stored memory=\(cache.currentMemoryUsage) disk=\(cache.currentDiskUsage)")
         let remaining = try await HTTPResponseCache(cache: cache).clear()
-        XCTAssertTrue(remaining.isEmpty)
+        print("HTTP_CACHE_DIAGNOSTIC stage=cleared memory=\(remaining.memoryBytes) disk=\(remaining.diskBytes) cached=\(cache.cachedResponse(for: request) != nil)")
+        XCTAssertTrue(remaining.isEmpty, "Actual remaining cache: memory=\(remaining.memoryBytes), disk=\(remaining.diskBytes)")
+        if !remaining.isEmpty {
+            for sample in 1...8 {
+                try await Task.sleep(nanoseconds: 500_000_000)
+                print("HTTP_CACHE_DIAGNOSTIC stage=settled sample=\(sample) memory=\(cache.currentMemoryUsage) disk=\(cache.currentDiskUsage) cached=\(cache.cachedResponse(for: request) != nil)")
+            }
+        }
         XCTAssertNil(cache.cachedResponse(for: request))
         XCTAssertEqual(cache.memoryCapacity, 1024 * 1024)
         XCTAssertEqual(cache.diskCapacity, 8 * 1024 * 1024)
         XCTAssertEqual(try Data(contentsOf: original), Data([3, 4, 5]), "Cleanup must leave original files alone")
         cache.storeCachedResponse(response, for: request)
         XCTAssertNotNil(cache.cachedResponse(for: request), "Later browsing can cache responses again")
+        print("HTTP_CACHE_DIAGNOSTIC stage=reused memory=\(cache.currentMemoryUsage) disk=\(cache.currentDiskUsage)")
     }
 
     func testConcurrentCleanupPreservesLimitsForBothCallers() async throws {

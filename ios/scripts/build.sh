@@ -17,7 +17,11 @@ xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Release \
   -derivedDataPath build/device CODE_SIGNING_ALLOWED=NO build
 
 echo "==> 4. Running ComicCore unit tests on Apple..."
-swift test --package-path ComicCore
+validation_failed=0
+if ! swift test --package-path ComicCore; then
+  validation_failed=1
+  echo 'ComicCore failed; continue collecting independent native/UI evidence. Packaging remains blocked.' >&2
+fi
 
 mkdir -p build/evidence/visual-matrix
 mkdir -p build/evidence/reader-enhancement
@@ -66,7 +70,7 @@ if [ "$validation_scope" = full ]; then
   /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$fixture_info"
 fi
 
-test_failed=0
+test_failed=$validation_failed
 for dest in "${DESTINATIONS[@]}"; do
   echo "==> Running tests on destination: $dest"
   if [ "$validation_scope" = full ]; then

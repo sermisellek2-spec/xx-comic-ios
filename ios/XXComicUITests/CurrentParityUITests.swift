@@ -23,6 +23,19 @@ final class CurrentParityUITests: ParityUITestCase {
         XCTAssertTrue(app.collectionViews.cells["电锯人"].exists)
     }
 
+    private func openUnfavoritedDetail(_ app: XCUIApplication, title: String) {
+        // Favorite refresh also loads chapters. Use a real unfavorited result
+        // so it cannot consume the pending request used to exercise cancellation.
+        app.tabBars.buttons["发现"].tap()
+        app.segmentedControls.buttons["全站"].tap()
+        let search = app.searchFields.firstMatch
+        search.tap(); search.typeText(title + "\n")
+        let source = app.buttons["discover.global.copy4000"]
+        XCTAssertTrue(source.waitForExistence(timeout: 5)); source.tap()
+        let comic = app.collectionViews.cells[title]
+        XCTAssertTrue(comic.waitForExistence(timeout: 5)); comic.tap()
+    }
+
     func testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels() {
         let app = launch("--matrix-download-network")
         app.collectionViews.cells["电锯人"].firstMatch.tap()
@@ -125,9 +138,7 @@ final class CurrentParityUITests: ParityUITestCase {
 
     func testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry() {
         let app = launch("--matrix-lazy-directory", "--matrix-directory-held-until-cancel")
-        app.buttons["我的书架"].tap()
-        let comic = app.collectionViews.cells["电锯人"]
-        XCTAssertTrue(comic.waitForExistence(timeout: 5)); comic.tap()
+        openUnfavoritedDetail(app, title: "电锯人")
         let download = app.buttons["detail.download"]
         download.tap()
         XCTAssertTrue(app.buttons["正在加载目录 · 点击取消"].waitForExistence(timeout: 3))
@@ -166,9 +177,7 @@ final class CurrentParityUITests: ParityUITestCase {
 
     func testStartingDownloadCancelsPendingReadAndReturnsToDetail() {
         let app = launch("--matrix-lazy-directory", "--matrix-directory-held-until-cancel")
-        app.buttons["我的书架"].tap()
-        let comic = app.collectionViews.cells["间谍过家家"]
-        XCTAssertTrue(comic.waitForExistence(timeout: 5)); comic.tap()
+        openUnfavoritedDetail(app, title: "间谍过家家")
         let read = app.buttons["detail.read"]
         read.tap()
         XCTAssertTrue(app.buttons["正在加载章节…"].waitForExistence(timeout: 3))
@@ -183,9 +192,7 @@ final class CurrentParityUITests: ParityUITestCase {
 
     func testStartingReadCancelsPendingDownload() {
         let app = launch("--matrix-lazy-directory", "--matrix-directory-held-until-cancel")
-        app.buttons["我的书架"].tap()
-        let comic = app.collectionViews.cells["间谍过家家"]
-        XCTAssertTrue(comic.waitForExistence(timeout: 5)); comic.tap()
+        openUnfavoritedDetail(app, title: "间谍过家家")
         app.buttons["detail.download"].tap()
         XCTAssertTrue(app.buttons["正在加载目录 · 点击取消"].waitForExistence(timeout: 3))
         app.buttons["detail.read"].tap()
@@ -195,9 +202,7 @@ final class CurrentParityUITests: ParityUITestCase {
 
     func testCancelledDownloadAfterPendingReadCanOpenReaderAgain() {
         let app = launch("--matrix-lazy-directory", "--matrix-directory-held-twice-until-cancel")
-        app.buttons["我的书架"].tap()
-        let comic = app.collectionViews.cells["间谍过家家"]
-        XCTAssertTrue(comic.waitForExistence(timeout: 5)); comic.tap()
+        openUnfavoritedDetail(app, title: "间谍过家家")
         let read = app.buttons["detail.read"], download = app.buttons["detail.download"]
         read.tap()
         XCTAssertTrue(app.buttons["正在加载章节…"].waitForExistence(timeout: 3))

@@ -1,0 +1,45 @@
+{
+  "recordedAtUTC": "2026-10-11T21:57:06.028643+00:00",
+  "runID": 38177012735,
+  "runURL": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38177012735",
+  "headSHA": "c55d4a3a0752461b1a1a80aaf90c75fc5ed70c07",
+  "conclusion": "failure",
+  "debugBuild": "success",
+  "releaseBuild": "success",
+  "appleCore": {
+    "executed": 884,
+    "failures": 1,
+    "seconds": 100.612,
+    "failure": "CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses:20"
+  },
+  "nativeTests": "not started",
+  "uiTests": "not started",
+  "filesFixtureBuildAndInstall": "not started",
+  "ipaProduced": false,
+  "uploadedResultArtifactContents": {
+    "manifest.json": "[]\n"
+  },
+  "nonSourceGatePassed": false,
+  "originals": [
+    {
+      "path": "apple-12-logs.zip",
+      "bytes": 561175,
+      "sha256": "7299c59a4522e0a246a33c293905d645cc7c5456c3e2818576fae1cb2829b1e5"
+    },
+    {
+      "path": "apple-12-results.zip",
+      "bytes": 145,
+      "sha256": "dc851d5b47f1c05ed85a9f561dc9769fbf7ec0eb9f823c757f761e96b908662e"
+    },
+    {
+      "path": "run-final.json",
+      "bytes": 3733,
+      "sha256": "bc4ced8af89c674474ef955581e434e821f4b8b0ed80e8fff1a510dc6d062d40"
+    },
+    {
+      "path": "apple-12-phase-excerpt.log",
+      "bytes": 1262,
+      "sha256": "c15ab765994c7eaa0525e4fdcbd2df864ba4f4e175fd0b2010bef31c14fe2427"
+    }
+  ]
+}

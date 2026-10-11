@@ -1,0 +1,58 @@
+{
+  "recordedAtUTC": "2026-10-11T21:57:06.029643+00:00",
+  "parentCommit": "c55d4a3a0752461b1a1a80aaf90c75fc5ed70c07",
+  "cacheDiagnosticTests": {
+    "executed": 9,
+    "failures": 0,
+    "seconds": 2.064,
+    "exitCode": 0,
+    "command": "swift test -j 2 --filter CacheMaintenanceTests",
+    "platform": "Linux Swift 5.10"
+  },
+  "nativeSyntax": {
+    "files": 78,
+    "ReleaseExitCode": 0,
+    "DebugExitCode": 0,
+    "appleTypeChecked": false,
+    "command": "bash -n ios/scripts/build.sh && bash tools/verify-ios-native-syntax.sh"
+  },
+  "candidateAppleResults": "pending",
+  "uiMethodsPerDevicePlanned": 74,
+  "ipaProduced": false,
+  "nonSourceGatePassed": false,
+  "inputs": [
+    {
+      "path": "ios/ComicCore/Tests/ComicCoreTests/CacheMaintenanceTests.swift",
+      "sha256": "10916e133035eca9402e2c4a23bc189cf6d6637d8ba63a83579341e22567aa42"
+    },
+    {
+      "path": "ios/XXComicUITests/CurrentParityUITests.swift",
+      "sha256": "6a784be2817e05062f0047eab252139ddb6b0ad30b26491762f6ecef7681eafc"
+    },
+    {
+      "path": "ios/scripts/build.sh",
+      "sha256": "de994c9df4ceac0c390a90e419dcff7d5d9d5b93ad343d81e35c571d533fd20d"
+    }
+  ],
+  "logs": {
+    "cache-diagnostic-tests.log": "df5f57805148b3c505b52370471767525f10c8c11c767ef46437f13f1773f6a8",
+    "native-syntax.log": "d6a7c27f2bbd8d6bf50e3e4d08830c8831c225c3000410a701f005f2b8e0c08d",
+    "driver-contract.log": "cf897d3d2e1a494ed1919158f06d2c18639755bbddbf2c795b504e4185f32a9a",
+    "driver-contract-fixture.py": "b8004fdb463fb5316ce6a5e2b4e9903df56ebf445239e5a1c6f512ebc9ed8596"
+  },
+  "driverContract": {
+    "exitCode": 0,
+    "environment": "disposable Linux container; all compiler/runtime commands mocked",
+    "coreFailure": {
+      "exitCode": 1,
+      "independentUIDestinations": 2,
+      "ipaProduced": false
+    },
+    "sdkFailure": {
+      "exitCode": 23,
+      "independentUIDestinations": 0,
+      "ipaProduced": false
+    },
+    "actualAppleRuntime": false
+  }
+}
