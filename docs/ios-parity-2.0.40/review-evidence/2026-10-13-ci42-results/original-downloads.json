@@ -1,0 +1,26 @@
+{
+  "runID": 38313214198,
+  "inputSHA": "c3ddb9c77a86217a90e13f1f79bc81e597e28a65",
+  "items": [
+    {
+      "file": "ios/build/ci42/build-log-original.zip",
+      "bytes": 241742,
+      "sha256": "6a604f112f5d7bd3d861be2d72877dfbe07d107aaad51dd4243f65b3f5f32b77"
+    },
+    {
+      "file": "ios/build/ci42/visual-original.zip",
+      "bytes": 4152,
+      "sha256": "45515e829d0a2557cc908a97088e72fed2d4f73c86aa514c4cf98855cc7be8a8"
+    },
+    {
+      "file": "ios/build/ci42/xcresult-original.zip",
+      "bytes": 6647056,
+      "sha256": "bd5028360eedf965746b7307a0742aa136e3b8a505976946929d3099ae64eb49"
+    },
+    {
+      "file": "ios/build/ci42/logs-original.zip",
+      "bytes": 699835,
+      "sha256": "e967f970b24c011c810f7b4f191abe6e86e453c7bdd49545164cacc72dec321b"
+    }
+  ]
+}

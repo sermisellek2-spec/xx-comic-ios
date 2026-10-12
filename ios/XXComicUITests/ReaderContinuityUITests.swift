@@ -166,6 +166,8 @@ final class ReaderContinuityUITests: ParityUITestCase {
         XCTAssertTrue(app.images["reader.image"].firstMatch.exists)
         revealControls(app); app.buttons["reader.directory"].tap()
         XCTAssertTrue(table.cells["第200话"].waitForExistence(timeout: 5)); XCTAssertTrue(table.cells["第200话"].isSelected)
+        let currentVisible = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: table.cells["第200话"])
+        XCTAssertEqual(XCTWaiter.wait(for: [currentVisible], timeout: 5), .completed)
         XCTAssertTrue(table.cells["第200话"].isHittable)
         app.buttons["chapter.drawer.dismiss"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
         XCTAssertTrue((pages.value as? String)?.contains("第200话") == true)

@@ -69,14 +69,14 @@
     "ios/XXComicUITests/DownloadLocationParityUITests.swift": "27e6b5e165053d41a9ef96020a14d994b62e186b0d92b99b7b624621dfe96c5f",
     "ios/XXComicUITests/EpubReadingUITests.swift": "3482901458ab3e5272b4f876295fade09bb82310b28410cbc32214f771cd08d4",
     "ios/XXComicUITests/ErrorLogsParityUITests.swift": "0fc7f8d122aafef4321b167cdc24b3419f707f0f68eea3038fdfab4fc7aedd15",
-    "ios/XXComicUITests/ExternalFilesParityUITests.swift": "3fb9fa6ca71b6bcfbe7683ca67d2af1a59f98804758a15b5380db0b7e430b12d",
-    "ios/XXComicUITests/FilesPickerDriver.swift": "7d62018654e1aab2f34a466d26d9ab5688b52e01a4372ca7cba18dbd90671b42",
+    "ios/XXComicUITests/ExternalFilesParityUITests.swift": "40f30f472acb9271811a3f9ccaa0b58f23f53c9705e02be0cc2fc7291016f36c",
+    "ios/XXComicUITests/FilesPickerDriver.swift": "d86a05865f5c8826532d2b250eeeb591747337b7f620baa6d147d11facba8067",
     "ios/XXComicUITests/LinkedFolderParityUITests.swift": "948ea3ab9d6e4ea4b16fcfb08a79d3a75395e9d2ba27a2ed7483c20904257504",
     "ios/XXComicUITests/LocalDeletionParityUITests.swift": "8948a54f63044df402a60f2bc36506d26accace35d1134d28e8fa2a5cc914a3c",
     "ios/XXComicUITests/Mh18VerificationTests.swift": "312d38c845f86c4f31e68166099b187122215d878fe3aed711199ce1c628ede3",
     "ios/XXComicUITests/ParityFixtureIdentity.swift": "4a0cb0a0fc21775fabc36a65662084a753f752826535350cd0f22bc5531fb374",
     "ios/XXComicUITests/ParityUITestCase.swift": "fce6bd2384119ba3bf60292e48fe9002c3bc2637ffa8d63d0b3dccdaea744d1b",
-    "ios/XXComicUITests/ReaderContinuityUITests.swift": "80ed01ba0377f7522d9f4aa923175162c8d2fb11aac5fde49780d941a3e41e3b",
+    "ios/XXComicUITests/ReaderContinuityUITests.swift": "5b7c30f9a0f296f0caf452a60135e331ac4b8d660df54abe7fb0d770c0bb9d1f",
     "ios/XXComicUITests/ReaderEnhancementUITests.swift": "2f8a3cc35c9ed673b2cfef62b5ecba4ba621921247468d6c756449fc8e40ea8d",
     "ios/XXComicUITests/ReaderSettingsParityUITests.swift": "12a5ee6d776955e4932f7f156fd6d049d487098ae78c6ebe824f56e1ea0294d8",
     "ios/XXComicUITests/ReaderToolbarParityUITests.swift": "12be89a751e434055f8fd8ed02b997576a028e5f9c86ed79e5e776fa3a3d94e7",
@@ -87,6 +87,6 @@
     "ios/XXComicUITests/SourceGroupsParityUITests.swift": "f1318b62f07f64ed2ba2db7d7c044dfd7f52a80adc43c33422038d857dd8bd4f",
     "ios/XXComicUITests/SourceSwitchParityUITests.swift": "23e01804f53c95291f94f06fb6291ecf5f0e54cdabbc0ebe1a794842f7278901",
     "ios/XXComicUITests/VisualMatrixUITests.swift": "74a449101aa113f85209f18b2acbad6acbcf208703efd2be857d9c186ac79082",
-    "ios/XXComicUITests/VolumeManagerParityUITests.swift": "8763683fb584ec34d6118d6d4ea2800445298c5b77e50177c435edb88168efa0"
+    "ios/XXComicUITests/VolumeManagerParityUITests.swift": "bbacfb38ca5260ca096bb86a3700803570c53b63b32ded12297f9815ce10945d"
   }
 }

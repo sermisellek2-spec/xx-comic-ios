@@ -49,7 +49,8 @@ final class VolumeManagerParityUITests: ParityUITestCase {
     func testRealFilesAppendAndDragOrderRetainTheOriginalChapterAcrossRelaunch() throws {
         let (app, host) = launch()
         app.buttons["detail.directory"].tap()
-        XCTAssertTrue(app.tables.cells["第二章"].waitForExistence(timeout: 10)); app.tables.cells["第二章"].tap()
+        let second = app.tables["chapter.list"].cells.containing(.staticText, identifier: "第二章").firstMatch
+        XCTAssertTrue(second.waitForExistence(timeout: 10)); XCTAssertTrue(second.isHittable); second.tap()
         XCTAssertTrue(app.images["reader.image"].firstMatch.waitForExistence(timeout: 10)); app.buttons["reader.back"].tap()
         openManager(app, count: 1); try append("01.png", count: 2, app: app); try append("02.png", count: 3, app: app)
         let original = row(bookTitle, app: app), last = row("02", app: app)
@@ -91,6 +92,11 @@ final class VolumeManagerParityUITests: ParityUITestCase {
             let (app, _) = launch(dark: dark); openManager(app, count: 1)
             for landscape in [false, true] {
                 XCUIDevice.shared.orientation = landscape ? .landscapeLeft : .portrait
+                let rotated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                    let window = app.windows.firstMatch.frame
+                    return (window.width > window.height) == landscape
+                }, object: app)
+                XCTAssertEqual(XCTWaiter.wait(for: [rotated], timeout: 5), .completed)
                 let frame = app.windows.firstMatch.frame
                 XCTAssertEqual(frame.width > frame.height, landscape)
                 XCTAssertTrue(app.buttons["volumes.append"].isHittable); XCTAssertTrue(app.buttons["volumes.close"].isHittable)

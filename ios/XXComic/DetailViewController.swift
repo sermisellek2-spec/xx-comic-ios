@@ -719,6 +719,7 @@ final class ChapterListViewController: UITableViewController {
         super.viewDidLoad(); title = "全部章节"
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: descending ? "倒序" : "正序", style: .plain, target: self, action: #selector(reverseOrder))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(close))
+        tableView.accessibilityIdentifier = "chapter.list"
         state.titleLabel?.numberOfLines = 0
         state.addTarget(self, action: #selector(stateTapped), for: .touchUpInside)
         tableView.backgroundView = state
@@ -726,7 +727,7 @@ final class ChapterListViewController: UITableViewController {
     }
     @objc private func reload() {
         needsVerification = false
-        task?.cancel(); state.setTitle("正在加载目录…", for: .normal)
+        task?.cancel(); state.isHidden = false; state.setTitle("正在加载目录…", for: .normal)
         let loader = load
         task = Task { [weak self] in
             do {
@@ -734,6 +735,7 @@ final class ChapterListViewController: UITableViewController {
                 guard let self else { return }
                 self.chapters = chapters
                 self.state.setTitle(chapters.isEmpty ? "暂无章节 · 点击刷新" : nil, for: .normal)
+                self.state.isHidden = !chapters.isEmpty
                 self.tableView.reloadData()
                 self.scrollToSelected()
             } catch {

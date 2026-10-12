@@ -1,0 +1,12 @@
+{
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "inputSHA": "09bd0d7569e619a61d576de0a1711ead8499afbe",
+  "ref": "codex/comic-feedback-fix-09bd0d7",
+  "inputs": {
+    "validation_scope": "final-flows",
+    "package_ipa": "false",
+    "validated_run_id": ""
+  },
+  "dispatchHTTP": 204,
+  "isAcceptanceIPA": false
+}

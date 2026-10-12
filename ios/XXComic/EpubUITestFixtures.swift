@@ -28,7 +28,8 @@ enum EpubUITestFixtures {
         let folder = library.directory.appendingPathComponent(".epub-fixtures", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let existing = Set(try library.books().map(\.title))
-        let image = UIGraphicsImageRenderer(size: CGSize(width: 32, height: 32)).image { context in
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 32, height: 32), format: format).image { context in
             UIColor.systemBlue.setFill(); context.fill(CGRect(x: 0, y: 0, width: 32, height: 32))
         }.pngData()!
         for kind in ["图片", "文字", "图文", "单图带文字", "旧文字"] {
