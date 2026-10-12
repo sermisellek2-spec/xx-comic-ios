@@ -1,0 +1,17 @@
+2026-10-12T19:39:54.7902080Z 	 Executed 929 tests, with 0 failures (0 unexpected) in 128.368 (128.423) seconds
+2026-10-12T19:39:54.7904000Z 	 Executed 929 tests, with 0 failures (0 unexpected) in 128.368 (128.425) seconds
+2026-10-12T19:42:11.7869370Z Test Suite 'XXComicTests.xctest' passed at 2026-10-12 19:42:11.592.
+2026-10-12T19:42:11.7877740Z 	 Executed 31 tests, with 0 failures (0 unexpected) in 10.678 (10.689) seconds
+2026-10-12T19:42:11.7988620Z 	 Executed 31 tests, with 0 failures (0 unexpected) in 10.678 (10.691) seconds
+2026-10-12T19:44:32.9579550Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:153: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertEqual failed: ("XCTWaiterResult(rawValue: 2)") is not equal to ("XCTWaiterResult(rawValue: 1)")
+2026-10-12T19:44:33.0306200Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:153: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferencePortraitDark] : XCTAssertFalse failed
+2026-10-12T19:44:59.0004000Z Test Suite 'XXComicUITests.xctest' failed at 2026-10-12 19:44:58.993.
+2026-10-12T19:47:41.1865620Z Test Suite 'XXComicTests.xctest' passed at 2026-10-12 19:47:40.925.
+2026-10-12T19:47:41.1867170Z 	 Executed 31 tests, with 0 failures (0 unexpected) in 12.528 (12.541) seconds
+2026-10-12T19:47:41.1874490Z 	 Executed 31 tests, with 0 failures (0 unexpected) in 12.528 (12.543) seconds
+2026-10-12T19:48:08.8951830Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SettingsParityUITests.swift:136: error: -[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery] : XCTAssertEqual failed: ("XCTWaiterResult(rawValue: 2)") is not equal to ("XCTWaiterResult(rawValue: 1)")
+2026-10-12T19:48:08.9705210Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/SettingsParityUITests.swift:136: error: -[XXComicUITests.SettingsParityUITests testCacheCleanupKeepsLibraryAndFixtureDiscovery] : XCTAssertFalse failed
+2026-10-12T19:49:22.6430400Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:153: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertEqual failed: ("XCTWaiterResult(rawValue: 2)") is not equal to ("XCTWaiterResult(rawValue: 1)")
+2026-10-12T19:49:22.7119360Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/VisualMatrixUITests.swift:153: error: -[XXComicUITests.VisualMatrixUITests testSettingsReferenceLandscapeLight] : XCTAssertFalse failed
+2026-10-12T19:50:04.4883960Z Test Suite 'XXComicUITests.xctest' failed at 2026-10-12 19:50:04.478.
+2026-10-12T19:50:35.5207030Z Native tests failed; Release IPA will not be packaged.

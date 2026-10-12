@@ -1,0 +1,25 @@
+{
+  "checks": [
+    {
+      "check": "Python compiler",
+      "exitCode": 0
+    },
+    {
+      "check": "Bash syntax",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "check": "Workflow YAML parse and job identities",
+      "exitCode": 0
+    }
+  ],
+  "inputs": {
+    "ios/scripts/release_product.py": "f6443ffe98add6fc85ae7043b2d18638e4aa9aad201873d9b17b3e4bd8870bb8",
+    "ios/scripts/build.sh": "e82068a422b65a029d78e71aa50a860df6c7349c7e3d8bcc3666d664e918231f",
+    ".github/workflows/ios.yml": "d29ca5f286bd8c67b2201f98fcd40321c9aa1dd564ac8724f6a7613e534c4a79"
+  },
+  "recordedAtUTC": "2026-10-12T20:05:49.470613+00:00",
+  "executedActualAppleArchiveOrPackage": false,
+  "precedingBashPathLookupFailed": true
+}

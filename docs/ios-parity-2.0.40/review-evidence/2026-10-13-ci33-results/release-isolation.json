@@ -1,0 +1,36 @@
+{
+  "revision": "d70e6cb50df1dd3b9020cd3d4054a077e7dea52c",
+  "Debug": {
+    "bundleID": "com.xxcomic.ios",
+    "version": "2.0.40",
+    "build": "340",
+    "executable": "XXComic",
+    "binarySHA256": "d7a87de35e892bc90db8d4b3668f63ed3b09f74ce67928853025a00631a52ce5",
+    "markers": {
+      "ui.matrix.library.seeded": true,
+      "ui.matrix.preferences.seeded": true,
+      "--matrix-update-fixture": true,
+      "http://127.0.0.1:8767/ios-release.json": true,
+      "android-2.0.40-current-pages-v1": true
+    },
+    "testResources": []
+  },
+  "Release": {
+    "bundleID": "com.xxcomic.ios",
+    "version": "2.0.40",
+    "build": "340",
+    "executable": "XXComic",
+    "binarySHA256": "a20faad29ea6c4bb49769a263575387b6b521bd06503e491178ff58fd532ef7a",
+    "markers": {
+      "ui.matrix.library.seeded": false,
+      "ui.matrix.preferences.seeded": false,
+      "--matrix-update-fixture": false,
+      "http://127.0.0.1:8767/ios-release.json": false,
+      "android-2.0.40-current-pages-v1": false
+    },
+    "testResources": []
+  },
+  "errors": [],
+  "passed": true,
+  "boundary": "Actual binary/resources check; does not replace Release device runtime or non-source acceptance"
+}

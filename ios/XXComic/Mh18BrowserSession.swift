@@ -2,29 +2,36 @@ import UIKit
 import WebKit
 import ComicCore
 
-/// Keep a WebKit context alive until its asynchronous data-removal callback.
+/// Remove the data actually held by WebKit without creating a new document.
 /// An unresponsive framework must produce a retryable failure, not leave the
 /// cache screen permanently disabled or announce a cleanup that never finished.
 @MainActor
 private final class WebCacheRemoval {
     private var continuation: CheckedContinuation<Void, Error>?
     private var timeout: Task<Void, Never>?
-    private var context: WKWebView?
+    private let store = WKWebsiteDataStore.default()
 
     func run() async throws {
         try Task.checkCancellation()
-        let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .default()
-        // No document or network request is loaded by this context.
-        context = WKWebView(frame: .zero, configuration: configuration)
         try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
             timeout = Task { [self] in
                 do { try await Task.sleep(nanoseconds: 8_000_000_000) } catch { return }
                 finish(.failure(URLError(.timedOut)))
             }
-            configuration.websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) { [self] in
-                Task { @MainActor [self] in finish(.success(())) }
+            let types = WKWebsiteDataStore.allWebsiteDataTypes()
+            store.fetchDataRecords(ofTypes: types) { [self] records in
+                Task { @MainActor [self] in
+                    // A late callback after timeout must not start another mutation.
+                    guard self.continuation != nil else { return }
+                    if records.isEmpty {
+                        finish(.success(()))
+                    } else {
+                        store.removeData(ofTypes: types, for: records) { [self] in
+                            Task { @MainActor [self] in finish(.success(())) }
+                        }
+                    }
+                }
             }
         }
     }
@@ -33,7 +40,6 @@ private final class WebCacheRemoval {
         guard let continuation else { return }
         self.continuation = nil
         timeout?.cancel(); timeout = nil
-        context?.stopLoading(); context = nil
         continuation.resume(with: result)
     }
 }

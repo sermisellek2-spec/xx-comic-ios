@@ -1,0 +1,64 @@
+{
+  "runID": 38286395819,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38286395819",
+  "revision": "d70e6cb50df1dd3b9020cd3d4054a077e7dea52c",
+  "scope": "full",
+  "conclusion": "failure",
+  "packageIPA": false,
+  "appleCore": {
+    "executed": 929,
+    "failures": 1,
+    "seconds": 149.788,
+    "remainingPhysicalDiskBytes": 144016
+  },
+  "nativePerDevice": {
+    "executed": 30,
+    "failures": 0
+  },
+  "UI": [
+    {
+      "device": "iPhone 15 Pro",
+      "executedUI": 93,
+      "successfulUI": 88,
+      "failedUI": [
+        "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ]
+    },
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "executedUI": 93,
+      "successfulUI": 88,
+      "failedUI": [
+        "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ]
+    }
+  ],
+  "UIFailedAssertionsPerDevice": 9,
+  "capturedVisualPNG": 130,
+  "originals": {
+    "logs-original.zip": {
+      "path": "ios/build/ci33/logs-original.zip",
+      "bytes": 1274629,
+      "sha256": "09d78f4931208de689e13b881727e10907472dfcee0ebbea85af8de3a248ae81"
+    },
+    "build-original.log": {
+      "path": "ios/build/ci33/build-original.log",
+      "bytes": 13364644,
+      "sha256": "4d3d35ed69f27a5dae2c463660abd33c18f485d259c534733871200c292ff324"
+    },
+    "visual-original.zip": {
+      "path": "ios/build/ci33/visual-original.zip",
+      "bytes": 63822792,
+      "sha256": "6a6dc49ff36d735ef751fef91ae6a3b97488f80c631cacb93963f66e52fc9e4d"
+    }
+  },
+  "recordedAtUTC": "2026-10-12T19:46:22.009892+00:00"
+}

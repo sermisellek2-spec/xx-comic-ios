@@ -150,6 +150,10 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
                 }
             } catch {
                 guard let self, !Task.isCancelled else { return }
+                #if DEBUG
+                // Only the framework error code; never expose cookies, URLs or permissions.
+                self.feedbackLabel.accessibilityValue = "failure.code=\((error as NSError).code)"
+                #endif
                 self.showToast("清理失败，请重试")
             }
         }

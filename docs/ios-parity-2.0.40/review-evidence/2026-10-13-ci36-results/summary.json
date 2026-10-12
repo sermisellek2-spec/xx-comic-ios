@@ -1,0 +1,61 @@
+{
+  "runID": 38298237394,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38298237394",
+  "revision": "52ea72e61aceae8d8976f863d06c111b94d9d7a9",
+  "scope": "settings-reference",
+  "conclusion": "failure",
+  "packageIPA": false,
+  "appleCore": {
+    "executed": 929,
+    "failures": 0,
+    "seconds": 128.368
+  },
+  "nativePerDevice": {
+    "executed": 31,
+    "failures": 0
+  },
+  "UI": [
+    {
+      "device": "iPhone 15 Pro",
+      "executedUI": 6,
+      "successfulUI": 5,
+      "failedUI": [
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()"
+      ]
+    },
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "executedUI": 6,
+      "successfulUI": 4,
+      "failedUI": [
+        "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()"
+      ]
+    }
+  ],
+  "UIFailedAssertions": {
+    "iPhone 15 Pro": 2,
+    "iPad Pro 11-inch (M4)": 4
+  },
+  "capturedSettingsPNG": 8,
+  "capturedSettingsPNGDoNotProveFailedPreconditions": true,
+  "originals": {
+    "logs-original.zip": {
+      "path": "ios/build/ci36/logs-original.zip",
+      "bytes": 684914,
+      "sha256": "6d5b9b7a8b4e9cbfcc41371ea33c81747d21b932aa1d8b8684e47b1de6c16767"
+    },
+    "visual-original.zip": {
+      "path": "ios/build/ci36/visual-original.zip",
+      "bytes": 2260858,
+      "sha256": "0673eae4a1ea5eb0ef1cbf070292fd4f78ab376c81de8b6f5c6838c89c89ad9d"
+    },
+    "xcresults-original.zip": {
+      "path": "ios/build/ci36/xcresults-original.zip",
+      "bytes": 121386991,
+      "sha256": "9f1100553f74cf372baa4549e835ec300d598a9d395f0207f927e9c5847885d6"
+    }
+  },
+  "xcresultDecodedByAppleToolLocally": false,
+  "recordedAtUTC": "2026-10-12T20:08:57.045185+00:00"
+}

@@ -12,6 +12,11 @@ on:
         description: 仅全部阶段自验通过后生成最终未签名IPA
         type: boolean
         default: false
+      validated_run_id:
+        description: 视觉自验结束后填同版本full成功运行ID，只组装该次已验产物
+        type: string
+        required: false
+        default: ''
   push:
     branches:
       - codex/ios-port
@@ -25,7 +30,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.repository == 'sermisellek2-spec/xx-comic-ios'
+    if: github.repository == 'sermisellek2-spec/xx-comic-ios' && (github.event.inputs.validated_run_id || '') == ''
     runs-on: macos-14
     # The full suite runs both devices sequentially, including the expanded
     # reading/Files recovery checks and every visual scene. Keep that coverage.
@@ -82,6 +87,24 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Archive fully validated Release product
+        if: success() && env.IOS_VALIDATION_SCOPE == 'full'
+        run: |
+          cd ios
+          python3 scripts/release_product.py archive \
+            --app build/device/Build/Products/Release-iphoneos/XXComic.app \
+            --log build/evidence/build-logs/build-and-test.log \
+            --revision "$GITHUB_SHA" --output build/validated-release-product
+
+      - name: Upload fully validated Release product
+        if: success() && env.IOS_VALIDATION_SCOPE == 'full'
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOS-validated-release-product
+          path: ios/build/validated-release-product/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Archive original UI test results
         if: always()
         run: python3 ios/scripts/archive_results.py ios/build
@@ -132,4 +155,42 @@ jobs:
           name: http-cache-evidence
           path: ios/build/evidence/http-cache/**
           if-no-files-found: ignore
+          retention-days: 7
+
+  package-validated:
+    if: github.repository == 'sermisellek2-spec/xx-comic-ios' && (github.event.inputs.validated_run_id || '') != ''
+    runs-on: macos-14
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read actual preceding validation status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATION_RUN_ID: ${{ inputs.validated_run_id }}
+        run: |
+          [[ "$VALIDATION_RUN_ID" =~ ^[0-9]+$ ]]
+          mkdir -p ios/build
+          gh api "repos/sermisellek2-spec/xx-comic-ios/actions/runs/$VALIDATION_RUN_ID" > ios/build/validation-run.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: iOS-validated-release-product
+          path: ios/build/validated-release-product
+          run-id: ${{ inputs.validated_run_id }}
+          github-token: ${{ github.token }}
+      - name: Package unchanged validated app bytes
+        env:
+          VALIDATION_RUN_ID: ${{ inputs.validated_run_id }}
+        run: |
+          python3 ios/scripts/release_product.py package \
+            --product ios/build/validated-release-product \
+            --run-proof ios/build/validation-run.json --run-id "$VALIDATION_RUN_ID" \
+            --revision "$GITHUB_SHA" --output ios/build/final-package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: XXComic-unsigned
+          path: ios/build/final-package/
+          if-no-files-found: error
           retention-days: 7

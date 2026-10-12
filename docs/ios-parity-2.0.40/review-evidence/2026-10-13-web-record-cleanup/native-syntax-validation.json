@@ -1,0 +1,23 @@
+{
+  "results": [
+    {
+      "configuration": "Release",
+      "files": 90,
+      "exitCode": 0
+    },
+    {
+      "configuration": "DEBUG",
+      "files": 90,
+      "exitCode": 0
+    }
+  ],
+  "inputsUnchanged": true,
+  "typeCheckedOnApple": false,
+  "recordedAtUTC": "2026-10-12T20:07:04.315772+00:00",
+  "priorPartialInventory": {
+    "files": 89,
+    "exitCode": 0,
+    "omitted": "ios/TestSupport/FilesFixtureHost/AppDelegate.swift",
+    "superseded": true
+  }
+}

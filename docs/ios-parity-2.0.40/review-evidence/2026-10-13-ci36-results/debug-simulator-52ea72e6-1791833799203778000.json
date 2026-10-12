@@ -1,0 +1,60 @@
+{
+  "revision": "52ea72e61aceae8d8976f863d06c111b94d9d7a9",
+  "variant": "debug-simulator",
+  "checks": {
+    "bundle": true,
+    "version": true,
+    "deviceFamilies": true,
+    "phoneIconMetadataAndPNG": true,
+    "padIconMetadataAndPNG": true,
+    "compiledAssetCatalog": true
+  },
+  "passed": true,
+  "metadata": {
+    "CFBundleIdentifier": "com.xxcomic.ios",
+    "CFBundleShortVersionString": "2.0.40",
+    "CFBundleVersion": "340",
+    "MinimumOSVersion": "16.0",
+    "UIDeviceFamily": [
+      1,
+      2
+    ]
+  },
+  "phoneIcon": {
+    "CFBundleIconFiles": [
+      "AppIcon60x60"
+    ],
+    "CFBundleIconName": "AppIcon"
+  },
+  "padIcon": {
+    "CFBundleIconFiles": [
+      "AppIcon60x60",
+      "AppIcon76x76"
+    ],
+    "CFBundleIconName": "AppIcon"
+  },
+  "icons": [
+    {
+      "file": "AppIcon60x60@2x.png",
+      "bytes": 29399,
+      "sha256": "852c4b1f626707a7222dfb322c3c6d306d9eacf5be56cfae7143d76d1cca0605",
+      "pixelSize": [
+        120,
+        120
+      ]
+    },
+    {
+      "file": "AppIcon76x76@2x~ipad.png",
+      "bytes": 44359,
+      "sha256": "19e779cf0a982920edcdeb022a2c928fa89f975100b2a5055c0c49de0d3b1b5f",
+      "pixelSize": [
+        152,
+        152
+      ]
+    }
+  ],
+  "infoPlistSHA256": "90aedc44a90bf3a303dcffbb2cfa0d1f3560a93c24112520ad7c5e3c6ace02d2",
+  "assetCatalogBytes": 2031512,
+  "assetCatalogSHA256": "9e5bd1ca6c793ed13a5f34f8c8eb059780a2c67815e07cbcb6fecd034d33c10c",
+  "boundary": "Actual build resources/metadata; does not prove signed installation or home-screen rendering"
+}
