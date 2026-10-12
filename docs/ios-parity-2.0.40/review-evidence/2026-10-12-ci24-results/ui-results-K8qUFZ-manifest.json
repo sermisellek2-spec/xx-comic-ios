@@ -1,0 +1,317 @@
+[
+  {
+    "file": "build/evidence/reader-enhancement/iPad_Pro_11-inch__M4_-reader-ai-metrics.json",
+    "sha256": "19a4d2b4ad7adf91cdb03af9086d7455115338f7a3feac5933e8f76328b31389",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+    "device": "iPad Pro 11-inch (M4)",
+    "destination": {
+      "displayName": "iPad Pro 11-inch (M4)",
+      "localComputerRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "1",
+        "cpuKind": "Apple M1 (Virtual)",
+        "cpuSpeedInMHz": "0",
+        "identifier": "0000FE00-7CCC9802DA488B9F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "3",
+        "modelCode": "VirtualMac2,1",
+        "modelName": "Apple Virtual Machine 1",
+        "modelUTI": "com.apple.virtual-machine",
+        "name": "My Mac",
+        "nativeArchitecture": "arm64e",
+        "operatingSystemVersion": "14.8.9",
+        "operatingSystemVersionWithBuildNumber": "14.8.9 (23J631)",
+        "physicalCPUCoresPerPackage": "3",
+        "platformRecord": {
+          "identifier": "com.apple.platform.macosx",
+          "userDescription": "macOS"
+        },
+        "ramSizeInMegabytes": "7168"
+      },
+      "targetArchitecture": "arm64",
+      "targetDeviceRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "0",
+        "cpuSpeedInMHz": "0",
+        "identifier": "F89BCCFC-5701-4B88-A238-EE866AF4834F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "0",
+        "modelCode": "iPad16,4",
+        "modelName": "iPad Pro 11-inch (M4)",
+        "modelUTI": "com.apple.ipad-pro-m4-1",
+        "name": "iPad Pro 11-inch (M4)",
+        "nativeArchitecture": "arm64",
+        "operatingSystemVersion": "17.5",
+        "operatingSystemVersionWithBuildNumber": "17.5 (21F79)",
+        "physicalCPUCoresPerPackage": "0",
+        "platformRecord": {
+          "identifier": "com.apple.platform.iphonesimulator",
+          "userDescription": "iOS Simulator"
+        },
+        "ramSizeInMegabytes": "0"
+      },
+      "targetSDKRecord": {
+        "identifier": "iphonesimulator17.5",
+        "name": "Simulator - iOS 17.5",
+        "operatingSystemVersion": "17.5"
+      }
+    },
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "attachment": "reader-ai-metrics",
+    "timestamp": "2026-10-12T09:54:31.607+0000",
+    "payload": "0~u6d1mSO0G6-s-VmyXvU7HCcF_PuRHaCK6guWdzwk69mBCKG3CCMqFQUYUyEYaXhVjC8Xv0LtMKQHoNmAUblg0A=="
+  },
+  {
+    "file": "build/evidence/reader-enhancement/iPad_Pro_11-inch__M4_-real-input-384x384.png",
+    "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+    "device": "iPad Pro 11-inch (M4)",
+    "destination": {
+      "displayName": "iPad Pro 11-inch (M4)",
+      "localComputerRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "1",
+        "cpuKind": "Apple M1 (Virtual)",
+        "cpuSpeedInMHz": "0",
+        "identifier": "0000FE00-7CCC9802DA488B9F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "3",
+        "modelCode": "VirtualMac2,1",
+        "modelName": "Apple Virtual Machine 1",
+        "modelUTI": "com.apple.virtual-machine",
+        "name": "My Mac",
+        "nativeArchitecture": "arm64e",
+        "operatingSystemVersion": "14.8.9",
+        "operatingSystemVersionWithBuildNumber": "14.8.9 (23J631)",
+        "physicalCPUCoresPerPackage": "3",
+        "platformRecord": {
+          "identifier": "com.apple.platform.macosx",
+          "userDescription": "macOS"
+        },
+        "ramSizeInMegabytes": "7168"
+      },
+      "targetArchitecture": "arm64",
+      "targetDeviceRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "0",
+        "cpuSpeedInMHz": "0",
+        "identifier": "F89BCCFC-5701-4B88-A238-EE866AF4834F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "0",
+        "modelCode": "iPad16,4",
+        "modelName": "iPad Pro 11-inch (M4)",
+        "modelUTI": "com.apple.ipad-pro-m4-1",
+        "name": "iPad Pro 11-inch (M4)",
+        "nativeArchitecture": "arm64",
+        "operatingSystemVersion": "17.5",
+        "operatingSystemVersionWithBuildNumber": "17.5 (21F79)",
+        "physicalCPUCoresPerPackage": "0",
+        "platformRecord": {
+          "identifier": "com.apple.platform.iphonesimulator",
+          "userDescription": "iOS Simulator"
+        },
+        "ramSizeInMegabytes": "0"
+      },
+      "targetSDKRecord": {
+        "identifier": "iphonesimulator17.5",
+        "name": "Simulator - iOS 17.5",
+        "operatingSystemVersion": "17.5"
+      }
+    },
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "attachment": "real-input-384x384",
+    "timestamp": "2026-10-12T09:54:31.618+0000",
+    "payload": "0~RxxnTtk9hJP_9kUjFiqbEzECcI-kqA7kf6Ij7HBHh9zML9i6kCThh84zjTWk7trXAxsPfyDB1uhWUdB3jQ29-A=="
+  },
+  {
+    "file": "build/evidence/reader-enhancement/iPad_Pro_11-inch__M4_-coreml-output-768x768.png",
+    "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+    "device": "iPad Pro 11-inch (M4)",
+    "destination": {
+      "displayName": "iPad Pro 11-inch (M4)",
+      "localComputerRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "1",
+        "cpuKind": "Apple M1 (Virtual)",
+        "cpuSpeedInMHz": "0",
+        "identifier": "0000FE00-7CCC9802DA488B9F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "3",
+        "modelCode": "VirtualMac2,1",
+        "modelName": "Apple Virtual Machine 1",
+        "modelUTI": "com.apple.virtual-machine",
+        "name": "My Mac",
+        "nativeArchitecture": "arm64e",
+        "operatingSystemVersion": "14.8.9",
+        "operatingSystemVersionWithBuildNumber": "14.8.9 (23J631)",
+        "physicalCPUCoresPerPackage": "3",
+        "platformRecord": {
+          "identifier": "com.apple.platform.macosx",
+          "userDescription": "macOS"
+        },
+        "ramSizeInMegabytes": "7168"
+      },
+      "targetArchitecture": "arm64",
+      "targetDeviceRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "0",
+        "cpuSpeedInMHz": "0",
+        "identifier": "F89BCCFC-5701-4B88-A238-EE866AF4834F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "0",
+        "modelCode": "iPad16,4",
+        "modelName": "iPad Pro 11-inch (M4)",
+        "modelUTI": "com.apple.ipad-pro-m4-1",
+        "name": "iPad Pro 11-inch (M4)",
+        "nativeArchitecture": "arm64",
+        "operatingSystemVersion": "17.5",
+        "operatingSystemVersionWithBuildNumber": "17.5 (21F79)",
+        "physicalCPUCoresPerPackage": "0",
+        "platformRecord": {
+          "identifier": "com.apple.platform.iphonesimulator",
+          "userDescription": "iOS Simulator"
+        },
+        "ramSizeInMegabytes": "0"
+      },
+      "targetSDKRecord": {
+        "identifier": "iphonesimulator17.5",
+        "name": "Simulator - iOS 17.5",
+        "operatingSystemVersion": "17.5"
+      }
+    },
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "attachment": "coreml-output-768x768",
+    "timestamp": "2026-10-12T09:54:31.650+0000",
+    "payload": "0~b4tgNIYOs6OkQcDmcXkFdQ6Sxf_qot0RhPcxOCC40Irm7-bwh-Gbrr2r1FEf4HZ8rU04oK7Nv53XDqv0KgN0AQ=="
+  },
+  {
+    "file": "build/evidence/ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-1.png",
+    "sha256": "4d27c421385ef735a788c307561299b7e6eb48be530414e4a0885bffb46bcfbb",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+    "device": "iPad Pro 11-inch (M4)",
+    "destination": {
+      "displayName": "iPad Pro 11-inch (M4)",
+      "localComputerRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "1",
+        "cpuKind": "Apple M1 (Virtual)",
+        "cpuSpeedInMHz": "0",
+        "identifier": "0000FE00-7CCC9802DA488B9F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "3",
+        "modelCode": "VirtualMac2,1",
+        "modelName": "Apple Virtual Machine 1",
+        "modelUTI": "com.apple.virtual-machine",
+        "name": "My Mac",
+        "nativeArchitecture": "arm64e",
+        "operatingSystemVersion": "14.8.9",
+        "operatingSystemVersionWithBuildNumber": "14.8.9 (23J631)",
+        "physicalCPUCoresPerPackage": "3",
+        "platformRecord": {
+          "identifier": "com.apple.platform.macosx",
+          "userDescription": "macOS"
+        },
+        "ramSizeInMegabytes": "7168"
+      },
+      "targetArchitecture": "arm64",
+      "targetDeviceRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "0",
+        "cpuSpeedInMHz": "0",
+        "identifier": "F89BCCFC-5701-4B88-A238-EE866AF4834F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "0",
+        "modelCode": "iPad16,4",
+        "modelName": "iPad Pro 11-inch (M4)",
+        "modelUTI": "com.apple.ipad-pro-m4-1",
+        "name": "iPad Pro 11-inch (M4)",
+        "nativeArchitecture": "arm64",
+        "operatingSystemVersion": "17.5",
+        "operatingSystemVersionWithBuildNumber": "17.5 (21F79)",
+        "physicalCPUCoresPerPackage": "0",
+        "platformRecord": {
+          "identifier": "com.apple.platform.iphonesimulator",
+          "userDescription": "iOS Simulator"
+        },
+        "ramSizeInMegabytes": "0"
+      },
+      "targetSDKRecord": {
+        "identifier": "iphonesimulator17.5",
+        "name": "Simulator - iOS 17.5",
+        "operatingSystemVersion": "17.5"
+      }
+    },
+    "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+    "status": "Failure",
+    "attachment": "failure-screen",
+    "timestamp": "2026-10-12T10:02:41.439+0000",
+    "payload": "0~_HFUhNwGoHVBVbm0DW-qEVKeIGhJT5uyxSE0Xlzu0s6dIO7wuG8sWsRw320ncHQkuhpS3a9lTHxyF2txrcfYkQ=="
+  },
+  {
+    "file": "build/evidence/ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-accessibility.txt",
+    "sha256": "19ec17876bd85eb8f373533c888e03632ab3f44f6f6777ce084dc0a7113a1e8d",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+    "device": "iPad Pro 11-inch (M4)",
+    "destination": {
+      "displayName": "iPad Pro 11-inch (M4)",
+      "localComputerRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "1",
+        "cpuKind": "Apple M1 (Virtual)",
+        "cpuSpeedInMHz": "0",
+        "identifier": "0000FE00-7CCC9802DA488B9F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "3",
+        "modelCode": "VirtualMac2,1",
+        "modelName": "Apple Virtual Machine 1",
+        "modelUTI": "com.apple.virtual-machine",
+        "name": "My Mac",
+        "nativeArchitecture": "arm64e",
+        "operatingSystemVersion": "14.8.9",
+        "operatingSystemVersionWithBuildNumber": "14.8.9 (23J631)",
+        "physicalCPUCoresPerPackage": "3",
+        "platformRecord": {
+          "identifier": "com.apple.platform.macosx",
+          "userDescription": "macOS"
+        },
+        "ramSizeInMegabytes": "7168"
+      },
+      "targetArchitecture": "arm64",
+      "targetDeviceRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "0",
+        "cpuSpeedInMHz": "0",
+        "identifier": "F89BCCFC-5701-4B88-A238-EE866AF4834F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "0",
+        "modelCode": "iPad16,4",
+        "modelName": "iPad Pro 11-inch (M4)",
+        "modelUTI": "com.apple.ipad-pro-m4-1",
+        "name": "iPad Pro 11-inch (M4)",
+        "nativeArchitecture": "arm64",
+        "operatingSystemVersion": "17.5",
+        "operatingSystemVersionWithBuildNumber": "17.5 (21F79)",
+        "physicalCPUCoresPerPackage": "0",
+        "platformRecord": {
+          "identifier": "com.apple.platform.iphonesimulator",
+          "userDescription": "iOS Simulator"
+        },
+        "ramSizeInMegabytes": "0"
+      },
+      "targetSDKRecord": {
+        "identifier": "iphonesimulator17.5",
+        "name": "Simulator - iOS 17.5",
+        "operatingSystemVersion": "17.5"
+      }
+    },
+    "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+    "status": "Failure",
+    "attachment": "failure-accessibility",
+    "timestamp": "2026-10-12T10:02:41.550+0000",
+    "payload": "0~HF8PRCthjPbYH7UmQOZ7tku0mpFoYr0T8sDgx3ETvAynYyR4AwX2A8kSZ9sBMwb6BD1Q6n6TiJOvdEM5wCdbtg=="
+  }
+]

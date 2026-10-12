@@ -1,6 +1,6 @@
 # 非站源完整验收门槛
 
-第22轮5e2 UI各46项/40通过/6失败、Mac缓存失败，64对照可生成但组件未通过；本门槛仍未通过。图内偏移及实际站源滚动新候选核心925项/2跳过/0失败，93文件两配置仅语法通过，计划原生29/阅读18/配置52每设备，需Apple实证。[原件](review-evidence/2026-10-12-ci22-results/README.md)、[接续](review-evidence/2026-10-12-reader-offset/README.md)。
+CI23/24已结束且failure：根导航操作与日漫旋转局部通过，底栏几何/模式切换及重启/缓存仍失败，CI24 iPhone还实际保留响应正文。当前底栏frame候选及Debug诊断93文件两配置仅语法通过；Core925/2跳过/0失败输入保持。门槛未通过，下一轮计划原生29、阅读18、配置52每设备，完整UI93尚未实际全跑；不打IPA。[CI23](review-evidence/2026-10-12-ci23-results/README.md)、[CI24](review-evidence/2026-10-12-ci24-results/README.md)、[接续](review-evidence/2026-10-12-reader-transition-trace/README.md)。
 
 ## 以下为对应旧输入历史
 

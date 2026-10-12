@@ -1,0 +1,3 @@
+*.zip -text
+ui-results-*.json -text
+simulator-selection/* -text

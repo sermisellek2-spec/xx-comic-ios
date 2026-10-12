@@ -1,0 +1,317 @@
+[
+  {
+    "file": "build/evidence/reader-enhancement/iPhone_15_Pro-reader-ai-metrics.json",
+    "sha256": "e63d50084b60879b88a5136c9834462270aa6c3c9329c7e1169fecb06fd1d1c2",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+    "device": "iPhone 15 Pro",
+    "destination": {
+      "displayName": "iPhone 15 Pro",
+      "localComputerRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "1",
+        "cpuKind": "Apple M1 (Virtual)",
+        "cpuSpeedInMHz": "0",
+        "identifier": "0000FE00-7CCC9802DA488B9F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "3",
+        "modelCode": "VirtualMac2,1",
+        "modelName": "Apple Virtual Machine 1",
+        "modelUTI": "com.apple.virtual-machine",
+        "name": "My Mac",
+        "nativeArchitecture": "arm64e",
+        "operatingSystemVersion": "14.8.9",
+        "operatingSystemVersionWithBuildNumber": "14.8.9 (23J631)",
+        "physicalCPUCoresPerPackage": "3",
+        "platformRecord": {
+          "identifier": "com.apple.platform.macosx",
+          "userDescription": "macOS"
+        },
+        "ramSizeInMegabytes": "7168"
+      },
+      "targetArchitecture": "arm64",
+      "targetDeviceRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "0",
+        "cpuSpeedInMHz": "0",
+        "identifier": "B15C98D2-D2CB-4366-B470-4881BB76708E",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "0",
+        "modelCode": "iPhone16,1",
+        "modelName": "iPhone 15 Pro",
+        "modelUTI": "com.apple.iphone-15-pro-1",
+        "name": "iPhone 15 Pro",
+        "nativeArchitecture": "arm64",
+        "operatingSystemVersion": "17.5",
+        "operatingSystemVersionWithBuildNumber": "17.5 (21F79)",
+        "physicalCPUCoresPerPackage": "0",
+        "platformRecord": {
+          "identifier": "com.apple.platform.iphonesimulator",
+          "userDescription": "iOS Simulator"
+        },
+        "ramSizeInMegabytes": "0"
+      },
+      "targetSDKRecord": {
+        "identifier": "iphonesimulator17.5",
+        "name": "Simulator - iOS 17.5",
+        "operatingSystemVersion": "17.5"
+      }
+    },
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "attachment": "reader-ai-metrics",
+    "timestamp": "2026-10-12T09:41:47.752+0000",
+    "payload": "0~-zYpOG46ecqpcBhdQLlRocJs9cnP3nLtMS0aVmHXnVlSfAtnDzoxxr6QkZoUGDZCkn-DKxM1zNMfg7ZzPgnHIA=="
+  },
+  {
+    "file": "build/evidence/reader-enhancement/iPhone_15_Pro-real-input-384x384.png",
+    "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+    "device": "iPhone 15 Pro",
+    "destination": {
+      "displayName": "iPhone 15 Pro",
+      "localComputerRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "1",
+        "cpuKind": "Apple M1 (Virtual)",
+        "cpuSpeedInMHz": "0",
+        "identifier": "0000FE00-7CCC9802DA488B9F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "3",
+        "modelCode": "VirtualMac2,1",
+        "modelName": "Apple Virtual Machine 1",
+        "modelUTI": "com.apple.virtual-machine",
+        "name": "My Mac",
+        "nativeArchitecture": "arm64e",
+        "operatingSystemVersion": "14.8.9",
+        "operatingSystemVersionWithBuildNumber": "14.8.9 (23J631)",
+        "physicalCPUCoresPerPackage": "3",
+        "platformRecord": {
+          "identifier": "com.apple.platform.macosx",
+          "userDescription": "macOS"
+        },
+        "ramSizeInMegabytes": "7168"
+      },
+      "targetArchitecture": "arm64",
+      "targetDeviceRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "0",
+        "cpuSpeedInMHz": "0",
+        "identifier": "B15C98D2-D2CB-4366-B470-4881BB76708E",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "0",
+        "modelCode": "iPhone16,1",
+        "modelName": "iPhone 15 Pro",
+        "modelUTI": "com.apple.iphone-15-pro-1",
+        "name": "iPhone 15 Pro",
+        "nativeArchitecture": "arm64",
+        "operatingSystemVersion": "17.5",
+        "operatingSystemVersionWithBuildNumber": "17.5 (21F79)",
+        "physicalCPUCoresPerPackage": "0",
+        "platformRecord": {
+          "identifier": "com.apple.platform.iphonesimulator",
+          "userDescription": "iOS Simulator"
+        },
+        "ramSizeInMegabytes": "0"
+      },
+      "targetSDKRecord": {
+        "identifier": "iphonesimulator17.5",
+        "name": "Simulator - iOS 17.5",
+        "operatingSystemVersion": "17.5"
+      }
+    },
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "attachment": "real-input-384x384",
+    "timestamp": "2026-10-12T09:41:47.760+0000",
+    "payload": "0~RxxnTtk9hJP_9kUjFiqbEzECcI-kqA7kf6Ij7HBHh9zML9i6kCThh84zjTWk7trXAxsPfyDB1uhWUdB3jQ29-A=="
+  },
+  {
+    "file": "build/evidence/reader-enhancement/iPhone_15_Pro-coreml-output-768x768.png",
+    "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+    "device": "iPhone 15 Pro",
+    "destination": {
+      "displayName": "iPhone 15 Pro",
+      "localComputerRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "1",
+        "cpuKind": "Apple M1 (Virtual)",
+        "cpuSpeedInMHz": "0",
+        "identifier": "0000FE00-7CCC9802DA488B9F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "3",
+        "modelCode": "VirtualMac2,1",
+        "modelName": "Apple Virtual Machine 1",
+        "modelUTI": "com.apple.virtual-machine",
+        "name": "My Mac",
+        "nativeArchitecture": "arm64e",
+        "operatingSystemVersion": "14.8.9",
+        "operatingSystemVersionWithBuildNumber": "14.8.9 (23J631)",
+        "physicalCPUCoresPerPackage": "3",
+        "platformRecord": {
+          "identifier": "com.apple.platform.macosx",
+          "userDescription": "macOS"
+        },
+        "ramSizeInMegabytes": "7168"
+      },
+      "targetArchitecture": "arm64",
+      "targetDeviceRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "0",
+        "cpuSpeedInMHz": "0",
+        "identifier": "B15C98D2-D2CB-4366-B470-4881BB76708E",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "0",
+        "modelCode": "iPhone16,1",
+        "modelName": "iPhone 15 Pro",
+        "modelUTI": "com.apple.iphone-15-pro-1",
+        "name": "iPhone 15 Pro",
+        "nativeArchitecture": "arm64",
+        "operatingSystemVersion": "17.5",
+        "operatingSystemVersionWithBuildNumber": "17.5 (21F79)",
+        "physicalCPUCoresPerPackage": "0",
+        "platformRecord": {
+          "identifier": "com.apple.platform.iphonesimulator",
+          "userDescription": "iOS Simulator"
+        },
+        "ramSizeInMegabytes": "0"
+      },
+      "targetSDKRecord": {
+        "identifier": "iphonesimulator17.5",
+        "name": "Simulator - iOS 17.5",
+        "operatingSystemVersion": "17.5"
+      }
+    },
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "attachment": "coreml-output-768x768",
+    "timestamp": "2026-10-12T09:41:47.784+0000",
+    "payload": "0~b4tgNIYOs6OkQcDmcXkFdQ6Sxf_qot0RhPcxOCC40Irm7-bwh-Gbrr2r1FEf4HZ8rU04oK7Nv53XDqv0KgN0AQ=="
+  },
+  {
+    "file": "build/evidence/ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-1.png",
+    "sha256": "6bc039e80cc12166cb7dc3cba2f877bea311525b9747e51a38c458822312ea55",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+    "device": "iPhone 15 Pro",
+    "destination": {
+      "displayName": "iPhone 15 Pro",
+      "localComputerRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "1",
+        "cpuKind": "Apple M1 (Virtual)",
+        "cpuSpeedInMHz": "0",
+        "identifier": "0000FE00-7CCC9802DA488B9F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "3",
+        "modelCode": "VirtualMac2,1",
+        "modelName": "Apple Virtual Machine 1",
+        "modelUTI": "com.apple.virtual-machine",
+        "name": "My Mac",
+        "nativeArchitecture": "arm64e",
+        "operatingSystemVersion": "14.8.9",
+        "operatingSystemVersionWithBuildNumber": "14.8.9 (23J631)",
+        "physicalCPUCoresPerPackage": "3",
+        "platformRecord": {
+          "identifier": "com.apple.platform.macosx",
+          "userDescription": "macOS"
+        },
+        "ramSizeInMegabytes": "7168"
+      },
+      "targetArchitecture": "arm64",
+      "targetDeviceRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "0",
+        "cpuSpeedInMHz": "0",
+        "identifier": "B15C98D2-D2CB-4366-B470-4881BB76708E",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "0",
+        "modelCode": "iPhone16,1",
+        "modelName": "iPhone 15 Pro",
+        "modelUTI": "com.apple.iphone-15-pro-1",
+        "name": "iPhone 15 Pro",
+        "nativeArchitecture": "arm64",
+        "operatingSystemVersion": "17.5",
+        "operatingSystemVersionWithBuildNumber": "17.5 (21F79)",
+        "physicalCPUCoresPerPackage": "0",
+        "platformRecord": {
+          "identifier": "com.apple.platform.iphonesimulator",
+          "userDescription": "iOS Simulator"
+        },
+        "ramSizeInMegabytes": "0"
+      },
+      "targetSDKRecord": {
+        "identifier": "iphonesimulator17.5",
+        "name": "Simulator - iOS 17.5",
+        "operatingSystemVersion": "17.5"
+      }
+    },
+    "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+    "status": "Failure",
+    "attachment": "failure-screen",
+    "timestamp": "2026-10-12T09:50:06.852+0000",
+    "payload": "0~zXoOXG5TPrEgWn49epWKhJzFCLkEP10O6TVewTV-rM0wdOn9X876uB-dYg5q2LNC20YFif7t4V5D9viRl1khIQ=="
+  },
+  {
+    "file": "build/evidence/ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-accessibility.txt",
+    "sha256": "4e9d164854411303bcd024a99e8b0c7c20fee26a8ea54f5bb916f22e7b29ae16",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+    "device": "iPhone 15 Pro",
+    "destination": {
+      "displayName": "iPhone 15 Pro",
+      "localComputerRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "1",
+        "cpuKind": "Apple M1 (Virtual)",
+        "cpuSpeedInMHz": "0",
+        "identifier": "0000FE00-7CCC9802DA488B9F",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "3",
+        "modelCode": "VirtualMac2,1",
+        "modelName": "Apple Virtual Machine 1",
+        "modelUTI": "com.apple.virtual-machine",
+        "name": "My Mac",
+        "nativeArchitecture": "arm64e",
+        "operatingSystemVersion": "14.8.9",
+        "operatingSystemVersionWithBuildNumber": "14.8.9 (23J631)",
+        "physicalCPUCoresPerPackage": "3",
+        "platformRecord": {
+          "identifier": "com.apple.platform.macosx",
+          "userDescription": "macOS"
+        },
+        "ramSizeInMegabytes": "7168"
+      },
+      "targetArchitecture": "arm64",
+      "targetDeviceRecord": {
+        "busSpeedInMHz": "0",
+        "cpuCount": "0",
+        "cpuSpeedInMHz": "0",
+        "identifier": "B15C98D2-D2CB-4366-B470-4881BB76708E",
+        "isConcreteDevice": "true",
+        "logicalCPUCoresPerPackage": "0",
+        "modelCode": "iPhone16,1",
+        "modelName": "iPhone 15 Pro",
+        "modelUTI": "com.apple.iphone-15-pro-1",
+        "name": "iPhone 15 Pro",
+        "nativeArchitecture": "arm64",
+        "operatingSystemVersion": "17.5",
+        "operatingSystemVersionWithBuildNumber": "17.5 (21F79)",
+        "physicalCPUCoresPerPackage": "0",
+        "platformRecord": {
+          "identifier": "com.apple.platform.iphonesimulator",
+          "userDescription": "iOS Simulator"
+        },
+        "ramSizeInMegabytes": "0"
+      },
+      "targetSDKRecord": {
+        "identifier": "iphonesimulator17.5",
+        "name": "Simulator - iOS 17.5",
+        "operatingSystemVersion": "17.5"
+      }
+    },
+    "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+    "status": "Failure",
+    "attachment": "failure-accessibility",
+    "timestamp": "2026-10-12T09:50:06.957+0000",
+    "payload": "0~y5YXkaIRdj77naPQaj-aG5oSxSWZo45fjZ7xPpfpx5F1hndDVCGr9kTftt6fpmxWTvd9-iw4OAwccmLXYuJL0w=="
+  }
+]

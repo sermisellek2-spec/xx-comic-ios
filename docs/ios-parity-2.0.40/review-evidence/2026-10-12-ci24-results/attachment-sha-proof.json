@@ -1,0 +1,62 @@
+[
+  {
+    "file": "ios/build/ci24-v/reader-enhancement/iPad_Pro_11-inch__M4_-reader-ai-metrics.json",
+    "sha256": "19a4d2b4ad7adf91cdb03af9086d7455115338f7a3feac5933e8f76328b31389",
+    "device": "iPad Pro 11-inch (M4)",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3"
+  },
+  {
+    "file": "ios/build/ci24-v/reader-enhancement/iPad_Pro_11-inch__M4_-real-input-384x384.png",
+    "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+    "device": "iPad Pro 11-inch (M4)",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3"
+  },
+  {
+    "file": "ios/build/ci24-v/reader-enhancement/iPad_Pro_11-inch__M4_-coreml-output-768x768.png",
+    "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+    "device": "iPad Pro 11-inch (M4)",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3"
+  },
+  {
+    "file": "ios/build/ci24-v/ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-1.png",
+    "sha256": "4d27c421385ef735a788c307561299b7e6eb48be530414e4a0885bffb46bcfbb",
+    "device": "iPad Pro 11-inch (M4)",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3"
+  },
+  {
+    "file": "ios/build/ci24-v/ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-accessibility.txt",
+    "sha256": "19ec17876bd85eb8f373533c888e03632ab3f44f6f6777ce084dc0a7113a1e8d",
+    "device": "iPad Pro 11-inch (M4)",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3"
+  },
+  {
+    "file": "ios/build/ci24-v/reader-enhancement/iPhone_15_Pro-reader-ai-metrics.json",
+    "sha256": "e63d50084b60879b88a5136c9834462270aa6c3c9329c7e1169fecb06fd1d1c2",
+    "device": "iPhone 15 Pro",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3"
+  },
+  {
+    "file": "ios/build/ci24-v/reader-enhancement/iPhone_15_Pro-real-input-384x384.png",
+    "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+    "device": "iPhone 15 Pro",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3"
+  },
+  {
+    "file": "ios/build/ci24-v/reader-enhancement/iPhone_15_Pro-coreml-output-768x768.png",
+    "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+    "device": "iPhone 15 Pro",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3"
+  },
+  {
+    "file": "ios/build/ci24-v/ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-1.png",
+    "sha256": "6bc039e80cc12166cb7dc3cba2f877bea311525b9747e51a38c458822312ea55",
+    "device": "iPhone 15 Pro",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3"
+  },
+  {
+    "file": "ios/build/ci24-v/ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-accessibility.txt",
+    "sha256": "4e9d164854411303bcd024a99e8b0c7c20fee26a8ea54f5bb916f22e7b29ae16",
+    "device": "iPhone 15 Pro",
+    "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3"
+  }
+]

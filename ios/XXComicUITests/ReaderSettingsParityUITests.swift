@@ -36,7 +36,13 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         let pages = app.collectionViews["reader.pages"]
         let expected = "第\(chapter)话，第 \(number) 页，共 4 页"
         let reached = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", expected), object: pages)
-        XCTAssertEqual(XCTWaiter.wait(for: [reached], timeout: 10), .completed)
+        let result = XCTWaiter.wait(for: [reached], timeout: 10)
+        if result != .completed {
+            let attachment = XCTAttachment(string: pages.label)
+            attachment.name = "reader-transition-expected-chapter-\(chapter)-page-\(number)"
+            attachment.lifetime = .keepAlways; add(attachment)
+        }
+        XCTAssertEqual(result, .completed)
         XCTAssertEqual(pages.value as? String, expected)
         XCTAssertTrue(app.images.matching(identifier: "reader.image").allElementsBoundByIndex.contains {
             $0.isHittable && ($0.value as? String)?.contains(":384x384") == true

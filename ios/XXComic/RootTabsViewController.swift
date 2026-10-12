@@ -161,18 +161,18 @@ private final class RootTabButton: UIControl {
         for child in [icon, label] {
             child.isUserInteractionEnabled = false
             child.isAccessibilityElement = false
-            child.translatesAutoresizingMaskIntoConstraints = false
             addSubview(child)
         }
-        NSLayoutConstraint.activate([
-            icon.widthAnchor.constraint(equalToConstant: 20), icon.heightAnchor.constraint(equalToConstant: 20),
-            icon.centerXAnchor.constraint(equalTo: centerXAnchor), icon.centerYAnchor.constraint(equalTo: centerYAnchor, constant: -8),
-            label.topAnchor.constraint(equalTo: icon.bottomAnchor, constant: 4), label.centerXAnchor.constraint(equalTo: centerXAnchor),
-            label.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 4),
-            label.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -4)
-        ])
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // Symbol images can supply alignment insets which shrink an Auto Layout
+        // image view's actual frame. Keep the application's 20/4 geometry exact.
+        icon.frame = CGRect(x: bounds.midX - 10, y: bounds.midY - 18, width: 20, height: 20)
+        label.frame = CGRect(x: 4, y: icon.frame.maxY + 4, width: max(0, bounds.width - 8), height: ceil(label.font.lineHeight))
+    }
 
     func setSelection(_ selected: Bool) {
         isSelected = selected
@@ -180,5 +180,6 @@ private final class RootTabButton: UIControl {
         icon.tintColor = color; label.textColor = color
         label.font = .systemFont(ofSize: 10, weight: selected ? .bold : .medium)
         accessibilityTraits = selected ? [.button, .selected] : .button
+        setNeedsLayout()
     }
 }

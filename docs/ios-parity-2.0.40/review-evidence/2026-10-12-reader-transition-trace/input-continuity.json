@@ -1,0 +1,15 @@
+{
+  "core": {
+    "inputCount": 267,
+    "allCurrentSHA256Match": true,
+    "result": "925 tests, 2 Apple PDF skips, 0 failures",
+    "sourceEvidence": "../2026-10-12-reader-offset/core-verification-final.json"
+  },
+  "native": {
+    "inputCount": 93,
+    "allCurrentSHA256Match": true,
+    "ReleaseExit": 0,
+    "DebugExit": 0,
+    "typecheckedOnApple": false
+  }
+}

@@ -1,0 +1,330 @@
+[
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 81920,
+    "diskCapacity": 8388608,
+    "files": [],
+    "initializer": "diskPath",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "fresh"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 663920,
+    "diskCapacity": 8388608,
+    "files": [],
+    "initializer": "diskPath",
+    "knownResponseBytes": 528384,
+    "knownResponsesHit": 4,
+    "memoryBytes": 4096,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "stored"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 36864,
+    "diskCapacity": 8388608,
+    "files": [],
+    "initializer": "diskPath",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "cleared"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 36864,
+    "diskCapacity": 8388608,
+    "files": [],
+    "initializer": "diskPath",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "reopened"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 81920,
+    "diskCapacity": 8388608,
+    "files": [
+      {
+        "bytes": 32768,
+        "file": "Cache.db-shm"
+      },
+      {
+        "bytes": 0,
+        "file": "Cache.db-wal"
+      },
+      {
+        "bytes": 49152,
+        "file": "Cache.db"
+      }
+    ],
+    "initializer": "directory",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "fresh"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 705120,
+    "diskCapacity": 8388608,
+    "files": [
+      {
+        "bytes": 262144,
+        "file": "fsCachedData/4EEABF5D-7DB1-455A-A3D9-E32992EEA9C4"
+      },
+      {
+        "bytes": 262144,
+        "file": "fsCachedData/29EF55B4-3163-4A94-9558-026069C9BECF"
+      },
+      {
+        "bytes": 32768,
+        "file": "Cache.db-shm"
+      },
+      {
+        "bytes": 98912,
+        "file": "Cache.db-wal"
+      },
+      {
+        "bytes": 49152,
+        "file": "Cache.db"
+      }
+    ],
+    "initializer": "directory",
+    "knownResponseBytes": 528384,
+    "knownResponsesHit": 4,
+    "memoryBytes": 4096,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "stored"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 144016,
+    "diskCapacity": 8388608,
+    "files": [
+      {
+        "bytes": 32768,
+        "file": "Cache.db-shm"
+      },
+      {
+        "bytes": 107152,
+        "file": "Cache.db-wal"
+      },
+      {
+        "bytes": 4096,
+        "file": "Cache.db"
+      }
+    ],
+    "initializer": "directory",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "cleared"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 144016,
+    "diskCapacity": 8388608,
+    "files": [
+      {
+        "bytes": 32768,
+        "file": "Cache.db-shm"
+      },
+      {
+        "bytes": 107152,
+        "file": "Cache.db-wal"
+      },
+      {
+        "bytes": 4096,
+        "file": "Cache.db"
+      }
+    ],
+    "initializer": "directory",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "reopened"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 81920,
+    "diskCapacity": 8388608,
+    "files": [],
+    "initializer": "diskPath",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "fresh"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 663920,
+    "diskCapacity": 8388608,
+    "files": [],
+    "initializer": "diskPath",
+    "knownResponseBytes": 528384,
+    "knownResponsesHit": 4,
+    "memoryBytes": 4096,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "stored"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 144016,
+    "diskCapacity": 8388608,
+    "files": [],
+    "initializer": "diskPath",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "cleared"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 144016,
+    "diskCapacity": 8388608,
+    "files": [],
+    "initializer": "diskPath",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "reopened"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 81920,
+    "diskCapacity": 8388608,
+    "files": [
+      {
+        "bytes": 32768,
+        "file": "Cache.db-shm"
+      },
+      {
+        "bytes": 0,
+        "file": "Cache.db-wal"
+      },
+      {
+        "bytes": 49152,
+        "file": "Cache.db"
+      }
+    ],
+    "initializer": "directory",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "fresh"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 663920,
+    "diskCapacity": 8388608,
+    "files": [
+      {
+        "bytes": 262144,
+        "file": "fsCachedData/B4D0702E-44E9-4BC8-B4E0-A48334A784BA"
+      },
+      {
+        "bytes": 262144,
+        "file": "fsCachedData/E2FCDB48-A792-4D8E-8BDA-2A6E1DD0E1EF"
+      },
+      {
+        "bytes": 32768,
+        "file": "Cache.db-shm"
+      },
+      {
+        "bytes": 57712,
+        "file": "Cache.db-wal"
+      },
+      {
+        "bytes": 49152,
+        "file": "Cache.db"
+      }
+    ],
+    "initializer": "directory",
+    "knownResponseBytes": 528384,
+    "knownResponsesHit": 4,
+    "memoryBytes": 4096,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "stored"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 36864,
+    "diskCapacity": 8388608,
+    "files": [
+      {
+        "bytes": 32768,
+        "file": "Cache.db-shm"
+      },
+      {
+        "bytes": 0,
+        "file": "Cache.db-wal"
+      },
+      {
+        "bytes": 4096,
+        "file": "Cache.db"
+      }
+    ],
+    "initializer": "directory",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "cleared"
+  },
+  {
+    "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+    "diskBytes": 144016,
+    "diskCapacity": 8388608,
+    "files": [
+      {
+        "bytes": 32768,
+        "file": "Cache.db-shm"
+      },
+      {
+        "bytes": 107152,
+        "file": "Cache.db-wal"
+      },
+      {
+        "bytes": 4096,
+        "file": "Cache.db"
+      }
+    ],
+    "initializer": "directory",
+    "knownResponseBytes": 0,
+    "knownResponsesHit": 0,
+    "memoryBytes": 0,
+    "memoryCapacity": 1048576,
+    "networkRequests": 0,
+    "stage": "reopened"
+  }
+]

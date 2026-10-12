@@ -58,6 +58,20 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var pagePanBeganAt: TimeInterval?
     private var habitTimer: Timer?
     private var leavingReader = false
+#if DEBUG
+    private var readerTrace: [String] = []
+#endif
+
+    private func recordReaderTrace(_ event: String) {
+#if DEBUG
+        guard ProcessInfo.processInfo.arguments.contains("--ui-testing") else { return }
+        let pending = pendingPosition.map { String($0.imageIndex) } ?? "nil"
+        let point = pages.contentOffset, size = pages.bounds.size, content = pages.contentSize
+        readerTrace.append("\(event) mode=\(settings.readingMode.rawValue) page=\(session.imageIndex) pending=\(pending) offset=\(point.x),\(point.y) size=\(size.width),\(size.height) content=\(content.width),\(content.height) restoring=\(restoring) animating=\(pageAnimating) fullscreen=\(fullscreen)")
+        if readerTrace.count > 96 { readerTrace.removeFirst(readerTrace.count - 96) }
+        pages.accessibilityLabel = readerTrace.joined(separator: "\n")
+#endif
+    }
 
     init(comic: ComicSummary, chapters: [Chapter], chapterIndex: Int, directoryIncomplete: Bool, environment: AppEnvironment) {
         self.comic = comic; self.chapters = chapters; self.environment = environment
@@ -289,11 +303,13 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         super.viewDidLayoutSubviews()
         headerWidth?.constant = max(44, view.bounds.width - view.safeAreaInsets.left - view.safeAreaInsets.right - 32)
         if let position = pendingPosition, !viewportTransitioning, !images.isEmpty, pages.bounds.width > 0 {
+            recordReaderTrace("layout.pending")
             // Reload/layout callbacks must still see the requested logical
             // position until the new axis has been laid out and restored.
             if restore(position) {
                 pendingPosition = nil
                 synchronizeContinuousSession(); updateBadge()
+                recordReaderTrace("layout.restored")
             }
         }
         appendNextChapterIfNeeded()
@@ -326,6 +342,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         }
     }
     private func applySettings() {
+        recordReaderTrace("settings.begin")
         synchronizeContinuousSession()
         savePosition()
         let position = currentPosition()
@@ -367,9 +384,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             layout.invalidateLayout(); pages.reloadData()
             pendingPosition = position
             view.setNeedsLayout()
+            recordReaderTrace("settings.pending(\(position.imageIndex),\(position.offset))")
         }
         updateContinuationFooter()
         setNeedsStatusBarAppearanceUpdate()
+        recordReaderTrace("settings.end")
     }
     private func loadDirectory() {
         directoryTask?.cancel()
@@ -730,6 +749,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     @discardableResult
     private func restore(_ position: ReaderPosition) -> Bool {
         guard !images.isEmpty else { return false }
+        recordReaderTrace("restore.begin(\(position.imageIndex),\(position.offset))")
         let wasRestoring = restoring
         restoring = true
         defer { restoring = wasRestoring }
@@ -751,6 +771,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         } else { return false }
         session.updateImage(localIndex)
         updateBadge()
+        recordReaderTrace("restore.end")
         return true
     }
     private func savePosition() {
@@ -824,6 +845,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     @objc private func backward() { moveChapterFromToolbar(-1) }
     @objc private func forward() { moveChapterFromToolbar(1) }
     private func move(_ delta: Int) {
+        recordReaderTrace("move.request(\(delta))")
         guard !loading, !isZoomed, !pageAnimating else { return }
         environment.readingHabits.userDidRead()
         session.updateImage(currentPosition().imageIndex)
@@ -832,6 +854,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         case .image(let index):
             pageAnimating = !settings.disablePageAnimation && !settings.inkScreen
             scrollToPage(index, animated: pageAnimating)
+            recordReaderTrace("move.page(\(index))")
             updateBadge()
             if settings.disablePageAnimation || settings.inkScreen { savePosition() }
         case .chapter(_, let atEnd): changeChapter(delta, atEnd: atEnd)
@@ -866,6 +889,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             y: Double((location.y - pages.bounds.minY) / max(1, pages.bounds.height)),
             controlsVisible: !fullscreen, layout: settings.layout, mode: settings.turnMode,
             zoomed: isZoomed, direction: settings.pageDirection)
+        recordReaderTrace("tap(\(location.x),\(location.y)): \(action)")
         switch action {
         case .none: break
         case .move(let delta): move(delta)
@@ -1071,6 +1095,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         return CGSize(width: width, height: max(1, width * size.height / max(1, size.width)))
     }
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if restoring || pendingPosition != nil || !pageAnimating { recordReaderTrace("scroll") }
         guard !restoring, !viewportTransitioning else { return }
         if settings.layout == .strip { synchronizeContinuousSession() }
         else { session.updateImage(currentPosition().imageIndex) }
@@ -1082,7 +1107,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         environment.readingHabits.userDidRead(); setFullscreen(true, animated: true)
     }
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { savePosition() }
-    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) { pageAnimating = false; savePosition() }
+    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+        pageAnimating = false; savePosition()
+        recordReaderTrace("animation.end")
+    }
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) { if !decelerate { savePosition() } }
 }
 

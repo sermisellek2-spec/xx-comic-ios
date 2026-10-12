@@ -1,0 +1,89 @@
+{
+  "run": 38230280027,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38230280027",
+  "revision": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+  "conclusion": "failure",
+  "package_ipa": false,
+  "debugReleaseSDKBuild": "success",
+  "filesHostBuild": false,
+  "macCore": {
+    "tests": 929,
+    "failedCases": 1,
+    "failure": "CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses",
+    "seconds": 136.844
+  },
+  "native": [
+    {
+      "tests": 29,
+      "passed": 27,
+      "failedCases": 2,
+      "failedTests": [
+        "CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal",
+        "RootTabGeometryTests testAllTabsRemainStackedAtPhoneAndTabletPortraitAndLandscapeWidths"
+      ],
+      "failureAssertionRecords": 34,
+      "mangaGeometryPassed": 3,
+      "device": "iPhone 15 Pro"
+    },
+    {
+      "tests": 29,
+      "passed": 28,
+      "failedCases": 1,
+      "failedTests": [
+        "RootTabGeometryTests testAllTabsRemainStackedAtPhoneAndTabletPortraitAndLandscapeWidths"
+      ],
+      "failureAssertionRecords": 36,
+      "mangaGeometryPassed": 3,
+      "device": "iPad Pro 11-inch (M4)"
+    }
+  ],
+  "ui": [
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "tests": 17,
+      "passed": 16,
+      "failedCases": 1,
+      "failedTests": [
+        "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()"
+      ],
+      "classes": {
+        "ReaderContinuityUITests": {
+          "Success": 10
+        },
+        "ReaderSettingsParityUITests": {
+          "Success": 4,
+          "Failure": 1
+        },
+        "ReaderToolbarParityUITests": {
+          "Success": 2
+        }
+      },
+      "failureAssertionRecords": 8
+    },
+    {
+      "device": "iPhone 15 Pro",
+      "tests": 17,
+      "passed": 16,
+      "failedCases": 1,
+      "failedTests": [
+        "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()"
+      ],
+      "classes": {
+        "ReaderContinuityUITests": {
+          "Success": 10
+        },
+        "ReaderSettingsParityUITests": {
+          "Success": 4,
+          "Failure": 1
+        },
+        "ReaderToolbarParityUITests": {
+          "Success": 2
+        }
+      },
+      "failureAssertionRecords": 8
+    }
+  ],
+  "attachmentsVerified": 10,
+  "xcresultDownloaded": false,
+  "nonSourceGatePassed": false
+}
