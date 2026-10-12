@@ -48,7 +48,10 @@ public actor HTTPResponseCache {
         // No cache database or unrelated directory is deleted by our code.
         cache.memoryCapacity = 0
         cache.diskCapacity = 0
-        defer { cache.memoryCapacity = memoryCapacity; cache.diskCapacity = diskCapacity }
+        var limitsRestored = false
+        defer {
+            if !limitsRestored { cache.memoryCapacity = memoryCapacity; cache.diskCapacity = diskCapacity }
+        }
         cache.removeAllCachedResponses()
         // A response that was already finishing can repopulate URLCache after
         // removeAllCachedResponses. Require a short quiet period, removing late
@@ -65,6 +68,11 @@ public actor HTTPResponseCache {
                 cache.removeAllCachedResponses()
             }
         }
+        // Restoring disk storage can allocate index files. Measure afterwards,
+        // so the result describes the cache the caller can actually use.
+        cache.memoryCapacity = memoryCapacity
+        cache.diskCapacity = diskCapacity
+        limitsRestored = true
         // Report remaining usage instead of claiming success if the framework retained data.
         return HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))
     }

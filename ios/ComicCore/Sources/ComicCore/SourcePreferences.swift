@@ -168,7 +168,7 @@ public final class SourcePreferences {
             // These exported fields have no consumer in the current source
             // interface. Preserve unchanged compatibility values, but report
             // attempted overrides rather than pretending they affect requests.
-            let unusedRoutes: Set<String> = id == "manhuagui" ? ["latest", "chapter"] : id == "d5d6" ? ["latest"] : []
+            let unusedRoutes = Self.unconsumedRoutes(for: id)
             for key in ["name", "domain", "baseUrl", "referer", "latestPath", "searchPath", "categoryPath", "detailPath", "enabled"] {
                 if let value = item[key] { normalized[key] = value }
             }
@@ -179,8 +179,11 @@ public final class SourcePreferences {
             let explicitRoutes = item["routes"] as? [String: String] ?? [:]
             for (field, route) in [("latestPath", "latest"), ("searchPath", "search"), ("categoryPath", "category"), ("detailPath", "detail")] {
                 if let path = item[field] as? String {
-                    if unusedRoutes.contains(route), path != supported.route(route) {
-                        warnings.append("已跳过不支持的字段：" + id + "." + field + "（当前请求不消费该字段）")
+                    let routeAvailable = supported.routes?[route] != nil || !supported.route(route).isEmpty
+                    if !routeAvailable || unusedRoutes.contains(route) {
+                        if path != (originalFields[field] as? String) {
+                            warnings.append("已跳过不支持的字段：" + id + "." + field + "（当前请求不消费该字段）")
+                        }
                         normalized[field] = originalFields[field]
                     } else if explicitRoutes[route] == nil { legacyRoutes[route] = path }
                 }
@@ -196,13 +199,12 @@ public final class SourcePreferences {
                     guard allowed.contains(field) else {
                         warnings.append("已跳过不支持的字段：" + id + "." + key + "." + field); continue
                     }
-                    let unusedFilter = key == "filters" && (id == "manhuagui" || (id == "d5d6" && (field.hasPrefix("category.") || field == "state.all")))
-                    if (key == "routes" && unusedRoutes.contains(field) || unusedFilter), value != defaultsMapping?[field] {
-                        warnings.append("已跳过不支持的字段：" + id + "." + key + "." + field + "（当前请求不消费该字段）"); continue
-                    }
-                    // HiperDEX uses chapter URLs returned by the directory; this route is export compatibility only.
-                    if id == "hiperdex", key == "routes", field == "chapter", value != supported.route("chapter") {
-                        warnings.append("已跳过不支持的字段：hiperdex.routes.chapter（目录提供章节地址）"); continue
+                    let unusedFilter = key == "filters" && (id == "manhuagui" || (id == "d5d6" && (field.hasPrefix("category.") || field == "state.all")) || (id == "manben" && field == "sort.popular") || id == "hanman18")
+                    if key == "routes" && unusedRoutes.contains(field) || unusedFilter {
+                        if value != merged[field] {
+                            warnings.append("已跳过不支持的字段：" + id + "." + key + "." + field + "（当前请求不消费该字段）")
+                        }
+                        continue
                     }
                     merged[field] = value
                 }
@@ -228,5 +230,22 @@ public final class SourcePreferences {
         let enabledCount = prepared.filter(\.enabled).count
         return SourceImportResult(totalSources: prepared.count, enabledCount: enabledCount, disabledCount: prepared.count - enabledCount,
                                   orderUpdated: !order.isEmpty, skippedSources: skipped, warnings: warnings)
+    }
+
+    // Retained Android export fields that do not reach the current request path.
+    // Category helpers and directory-provided chapter URLs are the consumers.
+    private static func unconsumedRoutes(for id: String) -> Set<String> {
+        if PublicSourceRegistry.contains(id) { return ["latest", "search", "category", "detail", "chapter"] }
+        switch id {
+        case "gmh", "d5d6": return ["latest"]
+        case "mh160", "mkzhan", "hiperdex": return ["chapter"]
+        case "jmcomic": return ["category", "chapter"]
+        case "mh18", "manhuagui", "manben": return ["latest", "chapter"]
+        case "manhuazhan", "bbyin", "liumanhua": return ["latest", "category", "chapter"]
+        case "cuimh": return ["latest", "search", "category", "chapter"]
+        case "copy4000": return ["chapters", "chapter"]
+        case "dongmanla", "hanman18": return ["category", "chapter"]
+        default: return []
+        }
     }
 }

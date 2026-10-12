@@ -2,6 +2,48 @@ import XCTest
 @testable import ComicCore
 
 final class ManbenSourceTests: XCTestCase {
+    func testImportedCategoryRouteAndSortReachLatestAndSelectedFilters() async throws {
+        let suite = "ManbenSourceTests.config." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = SourcePreferences(defaults: defaults, defaultIDs: ["manben"])
+        _ = try store.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"manben","baseUrl":"https://fixture.invalid","referer":"https://fixture.invalid/ref/","routes":{"category":"/configured-list"},"filters":{"sort.latest":"7","state.all":"8"}}]}"#)
+        let transport = ManbenFixtureTransport(["[]", "[]"])
+        let source = ManbenComicSource(config: try XCTUnwrap(store.config(for: "manben")), transport: transport)
+        _ = try await source.latest(page: 2)
+        _ = try await source.category(filters: ["state": "2", "tag": "31", "region": "36", "letter": "B"], page: 3)
+        let requests = await transport.requests
+        XCTAssertEqual(requests.map(\.url), Array(repeating: "https://fixture.invalid/configured-list", count: 2))
+        XCTAssertEqual(requests.map(\.method), ["POST", "POST"])
+        XCTAssertEqual(requests[0].body, "t=2&pageindex=2&sc=1&tsort=7&tagid=0&tst=8&tarea=0&tgroup=0&tnm=")
+        XCTAssertEqual(requests[1].body, "t=2&pageindex=3&sc=1&tsort=7&tagid=31&tst=2&tarea=36&tgroup=0&tnm=B")
+        XCTAssertEqual(requests.map { $0.headers["Referer"] }, Array(repeating: "https://fixture.invalid/ref/", count: 2))
+    }
+
+    func testSelectedAllValuesResetImportedCategoryDefaultsLikeAndroid() async throws {
+        let config = SourceConfigItem(id: "manben", name: "漫本", baseUrl: "https://fixture.invalid",
+                                     routes: ["category": "/list"],
+                                     filters: ["sort.latest": "7", "state.all": "8", "category.全部": "tagid:37"])
+        let transport = ManbenFixtureTransport(["[]"])
+        let source = ManbenComicSource(config: config, transport: transport)
+        _ = try await source.category(filters: [:], page: 0)
+        let requests = await transport.requests
+        XCTAssertEqual(requests[0].url, "https://fixture.invalid/list")
+        XCTAssertEqual(requests[0].body, "t=2&pageindex=1&sc=1&tsort=7&tagid=0&tst=0&tarea=0&tgroup=0&tnm=")
+    }
+
+    func testLegacyCategoryNamesUseConfiguredAndroidFieldMappings() async throws {
+        let config = SourceConfigItem(id: "manben", name: "漫本", baseUrl: "https://fixture.invalid",
+                                     routes: ["category": "/list"],
+                                     filters: ["category.地区·日韩": "tarea:36", "state.serial": "6", "sort.latest": "7"])
+        let transport = ManbenFixtureTransport(["[]"])
+        let source = ManbenComicSource(config: config, transport: transport)
+        _ = try await source.category(region: "地区·日韩", state: "serial", page: 4)
+        let requests = await transport.requests
+        XCTAssertEqual(requests[0].url, "https://fixture.invalid/list")
+        XCTAssertEqual(requests[0].body, "t=2&pageindex=4&sc=1&tsort=7&tagid=0&tst=6&tarea=36&tgroup=0&tnm=")
+    }
+
     func testCategoryPostsAndroidFieldsAndParsesMetadata() async throws {
         let transport = ManbenFixtureTransport(["""
         [{"Url":"/mh-stars/","Title":"星&amp;海","BigPic":"//img.test/c.jpg","Author":["作者"],"LastPartShowName":"第2话","TagList":["热血","热血","奇幻"]},{"Url":"/mh-stars/","Title":"重复"}]

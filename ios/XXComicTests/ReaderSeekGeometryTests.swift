@@ -33,12 +33,16 @@ final class ReaderSeekGeometryTests: XCTestCase {
         host.view.layoutIfNeeded()
         seek.layoutIfNeeded()
         let slider = try XCTUnwrap(seek.subviews.compactMap { $0 as? UISlider }.first)
-        print("READER_SEEK_GEOMETRY row=\(row.bounds) parent=\(seek.bounds) slider=\(slider.frame) accessibility=\(slider.isAccessibilityElement)")
+        print("READER_SEEK_GEOMETRY row=\(row.bounds) parent=\(seek.bounds) slider=\(slider.frame) alignmentInsets=\(slider.alignmentRectInsets) accessibility=\(slider.isAccessibilityElement)")
         XCTAssertGreaterThan(seek.bounds.height, 0, "A drawn control with a zero-height ancestor is not operable")
         XCTAssertTrue(seek.bounds.contains(slider.frame))
         let thumb = slider.thumbRect(forBounds: slider.bounds, trackRect: slider.trackRect(forBounds: slider.bounds), value: slider.value)
         let point = slider.convert(CGPoint(x: thumb.midX, y: thumb.midY), to: row)
         XCTAssertTrue(row.hitTest(point, with: nil) === slider, "The actual thumb must receive touches")
         XCTAssertTrue(slider.isAccessibilityElement)
+        slider.value = slider.maximumValue
+        let lastThumb = slider.thumbRect(forBounds: slider.bounds, trackRect: slider.trackRect(forBounds: slider.bounds), value: slider.value)
+        let lastPoint = slider.convert(CGPoint(x: lastThumb.midX, y: lastThumb.midY), to: row)
+        XCTAssertTrue(row.hitTest(lastPoint, with: nil) === slider, "The last-page thumb must also receive touches")
     }
 }

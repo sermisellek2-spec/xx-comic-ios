@@ -1,0 +1,141 @@
+[0/1] Planning build
+Building for debugging...
+[0/3] Write sources
+[0/3] Write swift-version-24593BA9C3E375BF.txt
+[3/5] Compiling ComicCoreTests ManbenSourceTests.swift
+[4/6] Emitting module ComicCoreTests
+[5/6] Compiling ComicCoreTests SourceImportContractTests.swift
+[6/14] Wrapping AST for ComicCoreTests for debugging
+[7/14] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[8/15] Write sources
+[10/17] Emitting module ComicCorePackageDiscoveredTests
+[11/17] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[12/18] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[13/19] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[14/19] Write sources
+[15/19] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[17/21] Emitting module ComicCorePackageTests
+[18/21] Compiling ComicCorePackageTests runner.swift
+[19/21] Write Objects.LinkFileList
+[20/21] Linking ComicCorePackageTests.xctest
+Build complete! (36.87s)
+Test Suite 'Selected tests' started at 2026-10-12 01:13:15.401
+Test Suite 'ManbenSourceTests' started at 2026-10-12 01:13:15.418
+Test Case 'ManbenSourceTests.testCategoryPostsAndroidFieldsAndParsesMetadata' started at 2026-10-12 01:13:15.418
+Test Case 'ManbenSourceTests.testCategoryPostsAndroidFieldsAndParsesMetadata' passed (0.013 seconds)
+Test Case 'ManbenSourceTests.testChapterAccumulatesSpreadPagesUntilExplicitEnd' started at 2026-10-12 01:13:15.431
+Test Case 'ManbenSourceTests.testChapterAccumulatesSpreadPagesUntilExplicitEnd' passed (0.005 seconds)
+Test Case 'ManbenSourceTests.testDetailStripsNestedScoreAndCatalogKeepsGroupsSorted' started at 2026-10-12 01:13:15.435
+Test Case 'ManbenSourceTests.testDetailStripsNestedScoreAndCatalogKeepsGroupsSorted' passed (0.061 seconds)
+Test Case 'ManbenSourceTests.testErrorShellsAndInvalidImageDataAreNotEmptySuccess' started at 2026-10-12 01:13:15.496
+Test Case 'ManbenSourceTests.testErrorShellsAndInvalidImageDataAreNotEmptySuccess' passed (0.022 seconds)
+Test Case 'ManbenSourceTests.testHTTPFailureAndCancellationPropagateWithoutMoreRequests' started at 2026-10-12 01:13:15.518
+Test Case 'ManbenSourceTests.testHTTPFailureAndCancellationPropagateWithoutMoreRequests' passed (0.005 seconds)
+Test Case 'ManbenSourceTests.testImportedCategoryRouteAndSortReachLatestAndSelectedFilters' started at 2026-10-12 01:13:15.523
+/work/Tests/ComicCoreTests/ManbenSourceTests.swift:16: error: ManbenSourceTests.testImportedCategoryRouteAndSortReachLatestAndSelectedFilters : XCTAssertEqual failed: ("["https://fixture.invalid/mh-list/pagerdata.ashx", "https://fixture.invalid/mh-list/pagerdata.ashx"]") is not equal to ("["https://fixture.invalid/configured-list", "https://fixture.invalid/configured-list"]") -
+/work/Tests/ComicCoreTests/ManbenSourceTests.swift:18: error: ManbenSourceTests.testImportedCategoryRouteAndSortReachLatestAndSelectedFilters : XCTAssertEqual failed: ("t=2&pageindex=2&sc=1&tsort=2&tagid=0&tst=0&tarea=0&tgroup=0&tnm=") is not equal to ("t=2&pageindex=2&sc=1&tsort=7&tagid=0&tst=8&tarea=0&tgroup=0&tnm=") - 
+/work/Tests/ComicCoreTests/ManbenSourceTests.swift:19: error: ManbenSourceTests.testImportedCategoryRouteAndSortReachLatestAndSelectedFilters : XCTAssertEqual failed: ("t=2&pageindex=3&sc=1&tsort=2&tagid=31&tst=2&tarea=36&tgroup=0&tnm=B") is not equal to ("t=2&pageindex=3&sc=1&tsort=7&tagid=31&tst=2&tarea=36&tgroup=0&tnm=B") -
+Test Case 'ManbenSourceTests.testImportedCategoryRouteAndSortReachLatestAndSelectedFilters' failed (0.011 seconds)
+Test Case 'ManbenSourceTests.testLongAuthorLinksAndQuotedFakeClassDoNotCorruptAuthor' started at 2026-10-12 01:13:15.534
+Test Case 'ManbenSourceTests.testLongAuthorLinksAndQuotedFakeClassDoNotCorruptAuthor' passed (0.073 seconds)
+Test Case 'ManbenSourceTests.testNoNewImagesTwiceFailsWithoutRequestingMorePages' started at 2026-10-12 01:13:15.607
+Test Case 'ManbenSourceTests.testNoNewImagesTwiceFailsWithoutRequestingMorePages' passed (0.003 seconds)
+Test Case 'ManbenSourceTests.testResponseCharsetDecodesNonUTF8Title' started at 2026-10-12 01:13:15.610
+Test Case 'ManbenSourceTests.testResponseCharsetDecodesNonUTF8Title' passed (0.041 seconds)
+Test Case 'ManbenSourceTests.testSearchPaginationAndFiltersFollowAndroidValues' started at 2026-10-12 01:13:15.651
+Test Case 'ManbenSourceTests.testSearchPaginationAndFiltersFollowAndroidValues' passed (0.04 seconds)
+Test Case 'ManbenSourceTests.testSearchRejectsInvalidItemsAndAcceptsExplicitEmptyResult' started at 2026-10-12 01:13:15.690
+Test Case 'ManbenSourceTests.testSearchRejectsInvalidItemsAndAcceptsExplicitEmptyResult' passed (0.015 seconds)
+Test Case 'ManbenSourceTests.testSelectedAllValuesResetImportedCategoryDefaultsLikeAndroid' started at 2026-10-12 01:13:15.706
+<EXPR>:0: error: ManbenSourceTests.testSelectedAllValuesResetImportedCategoryDefaultsLikeAndroid : threw error "Error Domain=NSURLErrorDomain Code=-1000 "(null)""
+Test Case 'ManbenSourceTests.testSelectedAllValuesResetImportedCategoryDefaultsLikeAndroid' failed (0.001 seconds)
+Test Case 'ManbenSourceTests.testSourceConfigDefaultsAndConfiguredSource' started at 2026-10-12 01:13:15.707
+Test Case 'ManbenSourceTests.testSourceConfigDefaultsAndConfiguredSource' passed (0.001 seconds)
+Test Suite 'ManbenSourceTests' failed at 2026-10-12 01:13:15.708
+	 Executed 13 tests, with 4 failures (1 unexpected) in 0.29 (0.29) seconds
+Test Suite 'SourceImportContractTests' started at 2026-10-12 01:13:15.708
+Test Case 'SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues' started at 2026-10-12 01:13:15.708
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - cuimh.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-latest")") is not equal to ("Optional("/category{pagePath}")") - cuimh.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - cuimh.search
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-search")") is not equal to ("Optional("")") - cuimh.search
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - cuimh.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-category")") is not equal to ("Optional("/category{filterPath}{pagePath}")") - cuimh.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - cuimh.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("{chapterUrl}")") - cuimh.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - hanman18.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-category")") is not equal to ("Optional("/list-manga{pagePath}")") - hanman18.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - hanman18.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("/manhwa/{comicId}/{chapterId}")") - hanman18.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - jmcomic.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("/photo/{chapterId}")") - jmcomic.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - dongmanla.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-category")") is not equal to ("Optional("{categoryPath}")") - dongmanla.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - dongmanla.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("{chapterUrl}")") - dongmanla.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - manhuazhan.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-latest")") is not equal to ("Optional("/category{pagePath}")") - manhuazhan.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - manhuazhan.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-category")") is not equal to ("Optional("/category{pagePath}")") - manhuazhan.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - manhuazhan.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("{chapterUrl}")") - manhuazhan.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - liumanhua.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-latest")") is not equal to ("Optional("/category")") - liumanhua.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - liumanhua.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-category")") is not equal to ("Optional("/category{filterPath}{pagePath}")") - liumanhua.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - liumanhua.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("{chapterUrl}")") - liumanhua.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - manben.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-latest")") is not equal to ("Optional("/mh-list/pagerdata.ashx")") - manben.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - manben.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("/m{chapterId}/")") - manben.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - bbyin.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-latest")") is not equal to ("Optional("/category{pagePath}")") - bbyin.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - bbyin.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-category")") is not equal to ("Optional("/category{pagePath}")") - bbyin.category
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - bbyin.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("{chapterUrl}")") - bbyin.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - mkzhan.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("/{comicId}/{chapterId}.html")") - mkzhan.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - mh18.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-latest")") is not equal to ("Optional("/manga{pagePath}")") - mh18.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - mh18.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("/manga/{comicId}/{chapterSlug}")") - mh18.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - copy4000.chapters
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapters")") is not equal to ("Optional("/comicdetail/{comicId}/chapters")") - copy4000.chapters
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - copy4000.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("{chapterUrl}")") - copy4000.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - gmh.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-latest")") is not equal to ("Optional("/manga{pagePath}")") - gmh.latest
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:130: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertTrue failed - mh160.chapter
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:131: error: SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues : XCTAssertEqual failed: ("Optional("/unused-chapter")") is not equal to ("Optional("{chapterUrl}")") - mh160.chapter
+Test Case 'SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues' failed (0.091 seconds)
+Test Case 'SourceImportContractTests.testFlatLegacyPathsReachRoutesAndExplicitV2RoutesTakePrecedence' started at 2026-10-12 01:13:15.798
+Test Case 'SourceImportContractTests.testFlatLegacyPathsReachRoutesAndExplicitV2RoutesTakePrecedence' passed (0.002 seconds)
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' started at 2026-10-12 01:13:15.800
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' started at 2026-10-12 01:13:15.801
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' started at 2026-10-12 01:13:15.802
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes' started at 2026-10-12 01:13:15.803
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:100: error: SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes : XCTAssertTrue failed - latestPath
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:100: error: SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes : XCTAssertTrue failed - searchPath
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:100: error: SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes : XCTAssertTrue failed - categoryPath
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:100: error: SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes : XCTAssertTrue failed - detailPath
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:102: error: SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes : XCTAssertEqual failed: ("Optional(["search": "/unused-search", "latest": "/unused-latest", "category": "/unused-category", "detail": "/unused-detail"])") is not equal to ("Optional([:])") - 
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:103: error: SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes : XCTAssertEqual failed: ("/unused-latest") is not equal to ("") - 
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:104: error: SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes : XCTAssertEqual failed: ("/unused-search") is not equal to ("") -
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:105: error: SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes : XCTAssertEqual failed: ("/unused-category") is not equal to ("") - 
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:106: error: SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes : XCTAssertEqual failed: ("/unused-detail") is not equal to ("") -
+Test Case 'SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes' failed (0.001 seconds)
+Test Case 'SourceImportContractTests.testUnconsumedCompatibilityOverridesAreReportedAndDoNotReplaceStoredValues' started at 2026-10-12 01:13:15.804
+Test Case 'SourceImportContractTests.testUnconsumedCompatibilityOverridesAreReportedAndDoNotReplaceStoredValues' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' started at 2026-10-12 01:13:15.805
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' passed (0.0 seconds)
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' started at 2026-10-12 01:13:15.806
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' passed (0.001 seconds)
+Test Suite 'SourceImportContractTests' failed at 2026-10-12 01:13:15.807
+Executed 9 tests, with 63 failures (0 unexpected) in 0.099 (0.099) seconds
+Test Suite 'Selected tests' failed at 2026-10-12 01:13:15.807
+Executed 22 tests, with 67 failures (1 unexpected) in 0.388 (0.388) seconds

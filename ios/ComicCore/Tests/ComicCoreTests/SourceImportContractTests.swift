@@ -85,4 +85,82 @@ final class SourceImportContractTests: XCTestCase {
             XCTAssertEqual(store.config(for: "d5d6")?.filter("state.pub"), "8")
         }
     }
+
+    func testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes() throws {
+        try withStore { store in
+            let id = try XCTUnwrap(PublicSourceRegistry.ids().first)
+            let original = try XCTUnwrap(store.config(for: id))
+            let item: [String: Any] = ["id": id, "name": "已改名称", "baseUrl": "https://fixture.invalid",
+                                       "latestPath": "/unused-latest", "searchPath": "/unused-search",
+                                       "categoryPath": "/unused-category", "detailPath": "/unused-detail"]
+            let data = try JSONSerialization.data(withJSONObject: ["schema": "xx-comic.sources", "version": 2, "sources": [item]])
+            let result = try store.importConfig(jsonString: String(decoding: data, as: UTF8.self))
+            let current = try XCTUnwrap(store.config(for: id))
+            for field in ["latestPath", "searchPath", "categoryPath", "detailPath"] {
+                XCTAssertTrue(result.warnings.contains { $0.contains(id + "." + field) }, field)
+            }
+            XCTAssertEqual(current.routes, original.routes)
+            XCTAssertEqual(current.latestPath, original.latestPath)
+            XCTAssertEqual(current.searchPath, original.searchPath)
+            XCTAssertEqual(current.categoryPath, original.categoryPath)
+            XCTAssertEqual(current.detailPath, original.detailPath)
+            XCTAssertEqual(current.name, "已改名称")
+            XCTAssertEqual(current.baseUrl, "https://fixture.invalid")
+        }
+    }
+
+    func testCurrentCatalogExportRoundTripDoesNotAddPhantomRoutesOrWarnings() throws {
+        try withStore { store in
+            let sources = BuiltinSourceCatalog.activeIDs.map { id -> (id: String, name: String, domain: String, referer: String) in
+                let config = store.config(for: id)!
+                return (id, config.name, config.domain, config.referer)
+            }
+            let original = Dictionary(uniqueKeysWithValues: sources.map { ($0.id, store.config(for: $0.id)!) })
+            let result = try store.importConfig(jsonString: store.exportConfig(sources: sources))
+            XCTAssertEqual(result.totalSources, 51)
+            XCTAssertEqual(result.enabledCount, 50)
+            XCTAssertEqual(result.warnings, [])
+            for source in sources {
+                XCTAssertEqual(store.config(for: source.id)?.routes, original[source.id]?.routes, source.id)
+            }
+        }
+    }
+
+    func testUnconsumedFilterChangesReportSkipAndKeepSupportedManbenSort() throws {
+        try withStore { store in
+            let result = try store.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"manben","filters":{"sort.popular":"unused","sort.latest":"7"}},{"id":"hanman18","filters":{"category.all":"unused"}}]}"#)
+            XCTAssertTrue(result.warnings.contains { $0.contains("manben.filters.sort.popular") })
+            XCTAssertTrue(result.warnings.contains { $0.contains("hanman18.filters.category.all") })
+            XCTAssertEqual(store.config(for: "manben")?.filter("sort.popular"), "4")
+            XCTAssertEqual(store.config(for: "manben")?.filter("sort.latest"), "7")
+            XCTAssertEqual(store.config(for: "hanman18")?.filter("category.all"), "")
+        }
+    }
+
+    func testAuditedUnconsumedRoutesReportOverridesAndPreserveValues() throws {
+        try withStore { store in
+            let fields: [String: [String]] = [
+                "gmh": ["latest"], "mh160": ["chapter"], "mh18": ["latest", "chapter"],
+                "mkzhan": ["chapter"], "manben": ["latest", "chapter"],
+                "manhuazhan": ["latest", "category", "chapter"], "bbyin": ["latest", "category", "chapter"],
+                "cuimh": ["latest", "search", "category", "chapter"], "liumanhua": ["latest", "category", "chapter"],
+                "copy4000": ["chapters", "chapter"], "dongmanla": ["category", "chapter"],
+                "jmcomic": ["chapter"], "hanman18": ["category", "chapter"]
+            ]
+            let items: [[String: Any]] = fields.keys.sorted().map { id in
+                ["id": id, "routes": Dictionary(uniqueKeysWithValues: fields[id]!.map { ($0, "/unused-" + $0) })]
+            }
+            let original = Dictionary(uniqueKeysWithValues: fields.keys.map { ($0, store.config(for: $0)!) })
+            let data = try JSONSerialization.data(withJSONObject: ["schema": "xx-comic.sources", "version": 2, "sources": items])
+            let result = try store.importConfig(jsonString: String(decoding: data, as: UTF8.self))
+            for (id, keys) in fields {
+                for key in keys {
+                    XCTAssertTrue(result.warnings.contains { $0.contains(id + ".routes." + key) }, id + "." + key)
+                    XCTAssertEqual(store.config(for: id)?.route(key), original[id]?.route(key), id + "." + key)
+                }
+            }
+            XCTAssertEqual(result.totalSources, fields.count)
+            XCTAssertEqual(store.orderedIDs.count, 51)
+        }
+    }
 }

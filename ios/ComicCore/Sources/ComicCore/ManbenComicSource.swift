@@ -22,17 +22,52 @@ public actor ManbenComicSource: ComicSource {
         self.chapterTransport = transport ?? URLSessionHTTPTransport(timeoutInterval: 30)
     }
 
-    public func latest(page: Int) async throws -> [ComicSummary] { try await category(filters: [:], page: page) }
+    public func latest(page: Int) async throws -> [ComicSummary] {
+        try await fetchCategory(fields: categoryFields(region: nil, state: nil, page: page))
+    }
+
+    public func category(region: String?, state: String?, page: Int) async throws -> [ComicSummary] {
+        try await fetchCategory(fields: categoryFields(region: region, state: state, page: page))
+    }
+
     public func category(filters: [String:String], page: Int) async throws -> [ComicSummary] {
         func value(_ key: String, fallback: String = "0") -> String {
             let v = SearchRules.trim(filters[key] ?? "all")
             return v.isEmpty || v == "all" ? fallback : v
         }
-        let fields = [("t","2"), ("pageindex",String(max(1,page))), ("sc","1"), ("tsort","2"),
-                      ("tagid",value("tag")), ("tst",value("state")), ("tarea",value("region")),
-                      ("tgroup",value("audience")), ("tnm",value("letter",fallback: ""))]
+        var fields = categoryFields(region: nil, state: nil, page: page)
+        for (field, key) in [("tst", "state"), ("tagid", "tag"), ("tgroup", "audience"), ("tarea", "region"), ("tnm", "letter")] {
+            setField(field, value: value(key, fallback: field == "tnm" ? "" : "0"), in: &fields)
+        }
+        return try await fetchCategory(fields: fields)
+    }
+
+    private func categoryFields(region: String?, state: String?, page: Int) -> [(String, String)] {
+        let sort = config?.filter("sort.latest") ?? SourceConfigDefaults.manben().filter("sort.latest")
+        var fields = [("t", "2"), ("pageindex", String(max(1, page))), ("sc", "1"), ("tsort", sort.isEmpty ? "2" : sort),
+                      ("tagid", "0"), ("tst", "0"), ("tarea", "0"), ("tgroup", "0"), ("tnm", "")]
+        let regionKey = region == nil || region == "" || region == "all" ? "全部" : region!
+        let category = config?.filter("category." + regionKey) ?? SourceConfigDefaults.manben().filter("category." + regionKey)
+        if let separator = category.firstIndex(of: ":") {
+            let key = SearchRules.trim(String(category[..<separator]))
+            let value = SearchRules.trim(String(category[category.index(after: separator)...]))
+            if !key.isEmpty, !value.isEmpty { setField(key, value: value, in: &fields) }
+        }
+        let stateKey = state == nil || state == "" ? "all" : state!
+        let stateValue = config?.filter("state." + stateKey) ?? SourceConfigDefaults.manben().filter("state." + stateKey)
+        if !stateValue.isEmpty { setField("tst", value: stateValue, in: &fields) }
+        return fields
+    }
+
+    private func setField(_ key: String, value: String, in fields: inout [(String, String)]) {
+        if let index = fields.firstIndex(where: { $0.0 == key }) { fields[index].1 = value }
+        else { fields.append((key, value)) }
+    }
+
+    private func fetchCategory(fields: [(String, String)]) async throws -> [ComicSummary] {
         let body = Data(fields.map { form($0.0) + "=" + form($0.1) }.joined(separator: "&").utf8)
-        let path = config?.route("latest") ?? "/mh-list/pagerdata.ashx"
+        let configuredPath = config?.route("category") ?? ""
+        let path = configuredPath.isEmpty ? SourceConfigDefaults.manben().route("category") : configuredPath
         let json = try await fetch(path, body: body)
         guard let array = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [Any] else { throw error("分类 JSON 非数组") }
         var seen = Set<String>()

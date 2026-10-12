@@ -1,0 +1,12 @@
+{
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "branch": "codex/cache-ownership-b8be2d9",
+  "head_sha": "b8be2d947e720c0527fb3ab280b4fbe1c1a30d0e",
+  "inputs": {
+    "validation_scope": "cache-diagnostics",
+    "package_ipa": "false"
+  },
+  "dispatch_http_status": 204,
+  "checked_at_utc": "2026-10-12T01:06:50.102155+00:00",
+  "full_run_not_cancelled": true
+}

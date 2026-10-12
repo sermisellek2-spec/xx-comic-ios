@@ -54,9 +54,12 @@ final class ReaderSeekBar: UIView {
         bubble.isAccessibilityElement = false
         addSubview(bubble)
 
+        // UIKit constrains a slider's alignment rectangle, which is inset
+        // from its frame. Keep the entire touch frame inside this parent.
+        let alignment = slider.alignmentRectInsets
         NSLayoutConstraint.activate([
-            slider.leadingAnchor.constraint(equalTo: leadingAnchor),
-            slider.trailingAnchor.constraint(equalTo: trailingAnchor),
+            slider.leadingAnchor.constraint(equalTo: leadingAnchor, constant: alignment.left),
+            slider.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -alignment.right),
             slider.centerYAnchor.constraint(equalTo: centerYAnchor),
             slider.heightAnchor.constraint(equalToConstant: 32)
         ])

@@ -1,0 +1,108 @@
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[0/4] Write swift-version-24593BA9C3E375BF.txt
+[4/6] Compiling ComicCore ManbenComicSource.swift
+[5/7] Compiling ComicCore SourcePreferences.swift
+[6/7] Emitting module ComicCore
+[7/9] Wrapping AST for ComicCore for debugging
+[9/20] Emitting module ComicCoreTests
+[10/24] Compiling ComicCoreTests BuiltinSourceCatalogTests.swift
+[11/24] Compiling ComicCoreTests D5d6SourceTests.swift
+[12/24] Compiling ComicCoreTests HiperdexSourceTests.swift
+[13/24] Compiling ComicCoreTests ManbenSourceTests.swift
+[14/24] Compiling ComicCoreTests ManhuaguiTests.swift
+[15/24] Compiling ComicCoreTests Mh160SourceTests.swift
+[16/24] Compiling ComicCoreTests MkzhanSourceTests.swift
+[17/24] Compiling ComicCoreTests SourceImportContractTests.swift
+[18/24] Compiling ComicCoreTests SourcePreferencesTests.swift
+[19/27] Wrapping AST for ComicCoreTests for debugging
+[20/27] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[21/28] Write sources
+[23/30] Emitting module ComicCorePackageDiscoveredTests
+[24/30] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[25/31] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[26/32] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[27/32] Write sources
+[28/32] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[30/34] Compiling ComicCorePackageTests runner.swift
+[31/34] Emitting module ComicCorePackageTests
+[32/34] Write Objects.LinkFileList
+[33/34] Linking ComicCorePackageTests.xctest
+Build complete! (23.40s)
+Test Suite 'Selected tests' started at 2026-10-12 01:15:48.528
+Test Suite 'ManbenSourceTests' started at 2026-10-12 01:15:48.545
+Test Case 'ManbenSourceTests.testCategoryPostsAndroidFieldsAndParsesMetadata' started at 2026-10-12 01:15:48.545
+Test Case 'ManbenSourceTests.testCategoryPostsAndroidFieldsAndParsesMetadata' passed (0.012 seconds)
+Test Case 'ManbenSourceTests.testChapterAccumulatesSpreadPagesUntilExplicitEnd' started at 2026-10-12 01:15:48.557
+Test Case 'ManbenSourceTests.testChapterAccumulatesSpreadPagesUntilExplicitEnd' passed (0.004 seconds)
+Test Case 'ManbenSourceTests.testDetailStripsNestedScoreAndCatalogKeepsGroupsSorted' started at 2026-10-12 01:15:48.561
+Test Case 'ManbenSourceTests.testDetailStripsNestedScoreAndCatalogKeepsGroupsSorted' passed (0.055 seconds)
+Test Case 'ManbenSourceTests.testErrorShellsAndInvalidImageDataAreNotEmptySuccess' started at 2026-10-12 01:15:48.616
+Test Case 'ManbenSourceTests.testErrorShellsAndInvalidImageDataAreNotEmptySuccess' passed (0.019 seconds)
+Test Case 'ManbenSourceTests.testHTTPFailureAndCancellationPropagateWithoutMoreRequests' started at 2026-10-12 01:15:48.634
+Test Case 'ManbenSourceTests.testHTTPFailureAndCancellationPropagateWithoutMoreRequests' passed (0.003 seconds)
+Test Case 'ManbenSourceTests.testImportedCategoryRouteAndSortReachLatestAndSelectedFilters' started at 2026-10-12 01:15:48.638
+Test Case 'ManbenSourceTests.testImportedCategoryRouteAndSortReachLatestAndSelectedFilters' passed (0.026 seconds)
+Test Case 'ManbenSourceTests.testLegacyCategoryNamesUseConfiguredAndroidFieldMappings' started at 2026-10-12 01:15:48.663
+Test Case 'ManbenSourceTests.testLegacyCategoryNamesUseConfiguredAndroidFieldMappings' passed (0.0 seconds)
+Test Case 'ManbenSourceTests.testLongAuthorLinksAndQuotedFakeClassDoNotCorruptAuthor' started at 2026-10-12 01:15:48.664
+Test Case 'ManbenSourceTests.testLongAuthorLinksAndQuotedFakeClassDoNotCorruptAuthor' passed (0.056 seconds)
+Test Case 'ManbenSourceTests.testNoNewImagesTwiceFailsWithoutRequestingMorePages' started at 2026-10-12 01:15:48.720
+Test Case 'ManbenSourceTests.testNoNewImagesTwiceFailsWithoutRequestingMorePages' passed (0.004 seconds)
+Test Case 'ManbenSourceTests.testResponseCharsetDecodesNonUTF8Title' started at 2026-10-12 01:15:48.723
+Test Case 'ManbenSourceTests.testResponseCharsetDecodesNonUTF8Title' passed (0.039 seconds)
+Test Case 'ManbenSourceTests.testSearchPaginationAndFiltersFollowAndroidValues' started at 2026-10-12 01:15:48.762
+Test Case 'ManbenSourceTests.testSearchPaginationAndFiltersFollowAndroidValues' passed (0.042 seconds)
+Test Case 'ManbenSourceTests.testSearchRejectsInvalidItemsAndAcceptsExplicitEmptyResult' started at 2026-10-12 01:15:48.804
+Test Case 'ManbenSourceTests.testSearchRejectsInvalidItemsAndAcceptsExplicitEmptyResult' passed (0.015 seconds)
+Test Case 'ManbenSourceTests.testSelectedAllValuesResetImportedCategoryDefaultsLikeAndroid' started at 2026-10-12 01:15:48.819
+Test Case 'ManbenSourceTests.testSelectedAllValuesResetImportedCategoryDefaultsLikeAndroid' passed (0.0 seconds)
+Test Case 'ManbenSourceTests.testSourceConfigDefaultsAndConfiguredSource' started at 2026-10-12 01:15:48.820
+Test Case 'ManbenSourceTests.testSourceConfigDefaultsAndConfiguredSource' passed (0.0 seconds)
+Test Suite 'ManbenSourceTests' passed at 2026-10-12 01:15:48.820
+Executed 14 tests, with 0 failures (0 unexpected) in 0.275 (0.275) seconds
+Test Suite 'SourceImportContractTests' started at 2026-10-12 01:15:48.820
+Test Case 'SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues' started at 2026-10-12 01:15:48.820
+Test Case 'SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues' passed (0.008 seconds)
+Test Case 'SourceImportContractTests.testCurrentCatalogExportRoundTripDoesNotAddPhantomRoutesOrWarnings' started at 2026-10-12 01:15:48.828
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:122: error: SourceImportContractTests.testCurrentCatalogExportRoundTripDoesNotAddPhantomRoutesOrWarnings : XCTAssertEqual failed: ("["已跳过不支持的字段：dongmanla.categoryPath（当前请求不消费该字段）"]") is not equal to ("[]") -
+/work/Tests/ComicCoreTests/SourceImportContractTests.swift:124: error: SourceImportContractTests.testCurrentCatalogExportRoundTripDoesNotAddPhantomRoutesOrWarnings : XCTAssertEqual failed: ("Optional(["search": "/search/photos?main_tag=0&search_query={keyword}", "detail": "/album/{comicId}", "category": "/theme/", "latest": "/albums?o=mr", "categoryIndex": "/theme/", "chapter": "/photo/{chapterId}"])") is not equal to ("Optional(["chapter": "/photo/{chapterId}", "detail": "/album/{comicId}", "latest": "/albums?o=mr", "search": "/search/photos?main_tag=0&search_query={keyword}", "categoryIndex": "/theme/"])") - jmcomic
+Test Case 'SourceImportContractTests.testCurrentCatalogExportRoundTripDoesNotAddPhantomRoutesOrWarnings' failed (0.023 seconds)
+Test Case 'SourceImportContractTests.testFlatLegacyPathsReachRoutesAndExplicitV2RoutesTakePrecedence' started at 2026-10-12 01:15:48.852
+Test Case 'SourceImportContractTests.testFlatLegacyPathsReachRoutesAndExplicitV2RoutesTakePrecedence' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' started at 2026-10-12 01:15:48.853
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' started at 2026-10-12 01:15:48.854
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' started at 2026-10-12 01:15:48.854
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes' started at 2026-10-12 01:15:48.855
+Test Case 'SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testUnconsumedCompatibilityOverridesAreReportedAndDoNotReplaceStoredValues' started at 2026-10-12 01:15:48.856
+Test Case 'SourceImportContractTests.testUnconsumedCompatibilityOverridesAreReportedAndDoNotReplaceStoredValues' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testUnconsumedFilterChangesReportSkipAndKeepSupportedManbenSort' started at 2026-10-12 01:15:48.857
+Test Case 'SourceImportContractTests.testUnconsumedFilterChangesReportSkipAndKeepSupportedManbenSort' passed (0.001 seconds)
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' started at 2026-10-12 01:15:48.859
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' passed (0.0 seconds)
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' started at 2026-10-12 01:15:48.859
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' passed (0.001 seconds)
+Test Suite 'SourceImportContractTests' failed at 2026-10-12 01:15:48.860
+	 Executed 11 tests, with 2 failures (0 unexpected) in 0.039 (0.039) seconds
+Test Suite 'SourcePreferencesTests' started at 2026-10-12 01:15:48.860
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' started at 2026-10-12 01:15:48.860
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' started at 2026-10-12 01:15:48.861
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' started at 2026-10-12 01:15:48.862
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' passed (0.004 seconds)
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' started at 2026-10-12 01:15:48.866
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' passed (0.04 seconds)
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' started at 2026-10-12 01:15:48.907
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' passed (0.0 seconds)
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' started at 2026-10-12 01:15:48.907
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' passed (0.0 seconds)
+Test Suite 'SourcePreferencesTests' passed at 2026-10-12 01:15:48.908
+Executed 6 tests, with 0 failures (0 unexpected) in 0.048 (0.048) seconds
+Test Suite 'Selected tests' failed at 2026-10-12 01:15:48.908
+Executed 31 tests, with 2 failures (0 unexpected) in 0.362 (0.362) seconds

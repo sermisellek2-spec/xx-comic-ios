@@ -1,0 +1,30 @@
+[0/1] Planning build
+Building for debugging...
+[0/3] Write sources
+[0/4] Write swift-version-24593BA9C3E375BF.txt
+[3/5] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[4/5] Emitting module ComicCoreTests
+[5/13] Wrapping AST for ComicCoreTests for debugging
+[6/13] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[7/14] Write sources
+[9/16] Emitting module ComicCorePackageDiscoveredTests
+[10/16] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[11/17] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[12/18] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[13/18] Write sources
+[14/18] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[16/20] Emitting module ComicCorePackageTests
+[17/20] Compiling ComicCorePackageTests runner.swift
+[18/20] Write Objects.LinkFileList
+[19/20] Linking ComicCorePackageTests.xctest
+Build complete! (16.60s)
+Test Suite 'Selected tests' started at 2026-10-12 01:37:32.468
+Test Suite 'CacheMaintenanceTests' started at 2026-10-12 01:37:32.484
+Test Case 'CacheMaintenanceTests.testCleanupReportsUsageAfterRestoringStorageLimits' started at 2026-10-12 01:37:32.484
+/work/Tests/ComicCoreTests/CacheMaintenanceTests.swift:15: error: CacheMaintenanceTests.testCleanupReportsUsageAfterRestoringStorageLimits : XCTAssertEqual failed: ("0") is not equal to ("4096") - Restoring storage can allocate index bytes; return the restored cache's real usage
+/work/Tests/ComicCoreTests/CacheMaintenanceTests.swift:16: error: CacheMaintenanceTests.testCleanupReportsUsageAfterRestoringStorageLimits : XCTAssertFalse failed - This fixture retains index storage after restoring its capacity
+Test Case 'CacheMaintenanceTests.testCleanupReportsUsageAfterRestoringStorageLimits' failed (0.41 seconds)
+Test Suite 'CacheMaintenanceTests' failed at 2026-10-12 01:37:32.894
+	 Executed 1 test, with 2 failures (0 unexpected) in 0.41 (0.41) seconds
+Test Suite 'Selected tests' failed at 2026-10-12 01:37:32.894
+	 Executed 1 test, with 2 failures (0 unexpected) in 0.41 (0.41) seconds

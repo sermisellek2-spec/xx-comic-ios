@@ -5,6 +5,17 @@ import FoundationNetworking
 @testable import ComicCore
 
 final class CacheMaintenanceTests: XCTestCase {
+    func testCleanupReportsUsageAfterRestoringStorageLimits() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let cache = RestoredLimitAccountingCache(memoryCapacity: 1024 * 1024, diskCapacity: 8 * 1024 * 1024, diskPath: directory.path)
+        let usage = try await HTTPResponseCache(cache: cache).clear()
+        XCTAssertEqual(cache.diskCapacity, 8 * 1024 * 1024)
+        XCTAssertEqual(usage.diskBytes, Int64(cache.currentDiskUsage), "Restoring storage can allocate index bytes; return the restored cache's real usage")
+        XCTAssertFalse(usage.isEmpty, "This fixture retains index storage after restoring its capacity")
+    }
+
     func testDiskCleanupRestoresLimitsAndAllowsLaterResponses() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
@@ -132,4 +143,8 @@ final class CacheMaintenanceTests: XCTestCase {
     func testMissingDirectoryHasNoBytes() throws {
         XCTAssertEqual(try StorageCalculator.directorySize(at: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)), 0)
     }
+}
+
+private final class RestoredLimitAccountingCache: URLCache, @unchecked Sendable {
+    override var currentDiskUsage: Int { diskCapacity > 0 ? 4096 : 0 }
 }
