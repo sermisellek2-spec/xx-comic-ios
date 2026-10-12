@@ -147,6 +147,13 @@ private final class MatrixUITestHTTPServer: @unchecked Sendable {
                 return
             }
             let request = String(decoding: headers, as: UTF8.self)
+            if request.hasPrefix("GET /verification-catalog "), self.flags.contains("--verification-timeout-then-local-response") {
+                let body = Data("<a href=\"/manga/fixture\"><img src=\"local.png\"><h3 class=\"cardtitle\">漫画验收</h3></a>".utf8)
+                var reply = Data("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\nContent-Length: \(body.count)\r\nConnection: close\r\n\r\n".utf8)
+                reply.append(body)
+                connection.send(content: reply, completion: .contentProcessed { _ in connection.cancel() })
+                return
+            }
             if request.hasPrefix("GET /ios-release.json ") {
                 self.sendRelease(connection)
                 return

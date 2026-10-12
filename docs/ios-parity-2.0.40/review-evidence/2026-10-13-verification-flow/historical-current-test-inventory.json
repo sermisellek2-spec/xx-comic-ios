@@ -1,0 +1,44 @@
+{
+  "native": {
+    "BuiltinSourceRegistrationTests": 2,
+    "CacheMaintenanceNativeTests": 1,
+    "CoverFallbackTests": 4,
+    "DetailFeedbackStateTests": 6,
+    "DownloadLifecycleTests": 3,
+    "OfflineDownloadImageTests": 1,
+    "ReaderEnhancementEngineTests": 6,
+    "ReaderMangaGeometryTests": 4,
+    "ReaderSeekGeometryTests": 3,
+    "RootTabGeometryTests": 1,
+    "TestHostIsolationTests": 1,
+    "WebCacheCleanupTests": 2
+  },
+  "UI": {
+    "AppNavigationTests": 2,
+    "BatchImportRecoveryUITests": 4,
+    "BookshelfParityUITests": 7,
+    "CurrentParityUITests": 12,
+    "DownloadLifecycleUITests": 2,
+    "DownloadLocationParityUITests": 2,
+    "EpubReadingUITests": 7,
+    "ExternalFilesParityUITests": 4,
+    "LinkedFolderParityUITests": 3,
+    "LocalDeletionParityUITests": 2,
+    "Mh18VerificationTests": 1,
+    "ReaderContinuityUITests": 11,
+    "ReaderEnhancementUITests": 1,
+    "ReaderSettingsParityUITests": 8,
+    "ReaderToolbarParityUITests": 2,
+    "RootNavigationParityUITests": 4,
+    "SettingsParityUITests": 8,
+    "SourceConfigFilesUITests": 5,
+    "SourceDrawerTests": 3,
+    "VisualMatrixUITests": 8,
+    "VolumeManagerParityUITests": 5
+  },
+  "totals": {
+    "native": 34,
+    "UI": 101
+  },
+  "isRuntimeResult": false
+}

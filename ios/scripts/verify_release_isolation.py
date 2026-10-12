@@ -20,6 +20,7 @@ MARKERS = (
     "--matrix-switch-empty-once",
     "--matrix-switch-no-match",
     "--matrix-error-log-fixture",
+    "--verification-timeout-then-local-response",
 )
 
 

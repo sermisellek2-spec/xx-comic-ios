@@ -10,7 +10,7 @@ CI37/ce0607c失败原件保持：手机directory正文/重开命中，平板实�
 
 缓存保留后端/容量、8秒失败/重试、10秒UI及正文/重开/原包/后来缓存断言。真实框架索引仍如实显示，没有伪造0或直接删数据库。当前Linux完整Core922项/2个Apple PDF跳过/0失败/148.348秒。Core生产此后未改。
 
-逐入口核对发现分卷追加/排序/撤销、外部文件夹实际变更、大目录快滚、双指缩放以及进度取消的用户闭环覆盖不足，正在补验。分卷页同时改为接近冻结安卓的底部卡片列表和后台文件操作，追加可取消，确认移除不依赖已关闭页面。CI39/aa53678的分卷/同步影响正在Apple运行；随后逐需求反查修换源严格同名/取消/失败原记录保护，补阅读换源返回、日志与实际队列闭环。最新声明35原生/108UI，93Swift两配置仅语法通过，Apple影响与最终full待验。[补验范围与边界](review-evidence/2026-10-13-volume-sync-coverage/README.md)。
+逐入口核对发现分卷追加/排序/撤销、外部文件夹实际变更、大目录快滚、双指缩放以及进度取消的用户闭环覆盖不足，正在补验。分卷页同时改为接近冻结安卓的底部卡片列表和后台文件操作，追加可取消，确认移除不依赖已关闭页面。CI39/aa53678的分卷/同步影响正在Apple运行；随后逐需求反查修换源严格同名/取消/失败原记录保护，补阅读换源返回、日志与实际队列闭环。最新声明35原生/109UI，93Swift两配置仅语法通过，Apple影响与最终full待验。[补验范围与边界](review-evidence/2026-10-13-volume-sync-coverage/README.md)。
 
 父输入64页同内容侧图已逐组件检查；8设置侧图另已查看。布局/文字/控件未发现重要缺失；iPhone横屏设置分组标题未避开安全区，当前已修并在原八场景检查中补实际横向对齐约束，已在CI38八设置实拍确认；这些父图仍不代最新交付版。所有旧图均标父输入，不算当前视觉通过。[64页审查](review-evidence/2026-10-13-current-visual/ci33-comparison/manual-component-review.json)、[设置审查](review-evidence/2026-10-13-current-visual/settings-ci36-comparison/manual-component-review.json)、[安全区修正](review-evidence/2026-10-13-settings-safe-area/README.md)。
 
@@ -19,3 +19,5 @@ CI37/ce0607c失败原件保持：手机directory正文/重开命中，平板实�
 [阶段方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md)、[需求矩阵](requirements.csv)、[差异台账](differences.md)、[完整门槛](NON_SOURCE_GATE.md)。此前状态原文与失败均保留为历史证据；详见本轮目录的historical-STATUS-before-ci37.md。
 
 [换源/日志/队列收尾](review-evidence/2026-10-13-final-user-flows/README.md) · [CI38八设置人工对照](review-evidence/2026-10-13-current-visual/settings-ci38-comparison/manual-component-review.json)。
+
+[验证超时/重试/返回](review-evidence/2026-10-13-verification-flow/README.md)：新增本机HTTP确定性交互用例，尚未Apple运行；CI40仍按23e9e56原输入验23UI，不包括该接续。

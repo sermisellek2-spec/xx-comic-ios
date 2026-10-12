@@ -6,7 +6,7 @@ on:
       validation_scope:
         description: 阶段验证不产出IPA，完整回归通过后才允许打包
         type: choice
-        options: [foundation-import, recovery-regression, cache-diagnostics, settings-reference, configuration-files, reader-modes, final-flows, full]
+        options: [foundation-import, recovery-regression, cache-diagnostics, settings-reference, configuration-files, reader-modes, final-flows, verification-ui, full]
         default: full
       package_ipa:
         description: 仅全部阶段自验通过后生成最终未签名IPA

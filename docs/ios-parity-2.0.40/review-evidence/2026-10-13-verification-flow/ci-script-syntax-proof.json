@@ -1,0 +1,12 @@
+{
+  "bashExitCode": 0,
+  "pythonAST": "pass",
+  "inputs": {
+    ".github/workflows/ios.yml": "3989ee859b591dd86daf776b6ed0c47cb60c0b904bc722ada79678eceaeffa22",
+    "ios/scripts/build.sh": "ae835a2b9a1f4c4e6fc2c05dbe8bf0db4d28659f2dce5c225841f44974922130",
+    "ios/scripts/verify_release_isolation.py": "32d307df2938144118d3a635e1eb6cca2dc551482d0c80aec825b1774aa7f13e",
+    "ios/scripts/release_product.py": "f6443ffe98add6fc85ae7043b2d18638e4aa9aad201873d9b17b3e4bd8870bb8"
+  },
+  "AppleRuntime": false,
+  "checkedAtUTC": "2026-10-12T21:39:21.448722+00:00"
+}

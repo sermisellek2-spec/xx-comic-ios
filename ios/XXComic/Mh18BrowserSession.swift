@@ -130,7 +130,16 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
             try await withCheckedThrowingContinuation { continuation in
                 guard !Task.isCancelled else { continuation.resume(throwing: CancellationError()); return }
                 let screen = Mh18VerificationViewController()
-                let item = Interactive(id: id, url: url, screen: screen, startedAt: now, continuation: continuation)
+                var startedAt = now
+                #if DEBUG
+                let flags = ProcessInfo.processInfo.arguments
+                if flags.contains("--ui-testing"), flags.contains("--verification-fixtures"), flags.contains("--verification-timeout-then-local-response") {
+                    // Exercise the real monotonic timeout with a short first
+                    // deadline; retries use the normal production duration.
+                    startedAt -= Mh18VerificationRules.requestTimeout - 1
+                }
+                #endif
+                let item = Interactive(id: id, url: url, screen: screen, startedAt: startedAt, continuation: continuation)
                 interactive = item
                 screen.onClose = { [weak self] in self?.finishInteractive(id, result: .failure(CancellationError())) }
                 screen.onRetry = { [weak self] in self?.retryInteractive(id) }
@@ -166,9 +175,41 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
         defaults.removeObject(forKey: "mh18.verifiedAt")
         item.screen.setStatus("正在检查站点")
         statusChanged?()
+        let token = item.attempt.token
+        let remaining = max(0, item.attempt.deadline - now)
+        item.timeout = Task { [weak self, weak item] in
+            do { try await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000)) } catch { return }
+            guard let self, let item, self.interactive === item, !item.attempt.succeeded else { return }
+            self.stop(item, message: "验证超时，请重新加载")
+        }
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("--ui-testing"), arguments.contains("--verification-fixtures") {
+            if arguments.contains("--verification-timeout-then-local-response"), item.fixtureAttemptCount > 0 {
+                item.fixtureAttemptCount += 1
+                item.work = Task { [weak self, weak item] in
+                    guard let self, let item else { return }
+                    do {
+                        let endpoint = URL(string: "http://127.0.0.1:8767/verification-catalog")!
+                        let (data, reply) = try await URLSession.shared.data(for: URLRequest(url: endpoint, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 5))
+                        guard self.accepts(item, token), !Task.isCancelled else { return }
+                        let body = String(decoding: data, as: UTF8.self)
+                        guard let http = reply as? HTTPURLResponse, http.url == endpoint,
+                              Mh18VerificationRules.interactiveAction(statusCode: http.statusCode, mitigated: nil, body: body) == .complete else {
+                            throw self.failure("隔离协议响应未包含漫画目录")
+                        }
+                        // Only the explicit Debug driver uses this local HTTP
+                        // payload. The actual cookie barrier, completion, saved
+                        // state and screen return are production consumers.
+                        await self.succeed(item, token: token, body: body, retainBrowser: false)
+                    } catch {
+                        guard self.accepts(item, token), !(error is CancellationError) else { return }
+                        self.stop(item, message: error.localizedDescription)
+                    }
+                }
+                return
+            }
+            item.fixtureAttemptCount += 1
             // Exercise the real presentation/retry/cancel lifetime without a live site.
             // This document never marks verification complete or copies any cookies.
             let config = WKWebViewConfiguration()
@@ -180,13 +221,6 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
             return
         }
         #endif
-        let token = item.attempt.token
-        let remaining = max(0, item.attempt.deadline - now)
-        item.timeout = Task { [weak self, weak item] in
-            do { try await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000)) } catch { return }
-            guard let self, let item, self.interactive === item, !item.attempt.succeeded else { return }
-            self.stop(item, message: "验证超时，请重新加载")
-        }
         item.work = Task { [weak self, weak item] in
             guard let self, let item else { return }
             do {
@@ -565,6 +599,9 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
         var statusCode = 200
         var mitigated: String?
         var navigation: WKNavigation?
+        #if DEBUG
+        var fixtureAttemptCount = 0
+        #endif
         init(id: UUID, url: URL, screen: Mh18VerificationViewController, startedAt: TimeInterval, continuation: CheckedContinuation<String, Error>) {
             self.id = id; self.url = url; self.screen = screen; self.continuation = continuation
             attempt = Mh18VerificationAttempt(startedAt: startedAt)
