@@ -28,6 +28,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var viewportTransitioning = false
     private var fullscreen = false
     private var pendingPosition: ReaderPosition?
+    private var pendingPositionNeedsContinuation = false
     private var lastSaved: ReaderPosition?
     private var pagedAnchor: ReaderPosition?
     private let layout = ReaderPageLayout()
@@ -160,6 +161,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
 
         readerSeekBar.onCommit = { [weak self] pageIndex in
             guard let self, self.chapters.indices.contains(self.session.chapterIndex), pageIndex >= 0, pageIndex < self.session.imageCount else { return }
+            self.pendingPosition = nil; self.pendingPositionNeedsContinuation = false
             self.environment.readingHabits.userDidRead()
             let chapter = self.chapters[self.session.chapterIndex]
             let target = self.settings.layout == .strip
@@ -302,7 +304,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         headerWidth?.constant = max(44, view.bounds.width - view.safeAreaInsets.left - view.safeAreaInsets.right - 32)
-        if let position = pendingPosition, !viewportTransitioning, !images.isEmpty, pages.bounds.width > 0 {
+        if let position = pendingPosition, !restoring, !viewportTransitioning, !images.isEmpty, pages.bounds.width > 0 {
             recordReaderTrace("layout.pending")
             // Reload/layout callbacks must still see the requested logical
             // position until the new axis has been laid out and restored.
@@ -373,6 +375,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         presentedViewController?.overrideUserInterfaceStyle = style
         for cell in pages.visibleCells { (cell as? ReaderImageCell)?.apply(settings) }
         if previousSettings.readingMode != settings.readingMode {
+            pendingPositionNeedsContinuation = false
             if settings.layout == .paged { pagedAnchor = position }
             cancelContinuation()
             if chapters.indices.contains(session.chapterIndex), let segment = continuousPages.segment(for: chapters[session.chapterIndex]) {
@@ -381,8 +384,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 continuousPages.append(chapter: chapters[session.chapterIndex], imageURLs: images)
                 session.loaded(imageCount: images.count, position: position)
             }
-            layout.invalidateLayout(); pages.reloadData()
             pendingPosition = position
+            layout.invalidateLayout(); pages.reloadData()
             view.setNeedsLayout()
             recordReaderTrace("settings.pending(\(position.imageIndex),\(position.offset))")
         }
@@ -426,6 +429,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private func loadChapter(_ index: Int, atEnd: Bool = false, restoreSaved: Bool = true) {
         guard chapters.indices.contains(index) else { return }
         savePosition()
+        pendingPosition = nil; pendingPositionNeedsContinuation = false
         cancelContinuation()
         lastObservedPosition = nil
         pagedAnchor = nil
@@ -457,8 +461,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 self.title = chapter.title
                 self.updateReaderHeading(chapter)
                 self.loadState.chapterFinished(); self.updateLoadStatus(); self.lastSaved = nil
+                self.pendingPosition = position
                 self.pages.reloadData(); self.layout.invalidateLayout()
-                self.pendingPosition = position; self.view.setNeedsLayout()
+                self.view.setNeedsLayout()
                 self.updateBadge()
                 self.readerSeekBar.configure(currentPage: self.session.imageIndex, total: self.images.count, sessionToken: Int64(self.session.chapterIndex))
                 self.updateContinuationFooter()
@@ -512,7 +517,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
 
     private func appendNextChapterIfNeeded() {
-        guard settings.layout == .strip, !loading, !restoring, !viewportTransitioning, pendingPosition == nil, !isZoomed, !leavingReader,
+        guard settings.layout == .strip, !loading, !restoring, !viewportTransitioning,
+              (pendingPosition == nil || pendingPositionNeedsContinuation), !isZoomed, !leavingReader,
               viewIfLoaded?.window != nil, continuationTask == nil, continuationError == nil,
               pages.contentSize.height > 0, pages.bounds.height > 0,
               let lastVisible = pages.indexPathsForVisibleItems.map(\.item).max(),
@@ -538,6 +544,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                     }) { [weak self] _ in
                         guard let self, self.continuationRequestID == token else { return }
                         self.continuationTask = nil
+                        if self.pendingPosition != nil {
+                            self.view.setNeedsLayout(); self.view.layoutIfNeeded()
+                        }
                         self.updateContinuationFooter()
                         self.appendNextChapterIfNeeded()
                     }
@@ -753,7 +762,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         let wasRestoring = restoring
         restoring = true
         defer { restoring = wasRestoring }
-        pages.layoutIfNeeded()
+        layout.prepareForPositionRestore()
+        pendingPositionNeedsContinuation = false
         let chapter = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex] : nil
         let activeImages = chapter.flatMap { continuousPages.segment(for: $0)?.imageURLs } ?? images
         let localIndex = position.index(in: activeImages)
@@ -768,6 +778,15 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             let chapterEnd = layout.layoutAttributesForItem(at: IndexPath(item: tailIndex, section: 0))?.frame.maxY ?? pages.contentSize.height
             let target = position.isAtEnd(in: activeImages) ? max(0, chapterEnd - pages.bounds.height) : frame.minY + frame.height * CGFloat(position.offset)
             pages.setContentOffset(CGPoint(x: 0, y: max(0, min(maxY, target))), animated: false)
+            if pendingPosition != nil, target > maxY + 0.5, nextContinuousChapterIndex != nil {
+                // The next chapter supplies the remaining strip height. Keep
+                // the requested chapter-local anchor through that append,
+                // rather than saving an earlier image from the temporary clamp.
+                pendingPositionNeedsContinuation = true
+                session.updateImage(localIndex); updateBadge()
+                recordReaderTrace("restore.waiting-for-continuation")
+                return false
+            }
         } else { return false }
         session.updateImage(localIndex)
         updateBadge()
@@ -1069,6 +1088,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             if self.settings.layout == .strip {
                 self.layout.invalidateLayout()
                 if !self.viewportTransitioning { self.restore(position) }
+                if self.pendingPosition != nil { self.view.setNeedsLayout() }
             }
             self.savePosition()
         }
@@ -1104,6 +1124,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         appendNextChapterIfNeeded()
     }
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        if pendingPositionNeedsContinuation {
+            pendingPosition = nil; pendingPositionNeedsContinuation = false
+            synchronizeContinuousSession()
+        }
         environment.readingHabits.userDidRead(); setFullscreen(true, animated: true)
     }
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { savePosition() }

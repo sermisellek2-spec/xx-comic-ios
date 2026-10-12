@@ -84,6 +84,11 @@ for action in root.get('actions', []):
                 # arbitrary automatic diagnostic logs remain in the raw archive.
                 suffix = name.removeprefix('failure-')
                 target = output / 'ui-failures' / f'{device_slug}-{test_slug}-{suffix}.txt'
+            elif failed and re.fullmatch(r'reader-transition-expected-chapter-[0-9]+-page-[0-9]+', name) and item.get('uniformTypeIdentifier') in ('public.plain-text', 'public.utf8-plain-text'):
+                # Explicit Debug fixture state only: no URLs, image data,
+                # browser diagnostics or production reading history.
+                attachment_index += 1
+                target = output / 'reader-transitions' / f'{device_slug}-{test_slug}-{name}-{attachment_index}.txt'
             else:
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)

@@ -4,10 +4,15 @@ import UIKit
 
 @MainActor
 final class ReaderMangaGeometryTests: XCTestCase {
-    private final class Pages: NSObject, UICollectionViewDataSource {
+    private final class Pages: NSObject, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+        var stripHeight: CGFloat = 500
         func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int { 3 }
         func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
             collectionView.dequeueReusableCell(withReuseIdentifier: "page", for: indexPath)
+        }
+        func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+            guard let layout = collectionViewLayout as? ReaderPageLayout else { return .zero }
+            return layout.scrollDirection == .horizontal ? collectionView.bounds.size : CGSize(width: collectionView.bounds.width, height: stripHeight)
         }
     }
     private func collection(_ source: Pages) -> UICollectionView {
@@ -72,5 +77,31 @@ final class ReaderMangaGeometryTests: XCTestCase {
         layout.reversesPages = false; layout.invalidateLayout()
         XCTAssertEqual(seek(1, in: pages), 1)
         XCTAssertEqual(pages.contentOffset.y, 0, accuracy: 0.01)
+    }
+    func testReloadedModesRestoreRealPageFramesBeforeStripOffsetsAreClamped() throws {
+        let source = Pages()
+        let pages = collection(source)
+        pages.delegate = source
+        let layout = try XCTUnwrap(pages.collectionViewLayout as? ReaderPageLayout)
+        XCTAssertEqual(seek(1, in: pages), 1)
+        layout.reversesPages = false
+        pages.reloadData()
+        layout.prepareForPositionRestore()
+        XCTAssertEqual(seek(1, in: pages), 1, "日漫转普通后应显示同一张实际图片")
+        layout.scrollDirection = .vertical
+        pages.reloadData()
+        layout.prepareForPositionRestore()
+        let frame = try XCTUnwrap(layout.layoutAttributesForItem(at: IndexPath(item: 1, section: 0))?.frame)
+        let maximum = pages.contentSize.height - pages.bounds.height
+        let target = frame.minY + frame.height * 0.4
+        XCTAssertGreaterThanOrEqual(maximum, target, "恢复时必须已提交卷轴内容尺寸")
+        pages.setContentOffset(CGPoint(x: 0, y: min(maximum, target)), animated: false)
+        XCTAssertEqual(pages.contentOffset.y - frame.minY, source.stripHeight * 0.4, accuracy: 0.01)
+        XCTAssertEqual(frame.height, source.stripHeight, accuracy: 0.01)
+        source.stripHeight = 750
+        layout.prepareForPositionRestore()
+        let resized = try XCTUnwrap(layout.layoutAttributesForItem(at: IndexPath(item: 1, section: 0))?.frame)
+        pages.setContentOffset(CGPoint(x: 0, y: resized.minY + resized.height * 0.4), animated: false)
+        XCTAssertEqual(pages.contentOffset.y - resized.minY, source.stripHeight * 0.4, accuracy: 0.01)
     }
 }
