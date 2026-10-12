@@ -1,0 +1,20 @@
+{
+  "run": 38289876722,
+  "job": 114947123803,
+  "status": "in_progress",
+  "partialOnly": true,
+  "bytes": 10551349,
+  "sha256": "3ed1377e3509568cf7098205d0d75b2d2644fd220f2a93e473e3c3ba8178ee0a",
+  "observed": [
+    "2026-10-12T18:20:24.8338720Z ** BUILD SUCCEEDED **",
+    "2026-10-12T18:23:19.8903740Z ** BUILD SUCCEEDED **",
+    "2026-10-12T18:23:20.5482170Z Built Release fixture isolation: PASS",
+    "2026-10-12T18:26:12.7162820Z \t Executed 30 tests, with 0 failures (0 unexpected) in 0.410 (0.411) seconds",
+    "2026-10-12T18:27:20.8256500Z \t Executed 929 tests, with 0 failures (0 unexpected) in 143.692 (143.763) seconds",
+    "2026-10-12T18:27:20.8257230Z \t Executed 929 tests, with 0 failures (0 unexpected) in 143.692 (143.765) seconds",
+    "2026-10-12T18:27:39.4614140Z ** BUILD SUCCEEDED **"
+  ],
+  "firstLinePrefix": "\ufeff2026-10-12T18:17:19.9058680Z Current runner version: '2.337.0'",
+  "lastTimestamp": "2026-10-12T18:29:54.0943470Z",
+  "observedAtUTC": "2026-10-12T18:32:08.813101+00:00"
+}

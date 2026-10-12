@@ -1,0 +1,8 @@
+{
+  "capturedAtUTC": "2026-10-12T18:26:13.284632+00:00",
+  "exitCode": 1,
+  "screenshots": 0,
+  "failure": "uiautomator returned a null accessibility root immediately after the isolated first launch; XML parse failed",
+  "fix": "Bounded real-root retries; remove only the tool-owned prior XML before each attempt",
+  "iOSVisualGate": "not passed"
+}

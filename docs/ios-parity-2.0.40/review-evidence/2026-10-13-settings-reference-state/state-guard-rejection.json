@@ -1,0 +1,6 @@
+{
+  "actualExitCode": 1,
+  "expectedRejectedParentState": true,
+  "error": "ValueError: The actual first settings section is not visible on both platforms: iphone_landscape_light_settings_reference_empty",
+  "outputCreated": false
+}

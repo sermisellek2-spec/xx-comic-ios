@@ -1,0 +1,6 @@
+{
+  "reason": "两个phone竖屏记录请求0，但实际XML rotation=1、PNG为2556x1179",
+  "acceptedForSameStateComparison": false,
+  "originalsPreserved": true,
+  "repair": "几何修改后重新启动同一冻结APK，实际rotation与PNG宽高严格检查；retry-2的8项通过"
+}

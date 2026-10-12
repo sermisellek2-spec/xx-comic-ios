@@ -11,6 +11,8 @@ import subprocess
 import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from PIL import Image
+import io
 
 
 def main():
@@ -19,10 +21,14 @@ def main():
     parser.add_argument("--serial", required=True)
     parser.add_argument("--apk", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--empty-matched-viewport", action="store_true",
+                        help="Capture an empty library on the dedicated, matching iOS viewport emulator")
     args = parser.parse_args()
     if not args.serial.startswith("emulator-"):
         raise SystemExit("Use a dedicated emulator for reference capture")
-    args.output.mkdir(parents=True, exist_ok=True)
+    if args.output.exists():
+        raise FileExistsError("Preserve prior captures; choose a new evidence directory")
+    args.output.mkdir(parents=True, exist_ok=False)
 
     def adb(*values, binary=False):
         output = subprocess.check_output([args.adb, "-s", args.serial, *values], timeout=40,
@@ -30,9 +36,18 @@ def main():
         return output if binary else output.strip()
 
     def hierarchy():
-        adb("shell", "uiautomator", "dump", "/sdcard/xxcomic-reference-ui.xml")
-        data = adb("exec-out", "cat", "/sdcard/xxcomic-reference-ui.xml", binary=True)
-        return data, ET.fromstring(data)
+        # The first launch after the isolated reset may still be creating its
+        # accessibility root. Do not read a stale XML from a previous page.
+        for attempt in range(6):
+            adb("shell", "rm", "-f", "/sdcard/xxcomic-reference-ui.xml")
+            adb("shell", "uiautomator", "dump", "/sdcard/xxcomic-reference-ui.xml")
+            try:
+                data = adb("exec-out", "cat", "/sdcard/xxcomic-reference-ui.xml", binary=True)
+                return data, ET.fromstring(data)
+            except (subprocess.CalledProcessError, ET.ParseError):
+                if attempt == 5:
+                    raise RuntimeError("No actual accessibility root after launch") from None
+                time.sleep(1)
 
     def settings_page():
         raw, tree = hierarchy()
@@ -48,6 +63,20 @@ def main():
             raise RuntimeError("Settings page could not be opened")
         return raw, tree
 
+    if args.empty_matched_viewport:
+        if args.serial != "emulator-5568" or adb("emu", "avd", "name").splitlines()[0] != "xxcomic-ux-viewport-api34":
+            raise RuntimeError("Empty-library reset is restricted to the task's dedicated viewport emulator")
+        if hashlib.sha256(args.apk.read_bytes()).hexdigest() != "a9de8d2c7dde7731846dbae28254722ae4beb656daa55656a0c9281e87b13b71":
+            raise RuntimeError("The APK is not the unchanged frozen Android reference")
+        adb("install", "-r", str(args.apk))
+        if adb("shell", "pm", "clear", "com.xxcomic") != "Success":
+            raise RuntimeError("The isolated reference library could not be reset")
+        adb("shell", "run-as", "com.xxcomic", "mkdir", "-p", "no_backup")
+        # Disable optional reporting before the frozen app initializes. The
+        # app binary is unchanged and this reset affects only the task clone.
+        subprocess.run([args.adb, "-s", args.serial, "shell", "run-as", "com.xxcomic", "sh", "-c",
+                        "'cat > no_backup/usage-stats.json'"],
+                       input=b'{"enabled":false,"decided":true}', check=True, timeout=40)
     adb("shell", "cmd", "connectivity", "airplane-mode", "enable")
     adb("shell", "settings", "put", "system", "font_scale", "1.0")
     adb("shell", "settings", "put", "system", "accelerometer_rotation", "0")
@@ -56,17 +85,33 @@ def main():
     apk_hash = hashlib.sha256(args.apk.read_bytes()).hexdigest()
     records = []
     try:
-        for device, size, density in [("phone", "1080x2340", "440"), ("tablet", "1536x2048", "320")]:
+        viewports = [("phone", "1179x2556", "480"), ("tablet", "1668x2420", "320")] if args.empty_matched_viewport else [("phone", "1080x2340", "440"), ("tablet", "1536x2048", "320")]
+        for device, size, density in viewports:
             adb("shell", "wm", "size", size)
             adb("shell", "wm", "density", density)
             for rotation, orientation in [("0", "portrait"), ("1", "landscape")]:
                 adb("shell", "settings", "put", "system", "user_rotation", rotation)
                 for mode, theme in [("no", "light"), ("yes", "dark")]:
                     adb("shell", "cmd", "uimode", "night", mode)
+                    if args.empty_matched_viewport:
+                        # Start after the geometry change so the app cannot keep
+                        # its previous phone/tablet orientation policy.
+                        adb("shell", "wm", "user-rotation", "lock", rotation)
+                        adb("shell", "am", "force-stop", "com.xxcomic")
+                        adb("shell", "am", "start", "-n", "com.xxcomic/.MainActivity")
                     time.sleep(1)
                     raw, tree = settings_page()
+                    if args.empty_matched_viewport and tree.attrib.get("rotation") != rotation:
+                        raise RuntimeError("Actual reference rotation disagrees with the requested case")
                     stem = f"android-settings-{device}-{orientation}-{theme}"
                     picture = adb("exec-out", "screencap", "-p", binary=True)
+                    if args.empty_matched_viewport:
+                        expected_pixels = list(map(int, size.split("x")))
+                        if orientation == "landscape":
+                            expected_pixels.reverse()
+                        with Image.open(io.BytesIO(picture)) as bitmap:
+                            if list(bitmap.size) != expected_pixels:
+                                raise RuntimeError("Actual reference PNG dimensions disagree with the requested case")
                     (args.output / f"{stem}.png").write_bytes(picture)
                     (args.output / f"{stem}.xml").write_bytes(raw)
                     record = {
@@ -82,6 +127,8 @@ def main():
                         "steps": "launch > settings; override emulator size/density; set rotation and system night mode",
                         "capturedAtUTC": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                         "sameContentCrossPlatformProof": False,
+                        "matchingViewportRequested": args.empty_matched_viewport,
+                        "actualRasterSizeVerified": args.empty_matched_viewport,
                         "components": [{"text": n.attrib["text"], "bounds": n.attrib.get("bounds")}
                                        for n in tree.iter("node") if n.attrib.get("text")],
                     }

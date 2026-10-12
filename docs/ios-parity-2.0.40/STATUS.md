@@ -15,3 +15,5 @@ CI32父输入54f8206已完整失败：Debug/Release SDK、实际图标、Release
 CI33（38286395819/d70e6cb）完整93UI/设备与64视觉场景仍在运行，不含最新缓存修正。继续收集完整原件，最新修正另跑当前完整Apple回归；视觉逐组件审查、Files/恢复、原生PDF/CoreML/WebKit与Release隔离全部完成后，再只在指定仓库生成最终IPA。中途不要求用户试包。
 
 [阶段方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md)、[功能矩阵](requirements.csv)、[差异](differences.md)、[完整门槛](NON_SOURCE_GATE.md)。旧整页证据继续保留为历史，不能覆盖当前状态。
+
+CI34（38289876722/1990c84）最新部分原日志已观察两SDK/Release隔离通过、Mac Core929项0失败/143.692秒；双设备完整UI与视觉尚未结束。主设置另补8张实际方向/尺寸验证的安卓同尺寸原图，确认2个phone横屏父输入拍摄滚动状态不同，当前参考测试补真实回顶部、原断言保留，需后续当前Apple运行。[设置参考接续](review-evidence/2026-10-13-settings-reference-state/README.md)。

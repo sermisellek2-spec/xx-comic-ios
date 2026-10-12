@@ -111,6 +111,19 @@ case "$validation_scope" in
       -only-testing:XXComicUITests/VisualMatrixUITests/testSettingsReferenceLandscapeDark
     )
     ;;
+  settings-reference)
+    # Verify the changed reference gestures and their real cleanup/history
+    # preconditions. The full run remains required and packaging is disabled.
+    test_arguments+=(
+      -only-testing:XXComicTests
+      -only-testing:XXComicUITests/SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery
+      -only-testing:XXComicUITests/SettingsParityUITests/testHistoryClearCancellationAndConfirmationPreserveFavoritesAcrossRelaunch
+      -only-testing:XXComicUITests/VisualMatrixUITests/testSettingsReferencePortraitLight
+      -only-testing:XXComicUITests/VisualMatrixUITests/testSettingsReferencePortraitDark
+      -only-testing:XXComicUITests/VisualMatrixUITests/testSettingsReferenceLandscapeLight
+      -only-testing:XXComicUITests/VisualMatrixUITests/testSettingsReferenceLandscapeDark
+    )
+    ;;
   reader-modes)
     test_arguments+=(
       -only-testing:XXComicTests

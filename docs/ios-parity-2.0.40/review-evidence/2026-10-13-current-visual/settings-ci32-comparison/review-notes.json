@@ -1,0 +1,25 @@
+{
+  "recordedAtUTC": "2026-10-12T18:44:41.338752+00:00",
+  "priorRevision": "54f820647177055022f1591caf34a35004311189",
+  "settingsPairsInspected": 8,
+  "unmatchedCases": [
+    "iphone_landscape_light_settings_reference_empty",
+    "iphone_landscape_dark_settings_reference_empty"
+  ],
+  "matchingCasesInspected": 6,
+  "findings": [
+    {
+      "component": "横屏主设置参考",
+      "finding": "iOS清理后返回时保留滚动位置，安卓参考为顶部；两图不是同一状态",
+      "resolution": "测试通过真实下拉返回顶部，检查首节标题可点及其完整位置；不改生产返回行为",
+      "status": "current Apple pending"
+    },
+    {
+      "component": "主设置图标/颜色/文字/行距",
+      "finding": "六个同状态父输入对照中卡片/配色/说明一致；字体家族、系统区、调试版本后缀及真实缓存统计差异保持可见",
+      "status": "parent review only; current required"
+    }
+  ],
+  "visualGatePassed": false,
+  "comparisonSHA256": "47e4bfc7b79e158a30089c243d4d9b52dd0190a0cf6b8ca656de208ce477fb5d"
+}

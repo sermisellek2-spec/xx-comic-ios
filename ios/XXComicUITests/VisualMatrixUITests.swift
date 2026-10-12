@@ -153,6 +153,18 @@ final class VisualMatrixUITests: ParityUITestCase {
         waitForCacheCleanupResult(in: app)
         app.navigationBars.buttons.firstMatch.tap()
         assertCacheLabelReflectsActualBytes(in: app)
+        // Selecting the cache row scrolls a short landscape table. Returning
+        // preserves that useful user position; the empty reference is at top.
+        // Reach the same captured state through real gestures, not an offset
+        // fixture or by changing the production navigation behavior.
+        let settingsTable = app.tables.firstMatch
+        let firstHeading = settingsTable.staticTexts["阅读与外观"]
+        for _ in 0..<4 {
+            if firstHeading.isHittable, firstHeading.frame.minY >= settingsTable.frame.minY { break }
+            settingsTable.swipeDown()
+        }
+        XCTAssertTrue(firstHeading.isHittable)
+        XCTAssertGreaterThanOrEqual(firstHeading.frame.minY, settingsTable.frame.minY)
         XCTAssertEqual(app.tables.cells.count, 11)
         XCTAssertTrue(app.tables.cells["settings.theme"].staticTexts["自动"].exists)
         XCTAssertTrue(app.tables.cells["settings.sources"].staticTexts["50 个开启"].exists)
