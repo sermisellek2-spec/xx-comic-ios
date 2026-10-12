@@ -4,7 +4,6 @@ import ComicCore
 @MainActor
 final class AppEnvironment {
     let preferences: ReaderPreferencesStore
-    let textPreferences: TextReaderPreferencesStore
     let defaults: UserDefaults
     let mh18BrowserSession: Mh18BrowserSession
     let readingHabits: ReadingHabitTracker
@@ -100,7 +99,6 @@ final class AppEnvironment {
         #endif
         allSources = available
         preferences = ReaderPreferencesStore(defaults: defaults)
-        textPreferences = TextReaderPreferencesStore(defaults: defaults)
         let habits = ReadingHabitTracker()
         habits.restore(from: defaults)
         readingHabits = habits
@@ -300,10 +298,20 @@ final class AppEnvironment {
         try Task.checkCancellation()
         RemoteImageView.clearMemoryCache()
         ReaderEnhancementEngine.shared.clearCache()
-        await mh18BrowserSession.clearCache()
+        #if DEBUG
+        let trace = ProcessInfo.processInfo.arguments.contains("--ui-testing")
+        let started = ProcessInfo.processInfo.systemUptime
+        if trace { print("CACHE_UI stage=begin") }
+        #endif
+        async let browser: Void = mh18BrowserSession.clearCache()
+        async let http: HTTPResponseCacheUsage = responseCache.clear()
+        let (_, remaining) = try await (browser, http)
+        #if DEBUG
+        if trace { print("CACHE_UI stage=finished elapsed=\(ProcessInfo.processInfo.systemUptime - started) memory=\(remaining.memoryBytes) disk=\(remaining.diskBytes)") }
+        #endif
         reloadSources()
         NotificationCenter.default.post(name: Self.sourcesChanged, object: self)
-        return try await responseCache.clear()
+        return remaining
     }
     func setUsageStatsEnabled(_ enabled: Bool) throws {
         try usageStats.setEnabled(enabled)

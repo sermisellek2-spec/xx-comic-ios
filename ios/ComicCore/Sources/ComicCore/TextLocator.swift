@@ -1,5 +1,6 @@
 import Foundation
 
+/// Legacy library.json compatibility only; no reader consumes or creates these records.
 public struct TextLocator: Codable, Equatable, Sendable {
     public let bookID: String
     public let chapterIndex: Int

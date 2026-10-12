@@ -1,0 +1,60 @@
+{
+  "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+  "run": 38275550653,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38275550653",
+  "scope": "cache-diagnostics",
+  "conclusion": "failure",
+  "sdkBuilds": [
+    "Debug simulator passed",
+    "Release device passed"
+  ],
+  "appIcons": "both actual built app metadata/resources passed",
+  "releaseIsolation": true,
+  "macCore": {
+    "executed": 935,
+    "failed": 1,
+    "seconds": 147.884,
+    "failure": "CacheMaintenanceTests.swift:35, memory=0/disk=144016"
+  },
+  "native": {
+    "iPhone": {
+      "executed": 30,
+      "failed": 0
+    },
+    "iPad": {
+      "executed": 30,
+      "failed": 0
+    }
+  },
+  "ui": {
+    "iPad Pro 11-inch (M4)": {
+      "uiCases": 15,
+      "passed": 9,
+      "failed": [
+        "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+        "SettingsParityUITests/testHistoryClearCancellationAndConfirmationPreserveFavoritesAcrossRelaunch()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ]
+    },
+    "iPhone 15 Pro": {
+      "uiCases": 15,
+      "passed": 9,
+      "failed": [
+        "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+        "SettingsParityUITests/testHistoryClearCancellationAndConfirmationPreserveFavoritesAcrossRelaunch()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ]
+    }
+  },
+  "rawBuildLog": {
+    "path": "logs-extracted\\build\\6_Build and test.txt",
+    "sha256": "741b1a3ed829d298b4406e1cfa2842c80dac689bef26c7dadf1035b52e12da12"
+  },
+  "ipa": "not packaged"
+}

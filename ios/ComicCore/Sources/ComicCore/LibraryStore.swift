@@ -12,6 +12,7 @@ public struct LibraryEntry: Codable, Equatable, Sendable {
     public var favoriteAt: TimeInterval?
     public var reading: ReadingRecord?
     public var positions: [String: ReaderPosition]
+    // Compatibility data only: preserved when old libraries are decoded and rewritten.
     public var textPositions: [String: TextLocator]?
     public var isFavorite: Bool { favoriteAt != nil }
     public var sortTime: TimeInterval { max(favoriteAt ?? 0, reading?.updatedAt ?? 0) }
@@ -48,26 +49,6 @@ public final class LibraryStore {
     public func entry(for comic: ComicSummary) -> LibraryEntry? { snapshot.entries[Self.key(comic)] }
     public func position(for comic: ComicSummary, chapterID: String) -> ReaderPosition? {
         entry(for: comic)?.positions[chapterID]
-    }
-
-    public func textPosition(for comic: ComicSummary, chapterID: String) -> TextLocator? {
-        entry(for: comic)?.textPositions?[chapterID]
-    }
-
-    public func saveTextReading(_ comic: ComicSummary, chapter: Chapter, chapterIndex: Int,
-                                locator: TextLocator, now: TimeInterval = Date().timeIntervalSince1970) throws {
-        guard comic.sourceId == "local" else { throw LibraryError.textReadingRequiresLocalBook }
-        guard locator.bookID == comic.comicId else { throw LibraryError.textBookMismatch }
-        let chapterIndex = max(0, chapterIndex)
-        guard locator.chapterIndex == chapterIndex else { throw LibraryError.textChapterMismatch }
-        guard !locator.resourceHref.isEmpty else { throw LibraryError.missingTextResource }
-        var entry = entry(for: comic) ?? LibraryEntry(summary: comic, positions: [:])
-        entry.summary = comic
-        entry.reading = ReadingRecord(chapter: chapter, chapterIndex: chapterIndex,
-                                      position: ReaderPosition(imageIndex: 0, offset: 0), updatedAt: now)
-        if entry.textPositions == nil { entry.textPositions = [:] }
-        entry.textPositions?[chapter.chapterId] = locator
-        try persist(entry)
     }
 
     public func setFavorite(_ comic: ComicSummary, favorite: Bool, now: TimeInterval = Date().timeIntervalSince1970) throws {
@@ -175,14 +156,9 @@ public final class LibraryStore {
 
 public enum LibraryError: LocalizedError, Equatable {
     case unsupportedVersion
-    case textReadingRequiresLocalBook, textBookMismatch, textChapterMismatch, missingTextResource
     public var errorDescription: String? {
         switch self {
         case .unsupportedVersion: return "书架数据版本暂不支持，已保留原文件。"
-        case .textReadingRequiresLocalBook: return "文字阅读记录仅支持本地书籍。"
-        case .textBookMismatch: return "文字阅读位置与当前书籍不匹配，未保存记录。"
-        case .textChapterMismatch: return "文字阅读位置与当前章节不匹配，未保存记录。"
-        case .missingTextResource: return "文字阅读位置缺少正文资源，未保存记录。"
         }
     }
 }

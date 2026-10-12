@@ -1,0 +1,59 @@
+{
+  "testedAtUTC": "2026-10-12T17:20:50.997807+00:00",
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "linuxCore": {
+    "command": "docker run --rm --mount type=bind,source=<ComicCore>,target=/work -w /work swift:5.10-jammy swift test -j 2",
+    "executed": 919,
+    "skipped": 2,
+    "failed": 0,
+    "seconds": 154.815,
+    "exitCode": 0,
+    "inputCount": 267,
+    "inputList": "core-inputs.json",
+    "inputUnchangedAfterRun": true,
+    "log": "core-full-final.log"
+  },
+  "nativeSyntax": {
+    "swiftFiles": 88,
+    "ReleaseExitCode": 0,
+    "DEBUGExitCode": 0,
+    "bashSyntaxExitCode": 0,
+    "boundary": "Linux parsing only; Apple SDK type-check/runtime pending"
+  },
+  "uiDeclaredPerDevice": 93,
+  "sourceCatalog": "51 current / 50 enabled; real websites paused",
+  "notRunForCurrentInput": [
+    "Apple SDK Debug/Release build",
+    "Apple Core and native tests",
+    "iPhone/iPad UI",
+    "current visual component review",
+    "final IPA"
+  ],
+  "nonSourceGate": "not passed",
+  "logs": {
+    "core-default-policy-compile-failure.log": {
+      "bytes": 1593,
+      "sha256": "6186226cfc89cd0e446cac5d9d1290dc6d161e6a56a911b8e441a5c1befb974b"
+    },
+    "core-full-before-default-policy.log": {
+      "bytes": 237837,
+      "sha256": "f699fad670849c61a4e121ff7e8eb2956c323ef36ebc708e635d4cd23d116367"
+    },
+    "core-full-final.log": {
+      "bytes": 238450,
+      "sha256": "ec28ec75399b57ef511d8edc21a588ce7b493876859d837a84e56a27bcce6ec8"
+    },
+    "native-syntax-final.log": {
+      "bytes": 73,
+      "sha256": "b1b4536d1bdbcc2d0bff0add0905dd2595289f1e39adce9baeca3e3b1f2c6bb6"
+    },
+    "text-removal-core-impact.log": {
+      "bytes": 49519,
+      "sha256": "f3257f36ad480b51d299b02f53f61c9ce7d8cd122ad76888692a0edc7328e93a"
+    },
+    "text-removal-native-syntax.log": {
+      "bytes": 95,
+      "sha256": "49b0cfc108c90bf2f9dd54885f0eedd3bee3c16a444f75c30e80e0a4d335bfb6"
+    }
+  }
+}

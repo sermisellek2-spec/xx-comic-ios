@@ -65,6 +65,7 @@ extension LocalLibrary {
             let publication = try EpubParser.parse(archive: content)
             let ranges = try publication.chapterRanges() // Rejects DRM and empty spine before probing.
             let archive = try EpubArchive(url: content, maximumReadBytes: UInt64(Self.maximumImportBytes))
+            try EpubComicContent.validate(publication, archive: archive)
             var validated = Set<String>(), validImages = Set<String>(), invalidImages = Set<String>(), coverName: String?
 
             func writeProbe(_ path: String) throws {
@@ -144,6 +145,11 @@ extension LocalLibrary {
         }
     }
 
+    func requireComicEpub(_ book: LocalBook) throws {
+        guard let publication = book.epub else { return }
+        try EpubComicContent.validate(publication, archive: EpubArchive(url: ownedEPUB(book)))
+    }
+
     public func epubResource(bookID: String, path: String, maximumBytes: Int) throws -> Data {
         try Task.checkCancellation()
         let book = try book(id: bookID)
@@ -157,7 +163,7 @@ extension LocalLibrary {
         let token = try EpubPageURL.parse(pageURL)
         let book = try book(id: token.bookID)
         guard let publication = book.epub, publication.spine.indices.contains(token.index) else { throw LocalLibraryError.invalidBook }
-        guard let path = publication.spine[token.index].resolvedImageEntry else { throw LocalLibraryError.requiresTextReader }
+        guard let path = publication.spine[token.index].resolvedImageEntry else { throw LocalLibraryError.unsupportedTextContent }
         return try epubResource(bookID: book.id, path: path, maximumBytes: Self.maximumImageBytes)
     }
 

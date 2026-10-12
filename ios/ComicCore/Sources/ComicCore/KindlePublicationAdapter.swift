@@ -1,8 +1,9 @@
 import Foundation
 
 public enum KindlePublicationAdapter {
-    /// Synchronous work intended for a background task. Only a verified EPUB is published.
-    public static func convert(source: URL, to destination: URL) throws -> EpubPublication {
+    /// Synchronous work intended for a background task. New imports require image comics.
+    /// Opting out is reserved for exact recovery of an already owned legacy book.
+    public static func convert(source: URL, to destination: URL, requireComic: Bool = true) throws -> EpubPublication {
         try Task.checkCancellation()
         let manager = FileManager.default
         let source = source.standardizedFileURL.resolvingSymlinksInPath()
@@ -109,7 +110,7 @@ public enum KindlePublicationAdapter {
             }
         }
         let derived = scratch.appendingPathComponent("derived.epub")
-        try KindleEpubWriter.write(to: derived, detection: detection, html: html, images: images)
+        try KindleEpubWriter.write(to: derived, detection: detection, html: html, images: images, requireComic: requireComic)
         let publication = try EpubParser.parse(archive: derived)
         try Task.checkCancellation()
         // Same-volume link publication atomically refuses concurrent destinations; the scratch

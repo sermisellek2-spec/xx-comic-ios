@@ -79,19 +79,22 @@ final class LocalEpubLibraryTests: XCTestCase {
         XCTAssertEqual(second.imageUrls, Array(urls.dropFirst()).map(\.absoluteString))
     }
 
-    func testTextBookImportsWithoutCoverAndRefusesImageReader() async throws {
-        let library = try LocalLibrary(directory: temporaryDirectory())
-        let book = try library.importEpub(title: "小说", archive: fixture(text: true)) { _ in XCTFail("文字不应进入图片探测"); return true }
-        XCTAssertNil(book.coverName)
-        XCTAssertEqual(try library.summary(for: book).coverUrl, "")
-        XCTAssertEqual(try library.epubResource(bookID: book.id, path: "OPS/a", maximumBytes: 100), Data("<p>正文甲</p>".utf8))
-        XCTAssertThrowsError(try library.epubImageData(pageURL: XCTUnwrap(library.pageURLs(for: book).first)))
-        let source = LocalComicSource(library: library)
-        let chapters = try await source.chapters(comicId: book.id)
-        for url in [book.id, chapters[0].url] {
-            do { _ = try await source.chapter(url: url); XCTFail("文字不能当成图片章节") }
-            catch { guard case LocalLibraryError.requiresTextReader = error else { return XCTFail("\(error)") } }
+    func testTextImportIsRejectedAndLegacyBookRefusesImageReaderWithoutDeletingFiles() async throws {
+        let library = try LocalLibrary(directory: temporaryDirectory()), input = try fixture(text: true)
+        let original = try Data(contentsOf: input)
+        XCTAssertThrowsError(try library.importEpub(title: "小说", archive: input) { _ in XCTFail("文字不应进入图片探测"); return true }) {
+            XCTAssertEqual($0 as? LocalLibraryError, .unsupportedTextContent)
         }
+        XCTAssertTrue(try library.books().isEmpty)
+        XCTAssertEqual(try Data(contentsOf: input), original)
+        let book = try LegacyEpubFixture.persist(library: library, archive: input, title: "旧小说")
+        let folder = library.directory.appendingPathComponent(book.id), metadata = try Data(contentsOf: folder.appendingPathComponent("book.json"))
+        let source = LocalComicSource(library: library), chapters = try await source.chapters(comicId: book.id)
+        do { _ = try await source.chapter(url: chapters[0].url); XCTFail("旧文字记录不能进入漫画阅读") }
+        catch { XCTAssertEqual(error as? LocalLibraryError, .unsupportedTextContent) }
+        XCTAssertEqual(try library.book(id: book.id), book)
+        XCTAssertEqual(try Data(contentsOf: folder.appendingPathComponent("content.epub")), original)
+        XCTAssertEqual(try Data(contentsOf: folder.appendingPathComponent("book.json")), metadata)
     }
 
     func testLegacyJSONAndMixedLibraryRemainReadable() throws {
@@ -227,11 +230,10 @@ final class LocalEpubLibraryTests: XCTestCase {
             let input = try fixture(text: true, extra: [("OPS/front", Data("FRONT".utf8))], opfTransform: {
                 $0.replacingOccurrences(of: "</manifest>", with: "<item id='front' href='front' media-type='image/jpeg'/></manifest>")
             })
-            let book = try library.importEpub(title: "文字封面", archive: input) { _ in readableCover }
-            XCTAssertEqual(book.coverName, readableCover ? "cover.bin" : nil)
-            if readableCover {
-                XCTAssertEqual(try Data(contentsOf: XCTUnwrap(URL(string: library.summary(for: book).coverUrl))), Data("FRONT".utf8))
-            } else { XCTAssertEqual(try library.summary(for: book).coverUrl, "") }
+            XCTAssertThrowsError(try library.importEpub(title: "文字封面", archive: input) { _ in readableCover }) {
+                XCTAssertEqual($0 as? LocalLibraryError, .unsupportedTextContent)
+            }
+            XCTAssertTrue(try library.books().isEmpty)
         }
     }
 

@@ -17,8 +17,12 @@ enum KindleEpubWriter {
         let path: String
     }
 
-    static func write(to url: URL, detection: KindleDetection, html: String, images: [Image]) throws {
+    static func write(to url: URL, detection: KindleDetection, html: String, images: [Image], requireComic: Bool) throws {
         let scan = HTMLScan()
+        if requireComic {
+            try EpubComicContent.validateMarkup(html)
+            guard !images.isEmpty else { throw LocalLibraryError.unsupportedTextContent }
+        }
         let plain = try scan.replace(#"<[^>]+>"#, in: html) { _ in "" }
         let visible: String
         let comic: Bool

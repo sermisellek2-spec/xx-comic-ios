@@ -501,6 +501,9 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             return
         }
         var list = (historyOnly ? environment.library.history : environment.library.favorites).map(\.summary)
+        #if DEBUG
+        if historyOnly, ProcessInfo.processInfo.arguments.contains("--ui-testing") { print("HISTORY_UI count=\(list.count) titles=\(list.map(\.title))") }
+        #endif
         if !historyOnly && currentGroupId != BookshelfGroupStore.builtinOnlineAllId {
             let members = environment.bookshelfGroupStore.getMembers(groupId: currentGroupId)
             list = list.filter { members.contains($0.comicId) }
@@ -537,11 +540,14 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         menu.addAction(UIAlertAction(title: "图片文件 (合并为一卷)", style: .default) { [weak self] _ in self?.pickImport(.images) })
         menu.addAction(UIAlertAction(title: "图片文件夹", style: .default) { [weak self] _ in self?.pickImport(.folder) })
         menu.addAction(UIAlertAction(title: "ZIP / CBZ 压缩包", style: .default) { [weak self] _ in self?.pickImport(.archive) })
-        menu.addAction(UIAlertAction(title: "EPUB 电子书", style: .default) { [weak self] _ in self?.pickImport(.epub) })
+        menu.addAction(UIAlertAction(title: "EPUB 漫画", style: .default) { [weak self] _ in self?.pickImport(.epub) })
         menu.addAction(UIAlertAction(title: "PDF 文档", style: .default) { [weak self] _ in self?.pickImport(.pdf) })
-        menu.addAction(UIAlertAction(title: "Kindle 电子书", style: .default) { [weak self] _ in self?.pickImport(.kindle) })
+        menu.addAction(UIAlertAction(title: "Kindle 漫画", style: .default) { [weak self] _ in self?.pickImport(.kindle) })
         #if DEBUG
         // Fixture URLs exist only under the isolated UI-test library, using the real import worker.
+        for (name, url) in EpubUITestFixtures.epubImports(library: environment.localLibrary) {
+            menu.addAction(UIAlertAction(title: name, style: .default) { [weak self] _ in self?.confirmImport([url], kind: .epub) })
+        }
         for (name, url) in EpubUITestFixtures.kindleImports(library: environment.localLibrary) {
             menu.addAction(UIAlertAction(title: name, style: .default) { [weak self] _ in self?.confirmImport([url], kind: .kindle) })
         }
@@ -652,9 +658,9 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         case .images: prompt = ("导入图片漫画", "所选图片合并为一本漫画，按文件名自然排序。")
         case .folder: prompt = ("导入文件夹漫画", "支持图片和章节子目录，按自然顺序导入。")
         case .archive: prompt = ("导入压缩包漫画", "仅支持 ZIP / CBZ，按目录自然分章。原压缩包会保留。")
-        case .epub: prompt = ("导入 EPUB 电子书", "支持文字、图文与纯图片 EPUB，保留原文件和完整目录。不支持 DRM 加密电子书。")
+        case .epub: prompt = ("导入 EPUB 漫画", "仅支持图片漫画 EPUB，保留原文件和完整目录。不支持纯文字、图文混排和 DRM 加密内容。")
         case .pdf: prompt = ("导入 PDF 文档", "按页阅读，保留原文件。不支持密码保护的 PDF。")
-        case .kindle: prompt = ("导入 Kindle 电子书", "选择 MOBI、AZW 或 AZW3 文件，保留原文件。支持可转换的旧版 Kindle 内容，不支持 DRM 加密和纯 KF8 电子书。")
+        case .kindle: prompt = ("导入 Kindle 漫画", "选择 MOBI、AZW 或 AZW3 漫画文件，保留原文件。仅支持可转换的图片漫画，不支持纯文字、图文混排、DRM 加密和纯 KF8 内容。")
         }
         let alert = UIAlertController(title: prompt.0, message: prompt.1, preferredStyle: .alert)
         alert.addTextField { $0.text = kind == .folder ? urls.first?.lastPathComponent : urls.first?.deletingPathExtension().lastPathComponent }

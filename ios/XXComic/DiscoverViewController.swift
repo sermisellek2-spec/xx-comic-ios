@@ -614,17 +614,17 @@ private final class FilterViewController: UIViewController {
             sheetHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor), sheetHeader.heightAnchor.constraint(equalToConstant: 56),
             grip.topAnchor.constraint(equalTo: sheetHeader.topAnchor, constant: 6), grip.centerXAnchor.constraint(equalTo: sheetHeader.centerXAnchor),
             grip.widthAnchor.constraint(equalToConstant: 32), grip.heightAnchor.constraint(equalToConstant: 4),
-            heading.topAnchor.constraint(equalTo: sheetHeader.topAnchor, constant: 26), heading.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            closeButton.centerYAnchor.constraint(equalTo: heading.centerYAnchor), closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+            heading.topAnchor.constraint(equalTo: sheetHeader.topAnchor, constant: 26), heading.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            closeButton.centerYAnchor.constraint(equalTo: heading.centerYAnchor), closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -8),
             closeButton.widthAnchor.constraint(equalToConstant: 36), closeButton.heightAnchor.constraint(equalToConstant: 36),
             sectionSegment.topAnchor.constraint(equalTo: sheetHeader.bottomAnchor),
-            sectionSegment.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            sectionSegment.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            sectionSegment.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            sectionSegment.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             sectionSegment.heightAnchor.constraint(equalToConstant: 44),
 
             tabScroll.topAnchor.constraint(equalTo: sectionSegment.bottomAnchor, constant: 8),
-            tabScroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            tabScroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            tabScroll.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            tabScroll.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             tabs.leadingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.leadingAnchor),
             tabs.trailingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.trailingAnchor),
             tabs.topAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.topAnchor),
@@ -632,12 +632,12 @@ private final class FilterViewController: UIViewController {
             tabs.heightAnchor.constraint(equalTo: tabScroll.frameLayoutGuide.heightAnchor),
 
             stateRow.topAnchor.constraint(equalTo: tabScroll.bottomAnchor, constant: 4),
-            stateRow.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            stateRow.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            stateRow.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            stateRow.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
 
             scroll.topAnchor.constraint(equalTo: stateRow.bottomAnchor, constant: 6),
-            scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            scroll.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            scroll.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             scroll.bottomAnchor.constraint(equalTo: confirmButton.topAnchor, constant: -12),
 
             options.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
@@ -646,8 +646,8 @@ private final class FilterViewController: UIViewController {
             options.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
             options.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
 
-            confirmButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            confirmButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            confirmButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            confirmButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             confirmButton.heightAnchor.constraint(equalToConstant: 44),
             confirmButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
         ])

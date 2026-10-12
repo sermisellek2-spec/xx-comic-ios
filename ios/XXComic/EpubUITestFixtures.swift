@@ -3,7 +3,7 @@ import ZIPFoundation
 import ComicCore
 import UIKit
 
-/// Real EPUB archives, enabled only in the existing isolated UI test launch path.
+/// Real comic files and rejected text inputs in the isolated Debug UI-test sandbox.
 @MainActor
 enum EpubUITestFixtures {
     static var sessionID: String? {
@@ -20,87 +20,57 @@ enum EpubUITestFixtures {
         guard ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--epub-fixtures"),
               library.directory.deletingLastPathComponent().lastPathComponent == "XXComic-UITests" else { return }
         if ProcessInfo.processInfo.arguments.contains("--batch-import-fixtures") {
-            try BatchImportUITestFixtures.seed(library: library)
-            return
+            try BatchImportUITestFixtures.seed(library: library); return
         }
         if ProcessInfo.processInfo.arguments.contains("--kindle-fixtures") {
-            try seedKindleImports(library: library)
-            return
+            try seedKindleImports(library: library); return
         }
+        let folder = library.directory.appendingPathComponent(".epub-fixtures", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let existing = Set(try library.books().map(\.title))
-        for kind in ["文字", "图文", "图片", "隔离", "跨书", "超限", "无锚点", "编码空锚点"] {
-            let title = "EPUB 验收·" + kind
-            guard !existing.contains(title) else { continue }
-            let archiveURL = library.directory.appendingPathComponent(".fixture-\(UUID().uuidString).epub")
-            defer { try? FileManager.default.removeItem(at: archiveURL) }
-            let long = (1...100).map { "<p id='p\($0)'>这是验证滚动和位置恢复的真实正文，第 \($0) 段。每一节都应完整可达，图文内容保持原序。</p>" }.joined()
-            let image = UIGraphicsImageRenderer(size: CGSize(width: 32, height: 32)).image { context in
-                UIColor.systemBlue.setFill(); context.fill(CGRect(x: 0, y: 0, width: 32, height: 32))
-            }.pngData()!
-            var files: [String: Data] = [
-                "META-INF/container.xml": Data("<container><rootfile full-path='OPS/book.opf'/></container>".utf8),
-                "OPS/nav.xhtml": Data("<html><nav><ol><li><a href='a.xhtml'>第一章</a></li><li><a href='c.xhtml'>第二章</a></li></ol></nav></html>".utf8),
-                "OPS/a.xhtml": Data(("<html><body><h1 id='first'>正文甲</h1><a href='https://example.com/epub-test'>外部测试链接</a><a href='c.xhtml#second'>跳到第二章</a>" + long + "</body></html>").utf8),
-                "OPS/b.xhtml": Data("<html><body><h1>第一章第二节</h1><p>不能遗漏的第二正文。</p></body></html>".utf8),
-                "OPS/c.xhtml": Data(("<html><body><h1 id='second'>第二章正文</h1>" + long + "</body></html>").utf8)
-            ]
-            var manifest = "<item id='a' href='a.xhtml' media-type='application/xhtml+xml'/><item id='b' href='b.xhtml' media-type='application/xhtml+xml'/><item id='c' href='c.xhtml' media-type='application/xhtml+xml'/><item id='nav' href='nav.xhtml' media-type='application/xhtml+xml' properties='nav'/>"
-            var spine = "<itemref idref='a'/><itemref idref='b'/><itemref idref='c'/>"
-            if kind == "图片" || kind == "图文" || kind == "隔离" {
-                files["OPS/image.png"] = image
-                manifest += "<item id='image' href='image.png' media-type='image/png'/>"
-                if kind == "图片" { spine = "<itemref idref='image'/>" }
-                if kind == "图文" { spine = "<itemref idref='a'/><itemref idref='b'/><itemref idref='image'/><itemref idref='c'/>" }
-            }
-            if kind == "隔离" {
-                // Script/event effects and CSS resource loading are observable through the WK accessibility tree.
-                files["OPS/a.xhtml"] = Data("""
-                <html><head><link rel='stylesheet' href='local.css'></head><body>
-                <h1>隔离正文</h1><p id='script-status'>脚本未执行</p><p id='event-status'>事件未执行</p>
-                <p class='same-book'>本书 CSS 未加载</p><p>本书资源隔离验收</p>
-                <a href='https://example.com/epub-test'>外部测试链接</a><a href='javascript:document.body.textContent="JS链接执行"'>不安全链接</a>
-                <script>document.getElementById('script-status').textContent='脚本已执行'</script>
-                <img src='image.png' onload="document.getElementById('event-status').textContent='事件已执行'"><img src='image.png'>
-                <link rel='stylesheet' href='https://example.com/blocked.css'>
-                <iframe src='c.xhtml'></iframe><form action='https://example.com'><input type='submit' value='不安全表单'></form>
-                </body></html>
-                """.utf8)
-                files["OPS/local.css"] = Data(".same-book{display:none}".utf8)
-                files["OPS/foreign.css"] = Data("body{display:none!important}".utf8)
-            }
-            if kind == "跨书" {
-                guard let foreign = try library.books().first(where: { $0.title == "EPUB 验收·隔离" }) else { throw LocalLibraryError.invalidBook }
-                let url = try EpubReaderResource.url(bookID: foreign.id, path: "OPS/foreign.css")
-                files["OPS/a.xhtml"] = Data("<html><head><link rel='stylesheet' href='\(url.absoluteString)'></head><body><h1>跨书样式未执行</h1></body></html>".utf8)
-            }
-            if kind == "超限" { files["OPS/a.xhtml"] = Data(("<html><body>" + String(repeating: "x", count: 8 * 1024 * 1024) + "</body></html>").utf8) }
-            if kind == "无锚点" {
-                let paragraphs = (1...100).map { "<p>没有 ID 的长篇正文，第 \($0) 段，必须使用百分比恢复阅读位置。</p>" }.joined()
-                files["OPS/a.xhtml"] = Data(("<html><body><h1>无锚点正文</h1>" + paragraphs + "</body></html>").utf8)
-            }
-            if kind == "编码空锚点" {
-                let padding = String(repeating: "<p>用于验证链接真正滚动到目标的正文段落。</p>", count: 40)
-                // %2520 targets a literal "%20" ID suffix, not a space. Targets sit well below the top.
-                files["OPS/a.xhtml"] = Data(("""
-                <html><body><h1>编码链接起点</h1>
-                <a href='#%E4%B8%AD%E6%96%87%20%E7%9B%AE%E6%A0%87'>同页中文空格</a>
-                <a href='#literal%2520'>同页字面百分号</a>
-                <a href='c.xhtml#%E7%AC%AC%E4%BA%8C%E7%AB%A0%20%E7%9B%AE%E6%A0%87'>跨章中文空格</a>
-                <a href='c.xhtml#literal%2520'>跨章字面百分号</a>
-                """ + padding + "<a id='中文 目标'></a><h2>同页中文目标已到达</h2>" + padding + "<div id='literal%20'></div><h2>同页百分号目标已到达</h2>" + padding + "</body></html>").utf8)
-                files["OPS/c.xhtml"] = Data(("<html><body><h1>编码链接第二章</h1>" + padding + "<a id='第二章 目标'></a><h2>跨章中文目标已到达</h2>" + padding + "<div id='literal%20'></div><h2>跨章百分号目标已到达</h2>" + padding + "</body></html>").utf8)
-            }
-            files["OPS/book.opf"] = Data(("<package xmlns:dc='http://purl.org/dc/elements/1.1/'><metadata><dc:title>\(title)</dc:title><dc:creator>验收作者</dc:creator></metadata><manifest>" + manifest + "</manifest><spine>" + spine + "</spine></package>").utf8)
-            do {
-                let archive = try Archive(url: archiveURL, accessMode: .create)
-                for (path, data) in files {
-                    try archive.addEntry(with: path, type: .file, uncompressedSize: Int64(data.count), compressionMethod: .deflate) { position, count in
-                        data.subdata(in: Int(position)..<min(Int(position) + count, data.count))
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 32, height: 32)).image { context in
+            UIColor.systemBlue.setFill(); context.fill(CGRect(x: 0, y: 0, width: 32, height: 32))
+        }.pngData()!
+        for kind in ["图片", "文字", "图文", "单图带文字", "旧文字"] {
+            let title = "EPUB 验收·" + kind, url = folder.appendingPathComponent(title + ".epub")
+            if !FileManager.default.fileExists(atPath: url.path) {
+                var files: [String: Data] = ["META-INF/container.xml": Data("<container><rootfile full-path='OPS/book.opf'/></container>".utf8),
+                    "OPS/nav.xhtml": Data("<html><nav><ol><li><a href='a.xhtml'>第一章</a></li><li><a href='b.xhtml'>第二章</a></li></ol></nav></html>".utf8),
+                    "OPS/image.png": image]
+                let picture = kind == "图片"
+                files["OPS/a.xhtml"] = Data((picture ? "<html><body><img src='image.png'/></body></html>" : "<html><body><p>纯文字正文</p>" + (kind == "单图带文字" ? "<img src='image.png'/>" : "") + "</body></html>").utf8)
+                files["OPS/b.xhtml"] = Data((picture || kind == "图文" ? "<html><body><img src='image.png'/></body></html>" : "<html><body><p>第二章文字</p></body></html>").utf8)
+                files["OPS/book.opf"] = Data(("<package><metadata/><manifest><item id='a' href='a.xhtml' media-type='application/xhtml+xml'/><item id='b' href='b.xhtml' media-type='application/xhtml+xml'/><item id='image' href='image.png' media-type='image/png'/><item id='nav' href='nav.xhtml' media-type='application/xhtml+xml' properties='nav'/></manifest><spine><itemref idref='a'/><itemref idref='b'/></spine></package>").utf8)
+                let archive = try Archive(url: url, accessMode: .create)
+                for (path, bytes) in files {
+                    try archive.addEntry(with: path, type: .file, uncompressedSize: Int64(bytes.count), compressionMethod: .deflate) { position, count in
+                        bytes.subdata(in: Int(position)..<min(Int(position) + count, bytes.count))
                     }
                 }
             }
-            _ = try library.importEpub(title: title, archive: archiveURL, isReadableImage: LocalImageProbe.isReadable)
+            guard !existing.contains(title) else { continue }
+            if kind == "图片" { _ = try library.importEpub(title: title, archive: url, isReadableImage: LocalImageProbe.isReadable) }
+            if kind == "旧文字" {
+                // A genuine old book.json remains loadable. It is never newly imported as text.
+                let publication = try EpubParser.parse(archive: url), id = UUID().uuidString
+                let pages = publication.spine.indices.map { "spine-\($0)" }
+                let chapters = try publication.chapterRanges().enumerated().map { index, range in
+                    LocalBookChapter(id: id + "_ch_\(index)", title: range.title, pages: Array(pages[range.startIndex..<range.endIndex]))
+                }
+                let book = LocalBook(id: id, title: title, createdAt: 1, pages: pages, chapters: chapters, epub: publication)
+                let owned = library.directory.appendingPathComponent(id)
+                try FileManager.default.createDirectory(at: owned, withIntermediateDirectories: false)
+                try FileManager.default.copyItem(at: url, to: owned.appendingPathComponent("content.epub"))
+                try JSONEncoder().encode(book).write(to: owned.appendingPathComponent("book.json"))
+            }
         }
+    }
+
+    static func epubImports(library: LocalLibrary) -> [(String, URL)] {
+        guard ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--epub-fixtures"),
+              !ProcessInfo.processInfo.arguments.contains("--kindle-fixtures"), !ProcessInfo.processInfo.arguments.contains("--batch-import-fixtures"),
+              library.directory.deletingLastPathComponent().lastPathComponent == "XXComic-UITests" else { return [] }
+        return ["文字", "图文", "单图带文字"].map { ("验收 EPUB·" + $0, library.directory.appendingPathComponent(".epub-fixtures").appendingPathComponent("EPUB 验收·" + $0 + ".epub")) }
     }
 
     static func kindleImports(library: LocalLibrary) -> [(String, URL)] {
@@ -140,84 +110,5 @@ enum EpubUITestFixtures {
         }
     }
 
-    static func seedMatrixFixtures(
-        library: LibraryStore,
-        localLibrary: LocalLibrary,
-        bookshelfGroupStore: BookshelfGroupStore,
-        downloadStore: DownloadStore
-    ) throws {
-        try seed(library: localLibrary)
-
-        let chainsaw = ComicSummary(
-            sourceId: "copymanga",
-            comicId: "chainsaw_man",
-            title: "电锯人",
-            coverUrl: "https://example.com/cover1.jpg",
-            subtitle: "藤本树",
-            tags: ["热血", "奇幻", "连载中"]
-        )
-        let spyFamily = ComicSummary(
-            sourceId: "copymanga",
-            comicId: "spy_x_family",
-            title: "间谍过家家",
-            coverUrl: "https://example.com/cover2.jpg",
-            subtitle: "远藤达哉",
-            tags: ["搞笑", "动作", "连载中"]
-        )
-        let onePerson = ComicSummary(
-            sourceId: "manhuagui",
-            comicId: "under_one_person",
-            title: "一人之下",
-            coverUrl: "https://example.com/cover3.jpg",
-            subtitle: "米二",
-            tags: ["热血", "修真", "连载中"]
-        )
-
-        try library.setFavorite(chainsaw, favorite: true)
-        try library.setFavorite(spyFamily, favorite: true)
-        try library.setFavorite(onePerson, favorite: true)
-
-        let chapter1 = Chapter(chapterId: "ch_01", title: "第1话 狗与电锯", url: "https://example.com/ch1")
-        try library.saveReading(chainsaw, chapter: chapter1, chapterIndex: 0, position: ReaderPosition(imageIndex: 0, offset: 0))
-
-        let jGroup = try? bookshelfGroupStore.createGroup(scope: .online, rawName: "日漫")
-        if let jGroup {
-            bookshelfGroupStore.addToGroup(groupId: jGroup.id, comicId: chainsaw.comicId)
-            bookshelfGroupStore.addToGroup(groupId: jGroup.id, comicId: spyFamily.comicId)
-        }
-        let cGroup = try? bookshelfGroupStore.createGroup(scope: .online, rawName: "国漫")
-        if let cGroup {
-            bookshelfGroupStore.addToGroup(groupId: cGroup.id, comicId: onePerson.comicId)
-        }
-
-        let downloadSummary = ComicSummary(
-            sourceId: "copymanga",
-            comicId: "download_spy",
-            title: "间谍过家家 [离线]",
-            coverUrl: "https://example.com/cover_dl.jpg",
-            subtitle: "远藤达哉",
-            tags: ["已下载"]
-        )
-        let downloadDetail = ComicDetail(
-            summary: downloadSummary,
-            author: "远藤达哉",
-            status: "连载中",
-            description: "离线已下载漫画",
-            latestChapter: "第1话",
-            chapters: [Chapter(chapterId: "ch_dl_01", title: "第1话 任务名'枭'", url: "https://example.com/ch_dl_1")]
-        )
-        var task = DownloadTask()
-        task.id = "task_01"
-        task.bookId = "download_spy"
-        task.comicId = "download_spy"
-        task.sourceId = "copymanga"
-        task.chapterId = "ch_dl_01"
-        task.title = "间谍过家家 [离线] - 第1话"
-        task.state = .completed
-        task.totalPages = 25
-        task.donePages = 25
-        downloadStore.save(task: task)
-        downloadStore.saveSnapshot(downloadDetail)
-    }
     #endif
 }

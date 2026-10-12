@@ -104,15 +104,14 @@ final class LocalImportPreparationTests: XCTestCase {
         return url
     }
 
-    func testRealKindleRetainsOriginalAndDerivedArchiveBeforePublishingText() throws {
-        let library = try LocalLibrary(directory: directory()), input = try kindle()
-        let prepared = try library.prepareKindle(title: "小说", source: input, format: .mobi) { _ in XCTFail("纯文字不应探测图片"); return false }
+    func testRealTextKindleCannotPublishAndKeepsOriginal() throws {
+        let library = try LocalLibrary(directory: directory()), input = try kindle(), original = try Data(contentsOf: input)
+        XCTAssertThrowsError(try library.prepareKindle(title: "小说", source: input, format: .mobi) { _ in XCTFail("纯文字不应探测图片"); return false }) {
+            XCTAssertEqual($0 as? LocalLibraryError, .unsupportedTextContent)
+        }
         XCTAssertTrue(try library.books().isEmpty)
-        XCTAssertEqual(try Data(contentsOf: prepared.staging.appendingPathComponent("source.kindle")), try Data(contentsOf: input))
-        XCTAssertEqual(try EpubParser.parse(archive: prepared.staging.appendingPathComponent("content.epub")), prepared.book.epub)
-        let book = try library.publishPrepared(prepared), reopened = try LocalLibrary(directory: library.directory)
-        let text = try reopened.epubResource(bookID: book.id, path: XCTUnwrap(book.epub?.spine.first?.fullZipPath), maximumBytes: 10000)
-        XCTAssertTrue(String(decoding: text, as: UTF8.self).contains("准备后的真实正文"))
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), [])
+        XCTAssertEqual(try Data(contentsOf: input), original)
     }
 
     func testPdfInjectedStoragePreparationCopiesBeforeInspectAndOnlyRendersAtImport() throws {

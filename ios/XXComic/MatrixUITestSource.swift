@@ -39,6 +39,7 @@ enum MatrixUITestFixtures {
                 }
             }
         }
+        print("MATRIX_LIBRARY seeded=\(environment.defaults.bool(forKey: "ui.matrix.library.seeded")) favorites=\(environment.library.favorites.count) history=\(environment.library.history.count)")
         environment.defaults.set(true, forKey: "ui.matrix.library.seeded")
         if !environment.defaults.bool(forKey: "ui.matrix.preferences.seeded") {
             var preferences = environment.preferences.load()

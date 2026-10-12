@@ -179,8 +179,8 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
             handle.heightAnchor.constraint(equalToConstant: 4),
 
             header.topAnchor.constraint(equalTo: handleHost.bottomAnchor),
-            header.leadingAnchor.constraint(equalTo: panel.leadingAnchor, constant: 20),
-            header.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -20),
+            header.leadingAnchor.constraint(equalTo: panel.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+            header.trailingAnchor.constraint(equalTo: panel.safeAreaLayoutGuide.trailingAnchor, constant: -20),
             header.heightAnchor.constraint(equalToConstant: 40),
 
             headerTitle.leadingAnchor.constraint(equalTo: header.leadingAnchor),
@@ -192,13 +192,13 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
 
             tableView.topAnchor.constraint(equalTo: header.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -44),
+            tableView.trailingAnchor.constraint(equalTo: scroller.leadingAnchor),
             tableView.bottomAnchor.constraint(equalTo: panel.bottomAnchor),
 
             scroller.topAnchor.constraint(equalTo: tableView.topAnchor),
-            scroller.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
+            scroller.trailingAnchor.constraint(equalTo: panel.safeAreaLayoutGuide.trailingAnchor),
             scroller.widthAnchor.constraint(equalToConstant: 44),
-            scroller.bottomAnchor.constraint(equalTo: panel.bottomAnchor)
+            scroller.bottomAnchor.constraint(equalTo: panel.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
 

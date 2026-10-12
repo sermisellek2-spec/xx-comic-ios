@@ -37,6 +37,7 @@ public struct LocalBookChapter: Codable, Equatable, Sendable {
     public let id: String
     public let title: String
     public let pages: [String]
+    public init(id: String, title: String, pages: [String]) { self.id = id; self.title = title; self.pages = pages }
 }
 
 extension LocalBook {
@@ -276,11 +277,10 @@ public struct LocalLibrary: Sendable {
         } else {
             volChIdx = 0
         }
-        let isText = (book.epub != nil && !book.epub!.isPurePictureEpub)
-        let kind: LocalReadingTarget.ReaderKind = isText ? .text : .comic
+        if let publication = book.epub, !publication.isPurePictureEpub { throw LocalLibraryError.unsupportedTextContent }
         return LocalReadingTarget(seriesId: seriesId, volumeId: volumeId, chapter: chapter,
                                   globalChapterIndex: chapterIndex, volumeChapterIndex: volChIdx,
-                                  kind: kind, totalChapters: allChapters.count)
+                                  kind: .comic, totalChapters: allChapters.count)
     }
     public func publishImport(_ prepared: PreparedLocalImport, targetSeriesId: String? = nil, explicitTitle: String? = nil) async throws -> (series: LocalSeriesRecord, book: LocalBook) {
         defer { try? discardPrepared(prepared) }
@@ -854,7 +854,7 @@ public struct LocalLibrary: Sendable {
 }
 
 public enum LocalLibraryError: LocalizedError {
-    case invalidBook, emptyImport, imageTooLarge, folderTooDeep, folderTooLarge, invalidArchive, archiveTooLarge, requiresTextReader, recoveryIncomplete
+    case invalidBook, emptyImport, imageTooLarge, folderTooDeep, folderTooLarge, invalidArchive, archiveTooLarge, unsupportedTextContent, recoveryIncomplete
     public var errorDescription: String? {
         switch self {
         case .invalidBook: return "本地漫画数据无效或文件不可用，原文件已保留。"
@@ -864,7 +864,7 @@ public enum LocalLibraryError: LocalizedError {
         case .folderTooLarge: return "文件夹超过 50000 项或 20 GiB，本次未导入。"
         case .invalidArchive: return "压缩包损坏、路径不安全、已加密或格式不支持，本次未导入，原文件已保留。仅支持 ZIP/CBZ。"
         case .archiveTooLarge: return "压缩包超过安全限制：最多 50000 项、单项 128 MiB、总量 20 GiB。本次未导入，原文件已保留。"
-        case .requiresTextReader: return "该 EPUB 章节包含文字内容，需要使用文字阅读器。"
+        case .unsupportedTextContent: return "仅支持图片漫画，不支持纯文字或图文混排内容。原文件和已有记录已保留。"
         case .recoveryIncomplete: return "部分本地恢复未完成：未知或被替换的文件已保留，请检查本地存储后重试。"
         }
     }

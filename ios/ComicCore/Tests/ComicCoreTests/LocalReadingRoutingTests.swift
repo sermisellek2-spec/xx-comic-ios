@@ -130,35 +130,20 @@ final class LocalReadingRoutingTests: XCTestCase {
         XCTAssertEqual(target2.totalChapters, 3)
     }
 
-    func testMixedFormatSeriesReaderKindDetection() async throws {
+    func testTextVolumeCannotBeAppendedAndExistingComicTargetsStayStable() async throws {
         let library = try LocalLibrary(directory: tempDirectory)
-
-        // Volume 1: Comic ZIP
         let zip = try createTestZip(name: "comic.zip", entries: ["0.png": [11, 22]])
-        let prepZip = try library.prepareArchive(title: "漫画部分", archive: zip, isReadableImage: { _ in true })
-        let (series, vol1) = try await library.publishImport(prepZip)
-
-        // Volume 2: Text EPUB
-        let epubURL = try createTestEpub(name: "novel.epub")
-        let prepEpub = try library.prepareEpub(title: "文字部分", archive: epubURL, isReadableImage: { _ in true })
-        let (_, vol2) = try await library.publishImport(prepEpub, targetSeriesId: series.id)
-
-        let chapters = try await library.chapters(for: series.id)
-        XCTAssertEqual(chapters.count, 3) // 1 comic chapter + 2 epub chapters
-
-        // Target for Volume 1 -> Comic
-        let targetComic = try await library.readingTarget(seriesId: series.id, chapterIndex: 0)
-        XCTAssertEqual(targetComic.volumeId, vol1.id)
-        XCTAssertEqual(targetComic.kind, .comic)
-
-        // Target for Volume 2 chapters -> Text
-        let targetText1 = try await library.readingTarget(seriesId: series.id, chapterIndex: 1)
-        XCTAssertEqual(targetText1.volumeId, vol2.id)
-        XCTAssertEqual(targetText1.kind, .text)
-
-        let targetText2 = try await library.readingTarget(seriesId: series.id, chapterIndex: 2)
-        XCTAssertEqual(targetText2.volumeId, vol2.id)
-        XCTAssertEqual(targetText2.kind, .text)
+        let prep = try library.prepareArchive(title: "漫画部分", archive: zip, isReadableImage: { _ in true })
+        let (series, volume) = try await library.publishImport(prep)
+        let before = try await library.chapters(for: series.id), input = try createTestEpub(name: "novel.epub"), original = try Data(contentsOf: input)
+        XCTAssertThrowsError(try library.prepareEpub(title: "文字部分", archive: input, isReadableImage: { _ in true })) {
+            XCTAssertEqual($0 as? LocalLibraryError, .unsupportedTextContent)
+        }
+        let after = try await library.chapters(for: series.id)
+        XCTAssertEqual(after, before)
+        let target = try await library.readingTarget(seriesId: series.id, chapterIndex: 0)
+        XCTAssertEqual(target.volumeId, volume.id); XCTAssertEqual(target.kind, .comic)
+        XCTAssertEqual(try Data(contentsOf: input), original)
     }
 
     func testVolumeReorderingUpdatesReadingTargetIndicesWithoutChangingChapterIDs() async throws {
@@ -194,47 +179,15 @@ final class LocalReadingRoutingTests: XCTestCase {
         XCTAssertEqual(afterVol1.volumeChapterIndex, 0)
     }
 
-    func testTextLocatorTranslationBetweenSeriesAndVolumeScope() async throws {
-        let library = try LocalLibrary(directory: tempDirectory)
-        let epubURL = try createTestEpub(name: "series_novel.epub")
-        let prepEpub = try library.prepareEpub(title: "小说卷", archive: epubURL, isReadableImage: { _ in true })
-        let (series, vol) = try await library.publishImport(prepEpub)
-
-        // Volume internal locator created by EpubTextSession
-        let session = try EpubTextSession(book: vol, chapterIndex: 1, locator: nil)
-        let volLocator = session.locator(anchorID: "b", percent: 0.75, charOffset: 42)
-        XCTAssertEqual(volLocator.bookID, vol.id)
-        XCTAssertEqual(volLocator.chapterIndex, 1)
-        XCTAssertEqual(volLocator.scrollPercentage, 0.75)
-
-        // Convert to series locator for saving in LibraryStore
-        let globalIndex = 1
-        let seriesLocator = volLocator.toSeriesLocator(seriesId: series.id, globalChapterIndex: globalIndex)
-        XCTAssertEqual(seriesLocator.bookID, series.id)
-        XCTAssertEqual(seriesLocator.chapterIndex, globalIndex)
-        XCTAssertEqual(seriesLocator.anchorID, "b")
-        XCTAssertEqual(seriesLocator.scrollPercentage, 0.75)
-
-        // Save in LibraryStore
-        let storeDir = outsideDirectory.appendingPathComponent("Store")
-        let store = try LibraryStore(directory: storeDir)
-        let summary = try library.summary(for: series)
-        let chapters = try await library.chapters(for: series.id)
-
-        try store.saveTextReading(summary, chapter: chapters[globalIndex], chapterIndex: globalIndex, locator: seriesLocator)
-
-        // Retrieve and convert back to volume locator
-        let loadedSeriesLocator = try XCTUnwrap(store.textPosition(for: summary, chapterID: chapters[globalIndex].chapterId))
-        XCTAssertEqual(loadedSeriesLocator.bookID, series.id)
-        XCTAssertEqual(loadedSeriesLocator.chapterIndex, globalIndex)
-
-        let restoredVolLocator = loadedSeriesLocator.toVolumeLocator(volumeId: vol.id, volumeChapterIndex: 1)
-        XCTAssertEqual(restoredVolLocator.bookID, vol.id)
-        XCTAssertEqual(restoredVolLocator.chapterIndex, 1)
-
-        // Restore into EpubTextSession
-        let restoredSession = try EpubTextSession(book: vol, chapterIndex: 1, locator: restoredVolLocator)
-        XCTAssertEqual(restoredSession.spineIndex, session.spineIndex)
+    func testLegacyTextReadingTargetRejectsAndKeepsMetadataAndOriginal() async throws {
+        let library = try LocalLibrary(directory: tempDirectory), input = try createTestEpub(name: "old-novel.epub")
+        let book = try LegacyEpubFixture.persist(library: library, archive: input, title: "旧文字卷")
+        let folder = library.directory.appendingPathComponent(book.id), metadata = try Data(contentsOf: folder.appendingPathComponent("book.json")), original = try Data(contentsOf: input)
+        let chapters = try await library.chapters(for: book.id)
+        do { _ = try await library.readingTarget(seriesId: book.id, chapterId: chapters[1].chapterId); XCTFail("旧记录不能打开文字阅读器") }
+        catch { XCTAssertEqual(error as? LocalLibraryError, .unsupportedTextContent) }
+        XCTAssertEqual(try Data(contentsOf: folder.appendingPathComponent("book.json")), metadata)
+        XCTAssertEqual(try Data(contentsOf: folder.appendingPathComponent("content.epub")), original)
     }
 
     func testLegacySingleBookFallbackReadingTarget() async throws {

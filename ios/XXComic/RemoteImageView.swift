@@ -64,8 +64,7 @@ final class RemoteImageView: UIImageView {
             do {
                 let book = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
                 guard let self, self.generation == token, !Task.isCancelled else { return }
-                if let epub = book.epub { self.original = TextBookCover.image(title: book.title, author: epub.author) }
-                else if book.pdf != nil { self.original = UIImage(systemName: "doc.richtext") }
+                if book.pdf != nil { self.original = UIImage(systemName: "doc.richtext") }
                 self.render()
             } catch {
                 guard let self, self.generation == token, !Task.isCancelled else { return }
@@ -329,8 +328,8 @@ final class ComicCell: UICollectionViewCell {
         nameLabel.font = .systemFont(ofSize: 13, weight: .bold)
         nameLabel.numberOfLines = 1
         nameLabel.textColor = Palette.text
-        sourceLabel.font = .systemFont(ofSize: 11); sourceLabel.textColor = Palette.text3
-        latestLabel.font = .systemFont(ofSize: 10); latestLabel.textColor = .white
+        sourceLabel.font = .systemFont(ofSize: 12); sourceLabel.textColor = Palette.text3
+        latestLabel.font = .systemFont(ofSize: 12); latestLabel.textColor = .white
         latestLabel.translatesAutoresizingMaskIntoConstraints = false; latestOverlay.addSubview(latestLabel)
 
         for view in [cover, nameLabel, sourceLabel, latestOverlay, badgeContainer] { view.translatesAutoresizingMaskIntoConstraints = false; contentView.addSubview(view) }

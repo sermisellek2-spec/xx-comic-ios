@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-13",
+  "userInstruction": "不需要文字阅读器，这是一个漫画阅读器，不需要文字阅读，相关功能去掉。",
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "scope": "iOS漫画功能与总验收包",
+  "removed": [
+    "文字阅读页面",
+    "文字排版设置与偏好消费者",
+    "文字章节自动跳转",
+    "小说及图文混排导入",
+    "文字WebView资源处理器",
+    "文字假封面"
+  ],
+  "retained": [
+    "卷轴/普通/日漫RTL",
+    "图片/文件夹/ZIP/CBZ",
+    "图片漫画EPUB",
+    "PDF漫画",
+    "可转换Kindle图片漫画",
+    "旧库JSON和文字位置兼容解码",
+    "旧原包及稳定身份"
+  ],
+  "sourceValidation": "真实源保持暂停，51个当前源/默认50及配置与fixture流程继续自验",
+  "ciRepository": "sermisellek2-spec/xx-comic-ios",
+  "finalAcceptance": "用户只做一次总验收；中途由代理修复和验收，不要求用户试包"
+}

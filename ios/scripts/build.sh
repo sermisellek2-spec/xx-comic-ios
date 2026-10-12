@@ -99,8 +99,10 @@ case "$validation_scope" in
   cache-diagnostics)
     # Keep every Core assertion and all native tests. This evidence-only scope
     # does not replace full UI or visual validation and cannot produce an IPA.
+    # Include comic-only import boundaries while the retired text-reader removal is verified.
     test_arguments+=(
       -only-testing:XXComicTests
+      -only-testing:XXComicUITests/EpubReadingUITests
       -only-testing:XXComicUITests/SettingsParityUITests
       -only-testing:XXComicUITests/SourceDrawerTests
       -only-testing:XXComicUITests/VisualMatrixUITests/testSettingsReferencePortraitLight

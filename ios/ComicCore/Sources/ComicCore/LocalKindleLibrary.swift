@@ -20,7 +20,7 @@ extension LocalLibrary {
         try prepareOwnedEpub(title: title, kindleFormat: format, isReadableImage: isReadableImage) { staging, owned in
             let original = staging.appendingPathComponent("source.kindle")
             try copyEbook(source, to: original, didCreateFile: owned.recordFile)
-            _ = try KindlePublicationAdapter.convert(source: original, to: staging.appendingPathComponent("content.epub"))
+            _ = try KindlePublicationAdapter.convert(source: original, to: staging.appendingPathComponent("content.epub"), requireComic: true)
             try owned.recordFile(staging.appendingPathComponent("content.epub"))
         }
     }
@@ -86,7 +86,9 @@ extension LocalLibrary {
         try manager.createDirectory(at: scratch, withIntermediateDirectories: false)
         defer { try? manager.removeItem(at: scratch) }
         let derived = scratch.appendingPathComponent("content.epub")
-        let publication = try KindlePublicationAdapter.convert(source: original, to: derived)
+        // Recreate the old derived bytes without changing its stable publication metadata.
+        // The reading route still rejects text; this only preserves the owned original.
+        let publication = try KindlePublicationAdapter.convert(source: original, to: derived, requireComic: false)
         guard publication == book.epub else { throw LocalLibraryError.invalidBook }
         try validateOwner()
         try beforeKindlePublish()

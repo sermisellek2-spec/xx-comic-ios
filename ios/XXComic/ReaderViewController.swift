@@ -469,10 +469,6 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 self.updateContinuationFooter()
             } catch {
                 guard let self, self.requestID == token, !Task.isCancelled else { return }
-                if (error as? LocalLibraryError) == .requiresTextReader {
-                    self.switchToTextReader(chapterIndex: index, atEnd: atEnd, restoreSaved: restoreSaved)
-                    return
-                }
                 if !(error is CancellationError) {
                     ErrorLogStore.shared.append(title: "章节加载失败: \(self.comic.title) - \(chapter.title)", error: error)
                 }
@@ -571,22 +567,18 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private func configureContinuationFooter(_ footer: ReaderContinuationFooter) {
         let text: String, canRetry: Bool
         if let error = continuationError {
-            if (error as? LocalLibraryError) == .requiresTextReader {
-                text = "下一章是文字内容 · 点击继续"
+            if (error as? LocalLibraryError) == .unsupportedTextContent {
+                text = "下一章包含文字内容，暂不支持阅读"
             } else if let error = error as? DownloadError, case .corruptedData(let message) = error {
                 text = message + " · 打开下载中心"
             } else { text = "下一章加载失败 · 点击重试" }
-            canRetry = true
+            canRetry = (error as? LocalLibraryError) != .unsupportedTextContent
         } else if continuationTask != nil { text = "正在加载下一章…"; canRetry = false }
         else if incompleteDirectory { text = "等待章节目录"; canRetry = false }
         else if nextContinuousChapterIndex != nil { text = "继续向下阅读"; canRetry = true }
         else { text = "已到最后一章"; canRetry = false }
         footer.configure(text: text, loading: continuationTask != nil, canRetry: canRetry) { [weak self] in
             guard let self else { return }
-            if (self.continuationError as? LocalLibraryError) == .requiresTextReader,
-               let index = self.nextContinuousChapterIndex {
-                self.loadChapter(index, restoreSaved: false); return
-            }
             if let error = self.continuationError as? DownloadError, case .corruptedData = error {
                 self.showDownloadCenter(forContinuation: true); return
             }
@@ -594,51 +586,6 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         }
     }
 
-    private func switchToTextReader(chapterIndex: Int, atEnd: Bool, restoreSaved: Bool) {
-        guard chapters.indices.contains(chapterIndex) else { return }
-        savePosition()
-        let chapter = chapters[chapterIndex]
-        let library = environment.localLibrary
-        Task { [weak self] in
-            guard let self else { return }
-            do {
-                let target = try await library.readingTarget(seriesId: self.comic.comicId, chapterId: chapter.chapterId)
-                let book = try library.book(id: target.volumeId)
-                let saved = restoreSaved ? self.environment.library.textPosition(for: self.comic, chapterID: chapter.chapterId) : nil
-                let volLocator: TextLocator?
-                if let saved {
-                    volLocator = saved.toVolumeLocator(volumeId: target.volumeId, volumeChapterIndex: target.volumeChapterIndex)
-                } else if atEnd {
-                    let chPages = (book.chapters?.indices.contains(target.volumeChapterIndex) == true) ? book.chapters![target.volumeChapterIndex].pages : []
-                    let targetPage = chPages.last ?? ""
-                    let spineIdx = book.pages.firstIndex(of: targetPage) ?? max(0, book.pages.count - 1)
-                    let href = (book.epub?.spine.indices.contains(spineIdx) == true) ? book.epub!.spine[spineIdx].fullZipPath : targetPage
-                    volLocator = TextLocator(bookID: target.volumeId, chapterIndex: target.volumeChapterIndex,
-                                             spineIndex: spineIdx, resourceHref: href, anchorID: "", scrollPercentage: 1.0)
-                } else {
-                    let chPages = (book.chapters?.indices.contains(target.volumeChapterIndex) == true) ? book.chapters![target.volumeChapterIndex].pages : []
-                    let targetPage = chPages.first ?? ""
-                    let spineIdx = book.pages.firstIndex(of: targetPage) ?? 0
-                    let href = (book.epub?.spine.indices.contains(spineIdx) == true) ? book.epub!.spine[spineIdx].fullZipPath : targetPage
-                    volLocator = TextLocator(bookID: target.volumeId, chapterIndex: target.volumeChapterIndex,
-                                             spineIndex: spineIdx, resourceHref: href, anchorID: "", scrollPercentage: 0.0)
-                }
-                let session = try EpubTextSession(book: book, chapterIndex: target.volumeChapterIndex, locator: volLocator)
-                let textVC = EpubTextReaderViewController(comic: self.comic, chapters: self.chapters, session: session,
-                                                          locator: volLocator, environment: self.environment)
-                if let nav = self.navigationController {
-                    var vcs = nav.viewControllers
-                    if let idx = vcs.lastIndex(where: { $0 === self }) {
-                        vcs[idx] = textVC
-                        nav.setViewControllers(vcs, animated: false)
-                    }
-                }
-            } catch {
-                self.loadState.chapterFinished(error: error)
-                self.updateLoadStatus()
-            }
-        }
-    }
     private func updateLoadStatus() {
         previous.isEnabled = !loading && (incompleteDirectory || session.chapterIndex > 0)
         nextButton.isEnabled = !loading && (incompleteDirectory || session.chapterIndex + 1 < chapters.count)
@@ -659,6 +606,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 status.setTitle(msg + " · 打开下载中心", for: .normal)
             }
             retryAction = { [weak self] in self?.showDownloadCenter() }
+            return
+        }
+        if (failure.error as? LocalLibraryError) == .unsupportedTextContent {
+            status.setTitle(failure.error.localizedDescription, for: .normal)
             return
         }
         let retry: () -> Void = failure.kind == .chapter

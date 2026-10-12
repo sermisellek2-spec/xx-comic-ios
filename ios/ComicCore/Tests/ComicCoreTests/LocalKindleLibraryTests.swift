@@ -35,6 +35,8 @@ final class LocalKindleLibraryTests: XCTestCase {
         return data
     }
 
+    private func comicMobi() -> Data { mobi(body: "<img recindex='1'/>", images: [png, png, png]) }
+
     private func input(_ data: Data) throws -> URL {
         let url = try directory().appendingPathComponent("input.mobi")
         try data.write(to: url)
@@ -42,7 +44,7 @@ final class LocalKindleLibraryTests: XCTestCase {
     }
 
     func testPersistedKindleCanReopenAndReadWhenOnlyDerivedArchiveIsMissing() throws {
-        let source = try input(mobi()), root = try directory()
+        let source = try input(comicMobi()), root = try directory()
         let derived = root.appendingPathComponent("derived.epub")
         _ = try KindlePublicationAdapter.convert(source: source, to: derived)
         let library = try LocalLibrary(directory: root.appendingPathComponent("library"))
@@ -60,36 +62,28 @@ final class LocalKindleLibraryTests: XCTestCase {
         XCTAssertEqual(try reopened.epubResource(bookID: book.id, path: path, maximumBytes: 8 * 1024 * 1024), before)
     }
 
-    func testImportPreservesOwnedOriginalMetadataAndTextHistoryAcrossRecovery() async throws {
-        let bytes = mobi(), source = try input(bytes), library = try LocalLibrary(directory: directory())
-        let book = try library.importKindle(title: " 小说 ", source: source, format: .mobi) { _ in true }
-        XCTAssertEqual(book.kindleFormat, .mobi); XCTAssertEqual(book.title, "小说"); XCTAssertNil(book.pdf)
+    func testImportPreservesComicOriginalMetadataAndImageHistoryAcrossRecovery() async throws {
+        let bytes = comicMobi(), source = try input(bytes), library = try LocalLibrary(directory: directory())
+        let book = try library.importKindle(title: " 漫画 ", source: source, format: .mobi) { try Data(contentsOf: $0) == self.png }
+        XCTAssertEqual(book.kindleFormat, .mobi); XCTAssertEqual(book.title, "漫画")
+        XCTAssertEqual(book.fingerprint, try ContentFingerprint.file(source))
         let folder = library.directory.appendingPathComponent(book.id)
-        XCTAssertEqual(Set(try FileManager.default.contentsOfDirectory(atPath: folder.path)), ["source.kindle", "content.epub", "book.json"])
+        XCTAssertEqual(Set(try FileManager.default.contentsOfDirectory(atPath: folder.path)), ["source.kindle", "content.epub", "cover.bin", "book.json"])
         XCTAssertEqual(try Data(contentsOf: folder.appendingPathComponent("source.kindle")), bytes)
         try FileManager.default.removeItem(at: source)
         let reopened = try LocalLibrary(directory: library.directory), local = LocalComicSource(library: reopened)
-        XCTAssertEqual(try reopened.book(id: book.id), book)
         let chapters = try await local.chapters(comicId: book.id)
-        XCTAssertEqual(chapters.map(\.title), ["第一章", "第二章"])
-        let detail = try await local.detail(comicId: book.id)
-        XCTAssertEqual(detail.status, "MOBI")
-        let path = try XCTUnwrap(book.epub?.spine[1].fullZipPath)
-        let before = try reopened.epubResource(bookID: book.id, path: path, maximumBytes: 8 * 1024 * 1024)
-        XCTAssertTrue(String(decoding: before, as: UTF8.self).contains("小说正文乙"))
-        let historyDirectory = try directory(), history = try LibraryStore(directory: historyDirectory)
-        let summary = try reopened.summary(for: book)
-        let position = TextLocator(bookID: book.id, chapterIndex: 1, spineIndex: 1, resourceHref: path, anchorID: "p1", scrollPercentage: 0.6)
-        try history.saveTextReading(summary, chapter: chapters[1], chapterIndex: 1, locator: position, now: 12)
-        let manifest = try Data(contentsOf: folder.appendingPathComponent("book.json"))
-        let saved = try Data(contentsOf: historyDirectory.appendingPathComponent("library.json"))
+        let path = try XCTUnwrap(book.epub?.spine.first?.fullZipPath), before = try reopened.epubResource(bookID: book.id, path: path, maximumBytes: 10000)
+        let historyDirectory = try directory(), history = try LibraryStore(directory: historyDirectory), summary = try reopened.summary(for: book)
+        let position = ReaderPosition(imageIndex: 2, offset: 0.4)
+        try history.saveReading(summary, chapter: chapters[0], chapterIndex: 0, position: position, now: 12)
+        let metadata = try Data(contentsOf: folder.appendingPathComponent("book.json")), saved = try Data(contentsOf: historyDirectory.appendingPathComponent("library.json"))
         try FileManager.default.removeItem(at: folder.appendingPathComponent("content.epub"))
-        XCTAssertEqual(try reopened.epubResource(bookID: book.id, path: path, maximumBytes: 8 * 1024 * 1024), before)
-        XCTAssertEqual(try Data(contentsOf: folder.appendingPathComponent("book.json")), manifest)
+        XCTAssertEqual(try reopened.epubResource(bookID: book.id, path: path, maximumBytes: 10000), before)
+        XCTAssertEqual(try Data(contentsOf: folder.appendingPathComponent("book.json")), metadata)
         XCTAssertEqual(try Data(contentsOf: historyDirectory.appendingPathComponent("library.json")), saved)
-        XCTAssertEqual(try LibraryStore(directory: historyDirectory).textPosition(for: summary, chapterID: chapters[1].chapterId), position)
+        XCTAssertEqual(try LibraryStore(directory: historyDirectory).position(for: summary, chapterID: chapters[0].chapterId), position)
         XCTAssertEqual(try reopened.book(id: book.id), book)
-        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: library.directory.path), [book.id])
     }
 
     func testComicAndMixedKindleReadActualImageBytesAndExtensionOnlyLabels() async throws {
@@ -107,15 +101,16 @@ final class LocalKindleLibraryTests: XCTestCase {
             XCTAssertEqual(try Data(contentsOf: XCTUnwrap(URL(string: library.summary(for: book).coverUrl))), png)
         }
         let library = try LocalLibrary(directory: directory())
-        let book = try library.importKindle(title: "图文", source: input(mobi(body: "<p>图文正文</p><img recindex='1'/><img recindex='2'/>", images: [png, png])), format: .mobi) { _ in true }
-        XCTAssertFalse(try XCTUnwrap(book.epub).isPurePictureEpub)
-        let path = try XCTUnwrap(book.epub?.manifest.first(where: { $0.mediaType == "image/png" })?.href)
-        XCTAssertEqual(try library.epubResource(bookID: book.id, path: path, maximumBytes: 1000), png)
+        let bytes = mobi(body: "<p>图文正文</p><img recindex='1'/><img recindex='2'/>", images: [png, png]), input = try input(bytes)
+        XCTAssertThrowsError(try library.importKindle(title: "图文", source: input, format: .mobi) { _ in true }) {
+            XCTAssertEqual($0 as? LocalLibraryError, .unsupportedTextContent)
+        }
+        XCTAssertTrue(try library.books().isEmpty); XCTAssertEqual(try Data(contentsOf: input), bytes)
     }
 
     func testUnsupportedDamagedAndUnreadableImagesNeverPublishAndKeepOriginal() throws {
         let library = try LocalLibrary(directory: directory())
-        let old = try library.importKindle(title: "保留", source: input(mobi()), format: .mobi) { _ in true }
+        let old = try library.importKindle(title: "保留", source: input(comicMobi()), format: .mobi) { _ in true }
         for (bytes, reason) in [(mobi(drm: 2), "DRM"), (mobi(version: 8), "KF8"), (Data([1, 2, 3]), "")] {
             let source = try input(bytes)
             XCTAssertThrowsError(try library.importKindle(title: "失败", source: source, format: .azw3) { _ in true }) {
@@ -134,7 +129,7 @@ final class LocalKindleLibraryTests: XCTestCase {
         let old = try JSONDecoder().decode(LocalBook.self, from: Data("{\"id\":\"\(id)\",\"title\":\"旧书\",\"createdAt\":1,\"pages\":[\"0.jpg\"]}".utf8))
         XCTAssertNil(old.kindleFormat)
         let root = try directory(), epub = root.appendingPathComponent("book.epub")
-        _ = try KindlePublicationAdapter.convert(source: input(mobi()), to: epub)
+        _ = try KindlePublicationAdapter.convert(source: input(comicMobi()), to: epub)
         let library = try LocalLibrary(directory: root.appendingPathComponent("library"))
         let book = try library.importEpub(title: "EPUB", archive: epub) { _ in true }
         XCTAssertNil(book.kindleFormat)
@@ -146,14 +141,14 @@ final class LocalKindleLibraryTests: XCTestCase {
     func testMissingSymlinkOriginalAndDerivedMismatchRefuseRecovery() throws {
         for mutation in ["missing", "symlink", "dangling", "changed", "derived-symlink", "corrupt"] {
             let library = try LocalLibrary(directory: directory())
-            let book = try library.importKindle(title: "校验", source: input(mobi()), format: .mobi) { _ in true }
+            let book = try library.importKindle(title: "校验", source: input(comicMobi()), format: .mobi) { _ in true }
             let folder = library.directory.appendingPathComponent(book.id), source = folder.appendingPathComponent("source.kindle"), derived = folder.appendingPathComponent("content.epub")
             try FileManager.default.removeItem(at: derived)
             switch mutation {
             case "missing": try FileManager.default.removeItem(at: source)
             case "symlink", "dangling":
                 try FileManager.default.removeItem(at: source)
-                let target = mutation == "symlink" ? try input(mobi()) : folder.appendingPathComponent("missing")
+                let target = mutation == "symlink" ? try input(comicMobi()) : folder.appendingPathComponent("missing")
                 try FileManager.default.createSymbolicLink(at: source, withDestinationURL: target)
             case "changed": try mobi(body: "<h1>另一章</h1><p>另一书</p>").write(to: source)
             case "derived-symlink": try FileManager.default.createSymbolicLink(at: derived, withDestinationURL: folder.appendingPathComponent("missing"))
@@ -189,7 +184,9 @@ final class LocalKindleLibraryTests: XCTestCase {
 
     private func recoveringBook() throws -> (LocalLibrary, LocalBook, String) {
         let library = try LocalLibrary(directory: directory())
-        let book = try library.importKindle(title: "真实长篇", source: input(mobi(body: "<h1>长篇</h1><p>" + String(repeating: "正文", count: 500_000) + "</p>")), format: .mobi) { _ in true }
+        let source = try input(mobi(body: "<h1>长篇</h1><p>" + String(repeating: "正文", count: 500_000) + "</p>")), derived = try directory().appendingPathComponent("old.epub")
+        _ = try KindlePublicationAdapter.convert(source: source, to: derived, requireComic: false)
+        let book = try LegacyEpubFixture.persist(library: library, archive: derived, title: "旧文字原包", kindleSource: source)
         try FileManager.default.removeItem(at: library.directory.appendingPathComponent(book.id).appendingPathComponent("content.epub"))
         return (library, book, try XCTUnwrap(book.epub?.spine.first?.fullZipPath))
     }
@@ -235,7 +232,7 @@ final class LocalKindleLibraryTests: XCTestCase {
             let (library, book, path) = try recoveringBook()
             let original = library.directory.appendingPathComponent(book.id).appendingPathComponent("source.kindle")
             let candidate = try directory().appendingPathComponent("winner.epub")
-            _ = try KindlePublicationAdapter.convert(source: winner == "matching" ? original : input(mobi()), to: candidate)
+            _ = try KindlePublicationAdapter.convert(source: winner == "matching" ? original : input(comicMobi()), to: candidate, requireComic: false)
             let worker = Task.detached { try library.epubResource(bookID: book.id, path: path, maximumBytes: 8 * 1024 * 1024) }
             try await awaitScratch(library)
             let target = library.directory.appendingPathComponent(book.id).appendingPathComponent("content.epub")
@@ -296,7 +293,7 @@ final class LocalKindleLibraryTests: XCTestCase {
     func testFinalPublishBoundaryRejectsReplacedSymlinkMovedAndDeletedDirectoriesWithoutWritingElsewhere() throws {
         for change in ["replacement", "external-symlink", "moved", "deleted"] {
             let library = try LocalLibrary(directory: directory())
-            let book = try library.importKindle(title: "发布边界", source: input(mobi()), format: .mobi) { _ in true }
+            let book = try library.importKindle(title: "发布边界", source: input(comicMobi()), format: .mobi) { _ in true }
             let folder = library.directory.appendingPathComponent(book.id)
             try FileManager.default.removeItem(at: folder.appendingPathComponent("content.epub"))
             let parked = try directory().appendingPathComponent("original-book")
@@ -329,7 +326,7 @@ final class LocalKindleLibraryTests: XCTestCase {
     func testFinalPublishBoundaryPreservesConcurrentWinnerOnSuccessFailureAndCancellation() async throws {
         for mode in ["matching", "invalid", "cancelled"] {
             let library = try LocalLibrary(directory: directory())
-            let book = try library.importKindle(title: "发布赢家", source: input(mobi()), format: .mobi) { _ in true }
+            let book = try library.importKindle(title: "发布赢家", source: input(comicMobi()), format: .mobi) { _ in true }
             let folder = library.directory.appendingPathComponent(book.id), target = folder.appendingPathComponent("content.epub")
             let winner = mode == "invalid" ? Data([1, 2, 3]) : try Data(contentsOf: target)
             let original = try Data(contentsOf: folder.appendingPathComponent("source.kindle"))

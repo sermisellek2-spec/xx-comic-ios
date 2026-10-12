@@ -69,13 +69,6 @@ for action in root.get('actions', []):
                 target = output / 'visual-matrix' / (name + '.png')
             elif re.fullmatch(r'provenance-(iphone|ipad)_(portrait|landscape)_(light|dark)_[A-Za-z0-9_]+', name) and item.get('uniformTypeIdentifier') == 'public.json':
                 target = output / 'visual-provenance' / (name.removeprefix('provenance-') + '.json')
-            elif identifier.startswith('EpubReadingUITests/testTextSettingsPanelKeepsEveryActionReachableAcrossThemesAndOrientations') and re.fullmatch(r'text-settings-(light|dark)-(portrait|landscape)', name) and item.get('uniformTypeIdentifier') == 'public.png':
-                target = output / 'text-settings' / (device_slug + '-' + name + '.png')
-            elif identifier.startswith('EpubReadingUITests/testTextSettingsPanelKeepsEveryActionReachableAcrossThemesAndOrientations') and re.fullmatch(r'provenance-text-settings-(light|dark)-(portrait|landscape)', name) and item.get('uniformTypeIdentifier') == 'public.json':
-                target = output / 'text-settings' / (device_slug + '-' + name.removeprefix('provenance-') + '.json')
-            elif name in ('real-input-384x384', 'coreml-output-768x768', 'reader-ai-metrics'):
-                suffix = '.json' if name == 'reader-ai-metrics' else '.png'
-                target = output / 'reader-enhancement' / (device_slug + '-' + name + suffix)
             elif failed and item.get('uniformTypeIdentifier') in ('public.png', 'public.jpeg'):
                 # Preserve actual failure screenshots, rather than guessing a
                 # UI state from the assertion line. Do not export log/archive

@@ -51,6 +51,7 @@ public actor LocalComicSource: ComicSource {
         let parts = url.split(separator: "/", omittingEmptySubsequences: false)
         guard parts.count == 1 || parts.count == 2 else { throw LocalLibraryError.invalidBook }
         let book = try library.book(id: String(parts[0]))
+        try library.requireComicEpub(book)
         let allURLs = try library.pageURLs(for: book)
         if parts.count == 2 {
             guard let chapter = book.chapters?.first(where: { $0.id == parts[1] }) else { throw LocalLibraryError.invalidBook }
@@ -68,7 +69,7 @@ public actor LocalComicSource: ComicSource {
         guard let publication = book.epub else { return }
         let selected = Set(pages)
         for (index, token) in book.pages.enumerated() where selected.contains(token) {
-            guard publication.spine[index].resolvedImageEntry != nil else { throw LocalLibraryError.requiresTextReader }
+            guard publication.spine[index].resolvedImageEntry != nil else { throw LocalLibraryError.unsupportedTextContent }
         }
     }
     public func filterGroups() async throws -> [SourceFilterGroup] { [] }

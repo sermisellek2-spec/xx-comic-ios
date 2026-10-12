@@ -1,0 +1,98 @@
+[
+  {
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+    "status": "Failure",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SettingsParityUITests/testCurrentVersionAndCancelledCheckAllowAnotherRealHTTPRequest()",
+    "status": "Success",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SettingsParityUITests/testHistoryClearCancellationAndConfirmationPreserveFavoritesAcrossRelaunch()",
+    "status": "Failure",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SettingsParityUITests/testLaunchShelfPersistsAndAboutCountsOnlyTheCurrent51Sources()",
+    "status": "Success",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SettingsParityUITests/testSettingsUsesCurrentAndroidSectionsAndThemeDrawer()",
+    "status": "Success",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SettingsParityUITests/testStatisticsCancelDisableRelaunchAndEnableUseTheRealSavedSetting()",
+    "status": "Success",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SettingsParityUITests/testThemeChoicePersistsAcrossRestart()",
+    "status": "Success",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SettingsParityUITests/testUpdateFailureRetryShowsNewVersionAndBrowserInstallationHint()",
+    "status": "Success",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+    "status": "Success",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SourceDrawerTests/testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs()",
+    "status": "Success",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SourceDrawerTests/testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm()",
+    "status": "Success",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+    "status": "Failure",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+    "status": "Failure",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+    "status": "Failure",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+    "status": "Failure",
+    "revision": "9991044d89c3d1ae060c3577595ce96943e96ffc",
+    "device": "iPad Pro 11-inch (M4)"
+  }
+]

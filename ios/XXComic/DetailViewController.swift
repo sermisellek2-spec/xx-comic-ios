@@ -653,31 +653,20 @@ final class DetailViewController: UIViewController {
                 do {
                     let target = try await library.readingTarget(seriesId: id, chapterId: targetChapter.chapterId)
                     guard let self, self.readID == token, !Task.isCancelled else { return }
-                    if target.kind == .text {
-                        let book = try library.book(id: target.volumeId)
-                        let complete = try await self.source.chapters(comicId: id)
-                        try Task.checkCancellation()
-                        guard self.readID == token, !complete.isEmpty else { return }
-                        let savedIndex = self.environment.library.entry(for: self.comic)?.reading?.chapterIndex ?? 0
-                        let realIndex = complete.firstIndex { $0.chapterId == targetChapter.chapterId } ?? max(0, min(complete.count - 1, savedIndex))
-                        let savedLocator = self.environment.library.textPosition(for: self.comic, chapterID: complete[realIndex].chapterId)
-                        let volLocator = savedLocator?.toVolumeLocator(volumeId: target.volumeId, volumeChapterIndex: target.volumeChapterIndex)
-                        let session = try EpubTextSession(book: book, chapterIndex: target.volumeChapterIndex, locator: volLocator)
-                        self.navigationController?.pushViewController(EpubTextReaderViewController(comic: self.comic, chapters: complete, session: session, locator: volLocator, environment: self.environment), animated: true)
-                    } else {
-                        let complete = incomplete ? try await self.source.chapters(comicId: id) : chapters
-                        try Task.checkCancellation()
-                        guard self.readID == token, !complete.isEmpty else { return }
-                        let realIndex = complete.firstIndex { $0.chapterId == targetChapter.chapterId } ?? target.globalChapterIndex
-                        self.navigationController?.pushViewController(ReaderViewController(comic: self.comic, chapters: complete, chapterIndex: realIndex, directoryIncomplete: false, environment: self.environment), animated: true)
-                    }
+                    let complete = incomplete ? try await self.source.chapters(comicId: id) : chapters
+                    try Task.checkCancellation()
+                    guard self.readID == token, !complete.isEmpty else { return }
+                    let realIndex = complete.firstIndex { $0.chapterId == targetChapter.chapterId } ?? target.globalChapterIndex
+                    self.navigationController?.pushViewController(ReaderViewController(comic: self.comic, chapters: complete, chapterIndex: realIndex, directoryIncomplete: false, environment: self.environment), animated: true)
                     self.readTask = nil; self.read.isEnabled = true; self.updateButtons()
                 } catch {
                     guard let self, self.readID == token, !Task.isCancelled else { return }
                     self.readTask = nil; self.read.isEnabled = true
                     let alert = UIAlertController(title: error is CancellationError ? "已取消打开" : "无法打开书籍", message: error.localizedDescription, preferredStyle: .alert)
                     alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-                    alert.addAction(UIAlertAction(title: "重试", style: .default) { [weak self] _ in self?.openReader(chapters: chapters, index: index, incomplete: incomplete) })
+                    if (error as? LocalLibraryError) != .unsupportedTextContent {
+                        alert.addAction(UIAlertAction(title: "重试", style: .default) { [weak self] _ in self?.openReader(chapters: chapters, index: index, incomplete: incomplete) })
+                    }
                     self.present(alert, animated: true)
                 }
             }

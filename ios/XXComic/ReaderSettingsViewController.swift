@@ -76,10 +76,10 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         NSLayoutConstraint.activate([
             handle.topAnchor.constraint(equalTo: view.topAnchor, constant: 12), handle.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             handle.widthAnchor.constraint(equalToConstant: 32), handle.heightAnchor.constraint(equalToConstant: 4),
-            header.topAnchor.constraint(equalTo: handle.bottomAnchor, constant: 4), header.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 18),
-            header.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -18),
-            scroll.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 8), scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 18),
-            scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -18), scroll.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            header.topAnchor.constraint(equalTo: handle.bottomAnchor, constant: 4), header.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 18),
+            header.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -18),
+            scroll.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 8), scroll.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 18),
+            scroll.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -18), scroll.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             content.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor), content.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
             content.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor), content.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
             content.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor)
@@ -89,7 +89,8 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         guard !userResized else { return }
-        let size = content.systemLayoutSizeFitting(CGSize(width: max(1, view.bounds.width - 36), height: 0), withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
+        let contentWidth = view.bounds.width - view.safeAreaInsets.left - view.safeAreaInsets.right - 36
+        let size = content.systemLayoutSizeFitting(CGSize(width: max(1, contentWidth), height: 0), withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
         let windowHeight = presentationController?.containerView?.bounds.height ?? view.window?.bounds.height ?? view.bounds.height
         // The Android sheet caps its scrolling content at 65% of the window,
         // while the handle, heading and bottom padding remain outside it.
@@ -121,6 +122,21 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
     }
     private func switchRow(title: String, subtitle: String?, identifier: String, isOn: Bool) -> (UIView, UISwitch) {
         let toggle = UISwitch(); toggle.isOn = isOn; toggle.onTintColor = ReaderSettingColors.accent
+        // Match the compact Android switch while the whole 44pt row remains
+        // tappable. Scaling inside a fixed host also keeps the trailing edge
+        // aligned; reserving the unscaled 51pt width would leave a visible gap.
+        toggle.transform = CGAffineTransform(scaleX: 0.67, y: 0.67)
+        let switchHost = UIView(); switchHost.translatesAutoresizingMaskIntoConstraints = false
+        toggle.translatesAutoresizingMaskIntoConstraints = false; switchHost.addSubview(toggle)
+        NSLayoutConstraint.activate([
+            switchHost.widthAnchor.constraint(equalToConstant: 34), switchHost.heightAnchor.constraint(equalToConstant: 24),
+            toggle.centerXAnchor.constraint(equalTo: switchHost.centerXAnchor), toggle.centerYAnchor.constraint(equalTo: switchHost.centerYAnchor)
+        ])
+        toggle.thumbTintColor = isOn ? .white : ReaderSettingColors.switchThumbOff
+        toggle.addAction(UIAction { [weak toggle] _ in
+            guard let toggle else { return }
+            toggle.thumbTintColor = toggle.isOn ? .white : ReaderSettingColors.switchThumbOff
+        }, for: .valueChanged)
         let row = ReaderSettingSwitchRow(toggle: toggle)
         let label = UILabel(); label.text = title; label.textColor = ReaderSettingColors.text; label.font = .systemFont(ofSize: 14); label.numberOfLines = 0
         let copy = UIStackView(arrangedSubviews: [label]); copy.axis = .vertical; copy.spacing = 2
@@ -134,10 +150,10 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         row.addAction(UIAction { [weak toggle] _ in
             guard let toggle else { return }; toggle.setOn(!toggle.isOn, animated: true); toggle.sendActions(for: .valueChanged)
         }, for: .touchUpInside)
-        let stack = UIStackView(arrangedSubviews: [copy, toggle]); stack.spacing = 12; stack.alignment = .center
+        let stack = UIStackView(arrangedSubviews: [copy, switchHost]); stack.spacing = 12; stack.alignment = .center
         stack.isUserInteractionEnabled = true; stack.translatesAutoresizingMaskIntoConstraints = false; row.addSubview(stack)
         row.accessibilityElements = [toggle]
-        let verticalPadding: CGFloat = subtitle == nil ? 4 : 10
+        let verticalPadding: CGFloat = 10
         let top = stack.topAnchor.constraint(equalTo: row.topAnchor, constant: verticalPadding), bottom = stack.bottomAnchor.constraint(equalTo: row.bottomAnchor, constant: -verticalPadding)
         let minimumHeight = row.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
         for constraint in [top, bottom, minimumHeight] { constraint.priority = .init(999) }
@@ -226,6 +242,7 @@ private enum ReaderSettingColors {
     static let panel = color(0xFFFFFF, 0x1C2128), text = color(0x1F2328, 0xE6EDF3)
     static let secondary = color(0x656D76, 0x8B949E), border = color(0xD0D7DE, 0x444C56)
     static let accent = color(0x0969DA, 0x58A6FF), unselected = color(0xF6F8FA, 0x22272E)
+    static let switchThumbOff = color(0x8C959F, 0xD0D7DE)
     static let selectedIcon = color(0x0969DA, 0x388BFD), selectedText = color(0x0969DA, 0xFFFFFF)
     static let selectedBorder = color(0x0969DA, 0x2E79E6), cardBorder = color(0xD0D7DE, 0x373E47)
     static let selected = UIColor { traits in

@@ -6,6 +6,8 @@ import ZIPFoundation
 import ImageIO
 #endif
 
+// Format and recovery tests explicitly exercise legacy conversion. New imports use
+// the default comic-only policy, verified below with real Kindle records.
 final class KindlePublicationTests: XCTestCase {
     private let png = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=")!
     // A real 1x1 JPEG, exported with Windows System.Drawing (not a magic-only placeholder).
@@ -66,10 +68,29 @@ final class KindlePublicationTests: XCTestCase {
         XCTAssertFalse(try FileManager.default.contentsOfDirectory(atPath: source.deletingLastPathComponent().path).contains { $0.hasPrefix(".kindle-") }, file: file, line: line)
     }
 
+    func testDefaultConversionRejectsNovelAndMixedContentWithoutChangingOriginal() throws {
+        for body in ["<p>小说正文</p>", "<p>图文正文</p><img recindex=1/>"] {
+            let original = fixture(text: [Data(body.utf8)], images: [png])
+            let (source, target) = try files(original)
+            XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target)) {
+                XCTAssertEqual($0 as? LocalLibraryError, .unsupportedTextContent)
+            }
+            try assertClean(source, target, original)
+        }
+    }
+    func testDefaultConversionAcceptsImageComicAndPreservesActualImageBytes() throws {
+        let original = fixture(text: [Data("<img recindex=1/>".utf8)], images: [png, jpeg, png])
+        let (source, target) = try files(original)
+        let publication = try KindlePublicationAdapter.convert(source: source, to: target)
+        XCTAssertTrue(publication.isPurePictureEpub)
+        XCTAssertEqual(publication.spine.count, 3)
+        XCTAssertEqual(try EpubArchive(url: target).read("OEBPS/images/img_1.png"), png)
+        XCTAssertEqual(try Data(contentsOf: source), original)
+    }
     func testTwoChapterNovelMetadataAndActualStoredMimetype() throws {
         let original = fixture(text: [Data("<h1>第一章</h1><p>第一章正文</p><mbp:pagebreak/><h2>第二章</h2><p>第二章正文</p>".utf8)])
         let (source, target) = try files(original)
-        let publication = try KindlePublicationAdapter.convert(source: source, to: target)
+        let publication = try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)
         XCTAssertEqual(publication, try EpubParser.parse(archive: target))
         XCTAssertEqual(publication.spine.count, 2)
         XCTAssertEqual(try publication.chapterRanges().map(\.title), ["第一章", "第二章"])
@@ -85,7 +106,7 @@ final class KindlePublicationTests: XCTestCase {
     func testComicLayoutWhitespaceImageBytesIndexHolesAndExplicitCover() throws {
         let whitespace = String(repeating: " \t\n\r\u{000B}\u{000C}\u{00A0}\u{3000}&nbsp;&#0160;&#x00A0;", count: 100)
         let (source, target) = try files(fixture(text: [Data(("<img recindex=1/>" + whitespace).utf8)], images: [jpeg, Data("BOUNDARY".utf8), png, jpeg], cover: 2))
-        let publication = try KindlePublicationAdapter.convert(source: source, to: target)
+        let publication = try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)
         XCTAssertTrue(publication.isPurePictureEpub); XCTAssertEqual(publication.spine.count, 3)
         XCTAssertEqual(try publication.chapterRanges().count, 1)
         XCTAssertEqual(publication.navItems.map(\.title), ["Page 1", "Page 2", "Page 3"])
@@ -101,7 +122,7 @@ final class KindlePublicationTests: XCTestCase {
     func testMixedTextMapsRecindexDropsMissingImageAndFallsBackCover() throws {
         let body = "<h2>A & B</h2><p>正文</p><img recindex='1'/><image recindex=3/><img recindex=2/><h2>不另分章</h2>"
         let (source, target) = try files(fixture(text: [Data(body.utf8)], images: [png, Data("EOF!".utf8), jpeg], cover: 1))
-        let publication = try KindlePublicationAdapter.convert(source: source, to: target)
+        let publication = try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)
         XCTAssertEqual(publication.spine.count, 1); XCTAssertEqual(publication.navItems.first?.title, "A & B")
         let chapter = try html(publication, target)
         XCTAssertTrue(chapter.contains("正文")); XCTAssertTrue(chapter.contains("不另分章"))
@@ -113,7 +134,7 @@ final class KindlePublicationTests: XCTestCase {
     func testWindows1252PalmDocAndMobiText() throws {
         for palm in [false, true] {
             let (source, target) = try files(fixture(text: [Data([0x93, 67, 97, 102, 0xE9, 0x94, 32, 0x80])], encoding: 1252, palm: palm))
-            XCTAssertTrue(try html(KindlePublicationAdapter.convert(source: source, to: target), target).contains("“Café” €"))
+            XCTAssertTrue(try html(KindlePublicationAdapter.convert(source: source, to: target, requireComic: false), target).contains("“Café” €"))
         }
     }
     func testCompressionBackreferenceSpansRecordsAndDeclaredLengthDropsPadding() throws {
@@ -122,27 +143,27 @@ final class KindlePublicationTests: XCTestCase {
             ([Data([65, 66, 67, 0x80])], 3, "ABC")
         ] {
             let (source, target) = try files(fixture(text: records, compression: 2, declared: length))
-            XCTAssertTrue(try html(KindlePublicationAdapter.convert(source: source, to: target), target).contains(expected))
+            XCTAssertTrue(try html(KindlePublicationAdapter.convert(source: source, to: target, requireComic: false), target).contains(expected))
         }
         let (source, target) = try files(fixture(text: [Data("ABCpadding".utf8)], declared: 3))
-        let result = try html(KindlePublicationAdapter.convert(source: source, to: target), target)
+        let result = try html(KindlePublicationAdapter.convert(source: source, to: target, requireComic: false), target)
         XCTAssertTrue(result.contains("ABC")); XCTAssertFalse(result.contains("padding"))
     }
     func testComboStopsBeforeBoundary() throws {
         let (source, target) = try files(fixture(text: [Data("Old text".utf8), Data("BOUNDARY".utf8), Data("New KF8".utf8)], boundary: 2, version: 8))
-        let result = try html(KindlePublicationAdapter.convert(source: source, to: target), target)
+        let result = try html(KindlePublicationAdapter.convert(source: source, to: target, requireComic: false), target)
         XCTAssertTrue(result.contains("Old text")); XCTAssertFalse(result.contains("BOUNDARY")); XCTAssertFalse(result.contains("New KF8"))
     }
     func testTextPreservesSupplementaryUnicodeAcrossCopyChunks() throws {
         let body = String(repeating: "a", count: 32767) + "😀结尾"
         let (source, target) = try files(fixture(text: [Data(("<img recindex=1/>" + body).utf8)], images: [png]))
-        let chapter = try html(KindlePublicationAdapter.convert(source: source, to: target), target)
+        let chapter = try html(KindlePublicationAdapter.convert(source: source, to: target, requireComic: false), target)
         XCTAssertTrue(chapter.contains(body)); XCTAssertFalse(chapter.contains("�"))
     }
     func testHeadingMustBeSameLineAndLessThanFiftyUTF16Units() throws {
         let body = "<h1>line\nbreak</h1><pagebreak/><h2>\(String(repeating: "😀", count: 25))</h2><pagebreak/><h3><b>名称</b></h3>"
         let (source, target) = try files(fixture(text: [Data(body.utf8)]))
-        let publication = try KindlePublicationAdapter.convert(source: source, to: target)
+        let publication = try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)
         XCTAssertEqual(publication.navItems.map(\.title), ["第 1 章", "第 2 章", "名称"])
     }
     func testEmptyUnsupportedInvalidEncodingAndTruncatedTextFailCleanly() throws {
@@ -151,7 +172,7 @@ final class KindlePublicationTests: XCTestCase {
                       fixture(text: [Data("x".utf8)], encryption: 2), fixture(text: [Data("x".utf8)], version: 8),
                       fixture(text: [Data("x".utf8)], count: 3)] {
             let (source, target) = try files(bytes)
-            XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target))
+            XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false))
             try assertClean(source, target, bytes)
         }
     }
@@ -159,32 +180,32 @@ final class KindlePublicationTests: XCTestCase {
         let original = fixture(text: [Data("正文".utf8)])
         let (source, target) = try files(original), existing = Data("keep me".utf8)
         try existing.write(to: target)
-        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target))
-        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: source))
+        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false))
+        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: source, requireComic: false))
         XCTAssertEqual(try Data(contentsOf: target), existing); XCTAssertEqual(try Data(contentsOf: source), original)
     }
     func testReconversionProducesEqualPublication() throws {
         let (source, first) = try files(fixture(text: [Data("<h2>章节</h2>文字<img recindex=1/>".utf8)], images: [jpeg]))
         let second = first.deletingLastPathComponent().appendingPathComponent("second.epub")
-        XCTAssertEqual(try KindlePublicationAdapter.convert(source: source, to: first),
-                       try KindlePublicationAdapter.convert(source: source, to: second))
+        XCTAssertEqual(try KindlePublicationAdapter.convert(source: source, to: first, requireComic: false),
+                       try KindlePublicationAdapter.convert(source: source, to: second, requireComic: false))
     }
     func testComicThresholdCountsUTF16RatherThanGraphemes() throws {
         let (source, target) = try files(fixture(text: [Data(String(repeating: "😀", count: 150).utf8)], images: [png, jpeg, png]))
-        let publication = try KindlePublicationAdapter.convert(source: source, to: target)
+        let publication = try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)
         XCTAssertEqual(publication.spine.count, 1); XCTAssertFalse(publication.isPurePictureEpub)
     }
     func testZeroAndSignedSentinelDeclaredLengthsUseAvailableText() throws {
         for declared: UInt32 in [0, UInt32(Int32.max), .max] {
             let (source, target) = try files(fixture(text: [Data("ABC".utf8)], declared: declared))
-            XCTAssertTrue(try html(KindlePublicationAdapter.convert(source: source, to: target), target).contains("ABC"))
+            XCTAssertTrue(try html(KindlePublicationAdapter.convert(source: source, to: target, requireComic: false), target).contains("ABC"))
         }
     }
     func testMaximumBodyPlusWrapperCannotExceedReaderCapacity() throws {
         let block = Data(repeating: 65, count: 4 * 1024 * 1024)
         let bytes = fixture(text: [block, block, Data("TRAILER".utf8)], declared: 0)
         let (source, target) = try files(bytes)
-        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target)) {
+        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)) {
             XCTAssertTrue($0.localizedDescription.contains("正文资源超过 8 MiB"))
         }
         try assertClean(source, target, bytes)
@@ -194,7 +215,7 @@ final class KindlePublicationTests: XCTestCase {
         let marker = Data("<pagebreak/>".utf8)
         let second = marker + Data(repeating: 66, count: 4 * 1024 * 1024 - marker.count)
         let (source, target) = try files(fixture(text: [first, second, Data("TRAILER".utf8)], declared: 0))
-        let publication = try KindlePublicationAdapter.convert(source: source, to: target)
+        let publication = try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)
         XCTAssertEqual(publication.spine.count, 2)
         let archive = try EpubArchive(url: target)
         let one = try archive.read(publication.spine[0].fullZipPath), two = try archive.read(publication.spine[1].fullZipPath)
@@ -206,7 +227,7 @@ final class KindlePublicationTests: XCTestCase {
         // Only classification is under test here; JPEG/PNG are real decode fixtures above.
         let images = [Data("GIF89a".utf8), Data("RIFFxxxxWEBP".utf8), Data("BMxx".utf8)]
         let (source, target) = try files(fixture(text: [], images: images))
-        let publication = try KindlePublicationAdapter.convert(source: source, to: target)
+        let publication = try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)
         XCTAssertEqual(publication.spine.count, 3)
         XCTAssertEqual(publication.manifest.filter { $0.mediaType.hasPrefix("image/") }.map(\.mediaType), ["image/gif", "image/webp", "image/bmp"])
     }
@@ -218,7 +239,7 @@ final class KindlePublicationTests: XCTestCase {
         let (source, target) = try files(bytes), handle = try FileHandle(forWritingTo: source)
         let size = UInt64(firstImageOffset + recordCount * recordSize)
         try handle.truncate(atOffset: size); try handle.close()
-        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target)) {
+        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)) {
             XCTAssertTrue($0.localizedDescription.contains("512 MiB"))
         }
         let input = try FileHandle(forReadingFrom: source)
@@ -234,14 +255,14 @@ final class KindlePublicationTests: XCTestCase {
         for bytes in [fixture(text: [hugeText], declared: 1), fixture(text: [Data("x".utf8)], images: [hugeImage]),
                       fixture(text: [Data(hugeText.prefix(8 * 1024 * 1024)), Data(hugeText.prefix(8 * 1024 * 1024)), Data([65])], compression: 2, declared: 1)] {
             let (source, target) = try files(bytes)
-            XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target))
+            XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false))
             try assertClean(source, target, bytes)
         }
     }
     func testManifestBudgetRejectsTooManyChapters() throws {
         let bytes = fixture(text: [Data(String(repeating: "x<pagebreak/>", count: 50_000).utf8)])
         let (source, target) = try files(bytes)
-        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target)) {
+        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)) {
             XCTAssertTrue($0.localizedDescription.contains("manifest"))
         }
         try assertClean(source, target, bytes)
@@ -249,7 +270,7 @@ final class KindlePublicationTests: XCTestCase {
     func testMaliciousHTMLHasBoundedRuntimeAndCleanup() throws {
         let bytes = fixture(text: [Data(String(repeating: "<", count: 300_000).utf8)])
         let (source, target) = try files(bytes), start = ContinuousClock.now
-        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target)) {
+        XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)) {
             XCTAssertTrue($0.localizedDescription.contains("2 秒"))
         }
         XCTAssertLessThan(start.duration(to: .now), .seconds(6))
@@ -258,7 +279,7 @@ final class KindlePublicationTests: XCTestCase {
     func testCancellationDuringHTMLScanningCleansScratch() async throws {
         let bytes = fixture(text: [Data(String(repeating: "<", count: 300_000).utf8)])
         let (source, target) = try files(bytes)
-        let worker = Task.detached { try KindlePublicationAdapter.convert(source: source, to: target) }
+        let worker = Task.detached { try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false) }
         // Wait for the real conversion scratch directory, then cancel its in-flight regex.
         for _ in 0..<100 {
             if try FileManager.default.contentsOfDirectory(atPath: source.deletingLastPathComponent().path).contains(where: { $0.hasPrefix(".kindle-") }) { break }
@@ -273,7 +294,7 @@ final class KindlePublicationTests: XCTestCase {
         let bytes = fixture(text: [Data("正文".utf8)]), (source, target) = try files(bytes)
         let worker = Task.detached {
             withUnsafeCurrentTask { $0?.cancel() }
-            return try KindlePublicationAdapter.convert(source: source, to: target)
+            return try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)
         }
         do { _ = try await worker.value; XCTFail("应取消转换") } catch { XCTAssertTrue(error is CancellationError) }
         try assertClean(source, target, bytes)
@@ -284,7 +305,7 @@ final class KindlePublicationTests: XCTestCase {
         let (source, target) = try files(bytes), parent = source.deletingLastPathComponent()
         let unrelated = parent.appendingPathComponent(".kindle-unrelated")
         try FileManager.default.createDirectory(at: unrelated, withIntermediateDirectories: false)
-        let worker = Task.detached { try KindlePublicationAdapter.convert(source: source, to: target) }
+        let worker = Task.detached { try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false) }
         var sawImage = false
         for _ in 0..<400 {
             let scratch = try FileManager.default.contentsOfDirectory(at: parent, includingPropertiesForKeys: nil).filter { $0.lastPathComponent.hasPrefix(".kindle-") && $0 != unrelated }
@@ -302,7 +323,7 @@ final class KindlePublicationTests: XCTestCase {
         let large = jpeg + Data(repeating: 0, count: 16 * 1024 * 1024 - jpeg.count)
         let bytes = fixture(text: [], images: [large, large, large])
         let (source, target) = try files(bytes), parent = source.deletingLastPathComponent()
-        let worker = Task.detached { try KindlePublicationAdapter.convert(source: source, to: target) }
+        let worker = Task.detached { try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false) }
         var entered = false
         for _ in 0..<400 {
             if try FileManager.default.contentsOfDirectory(atPath: parent.path).contains(where: { $0.hasPrefix(".kindle-") }) { entered = true; break }

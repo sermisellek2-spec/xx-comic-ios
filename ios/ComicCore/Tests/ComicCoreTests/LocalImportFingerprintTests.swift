@@ -38,19 +38,19 @@ final class LocalImportFingerprintTests: XCTestCase {
         return url
     }
 
-    // A minimal real MOBI7 record; SHA256 precomputed independently: 591ec20393d8171f2bffd3c2e80797bb2e4691d7a9db55fbd9f37d873f529e3e
+    // A minimal real MOBI7 record; Comic SHA256 precomputed independently with Python: 25ca18d45f08e29b774ac2f2a57c07cd0377c6deec4844e4d0cfe0fc45ddd81e
     private func kindle(_ directory: URL) throws -> URL {
         func put(_ data: inout Data, _ offset: Int, _ value: UInt32) {
             data.replaceSubrange(offset..<offset + 4, with: [UInt8(truncatingIfNeeded: value >> 24), UInt8(truncatingIfNeeded: value >> 16), UInt8(truncatingIfNeeded: value >> 8), UInt8(truncatingIfNeeded: value)])
         }
-        let text = Data("<p>fingerprint fixture</p>".utf8), url = directory.appendingPathComponent("book.mobi")
+        let text = Data("<img recindex='1'/>".utf8), url = directory.appendingPathComponent("book.mobi")
         var header = Data(repeating: 0, count: 256)
         header[1] = 1; header[9] = 1; put(&header, 4, UInt32(text.count))
         header.replaceSubrange(16..<20, with: Data("MOBI".utf8)); put(&header, 20, 232); put(&header, 24, 2); put(&header, 28, 65001); put(&header, 36, 6)
-        put(&header, 108, .max); put(&header, 168, .max); put(&header, 172, .max)
-        var data = Data(repeating: 0, count: 94)
-        data.replaceSubrange(0..<4, with: Data("Book".utf8)); data.replaceSubrange(60..<68, with: Data("BOOKMOBI".utf8)); data[77] = 2
-        put(&data, 78, 94); put(&data, 86, 350); data += header; data += text
+        put(&header, 108, 2); put(&header, 168, .max); put(&header, 172, .max)
+        var data = Data(repeating: 0, count: 102)
+        data.replaceSubrange(0..<4, with: Data("Book".utf8)); data.replaceSubrange(60..<68, with: Data("BOOKMOBI".utf8)); data[77] = 3
+        put(&data, 78, 102); put(&data, 86, 358); put(&data, 94, UInt32(358 + text.count)); data += header; data += text; data += png
         try data.write(to: url)
         return url
     }
@@ -100,13 +100,13 @@ final class LocalImportFingerprintTests: XCTestCase {
         let epubSource = try epub(root), pdfSource = try image(root, name: "book.pdf", data: Data("PDF storage fixture".utf8)), kindleSource = try kindle(root)
         let ebook = try library.importEpub(title: "epub", archive: epubSource) { try Data(contentsOf: $0) == self.png }
         let pdf = try library.importPdf(title: "pdf", file: pdfSource, inspect: { _ in PdfPublication(pages: [.init(width: 1, height: 1)]) }, renderCover: { _ in nil })
-        let kindle = try library.importKindle(title: "kindle", source: kindleSource, format: .mobi) { _ in false }
+        let kindle = try library.importKindle(title: "kindle", source: kindleSource, format: .mobi) { try Data(contentsOf: $0) == self.png }
         let reopened = try LocalLibrary(directory: library.directory)
         // Fixed independent Node crypto expectations
         let expected: [(LocalBook, LocalImportFormat, String, String)] = [
             (ebook, .epub, "content.epub", "c5b711d9af53f068de79069a33188b0d25d781e26a983d72f7b52c567eb9e981"),
             (pdf, .pdf, "content.pdf", "33e1382aea3ec9c4621ed0c77e29bd2b0df6c5c9de3d557fbc276153458aab4b"),
-            (kindle, .mobi, "source.kindle", "591ec20393d8171f2bffd3c2e80797bb2e4691d7a9db55fbd9f37d873f529e3e")
+            (kindle, .mobi, "source.kindle", "25ca18d45f08e29b774ac2f2a57c07cd0377c6deec4844e4d0cfe0fc45ddd81e")
         ]
         for (book, format, name, expectedHash) in expected {
             let stored = library.directory.appendingPathComponent(book.id).appendingPathComponent(name)
