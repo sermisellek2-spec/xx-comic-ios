@@ -1,0 +1,52 @@
+{
+  "parentRevision": "db4536abb30b99a9586cfe9f8d0b1df479a40e28",
+  "path": "ios/XXComicUITests/ReaderSettingsParityUITests.swift",
+  "sha256": "d4b1c09ce5910bf7aad7a3224af4be6e1985d93f421195f14a533769da82fa98",
+  "syntaxOnly": true,
+  "checks": [
+    {
+      "configuration": "Release",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--mount",
+        "type=bind,source=F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port,target=/work",
+        "-w",
+        "/work",
+        "swift:5.10-jammy",
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "-swift-version",
+        "5",
+        "ios/XXComicUITests/ReaderSettingsParityUITests.swift"
+      ],
+      "exitCode": 0
+    },
+    {
+      "configuration": "DEBUG",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--mount",
+        "type=bind,source=F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port,target=/work",
+        "-w",
+        "/work",
+        "swift:5.10-jammy",
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "-swift-version",
+        "5",
+        "-D",
+        "DEBUG",
+        "ios/XXComicUITests/ReaderSettingsParityUITests.swift"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "appleResult": "not run for the added rotation UI case",
+  "recordedAtUTC": "2026-10-12T08:45:10.323125+00:00"
+}

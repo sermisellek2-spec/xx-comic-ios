@@ -89,6 +89,30 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         page(1, chapter: 2, in: app)
         pages.swipeLeft(); page(2, chapter: 2, in: app)
     }
+    func testMangaRotationPreservesTheLogicalPageAndChapter() {
+        defer { XCUIDevice.shared.orientation = .portrait }
+        XCUIDevice.shared.orientation = .portrait
+        let app = launch()
+        app.buttons["reader.layout.2"].tap(); app.buttons["reader.settings.close"].tap(); page(1, in: app)
+        let pages = app.collectionViews["reader.pages"]
+        pages.swipeRight(); page(2, in: app)
+        pages.swipeRight(); page(3, in: app)
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let landscape = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            let frame = app.windows.firstMatch.frame
+            return frame.width > frame.height
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [landscape], timeout: 5), .completed)
+        page(3, in: app)
+        XCUIDevice.shared.orientation = .portrait
+        let portrait = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            let frame = app.windows.firstMatch.frame
+            return frame.height > frame.width
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [portrait], timeout: 5), .completed)
+        page(3, in: app)
+        pages.swipeRight(); page(4, in: app)
+    }
     func testEnhancementControlsAppearOnlyWhenEnabledAndComparisonReturnsToOriginal() {
         let app = launch()
         let enabled = app.switches["reader.enhancement.enabled"]

@@ -1,2 +1,3 @@
 *.log -text whitespace=cr-at-eol
+manga-rotation-syntax.log -text whitespace=cr-at-eol,-blank-at-eof
 *-original.json -text

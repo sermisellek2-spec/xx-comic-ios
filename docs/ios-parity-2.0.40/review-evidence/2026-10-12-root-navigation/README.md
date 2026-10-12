@@ -15,3 +15,7 @@
 公开UIKit容器关系参考：[Apple容器文档](https://developer.apple.com/documentation/uikit/creating-a-custom-container-view-controller)、[Apple UITabBar文档](https://developer.apple.com/documentation/uikit/uitabbar)。
 
 暂存首次diff检查退出2，原因是自有日志的Windows CRLF行尾；保留日志原字节，只在本证据目录将日志行尾明确标为cr-at-eol，再运行检查，不把首次检查记为通过。
+
+接续增加日漫第3逻辑页横竖屏往返并继续到第4页的实际UI用例，保留原页面像素/章身份断言。仅修改ReaderSettingsParityUITests；Release/DEBUG语法各退出0。该新增项不在db4536a或5e2三次CI输入里，待后续reader-modes实际运行；新计划17阅读UI/设备，configuration-files为51UI/设备。P1曾写两种模式及关联日漫删除的旧描述现已纠正，旧Git版本保留且不作为当前范围。
+
+旋转接续首次暂存diff检查退出2，原日志末尾是空工具输出后的空行；仅该日志明确保留EOF空行，生产源码和文档的空白检查不放宽，原字节不改，随后复检。
