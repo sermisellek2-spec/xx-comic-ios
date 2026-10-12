@@ -1,0 +1,12 @@
+{
+  "coreProof": "2026-10-12-manga-mode/core-full-result.json",
+  "unchanged": true,
+  "files": 266,
+  "actualObserved": {
+    "tests": 922,
+    "skipped": 2,
+    "failures": 0,
+    "seconds": 153.305
+  },
+  "newCoreTestRun": false
+}

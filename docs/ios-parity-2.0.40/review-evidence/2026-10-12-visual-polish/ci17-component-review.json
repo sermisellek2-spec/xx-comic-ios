@@ -1,0 +1,509 @@
+{
+  "recordedAtUTC": "2026-10-12T07:48:28.480785+00:00",
+  "androidRevision": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "iosRevision": "852178e882080920bc32c349a4bbcfe76cb79283",
+  "comparisonSHA256": "610602d96093b2dee685908f33596c684e752fb7a37d5579993a13d7e1c68527",
+  "reviewedPhonePairs": 32,
+  "expectedPairs": 64,
+  "ipadPairsRejected": 32,
+  "visualGatePassed": false,
+  "policy": "当前32手机对照已读取；旧852原图只描述该输入，不证明后续修复通过。组件量测尚未全部完成。iPad窗口尺寸不一致保留拒绝，不拉伸或遮罩应用内容。",
+  "rows": [
+    {
+      "case": "phone_portrait_light",
+      "page": "bookshelf_online",
+      "androidSHA256": "3e2e1b191b54e4bece563e4acfc17e5fd33afc8c4461d3af6ac72af0fee38875",
+      "iosSHA256": "2f817b42c0cf77b39441878f17fd98d3697de5410967a2a346449b17d266ec82",
+      "sideBySide": {
+        "file": "phone_portrait_light_bookshelf_online_side-by-side.png",
+        "sha256": "e235f9417729b530ccdf88429a01d012f53c64a014d913ec6714819ef32e78f2"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "D85: 刷新与分组图标、更新提示样式；候选12ddd38待新截图",
+        "横屏网格卡片左起点在安全区之外；当前候选待运行",
+        "横屏底栏图标/文字为并排，冻结为纵排；尚未修复"
+      ]
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "discover",
+      "androidSHA256": "aa14347db65e2191309712a249853d4e458eeb74087aac953222e12cef690bf5",
+      "iosSHA256": "e025dd5ef76e78a999fff348b6580bb47387990f5b84c20903d661c170298ff4",
+      "sideBySide": {
+        "file": "phone_portrait_light_discover_side-by-side.png",
+        "sha256": "3256858a1415d0f7c3a12b1e9d230a587ef68443a39ee34c25ffa4108969be8a"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "横屏网格左起点、安全区和底栏纵排仍需对齐",
+        "顶部系统保留区域需与应用内容区分别量测"
+      ]
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "source_drawer",
+      "androidSHA256": "52ddc9a3b7a18370c14eb59ce824941b9ebe001834b2b0cfab743b350df11ff5",
+      "iosSHA256": "4ba2e1f510a46854c24ed030aad49167e9d751becb98d5528342d92ec667eca8",
+      "sideBySide": {
+        "file": "phone_portrait_light_source_drawer_side-by-side.png",
+        "sha256": "7f1eba05cfc33218eb2db8dbcdd12c158ab3c5e9e2e481fc8fda241accfad818"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "站源说明使用UIButton固有高度，列表起点比冻结下移",
+        "深色应用按钮使用黑字；冻结为白字",
+        "可见行、片内边距和选择框仍需逐组件量测"
+      ]
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "search_results",
+      "androidSHA256": "79db5deaf979207c1e649f65a60d60f3513c0557bf3213ffcd141e3a585c77b6",
+      "iosSHA256": "81ae9e996f721d43b73c30756ac78c3b814b1a24d43e6386531156296f2c706b",
+      "sideBySide": {
+        "file": "phone_portrait_light_search_results_side-by-side.png",
+        "sha256": "f186ea9f7ce650bf2ae964a97eaeba6c18c1fbe0e72285fba43e5dbda839f100"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "横屏网格左起点、安全区和底栏纵排仍需对齐",
+        "搜索提示色D85已修候选，不能用852截图判为当前通过"
+      ]
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "detail",
+      "androidSHA256": "8ee624032b0c16380d3033dd41069097e3759db3af777e8ea250e8b4f92bf611",
+      "iosSHA256": "0fe775ac8e2e714364ffbc5e0b2504615c7d855aaa0c1b7649c8121b44e193f2",
+      "sideBySide": {
+        "file": "phone_portrait_light_detail_side-by-side.png",
+        "sha256": "a2cee14ee0339f07402fac02b7bbd348e8184148382a89cba5eb62cab0f1b2bd"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "收藏图标44像素缩略被高密度屏放大，清晰度偏低",
+        "章节卡片高度/提示字号/填色与冻结不同",
+        "系统返回按钮位置与冻结未完成量测"
+      ]
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reader",
+      "androidSHA256": "96b9ddedace328266bd12d3f706e45dbbc079f18ee9329818ce995a1d7ba1fc8",
+      "iosSHA256": "80312f711ad24782863afcca5fd0b36b30c87ae93f9f92a9b38e864c250aa2bb",
+      "sideBySide": {
+        "file": "phone_portrait_light_reader_side-by-side.png",
+        "sha256": "b0ed4055f6abb5e715257e4c5b83e320cc03bb9d74d06ec173278356e571779b"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "展开控制条时系统状态栏仍出现",
+        "安全区下标题与控件坐标需量测；图像画布不允许靠遮罩验收"
+      ]
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reading_settings",
+      "androidSHA256": "60d2cc597ce15de05d6842ed2646e8743684dab76c56bce08a40e9ec35b25dab",
+      "iosSHA256": "3aacdcd3c47c14196915aafc8b95ddac02056202c55e26b1a2a612ff143b8fc1",
+      "sideBySide": {
+        "file": "phone_portrait_light_reading_settings_side-by-side.png",
+        "sha256": "c3d971b0b256a3af7af946c1ea0201d0646b4e82b024e3de13335b0bb6417c21"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "D91: 日漫缺失；63c2af2已恢复但尚无新运行图",
+        "深色选中文字蓝色与冻结白色不同",
+        "横屏面板高度/卡片间距仍需量测"
+      ]
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reader_directory",
+      "androidSHA256": "ee1974c81856c831c46c74b4ee5475c86f21498f5199147025458c2e1986c02a",
+      "iosSHA256": "1b0653200656a666fb69687ab2221c648c808a7d93adbd9b3e281ffbf3f3b959",
+      "sideBySide": {
+        "file": "phone_portrait_light_reader_directory_side-by-side.png",
+        "sha256": "82b261d3030b79214ff4454548608fc239dd35fcc281203ee94a01e0f6ffc811"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "深色当前章节使用蓝字，冻结为白字",
+        "面板宽度、关闭按钮/目录行位置仍需量测"
+      ]
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "bookshelf_online",
+      "androidSHA256": "e0fab4a684e3dd3faaf6c115baaac3d1d4496e708dad9e2b152fec87f3ac3baf",
+      "iosSHA256": "d285be164a9fe5402c5306139e043f8f95f1e76a9848521364818fda01102692",
+      "sideBySide": {
+        "file": "phone_portrait_dark_bookshelf_online_side-by-side.png",
+        "sha256": "923480e5ce7285c1c994133b5fbe36f1b2343cbae676a67377ca4afc5755fa1e"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "D85: 刷新与分组图标、更新提示样式；候选12ddd38待新截图",
+        "横屏网格卡片左起点在安全区之外；当前候选待运行",
+        "横屏底栏图标/文字为并排，冻结为纵排；尚未修复"
+      ]
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "discover",
+      "androidSHA256": "8c86999dadcd262e626839cba9061a79a6e78b0150d47545b554872e6e016e77",
+      "iosSHA256": "445d75d833665dc1f9058260b954705506fb88de8302ad603050d87937092b9b",
+      "sideBySide": {
+        "file": "phone_portrait_dark_discover_side-by-side.png",
+        "sha256": "3738c010a59f8aa0835ba82b00d92d65ecc21797518dc23e854ae5bc5c88f65e"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "横屏网格左起点、安全区和底栏纵排仍需对齐",
+        "顶部系统保留区域需与应用内容区分别量测"
+      ]
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "source_drawer",
+      "androidSHA256": "2c33b3b0faef9d169e7ecd5a7b12e1c1bbd26f2091278a35effb6d832ea949ba",
+      "iosSHA256": "b86203c1495feabcebc73a49467dbd88a7b484b2db7a128884c0a7c00f540034",
+      "sideBySide": {
+        "file": "phone_portrait_dark_source_drawer_side-by-side.png",
+        "sha256": "2b89640651c13c933321c84924092d00e63528a5b918d91498b52f24fdc4b787"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "站源说明使用UIButton固有高度，列表起点比冻结下移",
+        "深色应用按钮使用黑字；冻结为白字",
+        "可见行、片内边距和选择框仍需逐组件量测"
+      ]
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "search_results",
+      "androidSHA256": "09028c1aee243b57c70da11ce41d9702bdeb1d4fd7698aaafef317b2f8bb8aaa",
+      "iosSHA256": "5d37664ab47b4412d3527f504ea47a5d93179414c1c478990cb4045a165bee71",
+      "sideBySide": {
+        "file": "phone_portrait_dark_search_results_side-by-side.png",
+        "sha256": "1f10d8078654655900fd22dc1cff7c3c413963a321df8acb4d0e4129b918506f"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "横屏网格左起点、安全区和底栏纵排仍需对齐",
+        "搜索提示色D85已修候选，不能用852截图判为当前通过"
+      ]
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "detail",
+      "androidSHA256": "89ee9bd199e9fe2bef91d49c23b58d638ee254b55c0e68be12f5f729dd16dbeb",
+      "iosSHA256": "0b049409742d264ecfba4779c6721eeb7e02a949c873d1af45e709de00cdcf79",
+      "sideBySide": {
+        "file": "phone_portrait_dark_detail_side-by-side.png",
+        "sha256": "10196e92203e4d07c3361d470fd2e7f1023276ef7af73d90670e62b5f0740c98"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "收藏图标44像素缩略被高密度屏放大，清晰度偏低",
+        "章节卡片高度/提示字号/填色与冻结不同",
+        "系统返回按钮位置与冻结未完成量测"
+      ]
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "reader",
+      "androidSHA256": "adfacd658243bfdd67d62f5d9a327055d84963bd7287139bfc21957c30afa710",
+      "iosSHA256": "c5d43bbdcdd3ad24288b9142611023fc17eecd22e1458513f1a2006e290536a3",
+      "sideBySide": {
+        "file": "phone_portrait_dark_reader_side-by-side.png",
+        "sha256": "28ab98dfe5bc76b11d6b0a89e313d7ea4b3ef3d73a06bcc206f53b3ad4bc3e07"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "展开控制条时系统状态栏仍出现",
+        "安全区下标题与控件坐标需量测；图像画布不允许靠遮罩验收"
+      ]
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "reading_settings",
+      "androidSHA256": "09cc2e8f14e7132f03c351be436dc343e52a01d2a86ab653fd820acd4c1f951d",
+      "iosSHA256": "f16fc0ec495140bc3123412b3931950d86c7b7dc80971a364250cc8b4a0f5008",
+      "sideBySide": {
+        "file": "phone_portrait_dark_reading_settings_side-by-side.png",
+        "sha256": "e4718b062127a19a56c03f9aa3e74ed4d647fedd4bd1fa00aa56f561308d3cec"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "D91: 日漫缺失；63c2af2已恢复但尚无新运行图",
+        "深色选中文字蓝色与冻结白色不同",
+        "横屏面板高度/卡片间距仍需量测"
+      ]
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "reader_directory",
+      "androidSHA256": "6efeffb9f51ceb2bbe24b8c3f2842c5ba6c7c28d8aba1043aeb8704cb29e7a9f",
+      "iosSHA256": "33aa4d25877cb74085e184a05efa4549626258685cb0caddaf644baac51b3143",
+      "sideBySide": {
+        "file": "phone_portrait_dark_reader_directory_side-by-side.png",
+        "sha256": "045014e4ce16918594448db163b07bd14c7d4b6910e24f60ec90ee56d489e5ad"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "深色当前章节使用蓝字，冻结为白字",
+        "面板宽度、关闭按钮/目录行位置仍需量测"
+      ]
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "bookshelf_online",
+      "androidSHA256": "b4f6d76df46764c174225d23f32723a294c000d3da828300caec547a5202fe6b",
+      "iosSHA256": "c08112d6940b3b347ddf84a9176b6714901d82c3272ad8b7a11bf81b2aa4c7ab",
+      "sideBySide": {
+        "file": "phone_landscape_light_bookshelf_online_side-by-side.png",
+        "sha256": "72862ac10875d2ab4a4e972f75281b1eef1c8629a6e10070ff788dff395086d3"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "D85: 刷新与分组图标、更新提示样式；候选12ddd38待新截图",
+        "横屏网格卡片左起点在安全区之外；当前候选待运行",
+        "横屏底栏图标/文字为并排，冻结为纵排；尚未修复"
+      ]
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "discover",
+      "androidSHA256": "73aa9bc1a989c605d158376453983b5cb4e776f5326971ae077fa0a4ac04436d",
+      "iosSHA256": "2ea7c7befbcdf1f20b5c6e65031c0415858eed2f4e3dd86cb9ad84fb68831e90",
+      "sideBySide": {
+        "file": "phone_landscape_light_discover_side-by-side.png",
+        "sha256": "f2d1efcca170efadccd164ddff256156602cbfb608cfe8c272d4514cfee29b5a"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "横屏网格左起点、安全区和底栏纵排仍需对齐",
+        "顶部系统保留区域需与应用内容区分别量测"
+      ]
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "source_drawer",
+      "androidSHA256": "ebeff152f395ef75b07994d4c3e6f31f6ab43cd12941ba306d3f2dd258e7a2be",
+      "iosSHA256": "841650a22ac857087fe72a3268de536ddbac9eb6f82fd9113f121007c07d2c7f",
+      "sideBySide": {
+        "file": "phone_landscape_light_source_drawer_side-by-side.png",
+        "sha256": "658bf2f42551f7730dc157958182379a9f630ef69236f5fa963a1b9b1d4f3b75"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "站源说明使用UIButton固有高度，列表起点比冻结下移",
+        "深色应用按钮使用黑字；冻结为白字",
+        "可见行、片内边距和选择框仍需逐组件量测"
+      ]
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "search_results",
+      "androidSHA256": "695d8b6709b214549fa2b19cdd5cb5611a13829184185e5da2c376da70e338a9",
+      "iosSHA256": "1e70c664c03882b5d7867738c633d0c86467c2956c05fab5ada6e23eccced300",
+      "sideBySide": {
+        "file": "phone_landscape_light_search_results_side-by-side.png",
+        "sha256": "66836f29241589b1e5a1ec05751b1be13a5d01e1c5b8f3ea3e79ba345b214844"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "横屏网格左起点、安全区和底栏纵排仍需对齐",
+        "搜索提示色D85已修候选，不能用852截图判为当前通过"
+      ]
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "detail",
+      "androidSHA256": "93c5bb49dd65a477b38d01b63761b86d94fabde060a7391210c95a8d4fce4955",
+      "iosSHA256": "f740b544a36add12b4597fd659b9fd1a93a88b67abdf009268213bca8bb7088f",
+      "sideBySide": {
+        "file": "phone_landscape_light_detail_side-by-side.png",
+        "sha256": "1118790bbfbbaa5d47667bdefa7d92927c9402ce531de4bb20ce42bfa5b887c1"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "收藏图标44像素缩略被高密度屏放大，清晰度偏低",
+        "章节卡片高度/提示字号/填色与冻结不同",
+        "系统返回按钮位置与冻结未完成量测"
+      ]
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "reader",
+      "androidSHA256": "0702cdb8432db47d467791873c974051876c10de117b26a1f032a132fbd7bbab",
+      "iosSHA256": "706aa178de4b4a3f80cb765108e38fddf663b05402bb5bfd23b9f030bebd5045",
+      "sideBySide": {
+        "file": "phone_landscape_light_reader_side-by-side.png",
+        "sha256": "8bb9624e41becfd6819843079f500a794ed74e685bc74fafc5b73a625d37d889"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "展开控制条时系统状态栏仍出现",
+        "安全区下标题与控件坐标需量测；图像画布不允许靠遮罩验收"
+      ]
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "reading_settings",
+      "androidSHA256": "7ef9bd948035077773ff0f0a242679b44c95b6d6318a8778f84d7693c2f0106e",
+      "iosSHA256": "e01468977dc6a9c4e4431535a9385adbc64e5d4c383fae104646b70923067e93",
+      "sideBySide": {
+        "file": "phone_landscape_light_reading_settings_side-by-side.png",
+        "sha256": "cecaaf8673beeb6fb3019c8a6d90990dc9faa2fcd1ea3b08af3195b5e3842f49"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "D91: 日漫缺失；63c2af2已恢复但尚无新运行图",
+        "深色选中文字蓝色与冻结白色不同",
+        "横屏面板高度/卡片间距仍需量测"
+      ]
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "reader_directory",
+      "androidSHA256": "b4c7c0156f277bcce14efbbebba84c6c246c8ef74b5867382a841cf81f5773d0",
+      "iosSHA256": "d33a8f8921b19c87693caec144d0468c020173c287619ae2a3dcab6291144a1a",
+      "sideBySide": {
+        "file": "phone_landscape_light_reader_directory_side-by-side.png",
+        "sha256": "b209cb73b28d5f3ac85e95624c0eded899eaf6f8f906d60ec45950e37cc816a1"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "深色当前章节使用蓝字，冻结为白字",
+        "面板宽度、关闭按钮/目录行位置仍需量测"
+      ]
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "bookshelf_online",
+      "androidSHA256": "17f5f9b750f5a9550c0bd969fbc761c4835edf79f4c727f41872fce21c17d7dd",
+      "iosSHA256": "ce52e6a65a2bfd8b8056de5270b14fb6b98a70ed61ab179fc9b5255da00d6f28",
+      "sideBySide": {
+        "file": "phone_landscape_dark_bookshelf_online_side-by-side.png",
+        "sha256": "dd2c8dfc08abc13be71d9c2c629d913de04705091acc6ac07e5cc0ba147e5d2b"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "D85: 刷新与分组图标、更新提示样式；候选12ddd38待新截图",
+        "横屏网格卡片左起点在安全区之外；当前候选待运行",
+        "横屏底栏图标/文字为并排，冻结为纵排；尚未修复"
+      ]
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "discover",
+      "androidSHA256": "c5f634fa36971e996f3cf8d018a75bdf516ec3f75f12f6c48f16cf9cd1234c01",
+      "iosSHA256": "a458bc0135a78a44eee637a7904ffebf739cb8eb0a6899d79a6a696b13ba556f",
+      "sideBySide": {
+        "file": "phone_landscape_dark_discover_side-by-side.png",
+        "sha256": "db0f8a3ba9c3a182d4d24c385442cb243ba25b323b9b4913081b78a97777c103"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "横屏网格左起点、安全区和底栏纵排仍需对齐",
+        "顶部系统保留区域需与应用内容区分别量测"
+      ]
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "source_drawer",
+      "androidSHA256": "9aa6da3978eab9acdf5b05c79d51fe7d28c90f1df0fb44a4f361a7746b0e10ef",
+      "iosSHA256": "0257b30e66d08a48494481309672c9b1c25f9573fd65f7df61837b47bbc7a186",
+      "sideBySide": {
+        "file": "phone_landscape_dark_source_drawer_side-by-side.png",
+        "sha256": "addc05f8ef42ab01fdba9240c56b57eaf18c6757d9ba44ac992853d971cedfc7"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "站源说明使用UIButton固有高度，列表起点比冻结下移",
+        "深色应用按钮使用黑字；冻结为白字",
+        "可见行、片内边距和选择框仍需逐组件量测"
+      ]
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "search_results",
+      "androidSHA256": "483fd75776da26e51ae89b4dc7259063ad9242422354c81b4b5be5bd9a593e00",
+      "iosSHA256": "7ccc98077fcb584fb3b7f95e1fa06bf612f4772f909c4e37df08d22e23ed559a",
+      "sideBySide": {
+        "file": "phone_landscape_dark_search_results_side-by-side.png",
+        "sha256": "89b179663f876bf84c8cfa6d9f0437fa78ab70383acfe7eb8806435f2c993aa8"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "横屏网格左起点、安全区和底栏纵排仍需对齐",
+        "搜索提示色D85已修候选，不能用852截图判为当前通过"
+      ]
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "detail",
+      "androidSHA256": "bede0485a3e122895147e4fecce356758a5b73b481606b0f2fa5fc0473780c39",
+      "iosSHA256": "cf7c5aff30d856c37c5ba231cea7eb4b45acf7b30a32ea46db824120c1f93882",
+      "sideBySide": {
+        "file": "phone_landscape_dark_detail_side-by-side.png",
+        "sha256": "aaad54d6569a585ceb3b097612486ad0c6846109ea0bdba27c8f7d7ff94028eb"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "收藏图标44像素缩略被高密度屏放大，清晰度偏低",
+        "章节卡片高度/提示字号/填色与冻结不同",
+        "系统返回按钮位置与冻结未完成量测"
+      ]
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "reader",
+      "androidSHA256": "c2b4878b38dca0a01a16ff2e5fb7aa6877183e037a783207560a9ee2867dbf06",
+      "iosSHA256": "c243387c37c6e9a31b84ee472e626b7bc77c24cd7e6037be8ce082553f7259e1",
+      "sideBySide": {
+        "file": "phone_landscape_dark_reader_side-by-side.png",
+        "sha256": "57c531839debee8ffba17d4d004d8457aff08e536a5a1d576a1e76bfa3f4c608"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "展开控制条时系统状态栏仍出现",
+        "安全区下标题与控件坐标需量测；图像画布不允许靠遮罩验收"
+      ]
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "reading_settings",
+      "androidSHA256": "e00e3d7ddb01364750dab444940c3b1a585733a9bbaf0d49e4a6ca8a15394a18",
+      "iosSHA256": "10c45a1306f555862b29247d6f982f2664a018bbebce25511156a9f6fe705229",
+      "sideBySide": {
+        "file": "phone_landscape_dark_reading_settings_side-by-side.png",
+        "sha256": "4367e50d3ecf29f8e8a92e632fa3cd0fa29617f4fcad706359dc8f4d549ea88e"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "D91: 日漫缺失；63c2af2已恢复但尚无新运行图",
+        "深色选中文字蓝色与冻结白色不同",
+        "横屏面板高度/卡片间距仍需量测"
+      ]
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "reader_directory",
+      "androidSHA256": "3f766593b99d18a84fe7d19e5f7d258a2c09ad77d12c609f4f4a2f75719c137e",
+      "iosSHA256": "e7502f39087931603ec69b9749486e695e2676ad9684c6794819dc52a28bbe9e",
+      "sideBySide": {
+        "file": "phone_landscape_dark_reader_directory_side-by-side.png",
+        "sha256": "28d559991cae163a0f8d30d4fb02446d76f2015b61328ddac6dc37c2227e76cd"
+      },
+      "review": "已读取真实对照，存在差异，未通过",
+      "issues": [
+        "深色当前章节使用蓝字，冻结为白字",
+        "面板宽度、关闭按钮/目录行位置仍需量测"
+      ]
+    }
+  ]
+}

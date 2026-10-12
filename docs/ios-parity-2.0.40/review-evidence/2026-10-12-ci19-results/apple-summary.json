@@ -1,0 +1,77 @@
+{
+  "runId": 38215339295,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38215339295",
+  "revision": "c5aa922016e867d58d8d76cc8f681e5981fa3cbe",
+  "conclusion": "failure",
+  "scope": "configuration-files",
+  "sdkBuilds": {
+    "Debug": "success",
+    "Release": "success"
+  },
+  "appleCore": {
+    "tests": 923,
+    "failures": 1,
+    "seconds": 101.375,
+    "failedTest": "CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses",
+    "remainingDiskBytes": 36864
+  },
+  "native": {
+    "testsPerDevice": 25,
+    "failedCasesPerDevice": 0,
+    "failedTest": null
+  },
+  "ui": [
+    {
+      "device": "iPhone 15 Pro",
+      "tests": 38,
+      "passed": 32,
+      "failedCases": 6,
+      "failedTests": [
+        "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+        "SourceDrawerTests/testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ]
+    },
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "tests": 38,
+      "passed": 32,
+      "failedCases": 6,
+      "failedTests": [
+        "SourceConfigFilesUITests/testCancellingImportAndExportLeavesConfigurationAndShowsNoFalseSuccess()",
+        "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ]
+    }
+  ],
+  "uiFailureAssertionRecordsPerDevice": [
+    11,
+    10
+  ],
+  "originalAttachmentsVerified": 290,
+  "coreLinuxDoesNotReplaceApple": true,
+  "ipaProduced": false,
+  "artifactArchives": [
+    {
+      "file": "original-logs.zip",
+      "bytes": 971716,
+      "sha256": "3d37933f6506595a8b84062cd203485ce8aca1d2041598fe4e49523aa466b8e4"
+    },
+    {
+      "file": "visual-original.zip",
+      "bytes": 60018772,
+      "sha256": "567feef72d617727cda8d6afa936046f8119f3859a77fc9e16a8972b4a3d3646"
+    },
+    {
+      "file": "reader-enhancement-original.zip",
+      "bytes": 1287249,
+      "sha256": "94849e0821bf030dec50d06c34b2c9f6709b5321429a9d2dd2d322cfa1101b94"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # XX Comic iOS
 
+最新接续（2026-10-12）：第19轮两SDK及25原生/设备通过，但整体失败；第20轮日漫两SDK通过，27原生/设备1真实页排列失败、16阅读UI/设备2日漫失败。当前显式页帧/查询、站源触摸滚动/顶部宽度、Files侧栏取消及样式修复，90文件仅语法通过，尚待Apple复验。Core266输入与Linux922项/2个Apple PDF跳过/0失败不变；缓存Mac929项仍1失败。当前以STATUS为准，下列早期数字和“正在运行”是对应输入历史，不继承为当前通过。
+
 当前状态以[STATUS](../docs/ios-parity-2.0.40/STATUS.md)为准：第17轮SDK及两设备原生通过但Core/UI仍失败；第18轮编译失败已修，第19轮正在复验。最新本地保留卷轴/普通/日漫三模式，删除旧左右手设置；完整Linux922项/2个Apple PDF跳过/0失败，Apple/UI尚待当前输入复验。非站源门槛未过，不生成IPA；下方旧版本数字是历史记录。
 
 原生 UIKit + ComicCore Swift Package，iOS16+，支持iPhone/iPad。当前Android冻结基线为2.0.40/340，提交 `696e80a44ab36b19de6f630565df32978e55a19e`。iOS checkout里的app/是旧Android副本，不能用作当前基线。

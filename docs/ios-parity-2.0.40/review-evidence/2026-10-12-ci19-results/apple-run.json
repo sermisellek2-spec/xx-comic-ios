@@ -1,0 +1,151 @@
+{
+  "run": {
+    "id": 38215339295,
+    "html_url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38215339295",
+    "status": "completed",
+    "conclusion": "failure",
+    "head_sha": "c5aa922016e867d58d8d76cc8f681e5981fa3cbe",
+    "head_branch": "codex/actor-repair-c5aa922",
+    "event": "workflow_dispatch",
+    "run_attempt": 1,
+    "created_at": "2026-10-12T06:59:57Z",
+    "updated_at": "2026-10-12T07:53:21Z"
+  },
+  "jobs": {
+    "total_count": 1,
+    "jobs": [
+      {
+        "id": 114698663715,
+        "run_id": 38215339295,
+        "workflow_name": "iOS manual build",
+        "head_branch": "codex/actor-repair-c5aa922",
+        "run_url": "https://api.github.com/repos/sermisellek2-spec/xx-comic-ios/actions/runs/38215339295",
+        "run_attempt": 1,
+        "node_id": "CR_kwDOVEUdg88AAAAatJK3Iw",
+        "head_sha": "c5aa922016e867d58d8d76cc8f681e5981fa3cbe",
+        "url": "https://api.github.com/repos/sermisellek2-spec/xx-comic-ios/actions/jobs/114698663715",
+        "html_url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38215339295/job/114698663715",
+        "status": "completed",
+        "conclusion": "failure",
+        "created_at": "2026-10-12T06:59:59Z",
+        "started_at": "2026-10-12T07:00:04Z",
+        "completed_at": "2026-10-12T07:53:20Z",
+        "name": "build",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-10-12T07:00:05Z",
+            "completed_at": "2026-10-12T07:00:06Z"
+          },
+          {
+            "name": "Checkout",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-10-12T07:00:06Z",
+            "completed_at": "2026-10-12T07:00:17Z"
+          },
+          {
+            "name": "Install XcodeGen",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-10-12T07:00:17Z",
+            "completed_at": "2026-10-12T07:00:20Z"
+          },
+          {
+            "name": "Select iPhone and iPad simulators",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-10-12T07:00:20Z",
+            "completed_at": "2026-10-12T07:00:27Z"
+          },
+          {
+            "name": "Build and test",
+            "status": "completed",
+            "conclusion": "failure",
+            "number": 5,
+            "started_at": "2026-10-12T07:00:27Z",
+            "completed_at": "2026-10-12T07:52:44Z"
+          },
+          {
+            "name": "Upload unsigned IPA",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 6,
+            "started_at": "2026-10-12T07:52:44Z",
+            "completed_at": "2026-10-12T07:52:44Z"
+          },
+          {
+            "name": "Archive original UI test results",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-10-12T07:52:44Z",
+            "completed_at": "2026-10-12T07:52:53Z"
+          },
+          {
+            "name": "Upload UI test results",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-10-12T07:52:53Z",
+            "completed_at": "2026-10-12T07:53:04Z"
+          },
+          {
+            "name": "Upload visual matrix screenshots",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-10-12T07:53:04Z",
+            "completed_at": "2026-10-12T07:53:07Z"
+          },
+          {
+            "name": "Upload AI enhancement evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-10-12T07:53:07Z",
+            "completed_at": "2026-10-12T07:53:08Z"
+          },
+          {
+            "name": "Upload isolated offline HTTP cache evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11,
+            "started_at": "2026-10-12T07:53:08Z",
+            "completed_at": "2026-10-12T07:53:08Z"
+          },
+          {
+            "name": "Post Checkout",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 22,
+            "started_at": "2026-10-12T07:53:08Z",
+            "completed_at": "2026-10-12T07:53:08Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23,
+            "started_at": "2026-10-12T07:53:08Z",
+            "completed_at": "2026-10-12T07:53:19Z"
+          }
+        ],
+        "check_run_url": "https://api.github.com/repos/sermisellek2-spec/xx-comic-ios/check-runs/114698663715",
+        "labels": [
+          "macos-14"
+        ],
+        "runner_id": 1000000025,
+        "runner_name": "GitHub Actions 1000000025",
+        "runner_group_id": 0,
+        "runner_group_name": "GitHub Actions"
+      }
+    ]
+  }
+}

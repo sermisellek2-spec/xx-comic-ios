@@ -54,6 +54,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var oldBatteryMonitoring = false
     private var isZoomed = false
     private var pageAnimating = false
+    private var pagePanBeganAt: TimeInterval?
     private var habitTimer: Timer?
     private var leavingReader = false
 
@@ -82,7 +83,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
     deinit { loadTask?.cancel(); directoryTask?.cancel(); continuationTask?.cancel() }
-    override var prefersStatusBarHidden: Bool { fullscreen }
+    override var prefersStatusBarHidden: Bool { true }
     override var preferredStatusBarStyle: UIStatusBarStyle { overrideUserInterfaceStyle == .dark ? .lightContent : .darkContent }
     override var prefersHomeIndicatorAutoHidden: Bool { fullscreen }
     override func viewDidLoad() {
@@ -333,7 +334,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             restore(position)
         }
         layout.scrollDirection = settings.layout == .strip ? .vertical : .horizontal
-        pages.semanticContentAttribute = settings.pageDirection == .rightToLeft ? .forceRightToLeft : .forceLeftToRight
+        // Reverse page frames explicitly, keeping image pixels and logical
+        // chapter/page identities unchanged. Local RTL semantics alone do not
+        // reverse UICollectionViewFlowLayout in an LTR application.
+        layout.reversesPages = settings.pageDirection == .rightToLeft
+        pages.semanticContentAttribute = .forceLeftToRight
         pages.isPagingEnabled = settings.layout == .paged
         pages.isScrollEnabled = settings.layout == .strip && !isZoomed
         let style: UIUserInterfaceStyle = settings.theme == .system ? UIScreen.main.traitCollection.userInterfaceStyle : (settings.theme == .dark ? .dark : .light)
@@ -870,16 +875,23 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         cell.toggleZoom()
     }
     @objc private func panned(_ gesture: UIPanGestureRecognizer) {
-        if gesture.state == .began { setFullscreen(true, animated: true) }
-        guard gesture.state == .ended, !isZoomed, settings.layout == .paged, settings.turnMode != .buttons else { return }
+        if gesture.state == .began {
+            pagePanBeganAt = ProcessInfo.processInfo.systemUptime
+            setFullscreen(true, animated: true)
+        }
+        if gesture.state == .cancelled || gesture.state == .failed { pagePanBeganAt = nil }
+        guard gesture.state == .ended else { return }
+        let began = pagePanBeganAt; pagePanBeganAt = nil
+        guard let began, ProcessInfo.processInfo.systemUptime - began < 1,
+              !isZoomed, settings.layout == .paged, settings.turnMode != .buttons else { return }
         let translation = gesture.translation(in: pages)
-        guard abs(translation.x) > 72, abs(translation.x) > abs(translation.y) * 1.35 else { return }
+        guard abs(translation.x) > 36, abs(translation.x) > abs(translation.y) * 1.1 else { return }
         move(ReaderNavigation.swipeDelta(dx: Double(translation.x), direction: settings.pageDirection))
     }
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if let pan = gestureRecognizer as? UIPanGestureRecognizer, pan.view === pages {
             let velocity = pan.velocity(in: pages)
-            return settings.layout == .paged && settings.turnMode != .buttons && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.35
+            return settings.layout == .paged && settings.turnMode != .buttons && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.1
         }
         return true
     }

@@ -1,0 +1,1452 @@
+[
+  {
+    "file": "reader-enhancement/iPhone_15_Pro-reader-ai-metrics.json",
+    "sha256": "79951663a45ab55bab60a451f2c414d497fd183816a48afdb14a9bf8ade0a087",
+    "bytes": 341
+  },
+  {
+    "file": "reader-enhancement/iPhone_15_Pro-real-input-384x384.png",
+    "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+    "bytes": 70556
+  },
+  {
+    "file": "reader-enhancement/iPhone_15_Pro-coreml-output-768x768.png",
+    "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+    "bytes": 583242
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-source-grid-accessibility.txt",
+    "sha256": "0a9486c5c69facb1613f245c0b9e6a3d235e890e2a4a630e7d7476a06596de5f",
+    "bytes": 20142
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-1.png",
+    "sha256": "4be01f9c8b21586c0ad67ddae102ce0d9c1c5a7af923a953adb026a8ce5c8ba7",
+    "bytes": 316181
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-2.png",
+    "sha256": "b285c2653f3de649650a06149c1d3adf15027c7664eebabb3b09580de2111fae",
+    "bytes": 176924
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-accessibility.txt",
+    "sha256": "2f8a3e6619bd682643a4fe33c6cfaeb5656aa8853c03ae43f7fc7940aeaa6e52",
+    "bytes": 17980
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-SourceDrawerTests_testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm__-1.png",
+    "sha256": "84c68e2fc323fbb370ede517ca9073f54db77a764ea347308976f78b98174b34",
+    "bytes": 265111
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-SourceDrawerTests_testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm__-accessibility.txt",
+    "sha256": "8d74f3452d1ad6c0d4559bec73d9fa6d32269036de1bf0494a62ee9efb5f9910",
+    "bytes": 4827
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_settings_reference_empty.png",
+    "sha256": "20ddb5015b06a2789fddca562ae7bc52d1a80725590d7147422608f10d25a7a1",
+    "bytes": 145683
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_settings_reference_empty.json",
+    "sha256": "1f4bd2b93d719f4fc04aa36ea617bdd002e73d9815a3565e13bd41da29705df1",
+    "bytes": 7731
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferenceLandscapeDark__-1.png",
+    "sha256": "e9bbe5a540a427da8638b0e3acc509018ccd9e7131ae6f84ca3f22ee8d290759",
+    "bytes": 145683
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferenceLandscapeDark__-accessibility.txt",
+    "sha256": "75220331c4c48e4f6ac7b218c29b0b755526bdcfbf7fdbc9366ba1d73511ad8f",
+    "bytes": 7242
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_settings_reference_empty.png",
+    "sha256": "bd44ad065a96663e0f6c35f2e328eadf43e12166c944664af85a00da1eb61a09",
+    "bytes": 147072
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_settings_reference_empty.json",
+    "sha256": "b8ba2c43c9aeadd86ae24fb4288f877c3d57937a440a0a11c0a979b06c414463",
+    "bytes": 7731
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferenceLandscapeLight__-1.png",
+    "sha256": "89738d9f9d5bcec503d8f95232d327c5b8d00ebe5c5b420a62e0847c7052cfe5",
+    "bytes": 147072
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferenceLandscapeLight__-accessibility.txt",
+    "sha256": "9b1a8def0ca9a4fe409d932784c5db6e3e9bfd4fbb0be46b7b38870bc2eb4861",
+    "bytes": 7242
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_settings_reference_empty.png",
+    "sha256": "eedb732396395dad13a9cf7d171efedbec48b3733c8690f708bedb3a1626b56f",
+    "bytes": 284034
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_settings_reference_empty.json",
+    "sha256": "3fca326f21fbb47d2b14d373420f79639ef58a4a3d11e8b6ce5284dbb32fad5b",
+    "bytes": 7862
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferencePortraitDark__-1.png",
+    "sha256": "eedb732396395dad13a9cf7d171efedbec48b3733c8690f708bedb3a1626b56f",
+    "bytes": 284034
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferencePortraitDark__-accessibility.txt",
+    "sha256": "ac2d2c2bdaf3fbf5967edd9a4b3c267b67c461acbba41d86536105ce4d1de38f",
+    "bytes": 6737
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_settings_reference_empty.png",
+    "sha256": "02028fc40f31ebd7eb5d86a98f21e022560160bf29eb54b160057c2e918340d2",
+    "bytes": 289747
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_settings_reference_empty.json",
+    "sha256": "fd3d98aa98e00e31e6ac5dc90d436bf0ca182a3bb96bbbbd912c5a320dfb1f90",
+    "bytes": 7863
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferencePortraitLight__-1.png",
+    "sha256": "02028fc40f31ebd7eb5d86a98f21e022560160bf29eb54b160057c2e918340d2",
+    "bytes": 289747
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferencePortraitLight__-accessibility.txt",
+    "sha256": "9ade80fcb22dadaac2ff245f711f9f5af9636c155460e2438502549909c69913",
+    "bytes": 6737
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_bookshelf_online.png",
+    "sha256": "5005fb60f5b787a39aa4b59baac8a13a5ab221e4b770fa96871f6692b718dd42",
+    "bytes": 330066
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_bookshelf_online.json",
+    "sha256": "76585b4e9b1aeff96064e5585471315e348c898cc3dfeb73bd65a25931fe5f99",
+    "bytes": 8208
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_bookshelf_local.png",
+    "sha256": "6daf33c67ba7fc56ffe3e9980b927e52af1e21c63988a8e412e48ddc704946b2",
+    "bytes": 613907
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_bookshelf_local.json",
+    "sha256": "d7f06c5ff44f6c9a9b06ba56aeb5ef43f758efa9118919c2046663defca8c970",
+    "bytes": 9043
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_discover.png",
+    "sha256": "13d3620a61d09623e2d6394e12d3ea2eebf16912f64e16673ecc113aab579149",
+    "bytes": 289480
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_discover.json",
+    "sha256": "84930f3ead95484029c4996f8586dae6fed087bb2d5a4d9b6db6b5e56146c5ac",
+    "bytes": 6126
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_source_drawer.png",
+    "sha256": "b83e8c4d4105a3a7d6fe3257ebb91346486527f3c1603ec9465ffd3e94bb4501",
+    "bytes": 129899
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_source_drawer.json",
+    "sha256": "947f796fe412502b2824017d468ad0002ce9ee8e8d50c855312d629b5e8f8bdd",
+    "bytes": 21282
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_search_results.png",
+    "sha256": "7ccc98077fcb584fb3b7f95e1fa06bf612f4772f909c4e37df08d22e23ed559a",
+    "bytes": 157017
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_search_results.json",
+    "sha256": "f4be19c4a3f2c512da792b7b1144764cbc64c2ad19a33c05c5a4f8c8c832d361",
+    "bytes": 5615
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_detail.png",
+    "sha256": "cf7c5aff30d856c37c5ba231cea7eb4b45acf7b30a32ea46db824120c1f93882",
+    "bytes": 304086
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_detail.json",
+    "sha256": "f02c02ff534a4a862da8a5c0794a38cc718736cb49ecf4014ce4c2b67b9e4165",
+    "bytes": 5284
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_source_switch.png",
+    "sha256": "07bcadc5ecb84f896b341bb676ef6334d23793a05480128f2345596acda0e73a",
+    "bytes": 127066
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_source_switch.json",
+    "sha256": "0048b4cf15aa41da387916a71a0dfc6d3278b091e6dfacaedd8433fa6860a7e2",
+    "bytes": 40551
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_reader.png",
+    "sha256": "27ed0a988e6a51b32bdd5330d31e472c5300cda1c2ce29b6460772fdc316bb4e",
+    "bytes": 2050483
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_reader.json",
+    "sha256": "6df53b7992c4ba110ef9df2ef0b0ee7144d322e5a2295ef24a9658c3f7186043",
+    "bytes": 5290
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_reading_settings.png",
+    "sha256": "e3aa93388e70b1a2583eec188b979c2ac45f54f4869adbf9d562779beffc24db",
+    "bytes": 137416
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_reading_settings.json",
+    "sha256": "37f4925fdc7b97fe304210160f40b03f2f1a55de0dfc980b58806ec6a96ec86f",
+    "bytes": 9383
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_reader_original.png",
+    "sha256": "c243387c37c6e9a31b84ee472e626b7bc77c24cd7e6037be8ce082553f7259e1",
+    "bytes": 1508209
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_reader_original.json",
+    "sha256": "ef5260e5366fcd67716fd0f44a6d83432164f9ff130ad4438b2b1146298cf735",
+    "bytes": 5158
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_reading_settings_original.png",
+    "sha256": "10c45a1306f555862b29247d6f982f2664a018bbebce25511156a9f6fe705229",
+    "bytes": 137425
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_reading_settings_original.json",
+    "sha256": "1e98b7fda297ddba945952af2754f8f6aed8623478c62d2419faa478c5a4cc8d",
+    "bytes": 8451
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_reader_directory.png",
+    "sha256": "e7502f39087931603ec69b9749486e695e2676ad9684c6794819dc52a28bbe9e",
+    "bytes": 640207
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_reader_directory.json",
+    "sha256": "e0b1420e3baa1bdd5a89a2939d8a736bf84f1e32ae42af894a8ba50c46d0853c",
+    "bytes": 7273
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_settings.png",
+    "sha256": "4edd687a31735203c5e86cd9c043d5a9ac7714d3294053fbcd5032f908ea5533",
+    "bytes": 163226
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_settings.json",
+    "sha256": "83c47ad0be776ac559ecf7004edfe130d30a765c1eb19595151a64cc3483a8ed",
+    "bytes": 7844
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_downloads.png",
+    "sha256": "01b61179d0daf0440ceeaba766c49525622c5457b8b0bd250d3a85f7f61b14d9",
+    "bytes": 138267
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_downloads.json",
+    "sha256": "59f857f7415eaa4c0d59e04b03bc081e5e25392a23a12aa767bed3cbd491a1cd",
+    "bytes": 4821
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_dark_cache_cleanup.png",
+    "sha256": "33c4414f5d862576372d0373916f8d8f2887a2931d3163ccc8582e3a7e126593",
+    "bytes": 152898
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_dark_cache_cleanup.json",
+    "sha256": "ae43b83241e80f83080abc9c5a2745e797527cc2d9dadaab289335691bb61b26",
+    "bytes": 5866
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_bookshelf_online.png",
+    "sha256": "6fa0985ba4048c4c0bdd28a885586f5cdd55e164450aeba80b93139d83aa6928",
+    "bytes": 328447
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_bookshelf_online.json",
+    "sha256": "a6b119c834942b3943d01b3523ffbf543aa069ea275510f7bf070e731296bbe2",
+    "bytes": 8209
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_bookshelf_local.png",
+    "sha256": "5865984c7eae007c7e46a57c66397d29698445253aa091cad31cb9193ed2a362",
+    "bytes": 618433
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_bookshelf_local.json",
+    "sha256": "c1d59d96c8e32cec04d609ec4b1c56e32e2f8cbe0645ed580c812d9e5a2aa0d0",
+    "bytes": 9044
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_discover.png",
+    "sha256": "c35e331e6a9da072bb1f1b5df57938d1ab7f56331019a57ae5ec19a256352a87",
+    "bytes": 290063
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_discover.json",
+    "sha256": "40135401ddb92852b9a298bb956511d2e007845e805e5697e8b91d5577d775bc",
+    "bytes": 6126
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_source_drawer.png",
+    "sha256": "c81b10c376f58d77f36eaf29e6c0f8ac14c34fccb7f410565e2e547c70cdee4e",
+    "bytes": 131155
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_source_drawer.json",
+    "sha256": "487086a4760dcd4c8097dabcc545a55df893a50ba380f2a8dd8c1f3772ef4c6c",
+    "bytes": 21283
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_search_results.png",
+    "sha256": "1e70c664c03882b5d7867738c633d0c86467c2956c05fab5ada6e23eccced300",
+    "bytes": 157469
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_search_results.json",
+    "sha256": "ea3cf3d41e17e06905aac7578fce5fa56c0798113bc676274cbc67f931ab00e4",
+    "bytes": 5616
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_detail.png",
+    "sha256": "f740b544a36add12b4597fd659b9fd1a93a88b67abdf009268213bca8bb7088f",
+    "bytes": 302182
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_detail.json",
+    "sha256": "c93e7a83e672726f65d1d338fd1910839b14187465206e8f7f19ce511b709f34",
+    "bytes": 5285
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_source_switch.png",
+    "sha256": "07bcadc5ecb84f896b341bb676ef6334d23793a05480128f2345596acda0e73a",
+    "bytes": 127066
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_source_switch.json",
+    "sha256": "53a6094038d82b6fce7525d8e73d085b16dc0321a44115ad20501b9e430aa6e0",
+    "bytes": 40552
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_reader.png",
+    "sha256": "13a35ee2170349c3d0ab616116fed15d8f311dc206fdd0a7ae709ac4715b59f2",
+    "bytes": 2016785
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_reader.json",
+    "sha256": "c4fd29d528932d8f67d5912ff6cb69a2137aa4d04590b0c4244cb505d537abe5",
+    "bytes": 5290
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_reading_settings.png",
+    "sha256": "d7d621f0b527d3e097b564d80837bac6e951adebfabfab415810d12bdea2e52a",
+    "bytes": 139107
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_reading_settings.json",
+    "sha256": "8a8b087bb1071c6ab06771ecd7fec6bb48fe45341fd39198309d8fb096742690",
+    "bytes": 9383
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_reader_original.png",
+    "sha256": "706aa178de4b4a3f80cb765108e38fddf663b05402bb5bfd23b9f030bebd5045",
+    "bytes": 1507023
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_reader_original.json",
+    "sha256": "385823a8ab64b3d612c659b3fed1412e7b36259427d6098a5bbc88739b9a5a35",
+    "bytes": 5164
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_reading_settings_original.png",
+    "sha256": "e01468977dc6a9c4e4431535a9385adbc64e5d4c383fae104646b70923067e93",
+    "bytes": 139049
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_reading_settings_original.json",
+    "sha256": "ce43c52295b1e8fc9967dec8a6bca562794b1654812fcdc1892c471593b179f1",
+    "bytes": 8452
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_reader_directory.png",
+    "sha256": "d33a8f8921b19c87693caec144d0468c020173c287619ae2a3dcab6291144a1a",
+    "bytes": 570523
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_reader_directory.json",
+    "sha256": "dce1a6b708ed8052f54203f9d9941e0460ee824038a69f82c64616fc61cad50f",
+    "bytes": 7274
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_settings.png",
+    "sha256": "c7d7fbe26ba06ed4b1564b5ca730df263255bc7ddfd8568c6f4edb946bc34c06",
+    "bytes": 165366
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_settings.json",
+    "sha256": "554920b24dfbf58ae59dab9f74037434f4624906f6387f34451698eca4a910de",
+    "bytes": 7845
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_downloads.png",
+    "sha256": "56281ad6f8ec237086143aad90510bad64a674879e9b4b053bae071c70cbf6e7",
+    "bytes": 137520
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_downloads.json",
+    "sha256": "43444c9c4e754318e15467d14baf62d415deb648701ef525d05afb533ce64369",
+    "bytes": 4823
+  },
+  {
+    "file": "visual-matrix/iphone_landscape_light_cache_cleanup.png",
+    "sha256": "c2acbcad4c23a8b18cadf1a7583c003b4e37d851c6e1971c9ad36ce402129047",
+    "bytes": 153015
+  },
+  {
+    "file": "visual-provenance/iphone_landscape_light_cache_cleanup.json",
+    "sha256": "50a5d17d8de324fc952ce739c469cadb96e242f261ae59e9bd0270ddbf8c3d17",
+    "bytes": 5867
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_bookshelf_online.png",
+    "sha256": "4076ee349f53b4f75daae79d65bbbb07ff39cc74bd03a1898d7468ec767bae58",
+    "bytes": 356974
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_bookshelf_online.json",
+    "sha256": "3a264289e9d5ca8bce90c23b11f808567024de67ee16c70566446ae577753fe9",
+    "bytes": 8219
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_bookshelf_local.png",
+    "sha256": "c7bfd9bf74b25a2a914c2941bfaa443522d83237c56ec8d547d6b660a422294c",
+    "bytes": 564819
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_bookshelf_local.json",
+    "sha256": "dce6690a17c17df7c78b5505fff5540293e4ff8e7fbb65dff102f25d1a38abd8",
+    "bytes": 9073
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_discover.png",
+    "sha256": "9feaf91bb7d651a5685d048bd2f4535dd988a37dd5a6a7fe5bc80d3ba03ee891",
+    "bytes": 272870
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_discover.json",
+    "sha256": "ac5e86845ff781286f68dc03efd874301adda3f64b278ed6dbee706c01b080a4",
+    "bytes": 6137
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_source_drawer.png",
+    "sha256": "97fc2666e41ce6d5e1c1e6c75a53747073206f35945c099d4b0bbe40b7c1bdb9",
+    "bytes": 316448
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_source_drawer.json",
+    "sha256": "47bcc892867ffd6b262e31f9262625cdd0c45884d53b7628c2f3fddecfebad75",
+    "bytes": 21311
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_search_results.png",
+    "sha256": "2005efb231a15a499e842d837e0a1b22603414d0ab139ebb9d3ea86046ca6fb7",
+    "bytes": 165789
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_search_results.json",
+    "sha256": "9329bd06af3b8e2342d776b44578c6cc8788e955817d7be72433742e1dcf46a3",
+    "bytes": 5626
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_detail.png",
+    "sha256": "f8867f91d6e018ab63f853630d6731db44174627e7d1eb0bb582caf09ac4fa3f",
+    "bytes": 275747
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_detail.json",
+    "sha256": "cc29d7268fbb4411984fbbb1fdba1aec574ea9acfd7c0dd23e09737fb80bac19",
+    "bytes": 5444
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_source_switch.png",
+    "sha256": "ea9ae1e9e7f86005552617da3313a438b56788e0554a96dd35b2ff12c90a7eef",
+    "bytes": 304520
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_source_switch.json",
+    "sha256": "3c65b75ba976a10f8d8bd661475218897805905ba224dfaad89f7bb81de6956e",
+    "bytes": 41061
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_reader.png",
+    "sha256": "a9023aae3b8babef552513fe34838e331665174a3869356b7ebb25943526e0f0",
+    "bytes": 1966227
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_reader.json",
+    "sha256": "9745dbe1ec2f3895037ff7b7448eb2452444782389f53ec7a8e94808dbc4daa5",
+    "bytes": 6090
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_reading_settings.png",
+    "sha256": "316eafa458e42b7424531a506ff7c6a814b24478c1b354552869381a115862cb",
+    "bytes": 536504
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_reading_settings.json",
+    "sha256": "f8fac64a4bec60b9ec8ed9937194bd134ee2c3f0d5a0d85c19ab8c58638270f0",
+    "bytes": 10188
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_reader_original.png",
+    "sha256": "b5d6be2ad27a6f02b950c032cab3af9615b46dc19be6a8be89c3a6daf63dc664",
+    "bytes": 956624
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_reader_original.json",
+    "sha256": "b410dcdd8d22eb690c376afdffb3e78260c77bb77772e197869b1987e39e8537",
+    "bytes": 5967
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_reading_settings_original.png",
+    "sha256": "5871e06a308231b5d6385c0d0f81ec789a81000f08a22ae6e2e5a0de121ee2bd",
+    "bytes": 456007
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_reading_settings_original.json",
+    "sha256": "e9d91c73df7451f36072753d5977d697adc4a26e01456a95d1dc88172d616b41",
+    "bytes": 9262
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_reader_directory.png",
+    "sha256": "730832668c7d655e5e3db427bba7ab7463cc2586c82406849090757ba2e5f694",
+    "bytes": 427746
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_reader_directory.json",
+    "sha256": "68eb21c534abc86239c0b202dfab52434afefa1a4e2ef8e0f9b48ca428ea1a12",
+    "bytes": 8080
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_settings.png",
+    "sha256": "106d74b303062e3726485cd009c48964454653dfe2e630506008d75b0f1020fc",
+    "bytes": 284434
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_settings.json",
+    "sha256": "ab4c8b503303fe0e28104038e1981c0f3e1e3f4daf187ed9a48e94e669b9fd17",
+    "bytes": 7906
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_downloads.png",
+    "sha256": "22d8fd70f7ffe080a7cd92c8c7259d9778d1c54d07c64bcc077e7e6586fdce20",
+    "bytes": 122802
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_downloads.json",
+    "sha256": "47484bf04c0417a28d4f9b28e0cac6d44d93148f7434a9d1b96f65c1705acf6c",
+    "bytes": 4833
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_dark_cache_cleanup.png",
+    "sha256": "d1346c49646505129a1286aee415aa31e90d930cd1fc86e76ea4ff4848cb5e41",
+    "bytes": 169237
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_dark_cache_cleanup.json",
+    "sha256": "ec9096d2b918da92197d8a2cd9a224cc4a93504b0e36d3f6d4007eeb079d63d8",
+    "bytes": 5857
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_bookshelf_online.png",
+    "sha256": "88fad87a2a870d44062c7378dce606ee2ec17471709b4b04ab6d5452f659dd74",
+    "bytes": 352623
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_bookshelf_online.json",
+    "sha256": "bc8db0fec2ce379cd15b4769ad0781973675dc593f203d5bc7063a05e5e8782b",
+    "bytes": 8220
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_bookshelf_local.png",
+    "sha256": "dbaca4d3236e3b9dfb3ab20f2b905c466c16f66feb544e3e5c44615c717c9efc",
+    "bytes": 570280
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_bookshelf_local.json",
+    "sha256": "e014b1ba20d6f8d52e4af83fe914580a2167c22516411321f31fad17cbc5f6b1",
+    "bytes": 9074
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_discover.png",
+    "sha256": "45b2315a4b360383349b547800685264d3470f5c1fbb6c86e8475ec036f63bbf",
+    "bytes": 270996
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_discover.json",
+    "sha256": "246c4600434ad6432bbd3d24038b0624c65d3097ae2a5fbfcde7a6a4c17c538f",
+    "bytes": 6138
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_source_drawer.png",
+    "sha256": "2c41da8f4838ffa424e4e417e6feec9ec31c7c456a6f45febfc18c6afee7cca3",
+    "bytes": 316255
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_source_drawer.json",
+    "sha256": "5c53b70c0565ed7c2aea450e3e66fbca91bc7906b854a5aacf76138c7fa1a50c",
+    "bytes": 21312
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_search_results.png",
+    "sha256": "e04cdc43c665011ef14dbbe028540a69e11c3b40ec7bee581271745bcb9511d2",
+    "bytes": 165134
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_search_results.json",
+    "sha256": "d211dd7f09d0496d0b0e6c843c8bbf9b6b6d807bbd279581ea7bb34e48c06265",
+    "bytes": 5627
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_detail.png",
+    "sha256": "60c23c31cb69ac95d0b98e33fa5e1f977fab36d828abae6c7c52ff94c0d2b0c5",
+    "bytes": 272937
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_detail.json",
+    "sha256": "233df81bb50b4e672a7ad4d42d47a92f7934ff4d83458c9a6d1994cd59dc3747",
+    "bytes": 5445
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_source_switch.png",
+    "sha256": "762f8dd818d64d58080dea7ff18b89b369e63c9886cc500ce6c62a46e640fc80",
+    "bytes": 304585
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_source_switch.json",
+    "sha256": "b67feef0c28fce7f2839d2551860690ccefb802b104e4b05eefd3bed016c159d",
+    "bytes": 41062
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_reader.png",
+    "sha256": "18a0a548a83b60f62e0ac7102c2a5bf94f996ac0e8b1c2bcdd59516d0efaaa60",
+    "bytes": 1957185
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_reader.json",
+    "sha256": "fa8ead138b38eb835873d81b2824a1724581bf31e59ea648141a0eb6908a4206",
+    "bytes": 6091
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_reading_settings.png",
+    "sha256": "7f684d39c892dce3b2dcd77038616025e58a856f9310fddc2033da35975494e5",
+    "bytes": 542926
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_reading_settings.json",
+    "sha256": "f01b4e87d390dd140978c8fa2c7d18c3e80aac7783ebe2367c67eb2e8d415941",
+    "bytes": 10189
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_reader_original.png",
+    "sha256": "73a8fd4486f6b802b3561ba6a4320663e1df5c8b79c4b1396f05132be963b51c",
+    "bytes": 951837
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_reader_original.json",
+    "sha256": "613d96e237d033d0964e5a04f4441c8f2ac1e0e040e2c430940db4f617f0b842",
+    "bytes": 5967
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_reading_settings_original.png",
+    "sha256": "51ab9c37b3bdd661c9199b5389424a31e610145cd4e85c775c97549155f096a7",
+    "bytes": 457480
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_reading_settings_original.json",
+    "sha256": "029b95fbae2a81f0362b2191313d27c6ca1996bc2fc47ecfdef4a9726c3e9ee5",
+    "bytes": 9263
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_reader_directory.png",
+    "sha256": "942da027d54f72eaf1ec0f3e563e2fe4cafbca8a7c79d0e92baef55cbb397c73",
+    "bytes": 424600
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_reader_directory.json",
+    "sha256": "8460940b74ec7fe747aa5360b234b4f98fc514a71d260a930c7b0dc13aeeaad8",
+    "bytes": 8081
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_settings.png",
+    "sha256": "499aa77e05a586dc257e5e99dffa9a3e3ef809da6780740dbc26cc26da7a3246",
+    "bytes": 289093
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_settings.json",
+    "sha256": "e2184dc6f45435c22556afd568f43f7801bebd1df88d90eb62adb9e16a7e2509",
+    "bytes": 7907
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_downloads.png",
+    "sha256": "8c4fcec668282d49f9c57a38bec0738f8aa550873b7889123483b7c14628ada9",
+    "bytes": 130251
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_downloads.json",
+    "sha256": "58942cd0eedb52f9bda27aae0340996abc5a17d1cf47a1460dd1d15c28e9a186",
+    "bytes": 4834
+  },
+  {
+    "file": "visual-matrix/iphone_portrait_light_cache_cleanup.png",
+    "sha256": "5778766f59a7c5be1caeb621062eb973aeb0ccf4241c7f3f0365c21ad639275c",
+    "bytes": 170571
+  },
+  {
+    "file": "visual-provenance/iphone_portrait_light_cache_cleanup.json",
+    "sha256": "1dd723735500af54200151c7ae9676e477972e2b6f0abf7009ea35521ae1a84c",
+    "bytes": 5859
+  },
+  {
+    "file": "reader-enhancement/iPad_Pro_11-inch__M4_-reader-ai-metrics.json",
+    "sha256": "0725b63666840b5e7839bf110a2a855784a39afc5aa162a723c6b88fa1db2ebf",
+    "bytes": 343
+  },
+  {
+    "file": "reader-enhancement/iPad_Pro_11-inch__M4_-real-input-384x384.png",
+    "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+    "bytes": 70556
+  },
+  {
+    "file": "reader-enhancement/iPad_Pro_11-inch__M4_-coreml-output-768x768.png",
+    "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+    "bytes": 583242
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-SourceConfigFilesUITests_testCancellingImportAndExportLeavesConfigurationAndShowsNoFalseSuccess__-1.png",
+    "sha256": "effeb6290486375538a8a0755a585f8648c091f4870332e4daa0cfcfbb073ec4",
+    "bytes": 190316
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-SourceConfigFilesUITests_testCancellingImportAndExportLeavesConfigurationAndShowsNoFalseSuccess__-accessibility.txt",
+    "sha256": "dc510bd0ffb521171e37b938aecbb0a529c3132879bbf6896b10acaf1647e799",
+    "bytes": 68767
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-source-grid-accessibility.txt",
+    "sha256": "4679fbe5a6d30d5305c65891a308745eb28aeb42859920b999c05bd3a65529d0",
+    "bytes": 20416
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-1.png",
+    "sha256": "ea396374463210f3b1821cd6318f2faedf2d2af2afd8541d40dabca142de8cbd",
+    "bytes": 285203
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-2.png",
+    "sha256": "0580d8fc675f1f84ba6ce7baca3234b403ad0e5a609faa6645ee35c496829fa1",
+    "bytes": 173926
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-accessibility.txt",
+    "sha256": "c531123d50b8f0280e646a592b871c2baa0a96a56457c486324e299f4b1e9a8d",
+    "bytes": 18357
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_settings_reference_empty.png",
+    "sha256": "04b9c4b0442283f371f32d5928edf5327c1e7d8430d7c5f28f85ec2521622d36",
+    "bytes": 218068
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_settings_reference_empty.json",
+    "sha256": "baa41c55f6448476126ad110fd82cfd06fbee6f85e006b16bd9199833047f638",
+    "bytes": 7906
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferenceLandscapeDark__-1.png",
+    "sha256": "12133a597b316b84d64faffa994f63eac134b9f022c8f4ec364562964282e0bc",
+    "bytes": 319365
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferenceLandscapeDark__-accessibility.txt",
+    "sha256": "1bb5c15b84181a886b0a7b3ef5eabb162637f1c6f8574823473337110f256299",
+    "bytes": 6803
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_settings_reference_empty.png",
+    "sha256": "5db3a07d26ed0b43e7e65844a630bd81281fa26381df50c46d8dd532e9a91e15",
+    "bytes": 221072
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_settings_reference_empty.json",
+    "sha256": "0e39887f15cfd5f087af585d669bd96cb70189bd13207bc2bec8ec348ab60573",
+    "bytes": 7907
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferenceLandscapeLight__-1.png",
+    "sha256": "416b675aa57b294e97f99a3d2705b2b4792b78421b1c63c6f68bc731a7705acb",
+    "bytes": 362513
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferenceLandscapeLight__-accessibility.txt",
+    "sha256": "360588f7c58443e288968ea28e4abb9a6d0e032b5cb6397d6c64be05c7f07a30",
+    "bytes": 6803
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_settings_reference_empty.png",
+    "sha256": "475c779e4f86d90b07f41c0e07ecfd9353e9e24cef48873b221da9d031df6413",
+    "bytes": 249544
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_settings_reference_empty.json",
+    "sha256": "416c2d9b96c1c650c4ddf20afec1d6b6c0fb9846b670aeb26bd508ff3d818f99",
+    "bytes": 7979
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferencePortraitDark__-1.png",
+    "sha256": "475c779e4f86d90b07f41c0e07ecfd9353e9e24cef48873b221da9d031df6413",
+    "bytes": 249544
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferencePortraitDark__-accessibility.txt",
+    "sha256": "bd9c4c7a67e54fff720ba672da3c43f424993e798cabbd50d16b491d80656ca6",
+    "bytes": 6803
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_settings_reference_empty.png",
+    "sha256": "b585a2eb5cef422441beb865ab731e8e0e03826207c26ac6b7ffdb4acbfaa2ab",
+    "bytes": 253610
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_settings_reference_empty.json",
+    "sha256": "7a4e9eaba0bfa1b97f8e514c4c3b1e493c6a5ea1f28e5b98d8ddc1068345f1a3",
+    "bytes": 7980
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferencePortraitLight__-1.png",
+    "sha256": "b585a2eb5cef422441beb865ab731e8e0e03826207c26ac6b7ffdb4acbfaa2ab",
+    "bytes": 253610
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferencePortraitLight__-accessibility.txt",
+    "sha256": "b19fc1e92d0dc371d84d5d2c63cf2cdec8baeb70b137ed3c7bd916111a6b5e4f",
+    "bytes": 6803
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_bookshelf_online.png",
+    "sha256": "8e31c5fc8eede3f5c2e5d84521e584f2a89b676ac6310f391c7d178782643d54",
+    "bytes": 281685
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_bookshelf_online.json",
+    "sha256": "2134b0b88a7218609b48e1e776096eaafc596888d9568f21ecc4f4abbb7061d9",
+    "bytes": 8428
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_bookshelf_local.png",
+    "sha256": "7d426c2c67cc50371d6e447c5095c6ff972d77e5b4d6135d6482169285c0fd7b",
+    "bytes": 407487
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_bookshelf_local.json",
+    "sha256": "83838ec250cddd8c15d9a58afa3c083fe4943fbeca9a93d9f5014bda634bbb28",
+    "bytes": 9307
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_discover.png",
+    "sha256": "31b6bf9f13a85bf9dff07dbb95ceb4d5c127635b57d22643f0f40cdaa6eaf467",
+    "bytes": 228541
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_discover.json",
+    "sha256": "58a4cf147b746a7aa053790e229de78e2ff9d2eafde0a753f2b87ae4ad1d5d31",
+    "bytes": 6306
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_source_drawer.png",
+    "sha256": "a8814db43d9fa2596cc37c145c0dde1228cb86e1ded0dfeb047edacc237aa3e6",
+    "bytes": 277306
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_source_drawer.json",
+    "sha256": "8e0028cad10581869786e61e8ba1493325a15f7dbbae893601e025db9a4fe989",
+    "bytes": 21530
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_search_results.png",
+    "sha256": "2da4e242e0e945a373946c3d5ea6113090021740a4e29e340ff52bef2b107e06",
+    "bytes": 144036
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_search_results.json",
+    "sha256": "c74e12655a4e5231d3175cbe57f85792472fdfb116fb6a441d0a58821e5e83a5",
+    "bytes": 5783
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_detail.png",
+    "sha256": "d371e0c7648682fe18773cb868e555aef5e581be087453b0ec5f3738f60fe504",
+    "bytes": 295938
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_detail.json",
+    "sha256": "5144b83744e3cd5a3547c980744c9197e222f72fd0d53a837cfa1e1f35a1f374",
+    "bytes": 5601
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_source_switch.png",
+    "sha256": "72dfab8fb9bdcca3d604a23575028631ce86eb75aeda0ceb5ad5727ad9da5600",
+    "bytes": 304689
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_source_switch.json",
+    "sha256": "b2272f5fc15cda9d9bcc74f48aba11cd2c9c1d72302c09df65441d12924a5415",
+    "bytes": 43699
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_reader.png",
+    "sha256": "33d3c476fd5be7479686f6bfb4ff322d7991317356352d11288aa3afbf51b72e",
+    "bytes": 2303192
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_reader.json",
+    "sha256": "b1f5097ccdf3ff1bf2ff8d7d1b7ad68e0adbdf8e95c8ff6ce0b8cd1cbb30ba86",
+    "bytes": 5443
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_reading_settings.png",
+    "sha256": "a6f38c2871e24b22cf0331c2dc6ce9117503d5e8f5ff2774eb80114b92dfe003",
+    "bytes": 649812
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_reading_settings.json",
+    "sha256": "968f544466912daf0d8f4de118fc857101c18cc890ddf786da01e81f821db40a",
+    "bytes": 9576
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_reader_original.png",
+    "sha256": "90f85081f487255c6a91a9d027b1fbae0bfc87414c724b58766d5d63b2cf1d0f",
+    "bytes": 1453745
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_reader_original.json",
+    "sha256": "eca4d490d1ee5fb8fb63710b97e3cca0c2dc32131f82e67c64e76820035f7e0e",
+    "bytes": 5314
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_reading_settings_original.png",
+    "sha256": "c35a0513411c4ccba578cc0a66e15f9778475c7268ee058acdeea059cf913f62",
+    "bytes": 632510
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_reading_settings_original.json",
+    "sha256": "895ef328157ce6e7d8ea80db3c6c3be88acf94285021d8ed547fc3f71bc7d798",
+    "bytes": 8639
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_reader_directory.png",
+    "sha256": "3d96000bc619122baaf9f1e525891abf516f212c6a5c9a55c1ac2e492867761e",
+    "bytes": 665945
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_reader_directory.json",
+    "sha256": "510035ecbe65be607a163cfc0bbb39905622f26a0b78ccd1b79b99fa266c1700",
+    "bytes": 7449
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_settings.png",
+    "sha256": "caa5b3c42ab8748c3adf0072c442d659f39989b8e15ce778e60833df8df85f89",
+    "bytes": 217994
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_settings.json",
+    "sha256": "29deba688401d814989870b1c4196447158202d1e16e0d598cc20dfb56db5a82",
+    "bytes": 8123
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_downloads.png",
+    "sha256": "0c5a9164fe1785557840f1ea98b1bad048314e865df3e41702dffe7953a66181",
+    "bytes": 134852
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_downloads.json",
+    "sha256": "42e29737f306173b7ff56b05e6fde06c313e9194bee006b7443ea4f0699a24bd",
+    "bytes": 4949
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_dark_cache_cleanup.png",
+    "sha256": "4a6bc9bf90508832e5bd62e1ad55617575cbc357655fe5e873aabbe3b5cc70dd",
+    "bytes": 159325
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_dark_cache_cleanup.json",
+    "sha256": "db990ed5fb06fa2f02b1661703f2594ef187ade21d69c0a81de801a52ba0d6f4",
+    "bytes": 6033
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_bookshelf_online.png",
+    "sha256": "3dc41c44e72032e6adde82469aebd5d6673b0d0c544a75770a647c1fe2a2db70",
+    "bytes": 281756
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_bookshelf_online.json",
+    "sha256": "e2a1d70bbe01790338b3ad27a81c962fa9da41a8c7a3973d36a24b92a29092e5",
+    "bytes": 8425
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_bookshelf_local.png",
+    "sha256": "4dfb61fadbe9fe52c0fc3bc4d88ca470ea4d6d7f15a771347b7e72ae1ca1b9ff",
+    "bytes": 409830
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_bookshelf_local.json",
+    "sha256": "f8fdd6900b3c71e6255e15c4aef988ecd10ccde9698d0ed80fc0f7546ec537c5",
+    "bytes": 9306
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_discover.png",
+    "sha256": "86c819b7f8dcabaf16f8d804fb596f146618efd622638a1516ab0a241b96482d",
+    "bytes": 229721
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_discover.json",
+    "sha256": "cc1516f1da80b3642b922fc42e8ab31ad293447954560f7bd3fac0feef4df9d9",
+    "bytes": 6303
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_source_drawer.png",
+    "sha256": "eddafa391c1a2087f8e7e998a7fd5d84e9b42e031ec8a7bc3386db5f5bd446b0",
+    "bytes": 278476
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_source_drawer.json",
+    "sha256": "696a977120e150eba32d4a21af239b6e3486746f79c5a9738fe7cb82f151349d",
+    "bytes": 21527
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_search_results.png",
+    "sha256": "9d6c005b3dc859e49b9550181f89a5d2c061bc2fb123026705b61b7df98885b5",
+    "bytes": 145244
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_search_results.json",
+    "sha256": "9ef0daf139c5790f3b5cc324457bfdafdfd847910b5e0a0a0502b8e1c5edf3d7",
+    "bytes": 5780
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_detail.png",
+    "sha256": "edcbe2404c0edeca1946a0fbf4345b42de2c8a0aace58d92f01b198d87a79541",
+    "bytes": 296900
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_detail.json",
+    "sha256": "ea5aaa89ebdf54ece945fb5ff871cae4fbc3f728c0cfb80c0149b980169e2534",
+    "bytes": 5598
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_source_switch.png",
+    "sha256": "6ec57f33f8500af5a027a98dc37cac983fc8b5953bcc23a5a2f90cdea7897132",
+    "bytes": 313481
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_source_switch.json",
+    "sha256": "3d45983269f2745071400146d6613931c974c3f6bf74d8751fc598d0a109d204",
+    "bytes": 43696
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_reader.png",
+    "sha256": "5b2f4970f218995b97283f7fe7d85d360e5423fd2c5325fd08e059ac77d71d2d",
+    "bytes": 2290313
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_reader.json",
+    "sha256": "f061ea5a75a4a2342cf1af580047c73ba6a6cc5b09e109194cdbb4b12537ac58",
+    "bytes": 5440
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_reading_settings.png",
+    "sha256": "1ef1754904f6865391799119d43179cfdd203ecc299adcabacf2441deee142e7",
+    "bytes": 646946
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_reading_settings.json",
+    "sha256": "1c3c8bfd85583ceb9bf5f9bafef915d199a35d83892952cd16f27ffa61cfeb65",
+    "bytes": 9573
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_reader_original.png",
+    "sha256": "39d5f4af09c4f3b6ae21a8179290e5fbfdb988fc44a7fa3703f2ed54e6ec59a0",
+    "bytes": 1449379
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_reader_original.json",
+    "sha256": "5429d2c726f5946e46cb9a9466a6c50cd951f9f42b1c9e17bf8e0950ccc1aaee",
+    "bytes": 5311
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_reading_settings_original.png",
+    "sha256": "d1c8dd638d079b084e0f41d8638748b0f68bc2b32c647e48192bbab174eb2957",
+    "bytes": 629532
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_reading_settings_original.json",
+    "sha256": "50df48ea6b242849adbd458cdb8d3866ee975d2d06fac5e36606d6c9b770c3e6",
+    "bytes": 8636
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_reader_directory.png",
+    "sha256": "4f42014bbef932d415527fdec0d780a5e76ab74d642243b491d2a5bc670644e3",
+    "bytes": 665173
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_reader_directory.json",
+    "sha256": "4a9ca36e4fa523a7a0c90a2cfc73b54186059ff58cb884fca43267ffb2ea29bc",
+    "bytes": 7446
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_settings.png",
+    "sha256": "30ad0fc2afdc2a8466b41f1a007fe75be33c7badff64fd71f20cbab5e4d22aa7",
+    "bytes": 220246
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_settings.json",
+    "sha256": "27dff4ec422cc07f42afd113aa218e9f73ad7ef3ab88acdb8b7a885e4ec5e9d1",
+    "bytes": 8120
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_downloads.png",
+    "sha256": "ed9ed6e2a8d2595da1357add80b0f8f1acb90ed71c650c7ba780a95a01bfec00",
+    "bytes": 135745
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_downloads.json",
+    "sha256": "ce2a108f1e75aa19cee0a888db5a0b998c3c10826afb86d02cac8d82c9d96576",
+    "bytes": 4946
+  },
+  {
+    "file": "visual-matrix/ipad_landscape_light_cache_cleanup.png",
+    "sha256": "d46b741ec7b1b71731bb03960401bf3cf6224dd9cc4d2c6ffc20336e0c2ead34",
+    "bytes": 159922
+  },
+  {
+    "file": "visual-provenance/ipad_landscape_light_cache_cleanup.json",
+    "sha256": "d220e2c5e46b58473df4a35c59d52ff7b09f5bd4476cfe64be10cc0bc2cd3abc",
+    "bytes": 6028
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_bookshelf_online.png",
+    "sha256": "03f3a5863c032852bf03fe5dbec6c5c8f7610222f9c99df042a44500025db35d",
+    "bytes": 282203
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_bookshelf_online.json",
+    "sha256": "112adf7512511a4cfa02fa0ab22905d810fd0a79a4938f2fba7535a29f6e5cf0",
+    "bytes": 8506
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_bookshelf_local.png",
+    "sha256": "2832df36f10bce5080ce814c225f1b1a2eab628f80a71aaf3267168535524a58",
+    "bytes": 426196
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_bookshelf_local.json",
+    "sha256": "af180a9c3e603b044ff30fafcf04fc3c8689fc3b02f268167b86f26b9dcbf92d",
+    "bytes": 9384
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_discover.png",
+    "sha256": "48bd917e113e0520d1c51d4ddf8c8771a08e2006aa941690c184cc91c84e9185",
+    "bytes": 223482
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_discover.json",
+    "sha256": "292919f60cddf534f12bd87da1cba12fc7f42963e6f7bc0c7179f6aee4c6919e",
+    "bytes": 6384
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_source_drawer.png",
+    "sha256": "d0bf6e99e8ddcdca0b59098ea17b2e3294d55ef50fe525b47fa9a5f049cc853f",
+    "bytes": 286195
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_source_drawer.json",
+    "sha256": "f5e9d174d87d660f4619f0b3e72aeccc54e54a93c1b57a1c1b6a5573a34b784b",
+    "bytes": 21639
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_search_results.png",
+    "sha256": "1deeae2c125fd685b6d238492e395ebf7a406a4f7f4f6f904c8f206f930e431e",
+    "bytes": 148999
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_search_results.json",
+    "sha256": "49d7c9e0de668897f1d6a050170fc7a5ecf7bd6c29b46a54bff2e768128b0774",
+    "bytes": 5868
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_detail.png",
+    "sha256": "3224a031ebf184ef60b78bb53a0d304e4c50340139f7d61b4c7d9a2c805e5771",
+    "bytes": 245787
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_detail.json",
+    "sha256": "b66a87dcd873414b599687432b9643a686b9e6b26d68a5d3c926b696f1fe2866",
+    "bytes": 5687
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_source_switch.png",
+    "sha256": "8ad40cd2a3cb1467414380f83e80ecaaf59bbd3ec0cd5791e4dfc31e9720494e",
+    "bytes": 463688
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_source_switch.json",
+    "sha256": "65cb608c36e7e79b5a8bfe0c2a35c987777200be967ad309ad28dcb5f2b76124",
+    "bytes": 43521
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_reader.png",
+    "sha256": "8484477d2386eae139f7b7d4935dc6bfb9bad3a61265e65655b0f399049b2343",
+    "bytes": 2103043
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_reader.json",
+    "sha256": "32801d75ab8db683ad136c070d284819b9252c9db01399ec2b618677c5da4a2b",
+    "bytes": 5959
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_reading_settings.png",
+    "sha256": "d3833497d4769b2ef74cd732479384fd769637b2dc09721be3fd7b4deaf61dd2",
+    "bytes": 838985
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_reading_settings.json",
+    "sha256": "6d61e70190c3bded7d7c272dc3835fba966ba07e872c304f783a9bf264fa0dd9",
+    "bytes": 10076
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_reader_original.png",
+    "sha256": "41e9c804c4f5f777bf1aad273e6563572fc211fdb2c419fb2636efc5f538225a",
+    "bytes": 887964
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_reader_original.json",
+    "sha256": "55b3d8e6dfbc859417e6a91c2d26d625a5f64730ef6930bcd0e4afb818232f75",
+    "bytes": 5831
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_reading_settings_original.png",
+    "sha256": "3f249d6ef6630b41c38156dbf88253ae6492e6b200a8f752e5a507fb56fe2963",
+    "bytes": 463814
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_reading_settings_original.json",
+    "sha256": "c6ea39ecf43b24b8b65e64b637f9cc87693cbc8c28302b814e21f7f0ab169b27",
+    "bytes": 9141
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_reader_directory.png",
+    "sha256": "af1e36aee79d46b3ee45d1f338f02050fb490c326a86b4f3ba5849b3657a4ed9",
+    "bytes": 406379
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_reader_directory.json",
+    "sha256": "92f8a1ce46c927af76c53f765ff6b195dabbc0ca5bb13587505881fd551d8ae5",
+    "bytes": 7961
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_settings.png",
+    "sha256": "635b354ba339b420b1b2e6105614fd34640aeb0bb1675c7a7260c93c51666bee",
+    "bytes": 249046
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_settings.json",
+    "sha256": "76555d40f15529b75172427ee6d1f22dafed43796ce32cd4d2dd2993b336c1dd",
+    "bytes": 8199
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_downloads.png",
+    "sha256": "bc0e85b21d3e81aacc7974d9e2f87ec416c2295c71ac54d8708fc612a2099a00",
+    "bytes": 127862
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_downloads.json",
+    "sha256": "e5a391b502e340421076634dcf5b54d8bb108122fd9b7ebf2e34cc698c35e8e7",
+    "bytes": 5047
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_dark_cache_cleanup.png",
+    "sha256": "2d4f32d8889d2fec58d6400f88e2449d19c497310bf9fecf2a132d167584f026",
+    "bytes": 167617
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_dark_cache_cleanup.json",
+    "sha256": "f5410de0737ac1a4767ffb0c9822b08b46a518de5e8a924a1a9a542ad0615a04",
+    "bytes": 6119
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_bookshelf_online.png",
+    "sha256": "8a5e5da0884c8593fd2cf0e378f0ee668374f6fee036bb186dd3f0b54eaff520",
+    "bytes": 281458
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_bookshelf_online.json",
+    "sha256": "f98d8a1f65778d33964539a5c8577cf294fa23162964259e0704fec3bce7b040",
+    "bytes": 8511
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_bookshelf_local.png",
+    "sha256": "685703cb6c30727a05510c1ef72407d78fa5d56019888bd03c2e0df4259066f0",
+    "bytes": 429659
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_bookshelf_local.json",
+    "sha256": "dc4dd0e4442c5ac69ae8883d84dbf1805a9141dcd9328bb943b0cccd5cfef451",
+    "bytes": 9389
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_discover.png",
+    "sha256": "ab07efb32218bea6f267a880b618f7dbbd00d315a0dff0fd73fa393d49227b16",
+    "bytes": 223716
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_discover.json",
+    "sha256": "bac6defa0b20f34505bb69cc63747a593346531ab60105e35d691018f65cb199",
+    "bytes": 6389
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_source_drawer.png",
+    "sha256": "ba26e4e34310ca15287c0042a33bc47b6ebf13ec1d2c98b2810c0ac997161ff2",
+    "bytes": 288010
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_source_drawer.json",
+    "sha256": "07812547ae3f495cad7aebd5134974fba65213d10f0dd150ffe88d00c583c268",
+    "bytes": 21643
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_search_results.png",
+    "sha256": "89438a5847f71c3f1cda20a0162b07075d700930032a30e951b53915b4a384ed",
+    "bytes": 149458
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_search_results.json",
+    "sha256": "fd030d9f2573e68f205b359e319fb38eac0b5db73497a8b562d2768155b8063f",
+    "bytes": 5873
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_detail.png",
+    "sha256": "ee88910e0e5107df90a2804fc98e8c2fa429d3e7a8c037160d8a0eac7c5b265d",
+    "bytes": 245624
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_detail.json",
+    "sha256": "16c94acaf4c57b7da9f7d1622d7762e5c3f61542c120635f4fca445705934b69",
+    "bytes": 5693
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_source_switch.png",
+    "sha256": "33d2b4c3ea356ad81a8a7c0ca319117532ef52ca902a73d5f673d9a2dcedbc28",
+    "bytes": 473051
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_source_switch.json",
+    "sha256": "e226b08913204b84bf2dc3d377989bdcaa22deacaa59a73da5b49fd6653b6c7b",
+    "bytes": 43526
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_reader.png",
+    "sha256": "1405db8d018768eb30e7483e5acbcd6308e288e72bc7d0937deb03dcd3ce9e20",
+    "bytes": 2104425
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_reader.json",
+    "sha256": "8cfbd70bf820de9e24e3c1747ed4c97a8716f5c06e61d3f9c555603268008c78",
+    "bytes": 5964
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_reading_settings.png",
+    "sha256": "12466dea09be92e0fdca484834a2b0e7cca37a1dbf2671a2921f215154ad881e",
+    "bytes": 847076
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_reading_settings.json",
+    "sha256": "da7c769b1974d42718fb83a76b77f25d2776c0c715f785d364c1d346e2b33d36",
+    "bytes": 10081
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_reader_original.png",
+    "sha256": "c6571cf4b13b1a67fd10c0a42efc2f8afe94a42e26436803e1f8bde7da616271",
+    "bytes": 887192
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_reader_original.json",
+    "sha256": "a630defe057160f7decf52d65ffe9c6ba2c11b5e1e03feb884d5b10f5873db92",
+    "bytes": 5836
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_reading_settings_original.png",
+    "sha256": "d8dcf7ec8349be98ddb3500a1adc3f3b70e09f530529bb280dd78bc3ac7fb4aa",
+    "bytes": 469726
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_reading_settings_original.json",
+    "sha256": "386ff2e2a32165e4f34a4520c9cf8feef717bcc4dcb16cc9d19818fa6f6968a9",
+    "bytes": 9147
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_reader_directory.png",
+    "sha256": "bfb6109694bfc0fb161a1efbb6215d280e2b0e5a2868fd77d5f179af9adfd1e9",
+    "bytes": 397322
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_reader_directory.json",
+    "sha256": "5e635689c966e3d80345bb1aa49f2cccc4c398c68a3fe22e7c0224e8fd61fb6b",
+    "bytes": 7967
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_settings.png",
+    "sha256": "559feb780c9dea714d3906f22253bf42ba8931650e0bd4b8695d21e26312cc43",
+    "bytes": 253078
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_settings.json",
+    "sha256": "0e23096b0c720cc2bab0b5af44c47d97b461667d3ec57233d6143e4ee915a7ed",
+    "bytes": 8204
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_downloads.png",
+    "sha256": "1bbfd2ea714483e6f24b92fd6457d83dae1eea9752b67387ab6ded7203c3be96",
+    "bytes": 136924
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_downloads.json",
+    "sha256": "df7ca88625b6c5fbeec88efe2d76cce6217c089a4636a31b8630fce0c8743ad3",
+    "bytes": 5052
+  },
+  {
+    "file": "visual-matrix/ipad_portrait_light_cache_cleanup.png",
+    "sha256": "22d20e8bd11065196bd56b070a30b0fbdce18b53640eca66d17d9d0c6ff6a1f1",
+    "bytes": 167843
+  },
+  {
+    "file": "visual-provenance/ipad_portrait_light_cache_cleanup.json",
+    "sha256": "59ac45d48a29a264031d3186b66998de44096bd27d87e8261928cb389cc6f55c",
+    "bytes": 6123
+  }
+]

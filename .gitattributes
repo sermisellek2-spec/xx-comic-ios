@@ -50,3 +50,9 @@ docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci18-repair/** -text whitespac
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci18-repair/historical-*.md whitespace=-blank-at-eof,blank-at-eol,space-before-tab,cr-at-eol
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-manga-mode/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-manga-mode/*.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-visual-polish/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-visual-polish/historical-*.md whitespace=-blank-at-eof,blank-at-eol,space-before-tab,cr-at-eol
+
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci19-results/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci20-results/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

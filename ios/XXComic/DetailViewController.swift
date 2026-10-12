@@ -32,6 +32,9 @@ final class DetailViewController: UIViewController {
     private var downloadTask: Task<Void, Never>?
     private var downloadID = UUID()
     private var feedback = DetailFeedbackState()
+    private var favoriteArtworkID = UUID()
+    private var favoriteArtworkName: String?
+    private var favoriteArtworkScale: CGFloat = 0
     private var resumeOnAppear: Bool
 
     init(comic: ComicSummary, environment: AppEnvironment, resumeOnAppear: Bool = false) {
@@ -112,7 +115,7 @@ final class DetailViewController: UIViewController {
         read.titleLabel?.numberOfLines = 2
         directory.accessibilityIdentifier = "detail.directory"
         directory.accessibilityLabel = "章节目录"
-        directory.heightAnchor.constraint(greaterThanOrEqualToConstant: 58).isActive = true
+        directory.heightAnchor.constraint(greaterThanOrEqualToConstant: 54).isActive = true
         directory.addTarget(self, action: #selector(showDirectory), for: .touchUpInside)
         directoryArrow.translatesAutoresizingMaskIntoConstraints = false
         directoryArrow.isUserInteractionEnabled = false
@@ -229,15 +232,13 @@ final class DetailViewController: UIViewController {
         readID = UUID(); readTask?.cancel(); readTask = nil; read.isEnabled = true
         cancelDownloadSelection()
         cover.cancel()
+        favoriteArtworkID = UUID(); favoriteArtworkName = nil
     }
     private func updateButtons() {
         let isFav = environment.library.entry(for: comic)?.isFavorite == true
         favorite.setTitle(nil, for: .normal)
         favorite.accessibilityLabel = isFav ? "取消收藏" : "收藏"
-        if let favImg = UIImage(named: isFav ? "rem_in_bookshelf" : "rem_not_in_bookshelf") {
-            let thumbnail = favImg.preparingThumbnail(of: CGSize(width: 44, height: 44))
-            favorite.setImage(thumbnail?.withRenderingMode(.alwaysOriginal), for: .normal)
-        }
+        updateFavoriteArtwork(isFavorite: isFav)
         let saved = environment.library.entry(for: comic)?.reading
         read.setTitle(nil, for: .normal)
         let title = saved.map { "继续阅读\n第 \($0.chapterIndex + 1) 话" } ?? "开始阅读"
@@ -250,6 +251,24 @@ final class DetailViewController: UIViewController {
         read.accessibilityLabel = saved.map { "继续阅读，第 \($0.chapterIndex + 1) 话" } ?? "开始阅读"
         updateDirectoryButton()
     }
+    private func updateFavoriteArtwork(isFavorite: Bool) {
+        let name = isFavorite ? "rem_in_bookshelf" : "rem_not_in_bookshelf"
+        let scale = max(1, traitCollection.displayScale)
+        guard favoriteArtworkName != name || favoriteArtworkScale != scale else { return }
+        let token = UUID(); favoriteArtworkID = token
+        favoriteArtworkName = name; favoriteArtworkScale = scale
+        guard let image = UIImage(named: name) else { return }
+        // The source artwork is 1254px. Decode off the UI thread at the
+        // screen's pixel density, then retain a 44pt display size.
+        image.prepareThumbnail(of: CGSize(width: 44 * scale, height: 44 * scale)) { [weak self] thumbnail in
+            guard let cgImage = thumbnail?.cgImage else { return }
+            let prepared = UIImage(cgImage: cgImage, scale: scale, orientation: image.imageOrientation).withRenderingMode(.alwaysOriginal)
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.favoriteArtworkID == token else { return }
+                self.favorite.setImage(prepared, for: .normal)
+            }
+        }
+    }
     private func setReadStatus(_ text: String) {
         read.setAttributedTitle(nil, for: .normal); read.setTitle(text, for: .normal); read.accessibilityLabel = text
     }
@@ -258,12 +277,12 @@ final class DetailViewController: UIViewController {
         let subtitle = count > 0 ? "\(count) 话 · 已缓存" : (detailLoaded ? "点击加载章节" : "正在加载…")
         var configuration = UIButton.Configuration.plain()
         var headingAttributes = AttributeContainer(); headingAttributes.font = .systemFont(ofSize: 14, weight: .bold); headingAttributes.foregroundColor = Palette.text
-        var subtitleAttributes = AttributeContainer(); subtitleAttributes.font = .systemFont(ofSize: 12); subtitleAttributes.foregroundColor = Palette.text3
+        var subtitleAttributes = AttributeContainer(); subtitleAttributes.font = .systemFont(ofSize: 11); subtitleAttributes.foregroundColor = Palette.text3
         configuration.attributedTitle = AttributedString("章节目录", attributes: headingAttributes)
         configuration.attributedSubtitle = AttributedString(subtitle, attributes: subtitleAttributes)
-        configuration.titleAlignment = .leading; configuration.titlePadding = 2
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 36)
-        configuration.background.backgroundColor = Palette.accentSoft; configuration.background.cornerRadius = 8
+        configuration.titleAlignment = .leading; configuration.titlePadding = 3
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 12, bottom: 9, trailing: 36)
+        configuration.background.backgroundColor = Palette.surface; configuration.background.cornerRadius = 8
         configuration.background.strokeColor = Palette.border; configuration.background.strokeWidth = 1 / UIScreen.main.scale
         configuration.baseForegroundColor = Palette.text3
         directory.configuration = configuration; directory.contentHorizontalAlignment = .leading

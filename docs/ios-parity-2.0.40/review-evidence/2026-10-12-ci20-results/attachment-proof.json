@@ -1,0 +1,72 @@
+[
+  {
+    "file": "reader-enhancement/iPhone_15_Pro-reader-ai-metrics.json",
+    "sha256": "4e0846c09d48543f87f2a20cd0f95b834a17890aad982f29182ea317f1f22fbe",
+    "bytes": 340
+  },
+  {
+    "file": "reader-enhancement/iPhone_15_Pro-real-input-384x384.png",
+    "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+    "bytes": 70556
+  },
+  {
+    "file": "reader-enhancement/iPhone_15_Pro-coreml-output-768x768.png",
+    "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+    "bytes": 583242
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testDefaultMangaSwipeAdvancesOnceAndCrossesToTheNextLogicalChapter__-1.png",
+    "sha256": "3672491a645121276fcf93801b524769c457510c964aa0b9b9382d19bc8a21e1",
+    "bytes": 333940
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testDefaultMangaSwipeAdvancesOnceAndCrossesToTheNextLogicalChapter__-accessibility.txt",
+    "sha256": "d665c3b77ba3d1bfb0680655826f8144b40b40e28366a71ed217db13bebfa8d5",
+    "bytes": 2128
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-1.png",
+    "sha256": "4c2c18b162bc8c597eca4d2935cb78244ee88a6291c61478318f29669a10cb17",
+    "bytes": 413831
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-accessibility.txt",
+    "sha256": "3eac47ca85131a2c80e836307dc7a27c5b3577b9b09f715059152496705358b3",
+    "bytes": 3840
+  },
+  {
+    "file": "reader-enhancement/iPad_Pro_11-inch__M4_-reader-ai-metrics.json",
+    "sha256": "395819beba16cf8b7ede60964a92abeb23ce341a6db7e7eeac99d95414005746",
+    "bytes": 342
+  },
+  {
+    "file": "reader-enhancement/iPad_Pro_11-inch__M4_-real-input-384x384.png",
+    "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+    "bytes": 70556
+  },
+  {
+    "file": "reader-enhancement/iPad_Pro_11-inch__M4_-coreml-output-768x768.png",
+    "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+    "bytes": 583242
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testDefaultMangaSwipeAdvancesOnceAndCrossesToTheNextLogicalChapter__-1.png",
+    "sha256": "e788b9f8ae1b36143c3acf6f71082a99693246abf11fe68136ad1c13cf96cd87",
+    "bytes": 494302
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testDefaultMangaSwipeAdvancesOnceAndCrossesToTheNextLogicalChapter__-accessibility.txt",
+    "sha256": "015a99eeb3a05854ba1002ca20824aa91e0fc168aab5faed19c8492516188016",
+    "bytes": 2103
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-1.png",
+    "sha256": "a72e109436e1d853535f7d2a3c9e3838e85b69c5a1bea79143897c37906632a6",
+    "bytes": 542445
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-accessibility.txt",
+    "sha256": "b5dc4357043c53ba0ddb53fdc5b8d62fd3960ef5f09cda29a51f8281a630410b",
+    "bytes": 4040
+  }
+]

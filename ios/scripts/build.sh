@@ -100,6 +100,9 @@ case "$validation_scope" in
       -only-testing:XXComicUITests/SourceConfigFilesUITests
       -only-testing:XXComicUITests/ReaderSettingsParityUITests
       -only-testing:XXComicUITests/VisualMatrixUITests
+      -only-testing:XXComicUITests/ReaderContinuityUITests/testStripControlsDoNotMoveOrResizeImages
+      -only-testing:XXComicUITests/ReaderContinuityUITests/testPagedControlsDoNotMoveOrResizeImages
+      -only-testing:XXComicUITests/ReaderToolbarParityUITests
     )
     ;;
   *) echo "Unknown validation scope: $validation_scope" >&2; exit 2 ;;

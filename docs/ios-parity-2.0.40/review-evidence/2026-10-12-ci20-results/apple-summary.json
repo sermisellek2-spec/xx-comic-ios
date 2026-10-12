@@ -1,0 +1,69 @@
+{
+  "runId": 38217879524,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38217879524",
+  "revision": "63c2af2e4b8f33ab871ac500cc9762a819f1ce7b",
+  "conclusion": "failure",
+  "scope": "reader-modes",
+  "sdkBuilds": {
+    "Debug": "success",
+    "Release": "success"
+  },
+  "appleCore": {
+    "tests": 929,
+    "failures": 1,
+    "seconds": 145.531,
+    "failedTest": "CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses",
+    "remainingDiskBytes": 36864
+  },
+  "native": {
+    "testsPerDevice": 27,
+    "failedCasesPerDevice": 1,
+    "failedTest": "ReaderMangaGeometryTests.testMangaFirstLogicalPageIsAtTheRightAndSeeksKeepLogicalOrder"
+  },
+  "ui": [
+    {
+      "device": "iPhone 15 Pro",
+      "tests": 16,
+      "passed": 14,
+      "failedCases": 2,
+      "failedTests": [
+        "ReaderSettingsParityUITests/testDefaultMangaSwipeAdvancesOnceAndCrossesToTheNextLogicalChapter()",
+        "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()"
+      ]
+    },
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "tests": 16,
+      "passed": 14,
+      "failedCases": 2,
+      "failedTests": [
+        "ReaderSettingsParityUITests/testDefaultMangaSwipeAdvancesOnceAndCrossesToTheNextLogicalChapter()",
+        "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()"
+      ]
+    }
+  ],
+  "uiFailureAssertionRecordsPerDevice": [
+    37,
+    37
+  ],
+  "originalAttachmentsVerified": 14,
+  "coreLinuxDoesNotReplaceApple": true,
+  "ipaProduced": false,
+  "artifactArchives": [
+    {
+      "file": "original-logs.zip",
+      "bytes": 849488,
+      "sha256": "0856c8e957670f8195cc8f26cd1d2ddb2f11e1ed186d6e8683d819d42981bf13"
+    },
+    {
+      "file": "visual-original.zip",
+      "bytes": 1702381,
+      "sha256": "dac69f0c3abd389852d7dd82d620754785fb58768fad96db0f70c1456ea4266e"
+    },
+    {
+      "file": "reader-enhancement-original.zip",
+      "bytes": 1287248,
+      "sha256": "233993bc840b0357f7039cc9fb89336a0c821241abf6cb6fa79c56f6be54f7c0"
+    }
+  ]
+}

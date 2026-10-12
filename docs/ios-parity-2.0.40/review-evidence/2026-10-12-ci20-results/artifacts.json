@@ -1,0 +1,26 @@
+{
+  "artifacts": [
+    {
+      "id": 11734855082,
+      "name": "reader-enhancement-evidence",
+      "size_in_bytes": 1287248,
+      "expired": false,
+      "created_at": "2026-10-12T08:03:28Z"
+    },
+    {
+      "id": 11733754956,
+      "name": "iOS-test-results",
+      "size_in_bytes": 179626761,
+      "expired": false,
+      "created_at": "2026-10-12T08:03:26Z"
+    },
+    {
+      "id": 11733259919,
+      "name": "visual-matrix-screenshots",
+      "size_in_bytes": 1702381,
+      "expired": false,
+      "created_at": "2026-10-12T08:03:27Z"
+    }
+  ],
+  "checked_at_utc": "2026-10-12T08:03:59.420352+00:00"
+}

@@ -1,0 +1,18 @@
+# 当前执行状态
+
+更新：2026-10-12。基线Android 2.0.40/340/696e80a；目录51/默认50。指定sermisellek2-spec认证和上传已成功，开发CI不生成IPA。用户只负责最后总验收，P6真实网站仍关闭。
+
+第十七轮852输入Apple38199185049已结束，整体failure：Debug/Release构建通过，双设备原生各25项/0失败；Apple Core917项/1缓存物理归零失败。UI各31项，iPhone20通过/11失败用例、iPad24通过/7失败用例；12项搜索/详情/下载影响UI双设备通过，Files、站源面板和设置空缓存参考仍有失败。[实际结果](review-evidence/2026-10-12-ci17-results/README.md)。
+
+当前接续已修书架新建分组覆盖移动草稿、损坏原分组文件被覆盖及写入失败假成功；失败回滚、错误反馈、恢复读取和空名重试已接线。冻结Android没有书架分组排序UI，本次纠正额外排序要求。Files识别/交互取消依实际系统导航树修正，下载目录加入真实外部文件核验。[接续证据](review-evidence/2026-10-12-bookshelf-groups/README.md)。
+
+当前Linux完整916项/2个Apple PDF跳过/0失败，147.091秒；分组11项影响0失败，87文件Release/DEBUG仅语法通过。新增分组4项UI及Files修复尚未Apple执行，不能记为通过。先前12ddd38筛选消费者/视觉修正同样晚于852输入，仍待当前候选复验。[此前接续](review-evidence/2026-10-12-filter-consumers/README.md)。
+
+第十八轮886输入Apple38213936169在Debug编译停止：书架更新提示类重复MainActor标注。Release/Core/原生/UI均未执行。当前已恢复两个类各自单一标注，87文件两配置仅语法退出0，准备重跑同范围；没有修改Core或降低任何断言。[失败原文及修复](review-evidence/2026-10-12-ci18-repair/README.md)。
+
+c5aa922编译修复已上传唯一指定仓库，第十九轮Apple38215339295正在运行，未生成IPA。用户随后指出日漫模式缺失：范围纠正为保留卷轴/普通/日漫，继续删除旧左右手设置。当前本地日漫独立持久化、右向左页布局/手势及普通默认横滑已补；38核心影响及完整922项/2个Apple PDF跳过/0失败，153.305秒。89原生文件仅语法通过，新增2原生/2UI尚待Apple；第十九轮不含此修复。[日漫接续](review-evidence/2026-10-12-manga-mode/README.md)。
+
+缓存物理归零仍实际失败。已取得本轮完整主视觉页面原件，但64页对照尚未验收；iPad原生场景边界与截图/无障碍缩放不一致，尺寸原因待处理。总体非站源门槛未通过，无最终验收包，不要求用户阶段试包。
+
+[阶段方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md)、[需求矩阵](requirements.csv)、[差异台账](differences.md)、[完整门槛](NON_SOURCE_GATE.md)、[最后用户事项](USER_ITEMS.md)。
+

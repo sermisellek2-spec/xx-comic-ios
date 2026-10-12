@@ -26,6 +26,7 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
     init(environment: AppEnvironment) {
         self.environment = environment
         let layout = UICollectionViewFlowLayout()
+        layout.sectionInsetReference = .fromSafeArea
         layout.minimumInteritemSpacing = 10
         layout.minimumLineSpacing = 16
         layout.sectionInset = UIEdgeInsets(top: 12, left: 14, bottom: 24, right: 14)

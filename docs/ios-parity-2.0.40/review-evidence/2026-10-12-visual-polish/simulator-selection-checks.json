@@ -1,0 +1,205 @@
+{
+  "syntheticInventoryOnly": true,
+  "actualAppleInventory": "pending",
+  "selectorSHA256": "7a2643027f6b201804cc2d677c65859da5a8af05932058a9d2229cb37579f813",
+  "checks": [
+    {
+      "name": "old-first",
+      "passed": true,
+      "inputs": {
+        "sdk": "17.5",
+        "runtimes": {
+          "runtimes": [
+            {
+              "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-17-4",
+              "version": "17.4",
+              "isAvailable": true
+            },
+            {
+              "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-17-5",
+              "version": "17.5",
+              "isAvailable": true
+            }
+          ]
+        },
+        "devices": {
+          "devices": {
+            "com.apple.CoreSimulator.SimRuntime.iOS-17-4": [
+              {
+                "name": "iPhone 15 Pro",
+                "udid": "fixture-17.4-IOS_TEST_DESTINATION",
+                "isAvailable": true
+              },
+              {
+                "name": "iPad Pro 11-inch (M4)",
+                "udid": "fixture-17.4-IOS_IPAD_DESTINATION",
+                "isAvailable": true
+              }
+            ],
+            "com.apple.CoreSimulator.SimRuntime.iOS-17-5": [
+              {
+                "name": "iPhone 15 Pro",
+                "udid": "fixture-17.5-IOS_TEST_DESTINATION",
+                "isAvailable": true
+              },
+              {
+                "name": "iPad Pro 11-inch (M4)",
+                "udid": "fixture-17.5-IOS_IPAD_DESTINATION",
+                "isAvailable": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "new-first",
+      "passed": true,
+      "inputs": {
+        "sdk": "17.5",
+        "runtimes": {
+          "runtimes": [
+            {
+              "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-17-5",
+              "version": "17.5",
+              "isAvailable": true
+            },
+            {
+              "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-17-4",
+              "version": "17.4",
+              "isAvailable": true
+            }
+          ]
+        },
+        "devices": {
+          "devices": {
+            "com.apple.CoreSimulator.SimRuntime.iOS-17-5": [
+              {
+                "name": "iPhone 15 Pro",
+                "udid": "fixture-17.5-IOS_TEST_DESTINATION",
+                "isAvailable": true
+              },
+              {
+                "name": "iPad Pro 11-inch (M4)",
+                "udid": "fixture-17.5-IOS_IPAD_DESTINATION",
+                "isAvailable": true
+              }
+            ],
+            "com.apple.CoreSimulator.SimRuntime.iOS-17-4": [
+              {
+                "name": "iPhone 15 Pro",
+                "udid": "fixture-17.4-IOS_TEST_DESTINATION",
+                "isAvailable": true
+              },
+              {
+                "name": "iPad Pro 11-inch (M4)",
+                "udid": "fixture-17.4-IOS_IPAD_DESTINATION",
+                "isAvailable": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "old-only",
+      "passed": true,
+      "inputs": {
+        "sdk": "17.5",
+        "runtimes": {
+          "runtimes": [
+            {
+              "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-17-4",
+              "version": "17.4",
+              "isAvailable": true
+            }
+          ]
+        },
+        "devices": {
+          "devices": {
+            "com.apple.CoreSimulator.SimRuntime.iOS-17-4": [
+              {
+                "name": "iPhone 15 Pro",
+                "udid": "fixture-17.4-IOS_TEST_DESTINATION",
+                "isAvailable": true
+              },
+              {
+                "name": "iPad Pro 11-inch (M4)",
+                "udid": "fixture-17.4-IOS_IPAD_DESTINATION",
+                "isAvailable": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "future-only",
+      "passed": true,
+      "inputs": {
+        "sdk": "17.5",
+        "runtimes": {
+          "runtimes": [
+            {
+              "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-0",
+              "version": "18.0",
+              "isAvailable": true
+            }
+          ]
+        },
+        "devices": {
+          "devices": {
+            "com.apple.CoreSimulator.SimRuntime.iOS-18-0": [
+              {
+                "name": "iPhone 15 Pro",
+                "udid": "fixture-18.0-IOS_TEST_DESTINATION",
+                "isAvailable": true
+              },
+              {
+                "name": "iPad Pro 11-inch (M4)",
+                "udid": "fixture-18.0-IOS_IPAD_DESTINATION",
+                "isAvailable": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "patch-version",
+      "passed": true,
+      "inputs": {
+        "sdk": "17.5",
+        "runtimes": {
+          "runtimes": [
+            {
+              "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-17-5-1",
+              "version": "17.5.1",
+              "isAvailable": true
+            }
+          ]
+        },
+        "devices": {
+          "devices": {
+            "com.apple.CoreSimulator.SimRuntime.iOS-17-5-1": [
+              {
+                "name": "iPhone 15 Pro",
+                "udid": "fixture-17.5.1-IOS_TEST_DESTINATION",
+                "isAvailable": true
+              },
+              {
+                "name": "iPad Pro 11-inch (M4)",
+                "udid": "fixture-17.5.1-IOS_IPAD_DESTINATION",
+                "isAvailable": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "missing-ipad-does-not-fabricate-destination",
+      "passed": true
+    }
+  ]
+}

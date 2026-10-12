@@ -207,10 +207,11 @@ private final class ReaderSettingCard: UIControl {
     func setSelection(_ selected: Bool) {
         isSelected = selected
         backgroundColor = selected ? ReaderSettingColors.selected : ReaderSettingColors.unselected
-        icon.tintColor = selected ? ReaderSettingColors.accent : ReaderSettingColors.secondary
-        label.textColor = icon.tintColor
+        icon.tintColor = selected ? ReaderSettingColors.selectedIcon : ReaderSettingColors.secondary
+        label.textColor = selected ? ReaderSettingColors.selectedText : ReaderSettingColors.secondary
+        label.font = .systemFont(ofSize: 12, weight: selected ? .medium : .regular)
         layer.borderWidth = selected ? 2 : 1
-        layer.borderColor = (selected ? ReaderSettingColors.accent : ReaderSettingColors.border).resolvedColor(with: traitCollection).cgColor
+        layer.borderColor = (selected ? ReaderSettingColors.selectedBorder : ReaderSettingColors.cardBorder).resolvedColor(with: traitCollection).cgColor
         accessibilityTraits = selected ? [.button, .selected] : .button
     }
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -221,7 +222,14 @@ private final class ReaderSettingCard: UIControl {
 private enum ReaderSettingColors {
     static let panel = color(0xFFFFFF, 0x1C2128), text = color(0x1F2328, 0xE6EDF3)
     static let secondary = color(0x656D76, 0x8B949E), border = color(0xD0D7DE, 0x444C56)
-    static let accent = color(0x0969DA, 0x58A6FF), selected = color(0xEAF5FF, 0x172D45), unselected = color(0xF6F8FA, 0x21262D)
+    static let accent = color(0x0969DA, 0x58A6FF), unselected = color(0xF6F8FA, 0x22272E)
+    static let selectedIcon = color(0x0969DA, 0x388BFD), selectedText = color(0x0969DA, 0xFFFFFF)
+    static let selectedBorder = color(0x0969DA, 0x2E79E6), cardBorder = color(0xD0D7DE, 0x373E47)
+    static let selected = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 46/255, green: 121/255, blue: 230/255, alpha: 38/255)
+            : UIColor(red: 235/255, green: 245/255, blue: 255/255, alpha: 1)
+    }
     private static func color(_ day: Int, _ night: Int) -> UIColor {
         UIColor { traits in
             let rgb = traits.userInterfaceStyle == .dark ? night : day

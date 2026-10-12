@@ -368,7 +368,7 @@ private final class ChapterRowCell: UITableViewCell {
         indicator.isHidden = !isCurrent
 
         if isCurrent {
-            titleLabel.textColor = indicatorColor
+            titleLabel.textColor = isReader && isDarkReader ? .white : indicatorColor
             titleLabel.font = .boldSystemFont(ofSize: 14)
         } else {
             titleLabel.textColor = isReader

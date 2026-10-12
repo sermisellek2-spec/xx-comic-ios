@@ -60,6 +60,7 @@ final class ReaderContinuityUITests: ParityUITestCase {
         let pages = app.collectionViews["reader.pages"]
         let image = app.images["reader.image"].firstMatch
         XCTAssertTrue(app.buttons["reader.settings"].isHittable, "Frozen Android starts with the controls visible")
+        XCTAssertFalse(app.statusBars.firstMatch.exists, "阅读页展开控制条时也应隐藏系统状态栏")
         let canvas = pages.frame, imageFrame = image.frame
         let center = pages.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         center.tap()
@@ -70,6 +71,7 @@ final class ReaderContinuityUITests: ParityUITestCase {
         XCTAssertEqual(image.frame.minY, imageFrame.minY, accuracy: 1)
         XCTAssertEqual(image.frame.height, imageFrame.height, accuracy: 1)
         center.tap(); revealControls(app)
+        XCTAssertFalse(app.statusBars.firstMatch.exists)
         XCTAssertEqual(pages.frame.minY, canvas.minY, accuracy: 1)
         XCTAssertEqual(image.frame.minY, imageFrame.minY, accuracy: 1)
         XCTAssertEqual(app.staticTexts["reader.title"].label, "电锯人 · 第1话")

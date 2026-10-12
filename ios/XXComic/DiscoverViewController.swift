@@ -7,8 +7,9 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
     private let modeButton = UIButton(type: .system)
     private var globalMode = false
     private let sourceButton = UIButton(type: .system)
+    private var sourceButtonWidth: NSLayoutConstraint?
     private let filterButton = UIButton(type: .system)
-    private let filterScroll = UIScrollView()
+    private let filterScroll = SourceOptionScrollView()
     private let filterRow = UIStackView()
     private let sectionHeading = UILabel()
     private weak var searchOutline: UIView?
@@ -16,7 +17,7 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
     private var scopeSourceID: String?
     private var scopeRequestID = UUID()
     private var scopeTask: Task<Void, Never>?
-    private let tabs = UIScrollView()
+    private let tabs = SourceOptionScrollView()
     private let tabRow = UIStackView()
     private let history = UIStackView()
     private let tools = UIStackView()
@@ -94,6 +95,8 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
         sourceButton.addTarget(self, action: #selector(showSources), for: .touchUpInside)
         sourceButton.accessibilityIdentifier = "discover.source"
         sourceButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        sourceButtonWidth = sourceButton.widthAnchor.constraint(equalToConstant: 44)
+        sourceButtonWidth?.isActive = true
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: sourceButton)
         configureFilterButton(filterButton, title: "分类")
         filterButton.addTarget(self, action: #selector(showFilters), for: .touchUpInside)
@@ -164,7 +167,10 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
         modeButton.accessibilityLabel = "切换搜索模式，当前" + (isGlobal ? "全站" : "单站")
         modeButton.accessibilityValue = isGlobal ? "全站" : "单站"
         guard !environment.discoverySources.isEmpty else {
-            sourceButton.setTitle("没有已启用的站源", for: .normal)
+            var configuration = sourceButton.configuration ?? .plain()
+            configuration.title = "没有已启用的站源"; configuration.image = nil
+            sourceButton.configuration = configuration
+            updateSourceControlSize()
             updateSearchPlaceholder(isGlobal ? "搜索全部站源" : "搜索漫画")
             scopeTask?.cancel(); scopeSourceID = nil; scopeGroups = []; renderScopeGroups()
             return
@@ -176,8 +182,16 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
         config.baseForegroundColor = Palette.accent; config.contentInsets = .zero
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { var result = $0; result.font = .systemFont(ofSize: 12, weight: .bold); return result }
         sourceButton.configuration = config
+        updateSourceControlSize()
         updateSearchPlaceholder(isGlobal ? "搜索全部站源" : "搜索" + name)
         loadScopeGroups()
+    }
+    private func updateSourceControlSize() {
+        sourceButton.invalidateIntrinsicContentSize()
+        sourceButtonWidth?.constant = max(44, min(sourceButton.intrinsicContentSize.width, max(44, view.bounds.width - 140)))
+        // Reinstall the item after its title changes so UINavigationBar does
+        // not retain the previous custom view's compressed fitting size.
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: sourceButton)
     }
     private func updateSearchPlaceholder(_ text: String) {
         searchBar.attributedPlaceholder = NSAttributedString(string: text, attributes: [
@@ -320,7 +334,8 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
 
     private func showHistory() {
         let saved = environment.defaults.stringArray(forKey: "global.search.history") ?? []
-        let scroll = UIScrollView()
+        let scroll = SourceOptionScrollView()
+        scroll.delaysContentTouches = false; scroll.canCancelContentTouches = true
         let row = UIStackView()
         row.axis = .horizontal; row.spacing = 8
         row.translatesAutoresizingMaskIntoConstraints = false
@@ -513,10 +528,12 @@ private final class FilterViewController: UIViewController {
     private let sectionSegment = UIStackView()
     private let sectionButtons = [UIButton(type: .system), UIButton(type: .system)]
     private let tabs = UIStackView()
-    private let tabScroll = UIScrollView()
+    private let tabScroll = SourceOptionScrollView()
     private var tabHeight: NSLayoutConstraint?
     private let options = UIStackView()
     private let state = UIButton(type: .system)
+    private let sourceDescription = UILabel()
+    private let stateRow = UIStackView()
     private let confirmButton = UIButton(type: .system)
     private var dragStartHeight: CGFloat = 400
 
@@ -563,17 +580,26 @@ private final class FilterViewController: UIViewController {
         state.contentHorizontalAlignment = .leading; state.setTitleColor(Palette.text3, for: .normal)
         state.setTitleColor(Palette.text3, for: .disabled)
         state.addTarget(self, action: #selector(stateTapped), for: .touchUpInside)
+        sourceDescription.font = .systemFont(ofSize: 12); sourceDescription.textColor = Palette.text3
+        sourceDescription.numberOfLines = 0
+        stateRow.axis = .vertical
+        stateRow.addArrangedSubview(sourceDescription); stateRow.addArrangedSubview(state)
+        let retryHeight = state.heightAnchor.constraint(equalToConstant: 44)
+        retryHeight.priority = .init(999); retryHeight.isActive = true
 
         confirmButton.configuration = .filled()
         confirmButton.configuration?.baseBackgroundColor = Palette.accent
-        confirmButton.configuration?.baseForegroundColor = Palette.onAccent
+        confirmButton.configuration?.baseForegroundColor = .white
+        confirmButton.configuration?.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
+            var updated = attributes; updated.font = .systemFont(ofSize: 15, weight: .medium); return updated
+        }
         confirmButton.configuration?.cornerStyle = .fixed
         confirmButton.configuration?.background.cornerRadius = 8
         confirmButton.setTitle("应用", for: .normal)
         confirmButton.accessibilityIdentifier = "filter.confirm"
         confirmButton.addTarget(self, action: #selector(done), for: .touchUpInside)
 
-        for item in [sheetHeader, sectionSegment, tabScroll, scroll, state, confirmButton] {
+        for item in [sheetHeader, sectionSegment, tabScroll, scroll, stateRow, confirmButton] {
             item.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(item)
         }
@@ -604,11 +630,11 @@ private final class FilterViewController: UIViewController {
             tabs.bottomAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.bottomAnchor),
             tabs.heightAnchor.constraint(equalTo: tabScroll.frameLayoutGuide.heightAnchor),
 
-            state.topAnchor.constraint(equalTo: tabScroll.bottomAnchor, constant: 4),
-            state.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            state.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            stateRow.topAnchor.constraint(equalTo: tabScroll.bottomAnchor, constant: 4),
+            stateRow.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            stateRow.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
-            scroll.topAnchor.constraint(equalTo: state.bottomAnchor, constant: 6),
+            scroll.topAnchor.constraint(equalTo: stateRow.bottomAnchor, constant: 6),
             scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             scroll.bottomAnchor.constraint(equalTo: confirmButton.topAnchor, constant: -12),
@@ -647,7 +673,7 @@ private final class FilterViewController: UIViewController {
 
     @objc private func loadGroups() {
         needsVerification = false
-        task?.cancel(); draftGroups = []; render(); state.setTitle("正在加载分类…", for: .normal)
+        task?.cancel(); draftGroups = []; render(); setStateMessage("正在加载分类…")
         let candidate = draftSource
         task = Task { [weak self, candidate] in
             do {
@@ -659,13 +685,13 @@ private final class FilterViewController: UIViewController {
                 }
                 self?.draftGroups = groups
                 if let self { self.activeGroupIndex = min(self.activeGroupIndex, max(0, groups.count - 1)) }
-                self?.state.setTitle(groups.isEmpty ? "该站源暂无分类" : nil, for: .normal)
+                self?.setStateMessage(groups.isEmpty ? "该站源暂无分类" : nil)
                 self?.render()
             }
             catch {
                 guard let self, !Task.isCancelled else { return }
                 self.needsVerification = (error as? Mh18SourceError) == .verificationRequired
-                self.state.setTitle(self.needsVerification ? "需要验证 · 去验证" : (error is CancellationError ? "已取消 · 点击重试" : "分类加载失败 · 点击重试"), for: .normal)
+                self.setStateMessage(self.needsVerification ? "需要验证 · 去验证" : (error is CancellationError ? "已取消 · 点击重试" : "分类加载失败 · 点击重试"))
             }
         }
     }
@@ -674,6 +700,10 @@ private final class FilterViewController: UIViewController {
         if needsVerification {
             showSourceManagement(environment: environment) { [weak self] in self?.loadGroups() }
         } else { loadGroups() }
+    }
+    private func setStateMessage(_ message: String?) {
+        state.setTitle(message, for: .normal)
+        state.isHidden = activeSection == 0 || message?.isEmpty != false
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -707,12 +737,14 @@ private final class FilterViewController: UIViewController {
         }
         tabScroll.isHidden = isSourceSection
         tabHeight?.constant = isSourceSection ? 0 : 42
+        sourceDescription.isHidden = !isSourceSection
+        state.isHidden = isSourceSection || state.currentTitle?.isEmpty != false
         tabs.arrangedSubviews.forEach { $0.removeFromSuperview() }
         options.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
         if isSourceSection {
             let groupName = environment.sourceGroupStore.currentGroup.name
-            state.setTitle("分组 · " + groupName + " · 已启用站源", for: .normal)
+            sourceDescription.text = "分组 · " + groupName + " · 已启用站源"
             state.isEnabled = false
 
             if sources.isEmpty {

@@ -13,10 +13,11 @@ final class ReaderMangaGeometryTests: XCTestCase {
     private func collection(_ source: Pages) -> UICollectionView {
         let layout = ReaderPageLayout()
         layout.scrollDirection = .horizontal
+        layout.reversesPages = true
         layout.minimumLineSpacing = 0; layout.minimumInteritemSpacing = 0
         layout.itemSize = CGSize(width: 393, height: 600)
         let collection = UICollectionView(frame: CGRect(x: 0, y: 0, width: 393, height: 600), collectionViewLayout: layout)
-        collection.semanticContentAttribute = .forceRightToLeft
+        collection.semanticContentAttribute = .forceLeftToRight
         collection.contentInsetAdjustmentBehavior = .never
         collection.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "page")
         collection.dataSource = source
@@ -36,7 +37,7 @@ final class ReaderMangaGeometryTests: XCTestCase {
         XCTAssertEqual(seek(1, in: pages), 1)
         XCTAssertEqual(seek(2, in: pages), 2)
         XCTAssertGreaterThan(firstOffset, pages.contentOffset.x, "日漫首逻辑页应位于末逻辑页右侧")
-        pages.semanticContentAttribute = .forceLeftToRight
+        (pages.collectionViewLayout as? ReaderPageLayout)?.reversesPages = false
         pages.collectionViewLayout.invalidateLayout(); pages.layoutIfNeeded()
         XCTAssertEqual(seek(0, in: pages), 0)
         let normalFirst = pages.contentOffset.x
@@ -51,7 +52,7 @@ final class ReaderMangaGeometryTests: XCTestCase {
         let layout = try XCTUnwrap(pages.collectionViewLayout as? ReaderPageLayout)
         layout.itemSize = pages.bounds.size; layout.invalidateLayout(); pages.layoutIfNeeded()
         XCTAssertEqual(seek(1, in: pages), 1)
-        pages.semanticContentAttribute = .forceLeftToRight
+        layout.reversesPages = false
         layout.invalidateLayout(); pages.layoutIfNeeded()
         XCTAssertEqual(seek(1, in: pages), 1)
     }

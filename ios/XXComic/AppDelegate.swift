@@ -111,7 +111,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         heading.sizeToFit()
         root.navigationItem.leftBarButtonItem = UIBarButtonItem(customView: heading)
         root.navigationItem.titleView = UIView(frame: .zero)
-        let navigation = UINavigationController(rootViewController: root)
+        let navigation = RootNavigationController(rootViewController: root)
         // The bookshelf owns the complete Android-style text-tab header.
         // A system bar may omit left items when sufficient space is unavailable.
         if root is BookshelfViewController { navigation.setNavigationBarHidden(true, animated: false) }
@@ -127,6 +127,12 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         navigation.navigationBar.compactAppearance = appearance
         return navigation
     }
+}
+
+private final class RootNavigationController: UINavigationController {
+    override var childForStatusBarHidden: UIViewController? { topViewController }
+    override var childForStatusBarStyle: UIViewController? { topViewController }
+    override var childForHomeIndicatorAutoHidden: UIViewController? { topViewController }
 }
 
 private final class DevelopmentPage: UIViewController {
