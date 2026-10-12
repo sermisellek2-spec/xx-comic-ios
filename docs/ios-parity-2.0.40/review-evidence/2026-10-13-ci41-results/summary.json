@@ -1,0 +1,56 @@
+{
+  "runID": 38312023209,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38312023209",
+  "revision": "ee762957b5f209bf0a7f05c899c4bb86e2a0902a",
+  "scope": "verification-ui",
+  "actualSuites": [
+    {
+      "suite": "ComicCorePackageTests",
+      "status": "passed",
+      "executed": 929,
+      "failures": 0,
+      "seconds": 123.755
+    },
+    {
+      "suite": "XXComicTests",
+      "status": "passed",
+      "executed": 35,
+      "failures": 0,
+      "seconds": 11.547
+    },
+    {
+      "suite": "XXComicUITests",
+      "status": "passed",
+      "executed": 2,
+      "failures": 0,
+      "seconds": 54.046
+    },
+    {
+      "suite": "XXComicTests",
+      "status": "passed",
+      "executed": 35,
+      "failures": 0,
+      "seconds": 12.485
+    },
+    {
+      "suite": "XXComicUITests",
+      "status": "passed",
+      "executed": 2,
+      "failures": 0,
+      "seconds": 67.981
+    }
+  ],
+  "SDKBuildsSucceeded": 2,
+  "nativeUIRunsSucceeded": 2,
+  "ReleaseIsolationPassed": true,
+  "failedOrSkippedTests": [],
+  "log": {
+    "path": "ios/build/ci41/build-log-extracted/build-and-test.log",
+    "bytes": 10982245,
+    "sha256": "ce7acbe057641f7b64c0f0e14d7f57335a322048415213ad15e916b374d03e5f"
+  },
+  "currentFullGatePassed": false,
+  "IPAProduced": false,
+  "liveSiteValidated": false,
+  "checkedAtUTC": "2026-10-12T21:55:41.048304+00:00"
+}

@@ -2,8 +2,8 @@
 """
 Generates the 2x Real-ESRGAN AnimeVideoV3 Super-Resolution CoreML model for XX Comic iOS.
 Architecture: Official Real-ESRGAN AnimeVideoV3 2x compact network with true trained weights.
-Weights source: app/src/main/assets/super-resolution/realesr-animevideov3-x2.bin (BSD-3-Clause)
-License: BSD-3-Clause (https://github.com/xinntao/Real-ESRGAN)
+Weights source: app/src/main/assets/super-resolution/realesr-animevideov3-x2.bin (MIT)
+License: MIT (https://github.com/xinntao/Real-ESRGAN)
 """
 import os
 import struct
@@ -125,7 +125,7 @@ def build_sr_model(output_path: str):
     # Metadata
     builder.spec.description.metadata.shortDescription = 'XX Comic Real-ESRGAN AnimeVideoV3 2x Offline Super Resolution Model'
     builder.spec.description.metadata.author = 'xinntao / Real-ESRGAN / XX Comic'
-    builder.spec.description.metadata.license = 'BSD-3-Clause'
+    builder.spec.description.metadata.license = 'MIT'
     builder.spec.description.metadata.versionString = '2.0.40'
 
     assert offset == len(bin_data), f"Remaining unparsed bytes: {len(bin_data) - offset}"

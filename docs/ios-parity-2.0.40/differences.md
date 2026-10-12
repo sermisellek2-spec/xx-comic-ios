@@ -163,3 +163,7 @@ D124：原日志页面与队列服务测试不代日志导出/取消清空和实
 ## D126 分组选源缺disabled项及表单反馈/呈现被丢弃
 
 冻结Android“全部”按当前51统计，选源也列未启用源；旧iOS按enabled目录计50且不能加入duya。改用当前ordered目录并标状态，取消不写成员、不改开关。新建/改名不再空名静默返回，实际Store错误可见；选源/错误等待表单关闭后呈现。新增2UI声明、94Swift两配置语法通过，Apple待验；不证明真实网站可用。[范围与原引用](review-evidence/2026-10-13-source-group-catalog/README.md)。
+
+## D127 模型许可与历史架构描述过时
+
+实际是冻结Android原训练权重转换；旧资源说明仍称50K/198KB/192输入，模型metadata误称BSD。按冻结包原文改MIT并保留作者/完整条款，记录真实256/512和约2.49MB；网络序列化字节与SHA保持。Windows格式核对成功不代Apple编译/推理，最终full须实际回归。[原始与当前哈希](review-evidence/2026-10-13-model-provenance/metadata-proof.json)。

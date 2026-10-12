@@ -23,3 +23,5 @@ CI37/ce0607c失败原件保持：手机directory正文/重开命中，平板实�
 [验证超时/重试/返回](review-evidence/2026-10-13-verification-flow/README.md)：新增本机HTTP确定性交互用例，尚未Apple运行；CI40仍按23e9e56原输入验23UI，不包括该接续。
 
 分组接续D126：全部51/disabled选源、表单实际错误和关闭后呈现已修，2UI新增仅语法通过；[边界](review-evidence/2026-10-13-source-group-catalog/README.md)。
+
+[CI41验证交互实际成功](review-evidence/2026-10-13-ci41-results/README.md)：双设备超时/重试/完成返回及复位重启已实际通过，仅影响范围。当前分组接续与[模型许可校正](review-evidence/2026-10-13-model-provenance/README.md)仍须最终同版本完整复验。

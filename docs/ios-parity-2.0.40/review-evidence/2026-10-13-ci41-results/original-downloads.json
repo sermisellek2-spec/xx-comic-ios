@@ -1,0 +1,40 @@
+{
+  "run": {
+    "id": 38312023209,
+    "html_url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38312023209",
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "ee762957b5f209bf0a7f05c899c4bb86e2a0902a",
+    "head_branch": "codex/comic-verification-ui-ee76295",
+    "created_at": "2026-10-12T21:39:46Z",
+    "updated_at": "2026-10-12T21:53:58Z"
+  },
+  "partialOnly": false,
+  "downloads": [
+    {
+      "kind": "logs",
+      "path": "ios/build/ci41/logs-original.zip",
+      "bytes": 672583,
+      "sha256": "dfe8e5b7cbc27453252d2fd3088794db8e14d4dcf578bdb89244b6aef78461ba"
+    },
+    {
+      "kind": "build-log",
+      "path": "ios/build/ci41/build-log-original.zip",
+      "bytes": 234296,
+      "sha256": "d95fbe3b031405cfaee2d5033a3559dad7786ed292d2b68ca642817b66aac517"
+    },
+    {
+      "kind": "visual",
+      "path": "ios/build/ci41/visual-original.zip",
+      "bytes": 3768,
+      "sha256": "07666b26787df30a524dbb5df380836b676b33f551b0e7603823c3f2ac955621"
+    },
+    {
+      "kind": "xcresults",
+      "path": "ios/build/ci41/xcresults-original.zip",
+      "bytes": 2322347,
+      "sha256": "bc118762b2ef4fce5c043270ca7f2467089b969fc84690fee18d7a5f6435459c"
+    }
+  ],
+  "checkedAtUTC": "2026-10-12T21:54:48.242790+00:00"
+}

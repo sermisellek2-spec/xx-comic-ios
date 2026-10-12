@@ -1,0 +1,29 @@
+{
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "licenseSource": "app/src/main/assets/super-resolution/REAL-ESRGAN-LICENSE.txt",
+  "licenseSHA256": "cf214522db258afee414f96adfb0d692ca852211cb64afc1a68cee89ae8e6416",
+  "licenseBefore": "BSD-3-Clause",
+  "licenseAfter": "MIT",
+  "modelSHA256Before": "049882ffac1c5ae431b7b484d27de0b4b81786fc0702b9fffe503de294e93399",
+  "modelSHA256After": "5281f72a9a9a013273b45d558437f4023b29a7822152c414ada46f440fbabecb",
+  "modelBytes": 2488674,
+  "neuralNetworkSHA256": "6ae593fa46dccdf26f6214980ed52fdfd1182e2e7f8f95fc43589fbcc374d71a",
+  "neuralNetworkBytesUnchanged": true,
+  "inputShape": [
+    [
+      256,
+      256
+    ]
+  ],
+  "outputShape": [
+    [
+      512,
+      512
+    ]
+  ],
+  "AppleCompilationAndRuntime": false,
+  "checkedAtUTC": "2026-10-12T21:57:13.739891+00:00",
+  "frozenTrainableParameterCount": 621424,
+  "convolutionLayers": 18,
+  "preluLayers": 17
+}

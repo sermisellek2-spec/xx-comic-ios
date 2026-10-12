@@ -41,7 +41,7 @@ READER-07,P3,换源,阅读中换源和章节对应保持续读历史,MainActivit
 READER-08,P3,恢复,图内位置旋转前后台重启和跨章恢复,reader/ReaderPosition.java;PagedReaderView.java,待验收,CI27图内Y往返、日漫第3页旋转双设备通过；iPhone完整模式/重启续读仍退页，当前迟到尺寸锚点修正待实际回归。当前Core269输入/Linux928执行2 Apple PDF跳过0失败；完整前后台/恢复不以局部结果关闭，D100。
 READER-09,P3,主题,独立阅读主题墨水屏去白边动画及默认值落盘,reader/ReaderSettingsSheet.java;ImageEnhancementPolicy.java,待验收,非法旧增强值按冻结Android回退关闭且读取不改写原值；相关16项Linux通过；阅读主题/墨水屏/动画/默认值完整UI仍待验收
 READER-10,P3,图像,普通增强开关原图对照关闭及失败回退,reader/ReaderEnhancementEngine.java,待验收,已有旧版原生AI故障/取消与原图对照证据；当前RemoteImageView改动后需回归，核心测试不替代Apple图像
-READER-11,P3,AI,离线2倍AI超分真实本地推理模型许可设备及内存,reader/GpuSuperResolution.java;app/src/main/cpp,待验收,历史CoreML参数/双设备真实neural证据保留；当前版本模型产物、设备峰值与性能/支持边界需核验
+READER-11,P3,AI,离线2倍AI超分真实本地推理模型许可设备及内存,reader/GpuSuperResolution.java;app/src/main/cpp,待验收,冻结Android原训练权重/图转换已用于CoreML，父原生实际推理/回退/取消/复用成功；D127校正为冻结附带MIT许可与真实256/512/2.49MB，网络字节SHA保持。新metadata仅Windows格式检查，当前Apple模型编译/双设备完整推理和指标待full。review-evidence/2026-10-13-model-provenance/README.md
 READER-12,P3,解码,长图高清透明损坏图多图预取取消和内存保护,reader/ReaderDecodePolicy.java,待验收,旧版生产Cell取消/复用已有证据；当前RemoteImageView读图路径改动需Apple类型/解码/内存回归
 READER-13,P3,文字,文字阅读及排版功能按用户指令移除,ebook/TextReaderView.java;TextReaderSettingsSheet.java,用户移除,2026-10-13用户明确移除范围；专属页面/设置/偏好消费者/文字跳转已删除；原包和旧JSON兼容数据保留，不计入当前功能门槛。review-evidence/2026-10-13-comic-only/README.md
 READER-14,P3,连续阅读,卷轴末尾预取连续追加下一章；章内页码拖动与持久化；失败重试取消末章及模式旋转恢复,MainActivity.java:8108;8162;8211,待验收,CI27两设备10项连续阅读用例通过，含失败/重试/取消/末章/跨章/旋转/模式/重启；iPhone模式续读另1用例失败。当前候选也保留pending清空后迟到图片尺寸的锚点，主动seek/拖动可取消等待；完整交付版回归仍待验收。
@@ -62,7 +62,7 @@ DOWNLOAD-04,P4,位置,自定义目录授权映射可读命名和冲突处理,dow
 DOWNLOAD-05,P4,策略,Wi-Fi开关持久化配额前后台调度和恢复提示,download/DownloadRuntime.java;DownloadService.java,待验收,第十四轮后台用例后续完成和像素通过，但Home立即状态仍前台；当前有界等待background后保留原相等断言；实际后台到期/配额仍待验收
 DOWNLOAD-06,P4,能力范围,核对当前源实际文件下载能力并剔除不可达旧入口,download/FileDownloadWorker.java;DownloadSources.java,通过,已从冻结Git对象完成静态范围核对：source包只声明FileSourceCapability，没有当前实现；正式工厂51源无可达文件型入口，旧完整/缺失断言撤回，不新增预留功能；stages/SOURCE_FILE_SCOPE.md与file-source-scope-proof.json；本地电子书导入仍在范围；此通过仅为范围核对，不代表队列/Files/后台或网站验收
 DOWNLOAD-07,P4,记录保护,下载写入失败回滚真实反馈与保存后恢复，不假报排队/完成,download/DownloadStore.java;DownloadRuntime.java,待验收,D70：真实downloads.json写入失败5项、下载影响回归53项通过，原断言保留；下载中心可见错误及实际重试入口已补，Apple界面/磁盘满/权限恢复待验收；review-evidence/2026-10-12-download-lifecycle/README.md
-VERIFY-01,P2,验证UI,验证等待成功取消过期和返回重试用fixture贯通,MainActivity.java;source,待验收,保留实际信任/请求/令牌/Cookie屏障及后台重置；新增Debug本机HTTP驱动实际超时→重试→完成→返回管理→复位→重启，关闭/重开原断言保留。仅2UI声明及语法退出0，Apple待验；不宣称真实网站/Cloudflare/TLS认证。review-evidence/2026-10-13-verification-flow/README.md
+VERIFY-01,P2,验证UI,验证等待成功取消过期和返回重试用fixture贯通,MainActivity.java;source,待验收,CI41/ee76295实际双SDK/Release隔离、Apple929核心、每设备35Native/2验证UI全部成功。实际超时/本机HTTP重试/完成返回/复位重启及关闭重开通过；不验真实站点/Cloudflare/TLS。当前最终full待验。review-evidence/2026-10-13-ci41-results/README.md
 GATE-01,P5,完整性,逐入口反查全部非站源需求与实际消费者无漏项,MainActivity.java;app/src/main,待核对,逐入口反查已修分卷/同步/目录/手势与换源重要问题，补日志/队列及验证超时重试返回；35/111声明不代实际，完整消费者证据映射与最终同版本运行仍待闭合。
 GATE-02,P5,视觉,全应用8场景真截图叠图及逐组件对照,UIHelpers.java;app/src/main/res,待验收,父64同内容侧图与CI38八设置完整人工查看，无重要缺失/遮挡；当前交付版64+8+主屏/分卷实拍仍待，不代视觉门槛。
 GATE-03,P5,交互,全应用正常异常取消恢复长按手势和返回闭环,app/src/androidTest,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。

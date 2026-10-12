@@ -1,17 +1,31 @@
-XX Comic iOS 2x Anime/Manga Super-Resolution Neural Model
-=========================================================
+XX Comic iOS 离线2倍漫画超分模型
 
-Architecture:
-- Compact Residual Convolutional Neural Network with Sub-Pixel Convolution (PixelShuffle x2)
-- Input: RGB Image (192x192 tile, matching Android 2.0.40 TILE = 192)
-- Output: RGB Image (384x384 tile)
-- Parameters: ~50K FP32 parameters (file size: ~198 KB)
-- Hardware Acceleration: Apple Neural Engine (ANE) & Metal GPU via CoreML framework
-- Memory Guard: Tile-based processing with 64MB LRU cache limit, automatic fallback on thermal throttle (serious/critical) or RAM < 2GB.
+模型：Real-ESRGAN realesr-animevideov3-x2，沿用冻结Android2.0.40的图与训练权重，经Core ML转换。
+权重SHA-256：548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d
+图SHA-256：b88ff4f00ebf019a7fdac17fdd45a7fd3665d37509efc5baf2e4da2e24420a04
+转换：tools/generate_sr_model.py。18个卷积层和17个PReLU，621424个训练参数；额外固定重排/缩放保留原图语义。
+输入256×256 RGB（192内容瓦片与每边32扩展），输出512×512；内部4倍PixelShuffle及最终0.5倍三次插值。
+模型文件约2.49MB；Core ML运行，64MiB增强缓存预算。温度/内存保护和失败回退由ReaderEnhancementEngine负责；模拟器运行不证明真机ANE后端或峰值内存。
+不使用云处理或新增运行依赖。许可按冻结包附带的Real-ESRGAN原文MIT，保留作者版权和完整条款。
 
-License:
-BSD-3-Clause / MIT (Compatible with Real-ESRGAN / ncnn super-resolution standards).
+The MIT License (MIT)
+
+Copyright (c) 2021 Xintao Wang
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files, to deal in the Software
-without restriction, including without limitation the rights to use, copy,
-modify, merge, publish, distribute, sublicense, and/or sell copies.
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
