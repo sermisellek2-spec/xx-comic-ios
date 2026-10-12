@@ -155,8 +155,6 @@ final class DetailViewController: UIViewController {
         } else {
             sourceSwitchButton.isHidden = false
             buttons.append(contentsOf: [sourceSwitchButton, downloadButton])
-            let centerItem = UIBarButtonItem(image: UIImage(systemName: "arrow.down.circle"), style: .plain, target: self, action: #selector(openDownloadCenter))
-            navigationItem.rightBarButtonItem = centerItem
         }
         items.append(retry)
         let topInset = UIView(); topInset.backgroundColor = Palette.background
@@ -405,10 +403,6 @@ final class DetailViewController: UIViewController {
             directoryID = UUID(); directoryTask?.cancel(); directoryTask = nil
         }
         read.isEnabled = true; updateButtons()
-    }
-    @objc private func openDownloadCenter() {
-        let centerVC = DownloadCenterViewController(environment: environment)
-        navigationController?.pushViewController(centerVC, animated: true)
     }
     @objc private func toggleFavorite() {
         do {

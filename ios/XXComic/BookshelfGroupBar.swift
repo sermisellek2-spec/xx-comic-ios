@@ -34,8 +34,7 @@ final class BookshelfGroupBar: UIView {
         tabsStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(tabsStack)
 
-        let plusConfig = UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold)
-        addGroupButton.setImage(UIImage(systemName: "plus", withConfiguration: plusConfig), for: .normal)
+        addGroupButton.setImage(ParityIcon.plus.image(), for: .normal)
         addGroupButton.tintColor = Palette.accent
         addGroupButton.translatesAutoresizingMaskIntoConstraints = false
         addGroupButton.addTarget(self, action: #selector(plusTapped), for: .touchUpInside)

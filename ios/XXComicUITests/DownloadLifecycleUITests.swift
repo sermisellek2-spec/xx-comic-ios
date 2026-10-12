@@ -53,6 +53,7 @@ final class DownloadLifecycleUITests: ParityUITestCase {
     func testActualBackgroundAndForegroundContinueWithoutManualRetry() {
         let app = preparePendingDownload()
         XCUIDevice.shared.press(.home)
+        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 6), "Wait for the real Home transition before checking background state")
         XCTAssertEqual(app.state, .runningBackground)
         app.activate()
         XCTAssertTrue(app.tables["download.tasks"].waitForExistence(timeout: 10))

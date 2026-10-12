@@ -2,11 +2,20 @@ import UIKit
 import ComicCore
 
 @MainActor
-final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate {
-    private let searchBar = UISearchBar()
-    private let mode = UISegmentedControl(items: ["单站", "全站"])
+final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate {
+    private let searchBar = UISearchTextField()
+    private let modeButton = UIButton(type: .system)
+    private var globalMode = false
     private let sourceButton = UIButton(type: .system)
     private let filterButton = UIButton(type: .system)
+    private let filterScroll = UIScrollView()
+    private let filterRow = UIStackView()
+    private let sectionHeading = UILabel()
+    private weak var searchOutline: UIView?
+    private var scopeGroups: [SourceFilterGroup] = []
+    private var scopeSourceID: String?
+    private var scopeRequestID = UUID()
+    private var scopeTask: Task<Void, Never>?
     private let tabs = UIScrollView()
     private let tabRow = UIStackView()
     private let history = UIStackView()
@@ -28,14 +37,21 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
     private var ended = false
     private var submittedQuery = ""
     private var needsReload = false
-    private var isGlobal: Bool { mode.selectedSegmentIndex == 1 }
+    private var isGlobal: Bool { globalMode }
+    override var usesDiscoveryLayout: Bool { true }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         sourceIDs = environment.discoverySources.map(\.id)
         NotificationCenter.default.addObserver(self, selector: #selector(sourcesChanged), name: AppEnvironment.sourcesChanged, object: environment)
         title = "发现"
-        tools.axis = .vertical; tools.spacing = 8
+        tools.axis = .vertical; tools.spacing = 2
+        header.layoutMargins = UIEdgeInsets(top: 6, left: 16, bottom: 0, right: 16)
+        if let layout = collection.collectionViewLayout as? UICollectionViewFlowLayout {
+            layout.sectionInset.top = 0; layout.sectionInset.left = 16; layout.sectionInset.right = 16
+            layout.minimumInteritemSpacing = 8
+            layout.minimumLineSpacing = 6
+        }
         tools.accessibilityIdentifier = "discover.tools"
         tools.translatesAutoresizingMaskIntoConstraints = false
         toolsHost.clipsToBounds = true; toolsHost.addSubview(tools)
@@ -48,23 +64,55 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         collapsedToolsHeight = toolsHost.heightAnchor.constraint(equalToConstant: 0)
         header.addArrangedSubview(toolsHost)
         collection.panGestureRecognizer.addTarget(self, action: #selector(discoveryDrag(_:)))
-        searchBar.placeholder = "搜索漫画"
         searchBar.delegate = self
-        searchBar.searchBarStyle = .minimal
-        mode.selectedSegmentIndex = 0
-        mode.addTarget(self, action: #selector(modeChanged), for: .valueChanged)
-        let top = UIStackView(arrangedSubviews: [searchBar, mode])
-        top.alignment = .center
-        mode.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        tools.addArrangedSubview(top)
+        searchBar.backgroundColor = .clear; searchBar.borderStyle = .none
+        searchBar.font = .systemFont(ofSize: 14); searchBar.textColor = Palette.text
+        searchBar.returnKeyType = .search; searchBar.clearButtonMode = .whileEditing
+        searchBar.accessibilityIdentifier = "discover.search"
+        searchBar.addTarget(self, action: #selector(searchTextChanged), for: .editingChanged)
+        let searchIcon = UIImageView(image: ParityIcon.search.image(size: 22))
+        searchIcon.tintColor = Palette.text3; searchIcon.contentMode = .center
+        searchIcon.frame = CGRect(x: 0, y: 0, width: 40, height: 42)
+        searchBar.leftView = searchIcon; searchBar.leftViewMode = .always
+        modeButton.accessibilityIdentifier = "discover.search.mode"
+        modeButton.titleLabel?.font = .systemFont(ofSize: 12, weight: .bold)
+        modeButton.tintColor = Palette.accent
+        modeButton.addTarget(self, action: #selector(modeChanged), for: .touchUpInside)
+        let searchContainer = UIStackView(arrangedSubviews: [searchBar, modeButton])
+        searchContainer.alignment = .center; searchContainer.backgroundColor = Palette.card
+        searchContainer.layer.cornerRadius = 8; searchContainer.layer.borderWidth = 1
+        searchContainer.layer.borderColor = Palette.border.resolvedColor(with: traitCollection).cgColor
+        searchContainer.accessibilityIdentifier = "discover.search.container"
+        searchOutline = searchContainer
+        searchContainer.isLayoutMarginsRelativeArrangement = true
+        searchContainer.layoutMargins = UIEdgeInsets(top: 0, left: 4, bottom: 0, right: 4)
+        searchContainer.heightAnchor.constraint(equalToConstant: 42).isActive = true
+        searchBar.heightAnchor.constraint(equalToConstant: 42).isActive = true
+        modeButton.widthAnchor.constraint(equalToConstant: 52).isActive = true
+        modeButton.heightAnchor.constraint(equalToConstant: 38).isActive = true
+        tools.addArrangedSubview(searchContainer)
         sourceButton.addTarget(self, action: #selector(showSources), for: .touchUpInside)
         sourceButton.accessibilityIdentifier = "discover.source"
-        updateSourceMenu()
-        filterButton.setTitle("分类筛选", for: .normal)
+        sourceButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: sourceButton)
+        configureFilterButton(filterButton, title: "分类")
         filterButton.addTarget(self, action: #selector(showFilters), for: .touchUpInside)
-        let sourceRow = UIStackView(arrangedSubviews: [sourceButton, filterButton])
-        sourceRow.distribution = .fillEqually
-        tools.addArrangedSubview(sourceRow)
+        filterRow.axis = .horizontal; filterRow.spacing = 14; filterRow.alignment = .center
+        filterRow.translatesAutoresizingMaskIntoConstraints = false; filterScroll.addSubview(filterRow)
+        filterScroll.showsHorizontalScrollIndicator = false
+        NSLayoutConstraint.activate([
+            filterScroll.heightAnchor.constraint(equalToConstant: 28),
+            filterRow.leadingAnchor.constraint(equalTo: filterScroll.contentLayoutGuide.leadingAnchor),
+            filterRow.trailingAnchor.constraint(equalTo: filterScroll.contentLayoutGuide.trailingAnchor),
+            filterRow.topAnchor.constraint(equalTo: filterScroll.contentLayoutGuide.topAnchor),
+            filterRow.bottomAnchor.constraint(equalTo: filterScroll.contentLayoutGuide.bottomAnchor),
+            filterRow.heightAnchor.constraint(equalTo: filterScroll.frameLayoutGuide.heightAnchor)
+        ])
+        tools.addArrangedSubview(filterScroll)
+        sectionHeading.font = .systemFont(ofSize: 16, weight: .bold); sectionHeading.textColor = Palette.text
+        sectionHeading.accessibilityIdentifier = "discover.section"
+        sectionHeading.heightAnchor.constraint(greaterThanOrEqualToConstant: 24).isActive = true
+        tools.addArrangedSubview(sectionHeading)
         tools.addArrangedSubview(tabs)
         tabs.showsHorizontalScrollIndicator = false
         tabRow.axis = .horizontal; tabRow.spacing = 6
@@ -88,13 +136,14 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         collection.keyboardDismissMode = .onDrag
         start()
     }
-    deinit { tasks.forEach { $0.cancel() } }
+    deinit { tasks.forEach { $0.cancel() }; scopeTask?.cancel() }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         headerGesture.end()
         if presentedViewController != nil { return }
         needsReload = loading || (isGlobal && !submittedQuery.isEmpty && finished.count < environment.searchSources.count)
         requestID = UUID(); tasks.forEach { $0.cancel() }; tasks = []
+        scopeTask?.cancel(); scopeSourceID = nil; scopeRequestID = UUID()
         loading = false
     }
     override func viewWillAppear(_ animated: Bool) {
@@ -102,19 +151,80 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         if needsReload {
             needsReload = false
             start(query: submittedQuery, restoringGlobalSourceID: isGlobal ? global.selectedSourceID : nil)
-        }
+        } else { updateSourceMenu() }
+    }
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        searchOutline?.layer.borderColor = Palette.border.resolvedColor(with: traitCollection).cgColor
     }
     private func updateSourceMenu() {
         filterButton.isEnabled = !environment.discoverySources.isEmpty
         sourceButton.isEnabled = !environment.discoverySources.isEmpty
+        modeButton.setTitle(isGlobal ? "全站" : "单站", for: .normal)
+        modeButton.accessibilityLabel = "切换搜索模式，当前" + (isGlobal ? "全站" : "单站")
+        modeButton.accessibilityValue = isGlobal ? "全站" : "单站"
         guard !environment.discoverySources.isEmpty else {
             sourceButton.setTitle("没有已启用的站源", for: .normal)
+            searchBar.placeholder = isGlobal ? "搜索全部站源" : "搜索漫画"
+            scopeTask?.cancel(); scopeSourceID = nil; scopeGroups = []; renderScopeGroups()
             return
         }
         let name = environment.discoverySources.indices.contains(sourceIndex) ? environment.discoverySources[sourceIndex].name : (environment.discoverySources.first?.name ?? "")
-        sourceButton.setTitle(name + " ▾", for: .normal)
+        var config = UIButton.Configuration.plain()
+        config.title = name; config.image = ParityIcon.chevronDown.image(size: 16)
+        config.imagePlacement = .trailing; config.imagePadding = 6
+        config.baseForegroundColor = Palette.accent; config.contentInsets = .zero
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { var result = $0; result.font = .systemFont(ofSize: 12, weight: .bold); return result }
+        sourceButton.configuration = config
+        searchBar.placeholder = isGlobal ? "搜索全部站源" : "搜索" + name
+        loadScopeGroups()
+    }
+    private func configureFilterButton(_ button: UIButton, title: String) {
+        var config = UIButton.Configuration.plain()
+        config.title = title; config.image = ParityIcon.chevronDown.image(size: 14)
+        config.imagePlacement = .trailing; config.imagePadding = 6
+        config.baseForegroundColor = Palette.text3
+        config.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 2, bottom: 4, trailing: 2)
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { var result = $0; result.font = .systemFont(ofSize: 12, weight: .bold); return result }
+        button.configuration = config
+        button.setContentHuggingPriority(.required, for: .horizontal)
+        button.setContentCompressionResistancePriority(.required, for: .horizontal)
+    }
+    private func renderScopeGroups() {
+        filterRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        if scopeGroups.isEmpty { filterRow.addArrangedSubview(filterButton); return }
+        for (index, group) in scopeGroups.enumerated() {
+            let button = UIButton(type: .system)
+            configureFilterButton(button, title: group.label)
+            button.accessibilityIdentifier = "discover.filter." + group.key
+            button.addAction(UIAction { [weak self] _ in self?.showFilterDrawer(initialSection: 1, initialGroupIndex: index) }, for: .touchUpInside)
+            filterRow.addArrangedSubview(button)
+        }
+    }
+    private func loadScopeGroups() {
+        guard !isGlobal, environment.discoverySources.indices.contains(sourceIndex) else { return }
+        let candidate = environment.discoverySources[sourceIndex]
+        guard scopeSourceID != candidate.id else { return }
+        scopeTask?.cancel(); scopeRequestID = UUID()
+        let token = scopeRequestID
+        scopeSourceID = candidate.id; scopeGroups = []
+        configureFilterButton(filterButton, title: "分类"); renderScopeGroups()
+        scopeTask = Task { [weak self, candidate] in
+            do {
+                let groups = try await candidate.filterGroups()
+                try Task.checkCancellation()
+                guard let self, self.scopeRequestID == token else { return }
+                self.scopeGroups = groups; self.renderScopeGroups()
+            } catch {
+                guard let self, self.scopeRequestID == token, !Task.isCancelled else { return }
+                self.scopeSourceID = nil
+                self.configureFilterButton(self.filterButton, title: "分类加载失败，重试")
+                self.renderScopeGroups()
+            }
+        }
     }
     @objc private func sourcesChanged() {
+        scopeTask?.cancel(); scopeRequestID = UUID(); scopeSourceID = nil; scopeGroups = []
         let selectedGlobalSourceID = global.selectedSourceID
         let previous = sourceIDs.indices.contains(sourceIndex) ? sourceIDs[sourceIndex] : nil
         sourceIDs = environment.discoverySources.map(\.id)
@@ -126,13 +236,13 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         if viewIfLoaded?.window != nil { start(query: submittedQuery, restoringGlobalSourceID: selectedGlobalSourceID) }
         else { needsReload = true }
     }
-    @objc private func modeChanged() { start() }
+    @objc private func modeChanged() { globalMode.toggle(); start() }
     @objc private func refreshResults() { start() }
-    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) { searchBar.resignFirstResponder(); start() }
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) { if searchText.isEmpty { start() } }
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool { textField.resignFirstResponder(); start(); return true }
+    @objc private func searchTextChanged() { if searchBar.text?.isEmpty == true { start() } }
 
     @objc private func discoveryDrag(_ gesture: UIPanGestureRecognizer) {
-        guard gesture.numberOfTouches <= 1, !searchBar.searchTextField.isFirstResponder else { headerGesture.end(); return }
+        guard gesture.numberOfTouches <= 1, !searchBar.isFirstResponder else { headerGesture.end(); return }
         let point = gesture.location(in: nil)
         switch gesture.state {
         case .began: headerGesture.begin(x: Double(point.x), y: Double(point.y))
@@ -168,8 +278,11 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
         loading = false; ended = false; nextPage = 1
         comics = []; collection.reloadData()
         submittedQuery = query ?? SearchRules.trim(searchBar.text ?? "")
+        updateSourceMenu()
         history.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        sourceButton.isHidden = isGlobal; filterButton.isHidden = isGlobal
+        sourceButton.isHidden = isGlobal; filterScroll.isHidden = isGlobal
+        sectionHeading.text = submittedQuery.isEmpty ? "全部漫画" : "搜索结果"
+        sectionHeading.isHidden = isGlobal && submittedQuery.isEmpty
         tabs.isHidden = !isGlobal || submittedQuery.isEmpty
         collection.refreshControl?.endRefreshing()
         if isGlobal {
@@ -262,8 +375,14 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
             }
         })
     }
-    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        if !isGlobal && indexPath.item >= comics.count - 4 { loadSingle() }
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // Android requests another page when the user moves toward the bottom;
+        // displaying a short first page alone must not mark it as exhausted.
+        guard scrollView === collection, !isGlobal, scrollView.isDragging || scrollView.isDecelerating,
+              scrollView.panGestureRecognizer.translation(in: scrollView).y < 0,
+              scrollView.contentOffset.y > -scrollView.adjustedContentInset.top,
+              scrollView.contentOffset.y + scrollView.bounds.height >= scrollView.contentSize.height - 120 else { return }
+        loadSingle()
     }
 
     private func loadGlobal(restoringSelectedSourceID: String? = nil) {
@@ -339,9 +458,9 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
             status(progress + (finished.count == environment.searchSources.count ? " · 没有找到漫画" : " · 正在搜索…"))
         } else { status(progress) }
     }
-    @objc private func showSources() { showFilterDrawer(initialSection: 0) }
-    @objc private func showFilters() { showFilterDrawer(initialSection: 1) }
-    private func showFilterDrawer(initialSection: Int) {
+    @objc private func showSources() { searchBar.resignFirstResponder(); showFilterDrawer(initialSection: 0) }
+    @objc private func showFilters() { loadScopeGroups(); showFilterDrawer(initialSection: 1) }
+    private func showFilterDrawer(initialSection: Int, initialGroupIndex: Int = 0) {
         guard environment.discoverySources.indices.contains(sourceIndex) else { return }
         let source = environment.discoverySources[sourceIndex]
         let controller = FilterViewController(
@@ -349,13 +468,22 @@ final class DiscoverViewController: ComicGridViewController, UISearchBarDelegate
             sources: environment.discoverySources,
             source: source,
             selected: filters,
-            initialSection: initialSection
+            initialSection: initialSection,
+            initialGroupIndex: initialGroupIndex
         ) { [weak self] sourceID, selected in
             guard let self, let index = self.environment.discoverySources.firstIndex(where: { $0.id == sourceID }) else { return }
             self.sourceIndex = index; self.filters = selected
             self.updateSourceMenu(); self.start()
         }
-        present(FilterDrawerNavigationController(rootViewController: controller), animated: true)
+        let navigation = FilterDrawerNavigationController(rootViewController: controller)
+        // A custom presentation is a sibling of the themed tab controller.
+        // Apply the saved app mode; automatic still follows the system window.
+        switch AppTheme(rawValue: environment.defaults.integer(forKey: "theme.mode")) ?? .automatic {
+        case .automatic: navigation.overrideUserInterfaceStyle = .unspecified
+        case .light: navigation.overrideUserInterfaceStyle = .light
+        case .dark: navigation.overrideUserInterfaceStyle = .dark
+        }
+        present(navigation, animated: true)
     }
 }
 
@@ -376,15 +504,17 @@ private final class FilterViewController: UIViewController {
     private var activeGroupIndex: Int = 0
     private var task: Task<Void, Never>?
 
-    private let sectionSegment = UISegmentedControl(items: ["站源", "分类"])
+    private let sectionSegment = UIStackView()
+    private let sectionButtons = [UIButton(type: .system), UIButton(type: .system)]
     private let tabs = UIStackView()
     private let tabScroll = UIScrollView()
     private var tabHeight: NSLayoutConstraint?
     private let options = UIStackView()
     private let state = UIButton(type: .system)
     private let confirmButton = UIButton(type: .system)
+    private var dragStartHeight: CGFloat = 400
 
-    init(environment: AppEnvironment, sources: [any ComicSource], source: any ComicSource, selected: [String: String], initialSection: Int, onSelect: @escaping (String, [String: String]) -> Void) {
+    init(environment: AppEnvironment, sources: [any ComicSource], source: any ComicSource, selected: [String: String], initialSection: Int, initialGroupIndex: Int, onSelect: @escaping (String, [String: String]) -> Void) {
         self.environment = environment
         self.sources = sources
         self.source = source
@@ -392,6 +522,7 @@ private final class FilterViewController: UIViewController {
         self.draftSource = source
         self.draftSelected = selected
         self.activeSection = initialSection
+        self.activeGroupIndex = initialGroupIndex
         self.onSelect = onSelect
         super.init(nibName: nil, bundle: nil)
     }
@@ -402,24 +533,41 @@ private final class FilterViewController: UIViewController {
         super.viewDidLoad()
         title = "站源与分类"
         view.backgroundColor = Palette.card
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(close))
-        navigationItem.rightBarButtonItem?.accessibilityIdentifier = "filter.close"
-
-        sectionSegment.selectedSegmentIndex = activeSection
-        sectionSegment.addTarget(self, action: #selector(sectionChanged), for: .valueChanged)
+        let sheetHeader = UIView(), grip = UIView(), heading = UILabel(), closeButton = UIButton(type: .system)
+        grip.backgroundColor = Palette.border; grip.layer.cornerRadius = 2
+        heading.text = title; heading.font = .systemFont(ofSize: 17, weight: .bold); heading.textColor = Palette.text
+        closeButton.setImage(UIImage(systemName: "xmark", withConfiguration: UIImage.SymbolConfiguration(pointSize: 16)), for: .normal)
+        closeButton.tintColor = Palette.text3; closeButton.accessibilityIdentifier = "filter.close"; closeButton.accessibilityLabel = "关闭"
+        closeButton.addTarget(self, action: #selector(close), for: .touchUpInside)
+        for child in [grip, heading, closeButton] { child.translatesAutoresizingMaskIntoConstraints = false; sheetHeader.addSubview(child) }
+        sheetHeader.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(dragHeader(_:))))
+        sectionSegment.axis = .horizontal; sectionSegment.spacing = 8; sectionSegment.distribution = .fillEqually
+        for (index, button) in sectionButtons.enumerated() {
+            button.tag = index; button.accessibilityIdentifier = "filter.section.\(index)"
+            button.addTarget(self, action: #selector(sectionChanged(_:)), for: .touchUpInside)
+            sectionSegment.addArrangedSubview(button)
+        }
 
         let scroll = UIScrollView()
+        scroll.accessibilityIdentifier = "filter.options"
         tabs.axis = .horizontal; tabs.spacing = 8
         options.axis = .vertical; options.spacing = 8
         state.titleLabel?.numberOfLines = 0
+        state.titleLabel?.font = .systemFont(ofSize: 12)
+        state.contentHorizontalAlignment = .leading; state.setTitleColor(Palette.text3, for: .normal)
+        state.setTitleColor(Palette.text3, for: .disabled)
         state.addTarget(self, action: #selector(stateTapped), for: .touchUpInside)
 
         confirmButton.configuration = .filled()
+        confirmButton.configuration?.baseBackgroundColor = Palette.accent
+        confirmButton.configuration?.baseForegroundColor = Palette.onAccent
+        confirmButton.configuration?.cornerStyle = .fixed
+        confirmButton.configuration?.background.cornerRadius = 8
         confirmButton.setTitle("应用", for: .normal)
         confirmButton.accessibilityIdentifier = "filter.confirm"
         confirmButton.addTarget(self, action: #selector(done), for: .touchUpInside)
 
-        for item in [sectionSegment, tabScroll, scroll, state, confirmButton] {
+        for item in [sheetHeader, sectionSegment, tabScroll, scroll, state, confirmButton] {
             item.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(item)
         }
@@ -429,14 +577,21 @@ private final class FilterViewController: UIViewController {
         tabHeight?.isActive = true
 
         NSLayoutConstraint.activate([
-            sectionSegment.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            sheetHeader.topAnchor.constraint(equalTo: view.topAnchor), sheetHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            sheetHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor), sheetHeader.heightAnchor.constraint(equalToConstant: 56),
+            grip.topAnchor.constraint(equalTo: sheetHeader.topAnchor, constant: 6), grip.centerXAnchor.constraint(equalTo: sheetHeader.centerXAnchor),
+            grip.widthAnchor.constraint(equalToConstant: 32), grip.heightAnchor.constraint(equalToConstant: 4),
+            heading.topAnchor.constraint(equalTo: sheetHeader.topAnchor, constant: 26), heading.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            closeButton.centerYAnchor.constraint(equalTo: heading.centerYAnchor), closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+            closeButton.widthAnchor.constraint(equalToConstant: 36), closeButton.heightAnchor.constraint(equalToConstant: 36),
+            sectionSegment.topAnchor.constraint(equalTo: sheetHeader.bottomAnchor),
             sectionSegment.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             sectionSegment.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            sectionSegment.heightAnchor.constraint(equalToConstant: 36),
+            sectionSegment.heightAnchor.constraint(equalToConstant: 44),
 
             tabScroll.topAnchor.constraint(equalTo: sectionSegment.bottomAnchor, constant: 8),
-            tabScroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            tabScroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            tabScroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            tabScroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             tabs.leadingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.leadingAnchor),
             tabs.trailingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.trailingAnchor),
             tabs.topAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.topAnchor),
@@ -444,12 +599,12 @@ private final class FilterViewController: UIViewController {
             tabs.heightAnchor.constraint(equalTo: tabScroll.frameLayoutGuide.heightAnchor),
 
             state.topAnchor.constraint(equalTo: tabScroll.bottomAnchor, constant: 4),
-            state.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            state.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            state.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            state.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
             scroll.topAnchor.constraint(equalTo: state.bottomAnchor, constant: 6),
-            scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             scroll.bottomAnchor.constraint(equalTo: confirmButton.topAnchor, constant: -12),
 
             options.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
@@ -471,8 +626,8 @@ private final class FilterViewController: UIViewController {
         }
     }
 
-    @objc private func sectionChanged() {
-        activeSection = sectionSegment.selectedSegmentIndex
+    @objc private func sectionChanged(_ sender: UIButton) {
+        activeSection = sender.tag
         if activeSection == 0 {
             render()
         } else {
@@ -497,7 +652,7 @@ private final class FilterViewController: UIViewController {
                     groups = fav.filterGroupsForType(selectedType)
                 }
                 self?.draftGroups = groups
-                self?.activeGroupIndex = 0
+                if let self { self.activeGroupIndex = min(self.activeGroupIndex, max(0, groups.count - 1)) }
                 self?.state.setTitle(groups.isEmpty ? "该站源暂无分类" : nil, for: .normal)
                 self?.render()
             }
@@ -524,6 +679,11 @@ private final class FilterViewController: UIViewController {
         task?.cancel()
         dismiss(animated: true)
     }
+    @objc private func dragHeader(_ pan: UIPanGestureRecognizer) {
+        if pan.state == .began { dragStartHeight = view.bounds.height - view.safeAreaInsets.bottom }
+        if pan.state == .changed { navigationController?.preferredContentSize.height = max(220, dragStartHeight - pan.translation(in: view).y) }
+        if pan.state == .ended, pan.translation(in: view).y > 60, pan.velocity(in: view).y > 300 { close() }
+    }
 
     @objc private func done() {
         task?.cancel()
@@ -533,6 +693,12 @@ private final class FilterViewController: UIViewController {
 
     private func render() {
         let isSourceSection = (activeSection == 0)
+        for (index, button) in sectionButtons.enumerated() {
+            configureOption(button, title: index == 0 ? "站源" : "分类", selected: false)
+            button.configuration?.baseForegroundColor = index == activeSection ? Palette.accent : Palette.text3
+            button.isSelected = index == activeSection
+            button.accessibilityTraits = index == activeSection ? [.button, .selected] : .button
+        }
         tabScroll.isHidden = isSourceSection
         tabHeight?.constant = isSourceSection ? 0 : 42
         tabs.arrangedSubviews.forEach { $0.removeFromSuperview() }
@@ -565,12 +731,7 @@ private final class FilterViewController: UIViewController {
                     let isSelected = (candidate.id == draftSource.id)
                     let button = UIButton(type: .system)
                     button.accessibilityIdentifier = "filter.source." + candidate.id
-                    var config = UIButton.Configuration.tinted()
-                    config.title = candidate.name
-                    config.baseBackgroundColor = isSelected ? Palette.accent : .clear
-                    config.baseForegroundColor = isSelected ? .white : Palette.text
-                    config.titleLineBreakMode = .byTruncatingTail
-                    button.configuration = config
+                    configureOption(button, title: candidate.name, selected: isSelected)
                     button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
                     button.addAction(UIAction { [weak self] _ in
                         guard let self else { return }
@@ -579,7 +740,7 @@ private final class FilterViewController: UIViewController {
                         self.draftSelected = [:]
                         self.draftGroups = []
                         self.activeSection = 1
-                        self.sectionSegment.selectedSegmentIndex = 1
+                        self.activeGroupIndex = 0
                         self.loadGroups()
                     }, for: .touchUpInside)
                     row.addArrangedSubview(button)
@@ -614,13 +775,8 @@ private final class FilterViewController: UIViewController {
                 }
                 let option = group.options[index]
                 let button = UIButton(type: .system)
-                var config = UIButton.Configuration.tinted()
-                config.title = option.label
                 let isCurrentOptionSelected = (draftSelected[group.key] ?? "all") == option.value
-                config.baseBackgroundColor = isCurrentOptionSelected ? Palette.accent : .clear
-                config.baseForegroundColor = isCurrentOptionSelected ? .white : Palette.text
-                config.titleLineBreakMode = .byTruncatingTail
-                button.configuration = config
+                configureOption(button, title: option.label, selected: isCurrentOptionSelected)
                 button.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
                 button.addAction(UIAction { [weak self] _ in
                     guard let self else { return }
@@ -642,5 +798,18 @@ private final class FilterViewController: UIViewController {
             }
             options.addArrangedSubview(row)
         }
+    }
+    private func configureOption(_ button: UIButton, title: String, selected: Bool) {
+        var config = UIButton.Configuration.plain()
+        config.title = title; config.titleAlignment = .center; config.titleLineBreakMode = .byWordWrapping
+        config.baseForegroundColor = selected ? Palette.accent : Palette.text
+        config.background.backgroundColor = selected ? Palette.accentSoft : Palette.card
+        config.background.strokeColor = selected ? Palette.accent : Palette.border
+        config.background.strokeWidth = 1; config.background.cornerRadius = 8
+        config.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 6, bottom: 6, trailing: 6)
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { var result = $0; result.font = .systemFont(ofSize: 12, weight: .bold); return result }
+        button.configuration = config; button.titleLabel?.numberOfLines = 2
+        button.isSelected = selected; button.accessibilityLabel = title
+        button.accessibilityTraits = selected ? [.button, .selected] : .button
     }
 }

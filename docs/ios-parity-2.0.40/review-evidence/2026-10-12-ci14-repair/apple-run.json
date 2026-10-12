@@ -1,0 +1,119 @@
+{
+  "id": 38186158757,
+  "html_url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38186158757",
+  "status": "completed",
+  "conclusion": "failure",
+  "head_sha": "d84122f23bbd277d4d0b0469513c37239858761b",
+  "head_branch": "codex/ios-port",
+  "event": "push",
+  "run_attempt": 1,
+  "created_at": "2026-10-11T23:56:47Z",
+  "updated_at": "2026-10-12T00:35:11Z",
+  "jobs": [
+    {
+      "id": 114608801913,
+      "name": "build",
+      "status": "completed",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-11T23:56:55Z",
+          "completed_at": "2026-10-11T23:56:56Z"
+        },
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-11T23:56:56Z",
+          "completed_at": "2026-10-11T23:57:07Z"
+        },
+        {
+          "name": "Install XcodeGen",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-11T23:57:07Z",
+          "completed_at": "2026-10-11T23:57:10Z"
+        },
+        {
+          "name": "Select iPhone and iPad simulators",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-11T23:57:10Z",
+          "completed_at": "2026-10-11T23:57:21Z"
+        },
+        {
+          "name": "Build and test",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 5,
+          "started_at": "2026-10-11T23:57:21Z",
+          "completed_at": "2026-10-12T00:34:24Z"
+        },
+        {
+          "name": "Upload unsigned IPA",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-12T00:34:24Z",
+          "completed_at": "2026-10-12T00:34:24Z"
+        },
+        {
+          "name": "Archive original UI test results",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-12T00:34:24Z",
+          "completed_at": "2026-10-12T00:34:33Z"
+        },
+        {
+          "name": "Upload UI test results",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-12T00:34:33Z",
+          "completed_at": "2026-10-12T00:34:43Z"
+        },
+        {
+          "name": "Upload visual matrix screenshots",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-12T00:34:43Z",
+          "completed_at": "2026-10-12T00:34:45Z"
+        },
+        {
+          "name": "Upload AI enhancement evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-12T00:34:45Z",
+          "completed_at": "2026-10-12T00:34:47Z"
+        },
+        {
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-10-12T00:34:47Z",
+          "completed_at": "2026-10-12T00:34:47Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-10-12T00:34:47Z",
+          "completed_at": "2026-10-12T00:35:08Z"
+        }
+      ]
+    }
+  ],
+  "checked_at_utc": "2026-10-12T00:38:49.024554+00:00"
+}

@@ -1,0 +1,7 @@
+main_files=82 fixture_files=0
+Release main exit=0
+<unknown>:0: error: this mode requires at least one input file
+Release fixture exit=1
+Debug main exit=0
+<unknown>:0: error: this mode requires at least one input file
+Debug fixture exit=1

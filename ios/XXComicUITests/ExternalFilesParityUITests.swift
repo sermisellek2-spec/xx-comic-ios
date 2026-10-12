@@ -46,11 +46,25 @@ final class ExternalFilesParityUITests: ParityUITestCase {
         let host = try XCTUnwrap(hostFolder.waitForExistence(timeout: 10) ? hostFolder : nil,
                                  "The separate app must appear in the real Files provider")
         host.tap()
+        captureFilesState("provider-root")
         let target = app.staticTexts[name]
         try XCTUnwrap(target.waitForExistence(timeout: 10) ? target : nil).tap()
+        // Opening a provider folder is asynchronous. The parent's Open button
+        // can remain hittable while navigation is pending; do not grant Documents.
+        let folderNavigation = app.navigationBars[name]
+        XCTAssertTrue(folderNavigation.waitForExistence(timeout: 10), "Navigate into the exact external folder before confirming its grant")
+        captureFilesState("target-folder")
+        guard folderNavigation.exists else { throw FilesSelectionError.targetNotOpened }
         let open = app.buttons.matching(NSPredicate(format: "label IN %@", ["打开", "Open", "完成", "Done"])).firstMatch
         try XCTUnwrap(open.waitForExistence(timeout: 10) && open.isEnabled ? open : nil).tap()
     }
+    private func captureFilesState(_ name: String) {
+        let image = XCTAttachment(data: XCUIScreen.main.screenshot().pngRepresentation, uniformTypeIdentifier: "public.png")
+        image.name = "files-" + name; image.lifetime = .keepAlways; add(image)
+        let tree = XCTAttachment(string: XCUIApplication().debugDescription)
+        tree.name = "files-" + name + "-accessibility"; tree.lifetime = .keepAlways; add(tree)
+    }
+    private enum FilesSelectionError: Error { case targetNotOpened }
     private func read(_ app: XCUIApplication) {
         app.tabBars.buttons["书架"].tap(); app.buttons["bookshelf.tab.1"].tap()
         let book = app.collectionViews.cells[folderName]

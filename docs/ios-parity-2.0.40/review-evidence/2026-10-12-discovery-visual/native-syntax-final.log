@@ -1,0 +1,5 @@
+Swift 5 syntax only; 83 files in separate target groups; Apple types and runtime are not checked.
+Release main-and-tests syntax exit_code=0
+Release separate-files-fixture syntax exit_code=0
+Debug main-and-tests syntax exit_code=0
+Debug separate-files-fixture syntax exit_code=0

@@ -1,0 +1,4 @@
+Swift 5 syntax only; 83 files; Apple types and runtime are not checked.
+error: filename "AppDelegate.swift" used twice: 'XXComic/AppDelegate.swift' and 'TestSupport/FilesFixtureHost/AppDelegate.swift'
+note: filenames are used to distinguish private declarations with the same name
+Release syntax exit_code=1

@@ -183,7 +183,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         updateMiddleButton()
         middleButton.addTarget(self, action: #selector(middleButtonAction), for: .touchUpInside)
 
-        configureToolbarAction(preferences, title: "设置", image: UIImage(systemName: "gearshape", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20)))
+        configureToolbarAction(preferences, title: "设置", image: ParityIcon.settings.image(size: 20))
         preferences.accessibilityIdentifier = "reader.settings"
         preferences.addTarget(self, action: #selector(showSettings), for: .touchUpInside)
 
@@ -293,21 +293,29 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         appendNextChapterIfNeeded()
     }
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-        synchronizeContinuousSession()
-        let position = currentPosition()
-        let chapter = !loading && chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex] : nil
+        // UIKit may already be recalculating item frames when this callback
+        // arrives. Preserve the chapter-local position from the last stable
+        // scroll observation instead of interpreting an old offset in new frames.
+        let observed = settings.layout == .strip ? lastObservedPosition : nil
+        let position = pendingPosition ?? observed?.position ?? currentPosition()
+        let chapter = !loading ? (observed?.chapter ?? (chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex] : nil)) : nil
         let token = requestID
         viewportTransitioning = true
         super.viewWillTransition(to: size, with: coordinator)
         coordinator.animate(alongsideTransition: { _ in self.layout.invalidateLayout() }) { _ in
-            self.viewportTransitioning = false
             if self.requestID == token, let chapter, let segment = self.continuousPages.segment(for: chapter),
                self.session.loaded(chapter: chapter, in: self.chapters, imageCount: segment.imageURLs.count, position: position) {
+                self.layout.invalidateLayout()
                 self.updateReaderHeading(self.chapters[self.session.chapterIndex])
                 self.restore(position)
-            } else if self.pendingPosition != nil {
+                self.lastObservedPosition = (chapter, position)
+            }
+            // Keep scroll callbacks suppressed through layout and restoration.
+            self.viewportTransitioning = false
+            if self.pendingPosition != nil {
                 self.view.setNeedsLayout(); self.view.layoutIfNeeded()
             }
+            self.readerSeekBar.configure(currentPage: self.session.imageIndex, total: self.session.imageCount, sessionToken: Int64(self.session.chapterIndex))
             self.appendNextChapterIfNeeded()
         }
     }

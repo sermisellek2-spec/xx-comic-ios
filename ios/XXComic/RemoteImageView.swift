@@ -282,6 +282,7 @@ final class ComicCell: UICollectionViewCell {
     private let latestLabel = UILabel()
     private let badgeContainer = UIView()
     private let badgeLabel = UILabel()
+    private var nameTop: NSLayoutConstraint!
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -316,12 +317,13 @@ final class ComicCell: UICollectionViewCell {
         latestLabel.translatesAutoresizingMaskIntoConstraints = false; latestOverlay.addSubview(latestLabel)
 
         for view in [cover, nameLabel, sourceLabel, latestOverlay, badgeContainer] { view.translatesAutoresizingMaskIntoConstraints = false; contentView.addSubview(view) }
+        nameTop = nameLabel.topAnchor.constraint(equalTo: cover.bottomAnchor, constant: 6)
         NSLayoutConstraint.activate([
             cover.topAnchor.constraint(equalTo: contentView.topAnchor), cover.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             cover.trailingAnchor.constraint(equalTo: contentView.trailingAnchor), cover.heightAnchor.constraint(equalTo: cover.widthAnchor, multiplier: 4 / 3),
             badgeContainer.topAnchor.constraint(equalTo: cover.topAnchor, constant: 6),
             badgeContainer.trailingAnchor.constraint(equalTo: cover.trailingAnchor, constant: -6),
-            nameLabel.topAnchor.constraint(equalTo: cover.bottomAnchor, constant: 6), nameLabel.leadingAnchor.constraint(equalTo: cover.leadingAnchor),
+            nameTop, nameLabel.leadingAnchor.constraint(equalTo: cover.leadingAnchor),
             nameLabel.trailingAnchor.constraint(equalTo: cover.trailingAnchor),
             sourceLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
             sourceLabel.leadingAnchor.constraint(equalTo: cover.leadingAnchor), sourceLabel.trailingAnchor.constraint(equalTo: cover.trailingAnchor),
@@ -335,6 +337,12 @@ final class ComicCell: UICollectionViewCell {
         accessibilityTraits = .button
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
+
+    func setDiscoveryStyle(_ discovery: Bool) {
+        cover.layer.cornerRadius = discovery ? 0 : 8
+        nameLabel.font = .systemFont(ofSize: 13, weight: discovery ? .regular : .medium)
+        nameTop.constant = discovery ? 3 : 6
+    }
 
     func configure(_ comic: ComicCore.ComicSummary, referer: String, library: LocalLibrary,
                    badgeText: String? = nil, badgeColor: UIColor? = nil, sourceName: String? = nil, latestChapter: String? = nil) {

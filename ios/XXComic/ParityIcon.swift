@@ -3,14 +3,14 @@ import UIKit
 /// 24-point paths copied from the frozen Android drawable geometry.
 /// Template rendering lets the same glyph follow the application's theme tokens.
 enum ParityIcon {
-    case bookshelf, search, profile, source, history, download, trash, lightning, automatic, sun, moon, chapterList, detail, layoutList, layoutGrid, swap, readerStrip, readerPage, back
+    case bookshelf, search, profile, source, history, download, trash, lightning, automatic, sun, moon, chapterList, detail, layoutList, layoutGrid, swap, readerStrip, readerPage, back, chevronDown, settings, plus
 
     func image(size: CGFloat = 24) -> UIImage {
         UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { context in
             context.cgContext.scaleBy(x: size / 24, y: size / 24)
             UIColor.black.setStroke()
             let path = UIBezierPath()
-            path.lineWidth = self == .swap ? 2 : ([.readerStrip, .readerPage].contains(self) ? 1.6 : ([.download, .layoutList, .layoutGrid].contains(self) ? 1.8 : 1.5))
+            path.lineWidth = [.swap, .plus, .chevronDown].contains(self) ? 2 : ([.readerStrip, .readerPage].contains(self) ? 1.6 : ([.download, .layoutList, .layoutGrid].contains(self) ? 1.8 : 1.5))
             path.lineCapStyle = .round; path.lineJoinStyle = .round
             func line(_ points: [(CGFloat, CGFloat)], closed: Bool = false) {
                 guard let first = points.first else { return }
@@ -22,7 +22,7 @@ enum ParityIcon {
                 path.append(UIBezierPath(ovalIn: CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2)))
             }
             // Android's A commands here are circular arcs with no rotation.
-            func arc(to end: CGPoint, radius: CGFloat, clockwise: Bool) {
+            func arc(to end: CGPoint, radius: CGFloat, clockwise: Bool, largeArc: Bool = false) {
                 let start = path.currentPoint, dx = end.x - start.x, dy = end.y - start.y
                 let distance = hypot(dx, dy)
                 let height = sqrt(max(0, radius * radius - distance * distance / 4))
@@ -33,7 +33,7 @@ enum ParityIcon {
                     let b = atan2(end.y - center.y, end.x - center.x)
                     var sweep = clockwise ? b - a : a - b
                     if sweep < 0 { sweep += .pi * 2 }
-                    if sweep <= .pi + 0.001 {
+                    if largeArc ? sweep >= .pi - 0.001 : sweep <= .pi + 0.001 {
                         path.addArc(withCenter: center, radius: radius, startAngle: a, endAngle: b, clockwise: clockwise)
                         return
                     }
@@ -42,6 +42,54 @@ enum ParityIcon {
             switch self {
             case .back:
                 path.move(to: CGPoint(x: 15, y: 4)); path.addLine(to: CGPoint(x: 8, y: 12)); path.addLine(to: CGPoint(x: 15, y: 20))
+            case .chevronDown:
+                line([(6, 9), (12, 15), (18, 9)])
+            case .plus:
+                line([(12, 5), (12, 19)]); line([(5, 12), (19, 12)])
+            case .settings:
+                circle(12, 12, 3)
+                path.move(to: CGPoint(x: 19.4, y: 15))
+                arc(to: CGPoint(x: 19.73, y: 16.82), radius: 1.65, clockwise: false)
+                path.addLine(to: CGPoint(x: 19.82, y: 16.91))
+                arc(to: CGPoint(x: 17, y: 19.73), radius: 2, clockwise: true, largeArc: true)
+                path.addLine(to: CGPoint(x: 16.91, y: 19.64))
+                arc(to: CGPoint(x: 15.09, y: 19.31), radius: 1.65, clockwise: false)
+                arc(to: CGPoint(x: 14, y: 20.86), radius: 1.65, clockwise: false)
+                path.addLine(to: CGPoint(x: 14, y: 21))
+                arc(to: CGPoint(x: 10, y: 21), radius: 2, clockwise: true, largeArc: true)
+                path.addLine(to: CGPoint(x: 10, y: 20.86))
+                arc(to: CGPoint(x: 8.91, y: 19.31), radius: 1.65, clockwise: false)
+                arc(to: CGPoint(x: 7.09, y: 19.64), radius: 1.65, clockwise: false)
+                path.addLine(to: CGPoint(x: 7, y: 19.73))
+                arc(to: CGPoint(x: 4.18, y: 16.91), radius: 2, clockwise: true, largeArc: true)
+                path.addLine(to: CGPoint(x: 4.27, y: 16.82))
+                arc(to: CGPoint(x: 4.6, y: 15), radius: 1.65, clockwise: false)
+                arc(to: CGPoint(x: 3.05, y: 13.91), radius: 1.65, clockwise: false)
+                path.addLine(to: CGPoint(x: 3, y: 13.91))
+                arc(to: CGPoint(x: 3, y: 9.91), radius: 2, clockwise: true, largeArc: true)
+                path.addLine(to: CGPoint(x: 3.05, y: 9.91))
+                arc(to: CGPoint(x: 4.6, y: 8.82), radius: 1.65, clockwise: false)
+                arc(to: CGPoint(x: 4.27, y: 7), radius: 1.65, clockwise: false)
+                path.addLine(to: CGPoint(x: 4.18, y: 6.91))
+                arc(to: CGPoint(x: 7, y: 4.09), radius: 2, clockwise: true, largeArc: true)
+                path.addLine(to: CGPoint(x: 7.09, y: 4.18))
+                arc(to: CGPoint(x: 8.91, y: 4.51), radius: 1.65, clockwise: false)
+                arc(to: CGPoint(x: 10, y: 2.96), radius: 1.65, clockwise: false)
+                path.addLine(to: CGPoint(x: 10, y: 3))
+                arc(to: CGPoint(x: 14, y: 3), radius: 2, clockwise: true, largeArc: true)
+                path.addLine(to: CGPoint(x: 14, y: 2.96))
+                arc(to: CGPoint(x: 15.09, y: 4.51), radius: 1.65, clockwise: false)
+                arc(to: CGPoint(x: 16.91, y: 4.18), radius: 1.65, clockwise: false)
+                path.addLine(to: CGPoint(x: 17, y: 4.09))
+                arc(to: CGPoint(x: 19.82, y: 6.91), radius: 2, clockwise: true, largeArc: true)
+                path.addLine(to: CGPoint(x: 19.73, y: 7))
+                arc(to: CGPoint(x: 19.4, y: 8.82), radius: 1.65, clockwise: false)
+                arc(to: CGPoint(x: 20.95, y: 9.91), radius: 1.65, clockwise: false)
+                path.addLine(to: CGPoint(x: 21, y: 9.91))
+                arc(to: CGPoint(x: 21, y: 13.91), radius: 2, clockwise: true, largeArc: true)
+                path.addLine(to: CGPoint(x: 20.95, y: 13.91))
+                arc(to: CGPoint(x: 19.4, y: 15), radius: 1.65, clockwise: false)
+                path.close()
             case .bookshelf:
                 for x: CGFloat in [4, 8, 12, 16, 20] { line([(x, 4), (x, 20)]) }
                 line([(3, 4), (21, 4)]); line([(3, 20), (21, 20)])

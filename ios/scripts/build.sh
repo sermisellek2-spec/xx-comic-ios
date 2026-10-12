@@ -16,8 +16,21 @@ xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Release \
   -sdk iphoneos -destination 'generic/platform=iOS' \
   -derivedDataPath build/device CODE_SIGNING_ALLOWED=NO build
 
-echo "==> 4. Running ComicCore unit tests on Apple..."
 validation_failed=0
+if [ "${IOS_VALIDATION_SCOPE:-full}" = cache-diagnostics ] || [ "${IOS_VALIDATION_SCOPE:-full}" = full ]; then
+  echo '==> Recording isolated offline HTTP cache ownership and SQLite row counts...'
+  mkdir -p build/evidence/http-cache
+  if ! swiftc -target "$(uname -m)-apple-macosx12.0" -swift-version 5 -parse-as-library ComicCore/Sources/ComicCore/HTTPResponseCache.swift \
+    scripts/CacheProbeMain.swift -o build/http-cache-probe; then
+    validation_failed=1
+    echo 'Cache evidence probe did not compile; continue independent tests, packaging remains blocked.' >&2
+  elif ! build/http-cache-probe build/evidence/http-cache; then
+    validation_failed=1
+    echo 'Cache evidence probe failed; continue independent tests, packaging remains blocked.' >&2
+  fi
+fi
+
+echo "==> 4. Running ComicCore unit tests on Apple..."
 if ! swift test --package-path ComicCore; then
   validation_failed=1
   echo 'ComicCore failed; continue collecting independent native/UI evidence. Packaging remains blocked.' >&2
@@ -63,6 +76,11 @@ case "$validation_scope" in
       -only-testing:XXComicUITests/ReaderContinuityUITests
       -only-testing:XXComicUITests/DownloadLifecycleUITests
     )
+    ;;
+  cache-diagnostics)
+    # Keep every Core assertion and all native tests. This evidence-only scope
+    # does not replace full UI or visual validation and cannot produce an IPA.
+    test_arguments+=(-only-testing:XXComicTests)
     ;;
   *) echo "Unknown validation scope: $validation_scope" >&2; exit 2 ;;
 esac

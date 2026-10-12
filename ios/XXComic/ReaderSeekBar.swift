@@ -36,9 +36,8 @@ final class ReaderSeekBar: UIView {
         slider.translatesAutoresizingMaskIntoConstraints = false
         slider.accessibilityIdentifier = "reader.seek"
         slider.accessibilityLabel = "本章阅读进度"
-        slider.minimumTrackTintColor = Palette.accent
-        slider.thumbTintColor = Palette.accent
-        slider.maximumTrackTintColor = UIColor(white: 0.6, alpha: 0.4)
+        slider.isAccessibilityElement = true
+        updateAppearance()
         slider.addTarget(self, action: #selector(sliderTouchDown), for: .touchDown)
         slider.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
         slider.addTarget(self, action: #selector(sliderTouchUp), for: [.touchUpInside, .touchUpOutside])
@@ -52,6 +51,7 @@ final class ReaderSeekBar: UIView {
         bubble.layer.cornerRadius = 8
         bubble.layer.masksToBounds = true
         bubble.isHidden = true
+        bubble.isAccessibilityElement = false
         addSubview(bubble)
 
         NSLayoutConstraint.activate([
@@ -60,6 +60,38 @@ final class ReaderSeekBar: UIView {
             slider.centerYAnchor.constraint(equalTo: centerYAnchor),
             slider.heightAnchor.constraint(equalToConstant: 32)
         ])
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) { updateAppearance() }
+    }
+
+    private func updateAppearance() {
+        // Android's applyReaderThemeInPlace uses reader text ink for progress.
+        // Custom images and slider tint properties are mutually exclusive.
+        let ink = traitCollection.userInterfaceStyle == .dark
+            ? UIColor(red: 235 / 255, green: 246 / 255, blue: 1, alpha: 1)
+            : UIColor(red: 31 / 255, green: 35 / 255, blue: 40 / 255, alpha: 1)
+        let remainder = UIColor(white: 0.6, alpha: 0.4)
+        for state: UIControl.State in [.normal, .highlighted, .disabled] {
+            let color = state == .disabled ? ink.withAlphaComponent(0.45) : ink
+            let thumb = UIGraphicsImageRenderer(size: CGSize(width: 12, height: 12)).image { _ in
+                color.setFill()
+                UIBezierPath(ovalIn: CGRect(x: 0, y: 0, width: 12, height: 12)).fill()
+            }.withRenderingMode(.alwaysOriginal)
+            func track(_ color: UIColor) -> UIImage {
+                UIGraphicsImageRenderer(size: CGSize(width: 1, height: 2)).image { _ in
+                    color.setFill()
+                    UIBezierPath(rect: CGRect(x: 0, y: 0, width: 1, height: 2)).fill()
+                }.resizableImage(withCapInsets: .zero).withRenderingMode(.alwaysOriginal)
+            }
+            // The small visible thumb retains the 32-point slider and
+            // 40-point parent used for touch and accessibility.
+            slider.setThumbImage(thumb, for: state)
+            slider.setMinimumTrackImage(track(color), for: state)
+            slider.setMaximumTrackImage(track(remainder), for: state)
+        }
     }
 
     func configure(currentPage: Int, total: Int, sessionToken: Int64 = 0) {

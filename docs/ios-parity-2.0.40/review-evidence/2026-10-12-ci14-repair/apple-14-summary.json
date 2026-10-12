@@ -1,0 +1,102 @@
+{
+  "run": 38186158757,
+  "head_sha": "d84122f23bbd277d4d0b0469513c37239858761b",
+  "scope": "recovery-regression",
+  "conclusion": "failure",
+  "raw_log_sha256": "251ca5229dddaf799626ab043b8a8f87d494cd8357b36685032551c7e1a95ebc",
+  "sections": {
+    "core": {
+      "totals": [
+        {
+          "suite": "2026-10-12T00:05:51.1577860Z Test Suite 'All tests' failed at 2026-10-12 00:05:51.073.",
+          "result": "2026-10-12T00:05:51.1578200Z \t Executed 902 tests, with 1 failure (0 unexpected) in 137.942 (138.010) seconds"
+        }
+      ],
+      "assertions": [
+        "2026-10-12T00:03:54.0142080Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Tests/ComicCoreTests/CacheMaintenanceTests.swift:24: error: -[ComicCoreTests.CacheMaintenanceTests testDiskCleanupRestoresLimitsAndAllowsLaterResponses] : XCTAssertTrue failed - Actual remaining cache: memory=0, disk=36864"
+      ],
+      "failed_cases": [
+        "2026-10-12T00:03:54.0154590Z Test Case '-[ComicCoreTests.CacheMaintenanceTests testDiskCleanupRestoresLimitsAndAllowsLaterResponses]' failed (8.463 seconds)."
+      ]
+    },
+    "iphone": {
+      "totals": [
+        {
+          "suite": "2026-10-12T00:09:15.5274830Z Test Suite 'XXComicTests.xctest' failed at 2026-10-12 00:09:15.372.",
+          "result": "2026-10-12T00:09:15.5377790Z \t Executed 24 tests, with 2 failures (0 unexpected) in 7.082 (7.097) seconds"
+        },
+        {
+          "suite": "2026-10-12T00:09:15.5542720Z Test Suite 'All tests' failed at 2026-10-12 00:09:15.373.",
+          "result": "2026-10-12T00:09:15.5628860Z \t Executed 24 tests, with 2 failures (0 unexpected) in 7.082 (7.099) seconds"
+        },
+        {
+          "suite": "2026-10-12T00:18:57.3169060Z Test Suite 'XXComicUITests.xctest' failed at 2026-10-12 00:18:57.308.",
+          "result": "2026-10-12T00:18:57.3169860Z \t Executed 18 tests, with 13 failures (0 unexpected) in 575.234 (575.256) seconds"
+        }
+      ],
+      "assertions": [
+        "2026-10-12T00:09:15.3741630Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/ReaderSeekGeometryTests.swift:21: error: -[XXComicTests.ReaderSeekGeometryTests testCenteredToolbarGivesTheVisibleSliderATouchableParent] : XCTAssertTrue failed",
+        "2026-10-12T00:09:15.3968730Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/ReaderSeekGeometryTests.swift:25: error: -[XXComicTests.ReaderSeekGeometryTests testCenteredToolbarGivesTheVisibleSliderATouchableParent] : XCTAssertTrue failed",
+        "2026-10-12T00:10:29.3269940Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/DownloadLifecycleUITests.swift:56: error: -[XXComicUITests.DownloadLifecycleUITests testActualBackgroundAndForegroundContinueWithoutManualRetry] : XCTAssertEqual failed: (\"XCUIApplicationState(rawValue: 4)\") is not equal to (\"XCUIApplicationState(rawValue: 3)\")",
+        "2026-10-12T00:12:13.9315710Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:79: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : XCTAssertTrue failed",
+        "2026-10-12T00:12:25.5448800Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:38: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : XCTAssertTrue failed",
+        "2026-10-12T00:12:47.0442870Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:57: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : XCTAssertTrue failed",
+        "2026-10-12T00:12:49.1666970Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:57: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : Failed to tap \"Files漫画_7884F517\" Cell: No matches found for Elements matching predicate '\"Files漫画_7884F517\" IN identifiers' from input {(",
+        "2026-10-12T00:13:16.2148430Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:38: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : XCTAssertTrue failed",
+        "2026-10-12T00:13:38.9407140Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:91: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : Asynchronous wait failed: Exceeded timeout of 15 seconds, with unfulfilled expectations: \"Expect predicate `label CONTAINS \"Files漫画_6EC405C8\"` for object \"download.location.current\" Cell\".",
+        "2026-10-12T00:14:00.4376010Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:107: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : XCTAssertTrue failed - Persist the actual external Files location",
+        "2026-10-12T00:14:33.0778770Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:38: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch] : XCTAssertTrue failed",
+        "2026-10-12T00:14:56.6954400Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:57: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch] : XCTAssertTrue failed",
+        "2026-10-12T00:14:59.0602490Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:57: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch] : Failed to tap \"Files漫画_02856D58\" Cell: No matches found for Elements matching predicate '\"Files漫画_02856D58\" IN identifiers' from input {(",
+        "2026-10-12T00:18:26.2367200Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:162: error: -[XXComicUITests.ReaderContinuityUITests testRotationKeepsChapterAndLocalImageAfterContinuousAppend] : XCTAssertEqual failed: (\"Optional(\"第1话，第 3 页，共 4 页\")\") is not equal to (\"Optional(\"第2话，第 2 页，共 4 页\")\") - Rotation must restore the captured chapter, not whichever chapter temporarily occupies the old pixel offset",
+        "2026-10-12T00:18:26.6344400Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:165: error: -[XXComicUITests.ReaderContinuityUITests testRotationKeepsChapterAndLocalImageAfterContinuousAppend] : XCTAssertEqual failed: (\"Optional(\"第3话，第 3 页，共 4 页\")\") is not equal to (\"Optional(\"第2话，第 2 页，共 4 页\")\")"
+      ],
+      "failed_cases": [
+        "2026-10-12T00:09:15.4085070Z Test Case '-[XXComicTests.ReaderSeekGeometryTests testCenteredToolbarGivesTheVisibleSliderATouchableParent]' failed (0.934 seconds).",
+        "2026-10-12T00:10:50.9595680Z Test Case '-[XXComicUITests.DownloadLifecycleUITests testActualBackgroundAndForegroundContinueWithoutManualRetry]' failed (41.580 seconds).",
+        "2026-10-12T00:12:49.7640070Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles]' failed (89.931 seconds).",
+        "2026-10-12T00:14:07.1724100Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch]' failed (77.398 seconds).",
+        "2026-10-12T00:15:00.1550480Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch]' failed (52.984 seconds).",
+        "2026-10-12T00:18:27.5094370Z Test Case '-[XXComicUITests.ReaderContinuityUITests testRotationKeepsChapterAndLocalImageAfterContinuousAppend]' failed (20.239 seconds)."
+      ]
+    },
+    "ipad": {
+      "totals": [
+        {
+          "suite": "2026-10-12T00:22:38.5670250Z Test Suite 'XXComicTests.xctest' failed at 2026-10-12 00:22:38.530.",
+          "result": "2026-10-12T00:22:38.5674490Z \t Executed 24 tests, with 2 failures (0 unexpected) in 8.079 (8.094) seconds"
+        },
+        {
+          "suite": "2026-10-12T00:22:38.5677650Z Test Suite 'All tests' failed at 2026-10-12 00:22:38.531.",
+          "result": "2026-10-12T00:22:38.5678890Z \t Executed 24 tests, with 2 failures (0 unexpected) in 8.079 (8.097) seconds"
+        },
+        {
+          "suite": "2026-10-12T00:33:45.4084740Z Test Suite 'XXComicUITests.xctest' failed at 2026-10-12 00:33:45.369.",
+          "result": "2026-10-12T00:33:45.4086930Z \t Executed 18 tests, with 10 failures (0 unexpected) in 658.919 (658.971) seconds"
+        }
+      ],
+      "assertions": [
+        "2026-10-12T00:22:38.5273170Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/ReaderSeekGeometryTests.swift:21: error: -[XXComicTests.ReaderSeekGeometryTests testCenteredToolbarGivesTheVisibleSliderATouchableParent] : XCTAssertTrue failed",
+        "2026-10-12T00:22:38.5296690Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/ReaderSeekGeometryTests.swift:25: error: -[XXComicTests.ReaderSeekGeometryTests testCenteredToolbarGivesTheVisibleSliderATouchableParent] : XCTAssertTrue failed",
+        "2026-10-12T00:23:55.5326050Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/DownloadLifecycleUITests.swift:56: error: -[XXComicUITests.DownloadLifecycleUITests testActualBackgroundAndForegroundContinueWithoutManualRetry] : XCTAssertEqual failed: (\"XCUIApplicationState(rawValue: 4)\") is not equal to (\"XCUIApplicationState(rawValue: 3)\")",
+        "2026-10-12T00:25:33.1351570Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:79: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : XCTAssertTrue failed",
+        "2026-10-12T00:25:56.2834630Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:57: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : XCTAssertTrue failed",
+        "2026-10-12T00:26:07.4282130Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:57: error: -[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles] : Failed to tap \"Files漫画_A92579E5\" Cell: No matches found for Elements matching predicate '\"Files漫画_A92579E5\" IN identifiers' from input {(",
+        "2026-10-12T00:26:53.8267440Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:91: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : Asynchronous wait failed: Exceeded timeout of 15 seconds, with unfulfilled expectations: \"Expect predicate `label CONTAINS \"Files漫画_0AFC4DC2\"` for object \"download.location.current\" Cell\".",
+        "2026-10-12T00:27:06.9543830Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:101: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch] : Failed to tap \"settings.downloads\" Cell: No matches found for Elements matching predicate '\"settings.downloads\" IN identifiers' from input {(",
+        "2026-10-12T00:27:44.9860680Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:57: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch] : XCTAssertTrue failed",
+        "2026-10-12T00:27:47.1632870Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ExternalFilesParityUITests.swift:57: error: -[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch] : Failed to tap \"Files漫画_F31D31DC\" Cell: No matches found for Elements matching predicate '\"Files漫画_F31D31DC\" IN identifiers' from input {(",
+        "2026-10-12T00:33:06.1307650Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:162: error: -[XXComicUITests.ReaderContinuityUITests testRotationKeepsChapterAndLocalImageAfterContinuousAppend] : XCTAssertEqual failed: (\"Optional(\"第1话，第 4 页，共 4 页\")\") is not equal to (\"Optional(\"第2话，第 2 页，共 4 页\")\") - Rotation must restore the captured chapter, not whichever chapter temporarily occupies the old pixel offset",
+        "2026-10-12T00:33:07.1118890Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderContinuityUITests.swift:165: error: -[XXComicUITests.ReaderContinuityUITests testRotationKeepsChapterAndLocalImageAfterContinuousAppend] : XCTAssertEqual failed: (\"Optional(\"第2话，第 4 页，共 4 页\")\") is not equal to (\"Optional(\"第2话，第 2 页，共 4 页\")\")"
+      ],
+      "failed_cases": [
+        "2026-10-12T00:22:38.5334120Z Test Case '-[XXComicTests.ReaderSeekGeometryTests testCenteredToolbarGivesTheVisibleSliderATouchableParent]' failed (1.128 seconds).",
+        "2026-10-12T00:24:16.5690820Z Test Case '-[XXComicUITests.DownloadLifecycleUITests testActualBackgroundAndForegroundContinueWithoutManualRetry]' failed (41.187 seconds).",
+        "2026-10-12T00:26:08.4066820Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testMissingExternalFolderCanBeReauthorizedThroughRealFiles]' failed (77.398 seconds).",
+        "2026-10-12T00:27:07.6417210Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch]' failed (59.253 seconds).",
+        "2026-10-12T00:27:48.0205440Z Test Case '-[XXComicUITests.ExternalFilesParityUITests testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch]' failed (40.377 seconds).",
+        "2026-10-12T00:33:07.9999980Z Test Case '-[XXComicUITests.ReaderContinuityUITests testRotationKeepsChapterAndLocalImageAfterContinuousAppend]' failed (32.668 seconds)."
+      ]
+    }
+  }
+}

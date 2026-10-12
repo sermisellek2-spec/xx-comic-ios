@@ -1,0 +1,125 @@
+{
+  "cacheDatabaseMutationsByProbe" : 0,
+  "networkRequests" : 0,
+  "observations" : [
+    {
+      "diskBytes" : 0,
+      "diskCapacity" : 8388608,
+      "files" : [
+
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "fresh"
+    },
+    {
+      "diskBytes" : 1054356,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 263589,
+          "file" : "813456076.Y2FjaGUtcHJvYmUuaW52YWxpZAAtMQAvcGFnZS0wAA==.storedcachedurlresponse"
+        },
+        {
+          "bytes" : 263589,
+          "file" : "813456076.Y2FjaGUtcHJvYmUuaW52YWxpZAAtMQAvcGFnZS0xAA==.storedcachedurlresponse"
+        },
+        {
+          "bytes" : 263589,
+          "file" : "813456076.Y2FjaGUtcHJvYmUuaW52YWxpZAAtMQAvcGFnZS0yAA==.storedcachedurlresponse"
+        },
+        {
+          "bytes" : 263589,
+          "file" : "813456076.Y2FjaGUtcHJvYmUuaW52YWxpZAAtMQAvcGFnZS0zAA==.storedcachedurlresponse"
+        }
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 1048576,
+      "knownResponsesHit" : 4,
+      "memoryBytes" : 790767,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "stored"
+    },
+    {
+      "clearReturnedDiskBytes" : 0,
+      "clearReturnedIsEmpty" : true,
+      "clearReturnedMemoryBytes" : 0,
+      "diskBytes" : 0,
+      "diskCapacity" : 8388608,
+      "files" : [
+
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "cleared"
+    },
+    {
+      "diskBytes" : 0,
+      "diskCapacity" : 8388608,
+      "files" : [
+
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-1"
+    },
+    {
+      "diskBytes" : 0,
+      "diskCapacity" : 8388608,
+      "files" : [
+
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-2"
+    },
+    {
+      "diskBytes" : 0,
+      "diskCapacity" : 8388608,
+      "files" : [
+
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-3"
+    },
+    {
+      "diskBytes" : 0,
+      "diskCapacity" : 8388608,
+      "files" : [
+
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-4"
+    }
+  ],
+  "originalPreserved" : true,
+  "platform" : "Ubuntu 22.04.5 LTS",
+  "productionClearImplementation" : "ComicCore\/Sources\/ComicCore\/HTTPResponseCache.swift"
+}

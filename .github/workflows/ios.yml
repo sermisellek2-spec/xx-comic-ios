@@ -6,7 +6,7 @@ on:
       validation_scope:
         description: 阶段验证不产出IPA，完整回归通过后才允许打包
         type: choice
-        options: [foundation-import, recovery-regression, full]
+        options: [foundation-import, recovery-regression, cache-diagnostics, full]
         default: full
       package_ipa:
         description: 仅全部阶段自验通过后生成最终未签名IPA
@@ -31,9 +31,9 @@ jobs:
     # Keep the full matrix; one retained hierarchy per scene removes that overhead.
     timeout-minutes: 90
     env:
-      # Pushes collect the current recovery repair evidence. Full validation is
-      # still required and available through workflow_dispatch before packaging.
-      IOS_VALIDATION_SCOPE: ${{ github.event.inputs.validation_scope || 'recovery-regression' }}
+      # Repair uploads now run the complete UI/visual matrix. Partial scopes
+      # remain available for diagnosis and never permit packaging.
+      IOS_VALIDATION_SCOPE: ${{ github.event.inputs.validation_scope || 'full' }}
       IOS_PACKAGE_IPA: ${{ github.event.inputs.package_ipa || 'false' }}
 
     steps:
@@ -117,5 +117,14 @@ jobs:
         with:
           name: reader-enhancement-evidence
           path: ios/build/evidence/reader-enhancement/*
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload isolated offline HTTP cache evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: http-cache-evidence
+          path: ios/build/evidence/http-cache/**
           if-no-files-found: ignore
           retention-days: 7

@@ -1,0 +1,42 @@
+{
+  "parent_commit": "d84122f23bbd277d4d0b0469513c37239858761b",
+  "platform": "Linux Swift5.10 Docker; no Apple evidence yet",
+  "execution_exit_code": 0,
+  "command": "swiftc -swift-version 5 -parse-as-library ComicCore/Sources/ComicCore/HTTPResponseCache.swift scripts/CacheProbeMain.swift -o <probe>; <probe> <new-owned-output>",
+  "production_cache_implementation_changed": false,
+  "original_cache_assertions_changed": false,
+  "network_requests": 0,
+  "database_write_or_delete": 0,
+  "reports": [
+    {
+      "file": "linux-cache-probe.json",
+      "bytes": 3184,
+      "sha256": "8462ce28b52af7c4c8e70489d9bfef88b7a3d0fe2688e8548f7f8be13eb0f093"
+    },
+    {
+      "file": "linux-probe.log",
+      "bytes": 687,
+      "sha256": "c882ee22986893a02e3cf346043477df1cf2b21ce6ac82fffee9951855533108"
+    }
+  ],
+  "inputs": [
+    {
+      "file": "ios/scripts/CacheProbeMain.swift",
+      "sha256": "ea07cd833ab3881f4d2ba52b6c868c3891dbcb03e0b40e370f071cc1d4d7a458"
+    },
+    {
+      "file": "ios/ComicCore/Sources/ComicCore/HTTPResponseCache.swift",
+      "sha256": "bc6a65ca82e10ec2a4b9789c3850ef48d573b4a3fe4558186332ec16abcd251f"
+    },
+    {
+      "file": ".github/workflows/ios.yml",
+      "sha256": "825dd7e8636176f0acb1e69f5db30280ed62dbfae4aab3100eb13a76a7b84c61"
+    },
+    {
+      "file": "ios/scripts/build.sh",
+      "sha256": "ee713136352839de276ce9efa84505d5922d2ed05a27b1b139546163c3a2247e"
+    }
+  ],
+  "apple_probe_run": false,
+  "cache_gate_passed": false
+}

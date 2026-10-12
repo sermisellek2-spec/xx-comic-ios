@@ -1,0 +1,639 @@
+{
+  "parent_commit": "d84122f23bbd277d4d0b0469513c37239858761b",
+  "inputs": [
+    {
+      "path": ".github/workflows/ios.yml",
+      "working_sha256": "ab472a6040ce47b6f4c4cce4c9eec4edcfec6a701c407484d253ad6e0dcbd763",
+      "index_sha256": "ab472a6040ce47b6f4c4cce4c9eec4edcfec6a701c407484d253ad6e0dcbd763",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/ComicCore/Sources/ComicCore/HTTPResponseCache.swift",
+      "working_sha256": "bc6a65ca82e10ec2a4b9789c3850ef48d573b4a3fe4558186332ec16abcd251f",
+      "index_sha256": "bc6a65ca82e10ec2a4b9789c3850ef48d573b4a3fe4558186332ec16abcd251f",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/project.yml",
+      "working_sha256": "4b331940a77aaa0f0e96db8433e81daac120dfba5f7c324c80d272d7a046e97b",
+      "index_sha256": "4b331940a77aaa0f0e96db8433e81daac120dfba5f7c324c80d272d7a046e97b",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/scripts/build.sh",
+      "working_sha256": "bda116f8f8bcb4b0cabca9ccc9c72b1f5d719116154e0bc50d4b8b3daee34693",
+      "index_sha256": "bda116f8f8bcb4b0cabca9ccc9c72b1f5d719116154e0bc50d4b8b3daee34693",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/scripts/CacheProbeMain.swift",
+      "working_sha256": "650265fa670c90dcf1145489fbd9f9bfdb6d5abe08697da161482059a26748ca",
+      "index_sha256": "650265fa670c90dcf1145489fbd9f9bfdb6d5abe08697da161482059a26748ca",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/TestSupport/FilesFixtureHost/AppDelegate.swift",
+      "working_sha256": "2a948a2ea3908c473e0676089bae60a894e98016e2265b71681154b6620697c1",
+      "index_sha256": "2a948a2ea3908c473e0676089bae60a894e98016e2265b71681154b6620697c1",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/TestSupport/FilesFixtureHost/Info.plist",
+      "working_sha256": "05e6792c10333d7eb0dd3be1fd931037a7cba8c5651b1db7fbe8613e4cd99641",
+      "index_sha256": "05e6792c10333d7eb0dd3be1fd931037a7cba8c5651b1db7fbe8613e4cd99641",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/AboutAppViewController.swift",
+      "working_sha256": "23741f449c2135accc6bc8d27349b7598c4546ec5b09ab6922d07231d0facb17",
+      "index_sha256": "23741f449c2135accc6bc8d27349b7598c4546ec5b09ab6922d07231d0facb17",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/AppDelegate.swift",
+      "working_sha256": "a9fe9e2bcf713c81012bdc18f7a448bba62d2fa0373dd5fceaaff94074a83aa7",
+      "index_sha256": "a9fe9e2bcf713c81012bdc18f7a448bba62d2fa0373dd5fceaaff94074a83aa7",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/AppEnvironment.swift",
+      "working_sha256": "e0bd74e1e7bb1cbc9cf35d76fab4e40d1d48a9553af503fe7663ed8b0a38d08d",
+      "index_sha256": "e0bd74e1e7bb1cbc9cf35d76fab4e40d1d48a9553af503fe7663ed8b0a38d08d",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/AppThemeController.swift",
+      "working_sha256": "2a97adf62d732234621da082c0d8b3cb4450dcee84ee02f3814abfd686489b3e",
+      "index_sha256": "2a97adf62d732234621da082c0d8b3cb4450dcee84ee02f3814abfd686489b3e",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/BatchImportConfirmationViewController.swift",
+      "working_sha256": "7314f4302e30956146b1f192cdda90852db3ae80a904f0e4bc94c0adacbad58e",
+      "index_sha256": "7314f4302e30956146b1f192cdda90852db3ae80a904f0e4bc94c0adacbad58e",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/BatchImportUITestFixtures.swift",
+      "working_sha256": "a35df4e2a02b3c4e9fd46ed19dcf5d93b323fbded4f6c0d00d9d6ec773d224d8",
+      "index_sha256": "a35df4e2a02b3c4e9fd46ed19dcf5d93b323fbded4f6c0d00d9d6ec773d224d8",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/BookshelfGroupBar.swift",
+      "working_sha256": "6ee857b9b620f6d2b5ce8e680fcbb7187d761092ded016b172a5ec99af8764d5",
+      "index_sha256": "6ee857b9b620f6d2b5ce8e680fcbb7187d761092ded016b172a5ec99af8764d5",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/BookshelfGroupSelectSheet.swift",
+      "working_sha256": "fe4713a931c1aa14dc86cd24d9577eb870344161dc01e294f7da838a5e4f006a",
+      "index_sha256": "fe4713a931c1aa14dc86cd24d9577eb870344161dc01e294f7da838a5e4f006a",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/BookshelfGroupSheet.swift",
+      "working_sha256": "60ff982fdbae97c7705f4ab58a367c3d70007bd975cff4ceb4d7ebc14b3c4847",
+      "index_sha256": "60ff982fdbae97c7705f4ab58a367c3d70007bd975cff4ceb4d7ebc14b3c4847",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/BookshelfResumeView.swift",
+      "working_sha256": "4d99366eeaa4621b92641bb690a89eb235d68764528ff84ff6bce691a5a397ae",
+      "index_sha256": "4d99366eeaa4621b92641bb690a89eb235d68764528ff84ff6bce691a5a397ae",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/BookshelfTabsView.swift",
+      "working_sha256": "57738f802214c8c5ce7e0261223339839a974756224540f2aef2836e71924487",
+      "index_sha256": "57738f802214c8c5ce7e0261223339839a974756224540f2aef2836e71924487",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/CacheCleanupViewController.swift",
+      "working_sha256": "5929135b16e6e7378147709b0152be580235e22a93d6e9b4a1890eb35a809a6b",
+      "index_sha256": "5929135b16e6e7378147709b0152be580235e22a93d6e9b4a1890eb35a809a6b",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/ChapterDrawerSheet.swift",
+      "working_sha256": "b4f83285008c891ed09a2fcdbbdad32884cef47e2a3028a656e06d20d99fe743",
+      "index_sha256": "b4f83285008c891ed09a2fcdbbdad32884cef47e2a3028a656e06d20d99fe743",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/ChapterFastScroller.swift",
+      "working_sha256": "73f1d7064fc422ff93e45c8e97cd60977f4057e96cb6097de4742377db663969",
+      "index_sha256": "73f1d7064fc422ff93e45c8e97cd60977f4057e96cb6097de4742377db663969",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/ComicGridViewController.swift",
+      "working_sha256": "b5b37fcbc68765848857c22f76bf68eafd68eac78f8bd27908b38ce19d0257b3",
+      "index_sha256": "b5b37fcbc68765848857c22f76bf68eafd68eac78f8bd27908b38ce19d0257b3",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/DetailFeedbackState.swift",
+      "working_sha256": "94f304f0ef9276f8377b39c5690b77d7c9e476a2dbc827eaa0bc8a8d9d79f27d",
+      "index_sha256": "94f304f0ef9276f8377b39c5690b77d7c9e476a2dbc827eaa0bc8a8d9d79f27d",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/DetailViewController.swift",
+      "working_sha256": "13d4e851286c748440c7f90823dc0c388d3fd7c219dab99a3bf417ceaa81a8fe",
+      "index_sha256": "69711e38ab1065ced8c87694f96d047b3a52d9c6455ba4768c297a9def113daf",
+      "exact_bytes": false,
+      "line_endings_only": true
+    },
+    {
+      "path": "ios/XXComic/DiscoverViewController.swift",
+      "working_sha256": "4deba538a071a52319132598de66ecd7c2587e7611bb07db19f5f078eb8f3915",
+      "index_sha256": "4deba538a071a52319132598de66ecd7c2587e7611bb07db19f5f078eb8f3915",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/DownloadCenterViewController.swift",
+      "working_sha256": "4343cdb9322a119b6ff72b18e0db4e91023c85c31afeb29672f368e57691f5ee",
+      "index_sha256": "4343cdb9322a119b6ff72b18e0db4e91023c85c31afeb29672f368e57691f5ee",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/DownloadLifecycleController.swift",
+      "working_sha256": "8bdbb2df998515e9843ba1e6da5ff5c0a5957212d55ed402df0d7e89f05724b4",
+      "index_sha256": "8bdbb2df998515e9843ba1e6da5ff5c0a5957212d55ed402df0d7e89f05724b4",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/DownloadLocationViewController.swift",
+      "working_sha256": "7fd76b4a31a73595c13e506591c988ce9716bba1821c60362ea145473cd2caef",
+      "index_sha256": "7fd76b4a31a73595c13e506591c988ce9716bba1821c60362ea145473cd2caef",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/DownloadSelectionViewController.swift",
+      "working_sha256": "2a9cd4ec0979ebac770450b9c3482f26c585a4083703a70b6b3306efca8c19c2",
+      "index_sha256": "2a9cd4ec0979ebac770450b9c3482f26c585a4083703a70b6b3306efca8c19c2",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/EpubBookSchemeHandler.swift",
+      "working_sha256": "87eec56b0527be2bc8cc08c3222fe69de7722ce87e6bf6f88ee74432d6070312",
+      "index_sha256": "87eec56b0527be2bc8cc08c3222fe69de7722ce87e6bf6f88ee74432d6070312",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/EpubTextContentView.swift",
+      "working_sha256": "47ba202cd3cb24a85db8ef92751199f0018418df9067f5546def184a0ae04cb2",
+      "index_sha256": "47ba202cd3cb24a85db8ef92751199f0018418df9067f5546def184a0ae04cb2",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/EpubTextReaderViewController.swift",
+      "working_sha256": "30608e26412ae661ca92fdda98d5639afbb0624123144e306049dd5dbe68621b",
+      "index_sha256": "30608e26412ae661ca92fdda98d5639afbb0624123144e306049dd5dbe68621b",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/EpubUITestFixtures.swift",
+      "working_sha256": "405229b9ea2df6b6ce49a2f1f364fb38ee7163cd1a7d86d60008824162384ea2",
+      "index_sha256": "405229b9ea2df6b6ce49a2f1f364fb38ee7163cd1a7d86d60008824162384ea2",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/ErrorLogsViewController.swift",
+      "working_sha256": "2074cd9676148f503a497faa5a26a471021eb1b80b0df46fadd0b7667a572255",
+      "index_sha256": "2074cd9676148f503a497faa5a26a471021eb1b80b0df46fadd0b7667a572255",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/FilterDrawerNavigationController.swift",
+      "working_sha256": "13beae12ff9e36f2fdeaf7dcff96229d082d04f2dc3b2d7e2e165c6d80c89bdd",
+      "index_sha256": "13beae12ff9e36f2fdeaf7dcff96229d082d04f2dc3b2d7e2e165c6d80c89bdd",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/FloatingImportBubble.swift",
+      "working_sha256": "2ae49541df249dc845ad8a0a7390d7f658d834021c4ea1aa7ef24b7a30a97cbf",
+      "index_sha256": "2ae49541df249dc845ad8a0a7390d7f658d834021c4ea1aa7ef24b7a30a97cbf",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/Info.plist",
+      "working_sha256": "a1762438a2402c87086c30b82af14917ba5747ad018e1c5819c92c5ef50a6db6",
+      "index_sha256": "a1762438a2402c87086c30b82af14917ba5747ad018e1c5819c92c5ef50a6db6",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/LinkedFolderUITestFixtures.swift",
+      "working_sha256": "69dd160b4a3b5798054d89896e48aa2fa877d1992c14ea475ea3223a63d392f2",
+      "index_sha256": "69dd160b4a3b5798054d89896e48aa2fa877d1992c14ea475ea3223a63d392f2",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/LocalDeletionController.swift",
+      "working_sha256": "54e62c74860e16ac0083cc5d567ccdd26e1e09a23ed4407651653b25a3082730",
+      "index_sha256": "54e62c74860e16ac0083cc5d567ccdd26e1e09a23ed4407651653b25a3082730",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/LocalStorageViewController.swift",
+      "working_sha256": "8e03b60651616a4ee54b9fe5dc1c7708243ef28acc24017f24f3df5e4cd7e26e",
+      "index_sha256": "8e03b60651616a4ee54b9fe5dc1c7708243ef28acc24017f24f3df5e4cd7e26e",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/MatrixSharedFixture.swift",
+      "working_sha256": "5df1749aa960de7426ff4cc8da817632c4ccdcca97c768b8aac942ea837a954d",
+      "index_sha256": "5564e41ef00cce0133a5e436899af767d0acc1795048e925e6e0ad8c7742878c",
+      "exact_bytes": false,
+      "line_endings_only": true
+    },
+    {
+      "path": "ios/XXComic/MatrixUITestSource.swift",
+      "working_sha256": "32e9ff7140a0be590fb5c550bb0c7ee4430893547b2d34c4bba37f3f8b7ba00d",
+      "index_sha256": "32e9ff7140a0be590fb5c550bb0c7ee4430893547b2d34c4bba37f3f8b7ba00d",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/Mh18BrowserSession.swift",
+      "working_sha256": "590aeb4f061130bf63641cfcae5f36f9cf8e60b97ca6680dc8e26aebd912e3e0",
+      "index_sha256": "590aeb4f061130bf63641cfcae5f36f9cf8e60b97ca6680dc8e26aebd912e3e0",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/Palette.swift",
+      "working_sha256": "9d6a471e13a330c6647c8044ca75419551dcb89c1f5a52d942188c4c3d5ed7bf",
+      "index_sha256": "9d6a471e13a330c6647c8044ca75419551dcb89c1f5a52d942188c4c3d5ed7bf",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/ParityIcon.swift",
+      "working_sha256": "92f77736f0de75013712a665883381a72efa494d978e6a7534ac10f5a5587e1b",
+      "index_sha256": "92f77736f0de75013712a665883381a72efa494d978e6a7534ac10f5a5587e1b",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/ReaderChromeViews.swift",
+      "working_sha256": "893261ad6a51fcf1a8621a3def44cf791a41c594d97fc41e0c130ea435d5399a",
+      "index_sha256": "893261ad6a51fcf1a8621a3def44cf791a41c594d97fc41e0c130ea435d5399a",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/ReaderEnhancementEngine.swift",
+      "working_sha256": "d1660673ed33cd5d5d5afb3f4522b0a804ae2e025f5fda65b4bed667ebcc6834",
+      "index_sha256": "d1660673ed33cd5d5d5afb3f4522b0a804ae2e025f5fda65b4bed667ebcc6834",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/ReaderSeekBar.swift",
+      "working_sha256": "5ff5d51d283629e84fd5f5712d799554c102bebf41c0b2f4d8e2f886828c0a8f",
+      "index_sha256": "5ff5d51d283629e84fd5f5712d799554c102bebf41c0b2f4d8e2f886828c0a8f",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/ReaderSettingsViewController.swift",
+      "working_sha256": "4e90a2937d315a1163fbdac7941c1e36112f46371a7c8686789bd801a000bf71",
+      "index_sha256": "4e90a2937d315a1163fbdac7941c1e36112f46371a7c8686789bd801a000bf71",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/ReaderViewController.swift",
+      "working_sha256": "d2c1e170d47622ac70d70a1a24ff790e27d1fd488906b9a317213c41e65d1125",
+      "index_sha256": "98f567b63d15b0b8b3df21da8af2e83d9278e846121eecff579effba103e4c77",
+      "exact_bytes": false,
+      "line_endings_only": true
+    },
+    {
+      "path": "ios/XXComic/RemoteImageView.swift",
+      "working_sha256": "a4a56f7a613dec5b87a319f4c27d905f52a7cccb757405f8569ac6998c8c13eb",
+      "index_sha256": "a4a56f7a613dec5b87a319f4c27d905f52a7cccb757405f8569ac6998c8c13eb",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/SceneDelegate.swift",
+      "working_sha256": "f0f135e6f51e85e17e72be9a14a221d223547ba8544b6927a800feb796d6e9ce",
+      "index_sha256": "f0f135e6f51e85e17e72be9a14a221d223547ba8544b6927a800feb796d6e9ce",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/SettingsMenuCell.swift",
+      "working_sha256": "3ab9e5058474700366e1e6a9fe79fe16ad8507ac5dbf683925971a7bfc762d41",
+      "index_sha256": "3ab9e5058474700366e1e6a9fe79fe16ad8507ac5dbf683925971a7bfc762d41",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/SettingsViewController.swift",
+      "working_sha256": "d2f2adef21ffd5b83f853bd6cdb4ef5eccd0e032ac988c0877ce6b22138f41a5",
+      "index_sha256": "90901994ceaea00955c497153b841d4fec7a6ebd9f66e45f0577e54699a1eae4",
+      "exact_bytes": false,
+      "line_endings_only": true
+    },
+    {
+      "path": "ios/XXComic/SourceGroupSheet.swift",
+      "working_sha256": "e935bc15e76df64b1bdedb56d0174c08b9b177f3a097216964986721046f9db0",
+      "index_sha256": "e935bc15e76df64b1bdedb56d0174c08b9b177f3a097216964986721046f9db0",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/SourceSettingsViewController.swift",
+      "working_sha256": "1ef7dcb39d342bc70dcfb482229145416a64e6fac5a8457e1cb74b9adb68cada",
+      "index_sha256": "1ef7dcb39d342bc70dcfb482229145416a64e6fac5a8457e1cb74b9adb68cada",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/SourceSwitchSheet.swift",
+      "working_sha256": "5163ed0f4b08d7795bfa40308e294439eff7516bcdad515fb3231ac963aa9f8d",
+      "index_sha256": "5163ed0f4b08d7795bfa40308e294439eff7516bcdad515fb3231ac963aa9f8d",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/SourceVerificationUI.swift",
+      "working_sha256": "79a8c93cb1948fe11a648fa0e010c86d00a9ae79ee4ba08d52af0186b55c95fb",
+      "index_sha256": "79a8c93cb1948fe11a648fa0e010c86d00a9ae79ee4ba08d52af0186b55c95fb",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/TextBookCover.swift",
+      "working_sha256": "91463d1ef4ae185a3ebb07837d585803b14b4f3e1265c16a366a20044b601496",
+      "index_sha256": "91463d1ef4ae185a3ebb07837d585803b14b4f3e1265c16a366a20044b601496",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/TextReaderSettingsViewController.swift",
+      "working_sha256": "32efa297ce66c7055d8672a7d15b15fd15fa3fb276a4f965d70c595336c36a2f",
+      "index_sha256": "32efa297ce66c7055d8672a7d15b15fd15fa3fb276a4f965d70c595336c36a2f",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/ThemeChoiceSheet.swift",
+      "working_sha256": "873114ef3e400ccebe932417884010b718f3a6e0c5d6a21c1192e01ae2526ddd",
+      "index_sha256": "873114ef3e400ccebe932417884010b718f3a6e0c5d6a21c1192e01ae2526ddd",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComic/VolumeManagerViewController.swift",
+      "working_sha256": "050cf5fd984ad5b905aaedaf7e5dec221ace87677f283e81456584e1078568d7",
+      "index_sha256": "050cf5fd984ad5b905aaedaf7e5dec221ace87677f283e81456584e1078568d7",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicTests/BuiltinSourceRegistrationTests.swift",
+      "working_sha256": "74ef076f820e60b76da87822fb7049b080c5bf80b8d4e1221aff37e25c477f73",
+      "index_sha256": "74ef076f820e60b76da87822fb7049b080c5bf80b8d4e1221aff37e25c477f73",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicTests/CoverFallbackTests.swift",
+      "working_sha256": "6a584cf8ca57667b31e7aabed7ca2d9d8b13c9db2ae1eea31c112839fb22d265",
+      "index_sha256": "6a584cf8ca57667b31e7aabed7ca2d9d8b13c9db2ae1eea31c112839fb22d265",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicTests/DetailFeedbackStateTests.swift",
+      "working_sha256": "94a600fe9385583ac672b3ebc575dfb5ad72ed9016f0b89393f3b4a378f02a43",
+      "index_sha256": "94a600fe9385583ac672b3ebc575dfb5ad72ed9016f0b89393f3b4a378f02a43",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicTests/DownloadLifecycleTests.swift",
+      "working_sha256": "d74d870b03cd2095620cba82c2eadb90fedc427d68959a30a2cd8c509ba5862e",
+      "index_sha256": "d74d870b03cd2095620cba82c2eadb90fedc427d68959a30a2cd8c509ba5862e",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicTests/OfflineDownloadImageTests.swift",
+      "working_sha256": "dc011e4bc2ca240602dfa964e61c01184d12dcc4c57e196ddddb13200255472e",
+      "index_sha256": "dc011e4bc2ca240602dfa964e61c01184d12dcc4c57e196ddddb13200255472e",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicTests/ReaderEnhancementEngineTests.swift",
+      "working_sha256": "b427b5e6016b9d2eb1c02e71c44ed85f66ca06ade47c0783647569c6f53d3e7e",
+      "index_sha256": "b427b5e6016b9d2eb1c02e71c44ed85f66ca06ade47c0783647569c6f53d3e7e",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicTests/ReaderSeekGeometryTests.swift",
+      "working_sha256": "58c670e10fbb0cb98c28066eec25c8597cfaaae2be4766bc58a87ee95eca800f",
+      "index_sha256": "58c670e10fbb0cb98c28066eec25c8597cfaaae2be4766bc58a87ee95eca800f",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicTests/TestHostIsolationTests.swift",
+      "working_sha256": "20758cf8dead82e390e3c4e685de8a8fce3c79799b57b7f95709faf793e5550b",
+      "index_sha256": "20758cf8dead82e390e3c4e685de8a8fce3c79799b57b7f95709faf793e5550b",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/AppNavigationTests.swift",
+      "working_sha256": "a101ed76246851b9c1549c2c535649ce35499b126bf6c5c6427fecd2669b5e0f",
+      "index_sha256": "a101ed76246851b9c1549c2c535649ce35499b126bf6c5c6427fecd2669b5e0f",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/BatchImportRecoveryUITests.swift",
+      "working_sha256": "fc9ac012ca92e99abbe9f9ca04d62cf644ef7ab4feff4231b53761dc17a64454",
+      "index_sha256": "fc9ac012ca92e99abbe9f9ca04d62cf644ef7ab4feff4231b53761dc17a64454",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/BookshelfParityUITests.swift",
+      "working_sha256": "3127379ebe5e4862c0354e49137eac0a00f3cbfe772e748873f4762a043d59d7",
+      "index_sha256": "3127379ebe5e4862c0354e49137eac0a00f3cbfe772e748873f4762a043d59d7",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/CurrentParityUITests.swift",
+      "working_sha256": "5e0309b61fd8e638e996656a30c9a0a24cc1592e353f3402ea5b6fd6272b5d38",
+      "index_sha256": "a6d89a7978b8fd2dcb142413cc693d679910b23f21fa1b0e52b83156d1808cca",
+      "exact_bytes": false,
+      "line_endings_only": true
+    },
+    {
+      "path": "ios/XXComicUITests/DownloadLifecycleUITests.swift",
+      "working_sha256": "58f3704b3d9244b629896f850ecb7898fe3a660d19821377e7512eef8b991799",
+      "index_sha256": "58f3704b3d9244b629896f850ecb7898fe3a660d19821377e7512eef8b991799",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/DownloadLocationParityUITests.swift",
+      "working_sha256": "27e6b5e165053d41a9ef96020a14d994b62e186b0d92b99b7b624621dfe96c5f",
+      "index_sha256": "27e6b5e165053d41a9ef96020a14d994b62e186b0d92b99b7b624621dfe96c5f",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/EpubReadingUITests.swift",
+      "working_sha256": "cc4100a6a7827b166cc1af6a45b621855485827957a5d08a22c6bad837745553",
+      "index_sha256": "cc4100a6a7827b166cc1af6a45b621855485827957a5d08a22c6bad837745553",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/ExternalFilesParityUITests.swift",
+      "working_sha256": "51a379b53272c8e71da60f5ae6ad27192a4003073fec12e8562b9a86623b29c1",
+      "index_sha256": "51a379b53272c8e71da60f5ae6ad27192a4003073fec12e8562b9a86623b29c1",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/LinkedFolderParityUITests.swift",
+      "working_sha256": "948ea3ab9d6e4ea4b16fcfb08a79d3a75395e9d2ba27a2ed7483c20904257504",
+      "index_sha256": "948ea3ab9d6e4ea4b16fcfb08a79d3a75395e9d2ba27a2ed7483c20904257504",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/LocalDeletionParityUITests.swift",
+      "working_sha256": "8948a54f63044df402a60f2bc36506d26accace35d1134d28e8fa2a5cc914a3c",
+      "index_sha256": "8948a54f63044df402a60f2bc36506d26accace35d1134d28e8fa2a5cc914a3c",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/Mh18VerificationTests.swift",
+      "working_sha256": "b0ad8887a60a45fb1da6c2e6ef39e6acbd99e55d609b68d135e39e502269a8d8",
+      "index_sha256": "b0ad8887a60a45fb1da6c2e6ef39e6acbd99e55d609b68d135e39e502269a8d8",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/ParityFixtureIdentity.swift",
+      "working_sha256": "4a0cb0a0fc21775fabc36a65662084a753f752826535350cd0f22bc5531fb374",
+      "index_sha256": "5ad312ac7cec90ed8683fb5f7f027bee60256d2f979acee02b22d039fae85238",
+      "exact_bytes": false,
+      "line_endings_only": true
+    },
+    {
+      "path": "ios/XXComicUITests/ParityUITestCase.swift",
+      "working_sha256": "85ef93b46e36fa8c2ddb4ab3d3d5bb285a80cf6f0772bf3c8973dd8a2d02ae90",
+      "index_sha256": "85ef93b46e36fa8c2ddb4ab3d3d5bb285a80cf6f0772bf3c8973dd8a2d02ae90",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/ReaderContinuityUITests.swift",
+      "working_sha256": "caef08bf554f2b6d2e19618b729c8bf5b63a2f31e49a088ca1614770bf9cdd27",
+      "index_sha256": "caef08bf554f2b6d2e19618b729c8bf5b63a2f31e49a088ca1614770bf9cdd27",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/ReaderEnhancementUITests.swift",
+      "working_sha256": "2f8a3cc35c9ed673b2cfef62b5ecba4ba621921247468d6c756449fc8e40ea8d",
+      "index_sha256": "2f8a3cc35c9ed673b2cfef62b5ecba4ba621921247468d6c756449fc8e40ea8d",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/ReaderSettingsParityUITests.swift",
+      "working_sha256": "18e347563a6a772c723528b211db85fa5ab10c709c8ec0b2a821f5b555dfa2e0",
+      "index_sha256": "4b2dc40648c0ab3829de007818002a81dbc1f70b15bf704611c984016872365a",
+      "exact_bytes": false,
+      "line_endings_only": true
+    },
+    {
+      "path": "ios/XXComicUITests/ReaderToolbarParityUITests.swift",
+      "working_sha256": "12be89a751e434055f8fd8ed02b997576a028e5f9c86ed79e5e776fa3a3d94e7",
+      "index_sha256": "12be89a751e434055f8fd8ed02b997576a028e5f9c86ed79e5e776fa3a3d94e7",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/SettingsParityUITests.swift",
+      "working_sha256": "361e2cd8f19bcfe21230d3d937155360b3a87cc53542ebaf9773fe25de405a5c",
+      "index_sha256": "361e2cd8f19bcfe21230d3d937155360b3a87cc53542ebaf9773fe25de405a5c",
+      "exact_bytes": true,
+      "line_endings_only": false
+    },
+    {
+      "path": "ios/XXComicUITests/SourceDrawerTests.swift",
+      "working_sha256": "952e4c75eacdbea623aa7948e0af8e379ef93e42c1abd10c2a1cba81dd9a5a9c",
+      "index_sha256": "861b885fc8965ec233bf4e4336625f855a42acfa1a162b3b209008c68a205709",
+      "exact_bytes": false,
+      "line_endings_only": true
+    },
+    {
+      "path": "ios/XXComicUITests/VisualMatrixUITests.swift",
+      "working_sha256": "5cdbe51ad802345e9a653f65906b6367f22a564dd34a1c2e5e35779476671503",
+      "index_sha256": "5cdbe51ad802345e9a653f65906b6367f22a564dd34a1c2e5e35779476671503",
+      "exact_bytes": true,
+      "line_endings_only": false
+    }
+  ],
+  "all_inputs_exact_bytes": false,
+  "all_inputs_equal_after_declared_crlf_lf_conversion": true,
+  "line_endings_only_files": 8,
+  "original_log_index_sha256": "251ca5229dddaf799626ab043b8a8f87d494cd8357b36685032551c7e1a95ebc"
+}

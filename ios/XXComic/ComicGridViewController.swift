@@ -19,6 +19,7 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
     var retry: (() -> Void)?
     var isListLayout: Bool = false
     var usesBookshelfLayout: Bool { false }
+    var usesDiscoveryLayout: Bool { false }
     func bookshelfStatus(for comic: ComicSummary) -> BookshelfReadingStatus? { nil }
     private let emptyArtwork = UIImageView(image: UIImage(named: "rem_empty"))
 
@@ -112,21 +113,25 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
             cell.configure(comic, referer: source?.referer ?? "", library: environment.localLibrary,
                            badgeText: badgeText, badgeColor: badgeColor,
                            sourceName: usesBookshelfLayout ? source?.name : nil, latestChapter: readingStatus?.latestChapter)
+            cell.setDiscoveryStyle(usesDiscoveryLayout)
             cell.accessibilityValue = readingStatus.map { "未读 \($0.unreadCount < 0 ? "未知" : String($0.unreadCount)) · " + BookshelfLayoutHelper.formatOnlineLatestChapter($0.latestChapter) }
             return cell
         }
     }
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let contentWidth = max(0, collectionView.bounds.width - (usesBookshelfLayout ? 32 : 28))
+        let flow = collectionViewLayout as? UICollectionViewFlowLayout
+        let horizontalInsets = flow.map { $0.sectionInset.left + $0.sectionInset.right } ?? (usesBookshelfLayout ? 32 : 28)
+        let viewportInsets = collectionView.adjustedContentInset
+        let contentWidth = max(0, collectionView.bounds.width - viewportInsets.left - viewportInsets.right - horizontalInsets)
         if isListLayout {
             return CGSize(width: contentWidth, height: usesBookshelfLayout ? 111 : 88)
         }
-        let spacing: CGFloat = usesBookshelfLayout ? 6 : 10
-        let minCardWidth: CGFloat = usesBookshelfLayout ? 110 : 105
+        let spacing: CGFloat = flow?.minimumInteritemSpacing ?? (usesBookshelfLayout ? 6 : 10)
+        let minCardWidth: CGFloat = usesBookshelfLayout || usesDiscoveryLayout ? 110 : 105
         let cols = max(3, Int((contentWidth + spacing) / (minCardWidth + spacing)))
         let totalSpacing = CGFloat(cols - 1) * spacing
         let cardWidth = floor(max(1, (contentWidth - totalSpacing) / CGFloat(cols)))
-        let cardHeight = (cardWidth * 4 / 3).rounded() + 42
+        let cardHeight = (cardWidth * 4 / 3).rounded() + (usesDiscoveryLayout ? 22 : 42)
         return CGSize(width: cardWidth, height: cardHeight)
     }
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -222,7 +227,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                     self.restoreAnchor(anchor)
                 }
             }
-            let layoutImg = (isListLayout ? ParityIcon.layoutGrid : .layoutList).image(size: 26)
+            let layoutImg = (isListLayout ? ParityIcon.layoutGrid : .layoutList).image(size: 16)
             let layoutButton = UIButton(type: .system)
             layoutButton.setImage(layoutImg, for: .normal)
             layoutButton.tintColor = Palette.text3
@@ -302,7 +307,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         let nextGrid = isListLayout
         BookshelfLayoutHelper.setGridMode(defaults: environment.defaults, scope: currentScope, isGrid: nextGrid)
         isListLayout = !nextGrid
-        let layoutImg = (isListLayout ? ParityIcon.layoutGrid : .layoutList).image(size: 26)
+        let layoutImg = (isListLayout ? ParityIcon.layoutGrid : .layoutList).image(size: 16)
         layoutControl?.setImage(layoutImg, for: .normal)
         layoutControl?.accessibilityLabel = isListLayout ? "网格" : "列表"
         collection.collectionViewLayout.invalidateLayout()

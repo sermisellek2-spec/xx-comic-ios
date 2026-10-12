@@ -1,0 +1,8 @@
+CACHE_DISK_PROBE initializer=diskPath stage=fresh memory=0 disk=0 knownHits=0 ownedFiles=0
+CACHE_DISK_PROBE initializer=diskPath stage=stored memory=790767 disk=1054356 knownHits=4 ownedFiles=4
+CACHE_DISK_PROBE initializer=diskPath stage=cleared memory=0 disk=0 knownHits=0 ownedFiles=0
+CACHE_DISK_PROBE initializer=diskPath stage=settled-1 memory=0 disk=0 knownHits=0 ownedFiles=0
+CACHE_DISK_PROBE initializer=diskPath stage=settled-2 memory=0 disk=0 knownHits=0 ownedFiles=0
+CACHE_DISK_PROBE initializer=diskPath stage=settled-3 memory=0 disk=0 knownHits=0 ownedFiles=0
+CACHE_DISK_PROBE initializer=diskPath stage=settled-4 memory=0 disk=0 knownHits=0 ownedFiles=0
+execution_exit=0

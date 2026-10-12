@@ -1,0 +1,165 @@
+{
+  "reviewed_ios_revision": "49446de7480c2405bcfaae4b2f389223d6e69998",
+  "candidate_parent": "d84122f23bbd277d4d0b0469513c37239858761b",
+  "reviewed_pages": 10,
+  "all_32_phone_pages_reviewed": false,
+  "ipad_sizes_accepted": false,
+  "policy": "完整画布/系统区域可见，不裁切/遮罩/重画；一个物理像素量化边缘显式洋红；无自动PASS",
+  "comparison_manifest": {
+    "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci13-comparison/comparison.json",
+    "bytes": 71953,
+    "sha256": "e065654e4a27f238df9c35172d396f0db1f383ed96fdc3754586af485f922bbf"
+  },
+  "reviews": [
+    {
+      "case": "phone_portrait_light",
+      "page": "bookshelf_online",
+      "android_original_sha256": "3e2e1b191b54e4bece563e4acfc17e5fd33afc8c4461d3af6ac72af0fee38875",
+      "ios_original_sha256": "740d96156e3f660730342abc82eb95738727fe1520789cc029392f8d787dc9ee",
+      "side_by_side": {
+        "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci13-comparison/phone_portrait_light_bookshelf_online_side-by-side.png",
+        "bytes": 412025,
+        "sha256": "5c2d82e5f49a285a50440b691a00a4a41dc29bf77f349be85c903f5fb4ee3c1f"
+      },
+      "findings": [
+        "冻结布局图与加号尺寸候选已改；完整复验待运行"
+      ],
+      "candidate_validation": "待当前Apple实拍，不记通过"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "discover",
+      "android_original_sha256": "aa14347db65e2191309712a249853d4e458eeb74087aac953222e12cef690bf5",
+      "ios_original_sha256": "5c5976751bd5591bdc51853f6e6c749bdf7c56c73509eeac8383c9f6c9cd5308",
+      "side_by_side": {
+        "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci13-comparison/phone_portrait_light_discover_side-by-side.png",
+        "bytes": 257406,
+        "sha256": "ef469ac6a31c5eb62476cb81e397c767e30e2773c2ebcefa0f3ae62f0633582a"
+      },
+      "findings": [
+        "搜索/站源/分类/标题层级与封面密度明显差异；首屏提前到底；候选修复待实拍"
+      ],
+      "candidate_validation": "待当前Apple实拍，不记通过"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "search_results",
+      "android_original_sha256": "79db5deaf979207c1e649f65a60d60f3513c0557bf3213ffcd141e3a585c77b6",
+      "ios_original_sha256": "6e0069fd5e98de83d73b582efdca9fd210ff4c5ba78ece19d86204a144f6e4d7",
+      "side_by_side": {
+        "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci13-comparison/phone_portrait_light_search_results_side-by-side.png",
+        "bytes": 189938,
+        "sha256": "b43d4683c80080dbbd451ce4b75fff7cd5ee4017d5c585d20e5c708fe8d4b57c"
+      },
+      "findings": [
+        "同内容结果页仍缺搜索结果标题、额外搜索模式分段与到底提示；候选待复验"
+      ],
+      "candidate_validation": "待当前Apple实拍，不记通过"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "detail",
+      "android_original_sha256": "8ee624032b0c16380d3033dd41069097e3759db3af777e8ea250e8b4f92bf611",
+      "ios_original_sha256": "770230afd00bd5329284abdd58c86f805821a8cb406330e0a1561b1ceb71ab6b",
+      "side_by_side": {
+        "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci13-comparison/phone_portrait_light_detail_side-by-side.png",
+        "bytes": 294240,
+        "sha256": "192591724aae9efe6a07bea6f150eaa73bff7f7633f880e4e68085a62bb62047"
+      },
+      "findings": [
+        "额外顶部下载中心控件候选去除，设置入口保留；系统返回区域单列；完整复验待运行"
+      ],
+      "candidate_validation": "待当前Apple实拍，不记通过"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reader",
+      "android_original_sha256": "96b9ddedace328266bd12d3f706e45dbbc079f18ee9329818ce995a1d7ba1fc8",
+      "ios_original_sha256": "015895bb1c0c28683919e40ceb0dd8fe78f696ef94936b136d44d69ff0d9d90f",
+      "side_by_side": {
+        "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci13-comparison/phone_portrait_light_reader_side-by-side.png",
+        "bytes": 673778,
+        "sha256": "36b76ab7f927e3a7e8ec72abe23a0eec5653d7815c3648864f5cb014acab5120"
+      },
+      "findings": [
+        "拇指/设置图标过大；候选冻结图标与12pt拇指/墨色；图片/两行控制条须全状态复验"
+      ],
+      "candidate_validation": "待当前Apple实拍，不记通过"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reader_directory",
+      "android_original_sha256": "ee1974c81856c831c46c74b4ee5475c86f21498f5199147025458c2e1986c02a",
+      "ios_original_sha256": "cf16e1c8e7dc4fdc33e1e649f402d1d8bf4e0d4d4949c47e69d4880753127b80",
+      "side_by_side": {
+        "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci13-comparison/phone_portrait_light_reader_directory_side-by-side.png",
+        "bytes": 354510,
+        "sha256": "1726527bde472498038b886d3bf257de4e69db1d9e3325ed5cfaf8795de486a2"
+      },
+      "findings": [
+        "当前章行/条色/正文与返回须完整复验；章标签AX为d841候选，不由旧图证明"
+      ],
+      "candidate_validation": "待当前Apple实拍，不记通过"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reading_settings",
+      "android_original_sha256": "60d2cc597ce15de05d6842ed2646e8743684dab76c56bce08a40e9ec35b25dab",
+      "ios_original_sha256": "f02fd2ca054482a5b321e97c209af5bd04a5c54812f63fe08a686b0e68e9649d",
+      "side_by_side": {
+        "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci13-comparison/phone_portrait_light_reading_settings_side-by-side.png",
+        "bytes": 521262,
+        "sha256": "36aee09b5e3c56c4b3152bda05a6445877d665a076eb743979811b394380304c"
+      },
+      "findings": [
+        "关联日漫反向入口按用户明确淘汰口径删除，系统开关形状单列；其余完整复验"
+      ],
+      "candidate_validation": "待当前Apple实拍，不记通过"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "source_drawer",
+      "android_original_sha256": "52ddc9a3b7a18370c14eb59ce824941b9ebe001834b2b0cfab743b350df11ff5",
+      "ios_original_sha256": "83e3c729596de6ceb20e06eb3aa6ee1ec7abe245ea180242febc70ac60194a9b",
+      "side_by_side": {
+        "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci13-comparison/phone_portrait_light_source_drawer_side-by-side.png",
+        "bytes": 403161,
+        "sha256": "3d6f170a0b5d0b54ba2615109a8d8db8d4e3d9731c04d1d07624e5e2ccbab85f"
+      },
+      "findings": [
+        "侧面全高与安卓底部400面板差异，长名截断、选中对比度弱；深色实际白底，候选已改"
+      ],
+      "candidate_validation": "待当前Apple实拍，不记通过"
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "discover",
+      "android_original_sha256": "73aa9bc1a989c605d158376453983b5cb4e776f5326971ae077fa0a4ac04436d",
+      "ios_original_sha256": "86e56ade7ba991c0a911a1ec3e70be1e4e948782e838e3baf44541f4d880b0b2",
+      "side_by_side": {
+        "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci13-comparison/phone_landscape_light_discover_side-by-side.png",
+        "bytes": 207527,
+        "sha256": "952321979a5b0d068b08598dbb224bc3753a13e59d64a3bbee29268859671937"
+      },
+      "findings": [
+        "搜索/站源/分类/标题层级与封面密度明显差异；首屏提前到底；候选修复待实拍"
+      ],
+      "candidate_validation": "待当前Apple实拍，不记通过"
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "source_drawer",
+      "android_original_sha256": "2c33b3b0faef9d169e7ecd5a7b12e1c1bbd26f2091278a35effb6d832ea949ba",
+      "ios_original_sha256": "648998cf2d3cbe3594b3a19c0298b03adccf7fbe3eeaa4fa5031d3bccaebadd9",
+      "side_by_side": {
+        "path": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci13-comparison/phone_portrait_dark_source_drawer_side-by-side.png",
+        "bytes": 408541,
+        "sha256": "8bda3ac5c6151c2bed3b0c649422d45cc35d0e94c6bf578a3d2e97503518ac43"
+      },
+      "findings": [
+        "侧面全高与安卓底部400面板差异，长名截断、选中对比度弱；深色实际白底，候选已改"
+      ],
+      "candidate_validation": "待当前Apple实拍，不记通过"
+    }
+  ]
+}

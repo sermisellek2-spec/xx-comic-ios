@@ -13,7 +13,7 @@ final class CurrentParityUITests: ParityUITestCase {
     private func checkGlobalSearch(_ groupFlag: String) {
         let app = launch(groupFlag)
         app.tabBars.buttons["发现"].tap()
-        app.segmentedControls.buttons["全站"].tap()
+        app.buttons["discover.search.mode"].tap()
         let search = app.searchFields.firstMatch
         search.tap(); search.typeText("电锯人\n")
         for source in ["mh160", "copy4000", "gmh"] {
@@ -27,7 +27,7 @@ final class CurrentParityUITests: ParityUITestCase {
         // Favorite refresh also loads chapters. Use a real unfavorited result
         // so it cannot consume the pending request used to exercise cancellation.
         app.tabBars.buttons["发现"].tap()
-        app.segmentedControls.buttons["全站"].tap()
+        app.buttons["discover.search.mode"].tap()
         let search = app.searchFields.firstMatch
         search.tap(); search.typeText(title + "\n")
         let source = app.buttons["discover.global.copy4000"]
@@ -155,7 +155,7 @@ final class CurrentParityUITests: ParityUITestCase {
         // Only mh160 fixtures are favorites. Use the unfavorited copy4000
         // result so background update checks cannot consume its first detail.
         app.tabBars.buttons["发现"].tap()
-        app.segmentedControls.buttons["全站"].tap()
+        app.buttons["discover.search.mode"].tap()
         let search = app.searchFields.firstMatch
         search.tap(); search.typeText("电锯人\n")
         let source = app.buttons["discover.global.copy4000"]
