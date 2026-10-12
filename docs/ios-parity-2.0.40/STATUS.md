@@ -10,6 +10,10 @@
 
 上一输入9991044的CI31已完整失败：两SDK、实际图标及Release隔离通过；Mac Core935项/1物理缓存归零失败（144016字节）；双设备原生各30通过；每设备15UI中9通过/6用例失败，涉及缓存清理反馈、历史初始展示和4项设置参考。[实际结果](review-evidence/2026-10-13-ci31-results/README.md)。当前文字删除、缓存API/并行清理、历史日志、字号/开关/安全区候选尚未Apple运行，不以父输入结果替代。
 
-下一步：仅指定仓库跑当前两SDK/完整Core/原生及漫画边界、缓存/历史影响UI；根据真实失败继续修复。然后跑当前完整93UI/设备、64场景视觉及Files/恢复/图像检查，闭合所有非站源门槛后再打最终包。真实网站仍暂停，中途不要求用户试包。
+最新接续：1/2图Kindle漫画逐页转换与精确旧目录恢复已补，第二章续读UI强化，历史空header明确高度0。当前Linux全量922项/2个Apple PDF跳过/0失败、152.776秒、退出0，267个Core输入SHA前后一致；88原生Swift两配置解析通过。[接续证据](review-evidence/2026-10-13-short-comic-recovery/README.md)。
+
+CI32（54f8206）部分原日志确认Debug/Release SDK及Release隔离通过、Apple Core926项/1物理缓存归零失败（144016字节），双设备UI仍待完整结果；该运行不包含上述短漫画/历史约束接续。原原件继续保留，不把部分日志记为全量通过。
+
+下一步：仅指定仓库跑最新完整Core/原生及93UI/设备、64场景视觉；根据真实失败继续修复。然后跑当前完整93UI/设备、64场景视觉及Files/恢复/图像检查，闭合所有非站源门槛后再打最终包。真实网站仍暂停，中途不要求用户试包。
 
 [阶段方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md)、[功能矩阵](requirements.csv)、[差异](differences.md)、[完整门槛](NON_SOURCE_GATE.md)。旧文字范围及当时执行数字的整页原件见[历史记录](review-evidence/2026-10-13-comic-only/historical-before-text-removal-STATUS.md)，不覆盖当前范围。

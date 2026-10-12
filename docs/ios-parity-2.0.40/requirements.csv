@@ -17,7 +17,7 @@ SHELF-03,P2,书架,单本长按管理取消及刷新/布局切换滚动锚点恢
 SHELF-04,P2,收藏,收藏撤销更新红点星标实际未读数量和最新章信息,favorite/FavoriteUpdateCoordinator.java;FavoriteStarBadgeView.java,待验收,第十四轮实际未读/最新章及取消收藏保历史双设备通过；完整红点/撤销/主题与视觉待验收
 SHELF-05,P2,换源,书架就地换源保留分组历史及阅读位置,MainActivity.java;favorite/FavoriteRevision.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：LibraryStore.swift;SourceSwitchSheet.swift;LibraryStoreTests.swift
 SHELF-06,P2,导入入口,悬浮导入及布局避让和导入方式选择,bookshelf/FloatingImportBubble.java;MainActivity.java,待验收,保留本地悬浮导入入口并加按钮无障碍标识；EPUB/Kindle用例改走该实际入口；拖动/避让/尺寸待运行
-HISTORY-01,P2,历史,历史入口续读清理删除和收藏生命周期独立,MainActivity.java,待验收,当前漫画范围/88原生语法/93声明UI及缓存历史开放失败见review-evidence/2026-10-13-comic-only/README.md；CI31父输入结果见2026-10-13-ci31-results/README.md，不能代替当前全量。
+HISTORY-01,P2,历史,历史入口续读清理删除和收藏生命周期独立,MainActivity.java,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
 DISC-01,P2,发现,站源分组管理选择及过滤范围按原版,MainActivity.java;source/SourceConfig.java,待验收,当前51/默认50保留；9b全站空分组/组外源通过，CI22双设备草稿源基本确认通过但催漫画滚动不可达。原图/树确认filter.options遗漏SourceOptionScrollView，现补实际容器，原3项UI断言保留，完整源分组管理及候选待复验。
 DISC-02,P2,搜索,单站分页全站返回异步合并严格同名置顶与去重,MainActivity.java;source,待验收,全站用全部启用可搜索源；当前搜索卡片及单站用户滚动分页，原UI行为断言保留并加首屏不提前到底；完整Apple待验收
 DISC-03,P2,搜索,空源标签隐藏人工选中稳定取消旧代次不抢页面,MainActivity.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：SearchRules.swift;DiscoverViewController.swift;SearchRulesTests.swift；第19轮source可达/确认实际失败；D96触摸取消滚动、顶部宽度和原用例复验候选。
@@ -47,7 +47,7 @@ READER-13,P3,文字,文字阅读及排版功能按用户指令移除,ebook/TextR
 READER-14,P3,连续阅读,卷轴末尾预取连续追加下一章；章内页码拖动与持久化；失败重试取消末章及模式旋转恢复,MainActivity.java:8108;8162;8211,待验收,CI27两设备10项连续阅读用例通过，含失败/重试/取消/末章/跨章/旋转/模式/重启；iPhone模式续读另1用例失败。当前候选也保留pending清空后迟到图片尺寸的锚点，主动seek/拖动可取消等待；完整交付版回归仍待验收。
 LOCAL-01,P4,格式,按基线实际边界完成图片ZIP与CBZ导入阅读,local/LocalImporter.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：LocalArchive.swift;LocalLibrary.swift;LocalArchiveTests.swift
 LOCAL-02,P4,格式,图片漫画EPUB目录与续读；纯文字和图文混排明确拒绝,ebook/EpubParser.java;local/LocalImporter.java,待验收,当前本机77项影响回归/1 Apple PDF跳过/0失败；含单图+文字与1MiB检查前缀后正文的拒绝和旧原包保护；当前Apple/UI待运行。review-evidence/2026-10-13-comic-only/README.md
-LOCAL-03,P4,格式,PDF漫画与Kindle图片漫画实际支持边界真文件验证,pdf/PdfParser.java;local/LocalImporter.java,待验收,Kindle原包/派生/封面/目录/图片续读与恢复保护已本机验证；小说/混排/DRM/KF8明确拒绝。当前Apple PDF和UI尚未完成。review-evidence/2026-10-13-comic-only/README.md
+LOCAL-03,P4,格式,PDF漫画与Kindle图片漫画实际支持边界真文件验证,pdf/PdfParser.java;local/LocalImporter.java,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
 LOCAL-04,P4,批量,多文件导入进度取消重启恢复及失败重试UI,local/BatchImportSession.java;BatchImportPlanner.java,待验收,f4eaf93核心恢复真实ZIP等通过；部分重选/重启第二卷两设备UI通过，其余3项被本地标题阻塞，当前修后再完整验收4项；不证明Files权限
 LOCAL-05,P4,合集,创建分卷混合卷追加重排撤销和稳定阅读身份,local;MainActivity.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：VolumeManagerViewController.swift;LocalLibrary.swift;LocalLibraryTests.swift
 LOCAL-06,P4,指纹,同内容去重墓碑删除重导旧记录和位置恢复,local;MainActivity.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：ContentFingerprint.swift;LocalCatalog.swift;ContentFingerprintTests.swift;LocalCatalogTests.swift
@@ -63,12 +63,12 @@ DOWNLOAD-05,P4,策略,Wi-Fi开关持久化配额前后台调度和恢复提示,d
 DOWNLOAD-06,P4,能力范围,核对当前源实际文件下载能力并剔除不可达旧入口,download/FileDownloadWorker.java;DownloadSources.java,通过,已从冻结Git对象完成静态范围核对：source包只声明FileSourceCapability，没有当前实现；正式工厂51源无可达文件型入口，旧完整/缺失断言撤回，不新增预留功能；stages/SOURCE_FILE_SCOPE.md与file-source-scope-proof.json；本地电子书导入仍在范围；此通过仅为范围核对，不代表队列/Files/后台或网站验收
 DOWNLOAD-07,P4,记录保护,下载写入失败回滚真实反馈与保存后恢复，不假报排队/完成,download/DownloadStore.java;DownloadRuntime.java,待验收,D70：真实downloads.json写入失败5项、下载影响回归53项通过，原断言保留；下载中心可见错误及实际重试入口已补，Apple界面/磁盘满/权限恢复待验收；review-evidence/2026-10-12-download-lifecycle/README.md
 VERIFY-01,P2,验证UI,验证等待成功取消过期和返回重试用fixture贯通,MainActivity.java;source,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：SourceVerificationUI.swift;Mh18BrowserSession.swift;Mh18VerificationAttemptTests.swift;Mh18VerificationRulesTests.swift
-GATE-01,P5,完整性,逐入口反查全部非站源需求与实际消费者无漏项,MainActivity.java;app/src/main,待核对,当前漫画范围/88原生语法/93声明UI及缓存历史开放失败见review-evidence/2026-10-13-comic-only/README.md；CI31父输入结果见2026-10-13-ci31-results/README.md，不能代替当前全量。
+GATE-01,P5,完整性,逐入口反查全部非站源需求与实际消费者无漏项,MainActivity.java;app/src/main,待核对,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
 GATE-02,P5,视觉,全应用8场景真截图叠图及逐组件对照,UIHelpers.java;app/src/main/res,待验收,当前64场景真实对照保留；书架文字/阅读开关/横屏安全区候选待当前Apple实拍复验。用户移除文字排版面板，原图仅历史证据，不计当前视觉门槛。
-GATE-03,P5,交互,全应用正常异常取消恢复长按手势和返回闭环,app/src/androidTest,待验收,当前漫画范围/88原生语法/93声明UI及缓存历史开放失败见review-evidence/2026-10-13-comic-only/README.md；CI31父输入结果见2026-10-13-ci31-results/README.md，不能代替当前全量。
-GATE-04,P5,平台,当前版本Apple构建及必要UI图像PDFWebKitFiles检查,ios/scripts/build.sh,待验收,当前漫画范围/88原生语法/93声明UI及缓存历史开放失败见review-evidence/2026-10-13-comic-only/README.md；CI31父输入结果见2026-10-13-ci31-results/README.md，不能代替当前全量。
-GATE-05,P5,质量,性能恢复旧数据并发和Release无测试内容检查,app/src/main,待验收,当前漫画范围/88原生语法/93声明UI及缓存历史开放失败见review-evidence/2026-10-13-comic-only/README.md；CI31父输入结果见2026-10-13-ci31-results/README.md，不能代替当前全量。
-GATE-06,P5,门槛,全部非站源必需项通过输出NON_SOURCE_GATE为PASS,docs/IOS_2_0_40_GEMINI_PLAN.md,待验收,当前漫画范围/88原生语法/93声明UI及缓存历史开放失败见review-evidence/2026-10-13-comic-only/README.md；CI31父输入结果见2026-10-13-ci31-results/README.md，不能代替当前全量。
+GATE-03,P5,交互,全应用正常异常取消恢复长按手势和返回闭环,app/src/androidTest,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
+GATE-04,P5,平台,当前版本Apple构建及必要UI图像PDFWebKitFiles检查,ios/scripts/build.sh,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
+GATE-05,P5,质量,性能恢复旧数据并发和Release无测试内容检查,app/src/main,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
+GATE-06,P5,门槛,全部非站源必需项通过输出NON_SOURCE_GATE为PASS,docs/IOS_2_0_40_GEMINI_PLAN.md,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
 SOURCE-01,P2,目录,生成22专用29公共稳定ID排序默认和退役矩阵,DownloadSources.java;source/PublicSourceRegistry.java,待验收,D19：冻结51/22+29/默认50/duya关闭静态与核心通过；9b1d4a2两设备生产注册及名称各2项通过；完整开关排序导入管理UI待验收；关于页误计53已按当前目录过滤，新增51显示UI待Apple。
 SOURCE-02,P6,适配,拆为每源需求和报告逐一搜索分类详情目录图片下载,source;sources.csv,后置站源,2026-10-12用户明确暂停真实站源验收，后续用户自行判断需修复源；不得标通过，不作为本次总验收包前置。51当前/默认50目录、开关、配置与fixture流程仍在非站源范围。
 SOURCE-03,P6,配置,逐源真实消费routesfilters域名referer及custom边界,source/SourceConfig.java,后置站源,2026-10-12用户明确暂停真实站源验收，后续用户自行判断需修复源；不得标通过，不作为本次总验收包前置。51当前/默认50目录、开关、配置与fixture流程仍在非站源范围。

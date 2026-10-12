@@ -85,10 +85,17 @@ extension LocalLibrary {
         let scratch = directory.appendingPathComponent(".restore-" + UUID().uuidString, isDirectory: true)
         try manager.createDirectory(at: scratch, withIntermediateDirectories: false)
         defer { try? manager.removeItem(at: scratch) }
-        let derived = scratch.appendingPathComponent("content.epub")
+        var derived = scratch.appendingPathComponent("content.epub")
         // Recreate the old derived bytes without changing its stable publication metadata.
         // The reading route still rejects text; this only preserves the owned original.
-        let publication = try KindlePublicationAdapter.convert(source: original, to: derived, requireComic: false)
+        var publication = try KindlePublicationAdapter.convert(source: original, to: derived, requireComic: false)
+        if publication != book.epub, book.epub?.isPurePictureEpub == true {
+            // New short comics use image pages; try that shape in a separate,
+            // owned file. Both variants must exactly match saved metadata, and
+            // nothing is published or overwritten before identity validation.
+            derived = scratch.appendingPathComponent("comic.epub")
+            publication = try KindlePublicationAdapter.convert(source: original, to: derived)
+        }
         guard publication == book.epub else { throw LocalLibraryError.invalidBook }
         try validateOwner()
         try beforeKindlePublish()

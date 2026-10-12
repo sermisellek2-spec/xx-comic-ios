@@ -1,0 +1,42 @@
+{
+  "activeCI": {
+    "run": 38283857701,
+    "revision": "54f820647177055022f1591caf34a35004311189",
+    "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38283857701",
+    "scope": "cache-diagnostics",
+    "containsThisFollowup": false
+  },
+  "impact": {
+    "executed": 52,
+    "failed": 0,
+    "seconds": 27.923,
+    "exitCode": 0,
+    "logSHA256": "e6824ce28abe19b681580b91e5f045c788612167648d19b4fafe7c3c17c3084c"
+  },
+  "currentFullCore": {
+    "executed": 922,
+    "skipped": 2,
+    "failed": 0,
+    "seconds": 152.776,
+    "exitCode": 0,
+    "inputFiles": 267,
+    "inputUnchangedAfterRun": true,
+    "logSHA256": "a1dbe3838c9bd3fc12146d35b90a3dcf896878fd58eb1af059f6e6e51c1cd2af"
+  },
+  "currentApple": "not run",
+  "currentUIDeclaredPerDevice": 93,
+  "nonSourceGate": "not passed",
+  "nativeSyntax": [
+    {
+      "configuration": "Release",
+      "files": 88,
+      "exitCode": 0
+    },
+    {
+      "configuration": "DEBUG",
+      "files": 88,
+      "exitCode": 0
+    }
+  ],
+  "checkedAtUTC": "2026-10-12T17:44:15.980530+00:00"
+}

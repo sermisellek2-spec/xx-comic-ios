@@ -18,3 +18,5 @@
 缓存检查保持真实占用、正文不可命中、重开不可恢复、容量与后续缓存能力及原文件保护全部断言；不扣除索引或更改失败期望。设置和历史也不通过改断言隐藏问题。
 
 [STATUS](STATUS.md)、[本轮输入与证据](review-evidence/2026-10-13-comic-only/README.md)、[CI31原件](review-evidence/2026-10-13-ci31-results/README.md)。旧门槛整页保存在[历史原文](review-evidence/2026-10-13-comic-only/historical-before-text-removal-NON_SOURCE_GATE.md)。
+
+最新短漫画与历史约束接续：Linux922/2个Apple PDF跳过/0失败、152.776秒、退出0；267输入前后SHA一致，88原生两配置仅语法通过。当前CI32部分日志已确认父输入两SDK/隔离通过，Core926/1物理归零失败；当前接续完整Apple/UI/视觉仍待运行。[当前接续](review-evidence/2026-10-13-short-comic-recovery/README.md)。

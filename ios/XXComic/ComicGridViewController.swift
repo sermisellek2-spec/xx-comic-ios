@@ -288,6 +288,9 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             view.addSubview(floatingBubble)
 
         } else {
+            // An empty stack has no intrinsic height. Keep it from consuming
+            // the history grid's space when this page has no bookshelf header.
+            header.heightAnchor.constraint(equalToConstant: 0).isActive = true
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: "清空", style: .plain, target: self, action: #selector(clearHistoryTapped))
         }
     }

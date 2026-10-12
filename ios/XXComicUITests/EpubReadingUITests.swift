@@ -13,7 +13,7 @@ final class EpubReadingUITests: ParityUITestCase {
         return app
     }
     private func back(_ app: XCUIApplication) { app.navigationBars.buttons.element(boundBy: 0).tap() }
-    private func readyComic(_ app: XCUIApplication) {
+    private func readyComic(_ app: XCUIApplication, chapter: String? = nil) {
         XCTAssertTrue(app.buttons["设置"].waitForExistence(timeout: 15))
         XCTAssertFalse(app.webViews.firstMatch.exists)
         XCTAssertFalse(app.buttons["排版"].exists)
@@ -21,6 +21,10 @@ final class EpubReadingUITests: ParityUITestCase {
             app.collectionViews.cells.count > 0 && !app.buttons["正在加载图片…"].exists && !app.buttons["图片加载失败 · 点击重试"].exists
         }, evaluatedWith: app)
         waitForExpectations(timeout: 15)
+        if let chapter {
+            expectation(for: NSPredicate(format: "value BEGINSWITH %@", chapter + "，"), evaluatedWith: app.collectionViews["reader.pages"])
+            waitForExpectations(timeout: 5)
+        }
     }
     private func open(_ title: String, app: XCUIApplication, secondChapter: Bool = false) {
         let cell = app.collectionViews.cells[title]
@@ -50,13 +54,13 @@ final class EpubReadingUITests: ParityUITestCase {
     private func openKindle(_ title: String, app: XCUIApplication) { open(title, app: app) }
 
     func testImageEpubKeepsDirectoryAndSecondChapterResumeWithoutTextControls() {
-        let app = launch(); open("EPUB 验收·图片", app: app, secondChapter: true); readyComic(app)
+        let app = launch(); open("EPUB 验收·图片", app: app, secondChapter: true); readyComic(app, chapter: "第二章")
         back(app)
         let resume = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '继续阅读'")).firstMatch
-        XCTAssertTrue(resume.waitForExistence(timeout: 5)); resume.tap(); readyComic(app)
+        XCTAssertTrue(resume.waitForExistence(timeout: 5)); resume.tap(); readyComic(app, chapter: "第二章")
         app.terminate(); app.launch(); app.buttons["本地书架"].tap()
         app.collectionViews.cells["EPUB 验收·图片"].tap()
-        XCTAssertTrue(resume.waitForExistence(timeout: 5)); resume.tap(); readyComic(app)
+        XCTAssertTrue(resume.waitForExistence(timeout: 5)); resume.tap(); readyComic(app, chapter: "第二章")
     }
     func testTextAndMixedEpubImportsRejectWithoutPublishingABook() {
         let app = launch()

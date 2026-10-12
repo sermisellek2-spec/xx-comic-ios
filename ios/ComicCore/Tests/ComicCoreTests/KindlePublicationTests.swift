@@ -87,6 +87,18 @@ final class KindlePublicationTests: XCTestCase {
         XCTAssertEqual(try EpubArchive(url: target).read("OEBPS/images/img_1.png"), png)
         XCTAssertEqual(try Data(contentsOf: source), original)
     }
+    func testDefaultConversionRetainsOneAndTwoPageImageComics() throws {
+        for count in [1, 2] {
+            let body = (1...count).map { "<img recindex=\($0)/>" }.joined()
+            let original = fixture(text: [Data(body.utf8)], images: Array(repeating: png, count: count))
+            let (source, target) = try files(original)
+            let publication = try KindlePublicationAdapter.convert(source: source, to: target)
+            XCTAssertTrue(publication.isPurePictureEpub)
+            XCTAssertEqual(publication.spine.count, count)
+            XCTAssertEqual(publication.spine.map(\.resolvedImageEntry), (1...count).map { "OEBPS/images/img_\($0).png" })
+            XCTAssertEqual(try Data(contentsOf: source), original)
+        }
+    }
     func testTwoChapterNovelMetadataAndActualStoredMimetype() throws {
         let original = fixture(text: [Data("<h1>第一章</h1><p>第一章正文</p><mbp:pagebreak/><h2>第二章</h2><p>第二章正文</p>".utf8)])
         let (source, target) = try files(original)

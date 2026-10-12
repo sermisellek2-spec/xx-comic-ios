@@ -40,7 +40,9 @@ enum KindleEpubWriter {
         }
         var pages: [Page] = []
         let imageMap = Dictionary(uniqueKeysWithValues: images.map { ($0.index, $0) })
-        if comic {
+        // New image-comic imports also need one page per image below the old
+        // three-image threshold. Legacy recovery keeps the original layout.
+        if requireComic || comic {
             for (index, image) in images.enumerated() {
                 try Task.checkCancellation()
                 pages.append(Page(title: "Page \(index + 1)", body: "<img src=\"../images/\(image.name)\" style=\"max-width:100%;max-height:100%;\"/>", path: "text/page_\(index + 1).xhtml"))

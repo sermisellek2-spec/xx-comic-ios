@@ -86,6 +86,44 @@ final class LocalKindleLibraryTests: XCTestCase {
         XCTAssertEqual(try reopened.book(id: book.id), book)
     }
 
+    func testShortComicImportAndRecoveryKeepAllPagesAndSavedMetadata() async throws {
+        for count in [1, 2] {
+            let body = (1...count).map { "<img recindex='\($0)'/>" }.joined()
+            let bytes = mobi(body: body, images: Array(repeating: png, count: count))
+            let library = try LocalLibrary(directory: directory())
+            let book = try library.importKindle(title: "短篇漫画", source: input(bytes), format: .mobi) { try Data(contentsOf: $0) == self.png }
+            let local = LocalComicSource(library: library), chapters = try await local.chapters(comicId: book.id)
+            let page = try await local.chapter(url: XCTUnwrap(chapters.first).url)
+            XCTAssertEqual(page.imageUrls.count, count)
+            let folder = library.directory.appendingPathComponent(book.id), manifest = folder.appendingPathComponent("book.json")
+            let saved = try Data(contentsOf: manifest)
+            try FileManager.default.removeItem(at: folder.appendingPathComponent("content.epub"))
+            let reopened = try LocalLibrary(directory: library.directory)
+            for url in page.imageUrls { XCTAssertEqual(try reopened.epubImageData(pageURL: XCTUnwrap(URL(string: url))), png) }
+            XCTAssertEqual(try Data(contentsOf: manifest), saved)
+            XCTAssertEqual(try Data(contentsOf: folder.appendingPathComponent("source.kindle")), bytes)
+            XCTAssertEqual(try reopened.book(id: book.id), book)
+        }
+    }
+
+    func testLegacyShortComicRecoveryKeepsItsOriginalChapterShape() throws {
+        for count in [1, 2] {
+            let bytes = mobi(body: "<img recindex='1'/>", images: Array(repeating: png, count: count))
+            let source = try input(bytes), archive = try directory().appendingPathComponent("old.epub")
+            _ = try KindlePublicationAdapter.convert(source: source, to: archive, requireComic: false)
+            let library = try LocalLibrary(directory: directory())
+            let book = try LegacyEpubFixture.persist(library: library, archive: archive, title: "旧漫画", kindleSource: source)
+            let path = try XCTUnwrap(book.epub?.spine.first?.fullZipPath)
+            let before = try library.epubResource(bookID: book.id, path: path, maximumBytes: 8 * 1024 * 1024)
+            let folder = library.directory.appendingPathComponent(book.id), manifest = folder.appendingPathComponent("book.json")
+            let saved = try Data(contentsOf: manifest)
+            try FileManager.default.removeItem(at: folder.appendingPathComponent("content.epub"))
+            XCTAssertEqual(try library.epubResource(bookID: book.id, path: path, maximumBytes: 8 * 1024 * 1024), before)
+            XCTAssertEqual(try Data(contentsOf: manifest), saved)
+            XCTAssertEqual(try Data(contentsOf: folder.appendingPathComponent("source.kindle")), bytes)
+        }
+    }
+
     func testComicAndMixedKindleReadActualImageBytesAndExtensionOnlyLabels() async throws {
         for format in [LocalKindleFormat.azw, .azw3] {
             let library = try LocalLibrary(directory: directory()), bytes = mobi(body: "<img recindex='1'/>", images: [png, png, png])

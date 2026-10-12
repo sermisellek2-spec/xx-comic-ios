@@ -1,0 +1,150 @@
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[0/5] Write swift-version-24593BA9C3E375BF.txt
+[4/6] Compiling ComicCore KindleEpubWriter.swift
+[5/6] Emitting module ComicCore
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[6/7] Compiling ComicCore LocalKindleLibrary.swift
+[8/15] Emitting module ComicCoreTests
+[9/15] Compiling ComicCoreTests KindlePublicationTests.swift
+[10/16] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+[11/19] Wrapping AST for ComicCoreTests for debugging
+[12/19] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[13/20] Write sources
+[15/22] Emitting module ComicCorePackageDiscoveredTests
+[16/22] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[17/23] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[18/24] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[19/24] Write sources
+[20/24] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[22/26] Emitting module ComicCorePackageTests
+[23/26] Compiling ComicCorePackageTests runner.swift
+[24/26] Write Objects.LinkFileList
+[25/26] Linking ComicCorePackageTests.xctest
+Build complete! (35.29s)
+Test Suite 'Selected tests' started at 2026-10-12 17:31:08.051
+Test Suite 'KindlePublicationTests' started at 2026-10-12 17:31:08.067
+Test Case 'KindlePublicationTests.testAllSupportedImageSignaturesBecomeLocalManifestResources' started at 2026-10-12 17:31:08.067
+Test Case 'KindlePublicationTests.testAllSupportedImageSignaturesBecomeLocalManifestResources' passed (0.034 seconds)
+Test Case 'KindlePublicationTests.testCancellationDuringHTMLScanningCleansScratch' started at 2026-10-12 17:31:08.101
+Test Case 'KindlePublicationTests.testCancellationDuringHTMLScanningCleansScratch' passed (0.048 seconds)
+Test Case 'KindlePublicationTests.testCancellationWhileStagingLargeImagesCleansOnlyOwnedScratch' started at 2026-10-12 17:31:08.149
+Test Case 'KindlePublicationTests.testCancellationWhileStagingLargeImagesCleansOnlyOwnedScratch' passed (0.417 seconds)
+Test Case 'KindlePublicationTests.testComboStopsBeforeBoundary' started at 2026-10-12 17:31:08.567
+Test Case 'KindlePublicationTests.testComboStopsBeforeBoundary' passed (0.01 seconds)
+Test Case 'KindlePublicationTests.testComicLayoutWhitespaceImageBytesIndexHolesAndExplicitCover' started at 2026-10-12 17:31:08.577
+Test Case 'KindlePublicationTests.testComicLayoutWhitespaceImageBytesIndexHolesAndExplicitCover' passed (0.036 seconds)
+Test Case 'KindlePublicationTests.testComicThresholdCountsUTF16RatherThanGraphemes' started at 2026-10-12 17:31:08.612
+Test Case 'KindlePublicationTests.testComicThresholdCountsUTF16RatherThanGraphemes' passed (0.011 seconds)
+Test Case 'KindlePublicationTests.testCompressionBackreferenceSpansRecordsAndDeclaredLengthDropsPadding' started at 2026-10-12 17:31:08.624
+Test Case 'KindlePublicationTests.testCompressionBackreferenceSpansRecordsAndDeclaredLengthDropsPadding' passed (0.02 seconds)
+Test Case 'KindlePublicationTests.testDefaultConversionAcceptsImageComicAndPreservesActualImageBytes' started at 2026-10-12 17:31:08.644
+Test Case 'KindlePublicationTests.testDefaultConversionAcceptsImageComicAndPreservesActualImageBytes' passed (0.012 seconds)
+Test Case 'KindlePublicationTests.testDefaultConversionRejectsNovelAndMixedContentWithoutChangingOriginal' started at 2026-10-12 17:31:08.656
+Test Case 'KindlePublicationTests.testDefaultConversionRejectsNovelAndMixedContentWithoutChangingOriginal' passed (0.011 seconds)
+Test Case 'KindlePublicationTests.testDefaultConversionRetainsOneAndTwoPageImageComics' started at 2026-10-12 17:31:08.667
+Test Case 'KindlePublicationTests.testDefaultConversionRetainsOneAndTwoPageImageComics' passed (0.022 seconds)
+Test Case 'KindlePublicationTests.testDestinationCreatedDuringConversionIsPreserved' started at 2026-10-12 17:31:08.689
+Test Case 'KindlePublicationTests.testDestinationCreatedDuringConversionIsPreserved' passed (2.378 seconds)
+Test Case 'KindlePublicationTests.testEmptyUnsupportedInvalidEncodingAndTruncatedTextFailCleanly' started at 2026-10-12 17:31:11.067
+Test Case 'KindlePublicationTests.testEmptyUnsupportedInvalidEncodingAndTruncatedTextFailCleanly' passed (0.022 seconds)
+Test Case 'KindlePublicationTests.testExistingTargetAndSourceAreNeverOverwritten' started at 2026-10-12 17:31:11.089
+Test Case 'KindlePublicationTests.testExistingTargetAndSourceAreNeverOverwritten' passed (0.004 seconds)
+Test Case 'KindlePublicationTests.testHeadingMustBeSameLineAndLessThanFiftyUTF16Units' started at 2026-10-12 17:31:11.093
+Test Case 'KindlePublicationTests.testHeadingMustBeSameLineAndLessThanFiftyUTF16Units' passed (0.007 seconds)
+Test Case 'KindlePublicationTests.testImageBudgetIncludesUnrecognizedControlRecords' started at 2026-10-12 17:31:11.100
+Test Case 'KindlePublicationTests.testImageBudgetIncludesUnrecognizedControlRecords' passed (0.003 seconds)
+Test Case 'KindlePublicationTests.testMaliciousHTMLHasBoundedRuntimeAndCleanup' started at 2026-10-12 17:31:11.104
+Test Case 'KindlePublicationTests.testMaliciousHTMLHasBoundedRuntimeAndCleanup' passed (2.01 seconds)
+Test Case 'KindlePublicationTests.testManifestBudgetRejectsTooManyChapters' started at 2026-10-12 17:31:13.113
+Test Case 'KindlePublicationTests.testManifestBudgetRejectsTooManyChapters' passed (0.187 seconds)
+Test Case 'KindlePublicationTests.testMaximumBodyPlusWrapperCannotExceedReaderCapacity' started at 2026-10-12 17:31:13.301
+Test Case 'KindlePublicationTests.testMaximumBodyPlusWrapperCannotExceedReaderCapacity' passed (0.729 seconds)
+Test Case 'KindlePublicationTests.testMixedTextMapsRecindexDropsMissingImageAndFallsBackCover' started at 2026-10-12 17:31:14.029
+Test Case 'KindlePublicationTests.testMixedTextMapsRecindexDropsMissingImageAndFallsBackCover' passed (0.011 seconds)
+Test Case 'KindlePublicationTests.testPreCancelledConversionPreservesSource' started at 2026-10-12 17:31:14.040
+Test Case 'KindlePublicationTests.testPreCancelledConversionPreservesSource' passed (0.003 seconds)
+Test Case 'KindlePublicationTests.testReconversionProducesEqualPublication' started at 2026-10-12 17:31:14.043
+Test Case 'KindlePublicationTests.testReconversionProducesEqualPublication' passed (0.016 seconds)
+Test Case 'KindlePublicationTests.testTextAndImageRecordBudgetsFailCleanly' started at 2026-10-12 17:31:14.059
+Test Case 'KindlePublicationTests.testTextAndImageRecordBudgetsFailCleanly' passed (0.14 seconds)
+Test Case 'KindlePublicationTests.testTextPreservesSupplementaryUnicodeAcrossCopyChunks' started at 2026-10-12 17:31:14.199
+Test Case 'KindlePublicationTests.testTextPreservesSupplementaryUnicodeAcrossCopyChunks' passed (0.035 seconds)
+Test Case 'KindlePublicationTests.testTotalBodyIsCappedAtEightMiBAcrossRecordsAndTwoChapters' started at 2026-10-12 17:31:14.234
+Test Case 'KindlePublicationTests.testTotalBodyIsCappedAtEightMiBAcrossRecordsAndTwoChapters' passed (5.335 seconds)
+Test Case 'KindlePublicationTests.testTwoChapterNovelMetadataAndActualStoredMimetype' started at 2026-10-12 17:31:19.569
+Test Case 'KindlePublicationTests.testTwoChapterNovelMetadataAndActualStoredMimetype' passed (0.012 seconds)
+Test Case 'KindlePublicationTests.testWindows1252PalmDocAndMobiText' started at 2026-10-12 17:31:19.581
+Test Case 'KindlePublicationTests.testWindows1252PalmDocAndMobiText' passed (0.014 seconds)
+Test Case 'KindlePublicationTests.testZeroAndSignedSentinelDeclaredLengthsUseAvailableText' started at 2026-10-12 17:31:19.595
+Test Case 'KindlePublicationTests.testZeroAndSignedSentinelDeclaredLengthsUseAvailableText' passed (0.019 seconds)
+Test Suite 'KindlePublicationTests' passed at 2026-10-12 17:31:19.614
+Executed 27 tests, with 0 failures (0 unexpected) in 11.546 (11.546) seconds
+Test Suite 'LocalImportFingerprintTests' started at 2026-10-12 17:31:19.614
+Test Case 'LocalImportFingerprintTests.testArchiveCopiesOriginalBeforeProbeAndPersistsItsHash' started at 2026-10-12 17:31:19.614
+Test Case 'LocalImportFingerprintTests.testArchiveCopiesOriginalBeforeProbeAndPersistsItsHash' passed (0.074 seconds)
+Test Case 'LocalImportFingerprintTests.testArchiveRequiresOwnedSourceArchiveFileOnReopening' started at 2026-10-12 17:31:19.687
+Test Case 'LocalImportFingerprintTests.testArchiveRequiresOwnedSourceArchiveFileOnReopening' passed (0.068 seconds)
+Test Case 'LocalImportFingerprintTests.testCancellationDuringPreparationCleansStaging' started at 2026-10-12 17:31:19.755
+Test Case 'LocalImportFingerprintTests.testCancellationDuringPreparationCleansStaging' passed (0.003 seconds)
+Test Case 'LocalImportFingerprintTests.testEpubPdfAndKindlePersistHashesOfTheirOwnedOriginalFiles' started at 2026-10-12 17:31:19.759
+Test Case 'LocalImportFingerprintTests.testEpubPdfAndKindlePersistHashesOfTheirOwnedOriginalFiles' passed (0.374 seconds)
+Test Case 'LocalImportFingerprintTests.testFolderPersistsOriginalPathManifestHashAfterExternalSourceChanges' started at 2026-10-12 17:31:20.133
+Test Case 'LocalImportFingerprintTests.testFolderPersistsOriginalPathManifestHashAfterExternalSourceChanges' passed (0.191 seconds)
+Test Case 'LocalImportFingerprintTests.testFolderRelativePathChangeAltersManifestFingerprint' started at 2026-10-12 17:31:20.324
+Test Case 'LocalImportFingerprintTests.testFolderRelativePathChangeAltersManifestFingerprint' passed (0.189 seconds)
+Test Case 'LocalImportFingerprintTests.testImagesImportHasImagesFormatAndNilFingerprint' started at 2026-10-12 17:31:20.513
+Test Case 'LocalImportFingerprintTests.testImagesImportHasImagesFormatAndNilFingerprint' passed (0.024 seconds)
+Test Case 'LocalImportFingerprintTests.testLegacyManifestWithoutFingerprintOrFormatRemainsReadable' started at 2026-10-12 17:31:20.537
+Test Case 'LocalImportFingerprintTests.testLegacyManifestWithoutFingerprintOrFormatRemainsReadable' passed (0.005 seconds)
+Test Case 'LocalImportFingerprintTests.testMetadataValidationRejectsInvalidFingerprintAndFormatCombinations' started at 2026-10-12 17:31:20.542
+Test Case 'LocalImportFingerprintTests.testMetadataValidationRejectsInvalidFingerprintAndFormatCombinations' passed (0.0 seconds)
+Test Suite 'LocalImportFingerprintTests' passed at 2026-10-12 17:31:20.542
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.928 (0.928) seconds
+Test Suite 'LocalKindleLibraryTests' started at 2026-10-12 17:31:20.542
+Test Case 'LocalKindleLibraryTests.testCancellationDuringOriginalCopyAndImageProbeNeverPublishes' started at 2026-10-12 17:31:20.542
+Test Case 'LocalKindleLibraryTests.testCancellationDuringOriginalCopyAndImageProbeNeverPublishes' passed (0.031 seconds)
+Test Case 'LocalKindleLibraryTests.testCancellationOrDeletedBookDuringActualRecoveryDoesNotResurrectBook' started at 2026-10-12 17:31:20.573
+Test Case 'LocalKindleLibraryTests.testCancellationOrDeletedBookDuringActualRecoveryDoesNotResurrectBook' passed (2.027 seconds)
+Test Case 'LocalKindleLibraryTests.testComicAndMixedKindleReadActualImageBytesAndExtensionOnlyLabels' started at 2026-10-12 17:31:22.600
+Test Case 'LocalKindleLibraryTests.testComicAndMixedKindleReadActualImageBytesAndExtensionOnlyLabels' passed (0.19 seconds)
+Test Case 'LocalKindleLibraryTests.testConcurrentActualResourceRequestsRebuildWithoutOverwriteOrResidue' started at 2026-10-12 17:31:22.790
+Test Case 'LocalKindleLibraryTests.testConcurrentActualResourceRequestsRebuildWithoutOverwriteOrResidue' passed (2.158 seconds)
+Test Case 'LocalKindleLibraryTests.testFinalPublishBoundaryPreservesConcurrentWinnerOnSuccessFailureAndCancellation' started at 2026-10-12 17:31:24.949
+Test Case 'LocalKindleLibraryTests.testFinalPublishBoundaryPreservesConcurrentWinnerOnSuccessFailureAndCancellation' passed (0.178 seconds)
+Test Case 'LocalKindleLibraryTests.testFinalPublishBoundaryRejectsReplacedSymlinkMovedAndDeletedDirectoriesWithoutWritingElsewhere' started at 2026-10-12 17:31:25.127
+Test Case 'LocalKindleLibraryTests.testFinalPublishBoundaryRejectsReplacedSymlinkMovedAndDeletedDirectoriesWithoutWritingElsewhere' passed (0.41 seconds)
+Test Case 'LocalKindleLibraryTests.testImportPreservesComicOriginalMetadataAndImageHistoryAcrossRecovery' started at 2026-10-12 17:31:25.537
+Test Case 'LocalKindleLibraryTests.testImportPreservesComicOriginalMetadataAndImageHistoryAcrossRecovery' passed (0.072 seconds)
+Test Case 'LocalKindleLibraryTests.testImportValidatesOwnedOriginalAndDerivedTogetherBeforeShelfPublication' started at 2026-10-12 17:31:25.609
+Test Case 'LocalKindleLibraryTests.testImportValidatesOwnedOriginalAndDerivedTogetherBeforeShelfPublication' passed (0.097 seconds)
+Test Case 'LocalKindleLibraryTests.testLegacyMetadataAndOrdinaryEpubMissingArchiveAreNotKindle' started at 2026-10-12 17:31:25.706
+Test Case 'LocalKindleLibraryTests.testLegacyMetadataAndOrdinaryEpubMissingArchiveAreNotKindle' passed (0.09 seconds)
+Test Case 'LocalKindleLibraryTests.testLegacyShortComicRecoveryKeepsItsOriginalChapterShape' started at 2026-10-12 17:31:25.796
+Test Case 'LocalKindleLibraryTests.testLegacyShortComicRecoveryKeepsItsOriginalChapterShape' passed (0.059 seconds)
+Test Case 'LocalKindleLibraryTests.testMissingSymlinkOriginalAndDerivedMismatchRefuseRecovery' started at 2026-10-12 17:31:25.855
+Test Case 'LocalKindleLibraryTests.testMissingSymlinkOriginalAndDerivedMismatchRefuseRecovery' passed (0.557 seconds)
+Test Case 'LocalKindleLibraryTests.testOldRecoveryCannotPublishIntoReplacedBookOrExternalSymlinkDirectory' started at 2026-10-12 17:31:26.412
+Test Case 'LocalKindleLibraryTests.testOldRecoveryCannotPublishIntoReplacedBookOrExternalSymlinkDirectory' passed (2.772 seconds)
+Test Case 'LocalKindleLibraryTests.testPersistedKindleCanReopenAndReadWhenOnlyDerivedArchiveIsMissing' started at 2026-10-12 17:31:29.184
+Test Case 'LocalKindleLibraryTests.testPersistedKindleCanReopenAndReadWhenOnlyDerivedArchiveIsMissing' passed (0.119 seconds)
+Test Case 'LocalKindleLibraryTests.testRecoveryOnlyReusesAnOwnedMatchingConcurrentWinner' started at 2026-10-12 17:31:29.304
+Test Case 'LocalKindleLibraryTests.testRecoveryOnlyReusesAnOwnedMatchingConcurrentWinner' passed (6.428 seconds)
+Test Case 'LocalKindleLibraryTests.testShortComicImportAndRecoveryKeepAllPagesAndSavedMetadata' started at 2026-10-12 17:31:35.732
+Test Case 'LocalKindleLibraryTests.testShortComicImportAndRecoveryKeepAllPagesAndSavedMetadata' passed (0.128 seconds)
+Test Case 'LocalKindleLibraryTests.testUnsupportedDamagedAndUnreadableImagesNeverPublishAndKeepOriginal' started at 2026-10-12 17:31:35.860
+Test Case 'LocalKindleLibraryTests.testUnsupportedDamagedAndUnreadableImagesNeverPublishAndKeepOriginal' passed (0.132 seconds)
+Test Suite 'LocalKindleLibraryTests' passed at 2026-10-12 17:31:35.992
+Executed 16 tests, with 0 failures (0 unexpected) in 15.449 (15.449) seconds
+Test Suite 'Selected tests' passed at 2026-10-12 17:31:35.992
+Executed 52 tests, with 0 failures (0 unexpected) in 27.923 (27.923) seconds
