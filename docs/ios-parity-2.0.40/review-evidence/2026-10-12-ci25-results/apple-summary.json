@@ -1,0 +1,80 @@
+{
+  "run": 38236059726,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38236059726",
+  "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+  "conclusion": "failure",
+  "packageRequested": false,
+  "debugReleaseBuildSucceeded": true,
+  "coreMac": {
+    "executed": 932,
+    "failureCount": 1,
+    "durationSeconds": 124.479
+  },
+  "nativeDevices": [
+    {
+      "executed": 29,
+      "failureCount": 0,
+      "durationSeconds": 13.011
+    },
+    {
+      "executed": 29,
+      "failureCount": 0,
+      "durationSeconds": 12.447
+    }
+  ],
+  "ui": [
+    {
+      "device": "iPhone 15 Pro",
+      "executed": 18,
+      "counts": {
+        "Success": 16,
+        "Failure": 2
+      },
+      "failedCases": [
+        "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+        "ReaderSettingsParityUITests/testStripImageOffsetSurvivesNormalMangaAndPagedRelaunch()"
+      ],
+      "originalTestManifest": "ui-results-cRyYFx-tests.json",
+      "manifestAlsoIncludesKeptNativeEvidence": true
+    },
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "executed": 18,
+      "counts": {
+        "Success": 16,
+        "Failure": 2
+      },
+      "failedCases": [
+        "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+        "ReaderSettingsParityUITests/testStripImageOffsetSurvivesNormalMangaAndPagedRelaunch()"
+      ],
+      "originalTestManifest": "ui-results-VTA11Z-tests.json",
+      "manifestAlsoIncludesKeptNativeEvidence": true
+    }
+  ],
+  "failureRecords": [
+    "2026-10-12T10:29:19.5849590Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Tests/ComicCoreTests/CacheMaintenanceTests.swift:35: error: -[ComicCoreTests.CacheMaintenanceTests testDiskCleanupRestoresLimitsAndAllowsLaterResponses] : XCTAssertTrue failed - Actual remaining cache: memory=0, disk=36864",
+    "2026-10-12T10:40:57.9606920Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:45: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T10:40:58.0048300Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:46: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"Optional(\"第1话，第 2 页，共 4 页\")\") is not equal to (\"Optional(\"第1话，第 3 页，共 4 页\")\")",
+    "2026-10-12T10:41:11.3604960Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:45: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T10:41:11.3970920Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:46: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"Optional(\"第1话，第 2 页，共 4 页\")\") is not equal to (\"Optional(\"第1话，第 3 页，共 4 页\")\")",
+    "2026-10-12T10:41:23.0870830Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:45: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T10:41:23.1052330Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:46: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"Optional(\"第1话，第 1 页，共 4 页\")\") is not equal to (\"Optional(\"第1话，第 3 页，共 4 页\")\")",
+    "2026-10-12T10:41:46.9312410Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:45: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T10:41:46.9612180Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:46: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"Optional(\"第1话，第 1 页，共 4 页\")\") is not equal to (\"Optional(\"第1话，第 3 页，共 4 页\")\")",
+    "2026-10-12T10:43:00.6661050Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:154: error: -[XXComicUITests.ReaderSettingsParityUITests testStripImageOffsetSurvivesNormalMangaAndPagedRelaunch] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T10:43:01.3530560Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:157: error: -[XXComicUITests.ReaderSettingsParityUITests testStripImageOffsetSurvivesNormalMangaAndPagedRelaunch] : XCTAssertEqualWithAccuracy failed: (\"0.0\") is not equal to (\"-160.66666666666666\") +/- (\"1.0\")",
+    "2026-10-12T10:52:43.7197770Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:45: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T10:52:43.7586760Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:46: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"Optional(\"第1话，第 2 页，共 4 页\")\") is not equal to (\"Optional(\"第1话，第 3 页，共 4 页\")\")",
+    "2026-10-12T10:52:56.9379730Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:45: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T10:52:56.9719650Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:46: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"Optional(\"第1话，第 2 页，共 4 页\")\") is not equal to (\"Optional(\"第1话，第 3 页，共 4 页\")\")",
+    "2026-10-12T10:53:08.7434270Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:45: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T10:53:08.7657060Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:46: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"Optional(\"第1话，第 1 页，共 4 页\")\") is not equal to (\"Optional(\"第1话，第 3 页，共 4 页\")\")",
+    "2026-10-12T10:53:32.6809780Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:45: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T10:53:32.7148700Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:46: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"Optional(\"第1话，第 1 页，共 4 页\")\") is not equal to (\"Optional(\"第1话，第 3 页，共 4 页\")\")",
+    "2026-10-12T10:54:46.8395040Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:154: error: -[XXComicUITests.ReaderSettingsParityUITests testStripImageOffsetSurvivesNormalMangaAndPagedRelaunch] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T10:54:47.0400670Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:157: error: -[XXComicUITests.ReaderSettingsParityUITests testStripImageOffsetSurvivesNormalMangaAndPagedRelaunch] : XCTAssertEqualWithAccuracy failed: (\"0.0\") is not equal to (\"-229.0\") +/- (\"1.0\")"
+  ],
+  "originalBuildLogSHA256": "1fcd7efbb94d71f09271aacfc363f21455debca39bb870325ea424ff9e3de18d",
+  "doesNotVerifyLaterReaderLayoutCandidate": true
+}

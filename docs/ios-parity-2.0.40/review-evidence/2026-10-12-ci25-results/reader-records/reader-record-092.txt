@@ -1,0 +1,72 @@
+Attributes: Application, 0x101a564f0, pid: 49850, label: 'XX Comic'
+Element subtree:
+ →Application, 0x101a564f0, pid: 49850, label: 'XX Comic'
+    Window (Main), 0x101a56610, {{0.0, 0.0}, {393.0, 852.0}}, identifier: 'parity.window', value: {"bounds":[0,0,393...
+      Other, 0x101a461c0, {{0.0, 0.0}, {393.0, 852.0}}
+        Other, 0x101a462e0, {{0.0, 0.0}, {393.0, 852.0}}
+          Other, 0x101a581b0, {{0.0, 0.0}, {393.0, 852.0}}
+            Other, 0x101a582d0, {{0.0, 0.0}, {393.0, 852.0}}
+              NavigationBar, 0x101a5d510, {{0.0, 53.7}, {393.0, 44.0}}, identifier: '第1话'
+                Button, 0x101a5d630, {{16.0, 53.7}, {44.0, 44.0}}, identifier: 'reader.back', label: '返回'
+                StaticText, 0x101a60000, {{60.0, 68.0}, {311.0, 15.7}}, identifier: 'reader.title', label: '电锯人 · 第1话'
+              Other, 0x101a60120, {{0.0, 0.0}, {393.0, 852.0}}
+                Other, 0x101a5ec00, {{0.0, 0.0}, {393.0, 852.0}}
+                  Other, 0x101a5ed20, {{0.0, 0.0}, {393.0, 852.0}}
+                    Other, 0x101a5ee40, {{0.0, 0.0}, {393.0, 97.7}}
+                    CollectionView, 0x101a5ef60, {{0.0, 0.0}, {393.0, 852.0}}, identifier: 'reader.pages', label: 'settings.begin mode=2 page=0 pending=nil offset=0.0,0.0 size=0.0,0.0 content=0.0,0.0 restoring=false animating=false fullscreen=false
+settings.end mode=2 page=0 pending=nil offset=0.0,0.0 size=0.0,0.0 content=0.0,0.0 restoring=true animating=false fullscreen=false
+settings.begin mode=2 page=0 pending=nil offset=0.0,0.0 size=0.0,0.0 content=0.0,0.0 restoring=false animating=false fullscreen=false
+settings.end mode=2 page=0 pending=nil offset=0.0,0.0 size=0.0,0.0 content=0.0,0.0 restoring=true animating=false fullscreen=false
+layout.pending mode=2 page=0 pending=0 offset=0.0,0.0 size=393.0,852.0 content=0.0,852.0 restoring=false animating=false fullscreen=false
+restore.begin(0,0.40882103477523324) mode=2 page=0 pending=0 offset=0.0,0.0 size=393.0,852.0 content=0.0,852.0 restoring=false animating=false fullscreen=false
+scroll mode=2 page=0 pending=0 offset=1179.0,0.0 size=393.0,852.0 content=0.0,852.0 restoring=true animating=false fullscreen=false
+restore.end mode=2 page=0 pending=0 offset=1179.0,0.0 size=393.0,852.0 content=0.0,852.0 restoring=true animating=false fullscreen=false
+layout.restored mode=2 page=0 pending=nil offset=1179.0,0.0 size=393.0,852.0 content=0.0,852.0 restoring=false animating=false fullscreen=false
+settings.begin mode=2 page=0 pending=nil offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=false
+settings.pending(0,0.40882103477523324) mode=0 page=0 pending=0 offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=true animating=false fullscreen=false
+settings.end mode=0 page=0 pending=0 offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=true animating=false fullscreen=false
+layout.pending mode=0 page=0 pending=0 offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=false
+restore.begin(0,0.40882103477523324) mode=0 page=0 pending=0 offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=false
+scroll mode=0 page=0 pending=0 offset=0.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=true animating=false fullscreen=false
+restore.end mode=0 page=0 pending=0 offset=0.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=true animating=false fullscreen=false
+layout.restored mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=false
+restore.begin(0,0.0) mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,2021.0 restoring=false animating=false fullscreen=false
+restore.end mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,1890.0 restoring=true animating=false fullscreen=false
+restore.begin(0,0.0) mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,1890.0 restoring=false animating=false fullscreen=false
+restore.end mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,1759.0 restoring=true animating=false fullscreen=false', value: 第1话，第 1 页，共 4 页
+                      Cell, 0x101a519f0, {{0.0, 0.0}, {393.0, 393.0}}
+                        Other, 0x101a51b10, {{0.0, 0.0}, {393.0, 393.0}}
+                          ScrollView, 0x101a51c30, {{0.0, 0.0}, {393.0, 393.0}}
+                            Image, 0x101a62f20, {{0.0, 0.0}, {393.0, 393.0}}, identifier: 'reader.image', label: '阅读图片', value: original:384x384
+                      Cell, 0x101a63040, {{0.0, 393.0}, {393.0, 393.0}}
+                        Other, 0x101a63160, {{0.0, 393.0}, {393.0, 393.0}}
+                          ScrollView, 0x101a63280, {{0.0, 393.0}, {393.0, 393.0}}
+                            Image, 0x101a633a0, {{0.0, 393.0}, {393.0, 393.0}}, identifier: 'reader.image', label: '阅读图片', value: original:384x384
+                      Cell, 0x101a64540, {{0.0, 786.0}, {393.0, 393.0}}
+                        Other, 0x101a64660, {{0.0, 786.0}, {393.0, 393.0}}
+                          ScrollView, 0x101a64780, {{0.0, 786.0}, {393.0, 393.0}}
+                            Image, 0x101a648a0, {{0.0, 786.0}, {393.0, 393.0}}, identifier: 'reader.image', label: '阅读图片', value: original:384x384
+                      Other, 0x101a649c0, {{360.0, 97.7}, {30.0, 705.0}}, label: '垂直滚动条, 5页', value: 0%
+                    Other, 0x101a5e5b0, {{0.0, 730.0}, {393.0, 88.0}}, identifier: 'reader.toolbar'
+                      Other, 0x101a5e6d0, {{0.0, 730.0}, {393.0, 42.0}}
+                        Button, 0x101a5e7f0, {{12.0, 732.0}, {60.0, 40.0}}, identifier: 'reader.previous.chapter', label: '上一章', Disabled
+                          StaticText, 0x101a5f9a0, {{22.0, 744.0}, {40.0, 16.0}}, label: '上一章'
+                        Other, 0x101a5fac0, {{82.0, 732.0}, {229.0, 40.0}}
+                          Slider, 0x101a5fbe0, {{82.0, 736.0}, {229.0, 33.0}}, identifier: 'reader.seek', label: '本章阅读进度', value: 0%
+                        Button, 0x101a5fd00, {{321.0, 732.0}, {60.0, 40.0}}, identifier: 'reader.next.chapter', label: '下一章'
+                          StaticText, 0x101a655a0, {{331.0, 744.0}, {40.0, 16.0}}, label: '下一章'
+                      Other, 0x101a656c0, {{0.0, 772.0}, {393.0, 46.0}}
+                        Button, 0x101a657e0, {{16.0, 772.0}, {120.3, 46.0}}, identifier: 'reader.directory', label: '目录'
+                          StaticText, 0x101a65900, {{64.7, 797.0}, {22.7, 13.3}}, label: '目录'
+                        Button, 0x101a65a20, {{136.3, 772.0}, {120.3, 46.0}}, label: '换源'
+                          StaticText, 0x101a65b40, {{185.0, 797.0}, {22.7, 13.3}}, label: '换源'
+                        Button, 0x101a65c60, {{256.7, 772.0}, {120.3, 46.0}}, identifier: 'reader.settings', label: '设置'
+                          StaticText, 0x101a65d80, {{305.3, 797.0}, {22.7, 13.3}}, label: '设置'
+                    Other, 0x101a65ea0, {{0.0, 730.0}, {393.0, 122.0}}
+Path to element:
+ →Application, 0x101a564f0, pid: 49850, label: 'XX Comic'
+Query chain:
+ →Find: Target Application 'com.xxcomic.ios'
+  Output: {
+    Application, 0x101e64a50, pid: 49850, label: 'XX Comic'
+  }

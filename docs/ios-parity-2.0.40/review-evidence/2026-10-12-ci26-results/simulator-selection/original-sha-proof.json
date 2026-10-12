@@ -1,0 +1,29 @@
+{
+  "archiveSHA256": "12cb97d2abba7559f4fb0363289df4c3d62a5cb2991f73a054c65c4d873a56f4",
+  "files": [
+    {
+      "file": "device-types.json",
+      "sha256": "b908fadf59c91a504c802b71d5f03c1404ee9b4cf7cfabe8b175c1cde40bd9c1"
+    },
+    {
+      "file": "devices.json",
+      "sha256": "734d8165d75636f507b98772bc5f646ce5782f6d262287e424f432b577fea39b"
+    },
+    {
+      "file": "runtimes.json",
+      "sha256": "5cdfcb067af5d09a888148413761ce53968791bf352144c7aa6c4f72f759d5cc"
+    },
+    {
+      "file": "selection.json",
+      "sha256": "e9a1b97e70dfd8287b72cb26d99f8192f499fea7bfe8187a0cfef7498734b2e7"
+    },
+    {
+      "file": "simulator-sdk-version.txt",
+      "sha256": "62a502d981c6b1199e6c04809d0f6cabbaf000588cb24f367781b989b9df16fa"
+    },
+    {
+      "file": "xcode-version.txt",
+      "sha256": "9b259e3b42e374dcfcbcfc0e2b41730e3c57e98f019df45d42174d6a3b8e6977"
+    }
+  ]
+}

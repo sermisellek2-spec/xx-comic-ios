@@ -1,0 +1,8 @@
+[
+  {
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "revision": "e5a8fa558373f2a815d5a1ed095e6d1aab7ede31",
+    "device": "iPhone 15 Pro"
+  }
+]

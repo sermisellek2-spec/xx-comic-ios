@@ -27,9 +27,9 @@ jobs:
   build:
     if: github.repository == 'sermisellek2-spec/xx-comic-ios'
     runs-on: macos-14
-    # CI 11 timed out while collecting every element through repeated IPC calls.
-    # Keep the full matrix; one retained hierarchy per scene removes that overhead.
-    timeout-minutes: 90
+    # The full suite runs both devices sequentially, including the expanded
+    # reading/Files recovery checks and every visual scene. Keep that coverage.
+    timeout-minutes: 180
     env:
       # Repair uploads now run the complete UI/visual matrix. Partial scopes
       # remain available for diagnosis and never permit packaging.

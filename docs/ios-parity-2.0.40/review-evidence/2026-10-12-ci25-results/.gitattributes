@@ -1,0 +1,4 @@
+*.zip -text -diff
+*.json -text -diff
+*.txt -text -diff
+*.zstd -text -diff

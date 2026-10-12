@@ -1,0 +1,116 @@
+[
+  {
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderContinuityUITests/testContinuousChapterLocalSeekModeSwitchAndRelaunchResume()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderContinuityUITests/testCorruptCurrentChapterReturnsAfterRepairAndUnrepairedReturnKeepsFailure()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderContinuityUITests/testCorruptNextChapterRepairReturnsToContinuousReadingWithoutReloadingFirstChapter()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderContinuityUITests/testLastChapterHasEndStateWithoutDiscardingImages()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderContinuityUITests/testLeavingReaderCancelsPendingContinuationAndReopenCanLoadIt()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderContinuityUITests/testNextChapterFailureKeepsReadablePagesAndHasExplicitRetry()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderContinuityUITests/testPagedControlsDoNotMoveOrResizeImages()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderContinuityUITests/testRotationKeepsChapterAndLocalImageAfterContinuousAppend()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderContinuityUITests/testStripControlsDoNotMoveOrResizeImages()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderContinuityUITests/testStripEdgeTapsAndHorizontalSwipeDoNotChangeChapters()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testDefaultMangaSwipeAdvancesOnceAndCrossesToTheNextLogicalChapter()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testEnhancementControlsAppearOnlyWhenEnabledAndComparisonReturnsToOriginal()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testMangaRotationPreservesTheLogicalPageAndChapter()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+    "status": "Failure",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testModeThemeAndSwitchSelectionPersistAfterRelaunch()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testStripImageOffsetSurvivesNormalMangaAndPagedRelaunch()",
+    "status": "Failure",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderToolbarParityUITests/testPagedReaderToolbarChangesChaptersAndKeepsUsableActionTargets()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "ReaderToolbarParityUITests/testStripReaderToolbarRetainsDirectoryAndReaderSettings()",
+    "status": "Success",
+    "revision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+    "device": "iPhone 15 Pro"
+  }
+]

@@ -1,4 +1,4 @@
-id,gate,area,requirement,android_reference,status,evidence
+﻿id,gate,area,requirement,android_reference,status,evidence
 BASE-01,P0,基线,核验固定发布提交与527文件快照,baseline/manifest.json,通过,verify-baseline.ps1退出0；527文件与冻结ZIP哈希匹配；baseline/VERIFICATION.md
 BASE-02,P0,范围,逐页逐入口逐默认值补齐需求矩阵,MainActivity.java,待核对,完整方案/P0~P4报告已写；范围审计确认当前源无文件型站源实现，不新增预留协议入口；其余入口/默认值继续核对
 BASE-03,P0,测试,建立双方共用且Release隔离的确定性fixture,app/src/androidTest,待验收,双方共同JSON/384×384原图及Debug/Release隔离保留；第22轮SDK/运行时17.5及五个原输入SHA核对。冻结金标与Apple64/64同内容窗口/尺寸对照退出0，逐组件尚未验收；ci22-results及ci22-comparison原件。
@@ -27,24 +27,24 @@ DETAIL-02,P2,换源,详情换源搜索候选选择取消与范围不限发现分
 CONFIG-01,P2,配置,所有设置入口默认值取值范围即时生效与重启持久化,MainActivity.java,待验收,3+6+2当前设置/主题选择面板、自动跟随文案及淘汰左右手已修；SettingsParity持久化/即时生效未原生运行；其余默认值继续核对
 CONFIG-02,P2,源协议,稳定ID注册开关排序分组和配置消费者一致,DownloadSources.java;source/SourceConfig.java,待核对,D71/D79/D84：已核实路由接线与不消费筛选改动跳过；默认51/启用50往返不增生路由/警告。25影响、911 Linux完整/2 Apple PDF跳过/0失败；全部51源字段/Apple/UI仍待核对；entry-consumer-audit及filter-consumers记录
 CONFIG-03,P2,源配置,xx-comic.sources导入导出及不支持字段真实提示,source/SourceConfig.java,待验收,D81：Files文件闭环本地实现，51/50往返，24影响/910 Linux完整/2跳过/0失败。c8 Apple因启动storyboard元数据编译失败，5真实Files UI未运行；最小修复重跑原范围，保持待验收；config-files及ci16-repair/README.md
-CONFIG-04,P2,缓存,缓存查看清理确认与下载原包数据保护,MainActivity.java,待验收,Mac隔离38190616735的4个大响应表行数4→0/正文文件删除，仍实际占144016字节；原Core物理0断言继续失败36864。iOS小/大响应两构造新增原生取证未运行；不隐瞒占用或代替生产缓存验收；返回统计在容量恢复后读取已修，903项Linux完整通过，原isEmpty/归零断言保留
+CONFIG-04,P2,缓存,缓存查看清理确认与下载原包数据保护,MainActivity.java,待验收,CI26实际Debug/Release及双设备29原生/0失败，已知正文/重开/容量/原文件保护通过；隔离三响应表清空，但Mac Core934/1物理归零失败，disk144016如实保留；当前完整缓存/设置UI未通过。原零字节断言不改，D101。
 CONFIG-05,P2,日志,日志查看导出清理与敏感字段脱敏,MainActivity.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：ErrorLogStore.swift;ErrorLogSanitizer.swift;ErrorLogsViewController.swift;ErrorLogStoreTests.swift
 CONFIG-06,P2,关于更新,关于版本外链更新提示及iOS分发等效流程,update;MainActivity.java,待验收,仅指定iOS仓库HTTPS Releases/IPA链接；APK及旧仓库回退iOS Releases；失败可重试/浏览器查看；IOSUpdatePolicy2项核心通过；UI未运行
 CONFIG-07,P2,统计,原版可选使用统计默认设置字段与关闭行为,UsageStatsClient.java;MainActivity.java,待验收,原5字段/默认开启/北京时间每日1次/15分钟重试/关闭持久化与取消/损坏保留已接真实消费者；6项隔离报告及4项既有核心通过；Apple前后台/设置待验收；第19轮Files导入导出部分通过、iPad取消失败，驱动按真实侧栏取消修正；完整交互仍待验收。
-READER-01,P3,模式,卷轴/普通/日漫三种独立模式；删除旧左右手设置，模式切换保留逻辑章页,reader/PagedReaderView.java;MainActivity.java,待验收,保留卷轴/普通/日漫独立模式，旧左右手忽略。CI24横滑/跨章及第3页旋转双设备通过，模式切换与重启仍失败，各17UI/16通过/1失败/8断言。当前Debug数值诊断附原失败，页3和原图断言不减；D99/D100真实UI待验收。
+READER-01,P3,模式,卷轴/普通/日漫三种独立模式；删除旧左右手设置，模式切换保留逻辑章页,reader/PagedReaderView.java;MainActivity.java,待验收,卷轴/普通/日漫独立模式与旧左右手忽略。CI25日漫横滑/跨章/第3页旋转通过，但双设备模式续读和图内偏移2用例失败，各18UI/16通过/10断言。原数值证实旧布局恢复，c377显式页帧/实际布局/待续章锚点候选正在CI27复验；原断言不减。
 READER-02,P3,手势,卷轴侧点横滑不切章单页手势及缩放平移取消,reader/PagedReaderView.java;ReaderNavigation.java,待验收,日漫左右点按/横滑反向而章序不反转，普通默认横滑接通；卷轴/缩放/控件手势保护保持。38核心影响0失败，实际UI与多指/取消/完整手势待验收；D91；接续按冻结36/1.1/<1秒手势，日漫首末页实际断言保留；真实UI待复验。；CI21默认日漫滑动跨章专用用例双设备通过；完整模式返回仍失败，D99候选待实际回归
 READER-03,P3,控制,工具条隐藏显示页数时间电量状态与返回路径,MainActivity.java,待验收,第十四轮条漫/单页控制条隐藏不改变图片双设备通过；当前冻结设置图标/小拇指及两主题完整视觉待验收；CI21默认日漫滑动跨章专用用例双设备通过；完整模式返回仍失败，D99候选待实际回归；CI22双设备控制条画布2与工具条2通过，当前候选完整视觉仍待验收。
 READER-04,P3,进度,进度拖动预览确认取消及章节定位,reader/ReaderSeekBar.java;ReaderSeekSession.java,待验收,第17轮852输入原生25项中的进度条包含/AX/末页hitTest双设备通过；日漫接续使用逻辑索引seek，实际反向页布局/旋转和UI新增检查待Apple；不以局部通过关闭全阅读验收；D93始终隐藏阅读状态栏候选；新增真实状态栏断言待运行，不以Linux语法证明运行通过。；CI21默认日漫滑动跨章专用用例双设备通过；完整模式返回仍失败，D99候选待实际回归
 READER-05,P3,目录,按需加载关闭缓存正逆序当前章蓝条无搜索框,MainActivity.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：ChapterDrawerSheet.swift
 READER-06,P3,目录,大目录快速滚动定位当前章末尾位置和返回来源,MainActivity.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：ChapterDrawerSheet.swift;ChapterFastScroller.swift
 READER-07,P3,换源,阅读中换源和章节对应保持续读历史,MainActivity.java;reader/ReaderPosition.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：ChapterMatching.swift;ChapterMatchingTests.swift;ReaderViewController.swift
-READER-08,P3,恢复,图内位置旋转前后台重启和跨章恢复,reader/ReaderPosition.java;PagedReaderView.java,待验收,D100同图偏移核心3新用例/12影响、925全量/2跳过/0失败输入未变；新增图内真实Y/高度往返及重启UI未运行。CI24第3页日漫旋转双设备通过，但模式/续读仍失败；D99诊断待运行，完整恢复未关闭。
+READER-08,P3,恢复,图内位置旋转前后台重启和跨章恢复,reader/ReaderPosition.java;PagedReaderView.java,待验收,D100核心偏移/身份恢复输入保持；当前927 Linux完整/2 Apple PDF跳过/0失败。CI25双设备实际图内Y往返失败，原偏移0.408821恢复成0；第3页日漫旋转通过。c377修布局完成后恢复与续章高度不足时保留锚点，CI27尚未返回，完整恢复未关闭。
 READER-09,P3,主题,独立阅读主题墨水屏去白边动画及默认值落盘,reader/ReaderSettingsSheet.java;ImageEnhancementPolicy.java,待验收,非法旧增强值按冻结Android回退关闭且读取不改写原值；相关16项Linux通过；阅读主题/墨水屏/动画/默认值完整UI仍待验收
 READER-10,P3,图像,普通增强开关原图对照关闭及失败回退,reader/ReaderEnhancementEngine.java,待验收,已有旧版原生AI故障/取消与原图对照证据；当前RemoteImageView改动后需回归，核心测试不替代Apple图像
 READER-11,P3,AI,离线2倍AI超分真实本地推理模型许可设备及内存,reader/GpuSuperResolution.java;app/src/main/cpp,待验收,历史CoreML参数/双设备真实neural证据保留；当前版本模型产物、设备峰值与性能/支持边界需核验
 READER-12,P3,解码,长图高清透明损坏图多图预取取消和内存保护,reader/ReaderDecodePolicy.java,待验收,旧版生产Cell取消/复用已有证据；当前RemoteImageView读图路径改动需Apple类型/解码/内存回归
 READER-13,P3,文字,文字阅读排版主题目录设置缩放和续读,ebook/TextReaderView.java;TextReaderSettingsSheet.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：EpubTextReaderViewController.swift;TextReaderSettingsViewController.swift;TextReadingTests.swift
-READER-14,P3,连续阅读,卷轴末尾预取连续追加下一章；章内页码拖动与持久化；失败重试取消末章及模式旋转恢复,MainActivity.java:8108;8162;8211,待验收,稳定章身份/全局行映射及Reader连续消费；881214f本地874全量，当前缓存修复后877/2跳过/0失败；新增10阅读UI未Apple运行，不继承38944ae父版本结果
+READER-14,P3,连续阅读,卷轴末尾预取连续追加下一章；章内页码拖动与持久化；失败重试取消末章及模式旋转恢复,MainActivity.java:8108;8162;8211,待验收,CI25双设备10项连续阅读用例均通过，含失败/重试/取消/末章/跨章/旋转/模式/重启；不能继承为c377当前完整恢复通过。新候选覆盖模式恢复时下一章尚未追加的高度不足，并允许主动seek/拖动覆盖等待；当前CI27复验中。
 LOCAL-01,P4,格式,按基线实际边界完成图片ZIP与CBZ导入阅读,local/LocalImporter.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：LocalArchive.swift;LocalLibrary.swift;LocalArchiveTests.swift
 LOCAL-02,P4,格式,EPUB图文目录混排资源与拒绝格式提示,ebook/EpubParser.java;local/LocalImporter.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：EpubParser.swift;EpubParserTests.swift;LocalEpubLibraryTests.swift
 LOCAL-03,P4,格式,PDF和Kindle等实际支持边界真文件验证,pdf/PdfParser.java;local/LocalImporter.java,待验收,核心真文件测试通过；当前Linux跳过2项Apple PDF测试，不能记录完整PDF运行通过

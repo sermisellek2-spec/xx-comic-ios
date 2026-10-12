@@ -40,6 +40,7 @@ final class BookshelfGroupBar: UIView {
         addGroupButton.accessibilityIdentifier = "bookshelf.groups"
         let disc = UIView()
         disc.backgroundColor = Palette.cardSoft; disc.layer.cornerRadius = 15
+        disc.layer.zPosition = -1
         disc.isUserInteractionEnabled = false; disc.translatesAutoresizingMaskIntoConstraints = false
         addGroupButton.insertSubview(disc, at: 0)
         NSLayoutConstraint.activate([

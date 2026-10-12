@@ -1,0 +1,49 @@
+settings.begin mode=0 page=0 pending=nil offset=0.0,0.0 size=0.0,0.0 content=0.0,0.0 restoring=false animating=false fullscreen=false
+settings.end mode=0 page=0 pending=nil offset=0.0,0.0 size=0.0,0.0 content=0.0,0.0 restoring=true animating=false fullscreen=false
+settings.begin mode=0 page=0 pending=nil offset=0.0,0.0 size=0.0,0.0 content=0.0,0.0 restoring=false animating=false fullscreen=false
+settings.end mode=0 page=0 pending=nil offset=0.0,0.0 size=0.0,0.0 content=0.0,0.0 restoring=true animating=false fullscreen=false
+layout.pending mode=0 page=0 pending=0 offset=0.0,0.0 size=393.0,852.0 content=393.0,0.0 restoring=false animating=false fullscreen=false
+restore.begin(0,0.0) mode=0 page=0 pending=0 offset=0.0,0.0 size=393.0,852.0 content=393.0,0.0 restoring=false animating=false fullscreen=false
+restore.end mode=0 page=0 pending=0 offset=0.0,0.0 size=393.0,852.0 content=393.0,0.0 restoring=true animating=false fullscreen=false
+layout.restored mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,0.0 restoring=false animating=false fullscreen=false
+restore.begin(0,0.0) mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,2152.0 restoring=false animating=false fullscreen=false
+restore.end mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,2021.0 restoring=true animating=false fullscreen=false
+restore.begin(0,0.0) mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,2021.0 restoring=false animating=false fullscreen=false
+restore.end mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,1890.0 restoring=true animating=false fullscreen=false
+restore.begin(0,0.0) mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,1890.0 restoring=false animating=false fullscreen=false
+restore.end mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,1759.0 restoring=true animating=false fullscreen=false
+settings.begin mode=0 page=0 pending=nil offset=0.0,0.0 size=393.0,852.0 content=393.0,3855.0 restoring=false animating=false fullscreen=false
+settings.pending(0,0.0) mode=2 page=0 pending=0 offset=0.0,0.0 size=393.0,852.0 content=393.0,3855.0 restoring=true animating=false fullscreen=false
+settings.end mode=2 page=0 pending=0 offset=0.0,0.0 size=393.0,852.0 content=393.0,3855.0 restoring=true animating=false fullscreen=false
+layout.pending mode=2 page=0 pending=0 offset=0.0,0.0 size=393.0,852.0 content=393.0,3855.0 restoring=false animating=false fullscreen=false
+restore.begin(0,0.0) mode=2 page=0 pending=0 offset=0.0,0.0 size=393.0,852.0 content=393.0,3855.0 restoring=false animating=false fullscreen=false
+scroll mode=2 page=0 pending=0 offset=1179.0,0.0 size=393.0,852.0 content=393.0,3855.0 restoring=true animating=false fullscreen=false
+restore.end mode=2 page=0 pending=0 offset=1179.0,0.0 size=393.0,852.0 content=393.0,3855.0 restoring=true animating=false fullscreen=false
+layout.restored mode=2 page=0 pending=nil offset=1179.0,0.0 size=393.0,852.0 content=393.0,3855.0 restoring=false animating=false fullscreen=false
+tap(1375.6666564941406,426.0): toggleControls mode=2 page=0 pending=nil offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=false
+tap(1218.3333282470703,426.0): move(1) mode=2 page=0 pending=nil offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+move.request(1) mode=2 page=0 pending=nil offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+move.page(1) mode=2 page=1 pending=nil offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=true fullscreen=true
+animation.end mode=2 page=1 pending=nil offset=786.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+tap(1139.6666564941406,426.0): move(-1) mode=2 page=1 pending=nil offset=786.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+move.request(-1) mode=2 page=1 pending=nil offset=786.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+move.page(0) mode=2 page=0 pending=nil offset=786.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=true fullscreen=true
+animation.end mode=2 page=0 pending=nil offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+tap(1218.3333282470703,426.0): move(1) mode=2 page=0 pending=nil offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+move.request(1) mode=2 page=0 pending=nil offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+move.page(1) mode=2 page=1 pending=nil offset=1179.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=true fullscreen=true
+animation.end mode=2 page=1 pending=nil offset=786.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+tap(982.6666564941406,426.0): toggleControls mode=2 page=1 pending=nil offset=786.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+settings.begin mode=2 page=1 pending=nil offset=786.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=false
+settings.pending(1,0.0) mode=1 page=1 pending=1 offset=786.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=true animating=false fullscreen=false
+settings.end mode=1 page=1 pending=1 offset=786.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=true animating=false fullscreen=false
+layout.pending mode=1 page=1 pending=1 offset=786.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=false
+restore.begin(1,0.0) mode=1 page=1 pending=1 offset=786.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=false
+scroll mode=1 page=1 pending=1 offset=0.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=true animating=false fullscreen=false
+restore.end mode=1 page=1 pending=1 offset=0.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=true animating=false fullscreen=false
+layout.restored mode=1 page=1 pending=nil offset=0.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=false
+tap(196.66665649414062,426.0): toggleControls mode=1 page=1 pending=nil offset=0.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=false
+tap(353.6666564941406,426.0): move(1) mode=1 page=1 pending=nil offset=0.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+move.request(1) mode=1 page=1 pending=nil offset=0.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true
+move.page(1) mode=1 page=1 pending=nil offset=0.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=true fullscreen=true
+animation.end mode=1 page=1 pending=nil offset=393.0,0.0 size=393.0,852.0 content=1572.0,852.0 restoring=false animating=false fullscreen=true

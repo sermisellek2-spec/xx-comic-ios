@@ -1,0 +1,15 @@
+{
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "account": "sermisellek2-spec",
+  "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+  "request": {
+    "ref": "codex/reader-layout-c377af6",
+    "inputs": {
+      "validation_scope": "reader-modes",
+      "package_ipa": "false"
+    }
+  },
+  "statusCode": 204,
+  "dispatchedAtUTC": "2026-10-12T11:21:05.978189+00:00",
+  "packageRequested": false
+}

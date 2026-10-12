@@ -1,0 +1,48 @@
+{
+  "run": 38238544096,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38238544096",
+  "revision": "e5a8fa558373f2a815d5a1ed095e6d1aab7ede31",
+  "conclusion": "failure",
+  "packageRequested": false,
+  "debugReleaseBuildSucceeded": true,
+  "coreMac": {
+    "executed": 934,
+    "failureCount": 1,
+    "durationSeconds": 136.886
+  },
+  "nativeDevices": [
+    {
+      "executed": 29,
+      "failureCount": 0,
+      "durationSeconds": 15.211
+    },
+    {
+      "executed": 29,
+      "failureCount": 0,
+      "durationSeconds": 15.643
+    }
+  ],
+  "ui": [
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "executed": 0,
+      "counts": {},
+      "failedCases": [],
+      "originalTestManifest": "ui-results-RNMSj8-tests.json",
+      "manifestAlsoIncludesKeptNativeEvidence": true
+    },
+    {
+      "device": "iPhone 15 Pro",
+      "executed": 0,
+      "counts": {},
+      "failedCases": [],
+      "originalTestManifest": "ui-results-ZIdKxs-tests.json",
+      "manifestAlsoIncludesKeptNativeEvidence": true
+    }
+  ],
+  "failureRecords": [
+    "2026-10-12T10:55:40.6270000Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Tests/ComicCoreTests/CacheMaintenanceTests.swift:35: error: -[ComicCoreTests.CacheMaintenanceTests testDiskCleanupRestoresLimitsAndAllowsLaterResponses] : XCTAssertTrue failed - Actual remaining cache: memory=0, disk=144016"
+  ],
+  "originalBuildLogSHA256": "4464d6adff6ec5263cfec13a67fda9ce5975d1ea28705fa01a6115e504a7059d",
+  "doesNotVerifyLaterReaderLayoutCandidate": true
+}

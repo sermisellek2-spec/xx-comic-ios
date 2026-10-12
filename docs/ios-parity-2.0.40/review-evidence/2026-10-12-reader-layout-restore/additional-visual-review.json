@@ -1,0 +1,18 @@
+[
+  {
+    "file": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci23-comparison/phone_portrait_light_bookshelf_online_side-by-side.png",
+    "sha256": "aa0b43aaabfc0132ef3b2624f234d01938f01432b7090073a7d7e3580d434b28",
+    "sourceRevision": "db4536abb30b99a9586cfe9f8d0b1df479a40e28",
+    "derivedComparison": true,
+    "viewedThisTurn": true,
+    "visualAcceptance": "待逐组件验收"
+  },
+  {
+    "file": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci23-comparison/tablet_landscape_light_detail_side-by-side.png",
+    "sha256": "24a2e942618e33090188076cda1f3650280c4c0cc8d4fa560eb59e2c208fd86f",
+    "sourceRevision": "db4536abb30b99a9586cfe9f8d0b1df479a40e28",
+    "derivedComparison": true,
+    "viewedThisTurn": true,
+    "visualAcceptance": "待逐组件验收"
+  }
+]

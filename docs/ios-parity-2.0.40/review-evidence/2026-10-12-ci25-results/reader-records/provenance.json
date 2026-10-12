@@ -1,0 +1,51 @@
+{
+  "sourceZIP_SHA256": "ea9a016795b41f37356c218ba0d6720a88b8c7e84e3b8902d9e0284008f8e6ac",
+  "sourceRevision": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+  "allArchiveSHA256Verified": true,
+  "dataMembersRead": 1332,
+  "tool": {
+    "name": "python-zstandard",
+    "version": "0.25.0"
+  },
+  "method": "只解压完整原始Zstd Data，不声称完整xcresulttool解析或新增UI运行",
+  "records": [
+    {
+      "archive": "ui-results-VTA11Z-UITests.tar.gz",
+      "member": "ui-results-VTA11Z/UITests.xcresult/Data/data.0~BD371BlzqO-ouWwe4_1JVM-uI-rpqcHi6Ms8e9p9OeOvWHC-FgaM3wLbjTW-XZES0x9az4lue9l17Z1Dyu32tw==",
+      "compressedSHA256": "104688e2e18fcb18b0fb2a9fd218c73076fab15fcaf0d2f86148968765435fd4",
+      "decodedSHA256": "b47f8b7524ea75a6d1a6e6cb8093446fb60358426749038e6539052f5b5774dc",
+      "decodedBytes": 6855,
+      "decodedFile": "ios/build/ci25-reader-records-zstd-2/reader-record-008.decoded",
+      "textFile": "ios/build/ci25-reader-records-zstd-2/reader-record-008.txt",
+      "zstd": true,
+      "file": "reader-record-008.txt",
+      "original": "reader-record-008.zstd"
+    },
+    {
+      "archive": "ui-results-cRyYFx-UITests.tar.gz",
+      "member": "ui-results-cRyYFx/UITests.xcresult/Data/data.0~aiMzxCWboN2RAAWMI33mTshgluYtnC-jon1Hl3ac2r0FGmUjza0XwWKZ5G-adFcuIvgv-pMeRnGUOSALKHu6iQ==",
+      "compressedSHA256": "115442771f674be214244dce4cb0a647ee2ea5a2cd2a80d3bd991d3dc60d5722",
+      "decodedSHA256": "3f9843776893ca3fe497cfcfd806bf44fe1bf7b8d5ff430108ca886847350cef",
+      "decodedBytes": 7146,
+      "decodedFile": "ios/build/ci25-reader-records-zstd-2/reader-record-083.decoded",
+      "textFile": "ios/build/ci25-reader-records-zstd-2/reader-record-083.txt",
+      "zstd": true,
+      "file": "reader-record-083.txt",
+      "original": "reader-record-083.zstd"
+    },
+    {
+      "archive": "ui-results-cRyYFx-UITests.tar.gz",
+      "member": "ui-results-cRyYFx/UITests.xcresult/Data/data.0~i0PtTBJlC4xF2p3HL5LGX8FdKA4vsN343vbBQwxImKYoHFOdtWdKt9jWAV7SPUngYfrkZdR9VE-Lieptc51ZQg==",
+      "compressedSHA256": "fbfa68b9f5fde4793edd7a7a19dba2e4c518bb34fd25a33591c5895d20e960f7",
+      "decodedSHA256": "0cea3d4e65ac185c942cded63599682bd2ae8031b68233e251daabbbaf7971e2",
+      "decodedBytes": 7371,
+      "decodedFile": "ios/build/ci25-reader-records-zstd-2/reader-record-092.decoded",
+      "textFile": "ios/build/ci25-reader-records-zstd-2/reader-record-092.txt",
+      "zstd": true,
+      "file": "reader-record-092.txt",
+      "original": "reader-record-092.zstd"
+    }
+  ],
+  "unparsedMemberCount": 4,
+  "notCompleteXCResultExport": true
+}
