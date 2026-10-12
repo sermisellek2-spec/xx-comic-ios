@@ -80,7 +80,11 @@ final class DownloadLifecycleUITests: ParityUITestCase {
         XCTAssertTrue(app.tables["download.tasks"].buttons["阅读"].firstMatch.exists)
         row.press(forDuration: 1); app.buttons["删除此章"].tap(); confirm.buttons["删除此章"].tap()
         XCTAssertTrue(app.staticTexts["暂无离线下载任务"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["download.empty"].isHittable)
+        XCTAssertEqual(app.tables["download.tasks"].cells.count, 0)
         app.terminate(); app.launch(); openDownloadCenter(app)
         XCTAssertTrue(app.staticTexts["暂无离线下载任务"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["download.empty"].isHittable)
+        XCTAssertEqual(app.tables["download.tasks"].cells.count, 0)
     }
 }

@@ -17,17 +17,19 @@ final class ErrorLogsParityUITests: ParityUITestCase {
         XCTAssertTrue(content.contains("文件校验失败")); XCTAssertTrue(content.contains("[REDACTED]"))
         for field in ["TEST_AUTH_FIELD", "TEST_COOKIE_FIELD", "TEST_TOKEN_FIELD"] { XCTAssertFalse(content.contains(field)) }
         app.buttons["error.logs.copy"].tap(); XCTAssertTrue(app.staticTexts["日志已复制"].waitForExistence(timeout: 5))
-        let notice = app.staticTexts["日志已复制"]
-        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: notice); waitForExpectations(timeout: 5)
+        XCTAssertTrue(app.staticTexts["error.logs.copy.feedback"].isHittable)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+        XCTAssertTrue(app.buttons["error.logs.export"].isHittable)
         app.buttons["error.logs.export"].tap()
-        XCTAssertTrue(app.otherElements["error.logs.share"].waitForExistence(timeout: 5))
         // Close the real system share UI using its own controls or gesture.
         let close = app.buttons.matching(NSPredicate(format: "label IN %@", ["Close", "关闭"])).firstMatch
-        if close.exists { close.tap() }
-        else if UIDevice.current.userInterfaceIdiom == .pad { app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.15)).tap() }
-        else { app.otherElements["error.logs.share"].swipeDown() }
+        XCTAssertTrue(close.waitForExistence(timeout: 5), "The system share controller must expose its real close control")
+        XCTAssertTrue(close.isHittable); close.tap()
         XCTAssertTrue(app.buttons["error.logs.copy"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["error.logs.copy.feedback"].exists)
         app.navigationBars.buttons.firstMatch.tap()
+        app.buttons["error.logs.more"].tap(); app.buttons["导出全部日志"].tap()
+        XCTAssertTrue(close.waitForExistence(timeout: 5)); XCTAssertTrue(close.isHittable); close.tap()
         app.buttons["error.logs.more"].tap(); app.buttons["清空错误日志"].tap()
         XCTAssertTrue(app.alerts["清空错误日志"].waitForExistence(timeout: 5)); app.alerts["清空错误日志"].buttons["取消"].tap()
         XCTAssertTrue(row.exists)

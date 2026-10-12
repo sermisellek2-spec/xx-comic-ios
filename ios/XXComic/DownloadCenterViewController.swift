@@ -207,6 +207,9 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
 
         let emptyLabel = UILabel()
         emptyLabel.text = "暂无离线下载任务"
+        emptyLabel.accessibilityIdentifier = "download.empty"
+        emptyLabel.textAlignment = .center
+        emptyLabel.numberOfLines = 0
         emptyLabel.font = .systemFont(ofSize: 16, weight: .medium)
         emptyLabel.textColor = Palette.secondaryText
         emptyLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -220,8 +223,11 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
 
             emptyView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyLabel.centerXAnchor.constraint(equalTo: emptyView.centerXAnchor),
-            emptyLabel.centerYAnchor.constraint(equalTo: emptyView.centerYAnchor)
+            emptyView.widthAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, constant: -32),
+            emptyLabel.leadingAnchor.constraint(equalTo: emptyView.leadingAnchor),
+            emptyLabel.trailingAnchor.constraint(equalTo: emptyView.trailingAnchor),
+            emptyLabel.topAnchor.constraint(equalTo: emptyView.topAnchor, constant: 8),
+            emptyLabel.bottomAnchor.constraint(equalTo: emptyView.bottomAnchor, constant: -8)
         ])
     }
 

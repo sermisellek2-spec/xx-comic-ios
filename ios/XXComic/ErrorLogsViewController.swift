@@ -102,16 +102,24 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
     @objc private func showMoreMenu() {
         let sheet = UIAlertController(title: "日志操作", message: nil, preferredStyle: .actionSheet)
         sheet.addAction(UIAlertAction(title: "导出全部日志", style: .default) { [weak self] _ in
-            self?.exportAllLogs()
+            self?.afterMenu { [weak self] in self?.exportAllLogs() }
         })
         sheet.addAction(UIAlertAction(title: "清空错误日志", style: .destructive) { [weak self] _ in
-            self?.confirmClearLogs()
+            self?.afterMenu { [weak self] in self?.confirmClearLogs() }
         })
         sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
         if let popover = sheet.popoverPresentationController {
             popover.barButtonItem = navigationItem.rightBarButtonItem
         }
         present(sheet, animated: true)
+    }
+
+    private func afterMenu(_ action: @escaping () -> Void) {
+        guard let menu = presentedViewController as? UIAlertController else { action(); return }
+        menu.dismiss(animated: true) { [weak self] in
+            guard let self, self.view.window != nil, self.presentedViewController == nil else { return }
+            action()
+        }
     }
 
     private func exportAllLogs() {
@@ -207,6 +215,7 @@ final class ErrorLogDetailViewController: UIViewController {
     private let actionStack = UIStackView()
     private let copyButton = UIButton(type: .system)
     private let exportButton = UIButton(type: .system)
+    private let copyFeedback = UILabel()
 
     init(entry: ErrorLogEntry) {
         self.entry = entry
@@ -286,6 +295,13 @@ final class ErrorLogDetailViewController: UIViewController {
         actionStack.addArrangedSubview(exportButton)
         contentView.addArrangedSubview(actionStack)
 
+        copyFeedback.font = .systemFont(ofSize: 12)
+        copyFeedback.textColor = Palette.secondaryText
+        copyFeedback.numberOfLines = 0
+        copyFeedback.accessibilityIdentifier = "error.logs.copy.feedback"
+        copyFeedback.isHidden = true
+        contentView.addArrangedSubview(copyFeedback)
+
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -302,14 +318,13 @@ final class ErrorLogDetailViewController: UIViewController {
 
     @objc private func copyTapped() {
         UIPasteboard.general.string = entry.fullText
-        let alert = UIAlertController(title: nil, message: "日志已复制", preferredStyle: .alert)
-        present(alert, animated: true)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            alert.dismiss(animated: true)
-        }
+        copyFeedback.text = "日志已复制"
+        copyFeedback.isHidden = false
+        UIAccessibility.post(notification: .announcement, argument: copyFeedback.text)
     }
 
     @objc private func exportTapped() {
+        copyFeedback.isHidden = true
         let activityVC = UIActivityViewController(activityItems: [entry.fullText], applicationActivities: nil)
         activityVC.view.accessibilityIdentifier = "error.logs.share"
         if let popover = activityVC.popoverPresentationController {

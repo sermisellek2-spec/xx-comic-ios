@@ -5,6 +5,7 @@
     "CoverFallbackTests": 4,
     "DetailFeedbackStateTests": 6,
     "DownloadLifecycleTests": 3,
+    "ErrorLogInteractionTests": 1,
     "OfflineDownloadImageTests": 1,
     "ReaderEnhancementEngineTests": 6,
     "ReaderMangaGeometryTests": 4,
@@ -41,7 +42,7 @@
     "VolumeManagerParityUITests": 5
   },
   "totals": {
-    "native": 35,
+    "native": 36,
     "UI": 111
   },
   "isRuntimeResult": false,
@@ -51,6 +52,7 @@
     "ios/XXComicTests/CoverFallbackTests.swift": "6a584cf8ca57667b31e7aabed7ca2d9d8b13c9db2ae1eea31c112839fb22d265",
     "ios/XXComicTests/DetailFeedbackStateTests.swift": "94a600fe9385583ac672b3ebc575dfb5ad72ed9016f0b89393f3b4a378f02a43",
     "ios/XXComicTests/DownloadLifecycleTests.swift": "d74d870b03cd2095620cba82c2eadb90fedc427d68959a30a2cd8c509ba5862e",
+    "ios/XXComicTests/ErrorLogInteractionTests.swift": "68bd992ea526aee46a5a39624dfed4b20fbbdd2017c1fe428fa1bca8ac1fccf9",
     "ios/XXComicTests/OfflineDownloadImageTests.swift": "dc011e4bc2ca240602dfa964e61c01184d12dcc4c57e196ddddb13200255472e",
     "ios/XXComicTests/ReaderEnhancementEngineTests.swift": "b427b5e6016b9d2eb1c02e71c44ed85f66ca06ade47c0783647569c6f53d3e7e",
     "ios/XXComicTests/ReaderMangaGeometryTests.swift": "90491af80e743fb4e991fa853a86211c69ed676060f6a0b8519cb220c0afac72",
@@ -63,10 +65,10 @@
     "ios/XXComicUITests/BatchImportRecoveryUITests.swift": "fc9ac012ca92e99abbe9f9ca04d62cf644ef7ab4feff4231b53761dc17a64454",
     "ios/XXComicUITests/BookshelfParityUITests.swift": "35d8ad80f8f9170266bd8fc1e898b26896e915d7f4683cb981d6224db89ede90",
     "ios/XXComicUITests/CurrentParityUITests.swift": "53c766c40a82860acfcf7a0b109c0d6c90b2fac6931d4b9253d642e37d618b82",
-    "ios/XXComicUITests/DownloadLifecycleUITests.swift": "dbc73bc51aac98098e5c361fe010894d56fe048674492c75d98a0e26f4a4efd2",
+    "ios/XXComicUITests/DownloadLifecycleUITests.swift": "2aa583901d17ff2623f8a3e436b090fddfbbe18dd74edbf2a44db2a5121a6aa5",
     "ios/XXComicUITests/DownloadLocationParityUITests.swift": "27e6b5e165053d41a9ef96020a14d994b62e186b0d92b99b7b624621dfe96c5f",
     "ios/XXComicUITests/EpubReadingUITests.swift": "3482901458ab3e5272b4f876295fade09bb82310b28410cbc32214f771cd08d4",
-    "ios/XXComicUITests/ErrorLogsParityUITests.swift": "b45c83aa5ab9ba98afc343662d4810c0e255ac3f34e2ea4483a9c6740d9bed56",
+    "ios/XXComicUITests/ErrorLogsParityUITests.swift": "0fc7f8d122aafef4321b167cdc24b3419f707f0f68eea3038fdfab4fc7aedd15",
     "ios/XXComicUITests/ExternalFilesParityUITests.swift": "3fb9fa6ca71b6bcfbe7683ca67d2af1a59f98804758a15b5380db0b7e430b12d",
     "ios/XXComicUITests/FilesPickerDriver.swift": "7d62018654e1aab2f34a466d26d9ab5688b52e01a4372ca7cba18dbd90671b42",
     "ios/XXComicUITests/LinkedFolderParityUITests.swift": "948ea3ab9d6e4ea4b16fcfb08a79d3a75395e9d2ba27a2ed7483c20904257504",
@@ -83,7 +85,7 @@
     "ios/XXComicUITests/SourceConfigFilesUITests.swift": "97314e7acc1de1768bd3fe8618ad79a7929fec2af80bf0ccf13a4c0bae482be3",
     "ios/XXComicUITests/SourceDrawerTests.swift": "45b534863156197af2d0f8d142866f1bea80d7b99f301bb983ba1a0550cbf2e5",
     "ios/XXComicUITests/SourceGroupsParityUITests.swift": "f1318b62f07f64ed2ba2db7d7c044dfd7f52a80adc43c33422038d857dd8bd4f",
-    "ios/XXComicUITests/SourceSwitchParityUITests.swift": "74ce25e5570cda1f1fba5a3d7ed9d475c3c37ef0be385cc70b1f94e1e123d230",
+    "ios/XXComicUITests/SourceSwitchParityUITests.swift": "23e01804f53c95291f94f06fb6291ecf5f0e54cdabbc0ebe1a794842f7278901",
     "ios/XXComicUITests/VisualMatrixUITests.swift": "74a449101aa113f85209f18b2acbad6acbcf208703efd2be857d9c186ac79082",
     "ios/XXComicUITests/VolumeManagerParityUITests.swift": "8763683fb584ec34d6118d6d4ea2800445298c5b77e50177c435edb88168efa0"
   }

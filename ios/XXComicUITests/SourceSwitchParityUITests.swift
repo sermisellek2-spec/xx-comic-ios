@@ -92,6 +92,10 @@ final class SourceSwitchParityUITests: ParityUITestCase {
         openDetail(app); app.buttons["detail.read"].tap()
         let pages = app.collectionViews["reader.pages"]
         XCTAssertTrue(pages.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["换源"].isHittable)
+        pages.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let hidden = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == false"), object: app.buttons["换源"])
+        XCTAssertEqual(XCTWaiter.wait(for: [hidden], timeout: 5), .completed)
         pages.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap(); assertPageTwo(app)
         if !app.buttons["换源"].isHittable { pages.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
         app.buttons["换源"].tap()

@@ -1,0 +1,26 @@
+{
+  "runID": 38310693882,
+  "revision": "23e9e5644a56e396c37d482c5b14f7c2c5fdc8c4",
+  "conclusion": "failure",
+  "downloads": [
+    {
+      "kind": "logs",
+      "path": "ios/build/ci40/logs-original.zip",
+      "bytes": 777903,
+      "sha256": "25c043022a137cbbc8f1730a581c33f1060ead7f7a481c39d5fa701203e521c4"
+    },
+    {
+      "kind": "build-log",
+      "path": "ios/build/ci40/build-log-original.zip",
+      "bytes": 261314,
+      "sha256": "9bfd3999f16c2c32d9d4ba7226562bdc56e8f38a9005e9bd92ae8a730941fad7"
+    },
+    {
+      "kind": "visual",
+      "path": "ios/build/ci40/visual-original.zip",
+      "bytes": 1274637,
+      "sha256": "bf812f6bf2e6a832389b3c174577de2b7afd6f5ee9123ad0f290b71bc6cd8d41"
+    }
+  ],
+  "checkedAtUTC": "2026-10-12T22:02:44.042595+00:00"
+}
