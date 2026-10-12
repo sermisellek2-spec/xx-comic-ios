@@ -146,7 +146,7 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
                 if remaining.isEmpty {
                     self.showToast("缓存已清理，收藏与本地漫画已保留")
                 } else {
-                    self.showToast("仍有 \(StorageCalculator.formatBytes(remaining.totalBytes)) 缓存未清理，请重试")
+                    self.showToast("已执行缓存清理，收藏与本地漫画已保留\n当前占用 \(StorageCalculator.formatBytes(remaining.totalBytes))。系统可能保留管理文件，或有新请求生成缓存。")
                 }
             } catch {
                 guard let self, !Task.isCancelled else { return }

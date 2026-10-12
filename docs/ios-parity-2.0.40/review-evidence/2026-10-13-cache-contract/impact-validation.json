@@ -1,0 +1,21 @@
+{
+  "command": "swift test -j 2 --filter CacheMaintenanceTests|CacheBackendContinuityTests|CacheLateRestoreTests",
+  "executed": 13,
+  "failed": 0,
+  "seconds": 12.141,
+  "exitCode": 0,
+  "logSHA256": "5feae52ea0deb157fe4e249b5ca703ffed910ca1379d257d59da337a90b840a5",
+  "nativeSyntax": [
+    {
+      "configuration": "Release",
+      "files": 88,
+      "exitCode": 0
+    },
+    {
+      "configuration": "DEBUG",
+      "files": 88,
+      "exitCode": 0
+    }
+  ],
+  "AppleCurrentContract": "not run"
+}

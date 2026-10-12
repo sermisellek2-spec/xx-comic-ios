@@ -15,8 +15,10 @@
 
 当前88个原生Swift两配置解析通过；首轮Linux917/2跳过/0失败已实际退出0，之后默认漫画策略变更的新全量919项/2个Apple PDF跳过/0失败、154.815秒、退出0，267个Core输入前后SHA一致。当前完整UI声明93项，尚未运行。上一输入CI31两SDK/图标/Release隔离及原生通过，但Mac物理缓存144016字节、双设备缓存/历史和设置参考UI失败。当前候选不能继承父输入通过。
 
-缓存检查保持真实占用、正文不可命中、重开不可恢复、容量与后续缓存能力及原文件保护全部断言；不扣除索引或更改失败期望。设置和历史也不通过改断言隐藏问题。
+缓存检查保持真实占用、正文不可命中、重开不可恢复、容量与后续缓存能力及原文件保护全部断言；不扣除索引或假报0。原物理0断言的错误口径单列修正：冻结Android/Apple API/0联网真实探针及原源码/失败原件均保留，当前新增实际记账与重开检查；必须当前Apple重新验收。其他历史/阅读/Files断言不放宽。
 
 [STATUS](STATUS.md)、[本轮输入与证据](review-evidence/2026-10-13-comic-only/README.md)、[CI31原件](review-evidence/2026-10-13-ci31-results/README.md)。旧门槛整页保存在[历史原文](review-evidence/2026-10-13-comic-only/historical-before-text-removal-NON_SOURCE_GATE.md)。
 
 最新短漫画与历史约束接续：Linux922/2个Apple PDF跳过/0失败、152.776秒、退出0；267输入前后SHA一致，88原生两配置仅语法通过。当前CI32部分日志已确认父输入两SDK/隔离通过，Core926/1物理归零失败；当前接续完整Apple/UI/视觉仍待运行。[当前接续](review-evidence/2026-10-13-short-comic-recovery/README.md)。
+
+当前接续：最新Core922项/2个Apple PDF跳过/0失败/152.493秒/退出0；CI32父输入双设备各22UI中16通过/6用例失败，漫画范围7UI全部通过，但不含d70第二章强化及当前缓存契约修正。CI33当前93UI/设备仍运行；最新契约也须完整Apple复验。详见[透明缓存修正](review-evidence/2026-10-13-cache-contract/README.md)及[CI32完整结果](review-evidence/2026-10-13-ci32-results/README.md)。

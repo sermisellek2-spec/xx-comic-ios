@@ -1,0 +1,14 @@
+{
+  "sourceCommitBefore": "d70e6cb50df1dd3b9020cd3d4054a077e7dea52c",
+  "currentCodeFiles": {
+    "ios/ComicCore/Tests/ComicCoreTests/CacheMaintenanceTests.swift": "c0311a16c9066dc5b584121f9e37697b90d5fcc9053a6bb1c0cd1a152f11bf40",
+    "ios/XXComic/CacheCleanupViewController.swift": "84da8257eb6f0c20463850915918b60240be23d7ea71cc618f243cce63275283",
+    "ios/XXComic/SettingsMenuCell.swift": "d0dc86c4a4eaa81956f70dd80538cc52ac221497f89d617e8d346f69573bfb62",
+    "ios/XXComic/SettingsViewController.swift": "f313044f07df6986ae1080fb33d70896abe0b71d8d510e5bfbb9bd3fe8dacea2",
+    "ios/XXComicUITests/ParityUITestCase.swift": "b3a9ba54d92a3282ab045bdeb21b670bf9bdd78df1909a74066f445c93b401cf",
+    "ios/XXComicUITests/SettingsParityUITests.swift": "3822b2d67f3c8ce3e35cf2d634942c744dea855b5dc396118bfbccac67222282",
+    "ios/XXComicUITests/VisualMatrixUITests.swift": "41b923dd7c319103444b64dcce65ecec61b869e27dd050332bfcbd727af35411"
+  },
+  "sourceAndDocumentDiffCheck": 0,
+  "rawLogsPreservedWithoutWhitespaceEditing": true
+}

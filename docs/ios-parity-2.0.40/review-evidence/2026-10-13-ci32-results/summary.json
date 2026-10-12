@@ -1,0 +1,90 @@
+{
+  "recordedAtUTC": "2026-10-12T18:13:36.197330+00:00",
+  "run": 38283857701,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38283857701",
+  "revision": "54f820647177055022f1591caf34a35004311189",
+  "scope": "cache-diagnostics",
+  "conclusion": "failure",
+  "SDK": {
+    "DebugSimulator": "BUILD SUCCEEDED",
+    "ReleaseDevice": "BUILD SUCCEEDED"
+  },
+  "icons": [
+    {
+      "file": "debug-simulator-54f82064-1791826100339614000.json",
+      "passed": true,
+      "revision": "54f820647177055022f1591caf34a35004311189"
+    },
+    {
+      "file": "release-device-54f82064-1791826100431484000.json",
+      "passed": true,
+      "revision": "54f820647177055022f1591caf34a35004311189"
+    }
+  ],
+  "releaseIsolationPassed": true,
+  "macCore": {
+    "executed": 926,
+    "failures": 1,
+    "seconds": 152.007,
+    "failure": "CacheMaintenanceTests/testDiskCleanupRestoresLimitsAndAllowsLaterResponses",
+    "remainingBytes": 144016
+  },
+  "devices": {
+    "iPad Pro 11-inch (M4)": {
+      "executed": 22,
+      "passed": 16,
+      "failedCases": 6,
+      "failedAssertions": 11,
+      "failedTests": [
+        "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+        "SettingsParityUITests/testHistoryClearCancellationAndConfirmationPreserveFavoritesAcrossRelaunch()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ],
+      "comicImportTestsExecuted": 7,
+      "comicImportTestsPassed": 7,
+      "nativeTestsExecuted": 30,
+      "nativeFailures": 0
+    },
+    "iPhone 15 Pro": {
+      "executed": 22,
+      "passed": 16,
+      "failedCases": 6,
+      "failedAssertions": 11,
+      "failedTests": [
+        "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+        "SettingsParityUITests/testHistoryClearCancellationAndConfirmationPreserveFavoritesAcrossRelaunch()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ],
+      "comicImportTestsExecuted": 7,
+      "comicImportTestsPassed": 7,
+      "nativeTestsExecuted": 30,
+      "nativeFailures": 0
+    }
+  },
+  "artifacts": {
+    "logs": {
+      "localPath": "ios/build/ci32/logs-original.zip",
+      "bytes": 773700,
+      "sha256": "9567a6909711acaac6c85ebe9d1249ed8cd678e4d1851f24ec8967caf8892e31"
+    },
+    "visual": {
+      "localPath": "ios/build/ci32/visual-original.zip",
+      "bytes": 3913746,
+      "sha256": "7d5baec18ae46b043d071d96619b45165d9e1c30ebd03e46af592fff7d08c781"
+    },
+    "cache": {
+      "localPath": "ios/build/ci32/cache-original.zip",
+      "bytes": 38198,
+      "sha256": "92af8f521f207c60159bca78204377bbb81d85728bc8c670e9d17e6e1735cd6a"
+    }
+  },
+  "currentFollowupIncluded": false,
+  "xcresultArchivesDownloaded": false,
+  "finalIPAProduced": false
+}

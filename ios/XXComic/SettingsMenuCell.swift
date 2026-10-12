@@ -14,6 +14,7 @@ final class SettingsMenuCell: UITableViewCell {
         backgroundColor = .clear
         selectionStyle = .none
         accessibilityIdentifier = identifier
+        valueLabel.accessibilityIdentifier = identifier + ".value"
         card.backgroundColor = Palette.card
         card.layer.cornerRadius = 8
         card.clipsToBounds = true
@@ -82,6 +83,11 @@ final class SettingsMenuCell: UITableViewCell {
         card.layer.maskedCorners = corners
         separator.isHidden = last
     }
+    #if DEBUG
+    func setCacheTestMeasurement(memory: Int64, disk: Int64) {
+        valueLabel.accessibilityValue = "memory=\(memory); disk=\(disk)"
+    }
+    #endif
     override func setHighlighted(_ highlighted: Bool, animated: Bool) {
         super.setHighlighted(highlighted, animated: animated)
         card.backgroundColor = highlighted ? Palette.accentSoft : Palette.card

@@ -31,8 +31,12 @@ final class CacheMaintenanceTests: XCTestCase {
         XCTAssertNotNil(cache.cachedResponse(for: request))
         print("HTTP_CACHE_DIAGNOSTIC stage=stored memory=\(cache.currentMemoryUsage) disk=\(cache.currentDiskUsage)")
         let remaining = try await HTTPResponseCache(cache: cache).clear()
+        // Empty native caches already allocate database/index files. Removal
+        // promises no stored responses, not a zero-byte filesystem footprint.
+        // Keep both real accounting and the content/reopen checks mandatory.
+        XCTAssertEqual(remaining.memoryBytes, Int64(cache.currentMemoryUsage))
+        XCTAssertEqual(remaining.diskBytes, Int64(cache.currentDiskUsage))
         print("HTTP_CACHE_DIAGNOSTIC stage=cleared memory=\(remaining.memoryBytes) disk=\(remaining.diskBytes) cached=\(cache.cachedResponse(for: request) != nil)")
-        XCTAssertTrue(remaining.isEmpty, "Actual remaining cache: memory=\(remaining.memoryBytes), disk=\(remaining.diskBytes)")
         if !remaining.isEmpty {
             for sample in 1...8 {
                 try await Task.sleep(nanoseconds: 500_000_000)
@@ -40,6 +44,8 @@ final class CacheMaintenanceTests: XCTestCase {
             }
         }
         XCTAssertNil(cache.cachedResponse(for: request))
+        let reopened = URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 8 * 1024 * 1024, diskPath: directory.appendingPathComponent("responses").path)
+        XCTAssertNil(reopened.cachedResponse(for: request), "Cleanup must also remove the response from its persistent store")
         XCTAssertEqual(cache.memoryCapacity, 1024 * 1024)
         XCTAssertEqual(cache.diskCapacity, 8 * 1024 * 1024)
         XCTAssertEqual(try Data(contentsOf: original), Data([3, 4, 5]), "Cleanup must leave original files alone")

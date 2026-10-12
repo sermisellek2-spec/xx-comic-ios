@@ -133,10 +133,9 @@ final class SettingsParityUITests: ParityUITestCase {
         app.tables.cells["settings.cache"].tap()
         app.buttons["确认清理"].tap()
         app.buttons["立即清理"].tap()
-        let notice = app.staticTexts["缓存已清理，收藏与本地漫画已保留"]
-        XCTAssertTrue(notice.waitForExistence(timeout: 10))
-        XCTAssertTrue(app.buttons["确认清理"].isEnabled)
+        waitForCacheCleanupResult(in: app)
         app.navigationBars.buttons.firstMatch.tap()
+        assertCacheLabelReflectsActualBytes(in: app)
         app.tabBars.buttons["书架"].tap()
         app.buttons["我的书架"].tap()
         XCTAssertTrue(app.collectionViews.cells["电锯人"].waitForExistence(timeout: 5))

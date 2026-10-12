@@ -1,0 +1,573 @@
+{
+  "directWritesOrDeletesToCacheDatabaseByProbe" : 0,
+  "networkRequests" : 0,
+  "observations" : [
+    {
+      "diskBytes" : 81920,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 49152,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 0,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "fresh"
+    },
+    {
+      "diskBytes" : 1212928,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 49152,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|4\ncfurl_cache_receiver_data|4\ncfurl_cache_response|4\nsqlite_sequence|1\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 82432,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 262144,
+          "file" : "fsCachedData\/9A6BF6E4-2E57-4567-9310-0406F475AA13",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 262144,
+          "file" : "fsCachedData\/9D30AAB6-6303-47C2-B010-1B347107E155",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 262144,
+          "file" : "fsCachedData\/A0C6E457-E49D-4790-9D55-3D0650C36EAC",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 262144,
+          "file" : "fsCachedData\/AE7599FD-CCFF-4C13-8FEC-514123574631",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 1048576,
+      "knownResponsesHit" : 4,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "stored"
+    },
+    {
+      "clearReturnedDiskBytes" : 144016,
+      "clearReturnedIsEmpty" : false,
+      "clearReturnedMemoryBytes" : 0,
+      "diskBytes" : 144016,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 4096,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 107152,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "cleared"
+    },
+    {
+      "diskBytes" : 144016,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 4096,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 107152,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-1"
+    },
+    {
+      "diskBytes" : 144016,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 4096,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 107152,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-2"
+    },
+    {
+      "diskBytes" : 144016,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 4096,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 107152,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-3"
+    },
+    {
+      "diskBytes" : 144016,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 4096,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 107152,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "diskPath",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-4"
+    },
+    {
+      "diskBytes" : 81920,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 49152,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 0,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "directory",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "fresh"
+    },
+    {
+      "diskBytes" : 1212928,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 49152,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|4\ncfurl_cache_receiver_data|4\ncfurl_cache_response|4\nsqlite_sequence|1\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 82432,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 262144,
+          "file" : "fsCachedData\/32897F87-EC4D-4624-A610-0A93C214CDB5",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 262144,
+          "file" : "fsCachedData\/6DA1CADC-8AF2-4B05-A3C7-D3D0549F6132",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 262144,
+          "file" : "fsCachedData\/BC00D6E2-356F-4062-B574-D8E9970D7398",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 262144,
+          "file" : "fsCachedData\/D13FC20E-6D8B-495B-AA60-72B38A3FE940",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "directory",
+      "knownResponseBytes" : 1048576,
+      "knownResponsesHit" : 4,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "stored"
+    },
+    {
+      "clearReturnedDiskBytes" : 144016,
+      "clearReturnedIsEmpty" : false,
+      "clearReturnedMemoryBytes" : 0,
+      "diskBytes" : 144016,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 4096,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 107152,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "directory",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "cleared"
+    },
+    {
+      "diskBytes" : 144016,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 4096,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 107152,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "directory",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-1"
+    },
+    {
+      "diskBytes" : 144016,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 4096,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 107152,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "directory",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-2"
+    },
+    {
+      "diskBytes" : 144016,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 4096,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 107152,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "directory",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-3"
+    },
+    {
+      "diskBytes" : 144016,
+      "diskCapacity" : 8388608,
+      "files" : [
+        {
+          "bytes" : 4096,
+          "file" : "Cache.db",
+          "snapshotIsAtomic" : false,
+          "sqliteDatabase" : true,
+          "sqliteReadOnlyCopiedSnapshot" : {
+            "available" : true,
+            "exitCode" : 0,
+            "pageCountFreeCountAndSize" : "12\n0\n4096\n",
+            "readOnly" : true,
+            "tableNames" : "cfurl_cache_blob_data\ncfurl_cache_receiver_data\ncfurl_cache_response\nsqlite_sequence\n",
+            "tableRowCounts" : "cfurl_cache_blob_data|0\ncfurl_cache_receiver_data|0\ncfurl_cache_response|0\nsqlite_sequence|0\n"
+          }
+        },
+        {
+          "bytes" : 32768,
+          "file" : "Cache.db-shm",
+          "sqliteDatabase" : false
+        },
+        {
+          "bytes" : 107152,
+          "file" : "Cache.db-wal",
+          "sqliteDatabase" : false
+        }
+      ],
+      "initializer" : "directory",
+      "knownResponseBytes" : 0,
+      "knownResponsesHit" : 0,
+      "memoryBytes" : 0,
+      "memoryCapacity" : 1048576,
+      "ownedDirectoryExists" : true,
+      "stage" : "settled-4"
+    }
+  ],
+  "originalPreserved" : true,
+  "platform" : "Version 14.8.9 (Build 23J631)",
+  "productionClearImplementation" : "ComicCore\/Sources\/ComicCore\/HTTPResponseCache.swift"
+}

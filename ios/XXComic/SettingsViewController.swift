@@ -8,6 +8,7 @@ final class SettingsViewController: UITableViewController {
     private let defaults: UserDefaults
 
     private var cachedSizeString: String = ""
+    private var cachedUsage: HTTPResponseCacheUsage?
     private var cacheSizeTask: Task<Void, Never>?
     private var cacheSizeGeneration = UUID()
     private var updateTask: Task<Void, Never>?
@@ -54,10 +55,12 @@ final class SettingsViewController: UITableViewController {
                 let usage = try await cache.usage()
                 guard let self, self.cacheSizeGeneration == token, !Task.isCancelled else { return }
                 self.cachedSizeString = StorageCalculator.formatBytes(usage.totalBytes)
+                self.cachedUsage = usage
                 self.tableView.reloadData()
             } catch {
                 guard let self, self.cacheSizeGeneration == token, !Task.isCancelled else { return }
                 self.cachedSizeString = "计算失败"
+                self.cachedUsage = nil
                 self.tableView.reloadData()
             }
         }
@@ -159,7 +162,13 @@ final class SettingsViewController: UITableViewController {
         case (1, 2):
             return SettingsMenuCell(icon: .bookshelf, title: "本地存储管理", subtitle: "仅 Wi-Fi 下载 · 副本与空间统计", identifier: "settings.storage")
         case (1, 3):
-            return SettingsMenuCell(icon: .trash, title: "缓存清理", subtitle: "保留收藏与阅读历史", value: cachedSizeString, identifier: "settings.cache")
+            let cell = SettingsMenuCell(icon: .trash, title: "缓存清理", subtitle: "保留收藏与阅读历史", value: cachedSizeString, identifier: "settings.cache")
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), let usage = cachedUsage {
+                cell.setCacheTestMeasurement(memory: usage.memoryBytes, disk: usage.diskBytes)
+            }
+            #endif
+            return cell
         case (1, 4):
             return SettingsMenuCell(icon: .lightning, title: "错误日志", subtitle: "只保存在本机", value: errorLogSummaryText, identifier: "settings.errors")
         case (1, 5):

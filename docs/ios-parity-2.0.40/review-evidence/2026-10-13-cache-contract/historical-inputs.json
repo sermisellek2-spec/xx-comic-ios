@@ -1,0 +1,17 @@
+[
+  {
+    "source": "ios/ComicCore/Tests/ComicCoreTests/CacheMaintenanceTests.swift",
+    "archive": "historical-CacheMaintenanceTests.swift.txt",
+    "sha256": "da871b7a2b06a27c9218be6b0da6abdafb170707702831d217a194c0f6fc1216"
+  },
+  {
+    "source": "ios/XXComicUITests/SettingsParityUITests.swift",
+    "archive": "historical-SettingsParityUITests.swift.txt",
+    "sha256": "971266206c560fdbe2fe2db56dbd24226bcc1bef8a7c20983a5e8dae0cf98973"
+  },
+  {
+    "source": "ios/XXComicUITests/VisualMatrixUITests.swift",
+    "archive": "historical-VisualMatrixUITests.swift.txt",
+    "sha256": "6faa4dec7979b248343ea34cebfce8c742f6bea291570949b97237d4d4172768"
+  }
+]

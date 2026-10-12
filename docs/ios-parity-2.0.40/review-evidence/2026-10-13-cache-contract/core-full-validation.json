@@ -1,0 +1,14 @@
+{
+  "recordedAtUTC": "2026-10-12T18:13:48.691349+00:00",
+  "command": "docker run --rm --mount type=bind,source=<ios/ComicCore>,target=/work -w /work swift:5.10-jammy swift test -j 2",
+  "exitCode": 0,
+  "totals": [
+    "922",
+    "2",
+    "0",
+    "152.493"
+  ],
+  "inputFiles": 267,
+  "inputsUnchanged": true,
+  "logSHA256": "2826914db693e89545b2900b33d2504dc17b0ebff48aab7f696cdabb93ad69a1"
+}
