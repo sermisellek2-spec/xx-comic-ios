@@ -8,6 +8,8 @@
 
 当前Linux完整916项/2个Apple PDF跳过/0失败，147.091秒；分组11项影响0失败，87文件Release/DEBUG仅语法通过。新增分组4项UI及Files修复尚未Apple执行，不能记为通过。先前12ddd38筛选消费者/视觉修正同样晚于852输入，仍待当前候选复验。[此前接续](review-evidence/2026-10-12-filter-consumers/README.md)。
 
+第十八轮886输入Apple38213936169在Debug编译停止：书架更新提示类重复MainActor标注。Release/Core/原生/UI均未执行。当前已恢复两个类各自单一标注，87文件两配置仅语法退出0，准备重跑同范围；没有修改Core或降低任何断言。[失败原文及修复](review-evidence/2026-10-12-ci18-repair/README.md)。
+
 缓存物理归零仍实际失败。已取得本轮完整主视觉页面原件，但64页对照尚未验收；iPad原生场景边界与截图/无障碍缩放不一致，尺寸原因待处理。总体非站源门槛未通过，无最终验收包，不要求用户阶段试包。
 
 [阶段方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md)、[需求矩阵](requirements.csv)、[差异台账](differences.md)、[完整门槛](NON_SOURCE_GATE.md)、[最后用户事项](USER_ITEMS.md)。

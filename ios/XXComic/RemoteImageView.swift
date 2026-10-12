@@ -274,7 +274,6 @@ final class RemoteImageView: UIImageView {
 }
 
 @MainActor
-@MainActor
 private final class BookshelfUpdateOverlay: UIView {
     override class var layerClass: AnyClass { CAGradientLayer.self }
 
@@ -292,6 +291,7 @@ private final class BookshelfUpdateOverlay: UIView {
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
 }
 
+@MainActor
 final class ComicCell: UICollectionViewCell {
     let cover = RemoteImageView()
     private let nameLabel = UILabel()

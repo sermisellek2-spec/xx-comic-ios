@@ -1,0 +1,4 @@
+Swift frontend parse only. Does not type-check UIKit or Apple SDKs.
+Release exit 0
+DEBUG exit 0
+git diff --check exit 0
