@@ -41,6 +41,16 @@ final class AppEnvironment {
     static let libraryChanged = Notification.Name("XXComic.libraryChanged")
     static let sourcesChanged = Notification.Name("XXComic.sourcesChanged")
 
+    func fetchAppRelease() async throws -> AppRelease {
+        #if DEBUG
+        let flags = ProcessInfo.processInfo.arguments
+        if flags.contains("--ui-testing"), flags.contains("--matrix-fixtures"), flags.contains("--matrix-update-fixture") {
+            return try await AppUpdateChecker.shared.fetchRelease(url: URL(string: "http://127.0.0.1:8767/ios-release.json")!)
+        }
+        #endif
+        return try await AppUpdateChecker.shared.fetchRelease()
+    }
+
     static func createSources(preferences: SourcePreferences, browserSession: (any ComicBrowserSession)?) -> [any ComicSource] {
         var result: [any ComicSource] = [
             Mh160ComicSource(config: preferences.config(for: "mh160") ?? SourceConfigDefaults.mh160()),

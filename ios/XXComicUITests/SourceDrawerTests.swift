@@ -74,12 +74,17 @@ final class SourceDrawerTests: ParityUITestCase {
         for _ in 0..<12 {
             if source.isHittable { break }
             let target = source.frame, viewport = scroll.frame
-            if target.midY > viewport.maxY {
-                scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
-                    .press(forDuration: 0.05, thenDragTo: scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45)))
-            } else if target.midY < viewport.minY {
-                scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
-                    .press(forDuration: 0.05, thenDragTo: scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55)))
+            let visible = viewport.insetBy(dx: 0, dy: 8)
+            if target.maxY > visible.maxY {
+                let distance = min(target.maxY - visible.maxY + 12, viewport.height * 0.5)
+                let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
+                start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -distance)),
+                            withVelocity: .slow, thenHoldForDuration: 0.15)
+            } else if target.minY < visible.minY {
+                let distance = min(visible.minY - target.minY + 12, viewport.height * 0.5)
+                let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
+                start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: distance)),
+                            withVelocity: .slow, thenHoldForDuration: 0.15)
             } else {
                 let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in source.isHittable }, object: source)
                 _ = XCTWaiter.wait(for: [ready], timeout: 1)

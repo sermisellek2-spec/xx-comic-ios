@@ -1,0 +1,272 @@
+{
+  "revision": "ed3e2bc9ad0947289dfa060d3e2a626981961825",
+  "runID": 38259663957,
+  "URL": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38259663957",
+  "conclusion": "failure",
+  "actualDebugAndReleaseBuildPassed": true,
+  "actualCompiledIconsBothPassed": true,
+  "MacCoreExecuted": 935,
+  "MacCoreFailed": 1,
+  "MacCoreSeconds": 131.257,
+  "MacCoreFailure": "CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses: memory=0, disk=144016",
+  "deviceResults": {
+    "iPad Pro 11-inch (M4)": {
+      "UIExecuted": 93,
+      "UIFailedCases": [
+        "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+        "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ],
+      "UIRawAssertionFailureCount": 10,
+      "nativeExecuted": 30,
+      "nativeFailures": 0,
+      "classResults": {
+        "AppNavigationTests": {
+          "Success": 2
+        },
+        "BatchImportRecoveryUITests": {
+          "Success": 4
+        },
+        "BookshelfParityUITests": {
+          "Success": 7
+        },
+        "CurrentParityUITests": {
+          "Success": 12
+        },
+        "DownloadLifecycleUITests": {
+          "Success": 2
+        },
+        "DownloadLocationParityUITests": {
+          "Success": 2
+        },
+        "EpubReadingUITests": {
+          "Success": 13
+        },
+        "ExternalFilesParityUITests": {
+          "Success": 3
+        },
+        "LinkedFolderParityUITests": {
+          "Success": 3
+        },
+        "LocalDeletionParityUITests": {
+          "Success": 2
+        },
+        "Mh18VerificationTests": {
+          "Success": 1
+        },
+        "ReaderContinuityUITests": {
+          "Success": 10
+        },
+        "ReaderEnhancementUITests": {
+          "Success": 1
+        },
+        "ReaderSettingsParityUITests": {
+          "Success": 6
+        },
+        "ReaderToolbarParityUITests": {
+          "Success": 2
+        },
+        "RootNavigationParityUITests": {
+          "Success": 4
+        },
+        "SettingsParityUITests": {
+          "Failure": 1,
+          "Success": 2
+        },
+        "SourceConfigFilesUITests": {
+          "Success": 5
+        },
+        "SourceDrawerTests": {
+          "Failure": 1,
+          "Success": 2
+        },
+        "VisualMatrixUITests": {
+          "Failure": 4,
+          "Success": 4
+        }
+      }
+    },
+    "iPhone 15 Pro": {
+      "UIExecuted": 93,
+      "UIFailedCases": [
+        "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+        "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ],
+      "UIRawAssertionFailureCount": 10,
+      "nativeExecuted": 30,
+      "nativeFailures": 0,
+      "classResults": {
+        "AppNavigationTests": {
+          "Success": 2
+        },
+        "BatchImportRecoveryUITests": {
+          "Success": 4
+        },
+        "BookshelfParityUITests": {
+          "Success": 7
+        },
+        "CurrentParityUITests": {
+          "Success": 12
+        },
+        "DownloadLifecycleUITests": {
+          "Success": 2
+        },
+        "DownloadLocationParityUITests": {
+          "Success": 2
+        },
+        "EpubReadingUITests": {
+          "Success": 13
+        },
+        "ExternalFilesParityUITests": {
+          "Success": 3
+        },
+        "LinkedFolderParityUITests": {
+          "Success": 3
+        },
+        "LocalDeletionParityUITests": {
+          "Success": 2
+        },
+        "Mh18VerificationTests": {
+          "Success": 1
+        },
+        "ReaderContinuityUITests": {
+          "Success": 10
+        },
+        "ReaderEnhancementUITests": {
+          "Success": 1
+        },
+        "ReaderSettingsParityUITests": {
+          "Success": 6
+        },
+        "ReaderToolbarParityUITests": {
+          "Success": 2
+        },
+        "RootNavigationParityUITests": {
+          "Success": 4
+        },
+        "SettingsParityUITests": {
+          "Failure": 1,
+          "Success": 2
+        },
+        "SourceConfigFilesUITests": {
+          "Success": 5
+        },
+        "SourceDrawerTests": {
+          "Failure": 1,
+          "Success": 2
+        },
+        "VisualMatrixUITests": {
+          "Failure": 4,
+          "Success": 4
+        }
+      }
+    }
+  },
+  "originalAttachmentsSHA256Verified": 294,
+  "rawBuildLogBytes": 13906708,
+  "rawBuildLogSHA256": "a15e52f157330c8d59994ea3ff70aa49fcaeeed00ffce7b0448078be20836556",
+  "originalDownloads": {
+    "logs": {
+      "path": "ios/build/ci28/logs-original.zip",
+      "bytes": 1311675,
+      "sha256": "c7cb9c827ba8a807b4b4f8678c8350551b60ae033767a81db677c759386e130b",
+      "checked_at_utc": "2026-10-12T15:59:53.669193+00:00"
+    },
+    "visual": {
+      "path": "ios/build/ci28/visual-original.zip",
+      "bytes": 66411378,
+      "sha256": "f3ab3a42c8e3f0d1692c1cd61b3b66c4ef07ceba57c48aaeaa9c8db2c0f49800",
+      "checked_at_utc": "2026-10-12T16:00:03.172747+00:00"
+    },
+    "xcresult": {
+      "path": "ios/build/ci28/xcresult-original.zip",
+      "bytes": 408045413,
+      "sha256": "5edf521f44bb36a2edd906ac2d9f12cdc2df9c1f3fc3e5442b13c6c645ce59e5",
+      "checked_at_utc": "2026-10-12T16:01:52.623615+00:00"
+    },
+    "cache": {
+      "path": "ios/build/ci28/cache-original.zip",
+      "bytes": 38204,
+      "sha256": "6f913e26dc62e0bbdb461a03548c879cf46a022cab0c4629738efbe591d5af4b",
+      "checked_at_utc": "2026-10-12T15:59:52.630509+00:00"
+    },
+    "ai": {
+      "path": "ios/build/ci28/ai-original.zip",
+      "bytes": 1287244,
+      "sha256": "26479dfabaec573dc5d7e570a1e7c6594d6e1f3369b9526389d808115ccdcb39",
+      "checked_at_utc": "2026-10-12T16:05:28.093412+00:00"
+    }
+  },
+  "xcresultInnerArchiveChecks": {
+    "ci28": [
+      {
+        "source": "ui-results-3SWWZb/UITests.xcresult",
+        "archive": "ui-results-3SWWZb-UITests.tar.gz",
+        "bytes": 199070929,
+        "sha256": "7af2d5b3975091eeb68acc8c5243a2776dc9ec29f83630da7f555b887008cf9f",
+        "includesStaging": false,
+        "testPassed": null
+      },
+      {
+        "source": "ui-results-kqqQui/UITests.xcresult",
+        "archive": "ui-results-kqqQui-UITests.tar.gz",
+        "bytes": 208860383,
+        "sha256": "aa25069c1a9907c211804ff3bd8cfdf87a1c3e960fc8c9e2874b1f1032b55881",
+        "includesStaging": false,
+        "testPassed": null
+      }
+    ],
+    "ci29": [
+      {
+        "source": "ui-results-3CUvi4/UITests.xcresult",
+        "archive": "ui-results-3CUvi4-UITests.tar.gz",
+        "bytes": 5094287,
+        "sha256": "c6d0d5cf08f6400e56a65756782a65c5f13079e335d1f264a3f9b42674bcc0a7",
+        "includesStaging": false,
+        "testPassed": null
+      },
+      {
+        "source": "ui-results-y3o1Zx/UITests.xcresult",
+        "archive": "ui-results-y3o1Zx-UITests.tar.gz",
+        "bytes": 5161021,
+        "sha256": "4177c43bef74bdbb0e412220b7a9963e9dfab11f2f17f9f1099925f6005ca5fe",
+        "includesStaging": false,
+        "testPassed": null
+      }
+    ]
+  },
+  "copiedFailureEvidence": {
+    "ipad-source-grid-failure.png": {
+      "original": "ios/build/ci28/visual-extracted/ui-failures/iPad_Pro_11-inch__M4_-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-1.png",
+      "sha256": "d5ae6190cae506a066158b6855f819b0325af6251d7c8ea71b5f76bb29b050ff"
+    },
+    "ipad-source-grid-failure.txt": {
+      "original": "ios/build/ci28/visual-extracted/ui-failures/iPad_Pro_11-inch__M4_-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-source-grid-accessibility.txt",
+      "sha256": "3ba3b0245c96f726c9005cf6150b7ca06e6feb3efa6c637766f7c55f768387eb"
+    },
+    "iphone-source-grid-failure.png": {
+      "original": "ios/build/ci28/visual-extracted/ui-failures/iPhone_15_Pro-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-1.png",
+      "sha256": "98e821137d47c0406795e2ad652a39725396d498ad7ddd99268a65ba15b3f587"
+    },
+    "iphone-source-grid-failure.txt": {
+      "original": "ios/build/ci28/visual-extracted/ui-failures/iPhone_15_Pro-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-source-grid-accessibility.txt",
+      "sha256": "13a6dbfd6562ce008416da1ea8f24e190afd9d6d11799288534fce96736ef9b2"
+    }
+  },
+  "sourceDrawerDiagnosis": {
+    "scope": "Deterministic catalog; no real websites",
+    "originalGestures": "12 alternating fixed-distance drags with inertia; source returns below viewport",
+    "actualReachableOnTap": true,
+    "remedy": "Same original assertions; compute clipped distance, slow drag and hold before inspecting"
+  },
+  "nonSourceGatePassed": false,
+  "packageIPA": false,
+  "realSourcesPaused": true
+}

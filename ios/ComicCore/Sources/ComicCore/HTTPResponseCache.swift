@@ -43,6 +43,7 @@ public actor HTTPResponseCache {
 
     private static func clear(cache: URLCache) async throws -> HTTPResponseCacheUsage {
         let memoryCapacity = cache.memoryCapacity
+        let diskCapacity = cache.diskCapacity
         // Keep the original disk backend active while its asynchronous removal
         // commits. Resetting diskCapacity can detach that backend and leave old
         // responses available when a later lookup reopens it.
@@ -87,6 +88,32 @@ public actor HTTPResponseCache {
             stableSamples = usage == previousUsage ? stableSamples + 1 : 0
             previousUsage = usage
             if stableSamples == 8 { break }
+        }
+        if diskCapacity > 0 {
+            // Release the disk backend only after removals have settled while
+            // it was active. Doing this first can invalidate pending removals
+            // and bring old responses back on the next lookup.
+            cache.diskCapacity = 0
+            var diskLimitRestored = false
+            defer { if !diskLimitRestored { cache.diskCapacity = diskCapacity } }
+            try await Task.sleep(nanoseconds: 50_000_000)
+            cache.diskCapacity = diskCapacity
+            diskLimitRestored = true
+            // A deferred response can publish when storage is restored. Use
+            // real restored accounting to decide whether another removal is
+            // needed; never subtract index bytes or return a fabricated zero.
+            if cache.currentMemoryUsage > 0 || cache.currentDiskUsage > 0 {
+                cache.removeAllCachedResponses()
+                var previous: HTTPResponseCacheUsage?
+                var stable = 0
+                for _ in 0..<40 {
+                    try await Task.sleep(nanoseconds: 50_000_000)
+                    let usage = HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))
+                    stable = usage == previous ? stable + 1 : 0; previous = usage
+                    if stable == 8 { break }
+                    cache.removeAllCachedResponses()
+                }
+            }
         }
         // Report remaining usage instead of claiming success if the framework retained data.
         return HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))

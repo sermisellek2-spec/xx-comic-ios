@@ -118,7 +118,8 @@ final class AboutAppViewController: UIViewController, UITableViewDataSource, UIT
             cell.detailTextLabel?.text = "仅本地"
         } else {
             cell.textLabel?.text = "已接入站源"
-            cell.detailTextLabel?.text = "\(environment.allSources.count) 个"
+            let currentIDs = Set(BuiltinSourceCatalog.activeIDs)
+            cell.detailTextLabel?.text = "\(environment.allSources.filter { currentIDs.contains($0.id) }.count) 个"
         }
         return cell
     }

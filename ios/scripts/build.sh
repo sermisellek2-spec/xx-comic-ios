@@ -29,6 +29,13 @@ for product_variant in debug-simulator release-device; do
     echo 'Built app icon metadata/resources failed verification; collect independent tests, packaging remains blocked.' >&2
   fi
 done
+if ! python3 scripts/verify_release_isolation.py \
+  --debug-app build/simulator/Build/Products/Debug-iphonesimulator/XXComic.app \
+  --release-app build/device/Build/Products/Release-iphoneos/XXComic.app \
+  --revision "$(git rev-parse HEAD)" --output build/evidence/release-isolation.json; then
+  validation_failed=1
+  echo 'Built Release fixture isolation failed; collect independent tests, packaging remains blocked.' >&2
+fi
 if [ "${IOS_VALIDATION_SCOPE:-full}" = cache-diagnostics ] || [ "${IOS_VALIDATION_SCOPE:-full}" = full ]; then
   echo '==> Recording isolated offline HTTP cache ownership and SQLite row counts...'
   mkdir -p build/evidence/http-cache
@@ -92,7 +99,15 @@ case "$validation_scope" in
   cache-diagnostics)
     # Keep every Core assertion and all native tests. This evidence-only scope
     # does not replace full UI or visual validation and cannot produce an IPA.
-    test_arguments+=(-only-testing:XXComicTests)
+    test_arguments+=(
+      -only-testing:XXComicTests
+      -only-testing:XXComicUITests/SettingsParityUITests
+      -only-testing:XXComicUITests/SourceDrawerTests
+      -only-testing:XXComicUITests/VisualMatrixUITests/testSettingsReferencePortraitLight
+      -only-testing:XXComicUITests/VisualMatrixUITests/testSettingsReferencePortraitDark
+      -only-testing:XXComicUITests/VisualMatrixUITests/testSettingsReferenceLandscapeLight
+      -only-testing:XXComicUITests/VisualMatrixUITests/testSettingsReferenceLandscapeDark
+    )
     ;;
   reader-modes)
     test_arguments+=(

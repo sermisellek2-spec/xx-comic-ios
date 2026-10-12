@@ -222,7 +222,7 @@ final class SettingsViewController: UITableViewController {
             guard let self else { return }
             defer { if self.updateGeneration == token { self.updateTask = nil } }
             do {
-                let release = try await AppUpdateChecker.shared.fetchRelease()
+                let release = try await self.environment.fetchAppRelease()
                 guard self.updateGeneration == token, !Task.isCancelled else { return }
                 progressAlert.dismiss(animated: true) {
                     guard self.updateGeneration == token, self.viewIfLoaded?.window != nil, self.presentedViewController == nil else { return }
@@ -256,8 +256,11 @@ final class SettingsViewController: UITableViewController {
                         message: "暂时无法查询最新版本，可重试或自行查看发布页。\n\n\(IOSUpdatePolicy.installationHint)",
                         preferredStyle: .alert
                     )
-                    alert.addAction(UIAlertAction(title: "重试", style: .default) { [weak self] _ in
-                        self?.checkForUpdate()
+                    alert.addAction(UIAlertAction(title: "重试", style: .default) { [weak self, weak alert] _ in
+                        alert?.dismiss(animated: true) { [weak self] in
+                            guard let self, self.viewIfLoaded?.window != nil, self.presentedViewController == nil else { return }
+                            self.checkForUpdate()
+                        }
                     })
                     alert.addAction(UIAlertAction(title: "查看发布页", style: .default) { [weak self] _ in
                         self?.openReleasePage(IOSUpdatePolicy.releasesURL)

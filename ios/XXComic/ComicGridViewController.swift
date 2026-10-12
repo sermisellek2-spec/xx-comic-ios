@@ -788,12 +788,38 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         )
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "清空", style: .destructive) { [weak self] _ in
-            guard let self else { return }
-            try? self.environment.library.clearHistory()
-            self.environment.notifyLibraryChanged()
-            self.refresh()
+            self?.clearHistoryConfirmed()
         })
         present(alert, animated: true)
+    }
+    private func clearHistoryConfirmed() {
+        do {
+            try environment.library.clearHistory()
+            environment.notifyLibraryChanged(); refresh()
+        } catch {
+            status("清空历史失败，原记录已保留。点击重试", retry: { [weak self] in self?.clearHistoryConfirmed() })
+            ErrorLogStore.shared.append(title: "清空历史失败", error: error)
+        }
+    }
+    private func deleteHistoryConfirmed(_ comic: ComicSummary) {
+        do {
+            try environment.library.deleteHistory(for: comic)
+            environment.notifyLibraryChanged(); refresh()
+            if comic.sourceId == "local" { clearHistoryTombstones(seriesID: comic.comicId) }
+        } catch {
+            status("删除历史失败，原记录已保留。点击重试", retry: { [weak self] in self?.deleteHistoryConfirmed(comic) })
+            ErrorLogStore.shared.append(title: "删除历史失败", error: error)
+        }
+    }
+    private func clearHistoryTombstones(seriesID: String) {
+        Task { [weak self] in
+            guard let self else { return }
+            do { try await self.environment.localLibrary.catalogStore.removeTombstones(forSeriesId: seriesID) }
+            catch {
+                self.status("历史已删除，旧本地记录清理失败。点击重试", retry: { [weak self] in self?.clearHistoryTombstones(seriesID: seriesID) })
+                ErrorLogStore.shared.append(title: "旧本地历史记录清理失败", error: error)
+            }
+        }
     }
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
         let comic = comics[indexPath.item]
@@ -801,12 +827,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
                 let deleteAction = UIAction(title: "删除此条历史", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
                     guard let self else { return }
-                    try? self.environment.library.deleteHistory(for: comic)
-                    if comic.sourceId == "local" {
-                        Task { try? await self.environment.localLibrary.catalogStore.removeTombstones(forSeriesId: comic.comicId) }
-                    }
-                    self.environment.notifyLibraryChanged()
-                    self.refresh()
+                    self.deleteHistoryConfirmed(comic)
                 }
                 return UIMenu(children: [deleteAction])
             }
@@ -837,8 +858,13 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                     alert.addAction(UIAlertAction(title: "确定", style: .default) { [weak self, weak alert] _ in
                         guard let self, let title = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty else { return }
                         Task {
-                            _ = try? await self.environment.localLibrary.renameSeries(id: comic.comicId, newTitle: title)
-                            self.refresh()
+                            do {
+                                _ = try await self.environment.localLibrary.renameSeries(id: comic.comicId, newTitle: title)
+                                self.refresh()
+                            } catch {
+                                self.status("修改作品名称失败，原名称已保留")
+                                ErrorLogStore.shared.append(title: "修改作品名称失败", error: error)
+                            }
                         }
                     })
                     self.present(alert, animated: true)

@@ -1,0 +1,407 @@
+{
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "runID": 38266096867,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38266096867",
+  "revision": "f5dcc5bcf16c2fa3c5d96ed557d7d91ab1f4c1da",
+  "scope": "reader-modes",
+  "conclusion": "failure",
+  "SDKBuildsSucceeded": 2,
+  "builtIcons": [
+    {
+      "file": "app-icon/debug-simulator-f5dcc5bc-1791817036872228000.json",
+      "sha256": "0cd1611c4e772d628da192866b04f642a59cdefbc6e67734237306b4fea1746c",
+      "passed": true
+    },
+    {
+      "file": "app-icon/release-device-f5dcc5bc-1791817036957216000.json",
+      "sha256": "76a8128be3c7635d954b2c6bde750838bd8619bdd62b672195669ffeba7317c0",
+      "passed": true
+    }
+  ],
+  "MacCore": {
+    "executed": 935,
+    "failures": 1,
+    "durationSeconds": 125.234,
+    "failureLines": [
+      "2026-10-12T14:59:09.9852430Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Tests/ComicCoreTests/CacheMaintenanceTests.swift:35: error: -[ComicCoreTests.CacheMaintenanceTests testDiskCleanupRestoresLimitsAndAllowsLaterResponses] : XCTAssertTrue failed - Actual remaining cache: memory=0, disk=144016"
+    ]
+  },
+  "nativeTestsPerDevice": {
+    "iPhone 15 Pro": {
+      "executed": 30,
+      "failures": 0
+    },
+    "iPad Pro 11-inch (M4)": {
+      "executed": 30,
+      "failures": 0
+    }
+  },
+  "readingUIByDevice": {
+    "iPhone 15 Pro": {
+      "executed": 19,
+      "failures": 0
+    },
+    "iPad Pro 11-inch (M4)": {
+      "executed": 19,
+      "failures": 0
+    }
+  },
+  "nativeCacheObservations": [
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 81920,
+      "diskCapacity": 8388608,
+      "files": [],
+      "initializer": "diskPath",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "fresh"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 663920,
+      "diskCapacity": 8388608,
+      "files": [],
+      "initializer": "diskPath",
+      "knownResponseBytes": 528384,
+      "knownResponsesHit": 4,
+      "memoryBytes": 4096,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "stored"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 144016,
+      "diskCapacity": 8388608,
+      "files": [],
+      "initializer": "diskPath",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "cleared"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 144016,
+      "diskCapacity": 8388608,
+      "files": [],
+      "initializer": "diskPath",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "reopened"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 81920,
+      "diskCapacity": 8388608,
+      "files": [
+        {
+          "bytes": 32768,
+          "file": "Cache.db-shm"
+        },
+        {
+          "bytes": 0,
+          "file": "Cache.db-wal"
+        },
+        {
+          "bytes": 49152,
+          "file": "Cache.db"
+        }
+      ],
+      "initializer": "directory",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "fresh"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 705120,
+      "diskCapacity": 8388608,
+      "files": [
+        {
+          "bytes": 262144,
+          "file": "fsCachedData/476E2543-2A88-407D-8D0D-63D8B6A30D3B"
+        },
+        {
+          "bytes": 262144,
+          "file": "fsCachedData/F60C80E0-F709-4B00-A2A7-517297420FC9"
+        },
+        {
+          "bytes": 32768,
+          "file": "Cache.db-shm"
+        },
+        {
+          "bytes": 98912,
+          "file": "Cache.db-wal"
+        },
+        {
+          "bytes": 49152,
+          "file": "Cache.db"
+        }
+      ],
+      "initializer": "directory",
+      "knownResponseBytes": 528384,
+      "knownResponsesHit": 4,
+      "memoryBytes": 4096,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "stored"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 144016,
+      "diskCapacity": 8388608,
+      "files": [
+        {
+          "bytes": 32768,
+          "file": "Cache.db-shm"
+        },
+        {
+          "bytes": 107152,
+          "file": "Cache.db-wal"
+        },
+        {
+          "bytes": 4096,
+          "file": "Cache.db"
+        }
+      ],
+      "initializer": "directory",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "cleared"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 144016,
+      "diskCapacity": 8388608,
+      "files": [
+        {
+          "bytes": 32768,
+          "file": "Cache.db-shm"
+        },
+        {
+          "bytes": 107152,
+          "file": "Cache.db-wal"
+        },
+        {
+          "bytes": 4096,
+          "file": "Cache.db"
+        }
+      ],
+      "initializer": "directory",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "reopened"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 81920,
+      "diskCapacity": 8388608,
+      "files": [],
+      "initializer": "diskPath",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "fresh"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 663920,
+      "diskCapacity": 8388608,
+      "files": [],
+      "initializer": "diskPath",
+      "knownResponseBytes": 528384,
+      "knownResponsesHit": 4,
+      "memoryBytes": 4096,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "stored"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 144016,
+      "diskCapacity": 8388608,
+      "files": [],
+      "initializer": "diskPath",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "cleared"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 144016,
+      "diskCapacity": 8388608,
+      "files": [],
+      "initializer": "diskPath",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "reopened"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 81920,
+      "diskCapacity": 8388608,
+      "files": [
+        {
+          "bytes": 32768,
+          "file": "Cache.db-shm"
+        },
+        {
+          "bytes": 0,
+          "file": "Cache.db-wal"
+        },
+        {
+          "bytes": 49152,
+          "file": "Cache.db"
+        }
+      ],
+      "initializer": "directory",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "fresh"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 663920,
+      "diskCapacity": 8388608,
+      "files": [
+        {
+          "bytes": 262144,
+          "file": "fsCachedData/3C8C59F7-0071-437D-95AE-1E80D84D6267"
+        },
+        {
+          "bytes": 262144,
+          "file": "fsCachedData/F1FE1AAC-3523-4942-9219-77895F8B39A2"
+        },
+        {
+          "bytes": 32768,
+          "file": "Cache.db-shm"
+        },
+        {
+          "bytes": 57712,
+          "file": "Cache.db-wal"
+        },
+        {
+          "bytes": 49152,
+          "file": "Cache.db"
+        }
+      ],
+      "initializer": "directory",
+      "knownResponseBytes": 528384,
+      "knownResponsesHit": 4,
+      "memoryBytes": 4096,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "stored"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 144016,
+      "diskCapacity": 8388608,
+      "files": [
+        {
+          "bytes": 32768,
+          "file": "Cache.db-shm"
+        },
+        {
+          "bytes": 107152,
+          "file": "Cache.db-wal"
+        },
+        {
+          "bytes": 4096,
+          "file": "Cache.db"
+        }
+      ],
+      "initializer": "directory",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "cleared"
+    },
+    {
+      "directCacheDatabaseWritesOrDeletesDuringObservation": 0,
+      "diskBytes": 144016,
+      "diskCapacity": 8388608,
+      "files": [
+        {
+          "bytes": 32768,
+          "file": "Cache.db-shm"
+        },
+        {
+          "bytes": 107152,
+          "file": "Cache.db-wal"
+        },
+        {
+          "bytes": 4096,
+          "file": "Cache.db"
+        }
+      ],
+      "initializer": "directory",
+      "knownResponseBytes": 0,
+      "knownResponsesHit": 0,
+      "memoryBytes": 0,
+      "memoryCapacity": 1048576,
+      "networkRequests": 0,
+      "stage": "reopened"
+    }
+  ],
+  "countingMethod": "Count XXComicTests.xctest and XXComicUITests.xctest separately; Core sub-suites can have identical counts. Kept attachment summaries include one native AI result and must not all be counted as UI.",
+  "buildLog": {
+    "zip": "apple-build-test-original.zip",
+    "rawBytes": 12112088,
+    "rawSHA256": "11ef9564808060de154a3c2d4a77b1211edca21a8b474d96534fbe6ca2947a69",
+    "zipSHA256": "5c5719029137916853ff3ec1b952fefcae0ab2182715d8c58d98865e909d1cbe"
+  },
+  "originalArtifacts": {
+    "logs": {
+      "path": "ios/build/ci29/logs-original.zip",
+      "bytes": 818625,
+      "sha256": "752da0af6abe3c9efe8f794865adc470e32ba226745c04c8ac239a22862b4792"
+    },
+    "visual": {
+      "path": "ios/build/ci29/visual-original.zip",
+      "bytes": 6507,
+      "sha256": "5ed939dfa52d17755063a739e7fdceec4e7fb0b6f1f1ea5ae808bbbdb507e5ac"
+    },
+    "xcresult": {
+      "path": "ios/build/ci29/xcresult-original.zip",
+      "bytes": 10258755,
+      "sha256": "f316ce689e93b1e9362f7f6fc62b24d2d767f108ffe704fd01d0b49ea716ea8f"
+    }
+  },
+  "packageIPA": false,
+  "fullNonSourceGatePassed": false,
+  "currentCandidateCovered": false,
+  "recordedAtUTC": "2026-10-12T15:47:31.139097+00:00"
+}

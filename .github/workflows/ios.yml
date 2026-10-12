@@ -58,7 +58,20 @@ jobs:
           retention-days: 7
 
       - name: Build and test
-        run: bash ios/scripts/build.sh
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ios/build/evidence/build-logs
+          bash ios/scripts/build.sh 2>&1 | tee ios/build/evidence/build-logs/build-and-test.log
+
+      - name: Upload original build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOS-build-log
+          path: ios/build/evidence/build-logs/build-and-test.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload unsigned IPA
         if: success() && env.IOS_VALIDATION_SCOPE == 'full' && env.IOS_PACKAGE_IPA == 'true'
@@ -99,6 +112,7 @@ jobs:
             ios/build/evidence/text-settings/*.png
             ios/build/evidence/text-settings/*.json
             ios/build/evidence/app-icon/*.json
+            ios/build/evidence/release-isolation.json
             ios/build/evidence/*-manifest.json
             ios/build/evidence/*-tests.json
           if-no-files-found: ignore

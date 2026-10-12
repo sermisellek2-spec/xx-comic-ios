@@ -1,0 +1,199 @@
+Attributes: Application, 0x10330abb0, pid: 52629, label: 'XX Comic'
+Element subtree:
+ →Application, 0x10330abb0, pid: 52629, label: 'XX Comic'
+    Window (Main), 0x1033095c0, {{0.0, 0.0}, {393.0, 852.0}}, identifier: 'parity.window', value: {"bounds":[0,0,393...
+      Other, 0x103309ce0, {{0.0, 0.0}, {393.0, 852.0}}
+        Other, 0x103309e00, {{0.0, 0.0}, {393.0, 852.0}}
+          Other, 0x103309b90, {{0.0, 0.0}, {393.0, 852.0}}
+            Other, 0x103fff560, {{0.0, 0.0}, {393.0, 758.0}}
+              NavigationBar, 0x103309f20, {{0.0, 53.7}, {393.0, 44.0}}, identifier: '发现'
+                StaticText, 0x10330a040, {{16.0, 61.3}, {48.7, 28.7}}, identifier: 'navigation.title', label: '发现'
+                Button, 0x10330a160, {{307.7, 53.7}, {69.3, 44.0}}, identifier: 'discover.source', label: '漫画160'
+                  StaticText, 0x10330a280, {{307.3, 68.3}, {47.3, 14.3}}, label: '漫画160'
+              Other, 0x10330a3a0, {{0.0, 0.0}, {393.0, 758.0}}
+                Other, 0x10330a4c0, {{0.0, 0.0}, {393.0, 758.0}}
+                  Other, 0x10330a5e0, {{0.0, 0.0}, {393.0, 758.0}}
+                    Other, 0x10330a700, {{0.0, 97.7}, {393.0, 106.0}}
+                      Other, 0x10330adf0, {{16.0, 103.7}, {361.0, 100.0}}
+                        Other, 0x10330af10, {{16.0, 103.7}, {361.0, 100.0}}, identifier: 'discover.tools'
+                          Other, 0x10330b030, {{16.0, 103.7}, {361.0, 42.0}}, identifier: 'discover.search.container'
+                            TextField, 0x10330b150, {{20.0, 103.7}, {301.0, 42.0}}, identifier: 'discover.search', placeholderValue: '搜索漫画160'
+                            Button, 0x10330b270, {{321.0, 105.7}, {52.0, 38.0}}, identifier: 'discover.search.mode', label: '切换搜索模式，当前单站', value: 单站
+                              StaticText, 0x10330b390, {{334.7, 117.3}, {25.0, 15.0}}, label: '单站'
+                          ScrollView, 0x10330b4b0, {{16.0, 147.7}, {361.0, 28.0}}
+                            Other, 0x10330b5d0, {{16.0, 147.7}, {48.7, 28.0}}
+                              Button, 0x10330b6f0, {{16.0, 150.7}, {48.7, 22.3}}, identifier: 'discover.filter.genre', label: '类型'
+                                StaticText, 0x10330b810, {{18.0, 154.7}, {24.7, 14.3}}, label: '类型'
+                            Other, 0x10330b930, {{344.0, 147.7}, {30.0, 28.0}}, label: '垂直滚动条, 1页', value: 0%
+                          StaticText, 0x10330ba50, {{16.0, 177.7}, {361.0, 24.0}}, identifier: 'discover.section', label: '全部漫画'
+                    CollectionView, 0x10330bb70, {{0.0, 203.7}, {393.0, 518.3}}
+                      Other, 0x10330bc90, {{0.0, 203.7}, {393.0, 518.3}}
+                      Cell, 0x10330bdb0, {{16.0, 203.7}, {115.0, 175.0}}, label: '电锯人'
+                        Other, 0x10330bed0, {{16.0, 203.7}, {115.0, 175.0}}
+                          Image, 0x10330bff0, {{16.0, 203.7}, {115.0, 153.3}}
+                          StaticText, 0x10330c110, {{16.0, 360.0}, {115.0, 15.7}}, label: '电锯人'
+                      Cell, 0x10330c230, {{139.0, 203.7}, {115.0, 175.0}}, label: '间谍过家家'
+                        Other, 0x10330c350, {{139.0, 203.7}, {115.0, 175.0}}
+                          Image, 0x10330c470, {{139.0, 203.7}, {115.0, 153.3}}
+                          StaticText, 0x10330c590, {{139.0, 360.0}, {115.0, 15.7}}, label: '间谍过家家'
+                      Cell, 0x10330c6b0, {{262.0, 203.7}, {115.0, 175.0}}, label: '一人之下'
+                        Other, 0x10330c7d0, {{262.0, 203.7}, {115.0, 175.0}}
+                          Image, 0x10330c8f0, {{262.0, 203.7}, {115.0, 153.3}}
+                          StaticText, 0x10330ca10, {{262.0, 360.0}, {115.0, 15.7}}, label: '一人之下'
+                      Other, 0x10330cb30, {{360.0, 203.7}, {30.0, 518.3}}, label: '垂直滚动条, 1页', value: 0%
+                      Other, 0x10330cc50, {{0.0, 689.0}, {393.0, 30.0}}, label: '水平滚动条, 1页', value: 0%
+                    Button, 0x10330cd70, {{16.0, 722.0}, {361.0, 36.0}}
+                      StaticText, 0x10330ce90, {{164.7, 732.0}, {64.0, 16.0}}, label: '正在加载…'
+            TabBar, 0x10330cfb0, {{0.0, 758.0}, {393.0, 94.0}}, identifier: 'navigation.tabs', label: '标签页栏'
+              Button, 0x10330d0d0, {{0.0, 758.5}, {131.0, 59.7}}, identifier: 'navigation.tab.0', label: '书架'
+              Button, 0x10330d1f0, {{131.0, 758.5}, {131.0, 59.7}}, identifier: 'navigation.tab.1', label: '发现', Selected
+              Button, 0x10330d310, {{262.0, 758.5}, {131.0, 59.7}}, identifier: 'navigation.tab.2', label: '设置'
+      Other, 0x10330d430, {{0.0, 0.0}, {393.0, 852.0}}
+        Other, 0x10330d550, {{0.0, 0.0}, {393.0, 852.0}}
+        Other, 0x10330d670, {{0.0, 418.0}, {393.0, 434.0}}
+          Other, 0x10330d790, {{0.0, 418.0}, {393.0, 434.0}}
+            Other, 0x10330d8b0, {{0.0, 418.0}, {393.0, 434.0}}
+              Other, 0x10330d9d0, {{0.0, 418.0}, {393.0, 434.0}}
+                Other, 0x10330daf0, {{0.0, 418.0}, {393.0, 56.0}}
+                  Other, 0x10330dc10, {{180.7, 424.0}, {32.0, 4.0}}
+                  StaticText, 0x10330dd30, {{16.0, 444.0}, {86.7, 20.3}}, label: '站源与分类'
+                  Button, 0x10330de50, {{349.0, 436.3}, {36.0, 36.0}}, identifier: 'filter.close', label: '关闭'
+                Other, 0x10330df70, {{16.0, 474.0}, {361.0, 44.0}}
+                  Button, 0x10330e090, {{16.0, 474.0}, {176.7, 44.0}}, identifier: 'filter.section.0', label: '站源', Selected
+                    StaticText, 0x10330e1b0, {{92.0, 488.7}, {24.7, 14.3}}, label: '站源'
+                  Button, 0x10330e2d0, {{200.7, 474.0}, {176.3, 44.0}}, identifier: 'filter.section.1', label: '分类'
+                    StaticText, 0x10330e3f0, {{276.3, 488.7}, {24.7, 14.3}}, label: '分类'
+                Other, 0x10330e510, {{16.0, 530.0}, {361.0, 14.3}}
+                  StaticText, 0x10330e630, {{16.0, 530.0}, {361.0, 14.3}}, label: '分组 · 全部 · 已启用站源'
+                ScrollView, 0x10330e750, {{16.0, 550.3}, {361.0, 199.7}}, identifier: 'filter.options'
+                  Other, 0x10330e870, {{16.0, 549.7}, {361.0, 876.0}}
+                    Other, 0x10330e990, {{16.0, 549.7}, {361.0, 44.0}}
+                      Button, 0x10330eab0, {{16.0, 549.7}, {115.0, 44.0}}, identifier: 'filter.source.mh160', label: '漫画160', Selected
+                        StaticText, 0x10330ebd0, {{49.7, 564.3}, {47.3, 14.3}}, label: '漫画160'
+                      Button, 0x10330ecf0, {{139.0, 549.7}, {115.0, 44.0}}, identifier: 'filter.source.gmh', label: 'G社漫画'
+                        StaticText, 0x10330ee10, {{173.3, 564.3}, {46.0, 14.3}}, label: 'G社漫画'
+                      Button, 0x10330ef30, {{262.0, 549.7}, {115.0, 44.0}}, identifier: 'filter.source.mh18', label: '18漫画'
+                        StaticText, 0x10330f050, {{300.0, 564.3}, {39.0, 14.3}}, label: '18漫画'
+                    Other, 0x10330f170, {{16.0, 601.7}, {361.0, 44.0}}
+                      Button, 0x10330f290, {{16.0, 601.7}, {115.0, 44.0}}, identifier: 'filter.source.jmcomic', label: '禁漫天堂'
+                        StaticText, 0x10330f3b0, {{48.7, 616.3}, {49.3, 14.3}}, label: '禁漫天堂'
+                      Button, 0x10330f4d0, {{139.0, 601.7}, {115.0, 44.0}}, identifier: 'filter.source.mkzhan', label: '漫客栈'
+                        StaticText, 0x10330f5f0, {{178.0, 616.3}, {37.0, 14.3}}, label: '漫客栈'
+                      Button, 0x10330f710, {{262.0, 601.7}, {115.0, 44.0}}, identifier: 'filter.source.hiperdex', label: 'HiperDEX'
+                        StaticText, 0x10330f830, {{290.0, 616.3}, {58.3, 14.3}}, label: 'HiperDEX'
+                    Other, 0x10330f950, {{16.0, 653.7}, {361.0, 44.0}}
+                      Button, 0x10330fa70, {{16.0, 653.7}, {115.0, 44.0}}, identifier: 'filter.source.manhuagui', label: '漫画柜'
+                        StaticText, 0x10330fb90, {{55.0, 668.3}, {37.0, 14.3}}, label: '漫画柜'
+                      Button, 0x10330fcb0, {{139.0, 653.7}, {115.0, 44.0}}, identifier: 'filter.source.hanman18', label: 'Hanman18'
+                        StaticText, 0x10330fdd0, {{164.3, 668.3}, {64.3, 14.3}}, label: 'Hanman18'
+                      Button, 0x10330fef0, {{262.0, 653.7}, {115.0, 44.0}}, identifier: 'filter.source.d5d6', label: '悦看漫画'
+                        StaticText, 0x103310010, {{294.7, 668.3}, {49.3, 14.3}}, label: '悦看漫画'
+                    Other, 0x103310130, {{16.0, 705.7}, {361.0, 44.0}}
+                      Button, 0x103310250, {{16.0, 705.7}, {115.0, 44.0}}, identifier: 'filter.source.manben', label: '漫本'
+                        StaticText, 0x103310370, {{61.0, 720.3}, {24.7, 14.3}}, label: '漫本'
+                      Button, 0x103310490, {{139.0, 705.7}, {115.0, 44.0}}, identifier: 'filter.source.manhuazhan', label: '漫画栈'
+                        StaticText, 0x1033105b0, {{178.0, 720.3}, {37.0, 14.3}}, label: '漫画栈'
+                      Button, 0x1033106d0, {{262.0, 705.7}, {115.0, 44.0}}, identifier: 'filter.source.bbyin', label: '比卡漫画'
+                        StaticText, 0x1033107f0, {{294.7, 720.3}, {49.3, 14.3}}, label: '比卡漫画'
+                    Other, 0x103310910, {{16.0, 757.7}, {361.0, 44.0}}
+                      Button, 0x103310a30, {{16.0, 757.7}, {115.0, 44.0}}, identifier: 'filter.source.antbyw', label: 'tapmanga搬运'
+                        StaticText, 0x103310b50, {{31.0, 772.3}, {85.0, 14.3}}, label: 'tapmanga搬运'
+                      Button, 0x103310c70, {{139.0, 757.7}, {115.0, 44.0}}, identifier: 'filter.source.cuimh', label: '催漫画'
+                        StaticText, 0x103310d90, {{178.0, 772.3}, {37.0, 14.3}}, label: '催漫画'
+                      Button, 0x103310eb0, {{262.0, 757.7}, {115.0, 44.0}}, identifier: 'filter.source.liumanhua', label: '六漫画'
+                        StaticText, 0x103310fd0, {{301.0, 772.3}, {37.0, 14.3}}, label: '六漫画'
+                    Other, 0x1033110f0, {{16.0, 809.7}, {361.0, 44.0}}
+                      Button, 0x103311210, {{16.0, 809.7}, {115.0, 44.0}}, identifier: 'filter.source.copy4000', label: '拷贝漫画'
+                        StaticText, 0x103311330, {{48.7, 824.3}, {49.3, 14.3}}, label: '拷贝漫画'
+                      Button, 0x103311450, {{139.0, 809.7}, {115.0, 44.0}}, identifier: 'filter.source.manwa', label: '漫蛙'
+                        StaticText, 0x103311570, {{184.0, 824.3}, {24.7, 14.3}}, label: '漫蛙'
+                      Button, 0x103311690, {{262.0, 809.7}, {115.0, 44.0}}, identifier: 'filter.source.dingmanhua', label: '顶漫画'
+                        StaticText, 0x1033117b0, {{301.0, 824.3}, {37.0, 14.3}}, label: '顶漫画'
+                    Other, 0x1033118d0, {{16.0, 861.7}, {361.0, 44.0}}
+                      Button, 0x1033119f0, {{16.0, 861.7}, {115.0, 44.0}}, identifier: 'filter.source.dongmanla', label: '动漫啦'
+                        StaticText, 0x103311b10, {{55.0, 876.3}, {37.0, 14.3}}, label: '动漫啦'
+                      Button, 0x103311c30, {{139.0, 861.7}, {115.0, 44.0}}, identifier: 'filter.source.xinmanhua', label: '新漫画-A'
+                        StaticText, 0x103311d50, {{170.7, 876.3}, {51.3, 14.3}}, label: '新漫画-A'
+                      Button, 0x103311e70, {{262.0, 861.7}, {115.0, 44.0}}, identifier: 'filter.source.zaimanhua', label: '再漫画'
+                        StaticText, 0x103311f90, {{301.0, 876.3}, {37.0, 14.3}}, label: '再漫画'
+                    Other, 0x1033120b0, {{16.0, 913.7}, {361.0, 44.0}}
+                      Button, 0x1033121d0, {{16.0, 913.7}, {115.0, 44.0}}, identifier: 'filter.source.guazi', label: '瓜子漫画'
+                        StaticText, 0x1033122f0, {{48.7, 928.3}, {49.3, 14.3}}, label: '瓜子漫画'
+                      Button, 0x103312410, {{139.0, 913.7}, {115.0, 44.0}}, identifier: 'filter.source.dm5', label: '动漫屋'
+                        StaticText, 0x103312530, {{178.0, 928.3}, {37.0, 14.3}}, label: '动漫屋'
+                      Button, 0x103312650, {{262.0, 913.7}, {115.0, 44.0}}, identifier: 'filter.source.kkk', label: '极速漫画'
+                        StaticText, 0x103312770, {{294.7, 928.3}, {49.3, 14.3}}, label: '极速漫画'
+                    Other, 0x103312890, {{16.0, 965.7}, {361.0, 44.0}}
+                      Button, 0x1033129b0, {{16.0, 965.7}, {115.0, 44.0}}, identifier: 'filter.source.manhuaren', label: '漫画人'
+                        StaticText, 0x103312ad0, {{55.0, 980.3}, {37.0, 14.3}}, label: '漫画人'
+                      Button, 0x103312bf0, {{139.0, 965.7}, {115.0, 44.0}}, identifier: 'filter.source.dongman', label: '咚漫'
+                        StaticText, 0x103312d10, {{184.0, 980.3}, {24.7, 14.3}}, label: '咚漫'
+                      Button, 0x103312e30, {{262.0, 965.7}, {115.0, 44.0}}, identifier: 'filter.source.dogemanga', label: '漫画狗'
+                        StaticText, 0x103312f50, {{301.0, 980.3}, {37.0, 14.3}}, label: '漫画狗'
+                    Other, 0x103313070, {{16.0, 1017.7}, {361.0, 44.0}}
+                      Button, 0x103313190, {{16.0, 1017.7}, {115.0, 44.0}}, identifier: 'filter.source.sisi', label: '思思漫画'
+                        StaticText, 0x1033132b0, {{48.7, 1032.3}, {49.3, 14.3}}, label: '思思漫画'
+                      Button, 0x1033133d0, {{139.0, 1017.7}, {115.0, 44.0}}, identifier: 'filter.source.manxiaosi', label: '漫小肆'
+                        StaticText, 0x1033134f0, {{178.0, 1032.3}, {37.0, 14.3}}, label: '漫小肆'
+                      Button, 0x103313610, {{262.0, 1017.7}, {115.0, 44.0}}, identifier: 'filter.source.lele', label: '乐乐韩漫'
+                        StaticText, 0x103313730, {{294.7, 1032.3}, {49.3, 14.3}}, label: '乐乐韩漫'
+                    Other, 0x103313850, {{16.0, 1069.7}, {361.0, 44.0}}
+                      Button, 0x103313970, {{16.0, 1069.7}, {115.0, 44.0}}, identifier: 'filter.source.tuku', label: '图库漫画'
+                        StaticText, 0x103313a90, {{48.7, 1084.3}, {49.3, 14.3}}, label: '图库漫画'
+                      Button, 0x103313bb0, {{139.0, 1069.7}, {115.0, 44.0}}, identifier: 'filter.source.ycy', label: '异次元漫画'
+                        StaticText, 0x103313cd0, {{165.7, 1084.3}, {61.3, 14.3}}, label: '异次元漫画'
+                      Button, 0x103313df0, {{262.0, 1069.7}, {115.0, 44.0}}, identifier: 'filter.source.miaoqu', label: '喵趣漫画'
+                        StaticText, 0x103313f10, {{294.7, 1084.3}, {49.3, 14.3}}, label: '喵趣漫画'
+                    Other, 0x103314030, {{16.0, 1121.7}, {361.0, 44.0}}
+                      Button, 0x103314150, {{16.0, 1121.7}, {115.0, 44.0}}, identifier: 'filter.source.aimi', label: '艾米漫画'
+                        StaticText, 0x103314270, {{48.7, 1136.3}, {49.3, 14.3}}, label: '艾米漫画'
+                      Button, 0x103314390, {{139.0, 1121.7}, {115.0, 44.0}}, identifier: 'filter.source.xiuxiu', label: '羞羞漫画'
+                        StaticText, 0x1033144b0, {{171.7, 1136.3}, {49.3, 14.3}}, label: '羞羞漫画'
+                      Button, 0x1033145d0, {{262.0, 1121.7}, {115.0, 44.0}}, identifier: 'filter.source.waiwai', label: '歪歪漫画'
+                        StaticText, 0x1033146f0, {{294.7, 1136.3}, {49.3, 14.3}}, label: '歪歪漫画'
+                    Other, 0x103314810, {{16.0, 1173.7}, {361.0, 44.0}}
+                      Button, 0x103314930, {{16.0, 1173.7}, {115.0, 44.0}}, identifier: 'filter.source.mh250', label: '250漫画'
+                        StaticText, 0x103314a50, {{49.0, 1188.3}, {48.7, 14.3}}, label: '250漫画'
+                      Button, 0x103314b70, {{139.0, 1173.7}, {115.0, 44.0}}, identifier: 'filter.source.tuhao', label: '土豪漫画'
+                        StaticText, 0x103314c90, {{171.7, 1188.3}, {49.3, 14.3}}, label: '土豪漫画'
+                      Button, 0x103314db0, {{262.0, 1173.7}, {115.0, 44.0}}, identifier: 'filter.source.manshiduo', label: '漫士多'
+                        StaticText, 0x103314ed0, {{301.0, 1188.3}, {37.0, 14.3}}, label: '漫士多'
+                    Other, 0x103314ff0, {{16.0, 1225.7}, {361.0, 44.0}}
+                      Button, 0x103315110, {{16.0, 1225.7}, {115.0, 44.0}}, identifier: 'filter.source.dumanwu', label: '读漫屋'
+                        StaticText, 0x103315230, {{55.0, 1240.3}, {37.0, 14.3}}, label: '读漫屋'
+                      Button, 0x103315350, {{139.0, 1225.7}, {115.0, 44.0}}, identifier: 'filter.source.ciyuan', label: '次元漫'
+                        StaticText, 0x103315470, {{178.0, 1240.3}, {37.0, 14.3}}, label: '次元漫'
+                      Button, 0x103315590, {{262.0, 1225.7}, {115.0, 44.0}}, identifier: 'filter.source.wmanhua', label: 'W漫画'
+                        StaticText, 0x1033156b0, {{301.0, 1240.3}, {36.7, 14.3}}, label: 'W漫画'
+                    Other, 0x1033157d0, {{16.0, 1277.7}, {361.0, 44.0}}
+                      Button, 0x1033158f0, {{16.0, 1277.7}, {115.0, 44.0}}, identifier: 'filter.source.aba', label: '阿吧漫画'
+                        StaticText, 0x103315a10, {{48.7, 1292.3}, {49.3, 14.3}}, label: '阿吧漫画'
+                      Button, 0x103315b30, {{139.0, 1277.7}, {115.0, 44.0}}, identifier: 'filter.source.comic51', label: '51漫画'
+                        StaticText, 0x103315c50, {{177.0, 1292.3}, {38.7, 14.3}}, label: '51漫画'
+                      Button, 0x103315d70, {{262.0, 1277.7}, {115.0, 44.0}}, identifier: 'filter.source.dmanhua', label: 'D漫画'
+                        StaticText, 0x103315e90, {{302.7, 1292.3}, {33.7, 14.3}}, label: 'D漫画'
+                    Other, 0x103315fb0, {{16.0, 1329.7}, {361.0, 44.0}}
+                      Button, 0x1033160d0, {{16.0, 1329.7}, {115.0, 44.0}}, identifier: 'filter.source.mh360', label: '360漫画'
+                        StaticText, 0x1033161f0, {{49.0, 1344.3}, {49.0, 14.3}}, label: '360漫画'
+                      Button, 0x103316310, {{139.0, 1329.7}, {115.0, 44.0}}, identifier: 'filter.source.favcomic', label: '喜漫漫画'
+                        StaticText, 0x103316430, {{171.7, 1344.3}, {49.3, 14.3}}, label: '喜漫漫画'
+                      Button, 0x103316550, {{262.0, 1329.7}, {115.0, 44.0}}, identifier: 'filter.source.ttk', label: '天天看漫画'
+                        StaticText, 0x103316670, {{288.7, 1344.3}, {61.3, 14.3}}, label: '天天看漫画'
+                    Other, 0x103316790, {{16.0, 1381.7}, {361.0, 44.0}}
+                      Button, 0x1033168b0, {{16.0, 1381.7}, {115.0, 44.0}}, identifier: 'filter.source.laiman', label: '来漫画'
+                        StaticText, 0x1033169d0, {{55.0, 1396.3}, {37.0, 14.3}}, label: '来漫画'
+                      Button, 0x103316af0, {{139.0, 1381.7}, {115.0, 44.0}}, identifier: 'filter.source.lmanhua', label: 'L漫画'
+                        StaticText, 0x103316c10, {{180.7, 1396.3}, {31.7, 14.3}}, label: 'L漫画'
+                      Other, 0x103316d30, {{262.0, 1381.7}, {115.0, 44.0}}
+                  Other, 0x103316e50, {{344.0, 550.3}, {30.0, 199.7}}, label: '垂直滚动条, 5页', value: 0%
+                    Other, 0x103316f70, {{371.0, 553.3}, {3.0, 44.0}}
+                  Other, 0x103317090, {{16.0, 717.0}, {361.0, 30.0}}, label: '水平滚动条, 1页', value: 0%
+                Button, 0x1033171b0, {{16.0, 762.0}, {361.0, 44.0}}, identifier: 'filter.confirm', label: '应用'
+                  StaticText, 0x1033172d0, {{181.0, 775.0}, {30.7, 18.0}}, label: '应用'
+Path to element:
+ →Application, 0x10330abb0, pid: 52629, label: 'XX Comic'
+Query chain:
+ →Find: Target Application 'com.xxcomic.ios'
+  Output: {
+    Application, 0x10310ca30, pid: 52629, label: 'XX Comic'
+  }

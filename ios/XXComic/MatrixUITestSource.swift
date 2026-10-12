@@ -114,6 +114,8 @@ private final class MatrixUITestHTTPServer: @unchecked Sendable {
     private let lock = NSLock()
     private let defaults: UserDefaults
     private let holdDownloadOnce: Bool
+    private let flags = ProcessInfo.processInfo.arguments
+    private var updateRequests = 0
     private var heldConnections: [ObjectIdentifier: NWConnection] = [:]
     init(image: Data, defaults: UserDefaults) throws {
         self.defaults = defaults
@@ -139,6 +141,10 @@ private final class MatrixUITestHTTPServer: @unchecked Sendable {
                 return
             }
             let request = String(decoding: headers, as: UTF8.self)
+            if request.hasPrefix("GET /ios-release.json ") {
+                self.sendRelease(connection)
+                return
+            }
             if self.shouldHold(request) {
                 let key = ObjectIdentifier(connection)
                 self.lock.lock(); self.heldConnections[key] = connection; self.lock.unlock()
@@ -158,6 +164,29 @@ private final class MatrixUITestHTTPServer: @unchecked Sendable {
             response.append(image)
             connection.send(content: response, completion: .contentProcessed { _ in connection.cancel() })
         }
+    }
+
+    private func sendRelease(_ connection: NWConnection) {
+        guard flags.contains("--matrix-update-fixture") else { connection.cancel(); return }
+        lock.lock(); updateRequests += 1; let count = updateRequests; lock.unlock()
+        if count == 1, flags.contains("--matrix-update-hold-once") {
+            let key = ObjectIdentifier(connection)
+            lock.lock(); heldConnections[key] = connection; lock.unlock()
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 1) { [weak self] _, _, _, _ in
+                if let self { self.lock.lock(); self.heldConnections.removeValue(forKey: key); self.lock.unlock() }
+                connection.cancel()
+            }
+            return
+        }
+        let fail = count == 1 && flags.contains("--matrix-update-fail-once")
+        let current = flags.contains("--matrix-update-current")
+        let release = AppRelease(versionName: current ? "2.0.40" : "2.0.41", versionCode: current ? 340 : 350,
+                                 releaseNotes: "验收新版本说明", downloadUrl: "https://github.com/sermisellek2-spec/xx-comic-ios/releases/tag/2.0.41")
+        guard let body = try? JSONEncoder().encode(release) else { connection.cancel(); return }
+        let status = fail ? "503 Service Unavailable" : "200 OK"
+        var response = Data("HTTP/1.1 \(status)\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nContent-Length: \(body.count)\r\nConnection: close\r\n\r\n".utf8)
+        response.append(body)
+        connection.send(content: response, completion: .contentProcessed { _ in connection.cancel() })
     }
 
     private func shouldHold(_ request: String) -> Bool {

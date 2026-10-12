@@ -1,0 +1,37 @@
+{
+  "reviewedAtUTC": "2026-10-12T15:48:37.746282+00:00",
+  "inputRevision": "db4536abb30b99a9586cfe9f8d0b1df479a40e28",
+  "referenceOnly": true,
+  "currentCandidateAccepted": false,
+  "method": "实际读取CI23同内容侧图；原图、叠图及组件记录保留；查看时显示缩放，不制造新运行截图。",
+  "scenes": [
+    {
+      "scene": "phone_portrait_dark_discover",
+      "file": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci23-comparison/phone_portrait_dark_discover_side-by-side.png",
+      "sha256": "511df66a3a7c47ae063c8c0e30b76afe219e7169edc4a925cb9d972705e36799",
+      "observation": "标题、站源、搜索/单站、类型、全部漫画、三卡片和底栏均可见。应用内容层次接近；iOS安全区使整体内容下移，搜索边线和字体需当前实拍量测。",
+      "status": "参考复核；当前候选待验收"
+    },
+    {
+      "scene": "phone_portrait_light_search_results",
+      "file": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci23-comparison/phone_portrait_light_search_results_side-by-side.png",
+      "sha256": "b6d5180e43a0231f002b86640deac006d4fb0acf04853176bc4b2fde19708ee7",
+      "observation": "同名搜索结果只有一张当前卡片，搜索词/类型/标题可见。封面一致；顶部系统安全区、搜索边线和文字栅格差异仍需逐组件记录。",
+      "status": "参考复核；当前候选待验收"
+    },
+    {
+      "scene": "tablet_landscape_dark_detail",
+      "file": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci23-comparison/tablet_landscape_dark_detail_side-by-side.png",
+      "sha256": "d1ded976ee1bac342c77a675525f24131ccd34b815cef805233092e468513cd1",
+      "observation": "封面、作品信息、下载/换源、目录及底部续读排列接近，文字未明显截断；iOS返回按钮和安全区可见差异。图缩小显示，不能据此断言每个图标/像素通过。",
+      "status": "参考复核；当前候选待验收"
+    },
+    {
+      "scene": "tablet_portrait_light_reader_directory",
+      "file": "docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-visual/ci23-comparison/tablet_portrait_light_reader_directory_side-by-side.png",
+      "sha256": "e8d8c59b90b481e6abbaee402461099c3112e6a81f44250c4dbb764aebdddfdb",
+      "observation": "全宽底部章节面板、正序按钮、6行、选中章蓝条可见；透白面板和标题接近。顶部系统区/内容位置需当前截图核验，不能用旧图关闭D102。",
+      "status": "参考复核；当前候选待验收"
+    }
+  ]
+}
