@@ -1,0 +1,63 @@
+{
+  "android_baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "ios_capture_commit": "b8be2d947e720c0527fb3ab280b4fbe1c1a30d0e",
+  "ios_capture_run": 38190082897,
+  "captures_reviewed": [
+    {
+      "path": "phone_portrait_light_discover_side-by-side.png",
+      "sha256": "642fa3d51ae61202deffe30cefd689677ae38b49c561b3bc69f0de85e33d189f"
+    },
+    {
+      "path": "phone_portrait_dark_discover_side-by-side.png",
+      "sha256": "e676060facaec88871dca25136c0047bdaffc9b0bbf71a38a1555aee38634b36"
+    },
+    {
+      "path": "phone_portrait_light_bookshelf_online_side-by-side.png",
+      "sha256": "7a5137d7b72f16ae733f681242ba1a19be298d37b194e05ee96d05bc454ac731"
+    },
+    {
+      "path": "phone_portrait_light_source_drawer_side-by-side.png",
+      "sha256": "7f5ef133cc996103ba08c5e1bd52934732cf9c17f8fd474426d1a7f49a270eef"
+    }
+  ],
+  "prepared_total": 12,
+  "required_total": 64,
+  "overall_visual_gate_passed": false,
+  "input_test_status": "Capture happened before the visual UI method failed at its later search step. Not a whole-test PASS.",
+  "problems": [
+    {
+      "component": "bookshelf.layout",
+      "observed": "Glyph enlarged by refresh from16 to26pt inside26pt disc",
+      "android_reference": "MainActivity4302~4319:26dp icon container with5dp padding",
+      "candidate": "restore16pt on refresh",
+      "runtime_after_repair": "pending"
+    },
+    {
+      "component": "bookshelf.groups",
+      "observed": "Glyph24pt accent instead of18pt TEXT2 and30dp soft disc; missing accessible name",
+      "android_reference": "bookshelf/BookshelfGroupBar.java108~123",
+      "candidate": "18pt TEXT2,30pt soft disc, explicit accessible name",
+      "runtime_after_repair": "pending"
+    },
+    {
+      "component": "bookshelf.latest",
+      "observed": "Uniform black rectangle and wrong title weight/spacing",
+      "android_reference": "MainActivity5041~5071",
+      "candidate": "frozen gradient/padding/rounded bottom and13pt bold title/4pt spacing",
+      "runtime_after_repair": "pending"
+    },
+    {
+      "component": "discover.search.placeholder",
+      "observed": "UIKit system placeholder gray differs from TEXT3 in light and dark",
+      "candidate": "theme TEXT3 attributed placeholder in all modes",
+      "runtime_after_repair": "pending"
+    }
+  ],
+  "remaining": "iPad actual canvas mismatch,52 missing/not comparable captures, full component review; no automated PASS or screenshot warping",
+  "retained_archive": {
+    "path": "visual-review-evidence.zip",
+    "sha256": "c82566b2f62e5edf22862c33ce86365f95d96088eda658ce76b4226d1dada5ca",
+    "bytes": 4920717,
+    "entries": 26
+  }
+}

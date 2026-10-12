@@ -34,8 +34,19 @@ final class BookshelfGroupBar: UIView {
         tabsStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(tabsStack)
 
-        addGroupButton.setImage(ParityIcon.plus.image(), for: .normal)
-        addGroupButton.tintColor = Palette.accent
+        addGroupButton.setImage(ParityIcon.plus.image(size: 18), for: .normal)
+        addGroupButton.tintColor = Palette.text2
+        addGroupButton.accessibilityLabel = "分组管理"
+        addGroupButton.accessibilityIdentifier = "bookshelf.groups"
+        let disc = UIView()
+        disc.backgroundColor = Palette.cardSoft; disc.layer.cornerRadius = 15
+        disc.isUserInteractionEnabled = false; disc.translatesAutoresizingMaskIntoConstraints = false
+        addGroupButton.insertSubview(disc, at: 0)
+        NSLayoutConstraint.activate([
+            disc.centerXAnchor.constraint(equalTo: addGroupButton.centerXAnchor),
+            disc.centerYAnchor.constraint(equalTo: addGroupButton.centerYAnchor),
+            disc.widthAnchor.constraint(equalToConstant: 30), disc.heightAnchor.constraint(equalToConstant: 30)
+        ])
         addGroupButton.translatesAutoresizingMaskIntoConstraints = false
         addGroupButton.addTarget(self, action: #selector(plusTapped), for: .touchUpInside)
         addSubview(addGroupButton)

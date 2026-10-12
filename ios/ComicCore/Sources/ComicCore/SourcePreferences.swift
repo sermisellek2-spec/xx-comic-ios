@@ -228,7 +228,7 @@ public final class SourcePreferences {
                     guard allowed.contains(field) else {
                         warnings.append("已跳过不支持的字段：" + id + "." + key + "." + field); continue
                     }
-                    let unusedFilter = key == "filters" && (id == "manhuagui" || (id == "d5d6" && (field.hasPrefix("category.") || field == "state.all")) || (id == "manben" && field == "sort.popular") || id == "hanman18")
+                    let unusedFilter = key == "filters" && (id == "manhuagui" || (id == "d5d6" && (field.hasPrefix("category.") || field == "state.all")) || (id == "manben" && field == "sort.popular") || ["hanman18", "mkzhan", "xinmanhua"].contains(id))
                     if key == "routes" && unusedRoutes.contains(field) || unusedFilter {
                         if value != merged[field] {
                             warnings.append("已跳过不支持的字段：" + id + "." + key + "." + field + "（当前请求不消费该字段）")

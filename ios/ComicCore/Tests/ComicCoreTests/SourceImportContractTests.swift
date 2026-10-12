@@ -137,6 +137,22 @@ final class SourceImportContractTests: XCTestCase {
         }
     }
 
+    func testUnconsumedMkzhanAndXinmanhuaFiltersReportSkipWithoutDiscardingSupportedFields() throws {
+        try withStore { store in
+            let mkzhan = store.config(for: "mkzhan")!
+            let xinmanhua = store.config(for: "xinmanhua")!
+            let result = try store.importConfig(jsonString: #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"mkzhan","enabled":false,"routes":{"search":"/imported-search?keyword={keyword}"},"filters":{"filter.serial":"finish=9","filter.free":"is_free=9"}},{"id":"xinmanhua","filters":{"genre.治愈":"unused","order.popular":"9"}}]}"#)
+            for field in ["mkzhan.filters.filter.serial", "mkzhan.filters.filter.free", "xinmanhua.filters.genre.治愈", "xinmanhua.filters.order.popular"] {
+                XCTAssertTrue(result.warnings.contains { $0.contains(field) }, field)
+            }
+            XCTAssertEqual(result.totalSources, 2)
+            XCTAssertEqual(store.config(for: "mkzhan")?.filters, mkzhan.filters)
+            XCTAssertEqual(store.config(for: "xinmanhua")?.filters, xinmanhua.filters)
+            XCTAssertFalse(store.isEnabled("mkzhan"))
+            XCTAssertEqual(store.config(for: "mkzhan")?.route("search"), "/imported-search?keyword={keyword}")
+        }
+    }
+
     func testAuditedUnconsumedRoutesReportOverridesAndPreserveValues() throws {
         try withStore { store in
             let fields: [String: [String]] = [

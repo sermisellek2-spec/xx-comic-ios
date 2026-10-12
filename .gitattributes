@@ -36,3 +36,7 @@ docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci15-results/native-apple-buil
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-config-files/impact-current.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-config-files/impact-initial-cleanup-failure.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-config-files/impact-initial-compile-failure.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+
+# Keep byte-addressed core failure and recovery evidence unchanged.
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-filter-consumers/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-filter-consumers/*.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol

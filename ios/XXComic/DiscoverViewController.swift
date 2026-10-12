@@ -165,7 +165,7 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
         modeButton.accessibilityValue = isGlobal ? "全站" : "单站"
         guard !environment.discoverySources.isEmpty else {
             sourceButton.setTitle("没有已启用的站源", for: .normal)
-            searchBar.placeholder = isGlobal ? "搜索全部站源" : "搜索漫画"
+            updateSearchPlaceholder(isGlobal ? "搜索全部站源" : "搜索漫画")
             scopeTask?.cancel(); scopeSourceID = nil; scopeGroups = []; renderScopeGroups()
             return
         }
@@ -176,8 +176,14 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
         config.baseForegroundColor = Palette.accent; config.contentInsets = .zero
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { var result = $0; result.font = .systemFont(ofSize: 12, weight: .bold); return result }
         sourceButton.configuration = config
-        searchBar.placeholder = isGlobal ? "搜索全部站源" : "搜索" + name
+        updateSearchPlaceholder(isGlobal ? "搜索全部站源" : "搜索" + name)
         loadScopeGroups()
+    }
+    private func updateSearchPlaceholder(_ text: String) {
+        searchBar.attributedPlaceholder = NSAttributedString(string: text, attributes: [
+            .foregroundColor: Palette.text3,
+            .font: UIFont.systemFont(ofSize: 14)
+        ])
     }
     private func configureFilterButton(_ button: UIButton, title: String) {
         var config = UIButton.Configuration.plain()

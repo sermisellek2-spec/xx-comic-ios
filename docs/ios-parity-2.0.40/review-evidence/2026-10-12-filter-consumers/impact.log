@@ -1,0 +1,81 @@
+[0/1] Planning build
+Building for debugging...
+[0/3] Write sources
+[1/3] Write swift-version-24593BA9C3E375BF.txt
+[3/5] Compiling ComicCore SourcePreferences.swift
+[4/5] Emitting module ComicCore
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[5/7] Write Objects.LinkFileList
+[6/7] Linking ComicCorePackageTests.xctest
+Build complete! (14.12s)
+Test Suite 'Selected tests' started at 2026-10-12 03:24:54.203
+Test Suite 'SourceConfigDocumentsTests' started at 2026-10-12 03:24:54.220
+Test Case 'SourceConfigDocumentsTests.testCancelledFileReadCannotWritePreferences' started at 2026-10-12 03:24:54.220
+Test Case 'SourceConfigDocumentsTests.testCancelledFileReadCannotWritePreferences' passed (0.034 seconds)
+Test Case 'SourceConfigDocumentsTests.testExportCleanupPreservesUnknownFilesAndRejectsReplacedFileAndLinks' started at 2026-10-12 03:24:54.254
+Test Case 'SourceConfigDocumentsTests.testExportCleanupPreservesUnknownFilesAndRejectsReplacedFileAndLinks' passed (0.02 seconds)
+Test Case 'SourceConfigDocumentsTests.testInvalidFileDoesNotApplyValidFirstItemAndCanRetryWithAValidFile' started at 2026-10-12 03:24:54.275
+Test Case 'SourceConfigDocumentsTests.testInvalidFileDoesNotApplyValidFirstItemAndCanRetryWithAValidFile' passed (0.011 seconds)
+Test Case 'SourceConfigDocumentsTests.testPreparedImportCannotOverwriteConfigurationChangedDuringFileRead' started at 2026-10-12 03:24:54.286
+Test Case 'SourceConfigDocumentsTests.testPreparedImportCannotOverwriteConfigurationChangedDuringFileRead' passed (0.009 seconds)
+Test Case 'SourceConfigDocumentsTests.testRealJSONFileRoundTripRetainsAll51SourcesAnd50EnabledAfterReload' started at 2026-10-12 03:24:54.295
+Test Case 'SourceConfigDocumentsTests.testRealJSONFileRoundTripRetainsAll51SourcesAnd50EnabledAfterReload' passed (0.032 seconds)
+Test Case 'SourceConfigDocumentsTests.testUnreadableNonUTF8OversizedAndDirectoryInputsAreRejected' started at 2026-10-12 03:24:54.327
+Test Case 'SourceConfigDocumentsTests.testUnreadableNonUTF8OversizedAndDirectoryInputsAreRejected' passed (0.02 seconds)
+Test Case 'SourceConfigDocumentsTests.testUnsupportedFieldsReportPartialImportThroughARealFile' started at 2026-10-12 03:24:54.347
+Test Case 'SourceConfigDocumentsTests.testUnsupportedFieldsReportPartialImportThroughARealFile' passed (0.005 seconds)
+Test Suite 'SourceConfigDocumentsTests' passed at 2026-10-12 03:24:54.352
+Executed 7 tests, with 0 failures (0 unexpected) in 0.132 (0.132) seconds
+Test Suite 'SourceImportContractTests' started at 2026-10-12 03:24:54.352
+Test Case 'SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues' started at 2026-10-12 03:24:54.352
+Test Case 'SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues' passed (0.012 seconds)
+Test Case 'SourceImportContractTests.testCurrentCatalogExportRoundTripDoesNotAddPhantomRoutesOrWarnings' started at 2026-10-12 03:24:54.365
+Test Case 'SourceImportContractTests.testCurrentCatalogExportRoundTripDoesNotAddPhantomRoutesOrWarnings' passed (0.027 seconds)
+Test Case 'SourceImportContractTests.testFlatLegacyPathsReachRoutesAndExplicitV2RoutesTakePrecedence' started at 2026-10-12 03:24:54.392
+Test Case 'SourceImportContractTests.testFlatLegacyPathsReachRoutesAndExplicitV2RoutesTakePrecedence' passed (0.007 seconds)
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' started at 2026-10-12 03:24:54.399
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' passed (0.002 seconds)
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' started at 2026-10-12 03:24:54.401
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' passed (0.002 seconds)
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' started at 2026-10-12 03:24:54.403
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' passed (0.004 seconds)
+Test Case 'SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes' started at 2026-10-12 03:24:54.407
+Test Case 'SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes' passed (0.003 seconds)
+Test Case 'SourceImportContractTests.testUnconsumedCompatibilityOverridesAreReportedAndDoNotReplaceStoredValues' started at 2026-10-12 03:24:54.410
+Test Case 'SourceImportContractTests.testUnconsumedCompatibilityOverridesAreReportedAndDoNotReplaceStoredValues' passed (0.004 seconds)
+Test Case 'SourceImportContractTests.testUnconsumedFilterChangesReportSkipAndKeepSupportedManbenSort' started at 2026-10-12 03:24:54.414
+Test Case 'SourceImportContractTests.testUnconsumedFilterChangesReportSkipAndKeepSupportedManbenSort' passed (0.012 seconds)
+Test Case 'SourceImportContractTests.testUnconsumedMkzhanAndXinmanhuaFiltersReportSkipWithoutDiscardingSupportedFields' started at 2026-10-12 03:24:54.426
+Test Case 'SourceImportContractTests.testUnconsumedMkzhanAndXinmanhuaFiltersReportSkipWithoutDiscardingSupportedFields' passed (0.005 seconds)
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' started at 2026-10-12 03:24:54.431
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' passed (0.004 seconds)
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' started at 2026-10-12 03:24:54.435
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' passed (0.004 seconds)
+Test Suite 'SourceImportContractTests' passed at 2026-10-12 03:24:54.439
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.086 (0.086) seconds
+Test Suite 'SourcePreferencesTests' started at 2026-10-12 03:24:54.439
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' started at 2026-10-12 03:24:54.439
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' started at 2026-10-12 03:24:54.440
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' started at 2026-10-12 03:24:54.440
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' passed (0.004 seconds)
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' started at 2026-10-12 03:24:54.445
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' passed (0.046 seconds)
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' started at 2026-10-12 03:24:54.491
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' started at 2026-10-12 03:24:54.491
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' passed (0.0 seconds)
+Test Suite 'SourcePreferencesTests' passed at 2026-10-12 03:24:54.492
+Executed 6 tests, with 0 failures (0 unexpected) in 0.053 (0.053) seconds
+Test Suite 'Selected tests' passed at 2026-10-12 03:24:54.492
+Executed 25 tests, with 0 failures (0 unexpected) in 0.271 (0.271) seconds

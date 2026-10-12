@@ -274,11 +274,29 @@ final class RemoteImageView: UIImageView {
 }
 
 @MainActor
+@MainActor
+private final class BookshelfUpdateOverlay: UIView {
+    override class var layerClass: AnyClass { CAGradientLayer.self }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        let gradient = layer as! CAGradientLayer
+        gradient.colors = [UIColor.clear.cgColor,
+                           UIColor(red: 10.0 / 255.0, green: 24.0 / 255.0, blue: 37.0 / 255.0, alpha: 175.0 / 255.0).cgColor]
+        gradient.startPoint = CGPoint(x: 0.5, y: 0)
+        gradient.endPoint = CGPoint(x: 0.5, y: 1)
+        layer.cornerRadius = 8
+        layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        clipsToBounds = true
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:)") }
+}
+
 final class ComicCell: UICollectionViewCell {
     let cover = RemoteImageView()
     private let nameLabel = UILabel()
     private let sourceLabel = UILabel()
-    private let latestOverlay = UIView()
+    private let latestOverlay = BookshelfUpdateOverlay()
     private let latestLabel = UILabel()
     private let badgeContainer = UIView()
     private let badgeLabel = UILabel()
@@ -308,16 +326,15 @@ final class ComicCell: UICollectionViewCell {
             badgeContainer.heightAnchor.constraint(equalToConstant: 18)
         ])
 
-        nameLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        nameLabel.font = .systemFont(ofSize: 13, weight: .bold)
         nameLabel.numberOfLines = 1
         nameLabel.textColor = Palette.text
         sourceLabel.font = .systemFont(ofSize: 11); sourceLabel.textColor = Palette.text3
-        latestOverlay.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         latestLabel.font = .systemFont(ofSize: 10); latestLabel.textColor = .white
         latestLabel.translatesAutoresizingMaskIntoConstraints = false; latestOverlay.addSubview(latestLabel)
 
         for view in [cover, nameLabel, sourceLabel, latestOverlay, badgeContainer] { view.translatesAutoresizingMaskIntoConstraints = false; contentView.addSubview(view) }
-        nameTop = nameLabel.topAnchor.constraint(equalTo: cover.bottomAnchor, constant: 6)
+        nameTop = nameLabel.topAnchor.constraint(equalTo: cover.bottomAnchor, constant: 4)
         NSLayoutConstraint.activate([
             cover.topAnchor.constraint(equalTo: contentView.topAnchor), cover.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             cover.trailingAnchor.constraint(equalTo: contentView.trailingAnchor), cover.heightAnchor.constraint(equalTo: cover.widthAnchor, multiplier: 4 / 3),
@@ -329,9 +346,10 @@ final class ComicCell: UICollectionViewCell {
             sourceLabel.leadingAnchor.constraint(equalTo: cover.leadingAnchor), sourceLabel.trailingAnchor.constraint(equalTo: cover.trailingAnchor),
             sourceLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor),
             latestOverlay.leadingAnchor.constraint(equalTo: cover.leadingAnchor), latestOverlay.trailingAnchor.constraint(equalTo: cover.trailingAnchor),
-            latestOverlay.bottomAnchor.constraint(equalTo: cover.bottomAnchor), latestOverlay.heightAnchor.constraint(equalToConstant: 20),
+            latestOverlay.bottomAnchor.constraint(equalTo: cover.bottomAnchor),
             latestLabel.leadingAnchor.constraint(equalTo: latestOverlay.leadingAnchor, constant: 6), latestLabel.trailingAnchor.constraint(equalTo: latestOverlay.trailingAnchor, constant: -6),
-            latestLabel.centerYAnchor.constraint(equalTo: latestOverlay.centerYAnchor)
+            latestLabel.topAnchor.constraint(equalTo: latestOverlay.topAnchor, constant: 8),
+            latestLabel.bottomAnchor.constraint(equalTo: latestOverlay.bottomAnchor, constant: -4)
         ])
         isAccessibilityElement = true
         accessibilityTraits = .button
@@ -340,8 +358,8 @@ final class ComicCell: UICollectionViewCell {
 
     func setDiscoveryStyle(_ discovery: Bool) {
         cover.layer.cornerRadius = discovery ? 0 : 8
-        nameLabel.font = .systemFont(ofSize: 13, weight: discovery ? .regular : .medium)
-        nameTop.constant = discovery ? 3 : 6
+        nameLabel.font = .systemFont(ofSize: 13, weight: discovery ? .regular : .bold)
+        nameTop.constant = discovery ? 3 : 4
     }
 
     func configure(_ comic: ComicCore.ComicSummary, referer: String, library: LocalLibrary,

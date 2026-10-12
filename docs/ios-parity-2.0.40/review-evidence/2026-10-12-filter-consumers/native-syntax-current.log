@@ -1,0 +1,4 @@
+CHECK application-tests Release
+CHECK application-tests DEBUG
+CHECK files-fixture Release
+CHECK files-fixture DEBUG

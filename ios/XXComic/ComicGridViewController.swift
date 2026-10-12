@@ -432,7 +432,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         refreshID = UUID(); refreshTask?.cancel(); refreshTask = nil
         let token = refreshID
         isListLayout = !BookshelfLayoutHelper.isGridMode(defaults: environment.defaults, scope: currentScope)
-        let layoutImg = (isListLayout ? ParityIcon.layoutGrid : .layoutList).image(size: 26)
+        let layoutImg = (isListLayout ? ParityIcon.layoutGrid : .layoutList).image(size: 16)
         layoutControl?.setImage(layoutImg, for: .normal)
         layoutControl?.accessibilityLabel = isListLayout ? "网格" : "列表"
 
