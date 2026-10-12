@@ -1,0 +1,10 @@
+{
+  "raw": "core-impact.log",
+  "rawBytes": 5093,
+  "rawSHA256": "a09581867bdf8db5e896b66e89d2fad95e15b2fec7a2e8ebabf6568ddcb2f428",
+  "archive": "core-impact.log.gz",
+  "archiveBytes": 1347,
+  "archiveSHA256": "cfeaeddf5473c03da30661c42b17086e618eebb96dc093147d193a616a2258a2",
+  "decompressedBytesIdentical": true,
+  "reason": "Compiler warning stdout contains intentional trailing whitespace; retain exact original bytes in gzip instead of rewriting evidence"
+}

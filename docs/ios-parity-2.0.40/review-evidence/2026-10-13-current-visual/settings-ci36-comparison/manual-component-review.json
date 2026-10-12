@@ -1,0 +1,64 @@
+{
+  "iosRevision": "52ea72e61aceae8d8976f863d06c111b94d9d7a9",
+  "currentDeliveryGatePassed": false,
+  "reviewed": [
+    {
+      "case": "iphone_portrait_light_settings_reference_empty",
+      "sha256": "1cd9913c61552b98b84a05fbb963e870ebf42e65f9e23ed8199ebd432552762c",
+      "observations": "11入口、图标、分组、两行说明、50启用源、0条历史、统计关闭与主题自动一致；iOS真实系统占用非0、版本后缀/安全区/字形差异公开。手机横屏分组标题未随卡片避开安全区，已另修，需当前实拍复验。",
+      "review": "实际完整侧图人工查看，无遮裁",
+      "iosTestStatus": "Success"
+    },
+    {
+      "case": "iphone_portrait_dark_settings_reference_empty",
+      "sha256": "b203800601e07feea95c47de249ea017dc44b6b85607dd84166a2befb64c2181",
+      "observations": "11入口、图标、分组、两行说明、50启用源、0条历史、统计关闭与主题自动一致；iOS真实系统占用非0、版本后缀/安全区/字形差异公开。手机横屏分组标题未随卡片避开安全区，已另修，需当前实拍复验。",
+      "review": "实际完整侧图人工查看，无遮裁",
+      "iosTestStatus": "Failure"
+    },
+    {
+      "case": "iphone_landscape_light_settings_reference_empty",
+      "sha256": "dce8d5644c62ea22b4e461627c7a7ed8fc090b5d7ab4af94683ee43872984582",
+      "observations": "11入口、图标、分组、两行说明、50启用源、0条历史、统计关闭与主题自动一致；iOS真实系统占用非0、版本后缀/安全区/字形差异公开。手机横屏分组标题未随卡片避开安全区，已另修，需当前实拍复验。",
+      "review": "实际完整侧图人工查看，无遮裁",
+      "iosTestStatus": "Success"
+    },
+    {
+      "case": "iphone_landscape_dark_settings_reference_empty",
+      "sha256": "4e3ba36d787f89db644f20876c2d06bb95225535569cfa0cde732143c1bbf5ed",
+      "observations": "11入口、图标、分组、两行说明、50启用源、0条历史、统计关闭与主题自动一致；iOS真实系统占用非0、版本后缀/安全区/字形差异公开。手机横屏分组标题未随卡片避开安全区，已另修，需当前实拍复验。",
+      "review": "实际完整侧图人工查看，无遮裁",
+      "iosTestStatus": "Success"
+    },
+    {
+      "case": "ipad_portrait_light_settings_reference_empty",
+      "sha256": "908d014fcc8a8f70310a9847975172f1d358fa26ca376f5a073c7893545a56cc",
+      "observations": "11入口、图标、分组、两行说明、50启用源、0条历史、统计关闭与主题自动一致；iOS真实系统占用非0、版本后缀/安全区/字形差异公开。手机横屏分组标题未随卡片避开安全区，已另修，需当前实拍复验。",
+      "review": "实际完整侧图人工查看，无遮裁",
+      "iosTestStatus": "Success"
+    },
+    {
+      "case": "ipad_portrait_dark_settings_reference_empty",
+      "sha256": "e8691060adda858a8c0c935a06b346195f319fc2e603a41e25431b695084d163",
+      "observations": "11入口、图标、分组、两行说明、50启用源、0条历史、统计关闭与主题自动一致；iOS真实系统占用非0、版本后缀/安全区/字形差异公开。手机横屏分组标题未随卡片避开安全区，已另修，需当前实拍复验。",
+      "review": "实际完整侧图人工查看，无遮裁",
+      "iosTestStatus": "Success"
+    },
+    {
+      "case": "ipad_landscape_light_settings_reference_empty",
+      "sha256": "5cae673ac68d75aa58db7b5a42f61124177dc0666c826ffaa928de84edc31713",
+      "observations": "11入口、图标、分组、两行说明、50启用源、0条历史、统计关闭与主题自动一致；iOS真实系统占用非0、版本后缀/安全区/字形差异公开。手机横屏分组标题未随卡片避开安全区，已另修，需当前实拍复验。",
+      "review": "实际完整侧图人工查看，无遮裁",
+      "iosTestStatus": "Failure"
+    },
+    {
+      "case": "ipad_landscape_dark_settings_reference_empty",
+      "sha256": "77fcbf9b1c71769d5fb95fe158f147cee5a959160f9bde0fa8ca42d1057ba8c5",
+      "observations": "11入口、图标、分组、两行说明、50启用源、0条历史、统计关闭与主题自动一致；iOS真实系统占用非0、版本后缀/安全区/字形差异公开。手机横屏分组标题未随卡片避开安全区，已另修，需当前实拍复验。",
+      "review": "实际完整侧图人工查看，无遮裁",
+      "iosTestStatus": "Success"
+    }
+  ],
+  "openIssue": "iPhone横屏分组标题安全区；见2026-10-13-settings-safe-area",
+  "boundary": "CI36父输入，3设置用例清理前提失败，不能标当前视觉门槛通过"
+}

@@ -48,10 +48,12 @@ public actor HTTPResponseCache {
         // lookup. URLCache alone owns eviction and its management files.
         cache.memoryCapacity = 0
         defer { cache.memoryCapacity = memoryCapacity }
+        cache.removeCachedResponses(since: .distantPast)
         cache.removeAllCachedResponses()
         try await waitForQuietAccounting(cache)
         // Catch responses already finishing when cleanup began, without issuing
         // a database deletion every time a retained index reports nonzero bytes.
+        cache.removeCachedResponses(since: .distantPast)
         cache.removeAllCachedResponses()
         try await waitForQuietAccounting(cache)
         cache.memoryCapacity = memoryCapacity
@@ -68,6 +70,7 @@ public actor HTTPResponseCache {
             let usage = HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))
             stable = usage == previous ? stable + 1 : 0
             if let previous, usage.memoryBytes > previous.memoryBytes || usage.diskBytes > previous.diskBytes {
+                cache.removeCachedResponses(since: .distantPast)
                 cache.removeAllCachedResponses()
                 stable = 0
             }

@@ -165,6 +165,12 @@ final class VisualMatrixUITests: ParityUITestCase {
         }
         XCTAssertTrue(firstHeading.isHittable)
         XCTAssertGreaterThanOrEqual(firstHeading.frame.minY, settingsTable.frame.minY)
+        let themeTitle = settingsTable.cells["settings.theme"].staticTexts["主题模式"]
+        XCTAssertTrue(themeTitle.isHittable)
+        let headingInsetFromTitle = themeTitle.frame.minX - firstHeading.frame.minX
+        XCTAssertGreaterThanOrEqual(headingInsetFromTitle, 0)
+        XCTAssertLessThanOrEqual(headingInsetFromTitle, 64,
+                                "分组标题必须与卡片一起避开横屏刘海安全区")
         XCTAssertEqual(app.tables.cells.count, 11)
         XCTAssertTrue(app.tables.cells["settings.theme"].staticTexts["自动"].exists)
         XCTAssertTrue(app.tables.cells["settings.sources"].staticTexts["50 个开启"].exists)

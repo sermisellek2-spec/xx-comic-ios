@@ -1,0 +1,555 @@
+{
+  "iosRevision": "d70e6cb50df1dd3b9020cd3d4054a077e7dea52c",
+  "androidBaseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "currentDeliveryGatePassed": false,
+  "reviewed": [
+    {
+      "case": "phone_portrait_light",
+      "page": "bookshelf_online",
+      "derivedSHA256": "91688d1de97c29ce8c940b0e902cca9ea78ff950d3c36c09c5d9b37432a29d2f",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "应用标题、三张同内容封面、未读5/6/6、更新至第6话、源名、续读/历史/分组/新增和底栏均清晰；卡片字重/边框及系统安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "discover",
+      "derivedSHA256": "b53f540fe23bea3b44fa8d5051566835002f28e6db110a82e7a1f942039deab6",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "发现标题、搜索框、单站入口、类型筛选、三张封面及底栏齐全；网格顺序一致，无按钮遮挡；字体栅格化和顶部间距存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "source_drawer",
+      "derivedSHA256": "e9901fe15b0b0837402b061972e2c7f91b7300102617b4694e4141a7156ba940",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "站源/分类切换、分组提示、冻结源顺序、选中状态、应用按钮齐全；iOS增加关闭按钮，抽屉间距及安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "search_results",
+      "derivedSHA256": "93c960e22fefc0f1b091ab6cedd9136019e4290d92ea8c88414f1c1cdc72cded",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同一关键词和单条同内容结果一致；类型/站源入口和搜索文字可读，横屏未被安全区遮挡。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "detail",
+      "derivedSHA256": "b00b025b6a7544da6636517a5e0b5da385ce34aeba161edefead37435f245bcf",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同内容封面、标题、作者/状态、下载、换源、简介、缓存目录、收藏和续读均可见；横屏信息区可滚动，iOS保留蓝色返回入口。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reader",
+      "derivedSHA256": "f68fb8af4086d84ff5056884d654ad8910b1e9b9ffcc1eb01f8cb8bff6ba6d70",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "漫画原图几何与图内内容一致；上一章/下一章、进度条及目录/换源/设置两行工具清晰；系统安全区和拖动圆点颜色存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reading_settings",
+      "derivedSHA256": "d0c4c50f2cb087e904bbb0f7d426ab91589b9a05875e6a06e51961bec9d40a0a",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "卷轴/普通/日漫三模式、三主题、状态信息/墨水屏/捏指/动画/白边/增强六开关齐全，无文字阅读/左右手入口；手机横屏只显示滚动窗口，iPad可显示更多项；iOS开关外观及关闭按钮存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reader_directory",
+      "derivedSHA256": "280db28dd635117a030900faf570e71a45049c1c1ff5748d489d8c54071392a0",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "六章、当前章蓝色指示、正序按钮和抽屉内容齐全，横屏快滚区域可见；行距和系统底部区域略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "bookshelf_online",
+      "derivedSHA256": "46ee94b776adb530ab1ee22c451170fcb48412ef58127b9a3557e6efac35bcaa",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "应用标题、三张同内容封面、未读5/6/6、更新至第6话、源名、续读/历史/分组/新增和底栏均清晰；卡片字重/边框及系统安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "discover",
+      "derivedSHA256": "f39b8aaf9edad186ed0724638855f06b8561c4f10c0371cb314cf485cc9487b1",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "发现标题、搜索框、单站入口、类型筛选、三张封面及底栏齐全；网格顺序一致，无按钮遮挡；字体栅格化和顶部间距存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "source_drawer",
+      "derivedSHA256": "d4e973fe80318a7b0a57b43bd8eb9b22cac7f8119351de23ee459d09157bb372",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "站源/分类切换、分组提示、冻结源顺序、选中状态、应用按钮齐全；iOS增加关闭按钮，抽屉间距及安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "search_results",
+      "derivedSHA256": "32ed2f3de5dec61515f1135e008d167f33c073f1af734ec097431dabd33c0dae",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同一关键词和单条同内容结果一致；类型/站源入口和搜索文字可读，横屏未被安全区遮挡。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "detail",
+      "derivedSHA256": "5f425f5c29144763ce1617acea8c41aca58873fd9cf0c73c8b63f5396f4d2255",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同内容封面、标题、作者/状态、下载、换源、简介、缓存目录、收藏和续读均可见；横屏信息区可滚动，iOS保留蓝色返回入口。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "reader",
+      "derivedSHA256": "80e6ea9c51f8c0c370be4f386d9d2f54de38696d7040d9ba7f59a57ba2f7dca9",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "漫画原图几何与图内内容一致；上一章/下一章、进度条及目录/换源/设置两行工具清晰；系统安全区和拖动圆点颜色存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "reading_settings",
+      "derivedSHA256": "bb9acf5a54937128a78f6cabd2ff4daed330bb2cf1c126cffb647367eb314c37",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "卷轴/普通/日漫三模式、三主题、状态信息/墨水屏/捏指/动画/白边/增强六开关齐全，无文字阅读/左右手入口；手机横屏只显示滚动窗口，iPad可显示更多项；iOS开关外观及关闭按钮存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "reader_directory",
+      "derivedSHA256": "b634f69a51420248952d6439ef7c9894e0f31052646c4160b989a125049bf08c",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "六章、当前章蓝色指示、正序按钮和抽屉内容齐全，横屏快滚区域可见；行距和系统底部区域略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "bookshelf_online",
+      "derivedSHA256": "ac7f96b6c65dd85b9352851702e3fd326cd527eca6da8c69f64ecc95263d9a53",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "应用标题、三张同内容封面、未读5/6/6、更新至第6话、源名、续读/历史/分组/新增和底栏均清晰；卡片字重/边框及系统安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "discover",
+      "derivedSHA256": "fa90b001883ece374f0b05d777f654f5d70f3080e4356b1c56e9911eda6b724b",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "发现标题、搜索框、单站入口、类型筛选、三张封面及底栏齐全；网格顺序一致，无按钮遮挡；字体栅格化和顶部间距存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "source_drawer",
+      "derivedSHA256": "088971547ce6c36cd0e04706c3e1b8ad63cdd0593bf696081efaac4262660ae5",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "站源/分类切换、分组提示、冻结源顺序、选中状态、应用按钮齐全；iOS增加关闭按钮，抽屉间距及安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "search_results",
+      "derivedSHA256": "0de4f8c4a98094c180fed13b688afcc6027c64afe826bb6335868b60db3c521d",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同一关键词和单条同内容结果一致；类型/站源入口和搜索文字可读，横屏未被安全区遮挡。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "detail",
+      "derivedSHA256": "7b2dbf0499058b61c16f0c4f8f51cd88f1b49501a46756abcb0bc29e32b2fc49",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同内容封面、标题、作者/状态、下载、换源、简介、缓存目录、收藏和续读均可见；横屏信息区可滚动，iOS保留蓝色返回入口。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "reader",
+      "derivedSHA256": "8bb9624e41becfd6819843079f500a794ed74e685bc74fafc5b73a625d37d889",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "漫画原图几何与图内内容一致；上一章/下一章、进度条及目录/换源/设置两行工具清晰；系统安全区和拖动圆点颜色存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "reading_settings",
+      "derivedSHA256": "576767502e981a428127b2e2b0dc9219152c84807a9b03cb2c899f59f89046b9",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "卷轴/普通/日漫三模式、三主题、状态信息/墨水屏/捏指/动画/白边/增强六开关齐全，无文字阅读/左右手入口；手机横屏只显示滚动窗口，iPad可显示更多项；iOS开关外观及关闭按钮存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "reader_directory",
+      "derivedSHA256": "f52738b86fe6a39c475b6c4813926a873f0d5c9fdeabdf47ff32a7b28c45895f",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "六章、当前章蓝色指示、正序按钮和抽屉内容齐全，横屏快滚区域可见；行距和系统底部区域略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "bookshelf_online",
+      "derivedSHA256": "803fad0cbcd584bb8351cbcec89617bd5769ad8b835a2ee168d5493350291f09",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "应用标题、三张同内容封面、未读5/6/6、更新至第6话、源名、续读/历史/分组/新增和底栏均清晰；卡片字重/边框及系统安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "discover",
+      "derivedSHA256": "128dc9fe02e5967f2bd68db20b2a5250e7439f9d87e729081322a73b1602a122",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "发现标题、搜索框、单站入口、类型筛选、三张封面及底栏齐全；网格顺序一致，无按钮遮挡；字体栅格化和顶部间距存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "source_drawer",
+      "derivedSHA256": "35dfb5653ba38b15b6a88722c7dfa6228bd49078f5517e91f46b43d8249baf3a",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "站源/分类切换、分组提示、冻结源顺序、选中状态、应用按钮齐全；iOS增加关闭按钮，抽屉间距及安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "search_results",
+      "derivedSHA256": "94d6ab8a2345cb4840273f5e6104dcf1ab8a77bf7d0eb377d92c268863bbc750",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同一关键词和单条同内容结果一致；类型/站源入口和搜索文字可读，横屏未被安全区遮挡。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "detail",
+      "derivedSHA256": "6bc0caaf1c1fe531cc37b43ef6f094c0cbb5c41cb9858c5ae844e8e77ab55feb",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同内容封面、标题、作者/状态、下载、换源、简介、缓存目录、收藏和续读均可见；横屏信息区可滚动，iOS保留蓝色返回入口。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "reader",
+      "derivedSHA256": "57c531839debee8ffba17d4d004d8457aff08e536a5a1d576a1e76bfa3f4c608",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "漫画原图几何与图内内容一致；上一章/下一章、进度条及目录/换源/设置两行工具清晰；系统安全区和拖动圆点颜色存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "reading_settings",
+      "derivedSHA256": "53838e975200fcecbb61558e4a9df51b53bdb792d32aaf26098d1776cd2484ec",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "卷轴/普通/日漫三模式、三主题、状态信息/墨水屏/捏指/动画/白边/增强六开关齐全，无文字阅读/左右手入口；手机横屏只显示滚动窗口，iPad可显示更多项；iOS开关外观及关闭按钮存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "reader_directory",
+      "derivedSHA256": "5378efd29d142f70b70b4119d783af32f4467dcdc0702c0eae9c135f9d3b2d69",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "六章、当前章蓝色指示、正序按钮和抽屉内容齐全，横屏快滚区域可见；行距和系统底部区域略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "bookshelf_online",
+      "derivedSHA256": "71cf5594bb24a5e5bead4de99d6dace7c297430f97fd60fcff98e5d0c1708c08",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "应用标题、三张同内容封面、未读5/6/6、更新至第6话、源名、续读/历史/分组/新增和底栏均清晰；卡片字重/边框及系统安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "discover",
+      "derivedSHA256": "f6c6631af2b0555aee00de832aea07044b92c4670c298ba65c57e184f0c438cc",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "发现标题、搜索框、单站入口、类型筛选、三张封面及底栏齐全；网格顺序一致，无按钮遮挡；字体栅格化和顶部间距存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "source_drawer",
+      "derivedSHA256": "91880eb320bc6bf78fe4cc457a6b3a5e69462d4b809e72c1ae14948afbba3306",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "站源/分类切换、分组提示、冻结源顺序、选中状态、应用按钮齐全；iOS增加关闭按钮，抽屉间距及安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "search_results",
+      "derivedSHA256": "33d56ded49b6fc1d8b2485631757cec26b8b215675fb3b6256c8ffb4e2ef1229",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同一关键词和单条同内容结果一致；类型/站源入口和搜索文字可读，横屏未被安全区遮挡。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "detail",
+      "derivedSHA256": "63a7a47bfa30fd37aa795e794f25a0ebdaf9a8040204db92e4402c3dd594d689",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同内容封面、标题、作者/状态、下载、换源、简介、缓存目录、收藏和续读均可见；横屏信息区可滚动，iOS保留蓝色返回入口。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "reader",
+      "derivedSHA256": "0e524e627f322623bcb0f9f156cc89b5419a9aeb9cd731f5d148fc4dd36281a9",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "漫画原图几何与图内内容一致；上一章/下一章、进度条及目录/换源/设置两行工具清晰；系统安全区和拖动圆点颜色存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "reading_settings",
+      "derivedSHA256": "c1c0c7a85db166fc6b452eb76a7d4dfd0c1a14c8aeb2ddf9ff07990ba9444fd0",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "卷轴/普通/日漫三模式、三主题、状态信息/墨水屏/捏指/动画/白边/增强六开关齐全，无文字阅读/左右手入口；手机横屏只显示滚动窗口，iPad可显示更多项；iOS开关外观及关闭按钮存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "reader_directory",
+      "derivedSHA256": "e8d8c59b90b481e6abbaee402461099c3112e6a81f44250c4dbb764aebdddfdb",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "六章、当前章蓝色指示、正序按钮和抽屉内容齐全，横屏快滚区域可见；行距和系统底部区域略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "bookshelf_online",
+      "derivedSHA256": "750d19a50b394cce3db5f40010794728d463c4ab3fd1cf27230357140b54f3d5",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "应用标题、三张同内容封面、未读5/6/6、更新至第6话、源名、续读/历史/分组/新增和底栏均清晰；卡片字重/边框及系统安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "discover",
+      "derivedSHA256": "fc6e3b937c9563d7baf4c764ddb58b71d8d4c2381d0a77767974efa22cbe15c0",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "发现标题、搜索框、单站入口、类型筛选、三张封面及底栏齐全；网格顺序一致，无按钮遮挡；字体栅格化和顶部间距存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "source_drawer",
+      "derivedSHA256": "e95af0c4b959d9bd519e6041351395f48a5a9381a3218049f7ea9246f0566ef9",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "站源/分类切换、分组提示、冻结源顺序、选中状态、应用按钮齐全；iOS增加关闭按钮，抽屉间距及安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "search_results",
+      "derivedSHA256": "1e5fb956f3baa76e9eb125e04a273bca292a5cf367e6652cd52cafa488e5da10",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同一关键词和单条同内容结果一致；类型/站源入口和搜索文字可读，横屏未被安全区遮挡。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "detail",
+      "derivedSHA256": "c21df6d1b617bfd7d1bd0e69e03fdecfd65263f961c041e4f2fc700877704f8a",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同内容封面、标题、作者/状态、下载、换源、简介、缓存目录、收藏和续读均可见；横屏信息区可滚动，iOS保留蓝色返回入口。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "reader",
+      "derivedSHA256": "b1beaeee7000c51e5e44211271ddd010af7d2dea6482bfef2ac98536c8cb9d1a",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "漫画原图几何与图内内容一致；上一章/下一章、进度条及目录/换源/设置两行工具清晰；系统安全区和拖动圆点颜色存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "reading_settings",
+      "derivedSHA256": "c8500fd88331be76309eb74afcd71d537882126cedc2be1a9e29d298dab56d7e",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "卷轴/普通/日漫三模式、三主题、状态信息/墨水屏/捏指/动画/白边/增强六开关齐全，无文字阅读/左右手入口；手机横屏只显示滚动窗口，iPad可显示更多项；iOS开关外观及关闭按钮存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "reader_directory",
+      "derivedSHA256": "76959ccf6979cbed391b73cc7c22500eefe992acdf3e4b6dc9be0d0707dcf797",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "六章、当前章蓝色指示、正序按钮和抽屉内容齐全，横屏快滚区域可见；行距和系统底部区域略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "bookshelf_online",
+      "derivedSHA256": "77bfa8ea4bef77c6e52829bf5d97a9a03ad9cd5ccb62a1c1e9971d14e3e58296",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "应用标题、三张同内容封面、未读5/6/6、更新至第6话、源名、续读/历史/分组/新增和底栏均清晰；卡片字重/边框及系统安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "discover",
+      "derivedSHA256": "e7c25ab623f44fdd5082f3892440c85af556342e1aed0803a39bd94d304c4893",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "发现标题、搜索框、单站入口、类型筛选、三张封面及底栏齐全；网格顺序一致，无按钮遮挡；字体栅格化和顶部间距存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "source_drawer",
+      "derivedSHA256": "ddf8f5d19fed3003df4c7c7991fe8b4185881ad9b5f91cf6882a59532b44c174",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "站源/分类切换、分组提示、冻结源顺序、选中状态、应用按钮齐全；iOS增加关闭按钮，抽屉间距及安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "search_results",
+      "derivedSHA256": "edaac34b4651a405822669f671f3cd001ed5d1d76f79da30d36fc84e813da5df",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同一关键词和单条同内容结果一致；类型/站源入口和搜索文字可读，横屏未被安全区遮挡。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "detail",
+      "derivedSHA256": "882cd1f7413e4995c7f390b89bc8c67799f5ae68da97a98b3a10f187737b9802",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同内容封面、标题、作者/状态、下载、换源、简介、缓存目录、收藏和续读均可见；横屏信息区可滚动，iOS保留蓝色返回入口。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "reader",
+      "derivedSHA256": "9e42527d9c49a22108099b894c2f0fd8dd3613107f15e557179141f13450410d",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "漫画原图几何与图内内容一致；上一章/下一章、进度条及目录/换源/设置两行工具清晰；系统安全区和拖动圆点颜色存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "reading_settings",
+      "derivedSHA256": "81684b1d5d2834a7f3b15a5a3651364fc5fff6a09e1eb30d9f8eb8a5f36b0be8",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "卷轴/普通/日漫三模式、三主题、状态信息/墨水屏/捏指/动画/白边/增强六开关齐全，无文字阅读/左右手入口；手机横屏只显示滚动窗口，iPad可显示更多项；iOS开关外观及关闭按钮存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "reader_directory",
+      "derivedSHA256": "f4e2090352ceda3cd9ea195203d0be8d857b89b646c85d2f45dd31df1b7a0b6f",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "六章、当前章蓝色指示、正序按钮和抽屉内容齐全，横屏快滚区域可见；行距和系统底部区域略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "bookshelf_online",
+      "derivedSHA256": "2c3481015a54b35b555e4d032d71a19ff1b279bde80105e4a936d279f370ec4f",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "应用标题、三张同内容封面、未读5/6/6、更新至第6话、源名、续读/历史/分组/新增和底栏均清晰；卡片字重/边框及系统安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "discover",
+      "derivedSHA256": "e97422299ccecc617e3c9f773f3b451a8d601f3b1457f0a9fa64a0f10dca793f",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "发现标题、搜索框、单站入口、类型筛选、三张封面及底栏齐全；网格顺序一致，无按钮遮挡；字体栅格化和顶部间距存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "source_drawer",
+      "derivedSHA256": "bc2164c68039d0795c384ae09e34a123c53d4113bbfa3bf487bb7b655db283c5",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "站源/分类切换、分组提示、冻结源顺序、选中状态、应用按钮齐全；iOS增加关闭按钮，抽屉间距及安全区略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "search_results",
+      "derivedSHA256": "b5b13edf59ed491eac4b84cceaae605bcb60cb8758337f3ea6c92c06dc24f2be",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同一关键词和单条同内容结果一致；类型/站源入口和搜索文字可读，横屏未被安全区遮挡。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "detail",
+      "derivedSHA256": "74c7bb084c05101ef99f36ecf06c3a44a5771b964d5d0dacd0098e42dd09d3e6",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "同内容封面、标题、作者/状态、下载、换源、简介、缓存目录、收藏和续读均可见；横屏信息区可滚动，iOS保留蓝色返回入口。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "reader",
+      "derivedSHA256": "ead14b2390d809ecb5452c129632fe8ef3dee00e8de6c30b3c7eec42be481437",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "漫画原图几何与图内内容一致；上一章/下一章、进度条及目录/换源/设置两行工具清晰；系统安全区和拖动圆点颜色存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "reading_settings",
+      "derivedSHA256": "3d240b96f57d5ef8ee0446ac240d281ac656d6085a6a01692013162f3d618650",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "卷轴/普通/日漫三模式、三主题、状态信息/墨水屏/捏指/动画/白边/增强六开关齐全，无文字阅读/左右手入口；手机横屏只显示滚动窗口，iPad可显示更多项；iOS开关外观及关闭按钮存在小差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "reader_directory",
+      "derivedSHA256": "535e5a33ca92a06d6ad608436030615be50bb65e91a9356a59695f954f247b3f",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance由比较工具核对；无遮罩/裁剪/非等比拉伸",
+      "observations": "六章、当前章蓝色指示、正序按钮和抽屉内容齐全，横屏快滚区域可见；行距和系统底部区域略有差异。",
+      "status": "minor differences observed; current delivery evidence pending"
+    }
+  ],
+  "openIssues": [],
+  "acceptedMinorDifferences": [
+    {
+      "component": "阅读进度圆点",
+      "observation": "运行金标初态Android蓝色，iOS按阅读主题呈黑/白；冻结applyReaderThemeInPlace最终将进度/拖动圆点染为阅读文字色，iOS已消费该规则。保留外观差异，未据初态截图反改最终主题消费。",
+      "source": "app/src/main/java/com/xxcomic/MainActivity.java",
+      "sourceLines": [
+        {
+          "line": 5738,
+          "text": "readerSeekBar.setThumbTintList(seekColor);"
+        },
+        {
+          "line": 5739,
+          "text": "readerSeekBar.setProgressTintList(seekColor);"
+        },
+        {
+          "line": 8628,
+          "text": "seekBar.setProgressTintList(android.content.res.ColorStateList.valueOf(UIHelpers.ACCENT));"
+        },
+        {
+          "line": 8629,
+          "text": "seekBar.setThumbTintList(android.content.res.ColorStateList.valueOf(UIHelpers.ACCENT));"
+        },
+        {
+          "line": 13254,
+          "text": "settingsUpdateProgressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(UIHelpers.ACCENT));"
+        }
+      ]
+    },
+    {
+      "component": "系统与原生控件",
+      "observation": "安全区/主页指示条、iOS返回入口、抽屉关闭X、开关外观及字体栅格化小差异；未发现重要缺失、遮挡或错误截断。"
+    }
+  ],
+  "boundary": "仅父输入d70e6cb的64页组件审查；不能代替当前ce0607c交付版完整回归与视觉验收",
+  "recordedAtUTC": "2026-10-12T20:20:52.650820+00:00"
+}

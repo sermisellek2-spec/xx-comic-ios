@@ -1,25 +1,17 @@
 # 当前执行状态
 
-更新：2026-10-13。Android固定2.0.40/340/696e80a44ab36b19de6f630565df32978e55a19e；iOS在codex/ios-port。用户只做最后总验收，上传与打包仅sermisellek2-spec/xx-comic-ios。**非站源完整门槛尚未通过，尚无当前总验收IPA。**
+更新：2026-10-13。Android冻结2.0.40 / 340 / `696e80a44ab36b19de6f630565df32978e55a19e`。用户仅最后总验收，上传及打包只用 `sermisellek2-spec/xx-comic-ios`。**当前非站源门槛未通过，尚无总验收IPA。**
 
-按用户最新范围已删除文字阅读、排版设置与自动跳转，保留图片漫画EPUB/PDF/Kindle。小说、图文混排新导入明确拒绝，旧JSON/历史/原包兼容保留。READER-13为“用户移除”，不计当前功能门槛。卷轴、普通、日漫RTL保留，旧左右手不恢复。
+按用户指令删除文字阅读/排版，保留图片漫画EPUB、PDF、Kindle；小说/图文混排新导入明确拒绝，旧JSON、历史、原包仅兼容，不误删。卷轴、普通、日漫RTL保留，旧左右手不恢复。真实站源继续暂停，不作为本次出包前置；当前51源、默认启用50（duya关）的目录和确定性流程仍在验收范围。
 
-真实站源验收继续暂停，后续由用户判断需修哪些源，不自动恢复，也不作为本次出包前置。51当前源、默认50（duya关）的目录/顺序/开关及确定性发现、搜索、验证、换源、配置、下载流程继续自验。
+CI34父输入1990c84已完整成功：两SDK/图标/Release隔离，Apple Core929项零失败，iPhone及iPad各30原生和93UI全部通过，无跳过；130张实拍已保存。[完整原件与边界](review-evidence/2026-10-13-ci34-results/README.md)。该版本不包含随后设置与缓存修正，不能标当前交付通过。
 
-当前已补1/2图Kindle漫画逐页转换、精确旧原包恢复、第二章续读UI断言和历史空header高度0。最新本机完整Core922项执行、2个Apple PDF跳过、0失败、152.493秒、实际退出0，267个输入前后SHA一致。13项缓存影响回归0失败/12.141秒/退出0；88个原生Swift两配置仅语法解析通过。[当前缓存修正与证据](review-evidence/2026-10-13-cache-contract/README.md)、[短漫画接续](review-evidence/2026-10-13-short-comic-recovery/README.md)。
+最新CI37/ce0607c影响复验失败：Core929零失败、两SDK/图标/隔离通过；每设备32原生各有1失败用例，手机directory旧正文及重开仍命中，平板真实Cookie清理超时。两设备6UI各4通过、2设置参考的清理前提失败。[CI37原件](review-evidence/2026-10-13-ci37-results/README.md)。CI35/36失败原件保持，不把实际正文残留当作系统索引。
 
-CI32父输入54f8206已完整失败：Debug/Release SDK、实际图标、Release隔离通过；Mac Core926项/1失败/152.007秒，物理缓存144016字节未归零；双设备原生各30通过，每设备22UI中16通过/6个失败用例（11条断言）。7项漫画导入/拒绝小说混排/旧记录保护双设备均通过。失败仍为缓存反馈、历史初始展示及4项设置参考。该输入不含d70短漫画/第二章强化/历史约束或最新缓存修正。[CI32原件](review-evidence/2026-10-13-ci32-results/README.md)。
+当前候选保留URLCache后端/容量，以两个公开清理接口清理实际响应；WebKit先完成无网络本地页初始化，再等待实际全数据清理回调。保留8秒失败/重试、10秒UI、正文/重开/原包/后来缓存能力断言。13项核心影响0失败，90Swift两配置仅语法解析通过；当前Linux完整Core922项/2个Apple PDF跳过/0失败/148.348秒，实际退出0且输入SHA不变；当前Apple复验待上传运行。[候选及本机记录](review-evidence/2026-10-13-cache-local-document/README.md)。
 
-缓存原“URLCache物理0”口径经冻结Android、Apple公开API和隔离0联网探针确认不等同漫画图片缓存清理。原测试与失败逐字节保留，当前改为实际记账一致、正文不命中和同路径重开不得恢复，容量与后来缓存能力/原包保护仍检查；设置显示真实残留字节，清理反馈说明系统管理文件或新请求，不扣索引/伪造0。此项测试契约变更透明记录，当前Apple复验尚未通过，不把历史失败改成通过。
+父输入64页同内容侧图已逐组件检查；8设置侧图另已查看。布局/文字/控件未发现重要缺失；iPhone横屏设置分组标题未避开安全区，当前已修并在原八场景检查中补实际横向对齐约束，须当前Apple实拍确认。所有旧图均标父输入，不算当前视觉通过。[64页审查](review-evidence/2026-10-13-current-visual/ci33-comparison/manual-component-review.json)、[设置审查](review-evidence/2026-10-13-current-visual/settings-ci36-comparison/manual-component-review.json)、[安全区修正](review-evidence/2026-10-13-settings-safe-area/README.md)。
 
-CI33（38286395819/d70e6cb）已完整失败：每设备93UI中88成功，仅缓存清理及4项主设置参考失败；两SDK/图标/隔离及30原生通过，核心929/1失败。CI34（38289876722/1990c84）完整运行继续收取。二者不含当前缓存候选。继续收集完整原件，视觉逐组件审查、Files/恢复、原生PDF/CoreML/WebKit与Release隔离全部完成后，再只在指定仓库生成最终IPA。中途不要求用户试包。
+通过当前影响复验后自动运行同版本full，复核当前64页、8设置及主屏图标；全部门槛实际通过后，使用成功full保存的Release原字节组装总验收IPA，核对图标/版本/完整资源字节与SHA，用户自行签名安装。打包工具只做语法核验，尚未实际归档/打包，不要求用户中途试包。
 
-[阶段方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md)、[功能矩阵](requirements.csv)、[差异](differences.md)、[完整门槛](NON_SOURCE_GATE.md)。旧整页证据继续保留为历史，不能覆盖当前状态。
-
-CI34（38289876722/1990c84）最新部分原日志已观察两SDK/Release隔离通过、Mac Core929项0失败/143.692秒；双设备完整UI与视觉尚未结束。主设置另补8张实际方向/尺寸验证的安卓同尺寸原图，确认2个phone横屏父输入拍摄滚动状态不同，当前参考测试补真实回顶部、原断言保留，需后续当前Apple运行。[设置参考接续](review-evidence/2026-10-13-settings-reference-state/README.md)。
-
-CI35（38293643264/1006ec6）设置影响复验完整失败：两SDK/图标/Release隔离通过，Apple Core929/0；手机30原生通过，iPad30原生有缓存正文/重开8条失败断言。双设备历史清空/重启保留收藏通过，缓存UI仍10秒未完成；设置参考只实际拍出3张，不能标8张通过。[CI35原件](review-evidence/2026-10-13-ci35-results/README.md)。
-
-当前候选保持URLCache磁盘后端和容量，减少重复异步清理；WebKit清理保持真实上下文至回调，8秒未完成明确失败/重试。原正文、重开、10秒UI检查均未改；13项现有核心影响回归0失败/8.294秒，90个Swift文件两配置仅语法解析退出0（含新原生用例及探针）。当前必需Apple复验未运行，不继承父输入通过。[缓存完成接续](review-evidence/2026-10-13-cache-completion/README.md)。
-
-CI36设置影响已完整失败，929核心与每设备31原生通过，UI手机5/6、平板4/6通过。当前采用实际WebKit记录清理并补Cookie检查，32原生/93UI仍待Apple完整运行，原断言保持。[CI36原件](review-evidence/2026-10-13-ci36-results/README.md)、[记录清理候选](review-evidence/2026-10-13-web-record-cleanup/README.md)。
+[阶段方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md)、[需求矩阵](requirements.csv)、[差异台账](differences.md)、[完整门槛](NON_SOURCE_GATE.md)。此前状态原文与失败均保留为历史证据；详见本轮目录的historical-STATUS-before-ci37.md。

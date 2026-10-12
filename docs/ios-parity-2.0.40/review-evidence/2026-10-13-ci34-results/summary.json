@@ -1,0 +1,52 @@
+{
+  "runID": 38289876722,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38289876722",
+  "revision": "1990c84582115cd1ccead0a878c5e952338fc65d",
+  "scope": "full",
+  "conclusion": "success",
+  "packageIPA": false,
+  "appleCore": {
+    "executed": 929,
+    "failures": 0,
+    "seconds": 143.692
+  },
+  "nativePerDevice": {
+    "executed": 30,
+    "failures": 0
+  },
+  "UI": [
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "executedUI": 93,
+      "successfulUI": 93,
+      "failedUI": []
+    },
+    {
+      "device": "iPhone 15 Pro",
+      "executedUI": 93,
+      "successfulUI": 93,
+      "failedUI": []
+    }
+  ],
+  "capturedVisualPNG": 130,
+  "skipped": 0,
+  "originals": {
+    "logs-original.zip": {
+      "path": "ios/build/ci34/logs-original.zip",
+      "bytes": 1266617,
+      "sha256": "d36c49a597a953cf9173c92b5eba5b65f9837a49f0fdd907817a838bb21d7563"
+    },
+    "build-original.log": {
+      "path": "ios/build/ci34/logs-extracted/0_build.txt",
+      "bytes": 13332344,
+      "sha256": "c5bb360e1085a188f19a4537edb3dfe3d24fb27abb62de4d47d667e9c75b9f6a"
+    },
+    "visual-original.zip": {
+      "path": "ios/build/ci34/visual-original.zip",
+      "bytes": 61989341,
+      "sha256": "bf6ef6b24b82a38a2097a5bc79951167ec92744b4961ee1845ad58bd135f1a95"
+    }
+  },
+  "boundary": "父输入1990c84完整回归通过；不包含1006ec6/52ea72e/ce0607c设置与缓存修正，不能作为当前版本最终通过证据",
+  "recordedAtUTC": "2026-10-12T20:20:53.486179+00:00"
+}

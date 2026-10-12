@@ -129,8 +129,8 @@ final class SettingsViewController: UITableViewController {
         label.translatesAutoresizingMaskIntoConstraints = false
         header.addSubview(label)
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 18),
-            label.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -18),
+            label.leadingAnchor.constraint(equalTo: header.safeAreaLayoutGuide.leadingAnchor, constant: 18),
+            label.trailingAnchor.constraint(equalTo: header.safeAreaLayoutGuide.trailingAnchor, constant: -18),
             label.topAnchor.constraint(equalTo: header.topAnchor, constant: 10),
             label.bottomAnchor.constraint(equalTo: header.bottomAnchor, constant: -5)
         ])

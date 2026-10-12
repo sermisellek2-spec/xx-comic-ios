@@ -1,0 +1,21 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--mount",
+    "type=bind,source=F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port\\ios\\ComicCore,target=/work",
+    "-w",
+    "/work",
+    "swift:5.10-jammy",
+    "swift",
+    "test",
+    "-j",
+    "2"
+  ],
+  "exitCode": 0,
+  "inputsUnchanged": true,
+  "inputs": 266,
+  "platform": "Linux Swift 5.10; Apple checks remain separate",
+  "recordedAtUTC": "2026-10-12T20:36:45.507746+00:00"
+}

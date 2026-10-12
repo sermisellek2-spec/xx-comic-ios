@@ -2,14 +2,17 @@ import UIKit
 import WebKit
 import ComicCore
 
-/// Remove the data actually held by WebKit without creating a new document.
+/// Remove WebKit data after initializing its process with an isolated local document.
 /// An unresponsive framework must produce a retryable failure, not leave the
 /// cache screen permanently disabled or announce a cleanup that never finished.
 @MainActor
-private final class WebCacheRemoval {
+private final class WebCacheRemoval: NSObject, WKNavigationDelegate {
     private var continuation: CheckedContinuation<Void, Error>?
     private var timeout: Task<Void, Never>?
     private let store = WKWebsiteDataStore.default()
+    private var context: WKWebView?
+    private var removalStarted = false
+    private var stage = "local-document"
 
     func run() async throws {
         try Task.checkCancellation()
@@ -17,29 +20,49 @@ private final class WebCacheRemoval {
             self.continuation = continuation
             timeout = Task { [self] in
                 do { try await Task.sleep(nanoseconds: 8_000_000_000) } catch { return }
-                finish(.failure(URLError(.timedOut)))
+                finish(.failure(NSError(domain: NSURLErrorDomain, code: NSURLErrorTimedOut,
+                                        userInfo: ["cache.cleanup.stage": stage])))
             }
-            let types = WKWebsiteDataStore.allWebsiteDataTypes()
-            store.fetchDataRecords(ofTypes: types) { [self] records in
-                Task { @MainActor [self] in
-                    // A late callback after timeout must not start another mutation.
-                    guard self.continuation != nil else { return }
-                    if records.isEmpty {
-                        finish(.success(()))
-                    } else {
-                        store.removeData(ofTypes: types, for: records) { [self] in
-                            Task { @MainActor [self] in finish(.success(())) }
-                        }
-                    }
-                }
-            }
+            // Finish initializing the real WebKit process before requesting
+            // removal. A merely constructed, never-loaded context can leave
+            // data-store callbacks pending. This local document has no network
+            // resources, never visits a source and is never presented.
+            let configuration = WKWebViewConfiguration()
+            configuration.websiteDataStore = store
+            let view = WKWebView(frame: .zero, configuration: configuration)
+            context = view; view.navigationDelegate = self
+            view.loadHTMLString("<meta http-equiv='Content-Security-Policy' content=\"default-src 'none'\"><title>Cache maintenance</title>", baseURL: nil)
         }
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        guard webView === context, continuation != nil, !removalStarted else { return }
+        removalStarted = true; stage = "remove-data"
+        store.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) { [self] in
+            Task { @MainActor [self] in finish(.success(())) }
+        }
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        guard webView === context else { return }
+        finish(.failure(error))
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        guard webView === context else { return }
+        finish(.failure(error))
+    }
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        guard webView === context else { return }
+        finish(.failure(URLError(.networkConnectionLost)))
     }
 
     private func finish(_ result: Result<Void, Error>) {
         guard let continuation else { return }
         self.continuation = nil
         timeout?.cancel(); timeout = nil
+        context?.navigationDelegate = nil; context?.stopLoading(); context = nil
         continuation.resume(with: result)
     }
 }

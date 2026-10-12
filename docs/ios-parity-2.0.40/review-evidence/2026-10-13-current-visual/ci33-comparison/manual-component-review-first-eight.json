@@ -1,0 +1,80 @@
+{
+  "iosRevision": "d70e6cb50df1dd3b9020cd3d4054a077e7dea52c",
+  "androidBaseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "currentDeliveryGatePassed": false,
+  "reviewed": [
+    {
+      "case": "phone_portrait_light",
+      "page": "bookshelf_online",
+      "derivedSHA256": "91688d1de97c29ce8c940b0e902cca9ea78ff950d3c36c09c5d9b37432a29d2f",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance已由比较工具核对",
+      "observations": "标题/卡片/图标/按钮无缺失或错误截断；系统上/下安全区与字体栅格化差异公开，抽屉增加关闭按钮；应用内容未遮裁",
+      "status": "minor differences observed; delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "discover",
+      "derivedSHA256": "b53f540fe23bea3b44fa8d5051566835002f28e6db110a82e7a1f942039deab6",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance已由比较工具核对",
+      "observations": "标题/卡片/图标/按钮无缺失或错误截断；系统上/下安全区与字体栅格化差异公开，抽屉增加关闭按钮；应用内容未遮裁",
+      "status": "minor differences observed; delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "source_drawer",
+      "derivedSHA256": "e9901fe15b0b0837402b061972e2c7f91b7300102617b4694e4141a7156ba940",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance已由比较工具核对",
+      "observations": "标题/卡片/图标/按钮无缺失或错误截断；系统上/下安全区与字体栅格化差异公开，抽屉增加关闭按钮；应用内容未遮裁",
+      "status": "minor differences observed; delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "search_results",
+      "derivedSHA256": "93c960e22fefc0f1b091ab6cedd9136019e4290d92ea8c88414f1c1cdc72cded",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance已由比较工具核对",
+      "observations": "标题/卡片/图标/按钮无缺失或错误截断；系统上/下安全区与字体栅格化差异公开，抽屉增加关闭按钮；应用内容未遮裁",
+      "status": "minor differences observed; delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "detail",
+      "derivedSHA256": "b00b025b6a7544da6636517a5e0b5da385ce34aeba161edefead37435f245bcf",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance已由比较工具核对",
+      "observations": "标题/卡片/图标/按钮无缺失或错误截断；系统上/下安全区与字体栅格化差异公开，抽屉增加关闭按钮；应用内容未遮裁",
+      "status": "minor differences observed; delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reader",
+      "derivedSHA256": "f68fb8af4086d84ff5056884d654ad8910b1e9b9ffcc1eb01f8cb8bff6ba6d70",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance已由比较工具核对",
+      "observations": "标题/卡片/图标/按钮无缺失或错误截断；系统上/下安全区与字体栅格化差异公开，抽屉增加关闭按钮；应用内容未遮裁",
+      "status": "minor differences observed; delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reading_settings",
+      "derivedSHA256": "d0c4c50f2cb087e904bbb0f7d426ab91589b9a05875e6a06e51961bec9d40a0a",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance已由比较工具核对",
+      "observations": "标题/卡片/图标/按钮无缺失或错误截断；系统上/下安全区与字体栅格化差异公开，抽屉增加关闭按钮；应用内容未遮裁",
+      "status": "minor differences observed; delivery evidence pending"
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reader_directory",
+      "derivedSHA256": "280db28dd635117a030900faf570e71a45049c1c1ff5748d489d8c54071392a0",
+      "method": "实际完整画布侧图人工查看；来源原图与provenance已由比较工具核对",
+      "observations": "标题/卡片/图标/按钮无缺失或错误截断；系统上/下安全区与字体栅格化差异公开，抽屉增加关闭按钮；应用内容未遮裁",
+      "status": "minor differences observed; delivery evidence pending"
+    }
+  ],
+  "openIssues": [
+    {
+      "case": "phone_portrait_light",
+      "page": "reader",
+      "component": "进度拖动圆点",
+      "observation": "Android蓝色，iOS随文字颜色呈黑色；需核对冻结消费者后决定修正",
+      "priority": "visual minor; confirmed appearance, source check pending"
+    }
+  ]
+}

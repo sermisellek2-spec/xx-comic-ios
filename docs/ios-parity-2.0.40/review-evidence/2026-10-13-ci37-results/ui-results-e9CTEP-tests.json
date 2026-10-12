@@ -1,0 +1,50 @@
+[
+  {
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "revision": "ce0607c8b2f8168d01885344f31bc4ce2459deb6",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "WebCacheCleanupTests/testExistingWebsiteCookieIsActuallyRemovedWithoutLoadingAWebsite()",
+    "status": "Failure",
+    "revision": "ce0607c8b2f8168d01885344f31bc4ce2459deb6",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+    "status": "Success",
+    "revision": "ce0607c8b2f8168d01885344f31bc4ce2459deb6",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "SettingsParityUITests/testHistoryClearCancellationAndConfirmationPreserveFavoritesAcrossRelaunch()",
+    "status": "Success",
+    "revision": "ce0607c8b2f8168d01885344f31bc4ce2459deb6",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+    "status": "Failure",
+    "revision": "ce0607c8b2f8168d01885344f31bc4ce2459deb6",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+    "status": "Failure",
+    "revision": "ce0607c8b2f8168d01885344f31bc4ce2459deb6",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+    "status": "Success",
+    "revision": "ce0607c8b2f8168d01885344f31bc4ce2459deb6",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+    "status": "Success",
+    "revision": "ce0607c8b2f8168d01885344f31bc4ce2459deb6",
+    "device": "iPad Pro 11-inch (M4)"
+  }
+]

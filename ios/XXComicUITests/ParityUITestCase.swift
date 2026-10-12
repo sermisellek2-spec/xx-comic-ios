@@ -8,7 +8,15 @@ class ParityUITestCase: XCTestCase {
         let predicate = NSPredicate(format: "label == %@ OR label BEGINSWITH %@",
                                     "缓存已清理，收藏与本地漫画已保留", "已执行缓存清理，收藏与本地漫画已保留")
         let ready = XCTNSPredicateExpectation(predicate: predicate, object: notice)
-        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 10), .completed, file: file, line: line)
+        let result = XCTWaiter.wait(for: [ready], timeout: 10)
+        if result != .completed {
+            let snapshot = XCTAttachment(data: XCUIScreen.main.screenshot().pngRepresentation,
+                                         uniformTypeIdentifier: "public.png")
+            snapshot.name = "cache-result-failure-screen"; snapshot.lifetime = .keepAlways; add(snapshot)
+            let details = XCTAttachment(string: "label=\(notice.label)\nvalue=\(notice.value ?? "missing")\n" + app.debugDescription)
+            details.name = "cache-result-failure-details"; details.lifetime = .keepAlways; add(details)
+        }
+        XCTAssertEqual(result, .completed, file: file, line: line)
         XCTAssertTrue(app.buttons["确认清理"].isEnabled, file: file, line: line)
         XCTAssertFalse(notice.label.contains("请重试"), file: file, line: line)
     }

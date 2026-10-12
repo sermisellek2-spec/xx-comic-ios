@@ -1,0 +1,68 @@
+{
+  "runID": 38302574712,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38302574712",
+  "revision": "ce0607c8b2f8168d01885344f31bc4ce2459deb6",
+  "scope": "settings-reference",
+  "conclusion": "failure",
+  "appleCore": {
+    "executed": 929,
+    "failures": 0,
+    "seconds": 112.094
+  },
+  "native": [
+    {
+      "device": "iPhone 15 Pro",
+      "executed": 32,
+      "failedCases": 1,
+      "failedAssertions": 8,
+      "failure": "directory responses and reopened responses still hit"
+    },
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "executed": 32,
+      "failedCases": 1,
+      "failedAssertions": 1,
+      "failure": "actual existing cookie cleanup timed out (-1001)"
+    }
+  ],
+  "UI": [
+    {
+      "device": "iPhone 15 Pro",
+      "executedUI": 6,
+      "successfulUI": 4,
+      "failedUI": [
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()"
+      ]
+    },
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "executedUI": 6,
+      "successfulUI": 4,
+      "failedUI": [
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()"
+      ]
+    }
+  ],
+  "capturedVisualPNG": 8,
+  "originals": {
+    "logs-original.zip": {
+      "path": "ios/build/ci37/logs-original.zip",
+      "bytes": 680851,
+      "sha256": "59afd13f965bc7817382ab9bd8a131cb50a7c554c52cd2cfe8247dfa4180fa90"
+    },
+    "build-log-original.zip": {
+      "path": "ios/build/ci37/build-log-original.zip",
+      "bytes": 236256,
+      "sha256": "8792a5c118e696320c6720f6356e7a9e52cd024986a7f2c4e29fa32a6c16264b"
+    },
+    "visual-original.zip": {
+      "path": "ios/build/ci37/visual-original.zip",
+      "bytes": 2487020,
+      "sha256": "998b3537981bf341814429d4f82364f131ffb66e35275b3d60146b0dd2732a70"
+    }
+  },
+  "recordedAtUTC": "2026-10-12T20:33:46.421353+00:00",
+  "boundary": "真实失败保持，未打包；记录删除路径未解决全部清理问题。"
+}
