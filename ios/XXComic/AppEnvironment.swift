@@ -303,7 +303,7 @@ final class AppEnvironment {
         let started = ProcessInfo.processInfo.systemUptime
         if trace { print("CACHE_UI stage=begin") }
         #endif
-        async let browser: Void = mh18BrowserSession.clearCache()
+        async let browser: Void = try mh18BrowserSession.clearCache()
         async let http: HTTPResponseCacheUsage = responseCache.clear()
         let (_, remaining) = try await (browser, http)
         #if DEBUG

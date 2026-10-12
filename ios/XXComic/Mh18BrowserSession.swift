@@ -2,6 +2,42 @@ import UIKit
 import WebKit
 import ComicCore
 
+/// Keep a WebKit context alive until its asynchronous data-removal callback.
+/// An unresponsive framework must produce a retryable failure, not leave the
+/// cache screen permanently disabled or announce a cleanup that never finished.
+@MainActor
+private final class WebCacheRemoval {
+    private var continuation: CheckedContinuation<Void, Error>?
+    private var timeout: Task<Void, Never>?
+    private var context: WKWebView?
+
+    func run() async throws {
+        try Task.checkCancellation()
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .default()
+        // No document or network request is loaded by this context.
+        context = WKWebView(frame: .zero, configuration: configuration)
+        try await withCheckedThrowingContinuation { continuation in
+            self.continuation = continuation
+            timeout = Task { [self] in
+                do { try await Task.sleep(nanoseconds: 8_000_000_000) } catch { return }
+                finish(.failure(URLError(.timedOut)))
+            }
+            configuration.websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) { [self] in
+                Task { @MainActor [self] in finish(.success(())) }
+            }
+        }
+    }
+
+    private func finish(_ result: Result<Void, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        timeout?.cancel(); timeout = nil
+        context?.stopLoading(); context = nil
+        continuation.resume(with: result)
+    }
+}
+
 /// Owns one persistent WebKit document and serializes its HTTP and browser requests.
 @MainActor
 final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDelegate, WKHTTPCookieStoreObserver {
@@ -77,14 +113,12 @@ final class Mh18BrowserSession: NSObject, ComicBrowserSession, WKNavigationDeleg
         }
     }
 
-    func clearCache() async {
+    func clearCache() async throws {
+        try Task.checkCancellation()
         reset()
         HTTPCookieStorage.shared.cookies?.forEach { HTTPCookieStorage.shared.deleteCookie($0) }
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            WKWebsiteDataStore.default().removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) {
-                continuation.resume()
-            }
-        }
+        try await WebCacheRemoval().run()
+        try Task.checkCancellation()
     }
 
     /// Reset active browser work before invalidating verification data.

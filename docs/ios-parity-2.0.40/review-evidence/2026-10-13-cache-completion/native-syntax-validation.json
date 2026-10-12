@@ -1,0 +1,17 @@
+{
+  "results": [
+    {
+      "configuration": "Release",
+      "files": 90,
+      "exitCode": 0
+    },
+    {
+      "configuration": "DEBUG",
+      "files": 90,
+      "exitCode": 0
+    }
+  ],
+  "inputsUnchanged": true,
+  "typeCheckedOnApple": false,
+  "recordedAtUTC": "2026-10-12T19:26:54.632260+00:00"
+}

@@ -1,0 +1,46 @@
+[0/1] Planning build
+Building for debugging...
+[0/2] Write swift-version-24593BA9C3E375BF.txt
+Build complete! (4.02s)
+Test Suite 'Selected tests' started at 2026-10-12 19:25:21.001
+Test Suite 'CacheBackendContinuityTests' started at 2026-10-12 19:25:21.022
+Test Case 'CacheBackendContinuityTests.testCleanupRemovesResponsesBeforeALookupReopensTheOriginalBackingStore' started at 2026-10-12 19:25:21.022
+Test Case 'CacheBackendContinuityTests.testCleanupRemovesResponsesBeforeALookupReopensTheOriginalBackingStore' passed (0.956 seconds)
+Test Suite 'CacheBackendContinuityTests' passed at 2026-10-12 19:25:21.978
+Executed 1 test, with 0 failures (0 unexpected) in 0.956 (0.956) seconds
+Test Suite 'CacheLateRestoreTests' started at 2026-10-12 19:25:21.978
+Test Case 'CacheLateRestoreTests.testCleanupAlsoRemovesAWritePublishedWhenDiskStorageReopens' started at 2026-10-12 19:25:21.978
+Test Case 'CacheLateRestoreTests.testCleanupAlsoRemovesAWritePublishedWhenDiskStorageReopens' passed (0.906 seconds)
+Test Case 'CacheLateRestoreTests.testCleanupRemovesResponsesInAnInactiveDiskBackingStore' started at 2026-10-12 19:25:22.883
+Test Case 'CacheLateRestoreTests.testCleanupRemovesResponsesInAnInactiveDiskBackingStore' passed (0.906 seconds)
+Test Suite 'CacheLateRestoreTests' passed at 2026-10-12 19:25:23.789
+	 Executed 2 tests, with 0 failures (0 unexpected) in 1.812 (1.812) seconds
+Test Suite 'CacheMaintenanceTests' started at 2026-10-12 19:25:23.789
+Test Case 'CacheMaintenanceTests.testCancellationAfterCleanupStartsRestoresCapacityAndFinishes' started at 2026-10-12 19:25:23.789
+Test Case 'CacheMaintenanceTests.testCancellationAfterCleanupStartsRestoresCapacityAndFinishes' passed (0.914 seconds)
+Test Case 'CacheMaintenanceTests.testCancelledCleanupDoesNotRemoveCachedResponse' started at 2026-10-12 19:25:24.703
+Test Case 'CacheMaintenanceTests.testCancelledCleanupDoesNotRemoveCachedResponse' passed (0.005 seconds)
+Test Case 'CacheMaintenanceTests.testCancelledSizeCalculationFailsInsteadOfReportingEmpty' started at 2026-10-12 19:25:24.708
+Test Case 'CacheMaintenanceTests.testCancelledSizeCalculationFailsInsteadOfReportingEmpty' passed (0.003 seconds)
+Test Case 'CacheMaintenanceTests.testCleanupRemovesAResponseThatFinishesAfterTheFirstRemoval' started at 2026-10-12 19:25:24.711
+Test Case 'CacheMaintenanceTests.testCleanupRemovesAResponseThatFinishesAfterTheFirstRemoval' passed (0.911 seconds)
+Test Case 'CacheMaintenanceTests.testCleanupReportsUsageAfterRestoringStorageLimits' started at 2026-10-12 19:25:25.622
+Test Case 'CacheMaintenanceTests.testCleanupReportsUsageAfterRestoringStorageLimits' passed (0.923 seconds)
+Test Case 'CacheMaintenanceTests.testConcurrentCleanupPreservesLimitsForBothCallers' started at 2026-10-12 19:25:26.545
+Test Case 'CacheMaintenanceTests.testConcurrentCleanupPreservesLimitsForBothCallers' passed (0.912 seconds)
+Test Case 'CacheMaintenanceTests.testDirectorySizeIncludesHiddenFilesAndDoesNotFollowSymlinks' started at 2026-10-12 19:25:27.457
+Test Case 'CacheMaintenanceTests.testDirectorySizeIncludesHiddenFilesAndDoesNotFollowSymlinks' passed (0.031 seconds)
+Test Case 'CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses' started at 2026-10-12 19:25:27.488
+HTTP_CACHE_DIAGNOSTIC stage=fresh memory=0 disk=0
+HTTP_CACHE_DIAGNOSTIC stage=stored memory=5266 disk=5266
+HTTP_CACHE_DIAGNOSTIC stage=cleared memory=0 disk=0 cached=false
+HTTP_CACHE_DIAGNOSTIC stage=reused memory=5266 disk=5266
+Test Case 'CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses' passed (0.919 seconds)
+Test Case 'CacheMaintenanceTests.testHTTPResponseCleanupUsesCacheAPIAndReportsRemainingUsage' started at 2026-10-12 19:25:28.407
+Test Case 'CacheMaintenanceTests.testHTTPResponseCleanupUsesCacheAPIAndReportsRemainingUsage' passed (0.909 seconds)
+Test Case 'CacheMaintenanceTests.testMissingDirectoryHasNoBytes' started at 2026-10-12 19:25:29.316
+Test Case 'CacheMaintenanceTests.testMissingDirectoryHasNoBytes' passed (0.0 seconds)
+Test Suite 'CacheMaintenanceTests' passed at 2026-10-12 19:25:29.317
+	 Executed 10 tests, with 0 failures (0 unexpected) in 5.527 (5.527) seconds
+Test Suite 'Selected tests' passed at 2026-10-12 19:25:29.317
+Executed 13 tests, with 0 failures (0 unexpected) in 8.294 (8.294) seconds

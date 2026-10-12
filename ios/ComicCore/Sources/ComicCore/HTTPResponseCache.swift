@@ -43,76 +43,36 @@ public actor HTTPResponseCache {
 
     private static func clear(cache: URLCache) async throws -> HTTPResponseCacheUsage {
         let memoryCapacity = cache.memoryCapacity
-        let diskCapacity = cache.diskCapacity
-        // Keep the original disk backend active while its asynchronous removal
-        // commits. Resetting diskCapacity can detach that backend and leave old
-        // responses available when a later lookup reopens it.
-        cache.removeAllCachedResponses()
-        // Temporarily disable memory storage; URLCache still owns all disk files.
-        // No cache database or unrelated directory is deleted by our code.
+        // Keep the disk backend and its capacity intact. Repeatedly truncating
+        // or reopening it queues more native database work and can race a later
+        // lookup. URLCache alone owns eviction and its management files.
         cache.memoryCapacity = 0
-        var limitsRestored = false
-        defer {
-            if !limitsRestored { cache.memoryCapacity = memoryCapacity }
-        }
+        defer { cache.memoryCapacity = memoryCapacity }
         cache.removeAllCachedResponses()
-        // A response that was already finishing can repopulate URLCache after
-        // removeAllCachedResponses. Require a short quiet period, removing late
-        // entries while framework accounting settles. The entire wait is bounded.
-        var emptySamples = 0
-        for _ in 0..<40 {
-            try Task.checkCancellation()
-            try await Task.sleep(nanoseconds: 50_000_000)
-            if cache.currentMemoryUsage == 0, cache.currentDiskUsage == 0 {
-                emptySamples += 1
-                if emptySamples == 8 { break }
-            } else {
-                emptySamples = 0
-                cache.removeAllCachedResponses()
-            }
-        }
-        // Measure with the original memory limit restored, so the result
-        // describes the cache the caller can actually use.
+        try await waitForQuietAccounting(cache)
+        // Catch responses already finishing when cleanup began, without issuing
+        // a database deletion every time a retained index reports nonzero bytes.
+        cache.removeAllCachedResponses()
+        try await waitForQuietAccounting(cache)
         cache.memoryCapacity = memoryCapacity
-        limitsRestored = true
-        // An already pending disk write can finish during cleanup. Remove
-        // responses again while the original store remains active, then wait for
-        // stable real accounting without treating retained index bytes as zero.
-        var previousUsage: HTTPResponseCacheUsage?
-        var stableSamples = 0
-        for _ in 0..<40 {
-            cache.removeAllCachedResponses()
+        return HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))
+    }
+
+    private static func waitForQuietAccounting(_ cache: URLCache) async throws {
+        let deadline = ProcessInfo.processInfo.systemUptime + 2
+        var previous: HTTPResponseCacheUsage?
+        var stable = 0
+        repeat {
             try Task.checkCancellation()
             try await Task.sleep(nanoseconds: 50_000_000)
             let usage = HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))
-            stableSamples = usage == previousUsage ? stableSamples + 1 : 0
-            previousUsage = usage
-            if stableSamples == 8 { break }
-        }
-        if diskCapacity > 1 {
-            // A positive minimum asks URLCache to truncate its active store. Zero
-            // can disable accounting without releasing the old backing files.
-            // URLCache alone owns eviction; no database paths or index allowances.
-            cache.diskCapacity = 1
-            var diskLimitRestored = false
-            defer { if !diskLimitRestored { cache.diskCapacity = diskCapacity } }
-            cache.removeCachedResponses(since: .distantPast)
-            cache.removeAllCachedResponses()
-            try await Task.sleep(nanoseconds: 100_000_000)
-            cache.diskCapacity = diskCapacity
-            diskLimitRestored = true
-            // Account for an already finishing response after restoring limits.
-            var previous: HTTPResponseCacheUsage?
-            var stable = 0
-            for _ in 0..<40 {
+            stable = usage == previous ? stable + 1 : 0
+            if let previous, usage.memoryBytes > previous.memoryBytes || usage.diskBytes > previous.diskBytes {
                 cache.removeAllCachedResponses()
-                try await Task.sleep(nanoseconds: 50_000_000)
-                let usage = HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))
-                stable = usage == previous ? stable + 1 : 0; previous = usage
-                if stable == 8 { break }
+                stable = 0
             }
-        }
-        // Report remaining usage instead of claiming success if the framework retained data.
-        return HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))
+            previous = usage
+            if stable >= 8 { return }
+        } while ProcessInfo.processInfo.systemUptime < deadline
     }
 }

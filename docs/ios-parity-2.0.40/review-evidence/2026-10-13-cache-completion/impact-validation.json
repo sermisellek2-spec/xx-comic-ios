@@ -1,0 +1,25 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--mount",
+    "type=bind,source=F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port\\ios\\ComicCore,target=/work",
+    "-w",
+    "/work",
+    "swift:5.10-jammy",
+    "swift",
+    "test",
+    "-j",
+    "2",
+    "--filter",
+    "CacheMaintenanceTests"
+  ],
+  "exitCode": 0,
+  "inputs": {
+    "ios\\ComicCore\\Sources\\ComicCore\\HTTPResponseCache.swift": "ab1665d87d000d18869af91cf3af9e0330b0742cca3198aff18be6f89f4c38bc",
+    "ios\\ComicCore\\Tests\\ComicCoreTests\\CacheMaintenanceTests.swift": "c0311a16c9066dc5b584121f9e37697b90d5fcc9053a6bb1c0cd1a152f11bf40"
+  },
+  "logSHA256": "68e20b17ff4a97f069e7dd72ffb0aad24a66b2dd6d4076b81b6fa612a8779708",
+  "recordedAtUTC": "2026-10-12T19:24:16.147992+00:00"
+}

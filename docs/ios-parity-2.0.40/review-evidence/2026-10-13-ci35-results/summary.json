@@ -1,0 +1,63 @@
+{
+  "runID": 38293643264,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38293643264",
+  "revision": "1006ec672def792f7659f1d1fc1777c4272bc411",
+  "scope": "settings-reference",
+  "conclusion": "failure",
+  "packageIPA": false,
+  "appleCore": {
+    "executed": 929,
+    "failures": 0,
+    "seconds": 167.34
+  },
+  "native": {
+    "iPhone": {
+      "executed": 30,
+      "failedAssertions": 0
+    },
+    "iPad": {
+      "executed": 30,
+      "failedAssertions": 8,
+      "failedCase": "CacheMaintenanceNativeTests/testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal"
+    }
+  },
+  "UI": {
+    "iPhone": {
+      "executed": 6,
+      "successfulCases": 2,
+      "failedCases": 4,
+      "failedAssertions": 8
+    },
+    "iPad": {
+      "executed": 6,
+      "successfulCases": 3,
+      "failedCases": 3,
+      "failedAssertions": 6
+    }
+  },
+  "debugSimulatorBuild": "success",
+  "releaseDeviceBuild": "success",
+  "originals": {
+    "logs-original.zip": {
+      "path": "ios/build/ci35/logs-original.zip",
+      "bytes": 698646,
+      "sha256": "5519d91a7ec567495908f7299cc257ef5079285fec0c693ec9a841cc69b8d113"
+    },
+    "build-original.log": {
+      "path": "ios/build/ci35/build-original.log",
+      "bytes": 11351085,
+      "sha256": "eb0c70fc18bf423c398bedaca8a1592d598d03cb7d82778abebed948b496f5d9"
+    },
+    "visual-original.zip": {
+      "path": "ios/build/ci35/visual-original.zip",
+      "bytes": 1508868,
+      "sha256": "2674245442b88b43d3fbd1ae7a0117d15e17f32f98610713a7f4fbd44f6a1778"
+    },
+    "xcresults-original.zip": {
+      "path": "ios/build/ci35/xcresults-original.zip",
+      "bytes": 127308821,
+      "sha256": "1fcebdb9cf9b776d15b673dd81d123831afabf38ccd33b2b25ecb10594ae528f"
+    }
+  },
+  "recordedAtUTC": "2026-10-12T19:24:32.610030+00:00"
+}

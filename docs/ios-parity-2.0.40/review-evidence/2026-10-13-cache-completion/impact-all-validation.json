@@ -1,0 +1,22 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--mount",
+    "type=bind,source=F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port\\ios\\ComicCore,target=/work",
+    "-w",
+    "/work",
+    "swift:5.10-jammy",
+    "swift",
+    "test",
+    "-j",
+    "2",
+    "--filter",
+    "Cache(Maintenance|BackendContinuity|LateRestore)Tests"
+  ],
+  "exitCode": 0,
+  "logSHA256": "73bf35d876a0d9bbec56bf302f4b2b2da8ae893c5208530b89156256e364f1b8",
+  "testFilesUnchanged": true,
+  "recordedAtUTC": "2026-10-12T19:25:29.610146+00:00"
+}
