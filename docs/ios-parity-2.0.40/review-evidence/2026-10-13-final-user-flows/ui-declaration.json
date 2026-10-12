@@ -1,0 +1,160 @@
+{
+  "isRuntimeResult": false,
+  "count": 108,
+  "files": {
+    "AppNavigationTests.swift": [
+      "testInstalledApplicationIconAppearsOnHomeScreenAndOpensTheApp",
+      "testNavigationAndReaderPreferencesPersist"
+    ],
+    "BatchImportRecoveryUITests.swift": [
+      "testRecoveredBookRemainsSingleAndCompletedAfterRelaunch",
+      "testCancellingRecoveryKeepsPendingTaskAvailableAfterRestart",
+      "testPartiallyReselectedFilesReportFailureAndRemainingVolumeCanResume",
+      "testExplicitBatchPickerSupportsOneFileThroughBatchConfirmation"
+    ],
+    "BookshelfParityUITests.swift": [
+      "testActualUnreadCountLatestChapterAndReadingPositionAppearInGridAndList",
+      "testSwitchingGridToListKeepsVisibleComic",
+      "testResumeRowOpensSavedChapterWithOneTapAndRetainsReturnPath",
+      "testNewGroupsPreserveMoveDraftAndMembershipAcrossRelaunch",
+      "testCancellingMoveAfterCreatingAGroupPreservesExistingMembership",
+      "testEmptyGroupNameShowsAnErrorAndAllowsCreatingAfterRetry",
+      "testRenamingDeletingAndUndoingAGroupRetainsItsBookAndMembership"
+    ],
+    "CurrentParityUITests.swift": [
+      "testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels",
+      "testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup",
+      "testEmptyDiscoveryGroupDoesNotBlockGlobalSearch",
+      "testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag",
+      "testDetailDownloadLoadsOnDemandDirectoryAndCloses",
+      "testBookshelfDownloadLoadsDirectoryAndReturnsToBookshelf",
+      "testEmptyDirectoryOffersRetryInsteadOfEmptySelection",
+      "testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry",
+      "testLateDetailSuccessKeepsDownloadFailureAndItsRetryAction",
+      "testStartingDownloadCancelsPendingReadAndReturnsToDetail",
+      "testStartingReadCancelsPendingDownload",
+      "testCancelledDownloadAfterPendingReadCanOpenReaderAgain"
+    ],
+    "DownloadLifecycleUITests.swift": [
+      "testTerminatedDownloadResumesFromPublishedPageAfterRelaunch",
+      "testActualBackgroundAndForegroundContinueWithoutManualRetry",
+      "testPauseAllSurvivesRelaunchResumeCompletesAndChapterDeletionCanCancel"
+    ],
+    "DownloadLocationParityUITests.swift": [
+      "testCancelLocationConfirmationKeepsDefaultAndDoesNotQueueDownloads",
+      "testFilesPickerCanCancelWithoutChangingDefault"
+    ],
+    "EpubReadingUITests.swift": [
+      "testImageEpubKeepsDirectoryAndSecondChapterResumeWithoutTextControls",
+      "testTextAndMixedEpubImportsRejectWithoutPublishingABook",
+      "testLegacyTextBookStaysOnShelfAndCannotOpenATextReader",
+      "testImportMenuUsesComicFormatsAndEpubPickerCanBeCancelled",
+      "testKindleComicRealImportUsesExistingImageReaderAndResume",
+      "testKindleTextAndMixedImportsRejectWithoutOpeningAWebReader",
+      "testKindleUnsupportedImportShowsParserReasonAndPickerEntryWorks"
+    ],
+    "ErrorLogsParityUITests.swift": [
+      "testLogDetailsAreRedactedCopyIsUsableAndCancelledClearPreservesTheLog"
+    ],
+    "ExternalFilesParityUITests.swift": [
+      "testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch",
+      "testForegroundFolderSyncAddsRenamesRemovesAndRestoresActualExternalPages",
+      "testMissingExternalFolderCanBeReauthorizedThroughRealFiles",
+      "testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch"
+    ],
+    "LinkedFolderParityUITests.swift": [
+      "testIndexedBookReadsRealPageWithoutAFullPrivateCopy",
+      "testMovedFolderReauthorizationRestoresReadingAndKeepsOneBook",
+      "testCancellingFolderReauthorizationKeepsTheExistingLink"
+    ],
+    "LocalDeletionParityUITests.swift": [
+      "testWholeBookUndoRestoresSelectionPageAndRealImportedCopy",
+      "testWholeBookDeletionWaitsForUndoWindowAndShowsActualCompletion"
+    ],
+    "Mh18VerificationTests.swift": [
+      "testManualVerificationCanCloseAndBeOpenedAgain"
+    ],
+    "ReaderContinuityUITests.swift": [
+      "testStripControlsDoNotMoveOrResizeImages",
+      "testPagedControlsDoNotMoveOrResizeImages",
+      "testContinuousChapterLocalSeekModeSwitchAndRelaunchResume",
+      "testNextChapterFailureKeepsReadablePagesAndHasExplicitRetry",
+      "testLeavingReaderCancelsPendingContinuationAndReopenCanLoadIt",
+      "testLastChapterHasEndStateWithoutDiscardingImages",
+      "testStripEdgeTapsAndHorizontalSwipeDoNotChangeChapters",
+      "testLargeDirectoryFastScrollOrderAndCurrentChapterKeepTheReaderReturnPath",
+      "testRotationKeepsChapterAndLocalImageAfterContinuousAppend",
+      "testCorruptCurrentChapterReturnsAfterRepairAndUnrepairedReturnKeepsFailure",
+      "testCorruptNextChapterRepairReturnsToContinuousReadingWithoutReloadingFirstChapter"
+    ],
+    "ReaderEnhancementUITests.swift": [
+      "testReaderAIBadgeAndLongPressOriginalComparison"
+    ],
+    "ReaderSettingsParityUITests.swift": [
+      "testModeThemeAndSwitchSelectionPersistAfterRelaunch",
+      "testActualPinchAndZoomedPanDoNotTurnThePageAndTurningResumesAfterZoomReset",
+      "testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage",
+      "testArchivedButtonPreferenceKeepsNormalAndMangaTurnsUsableAfterRelaunch",
+      "testDefaultMangaSwipeAdvancesOnceAndCrossesToTheNextLogicalChapter",
+      "testMangaRotationPreservesTheLogicalPageAndChapter",
+      "testStripImageOffsetSurvivesNormalMangaAndPagedRelaunch",
+      "testEnhancementControlsAppearOnlyWhenEnabledAndComparisonReturnsToOriginal"
+    ],
+    "ReaderToolbarParityUITests.swift": [
+      "testPagedReaderToolbarChangesChaptersAndKeepsUsableActionTargets",
+      "testStripReaderToolbarRetainsDirectoryAndReaderSettings"
+    ],
+    "RootNavigationParityUITests.swift": [
+      "testPortraitLightTabsAndDetailReturn",
+      "testPortraitDarkTabsAndDetailReturn",
+      "testLandscapeLightTabsAndDetailReturn",
+      "testLandscapeDarkTabsAndDetailReturn"
+    ],
+    "SettingsParityUITests.swift": [
+      "testUpdateFailureRetryShowsNewVersionAndBrowserInstallationHint",
+      "testCurrentVersionAndCancelledCheckAllowAnotherRealHTTPRequest",
+      "testStatisticsCancelDisableRelaunchAndEnableUseTheRealSavedSetting",
+      "testLaunchShelfPersistsAndAboutCountsOnlyTheCurrent51Sources",
+      "testHistoryClearCancellationAndConfirmationPreserveFavoritesAcrossRelaunch",
+      "testSettingsUsesCurrentAndroidSectionsAndThemeDrawer",
+      "testThemeChoicePersistsAcrossRestart",
+      "testCacheCleanupKeepsLibraryAndFixtureDiscovery"
+    ],
+    "SourceConfigFilesUITests.swift": [
+      "testRealFilesImportPersistsSwitchesAndOrderAcrossRelaunch",
+      "testExportWrites51SourceJSONInExternalProviderAndCanReimportIt",
+      "testMalformedFileDoesNotPartiallyImportAndCanRetryWithoutLeavingManagement",
+      "testUnsupportedConfigurationIsReportedAndRetiredSourcesStayExcluded",
+      "testCancellingImportAndExportLeavesConfigurationAndShowsNoFalseSuccess"
+    ],
+    "SourceDrawerTests.swift": [
+      "testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs",
+      "testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs",
+      "testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm"
+    ],
+    "SourceSwitchParityUITests.swift": [
+      "testStrictSameTitleExcludesSimilarResultsAndKeepsTheCurrentSourceVisible",
+      "testNoExactSourceShowsEmptyFeedbackAndCanSearchAgainWithoutChangingTheBook",
+      "testEmptyTargetDirectoryPreservesTheOriginalAndARealRetryCompletesTheSwitch",
+      "testCancellingPendingSwitchKeepsTheOriginalRecordAndAllowsAnotherSwitch",
+      "testReaderSwitchAndReturnRelaunchKeepPageFavoriteAndGroupOnTheNewSource"
+    ],
+    "VisualMatrixUITests.swift": [
+      "testVisualMatrixPortraitLight",
+      "testVisualMatrixPortraitDark",
+      "testVisualMatrixLandscapeLight",
+      "testVisualMatrixLandscapeDark",
+      "testSettingsReferencePortraitLight",
+      "testSettingsReferencePortraitDark",
+      "testSettingsReferenceLandscapeLight",
+      "testSettingsReferenceLandscapeDark"
+    ],
+    "VolumeManagerParityUITests.swift": [
+      "testRealFilesAppendAndDragOrderRetainTheOriginalChapterAcrossRelaunch",
+      "testVolumeUndoThenConfirmedRemovalSurviveRelaunchAndPreserveExternalFiles",
+      "testCancellingRealFilesAppendKeepsTheExistingVolume",
+      "testVolumeSheetThemesAndRotationKeepAllControlsAndRowsReachable",
+      "testCancellingPendingAppendKeepsTheOwnedVolumeAndOriginalFileAfterRelaunch"
+    ]
+  }
+}

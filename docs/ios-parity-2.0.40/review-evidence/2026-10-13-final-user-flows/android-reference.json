@@ -1,0 +1,19 @@
+{
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "sourceFiles": {
+    "app/src/main/java/com/xxcomic/source/DetailSourceSearch.java": {
+      "sha256": "06f664b0ae14d94b4dc5e74a83117f9443b61d75874df4726d154cdda8faca6d"
+    },
+    "app/src/main/java/com/xxcomic/source/SourceSwitchMatcher.java": {
+      "sha256": "0688a4df06d5f422fa52139fafe5bf747730b3243feca15cb62609fde2a80961"
+    }
+  },
+  "rules": [
+    "严格trim后UTF16相等",
+    "源ID匹配及漫画ID非空",
+    "当前源始终列出",
+    "3并发且每请求实际运行起10秒超时",
+    "逐完成发布候选，选择不受发现组限制"
+  ],
+  "kind": "冻结源码参考，不是Android运行截图"
+}

@@ -44,6 +44,7 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
             action: #selector(showMoreMenu)
         )
         navigationItem.rightBarButtonItem = moreButton
+        moreButton.accessibilityIdentifier = "error.logs.more"
     }
 
     private func setupViews() {
@@ -51,6 +52,7 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
         tableView.backgroundColor = Palette.background
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.accessibilityIdentifier = "error.logs.list"
         view.addSubview(tableView)
 
         emptyView.translatesAutoresizingMaskIntoConstraints = false
@@ -70,6 +72,7 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
         emptyTitle.textColor = Palette.text
 
         emptySubtitle.text = "暂时没有错误日志"
+        emptySubtitle.accessibilityIdentifier = "error.logs.empty"
         emptySubtitle.font = .systemFont(ofSize: 13)
         emptySubtitle.textColor = Palette.secondaryText
 
@@ -118,6 +121,7 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
             return
         }
         let activityVC = UIActivityViewController(activityItems: [allLogs], applicationActivities: nil)
+        activityVC.view.accessibilityIdentifier = "error.logs.share"
         if let popover = activityVC.popoverPresentationController {
             popover.barButtonItem = navigationItem.rightBarButtonItem
         }
@@ -239,6 +243,7 @@ final class ErrorLogDetailViewController: UIViewController {
         logTextView.isEditable = false
         logTextView.isScrollEnabled = false
         logTextView.text = entry.fullText
+        logTextView.accessibilityIdentifier = "error.logs.detail"
         logTextView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
         logTextView.textColor = Palette.text
         logTextView.backgroundColor = Palette.card
@@ -258,6 +263,7 @@ final class ErrorLogDetailViewController: UIViewController {
         actionStack.distribution = .fillEqually
 
         copyButton.setTitle("复制", for: .normal)
+        copyButton.accessibilityIdentifier = "error.logs.copy"
         copyButton.setTitleColor(Palette.accent, for: .normal)
         copyButton.backgroundColor = Palette.card
         copyButton.layer.cornerRadius = 8
@@ -267,6 +273,7 @@ final class ErrorLogDetailViewController: UIViewController {
         copyButton.addTarget(self, action: #selector(copyTapped), for: .touchUpInside)
 
         exportButton.setTitle("导出日志", for: .normal)
+        exportButton.accessibilityIdentifier = "error.logs.export"
         exportButton.setTitleColor(Palette.accent, for: .normal)
         exportButton.backgroundColor = Palette.card
         exportButton.layer.cornerRadius = 8
@@ -304,6 +311,7 @@ final class ErrorLogDetailViewController: UIViewController {
 
     @objc private func exportTapped() {
         let activityVC = UIActivityViewController(activityItems: [entry.fullText], applicationActivities: nil)
+        activityVC.view.accessibilityIdentifier = "error.logs.share"
         if let popover = activityVC.popoverPresentationController {
             popover.sourceView = exportButton
             popover.sourceRect = exportButton.bounds

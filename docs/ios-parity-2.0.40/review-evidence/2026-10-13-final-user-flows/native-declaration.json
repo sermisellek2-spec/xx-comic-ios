@@ -1,0 +1,67 @@
+{
+  "isRuntimeResult": false,
+  "count": 35,
+  "files": {
+    "BuiltinSourceRegistrationTests.swift": [
+      "testHiperdexRegistrationConsumesStoredConfiguration",
+      "testCurrentCatalogHasOneProductionAdapterPerAndroidSource"
+    ],
+    "CacheMaintenanceNativeTests.swift": [
+      "testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal"
+    ],
+    "CoverFallbackTests.swift": [
+      "testEmptyCoverUsesArtworkInsteadOfAnUnexplainedBlankCard",
+      "testReaderFailureKeepsItsOwnRetryStateWithoutCoverArtwork",
+      "testSuccessfulImageReplacesFallbackAndRestoresTheCoverLayout",
+      "testLocalCoverUsesItsLibraryInstanceInsideAnIsolatedSession"
+    ],
+    "DetailFeedbackStateTests.swift": [
+      "testLateDetailSuccessPreservesDownloadFailureAndRetry",
+      "testLateDetailFailureDoesNotChangeDownloadRetryAction",
+      "testCancellingDownloadRestoresLatestDetailFailureAndAction",
+      "testCancellingFailedDownloadRestoresDetailRetry",
+      "testDownloadLoadingSuppressesDetailRetryUntilItEnds",
+      "testLateDetailCompletionCannotEraseQueuedConfirmationOrMakeItRetry"
+    ],
+    "DownloadLifecycleTests.swift": [
+      "testIdleBackgroundDoesNotKeepAnAllowanceOrResumeManualPause",
+      "testExpirationPersistsLeaseAndForegroundResumptionCompletesRealFiles",
+      "testDeniedAllowanceSuspendsAndForegroundResumptionStillCompletes"
+    ],
+    "OfflineDownloadImageTests.swift": [
+      "testDownloadedFileOutsideLocalImportsDecodesThroughRecordedDownloadAccess"
+    ],
+    "ReaderEnhancementEngineTests.swift": [
+      "testRealCoreMLSuperResolutionInferenceAndTileStitching",
+      "testCancellationStopsBeforeNextPredictionTile",
+      "testInferenceFailureFallsBackToBicubic2x",
+      "testReaderCellCancelsEnhancementWhenLeavingScreen",
+      "testReaderCellReuseRejectsLateResult",
+      "testEnhancementPolicyGuards"
+    ],
+    "ReaderMangaGeometryTests.swift": [
+      "testMangaFirstLogicalPageIsAtTheRightAndSeeksKeepLogicalOrder",
+      "testMangaResizeAndDirectionChangePreserveTheRequestedLogicalPage",
+      "testStripToMangaAndNormalRestorationClearsThePreviousVerticalOffset",
+      "testReloadedModesRestoreRealPageFramesBeforeStripOffsetsAreClamped"
+    ],
+    "ReaderSeekGeometryTests.swift": [
+      "testTrackingPreviewsWithoutMovingThePageAndCancelRestoresTheCommittedValue",
+      "testAChangedChapterTokenCannotCommitAnOldTrackingPreview",
+      "testCenteredToolbarGivesTheVisibleSliderATouchableParent"
+    ],
+    "RootTabGeometryTests.swift": [
+      "testAllTabsRemainStackedAtPhoneAndTabletPortraitAndLandscapeWidths"
+    ],
+    "SourceReplacementTransactionTests.swift": [
+      "testFailedLibraryWritePreservesGroupsFavoriteAndReadingUntilARealRetrySucceeds"
+    ],
+    "TestHostIsolationTests.swift": [
+      "testHostedUnitTestsDoNotBootstrapTheProductionApplication"
+    ],
+    "WebCacheCleanupTests.swift": [
+      "testUnusedBrowserCacheCleanupCompletesAndCanBeRepeatedWithoutLoadingAWebsite",
+      "testExistingWebsiteCookieIsActuallyRemovedWithoutLoadingAWebsite"
+    ]
+  }
+}

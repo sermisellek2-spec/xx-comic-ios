@@ -61,4 +61,26 @@ final class DownloadLifecycleUITests: ParityUITestCase {
         // automatic retry must be handled by the runtime, with no button tap.
         checkCompletedOfflineRead(app, timeout: 40)
     }
+
+    func testPauseAllSurvivesRelaunchResumeCompletesAndChapterDeletionCanCancel() {
+        let app = preparePendingDownload()
+        app.buttons["download.pauseAll"].tap()
+        let status = app.staticTexts["download.task.status"].firstMatch
+        expectation(for: NSPredicate(format: "value BEGINSWITH %@", "PAUSED_USER;"), evaluatedWith: status)
+        waitForExpectations(timeout: 10)
+        app.terminate(); app.launch(); openDownloadCenter(app)
+        XCTAssertTrue(status.waitForExistence(timeout: 5))
+        XCTAssertTrue((status.value as? String)?.hasPrefix("PAUSED_USER;") == true)
+        app.buttons["download.resumeAll"].tap()
+        XCTAssertTrue(app.tables["download.tasks"].buttons["阅读"].firstMatch.waitForExistence(timeout: 20))
+        let row = app.tables["download.tasks"].cells.firstMatch
+        row.press(forDuration: 1); app.buttons["删除此章"].tap()
+        let confirm = app.alerts["删除此章的下载文件？"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5)); confirm.buttons["取消"].tap()
+        XCTAssertTrue(app.tables["download.tasks"].buttons["阅读"].firstMatch.exists)
+        row.press(forDuration: 1); app.buttons["删除此章"].tap(); confirm.buttons["删除此章"].tap()
+        XCTAssertTrue(app.staticTexts["暂无离线下载任务"].waitForExistence(timeout: 10))
+        app.terminate(); app.launch(); openDownloadCenter(app)
+        XCTAssertTrue(app.staticTexts["暂无离线下载任务"].waitForExistence(timeout: 5))
+    }
 }

@@ -1,0 +1,81 @@
+{
+  "iosRevision": "7f440e7dc77cf262f8648a85fb8970192542360a",
+  "runID": 38305588173,
+  "currentDeliveryGatePassed": false,
+  "reviewed": [
+    {
+      "case": "iphone_portrait_light_settings_reference_empty",
+      "sideBySideSHA256": "c5e7b7b8a25f6705328071338ddd7544dbcbf9882ad4743b1c721a0eb78bd66d",
+      "androidSHA256": "7154e6d6329e30cdb12dda2580d275572aa97c60848969c8ea8ae6e4f4b3e6b3",
+      "iosSHA256": "db5962eacef6de04113f22a4f6630c02ec788d31d07fba94af5d8c80c0cceb19",
+      "iosTestStatus": "Success",
+      "review": "实际完整侧图人工逐张查看",
+      "observations": "标题/分组/11入口/控件图标/两行说明/50启用源/0历史/统计关闭与自动主题均对齐；横屏header与卡片均避开安全区。未见缺失按钮/截断/遮挡。真实缓存140.6KB框架索引、Debug版本后缀/340、系统区与字形细节作为已声明差异保留。横屏下端入口由滚动到达，不伪造同系统导航高度。"
+    },
+    {
+      "case": "iphone_portrait_dark_settings_reference_empty",
+      "sideBySideSHA256": "33b57d516bea06f6d6cebf1ff147eb479603cd2e6e8417ff81fb416d07ba7857",
+      "androidSHA256": "c8f03f88537e796f0591fd59b36817a8c5818ef775ee8c38bc0694cfafaf5409",
+      "iosSHA256": "4be5cf0ba77aeae8aed727f71929858ab400bf5993bab778255ba95692615992",
+      "iosTestStatus": "Success",
+      "review": "实际完整侧图人工逐张查看",
+      "observations": "标题/分组/11入口/控件图标/两行说明/50启用源/0历史/统计关闭与自动主题均对齐；横屏header与卡片均避开安全区。未见缺失按钮/截断/遮挡。真实缓存140.6KB框架索引、Debug版本后缀/340、系统区与字形细节作为已声明差异保留。横屏下端入口由滚动到达，不伪造同系统导航高度。"
+    },
+    {
+      "case": "iphone_landscape_light_settings_reference_empty",
+      "sideBySideSHA256": "d66d5887841f612ba8e3ca425f0c7808c0aa1d9adeaf95fe0d00f77101f3db90",
+      "androidSHA256": "f1f97864f56c902a526f22b3a273f62ead45209dda3d70d1ab7c0ac3262155eb",
+      "iosSHA256": "16d9ce5515f84c0618dbbf2b5c59b96ce069385b10bba163fb3f43eb14bbd403",
+      "iosTestStatus": "Success",
+      "review": "实际完整侧图人工逐张查看",
+      "observations": "标题/分组/11入口/控件图标/两行说明/50启用源/0历史/统计关闭与自动主题均对齐；横屏header与卡片均避开安全区。未见缺失按钮/截断/遮挡。真实缓存140.6KB框架索引、Debug版本后缀/340、系统区与字形细节作为已声明差异保留。横屏下端入口由滚动到达，不伪造同系统导航高度。"
+    },
+    {
+      "case": "iphone_landscape_dark_settings_reference_empty",
+      "sideBySideSHA256": "365300546b9e66b4a61d118f079bd1f6ad3f112245616ba3b73977360e28ca22",
+      "androidSHA256": "070a4c41f263553581cd3481353cc8a4cd64048675b549128900f98678d35297",
+      "iosSHA256": "167bce7f5c749099fdc0464a56b4ed6842c01bceacc15c307af580b26248f96b",
+      "iosTestStatus": "Success",
+      "review": "实际完整侧图人工逐张查看",
+      "observations": "标题/分组/11入口/控件图标/两行说明/50启用源/0历史/统计关闭与自动主题均对齐；横屏header与卡片均避开安全区。未见缺失按钮/截断/遮挡。真实缓存140.6KB框架索引、Debug版本后缀/340、系统区与字形细节作为已声明差异保留。横屏下端入口由滚动到达，不伪造同系统导航高度。"
+    },
+    {
+      "case": "ipad_portrait_light_settings_reference_empty",
+      "sideBySideSHA256": "725d2be0f36e9d23c958180cf67520e39ac6ebd1d0760623d7c8871a568dc485",
+      "androidSHA256": "785ac54bf71ac4db57926fa0ea432cd91d5eb2dc94fd55392ebd182c8c472683",
+      "iosSHA256": "a377847da9bb9d2041fef1d810c3a7e356b87f170b7e49a0b91772eec1a0dfbe",
+      "iosTestStatus": "Success",
+      "review": "实际完整侧图人工逐张查看",
+      "observations": "标题/分组/11入口/控件图标/两行说明/50启用源/0历史/统计关闭与自动主题均对齐；横屏header与卡片均避开安全区。未见缺失按钮/截断/遮挡。真实缓存140.6KB框架索引、Debug版本后缀/340、系统区与字形细节作为已声明差异保留。横屏下端入口由滚动到达，不伪造同系统导航高度。"
+    },
+    {
+      "case": "ipad_portrait_dark_settings_reference_empty",
+      "sideBySideSHA256": "fd5e17e9580bb12d486b76fa0ad1b49b173e4212c859bf3b78938c67dee779d7",
+      "androidSHA256": "4caa646a871a53191b44d92124725e4ab8f5e5465466367d0cdfbff3797bcdbd",
+      "iosSHA256": "8a7ceb46f69860f9fb785e690dc74fb94d815c4652541cebfb83e048d9babea5",
+      "iosTestStatus": "Success",
+      "review": "实际完整侧图人工逐张查看",
+      "observations": "标题/分组/11入口/控件图标/两行说明/50启用源/0历史/统计关闭与自动主题均对齐；横屏header与卡片均避开安全区。未见缺失按钮/截断/遮挡。真实缓存140.6KB框架索引、Debug版本后缀/340、系统区与字形细节作为已声明差异保留。横屏下端入口由滚动到达，不伪造同系统导航高度。"
+    },
+    {
+      "case": "ipad_landscape_light_settings_reference_empty",
+      "sideBySideSHA256": "5db52813257dc088f901a8e6ef7fd3428221247ae06ca2c8886393bcd46397cc",
+      "androidSHA256": "4f8983bd0cf86e454af4550546906f5a5a3c16dd281766c0b4703c68aba4e606",
+      "iosSHA256": "f5034ecf7578ab94088a9e78b9de4a7626a668e39086d0d22ca2383a0f574f78",
+      "iosTestStatus": "Success",
+      "review": "实际完整侧图人工逐张查看",
+      "observations": "标题/分组/11入口/控件图标/两行说明/50启用源/0历史/统计关闭与自动主题均对齐；横屏header与卡片均避开安全区。未见缺失按钮/截断/遮挡。真实缓存140.6KB框架索引、Debug版本后缀/340、系统区与字形细节作为已声明差异保留。横屏下端入口由滚动到达，不伪造同系统导航高度。"
+    },
+    {
+      "case": "ipad_landscape_dark_settings_reference_empty",
+      "sideBySideSHA256": "fd5af9cab4fca01cf99e31acb54067692d15f9f918b76025c475adde2299c341",
+      "androidSHA256": "8d45803e7ade3c82d8cfe1d241b91498f486ffeb36f1fd02c161509cd1743031",
+      "iosSHA256": "0157e2633ebc45dc42222b4eed970216eb5e4b1c387433f56be5d9b17b30a790",
+      "iosTestStatus": "Success",
+      "review": "实际完整侧图人工逐张查看",
+      "observations": "标题/分组/11入口/控件图标/两行说明/50启用源/0历史/统计关闭与自动主题均对齐；横屏header与卡片均避开安全区。未见缺失按钮/截断/遮挡。真实缓存140.6KB框架索引、Debug版本后缀/340、系统区与字形细节作为已声明差异保留。横屏下端入口由滚动到达，不伪造同系统导航高度。"
+    }
+  ],
+  "openImportantVisualIssues": [],
+  "boundary": "CI38/7f440e7影响范围真实截图；不代当前新增或最终full/IPA。系统区不遮罩，保持完整画布。"
+}

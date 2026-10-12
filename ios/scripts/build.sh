@@ -135,6 +135,16 @@ case "$validation_scope" in
       -only-testing:XXComicUITests/EpubReadingUITests
     )
     ;;
+  final-flows)
+    test_arguments+=(
+      -only-testing:XXComicTests
+      -only-testing:XXComicUITests/SourceSwitchParityUITests
+      -only-testing:XXComicUITests/ErrorLogsParityUITests
+      -only-testing:XXComicUITests/DownloadLifecycleUITests
+      -only-testing:XXComicUITests/CurrentParityUITests
+      -only-testing:XXComicUITests/ReaderToolbarParityUITests
+    )
+    ;;
   configuration-files)
     test_arguments+=(
       -only-testing:XXComicTests

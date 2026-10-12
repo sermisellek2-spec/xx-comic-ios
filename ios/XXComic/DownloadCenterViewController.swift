@@ -88,6 +88,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
 
         let pauseAllBtn = UIButton(type: .system)
         pauseAllBtn.setTitle("全部暂停", for: .normal)
+        pauseAllBtn.accessibilityIdentifier = "download.pauseAll"
         pauseAllBtn.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
         pauseAllBtn.backgroundColor = Palette.card
         pauseAllBtn.layer.cornerRadius = 8
@@ -99,6 +100,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
 
         let resumeAllBtn = UIButton(type: .system)
         resumeAllBtn.setTitle("继续下载", for: .normal)
+        resumeAllBtn.accessibilityIdentifier = "download.resumeAll"
         resumeAllBtn.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
         resumeAllBtn.backgroundColor = Palette.accent
         resumeAllBtn.layer.cornerRadius = 8

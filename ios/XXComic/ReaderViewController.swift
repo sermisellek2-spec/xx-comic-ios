@@ -59,6 +59,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var pagePanBeganAt: TimeInterval?
     private var habitTimer: Timer?
     private var leavingReader = false
+    var onSourceChanged: ((ComicDetail) -> Void)?
 #if DEBUG
     private var readerTrace: [String] = []
 #endif
@@ -788,6 +789,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     @objc private func refreshBadge() { updateBadge() }
     private func updateReaderHeading(_ chapter: Chapter) {
+        readerHeading.accessibilityValue = source.name
         title = chapter.title
         readerHeading.text = comic.title.isEmpty ? chapter.title : comic.title + " · " + chapter.title
     }
@@ -971,6 +973,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
 
     private func showReaderSourceSheet() {
+        savePosition()
         let sheet = SourceSwitchSheet(comic: comic, environment: environment) { [weak self] targetDetail in
             guard let self else { return }
             self.applySwitchedSource(targetDetail: targetDetail)
@@ -982,7 +985,6 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
 
     private func applySwitchedSource(targetDetail: ComicDetail) {
         guard let targetSource = environment.source(for: targetDetail.summary) else { return }
-        savePosition()
         let currentTitle = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex].title : ""
         let currentIndex = session.chapterIndex
         let targetChapters = targetDetail.chapters
@@ -994,6 +996,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             defaultIndex: currentIndex
         )
 
+        loadTask?.cancel(); directoryTask?.cancel(); directoryTask = nil
+        cancelContinuation(); pendingPosition = nil; pendingPositionNeedsContinuation = false
+        lastSaved = nil; sizes = [:]
         self.comic = targetDetail.summary
         self.source = targetSource
         self.chapters = targetChapters
@@ -1003,6 +1008,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         self.lastObservedPosition = nil
         self.pagedAnchor = nil
         self.pages.reloadData()
+        self.onSourceChanged?(targetDetail)
         self.loadChapter(matchedIndex)
         self.updateMiddleButton()
     }

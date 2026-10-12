@@ -86,7 +86,7 @@ final class AppEnvironment {
         ]
     }
 
-    init(defaults: UserDefaults) throws {
+    init(defaults: UserDefaults, storageDirectory: URL? = nil) throws {
         self.defaults = defaults
         mh18BrowserSession = Mh18BrowserSession(defaults: defaults)
         let defaultIDs = BuiltinSourceCatalog.activeIDs
@@ -107,8 +107,8 @@ final class AppEnvironment {
         let sessionBase = EpubUITestFixtures.sessionID.map {
             base.appendingPathComponent("UITestSessions", isDirectory: true).appendingPathComponent($0, isDirectory: true)
         } ?? base
-        let appDir = sessionBase.appendingPathComponent(suffix, isDirectory: true)
-        usageStats = UsageStatsClient(directory: ProcessInfo.processInfo.arguments.contains("--ui-testing") ? appDir : base)
+        let appDir = storageDirectory ?? sessionBase.appendingPathComponent(suffix, isDirectory: true)
+        usageStats = UsageStatsClient(directory: storageDirectory != nil || ProcessInfo.processInfo.arguments.contains("--ui-testing") ? appDir : base)
         library = try LibraryStore(directory: appDir)
         localLibrary = try LocalLibrary(directory: appDir.appendingPathComponent("Local", isDirectory: true))
         localSource = LocalComicSource(library: localLibrary)
@@ -263,6 +263,9 @@ final class AppEnvironment {
 
     func replaceSource(original: ComicSummary, target: ComicDetail, matchingChapter: Chapter? = nil, matchingChapterIndex: Int = 0) throws {
         let oldGroups = bookshelfGroupStore.getGroupsForComic(scope: .online, comicId: original.comicId).map(\.id)
+        // Confirm the library transaction before changing independently saved
+        // group/update state. A failed write must leave the old membership intact.
+        try library.replaceSource(original: original, target: target.summary, matchingChapter: matchingChapter, matchingChapterIndex: matchingChapterIndex)
         var targetGroups = Set(oldGroups)
         for g in bookshelfGroupStore.getGroupsForComic(scope: .online, comicId: target.summary.comicId) {
             targetGroups.insert(g.id)
@@ -276,7 +279,6 @@ final class AppEnvironment {
             favoriteUpdateCoordinator.acknowledge(sourceId: target.summary.sourceId, comicId: target.summary.comicId, revision: rev)
         }
 
-        try library.replaceSource(original: original, target: target.summary, matchingChapter: matchingChapter, matchingChapterIndex: matchingChapterIndex)
         notifyLibraryChanged()
     }
 

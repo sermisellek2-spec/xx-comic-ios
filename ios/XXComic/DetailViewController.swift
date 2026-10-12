@@ -473,30 +473,6 @@ final class DetailViewController: UIViewController {
         let revision = FavoriteRevision.fromChapters(latestChapterName: targetDetail.latestChapter, chapters: targetDetail.chapters)
         self.environment.favoriteUpdateCoordinator.acknowledge(sourceId: targetDetail.summary.sourceId, comicId: targetDetail.summary.comicId, revision: revision)
     }
-    private func switchToSource(target: ComicSummary) {
-        guard target.comicId != comic.comicId else { return }
-        guard let newSource = environment.source(for: target) else { return }
-        sourceSwitchButton.setTitle("正在切换至 \(newSource.name)…", for: .normal)
-        sourceSwitchButton.isEnabled = false
-
-        Task { [weak self] in
-            do {
-                let targetDetail = try await newSource.detail(comicId: target.comicId)
-                guard let self else { return }
-                if self.environment.library.entry(for: self.comic)?.isFavorite == true {
-                    try? self.environment.replaceSource(original: self.comic, target: targetDetail)
-                }
-                self.applySwitchedSource(targetDetail: targetDetail)
-            } catch {
-                guard let self else { return }
-                self.sourceSwitchButton.setTitle(self.source.name, for: .normal)
-                self.sourceSwitchButton.isEnabled = true
-                let alert = UIAlertController(title: "换源失败", message: error.localizedDescription, preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "确定", style: .default))
-                self.present(alert, animated: true)
-            }
-        }
-    }
     @objc private func openVolumeManager() {
         let vm = VolumeManagerViewController(seriesId: comic.comicId, seriesTitle: comic.title, environment: environment) { [weak self] in
             self?.localVolumesChanged()
@@ -685,8 +661,10 @@ final class DetailViewController: UIViewController {
             }
             return
         }
-        navigationController?.pushViewController(ReaderViewController(comic: comic, chapters: chapters,
-            chapterIndex: index, directoryIncomplete: incomplete, environment: environment), animated: true)
+        let reader = ReaderViewController(comic: comic, chapters: chapters,
+            chapterIndex: index, directoryIncomplete: incomplete, environment: environment)
+        reader.onSourceChanged = { [weak self] detail in self?.applySwitchedSource(targetDetail: detail) }
+        navigationController?.pushViewController(reader, animated: true)
     }
 }
 

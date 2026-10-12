@@ -25,6 +25,11 @@ enum MatrixUITestFixtures {
             try environment.sourceGroupStore.select(id: group.id)
         }
         if arguments.contains("--matrix-disabled-statistics") { try environment.usageStats.setEnabled(false) }
+        if arguments.contains("--matrix-error-log-fixture"), !environment.defaults.bool(forKey: "ui.matrix.errors.seeded") {
+            ErrorLogStore.shared.clear()
+            ErrorLogStore.shared.append(title: "验收导入错误", detail: "文件校验失败\nAuthorization: Bearer TEST_AUTH_FIELD\nCookie: session=TEST_COOKIE_FIELD\nhttps://fixture.invalid/comic?token=TEST_TOKEN_FIELD")
+            environment.defaults.set(true, forKey: "ui.matrix.errors.seeded")
+        }
         for source in environment.allSources where !arguments.contains("--matrix-empty-library") && !environment.defaults.bool(forKey: "ui.matrix.library.seeded") {
             guard let fixture = source as? MatrixUITestSource else { continue }
             if fixture.id == "mh160" {
@@ -246,10 +251,16 @@ struct MatrixUITestSource: ComicSource {
     func latest(page: Int) async throws -> [ComicSummary] { try Task.checkCancellation(); return page == 1 ? comics : [] }
     func search(keyword: String, page: Int) async throws -> [ComicSummary] {
         try await Task.sleep(nanoseconds: 30_000_000)
+        if (id == "gmh" && ProcessInfo.processInfo.arguments.contains("--matrix-switch-similar-title")) || (id != "mh160" && ProcessInfo.processInfo.arguments.contains("--matrix-switch-no-match")) {
+            return [ComicSummary(sourceId: id, comicId: id + "_similar", title: keyword + "外传")]
+        }
         return page == 1 ? comics.filter { $0.title.contains(keyword) } : []
     }
     func detail(comicId: String) async throws -> ComicDetail {
         let request = await requests.nextDetail(comicId)
+        if id == "copy4000", request == 1, ProcessInfo.processInfo.arguments.contains("--matrix-switch-held-until-cancel") {
+            while true { try await Task.sleep(nanoseconds: 50_000_000) }
+        }
         if id == "copy4000", request == 1, ProcessInfo.processInfo.arguments.contains("--matrix-initial-detail-after-directory") {
             // Hold only the initial request; download's detail completes first.
             // This scenario opens an unfavorited copy4000 discovery result, so
@@ -264,11 +275,13 @@ struct MatrixUITestSource: ComicSource {
         try Task.checkCancellation()
         guard let comic = comics.first(where: { $0.comicId == comicId }) else { throw URLError(.resourceUnavailable) }
         let fixture = MatrixSharedFixture.document
-        return ComicDetail(summary: comic, author: fixture.author, status: fixture.status, description: fixture.description, latestChapter: fixture.latestChapter, chapters: ProcessInfo.processInfo.arguments.contains("--matrix-lazy-directory") ? [] : chapterList)
+        let lazy = ProcessInfo.processInfo.arguments.contains("--matrix-lazy-directory") || (id == "copy4000" && ProcessInfo.processInfo.arguments.contains("--matrix-switch-empty-once"))
+        return ComicDetail(summary: comic, author: fixture.author, status: fixture.status, description: fixture.description, latestChapter: fixture.latestChapter, chapters: lazy ? [] : chapterList)
     }
     func chapters(comicId: String) async throws -> [Chapter] {
         let request = await requests.nextDirectory(comicId)
         let flags = ProcessInfo.processInfo.arguments
+        if id == "copy4000", request == 1, flags.contains("--matrix-switch-empty-once") { return [] }
         let holdCount = flags.contains("--matrix-directory-held-twice-until-cancel") ? 2 : (flags.contains("--matrix-directory-held-until-cancel") ? 1 : 0)
         if request <= holdCount {
             // A deterministic pending request lets XCTest verify actual cancellation,
