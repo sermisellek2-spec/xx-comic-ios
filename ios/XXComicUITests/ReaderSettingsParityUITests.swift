@@ -82,6 +82,31 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         XCTAssertFalse(app.staticTexts["左右手模式"].exists)
         app.buttons["reader.settings.close"].tap(); page(3, in: app)
     }
+    func testArchivedButtonPreferenceKeepsNormalAndMangaTurnsUsableAfterRelaunch() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--matrix-fixtures", "--matrix-reader-original", "--matrix-legacy-button-reader", "--light-mode"]
+        app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
+        app.launch(); open(app)
+        XCTAssertTrue(app.buttons["reader.layout.1"].isSelected)
+        XCTAssertFalse(app.staticTexts["翻页方式"].exists)
+        app.buttons["reader.settings.close"].tap(); page(1, in: app)
+        controls(false, in: app)
+        let pages = app.collectionViews["reader.pages"]
+        pages.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap(); page(2, in: app)
+        pages.swipeLeft(); page(3, in: app)
+        controls(true, in: app)
+        app.buttons["reader.settings"].tap(); app.buttons["reader.layout.2"].tap(); app.buttons["reader.settings.close"].tap()
+        page(3, in: app); controls(false, in: app)
+        pages.swipeRight(); page(4, in: app)
+        pages.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap(); page(3, in: app)
+        controls(true, in: app); app.buttons["reader.back"].tap()
+        XCTAssertTrue(app.buttons["detail.read"].waitForExistence(timeout: 5))
+        app.terminate(); app.launch(); open(app)
+        XCTAssertTrue(app.buttons["reader.layout.2"].isSelected)
+        XCTAssertFalse(app.staticTexts["翻页方式"].exists)
+        app.buttons["reader.settings.close"].tap(); page(3, in: app)
+        controls(false, in: app); pages.swipeRight(); page(4, in: app)
+    }
     func testDefaultMangaSwipeAdvancesOnceAndCrossesToTheNextLogicalChapter() {
         let app = launch()
         app.buttons["reader.layout.2"].tap(); app.buttons["reader.settings.close"].tap(); page(1, in: app)

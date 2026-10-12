@@ -907,7 +907,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         let action = ReaderNavigation.tapAction(
             x: Double((location.x - pages.bounds.minX) / max(1, pages.bounds.width)),
             y: Double((location.y - pages.bounds.minY) / max(1, pages.bounds.height)),
-            controlsVisible: !fullscreen, layout: settings.layout, mode: settings.turnMode,
+            // The current three reading modes support taps and horizontal turns.
+            // Keep archived input preferences without reviving the retired
+            // button-only mode, whose separate page buttons no longer exist.
+            controlsVisible: !fullscreen, layout: settings.layout, mode: .tap,
             zoomed: isZoomed, direction: settings.pageDirection)
         recordReaderTrace("tap(\(location.x),\(location.y)): \(action)")
         switch action {
@@ -944,7 +947,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         guard gesture.state == .ended else { return }
         let began = pagePanBeganAt; pagePanBeganAt = nil
         guard let began, ProcessInfo.processInfo.systemUptime - began < 1,
-              !isZoomed, settings.layout == .paged, settings.turnMode != .buttons else { return }
+              !isZoomed, settings.layout == .paged else { return }
         let translation = gesture.translation(in: pages)
         guard abs(translation.x) > 36, abs(translation.x) > abs(translation.y) * 1.1 else { return }
         move(ReaderNavigation.swipeDelta(dx: Double(translation.x), direction: settings.pageDirection))
@@ -952,7 +955,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if let pan = gestureRecognizer as? UIPanGestureRecognizer, pan.view === pages {
             let velocity = pan.velocity(in: pages)
-            return settings.layout == .paged && settings.turnMode != .buttons && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.1
+            return settings.layout == .paged && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.1
         }
         return true
     }

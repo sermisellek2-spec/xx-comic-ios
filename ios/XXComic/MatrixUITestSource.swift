@@ -43,6 +43,13 @@ enum MatrixUITestFixtures {
         if !environment.defaults.bool(forKey: "ui.matrix.preferences.seeded") {
             var preferences = environment.preferences.load()
             if arguments.contains("--matrix-paged-reader") { preferences.layout = .paged }
+            if arguments.contains("--matrix-legacy-button-reader") {
+                // Exercise the archived state that previously disabled page
+                // navigation, through the real persistent preferences store.
+                preferences.readingMode = .normal
+                preferences.turnMode = .buttons
+                environment.defaults.set(true, forKey: "reader.button.mode")
+            }
             let originalPixels = arguments.contains("--matrix-reader-original")
             preferences.enhancementMode = originalPixels ? ImageEnhancementPolicy.modeOff : ImageEnhancementPolicy.modeSmart
             preferences.enhancementComparison = !originalPixels

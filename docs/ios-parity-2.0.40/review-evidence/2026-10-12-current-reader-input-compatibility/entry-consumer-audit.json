@@ -1,0 +1,130 @@
+{
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "parentRevision": "ed3e2bc9ad0947289dfa060d3e2a626981961825",
+  "checkedAtUTC": "2026-10-12T14:51:12.760895+00:00",
+  "androidRawBlobSHA256": {
+    "app/src/main/java/com/xxcomic/MainActivity.java": "ebf97fb1e38241916e4a318b495bbe75edb3a6bb3c1e81435e8e0a05ca4ff515",
+    "app/src/main/java/com/xxcomic/reader/PagedReaderView.java": "3138ca2d97b508d49df80c8326dbd53c7a6d74b1c62a64ae5af927b3ea6381b4",
+    "app/src/main/java/com/xxcomic/reader/ReaderSettingsSheet.java": "968611404c58b6820a469c8c57c17c6cf4d1423b5680242bfab4db26967f5149",
+    "app/src/main/java/com/xxcomic/reader/ReadingHabitTracker.java": "6d49c933649884a193269b4e89d8a53f33adc9a89b383003686da05862d293ab",
+    "app/src/main/java/com/xxcomic/UsageStatsClient.java": "4814b5aa61d8c1df2240497d41253771a7aef0168a419bd34939608461e92f9d"
+  },
+  "scope": "Reading defaults, archived input consumers and the eleven main settings entries. Source inspection only; this is not the complete application gate.",
+  "settingsEntries": [
+    {
+      "label": "主题模式",
+      "iosIdentifier": "settings.theme",
+      "androidAction": "showThemeDrawer",
+      "iosConsumer": "ThemeChoiceSheet / theme.mode / AppThemeController",
+      "acceptance": "source path confirmed; current UI result pending"
+    },
+    {
+      "label": "启动书架",
+      "iosIdentifier": "settings.launch",
+      "androidAction": "showLaunchBookshelfDrawer",
+      "iosConsumer": "LaunchBookshelfSettingsViewController / ReadingHabitTracker / SceneDelegate",
+      "acceptance": "source path confirmed; current UI result pending"
+    },
+    {
+      "label": "阅读历史",
+      "iosIdentifier": "settings.history",
+      "androidAction": "showHistory",
+      "iosConsumer": "BookshelfViewController(historyOnly) / LibraryStore.history",
+      "acceptance": "source path confirmed; current UI result pending"
+    },
+    {
+      "label": "站源管理",
+      "iosIdentifier": "settings.sources",
+      "androidAction": "showSourceManagement",
+      "iosConsumer": "SourceSettingsViewController / SourcePreferences / AppEnvironment.reloadSources",
+      "acceptance": "source path confirmed; current UI result pending"
+    },
+    {
+      "label": "下载中心",
+      "iosIdentifier": "settings.downloads",
+      "androidAction": "showDownloadCenter",
+      "iosConsumer": "DownloadCenterViewController / DownloadRuntime",
+      "acceptance": "source path confirmed; current UI result pending"
+    },
+    {
+      "label": "本地存储管理",
+      "iosIdentifier": "settings.storage",
+      "androidAction": "showLocalStorage",
+      "iosConsumer": "LocalStorageViewController / LocalLibrary / DownloadStorageLocations",
+      "acceptance": "source path confirmed; current UI result pending"
+    },
+    {
+      "label": "缓存清理",
+      "iosIdentifier": "settings.cache",
+      "androidAction": "showCacheCleanup",
+      "iosConsumer": "CacheCleanupViewController / AppEnvironment.clearCaches / HTTPResponseCache",
+      "acceptance": "source path confirmed; current UI result pending"
+    },
+    {
+      "label": "错误日志",
+      "iosIdentifier": "settings.errors",
+      "androidAction": "showErrorLogs",
+      "iosConsumer": "ErrorLogsViewController / ErrorLogStore",
+      "acceptance": "source path confirmed; current UI result pending"
+    },
+    {
+      "label": "使用统计",
+      "iosIdentifier": "settings.statistics",
+      "androidAction": "toggleUsageStats",
+      "iosConsumer": "setUsageStatsEnabled / UsageStatsClient",
+      "acceptance": "source path confirmed; current UI result pending"
+    },
+    {
+      "label": "版本更新",
+      "iosIdentifier": "settings.update",
+      "androidAction": "checkAppUpdate",
+      "iosConsumer": "AppUpdateChecker / IOSUpdatePolicy / browser",
+      "acceptance": "source path confirmed; current UI result pending"
+    },
+    {
+      "label": "关于 App",
+      "iosIdentifier": "settings.about",
+      "androidAction": "showAboutApp",
+      "iosConsumer": "AboutAppViewController",
+      "acceptance": "source path confirmed; current UI result pending"
+    }
+  ],
+  "readerDefaults": {
+    "readingMode": "scroll",
+    "readerTheme": "actual system, independent of app theme",
+    "pinchZoom": true,
+    "fullyImmersive": false,
+    "inkScreen": false,
+    "disablePageAnimation": false,
+    "cropWhiteMargins": false,
+    "enhancementMode": 0,
+    "enhancementComparison": false
+  },
+  "otherConfirmedDefaults": {
+    "appTheme": "automatic",
+    "launchBookshelf": "automatic habit",
+    "usageStatsEnabled": true,
+    "currentSourceCount": 51,
+    "defaultEnabledSources": 50,
+    "disabledByDefault": [
+      "duya"
+    ]
+  },
+  "archivedInputPreferences": {
+    "keys": [
+      "reader.page.mode",
+      "reader.button.mode"
+    ],
+    "androidRetainsData": true,
+    "androidLegacyConsumer": "PagedReaderView inputMode and MainActivity 52dp separate page buttons",
+    "iosDataRoundtripUnchanged": true,
+    "iosCurrentReaderConsumesTurnMode": false,
+    "iosCurrentReaderInput": "normal and manga use current tap and horizontal swipe rules",
+    "retiredLeftHandConsumed": false,
+    "reason": "The current UI exposes three reading modes and no legacy input selector/page-button bar. Preserve old values without disabling current turns.",
+    "appleRegression": "ReaderSettingsParityUITests.testArchivedButtonPreferenceKeepsNormalAndMangaTurnsUsableAfterRelaunch",
+    "appleRegressionExecuted": false
+  },
+  "realWebsiteRequests": 0,
+  "completeGatePassed": false
+}
