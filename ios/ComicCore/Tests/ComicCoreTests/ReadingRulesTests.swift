@@ -53,6 +53,25 @@ final class ReadingRulesTests: XCTestCase {
         XCTAssertFalse(ReaderNavigation.crossesChapter(index: 0, count: 0, delta: 1))
     }
 
+    func testMangaTapAndSwipeAdvanceFromTheLeftWithoutReversingChapters() {
+        XCTAssertEqual(ReaderNavigation.tapDelta(leftSide: true, direction: .rightToLeft), 1)
+        XCTAssertEqual(ReaderNavigation.tapDelta(leftSide: false, direction: .rightToLeft), -1)
+        XCTAssertEqual(ReaderNavigation.swipeDelta(dx: 100, direction: .rightToLeft), 1)
+        XCTAssertEqual(ReaderNavigation.swipeDelta(dx: -100, direction: .rightToLeft), -1)
+        var session = ReaderSession(chapterCount: 3, chapterIndex: 1)
+        session.loaded(imageCount: 2, position: ReaderPosition(imageIndex: 0, offset: 0))
+        XCTAssertEqual(session.move(delta: ReaderNavigation.tapDelta(leftSide: true, direction: .rightToLeft)), .image(1))
+        XCTAssertEqual(session.move(delta: ReaderNavigation.tapDelta(leftSide: true, direction: .rightToLeft)), .chapter(2, atEnd: false))
+    }
+
+    func testMangaDirectionDoesNotBypassStripZoomOrOverlayTapRules() {
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .paged, mode: .tap, zoomed: false, direction: .rightToLeft), .move(1))
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.9, y: 0.5, controlsVisible: false, layout: .paged, mode: .tap, zoomed: false, direction: .rightToLeft), .move(-1))
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: true, layout: .paged, mode: .tap, zoomed: false, direction: .rightToLeft), .toggleControls)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .strip, mode: .tap, zoomed: false, direction: .rightToLeft), .toggleControls)
+        XCTAssertEqual(ReaderNavigation.tapAction(x: 0.1, y: 0.5, controlsVisible: false, layout: .paged, mode: .tap, zoomed: true, direction: .rightToLeft), .toggleControls)
+    }
+
     func testHistorySurvivesChangedOrMissingDirectory() {
         XCTAssertEqual(HistoryProgressLabel.label(savedIndex: 9, titles: ["全卷"]), "目录已更新 · 点击继续")
         XCTAssertEqual(HistoryProgressLabel.label(savedIndex: -1, titles: []), "有阅读记录")

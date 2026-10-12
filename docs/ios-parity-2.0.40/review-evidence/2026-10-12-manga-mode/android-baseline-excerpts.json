@@ -1,0 +1,159 @@
+{
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "androidRepository": "F:\\softForCode\\codex-project\\xx-comic",
+  "sources": {
+    "settings": {
+      "path": "app/src/main/java/com/xxcomic/reader/ReaderSettingsSheet.java",
+      "sha256": "968611404c58b6820a469c8c57c17c6cf4d1423b5680242bfab4db26967f5149",
+      "excerpts": [
+        {
+          "firstLine": 31,
+          "lastLine": 62,
+          "lines": [
+            "    public static final int MODE_SCROLL = 0;",
+            "    public static final int MODE_NORMAL = 1;",
+            "    public static final int MODE_MANGA = 2;",
+            "",
+            "    public static final int THEME_DEFAULT = 0;",
+            "    public static final int THEME_DARK = 1;",
+            "    public static final int THEME_LIGHT = 2;",
+            "",
+            "    public interface OnSettingsChangeListener {",
+            "        void onReadingModeChanged(int mode);",
+            "        void onHideStatusBadgeChanged(boolean hide);",
+            "        void onEinkModeChanged(boolean eink);",
+            "        void onPinchZoomChanged(boolean enabled);",
+            "        default void onDisablePageAnimationChanged(boolean disabled) {}",
+            "        default void onCropWhiteMarginsChanged(boolean enabled) {}",
+            "        default void onReaderThemeChanged(int themeMode) {}",
+            "        default void onImageEnhancementChanged(int mode) {}",
+            "        default void onImageEnhancementComparisonChanged(boolean enabled) {}",
+            "    }",
+            "",
+            "    public static int toReadingMode(int layoutMode, boolean leftHand) {",
+            "        if (layoutMode == 0) return MODE_SCROLL;",
+            "        return leftHand ? MODE_MANGA : MODE_NORMAL;",
+            "    }",
+            "",
+            "    public static int toLayoutMode(int readingMode) {",
+            "        return readingMode == MODE_SCROLL ? 0 : 1;",
+            "    }",
+            "",
+            "    public static boolean toLeftHand(int readingMode) {",
+            "        return readingMode == MODE_MANGA;",
+            "    }"
+          ]
+        },
+        {
+          "firstLine": 209,
+          "lastLine": 218,
+          "lines": [
+            "",
+            "        cardViews[0] = new ModeCardView(activity, R.drawable.ic_mode_scroll, \"卷轴模式\", initialMode == MODE_SCROLL, isDark);",
+            "        cardViews[1] = new ModeCardView(activity, R.drawable.ic_mode_normal, \"普通模式\", initialMode == MODE_NORMAL, isDark);",
+            "        cardViews[2] = new ModeCardView(activity, R.drawable.ic_mode_manga, \"日漫模式\", initialMode == MODE_MANGA, isDark);",
+            "",
+            "        for (int i = 0; i < 3; i++) {",
+            "            final int modeIndex = i;",
+            "            final ModeCardView card = cardViews[i];",
+            "            allCards.add(card);",
+            "            card.setOnClickListener(v -> {"
+          ]
+        }
+      ]
+    },
+    "navigation": {
+      "path": "app/src/main/java/com/xxcomic/reader/ReaderNavigation.java",
+      "sha256": "9f129c0b764c87d6071cd03ac2427cfd9c2911f2e17e575e34f968a6fe60e82a",
+      "excerpts": [
+        {
+          "firstLine": 1,
+          "lastLine": 17,
+          "lines": [
+            "package com.xxcomic.reader;",
+            "",
+            "/** Logical order never depends on handedness; only physical gestures do. */",
+            "public final class ReaderNavigation {",
+            "    private ReaderNavigation() { }",
+            "    public static int tapDelta(boolean leftSide, boolean leftHand) {",
+            "        return leftSide == leftHand ? 1 : -1;",
+            "    }",
+            "    public static int swipeDelta(float dx, boolean leftHand) {",
+            "        return (dx > 0) == leftHand ? 1 : -1;",
+            "    }",
+            "    public static boolean isEdgeTapNavigationPermitted(int layoutMode, int pageMode) {",
+            "        return layoutMode == 1 && pageMode == 0;",
+            "    }",
+            "    public static boolean crossesChapter(int index, int count, int delta) {",
+            "        return count > 0 && (index + delta < 0 || index + delta >= count);",
+            "    }"
+          ]
+        }
+      ]
+    },
+    "pager": {
+      "path": "app/src/main/java/com/xxcomic/reader/PagedReaderView.java",
+      "sha256": "3138ca2d97b508d49df80c8326dbd53c7a6d74b1c62a64ae5af927b3ea6381b4",
+      "excerpts": [
+        {
+          "firstLine": 41,
+          "lastLine": 57,
+          "lines": [
+            "    public PagedReaderView(Context context, List<String> images, int initialPage, int inputMode,",
+            "                           boolean leftHand, boolean pinchZoomEnabled, boolean animationDisabled, ImageLoader loader, Listener listener) {",
+            "        super(context);",
+            "        this.urls = new ArrayList<>(images);",
+            "        this.inputMode = inputMode;",
+            "        this.leftHand = leftHand;",
+            "        this.loader = loader;",
+            "        this.pinchZoomEnabled = pinchZoomEnabled;",
+            "        this.animationDisabled = animationDisabled;",
+            "        this.listener = listener;",
+            "        setBackgroundColor(Color.rgb(12, 20, 32));",
+            "        pager = new ViewPager2(context);",
+            "        pager.setLayoutDirection(leftHand ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);",
+            "        pager.setOrientation(ViewPager2.ORIENTATION_HORIZONTAL);",
+            "        updateUserInputEnabled();",
+            "        pager.setOffscreenPageLimit(1);",
+            "        pager.setVerticalScrollBarEnabled(false);"
+          ]
+        },
+        {
+          "firstLine": 193,
+          "lastLine": 197,
+          "lines": [
+            "    private void updateUserInputEnabled() {",
+            "        if (pager != null) {",
+            "            pager.setUserInputEnabled(inputMode != 1 && !isZoomed() && !animationDisabled);",
+            "        }",
+            "    }"
+          ]
+        },
+        {
+          "firstLine": 235,
+          "lastLine": 251,
+          "lines": [
+            "        if (action == MotionEvent.ACTION_MOVE && (Math.abs(dx) > dp(8) || Math.abs(dy) > dp(8))) listener.onInteraction();",
+            "        boolean result = super.dispatchTouchEvent(event);",
+            "        if (action == MotionEvent.ACTION_UP && inputMode != 1 && !blockedGesture && !isZoomed()",
+            "                && !navigationTriggeredInGesture",
+            "                && Math.abs(dx) > dp(36) && Math.abs(dx) > Math.abs(dy) * 1.1f",
+            "                && event.getEventTime() - downTime < 1000) {",
+            "            long now = event.getEventTime();",
+            "            if (now - lastNavigateTime >= MIN_NAVIGATE_INTERVAL_MS) {",
+            "                int delta = ReaderNavigation.swipeDelta(dx, leftHand);",
+            "                if (delta != 0) {",
+            "                    lastNavigateTime = now;",
+            "                    navigationTriggeredInGesture = true;",
+            "                    if (animationDisabled) {",
+            "                        listener.onNavigate(delta);",
+            "                    } else if (currentPage() == downPage && ReaderNavigation.crossesChapter(downPage, urls.size(), delta)) {",
+            "                        listener.onNavigate(delta);",
+            "                    }"
+          ]
+        }
+      ]
+    }
+  },
+  "userSteering": "2026-10-12：阅读模式是不是少了一个日漫模式；恢复日漫独立模式，继续删除旧左右手设置"
+}

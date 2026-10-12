@@ -72,19 +72,26 @@ public enum ReaderNavigation {
     }
 
     public static func tapAction(x: Double, y: Double, controlsVisible: Bool, layout: ReaderLayout,
-                                 mode: ReaderTurnMode, zoomed: Bool) -> ReaderTapAction {
+                                 mode: ReaderTurnMode, zoomed: Bool,
+                                 direction: ReaderPageDirection = .leftToRight) -> ReaderTapAction {
         if controlsVisible { return .toggleControls }
         guard x.isFinite, y.isFinite else { return .none }
         let activeY = layout == .paged ? (y >= 0.25 && y <= 0.75) : (y > 0.25 && y < 0.75)
         guard activeY else { return .none }
         let allowsTap = isEdgeTapNavigationPermitted(layout: layout, mode: mode)
         if allowsTap && !zoomed && (x < 0.28 || x > 0.72) {
-            return .move(tapDelta(leftSide: x < 0.28))
+            return .move(tapDelta(leftSide: x < 0.28, direction: direction))
         }
         return .toggleControls
     }
-    public static func tapDelta(leftSide: Bool) -> Int { leftSide ? -1 : 1 }
-    public static func swipeDelta(dx: Double) -> Int { dx < 0 ? 1 : -1 }
+    public static func tapDelta(leftSide: Bool, direction: ReaderPageDirection = .leftToRight) -> Int {
+        let delta = leftSide ? -1 : 1
+        return direction == .rightToLeft ? -delta : delta
+    }
+    public static func swipeDelta(dx: Double, direction: ReaderPageDirection = .leftToRight) -> Int {
+        let delta = dx < 0 ? 1 : -1
+        return direction == .rightToLeft ? -delta : delta
+    }
     public static func crossesChapter(index: Int, count: Int, delta: Int) -> Bool {
         guard count > 0 else { return false }
         let (next, overflow) = index.addingReportingOverflow(delta)

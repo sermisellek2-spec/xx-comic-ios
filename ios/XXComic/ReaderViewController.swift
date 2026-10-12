@@ -29,7 +29,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var fullscreen = false
     private var pendingPosition: ReaderPosition?
     private var lastSaved: ReaderPosition?
-    private let layout = UICollectionViewFlowLayout()
+    private let layout = ReaderPageLayout()
     private lazy var pages = UICollectionView(frame: .zero, collectionViewLayout: layout)
     private let toolbar = UIStackView()
     private let topChrome = ReaderChromeGradientView(edge: .top)
@@ -150,8 +150,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 ? self.continuousPages.globalIndex(for: chapter, position: ReaderPosition(imageIndex: pageIndex, offset: 0)) : pageIndex
             guard let target else { return }
             if self.settings.layout == .paged {
-                let x = CGFloat(target) * self.pages.bounds.width
-                self.pages.setContentOffset(CGPoint(x: x, y: 0), animated: false)
+                self.scrollToPage(target, animated: false)
             } else {
                 self.pages.scrollToItem(at: IndexPath(item: target, section: 0), at: .top, animated: false)
             }
@@ -324,6 +323,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         savePosition()
         let position = currentPosition()
         let previousSettings = settings
+        let wasRestoring = restoring
+        restoring = true
+        defer { restoring = wasRestoring }
         settings = environment.preferences.load()
         if pageAnimating {
             pages.setContentOffset(pages.contentOffset, animated: false)
@@ -331,6 +333,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             restore(position)
         }
         layout.scrollDirection = settings.layout == .strip ? .vertical : .horizontal
+        pages.semanticContentAttribute = settings.pageDirection == .rightToLeft ? .forceRightToLeft : .forceLeftToRight
         pages.isPagingEnabled = settings.layout == .paged
         pages.isScrollEnabled = settings.layout == .strip && !isZoomed
         let style: UIUserInterfaceStyle = settings.theme == .system ? UIScreen.main.traitCollection.userInterfaceStyle : (settings.theme == .dark ? .dark : .light)
@@ -341,7 +344,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         badge.isHidden = !fullscreen || settings.fullyImmersive
         presentedViewController?.overrideUserInterfaceStyle = style
         for cell in pages.visibleCells { (cell as? ReaderImageCell)?.apply(settings) }
-        if previousSettings.layout != settings.layout {
+        if previousSettings.readingMode != settings.readingMode {
             cancelContinuation()
             if chapters.indices.contains(session.chapterIndex), let segment = continuousPages.segment(for: chapters[session.chapterIndex]) {
                 images = segment.imageURLs
@@ -664,7 +667,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         guard !images.isEmpty, pages.bounds.width > 0 else { return ReaderPosition(imageIndex: 0, offset: 0) }
         if let pendingPosition { return pendingPosition }
         if settings.layout == .paged {
-            let index = Int((pages.contentOffset.x / max(1, pages.bounds.width)).rounded())
+            let center = CGPoint(x: pages.bounds.midX, y: pages.bounds.midY)
+            let index = pages.indexPathForItem(at: center)?.item ?? session.imageIndex
             return positionAtImage(max(0, min(images.count - 1, index)), offset: 0, atEnd: index == images.count - 1)
         }
         let index = visibleStripImageIndex()
@@ -715,7 +719,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         let index = settings.layout == .strip
             ? (chapter.flatMap { continuousPages.globalIndex(for: $0, position: position) } ?? localIndex) : localIndex
         if settings.layout == .paged {
-            pages.setContentOffset(CGPoint(x: CGFloat(index) * pages.bounds.width, y: 0), animated: false)
+            scrollToPage(index, animated: false)
         } else if let frame = layout.layoutAttributesForItem(at: IndexPath(item: index, section: 0))?.frame {
             let maxY = max(0, pages.contentSize.height - pages.bounds.height)
             let tailIndex = chapter.flatMap { continuousPages.segment(for: $0)?.range.last } ?? images.count - 1
@@ -804,13 +808,18 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         switch session.move(delta: delta) {
         case .image(let index):
             pageAnimating = !settings.disablePageAnimation && !settings.inkScreen
-            pages.setContentOffset(CGPoint(x: CGFloat(index) * pages.bounds.width, y: 0), animated: pageAnimating)
+            scrollToPage(index, animated: pageAnimating)
             updateBadge()
             if settings.disablePageAnimation || settings.inkScreen { savePosition() }
         case .chapter(_, let atEnd): changeChapter(delta, atEnd: atEnd)
         case .boundary: boundary()
         case .unavailable: break
         }
+    }
+    private func scrollToPage(_ index: Int, animated: Bool) {
+        pages.layoutIfNeeded()
+        guard images.indices.contains(index) else { return }
+        pages.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredHorizontally, animated: animated)
     }
     private func changeChapter(_ delta: Int, atEnd: Bool = false) {
         if incompleteDirectory { loadDirectory(); return }
@@ -834,7 +843,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             x: Double((location.x - pages.bounds.minX) / max(1, pages.bounds.width)),
             y: Double((location.y - pages.bounds.minY) / max(1, pages.bounds.height)),
             controlsVisible: !fullscreen, layout: settings.layout, mode: settings.turnMode,
-            zoomed: isZoomed)
+            zoomed: isZoomed, direction: settings.pageDirection)
         switch action {
         case .none: break
         case .move(let delta): move(delta)
@@ -862,15 +871,15 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     @objc private func panned(_ gesture: UIPanGestureRecognizer) {
         if gesture.state == .began { setFullscreen(true, animated: true) }
-        guard gesture.state == .ended, !isZoomed, settings.layout == .paged, settings.turnMode == .swipe else { return }
+        guard gesture.state == .ended, !isZoomed, settings.layout == .paged, settings.turnMode != .buttons else { return }
         let translation = gesture.translation(in: pages)
         guard abs(translation.x) > 72, abs(translation.x) > abs(translation.y) * 1.35 else { return }
-        move(ReaderNavigation.swipeDelta(dx: Double(translation.x)))
+        move(ReaderNavigation.swipeDelta(dx: Double(translation.x), direction: settings.pageDirection))
     }
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if let pan = gestureRecognizer as? UIPanGestureRecognizer, pan.view === pages {
             let velocity = pan.velocity(in: pages)
-            return settings.layout == .paged && settings.turnMode == .swipe && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.35
+            return settings.layout == .paged && settings.turnMode != .buttons && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.35
         }
         return true
     }

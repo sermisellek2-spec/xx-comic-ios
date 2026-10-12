@@ -2,9 +2,18 @@ import Foundation
 
 public enum ReaderLayout: Int, CaseIterable, Sendable { case strip = 0, paged = 1 }
 public enum ReaderTurnMode: Int, CaseIterable, Sendable { case tap = 0, buttons = 1, swipe = 2 }
+public enum ReaderReadingMode: Int, CaseIterable, Sendable { case scroll = 0, normal = 1, manga = 2 }
+public enum ReaderPageDirection: Equatable, Sendable { case leftToRight, rightToLeft }
 
 public struct ReaderPreferences: Equatable, Sendable {
-    public var layout: ReaderLayout = .strip
+    public var readingMode: ReaderReadingMode = .scroll
+    public var layout: ReaderLayout {
+        get { readingMode == .scroll ? .strip : .paged }
+        set { readingMode = newValue == .strip ? .scroll : .normal }
+    }
+    public var pageDirection: ReaderPageDirection {
+        readingMode == .manga ? .rightToLeft : .leftToRight
+    }
     public var turnMode: ReaderTurnMode = .tap
     public var theme: ReaderTheme = .system
     public var fullyImmersive = false
@@ -24,6 +33,10 @@ public final class ReaderPreferencesStore {
     public func load() -> ReaderPreferences {
         var settings = ReaderPreferences()
         settings.layout = ReaderLayout(rawValue: defaults.integer(forKey: "reader.layout.mode")) ?? .strip
+        if let value = defaults.object(forKey: "reader.reading.mode") as? Int,
+           let mode = ReaderReadingMode(rawValue: value) {
+            settings.readingMode = mode
+        }
         let pageMode = (defaults.object(forKey: "reader.page.mode") as? Int)
             ?? (defaults.bool(forKey: "reader.button.mode") ? 1 : 0)
         settings.turnMode = ReaderTurnMode(rawValue: max(0, min(2, pageMode))) ?? .tap
@@ -40,6 +53,7 @@ public final class ReaderPreferencesStore {
 
     public func save(_ settings: ReaderPreferences) {
         defaults.set(settings.layout.rawValue, forKey: "reader.layout.mode")
+        defaults.set(settings.readingMode.rawValue, forKey: "reader.reading.mode")
         defaults.set(settings.turnMode.rawValue, forKey: "reader.page.mode")
         defaults.set(settings.theme.rawValue, forKey: "reader.theme.mode")
         defaults.set(settings.fullyImmersive, forKey: "reader.fully.immersive")

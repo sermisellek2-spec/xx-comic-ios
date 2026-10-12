@@ -29,6 +29,64 @@ final class PreferencesTests: XCTestCase {
         XCTAssertEqual(ReaderPreferencesStore(defaults: defaults).load(), ReaderPreferences())
     }
 
+    func testMangaModePersistsIndependentlyOfRetiredLeftHandSetting() {
+        let name = "XXComicTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        let store = ReaderPreferencesStore(defaults: defaults)
+        for legacyHand in [false, true] {
+            defaults.set(legacyHand, forKey: "reader.left.hand")
+            var settings = store.load()
+            settings.readingMode = .manga; settings.theme = .dark
+            store.save(settings)
+            let reopened = ReaderPreferencesStore(defaults: defaults).load()
+            XCTAssertEqual(reopened, settings)
+            XCTAssertEqual(reopened.layout, .paged)
+            XCTAssertEqual(reopened.pageDirection, .rightToLeft)
+            XCTAssertEqual(defaults.integer(forKey: "reader.layout.mode"), 1)
+            XCTAssertEqual(defaults.bool(forKey: "reader.left.hand"), legacyHand, "新模式不改写旧左右手数据")
+        }
+    }
+
+    func testAllThreeReadingModesRoundTripAndNormalResetsDirection() {
+        let name = "XXComicTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        let store = ReaderPreferencesStore(defaults: defaults)
+        var settings = store.load()
+        for mode in [ReaderReadingMode.manga, .normal, .scroll, .manga] {
+            settings.readingMode = mode
+            store.save(settings)
+            let reopened = ReaderPreferencesStore(defaults: defaults).load()
+            XCTAssertEqual(reopened.readingMode, mode)
+            XCTAssertEqual(reopened.layout, mode == .scroll ? .strip : .paged)
+            XCTAssertEqual(reopened.pageDirection, mode == .manga ? .rightToLeft : .leftToRight)
+        }
+    }
+
+    func testOlderPagedSettingsStayNormalEvenWithOldLeftHandValue() {
+        let name = "XXComicTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set(1, forKey: "reader.layout.mode")
+        defaults.set(true, forKey: "reader.left.hand")
+        let loaded = ReaderPreferencesStore(defaults: defaults).load()
+        XCTAssertEqual(loaded.readingMode, .normal)
+        XCTAssertEqual(loaded.pageDirection, .leftToRight)
+        XCTAssertNil(defaults.object(forKey: "reader.reading.mode"), "读取旧数据不自动写入迁移结果")
+    }
+
+    func testInvalidNewReadingModeFallsBackWithoutOverwritingStoredValues() {
+        let name = "XXComicTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set(1, forKey: "reader.layout.mode")
+        defaults.set(99, forKey: "reader.reading.mode")
+        XCTAssertEqual(ReaderPreferencesStore(defaults: defaults).load().readingMode, .normal)
+        XCTAssertEqual(defaults.integer(forKey: "reader.reading.mode"), 99)
+        XCTAssertEqual(defaults.integer(forKey: "reader.layout.mode"), 1)
+    }
+
     func testPersistedReaderChoicesSurviveNewStoreAndDoNotChangeAppTheme() {
         let name = "XXComicTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!

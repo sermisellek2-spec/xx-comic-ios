@@ -1,0 +1,73 @@
+{
+  "verifiedCoreInputs": 266,
+  "verifiedNativeInputs": 89,
+  "onlyLineEndingDifferences": [
+    "ios/ComicCore/Sources/ComicCore/LocalFolderSync.swift",
+    "ios/ComicCore/Sources/ComicCore/Resources/public-sources.json",
+    "ios/ComicCore/Sources/ComicCore/SourcePreferences.swift",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/copy4000/api-chapters-page1.json",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/copy4000/api-chapters-page2.json",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/copy4000/api-detail.json",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/copy4000/api-reader.json",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/copy4000/filters.html",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/copy4000/search-page1.json",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/copy4000/search-page2.json",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/dongmanla-44074.html",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/new-sources/guazi-detail.html",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/new-sources/guazi-list1.html",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/new-sources/guazi-reader1.html",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/new-sources/guazi-top.html",
+    "ios/ComicCore/Tests/ComicCoreTests/Fixtures/public-sources/mh360-filters.html",
+    "ios/ComicCore/Tests/ComicCoreTests/LinkedFolderLibraryTests.swift",
+    "ios/XXComic/DetailViewController.swift",
+    "ios/XXComic/MatrixSharedFixture.swift",
+    "ios/XXComic/ReaderViewController.swift",
+    "ios/XXComic/SettingsViewController.swift",
+    "ios/XXComicUITests/CurrentParityUITests.swift",
+    "ios/XXComicUITests/ParityFixtureIdentity.swift",
+    "ios/XXComicUITests/ReaderSettingsParityUITests.swift",
+    "ios/XXComicUITests/SourceDrawerTests.swift"
+  ],
+  "buildInputs": [
+    {
+      "path": "ios/scripts/build.sh",
+      "sha256": "1fe12afde9ac0ca93373c21541ca47869424d71487c5ad34c66714357449b5cb"
+    },
+    {
+      "path": ".github/workflows/ios.yml",
+      "sha256": "55cea286bdfc0def397ce8cff04ef9c0d588ea83bdcc357cb47afffe51c00f82"
+    }
+  ],
+  "ownedFiles": [
+    ".gitattributes",
+    ".github/workflows/ios.yml",
+    "docs/IOS_2_0_40_PHASED_DEVELOPMENT.md",
+    "docs/comparisons/2026-10-11-ios-android-current-assessment.md",
+    "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
+    "docs/ios-parity-2.0.40/STATUS.md",
+    "docs/ios-parity-2.0.40/differences.md",
+    "docs/ios-parity-2.0.40/requirements.csv",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-12-manga-mode/README.md",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-12-manga-mode/android-baseline-excerpts.json",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-12-manga-mode/build-script-syntax.log",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-12-manga-mode/core-full-result.json",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-12-manga-mode/core-full.log",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-12-manga-mode/impact-result.json",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-12-manga-mode/impact.log",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-12-manga-mode/native-syntax-result.json",
+    "docs/ios-parity-2.0.40/review-evidence/2026-10-12-manga-mode/native-syntax.log",
+    "ios/ComicCore/Sources/ComicCore/ReaderPreferences.swift",
+    "ios/ComicCore/Sources/ComicCore/ReadingRules.swift",
+    "ios/ComicCore/Tests/ComicCoreTests/PreferencesTests.swift",
+    "ios/ComicCore/Tests/ComicCoreTests/ReadingRulesTests.swift",
+    "ios/PARITY.md",
+    "ios/README.md",
+    "ios/XXComic/ParityIcon.swift",
+    "ios/XXComic/ReaderPageLayout.swift",
+    "ios/XXComic/ReaderSettingsViewController.swift",
+    "ios/XXComic/ReaderViewController.swift",
+    "ios/XXComicTests/ReaderMangaGeometryTests.swift",
+    "ios/XXComicUITests/ReaderSettingsParityUITests.swift",
+    "ios/scripts/build.sh"
+  ]
+}

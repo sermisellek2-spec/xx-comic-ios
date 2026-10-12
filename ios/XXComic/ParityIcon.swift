@@ -3,14 +3,14 @@ import UIKit
 /// 24-point paths copied from the frozen Android drawable geometry.
 /// Template rendering lets the same glyph follow the application's theme tokens.
 enum ParityIcon {
-    case bookshelf, search, profile, source, history, download, trash, lightning, automatic, sun, moon, chapterList, detail, layoutList, layoutGrid, swap, readerStrip, readerPage, back, chevronDown, settings, plus
+    case bookshelf, search, profile, source, history, download, trash, lightning, automatic, sun, moon, chapterList, detail, layoutList, layoutGrid, swap, readerStrip, readerPage, readerManga, back, chevronDown, settings, plus
 
     func image(size: CGFloat = 24) -> UIImage {
         UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { context in
             context.cgContext.scaleBy(x: size / 24, y: size / 24)
             UIColor.black.setStroke()
             let path = UIBezierPath()
-            path.lineWidth = [.swap, .plus, .chevronDown].contains(self) ? 2 : ([.readerStrip, .readerPage].contains(self) ? 1.6 : ([.download, .layoutList, .layoutGrid].contains(self) ? 1.8 : 1.5))
+            path.lineWidth = [.swap, .plus, .chevronDown].contains(self) ? 2 : ([.readerStrip, .readerPage, .readerManga].contains(self) ? 1.6 : ([.download, .layoutList, .layoutGrid].contains(self) ? 1.8 : 1.5))
             path.lineCapStyle = .round; path.lineJoinStyle = .round
             func line(_ points: [(CGFloat, CGFloat)], closed: Bool = false) {
                 guard let first = points.first else { return }
@@ -109,12 +109,14 @@ enum ParityIcon {
             case .swap:
                 line([(4, 8), (20, 8)]); line([(16, 4), (20, 8), (16, 12)])
                 line([(20, 16), (4, 16)]); line([(8, 12), (4, 16), (8, 20)])
-            case .readerStrip, .readerPage:
+            case .readerStrip, .readerPage, .readerManga:
                 path.append(UIBezierPath(roundedRect: CGRect(x: 3.4, y: 4, width: 17.2, height: 16), cornerRadius: 1.6))
                 if self == .readerStrip {
                     line([(12, 8), (12, 16)]); line([(9, 13), (12, 16), (15, 13)])
-                } else {
+                } else if self == .readerPage {
                     line([(8, 12), (16, 12)]); line([(13, 9), (16, 12), (13, 15)])
+                } else {
+                    line([(16, 12), (8, 12)]); line([(11, 9), (8, 12), (11, 15)])
                 }
             case .history:
                 circle(12, 12, 9); line([(12, 7), (12, 12), (16, 14)])

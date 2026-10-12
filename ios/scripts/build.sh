@@ -82,6 +82,14 @@ case "$validation_scope" in
     # does not replace full UI or visual validation and cannot produce an IPA.
     test_arguments+=(-only-testing:XXComicTests)
     ;;
+  reader-modes)
+    test_arguments+=(
+      -only-testing:XXComicTests
+      -only-testing:XXComicUITests/ReaderSettingsParityUITests
+      -only-testing:XXComicUITests/ReaderContinuityUITests
+      -only-testing:XXComicUITests/ReaderToolbarParityUITests
+    )
+    ;;
   configuration-files)
     test_arguments+=(
       -only-testing:XXComicTests
@@ -90,6 +98,7 @@ case "$validation_scope" in
       -only-testing:XXComicUITests/SourceDrawerTests
       -only-testing:XXComicUITests/ExternalFilesParityUITests
       -only-testing:XXComicUITests/SourceConfigFilesUITests
+      -only-testing:XXComicUITests/ReaderSettingsParityUITests
       -only-testing:XXComicUITests/VisualMatrixUITests
     )
     ;;

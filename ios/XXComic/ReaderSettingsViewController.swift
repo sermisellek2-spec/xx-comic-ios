@@ -48,7 +48,7 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         let scroll = UIScrollView(); scroll.contentInsetAdjustmentBehavior = .never; scroll.showsVerticalScrollIndicator = false
         scroll.accessibilityIdentifier = "reader.settings.content"
         content.axis = .vertical; content.spacing = 0
-        content.addArrangedSubview(choiceRow(title: "阅读模式", items: [("卷轴模式", .readerStrip), ("普通模式", .readerPage)], group: 0))
+        content.addArrangedSubview(choiceRow(title: "阅读模式", items: [("卷轴模式", .readerStrip), ("普通模式", .readerPage), ("日漫模式", .readerManga)], group: 0))
         content.addArrangedSubview(choiceRow(title: "阅读主题", items: [("默认", .automatic), ("深色", .moon), ("浅色", .sun)], group: 1))
         for (index, item) in toggles.enumerated() {
             let (row, toggle) = switchRow(title: item.0, subtitle: item.1, identifier: item.2, isOn: settings[keyPath: item.3])
@@ -145,7 +145,7 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         return (row, toggle)
     }
     private func select(group: Int, index: Int) {
-        if group == 0 { settings.layout = ReaderLayout(rawValue: index) ?? .strip }
+        if group == 0 { settings.readingMode = ReaderReadingMode(rawValue: index) ?? .scroll }
         else if group == 1 { settings.theme = ReaderTheme(rawValue: index) ?? .system }
         else { settings.enhancementMode = index + 1 }
         save()
@@ -154,7 +154,7 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         store.save(settings); onChange?(); updateSelections()
     }
     private func updateSelections() {
-        let selected = [settings.layout.rawValue, settings.theme.rawValue, settings.enhancementMode - 1]
+        let selected = [settings.readingMode.rawValue, settings.theme.rawValue, settings.enhancementMode - 1]
         for (group, cards) in choices.enumerated() {
             for (index, card) in cards.enumerated() { card.setSelection(index == selected[group]) }
         }

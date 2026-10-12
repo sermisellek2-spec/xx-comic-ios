@@ -1,0 +1,234 @@
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[0/4] Write swift-version-24593BA9C3E375BF.txt
+[4/6] Compiling ComicCore ReaderPreferences.swift
+[5/6] Emitting module ComicCore
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[6/7] Compiling ComicCore ReadingRules.swift
+[7/14] Wrapping AST for ComicCore for debugging
+[9/37] Compiling ComicCoreTests AntbywSourceTests.swift
+[10/37] Compiling ComicCoreTests AppThemeTests.swift
+[11/37] Compiling ComicCoreTests AppUpdateCheckerTests.swift
+[12/37] Compiling ComicCoreTests BaoziSourceTests.swift
+[13/37] Compiling ComicCoreTests BatchImportPlannerTests.swift
+[14/37] Compiling ComicCoreTests BatchImportSessionTests.swift
+[15/37] Compiling ComicCoreTests BatchImportWorkerTests.swift
+[16/37] Compiling ComicCoreTests BookshelfGroupStoreTests.swift
+[17/37] Compiling ComicCoreTests BookshelfReadingStatusTests.swift
+[18/37] Compiling ComicCoreTests BuiltinSourceCatalogTests.swift
+[19/37] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[20/37] Compiling ComicCoreTests ChapterMatchingTests.swift
+[21/37] Compiling ComicCoreTests ComicDirectoryPreparationTests.swift
+[22/37] Compiling ComicCoreTests ContentFingerprintTests.swift
+[23/37] Compiling ComicCoreTests ContinuousReaderPagesTests.swift
+[24/37] Compiling ComicCoreTests CopyMangaTests.swift
+[25/37] Compiling ComicCoreTests CuimhSourceTests.swift
+[26/37] Compiling ComicCoreTests D5d6SourceTests.swift
+[27/37] Compiling ComicCoreTests DefaultDownloadImageFetcherTests.swift
+[28/37] Compiling ComicCoreTests DeferredDeletionTests.swift
+[29/37] Compiling ComicCoreTests DingManhuaSourceTests.swift
+[30/37] Compiling ComicCoreTests DiscoveryHeaderGestureTests.swift
+[31/37] Emitting module ComicCoreTests
+[32/80] Compiling ComicCoreTests DongmanLaSourceTests.swift
+[33/80] Compiling ComicCoreTests DownloadCoordinatorTests.swift
+[34/80] Compiling ComicCoreTests DownloadDeletionTests.swift
+[35/80] Compiling ComicCoreTests DownloadFileCoordinationTests.swift
+[36/80] Compiling ComicCoreTests DownloadIdentityTests.swift
+[37/80] Compiling ComicCoreTests DownloadLocationTests.swift
+[38/80] Compiling ComicCoreTests DownloadOwnedDirectoryTests.swift
+[39/80] Compiling ComicCoreTests DownloadPersistenceTests.swift
+[40/80] Compiling ComicCoreTests DownloadRuntimeTests.swift
+[41/80] Compiling ComicCoreTests DownloadSchedulingTests.swift
+[42/80] Compiling ComicCoreTests DownloadStoreTests.swift
+[43/80] Compiling ComicCoreTests EpubParserTests.swift
+[44/80] Compiling ComicCoreTests EpubReaderResourceTests.swift
+[45/80] Compiling ComicCoreTests EpubTextSessionTests.swift
+[46/80] Compiling ComicCoreTests ErrorLogStoreTests.swift
+[47/80] Compiling ComicCoreTests FavoriteRevisionTests.swift
+[48/80] Compiling ComicCoreTests FavoriteUpdateCheckerTests.swift
+[49/80] Compiling ComicCoreTests FileDownloadWorkerTests.swift
+[50/80] Compiling ComicCoreTests FiveUmSourceTests.swift
+[51/80] Compiling ComicCoreTests FolderBookmarkStoreTests.swift
+[52/80] Compiling ComicCoreTests GmhSourceTests.swift
+[53/80] Compiling ComicCoreTests Hanman18SourceTests.swift
+[54/101] Compiling ComicCoreTests HiperdexSourceTests.swift
+[55/101] Compiling ComicCoreTests IOSUpdatePolicyTests.swift
+[56/101] Compiling ComicCoreTests ImageEnhancementPolicyTests.swift
+[57/101] Compiling ComicCoreTests JmImageTransformTests.swift
+[58/101] Compiling ComicCoreTests JmSourceTests.swift
+[59/101] Compiling ComicCoreTests KindleFormatTests.swift
+[60/101] Compiling ComicCoreTests KindlePublicationTests.swift
+[61/101] Compiling ComicCoreTests LibraryStoreTests.swift
+[62/101] Compiling ComicCoreTests LinkedFolderLibraryTests.swift
+[63/101] Compiling ComicCoreTests LiumanhuaSourceTests.swift
+[64/101] Compiling ComicCoreTests LocalArchiveTests.swift
+[65/101] Compiling ComicCoreTests LocalCatalogTests.swift
+[66/101] Compiling ComicCoreTests LocalEpubLibraryTests.swift
+[67/101] Compiling ComicCoreTests LocalFolderSyncTests.swift
+[68/101] Compiling ComicCoreTests LocalFolderTests.swift
+[69/101] Compiling ComicCoreTests LocalImportFingerprintTests.swift
+[70/101] Compiling ComicCoreTests LocalImportPreparationTests.swift
+[71/101] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+[72/101] Compiling ComicCoreTests LocalLibraryTests.swift
+[73/101] Compiling ComicCoreTests LocalOwnershipRecoveryTests.swift
+[74/101] Compiling ComicCoreTests LocalPdfLibraryTests.swift
+[75/122] Compiling ComicCoreTests LocalReadingRoutingTests.swift
+[76/122] Compiling ComicCoreTests LocalSeriesLifecycleTests.swift
+[77/122] Compiling ComicCoreTests LocalTestHTTPServer.swift
+[78/122] Compiling ComicCoreTests LocalTestHTTPServerTests.swift
+[79/122] Compiling ComicCoreTests ManbenSourceTests.swift
+[80/122] Compiling ComicCoreTests ManhuaguiTests.swift
+[81/122] Compiling ComicCoreTests ManwaImageDecoderTests.swift
+[82/122] Compiling ComicCoreTests ManwaSourceTests.swift
+[83/122] Compiling ComicCoreTests Mh160SourceTests.swift
+[84/122] Compiling ComicCoreTests Mh18BrowserTrustTests.swift
+[85/122] Compiling ComicCoreTests Mh18CookieSynchronizerTests.swift
+[86/122] Compiling ComicCoreTests Mh18SourceTests.swift
+[87/122] Compiling ComicCoreTests Mh18VerificationAttemptTests.swift
+[88/122] Compiling ComicCoreTests Mh18VerificationRulesTests.swift
+[89/122] Compiling ComicCoreTests MkzhanSourceTests.swift
+[90/122] Compiling ComicCoreTests NaturalPathOrderTests.swift
+[91/122] Compiling ComicCoreTests NewPublicSourcesTests.swift
+[92/122] Compiling ComicCoreTests PdfRendererTests.swift
+[93/122] Compiling ComicCoreTests PreferencesTests.swift
+[94/122] Compiling ComicCoreTests PublicComicSourceTests.swift
+[95/122] Compiling ComicCoreTests QuickPublicationInfoTests.swift
+[96/122] Compiling ComicCoreTests ReaderLoadStateTests.swift
+[97/122] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+[98/122] Compiling ComicCoreTests ReaderSessionTests.swift
+[99/122] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+[100/122] Compiling ComicCoreTests ReadingRulesTests.swift
+[101/122] Compiling ComicCoreTests RetiredComicSourceTests.swift
+[102/122] Compiling ComicCoreTests SearchRulesTests.swift
+[103/122] Compiling ComicCoreTests SourceAESTests.swift
+[104/122] Compiling ComicCoreTests SourceConfigDocumentsTests.swift
+[105/122] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+[106/122] Compiling ComicCoreTests SourceGroupStoreTests.swift
+[107/122] Compiling ComicCoreTests SourceImportContractTests.swift
+[108/122] Compiling ComicCoreTests SourcePreferencesTests.swift
+[109/122] Compiling ComicCoreTests SourceSearchTrimTests.swift
+[110/122] Compiling ComicCoreTests StorageCalculatorTests.swift
+[111/122] Compiling ComicCoreTests TextReadingTests.swift
+[112/122] Compiling ComicCoreTests UsageStatsClientTests.swift
+[113/122] Compiling ComicCoreTests UsageStatsReportingTests.swift
+[114/122] Compiling ComicCoreTests WhiteMarginTests.swift
+[115/122] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+[116/122] Compiling ComicCoreTests resource_bundle_accessor.swift
+[117/125] Wrapping AST for ComicCoreTests for debugging
+[118/125] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[119/126] Write sources
+[121/128] Emitting module ComicCorePackageDiscoveredTests
+[122/128] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[123/129] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[124/130] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[125/130] Write sources
+[126/130] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[128/132] Emitting module ComicCorePackageTests
+[129/132] Compiling ComicCorePackageTests runner.swift
+[130/132] Write Objects.LinkFileList
+[131/132] Linking ComicCorePackageTests.xctest
+Build complete! (50.61s)
+Test Suite 'Selected tests' started at 2026-10-12 07:16:24.386
+Test Suite 'PreferencesTests' started at 2026-10-12 07:16:24.403
+Test Case 'PreferencesTests.testAllThreeReadingModesRoundTripAndNormalResetsDirection' started at 2026-10-12 07:16:24.403
+Test Case 'PreferencesTests.testAllThreeReadingModesRoundTripAndNormalResetsDirection' passed (0.004 seconds)
+Test Case 'PreferencesTests.testAndroidPageModeValuesKeepTheirMeaning' started at 2026-10-12 07:16:24.407
+Test Case 'PreferencesTests.testAndroidPageModeValuesKeepTheirMeaning' passed (0.0 seconds)
+Test Case 'PreferencesTests.testInvalidNewReadingModeFallsBackWithoutOverwritingStoredValues' started at 2026-10-12 07:16:24.407
+Test Case 'PreferencesTests.testInvalidNewReadingModeFallsBackWithoutOverwritingStoredValues' passed (0.0 seconds)
+Test Case 'PreferencesTests.testInvalidSettingsFallBackToUsableModes' started at 2026-10-12 07:16:24.408
+Test Case 'PreferencesTests.testInvalidSettingsFallBackToUsableModes' passed (0.0 seconds)
+Test Case 'PreferencesTests.testLegacyButtonPreferenceIsUsedOnlyUntilExplicitModeExists' started at 2026-10-12 07:16:24.408
+Test Case 'PreferencesTests.testLegacyButtonPreferenceIsUsedOnlyUntilExplicitModeExists' passed (0.0 seconds)
+Test Case 'PreferencesTests.testMangaModePersistsIndependentlyOfRetiredLeftHandSetting' started at 2026-10-12 07:16:24.409
+Test Case 'PreferencesTests.testMangaModePersistsIndependentlyOfRetiredLeftHandSetting' passed (0.001 seconds)
+Test Case 'PreferencesTests.testOlderPagedSettingsStayNormalEvenWithOldLeftHandValue' started at 2026-10-12 07:16:24.410
+Test Case 'PreferencesTests.testOlderPagedSettingsStayNormalEvenWithOldLeftHandValue' passed (0.0 seconds)
+Test Case 'PreferencesTests.testPersistedReaderChoicesSurviveNewStoreAndDoNotChangeAppTheme' started at 2026-10-12 07:16:24.410
+Test Case 'PreferencesTests.testPersistedReaderChoicesSurviveNewStoreAndDoNotChangeAppTheme' passed (0.001 seconds)
+Test Case 'PreferencesTests.testRetiredLeftHandPreferenceDoesNotChangeCurrentReaderSettings' started at 2026-10-12 07:16:24.411
+Test Case 'PreferencesTests.testRetiredLeftHandPreferenceDoesNotChangeCurrentReaderSettings' passed (0.0 seconds)
+Test Case 'PreferencesTests.testUnknownPersistedEnhancementModesReopenWithOffWithoutOverwritingOldData' started at 2026-10-12 07:16:24.411
+Test Case 'PreferencesTests.testUnknownPersistedEnhancementModesReopenWithOffWithoutOverwritingOldData' passed (0.002 seconds)
+Test Suite 'PreferencesTests' passed at 2026-10-12 07:16:24.413
+Executed 10 tests, with 0 failures (0 unexpected) in 0.01 (0.01) seconds
+Test Suite 'ReaderSessionTests' started at 2026-10-12 07:16:24.413
+Test Case 'ReaderSessionTests.testChapterChangeCommitsOnlyWhenExplicitlyLoadedAndClampsOldPosition' started at 2026-10-12 07:16:24.413
+Test Case 'ReaderSessionTests.testChapterChangeCommitsOnlyWhenExplicitlyLoadedAndClampsOldPosition' passed (0.0 seconds)
+Test Case 'ReaderSessionTests.testChapterResponseUsesIdentityAfterDirectoryExpands' started at 2026-10-12 07:16:24.413
+Test Case 'ReaderSessionTests.testChapterResponseUsesIdentityAfterDirectoryExpands' passed (0.001 seconds)
+Test Case 'ReaderSessionTests.testEmptyAndCancelledGestureDoesNotAdvance' started at 2026-10-12 07:16:24.414
+Test Case 'ReaderSessionTests.testEmptyAndCancelledGestureDoesNotAdvance' passed (0.0 seconds)
+Test Case 'ReaderSessionTests.testPageBoundaryRequestsAdjacentChapterWithoutChangingLoadedChapter' started at 2026-10-12 07:16:24.414
+Test Case 'ReaderSessionTests.testPageBoundaryRequestsAdjacentChapterWithoutChangingLoadedChapter' passed (0.0 seconds)
+Test Suite 'ReaderSessionTests' passed at 2026-10-12 07:16:24.414
+Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'ReadingRulesTests' started at 2026-10-12 07:16:24.414
+Test Case 'ReadingRulesTests.testCompletedAndShortenedChapters' started at 2026-10-12 07:16:24.414
+Test Case 'ReadingRulesTests.testCompletedAndShortenedChapters' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testDefaultGestureDirectionKeepsLogicalPageOrder' started at 2026-10-12 07:16:24.414
+Test Case 'ReadingRulesTests.testDefaultGestureDirectionKeepsLogicalPageOrder' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testHistorySurvivesChangedOrMissingDirectory' started at 2026-10-12 07:16:24.414
+Test Case 'ReadingRulesTests.testHistorySurvivesChangedOrMissingDirectory' passed (0.002 seconds)
+Test Case 'ReadingRulesTests.testInvalidOffsetsAreClamped' started at 2026-10-12 07:16:24.416
+Test Case 'ReadingRulesTests.testInvalidOffsetsAreClamped' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testLegacyProgressRestoresImageAndOffset' started at 2026-10-12 07:16:24.417
+Test Case 'ReadingRulesTests.testLegacyProgressRestoresImageAndOffset' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testMangaDirectionDoesNotBypassStripZoomOrOverlayTapRules' started at 2026-10-12 07:16:24.417
+Test Case 'ReadingRulesTests.testMangaDirectionDoesNotBypassStripZoomOrOverlayTapRules' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testMangaTapAndSwipeAdvanceFromTheLeftWithoutReversingChapters' started at 2026-10-12 07:16:24.417
+Test Case 'ReadingRulesTests.testMangaTapAndSwipeAdvanceFromTheLeftWithoutReversingChapters' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testReaderThemeFollowsSystemIndependentlyAndOverridesIt' started at 2026-10-12 07:16:24.417
+Test Case 'ReadingRulesTests.testReaderThemeFollowsSystemIndependentlyAndOverridesIt' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testTapZonesHonorControlsMiddleHeightAndPageInputMode' started at 2026-10-12 07:16:24.417
+Test Case 'ReadingRulesTests.testTapZonesHonorControlsMiddleHeightAndPageInputMode' passed (0.0 seconds)
+Test Suite 'ReadingRulesTests' passed at 2026-10-12 07:16:24.417
+Executed 9 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'SourcePreferencesTests' started at 2026-10-12 07:16:24.417
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' started at 2026-10-12 07:16:24.417
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' passed (0.003 seconds)
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' started at 2026-10-12 07:16:24.420
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' passed (0.092 seconds)
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' started at 2026-10-12 07:16:24.512
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' passed (0.009 seconds)
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' started at 2026-10-12 07:16:24.521
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' passed (0.045 seconds)
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' started at 2026-10-12 07:16:24.566
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' passed (0.0 seconds)
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' started at 2026-10-12 07:16:24.566
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' passed (0.0 seconds)
+Test Suite 'SourcePreferencesTests' passed at 2026-10-12 07:16:24.567
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.149 (0.149) seconds
+Test Suite 'TextReadingTests' started at 2026-10-12 07:16:24.567
+Test Case 'TextReadingTests.testCorruptTextPositionDoesNotRebuildOrOverwriteLibrary' started at 2026-10-12 07:16:24.567
+Test Case 'TextReadingTests.testCorruptTextPositionDoesNotRebuildOrOverwriteLibrary' passed (0.003 seconds)
+Test Case 'TextReadingTests.testDefaultPreferencesAndIndependentPersistenceAcrossStores' started at 2026-10-12 07:16:24.570
+Test Case 'TextReadingTests.testDefaultPreferencesAndIndependentPersistenceAcrossStores' passed (0.001 seconds)
+Test Case 'TextReadingTests.testFailedTextWriteLeavesWholeInMemoryEntryUnchanged' started at 2026-10-12 07:16:24.571
+Test Case 'TextReadingTests.testFailedTextWriteLeavesWholeInMemoryEntryUnchanged' passed (0.006 seconds)
+Test Case 'TextReadingTests.testLocatorAndroidKeysMissingFieldsRoundTripAndCorruptTypes' started at 2026-10-12 07:16:24.577
+Test Case 'TextReadingTests.testLocatorAndroidKeysMissingFieldsRoundTripAndCorruptTypes' passed (0.0 seconds)
+Test Case 'TextReadingTests.testLocatorNormalizesConstructorAndDecodedValues' started at 2026-10-12 07:16:24.577
+Test Case 'TextReadingTests.testLocatorNormalizesConstructorAndDecodedValues' passed (0.0 seconds)
+Test Case 'TextReadingTests.testOldLibraryJSONCanAddTextPositionWithoutLosingMangaPosition' started at 2026-10-12 07:16:24.577
+Test Case 'TextReadingTests.testOldLibraryJSONCanAddTextPositionWithoutLosingMangaPosition' passed (0.004 seconds)
+Test Case 'TextReadingTests.testPreferencesNormalizeBothLoadedAndSavedValues' started at 2026-10-12 07:16:24.581
+Test Case 'TextReadingTests.testPreferencesNormalizeBothLoadedAndSavedValues' passed (0.001 seconds)
+Test Case 'TextReadingTests.testTextSaveRejectsMismatchedIdentityChapterAndMissingResourceWithoutMutation' started at 2026-10-12 07:16:24.582
+Test Case 'TextReadingTests.testTextSaveRejectsMismatchedIdentityChapterAndMissingResourceWithoutMutation' passed (0.004 seconds)
+Test Case 'TextReadingTests.testTwoTextChaptersSurviveMangaUpdatesAndRemovingFavorite' started at 2026-10-12 07:16:24.586
+Test Case 'TextReadingTests.testTwoTextChaptersSurviveMangaUpdatesAndRemovingFavorite' passed (0.008 seconds)
+Test Suite 'TextReadingTests' passed at 2026-10-12 07:16:24.594
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.027 (0.027) seconds
+Test Suite 'Selected tests' passed at 2026-10-12 07:16:24.594
+Executed 38 tests, with 0 failures (0 unexpected) in 0.19 (0.19) seconds
