@@ -1,0 +1,30 @@
+{
+  "revision": "a5aeec90a1d47b9670b859150cb89f78c9856fbb",
+  "variant": "release-device",
+  "checks": {
+    "bundle": true,
+    "version": true,
+    "deviceFamilies": true,
+    "phoneIconMetadataAndPNG": false,
+    "padIconMetadataAndPNG": false,
+    "compiledAssetCatalog": false
+  },
+  "passed": false,
+  "metadata": {
+    "CFBundleIdentifier": "com.xxcomic.ios",
+    "CFBundleShortVersionString": "2.0.40",
+    "CFBundleVersion": "340",
+    "MinimumOSVersion": "16.0",
+    "UIDeviceFamily": [
+      1,
+      2
+    ]
+  },
+  "phoneIcon": {},
+  "padIcon": {},
+  "icons": [],
+  "infoPlistSHA256": "206be7b8077f4fc8c8292fe3d3ea549573033e3b95c3f722d0cdcd24b1ebb7cb",
+  "assetCatalogBytes": 0,
+  "assetCatalogSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "boundary": "Actual build resources/metadata; does not prove signed installation or home-screen rendering"
+}

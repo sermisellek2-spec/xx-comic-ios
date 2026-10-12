@@ -1,0 +1,72 @@
+{
+  "outerArchiveSHA256": "a9f21f9b8ebc828d96269582e3cf0f80785629a9563fd382c15bff83b725b536",
+  "selectedRecords": [
+    {
+      "file": "trace-001.txt",
+      "original": "trace-001.original",
+      "archive": "ui-results-lG3LN9-UITests.tar.gz",
+      "archiveSHA256": "ebfa75370ebc587b4ea7373364b4451deede6fb0f71c60e67aa9e44a23b8bd4f",
+      "member": "ui-results-lG3LN9/UITests.xcresult/Data/data.0~OhU1m1tJB-nOyKMaYWVqrbq6LMOSZOrmTjE9PbLn4jkn5FICTux3mTSC7Oo6hrxMCeOAWRLBWdMVTnhzeXe88w==",
+      "originalBytes": 867,
+      "originalSHA256": "68b579b8123537d75e8fe157c9dd1ae030ba491c19d1ec27a1053c0815ea81a4",
+      "decodedSHA256": "7cd4aeb74fef02f8070c54af20edd5e9c2c50da44a9721dcb68d71b8d2b2ecdd",
+      "phonePortrait": true,
+      "matchingOriginalManifestRecords": [
+        {
+          "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+          "device": "iPhone 15 Pro",
+          "status": "Failure",
+          "attachment": "reader-transition-expected-chapter-1-page-3",
+          "timestamp": "2026-10-12T11:37:40.997+0000",
+          "file": "build/evidence/reader-transitions/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-reader-transition-expected-chapter-1-page-3-1.txt",
+          "sha256": "7cd4aeb74fef02f8070c54af20edd5e9c2c50da44a9721dcb68d71b8d2b2ecdd"
+        }
+      ]
+    },
+    {
+      "file": "trace-002.txt",
+      "original": "trace-002.original",
+      "archive": "ui-results-lG3LN9-UITests.tar.gz",
+      "archiveSHA256": "ebfa75370ebc587b4ea7373364b4451deede6fb0f71c60e67aa9e44a23b8bd4f",
+      "member": "ui-results-lG3LN9/UITests.xcresult/Data/data.0~T3pUJAIjnKEqilQYm7sQCfeXJmOhLmcIWstpd9hd78Ak9mxGWkEuMTWr9QcKNjhv5qusFVMmDUKlCQ8NLZFsNQ==",
+      "originalBytes": 953,
+      "originalSHA256": "c95faa9d0b84c827dceed9cca85ff7f7a63aea86ea6b51fa9574d58405be0136",
+      "decodedSHA256": "15d912478c9e3688ba13618d60f76ca6c78058bdfb5abb45822107ff40467746",
+      "phonePortrait": true,
+      "matchingOriginalManifestRecords": [
+        {
+          "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+          "device": "iPhone 15 Pro",
+          "status": "Failure",
+          "attachment": "reader-transition-expected-chapter-1-page-3",
+          "timestamp": "2026-10-12T11:37:53.830+0000",
+          "file": "build/evidence/reader-transitions/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-reader-transition-expected-chapter-1-page-3-2.txt",
+          "sha256": "15d912478c9e3688ba13618d60f76ca6c78058bdfb5abb45822107ff40467746"
+        }
+      ]
+    }
+  ],
+  "completeDataDecodeFailures": [
+    {
+      "archive": "ui-results-RMpLSd-UITests.tar.gz",
+      "member": "ui-results-RMpLSd/UITests.xcresult/Data/data.0~0Kq2VFG6dJxcHFpRAsoGb30xe2ZXD8qrYeNX6umZxIUlM61jlTJT6G-awxQXiIDOtnNUsE89MoU4lz41nlwoEw==",
+      "error": "ZstdError"
+    },
+    {
+      "archive": "ui-results-RMpLSd-UITests.tar.gz",
+      "member": "ui-results-RMpLSd/UITests.xcresult/Data/data.0~YPgMphvBbHy8Ahtzhk7H1AUIB2wp4BBejrkNOQkGLDmNFD7LRFWTmwG4TqS6c687OLTMSbntOWsKCmO50lR72w==",
+      "error": "ZstdError"
+    },
+    {
+      "archive": "ui-results-lG3LN9-UITests.tar.gz",
+      "member": "ui-results-lG3LN9/UITests.xcresult/Data/data.0~BXU_sKzxSrg5JbR1n64MsfdhPI4RXcUkVafYqYGfLl2Q4wItDhEdzFKPxFQCgF9Iu_XUo7KmXE08huCCUqScfw==",
+      "error": "ZstdError"
+    },
+    {
+      "archive": "ui-results-lG3LN9-UITests.tar.gz",
+      "member": "ui-results-lG3LN9/UITests.xcresult/Data/data.0~t0raZayF2J9MkghZnYV-dfY5ufmXbvrZ9DJ73bWaxCc3zMwbpelnTLGySrGonY9To1thJPEEBS6bCFk-UV-4Bw==",
+      "error": "ZstdError"
+    }
+  ],
+  "boundary": "Matching complete attachment data inspected; does not parse all xcresult records. Full original archive retained locally."
+}

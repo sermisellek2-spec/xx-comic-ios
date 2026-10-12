@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-12",
+  "userInstruction": "站源先不用验证（先暂停验收站源，后续我自己来看哪些站源需要修复），弄完先出个总验收包。",
+  "realSourceAcceptance": "paused_by_user",
+  "catalogRequired": {
+    "currentSources": 51,
+    "defaultEnabled": 50,
+    "defaultDisabled": "duya"
+  },
+  "nonSourceAcceptance": "continue autonomously; keep mandatory normal/failure/cancel/recovery/visual/native checks",
+  "packageAfter": "non-source complete self-acceptance; real-site checks excluded from this package prerequisite",
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "automaticSourceResume": false,
+  "currentIPAReady": false
+}

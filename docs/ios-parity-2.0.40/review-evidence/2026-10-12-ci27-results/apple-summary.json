@@ -1,0 +1,91 @@
+{
+  "run": 38242082789,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38242082789",
+  "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+  "scope": "reader-modes",
+  "conclusion": "failure",
+  "packageRequested": false,
+  "debugReleaseBuildSucceeded": true,
+  "coreMac": {
+    "executed": 934,
+    "failedCases": 1,
+    "assertionFailures": 1,
+    "durationSeconds": 123.304
+  },
+  "nativeDevices": [
+    {
+      "device": "iPhone 15 Pro",
+      "executed": 30,
+      "passedCases": 30,
+      "failedCases": 0,
+      "assertionFailures": 0,
+      "durationSeconds": 15.11
+    },
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "executed": 30,
+      "passedCases": 29,
+      "failedCases": 1,
+      "assertionFailures": 8,
+      "durationSeconds": 15.074
+    }
+  ],
+  "ui": [
+    {
+      "device": "iPhone 15 Pro",
+      "executed": 18,
+      "counts": {
+        "Success": 17,
+        "Failure": 1
+      },
+      "failedCases": [
+        "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()"
+      ],
+      "originalTestManifest": "ui-results-lG3LN9-tests.json",
+      "manifestIncludesNativeEvidence": true
+    },
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "executed": 18,
+      "counts": {
+        "Success": 18
+      },
+      "failedCases": [],
+      "originalTestManifest": "ui-results-RMpLSd-tests.json",
+      "manifestIncludesNativeEvidence": true
+    }
+  ],
+  "uiDurationSeconds": {
+    "iPhone 15 Pro": 512.932,
+    "iPad Pro 11-inch (M4)": 585.57
+  },
+  "confirmedProgress": [
+    "All four native reader geometry tests passed on both devices",
+    "Image-offset roundtrip UI passed on both devices",
+    "All 18 reader UI passed on iPad"
+  ],
+  "remainingFailures": [
+    "iPhone three mode/return/relaunch checkpoints expected page 3, actual page 2 (one case, six assertions)",
+    "iPad directory cache four known responses retained and four reopened responses retained (one case, eight assertions)",
+    "Mac cache memory 0/disk 144016 fails original physical-zero assertion"
+  ],
+  "failureRecords": [
+    "2026-10-12T11:27:38.3049840Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/ComicCore/Tests/ComicCoreTests/CacheMaintenanceTests.swift:35: error: -[ComicCoreTests.CacheMaintenanceTests testDiskCleanupRestoresLimitsAndAllowsLaterResponses] : XCTAssertTrue failed - Actual remaining cache: memory=0, disk=144016",
+    "2026-10-12T11:37:41.2725190Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:45: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T11:37:41.3371820Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:46: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"Optional(\"第1话，第 2 页，共 4 页\")\") is not equal to (\"Optional(\"第1话，第 3 页，共 4 页\")\")",
+    "2026-10-12T11:37:53.8399220Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:45: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T11:37:53.8659400Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:46: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"Optional(\"第1话，第 2 页，共 4 页\")\") is not equal to (\"Optional(\"第1话，第 3 页，共 4 页\")\")",
+    "2026-10-12T11:38:18.0873770Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:45: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\")",
+    "2026-10-12T11:38:18.1248180Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicUITests/ReaderSettingsParityUITests.swift:46: error: -[XXComicUITests.ReaderSettingsParityUITests testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage] : XCTAssertEqual failed: (\"Optional(\"第1话，第 2 页，共 4 页\")\") is not equal to (\"Optional(\"第1话，第 3 页，共 4 页\")\")",
+    "2026-10-12T11:42:17.0235690Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/CacheMaintenanceNativeTests.swift:38: error: -[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal] : XCTAssertNil failed: \"<NSCachedURLResponse: 0x60000000bb90>\" - directory",
+    "2026-10-12T11:42:17.1066840Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/CacheMaintenanceNativeTests.swift:38: error: -[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal] : XCTAssertNil failed: \"<NSCachedURLResponse: 0x60000000bd00>\" - directory",
+    "2026-10-12T11:42:17.1675480Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/CacheMaintenanceNativeTests.swift:38: error: -[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal] : XCTAssertNil failed: \"<NSCachedURLResponse: 0x60000000bc30>\" - directory",
+    "2026-10-12T11:42:17.1723250Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/CacheMaintenanceNativeTests.swift:38: error: -[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal] : XCTAssertNil failed: \"<NSCachedURLResponse: 0x60000000bbb0>\" - directory",
+    "2026-10-12T11:42:17.1846640Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/CacheMaintenanceNativeTests.swift:40: error: -[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal] : XCTAssertNil failed: \"<NSCachedURLResponse: 0x600000010940>\" - directory reopened",
+    "2026-10-12T11:42:17.1964980Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/CacheMaintenanceNativeTests.swift:40: error: -[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal] : XCTAssertNil failed: \"<NSCachedURLResponse: 0x6000000109a0>\" - directory reopened",
+    "2026-10-12T11:42:17.2074700Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/CacheMaintenanceNativeTests.swift:40: error: -[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal] : XCTAssertNil failed: \"<NSCachedURLResponse: 0x600000010a10>\" - directory reopened",
+    "2026-10-12T11:42:17.2182070Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/CacheMaintenanceNativeTests.swift:40: error: -[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal] : XCTAssertNil failed: \"<NSCachedURLResponse: 0x600000010a70>\" - directory reopened"
+  ],
+  "originalBuildLogSHA256": "f3bd54c52cdfbadf2592887d08bb646b726e0a3304a83f9d95b6247032cc4ba1",
+  "currentLocalFixNotVerifiedByThisRun": true
+}

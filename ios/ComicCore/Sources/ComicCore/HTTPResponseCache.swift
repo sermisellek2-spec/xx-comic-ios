@@ -35,25 +35,24 @@ public actor HTTPResponseCache {
         }
         defer { if cleanup?.id == operation.id { cleanup = nil } }
         // Once mutation begins it finishes, even if a page leaves or a second
-        // caller cancels. All callers share one operation and one capacity reset.
+        // caller cancels. All callers share one operation and one memory reset.
         let usage = try await operation.task.value
         try Task.checkCancellation()
         return usage
     }
 
     private static func clear(cache: URLCache) async throws -> HTTPResponseCacheUsage {
-        let memoryCapacity = cache.memoryCapacity, diskCapacity = cache.diskCapacity
-        // Clear the active backing store before changing its storage limits.
-        // A disabled cache can otherwise hide responses until it is reopened.
+        let memoryCapacity = cache.memoryCapacity
+        // Keep the original disk backend active while its asynchronous removal
+        // commits. Resetting diskCapacity can detach that backend and leave old
+        // responses available when a later lookup reopens it.
         cache.removeAllCachedResponses()
-        // URLCache owns truncation. Temporarily disable storage as well as
-        // removing responses, then restore the application's original limits.
+        // Temporarily disable memory storage; URLCache still owns all disk files.
         // No cache database or unrelated directory is deleted by our code.
         cache.memoryCapacity = 0
-        cache.diskCapacity = 0
         var limitsRestored = false
         defer {
-            if !limitsRestored { cache.memoryCapacity = memoryCapacity; cache.diskCapacity = diskCapacity }
+            if !limitsRestored { cache.memoryCapacity = memoryCapacity }
         }
         cache.removeAllCachedResponses()
         // A response that was already finishing can repopulate URLCache after
@@ -71,13 +70,12 @@ public actor HTTPResponseCache {
                 cache.removeAllCachedResponses()
             }
         }
-        // Restoring disk storage can allocate index files. Measure afterwards,
-        // so the result describes the cache the caller can actually use.
+        // Measure with the original memory limit restored, so the result
+        // describes the cache the caller can actually use.
         cache.memoryCapacity = memoryCapacity
-        cache.diskCapacity = diskCapacity
         limitsRestored = true
-        // Reopening storage can publish an already pending disk write. Remove
-        // responses again while the original store is active, then wait for
+        // An already pending disk write can finish during cleanup. Remove
+        // responses again while the original store remains active, then wait for
         // stable real accounting without treating retained index bytes as zero.
         var previousUsage: HTTPResponseCacheUsage?
         var stableSamples = 0

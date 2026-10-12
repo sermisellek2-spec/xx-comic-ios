@@ -17,6 +17,18 @@ xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Release \
   -derivedDataPath build/device CODE_SIGNING_ALLOWED=NO build
 
 validation_failed=0
+for product_variant in debug-simulator release-device; do
+  if [ "$product_variant" = debug-simulator ]; then
+    product_app=build/simulator/Build/Products/Debug-iphonesimulator/XXComic.app
+  else
+    product_app=build/device/Build/Products/Release-iphoneos/XXComic.app
+  fi
+  if ! python3 scripts/verify_app_icon.py --app "$product_app" --variant "$product_variant" \
+    --revision "$(git rev-parse HEAD)" --output-dir build/evidence/app-icon; then
+    validation_failed=1
+    echo 'Built app icon metadata/resources failed verification; collect independent tests, packaging remains blocked.' >&2
+  fi
+done
 if [ "${IOS_VALIDATION_SCOPE:-full}" = cache-diagnostics ] || [ "${IOS_VALIDATION_SCOPE:-full}" = full ]; then
   echo '==> Recording isolated offline HTTP cache ownership and SQLite row counts...'
   mkdir -p build/evidence/http-cache

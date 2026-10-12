@@ -1,0 +1,122 @@
+[
+  {
+    "test": "CacheMaintenanceNativeTests/testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal()",
+    "status": "Failure",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderContinuityUITests/testContinuousChapterLocalSeekModeSwitchAndRelaunchResume()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderContinuityUITests/testCorruptCurrentChapterReturnsAfterRepairAndUnrepairedReturnKeepsFailure()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderContinuityUITests/testCorruptNextChapterRepairReturnsToContinuousReadingWithoutReloadingFirstChapter()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderContinuityUITests/testLastChapterHasEndStateWithoutDiscardingImages()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderContinuityUITests/testLeavingReaderCancelsPendingContinuationAndReopenCanLoadIt()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderContinuityUITests/testNextChapterFailureKeepsReadablePagesAndHasExplicitRetry()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderContinuityUITests/testPagedControlsDoNotMoveOrResizeImages()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderContinuityUITests/testRotationKeepsChapterAndLocalImageAfterContinuousAppend()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderContinuityUITests/testStripControlsDoNotMoveOrResizeImages()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderContinuityUITests/testStripEdgeTapsAndHorizontalSwipeDoNotChangeChapters()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testDefaultMangaSwipeAdvancesOnceAndCrossesToTheNextLogicalChapter()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testEnhancementControlsAppearOnlyWhenEnabledAndComparisonReturnsToOriginal()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testMangaRotationPreservesTheLogicalPageAndChapter()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testModeThemeAndSwitchSelectionPersistAfterRelaunch()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderSettingsParityUITests/testStripImageOffsetSurvivesNormalMangaAndPagedRelaunch()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderToolbarParityUITests/testPagedReaderToolbarChangesChaptersAndKeepsUsableActionTargets()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  },
+  {
+    "test": "ReaderToolbarParityUITests/testStripReaderToolbarRetainsDirectoryAndReaderSettings()",
+    "status": "Success",
+    "revision": "c377af6ffd616cf0c91d55dd8f01643be83076a3",
+    "device": "iPad Pro 11-inch (M4)"
+  }
+]

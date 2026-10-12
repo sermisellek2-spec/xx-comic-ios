@@ -1,0 +1,31 @@
+[0/1] Planning build
+Building for debugging...
+[0/11] Write sources
+[0/10] Write swift-version-24593BA9C3E375BF.txt
+[3/10] Compiling ComicCoreTests CacheBackendContinuityTests.swift
+[4/10] Emitting module ComicCoreTests
+[5/13] Wrapping AST for ComicCoreTests for debugging
+[6/13] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[7/14] Write sources
+[9/16] Emitting module ComicCorePackageDiscoveredTests
+[10/16] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[11/17] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[12/18] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[13/18] Write sources
+[14/18] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[16/20] Emitting module ComicCorePackageTests
+[17/20] Compiling ComicCorePackageTests runner.swift
+[18/20] Write Objects.LinkFileList
+[19/20] Linking ComicCorePackageTests.xctest
+Build complete! (40.55s)
+Test Suite 'Selected tests' started at 2026-10-12 13:43:00.956
+Test Suite 'CacheBackendContinuityTests' started at 2026-10-12 13:43:00.983
+Test Case 'CacheBackendContinuityTests.testCleanupRemovesResponsesBeforeALookupReopensTheOriginalBackingStore' started at 2026-10-12 13:43:00.983
+/work/Tests/ComicCoreTests/CacheBackendContinuityTests.swift:19: error: CacheBackendContinuityTests.testCleanupRemovesResponsesBeforeALookupReopensTheOriginalBackingStore : XCTAssertNil failed: "<CachedURLResponse: 0x000072a54c003820>" - A lookup must not bring back responses hidden by a storage-limit reset
+/work/Tests/ComicCoreTests/CacheBackendContinuityTests.swift:19: error: CacheBackendContinuityTests.testCleanupRemovesResponsesBeforeALookupReopensTheOriginalBackingStore : XCTAssertNil failed: "<CachedURLResponse: 0x000072a54c0037d0>" - A lookup must not bring back responses hidden by a storage-limit reset
+/work/Tests/ComicCoreTests/CacheBackendContinuityTests.swift:21: error: CacheBackendContinuityTests.testCleanupRemovesResponsesBeforeALookupReopensTheOriginalBackingStore : XCTAssertEqual failed: ("0") is not equal to ("264192") -
+Test Case 'CacheBackendContinuityTests.testCleanupRemovesResponsesBeforeALookupReopensTheOriginalBackingStore' failed (0.86 seconds)
+Test Suite 'CacheBackendContinuityTests' failed at 2026-10-12 13:43:01.842
+	 Executed 1 test, with 3 failures (0 unexpected) in 0.86 (0.86) seconds
+Test Suite 'Selected tests' failed at 2026-10-12 13:43:01.842
+	 Executed 1 test, with 3 failures (0 unexpected) in 0.86 (0.86) seconds

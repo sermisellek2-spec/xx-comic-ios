@@ -95,6 +95,8 @@ jobs:
             ios/build/evidence/ui-failures/*.png
             ios/build/evidence/ui-failures/*.jpg
             ios/build/evidence/ui-failures/*.txt
+            ios/build/evidence/reader-transitions/*.txt
+            ios/build/evidence/app-icon/*.json
             ios/build/evidence/*-manifest.json
             ios/build/evidence/*-tests.json
           if-no-files-found: ignore

@@ -1,0 +1,2 @@
+*.log -text -diff
+old-ipa-icon-verifier-original.json -text -diff

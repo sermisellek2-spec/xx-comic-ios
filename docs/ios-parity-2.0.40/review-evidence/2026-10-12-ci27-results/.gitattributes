@@ -1,0 +1,5 @@
+original-logs.zip -text -diff
+ui-results-*.json -text -diff
+inventory-original/*.json -text -diff
+reader-records/*.original -text -diff
+reader-records/*.txt -text -diff

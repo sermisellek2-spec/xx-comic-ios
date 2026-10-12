@@ -1,0 +1,73 @@
+{
+  "revisionForToolContract": "d74e1d783a3a46c27b3f18903fd4b687b5d83ccf",
+  "verifierSHA256": "9f6d10a0a8602e664ffc584ca12835d5e57a06f0ea5d2c533d76f11c28ae9807",
+  "controlledFixtureCases": [
+    {
+      "case": "complete-fixture",
+      "expectedPass": true,
+      "actualPass": true,
+      "checks": {
+        "bundle": true,
+        "version": true,
+        "deviceFamilies": true,
+        "phoneIconMetadataAndPNG": true,
+        "padIconMetadataAndPNG": true,
+        "compiledAssetCatalog": true
+      }
+    },
+    {
+      "case": "missing-pad-metadata",
+      "expectedPass": false,
+      "actualPass": false,
+      "checks": {
+        "bundle": true,
+        "version": true,
+        "deviceFamilies": true,
+        "phoneIconMetadataAndPNG": true,
+        "padIconMetadataAndPNG": false,
+        "compiledAssetCatalog": true
+      }
+    },
+    {
+      "case": "invalid-phone-png",
+      "expectedPass": false,
+      "actualPass": false,
+      "checks": {
+        "bundle": true,
+        "version": true,
+        "deviceFamilies": true,
+        "phoneIconMetadataAndPNG": false,
+        "padIconMetadataAndPNG": false,
+        "compiledAssetCatalog": true
+      }
+    },
+    {
+      "case": "missing-asset-catalog",
+      "expectedPass": false,
+      "actualPass": false,
+      "checks": {
+        "bundle": true,
+        "version": true,
+        "deviceFamilies": true,
+        "phoneIconMetadataAndPNG": false,
+        "padIconMetadataAndPNG": false,
+        "compiledAssetCatalog": false
+      }
+    }
+  ],
+  "oldIPAActualNegative": {
+    "file": "old-ipa-icon-verifier-original.json",
+    "sha256": "be43a34151fddaa756127ed6df9fb87ef907fa3d9b49897af083ca2dfc0a7395",
+    "exitCode": 1,
+    "expectedFailure": true,
+    "checks": {
+      "bundle": true,
+      "version": true,
+      "deviceFamilies": true,
+      "phoneIconMetadataAndPNG": false,
+      "padIconMetadataAndPNG": false,
+      "compiledAssetCatalog": false
+    }
+  },
+  "boundary": "Controlled fixtures verify the inspection tool only. Old IPA is actual a5aeec9. Current Xcode icon resources remain to be verified on Apple."
+}

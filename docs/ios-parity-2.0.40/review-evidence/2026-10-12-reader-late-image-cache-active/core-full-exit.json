@@ -1,0 +1,6 @@
+{
+  "command": "swift test -j 2",
+  "runtime": "swift:5.10-jammy",
+  "exitCode": 0,
+  "boundary": "Linux ComicCore; Apple native/UI separate"
+}

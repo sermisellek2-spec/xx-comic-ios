@@ -1,0 +1,6 @@
+{
+  "command": "swift test -j 2 --filter CacheBackendContinuityTests|CacheMaintenanceTests|CacheLateRestoreTests",
+  "boundary": "Linux core cache behavior; Apple real cache separately required",
+  "phase": "after-fix-impact",
+  "exitCode": 0
+}

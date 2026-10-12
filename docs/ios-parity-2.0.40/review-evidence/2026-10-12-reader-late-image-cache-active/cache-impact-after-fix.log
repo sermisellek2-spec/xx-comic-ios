@@ -1,0 +1,61 @@
+[0/1] Planning build
+Building for debugging...
+[0/3] Write sources
+[1/3] Write swift-version-24593BA9C3E375BF.txt
+[3/5] Compiling ComicCore HTTPResponseCache.swift
+[4/5] Emitting module ComicCore
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[5/7] Write Objects.LinkFileList
+[6/7] Linking ComicCorePackageTests.xctest
+Build complete! (15.95s)
+Test Suite 'Selected tests' started at 2026-10-12 13:44:33.197
+Test Suite 'CacheBackendContinuityTests' started at 2026-10-12 13:44:33.215
+Test Case 'CacheBackendContinuityTests.testCleanupRemovesResponsesBeforeALookupReopensTheOriginalBackingStore' started at 2026-10-12 13:44:33.215
+Test Case 'CacheBackendContinuityTests.testCleanupRemovesResponsesBeforeALookupReopensTheOriginalBackingStore' passed (0.859 seconds)
+Test Suite 'CacheBackendContinuityTests' passed at 2026-10-12 13:44:34.074
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.859 (0.859) seconds
+Test Suite 'CacheLateRestoreTests' started at 2026-10-12 13:44:34.074
+Test Case 'CacheLateRestoreTests.testCleanupAlsoRemovesAWritePublishedWhenDiskStorageReopens' started at 2026-10-12 13:44:34.074
+Test Case 'CacheLateRestoreTests.testCleanupAlsoRemovesAWritePublishedWhenDiskStorageReopens' passed (0.854 seconds)
+Test Case 'CacheLateRestoreTests.testCleanupRemovesResponsesInAnInactiveDiskBackingStore' started at 2026-10-12 13:44:34.928
+Test Case 'CacheLateRestoreTests.testCleanupRemovesResponsesInAnInactiveDiskBackingStore' passed (0.854 seconds)
+Test Suite 'CacheLateRestoreTests' passed at 2026-10-12 13:44:35.783
+	 Executed 2 tests, with 0 failures (0 unexpected) in 1.709 (1.709) seconds
+Test Suite 'CacheMaintenanceTests' started at 2026-10-12 13:44:35.783
+Test Case 'CacheMaintenanceTests.testCancellationAfterCleanupStartsRestoresCapacityAndFinishes' started at 2026-10-12 13:44:35.783
+Test Case 'CacheMaintenanceTests.testCancellationAfterCleanupStartsRestoresCapacityAndFinishes' passed (0.857 seconds)
+Test Case 'CacheMaintenanceTests.testCancelledCleanupDoesNotRemoveCachedResponse' started at 2026-10-12 13:44:36.639
+Test Case 'CacheMaintenanceTests.testCancelledCleanupDoesNotRemoveCachedResponse' passed (0.0 seconds)
+Test Case 'CacheMaintenanceTests.testCancelledSizeCalculationFailsInsteadOfReportingEmpty' started at 2026-10-12 13:44:36.640
+Test Case 'CacheMaintenanceTests.testCancelledSizeCalculationFailsInsteadOfReportingEmpty' passed (0.001 seconds)
+Test Case 'CacheMaintenanceTests.testCleanupRemovesAResponseThatFinishesAfterTheFirstRemoval' started at 2026-10-12 13:44:36.640
+Test Case 'CacheMaintenanceTests.testCleanupRemovesAResponseThatFinishesAfterTheFirstRemoval' passed (0.857 seconds)
+Test Case 'CacheMaintenanceTests.testCleanupReportsUsageAfterRestoringStorageLimits' started at 2026-10-12 13:44:37.497
+Test Case 'CacheMaintenanceTests.testCleanupReportsUsageAfterRestoringStorageLimits' passed (2.466 seconds)
+Test Case 'CacheMaintenanceTests.testConcurrentCleanupPreservesLimitsForBothCallers' started at 2026-10-12 13:44:39.964
+Test Case 'CacheMaintenanceTests.testConcurrentCleanupPreservesLimitsForBothCallers' passed (0.856 seconds)
+Test Case 'CacheMaintenanceTests.testDirectorySizeIncludesHiddenFilesAndDoesNotFollowSymlinks' started at 2026-10-12 13:44:40.820
+Test Case 'CacheMaintenanceTests.testDirectorySizeIncludesHiddenFilesAndDoesNotFollowSymlinks' passed (0.007 seconds)
+Test Case 'CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses' started at 2026-10-12 13:44:40.827
+HTTP_CACHE_DIAGNOSTIC stage=fresh memory=0 disk=0
+HTTP_CACHE_DIAGNOSTIC stage=stored memory=5266 disk=5266
+HTTP_CACHE_DIAGNOSTIC stage=cleared memory=0 disk=0 cached=false
+HTTP_CACHE_DIAGNOSTIC stage=reused memory=5266 disk=5266
+Test Case 'CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses' passed (0.872 seconds)
+Test Case 'CacheMaintenanceTests.testHTTPResponseCleanupUsesCacheAPIAndReportsRemainingUsage' started at 2026-10-12 13:44:41.699
+Test Case 'CacheMaintenanceTests.testHTTPResponseCleanupUsesCacheAPIAndReportsRemainingUsage' passed (0.857 seconds)
+Test Case 'CacheMaintenanceTests.testMissingDirectoryHasNoBytes' started at 2026-10-12 13:44:42.556
+Test Case 'CacheMaintenanceTests.testMissingDirectoryHasNoBytes' passed (0.0 seconds)
+Test Suite 'CacheMaintenanceTests' passed at 2026-10-12 13:44:42.557
+Executed 10 tests, with 0 failures (0 unexpected) in 6.774 (6.774) seconds
+Test Suite 'Selected tests' passed at 2026-10-12 13:44:42.557
+Executed 13 tests, with 0 failures (0 unexpected) in 9.341 (9.341) seconds

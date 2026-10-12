@@ -778,10 +778,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             let chapterEnd = layout.layoutAttributesForItem(at: IndexPath(item: tailIndex, section: 0))?.frame.maxY ?? pages.contentSize.height
             let target = position.isAtEnd(in: activeImages) ? max(0, chapterEnd - pages.bounds.height) : frame.minY + frame.height * CGFloat(position.offset)
             pages.setContentOffset(CGPoint(x: 0, y: max(0, min(maxY, target))), animated: false)
-            if pendingPosition != nil, target > maxY + 0.5, nextContinuousChapterIndex != nil {
-                // The next chapter supplies the remaining strip height. Keep
-                // the requested chapter-local anchor through that append,
-                // rather than saving an earlier image from the temporary clamp.
+            if target > maxY + 0.5, nextContinuousChapterIndex != nil {
+                // Decoding an image can shrink a strip that was already restored.
+                // Preserve that anchor too: the next chapter supplies the missing
+                // height, and the temporary clamp must not become a saved position.
+                pendingPosition = position
                 pendingPositionNeedsContinuation = true
                 session.updateImage(localIndex); updateBadge()
                 recordReaderTrace("restore.waiting-for-continuation")
