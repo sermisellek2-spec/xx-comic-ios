@@ -719,11 +719,17 @@ final class ChapterListViewController: UITableViewController {
         super.viewDidLoad(); title = "全部章节"
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: descending ? "倒序" : "正序", style: .plain, target: self, action: #selector(reverseOrder))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(close))
+        navigationItem.leftBarButtonItem?.accessibilityIdentifier = "chapter.list.order"
+        navigationItem.rightBarButtonItem?.accessibilityIdentifier = "chapter.list.close"
         tableView.accessibilityIdentifier = "chapter.list"
         state.titleLabel?.numberOfLines = 0
         state.addTarget(self, action: #selector(stateTapped), for: .touchUpInside)
         tableView.backgroundView = state
         reload()
+    }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        scrollToSelected()
     }
     @objc private func reload() {
         needsVerification = false

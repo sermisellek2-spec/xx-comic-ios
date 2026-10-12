@@ -26,3 +26,5 @@
 CI39恢复影响与CI40收尾影响失败原件已完整保存。CI40三失败方法已定位并本地修正：下载空态文本已绘制但容器零尺寸导致AX不可达，日志复制改为可读且不阻塞导出的页内反馈，系统分享改查真实关闭控制；换源用例补实际收起工具栏的前提，原第2页/像素/分组/重启断言不变。新增实际剪贴板脱敏原生断言；95Swift两配置仅语法通过，修复Apple复验待运行。[原失败与修正边界](review-evidence/2026-10-13-ci40-repair/README.md)
 
 [CI42分组管理实际通过](review-evidence/2026-10-13-ci42-results/README.md)：双设备35Native/7UI及Apple929核心零失败，不代当前full。CI39原Files错匹配、fixture屏幕倍率、目录加载AX与异步定位前提已本地修正，保留原文件/章节/像素/重启断言；新增范围包括配置Files驱动回归，36Native/36UI待Apple复验。[原失败与边界](review-evidence/2026-10-13-ci39-repair/README.md)。
+
+逐入口复查D131：阅读目录正逆序原未保存，现接同一详情偏好并补重开/详情/重启的实际顺序/当前章检查；95Swift仅语法通过，仍待Apple。[原安卓证据和改动](review-evidence/2026-10-13-directory-order/README.md)。

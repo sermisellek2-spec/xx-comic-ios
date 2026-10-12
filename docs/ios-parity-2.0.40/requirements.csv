@@ -35,8 +35,8 @@ READER-01,P3,模式,卷轴/普通/日漫三种独立模式；删除旧左右手�
 READER-02,P3,手势,卷轴侧点横滑不切章单页手势及缩放平移取消,reader/PagedReaderView.java;ReaderNavigation.java,待验收,CI34普通/日漫单次横滑与卷轴边点/横滑保护通过；实际双指缩放/放大后平移/复位后翻页原缺界面覆盖，当前新增真实XCUI双指用例，影响和完整Apple待验。review-evidence/2026-10-13-volume-sync-coverage/README.md
 READER-03,P3,控制,工具条隐藏显示页数时间电量状态与返回路径,MainActivity.java,待验收,第十四轮条漫/单页控制条隐藏不改变图片双设备通过；当前冻结设置图标/小拇指及两主题完整视觉待验收；CI21默认日漫滑动跨章专用用例双设备通过；完整模式返回仍失败，D99候选待实际回归；CI22双设备控制条画布2与工具条2通过，当前候选完整视觉仍待验收。
 READER-04,P3,进度,进度拖动预览确认取消及章节定位,reader/ReaderSeekBar.java;ReaderSeekSession.java,待验收,CI38原生实际进度触控父尺寸/首末页命中与原章节UI通过；进度预览/取消/新章代次旧拖动未原生验收，当前新增UISlider真实事件链及预览泡边界/不提前提交/取消恢复/旧章不能提交，Apple待验。review-evidence/2026-10-13-volume-sync-coverage/README.md
-READER-05,P3,目录,按需加载关闭缓存正逆序当前章蓝条无搜索框,MainActivity.java,待验收,目录加载/关闭/失败/重试及6章当前选中父CI34通过；原报告错误引用缓存已撤回。当前增加200章真实目录快滚/逆序/选中及返回来源，最终Apple和视觉待验。review-evidence/2026-10-13-volume-sync-coverage/README.md
-READER-06,P3,目录,大目录快速滚动定位当前章末尾位置和返回来源,MainActivity.java,待验收,CI39第200章选择/定位/正逆序已走到返回，重开当前行可达断言在动画完成前失败；D130改等实际定位且保留当前章选中/可达/关闭/返回全部原断言，当前待Apple复验。
+READER-05,P3,目录,按需加载关闭缓存正逆序当前章蓝条无搜索框,MainActivity.java,待验收,D131：冻结chapterDesc保存证据确认；阅读/详情共用chapter.desc偏好、切序实际落盘；原大目录UI增重开/详情/重启倒序及当前章可达，原按需目录/关闭/缓存检查保持，当前待Apple影响及full。
+READER-06,P3,目录,大目录快速滚动定位当前章末尾位置和返回来源,MainActivity.java,待验收,D130等待真实动画/定位且原200话/正逆序/选中/可达/返回断言不变；D131详情呈现后按当前章重定位，增阅读重开→详情→重启顺序/当前章，待Apple影响及当前full。
 READER-07,P3,换源,阅读中换源和章节对应保持续读历史,MainActivity.java;reader/ReaderPosition.java,待验收,CI40换源前即第2页断言失败：首边缘tap实际仅收起工具栏；D129补明确收起后再翻页，原换源后/返回详情/收藏/组/重启第2页断言保留，待Apple复验。
 READER-08,P3,恢复,图内位置旋转前后台重启和跨章恢复,reader/ReaderPosition.java;PagedReaderView.java,待验收,CI27图内Y往返、日漫第3页旋转双设备通过；iPhone完整模式/重启续读仍退页，当前迟到尺寸锚点修正待实际回归。当前Core269输入/Linux928执行2 Apple PDF跳过0失败；完整前后台/恢复不以局部结果关闭，D100。
 READER-09,P3,主题,独立阅读主题墨水屏去白边动画及默认值落盘,reader/ReaderSettingsSheet.java;ImageEnhancementPolicy.java,待验收,非法旧增强值按冻结Android回退关闭且读取不改写原值；相关16项Linux通过；阅读主题/墨水屏/动画/默认值完整UI仍待验收

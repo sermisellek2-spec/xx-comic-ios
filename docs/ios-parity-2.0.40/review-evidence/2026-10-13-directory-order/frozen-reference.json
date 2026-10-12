@@ -1,0 +1,55 @@
+{
+  "commit": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "file": "app/src/main/java/com/xxcomic/MainActivity.java",
+  "sha256": "ebf97fb1e38241916e4a318b495bbe75edb3a6bb3c1e81435e8e0a05ca4ff515",
+  "lines": [
+    {
+      "number": 10704,
+      "text": "        final ComicModels.ComicDetail[] drawerDetail = {detail};"
+    },
+    {
+      "number": 10705,
+      "text": "        final int drawerReaderGeneration = readerGeneration;"
+    },
+    {
+      "number": 10706,
+      "text": "        ChapterDrawerSheet sheet = new ChapterDrawerSheet(this, detail.chapters,"
+    },
+    {
+      "number": 10707,
+      "text": "                currentChapter, hasCurrent, readerVisible, isReaderDarkTheme(), chapterDesc, null,"
+    },
+    {
+      "number": 10708,
+      "text": "                selectedChapter -> {"
+    },
+    {
+      "number": 10709,
+      "text": "                    if (activityDestroyed || isFinishing() || isDestroyed() || drawerReaderGeneration != readerGeneration) return;"
+    },
+    {
+      "number": 10710,
+      "text": "                    showReader(drawerDetail[0], selectedChapter);"
+    },
+    {
+      "number": 10711,
+      "text": "                });"
+    },
+    {
+      "number": 10712,
+      "text": "        sheet.setOrderChangeListener(desc -> {"
+    },
+    {
+      "number": 10713,
+      "text": "            chapterDesc = desc;"
+    },
+    {
+      "number": 10714,
+      "text": "            saveLocalState();"
+    },
+    {
+      "number": 10715,
+      "text": "        });"
+    }
+  ]
+}

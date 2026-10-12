@@ -1,0 +1,16 @@
+{
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "inputSHA": "d6456c08ee48de1a7ed5f81391429a9d48297487",
+  "ref": "codex/comic-files-recovery-d6456c0",
+  "inputs": {
+    "validation_scope": "recovery-regression",
+    "package_ipa": "false",
+    "validated_run_id": ""
+  },
+  "dispatchHTTP": 204,
+  "expectedPerDevice": {
+    "native": 36,
+    "UI": 36
+  },
+  "isAcceptanceIPA": false
+}

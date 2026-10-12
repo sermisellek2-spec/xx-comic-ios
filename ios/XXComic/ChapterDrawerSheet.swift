@@ -12,6 +12,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
     private let isReader: Bool
     private let isDarkReader: Bool
     private var isDesc: Bool
+    private let onOrderChanged: ((Bool) -> Void)?
     private let onChapterSelected: (Int) -> Void
 
     private var orderIndexes: [Int] = []
@@ -36,6 +37,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
         isReader: Bool = true,
         isDarkReader: Bool = true,
         isDesc: Bool = false,
+        onOrderChanged: ((Bool) -> Void)? = nil,
         onChapterSelected: @escaping (Int) -> Void
     ) {
         self.chapters = chapters
@@ -44,6 +46,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
         self.isReader = isReader
         self.isDarkReader = isDarkReader
         self.isDesc = isDesc
+        self.onOrderChanged = onOrderChanged
         self.onChapterSelected = onChapterSelected
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .overFullScreen
@@ -224,6 +227,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
 
     @objc private func toggleOrder() {
         isDesc.toggle()
+        onOrderChanged?(isDesc)
         orderBtn.setTitle(isDesc ? "倒序" : "正序", for: .normal)
         rebuildOrderIndexes()
         tableView.reloadData()

@@ -165,6 +165,7 @@ final class ReaderContinuityUITests: ParityUITestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [reached], timeout: 15), .completed)
         XCTAssertTrue(app.images["reader.image"].firstMatch.exists)
         revealControls(app); app.buttons["reader.directory"].tap()
+        XCTAssertEqual(app.buttons["chapter.drawer.order"].label, "倒序")
         XCTAssertTrue(table.cells["第200话"].waitForExistence(timeout: 5)); XCTAssertTrue(table.cells["第200话"].isSelected)
         let currentVisible = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: table.cells["第200话"])
         XCTAssertEqual(XCTWaiter.wait(for: [currentVisible], timeout: 5), .completed)
@@ -173,6 +174,21 @@ final class ReaderContinuityUITests: ParityUITestCase {
         XCTAssertTrue((pages.value as? String)?.contains("第200话") == true)
         revealControls(app); app.buttons["reader.back"].tap()
         XCTAssertTrue(app.buttons["detail.read"].waitForExistence(timeout: 5))
+        app.buttons["detail.directory"].tap()
+        XCTAssertTrue(app.tables["chapter.list"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["chapter.list.order"].label, "倒序")
+        let selectedInDetail = app.tables["chapter.list"].cells.containing(.staticText, identifier: "第200话").firstMatch
+        let detailVisible = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: selectedInDetail)
+        XCTAssertEqual(XCTWaiter.wait(for: [detailVisible], timeout: 5), .completed)
+        app.buttons["chapter.list.close"].tap()
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["我的书架"].waitForExistence(timeout: 10)); enterReader(app)
+        XCTAssertTrue((pages.value as? String)?.contains("第200话") == true)
+        revealControls(app); app.buttons["reader.directory"].tap()
+        XCTAssertEqual(app.buttons["chapter.drawer.order"].label, "倒序")
+        let restoredVisible = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: table.cells["第200话"])
+        XCTAssertEqual(XCTWaiter.wait(for: [restoredVisible], timeout: 5), .completed)
+        XCTAssertTrue(table.cells["第200话"].isSelected)
     }
 
     func testRotationKeepsChapterAndLocalImageAfterContinuousAppend() {

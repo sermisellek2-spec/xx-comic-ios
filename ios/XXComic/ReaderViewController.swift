@@ -955,7 +955,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             hasCurrent: true,
             isReader: true,
             isDarkReader: isDark,
-            isDesc: false
+            isDesc: environment.defaults.bool(forKey: "chapter.desc"),
+            onOrderChanged: { [weak self] descending in
+                self?.environment.defaults.set(descending, forKey: "chapter.desc")
+            }
         ) { [weak self] selectedIndex in
             guard let self, self.chapters.indices.contains(selectedIndex) else { return }
             self.savePosition()

@@ -1,0 +1,27 @@
+{
+  "id": 38316334822,
+  "head_sha": "d6456c08ee48de1a7ed5f81391429a9d48297487",
+  "status": "in_progress",
+  "conclusion": null,
+  "html_url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38316334822",
+  "updated_at": "2026-10-12T22:23:11Z",
+  "jobs": [
+    {
+      "id": 115033737909,
+      "status": "in_progress",
+      "conclusion": null,
+      "currentStep": [
+        [
+          "Build and test",
+          "in_progress"
+        ]
+      ]
+    },
+    {
+      "id": 115033739301,
+      "status": "completed",
+      "conclusion": "skipped",
+      "currentStep": []
+    }
+  ]
+}

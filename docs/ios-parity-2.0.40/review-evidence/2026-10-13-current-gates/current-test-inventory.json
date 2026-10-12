@@ -76,7 +76,7 @@
     "ios/XXComicUITests/Mh18VerificationTests.swift": "312d38c845f86c4f31e68166099b187122215d878fe3aed711199ce1c628ede3",
     "ios/XXComicUITests/ParityFixtureIdentity.swift": "4a0cb0a0fc21775fabc36a65662084a753f752826535350cd0f22bc5531fb374",
     "ios/XXComicUITests/ParityUITestCase.swift": "fce6bd2384119ba3bf60292e48fe9002c3bc2637ffa8d63d0b3dccdaea744d1b",
-    "ios/XXComicUITests/ReaderContinuityUITests.swift": "5b7c30f9a0f296f0caf452a60135e331ac4b8d660df54abe7fb0d770c0bb9d1f",
+    "ios/XXComicUITests/ReaderContinuityUITests.swift": "bcefc6fe7dcf62fdf27e1113f9eab092eeaeb50ae27855b8559c4455b0fef1b5",
     "ios/XXComicUITests/ReaderEnhancementUITests.swift": "2f8a3cc35c9ed673b2cfef62b5ecba4ba621921247468d6c756449fc8e40ea8d",
     "ios/XXComicUITests/ReaderSettingsParityUITests.swift": "12a5ee6d776955e4932f7f156fd6d049d487098ae78c6ebe824f56e1ea0294d8",
     "ios/XXComicUITests/ReaderToolbarParityUITests.swift": "12be89a751e434055f8fd8ed02b997576a028e5f9c86ed79e5e776fa3a3d94e7",
