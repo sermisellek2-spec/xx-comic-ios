@@ -45,7 +45,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         let referenceSystemTheme = ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--matrix-reference-automatic-theme")
         if referenceSystemTheme { defaults.set(0, forKey: "theme.mode") }
         #endif
-        let tabs = UITabBarController()
         let environment: AppEnvironment
         do { environment = try AppEnvironment(defaults: defaults) }
         catch {
@@ -56,24 +55,11 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         let shelf = BookshelfViewController(environment: environment)
         let discover = DiscoverViewController(environment: environment)
         let settings = SettingsViewController(environment: environment)
-        tabs.viewControllers = [
+        let tabs = RootTabsViewController(navigationControllers: [
             navigation(shelf, title: "书架", icon: .bookshelf),
             navigation(discover, title: "发现", icon: .search),
             navigation(settings, title: "设置", icon: .profile)
-        ]
-        tabs.tabBar.tintColor = Palette.accent
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = Palette.card
-        appearance.shadowColor = Palette.borderSoft
-        for layout in [appearance.stackedLayoutAppearance, appearance.inlineLayoutAppearance, appearance.compactInlineLayoutAppearance] {
-            layout.normal.iconColor = Palette.text3
-            layout.selected.iconColor = Palette.accent
-            layout.normal.titleTextAttributes = [.foregroundColor: Palette.text3, .font: UIFont.systemFont(ofSize: 12, weight: .medium)]
-            layout.selected.titleTextAttributes = [.foregroundColor: Palette.accent, .font: UIFont.systemFont(ofSize: 12, weight: .semibold)]
-        }
-        tabs.tabBar.standardAppearance = appearance
-        tabs.tabBar.scrollEdgeAppearance = appearance
+        ])
         window.rootViewController = tabs
         #if DEBUG
         if referenceSystemTheme {

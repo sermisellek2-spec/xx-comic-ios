@@ -1,0 +1,19 @@
+{
+  "run": 38223265455,
+  "revision": "5e2eb9da3b5236c19bac906165db7563cc6045eb",
+  "selectionSHA256": "6f808fb738ba68ece1132f09f2aaa1cbe2dff7265afbcc6eedafc50e2ef5be1b",
+  "sdkVersion": "17.5",
+  "runtimeVersion": "17.5",
+  "devices": [
+    {
+      "name": "iPhone 15 Pro",
+      "udid": "B15C98D2-D2CB-4366-B470-4881BB76708E"
+    },
+    {
+      "name": "iPad Pro 11-inch (M4)",
+      "udid": "F89BCCFC-5701-4B88-A238-EE866AF4834F"
+    }
+  ],
+  "allOriginalInventoryHashesMatch": true,
+  "newCandidateGeometryPassed": false
+}

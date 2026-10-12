@@ -1,0 +1,11 @@
+{
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "revision": "5e2eb9da3b5236c19bac906165db7563cc6045eb",
+  "branch": "codex/manga-layout-5e2eb9d",
+  "inputs": {
+    "validation_scope": "reader-modes",
+    "package_ipa": "false"
+  },
+  "httpStatus": 204,
+  "dispatchedAtUTC": "2026-10-12T08:23:25.684132+00:00"
+}

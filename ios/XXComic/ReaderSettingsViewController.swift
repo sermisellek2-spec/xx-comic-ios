@@ -90,7 +90,10 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         super.viewDidLayoutSubviews()
         guard !userResized else { return }
         let size = content.systemLayoutSizeFitting(CGSize(width: max(1, view.bounds.width - 36), height: 0), withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
-        let height = size.height + 84 + view.safeAreaInsets.bottom
+        let windowHeight = presentationController?.containerView?.bounds.height ?? view.window?.bounds.height ?? view.bounds.height
+        // The Android sheet caps its scrolling content at 65% of the window,
+        // while the handle, heading and bottom padding remain outside it.
+        let height = min(size.height, windowHeight * 0.65) + 82 + view.safeAreaInsets.bottom
         if abs(preferredContentSize.height - height) > 1 { preferredContentSize.height = height }
     }
     private func choiceRow(title: String, items: [(String, ParityIcon)], group: Int) -> UIView {

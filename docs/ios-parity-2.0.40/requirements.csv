@@ -6,9 +6,9 @@ BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,io
 BASE-05,P0,视觉,建立8场景真实Android截图金标和设备元数据,app/src/androidTest,待验收,当前Android冻结独立APK完整8种状态64图，实际尺寸/哈希/夹具均验；早期横屏误采竖屏组保留失败。共用原图金标重采；iOS同宽实拍/叠图/逐组件尚未齐
 VIS-01,P1,主题,完整浅深色token及默认跟随系统且设置落盘,UIHelpers.java;UiContrast.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：Palette.swift;AppTheme.swift;AppThemeController.swift
 VIS-02,P1,素材,启动图标应用图标插画及控件图标按实际原版,app/src/main/res;app/src/main/assets,待验收,18规格不透明RGB及SDK资源编译已补；新增实际两设备主屏图标/点击截图与位置记录，用例未运行；旧IPA无资源不能交付；D93横屏安全区候选；底栏纵排仍未关闭。
-VIS-03,P1,导航,底栏标题细线工具区切页返回及安全区,MainActivity.java;NavigationInsets.java,待验收,当前发现导航按冻结站源位置/搜索/标题补齐，书架布局图及阅读冻结图标保持实际点击区；旧第十三轮实拍只作问题依据，当前完整8场景待验收；D85：同宽b8截图明确书架刷新图标26偏大、硬底提示和搜索提示色偏差，候选按冻结参数修复，当前原生/视觉待复验；filter-consumers记录
+VIS-03,P1,导航,底栏标题细线工具区切页返回及安全区,MainActivity.java;NavigationInsets.java,待验收,当前发现导航按冻结站源位置/搜索/标题补齐，书架布局图及阅读冻结图标保持实际点击区；旧第十三轮实拍只作问题依据，当前完整8场景待验收；D85：同宽b8截图明确书架刷新图标26偏大、硬底提示和搜索提示色偏差，候选按冻结参数修复，当前原生/视觉待复验；filter-consumers记录；D97/D98接续根底栏60pt纵排及设置滚动区65%窗口候选；93原生仅语法通过；root-navigation证据；Apple/UI/当前视觉待验收
 VIS-04,P1,布局,封面密度动态列数卡片边距圆角文本与截断,CoverLayoutHelper.java;bookshelf/BookshelfLayoutHelper.java,待验收,书架16/6/110；发现16/8/110/3:4及13字标题；详情冻结封面与信息区。当前候选未Apple实拍，不由静态数值记通过
-VIS-05,P1,组件,底部抽屉展开收回遮罩和弹窗按钮布局,UIHelpers.java;MainActivity.java,待验收,阅读与站源分类均全宽底部面板；站源面板400内容高/拖动关闭/完整长名/选中/保存主题接线，原草稿与确认用例保留；8场景与完整UI待验收；852手机32对照已人工读取登记；D92/D93后续本地修复仅语法通过，新图/完整量测仍待验收。
+VIS-05,P1,组件,底部抽屉展开收回遮罩和弹窗按钮布局,UIHelpers.java;MainActivity.java,待验收,阅读与站源分类均全宽底部面板；站源面板400内容高/拖动关闭/完整长名/选中/保存主题接线，原草稿与确认用例保留；8场景与完整UI待验收；852手机32对照已人工读取登记；D92/D93后续本地修复仅语法通过，新图/完整量测仍待验收。；D97/D98接续根底栏60pt纵排及设置滚动区65%窗口候选；93原生仅语法通过；root-navigation证据；Apple/UI/当前视觉待验收
 VIS-06,P1,状态,所有通用加载空错误重试禁用选中与按压反馈,MainActivity.java,待验收,D22 iPhone实际3项封面原生测试通过；全通用状态及8场景UI仍待验收
 VIS-07,P1,iPad,横竖屏弹层分享锚点键盘和触控命中,MainActivity.java;NavigationInsets.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：DetailViewController.swift;ComicGridViewController.swift
 SHELF-01,P2,书架,在线本地作用域及网格列表切换,bookshelf/BookshelfScope.java;BookshelfLayoutHelper.java,待验收,第十四轮网格列表保可见用例双设备通过；当前主标题/本地范围及完整8场景仍待全量验收
