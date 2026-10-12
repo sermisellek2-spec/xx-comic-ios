@@ -1,0 +1,173 @@
+{
+  "runId": 38223827364,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38223827364",
+  "revision": "5e2eb9da3b5236c19bac906165db7563cc6045eb",
+  "scope": "configuration-files",
+  "conclusion": "failure",
+  "sdkBuilds": {
+    "Debug": "success",
+    "Release": "success",
+    "FilesFixtureHost": "success"
+  },
+  "appleCore": {
+    "tests": 929,
+    "failures": 1,
+    "seconds": 136.494,
+    "failedTest": "CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses",
+    "remainingDiskBytes": 36864
+  },
+  "native": {
+    "testsPerDevice": 27,
+    "failuresPerDevice": 0
+  },
+  "ui": [
+    {
+      "device": "iPhone 15 Pro",
+      "tests": 46,
+      "passed": 40,
+      "failedCases": 6,
+      "failureAssertionRecords": 13,
+      "failedTests": [
+        "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+        "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ],
+      "classes": {
+        "BookshelfParityUITests": {
+          "tests": 7,
+          "passed": 7
+        },
+        "CurrentParityUITests": {
+          "tests": 12,
+          "passed": 12
+        },
+        "ExternalFilesParityUITests": {
+          "tests": 3,
+          "passed": 3
+        },
+        "ReaderContinuityUITests": {
+          "tests": 2,
+          "passed": 2
+        },
+        "ReaderSettingsParityUITests": {
+          "tests": 4,
+          "passed": 3
+        },
+        "ReaderToolbarParityUITests": {
+          "tests": 2,
+          "passed": 2
+        },
+        "SourceConfigFilesUITests": {
+          "tests": 5,
+          "passed": 5
+        },
+        "SourceDrawerTests": {
+          "tests": 3,
+          "passed": 2
+        },
+        "VisualMatrixUITests": {
+          "tests": 8,
+          "passed": 4
+        }
+      }
+    },
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "tests": 46,
+      "passed": 40,
+      "failedCases": 6,
+      "failureAssertionRecords": 13,
+      "failedTests": [
+        "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+        "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+        "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+        "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+        "VisualMatrixUITests/testSettingsReferencePortraitLight()"
+      ],
+      "classes": {
+        "BookshelfParityUITests": {
+          "tests": 7,
+          "passed": 7
+        },
+        "CurrentParityUITests": {
+          "tests": 12,
+          "passed": 12
+        },
+        "ExternalFilesParityUITests": {
+          "tests": 3,
+          "passed": 3
+        },
+        "ReaderContinuityUITests": {
+          "tests": 2,
+          "passed": 2
+        },
+        "ReaderSettingsParityUITests": {
+          "tests": 4,
+          "passed": 3
+        },
+        "ReaderToolbarParityUITests": {
+          "tests": 2,
+          "passed": 2
+        },
+        "SourceConfigFilesUITests": {
+          "tests": 5,
+          "passed": 5
+        },
+        "SourceDrawerTests": {
+          "tests": 3,
+          "passed": 2
+        },
+        "VisualMatrixUITests": {
+          "tests": 8,
+          "passed": 4
+        }
+      }
+    }
+  ],
+  "simulatorSDKVersion": "17.5",
+  "selectedRuntimeVersion": "17.5",
+  "originalInventoryInputsVerified": 5,
+  "originalAttachmentsVerified": 290,
+  "visualPreparation": {
+    "expected": 64,
+    "prepared": 64,
+    "pending": 0,
+    "comparisonExitCode": 0,
+    "componentGatePassed": false,
+    "currentRootNavigationCandidateIncluded": false
+  },
+  "ipaProduced": false,
+  "xcresultDownloaded": false,
+  "xcresultAvailableInCIArtifact": 11739245101,
+  "archives": [
+    {
+      "file": "original-logs.zip",
+      "bytes": 1049443,
+      "sha256": "acb54ecb5e731e81f288e441b4108e0b28d96c4e53f37fe773d1075732c55709"
+    },
+    {
+      "file": "failure-evidence.zip",
+      "bytes": 3480185,
+      "sha256": "9363eec10468f23df6dd83e134082f3f9924e5882af967f8e8a8666be113c1ae"
+    },
+    {
+      "file": "visual-original.zip",
+      "bytes": 57818722,
+      "sha256": "4b7cf80bdaf830ae48bb43b1fdfade0b6fe05afb1437778e071a1c4652e995bb"
+    },
+    {
+      "file": "ai-original.zip",
+      "bytes": 1287249,
+      "sha256": "f5db52373d338dda182c391aebf1fcd179c602f986260880f04034398407b8fc"
+    },
+    {
+      "file": "inventory-original.zip",
+      "bytes": 16775,
+      "sha256": "c9ddf4e2fd2dc51f04a893e6eced0a61dace189384cfc876a0039db261945040"
+    }
+  ]
+}

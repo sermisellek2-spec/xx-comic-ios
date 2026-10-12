@@ -1,0 +1,135 @@
+{
+  "id": 38223827364,
+  "html_url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38223827364",
+  "status": "completed",
+  "conclusion": "failure",
+  "head_sha": "5e2eb9da3b5236c19bac906165db7563cc6045eb",
+  "head_branch": "codex/configuration-parity-5e2eb9d",
+  "event": "workflow_dispatch",
+  "run_attempt": 1,
+  "created_at": "2026-10-12T08:29:00Z",
+  "updated_at": "2026-10-12T09:42:56Z",
+  "jobs": [
+    {
+      "id": 114726338059,
+      "name": "build",
+      "status": "completed",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-12T08:29:09Z",
+          "completed_at": "2026-10-12T08:29:11Z"
+        },
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-12T08:29:11Z",
+          "completed_at": "2026-10-12T08:29:28Z"
+        },
+        {
+          "name": "Install XcodeGen",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-12T08:29:28Z",
+          "completed_at": "2026-10-12T08:29:32Z"
+        },
+        {
+          "name": "Select iPhone and iPad simulators",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-12T08:29:32Z",
+          "completed_at": "2026-10-12T08:29:46Z"
+        },
+        {
+          "name": "Upload original simulator inventory",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-12T08:29:46Z",
+          "completed_at": "2026-10-12T08:29:48Z"
+        },
+        {
+          "name": "Build and test",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 6,
+          "started_at": "2026-10-12T08:29:48Z",
+          "completed_at": "2026-10-12T09:42:18Z"
+        },
+        {
+          "name": "Upload unsigned IPA",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-12T09:42:18Z",
+          "completed_at": "2026-10-12T09:42:18Z"
+        },
+        {
+          "name": "Archive original UI test results",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-12T09:42:18Z",
+          "completed_at": "2026-10-12T09:42:29Z"
+        },
+        {
+          "name": "Upload UI test results",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-12T09:42:29Z",
+          "completed_at": "2026-10-12T09:42:39Z"
+        },
+        {
+          "name": "Upload visual matrix screenshots",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-12T09:42:40Z",
+          "completed_at": "2026-10-12T09:42:42Z"
+        },
+        {
+          "name": "Upload AI enhancement evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-12T09:42:42Z",
+          "completed_at": "2026-10-12T09:42:43Z"
+        },
+        {
+          "name": "Upload isolated offline HTTP cache evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-12T09:42:43Z",
+          "completed_at": "2026-10-12T09:42:43Z"
+        },
+        {
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24,
+          "started_at": "2026-10-12T09:42:43Z",
+          "completed_at": "2026-10-12T09:42:44Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25,
+          "started_at": "2026-10-12T09:42:44Z",
+          "completed_at": "2026-10-12T09:42:54Z"
+        }
+      ]
+    }
+  ],
+  "checked_at_utc": "2026-10-12T09:43:51.222662+00:00"
+}

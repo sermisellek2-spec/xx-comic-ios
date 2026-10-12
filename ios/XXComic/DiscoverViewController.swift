@@ -571,7 +571,8 @@ private final class FilterViewController: UIViewController {
             sectionSegment.addArrangedSubview(button)
         }
 
-        let scroll = UIScrollView()
+        let scroll = SourceOptionScrollView()
+        scroll.delaysContentTouches = false; scroll.canCancelContentTouches = true
         scroll.accessibilityIdentifier = "filter.options"
         tabs.axis = .horizontal; tabs.spacing = 8
         options.axis = .vertical; options.spacing = 8

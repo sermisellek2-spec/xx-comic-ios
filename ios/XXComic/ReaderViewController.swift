@@ -29,6 +29,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var fullscreen = false
     private var pendingPosition: ReaderPosition?
     private var lastSaved: ReaderPosition?
+    private var pagedAnchor: ReaderPosition?
     private let layout = ReaderPageLayout()
     private lazy var pages = UICollectionView(frame: .zero, collectionViewLayout: layout)
     private let toolbar = UIStackView()
@@ -355,6 +356,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         presentedViewController?.overrideUserInterfaceStyle = style
         for cell in pages.visibleCells { (cell as? ReaderImageCell)?.apply(settings) }
         if previousSettings.readingMode != settings.readingMode {
+            if settings.layout == .paged { pagedAnchor = position }
             cancelContinuation()
             if chapters.indices.contains(session.chapterIndex), let segment = continuousPages.segment(for: chapters[session.chapterIndex]) {
                 images = segment.imageURLs
@@ -407,6 +409,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         savePosition()
         cancelContinuation()
         lastObservedPosition = nil
+        pagedAnchor = nil
         loadTask?.cancel(); requestID = UUID()
         let token = requestID, chapter = chapters[index]
         let requestComic = comic, requestChapters = chapters, requestSource = source
@@ -429,6 +432,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 guard self.session.loaded(chapter: chapter, in: self.chapters, imageCount: page.imageUrls.count, position: position) else { throw ReaderError.chapterMissing }
                 self.session.updateImage(position.index(in: page.imageUrls))
                 self.images = page.imageUrls; self.sizes = [:]
+                self.pagedAnchor = position.forPagedImage(at: self.session.imageIndex, in: self.images)
                 self.continuousPages = ContinuousReaderPages()
                 self.continuousPages.append(chapter: chapter, imageURLs: page.imageUrls)
                 self.title = chapter.title
@@ -679,7 +683,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         if settings.layout == .paged {
             let center = CGPoint(x: pages.bounds.midX, y: pages.bounds.midY)
             let index = pages.indexPathForItem(at: center)?.item ?? session.imageIndex
-            return positionAtImage(max(0, min(images.count - 1, index)), offset: 0, atEnd: index == images.count - 1)
+            let target = max(0, min(images.count - 1, index))
+            let anchor = pagedAnchor ?? positionAtImage(target, offset: 0, atEnd: target == images.count - 1)
+            let position = anchor.forPagedImage(at: target, in: images)
+            pagedAnchor = position
+            return position
         }
         let index = visibleStripImageIndex()
         guard let frame = layout.layoutAttributesForItem(at: IndexPath(item: index, section: 0))?.frame else { return positionAtImage(index, offset: 0) }
@@ -733,6 +741,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             ? (chapter.flatMap { continuousPages.globalIndex(for: $0, position: position) } ?? localIndex) : localIndex
         if settings.layout == .paged {
             guard layout.scrollToLogicalPage(index, animated: false) else { return false }
+            pagedAnchor = position.forPagedImage(at: localIndex, in: activeImages)
         } else if let frame = layout.layoutAttributesForItem(at: IndexPath(item: index, section: 0))?.frame {
             let maxY = max(0, pages.contentSize.height - pages.bounds.height)
             let tailIndex = chapter.flatMap { continuousPages.segment(for: $0)?.range.last } ?? images.count - 1
@@ -994,6 +1003,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         self.session = ReaderSession(chapterCount: targetChapters.count, chapterIndex: matchedIndex)
         self.images = []
         self.lastObservedPosition = nil
+        self.pagedAnchor = nil
         self.pages.reloadData()
         self.loadChapter(matchedIndex)
         self.updateMiddleButton()

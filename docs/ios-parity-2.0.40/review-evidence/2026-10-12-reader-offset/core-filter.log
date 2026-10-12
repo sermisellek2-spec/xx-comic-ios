@@ -1,0 +1,74 @@
+[0/1] Planning build
+Building for debugging...
+[0/5] Write sources
+[0/4] Write swift-version-24593BA9C3E375BF.txt
+[4/6] Compiling ComicCore ReadingRules.swift
+[5/6] Emitting module ComicCore
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[6/11] Compiling ComicCore BookshelfReadingStatus.swift
+[7/11] Compiling ComicCore ContinuousReaderPages.swift
+[8/11] Compiling ComicCore FavoriteUpdateChecker.swift
+[9/11] Compiling ComicCore LibraryStore.swift
+[10/11] Compiling ComicCore ReaderSession.swift
+[11/18] Wrapping AST for ComicCore for debugging
+[13/23] Emitting module ComicCoreTests
+[14/26] Compiling ComicCoreTests BookshelfReadingStatusTests.swift
+[15/26] Compiling ComicCoreTests ContinuousReaderPagesTests.swift
+[16/26] Compiling ComicCoreTests LibraryStoreTests.swift
+[17/26] Compiling ComicCoreTests LinkedFolderLibraryTests.swift
+[18/26] Compiling ComicCoreTests ReaderSessionTests.swift
+[19/26] Compiling ComicCoreTests ReadingRulesTests.swift
+[20/26] Compiling ComicCoreTests TextReadingTests.swift
+[21/29] Wrapping AST for ComicCoreTests for debugging
+[22/29] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[23/30] Write sources
+[25/32] Emitting module ComicCorePackageDiscoveredTests
+[26/32] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[27/33] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[28/34] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[29/34] Write sources
+[30/34] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[32/36] Emitting module ComicCorePackageTests
+[33/36] Compiling ComicCorePackageTests runner.swift
+[34/36] Write Objects.LinkFileList
+[35/36] Linking ComicCorePackageTests.xctest
+Build complete! (40.97s)
+Test Suite 'Selected tests' started at 2026-10-12 09:41:23.901
+Test Suite 'ReadingRulesTests' started at 2026-10-12 09:41:23.916
+Test Case 'ReadingRulesTests.testCompletedAndShortenedChapters' started at 2026-10-12 09:41:23.916
+Test Case 'ReadingRulesTests.testCompletedAndShortenedChapters' passed (0.003 seconds)
+Test Case 'ReadingRulesTests.testDefaultGestureDirectionKeepsLogicalPageOrder' started at 2026-10-12 09:41:23.919
+Test Case 'ReadingRulesTests.testDefaultGestureDirectionKeepsLogicalPageOrder' passed (0.101 seconds)
+Test Case 'ReadingRulesTests.testHistorySurvivesChangedOrMissingDirectory' started at 2026-10-12 09:41:24.020
+Test Case 'ReadingRulesTests.testHistorySurvivesChangedOrMissingDirectory' passed (0.002 seconds)
+Test Case 'ReadingRulesTests.testInvalidOffsetsAreClamped' started at 2026-10-12 09:41:24.022
+Test Case 'ReadingRulesTests.testInvalidOffsetsAreClamped' passed (0.001 seconds)
+Test Case 'ReadingRulesTests.testLegacyProgressRestoresImageAndOffset' started at 2026-10-12 09:41:24.023
+Test Case 'ReadingRulesTests.testLegacyProgressRestoresImageAndOffset' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testMangaDirectionDoesNotBypassStripZoomOrOverlayTapRules' started at 2026-10-12 09:41:24.023
+Test Case 'ReadingRulesTests.testMangaDirectionDoesNotBypassStripZoomOrOverlayTapRules' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testMangaTapAndSwipeAdvanceFromTheLeftWithoutReversingChapters' started at 2026-10-12 09:41:24.023
+Test Case 'ReadingRulesTests.testMangaTapAndSwipeAdvanceFromTheLeftWithoutReversingChapters' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testNormalAndMangaViewsRetainTheStripOffsetWhileReadingTheSameImage' started at 2026-10-12 09:41:24.023
+Test Case 'ReadingRulesTests.testNormalAndMangaViewsRetainTheStripOffsetWhileReadingTheSameImage' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testPagedOffsetTracksLinkedImageIdentityAfterTheFolderOrderChanges' started at 2026-10-12 09:41:24.024
+Test Case 'ReadingRulesTests.testPagedOffsetTracksLinkedImageIdentityAfterTheFolderOrderChanges' passed (0.003 seconds)
+Test Case 'ReadingRulesTests.testReaderThemeFollowsSystemIndependentlyAndOverridesIt' started at 2026-10-12 09:41:24.027
+Test Case 'ReadingRulesTests.testReaderThemeFollowsSystemIndependentlyAndOverridesIt' passed (0.0 seconds)
+Test Case 'ReadingRulesTests.testReadingAnotherPagedImageResetsThePreviousStripOffsetAndCompletion' started at 2026-10-12 09:41:24.027
+Test Case 'ReadingRulesTests.testReadingAnotherPagedImageResetsThePreviousStripOffsetAndCompletion' passed (0.002 seconds)
+Test Case 'ReadingRulesTests.testTapZonesHonorControlsMiddleHeightAndPageInputMode' started at 2026-10-12 09:41:24.029
+Test Case 'ReadingRulesTests.testTapZonesHonorControlsMiddleHeightAndPageInputMode' passed (0.0 seconds)
+Test Suite 'ReadingRulesTests' passed at 2026-10-12 09:41:24.029
+Executed 12 tests, with 0 failures (0 unexpected) in 0.113 (0.113) seconds
+Test Suite 'Selected tests' passed at 2026-10-12 09:41:24.029
+Executed 12 tests, with 0 failures (0 unexpected) in 0.113 (0.113) seconds

@@ -1,0 +1,2036 @@
+{
+  "inputSHA": "5e2eb9da3b5236c19bac906165db7563cc6045eb",
+  "verifiedRecords": 290,
+  "records": [
+    {
+      "file": "reader-enhancement/iPhone_15_Pro-reader-ai-metrics.json",
+      "sha256": "295fb224e5a000991512c17ef51bfdeb3073dea1088881fb5aff3a1e1cb7a730",
+      "device": "iPhone 15 Pro",
+      "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+      "status": "Success"
+    },
+    {
+      "file": "reader-enhancement/iPhone_15_Pro-real-input-384x384.png",
+      "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+      "device": "iPhone 15 Pro",
+      "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+      "status": "Success"
+    },
+    {
+      "file": "reader-enhancement/iPhone_15_Pro-coreml-output-768x768.png",
+      "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+      "device": "iPhone 15 Pro",
+      "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+      "status": "Success"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-1.png",
+      "sha256": "6bc039e80cc12166cb7dc3cba2f877bea311525b9747e51a38c458822312ea55",
+      "device": "iPhone 15 Pro",
+      "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-accessibility.txt",
+      "sha256": "0f4a627af1d7a882145839405fac46b82263ad225d0f6b601861ef142e6cac5d",
+      "device": "iPhone 15 Pro",
+      "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-source-grid-accessibility.txt",
+      "sha256": "59a7d4b38eb718846d8e06f194fb487438381bc5d7ec3a97dc9cfbd56279d720",
+      "device": "iPhone 15 Pro",
+      "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-1.png",
+      "sha256": "f27aa70c2084c6eb9dddbd4ea43bc31ad62fd3a343ff607c6b2dd27f05cd0589",
+      "device": "iPhone 15 Pro",
+      "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-2.png",
+      "sha256": "16f4d5a04a7bb29593d1b64ccdc1f5b11eec2e826db214ac1dccf0b1dacabb82",
+      "device": "iPhone 15 Pro",
+      "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-accessibility.txt",
+      "sha256": "f67c3de748523777f95d41ba69d8fa881037a6f79ad5381e55512bbb46fc4c97",
+      "device": "iPhone 15 Pro",
+      "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_settings_reference_empty.png",
+      "sha256": "20ddb5015b06a2789fddca562ae7bc52d1a80725590d7147422608f10d25a7a1",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_settings_reference_empty.json",
+      "sha256": "1c74049da685798dd1fee65f9aa2dfec3cbbb5365891a648aa557791d045e905",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferenceLandscapeDark__-1.png",
+      "sha256": "e9bbe5a540a427da8638b0e3acc509018ccd9e7131ae6f84ca3f22ee8d290759",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferenceLandscapeDark__-accessibility.txt",
+      "sha256": "6891dadef80cf34268ad96fd067105762477d19e3b3e93ff96c273320de74ad1",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_settings_reference_empty.png",
+      "sha256": "bd44ad065a96663e0f6c35f2e328eadf43e12166c944664af85a00da1eb61a09",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_settings_reference_empty.json",
+      "sha256": "1bfa16dbf971c49f7ebd397719c55b1b355e1d693f8f6fa4729a6f26e39a8ec1",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferenceLandscapeLight__-1.png",
+      "sha256": "89738d9f9d5bcec503d8f95232d327c5b8d00ebe5c5b420a62e0847c7052cfe5",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferenceLandscapeLight__-accessibility.txt",
+      "sha256": "27f38b1316d150f7523514cf34a99900cdc2113334fe57275bfe5765edc6a160",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_settings_reference_empty.png",
+      "sha256": "499e1db70a5ed2a3d6dcda77220c8d0a6b0bd18e749156c7a232eb968eca912a",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_settings_reference_empty.json",
+      "sha256": "cff82a48f8512f924d4678aeb606d4245fab9ada6192a36ab8d9eb427699033f",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferencePortraitDark__-1.png",
+      "sha256": "499e1db70a5ed2a3d6dcda77220c8d0a6b0bd18e749156c7a232eb968eca912a",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferencePortraitDark__-accessibility.txt",
+      "sha256": "04b91ecfa3563c6a0e39dab667e18ec76341c93962a672c4f922cc0158a802d5",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_settings_reference_empty.png",
+      "sha256": "393f0902e41db0e11724624c3f7ca57d7f69da3edf5ccab9b0884c7dcbfcd51b",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_settings_reference_empty.json",
+      "sha256": "e7662a6cd1fbb356373d32b3fcfb8a266d1591efdce57d9a62c49134fa653ac8",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferencePortraitLight__-1.png",
+      "sha256": "393f0902e41db0e11724624c3f7ca57d7f69da3edf5ccab9b0884c7dcbfcd51b",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPhone_15_Pro-VisualMatrixUITests_testSettingsReferencePortraitLight__-accessibility.txt",
+      "sha256": "dbbafb122e429369fc4831c8d3b16a01c99153b3d7f8af526940814c57b86d76",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_bookshelf_online.png",
+      "sha256": "510b54b89d583453e5a3fce264bf601388c073031519ca44a518854d916f1593",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_bookshelf_online.json",
+      "sha256": "585d609a964ed8faa7e6377ee245f0dc4ced9da25016bafeeed6369bf08116a4",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_bookshelf_local.png",
+      "sha256": "ea6a9c7fb4ab3316d79d8d5f355170806ae424ca99a1bfc39d69b1eb54419d73",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_bookshelf_local.json",
+      "sha256": "59af5f35813157569b85fa410c368bf1536204080164d15edbefd92c37b78d40",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_discover.png",
+      "sha256": "4d370a52b1828b6facda9c7f7b56242d1ebe1932ed41dd547f3fdf7de526762a",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_discover.json",
+      "sha256": "107100eb82dd53a6c44d8ed4e6bf78299dba0c1289f7cbab9380673ecebe50b2",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_source_drawer.png",
+      "sha256": "214664123c39119bcccad5ea6af733bd14fdfdf8f5151efeb4c426c9f8c858f6",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_source_drawer.json",
+      "sha256": "cee16fdae9d7a1830813f2f8d548764995f5f82e9e39318a0118e589b5202bca",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_search_results.png",
+      "sha256": "892c50cb299774f4958300f0880f8768d632830a27150cea6434c07e073fed40",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_search_results.json",
+      "sha256": "32fb3b817bf3f624f662d8e2658db08b766050f9fd0cf3e3aef6d751214f84cf",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_detail.png",
+      "sha256": "8bc475a8f717d4cf23fbac909008afc9372159befb8a0f2fe7fcf9f0cfafa577",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_detail.json",
+      "sha256": "3f88a5de78450bba2755daf52ebe8e17262dfadf3b1e04ab5b2170c662eab483",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_source_switch.png",
+      "sha256": "07bcadc5ecb84f896b341bb676ef6334d23793a05480128f2345596acda0e73a",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_source_switch.json",
+      "sha256": "5b70f8344d4183923c8b144299f606067f527f3e373ee6bc33d801d0324d497d",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_reader.png",
+      "sha256": "27ed0a988e6a51b32bdd5330d31e472c5300cda1c2ce29b6460772fdc316bb4e",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_reader.json",
+      "sha256": "3ca1ed6993886d67bdab39aa2438df919ae39483d15a6b6b656ccb6385c51448",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_reading_settings.png",
+      "sha256": "4835fa1edb7501a1f238a94b439de0b0fde886ae118908ddfd6ec5fe56f5586c",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_reading_settings.json",
+      "sha256": "400ce7f4124d864d21098f5b96158acd8eb53ffd521d886f70a61584d45b8e80",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_reader_original.png",
+      "sha256": "c243387c37c6e9a31b84ee472e626b7bc77c24cd7e6037be8ce082553f7259e1",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_reader_original.json",
+      "sha256": "10d62540cf725f27b241884e8c2ec982894f7bc26e1a163527e701cc27f02442",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_reading_settings_original.png",
+      "sha256": "979574d2aa6946db9a2598f015554207137f615222cef0e3e4da9be1d40ad8b2",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_reading_settings_original.json",
+      "sha256": "a8fc1237b126e7e681e2dbec61751ebb2312f713a9c154208189e14d45a9cdcc",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_reader_directory.png",
+      "sha256": "9298e2f184c47a995defb9533f719b84f7fdf70d92c3c3f3ccc70b08d7801b29",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_reader_directory.json",
+      "sha256": "66efe2bd8110d3cd64a222d25225cd5865eb55e9dfbaa7d3b42d5ce5aad2a652",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_settings.png",
+      "sha256": "4edd687a31735203c5e86cd9c043d5a9ac7714d3294053fbcd5032f908ea5533",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_settings.json",
+      "sha256": "3e650ce6984a7650905136756b4c4098cd75e9fd31543a0902e2af8623971c6a",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_downloads.png",
+      "sha256": "01b61179d0daf0440ceeaba766c49525622c5457b8b0bd250d3a85f7f61b14d9",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_downloads.json",
+      "sha256": "0f1bf72bdaccefb0e05dd6f13550a15cce5c9c31eefc9510064cd866c2c9d2f3",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_dark_cache_cleanup.png",
+      "sha256": "ce37269407aef0be548c3f53067b4dc970856c546cac0d15cc3c85a995da37ac",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_dark_cache_cleanup.json",
+      "sha256": "c857b44583b04d59be0d359daea435bc002e81e87541df0bc05723be4d343394",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_bookshelf_online.png",
+      "sha256": "05d36b27b62ff79d1c42c75584773884b7de2b00c4f83423c0dd6ed443b43d15",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_bookshelf_online.json",
+      "sha256": "6010a9240eb2dfd2b96c67e2df65ad224d2c8257ce0aabf06e8888e8113d8d20",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_bookshelf_local.png",
+      "sha256": "f443b0f7e31ad3b10a0672923b0e387204799db7ae1b6cf27a83ab70def67572",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_bookshelf_local.json",
+      "sha256": "0d461f73906c8736e34ee87bd1fc5e33dfa63bfafd65cb2d16a6a6ae689b177f",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_discover.png",
+      "sha256": "74535617cb17eb084cd62c9cb9a8b4f76fb90815e01c546bd8e01aefa5770628",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_discover.json",
+      "sha256": "dbbb016de48a07cf7d9dc50da11eb3f4d74e691b0d2483d7fe80fe79b9adb3a9",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_source_drawer.png",
+      "sha256": "f3fd5cac7b02e3b4fca182e88c3e9c05db5ab52d3fd33c6440b64e71ab6b3ad1",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_source_drawer.json",
+      "sha256": "6589dd8c939f3b3b73b3764b290071324c2c27e4ff6b4fd5e1cf137ce256d577",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_search_results.png",
+      "sha256": "b1c60718245d005c860567e4a3a6f401c22e913445950e22c06e913c52cebfdb",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_search_results.json",
+      "sha256": "60c3291a222fd044a8eae4eaf5883f920c368c9bc3b84777015ebf00cab11ac4",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_detail.png",
+      "sha256": "f015a387a94ed30d358eae2e66d274ddab8c9975034aa9ca15ddd77f9f1602a6",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_detail.json",
+      "sha256": "8f56593f238c25dd5caaccf41ef3f1a79dd7460ce781d3172f0bcb0db6b2152e",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_source_switch.png",
+      "sha256": "07bcadc5ecb84f896b341bb676ef6334d23793a05480128f2345596acda0e73a",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_source_switch.json",
+      "sha256": "aa05754ad2c9536f478cbe60acf78991aa7c93bc611578c6bf4b3515200f7142",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_reader.png",
+      "sha256": "13a35ee2170349c3d0ab616116fed15d8f311dc206fdd0a7ae709ac4715b59f2",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_reader.json",
+      "sha256": "5b08c21236bd9baec82d59cdf5e7300b114e8b1ad65ce6a90aa020fc2c23e5ae",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_reading_settings.png",
+      "sha256": "dfbc6149c6c7a9e5be111fa1b497f544976c65b295eb118b13fd985748a6ac70",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_reading_settings.json",
+      "sha256": "3be6c31df88b0407d60f1141ec670aaea7e9379e3503f4badd000956377726ee",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_reader_original.png",
+      "sha256": "706aa178de4b4a3f80cb765108e38fddf663b05402bb5bfd23b9f030bebd5045",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_reader_original.json",
+      "sha256": "a0a783d2cbc5d3ab3d75e2f8d57ac9a3c1d30ce0b9b09cfb7752711fef53b6f1",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_reading_settings_original.png",
+      "sha256": "6b01aafae96f6677b1640e1bccb847d22fda077cf02357e72bda0b98c26acdc3",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_reading_settings_original.json",
+      "sha256": "1e305cedcf1780c144ee6125a36a559a2af297b61841be92b9415e7cb4a213dd",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_reader_directory.png",
+      "sha256": "d33a8f8921b19c87693caec144d0468c020173c287619ae2a3dcab6291144a1a",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_reader_directory.json",
+      "sha256": "0ccdbd46c29bc30ca3eba6cf88b0f85e958dcd4324fe0dc4f61ad5c929f4dd94",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_settings.png",
+      "sha256": "c7d7fbe26ba06ed4b1564b5ca730df263255bc7ddfd8568c6f4edb946bc34c06",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_settings.json",
+      "sha256": "1ed563cb0e330327a3e575b7af8a5a41631d8288e32db41a352729b117ef20ae",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_downloads.png",
+      "sha256": "56281ad6f8ec237086143aad90510bad64a674879e9b4b053bae071c70cbf6e7",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_downloads.json",
+      "sha256": "441b95a5835a961993679181722b23d2e6b9a77130d998386a80f58a788ce6e3",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_landscape_light_cache_cleanup.png",
+      "sha256": "ec485024e940395e1379bf15db2dfe5dffc27061c5dc14c7200f1bfe787a3398",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_landscape_light_cache_cleanup.json",
+      "sha256": "445456d77044fac6ac2c17ca62cd00a57fab86605acabdb2c8574c5d7d949178",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_bookshelf_online.png",
+      "sha256": "2fd971bf5992398157a909ab6566acdf307e73ec8bda4837af6a588c835fad79",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_bookshelf_online.json",
+      "sha256": "5fa06041650eb191e37b706a96ac614231072df37eb881ca4a52719da6d5d01e",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_bookshelf_local.png",
+      "sha256": "536b9efa7d773c8df6550507a71a5b54a1edf36147fe81ae2d71649bcbbd5d01",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_bookshelf_local.json",
+      "sha256": "e37a67bb720de317a6985b435a436907a23e412e744bbd23b7e7efb18647f7c3",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_discover.png",
+      "sha256": "722cfd972e0e4dc0ccb7e1198eebceca89b73ee279601e6e34832d66a5f48b69",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_discover.json",
+      "sha256": "d752b8680de6eac6e990d753183e46397f39f74dafd29acf5a1d2b4313b417a4",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_source_drawer.png",
+      "sha256": "020ae300eb350d976a46f2c754deac0227862b389f1202bde586c8eecaa2956e",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_source_drawer.json",
+      "sha256": "d8fb5be79cd38c7aec98bb0e259d911980a2c74a808bf8b231a43aef87fcc604",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_search_results.png",
+      "sha256": "3cfb5882e3671cef56d90ef32033ee6a92eafe90432eebb0f7c56e5127656980",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_search_results.json",
+      "sha256": "c88491feec2eca8df8b9c7d60d37db4e3274b864a5e201e7edd23f206e4b3f75",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_detail.png",
+      "sha256": "39830b6f8b1448d986cf9faa0d14552d3c6b1439927a59c7ee1c4aaaff695f45",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_detail.json",
+      "sha256": "b1902f462f0576c3f779c856a17450b094133f60225d30980ca341c0d185f1c5",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_source_switch.png",
+      "sha256": "13e1198a3c21250c63833aa71f329939ce64a28ee2b67919ea36f6bbfb056ed0",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_source_switch.json",
+      "sha256": "7bdf6ae7a1d3ee356b9f98b72264ec3711e09587a4c457fd252b828784ffcbaf",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_reader.png",
+      "sha256": "51e8a3d4351387518897bcb1e23230c68cc2cb6f8b11345b2635bf5db66bcadd",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_reader.json",
+      "sha256": "936d1fea58418212c1c05ee9ff1de68656bea5f3811768d5d56ca790258be1b8",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_reading_settings.png",
+      "sha256": "6403744b9b2b6d43eb3e5c30b954d4b5601f6e76e31e6bf33eb045ed4c2b1829",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_reading_settings.json",
+      "sha256": "844b695435d8b2d3781e165ac6769d8bf9e3744067e2d34b5b73f9abccf13fa3",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_reader_original.png",
+      "sha256": "953a7f989fa507c01c04986975082235d129ab6c4ade34062157727d742746c6",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_reader_original.json",
+      "sha256": "01868978d9060f7e7e3b6128ec5f61d2fe5a9368182b191eef4218a221d18832",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_reading_settings_original.png",
+      "sha256": "08fc2e4930ab26193a55a1c61b9a0ecc990466335c3c8a7b53ab5e0228fc1c33",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_reading_settings_original.json",
+      "sha256": "da73500a6e0369f228757358970009d7616d3cdab8332fcf19bb0ef9b5576202",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_reader_directory.png",
+      "sha256": "54fd524da55eb6c55f1961510c0d0e2b9a09ef9100c63539e5f5f4f57eca4a31",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_reader_directory.json",
+      "sha256": "1efa1f194319409d539f7d94330f29c241da5ff729979bc179176946ef83725c",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_settings.png",
+      "sha256": "20461d3b5bb7f639ee1cdb0c4678b1082148e1729f2560db23eda2adf038008e",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_settings.json",
+      "sha256": "71fddc1f44a3263707df2cda7173d5b487782c7c7d1b64aff271daf5d08bccf4",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_downloads.png",
+      "sha256": "4eb64ed564f182bdb3f3993e9ef6246f0852cc9d59ceeaaddbd731d9dbce9a29",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_downloads.json",
+      "sha256": "1b438401ca53b55ad937454defc575500cbdd277d4dde04560a6340f10106635",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_dark_cache_cleanup.png",
+      "sha256": "ec29d0d30fa96960eee785c29fa54411509bd984c1710eef38e8faf8abf13cef",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_dark_cache_cleanup.json",
+      "sha256": "16f3ee8994708a60c12ec128b828033846e63c244e63efd3e270dd44cca7dae8",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_bookshelf_online.png",
+      "sha256": "b20bb9df48b2eca01e72282bca3c90032820a0e56b332b4c4acf12bcd6a127b6",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_bookshelf_online.json",
+      "sha256": "5b2ef6873baf098b1ded7efa22f9917886ee89c858a5c30dfcfbb9a70981891b",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_bookshelf_local.png",
+      "sha256": "255a88632232617e37e0b9749e77dbd64f70ac8ad57116639bcd32c9794562b1",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_bookshelf_local.json",
+      "sha256": "8c2be29540ecf0cb4ddca07bfed4238f61ef0c3441c97685481efd79eb742965",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_discover.png",
+      "sha256": "8a683d24d42332e09a918a7db7d0cae897ab52d138f03998ff2cb4c5a261ceec",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_discover.json",
+      "sha256": "5bc45d5a0f78e895546c14a17154ef71381c753819b9fb4653ef4ab5a3637a65",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_source_drawer.png",
+      "sha256": "60bbf7ad1686b31165abb9cb728f318f88c240e3e0201eb7919cf9e13a8878a4",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_source_drawer.json",
+      "sha256": "62eb76fbfc3a9aaf96aedfebced111909d6b06a4dfeb077615099670a2f517fc",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_search_results.png",
+      "sha256": "ccb4be232bc1cb93658e8fbd72ab8fed6e25d7a2cbb2a8a87373d36750196c57",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_search_results.json",
+      "sha256": "b02979498768b3e92ed03b4654cdc34bac14000985bf927d82e8db8b9ef0b35f",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_detail.png",
+      "sha256": "19b920eee7cc67672bef7328a85bd11cf4d9822a951e4f681406e34e04948893",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_detail.json",
+      "sha256": "809be61a902131d4423eda31c9d4f72e3fc2e377234e1df5a8e4cb02c10d4f80",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_source_switch.png",
+      "sha256": "3d87c806a076367a4f2113897a5d122e117418319399ef23986096e33f6e3357",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_source_switch.json",
+      "sha256": "fc708aead667321b85f93a76fad963cab39828e6a99d2d1567aca543ede0423d",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_reader.png",
+      "sha256": "1e7e0458cafef5af977dbd9819aa7873d6fd9157e88d72edfdd7527f2960ee4c",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_reader.json",
+      "sha256": "0dbdc712ef78911a8a36d8785c984a2f41e8f439653611e5aa1eb3a7f13687df",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_reading_settings.png",
+      "sha256": "a131fd0b353d1e008116cecba3fafbb28b1addfc0354280127f02749d56ec97c",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_reading_settings.json",
+      "sha256": "267bd42ea7f1f4ec3a83a2d294b92064ad0f317ba323510723158402427f4eed",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_reader_original.png",
+      "sha256": "84a5838c66d3fc9afca627a2f845450c07f574d985e1605e87fc7c5f0e9a8ad5",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_reader_original.json",
+      "sha256": "0ae5b8d689c19672cdd20ebb66df83657b9490c595fc34d8934dca44412f9400",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_reading_settings_original.png",
+      "sha256": "f92ea0b4175cde4db435797853857888fcfcf1efb3e258548a91af9f40bca0ea",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_reading_settings_original.json",
+      "sha256": "b8581c9c94000ac253adf5081091baaf49f100900e546b64ba13d1052b96cb9c",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_reader_directory.png",
+      "sha256": "ab1b8e342d04a67ce301f66710055552bfdacf90325d648d0063a9f0d7f3e8ba",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_reader_directory.json",
+      "sha256": "1184b3f6c6d20b5cfe71c13271f69f0bff962b4261d5cf651de4de60fb9bfea8",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_settings.png",
+      "sha256": "f74aa4299eb3bd459958c5f5e9408a18c93b496d2a4f90088b82055c890ae044",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_settings.json",
+      "sha256": "649900b0ae59e294b15fa15284aea9d1bf25ebeecaa7309cf93e5fd8d7af45bc",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_downloads.png",
+      "sha256": "c1333ac4496df32e5b5e8bb2eeb2c40abf90d92b78a8265c2a682a0cf1efe14a",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_downloads.json",
+      "sha256": "9dead1cfe27b6ae8d43c0f26eaaba96e701785b3e0f24493a7822cfa64723f18",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/iphone_portrait_light_cache_cleanup.png",
+      "sha256": "349a176109acc32f43f8dbcd99a1de4f4e7accf891ddc2ef8baa7103ea87f4eb",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/iphone_portrait_light_cache_cleanup.json",
+      "sha256": "d8f8380ab89b6a48887857daad85399949f9c4aef05b51dcc3b45725cb3fd0d1",
+      "device": "iPhone 15 Pro",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "reader-enhancement/iPad_Pro_11-inch__M4_-reader-ai-metrics.json",
+      "sha256": "d86b48b69dc758a25cdaa24891a172583788c053f4be02cc0df343ada42de250",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+      "status": "Success"
+    },
+    {
+      "file": "reader-enhancement/iPad_Pro_11-inch__M4_-real-input-384x384.png",
+      "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+      "status": "Success"
+    },
+    {
+      "file": "reader-enhancement/iPad_Pro_11-inch__M4_-coreml-output-768x768.png",
+      "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+      "status": "Success"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-1.png",
+      "sha256": "1febc6ebe304e6fdb090ef49ea900975d3044f7ba5514a96d0b2b2d4b4d44a78",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-accessibility.txt",
+      "sha256": "241595dd59e2e9d26749554b586d93fc78bb6fff16351d7f577bd23c90e33630",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-source-grid-accessibility.txt",
+      "sha256": "7023f9202b587ddff48d919c754a256af5c144207ef41cb2812eedb55b356fd4",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-1.png",
+      "sha256": "28e8cfdc7af55b6d3ebe3be02b511f60b75835ae03c82d0e0dbe4b0b0b6f8a33",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-2.png",
+      "sha256": "404cd99ee5d1481ee79538bbea07f30ac23bab9b93191b030654f7e5c3d50c20",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-SourceDrawerTests_testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs__-accessibility.txt",
+      "sha256": "c0ce77fde217999c82f6375712fcc4bf93612a09803936d36d38484e6f273a2a",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_settings_reference_empty.png",
+      "sha256": "0b89859903cdc193d351ccbabc1a86f11dae93c5862de39ae8a87365546ff72d",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_settings_reference_empty.json",
+      "sha256": "0f61e6d1aa182561e3b1184243e3f496abb5a76e8a2ae6330bc364b123ca9259",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferenceLandscapeDark__-1.png",
+      "sha256": "a56c0c1f2d61f15967cb2ba755e5e69deb9aaf6c41de9873e552eecba7ff0ca8",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferenceLandscapeDark__-accessibility.txt",
+      "sha256": "15b911a56327e028b9696a01367c342d44f83068f786d2d6eaf837bf94041301",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_settings_reference_empty.png",
+      "sha256": "3c4f42458c7c86c1f2fc9be84cfd095baedd12a56179d181b703416014891629",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_settings_reference_empty.json",
+      "sha256": "236bfd6349ba374254efe9b7b8b13b68e98750abac6527179ca95d4a118b232a",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferenceLandscapeLight__-1.png",
+      "sha256": "7333bbe6980a0790d5e57f360ad423803b37c16b11398274f8466df1dc732188",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferenceLandscapeLight__-accessibility.txt",
+      "sha256": "575c25b461e1ed371ee089660d2b3fc48979d2069a1d24fd17996d7a1dff4f19",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_settings_reference_empty.png",
+      "sha256": "02b03eae5cfb4578e255e908a89f5dadf2393d26666dcc4689c458df6fad861f",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_settings_reference_empty.json",
+      "sha256": "b383060be79ec57a82ca733a219cd250dac2090064a8e7560cf68679ac452f67",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferencePortraitDark__-1.png",
+      "sha256": "02b03eae5cfb4578e255e908a89f5dadf2393d26666dcc4689c458df6fad861f",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferencePortraitDark__-accessibility.txt",
+      "sha256": "1930c52f6c2c61b96b8bc9dcd6aa42cb9113e7eb3fd7662cf6acb91951e34f99",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_settings_reference_empty.png",
+      "sha256": "5e4a8d416707213fa8935f8ccf0a8a0fbaa8d837074d9b9fd318e33e38e01a37",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_settings_reference_empty.json",
+      "sha256": "0d4badd8253fc1a8c66db9936f4f1bd8865b3d11228918a8b4f2c056bc6c3646",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferencePortraitLight__-1.png",
+      "sha256": "5e4a8d416707213fa8935f8ccf0a8a0fbaa8d837074d9b9fd318e33e38e01a37",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "ui-failures/iPad_Pro_11-inch__M4_-VisualMatrixUITests_testSettingsReferencePortraitLight__-accessibility.txt",
+      "sha256": "9465160453904c0155f2eddf334b57b03323065964c48a047868c7d6215ab2a8",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+      "status": "Failure"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_bookshelf_online.png",
+      "sha256": "2f3840a4b365a65be31562c59e2c10f4a2f0663abc579d3c01afdc0f890043d3",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_bookshelf_online.json",
+      "sha256": "f1767c1f84e517987d8d042fc8f1cd0f11f4b401b7979b16f37b9c80080d40c7",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_bookshelf_local.png",
+      "sha256": "0e7084ab145a738deb2c15ee60cb450e6493a8023ecb4ce7ba4b568fd1a19d34",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_bookshelf_local.json",
+      "sha256": "23a579a822f0b45abe331aff12948373a91d569c4e7dc253e5e513f1cd919b89",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_discover.png",
+      "sha256": "3e3d79ac96ec5a2d37e919a8f29287258a32e6a35bcadfb093565f626f75170b",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_discover.json",
+      "sha256": "5b768ed66423cb76698b1f30204057c4670ce93f4b839fccfb501711a138531f",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_source_drawer.png",
+      "sha256": "a1458454ddf452c8e99187fe54b0961a1e52f75c698dc4a812746fb984272e4a",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_source_drawer.json",
+      "sha256": "91f6a11bff6a3f0d300f35c65991902de1796a45890cbd0614d10061131ce924",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_search_results.png",
+      "sha256": "7c54611ac273d898796517218a073fd17549948c0ff756972638c5559f88fb06",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_search_results.json",
+      "sha256": "cd36d457fc2fb65160d46668f698f0547194525d587ad1093167424c33e9604e",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_detail.png",
+      "sha256": "9e7271a128092471c346bdc735e39481e7fd4121307f27f37c1e9f2ba5805706",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_detail.json",
+      "sha256": "e9e8136ffaa0906edfd8b77b21acd6b1fc88fd2c606a5787f89579fe7d4a201b",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_source_switch.png",
+      "sha256": "e663830b34fe5a2c5e373d392570e23c81f5f091d4e2047e977a875f5237c675",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_source_switch.json",
+      "sha256": "702e50a02fe338cf32b1b6801ff0b36e12da7ffef40de70150d90a7a4c37cc11",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_reader.png",
+      "sha256": "4cd5b83bdb007c2057cc2f6ab2789f8a831985279ad2bc0c47cf8559208d7f3f",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_reader.json",
+      "sha256": "01dd5f23627cf247c9527e6a5ab1e54ec5d81f404b49a76c6ba2871b7701be51",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_reading_settings.png",
+      "sha256": "dfbe5b87a70ac42d66ff3d61a08596ecee70379b93b25be4cb274c630fd2aaf4",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_reading_settings.json",
+      "sha256": "71361acb6f2351eb7d8c5eacdfcb31fcc2d91ce4300dfe4c9c709de291c81a10",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_reader_original.png",
+      "sha256": "a206b82d6be873e50fae9405e26cf5f989205b2e0f81d83b34e6f87e29b88313",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_reader_original.json",
+      "sha256": "4fd3bb361a884717837252aa172988afb97821008c88673fd2542e4a60522103",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_reading_settings_original.png",
+      "sha256": "b2101a64f2c9b7988c13bf3be1caeb9174c8ffa0a112c41c12d883e4db6c212a",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_reading_settings_original.json",
+      "sha256": "27df33767e9e7449425bacd76bfa752e8c6cb6b5422e78515e7102b01514cecc",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_reader_directory.png",
+      "sha256": "73ac620d34736a47035bbb0a82c5353a9bb68ae82115d2b1744bbbc7a7477c38",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_reader_directory.json",
+      "sha256": "6886962dacdc8e72a5aa3854c792ac547fe898d7248605708efed6aef09586f0",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_settings.png",
+      "sha256": "5b1b240ab264dc98eae1846be76c89b27bed56cf8e69e12e6429ea09850c1762",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_settings.json",
+      "sha256": "0a9da1e1c7da6e27c8b5d321d5b74f11554644c3d0cbc5ee763e9b7c8fc9ac61",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_downloads.png",
+      "sha256": "fc6d78104d09f023d6e59e070da64fc0bd7decfc8053a03e015d995e23ee0339",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_downloads.json",
+      "sha256": "50c5bb6351bebea9151b0d0c155bfca86b3f8a50203cc48724268a95f7f48098",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_dark_cache_cleanup.png",
+      "sha256": "6e404adbec4292c25ba74cc8eaabfd2a502dcec9a9c818f7d4fca7eaa7b15330",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_dark_cache_cleanup.json",
+      "sha256": "6f46f4f8955c3a5587ed615e66167ec6d2788e9034e8b16129be4fc99d2934d2",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_bookshelf_online.png",
+      "sha256": "a45c2d04dd9bf911ee78071b9b70c10cf4c477a442ba26df47fbcbdeaba5a5bb",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_bookshelf_online.json",
+      "sha256": "553ead766dfd7a303f69c3676c9d4d53c9cbf0a0b6197ffe7514e75180ebc1d1",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_bookshelf_local.png",
+      "sha256": "a7e09f2894b32bb03cc4dbe0196895c0dc1889bff156a34ecaba75d7843a9846",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_bookshelf_local.json",
+      "sha256": "0a27c6e52d6572037e5a0269b3c306f4b3ccbe855e747f20162f2b3c2ac5acb7",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_discover.png",
+      "sha256": "fbab8b4a1924874a651ecfeb43b970c5f9294390a7d3dd589e53e76819175a45",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_discover.json",
+      "sha256": "678049cfb993c71052c1ce0be3398c9d2ebc55c9915a3ba4842c17eddd76f0f9",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_source_drawer.png",
+      "sha256": "eebb30b1a6bf3b363517b75f5174a5a81c26ffbc573afe4136ac9144f31a515e",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_source_drawer.json",
+      "sha256": "c05fd57d20f4008302e781995c3ddf4fb3798be9ab45a3d142b1ce0e46a989c3",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_search_results.png",
+      "sha256": "b786d1a6fe307642b53306b6d1365363861b7dde41b06cdfff39ef21b7d2a582",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_search_results.json",
+      "sha256": "708b5039032e7e419e7db2cc411286c6ab6c1d52dd6a86f6d4eaac57db6349d3",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_detail.png",
+      "sha256": "665b67c2989d330c33909d5688984f7187fb49f4e648178531749e256a4c68d1",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_detail.json",
+      "sha256": "fed36adfc47dce2c77237c27c6d39e67410e2e3fee564867cceb8f67b7857bb8",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_source_switch.png",
+      "sha256": "5cd792283f5df4e5eca78762f18fa8b635dbc037c7c5b8275fc8645ac5a1d9a1",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_source_switch.json",
+      "sha256": "5f50ad63764f143e999510d27ce36d266eb09c96cfbde7ea5fb2d815bd65dc9c",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_reader.png",
+      "sha256": "63af2283915276c1ba1e6d0cd6ec2be4c21635f4bddcfe6336938ac800efa03c",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_reader.json",
+      "sha256": "26c78bcafe63aa482c51e25716622d6d35abd03e51438d2c99f1b8f493ce426c",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_reading_settings.png",
+      "sha256": "c5e0c99eb4746dfad22068abf80e0a09dfc88eb4b96507016fc0b6f8f80ee9d1",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_reading_settings.json",
+      "sha256": "697ffbe5ed5902c4a74085e4016003a04359eed2f2c5ec33f60ea55a5f328eff",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_reader_original.png",
+      "sha256": "16259ce543da2d6f38548b8d4eb78962a1b06770cc365d70e9994081cb07b789",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_reader_original.json",
+      "sha256": "533bc6eaacd4d7360b16f2906808d99ed30b621001aae9cac51834eef81db2c5",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_reading_settings_original.png",
+      "sha256": "817def6d116d4f15bd96497cec106735823c1fbe03fbc99b79cc5da829901a05",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_reading_settings_original.json",
+      "sha256": "1ead3f5e8a33210ba99ec55bfd1046839101e4ca75f04faeb4b6f00760a44c84",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_reader_directory.png",
+      "sha256": "d2ee4fa9169fcac38e6cbfa8b817df314b1920f1ddcf9c91590b477794222a3b",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_reader_directory.json",
+      "sha256": "fd0946686b32183b450a84b9113340982dde7a864b138c43193a64279b53b329",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_settings.png",
+      "sha256": "bb53aa988d982f8cbeb4441a180afe20fe86d6a30dc3e2898406fd8e6e6c64b5",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_settings.json",
+      "sha256": "33450cafc61c53c8dbc0c9a70b2327500a7f0bc10e9842263c20785ce606e154",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_downloads.png",
+      "sha256": "826e2bf291ffa15e48ee621a224e83d660807e4f48ab4bfdfba2fbaa130a2983",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_downloads.json",
+      "sha256": "ebb3ed23a2c0e10a25e8dcec8e0cab5df8afda55b300c5a97e273d8652a14652",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_landscape_light_cache_cleanup.png",
+      "sha256": "69f5ba040d1b8ff6ea0f82c4170656fca8070cd0de688a00922cea7092d70c3a",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_landscape_light_cache_cleanup.json",
+      "sha256": "d12d1532c63c879a5cc57efd6fe0bcb34f08ed01ea1cc3d6e1fe39e55112388e",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_bookshelf_online.png",
+      "sha256": "f368c1b690cd02d1dfb071ab34e9fe70e9ec24410f87ce8f6807965e56e2a194",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_bookshelf_online.json",
+      "sha256": "0b885b3067b0ef206d26ec8de1f0b54e8614a17af88dcbbb9168ee1b41ac231f",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_bookshelf_local.png",
+      "sha256": "31f026937774e0fef0c6b2c5cee8ecfd4b4e9888a8fe0303325f371361e2a249",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_bookshelf_local.json",
+      "sha256": "ddc640f00177df3ca7fa842b81ca970396301406c57df4a1e0e2c28392b7b0b2",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_discover.png",
+      "sha256": "16f9a40c7f0be5d6aa0d25c162b3bcead686d565ea86eebf75f25d7e9ca1accd",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_discover.json",
+      "sha256": "824c2f3be46c76eec79e415a5c891ba4df8539d7a003db76c3220b5d52f8f2cf",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_source_drawer.png",
+      "sha256": "4e23d94c95281d14a14d102dcc57057db1321c03e84744a9de34eff529f74133",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_source_drawer.json",
+      "sha256": "600a805376a71921eab6f00ca76074a0d0a0ac9d27b16cfaa1a1da46182e90bb",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_search_results.png",
+      "sha256": "3a1c6f5cba967557fedbf191f5f984ee94e21677dae173cbb00de1fdd6345631",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_search_results.json",
+      "sha256": "f43ee6213913765cd4e67224ecf663986753e56625c16bea359858acd4a6db70",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_detail.png",
+      "sha256": "526cfc76910d8d92978b3ef42a6325f63df210820349765abf3b5fa861b3aa5d",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_detail.json",
+      "sha256": "ccc82364b9735e3e9001f9f530e90a9453f1f3b097781c494d563fb59705deba",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_source_switch.png",
+      "sha256": "12a4764b553f36f26eef8e390b38d9a3740af32aa34b0b0e360a92e09d6dac92",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_source_switch.json",
+      "sha256": "7c4a7518f673a6f708a30bab47d561fab2da5f03b50bd9689e08bb26c28e2771",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_reader.png",
+      "sha256": "2826df23fd74f4ecef5944abf83485d89f22fe23da2d1bef3365c8e5a1711ca3",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_reader.json",
+      "sha256": "4c41948388fa387a792325d8e190a7363ab309125791ba613ebd03bd424e4618",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_reading_settings.png",
+      "sha256": "036f766b324d953773e52e718a4d2f717b58e0990d7f5c9ec75ee0b0f49ecfad",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_reading_settings.json",
+      "sha256": "f01311af18119108412cc592c52cc37adff6ac05cdc1095a9bbe1b0e9cad91a0",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_reader_original.png",
+      "sha256": "d12e693aa29475342fe68b500e5da4ecd024837e3dddff070c35e3c2be3fc14c",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_reader_original.json",
+      "sha256": "49dce3517ea727c539d90cd418c3f9d1a88a03aee376a4fc17d8b4dfb3fad411",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_reading_settings_original.png",
+      "sha256": "db83ba13a1aa04948f5552dd4f073a78781382477ff4369fe62818c24302ad36",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_reading_settings_original.json",
+      "sha256": "45e68e81de2ffe7fc023234b2c5277e902011e7277af4987d3ff0770f54156de",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_reader_directory.png",
+      "sha256": "933fc951fa33f4fd3ddef9bc7192eda973530fd96451668ec09605b39f4f4a5c",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_reader_directory.json",
+      "sha256": "5946b048501fca9cc55b5d893c7ad4774e1348ee49bc075a3eb134efa382dac7",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_settings.png",
+      "sha256": "d9faaaef546152b910735e9810358df4c82adbd643c8b2a9103f7750e33e5aa9",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_settings.json",
+      "sha256": "54a2de0aa5775ed1fe367378734ab8b290e232f3d202b3b0eac9f5401c19450f",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_downloads.png",
+      "sha256": "becdae2921e30b68ad25d248f82a72b5fd2b89a31a8151908feafbcaf2326e8d",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_downloads.json",
+      "sha256": "bc401ca86f6dd5ea63c60b99c2d8fac3d42b9a5b258a761c09663d311b35b8b9",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_dark_cache_cleanup.png",
+      "sha256": "961f8ff29df6752316b4f72993c4887b698fa84cf78eb1844a49849090407281",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_dark_cache_cleanup.json",
+      "sha256": "2865e05a0748c2f79d4c10622350500430a97c86fdb89a67c52f0d63ab4d4f67",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_bookshelf_online.png",
+      "sha256": "7e7fd035a725e52806cf77260cfce56b07f37ea61534771d4a36663b15b283f0",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_bookshelf_online.json",
+      "sha256": "599d2e10b0e0a876c7ce88223fe802187a2b4c30ba2aa4559b09efb22d66eae9",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_bookshelf_local.png",
+      "sha256": "4389eff454b0161a317969c83223583f99c1c2e05a09bbcade11609705fdfecb",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_bookshelf_local.json",
+      "sha256": "cfbb981751d967ac1a67cc887b4adbb3d6abcefe52f84cd245f29268bd32be6c",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_discover.png",
+      "sha256": "9274af22993e11ce4a852c5a28e6faff915d5027a70bd8dc2bb8df50774824d8",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_discover.json",
+      "sha256": "bc7d687fa18bde196a7304ff4dc078a83011e79b5b54863092dce3ad495fc9c5",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_source_drawer.png",
+      "sha256": "238096be9d3bf235beaa1f6809e0f8ed1f6fccf2e15febcbfc5f6b349f836165",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_source_drawer.json",
+      "sha256": "7c9b22e6e5e2dccb2dfa7c97c137862658f9c5318de1e0e799b279647efe402e",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_search_results.png",
+      "sha256": "dd7fc278cf67dc3ec0083d97dbccc21638a58983ed618edbf58b4504cade57f3",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_search_results.json",
+      "sha256": "c71e843a2e26d9ba51d0cde2eca97289aa17fc9d403909e9db1283febd6551b7",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_detail.png",
+      "sha256": "7026f1a9dfea10fa8006498451b05a6810470e929a24581c3dc9a1369270c4a8",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_detail.json",
+      "sha256": "0b9708a5adecf7451f285b11bbb9dbb9f4f11547a7119031f1a44ca657d39974",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_source_switch.png",
+      "sha256": "5e1a632cd8538047462aea66840b1d28d38330905693b1027367bbe3d61ad025",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_source_switch.json",
+      "sha256": "a6c6b58a11a62e87207e03c6e437dcb8df965616c44178efab3c19186b1bf08a",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_reader.png",
+      "sha256": "21bb5b8e0932b76b5122916da30b280f6a131e9ae6f9f1b061a01c7b35b6b2df",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_reader.json",
+      "sha256": "50b02dc0c52706786a8e54f429febea95ab3929972b73fb309c9befb12b51d91",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_reading_settings.png",
+      "sha256": "c9f76f0631eeac59b188a45399fe8a229000c7e27224771e50d9633290ccdc00",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_reading_settings.json",
+      "sha256": "9dbc02fb21b4f17d072a63fc744afaf97de3af1d113d5c6dd9ba36b22ff13289",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_reader_original.png",
+      "sha256": "2a6fced5b195950627c8156d1f56400260386a51ad39d52cec57e05611d07c11",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_reader_original.json",
+      "sha256": "0e39df801998d2e45afecb0fe60e78aacbfa68bde4a3912aa16c152deb2982ac",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_reading_settings_original.png",
+      "sha256": "928d92c2067e53ea986a1703361f95ad6aae30adf3860f0b971ed71703179b2c",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_reading_settings_original.json",
+      "sha256": "1a079011df98fba5dd169e9a19001fafa0bb59492484157dba976e6d6dcfc7c9",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_reader_directory.png",
+      "sha256": "fa81223089864d9646b697b8bad8d1c42fcabb74cea07302166bd6ec9187d4fa",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_reader_directory.json",
+      "sha256": "72bc5f6c795742ba151ef4a391566524e4926fb9a31212882e67e18511d2b20f",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_settings.png",
+      "sha256": "b15dfb67cb7b31a46620d8b143eac089146507f82f43a20874796a2a60f29edd",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_settings.json",
+      "sha256": "e641d1b54b215f0de9c745e41a0b4a3a55c8d7f53c86df7c2466f37ae78c0012",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_downloads.png",
+      "sha256": "aff8771d17bec781f0aa80c501a9e4431defdf66bfe666251e8d947015081106",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_downloads.json",
+      "sha256": "78062656ec64df0e6603f3d8ace686c97802419f23ab36dbd14a5743ecc23d66",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-matrix/ipad_portrait_light_cache_cleanup.png",
+      "sha256": "79c3f66c9e0f461c50784d3a0b9232d898a1be0f25e17b84b4d2e0d9c0113007",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    },
+    {
+      "file": "visual-provenance/ipad_portrait_light_cache_cleanup.json",
+      "sha256": "6f379984ff8e06493855d691d548f68eb9b1bb43bbe73d077b587d054e470085",
+      "device": "iPad Pro 11-inch (M4)",
+      "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+      "status": "Success"
+    }
+  ]
+}

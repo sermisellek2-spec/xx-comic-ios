@@ -27,6 +27,21 @@ public struct ReaderPosition: Codable, Equatable, Sendable {
         return index(for: imageURLs.count)
     }
 
+    /// A paged view displays the whole image, but switching back to the strip
+    /// must retain its offset until the user actually reads another image.
+    public func forPagedImage(at index: Int, in imageURLs: [String]) -> ReaderPosition {
+        guard !imageURLs.isEmpty else { return ReaderPosition(imageIndex: 0, offset: 0) }
+        let target = max(0, min(imageURLs.count - 1, index))
+        let sameImage = linkedPageID.map { Self.linkedIdentity(in: imageURLs[target]) == $0 } ?? (imageIndex == target)
+        if sameImage {
+            return ReaderPosition(imageIndex: target, offset: offset, atEnd: atEnd,
+                                  linkedPageID: linkedPageID, linkedTailID: linkedTailID)
+        }
+        return ReaderPosition(imageIndex: target, offset: 0, atEnd: target == imageURLs.count - 1,
+                              linkedPageID: Self.linkedIdentity(in: imageURLs[target]),
+                              linkedTailID: imageURLs.last.flatMap(Self.linkedIdentity(in:)))
+    }
+
     public static func linkedIdentity(in imageURL: String) -> String? {
         guard let url = URL(string: imageURL) else { return nil }
         return (try? LinkedFolderPageURL.parse(url))?.pageID

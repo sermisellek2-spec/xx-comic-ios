@@ -1,6 +1,6 @@
 # 非站源完整验收门槛
 
-第21轮两SDK和双设备27原生通过，但UI各1模式返回/续读失败、Mac缓存失败；本门槛未通过。新93文件定位/恢复候选仅语法通过，需原生29与阅读17完整复验。[实际结果](review-evidence/2026-10-12-ci21-results/README.md)、[接续](review-evidence/2026-10-12-reader-mode-recovery/README.md)。
+第22轮5e2 UI各46项/40通过/6失败、Mac缓存失败，64对照可生成但组件未通过；本门槛仍未通过。图内偏移及实际站源滚动新候选核心925项/2跳过/0失败，93文件两配置仅语法通过，计划原生29/阅读18/配置52每设备，需Apple实证。[原件](review-evidence/2026-10-12-ci22-results/README.md)、[接续](review-evidence/2026-10-12-reader-offset/README.md)。
 
 ## 以下为对应旧输入历史
 

@@ -1,0 +1,12 @@
+{
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "inputSHA": "ca68ef87364986f1bdbcf26a29d5d01dde8b4bb3",
+  "branch": "codex/reader-recovery-ca68ef8",
+  "inputs": {
+    "validation_scope": "reader-modes",
+    "package_ipa": "false"
+  },
+  "dispatchHTTP": 204,
+  "dispatchedAtUTC": "2026-10-12T09:30:04.212206+00:00",
+  "verification": "本机精确HEAD已上传；远端ref SHA核对一致；仅开发CI，不打包"
+}

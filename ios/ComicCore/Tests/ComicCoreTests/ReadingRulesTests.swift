@@ -22,6 +22,46 @@ final class ReadingRulesTests: XCTestCase {
         XCTAssertEqual(position.legacyProgress(count: 8), 4200)
     }
 
+    func testNormalAndMangaViewsRetainTheStripOffsetWhileReadingTheSameImage() {
+        let images = ["first", "second", "third"]
+        let strip = ReaderPosition(imageIndex: 1, offset: 0.625)
+        let normal = strip.forPagedImage(at: 1, in: images)
+        let manga = normal.forPagedImage(at: 1, in: images)
+        XCTAssertEqual(normal, strip)
+        XCTAssertEqual(manga, strip)
+        XCTAssertEqual(manga.legacyProgress(count: images.count), strip.legacyProgress(count: images.count))
+    }
+
+    func testReadingAnotherPagedImageResetsThePreviousStripOffsetAndCompletion() {
+        let images = ["first", "second", "third"]
+        let completed = ReaderPosition(imageIndex: 2, offset: 0.625, atEnd: true)
+        let previous = completed.forPagedImage(at: 1, in: images)
+        XCTAssertEqual(previous, ReaderPosition(imageIndex: 1, offset: 0))
+        let tail = previous.forPagedImage(at: 2, in: images)
+        XCTAssertEqual(tail, ReaderPosition(imageIndex: 2, offset: 0, atEnd: true))
+        XCTAssertEqual(tail.forPagedImage(at: 0, in: []), ReaderPosition(imageIndex: 0, offset: 0))
+        let shortened = ReaderPosition(imageIndex: 99, offset: 0.625).forPagedImage(at: 99, in: images)
+        XCTAssertEqual(shortened, ReaderPosition(imageIndex: 2, offset: 0, atEnd: true))
+    }
+
+    func testPagedOffsetTracksLinkedImageIdentityAfterTheFolderOrderChanges() throws {
+        let page = UUID(), other = UUID(), book = UUID()
+        let first = try LinkedFolderPageURL.make(bookID: book.uuidString, pageID: page.uuidString)
+        let second = try LinkedFolderPageURL.make(bookID: book.uuidString, pageID: other.uuidString)
+        let position = ReaderPosition(imageIndex: 0, offset: 0.5, linkedPageID: page.uuidString, linkedTailID: other.uuidString)
+        let moved = position.forPagedImage(at: 1, in: [second.absoluteString, first.absoluteString])
+        XCTAssertEqual(moved.imageIndex, 1)
+        XCTAssertEqual(moved.offset, 0.5)
+        XCTAssertEqual(moved.linkedPageID, page.uuidString)
+        XCTAssertFalse(moved.atEnd)
+        let changed = moved.forPagedImage(at: 0, in: [second.absoluteString, first.absoluteString])
+        XCTAssertEqual(changed.offset, 0)
+        XCTAssertEqual(changed.linkedPageID, other.uuidString)
+        let removed = position.forPagedImage(at: 0, in: [second.absoluteString])
+        XCTAssertEqual(removed.offset, 0)
+        XCTAssertEqual(removed.linkedPageID, other.uuidString)
+    }
+
     func testCompletedAndShortenedChapters() {
         let position = ReaderPosition.fromLegacy(10000, count: 8)
         XCTAssertEqual(position.imageIndex, 7)

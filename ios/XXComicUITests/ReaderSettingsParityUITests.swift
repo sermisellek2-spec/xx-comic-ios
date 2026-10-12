@@ -113,6 +113,44 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         page(3, in: app)
         pages.swipeRight(); page(4, in: app)
     }
+    func testStripImageOffsetSurvivesNormalMangaAndPagedRelaunch() {
+        let app = launch()
+        XCTAssertTrue(app.buttons["reader.layout.0"].isSelected)
+        app.buttons["reader.settings.close"].tap()
+        controls(false, in: app)
+        let pages = app.collectionViews["reader.pages"]
+        let start = pages.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+        let end = pages.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+        start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.5)
+        func topImageFrame() -> CGRect? {
+            app.images.matching(identifier: "reader.image").allElementsBoundByIndex
+                .map(\.frame).filter { $0.height > 0 && $0.maxY > pages.frame.minY + 20 && $0.minY < pages.frame.maxY }
+                .sorted { $0.minY < $1.minY }.first
+        }
+        guard let original = topImageFrame() else { XCTFail("卷轴应显示真实图片"); return }
+        XCTAssertLessThan(original.minY, pages.frame.minY - 40, "先真实滚到图内，不能只验证页码")
+        let value = pages.value as? String
+        for mode in [1, 2] {
+            controls(true, in: app)
+            app.buttons["reader.settings"].tap(); app.buttons["reader.layout.\(mode)"].tap()
+            app.buttons["reader.settings.close"].tap()
+            XCTAssertEqual(pages.value as? String, value)
+        }
+        controls(true, in: app); app.buttons["reader.back"].tap()
+        XCTAssertTrue(app.buttons["detail.read"].waitForExistence(timeout: 5))
+        app.terminate(); app.launch(); open(app)
+        XCTAssertTrue(app.buttons["reader.layout.2"].isSelected)
+        app.buttons["reader.layout.0"].tap(); app.buttons["reader.settings.close"].tap()
+        let restored = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            guard let frame = topImageFrame() else { return false }
+            return (pages.value as? String) == value && abs(frame.minY - original.minY) <= 1 && abs(frame.height - original.height) <= 1
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [restored], timeout: 10), .completed)
+        XCTAssertEqual(pages.value as? String, value)
+        guard let resumed = topImageFrame() else { XCTFail("模式恢复后应显示原图"); return }
+        XCTAssertEqual(resumed.minY, original.minY, accuracy: 1)
+        XCTAssertEqual(resumed.height, original.height, accuracy: 1)
+    }
     func testEnhancementControlsAppearOnlyWhenEnabledAndComparisonReturnsToOriginal() {
         let app = launch()
         let enabled = app.switches["reader.enhancement.enabled"]

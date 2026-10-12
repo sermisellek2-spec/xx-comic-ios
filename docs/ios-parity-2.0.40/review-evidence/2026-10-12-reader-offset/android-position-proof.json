@@ -1,0 +1,56 @@
+{
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "path": "app/src/main/java/com/xxcomic/MainActivity.java",
+  "sha256": "ebf97fb1e38241916e4a318b495bbe75edb3a6bb3c1e81435e8e0a05ca4ff515",
+  "excerpts": [
+    {
+      "firstLine": 5611,
+      "lastLine": 5625,
+      "lines": [
+        "        int currentMode = ReaderSettingsSheet.toReadingMode(readerLayoutMode, readerLeftHand);",
+        "        readerSettingsDialog = ReaderSettingsSheet.show(this, currentMode, readerFullyImmersive, readerDisplayMode == 1, readerPinchZoom,",
+        "                readerDisablePageAnimation, readerCropWhiteMargins, readerThemeMode, readerEnhancementMode, readerEnhancementComparisonEnabled,",
+        "                new ReaderSettingsSheet.OnSettingsChangeListener() {",
+        "                    @Override",
+        "                    public void onReadingModeChanged(int mode) {",
+        "                        int newLayoutMode = ReaderSettingsSheet.toLayoutMode(mode);",
+        "                        boolean newLeftHand = ReaderSettingsSheet.toLeftHand(mode);",
+        "                        if (readerLayoutMode == newLayoutMode && readerLeftHand == newLeftHand) {",
+        "                            return;",
+        "                        }",
+        "                        readerLayoutMode = newLayoutMode;",
+        "                        readerLeftHand = newLeftHand;",
+        "                        saveLocalState();",
+        "                        reloadCurrentReaderContent();"
+      ]
+    },
+    {
+      "firstLine": 9100,
+      "lastLine": 9120,
+      "lines": [
+        "    private void recordPagedPosition(String key, int index, int count) {",
+        "        ReaderPosition position = readerImagePositions.get(key);",
+        "        if (position == null || position.imageIndex != index) position = new ReaderPosition(index, 0, index == count - 1);",
+        "        readerImagePositions.put(key, position);",
+        "        readerPositions.put(key, position.legacyProgress(count));",
+        "        main.removeCallbacks(persistReaderPositionRunnable);",
+        "        main.postDelayed(persistReaderPositionRunnable, READER_POSITION_SAVE_DELAY_MS);",
+        "    }",
+        "",
+        "    private void captureReaderPosition() {",
+        "        if (readerList != null && (readerRestoringPosition == null || !readerRestoringPosition[0])) {",
+        "            saveReaderPosition(readerList, (String) readerList.getTag());",
+        "        }",
+        "        if (readerPager != null) {",
+        "            ComicModels.ComicDetail detail = details.get(activeDetailId);",
+        "            if (detail != null && readerChapterIndex >= 0 && readerChapterIndex < detail.chapters.size()) {",
+        "                ComicModels.Chapter chapter = detail.chapters.get(readerChapterIndex);",
+        "                ComicModels.ChapterPage page = chapters.get(chapter.url);",
+        "                if (page != null && !page.imageUrls.isEmpty()) recordPagedPosition(readerPositionKey(activeDetailId, chapter), readerPager.currentPage(), page.imageUrls.size());",
+        "            }",
+        "        }"
+      ]
+    }
+  ],
+  "finding": "单页仍处于同一逻辑图片时保留原ReaderPosition（包含卷轴offset）；实际换图片才重建0偏移的位置。"
+}

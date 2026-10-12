@@ -1,0 +1,5 @@
+core-filter.log -text whitespace=-blank-at-eof,-blank-at-eol
+core-full.log -text whitespace=-blank-at-eof
+core-filter-final.log -text whitespace=-blank-at-eof,-blank-at-eol
+core-full-final.log -text whitespace=-blank-at-eof
+native-syntax.log -text
