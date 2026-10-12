@@ -26,7 +26,7 @@ DETAIL-01,P2,详情,封面文案布局卷信息收藏继续阅读与失败恢复
 DETAIL-02,P2,换源,详情换源搜索候选选择取消与范围不限发现分组,MainActivity.java,待验收,D21/D63：换源/离开取消旧请求；阅读取消进一步传至实际目录worker，阻止下载接管等待旧任务；受控悬挂取消/重试/双向接管完整UI当前待Apple
 CONFIG-01,P2,配置,所有设置入口默认值取值范围即时生效与重启持久化,MainActivity.java,待验收,3+6+2当前设置/主题选择面板、自动跟随文案及淘汰左右手已修；SettingsParity持久化/即时生效未原生运行；其余默认值继续核对
 CONFIG-02,P2,源协议,稳定ID注册开关排序分组和配置消费者一致,DownloadSources.java;source/SourceConfig.java,待核对,D71/D79：漫本category/sort接入实际POST；其余已核实兼容路由无消费者的改动报告跳过；影响31项0失败，当前Linux902项/2跳过/0失败；51/默认50目录不变。全部字段及Apple/UI未通过；config-audit-continuation/README.md；当前文件接续Linux910/2跳过/0失败，Apple配置消费者与全部字段仍待验收
-CONFIG-03,P2,源配置,xx-comic.sources导入导出及不支持字段真实提示,source/SourceConfig.java,待验收,D81：Files副本导入/真实UTF-8文件导出及完整后台校验/取消/快照保护已实现；当前51/50往返，24影响/910 Linux完整/2跳过/0失败。5真实Files UI及Apple未运行，保持待验收；config-files/README.md
+CONFIG-03,P2,源配置,xx-comic.sources导入导出及不支持字段真实提示,source/SourceConfig.java,待验收,D81：Files文件闭环本地实现，51/50往返，24影响/910 Linux完整/2跳过/0失败。c8 Apple因启动storyboard元数据编译失败，5真实Files UI未运行；最小修复重跑原范围，保持待验收；config-files及ci16-repair/README.md
 CONFIG-04,P2,缓存,缓存查看清理确认与下载原包数据保护,MainActivity.java,待验收,Mac隔离38190616735的4个大响应表行数4→0/正文文件删除，仍实际占144016字节；原Core物理0断言继续失败36864。iOS小/大响应两构造新增原生取证未运行；不隐瞒占用或代替生产缓存验收；返回统计在容量恢复后读取已修，903项Linux完整通过，原isEmpty/归零断言保留
 CONFIG-05,P2,日志,日志查看导出清理与敏感字段脱敏,MainActivity.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：ErrorLogStore.swift;ErrorLogSanitizer.swift;ErrorLogsViewController.swift;ErrorLogStoreTests.swift
 CONFIG-06,P2,关于更新,关于版本外链更新提示及iOS分发等效流程,update;MainActivity.java,待验收,仅指定iOS仓库HTTPS Releases/IPA链接；APK及旧仓库回退iOS Releases；失败可重试/浏览器查看；IOSUpdatePolicy2项核心通过；UI未运行
@@ -66,7 +66,7 @@ VERIFY-01,P2,验证UI,验证等待成功取消过期和返回重试用fixture贯
 GATE-01,P5,完整性,逐入口反查全部非站源需求与实际消费者无漏项,MainActivity.java;app/src/main,待核对,已补LOCAL04/07/08及下载D69/D70，配置D71/D79局部实际请求/整包往返通过；全部消费者/默认值/共同fixture和Apple完整闭环未齐；entry-consumer-audit.md
 GATE-02,P5,视觉,全应用8场景真截图叠图及逐组件对照,UIHelpers.java;app/src/main/res,待验收,Android64原图保持；第十三轮iPhone32页对照，iPad窗口尺寸不符；候选发现/面板/图标未Apple实拍，当前64页和逐组件待验收
 GATE-03,P5,交互,全应用正常异常取消恢复长按手势和返回闭环,app/src/androidTest,待验收,第十四轮18项影响UI各5个失败用例；当前旋转/Files/Home接续和缓存取证待完整76项UI/设备，不以局部通过关闭门槛
-GATE-04,P5,平台,当前版本Apple构建及必要UI图像PDFWebKitFiles检查,ios/scripts/build.sh,待验收,b8完整38190082897的24原生/76UI每设备与64页视觉仍在运行。独立缓存诊断SDK成功、Mac902项1缓存失败、双设备24原生1包含失败；新候选25原生/76UI待Apple
+GATE-04,P5,平台,当前版本Apple构建及必要UI图像PDFWebKitFiles检查,ios/scripts/build.sh,待验收,b8完整SDK成功但Core/原生/UI失败；c781进度条双设备通过，缓存仍失败。c8 38198511682启动页资源编译失败，Release/Core/原生/UI未运行，修复后重跑；ci15-results及ci16-repair原始证据
 GATE-05,P5,质量,性能恢复旧数据并发和Release无测试内容检查,app/src/main,待验收,新候选Linux完整903项/2个Apple PDF跳过/0失败；真实文件保护保留。Mac隔离缓存响应清空但物理占用不归零；iOS新取证、Files/后台/图像峰值/旧数据/Release运行仍待完整验收
 GATE-06,P5,门槛,全部非站源必需项通过输出NON_SOURCE_GATE为PASS,docs/IOS_2_0_40_GEMINI_PLAN.md,待验收,NON_SOURCE_GATE未通过：仍有待实现项、必需Apple检查和同内容视觉证据缺失
 SOURCE-01,P2,目录,生成22专用29公共稳定ID排序默认和退役矩阵,DownloadSources.java;source/PublicSourceRegistry.java,待验收,D19：冻结51/22+29/默认50/duya关闭静态与核心通过；9b1d4a2两设备生产注册及名称各2项通过；完整开关排序导入管理UI待验收

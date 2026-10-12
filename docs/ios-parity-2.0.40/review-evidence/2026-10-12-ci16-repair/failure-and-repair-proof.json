@@ -1,0 +1,27 @@
+{
+  "input_commit": "c8c0bc28434f854aded9b625c9f99855b393d347",
+  "run_id": 38198511682,
+  "run_url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38198511682",
+  "conclusion": "failure",
+  "failed_step": "Debug simulator build / CompileStoryboard",
+  "diagnostic": "IBDocumentUnarchiving-ToolsVersion missing; storyboard cannot be opened",
+  "release_build": "not_run",
+  "core_tests": "not_run",
+  "native_tests": "not_run",
+  "ui_tests": "not_run",
+  "visual_capture": "not_run",
+  "ipa": "not_generated",
+  "repair": "toolsVersion and iOS deployment metadata only; no test assertions changed",
+  "local_xml_parse_exit_code": 0,
+  "apple_ibtool_repair_verification": "pending",
+  "original_logs": {
+    "path": "original-logs.zip",
+    "bytes": 417959,
+    "sha256": "47d1f3885b04100c5ecd4ad6af3a02a51dd015f108f63c03fe8ab87d99f58f6f"
+  },
+  "repaired_storyboard": {
+    "path": "ios/XXComic/LaunchScreen.storyboard",
+    "sha256": "f50368d05523e23bd560f46dde79908850ce0e0175534c1759fb77445c38b757"
+  },
+  "unchanged_core_validation": "../2026-10-12-config-files/core-validation.json"
+}

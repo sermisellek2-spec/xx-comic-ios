@@ -4,7 +4,7 @@
 
 第十五轮完整b8输入及c781原生诊断均已结束、实际失败。b8两SDK成功，Core902/1失败；两设备原生24/1失败；完整UI各76，iPhone38/iPad35条失败。c781两SDK成功，Apple Core910/1失败，原生25/1缓存失败；阅读进度条原边界/hitTest断言双设备已通过。原失败保留、总体未通过。[原始结果](review-evidence/2026-10-12-ci15-results/README.md)。
 
-当前接续已实现站源配置Files真正导入/文件导出、后台完整校验/取消和快照保护；新增7核心真实文件/5真实Files UI用例。Linux完整910/2个Apple PDF跳过/0失败，144.970秒；配置影响24/0失败。当前87原生Swift文件仅两配置语法通过，Apple新候选尚未运行。搜索查询和Files导航按实际控件路径修正，原结果断言保留；iPad启动storyboard及本场景尺寸证据候选仍需验证。[文件闭环证据](review-evidence/2026-10-12-config-files/README.md)。
+当前接续已实现站源配置Files真正导入/文件导出、后台完整校验/取消和快照保护；新增7核心真实文件/5真实Files UI用例。Linux完整910/2个Apple PDF跳过/0失败，144.970秒；配置影响24/0失败。当前87原生Swift文件仅两配置语法通过。c8候选Apple38198511682已结束，Debug启动storyboard缺toolsVersion而构建失败，后续检查未运行；补必要元数据后重跑原范围，见[构建修复](review-evidence/2026-10-12-ci16-repair/README.md)。搜索查询和Files导航按实际控件路径修正，原结果断言保留；iPad启动storyboard及本场景尺寸证据候选仍需验证。[文件闭环证据](review-evidence/2026-10-12-config-files/README.md)。
 
 缓存D51/D80仍失败，实际索引余量与统计异步变化未关闭。当前视觉64页要求仅12页可准备，iPad窗口尺寸不符、搜索后的页面待补；不拉伸/裁切制造通过。没有阶段完整通过，不生成最终验收包，不要求用户中间试包。
 
