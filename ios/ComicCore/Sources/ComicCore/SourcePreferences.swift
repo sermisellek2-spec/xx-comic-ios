@@ -100,6 +100,16 @@ public final class SourcePreferences {
     }
 
     public func exportConfig(sources: [(id: String, name: String, domain: String, referer: String)]) -> String {
+        let package = exportPackage(sources: sources)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        if let data = try? encoder.encode(package), let string = String(data: data, encoding: .utf8) {
+            return string
+        }
+        return "{}"
+    }
+
+    public func exportPackage(sources: [(id: String, name: String, domain: String, referer: String)]) -> SourceExportPackage {
         let order = orderedIDs
         let items = sources.map { s -> SourceConfigItem in
             let existing = config(for: s.id)
@@ -119,7 +129,7 @@ public final class SourcePreferences {
                 filters: existing?.filters
             )
         }
-        let package = SourceExportPackage(
+        return SourceExportPackage(
             schema: "xx-comic.sources",
             version: 2,
             exportedAt: Int64(Date().timeIntervalSince1970 * 1000),
@@ -127,15 +137,33 @@ public final class SourcePreferences {
             sources: items,
             custom: []
         )
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        if let data = try? encoder.encode(package), let string = String(data: data, encoding: .utf8) {
-            return string
-        }
-        return "{}"
     }
 
     public func importConfig(jsonString: String) throws -> SourceImportResult {
+        try applyImport(Self.prepareImport(jsonString: jsonString, snapshot: importSnapshot()))
+    }
+
+    public func importSnapshot() -> SourceImportSnapshot {
+        var configurations: [String: SourceConfigItem] = [:]
+        for id in defaultIDs {
+            configurations[Self.canonicalID(id)] = (config(for: id) ?? SourceConfigItem(id: id, name: id)).withEnabled(isEnabled(id))
+        }
+        return SourceImportSnapshot(defaultIDs: defaultIDs, order: orderedIDs, configurations: configurations)
+    }
+
+    public func applyImport(_ prepared: PreparedSourceImport) throws -> SourceImportResult {
+        try Task.checkCancellation()
+        guard importSnapshot() == prepared.snapshot else { throw SourceConfigError.configurationChanged }
+        for config in prepared.configurations {
+            setConfig(config, for: config.id)
+            setEnabled(config.enabled, id: config.id)
+        }
+        if !prepared.order.isEmpty { setOrder(prepared.order) }
+        return prepared.result
+    }
+
+    public static func prepareImport(jsonString: String, snapshot: SourceImportSnapshot) throws -> PreparedSourceImport {
+        try Task.checkCancellation()
         guard let data = jsonString.data(using: .utf8),
               let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { throw SourceConfigError.invalidJSON }
         guard (json["schema"] as? String) == "xx-comic.sources" else { throw SourceConfigError.invalidSchema }
@@ -153,13 +181,14 @@ public final class SourcePreferences {
         // Prepare and validate the entire import before persisting any order, switch or endpoint.
         var prepared: [SourceConfigItem] = [], seen = Set<String>(), skipped: [String] = [], warnings: [String] = []
         for item in sources {
+            try Task.checkCancellation()
             guard let rawID = item["id"] as? String, !rawID.isEmpty else { throw SourceConfigError.invalidFields }
             let id = Self.canonicalID(rawID)
-            guard defaultIDs.contains(id) || defaultIDs.contains(rawID) else {
+            guard snapshot.defaultIDs.contains(id) || snapshot.defaultIDs.contains(rawID) else {
                 skipped.append(rawID); warnings.append("已跳过非当前站源：" + rawID); continue
             }
             guard seen.insert(id).inserted else { throw SourceConfigError.invalidFields }
-            let fallback = (config(for: id) ?? SourceConfigItem(id: id, name: id)).withEnabled(isEnabled(id))
+            let fallback = snapshot.configurations[id] ?? SourceConfigItem(id: id, name: id)
             let encoder = JSONEncoder()
             let baseData = try encoder.encode(fallback)
             var normalized = try JSONSerialization.jsonObject(with: baseData) as! [String: Any]
@@ -218,18 +247,16 @@ public final class SourcePreferences {
             prepared.append(config)
         }
         for (index, item) in custom.enumerated() {
+            try Task.checkCancellation()
             let id = item["id"] as? String ?? "自定义站源（第\(index + 1)项）"
             skipped.append(id)
             warnings.append("已跳过自定义站源：" + id + "（当前版本尚不支持自定义解析器）")
         }
-        for config in prepared {
-            setConfig(config, for: config.id)
-            setEnabled(config.enabled, id: config.id)
-        }
-        if !order.isEmpty { setOrder(order) }
+        try Task.checkCancellation()
         let enabledCount = prepared.filter(\.enabled).count
-        return SourceImportResult(totalSources: prepared.count, enabledCount: enabledCount, disabledCount: prepared.count - enabledCount,
-                                  orderUpdated: !order.isEmpty, skippedSources: skipped, warnings: warnings)
+        let result = SourceImportResult(totalSources: prepared.count, enabledCount: enabledCount, disabledCount: prepared.count - enabledCount,
+                                        orderUpdated: !order.isEmpty, skippedSources: skipped, warnings: warnings)
+        return PreparedSourceImport(snapshot: snapshot, configurations: prepared, order: order, result: result)
     }
 
     // Retained Android export fields that do not reach the current request path.

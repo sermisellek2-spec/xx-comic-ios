@@ -27,3 +27,12 @@ docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci15-repair/** -text whitespac
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-discovery-visual/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-p1-visual/apple-11-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-p1-visual/eleventh-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# Preserve original CI and compiler evidence bytes, including timestamp blanks.
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci15-results/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-config-files/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci15-results/full-apple-build-test.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci15-results/native-apple-build-test.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-config-files/impact-current.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-config-files/impact-initial-cleanup-failure.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-config-files/impact-initial-compile-failure.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol

@@ -1,0 +1,553 @@
+[0/1] Planning build
+Building for debugging...
+[0/12] Write sources
+[0/11] Write swift-version-24593BA9C3E375BF.txt
+[4/13] Compiling ComicCore SourceConfigDocuments.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[5/13] Compiling ComicCore SourceConfigModels.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[6/14] Compiling ComicCore SourcePreferences.swift
+[7/27] Emitting module ComicCore
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[8/40] Compiling ComicCore JmComicSource.swift
+[9/40] Compiling ComicCore LiumanhuaComicSource.swift
+[10/40] Compiling ComicCore ManbenComicSource.swift
+[11/40] Compiling ComicCore ManhuaguiComicSource.swift
+[12/40] Compiling ComicCore ManwaComicSource.swift
+[13/40] Compiling ComicCore Mh160ComicSource.swift
+[14/40] Compiling ComicCore Mh18ComicSource.swift
+[15/40] Compiling ComicCore Mh18VerificationRules.swift
+[16/40] Compiling ComicCore MkzhanComicSource.swift
+[17/40] Compiling ComicCore PublicComicSource.swift
+[18/40] Compiling ComicCore PublicSourceRegistry.swift
+[19/40] Compiling ComicCore XinmanhuaComicSource.swift
+[20/40] Compiling ComicCore ZaimanhuaComicSource.swift
+[21/40] Compiling ComicCore AntbywComicSource.swift
+[22/40] Compiling ComicCore BaoziComicSource.swift
+[23/40] Compiling ComicCore CopyMangaComicSource.swift
+[24/40] Compiling ComicCore CuimhComicSource.swift
+[25/40] Compiling ComicCore D5d6ComicSource.swift
+[26/40] Compiling ComicCore DingManhuaComicSource.swift
+[27/40] Compiling ComicCore DongmanLaComicSource.swift
+[28/40] Compiling ComicCore DownloadModels.swift
+[29/40] Compiling ComicCore FiveUmComicSource.swift
+[30/40] Compiling ComicCore GmhComicSource.swift
+[31/40] Compiling ComicCore GuaziComicSource.swift
+[32/40] Compiling ComicCore Hanman18ComicSource.swift
+[33/40] Compiling ComicCore HiperdexComicSource.swift
+[34/41] Wrapping AST for ComicCore for debugging
+[36/64] Emitting module ComicCoreTests
+[37/86] Compiling ComicCoreTests AntbywSourceTests.swift
+[38/86] Compiling ComicCoreTests AppThemeTests.swift
+[39/86] Compiling ComicCoreTests AppUpdateCheckerTests.swift
+[40/86] Compiling ComicCoreTests BaoziSourceTests.swift
+[41/86] Compiling ComicCoreTests BatchImportPlannerTests.swift
+[42/86] Compiling ComicCoreTests BatchImportSessionTests.swift
+[43/86] Compiling ComicCoreTests BatchImportWorkerTests.swift
+[44/86] Compiling ComicCoreTests BookshelfGroupStoreTests.swift
+[45/86] Compiling ComicCoreTests BookshelfReadingStatusTests.swift
+[46/86] Compiling ComicCoreTests BuiltinSourceCatalogTests.swift
+[47/86] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[48/86] Compiling ComicCoreTests ChapterMatchingTests.swift
+[49/86] Compiling ComicCoreTests ComicDirectoryPreparationTests.swift
+[50/86] Compiling ComicCoreTests ContentFingerprintTests.swift
+[51/86] Compiling ComicCoreTests ContinuousReaderPagesTests.swift
+[52/86] Compiling ComicCoreTests CopyMangaTests.swift
+[53/86] Compiling ComicCoreTests CuimhSourceTests.swift
+[54/86] Compiling ComicCoreTests D5d6SourceTests.swift
+[55/86] Compiling ComicCoreTests DefaultDownloadImageFetcherTests.swift
+[56/86] Compiling ComicCoreTests DeferredDeletionTests.swift
+[57/86] Compiling ComicCoreTests DingManhuaSourceTests.swift
+[58/86] Compiling ComicCoreTests DiscoveryHeaderGestureTests.swift
+[59/107] Compiling ComicCoreTests DongmanLaSourceTests.swift
+[60/107] Compiling ComicCoreTests DownloadCoordinatorTests.swift
+[61/107] Compiling ComicCoreTests DownloadDeletionTests.swift
+[62/107] Compiling ComicCoreTests DownloadFileCoordinationTests.swift
+[63/107] Compiling ComicCoreTests DownloadIdentityTests.swift
+[64/107] Compiling ComicCoreTests DownloadLocationTests.swift
+[65/107] Compiling ComicCoreTests DownloadOwnedDirectoryTests.swift
+[66/107] Compiling ComicCoreTests DownloadPersistenceTests.swift
+[67/107] Compiling ComicCoreTests DownloadRuntimeTests.swift
+[68/107] Compiling ComicCoreTests DownloadSchedulingTests.swift
+[69/107] Compiling ComicCoreTests DownloadStoreTests.swift
+[70/107] Compiling ComicCoreTests EpubParserTests.swift
+[71/107] Compiling ComicCoreTests EpubReaderResourceTests.swift
+[72/107] Compiling ComicCoreTests EpubTextSessionTests.swift
+[73/107] Compiling ComicCoreTests ErrorLogStoreTests.swift
+[74/107] Compiling ComicCoreTests FavoriteRevisionTests.swift
+[75/107] Compiling ComicCoreTests FavoriteUpdateCheckerTests.swift
+[76/107] Compiling ComicCoreTests FileDownloadWorkerTests.swift
+[77/107] Compiling ComicCoreTests FiveUmSourceTests.swift
+[78/107] Compiling ComicCoreTests FolderBookmarkStoreTests.swift
+[79/107] Compiling ComicCoreTests GmhSourceTests.swift
+[80/107] Compiling ComicCoreTests Hanman18SourceTests.swift
+[81/128] Compiling ComicCoreTests LocalReadingRoutingTests.swift
+[82/128] Compiling ComicCoreTests LocalSeriesLifecycleTests.swift
+[83/128] Compiling ComicCoreTests LocalTestHTTPServer.swift
+[84/128] Compiling ComicCoreTests LocalTestHTTPServerTests.swift
+[85/128] Compiling ComicCoreTests ManbenSourceTests.swift
+[86/128] Compiling ComicCoreTests ManhuaguiTests.swift
+[87/128] Compiling ComicCoreTests ManwaImageDecoderTests.swift
+[88/128] Compiling ComicCoreTests ManwaSourceTests.swift
+[89/128] Compiling ComicCoreTests Mh160SourceTests.swift
+[90/128] Compiling ComicCoreTests Mh18BrowserTrustTests.swift
+[91/128] Compiling ComicCoreTests Mh18CookieSynchronizerTests.swift
+[92/128] Compiling ComicCoreTests Mh18SourceTests.swift
+[93/128] Compiling ComicCoreTests Mh18VerificationAttemptTests.swift
+[94/128] Compiling ComicCoreTests Mh18VerificationRulesTests.swift
+[95/128] Compiling ComicCoreTests MkzhanSourceTests.swift
+[96/128] Compiling ComicCoreTests NaturalPathOrderTests.swift
+[97/128] Compiling ComicCoreTests NewPublicSourcesTests.swift
+[98/128] Compiling ComicCoreTests PdfRendererTests.swift
+[99/128] Compiling ComicCoreTests PreferencesTests.swift
+[100/128] Compiling ComicCoreTests PublicComicSourceTests.swift
+[101/128] Compiling ComicCoreTests QuickPublicationInfoTests.swift
+[102/149] Compiling ComicCoreTests ReaderLoadStateTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[103/149] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[104/149] Compiling ComicCoreTests ReaderSessionTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[105/149] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[106/149] Compiling ComicCoreTests ReadingRulesTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[107/149] Compiling ComicCoreTests RetiredComicSourceTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[108/149] Compiling ComicCoreTests SearchRulesTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[109/149] Compiling ComicCoreTests SourceAESTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[110/149] Compiling ComicCoreTests SourceConfigDocumentsTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[111/149] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[112/149] Compiling ComicCoreTests SourceGroupStoreTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[113/149] Compiling ComicCoreTests SourceImportContractTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[114/149] Compiling ComicCoreTests SourcePreferencesTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[115/149] Compiling ComicCoreTests SourceSearchTrimTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[116/149] Compiling ComicCoreTests StorageCalculatorTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[117/149] Compiling ComicCoreTests TextReadingTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[118/149] Compiling ComicCoreTests UsageStatsClientTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[119/149] Compiling ComicCoreTests UsageStatsReportingTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[120/149] Compiling ComicCoreTests WhiteMarginTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[121/149] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[122/149] Compiling ComicCoreTests resource_bundle_accessor.swift
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:13:88: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        return (SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs), defaults, name)
+                                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:16:59: error: type 'BuiltinSourceCatalog' has no member 'current'
+        store.exportPackage(sources: BuiltinSourceCatalog.current.map { ($0.id, $0.name, "", "") })
+                                     ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:24:52: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        source.setOrder(Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                              ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:32:64: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.currentIDs, "Preparing a file must not save preferences")
+                                          ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:35:95: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.currentIDs)
+                                                                         ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+/work/Tests/ComicCoreTests/SourceConfigDocumentsTests.swift:36:72: error: type 'BuiltinSourceCatalog' has no member 'currentIDs'
+        XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.currentIDs.reversed()))
+                                                  ~~~~~~~~~~~~~~~~~~~~ ^~~~~~~~~~
+[123/149] Compiling ComicCoreTests HiperdexSourceTests.swift
+[124/149] Compiling ComicCoreTests IOSUpdatePolicyTests.swift
+[125/149] Compiling ComicCoreTests ImageEnhancementPolicyTests.swift
+[126/149] Compiling ComicCoreTests JmImageTransformTests.swift
+[127/149] Compiling ComicCoreTests JmSourceTests.swift
+[128/149] Compiling ComicCoreTests KindleFormatTests.swift
+[129/149] Compiling ComicCoreTests KindlePublicationTests.swift
+[130/149] Compiling ComicCoreTests LibraryStoreTests.swift
+[131/149] Compiling ComicCoreTests LinkedFolderLibraryTests.swift
+[132/149] Compiling ComicCoreTests LiumanhuaSourceTests.swift
+[133/149] Compiling ComicCoreTests LocalArchiveTests.swift
+[134/149] Compiling ComicCoreTests LocalCatalogTests.swift
+[135/149] Compiling ComicCoreTests LocalEpubLibraryTests.swift
+[136/149] Compiling ComicCoreTests LocalFolderSyncTests.swift
+[137/149] Compiling ComicCoreTests LocalFolderTests.swift
+[138/149] Compiling ComicCoreTests LocalImportFingerprintTests.swift
+[139/149] Compiling ComicCoreTests LocalImportPreparationTests.swift
+[140/149] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+[141/149] Compiling ComicCoreTests LocalLibraryTests.swift
+[142/149] Compiling ComicCoreTests LocalOwnershipRecoveryTests.swift
+[143/149] Compiling ComicCoreTests LocalPdfLibraryTests.swift
+error: fatalError
+error: fatalError

@@ -14,7 +14,7 @@ final class CurrentParityUITests: ParityUITestCase {
         let app = launch(groupFlag)
         app.tabBars.buttons["发现"].tap()
         app.buttons["discover.search.mode"].tap()
-        let search = app.searchFields.firstMatch
+        let search = app.descendants(matching: .any)["discover.search"]
         search.tap(); search.typeText("电锯人\n")
         for source in ["mh160", "copy4000", "gmh"] {
             XCTAssertTrue(app.buttons["discover.global." + source].waitForExistence(timeout: 5),
@@ -28,7 +28,7 @@ final class CurrentParityUITests: ParityUITestCase {
         // so it cannot consume the pending request used to exercise cancellation.
         app.tabBars.buttons["发现"].tap()
         app.buttons["discover.search.mode"].tap()
-        let search = app.searchFields.firstMatch
+        let search = app.descendants(matching: .any)["discover.search"]
         search.tap(); search.typeText(title + "\n")
         let source = app.buttons["discover.global.copy4000"]
         XCTAssertTrue(source.waitForExistence(timeout: 5)); source.tap()
@@ -92,11 +92,11 @@ final class CurrentParityUITests: ParityUITestCase {
         app.tabBars.buttons["发现"].tap()
         let list = app.collectionViews.firstMatch
         XCTAssertTrue(list.cells["电锯人"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.searchFields.firstMatch.isHittable)
+        XCTAssertTrue(app.descendants(matching: .any)["discover.search"].isHittable)
         list.swipeUp()
-        XCTAssertFalse(app.searchFields.firstMatch.isHittable)
+        XCTAssertFalse(app.descendants(matching: .any)["discover.search"].isHittable)
         list.swipeDown()
-        XCTAssertTrue(app.searchFields.firstMatch.isHittable)
+        XCTAssertTrue(app.descendants(matching: .any)["discover.search"].isHittable)
     }
 
     func testDetailDownloadLoadsOnDemandDirectoryAndCloses() {
@@ -156,7 +156,7 @@ final class CurrentParityUITests: ParityUITestCase {
         // result so background update checks cannot consume its first detail.
         app.tabBars.buttons["发现"].tap()
         app.buttons["discover.search.mode"].tap()
-        let search = app.searchFields.firstMatch
+        let search = app.descendants(matching: .any)["discover.search"]
         search.tap(); search.typeText("电锯人\n")
         let source = app.buttons["discover.global.copy4000"]
         XCTAssertTrue(source.waitForExistence(timeout: 5)); source.tap()

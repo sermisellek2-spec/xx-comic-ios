@@ -1,13 +1,22 @@
 import UIKit
 import ComicCore
+import UniformTypeIdentifiers
 
 @MainActor
-final class SourceSettingsViewController: UITableViewController {
+final class SourceSettingsViewController: UITableViewController, UIDocumentPickerDelegate {
     private let environment: AppEnvironment
     let onVerified: (() -> Void)?
     private var verificationTask: Task<Void, Never>?
     private var healthCheckTask: Task<Void, Never>?
     private var healthStatuses: [String: String] = [:]
+    private enum ConfigPickerPurpose { case importing; case exporting(SourceConfigExportDocument) }
+    private let configDocuments = SourceConfigDocuments()
+    private var configTask: Task<Void, Never>?
+    private var configGeneration = UUID()
+    private var configPicker: UIDocumentPickerViewController?
+    private var configPickerPurpose: ConfigPickerPurpose?
+    private var configFeedback = ""
+    private var configBusy: Bool { configTask != nil || configPickerPurpose != nil }
     private var ids: [String] { environment.sourcePreferences.orderedIDs }
     init(environment: AppEnvironment, onVerified: (() -> Void)? = nil) {
         self.environment = environment; self.onVerified = onVerified
@@ -20,7 +29,7 @@ final class SourceSettingsViewController: UITableViewController {
         tableView.backgroundColor = Palette.background
         tableView.setEditing(true, animated: false)
         tableView.allowsSelectionDuringEditing = true
-        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), style: .plain, target: self, action: #selector(showMoreMenu))
+        updateConfigControls()
         environment.mh18BrowserSession.statusChanged = { [weak self] in self?.tableView.reloadData() }
     }
     override func viewDidDisappear(_ animated: Bool) {
@@ -28,6 +37,7 @@ final class SourceSettingsViewController: UITableViewController {
         if isMovingFromParent || isBeingDismissed || navigationController?.isBeingDismissed == true {
             verificationTask?.cancel()
             healthCheckTask?.cancel()
+            cancelConfigOperation()
             environment.mh18BrowserSession.statusChanged = nil
         }
     }
@@ -40,7 +50,7 @@ final class SourceSettingsViewController: UITableViewController {
     }
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
         guard section == 1 else { return nil }
-        return "拖动右侧手柄调整顺序。关闭站源不会删除收藏和阅读记录。" + (ids.contains("mh18") ? "18漫画的“重置”会结束浏览器会话及进行中的请求，保留站点 Cookie。" : "")
+        return "拖动右侧手柄调整顺序。关闭站源不会删除收藏和阅读记录。" + (ids.contains("mh18") ? "18漫画的“重置”会结束浏览器会话及进行中的请求，保留站点 Cookie。" : "") + (configFeedback.isEmpty ? "" : "\n\n" + configFeedback)
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if indexPath.section == 0 {
@@ -152,10 +162,10 @@ final class SourceSettingsViewController: UITableViewController {
             self?.runHealthCheck()
         })
         alert.addAction(UIAlertAction(title: "导入站源配置", style: .default) { [weak self] _ in
-            self?.importConfig()
+            self?.afterMenuDismissal { [weak self] in self?.importConfig() }
         })
         alert.addAction(UIAlertAction(title: "导出站源配置", style: .default) { [weak self] _ in
-            self?.exportConfig()
+            self?.afterMenuDismissal { [weak self] in self?.exportConfig() }
         })
         alert.addAction(UIAlertAction(title: "恢复默认排序", style: .default) { [weak self] _ in
             self?.resetOrder()
@@ -165,6 +175,10 @@ final class SourceSettingsViewController: UITableViewController {
             popover.barButtonItem = navigationItem.rightBarButtonItem
         }
         present(alert, animated: true)
+    }
+    private func afterMenuDismissal(_ action: @escaping () -> Void) {
+        if let menu = presentedViewController as? UIAlertController { menu.dismiss(animated: true, completion: action) }
+        else { action() }
     }
     private func runHealthCheck() {
         healthCheckTask?.cancel()
@@ -191,55 +205,154 @@ final class SourceSettingsViewController: UITableViewController {
         }
     }
     private func importConfig() {
-        let alert = UIAlertController(title: "导入站源配置", message: "粘贴符合 xx-comic.sources 格式的 JSON 配置：", preferredStyle: .alert)
-        alert.addTextField { field in
-            field.placeholder = "{\"schema\":\"xx-comic.sources\", ...}"
-            field.clearButtonMode = .whileEditing
-            if let clip = UIPasteboard.general.string, clip.contains("xx-comic.sources") {
-                field.text = clip
-            }
-        }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "导入", style: .default) { [weak self, weak alert] _ in
-            guard let self, let text = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return }
-            do {
-                let result = try self.environment.sourcePreferences.importConfig(jsonString: text)
-                self.tableView.reloadData()
-                self.notifyChanged()
-                let successAlert = UIAlertController(
-                    title: result.warnings.isEmpty ? "导入完成" : (result.totalSources > 0 || result.orderUpdated ? "部分配置已导入" : "未导入配置"),
-                    message: "已导入 \(result.totalSources) 个站源配置（启用 \(result.enabledCount)，禁用 \(result.disabledCount)）" + (result.orderUpdated ? "\n已更新排序" : "") + (result.warnings.isEmpty ? "" : "\n\n" + result.warnings.joined(separator: "\n")),
-                    preferredStyle: .alert
-                )
-                successAlert.addAction(UIAlertAction(title: "确定", style: .default))
-                self.present(successAlert, animated: true)
-            } catch {
-                self.showError(error)
-            }
-        })
-        present(alert, animated: true)
+        guard !configBusy else { return }
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: true)
+        picker.allowsMultipleSelection = false; picker.delegate = self
+        configPicker = picker; configPickerPurpose = .importing
+        configFeedback = "请选择站源配置文件"; updateConfigControls()
+        present(picker, animated: true)
     }
     private func exportConfig() {
+        guard !configBusy else { return }
         let tuples = ids.compactMap { id in environment.allSources.first { $0.id == id } }
             .map { ($0.id, $0.name, URL(string: $0.referer)?.host ?? "", $0.referer) }
-        let json = environment.sourcePreferences.exportConfig(sources: tuples)
-        UIPasteboard.general.string = json
-        let alert = UIAlertController(
-            title: "已导出站源配置",
-            message: "站源配置 JSON 已复制到剪贴板，符合 xx-comic.sources v2 规范，可直接分享或备份。",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "分享", style: .default) { [weak self] _ in
-            let share = UIActivityViewController(activityItems: [json], applicationActivities: nil)
-            if let popover = share.popoverPresentationController {
-                popover.sourceView = self?.view
-                popover.sourceRect = CGRect(x: self?.view.bounds.midX ?? 0, y: self?.view.bounds.midY ?? 0, width: 0, height: 0)
-                popover.permittedArrowDirections = []
+        let package = environment.sourcePreferences.exportPackage(sources: tuples)
+        let worker = configDocuments, token = UUID(); configGeneration = token
+        configFeedback = "正在准备站源配置文件…"
+        configTask = Task { [weak self] in
+            defer { self?.finishConfigTask(token: token) }
+            do {
+                let document = try await worker.prepareExport(package)
+                guard let self, self.configGeneration == token, !Task.isCancelled else {
+                    try await worker.discardExport(document); return
+                }
+                let picker = UIDocumentPickerViewController(forExporting: [document.url], asCopy: true)
+                picker.delegate = self
+                self.configPicker = picker; self.configPickerPurpose = .exporting(document)
+                self.configFeedback = "请选择保存位置"; self.updateConfigControls()
+                self.present(picker, animated: true)
+            } catch {
+                guard let self, self.configGeneration == token, !Task.isCancelled else { return }
+                self.configFeedback = "导出失败，可重新导出重试"
+                self.showError(error)
             }
-            self?.present(share, animated: true)
-        })
-        alert.addAction(UIAlertAction(title: "完成", style: .cancel))
-        present(alert, animated: true)
+        }
+        updateConfigControls()
+    }
+
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard controller === configPicker, let purpose = configPickerPurpose else { return }
+        configPicker = nil; configPickerPurpose = nil
+        let token = configGeneration, worker = configDocuments
+        controller.dismiss(animated: true) { [weak self] in
+            guard let self, self.configGeneration == token else {
+                if case .exporting(let document) = purpose { Self.discardExport(document, worker: worker) }
+                return
+            }
+            switch purpose {
+            case .importing:
+                guard let url = urls.first else {
+                    self.configFeedback = "未选择文件，现有配置未修改"; self.updateConfigControls(); return
+                }
+                self.readConfig(url)
+            case .exporting(let document): self.finishExport(document, saved: !urls.isEmpty)
+            }
+        }
+    }
+
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        guard controller === configPicker, let purpose = configPickerPurpose else { return }
+        configPicker = nil; configPickerPurpose = nil
+        let token = configGeneration, worker = configDocuments
+        controller.dismiss(animated: true) { [weak self] in
+            guard let self, self.configGeneration == token else {
+                if case .exporting(let document) = purpose { Self.discardExport(document, worker: worker) }
+                return
+            }
+            switch purpose {
+            case .importing:
+                self.configFeedback = "已取消导入，现有配置未修改"; self.updateConfigControls()
+            case .exporting(let document): self.finishExport(document, saved: false)
+            }
+        }
+    }
+
+    private func readConfig(_ url: URL) {
+        let snapshot = environment.sourcePreferences.importSnapshot()
+        let worker = configDocuments, token = UUID(); configGeneration = token
+        configFeedback = "正在读取并检查站源配置…"
+        configTask = Task { [weak self] in
+            defer { self?.finishConfigTask(token: token) }
+            do {
+                let prepared = try await worker.prepareImport(from: url, snapshot: snapshot)
+                guard let self, self.configGeneration == token, !Task.isCancelled else { return }
+                let result = try self.environment.sourcePreferences.applyImport(prepared)
+                self.healthCheckTask?.cancel(); self.healthCheckTask = nil
+                self.healthStatuses.removeAll()
+                self.notifyChanged()
+                self.configFeedback = "已导入 \(result.totalSources) 个站源配置（启用 \(result.enabledCount)，禁用 \(result.disabledCount)）" + (result.orderUpdated ? "\n已更新排序" : "")
+                let alert = UIAlertController(
+                    title: result.warnings.isEmpty ? "导入完成" : (result.totalSources > 0 || result.orderUpdated ? "部分配置已导入" : "未导入配置"),
+                    message: self.configFeedback + (result.warnings.isEmpty ? "" : "\n\n" + result.warnings.joined(separator: "\n")),
+                    preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "确定", style: .default))
+                self.present(alert, animated: true)
+            } catch {
+                guard let self, self.configGeneration == token, !Task.isCancelled else { return }
+                self.configFeedback = "导入失败，现有配置未修改；可重新选择文件重试"
+                self.showError(error)
+            }
+        }
+        updateConfigControls()
+    }
+
+    private func finishExport(_ document: SourceConfigExportDocument, saved: Bool) {
+        let worker = configDocuments, token = UUID(); configGeneration = token
+        configFeedback = saved ? "站源配置已保存为 \(SourceConfigDocuments.filename)" : "已取消导出"
+        configTask = Task { [weak self] in
+            defer { self?.finishConfigTask(token: token) }
+            do { try await worker.discardExport(document) }
+            catch {
+                ErrorLogStore.shared.append(title: "站源导出临时副本未清理", detail: "文件已保留")
+                guard let self, self.configGeneration == token, !Task.isCancelled else { return }
+                self.configFeedback += "；临时副本未能清理，已保留"
+            }
+            guard let self, self.configGeneration == token, !Task.isCancelled, saved else { return }
+            let alert = UIAlertController(title: "导出完成", message: self.configFeedback, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "确定", style: .default)); self.present(alert, animated: true)
+        }
+        updateConfigControls()
+    }
+
+    private func finishConfigTask(token: UUID) {
+        guard configGeneration == token else { return }
+        configTask = nil; updateConfigControls()
+    }
+    @objc private func cancelConfigOperation() {
+        configGeneration = UUID(); configTask?.cancel(); configTask = nil
+        if case .exporting(let document) = configPickerPurpose {
+            Self.discardExport(document, worker: configDocuments)
+        }
+        configPicker = nil; configPickerPurpose = nil
+        configFeedback = "已取消操作，现有配置未修改"; updateConfigControls()
+    }
+    private static func discardExport(_ document: SourceConfigExportDocument, worker: SourceConfigDocuments) {
+        Task {
+            do { try await worker.discardExport(document) }
+            catch { ErrorLogStore.shared.append(title: "站源导出临时副本未清理", detail: "文件已保留") }
+        }
+    }
+    private func updateConfigControls() {
+        tableView.isUserInteractionEnabled = !configBusy
+        let item: UIBarButtonItem
+        if configBusy {
+            item = UIBarButtonItem(title: "取消", style: .plain, target: self, action: #selector(cancelConfigOperation))
+            item.accessibilityIdentifier = "source.config.cancel"
+        } else {
+            item = UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), style: .plain, target: self, action: #selector(showMoreMenu))
+            item.accessibilityLabel = "站源管理操作"; item.accessibilityIdentifier = "source.config.more"
+        }
+        navigationItem.rightBarButtonItems = [item]; tableView.reloadData()
     }
     private func notifyChanged() {
         environment.reloadSources()

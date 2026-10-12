@@ -17,7 +17,7 @@ final class VisualMatrixUITests: ParityUITestCase {
         let accessibilitySnapshot = app.debugDescription
         let collectionSeconds = Date().timeIntervalSince(collectionStarted)
         XCTAssertFalse(accessibilitySnapshot.isEmpty)
-        let record: [String: Any] = [
+        var record: [String: Any] = [
             "fixtureID": ParityFixtureIdentity.fixtureID,
             "metadataSHA256": ParityFixtureIdentity.metadataSHA256,
             "imageSHA256": ParityFixtureIdentity.imageSHA256,
@@ -36,6 +36,11 @@ final class VisualMatrixUITests: ParityUITestCase {
             "accessibilitySnapshot": accessibilitySnapshot,
             "steps": "VisualMatrixUITests production navigation with explicitly isolated Debug fixture"
         ]
+        if let value = app.windows["parity.window"].value as? String,
+           let data = value.data(using: .utf8),
+           let native = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            record["nativeAppWindowGeometry"] = native
+        } else { XCTFail("Missing app-side scene geometry; the UI runner screen must not replace it") }
         do {
             let data = try JSONSerialization.data(withJSONObject: record, options: [.sortedKeys])
             let metadata = XCTAttachment(data: data, uniformTypeIdentifier: "public.json")
@@ -67,7 +72,7 @@ final class VisualMatrixUITests: ParityUITestCase {
         XCTAssertTrue(app.buttons["filter.close"].waitForExistence(timeout: 5))
         capture(stem + "source_drawer")
         app.buttons["filter.close"].tap()
-        let search = app.searchFields.firstMatch
+        let search = app.descendants(matching: .any)["discover.search"]
         XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("电锯人\n")
         XCTAssertTrue(app.collectionViews.cells["电锯人"].waitForExistence(timeout: 5))
         capture(stem + "search_results")

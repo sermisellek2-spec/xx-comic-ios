@@ -8,7 +8,7 @@ final class SourceDrawerTests: ParityUITestCase {
         app.launch()
         app.tabBars.buttons["发现"].tap()
         app.buttons["discover.search.mode"].tap()
-        let search = app.searchFields.firstMatch
+        let search = app.descendants(matching: .any)["discover.search"]
         search.tap(); search.typeText("未匹配的验收关键词\n")
         let empty = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "没有找到漫画")).firstMatch
         XCTAssertTrue(empty.waitForExistence(timeout: 10))
@@ -31,7 +31,7 @@ final class SourceDrawerTests: ParityUITestCase {
         revealSource(source, in: app)
         source.tap()
         app.buttons["filter.confirm"].tap()
-        let search = app.searchFields.firstMatch
+        let search = app.descendants(matching: .any)["discover.search"]
         search.tap()
         // Android exposes only sources that returned results. Use a title in
         // the shared fixture so the supported-source assertions have results.
@@ -59,12 +59,14 @@ final class SourceDrawerTests: ParityUITestCase {
         revealSource(candidate, in: app)
         candidate.tap()
         app.buttons["filter.close"].tap()
+        XCTAssertTrue(source.waitForExistence(timeout: 5))
         XCTAssertEqual(source.label, original)
         source.tap()
         let confirmedCandidate = app.buttons["filter.source.bbyin"]
         revealSource(confirmedCandidate, in: app)
         confirmedCandidate.tap()
         app.buttons["filter.confirm"].tap()
+        XCTAssertTrue(source.waitForExistence(timeout: 5))
         XCTAssertTrue(source.label.contains("比卡漫画"))
     }
     private func revealSource(_ source: XCUIElement, in app: XCUIApplication) {

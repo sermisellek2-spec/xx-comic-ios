@@ -1,0 +1,33 @@
+{
+  "artifacts": [
+    {
+      "id": 11723465157,
+      "name": "http-cache-evidence",
+      "size_in_bytes": 34811,
+      "expired": false,
+      "created_at": "2026-10-12T02:13:27Z"
+    },
+    {
+      "id": 11723460220,
+      "name": "iOS-test-results",
+      "size_in_bytes": 377986061,
+      "expired": false,
+      "created_at": "2026-10-12T02:13:22Z"
+    },
+    {
+      "id": 11723365514,
+      "name": "reader-enhancement-evidence",
+      "size_in_bytes": 1287250,
+      "expired": false,
+      "created_at": "2026-10-12T02:13:26Z"
+    },
+    {
+      "id": 11722749305,
+      "name": "visual-matrix-screenshots",
+      "size_in_bytes": 26719978,
+      "expired": false,
+      "created_at": "2026-10-12T02:13:24Z"
+    }
+  ],
+  "checked_at_utc": "2026-10-12T02:18:45.776162+00:00"
+}

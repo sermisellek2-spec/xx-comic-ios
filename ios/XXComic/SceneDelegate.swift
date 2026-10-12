@@ -6,7 +6,11 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let scene = scene as? UIWindowScene, let app = UIApplication.shared.delegate as? AppDelegate else { return }
+        #if DEBUG
+        let window = ParityGeometryWindow(windowScene: scene)
+        #else
         let window = UIWindow(windowScene: scene)
+        #endif
         self.window = window
         app.configureMainWindow(window)
     }

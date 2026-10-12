@@ -82,13 +82,23 @@ case "$validation_scope" in
     # does not replace full UI or visual validation and cannot produce an IPA.
     test_arguments+=(-only-testing:XXComicTests)
     ;;
+  configuration-files)
+    test_arguments+=(
+      -only-testing:XXComicTests
+      -only-testing:XXComicUITests/CurrentParityUITests
+      -only-testing:XXComicUITests/SourceDrawerTests
+      -only-testing:XXComicUITests/ExternalFilesParityUITests
+      -only-testing:XXComicUITests/SourceConfigFilesUITests
+      -only-testing:XXComicUITests/VisualMatrixUITests
+    )
+    ;;
   *) echo "Unknown validation scope: $validation_scope" >&2; exit 2 ;;
 esac
 echo "==> Native validation scope: $validation_scope (partial validation never produces an IPA)"
 
 # This separate application provides real Files-provider directories outside
 # XXComic's sandbox. It is not a dependency of the production app or IPA.
-if [ "$validation_scope" = full ] || [ "$validation_scope" = recovery-regression ]; then
+if [ "$validation_scope" = full ] || [ "$validation_scope" = recovery-regression ] || [ "$validation_scope" = configuration-files ]; then
   xcodebuild -project XXComic.xcodeproj -scheme FilesFixtureHost -configuration Debug \
     -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
     -derivedDataPath build/files-fixture CODE_SIGNING_ALLOWED=NO build
@@ -106,7 +116,7 @@ fi
 test_failed=$validation_failed
 for dest in "${DESTINATIONS[@]}"; do
   echo "==> Running tests on destination: $dest"
-  if [ "$validation_scope" = full ] || [ "$validation_scope" = recovery-regression ]; then
+  if [ "$validation_scope" = full ] || [ "$validation_scope" = recovery-regression ] || [ "$validation_scope" = configuration-files ]; then
     simulator_id="${dest##*id=}"
     xcrun simctl boot "$simulator_id" 2>/dev/null || true
     xcrun simctl bootstatus "$simulator_id" -b

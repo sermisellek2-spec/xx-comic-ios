@@ -70,6 +70,7 @@ public enum SourceConfigError: LocalizedError, Equatable {
     case emptyPackage
     case unsupportedVersion
     case invalidFields
+    case configurationChanged
 
     public var errorDescription: String? {
         switch self {
@@ -83,8 +84,24 @@ public enum SourceConfigError: LocalizedError, Equatable {
             return "暂不支持该站源配置版本"
         case .invalidFields:
             return "站源配置字段格式错误，未修改现有配置"
+        case .configurationChanged:
+            return "站源配置已发生变化，请重新导入；未覆盖现有配置"
         }
     }
+}
+
+/// A value snapshot crosses the file worker boundary; UserDefaults never does.
+public struct SourceImportSnapshot: Equatable, Sendable {
+    let defaultIDs: [String]
+    let order: [String]
+    let configurations: [String: SourceConfigItem]
+}
+
+public struct PreparedSourceImport: Sendable {
+    let snapshot: SourceImportSnapshot
+    let configurations: [SourceConfigItem]
+    let order: [String]
+    public let result: SourceImportResult
 }
 
 public struct SourceImportResult: Equatable, Sendable {

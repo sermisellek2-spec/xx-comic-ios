@@ -1,0 +1,7 @@
+application-tests Release exit=0
+
+application-tests DEBUG exit=0
+
+files-fixture Release exit=0
+
+files-fixture DEBUG exit=0

@@ -1,0 +1,626 @@
+{
+  "input_sha": "b8be2d947e720c0527fb3ab280b4fbe1c1a30d0e",
+  "run_id": 38190082897,
+  "totals": [
+    "2026-10-12T01:07:23.1224820Z \t Executed 902 tests, with 1 failure (0 unexpected) in 113.307 (113.354) seconds",
+    "2026-10-12T01:07:23.1237320Z \t Executed 902 tests, with 1 failure (0 unexpected) in 113.307 (113.356) seconds",
+    "2026-10-12T01:10:15.1717330Z \t Executed 24 tests, with 1 failure (0 unexpected) in 7.236 (7.247) seconds",
+    "2026-10-12T01:10:15.1719310Z \t Executed 24 tests, with 1 failure (0 unexpected) in 7.236 (7.250) seconds",
+    "2026-10-12T01:38:56.7146410Z \t Executed 76 tests, with 38 failures (3 unexpected) in 1713.959 (1714.034) seconds",
+    "2026-10-12T01:38:56.8645460Z \t Executed 76 tests, with 38 failures (3 unexpected) in 1713.959 (1714.038) seconds",
+    "2026-10-12T01:42:00.9049970Z \t Executed 24 tests, with 1 failure (0 unexpected) in 6.458 (6.491) seconds",
+    "2026-10-12T01:42:00.9156630Z \t Executed 24 tests, with 1 failure (0 unexpected) in 6.458 (6.494) seconds",
+    "2026-10-12T02:12:07.9841500Z \t Executed 76 tests, with 35 failures (3 unexpected) in 1799.919 (1799.985) seconds",
+    "2026-10-12T02:12:08.2403380Z \t Executed 76 tests, with 35 failures (3 unexpected) in 1799.919 (1799.987) seconds"
+  ],
+  "failures": [
+    {
+      "file": "ComicCore/Tests/ComicCoreTests/CacheMaintenanceTests.swift",
+      "line": 24,
+      "suite": "ComicCoreTests.CacheMaintenanceTests",
+      "test": "testDiskCleanupRestoresLimitsAndAllowsLaterResponses",
+      "message": "XCTAssertTrue failed - Actual remaining cache: memory=0, disk=36864",
+      "timestamp": "2026-10-12T01:05:48.1430710Z"
+    },
+    {
+      "file": "XXComicTests/ReaderSeekGeometryTests.swift",
+      "line": 38,
+      "suite": "XXComicTests.ReaderSeekGeometryTests",
+      "test": "testCenteredToolbarGivesTheVisibleSliderATouchableParent",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:10:15.1624510Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 32,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testCancelledDownloadAfterPendingReadCanOpenReaderAgain",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 36959",
+      "timestamp": "2026-10-12T01:13:26.1970980Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 32,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 37547",
+      "timestamp": "2026-10-12T01:13:35.2869850Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 95,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:15:33.1617500Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 99,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:15:42.8570520Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 18,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testEmptyDiscoveryGroupDoesNotBlockGlobalSearch",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 45943",
+      "timestamp": "2026-10-12T01:16:01.5051200Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 18,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 46611",
+      "timestamp": "2026-10-12T01:16:09.5916630Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 160,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testLateDetailSuccessKeepsDownloadFailureAndItsRetryAction",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 47162",
+      "timestamp": "2026-10-12T01:16:18.5013040Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 32,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testStartingDownloadCancelsPendingReadAndReturnsToDetail",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 47299",
+      "timestamp": "2026-10-12T01:16:26.7661290Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 32,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testStartingReadCancelsPendingDownload",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 47953",
+      "timestamp": "2026-10-12T01:16:35.0657730Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 55,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testMissingExternalFolderCanBeReauthorizedThroughRealFiles",
+      "message": "XCTAssertTrue failed - Navigate into the exact external folder before confirming its grant",
+      "timestamp": "2026-10-12T01:25:33.0525960Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 57,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testMissingExternalFolderCanBeReauthorizedThroughRealFiles",
+      "message": "failed: caught error: \"targetNotOpened\"",
+      "timestamp": "2026-10-12T01:25:33.5326030Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 38,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:25:59.3519130Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 55,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch",
+      "message": "XCTAssertTrue failed - Navigate into the exact external folder before confirming its grant",
+      "timestamp": "2026-10-12T01:26:13.8837820Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 57,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch",
+      "message": "failed: caught error: \"targetNotOpened\"",
+      "timestamp": "2026-10-12T01:26:14.2567250Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 38,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:26:37.7875910Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 55,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch",
+      "message": "XCTAssertTrue failed - Navigate into the exact external folder before confirming its grant",
+      "timestamp": "2026-10-12T01:26:52.5765850Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 57,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch",
+      "message": "failed: caught error: \"targetNotOpened\"",
+      "timestamp": "2026-10-12T01:26:53.1032370Z"
+    },
+    {
+      "file": "XXComicUITests/SettingsParityUITests.swift",
+      "line": 47,
+      "suite": "XXComicUITests.SettingsParityUITests",
+      "test": "testCacheCleanupKeepsLibraryAndFixtureDiscovery",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:34:16.5288500Z"
+    },
+    {
+      "file": "XXComicUITests/SourceDrawerTests.swift",
+      "line": 72,
+      "suite": "XXComicUITests.SourceDrawerTests",
+      "test": "testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs",
+      "message": "XCTAssertTrue failed - The selected source must be reachable through the actual source grid",
+      "timestamp": "2026-10-12T01:35:03.1391410Z"
+    },
+    {
+      "file": "XXComicUITests/SourceDrawerTests.swift",
+      "line": 35,
+      "suite": "XXComicUITests.SourceDrawerTests",
+      "test": "testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 10429",
+      "timestamp": "2026-10-12T01:35:06.7566780Z"
+    },
+    {
+      "file": "XXComicUITests/SourceDrawerTests.swift",
+      "line": 12,
+      "suite": "XXComicUITests.SourceDrawerTests",
+      "test": "testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 11771",
+      "timestamp": "2026-10-12T01:35:14.5327270Z"
+    },
+    {
+      "file": "XXComicUITests/SourceDrawerTests.swift",
+      "line": 68,
+      "suite": "XXComicUITests.SourceDrawerTests",
+      "test": "testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm",
+      "message": "Failed to get matching snapshot: No matches found for Elements matching predicate '\"discover.source\" IN identifiers' from input {(",
+      "timestamp": "2026-10-12T01:35:28.4637960Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 148,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferenceLandscapeDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:35:48.2729370Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 151,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferenceLandscapeDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:35:59.1665980Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 148,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferenceLandscapeLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:36:20.1447300Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 151,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferenceLandscapeLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:36:31.0604460Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 148,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferencePortraitDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:36:50.7795200Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 151,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferencePortraitDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:37:01.6752320Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 148,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferencePortraitLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:37:20.1717160Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 151,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferencePortraitLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:37:31.0586760Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixLandscapeDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:37:50.4145670Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixLandscapeDark",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 20947",
+      "timestamp": "2026-10-12T01:37:52.6569730Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixLandscapeLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:38:10.5061690Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixLandscapeLight",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 22300",
+      "timestamp": "2026-10-12T01:38:12.7503420Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixPortraitDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:38:32.3972850Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixPortraitDark",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 24616",
+      "timestamp": "2026-10-12T01:38:34.6445200Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixPortraitLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:38:53.7843100Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixPortraitLight",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 26043",
+      "timestamp": "2026-10-12T01:38:56.0610910Z"
+    },
+    {
+      "file": "XXComicTests/ReaderSeekGeometryTests.swift",
+      "line": 38,
+      "suite": "XXComicTests.ReaderSeekGeometryTests",
+      "test": "testCenteredToolbarGivesTheVisibleSliderATouchableParent",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:42:00.7635100Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 32,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testCancelledDownloadAfterPendingReadCanOpenReaderAgain",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 44326",
+      "timestamp": "2026-10-12T01:44:59.0576010Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 32,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 44872",
+      "timestamp": "2026-10-12T01:45:09.1497840Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 95,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:46:01.0650620Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 99,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T01:46:09.3177820Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 18,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testEmptyDiscoveryGroupDoesNotBlockGlobalSearch",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 49709",
+      "timestamp": "2026-10-12T01:46:31.2821000Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 18,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 50770",
+      "timestamp": "2026-10-12T01:46:40.1224330Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 160,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testLateDetailSuccessKeepsDownloadFailureAndItsRetryAction",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 50981",
+      "timestamp": "2026-10-12T01:46:49.4784940Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 32,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testStartingDownloadCancelsPendingReadAndReturnsToDetail",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 51690",
+      "timestamp": "2026-10-12T01:46:59.4797960Z"
+    },
+    {
+      "file": "XXComicUITests/CurrentParityUITests.swift",
+      "line": 32,
+      "suite": "XXComicUITests.CurrentParityUITests",
+      "test": "testStartingReadCancelsPendingDownload",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 51963",
+      "timestamp": "2026-10-12T01:47:09.4443750Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 55,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testMissingExternalFolderCanBeReauthorizedThroughRealFiles",
+      "message": "XCTAssertTrue failed - Navigate into the exact external folder before confirming its grant",
+      "timestamp": "2026-10-12T01:56:13.2960980Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 57,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testMissingExternalFolderCanBeReauthorizedThroughRealFiles",
+      "message": "failed: caught error: \"targetNotOpened\"",
+      "timestamp": "2026-10-12T01:56:14.0670850Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 55,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch",
+      "message": "XCTAssertTrue failed - Navigate into the exact external folder before confirming its grant",
+      "timestamp": "2026-10-12T01:56:49.5703880Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 57,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch",
+      "message": "failed: caught error: \"targetNotOpened\"",
+      "timestamp": "2026-10-12T01:56:50.3246890Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 55,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch",
+      "message": "XCTAssertTrue failed - Navigate into the exact external folder before confirming its grant",
+      "timestamp": "2026-10-12T01:57:26.1934770Z"
+    },
+    {
+      "file": "XXComicUITests/ExternalFilesParityUITests.swift",
+      "line": 57,
+      "suite": "XXComicUITests.ExternalFilesParityUITests",
+      "test": "testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch",
+      "message": "failed: caught error: \"targetNotOpened\"",
+      "timestamp": "2026-10-12T01:57:27.0178660Z"
+    },
+    {
+      "file": "XXComicUITests/SettingsParityUITests.swift",
+      "line": 47,
+      "suite": "XXComicUITests.SettingsParityUITests",
+      "test": "testCacheCleanupKeepsLibraryAndFixtureDiscovery",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:07:01.6725710Z"
+    },
+    {
+      "file": "XXComicUITests/SourceDrawerTests.swift",
+      "line": 72,
+      "suite": "XXComicUITests.SourceDrawerTests",
+      "test": "testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs",
+      "message": "XCTAssertTrue failed - The selected source must be reachable through the actual source grid",
+      "timestamp": "2026-10-12T02:07:52.7454420Z"
+    },
+    {
+      "file": "XXComicUITests/SourceDrawerTests.swift",
+      "line": 35,
+      "suite": "XXComicUITests.SourceDrawerTests",
+      "test": "testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 35497",
+      "timestamp": "2026-10-12T02:07:56.3134020Z"
+    },
+    {
+      "file": "XXComicUITests/SourceDrawerTests.swift",
+      "line": 12,
+      "suite": "XXComicUITests.SourceDrawerTests",
+      "test": "testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 36499",
+      "timestamp": "2026-10-12T02:08:05.6926610Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 148,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferenceLandscapeDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:08:39.2673980Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 151,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferenceLandscapeDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:08:50.2248030Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 148,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferenceLandscapeLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:09:12.7369970Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 151,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferenceLandscapeLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:09:23.7510190Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 148,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferencePortraitDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:09:45.0098220Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 151,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferencePortraitDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:09:56.0420430Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 148,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferencePortraitLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:10:17.6177850Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 151,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testSettingsReferencePortraitLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:10:28.6962700Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixLandscapeDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:10:52.2801740Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixLandscapeDark",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 47159",
+      "timestamp": "2026-10-12T02:10:54.5622370Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixLandscapeLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:11:15.1371310Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixLandscapeLight",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 48975",
+      "timestamp": "2026-10-12T02:11:17.4491390Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixPortraitDark",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:11:40.6289120Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixPortraitDark",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 50829",
+      "timestamp": "2026-10-12T02:11:42.9547570Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixPortraitLight",
+      "message": "XCTAssertTrue failed",
+      "timestamp": "2026-10-12T02:12:04.8218350Z"
+    },
+    {
+      "file": "XXComicUITests/VisualMatrixUITests.swift",
+      "line": 71,
+      "suite": "XXComicUITests.VisualMatrixUITests",
+      "test": "testVisualMatrixPortraitLight",
+      "message": "Failed to tap SearchField (First Match): No matches found for first query match sequence: `Descendants matching type SearchField`, given input App element pid: 52608",
+      "timestamp": "2026-10-12T02:12:07.1340560Z"
+    }
+  ]
+}

@@ -22,6 +22,7 @@ targets:
     sources:
       - path: TestSupport/FilesFixtureHost
         excludes: [Info.plist]
+      - path: XXComic/LaunchScreen.storyboard
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.xxcomic.tests.filesfixture

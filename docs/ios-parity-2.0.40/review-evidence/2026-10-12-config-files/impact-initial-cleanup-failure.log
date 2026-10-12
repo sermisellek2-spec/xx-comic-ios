@@ -1,0 +1,114 @@
+[0/1] Planning build
+Building for debugging...
+[0/12] Write sources
+[0/12] Write swift-version-24593BA9C3E375BF.txt
+[4/12] Compiling ComicCore SourcePreferences.swift
+[5/12] Emitting module ComicCore
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[7/24] Emitting module ComicCoreTests
+[8/34] Compiling ComicCoreTests ReaderLoadStateTests.swift
+[9/34] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+[10/34] Compiling ComicCoreTests ReaderSessionTests.swift
+[11/34] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+[12/34] Compiling ComicCoreTests ReadingRulesTests.swift
+[13/34] Compiling ComicCoreTests RetiredComicSourceTests.swift
+[14/34] Compiling ComicCoreTests SearchRulesTests.swift
+[15/34] Compiling ComicCoreTests SourceAESTests.swift
+[16/34] Compiling ComicCoreTests SourceConfigDocumentsTests.swift
+[17/34] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+[18/34] Compiling ComicCoreTests SourceGroupStoreTests.swift
+[19/34] Compiling ComicCoreTests SourceImportContractTests.swift
+[20/34] Compiling ComicCoreTests SourcePreferencesTests.swift
+[21/34] Compiling ComicCoreTests SourceSearchTrimTests.swift
+[22/34] Compiling ComicCoreTests StorageCalculatorTests.swift
+[23/34] Compiling ComicCoreTests TextReadingTests.swift
+[24/34] Compiling ComicCoreTests UsageStatsClientTests.swift
+[25/34] Compiling ComicCoreTests UsageStatsReportingTests.swift
+[26/34] Compiling ComicCoreTests WhiteMarginTests.swift
+[27/34] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+[28/34] Compiling ComicCoreTests resource_bundle_accessor.swift
+[29/37] Wrapping AST for ComicCoreTests for debugging
+[30/37] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[31/38] Write sources
+[33/40] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[34/40] Emitting module ComicCorePackageDiscoveredTests
+[35/41] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[36/42] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[37/42] Write sources
+[38/42] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[40/44] Emitting module ComicCorePackageTests
+[41/44] Compiling ComicCorePackageTests runner.swift
+[42/44] Write Objects.LinkFileList
+[43/44] Linking ComicCorePackageTests.xctest
+Build complete! (32.40s)
+Test Suite 'Selected tests' started at 2026-10-12 02:20:34.929
+Test Suite 'SourceConfigDocumentsTests' started at 2026-10-12 02:20:34.945
+Test Case 'SourceConfigDocumentsTests.testCancelledFileReadCannotWritePreferences' started at 2026-10-12 02:20:34.945
+Test Case 'SourceConfigDocumentsTests.testCancelledFileReadCannotWritePreferences' passed (0.089 seconds)
+Test Case 'SourceConfigDocumentsTests.testExportCleanupPreservesUnknownFilesAndRejectsReplacedFileAndLinks' started at 2026-10-12 02:20:35.034
+<EXPR>:0: error: SourceConfigDocumentsTests.testExportCleanupPreservesUnknownFilesAndRejectsReplacedFileAndLinks : threw error "unsafeExport"
+Test Case 'SourceConfigDocumentsTests.testExportCleanupPreservesUnknownFilesAndRejectsReplacedFileAndLinks' failed (0.009 seconds)
+Test Case 'SourceConfigDocumentsTests.testInvalidFileDoesNotApplyValidFirstItemAndCanRetryWithAValidFile' started at 2026-10-12 02:20:35.043
+Test Case 'SourceConfigDocumentsTests.testInvalidFileDoesNotApplyValidFirstItemAndCanRetryWithAValidFile' passed (0.012 seconds)
+Test Case 'SourceConfigDocumentsTests.testPreparedImportCannotOverwriteConfigurationChangedDuringFileRead' started at 2026-10-12 02:20:35.055
+Test Case 'SourceConfigDocumentsTests.testPreparedImportCannotOverwriteConfigurationChangedDuringFileRead' passed (0.005 seconds)
+Test Case 'SourceConfigDocumentsTests.testRealJSONFileRoundTripRetainsAll51SourcesAnd50EnabledAfterReload' started at 2026-10-12 02:20:35.060
+<EXPR>:0: error: SourceConfigDocumentsTests.testRealJSONFileRoundTripRetainsAll51SourcesAnd50EnabledAfterReload : threw error "unsafeExport"
+Test Case 'SourceConfigDocumentsTests.testRealJSONFileRoundTripRetainsAll51SourcesAnd50EnabledAfterReload' failed (0.032 seconds)
+Test Case 'SourceConfigDocumentsTests.testUnreadableNonUTF8OversizedAndDirectoryInputsAreRejected' started at 2026-10-12 02:20:35.093
+Test Case 'SourceConfigDocumentsTests.testUnreadableNonUTF8OversizedAndDirectoryInputsAreRejected' passed (0.017 seconds)
+Test Case 'SourceConfigDocumentsTests.testUnsupportedFieldsReportPartialImportThroughARealFile' started at 2026-10-12 02:20:35.110
+Test Case 'SourceConfigDocumentsTests.testUnsupportedFieldsReportPartialImportThroughARealFile' passed (0.006 seconds)
+Test Suite 'SourceConfigDocumentsTests' failed at 2026-10-12 02:20:35.116
+Executed 7 tests, with 2 failures (2 unexpected) in 0.171 (0.171) seconds
+Test Suite 'SourceImportContractTests' started at 2026-10-12 02:20:35.116
+Test Case 'SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues' started at 2026-10-12 02:20:35.116
+Test Case 'SourceImportContractTests.testAuditedUnconsumedRoutesReportOverridesAndPreserveValues' passed (0.01 seconds)
+Test Case 'SourceImportContractTests.testCurrentCatalogExportRoundTripDoesNotAddPhantomRoutesOrWarnings' started at 2026-10-12 02:20:35.126
+Test Case 'SourceImportContractTests.testCurrentCatalogExportRoundTripDoesNotAddPhantomRoutesOrWarnings' passed (0.024 seconds)
+Test Case 'SourceImportContractTests.testFlatLegacyPathsReachRoutesAndExplicitV2RoutesTakePrecedence' started at 2026-10-12 02:20:35.150
+Test Case 'SourceImportContractTests.testFlatLegacyPathsReachRoutesAndExplicitV2RoutesTakePrecedence' passed (0.006 seconds)
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' started at 2026-10-12 02:20:35.156
+Test Case 'SourceImportContractTests.testFutureVersionIsRejectedBeforeMutation' passed (0.002 seconds)
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' started at 2026-10-12 02:20:35.158
+Test Case 'SourceImportContractTests.testMalformedPackageDoesNotPartiallyChangeOrderSwitchesOrConfig' passed (0.002 seconds)
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' started at 2026-10-12 02:20:35.160
+Test Case 'SourceImportContractTests.testMinimalV2ItemMergesDefaultsAndConsumesOverrides' passed (0.004 seconds)
+Test Case 'SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes' started at 2026-10-12 02:20:35.164
+Test Case 'SourceImportContractTests.testPublicSourceFlatPathsAreReportedAndCannotCreateUnconsumedRoutes' passed (0.004 seconds)
+Test Case 'SourceImportContractTests.testUnconsumedCompatibilityOverridesAreReportedAndDoNotReplaceStoredValues' started at 2026-10-12 02:20:35.168
+Test Case 'SourceImportContractTests.testUnconsumedCompatibilityOverridesAreReportedAndDoNotReplaceStoredValues' passed (0.004 seconds)
+Test Case 'SourceImportContractTests.testUnconsumedFilterChangesReportSkipAndKeepSupportedManbenSort' started at 2026-10-12 02:20:35.172
+Test Case 'SourceImportContractTests.testUnconsumedFilterChangesReportSkipAndKeepSupportedManbenSort' passed (0.004 seconds)
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' started at 2026-10-12 02:20:35.176
+Test Case 'SourceImportContractTests.testUnknownAndCustomSourcesDoNotBecomeActiveSources' passed (0.003 seconds)
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' started at 2026-10-12 02:20:35.179
+Test Case 'SourceImportContractTests.testUnsupportedKeysAreReportedWithoutDroppingSupportedConfiguration' passed (0.003 seconds)
+Test Suite 'SourceImportContractTests' passed at 2026-10-12 02:20:35.182
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.066 (0.066) seconds
+Test Suite 'SourcePreferencesTests' started at 2026-10-12 02:20:35.182
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' started at 2026-10-12 02:20:35.182
+Test Case 'SourcePreferencesTests.testCanonicalIDMappingAndLegacyAliases' passed (0.0 seconds)
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' started at 2026-10-12 02:20:35.183
+Test Case 'SourcePreferencesTests.testDisablingPreservesPositionAcrossReloadAndResetLeavesSwitchesUnchanged' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' started at 2026-10-12 02:20:35.183
+Test Case 'SourcePreferencesTests.testExportAndImportConfigJson' passed (0.003 seconds)
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' started at 2026-10-12 02:20:35.187
+Test Case 'SourcePreferencesTests.testImportedConfigUpdatesSourceEndpointsAndHeaders' passed (0.042 seconds)
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' started at 2026-10-12 02:20:35.229
+Test Case 'SourcePreferencesTests.testInvalidPreferencesKeepDefaultsAndCannotCreatePhantomSource' passed (0.001 seconds)
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' started at 2026-10-12 02:20:35.229
+Test Case 'SourcePreferencesTests.testOrderDropsRemovedAndDuplicatesAndAppendsNewSources' passed (0.0 seconds)
+Test Suite 'SourcePreferencesTests' passed at 2026-10-12 02:20:35.230
+Executed 6 tests, with 0 failures (0 unexpected) in 0.048 (0.048) seconds
+Test Suite 'Selected tests' failed at 2026-10-12 02:20:35.230
+Executed 24 tests, with 2 failures (2 unexpected) in 0.285 (0.285) seconds

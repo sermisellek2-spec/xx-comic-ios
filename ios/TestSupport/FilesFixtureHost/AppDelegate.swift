@@ -19,6 +19,8 @@ private final class FilesFixtureViewController: UIViewController {
     private var replacement: URL?
     private let markerName = ".fixture-owner"
     private var token: String?
+    private var configFolder: URL?
+    private let exportStatus = UILabel()
 
     override func viewDidLoad() {
         super.viewDidLoad(); view.backgroundColor = .systemBackground
@@ -27,7 +29,12 @@ private final class FilesFixtureViewController: UIViewController {
         retire.setTitle("模拟原目录失效，保留新目录", for: .normal)
         retire.accessibilityIdentifier = "files.fixture.retire"
         retire.addTarget(self, action: #selector(retireFolder), for: .touchUpInside)
-        let stack = UIStackView(arrangedSubviews: [status, retire])
+        let verify = UIButton(type: .system)
+        verify.setTitle("校验实际导出的站源文件", for: .normal)
+        verify.accessibilityIdentifier = "files.fixture.verify-export"
+        verify.addTarget(self, action: #selector(verifyExport), for: .touchUpInside)
+        exportStatus.numberOfLines = 0; exportStatus.accessibilityIdentifier = "files.fixture.export.status"
+        let stack = UIStackView(arrangedSubviews: [status, retire, verify, exportStatus])
         stack.axis = .vertical; stack.spacing = 20; stack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -44,8 +51,40 @@ private final class FilesFixtureViewController: UIViewController {
             let folder = documents.appendingPathComponent("Files漫画_" + String(session.prefix(8)), isDirectory: true)
             selected = folder; replacement = documents.appendingPathComponent(folder.lastPathComponent + "_新", isDirectory: true)
             try create(folder, session: session)
+            let configs = documents.appendingPathComponent("站源配置_" + String(session.prefix(8)), isDirectory: true)
+            try createConfigs(configs); configFolder = configs
             status.text = "准备完成：" + folder.lastPathComponent
         } catch { status.text = "准备失败：" + error.localizedDescription }
+    }
+
+    private func createConfigs(_ folder: URL) throws {
+        let manager = FileManager.default
+        if manager.fileExists(atPath: folder.path) { return }
+        try manager.createDirectory(at: folder, withIntermediateDirectories: false)
+        let files = [
+            "changed.json": #"{"schema":"xx-comic.sources","version":2,"sourceOrder":["duya","mh160"],"sources":[{"id":"duya","enabled":true},{"id":"mh160","enabled":false}]}"#,
+            "invalid.json": #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"mh160","enabled":false},{"id":"gmh","enabled":"invalid"}]}"#,
+            "partial.json": #"{"schema":"xx-comic.sources","version":2,"sources":[{"id":"gmh","enabled":false,"routes":{"fictional":"/ignored"}},{"id":"baozimh"}],"custom":[{"id":"custom-test"}]}"#
+        ]
+        for (name, text) in files { try Data(text.utf8).write(to: folder.appendingPathComponent(name), options: .withoutOverwriting) }
+    }
+
+    @objc private func verifyExport() {
+        do {
+            guard let configFolder else { throw CocoaError(.fileNoSuchFile) }
+            let data = try Data(contentsOf: configFolder.appendingPathComponent("xx-comic-sources.json"))
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  json["schema"] as? String == "xx-comic.sources", json["version"] as? Int == 2,
+                  let sources = json["sources"] as? [[String: Any]], sources.count == 51,
+                  Set(sources.compactMap { $0["id"] as? String }).count == 51,
+                  sources.first(where: { $0["id"] as? String == "duya" })?["enabled"] as? Bool == true,
+                  sources.first(where: { $0["id"] as? String == "mh160" })?["enabled"] as? Bool == false,
+                  let order = json["sourceOrder"] as? [String], order.count == 51, Array(order.prefix(2)) == ["duya", "mh160"] else {
+                throw CocoaError(.fileReadCorruptFile)
+            }
+            let enabled = sources.filter { $0["enabled"] as? Bool == true }.count
+            exportStatus.text = "已校验实际文件：51 个站源，\(enabled) 个开启；毒牙开启，漫画160关闭"
+        } catch { exportStatus.text = "导出文件校验失败" }
     }
 
     private func image(_ index: Int) -> Data {
