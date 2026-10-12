@@ -856,7 +856,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                     let vm = VolumeManagerViewController(seriesId: comic.comicId, seriesTitle: comic.title, environment: self.environment) { [weak self] in
                         self?.refresh()
                     }
-                    let nav = UINavigationController(rootViewController: vm)
+                    let nav = FilterDrawerNavigationController(rootViewController: vm)
                     self.present(nav, animated: true)
                 }
                 let renameAction = UIAction(title: "修改作品名称", image: UIImage(systemName: "pencil")) { [weak self] _ in

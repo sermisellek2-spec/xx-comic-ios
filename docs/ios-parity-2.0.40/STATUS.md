@@ -6,9 +6,11 @@
 
 CI34父输入1990c84已完整成功：两SDK/图标/Release隔离，Apple Core929项零失败，iPhone及iPad各30原生和93UI全部通过，无跳过；130张实拍已保存。[完整原件与边界](review-evidence/2026-10-13-ci34-results/README.md)。该版本不包含随后设置与缓存修正，不能标当前交付通过。
 
-最新CI37/ce0607c影响复验失败：Core929零失败、两SDK/图标/隔离通过；每设备32原生各有1失败用例，手机directory旧正文及重开仍命中，平板真实Cookie清理超时。两设备6UI各4通过、2设置参考的清理前提失败。[CI37原件](review-evidence/2026-10-13-ci37-results/README.md)。CI35/36失败原件保持，不把实际正文残留当作系统索引。
+CI37/ce0607c失败原件保持：手机directory正文/重开命中，平板实际Cookie清理超时。随后CI38/7f440e7影响复验实际成功：两SDK/图标/Release隔离，Apple929核心零失败，iPhone/iPad各32原生及6UI全部通过。两个后端正文与重开均零命中，已有Cookie实际删除，八设置清理前提与横屏安全区原断言通过。[CI38原件](review-evidence/2026-10-13-ci38-results/README.md)。这不是最终完整交付结果。
 
-当前候选保留URLCache后端/容量，以两个公开清理接口清理实际响应；WebKit先完成无网络本地页初始化，再等待实际全数据清理回调。保留8秒失败/重试、10秒UI、正文/重开/原包/后来缓存能力断言。13项核心影响0失败，90Swift两配置仅语法解析通过；当前Linux完整Core922项/2个Apple PDF跳过/0失败/148.348秒，实际退出0且输入SHA不变；当前Apple复验待上传运行。[候选及本机记录](review-evidence/2026-10-13-cache-local-document/README.md)。
+缓存保留后端/容量、8秒失败/重试、10秒UI及正文/重开/原包/后来缓存断言。真实框架索引仍如实显示，没有伪造0或直接删数据库。当前Linux完整Core922项/2个Apple PDF跳过/0失败/148.348秒。Core生产此后未改。
+
+逐入口核对发现分卷追加/排序/撤销、外部文件夹实际变更、大目录快滚、双指缩放以及进度取消的用户闭环覆盖不足，正在补验。分卷页同时改为接近冻结安卓的底部卡片列表和后台文件操作，追加可取消，确认移除不依赖已关闭页面。当前声明34原生/101UI；本机两配置仅语法通过，当前Apple影响验收待运行。[补验范围与边界](review-evidence/2026-10-13-volume-sync-coverage/README.md)。
 
 父输入64页同内容侧图已逐组件检查；8设置侧图另已查看。布局/文字/控件未发现重要缺失；iPhone横屏设置分组标题未避开安全区，当前已修并在原八场景检查中补实际横向对齐约束，须当前Apple实拍确认。所有旧图均标父输入，不算当前视觉通过。[64页审查](review-evidence/2026-10-13-current-visual/ci33-comparison/manual-component-review.json)、[设置审查](review-evidence/2026-10-13-current-visual/settings-ci36-comparison/manual-component-review.json)、[安全区修正](review-evidence/2026-10-13-settings-safe-area/README.md)。
 

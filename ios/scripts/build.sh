@@ -92,6 +92,8 @@ case "$validation_scope" in
       -only-testing:XXComicTests
       -only-testing:XXComicUITests/BookshelfParityUITests
       -only-testing:XXComicUITests/ExternalFilesParityUITests
+      -only-testing:XXComicUITests/VolumeManagerParityUITests
+      -only-testing:XXComicUITests/ReaderSettingsParityUITests/testActualPinchAndZoomedPanDoNotTurnThePageAndTurningResumesAfterZoomReset
       -only-testing:XXComicUITests/ReaderContinuityUITests
       -only-testing:XXComicUITests/DownloadLifecycleUITests
     )

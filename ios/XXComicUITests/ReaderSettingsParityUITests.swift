@@ -58,6 +58,20 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         }, object: app)
         XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 3), .completed)
     }
+    func testActualPinchAndZoomedPanDoNotTurnThePageAndTurningResumesAfterZoomReset() {
+        let app = launch(); app.buttons["reader.layout.1"].tap(); app.buttons["reader.settings.close"].tap(); page(1, in: app)
+        controls(false, in: app)
+        let pages = app.collectionViews["reader.pages"], image = app.images["reader.image"].firstMatch
+        let width = image.frame.width
+        image.pinch(withScale: 2, velocity: 1)
+        let zoomed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in image.frame.width > width * 1.2 }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [zoomed], timeout: 5), .completed)
+        pages.swipeLeft(); page(1, in: app)
+        image.pinch(withScale: 0.25, velocity: -1)
+        let reset = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in abs(image.frame.width - width) <= 1 }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [reset], timeout: 5), .completed)
+        pages.swipeLeft(); page(2, in: app)
+    }
     func testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage() {
         let app = launch()
         app.buttons["reader.layout.2"].tap()

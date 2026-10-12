@@ -54,6 +54,39 @@ final class ExternalFilesParityUITests: ParityUITestCase {
         app.terminate(); app.launch()
         XCTAssertTrue(app.tabBars.buttons["书架"].waitForExistence(timeout: 10)); read(app)
     }
+    func testForegroundFolderSyncAddsRenamesRemovesAndRestoresActualExternalPages() throws {
+        let host = prepareHost(), app = launch()
+        app.buttons["local.folder.link"].tap(); try choose(folderName, app: app)
+        XCTAssertTrue(app.staticTexts["已关联文件夹；正文直接读取，原文件保留"].waitForExistence(timeout: 15))
+        app.navigationBars.buttons.firstMatch.tap(); read(app)
+        app.sliders["reader.seek"].adjust(toNormalizedSliderPosition: 1)
+        XCTAssertTrue((app.collectionViews["reader.pages"].value as? String)?.contains("第 2 页，共 2 页") == true)
+        func returnToStorage() {
+            app.buttons["reader.back"].tap(); app.navigationBars.buttons.firstMatch.tap()
+            app.tabBars.buttons["设置"].tap(); app.cells["settings.storage"].tap()
+        }
+        func waitForCount(_ count: Int) {
+            let record = app.cells.matching(NSPredicate(format: "identifier BEGINSWITH %@", "local.folder.")).firstMatch
+            let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "\(count) 张图片 · 正常同步"), object: record)
+            XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed)
+        }
+        returnToStorage(); host.activate(); host.buttons["files.fixture.change-images"].tap()
+        XCTAssertEqual(host.staticTexts["files.fixture.status"].label, "已新增03并将02改名04：3张图片")
+        app.activate(); waitForCount(3)
+        app.navigationBars.buttons.firstMatch.tap(); read(app)
+        XCTAssertTrue((app.collectionViews["reader.pages"].value as? String)?.contains("第 3 页，共 3 页") == true, "Rename must retain the same page identity while the new picture shifts its index")
+        app.sliders["reader.seek"].adjust(toNormalizedSliderPosition: 0.5)
+        let changedPixels = app.images.matching(identifier: "reader.image").matching(NSPredicate(format: "value CONTAINS ':64x96'")).firstMatch
+        XCTAssertTrue(changedPixels.waitForExistence(timeout: 15), "Decode the new external file, rather than a copied or stale image")
+        returnToStorage(); host.activate(); host.buttons["files.fixture.remove-first-image"].tap()
+        XCTAssertEqual(host.staticTexts["files.fixture.status"].label, "已移除01：2张图片，03和04保留")
+        app.activate(); waitForCount(2); app.terminate(); app.launch()
+        XCTAssertTrue(app.tabBars.buttons["书架"].waitForExistence(timeout: 10)); app.tabBars.buttons["书架"].tap(); app.buttons["bookshelf.tab.1"].tap()
+        let book = app.collectionViews.cells[folderName]; XCTAssertTrue(book.waitForExistence(timeout: 10)); book.tap(); app.buttons["detail.read"].tap()
+        XCTAssertTrue(changedPixels.waitForExistence(timeout: 15))
+        XCTAssertTrue((app.collectionViews["reader.pages"].value as? String)?.contains("第 1 页，共 2 页") == true)
+        XCTAssertFalse(app.alerts.firstMatch.exists)
+    }
     func testMissingExternalFolderCanBeReauthorizedThroughRealFiles() throws {
         let host = prepareHost(), app = launch()
         app.buttons["local.folder.link"].tap(); try choose(folderName, app: app)

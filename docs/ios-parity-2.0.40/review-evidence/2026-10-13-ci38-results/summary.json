@@ -1,0 +1,65 @@
+{
+  "runID": 38305588173,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38305588173",
+  "revision": "7f440e7dc77cf262f8648a85fb8970192542360a",
+  "scope": "settings-reference",
+  "conclusion": "success",
+  "SDKBuildsSucceeded": 2,
+  "suites": {
+    "ComicCorePackageTests.xctest": [
+      {
+        "executed": 929,
+        "failures": 0,
+        "seconds": 131.425
+      }
+    ],
+    "XXComicTests.xctest": [
+      {
+        "executed": 32,
+        "failures": 0,
+        "seconds": 11.971
+      },
+      {
+        "executed": 32,
+        "failures": 0,
+        "seconds": 13.653
+      }
+    ],
+    "XXComicUITests.xctest": [
+      {
+        "executed": 6,
+        "failures": 0,
+        "seconds": 125.328
+      },
+      {
+        "executed": 6,
+        "failures": 0,
+        "seconds": 118.159
+      }
+    ]
+  },
+  "cacheKnownBodiesAndReopenedBodiesRemoved": true,
+  "WebKitRealCookieAndUnusedContextPassedOnBothDevices": true,
+  "settingsSafeAreaOriginalAssertionsPassed": true,
+  "settingsReferencePNG": 8,
+  "originals": {
+    "logs-original.zip": {
+      "bytes": 678008,
+      "sha256": "10ab719bce6f8a8a0574eaa0e7d7146b5d053fc6a230a6f798bf63fefdec2659"
+    },
+    "visual-original.zip": {
+      "bytes": 1474839,
+      "sha256": "f6313a281130de0aac66ed7fdb18e7506a3da75890cb4f13bfe758ce884899d3"
+    },
+    "build-log-original.zip": {
+      "bytes": 233778,
+      "sha256": "48275232719bba0c98f23336220da71cb39604183c40644d3b59e8ac7a28b096"
+    },
+    "build-log-extracted\\build-and-test.log": {
+      "bytes": 10913218,
+      "sha256": "e2ad1b777a81c3bea54c700e9d0200d95e0ae2a1aa094214251983cfb26e7bcb"
+    }
+  },
+  "fullDeliveryPassed": false,
+  "boundary": "Actual targeted Apple run; later volume changes and complete UI/visual/packaging still require their own final revision"
+}

@@ -240,7 +240,8 @@ struct MatrixUITestSource: ComicSource {
         }
     }
     var chapterList: [Chapter] {
-        (1...MatrixSharedFixture.document.chapterCount).map { Chapter(chapterId: "\(id)_chapter_\($0)", title: "第\($0)话", url: "\(referer)\(id)/chapter/\($0)") }
+        let count = ProcessInfo.processInfo.arguments.contains("--matrix-large-directory") ? 200 : MatrixSharedFixture.document.chapterCount
+        return (1...count).map { Chapter(chapterId: "\(id)_chapter_\($0)", title: "第\($0)话", url: "\(referer)\(id)/chapter/\($0)") }
     }
     func latest(page: Int) async throws -> [ComicSummary] { try Task.checkCancellation(); return page == 1 ? comics : [] }
     func search(keyword: String, page: Int) async throws -> [ComicSummary] {

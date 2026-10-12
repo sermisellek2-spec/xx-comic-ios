@@ -150,6 +150,28 @@ final class ReaderContinuityUITests: ParityUITestCase {
         XCTAssertEqual(pages.value as? String, "第1话，第 1 页，共 4 页")
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
+    func testLargeDirectoryFastScrollOrderAndCurrentChapterKeepTheReaderReturnPath() {
+        let app = launch("--matrix-paged-reader", "--matrix-large-directory")
+        app.buttons["reader.directory"].tap()
+        let rail = app.otherElements["chapter.drawer.fast-scroll"], table = app.tables["chapter.drawer.list"]
+        XCTAssertTrue(rail.waitForExistence(timeout: 5)); XCTAssertGreaterThanOrEqual(rail.frame.width, 44)
+        rail.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.99)).tap()
+        XCTAssertTrue(table.cells["第200话"].isHittable)
+        app.buttons["chapter.drawer.order"].tap()
+        rail.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.01)).tap()
+        XCTAssertTrue(table.cells["第200话"].isHittable); table.cells["第200话"].tap()
+        let pages = app.collectionViews["reader.pages"]
+        let reached = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value CONTAINS '第200话'"), object: pages)
+        XCTAssertEqual(XCTWaiter.wait(for: [reached], timeout: 15), .completed)
+        XCTAssertTrue(app.images["reader.image"].firstMatch.exists)
+        revealControls(app); app.buttons["reader.directory"].tap()
+        XCTAssertTrue(table.cells["第200话"].waitForExistence(timeout: 5)); XCTAssertTrue(table.cells["第200话"].isSelected)
+        XCTAssertTrue(table.cells["第200话"].isHittable)
+        app.buttons["chapter.drawer.dismiss"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+        XCTAssertTrue((pages.value as? String)?.contains("第200话") == true)
+        revealControls(app); app.buttons["reader.back"].tap()
+        XCTAssertTrue(app.buttons["detail.read"].waitForExistence(timeout: 5))
+    }
 
     func testRotationKeepsChapterAndLocalImageAfterContinuousAppend() {
         let app = launch()

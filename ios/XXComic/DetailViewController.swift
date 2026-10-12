@@ -151,6 +151,7 @@ final class DetailViewController: UIViewController {
         if comic.sourceId == "local" {
             sourceSwitchButton.isHidden = true; downloadButton.isHidden = true
             manageVolumes.setTitle("管理分卷", for: .normal)
+            manageVolumes.accessibilityIdentifier = "detail.volumes"
             manageVolumes.addTarget(self, action: #selector(openVolumeManager), for: .touchUpInside)
             items.append(manageVolumes)
             buttons.append(manageVolumes)
@@ -498,13 +499,25 @@ final class DetailViewController: UIViewController {
     }
     @objc private func openVolumeManager() {
         let vm = VolumeManagerViewController(seriesId: comic.comicId, seriesTitle: comic.title, environment: environment) { [weak self] in
-            guard let self else { return }
-            self.cachedChapters = nil
-            self.loadDetail()
-            self.environment.notifyLibraryChanged()
+            self?.localVolumesChanged()
         }
-        let nav = UINavigationController(rootViewController: vm)
+        let nav = FilterDrawerNavigationController(rootViewController: vm)
         present(nav, animated: true)
+    }
+    private func localVolumesChanged() {
+        cachedChapters = nil; environment.notifyLibraryChanged()
+        let library = environment.localLibrary, id = comic.comicId
+        detailTask?.cancel()
+        detailTask = Task { [weak self] in
+            do {
+                let series = try await Task.detached(priority: .utility) { try await library.series(id: id) }.value
+                guard let self, !Task.isCancelled, self.view.window != nil else { return }
+                if series == nil { self.navigationController?.popViewController(animated: true) }
+                else { self.loadDetail() }
+            } catch {
+                guard let self, !Task.isCancelled else { return }; self.loadDetail()
+            }
+        }
     }
     @objc private func showLocalManagementMenu() {
         let alert = UIAlertController(title: "漫画管理", message: nil, preferredStyle: .actionSheet)

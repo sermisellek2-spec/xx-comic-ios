@@ -121,6 +121,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
         header.addSubview(headerTitle)
 
         orderBtn.translatesAutoresizingMaskIntoConstraints = false
+        orderBtn.accessibilityIdentifier = "chapter.drawer.order"
         orderBtn.setTitle(isDesc ? "倒序" : "正序", for: .normal)
         orderBtn.titleLabel?.font = .systemFont(ofSize: 12)
         let btnTextColor = isReader
@@ -137,6 +138,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
 
         // TableView
         tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.accessibilityIdentifier = "chapter.drawer.list"
         tableView.dataSource = self
         tableView.delegate = self
         tableView.backgroundColor = .clear
@@ -146,6 +148,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
 
         // Fast Scroller
         let scroller = ChapterFastScroller(tableView: tableView)
+        scroller.accessibilityIdentifier = "chapter.drawer.fast-scroll"
         scroller.translatesAutoresizingMaskIntoConstraints = false
         panel.addSubview(scroller)
         fastScroller = scroller

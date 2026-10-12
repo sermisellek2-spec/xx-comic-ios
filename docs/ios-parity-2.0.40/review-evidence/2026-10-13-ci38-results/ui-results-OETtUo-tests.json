@@ -1,0 +1,44 @@
+[
+  {
+    "test": "ReaderEnhancementEngineTests/testRealCoreMLSuperResolutionInferenceAndTileStitching()",
+    "status": "Success",
+    "revision": "7f440e7dc77cf262f8648a85fb8970192542360a",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "SettingsParityUITests/testCacheCleanupKeepsLibraryAndFixtureDiscovery()",
+    "status": "Success",
+    "revision": "7f440e7dc77cf262f8648a85fb8970192542360a",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "SettingsParityUITests/testHistoryClearCancellationAndConfirmationPreserveFavoritesAcrossRelaunch()",
+    "status": "Success",
+    "revision": "7f440e7dc77cf262f8648a85fb8970192542360a",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+    "status": "Success",
+    "revision": "7f440e7dc77cf262f8648a85fb8970192542360a",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+    "status": "Success",
+    "revision": "7f440e7dc77cf262f8648a85fb8970192542360a",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+    "status": "Success",
+    "revision": "7f440e7dc77cf262f8648a85fb8970192542360a",
+    "device": "iPhone 15 Pro"
+  },
+  {
+    "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+    "status": "Success",
+    "revision": "7f440e7dc77cf262f8648a85fb8970192542360a",
+    "device": "iPhone 15 Pro"
+  }
+]

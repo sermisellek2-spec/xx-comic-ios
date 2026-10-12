@@ -478,6 +478,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
             }
             let timeDesc = DateFormatter.localizedString(from: Date(timeIntervalSince1970: folder.lastSyncTimestamp), dateStyle: .short, timeStyle: .short)
             cell.detailTextLabel?.text = "\(folder.fileCount) 张图片 · \(statusDesc) · 上次同步: \(timeDesc)\n点按重新授权" + (folder.lastError.map { "\n" + $0 } ?? "")
+            cell.accessibilityValue = "\(folder.fileCount) 张图片 · \(statusDesc)"
             cell.detailTextLabel?.numberOfLines = 0
             cell.detailTextLabel?.textColor = folder.status == .active ? Palette.secondaryText : .systemRed
             cell.detailTextLabel?.font = .systemFont(ofSize: 12)

@@ -4,6 +4,34 @@ import UIKit
 
 @MainActor
 final class ReaderSeekGeometryTests: XCTestCase {
+    func testTrackingPreviewsWithoutMovingThePageAndCancelRestoresTheCommittedValue() throws {
+        let seek = ReaderSeekBar(frame: CGRect(x: 0, y: 60, width: 280, height: 40))
+        seek.configure(currentPage: 1, total: 12, sessionToken: 9); seek.layoutIfNeeded()
+        let slider = try XCTUnwrap(seek.subviews.compactMap { $0 as? UISlider }.first)
+        let bubble = try XCTUnwrap(seek.subviews.compactMap { $0 as? UILabel }.first)
+        var commits: [Int] = [], tracking: [Bool] = []
+        seek.onCommit = { commits.append($0) }; seek.onTracking = { tracking.append($0) }
+        slider.sendActions(for: .touchDown); slider.value = 8; slider.sendActions(for: .valueChanged)
+        XCTAssertEqual(bubble.text, " 9 / 12 "); XCTAssertFalse(bubble.isHidden)
+        XCTAssertTrue(commits.isEmpty, "Preview must not change the chapter/page before release")
+        XCTAssertGreaterThanOrEqual(bubble.frame.minX, 0); XCTAssertLessThanOrEqual(bubble.frame.maxX, seek.bounds.width)
+        slider.sendActions(for: .touchCancel)
+        XCTAssertEqual(slider.value, 1); XCTAssertTrue(bubble.isHidden); XCTAssertTrue(commits.isEmpty)
+        XCTAssertEqual(tracking, [true, false])
+        slider.sendActions(for: .touchDown); slider.value = 10; slider.sendActions(for: .valueChanged)
+        slider.sendActions(for: .touchUpInside)
+        XCTAssertEqual(commits, [10]); XCTAssertTrue(bubble.isHidden)
+    }
+    func testAChangedChapterTokenCannotCommitAnOldTrackingPreview() throws {
+        let seek = ReaderSeekBar(frame: CGRect(x: 0, y: 0, width: 240, height: 40))
+        seek.configure(currentPage: 0, total: 10, sessionToken: 1); seek.layoutIfNeeded()
+        let slider = try XCTUnwrap(seek.subviews.compactMap { $0 as? UISlider }.first)
+        var commits: [Int] = []; seek.onCommit = { commits.append($0) }
+        slider.sendActions(for: .touchDown); slider.value = 9; slider.sendActions(for: .valueChanged)
+        seek.configure(currentPage: 2, total: 5, sessionToken: 2)
+        slider.sendActions(for: .touchUpInside)
+        XCTAssertTrue(commits.isEmpty); XCTAssertEqual(slider.value, 2)
+    }
     func testCenteredToolbarGivesTheVisibleSliderATouchableParent() throws {
         let row = UIStackView()
         row.axis = .horizontal; row.alignment = .center

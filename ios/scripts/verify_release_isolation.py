@@ -14,6 +14,7 @@ MARKERS = (
     "--matrix-update-fixture",
     "http://127.0.0.1:8767/ios-release.json",
     "android-2.0.40-current-pages-v1",
+    "--volume-append-held-until-cancel",
 )
 
 

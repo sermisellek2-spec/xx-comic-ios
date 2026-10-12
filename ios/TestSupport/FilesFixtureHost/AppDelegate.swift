@@ -22,6 +22,8 @@ private final class FilesFixtureViewController: UIViewController {
     private var configFolder: URL?
     private let exportStatus = UILabel()
     private let downloadStatus = UILabel()
+    private let originalsStatus = UILabel()
+    private var originals: [String: Data] = [:]
 
     override func viewDidLoad() {
         super.viewDidLoad(); view.backgroundColor = .systemBackground
@@ -40,7 +42,17 @@ private final class FilesFixtureViewController: UIViewController {
         verifyDownload.accessibilityIdentifier = "files.fixture.verify-download"
         verifyDownload.addTarget(self, action: #selector(verifyDownloadedPixels), for: .touchUpInside)
         downloadStatus.numberOfLines = 0; downloadStatus.accessibilityIdentifier = "files.fixture.download.status"
-        let stack = UIStackView(arrangedSubviews: [status, retire, verify, exportStatus, verifyDownload, downloadStatus])
+        let verifyOriginals = UIButton(type: .system)
+        verifyOriginals.setTitle("校验原目录图片完整", for: .normal); verifyOriginals.accessibilityIdentifier = "files.fixture.verify-originals"
+        verifyOriginals.addTarget(self, action: #selector(checkOriginals), for: .touchUpInside)
+        originalsStatus.numberOfLines = 0; originalsStatus.accessibilityIdentifier = "files.fixture.originals.status"
+        let change = UIButton(type: .system)
+        change.setTitle("新增图片并改名已有图片", for: .normal); change.accessibilityIdentifier = "files.fixture.change-images"
+        change.addTarget(self, action: #selector(changeImages), for: .touchUpInside)
+        let remove = UIButton(type: .system)
+        remove.setTitle("移除第一张生成图片", for: .normal); remove.accessibilityIdentifier = "files.fixture.remove-first-image"
+        remove.addTarget(self, action: #selector(removeFirstImage), for: .touchUpInside)
+        let stack = UIStackView(arrangedSubviews: [status, retire, verify, exportStatus, verifyDownload, downloadStatus, verifyOriginals, originalsStatus, change, remove])
         stack.axis = .vertical; stack.spacing = 20; stack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -57,10 +69,57 @@ private final class FilesFixtureViewController: UIViewController {
             let folder = documents.appendingPathComponent("Files漫画_" + String(session.prefix(8)), isDirectory: true)
             selected = folder; replacement = documents.appendingPathComponent(folder.lastPathComponent + "_新", isDirectory: true)
             try create(folder, session: session)
+            for name in ["01.png", "02.png"] { originals[name] = try Data(contentsOf: folder.appendingPathComponent(name)) }
             let configs = documents.appendingPathComponent("站源配置_" + String(session.prefix(8)), isDirectory: true)
             try createConfigs(configs); configFolder = configs
             status.text = "准备完成：" + folder.lastPathComponent
         } catch { status.text = "准备失败：" + error.localizedDescription }
+    }
+
+    private func ownedFolder(expectedNames: Set<String>) throws -> URL {
+        guard let selected, let token else { throw CocoaError(.fileNoSuchFile) }
+        let info = try selected.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+        guard info.isDirectory == true, info.isSymbolicLink != true,
+              try Data(contentsOf: selected.appendingPathComponent(markerName)) == Data(token.utf8),
+              Set(try FileManager.default.contentsOfDirectory(atPath: selected.path)) == expectedNames else { throw CocoaError(.fileReadNoPermission) }
+        for name in expectedNames {
+            let properties = try selected.appendingPathComponent(name).resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+            guard properties.isRegularFile == true, properties.isSymbolicLink != true else { throw CocoaError(.fileReadNoPermission) }
+        }
+        return selected
+    }
+    @objc private func checkOriginals() {
+        do {
+            guard let selected, let token,
+                  try Data(contentsOf: selected.appendingPathComponent(markerName)) == Data(token.utf8), originals.count == 2 else { throw CocoaError(.fileReadNoPermission) }
+            for (name, bytes) in originals {
+                let file = selected.appendingPathComponent(name), info = try file.resourceValues(forKeys: [.isSymbolicLinkKey, .isRegularFileKey])
+                guard info.isSymbolicLink != true, info.isRegularFile == true, try Data(contentsOf: file) == bytes,
+                      UIImage(data: bytes)?.size == CGSize(width: 32, height: 48) else { throw CocoaError(.fileReadCorruptFile) }
+            }
+            originalsStatus.text = "原目录两张图片完整：32×48"
+        } catch { originalsStatus.text = "原图片校验失败" }
+    }
+    @objc private func changeImages() {
+        do {
+            let folder = try ownedFolder(expectedNames: [markerName, "01.png", "02.png"])
+            let format = UIGraphicsImageRendererFormat(); format.scale = 1
+            let image = UIGraphicsImageRenderer(size: CGSize(width: 64, height: 96), format: format).image {
+                UIColor.systemGreen.setFill(); $0.fill(CGRect(x: 0, y: 0, width: 64, height: 96))
+            }.pngData()!
+            try FileManager.default.moveItem(at: folder.appendingPathComponent("02.png"), to: folder.appendingPathComponent("04.png"))
+            try image.write(to: folder.appendingPathComponent("03.png"), options: .withoutOverwriting)
+            status.text = "已新增03并将02改名04：3张图片"
+        } catch { status.text = "图片变更失败" }
+    }
+    @objc private func removeFirstImage() {
+        do {
+            let folder = try ownedFolder(expectedNames: [markerName, "01.png", "03.png", "04.png"])
+            // Only this exact generated regular file is removed, after ownership
+            // and every entry have been checked. No directory tree is deleted.
+            try FileManager.default.removeItem(at: folder.appendingPathComponent("01.png"))
+            status.text = "已移除01：2张图片，03和04保留"
+        } catch { status.text = "图片移除失败" }
     }
 
     private func createConfigs(_ folder: URL) throws {

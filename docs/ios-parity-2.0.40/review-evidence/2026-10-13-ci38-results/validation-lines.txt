@@ -1,0 +1,25 @@
+** BUILD SUCCEEDED **
+** BUILD SUCCEEDED **
+Built Release fixture isolation: PASS
+Test Suite 'ComicCorePackageTests.xctest' passed at 2026-10-12 20:46:47.792.
+	 Executed 929 tests, with 0 failures (0 unexpected) in 131.425 (131.491) seconds
+Test Case '-[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal]' started.
+Test Case '-[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal]' passed (4.504 seconds).
+Test Case '-[XXComicTests.WebCacheCleanupTests testExistingWebsiteCookieIsActuallyRemovedWithoutLoadingAWebsite]' started.
+Test Case '-[XXComicTests.WebCacheCleanupTests testExistingWebsiteCookieIsActuallyRemovedWithoutLoadingAWebsite]' passed (1.511 seconds).
+Test Case '-[XXComicTests.WebCacheCleanupTests testUnusedBrowserCacheCleanupCompletesAndCanBeRepeatedWithoutLoadingAWebsite]' started.
+Test Case '-[XXComicTests.WebCacheCleanupTests testUnusedBrowserCacheCleanupCompletesAndCanBeRepeatedWithoutLoadingAWebsite]' passed (0.364 seconds).
+Test Suite 'XXComicTests.xctest' passed at 2026-10-12 20:48:55.454.
+	 Executed 32 tests, with 0 failures (0 unexpected) in 11.971 (11.988) seconds
+Test Suite 'XXComicUITests.xctest' passed at 2026-10-12 20:51:06.594.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 125.328 (125.334) seconds
+Test Case '-[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal]' started.
+Test Case '-[XXComicTests.CacheMaintenanceNativeTests testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal]' passed (4.074 seconds).
+Test Case '-[XXComicTests.WebCacheCleanupTests testExistingWebsiteCookieIsActuallyRemovedWithoutLoadingAWebsite]' started.
+Test Case '-[XXComicTests.WebCacheCleanupTests testExistingWebsiteCookieIsActuallyRemovedWithoutLoadingAWebsite]' passed (2.053 seconds).
+Test Case '-[XXComicTests.WebCacheCleanupTests testUnusedBrowserCacheCleanupCompletesAndCanBeRepeatedWithoutLoadingAWebsite]' started.
+Test Case '-[XXComicTests.WebCacheCleanupTests testUnusedBrowserCacheCleanupCompletesAndCanBeRepeatedWithoutLoadingAWebsite]' passed (0.619 seconds).
+Test Suite 'XXComicTests.xctest' passed at 2026-10-12 20:53:20.683.
+	 Executed 32 tests, with 0 failures (0 unexpected) in 13.653 (13.669) seconds
+Test Suite 'XXComicUITests.xctest' passed at 2026-10-12 20:55:26.312.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 118.159 (118.163) seconds

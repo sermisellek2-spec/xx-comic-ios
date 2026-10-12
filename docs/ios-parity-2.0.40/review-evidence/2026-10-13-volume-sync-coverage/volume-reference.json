@@ -1,0 +1,14 @@
+{
+  "baselineCommit": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "file": "app/src/main/java/com/xxcomic/local/VolumeManagerSheet.java",
+  "sha256": "3572269c54349e7f9e59fa6ed8ad0ed03b9dbfb9c2c189bb9504c46707fa199d",
+  "actualFrozenRules": [
+    "72 percent bottom panel",
+    "header count and append control",
+    "right drag handles",
+    "trash removal with 3.5 second undo",
+    "preserve original selected files",
+    "background single writer for file operations"
+  ],
+  "boundary": "Source-derived component/interaction reference; not an Android runtime screenshot"
+}

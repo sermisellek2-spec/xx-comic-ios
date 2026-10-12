@@ -8,7 +8,7 @@
     "OfflineDownloadImageTests": 1,
     "ReaderEnhancementEngineTests": 6,
     "ReaderMangaGeometryTests": 4,
-    "ReaderSeekGeometryTests": 1,
+    "ReaderSeekGeometryTests": 3,
     "RootTabGeometryTests": 1,
     "TestHostIsolationTests": 1,
     "WebCacheCleanupTests": 2
@@ -21,21 +21,24 @@
     "DownloadLifecycleUITests": 2,
     "DownloadLocationParityUITests": 2,
     "EpubReadingUITests": 7,
-    "ExternalFilesParityUITests": 3,
+    "ExternalFilesParityUITests": 4,
     "LinkedFolderParityUITests": 3,
     "LocalDeletionParityUITests": 2,
     "Mh18VerificationTests": 1,
-    "ReaderContinuityUITests": 10,
+    "ReaderContinuityUITests": 11,
     "ReaderEnhancementUITests": 1,
-    "ReaderSettingsParityUITests": 7,
+    "ReaderSettingsParityUITests": 8,
     "ReaderToolbarParityUITests": 2,
     "RootNavigationParityUITests": 4,
     "SettingsParityUITests": 8,
     "SourceConfigFilesUITests": 5,
     "SourceDrawerTests": 3,
-    "VisualMatrixUITests": 8
+    "VisualMatrixUITests": 8,
+    "VolumeManagerParityUITests": 5
   },
-  "declaredNativePerDevice": 32,
-  "declaredUIPerDevice": 93,
+  "totals": {
+    "native": 34,
+    "UI": 101
+  },
   "isRuntimeResult": false
 }
