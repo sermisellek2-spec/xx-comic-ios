@@ -100,6 +100,7 @@ case "$validation_scope" in
       -only-testing:XXComicUITests/ReaderSettingsParityUITests
       -only-testing:XXComicUITests/ReaderContinuityUITests
       -only-testing:XXComicUITests/ReaderToolbarParityUITests
+      -only-testing:XXComicUITests/EpubReadingUITests
     )
     ;;
   configuration-files)
@@ -175,7 +176,7 @@ if [ "$validation_scope" != full ]; then
   exit 0
 fi
 if [ "${IOS_PACKAGE_IPA:-false}" != true ]; then
-  echo '完整Apple运行结束；视觉/Files/性能及站源门槛由阶段台账另验。本次不生成IPA。'
+  echo '完整Apple运行结束；视觉/Files/性能门槛由阶段台账另验。真实站源按用户指令暂停，本次不生成IPA。'
   exit 0
 fi
 

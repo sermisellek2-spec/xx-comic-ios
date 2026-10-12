@@ -1,44 +1,26 @@
 # 非站源完整验收门槛
 
-门槛未通过。最新接续（2026-10-12）：用户暂停真实站源验收，非站源完整自验后直接出总验收包；51当前/默认50目录仍需一致，P6不自动恢复。CI27两SDK成功，双设备图内偏移及4阅读几何通过；iPhone模式续读1用例失败、iPad缓存正文1用例失败、Mac原物理归零断言仍失败。当前迟到图片锚点与活动磁盘后端候选：Linux928全量/2 Apple PDF跳过/0失败，93原生两配置仅语法通过；Apple全量/UI/当前图标产物与64场景视觉待验收。
+2026-10-12，**未通过**。固定Android2.0.40/340/696e80a。用户只负责最后总验收；代理自主完成阶段修复和自验。
 
-## 以下为对应旧输入历史
+真实站源验收按用户最新指令暂停，由用户后续判断需修复哪些站源，不作为本次出包前置，也不自动恢复。当前51源、默认开启50（duya关闭）的目录、配置和确定性发现/搜索/下载流程仍须对齐。全部非站源自验完成后，仅在 sermisellek2-spec/xx-comic-ios 出总验收包。
 
+ed3完整CI28 [38259663957](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38259663957)运行中，保留原93项UI/设备。部分原日志确认Debug/Release构建及两套实际产物图标元数据、PNG、Assets.car通过，完整Core、原生、UI结果尚未取得。部分日志有10MiB截断，不能当作最终结果或用于推断后续通过。
 
-2026-10-12接续：日漫与配置视觉的父输入5e2已运行指定仓库开发CI，两次按实际SDK17.5选择同版运行时；结果未结束。新根导航纵排/阅读面板高度候选93文件仅语法通过，原生及UI待执行，不改变本门槛未通过状态。见[接续证据](review-evidence/2026-10-12-root-navigation/README.md)。
+当前f5另修旧按钮偏好禁用单页交互，原有全部断言保留，新增后94项UI/设备。阅读影响CI29 [38266096867](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38266096867)运行中，不生成IPA。93原生文件Release/DEBUG语法通过；269个Core输入与已实际运行的Linux928项/2 Apple PDF跳过/0失败完全一致。Linux结果不能代替Apple。
 
-更新：2026-10-12。**未通过。** Android2.0.40/340/696e80a，当前51站源/默认50，先非站源后真实网站。认证已成功，上传和开发CI仅sermisellek2-spec/xx-comic-ios；用户只负责总验收，没有阶段IPA。
+文字排版设置原系统大列表已替换为冻结Android的底部卡片，字号、行距、背景和翻页消费者/保存保留；新增主题×方向实际操作及截图用例。当前完整95项UI/设备，93原生两配置与Bash语法通过，269 Core输入不变。Apple实际运行及文字面板视觉仍待验收。[候选证据](review-evidence/2026-10-12-text-settings-panel/README.md)。
 
-第19轮c5aa922/Apple38215339295已结束：Debug/Release及两设备25项原生通过，重复MainActor编译问题已实证修复。Mac Core923项/1缓存物理归零失败；UI38项/设备各32通过、6失败用例，iPhone11条/iPad10条失败记录。分组7项、搜索/详情/下载12项、ExternalFiles3项双设备通过；站源按钮可达/确认、iPad文件取消及设置缓存0仍失败。[第19轮原件](review-evidence/2026-10-12-ci19-results/README.md)。
-
-第20轮63c2af2/Apple38217879524已结束：两SDK通过，Mac Core929项/1缓存失败；原生27项/设备各1真实页排列失败（首逻辑页offset0、末页786），UI16项/设备各14通过、2日漫用例失败、37条失败记录。入口和保存不能代替日漫实际行为通过。[第20轮原件](review-evidence/2026-10-12-ci20-results/README.md)。
-
-当前接续：保留卷轴/普通/日漫，旧左右手继续删除。日漫页帧/可见范围显式反向，逻辑身份和原图不反转，原首末/seek/旋转和全部UI翻页/续读断言保留；手势按冻结36逻辑距离/1.1比例/<1秒对齐。站源列表允许按钮拖动取消并滚动，换源重算顶部按钮宽度；Files驱动识别iPad侧栏的真实取消按钮。
-
-同时修阅读设置深色选中字/边框、目录当前章白字、详情目录54/提示11、收藏44pt按屏幕密度后台缩略、阅读展开控件隐藏状态栏、横屏网格安全区及站源说明高度/按钮白字。852手机32组真实对照已登记，修复尚无当前截图，完整组件量测/横屏根底栏纵排和设置面板高度仍未关闭。
-
-当前90原生Swift文件Release/DEBUG仅语法各退出0、build.sh bash语法退出0；Core266输入与922项Linux完整回归/2个Apple PDF跳过/0失败完全一致，没有新增核心执行。不能代替Apple复验。[当前候选和逐图台账](review-evidence/2026-10-12-visual-polish/README.md)。
-
-原日志SDK17.5、M4 iPad实际17.4已确认；新选择器按固定设备配活动SDK主次版本，保存原始目录。6合成目录检查通过，实际环境/新iPad几何待运行，不提前判定所有尺寸根因。
-
-非站源门槛未通过，缓存实际36864字节不得伪报0；P6关闭，没有最终验收包，不要求用户阶段试包。[阶段方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md)、[矩阵](requirements.csv)、[差异](differences.md)、[完整门槛](NON_SOURCE_GATE.md)。
-
-## 历史门槛记录（不覆盖上述当前状态）
-
-
-更新：2026-10-12。**未通过。** 父输入b8的完整38190082897正在运行；同输入缓存诊断SDK成功，Mac Core902项/1缓存失败，双设备24原生各1条包含断言失败。隔离响应清空但占用仍非零，不能代替生产缓存验收。新候选配置/缓存Linux903项/2跳过/0失败，原生触控补偿及新增iOS缓存诊断仍待Apple（25原生/设备、76UI/设备）。[缓存原始证据](review-evidence/2026-10-12-cache-ownership/README.md)、[本地修复](review-evidence/2026-10-12-ci15-repair/README.md)。十四轮结果保留在历史归档。
-
-完整范围保留全部原断言，包含发现/面板/图标、稳定旋转锚点、进度条、Files目标目录导航和Home后台等待，并同时运行隔离缓存探针。任一核心、探针、原生、UI失败或必需缺项继续阻止总体通过和IPA，不以影响范围通过代替完整门槛。
-
-| 门槛 | 状态 | 未关闭事项 |
+| 门槛 | 状态 | 当前需要关闭的事项 |
 | --- | --- | --- |
-| GATE-01 全入口与消费者 | 待核对 | 全部配置、默认值、数据生命周期与可达入口审计 |
-| GATE-02 全应用8场景视觉 | 待验收 | Android64图；旧iPhone32页可比较，旧iPad窗口不符；当前64页及逐组件问题闭合 |
-| GATE-03 正常/异常/取消/恢复 | 待验收 | 当前缓存、旋转、Files、后台等失败；其余流程须完整回归 |
-| GATE-04 当前Apple/UI/图像/Files | 待验收 | 父输入完整24原生/76UI正在运行；新候选25原生/76UI待Apple；核心/原生失败未关闭 |
-| GATE-05 性能/旧数据/恢复/Release | 待验收 | 当前实际耗时、峰值、后台到期/磁盘/失权、旧数据及Release运行尚待完整证据 |
-| GATE-06 全非站源通过 | 待验收 | 所有必需项来自交付版本；失败/未测不记PASS |
+| GATE-01 全入口与消费者 | 待核对 | 11设置入口、阅读默认值/旧输入消费者及51/50目录已源码核对；全应用入口、配置与数据生命周期仍需完整对应当前运行结果 |
+| GATE-02 全应用8场景视觉 | 待验收 | 64张冻结Android金标及CI23同内容对照保留；当前64张实拍、1032组件逐项问题、图标和文本/颜色/布局检查未闭合 |
+| GATE-03 正常/异常/取消/恢复 | 待验收 | 当前全量UI、阅读迟到尺寸/模式/重启、旧输入兼容、缓存实际反馈、Files/下载/导入恢复待结果 |
+| GATE-04 当前Apple/UI/图像/Files | 待验收 | 当前完整Core、两设备全部原生/UI、PDF/CoreML/WebKit/真实外部Files检查必须实际运行；CI28父输入不能覆盖f5修正 |
+| GATE-05 性能/旧数据/恢复/Release | 待验收 | 记录当前耗时、真实内存观察、并发/文件/权限失败和恢复；最终Release无夹具/测试端点。模拟器不能证明真机峰值或系统后台配额 |
+| GATE-06 全非站源通过 | 待验收 | 所有必需项来自交付代码，无开放重要缺陷；未测、失败或平台缺项不记通过 |
 
-父输入的ComicCore与a41/Linux895项相同；新候选配置/缓存修复为Linux903项/2Apple PDF跳过/0失败、144.292秒，详细SHA见ci15-repair与config-audit-continuation。Linux语法和核心不能代替UIKit、Apple图像、WebKit、Files或真实设备后台配额。
+CI27的原失败仍保留：Mac Core实际缓存物理归零断言失败，iPad已知正文与同目录重开仍命中，iPhone三次第3页恢复失败。正文缺陷不能解释为索引字节。当前活动磁盘后端与迟到图片锚点修正必须复验；原物理归零断言、正文不可命中、容量恢复、后续可缓存与原包保护检查不删、不放宽。
 
-源目录/ID/开关/排序SOURCE-01属于P2；51真实网站SOURCE-02~04在门槛通过后自动进入P6。目录保持51、默认50，不因站点失效减少数量。没有阶段IPA，不要求用户中间安装。旧门槛页已按字节保存在第十四轮historical-NON_SOURCE_GATE.md。
+当前状态以[STATUS](STATUS.md)、[功能矩阵](requirements.csv)、[差异台账](differences.md)及实际原件为准。尚无总验收IPA。[CI27原件](review-evidence/2026-10-12-ci27-results/README.md)、[ed3证据](review-evidence/2026-10-12-reader-late-image-cache-active/README.md)、[f5修正与审计](review-evidence/2026-10-12-current-reader-input-compatibility/README.md)。
+
+旧门槛整页按原字节保存在[历史原文](review-evidence/2026-10-12-current-reader-input-compatibility/historical-NON_SOURCE_GATE.md-before-scope-cleanup.md)，哈希见[归档记录](review-evidence/2026-10-12-current-reader-input-compatibility/historical-documents.json)。其中旧“正在运行”、用例数量及站源自动推进规则不覆盖当前范围。

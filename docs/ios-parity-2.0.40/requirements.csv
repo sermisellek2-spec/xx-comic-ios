@@ -2,7 +2,7 @@ id,gate,area,requirement,android_reference,status,evidence
 BASE-01,P0,基线,核验固定发布提交与527文件快照,baseline/manifest.json,通过,verify-baseline.ps1退出0；527文件与冻结ZIP哈希匹配；baseline/VERIFICATION.md
 BASE-02,P0,范围,逐页逐入口逐默认值补齐需求矩阵,MainActivity.java,待核对,完整方案/P0~P4报告已写；范围审计确认当前源无文件型站源实现，不新增预留协议入口；其余入口/默认值继续核对
 BASE-03,P0,测试,建立双方共用且Release隔离的确定性fixture,app/src/androidTest,待验收,双方共同JSON/384×384原图及Debug/Release隔离保留；第22轮SDK/运行时17.5及五个原输入SHA核对。冻结金标与Apple64/64同内容窗口/尺寸对照退出0，逐组件尚未验收；ci22-results及ci22-comparison原件。
-BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,ios/scripts/build.sh,待验收,ed3完整Apple CI28运行；已取得部分原日志，两SDK及Debug/Release真实图标资源检查通过，Core/原生/UI待完整结果。当前兼容修正269 Core输入不变（已有Linux928/2跳过/0失败），93原生两配置仅语法通过，新增UI后94项待Apple；父CI不代替当前候选。
+BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,ios/scripts/build.sh,待验收,ed3完整Apple CI28运行；已取得部分原日志，两SDK及Debug/Release真实图标资源检查通过，Core/原生/UI待完整结果。当前兼容修正269 Core输入不变（已有Linux928/2跳过/0失败），93原生两配置仅语法通过，新增UI后94项待Apple；父CI不代替当前候选。；最新文字面板候选完整95UI，93原生两配置/Bash语法0，当前Apple待运行；review-evidence/2026-10-12-text-settings-panel/README.md
 BASE-05,P0,视觉,建立8场景真实Android截图金标和设备元数据,app/src/androidTest,待验收,冻结Android64原图不变；第22轮5e2的64/64同内容叠图/差分可生成且哈希核对，组件和后续根导航候选实拍仍待验收。
 VIS-01,P1,主题,完整浅深色token及默认跟随系统且设置落盘,UIHelpers.java;UiContrast.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：Palette.swift;AppTheme.swift;AppThemeController.swift
 VIS-02,P1,素材,启动图标应用图标插画及控件图标按实际原版,app/src/main/res;app/src/main/assets,待验收,18规格不透明RGB及SDK资源编译已补；新增实际两设备主屏图标/点击截图与位置记录，用例未运行；旧IPA无资源不能交付；D93横屏安全区候选；底栏纵排仍未关闭。
@@ -43,7 +43,7 @@ READER-09,P3,主题,独立阅读主题墨水屏去白边动画及默认值落盘
 READER-10,P3,图像,普通增强开关原图对照关闭及失败回退,reader/ReaderEnhancementEngine.java,待验收,已有旧版原生AI故障/取消与原图对照证据；当前RemoteImageView改动后需回归，核心测试不替代Apple图像
 READER-11,P3,AI,离线2倍AI超分真实本地推理模型许可设备及内存,reader/GpuSuperResolution.java;app/src/main/cpp,待验收,历史CoreML参数/双设备真实neural证据保留；当前版本模型产物、设备峰值与性能/支持边界需核验
 READER-12,P3,解码,长图高清透明损坏图多图预取取消和内存保护,reader/ReaderDecodePolicy.java,待验收,旧版生产Cell取消/复用已有证据；当前RemoteImageView读图路径改动需Apple类型/解码/内存回归
-READER-13,P3,文字,文字阅读排版主题目录设置缩放和续读,ebook/TextReaderView.java;TextReaderSettingsSheet.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：EpubTextReaderViewController.swift;TextReaderSettingsViewController.swift;TextReadingTests.swift
+READER-13,P3,文字,文字阅读排版主题目录设置缩放和续读,ebook/TextReaderView.java;TextReaderSettingsSheet.java,待验收,文字排版设置原系统大列表已替换为冻结Android的底部卡片，字号、行距、背景和翻页消费者/保存保留；新增主题×方向实际操作及截图用例。当前完整95项UI/设备，93原生两配置与Bash语法通过，269 Core输入不变。Apple实际运行及文字面板视觉仍待验收。review-evidence/2026-10-12-text-settings-panel/README.md
 READER-14,P3,连续阅读,卷轴末尾预取连续追加下一章；章内页码拖动与持久化；失败重试取消末章及模式旋转恢复,MainActivity.java:8108;8162;8211,待验收,CI27两设备10项连续阅读用例通过，含失败/重试/取消/末章/跨章/旋转/模式/重启；iPhone模式续读另1用例失败。当前候选也保留pending清空后迟到图片尺寸的锚点，主动seek/拖动可取消等待；完整交付版回归仍待验收。
 LOCAL-01,P4,格式,按基线实际边界完成图片ZIP与CBZ导入阅读,local/LocalImporter.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：LocalArchive.swift;LocalLibrary.swift;LocalArchiveTests.swift
 LOCAL-02,P4,格式,EPUB图文目录混排资源与拒绝格式提示,ebook/EpubParser.java;local/LocalImporter.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：EpubParser.swift;EpubParserTests.swift;LocalEpubLibraryTests.swift
@@ -64,7 +64,7 @@ DOWNLOAD-06,P4,能力范围,核对当前源实际文件下载能力并剔除不�
 DOWNLOAD-07,P4,记录保护,下载写入失败回滚真实反馈与保存后恢复，不假报排队/完成,download/DownloadStore.java;DownloadRuntime.java,待验收,D70：真实downloads.json写入失败5项、下载影响回归53项通过，原断言保留；下载中心可见错误及实际重试入口已补，Apple界面/磁盘满/权限恢复待验收；review-evidence/2026-10-12-download-lifecycle/README.md
 VERIFY-01,P2,验证UI,验证等待成功取消过期和返回重试用fixture贯通,MainActivity.java;source,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：SourceVerificationUI.swift;Mh18BrowserSession.swift;Mh18VerificationAttemptTests.swift;Mh18VerificationRulesTests.swift
 GATE-01,P5,完整性,逐入口反查全部非站源需求与实际消费者无漏项,MainActivity.java;app/src/main,待核对,当前11设置入口及阅读默认值/旧偏好实际消费者已源级核对；确认旧按钮状态缺页按钮而禁用当前手势，已修。51/默认50目录静态复核通过；全应用入口与当前Apple/UI、数据生命周期仍需闭合，不以静态映射记PASS。
-GATE-02,P5,视觉,全应用8场景真截图叠图及逐组件对照,UIHelpers.java;app/src/main/res,待验收,CI22的64/64同内容对照已生成且原290附件SHA核对，窗口/尺寸门槛可比较；组件、当前根导航候选与完整视觉未验收。
+GATE-02,P5,视觉,全应用8场景真截图叠图及逐组件对照,UIHelpers.java;app/src/main/res,待验收,CI22的64/64同内容对照已生成且原290附件SHA核对，窗口/尺寸门槛可比较；组件、当前根导航候选与完整视觉未验收。；新增文字底部面板8状态真实截图与元数据用例尚未Apple运行，不标视觉通过；review-evidence/2026-10-12-text-settings-panel/README.md
 GATE-03,P5,交互,全应用正常异常取消恢复长按手势和返回闭环,app/src/androidTest,待验收,第十四轮18项影响UI各5个失败用例；当前旋转/Files/Home接续和缓存取证待完整76项UI/设备，不以局部通过关闭门槛
 GATE-04,P5,平台,当前版本Apple构建及必要UI图像PDFWebKitFiles检查,ios/scripts/build.sh,待验收,CI22 SDK/原生局部通过，Mac缓存及UI6用例失败；新Core925/2跳过/0失败不替代Apple；当前完整原生/UI/Files/PDF/WebKit仍待验收。
 GATE-05,P5,质量,性能恢复旧数据并发和Release无测试内容检查,app/src/main,待验收,新候选Linux完整903项/2个Apple PDF跳过/0失败；真实文件保护保留。Mac隔离缓存响应清空但物理占用不归零；iOS新取证、Files/后台/图像峰值/旧数据/Release运行仍待完整验收
@@ -73,5 +73,5 @@ SOURCE-01,P2,目录,生成22专用29公共稳定ID排序默认和退役矩阵,Do
 SOURCE-02,P6,适配,拆为每源需求和报告逐一搜索分类详情目录图片下载,source;sources.csv,后置站源,2026-10-12用户明确暂停真实站源验收，后续用户自行判断需修复源；不得标通过，不作为本次总验收包前置。51当前/默认50目录、开关、配置与fixture流程仍在非站源范围。
 SOURCE-03,P6,配置,逐源真实消费routesfilters域名referer及custom边界,source/SourceConfig.java,后置站源,2026-10-12用户明确暂停真实站源验收，后续用户自行判断需修复源；不得标通过，不作为本次总验收包前置。51当前/默认50目录、开关、配置与fixture流程仍在非站源范围。
 SOURCE-04,P6,验证,逐源真实验证还原Cookie超时取消与网络提示,source,后置站源,2026-10-12用户明确暂停真实站源验收，后续用户自行判断需修复源；不得标通过，不作为本次总验收包前置。51当前/默认50目录、开关、配置与fixture流程仍在非站源范围。
-FINAL-01,P7,回归,当前HEAD全量核心AppleUI视觉站源恢复和性能自验,docs/IOS_2_0_40_GEMINI_PLAN.md,待验收,用户要求非站源完整自验后先出总验收包；真实站源验收暂停并如实标未验收。仅sermisellek2-spec仓库打包，交付包含实际版本、图标、IPA SHA及签名方式；当前Apple/视觉/完整门槛未关闭。
+FINAL-01,P7,回归,当前HEAD全量非站源核心AppleUI视觉恢复和性能自验，真实站源验收暂停,docs/IOS_2_0_40_GEMINI_PLAN.md,待验收,用户要求非站源完整自验后先出总验收包；真实站源验收暂停并如实标未验收。仅sermisellek2-spec仓库打包，交付包含实际版本、图标、IPA SHA及签名方式；当前Apple/视觉/完整门槛未关闭。
 FINAL-02,P7,交付,版本一致IPA哈希签名安装说明阶段证据和总验收清单,ios/scripts/build.sh,待验收,用户要求非站源完整自验后先出总验收包；真实站源验收暂停并如实标未验收。仅sermisellek2-spec仓库打包，交付包含实际版本、图标、IPA SHA及签名方式；当前Apple/视觉/完整门槛未关闭。

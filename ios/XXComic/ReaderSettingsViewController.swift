@@ -270,7 +270,7 @@ private final class ReaderSettingsPresentation: UIPresentationController {
 }
 
 @MainActor
-private final class ReaderSettingsAnimation: NSObject, UIViewControllerAnimatedTransitioning {
+final class ReaderSettingsAnimation: NSObject, UIViewControllerAnimatedTransitioning {
     private let presenting: Bool
     init(presenting: Bool) { self.presenting = presenting }
     func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval { 0.24 }
@@ -278,10 +278,11 @@ private final class ReaderSettingsAnimation: NSObject, UIViewControllerAnimatedT
         guard let controller = context.viewController(forKey: presenting ? .to : .from), let view = controller.view else { context.completeTransition(false); return }
         if presenting {
             context.containerView.addSubview(view); view.frame = context.finalFrame(for: controller)
-            view.transform = CGAffineTransform(translationX: 0, y: view.bounds.height)
         }
+        let distance = max(view.bounds.height, context.containerView.bounds.maxY - view.frame.minY)
+        if presenting { view.transform = CGAffineTransform(translationX: 0, y: distance) }
         UIView.animate(withDuration: transitionDuration(using: context), animations: {
-            view.transform = self.presenting ? .identity : CGAffineTransform(translationX: 0, y: view.bounds.height)
+            view.transform = self.presenting ? .identity : CGAffineTransform(translationX: 0, y: distance)
         }, completion: { _ in context.completeTransition(!context.transitionWasCancelled) })
     }
 }

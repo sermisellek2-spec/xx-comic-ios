@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 /// These are executable Apple UI scenarios, not source-code assertions. Run with an iOS simulator.
 final class EpubReadingUITests: ParityUITestCase {
@@ -102,6 +103,74 @@ final class EpubReadingUITests: ParityUITestCase {
         open("文字", app: app); ready(app); app.buttons["排版"].tap()
         XCTAssertEqual(app.tables.cells.element(boundBy: 0).staticTexts.firstMatch.label, changed)
         XCTAssertTrue(app.buttons["护眼"].isSelected); XCTAssertTrue(app.buttons["点击翻页"].isSelected)
+    }
+
+    func testTextSettingsPanelKeepsEveryActionReachableAcrossThemesAndOrientations() {
+        defer { XCUIDevice.shared.orientation = .portrait }
+        for theme in ["light", "dark"] {
+            for (name, orientation) in [("portrait", UIDeviceOrientation.portrait), ("landscape", .landscapeLeft)] {
+                XCUIDevice.shared.orientation = orientation
+                let app = XCUIApplication()
+                app.launchArguments = ["--ui-testing", "--epub-fixtures", "--\(theme)-mode"]
+                app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
+                app.launch()
+                XCTAssertTrue(app.buttons["本地书架"].waitForExistence(timeout: 20)); app.buttons["本地书架"].tap()
+                open("文字", app: app); ready(app); app.buttons["排版"].tap()
+                let panel = app.tables["epub.text.settings"]
+                XCTAssertTrue(panel.waitForExistence(timeout: 5)); XCTAssertEqual(panel.cells.count, 4)
+                let window = app.frame
+                XCTAssertGreaterThanOrEqual(panel.frame.minX, window.minX)
+                XCTAssertGreaterThanOrEqual(panel.frame.minY, window.minY)
+                XCTAssertLessThanOrEqual(panel.frame.maxX, window.maxX)
+                XCTAssertLessThanOrEqual(panel.frame.maxY, window.maxY)
+                let increment = app.buttons["epub.fontSize-Increment"]
+                XCTAssertTrue(increment.isHittable)
+                let before = panel.cells.element(boundBy: 0).staticTexts.firstMatch.label
+                increment.tap()
+                XCTAssertNotEqual(panel.cells.element(boundBy: 0).staticTexts.firstMatch.label, before)
+                for identifier in ["epub.lineHeight.2", "epub.theme.1", "epub.turn.1"] {
+                    let button = app.buttons[identifier]
+                    for _ in 0..<3 where !button.isHittable { panel.swipeUp() }
+                    XCTAssertTrue(button.isHittable); button.tap(); XCTAssertTrue(button.isSelected)
+                }
+                captureTextSettings(app, theme: theme, orientation: name)
+                app.buttons["epub.text.settings.close"].tap(); ready(app)
+                XCTAssertFalse(panel.exists)
+                app.buttons["排版"].tap()
+                XCTAssertTrue(app.buttons["epub.theme.1"].isSelected)
+                XCTAssertTrue(app.buttons["epub.turn.1"].isSelected)
+                app.buttons["epub.text.settings.close"].tap(); app.terminate()
+            }
+        }
+    }
+
+    private func captureTextSettings(_ app: XCUIApplication, theme: String, orientation: String) {
+        let name = "text-settings-\(theme)-\(orientation)"
+        let screenshot = XCUIScreen.main.screenshot()
+        let attachment = XCTAttachment(data: screenshot.pngRepresentation, uniformTypeIdentifier: "public.png")
+        attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+        guard let raster = screenshot.image.cgImage else { XCTFail("Missing text-settings raster"); return }
+        let frame = app.windows.firstMatch.frame
+        let record: [String: Any] = [
+            "fixtureID": "epub-fixtures/EPUB 验收·文字",
+            "fixtureSource": "ios/XXComic/EpubUITestFixtures.swift at tested revision",
+            "scene": name,
+            "appFrame": ["x": Double(frame.minX), "y": Double(frame.minY), "width": Double(frame.width), "height": Double(frame.height)],
+            "screenScale": Double(UIScreen.main.scale), "rasterPixelSize": [raster.width, raster.height],
+            "screenshotImageSizePT": [Double(screenshot.image.size.width), Double(screenshot.image.size.height)],
+            "screenshotImageScale": Double(screenshot.image.scale),
+            "screenshotImageOrientation": screenshot.image.imageOrientation.rawValue,
+            "preferredContentSizeCategory": UIApplication.shared.preferredContentSizeCategory.rawValue,
+            "capturedAtUTC": ISO8601DateFormatter().string(from: Date()),
+            "accessibilitySnapshot": app.debugDescription,
+            "steps": "本地书架→EPUB 验收·文字→第一章→排版→字号加一→宽松→护眼→点击翻页",
+            "comparisonStatus": "Apple运行证据；同内容Android文字面板对照尚未运行"
+        ]
+        do {
+            let data = try JSONSerialization.data(withJSONObject: record, options: [.sortedKeys])
+            let metadata = XCTAttachment(data: data, uniformTypeIdentifier: "public.json")
+            metadata.name = "provenance-" + name; metadata.lifetime = .keepAlways; add(metadata)
+        } catch { XCTFail("Cannot retain text-settings screenshot provenance: \(error)") }
     }
 
     func testMixedSpineRetainsDirectImageAndPureImageUsesComicReader() {

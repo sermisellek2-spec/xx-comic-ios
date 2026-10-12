@@ -113,6 +113,7 @@ def main():
     commands.add_parser("auth")
     runs = commands.add_parser("runs")
     runs.add_argument("--sha", required=True)
+    runs.add_argument("--ref", default=BRANCH, help="本次CI的实际分支；默认codex/ios-port")
     run = commands.add_parser("run")
     run.add_argument("id", type=int)
     artifacts = commands.add_parser("artifacts")
@@ -137,7 +138,7 @@ def main():
             "credential_source": "normal Git Credential Manager; credentials kept in process memory",
         }
     elif args.command == "runs":
-        query = urllib.parse.urlencode({"branch": BRANCH, "head_sha": args.sha, "per_page": 30})
+        query = urllib.parse.urlencode({"branch": args.ref, "head_sha": args.sha, "per_page": 30})
         result = {"runs": [run_summary(run) for run in api.json(prefix + "/actions/runs?" + query)["workflow_runs"] if run["head_sha"] == args.sha]}
     elif args.command == "run":
         result = run_summary(api.json(prefix + f"/actions/runs/{args.id}"))

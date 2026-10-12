@@ -282,7 +282,7 @@ final class EpubTextReaderViewController: UIViewController, UIAdaptivePresentati
     @objc private func layoutSettings() {
         let controller = TextReaderSettingsViewController(settings: settings) { [weak self] settings in self?.updateSettings(settings) }
         controller.onDismiss = { [weak self] in self?.overlayChanged() }
-        presentPanel(UINavigationController(rootViewController: controller))
+        presentPanel(controller)
     }
     @objc private func cycleTheme() {
         var next = settings; next.theme = TextReaderTheme(rawValue: (next.theme.rawValue + 1) % 3)!

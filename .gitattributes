@@ -58,3 +58,6 @@ docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci19-results/** -text whitespa
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci20-results/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-reader-input-compatibility/*.log -text -diff whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-current-reader-input-compatibility/historical-*.md -text whitespace=-blank-at-eof,-blank-at-eol,-space-before-tab,cr-at-eol
+
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-text-settings-panel/*.log -text -diff whitespace=-blank-at-eof,-blank-at-eol,-space-before-tab,cr-at-eol

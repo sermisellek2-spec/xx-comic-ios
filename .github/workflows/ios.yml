@@ -96,6 +96,8 @@ jobs:
             ios/build/evidence/ui-failures/*.jpg
             ios/build/evidence/ui-failures/*.txt
             ios/build/evidence/reader-transitions/*.txt
+            ios/build/evidence/text-settings/*.png
+            ios/build/evidence/text-settings/*.json
             ios/build/evidence/app-icon/*.json
             ios/build/evidence/*-manifest.json
             ios/build/evidence/*-tests.json
