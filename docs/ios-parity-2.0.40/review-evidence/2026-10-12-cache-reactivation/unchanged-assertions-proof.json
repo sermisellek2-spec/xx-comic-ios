@@ -1,0 +1,19 @@
+{
+  "nativeOriginalAssertionLinesPreserved": true,
+  "assertionLines": [
+    "XCTAssertEqual(cache.diskCapacity, 8 * 1024 * 1024)",
+    "XCTAssertEqual(cache.memoryCapacity, 1024 * 1024)",
+    "XCTAssertEqual(remaining.diskBytes, Int64(cache.currentDiskUsage), \"Index bytes cannot be hidden or subtracted\")",
+    "XCTAssertEqual(remaining.memoryBytes, Int64(cache.currentMemoryUsage), \"Usage must retain the framework's actual byte accounting\")",
+    "XCTAssertEqual(requests.compactMap { cache.cachedResponse(for: $0) }.count, 4)",
+    "XCTAssertEqual(try Data(contentsOf: original), Data([3, 4, 5]))",
+    "XCTAssertTrue(requests.allSatisfy { cache.cachedResponse(for: $0) == nil })",
+    "for request in requests { XCTAssertNil(cache.cachedResponse(for: request), initializer) }",
+    "for request in requests { XCTAssertNil(reopened.cachedResponse(for: request), initializer + \" reopened\") }"
+  ],
+  "oldCoreDiskZeroAssertionFileUnchanged": true,
+  "fullCoreInputCount": 268,
+  "currentFullSHA256Match": true,
+  "nativeInputCount": 93,
+  "currentNativeSHA256Match": true
+}

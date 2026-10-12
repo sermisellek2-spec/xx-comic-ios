@@ -1,0 +1,16 @@
+{
+  "runs": [
+    {
+      "id": 38236059726,
+      "html_url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38236059726",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+      "head_branch": "codex/reader-transition-d0e0d38",
+      "event": "workflow_dispatch",
+      "run_attempt": 1,
+      "created_at": "2026-10-12T10:23:50Z",
+      "updated_at": "2026-10-12T10:24:00Z"
+    }
+  ]
+}

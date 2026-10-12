@@ -43,6 +43,9 @@ public actor HTTPResponseCache {
 
     private static func clear(cache: URLCache) async throws -> HTTPResponseCacheUsage {
         let memoryCapacity = cache.memoryCapacity, diskCapacity = cache.diskCapacity
+        // Clear the active backing store before changing its storage limits.
+        // A disabled cache can otherwise hide responses until it is reopened.
+        cache.removeAllCachedResponses()
         // URLCache owns truncation. Temporarily disable storage as well as
         // removing responses, then restore the application's original limits.
         // No cache database or unrelated directory is deleted by our code.
@@ -73,6 +76,20 @@ public actor HTTPResponseCache {
         cache.memoryCapacity = memoryCapacity
         cache.diskCapacity = diskCapacity
         limitsRestored = true
+        // Reopening storage can publish an already pending disk write. Remove
+        // responses again while the original store is active, then wait for
+        // stable real accounting without treating retained index bytes as zero.
+        var previousUsage: HTTPResponseCacheUsage?
+        var stableSamples = 0
+        for _ in 0..<40 {
+            cache.removeAllCachedResponses()
+            try Task.checkCancellation()
+            try await Task.sleep(nanoseconds: 50_000_000)
+            let usage = HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))
+            stableSamples = usage == previousUsage ? stableSamples + 1 : 0
+            previousUsage = usage
+            if stableSamples == 8 { break }
+        }
         // Report remaining usage instead of claiming success if the framework retained data.
         return HTTPResponseCacheUsage(memoryBytes: Int64(cache.currentMemoryUsage), diskBytes: Int64(cache.currentDiskUsage))
     }

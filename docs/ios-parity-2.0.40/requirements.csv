@@ -2,7 +2,7 @@ id,gate,area,requirement,android_reference,status,evidence
 BASE-01,P0,基线,核验固定发布提交与527文件快照,baseline/manifest.json,通过,verify-baseline.ps1退出0；527文件与冻结ZIP哈希匹配；baseline/VERIFICATION.md
 BASE-02,P0,范围,逐页逐入口逐默认值补齐需求矩阵,MainActivity.java,待核对,完整方案/P0~P4报告已写；范围审计确认当前源无文件型站源实现，不新增预留协议入口；其余入口/默认值继续核对
 BASE-03,P0,测试,建立双方共用且Release隔离的确定性fixture,app/src/androidTest,待验收,双方共同JSON/384×384原图及Debug/Release隔离保留；第22轮SDK/运行时17.5及五个原输入SHA核对。冻结金标与Apple64/64同内容窗口/尺寸对照退出0，逐组件尚未验收；ci22-results及ci22-comparison原件。
-BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,ios/scripts/build.sh,待验收,CI23/24两SDK成功，Mac929/1缓存失败；原生及UI有真实失败，见原件。当前Core925/2跳过/0失败输入未变，93原生Release/DEBUG仅语法通过；完整Apple/UI待执行。
+BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,ios/scripts/build.sh,待验收,CI23/24两SDK成功但Mac/原生/UI有实际失败；d0阅读Apple复验运行。当前缓存候选Core927/2跳过/0失败、150.959秒及93原生两配置仅语法通过。当前完整Apple/UI93仍待执行；cache-reactivation证据。
 BASE-05,P0,视觉,建立8场景真实Android截图金标和设备元数据,app/src/androidTest,待验收,冻结Android64原图不变；第22轮5e2的64/64同内容叠图/差分可生成且哈希核对，组件和后续根导航候选实拍仍待验收。
 VIS-01,P1,主题,完整浅深色token及默认跟随系统且设置落盘,UIHelpers.java;UiContrast.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：Palette.swift;AppTheme.swift;AppThemeController.swift
 VIS-02,P1,素材,启动图标应用图标插画及控件图标按实际原版,app/src/main/res;app/src/main/assets,待验收,18规格不透明RGB及SDK资源编译已补；新增实际两设备主屏图标/点击截图与位置记录，用例未运行；旧IPA无资源不能交付；D93横屏安全区候选；底栏纵排仍未关闭。

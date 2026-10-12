@@ -1,0 +1,4301 @@
+{
+  "recordedAtUTC": "2026-10-12T10:27:01.132501+00:00",
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "iosCommit": "db4536abb30b99a9586cfe9f8d0b1df479a40e28",
+  "policy": "full canvas, uniform density at 2 pixels/point; at most one physical pixel of recorded raster rounding; magenta outside-capture edges; no masks/cropping/axis stretching/automatic PASS",
+  "systemDifferences": "Visible in derived images; assess real status/navigation/home-indicator areas individually in component review",
+  "prepared": 64,
+  "expected": 64,
+  "captures": [
+    {
+      "case": "phone_portrait_light",
+      "page": "bookshelf_online",
+      "androidSHA256": "3e2e1b191b54e4bece563e4acfc17e5fd33afc8c4461d3af6ac72af0fee38875",
+      "iosSHA256": "5138ff85a6d55162cdceaaa2f8cfdcd21d39621762d21855b8ebf126a47f2173",
+      "iosProvenanceSHA256": "768a42e0c754e7fb09d356d68f279027f942696f221140b9d8b81dfd82e7f3cc",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_light_bookshelf_online_side-by-side.png",
+          "sha256": "aa0b43aaabfc0132ef3b2624f234d01938f01432b7090073a7d7e3580d434b28"
+        },
+        "overlay": {
+          "file": "phone_portrait_light_bookshelf_online_overlay.png",
+          "sha256": "77abfe066950892d0b426029666610b682d4fe79836b3e23813fad0a8d78662a"
+        },
+        "difference": {
+          "file": "phone_portrait_light_bookshelf_online_difference.png",
+          "sha256": "24a88b5f3250a6bb914fdf9ec0f83a140b65b9683066d76301438f5969a13b3e"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "discover",
+      "androidSHA256": "aa14347db65e2191309712a249853d4e458eeb74087aac953222e12cef690bf5",
+      "iosSHA256": "6b54c438100a815df78460728bf6f7718150cab11e0dd8f0f9ae3e2bca31390e",
+      "iosProvenanceSHA256": "dcbeab39aed33a2ea35960adbbaddcddcad4128ed24b370fdd766655bd86811f",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_light_discover_side-by-side.png",
+          "sha256": "05fc537f891ca27d8d709b77e28ca087be66819f0bc5e65ac8f3ac9d9d53bcf4"
+        },
+        "overlay": {
+          "file": "phone_portrait_light_discover_overlay.png",
+          "sha256": "1e74f69dae4ace7da4efb4886d353997e72e6ce6a80c7c816eba6b6ef2cec618"
+        },
+        "difference": {
+          "file": "phone_portrait_light_discover_difference.png",
+          "sha256": "646f6cca250ddc3ce7427135852f9c8803318bff5313b777a92251ec4f9f10de"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "source_drawer",
+      "androidSHA256": "52ddc9a3b7a18370c14eb59ce824941b9ebe001834b2b0cfab743b350df11ff5",
+      "iosSHA256": "f1570200aec32be040223a74f642b597627160a8d1108b989a104e5368c519e7",
+      "iosProvenanceSHA256": "317f6d642e9daa43579f6fed64f68d930fa40f51fbeb3860d0b85b1d804dbc9c",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_light_source_drawer_side-by-side.png",
+          "sha256": "43cec0b8ceecc99fa32a5c014b9adaae4886de9fd6381e59e79581c63e5d1cfe"
+        },
+        "overlay": {
+          "file": "phone_portrait_light_source_drawer_overlay.png",
+          "sha256": "0e9fe9afe091315e1e26bc016daa158133f246915a84bdfaa208b18c397448f5"
+        },
+        "difference": {
+          "file": "phone_portrait_light_source_drawer_difference.png",
+          "sha256": "111544dc4e914c294101c6cee3d06424073191c6ec85a60653d59beea87f0fcc"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "search_results",
+      "androidSHA256": "79db5deaf979207c1e649f65a60d60f3513c0557bf3213ffcd141e3a585c77b6",
+      "iosSHA256": "f1c6eb564538f5503016d89844ac9f03621c5ad4d9e12e69d18de7f682b73b7e",
+      "iosProvenanceSHA256": "cbd2b2d380ab4028abdcd6a6e4ada2922ef262acf8af2ba8cfad186a4c9e38c2",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_light_search_results_side-by-side.png",
+          "sha256": "b6d5180e43a0231f002b86640deac006d4fb0acf04853176bc4b2fde19708ee7"
+        },
+        "overlay": {
+          "file": "phone_portrait_light_search_results_overlay.png",
+          "sha256": "d33f8a360c9c8b49e25bec8438981157e65db5ebbeab8d122c39c47b9d417843"
+        },
+        "difference": {
+          "file": "phone_portrait_light_search_results_difference.png",
+          "sha256": "359a2e148cc65bd98c5aa2566c78de0d014ced87ea00167338f0f1f215a78377"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "detail",
+      "androidSHA256": "8ee624032b0c16380d3033dd41069097e3759db3af777e8ea250e8b4f92bf611",
+      "iosSHA256": "73d7b9036782e500442d7d3b7c57440734f909db88221cf81c6b8a9601c07b95",
+      "iosProvenanceSHA256": "9ae987114c3ff71ab381017077763adffcda8d92b0c7168ae461f2ee34262085",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_light_detail_side-by-side.png",
+          "sha256": "6200bec8538e99f07a5db3ec75af1c4def9da34180baeb876a5aef3150e472b9"
+        },
+        "overlay": {
+          "file": "phone_portrait_light_detail_overlay.png",
+          "sha256": "18aab332b8c95a6cc8e7fe2eab48de8b618f081b19d0184b548c9d1560ed2b25"
+        },
+        "difference": {
+          "file": "phone_portrait_light_detail_difference.png",
+          "sha256": "2f36fd9016db2c90f2c13b28408f122181d74757d4573ae41aa2292fb3446793"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reader",
+      "androidSHA256": "96b9ddedace328266bd12d3f706e45dbbc079f18ee9329818ce995a1d7ba1fc8",
+      "iosSHA256": "84a5838c66d3fc9afca627a2f845450c07f574d985e1605e87fc7c5f0e9a8ad5",
+      "iosProvenanceSHA256": "b89835ae108ed7952523d6d416964f29c36846409cff6bddc770b870093407a0",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_light_reader_side-by-side.png",
+          "sha256": "f68fb8af4086d84ff5056884d654ad8910b1e9b9ffcc1eb01f8cb8bff6ba6d70"
+        },
+        "overlay": {
+          "file": "phone_portrait_light_reader_overlay.png",
+          "sha256": "a73c025922e62ef51127ba19a0d44a7afe9da201b7a04357544d0529f5e3884c"
+        },
+        "difference": {
+          "file": "phone_portrait_light_reader_difference.png",
+          "sha256": "b2b862b387291c3abf203cbcc8cd532819fdeaae8af6bf1e768c6bdbefe09c32"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reading_settings",
+      "androidSHA256": "60d2cc597ce15de05d6842ed2646e8743684dab76c56bce08a40e9ec35b25dab",
+      "iosSHA256": "09a0a76c6434803811b7bb8ee917c838e390b8f27b8318a111075d48a0c96c5b",
+      "iosProvenanceSHA256": "b876f9b8ba7ac9fec4d17cebed440a051fa526dacd56b5b5af8d5c33da566875",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_light_reading_settings_side-by-side.png",
+          "sha256": "b6be9a35a378858d3da7e173f659178439d8b2e78e5c35357565e9a691ace25b"
+        },
+        "overlay": {
+          "file": "phone_portrait_light_reading_settings_overlay.png",
+          "sha256": "983c8716a574f764135098ea8820e3d0ecc23e6d05660c9e9eb0f3d3562f3049"
+        },
+        "difference": {
+          "file": "phone_portrait_light_reading_settings_difference.png",
+          "sha256": "2f7b74fed3404be5ec41ae53c2a9d80e6b26be223de2e9a5c1f803eed453d0f1"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_light",
+      "page": "reader_directory",
+      "androidSHA256": "ee1974c81856c831c46c74b4ee5475c86f21498f5199147025458c2e1986c02a",
+      "iosSHA256": "ab1b8e342d04a67ce301f66710055552bfdacf90325d648d0063a9f0d7f3e8ba",
+      "iosProvenanceSHA256": "64b61f498c20dab510e92b208733daa7e2af5d6a882b8eb41fb3cc7548b92027",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_light_reader_directory_side-by-side.png",
+          "sha256": "280db28dd635117a030900faf570e71a45049c1c1ff5748d489d8c54071392a0"
+        },
+        "overlay": {
+          "file": "phone_portrait_light_reader_directory_overlay.png",
+          "sha256": "548e14109ab9fdc75829bd3cac48cc5dd38bc1f3a786face224ea97b845e82c0"
+        },
+        "difference": {
+          "file": "phone_portrait_light_reader_directory_difference.png",
+          "sha256": "e18004002b5a3f72ab0fd7563bfc0facc3913fedb9edc96c92967bfb3f9175aa"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "bookshelf_online",
+      "androidSHA256": "e0fab4a684e3dd3faaf6c115baaac3d1d4496e708dad9e2b152fec87f3ac3baf",
+      "iosSHA256": "9ed2867b94927f83041377033597dec44e433c3c931bd06b3f7c14f525da9398",
+      "iosProvenanceSHA256": "ea0cbf832a79af5b7201d4ed4895643251be85e57f23734a58ebd5e3d0d4df81",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_dark_bookshelf_online_side-by-side.png",
+          "sha256": "d8748fe5b219374edcbe286c9de734224fa4cb94c446bcccb263e38e7631e569"
+        },
+        "overlay": {
+          "file": "phone_portrait_dark_bookshelf_online_overlay.png",
+          "sha256": "f56691952193d054b2d6a6843e393e5fdbccacc20e0a6fe39fa1b5d408ace2a1"
+        },
+        "difference": {
+          "file": "phone_portrait_dark_bookshelf_online_difference.png",
+          "sha256": "2d451bf9ce6a91873f05fc37f29da7546e35d9282f177f72392291fbe7a2895e"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "discover",
+      "androidSHA256": "8c86999dadcd262e626839cba9061a79a6e78b0150d47545b554872e6e016e77",
+      "iosSHA256": "8bdd3d2284e4ad1a3f7c467823b48641ae069354ea04b383d71cf1212ef97956",
+      "iosProvenanceSHA256": "e2d4f2d831f2dc21ff9153343f7bfeb7fd30dedd59eebc137701d70d8f4fbc1b",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_dark_discover_side-by-side.png",
+          "sha256": "511df66a3a7c47ae063c8c0e30b76afe219e7169edc4a925cb9d972705e36799"
+        },
+        "overlay": {
+          "file": "phone_portrait_dark_discover_overlay.png",
+          "sha256": "e090e176d2ff2c411d5192b4418fad2e48c23f87218e49229592ecdbc1164c38"
+        },
+        "difference": {
+          "file": "phone_portrait_dark_discover_difference.png",
+          "sha256": "881f20389e5382427adbbdce0530fb8fecc303275e54eb2b7c2d876f0d3f286f"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "source_drawer",
+      "androidSHA256": "2c33b3b0faef9d169e7ecd5a7b12e1c1bbd26f2091278a35effb6d832ea949ba",
+      "iosSHA256": "d9320f1f5d0ff78820fc05a0a6e722a9dd07e52ae6fcd8ca1791cc67a837b0ee",
+      "iosProvenanceSHA256": "493d2cb6f79134c598466bb2073432477fb272836938b679fc75aa035bbe6a2f",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_dark_source_drawer_side-by-side.png",
+          "sha256": "1ba347e69b300af2bb17dc8a8598414e6d7dc69dced82d7bc0035189754f5c9c"
+        },
+        "overlay": {
+          "file": "phone_portrait_dark_source_drawer_overlay.png",
+          "sha256": "6c689082f8c88bf9129691d24627970db849ac378272ac79eee8c1868c9bbc33"
+        },
+        "difference": {
+          "file": "phone_portrait_dark_source_drawer_difference.png",
+          "sha256": "8bf17453c75431029f06dbc07d9f6c3e3eec4fb74eb4f19aa82e738e9481ec85"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "search_results",
+      "androidSHA256": "09028c1aee243b57c70da11ce41d9702bdeb1d4fd7698aaafef317b2f8bb8aaa",
+      "iosSHA256": "4539fdc901aeb13bc297786705d48dbd786fcdb0a0a411126f04a9dc1f0cc65b",
+      "iosProvenanceSHA256": "9c6366499ad3b31b97f4b2a9d94d5ddbd2ccc34c77b335b6211fc887157711fe",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_dark_search_results_side-by-side.png",
+          "sha256": "c3e063a6c41571776ac0b2e3a62fb898e1315ea31310aebbf46ff98c42a9abd5"
+        },
+        "overlay": {
+          "file": "phone_portrait_dark_search_results_overlay.png",
+          "sha256": "8f1659fd264f8d202d631b662a11eb7003d25dbab9460a1b56eb7b1d0762c6a2"
+        },
+        "difference": {
+          "file": "phone_portrait_dark_search_results_difference.png",
+          "sha256": "c5bc5b3aba2185e039a2202a9175544c7b9e0d587ee4659ab35153089037e2d5"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "detail",
+      "androidSHA256": "89ee9bd199e9fe2bef91d49c23b58d638ee254b55c0e68be12f5f729dd16dbeb",
+      "iosSHA256": "aea6b3c01375c745edcbfc3d346d3977755b27434ba81302e7ecf0e5542da79a",
+      "iosProvenanceSHA256": "85ddd39849fe30fdf0b8721180d850dca65d60c51cc7b15f2054c654f9c3786b",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_dark_detail_side-by-side.png",
+          "sha256": "2456a86da70c58902a979a1a3738b47061534bf30a448c3fc3ea9a74b6a14384"
+        },
+        "overlay": {
+          "file": "phone_portrait_dark_detail_overlay.png",
+          "sha256": "bfcb19ea3d0e799ec14c81fa9a3fa67a77b0e9c241d9a63fef549d27dd053a01"
+        },
+        "difference": {
+          "file": "phone_portrait_dark_detail_difference.png",
+          "sha256": "ff6c37d6f20644953fe202c22b14dc23fa2418fe931b8f5a4b732f12a4853023"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "reader",
+      "androidSHA256": "adfacd658243bfdd67d62f5d9a327055d84963bd7287139bfc21957c30afa710",
+      "iosSHA256": "953a7f989fa507c01c04986975082235d129ab6c4ade34062157727d742746c6",
+      "iosProvenanceSHA256": "b2723640f27c92a7adc107bfef46a26b9e249c65b41520a3d9d1a57b3d3b3d3c",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_dark_reader_side-by-side.png",
+          "sha256": "80e6ea9c51f8c0c370be4f386d9d2f54de38696d7040d9ba7f59a57ba2f7dca9"
+        },
+        "overlay": {
+          "file": "phone_portrait_dark_reader_overlay.png",
+          "sha256": "50b6bf895818998a6379e216c763d3b0a5c5025e108e121e488cee865adfe395"
+        },
+        "difference": {
+          "file": "phone_portrait_dark_reader_difference.png",
+          "sha256": "5bf5fc515b39fc4f07e6c2957eaecb1eeeb29ba41a989c4bd738716795901576"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "reading_settings",
+      "androidSHA256": "09cc2e8f14e7132f03c351be436dc343e52a01d2a86ab653fd820acd4c1f951d",
+      "iosSHA256": "7d7f4064e756fd39bb7bb5845116d0a33cb00740b0b07520964ec0db4fd8dfdf",
+      "iosProvenanceSHA256": "c518b46c17e692a437de8914100f7cd5726eef5b19e446a053a831e0e40bf176",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_dark_reading_settings_side-by-side.png",
+          "sha256": "44ca2f653677c53d0ee16ded3e420180fdf9f6ae0f037944e96fffcf218a18d5"
+        },
+        "overlay": {
+          "file": "phone_portrait_dark_reading_settings_overlay.png",
+          "sha256": "a7ea8710399a452e1afebc83c328b0a7d370d83753cecc66e00723be3a6817d9"
+        },
+        "difference": {
+          "file": "phone_portrait_dark_reading_settings_difference.png",
+          "sha256": "345d8d1206b4f2149c50f1534e9aa1bab09dc02c951f4dbc3214b3ee4cf48085"
+        }
+      }
+    },
+    {
+      "case": "phone_portrait_dark",
+      "page": "reader_directory",
+      "androidSHA256": "6efeffb9f51ceb2bbe24b8c3f2842c5ba6c7c28d8aba1043aeb8704cb29e7a9f",
+      "iosSHA256": "54fd524da55eb6c55f1961510c0d0e2b9a09ef9100c63539e5f5f4f57eca4a31",
+      "iosProvenanceSHA256": "f09c63e25c8758503f0cc7c1b63788b6fc74214af89666b86a9e134af702f257",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        393.0,
+        852.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1179,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1179,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1178,
+          2556
+        ],
+        "expectedPixels": [
+          1179,
+          2556
+        ],
+        "deltaPixels": [
+          -1,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_portrait_dark_reader_directory_side-by-side.png",
+          "sha256": "b634f69a51420248952d6439ef7c9894e0f31052646c4160b989a125049bf08c"
+        },
+        "overlay": {
+          "file": "phone_portrait_dark_reader_directory_overlay.png",
+          "sha256": "4b9d5cd39cf697bd3b9852033ceb0842316cde97c3fec8a1461b585cfddc8849"
+        },
+        "difference": {
+          "file": "phone_portrait_dark_reader_directory_difference.png",
+          "sha256": "7e729725f8406457169fd69a69fcb147245a55455011a17f9d7b72a2ab4b16c4"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "bookshelf_online",
+      "androidSHA256": "b4f6d76df46764c174225d23f32723a294c000d3da828300caec547a5202fe6b",
+      "iosSHA256": "11eed7a0c9c7f7f518d4227d53c3cba685dc4a9d689f2edb55315b751fbc33e2",
+      "iosProvenanceSHA256": "9c6920186b93fa8eef76110e4de17eee87c398f29247834ff4358395e7d29280",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_light_bookshelf_online_side-by-side.png",
+          "sha256": "c299c57fb87b59951663d544c5ead632371c5b2ad8e31d8ace6c1233c376e57c"
+        },
+        "overlay": {
+          "file": "phone_landscape_light_bookshelf_online_overlay.png",
+          "sha256": "ae554580c7b091b55ffd1afe3dfb93327c6a19f0a956e05a1b73d2931e0421dd"
+        },
+        "difference": {
+          "file": "phone_landscape_light_bookshelf_online_difference.png",
+          "sha256": "c42b8f833363927b801b5d9aad14fb62f66afd8cec331eb2098b1e52ef653b21"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "discover",
+      "androidSHA256": "73aa9bc1a989c605d158376453983b5cb4e776f5326971ae077fa0a4ac04436d",
+      "iosSHA256": "24ad57df747cdb0203be17bdb1b30da1c20e5a88bcabc652fa3ee9c2df7f9a85",
+      "iosProvenanceSHA256": "136e734e66c7d2c43ee49cf1c323020aaaaa37245ef38b9aec2cb72c92d2c6fc",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_light_discover_side-by-side.png",
+          "sha256": "ac1d70be7c91f649f0abbd75df4946d87455248dada29019df873067de4517c6"
+        },
+        "overlay": {
+          "file": "phone_landscape_light_discover_overlay.png",
+          "sha256": "cc507bf41049ecee03250a40048fb36f2215f7b58e6fe6aac517376c862067ff"
+        },
+        "difference": {
+          "file": "phone_landscape_light_discover_difference.png",
+          "sha256": "a594244341f43aca1828ed580630e59f8eaa4893ee41dc69bb2483719695387b"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "source_drawer",
+      "androidSHA256": "ebeff152f395ef75b07994d4c3e6f31f6ab43cd12941ba306d3f2dd258e7a2be",
+      "iosSHA256": "f3fd5cac7b02e3b4fca182e88c3e9c05db5ab52d3fd33c6440b64e71ab6b3ad1",
+      "iosProvenanceSHA256": "81a625087de3be31f1a88128dccc172e0c9b92ffa04ab0db278e1415f8434f03",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_light_source_drawer_side-by-side.png",
+          "sha256": "f6cbd067edd65049579902f43a098e2fc8f5123b5d5ebf46c1214cddf5d3d570"
+        },
+        "overlay": {
+          "file": "phone_landscape_light_source_drawer_overlay.png",
+          "sha256": "959d640d6f9738efe43534a9fc96fca9d60ab9f25cb11afa94f492641d139058"
+        },
+        "difference": {
+          "file": "phone_landscape_light_source_drawer_difference.png",
+          "sha256": "90e57d9cceaf24104411fbc9bf0838d4043c60ee6e17189170cbbd7a87cf166a"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "search_results",
+      "androidSHA256": "695d8b6709b214549fa2b19cdd5cb5611a13829184185e5da2c376da70e338a9",
+      "iosSHA256": "765a7e23f15ddc2a33ad2979d5e490f8227203751862e3f84eaa7b14807796e9",
+      "iosProvenanceSHA256": "1c0c0a80af8a570232b4ba87378f706de0eac0583b073a6679bc8e1a8dfa9a4f",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_light_search_results_side-by-side.png",
+          "sha256": "d0e906511cc244c3dc54536b9f1ae25e57ddf7c42e70bcc4f661e7e9be45048d"
+        },
+        "overlay": {
+          "file": "phone_landscape_light_search_results_overlay.png",
+          "sha256": "21ace9eee2991a40644fed222580941f57dc83906214ba783a8ee24fbf85328c"
+        },
+        "difference": {
+          "file": "phone_landscape_light_search_results_difference.png",
+          "sha256": "24bc5fdaeefad2a73cbb1b3adf3908cadccdec6a4eb73ddd6accf8f88860cf2d"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "detail",
+      "androidSHA256": "93c5bb49dd65a477b38d01b63761b86d94fabde060a7391210c95a8d4fce4955",
+      "iosSHA256": "f015a387a94ed30d358eae2e66d274ddab8c9975034aa9ca15ddd77f9f1602a6",
+      "iosProvenanceSHA256": "4c5d24e6e0fff8ae7f0b9d8a292b610ee76137685d3220a018703eb7dff56a5b",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_light_detail_side-by-side.png",
+          "sha256": "7b2dbf0499058b61c16f0c4f8f51cd88f1b49501a46756abcb0bc29e32b2fc49"
+        },
+        "overlay": {
+          "file": "phone_landscape_light_detail_overlay.png",
+          "sha256": "96a5a266c1b8c47e3bb4733a723c6352006efcd2a6b10377a4ec1d14d010036a"
+        },
+        "difference": {
+          "file": "phone_landscape_light_detail_difference.png",
+          "sha256": "e5577722bec375bc04771f204d35bb79dfc3c7a352c826581b7eb186e2dde331"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "reader",
+      "androidSHA256": "0702cdb8432db47d467791873c974051876c10de117b26a1f032a132fbd7bbab",
+      "iosSHA256": "706aa178de4b4a3f80cb765108e38fddf663b05402bb5bfd23b9f030bebd5045",
+      "iosProvenanceSHA256": "4820bddc9d03dcce1d5d786eada324db132e5c996dcbdafce78285b38b74ddd0",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_light_reader_side-by-side.png",
+          "sha256": "8bb9624e41becfd6819843079f500a794ed74e685bc74fafc5b73a625d37d889"
+        },
+        "overlay": {
+          "file": "phone_landscape_light_reader_overlay.png",
+          "sha256": "df6f2d77a515438130965e6ae1d012f39db8559b08faac805a89ae4875b758d0"
+        },
+        "difference": {
+          "file": "phone_landscape_light_reader_difference.png",
+          "sha256": "413fdee0e660c1c5817d07aeac36cf8c7cf8235ca8b33b821fe8bcfbaca66083"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "reading_settings",
+      "androidSHA256": "7ef9bd948035077773ff0f0a242679b44c95b6d6318a8778f84d7693c2f0106e",
+      "iosSHA256": "f27940def8bcbf051fbccbaff9e1326cdbade103697a86b4e3ebddead0c016e1",
+      "iosProvenanceSHA256": "d79bfbf8e5d97851b83d6fca2841dfd3d32d05279d564eef8b678937a774fd7b",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_light_reading_settings_side-by-side.png",
+          "sha256": "35cc1d382ffafc61d21da3e8997510190c591adf03526ea209dc541cda38590e"
+        },
+        "overlay": {
+          "file": "phone_landscape_light_reading_settings_overlay.png",
+          "sha256": "d00dac7f622cb97ba4a9fd578f90cdee904cd1dc5ec8832e3d6dd5660b504fcc"
+        },
+        "difference": {
+          "file": "phone_landscape_light_reading_settings_difference.png",
+          "sha256": "1c99c8f3be46545f4acc475aa38beff216493394dd8498d2666f9f6a08820bec"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_light",
+      "page": "reader_directory",
+      "androidSHA256": "b4c7c0156f277bcce14efbbebba84c6c246c8ef74b5867382a841cf81f5773d0",
+      "iosSHA256": "d33a8f8921b19c87693caec144d0468c020173c287619ae2a3dcab6291144a1a",
+      "iosProvenanceSHA256": "bf09b584a1f53ba3417445e59be1c4e08a7641f4fd028f4f60e06f47e1746e2f",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_light_reader_directory_side-by-side.png",
+          "sha256": "b209cb73b28d5f3ac85e95624c0eded899eaf6f8f906d60ec45950e37cc816a1"
+        },
+        "overlay": {
+          "file": "phone_landscape_light_reader_directory_overlay.png",
+          "sha256": "b864c6d6147616eb37be556fa9dcd8a3b5c14bf08cec8c5f6c64c58dacb76903"
+        },
+        "difference": {
+          "file": "phone_landscape_light_reader_directory_difference.png",
+          "sha256": "bb42217ed458f5a815cc7147af1021d76a06586325ce273e43b7e1195bbb271a"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "bookshelf_online",
+      "androidSHA256": "17f5f9b750f5a9550c0bd969fbc761c4835edf79f4c727f41872fce21c17d7dd",
+      "iosSHA256": "a64ed5a863913dc2ec421382e0921d9ad7c1bd9e363952eea5c71386a2a2fd8d",
+      "iosProvenanceSHA256": "f10913d203ee1d717f74e59ceee65a5997ab6d6d93b0aa474647662aff30db02",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_dark_bookshelf_online_side-by-side.png",
+          "sha256": "f7057b3fbcee74694d01efc886a6d4611b214c2b35a0191bea41882cd1b17617"
+        },
+        "overlay": {
+          "file": "phone_landscape_dark_bookshelf_online_overlay.png",
+          "sha256": "cdcdefd6356bf06eac884debc9bb6d4c784dd0888a6ba958c7fdb776e390acdb"
+        },
+        "difference": {
+          "file": "phone_landscape_dark_bookshelf_online_difference.png",
+          "sha256": "d09b998eae827793fe4ee02a7c3011f2e2a2bb9fd6a0ecb8f9c4e21e16be0494"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "discover",
+      "androidSHA256": "c5f634fa36971e996f3cf8d018a75bdf516ec3f75f12f6c48f16cf9cd1234c01",
+      "iosSHA256": "810f191853f5ddb3f055bbe0d8bbed650ee9fc16971994f4a3c6fe60bb4e3af3",
+      "iosProvenanceSHA256": "5208248f6315b0e21b691e8e1ce0756950763554dd09b2b12f643a8ea879ac67",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_dark_discover_side-by-side.png",
+          "sha256": "77445d7a7a3d1c1f754a71ba520ab5354f2b7ec5bc7993a388b5a6528ac89fc0"
+        },
+        "overlay": {
+          "file": "phone_landscape_dark_discover_overlay.png",
+          "sha256": "c78943d2f27ff206cdc6a7f5625767ab67e409235c220331d5382be611d3a2fe"
+        },
+        "difference": {
+          "file": "phone_landscape_dark_discover_difference.png",
+          "sha256": "5995d1ffd824a772e065b6331c743b3a5ea149b0731486f8e07b12a114e9e27f"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "source_drawer",
+      "androidSHA256": "9aa6da3978eab9acdf5b05c79d51fe7d28c90f1df0fb44a4f361a7746b0e10ef",
+      "iosSHA256": "3bf9190f32b1abc1469aae3dbd7ffad88689d174e376ec111f3c65e75a6bcb8c",
+      "iosProvenanceSHA256": "9bee14b770f949cc0390a8ad57f6a6ff339b9fb08cb7a547b7fb04c6ce1b9f9a",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_dark_source_drawer_side-by-side.png",
+          "sha256": "1d964d575a2060fbdd0373305388b9802b1fcf50eddec41e9ea6c0adad5e2e91"
+        },
+        "overlay": {
+          "file": "phone_landscape_dark_source_drawer_overlay.png",
+          "sha256": "d7fbc2545376c572fc2f0d6dd203722394b4e0544bb48cea5fd6753a57f7ea04"
+        },
+        "difference": {
+          "file": "phone_landscape_dark_source_drawer_difference.png",
+          "sha256": "6cd3e91e15cb83b21dab31c965db0c222b9ac7df78e3fac0943e1e122e3747b8"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "search_results",
+      "androidSHA256": "483fd75776da26e51ae89b4dc7259063ad9242422354c81b4b5be5bd9a593e00",
+      "iosSHA256": "e045bbf1b26e7e4940d6897f0b3e919ec6dda1ab62cd2180aabb15141660213a",
+      "iosProvenanceSHA256": "2cd08e31cbeb980b5fb74d9add6f9823c0f83dd2c9b63f5f034c52c7aef01ef7",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_dark_search_results_side-by-side.png",
+          "sha256": "045e99e3258e1bcca691fa308781228694a78fa60b0edca292845394044268bd"
+        },
+        "overlay": {
+          "file": "phone_landscape_dark_search_results_overlay.png",
+          "sha256": "adc0752762647b74e8fb2bc7846ca24e627f5ec371e8d2dc86271d40093ffb00"
+        },
+        "difference": {
+          "file": "phone_landscape_dark_search_results_difference.png",
+          "sha256": "495312f66a15dfc44b8ebf32a19e11f5f24ed6cfc951c1ee4a2560d325d7ad90"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "detail",
+      "androidSHA256": "bede0485a3e122895147e4fecce356758a5b73b481606b0f2fa5fc0473780c39",
+      "iosSHA256": "8bc475a8f717d4cf23fbac909008afc9372159befb8a0f2fe7fcf9f0cfafa577",
+      "iosProvenanceSHA256": "1a681b6d6b5c8f579a571af14f232a71a3baede4d8e118b43cd972a834fff0e0",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_dark_detail_side-by-side.png",
+          "sha256": "6bc0caaf1c1fe531cc37b43ef6f094c0cbb5c41cb9858c5ae844e8e77ab55feb"
+        },
+        "overlay": {
+          "file": "phone_landscape_dark_detail_overlay.png",
+          "sha256": "b33fc117e35a1df7031f71d953c607be004192dbd6ea72fab9f597efd4bebb87"
+        },
+        "difference": {
+          "file": "phone_landscape_dark_detail_difference.png",
+          "sha256": "36259ce43c9ae64234e165e3195fc5524ef279287ecd33efbd82ea51873631c8"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "reader",
+      "androidSHA256": "c2b4878b38dca0a01a16ff2e5fb7aa6877183e037a783207560a9ee2867dbf06",
+      "iosSHA256": "c243387c37c6e9a31b84ee472e626b7bc77c24cd7e6037be8ce082553f7259e1",
+      "iosProvenanceSHA256": "ba5638ea8a5db0a51e4596b91c96e027a0ca875be1417094bf8e867f8900a644",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_dark_reader_side-by-side.png",
+          "sha256": "57c531839debee8ffba17d4d004d8457aff08e536a5a1d576a1e76bfa3f4c608"
+        },
+        "overlay": {
+          "file": "phone_landscape_dark_reader_overlay.png",
+          "sha256": "f733e928752a96ccc086bf3b7f8f52b00fe270d8a5f947263cb2e28005c0fa21"
+        },
+        "difference": {
+          "file": "phone_landscape_dark_reader_difference.png",
+          "sha256": "f4c36317d55ac5e751836ee247879abe07f6ca384801e11b699b705fd8f2cb84"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "reading_settings",
+      "androidSHA256": "e00e3d7ddb01364750dab444940c3b1a585733a9bbaf0d49e4a6ca8a15394a18",
+      "iosSHA256": "d08e7cfb734ee9090b1233045ecf2bbdb5c1153637630b2773095919c69ee2e2",
+      "iosProvenanceSHA256": "979a35d980d19c1731eaa0ae078e6b67201eb9dc7578f04edc8d0f8cd39b5106",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_dark_reading_settings_side-by-side.png",
+          "sha256": "5d5c004f47911c06d6a594560d37dbdf217b7f9c94e59a68560510e8e362a51f"
+        },
+        "overlay": {
+          "file": "phone_landscape_dark_reading_settings_overlay.png",
+          "sha256": "e4ba3fec249b65f7ad80f506b9f7bafe52f63ef61aea7776877a39a0ec41e3a3"
+        },
+        "difference": {
+          "file": "phone_landscape_dark_reading_settings_difference.png",
+          "sha256": "e683202219140794dca85db765b6657568d6480ea32c25f1f0051cb677c2652f"
+        }
+      }
+    },
+    {
+      "case": "phone_landscape_dark",
+      "page": "reader_directory",
+      "androidSHA256": "3f766593b99d18a84fe7d19e5f7d258a2c09ad77d12c609f4f4a2f75719c137e",
+      "iosSHA256": "9298e2f184c47a995defb9533f719b84f7fdf70d92c3c3f3ccc70b08d7801b29",
+      "iosProvenanceSHA256": "4e5f34c542a8afd04e73c9ce28f632195413a1f74fc24383dd7ed701098cb60b",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        852.0,
+        393.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2556,
+          1179
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2556,
+          1179
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1178,
+          2556
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2556,
+          1178
+        ],
+        "expectedPixels": [
+          2556,
+          1179
+        ],
+        "deltaPixels": [
+          0,
+          -1
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "phone_landscape_dark_reader_directory_side-by-side.png",
+          "sha256": "3bcb3c1eae7f70aeeb698887cb27d82e1b618850652d27bcd6a5e845d10debe4"
+        },
+        "overlay": {
+          "file": "phone_landscape_dark_reader_directory_overlay.png",
+          "sha256": "033378b2c09b858dfd41878d4c6059edd6cacbe0c551080d3f3ea1b9778061e5"
+        },
+        "difference": {
+          "file": "phone_landscape_dark_reader_directory_difference.png",
+          "sha256": "0be3f464ad92f32d8c26ff693154f68bde03eb1b081263824008ba19a3efd1df"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "bookshelf_online",
+      "androidSHA256": "5d194ccbfbd413f39820cd2c73aee2079c45868e43716f34309c090976c40265",
+      "iosSHA256": "615e6b0aca93e08c5c1f2bb0e8ce5e62847b18290e1c47f1f3cc25fa06b2a19b",
+      "iosProvenanceSHA256": "0b2bc54a3625612615b8b525afc6698c66fedc726b1cb52997b72fb599b5902b",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_light_bookshelf_online_side-by-side.png",
+          "sha256": "481314e721a4e744aa9c33b0e2eb064e703e0ca85374313b19ae3cc175e46d19"
+        },
+        "overlay": {
+          "file": "tablet_portrait_light_bookshelf_online_overlay.png",
+          "sha256": "1475d5dc81e1dc3f7764a960cbb2b1a5b139e46903fb73896a6db74c9052d2e1"
+        },
+        "difference": {
+          "file": "tablet_portrait_light_bookshelf_online_difference.png",
+          "sha256": "966b5b964191fd26c85999d3e411dbe5c647c283dd44ea84539646684d25cf2d"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "discover",
+      "androidSHA256": "22bc1deb7e9c267a4ad75e9062e99630321762c5ebc3227afe1ac51d73aa925c",
+      "iosSHA256": "2ba365fd0ea7b085fdc356d8390b3f4050a87737986afd2f4293d90f1f792799",
+      "iosProvenanceSHA256": "d29968d865e986076f174076903b7981e3782fbf9e63d45a090866e25c8bd51f",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_light_discover_side-by-side.png",
+          "sha256": "7b2424ce141ff22846ab562dd88d8bec4684c9d565f7c34984f6b2eb1e93d7e7"
+        },
+        "overlay": {
+          "file": "tablet_portrait_light_discover_overlay.png",
+          "sha256": "692e83fbcd0c2092e97da48c71bb4326c41adf7a47270eb98cba631eba658db5"
+        },
+        "difference": {
+          "file": "tablet_portrait_light_discover_difference.png",
+          "sha256": "978951b7e20cf33374c175e542292558bf0c50419d0762bf243ae7eeb72cfe34"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "source_drawer",
+      "androidSHA256": "710e5cdc566ad05059dcb7bec5c79a39cb34eda56e849cb3e6b55a07101ed2b4",
+      "iosSHA256": "fd70429b9bc3d28c13215ac32a9338333ee72633589a03f344a2a25da650eb87",
+      "iosProvenanceSHA256": "1458462a8d7c1d311df70334f48eec3bcfcdfe3519075e178708e11f1eb3c8c6",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_light_source_drawer_side-by-side.png",
+          "sha256": "6d2966ba038f18dcf4fea1cd0ad84076eb2dca2f663671c1a5406abc50033f02"
+        },
+        "overlay": {
+          "file": "tablet_portrait_light_source_drawer_overlay.png",
+          "sha256": "c22f086c6b8b60999f268d33f7d38b046fbb041e29e8c8f56511ba27978de210"
+        },
+        "difference": {
+          "file": "tablet_portrait_light_source_drawer_difference.png",
+          "sha256": "eb5d85c2f53666676242d75f1438912943fe3d79f3812803dfc25ede28d994f1"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "search_results",
+      "androidSHA256": "4d9f98fb9ea34159e3998b11004df6dcf109ffcd4c517416be44a34ed4955840",
+      "iosSHA256": "a3d568d8b4b094d2cebfda283310710ec63ccb11948e2e2580754f4e5a56b834",
+      "iosProvenanceSHA256": "c71b1637e58d1ee12976796ec5c631a5c2c12df9e4258b574a2ec8723dd663c1",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_light_search_results_side-by-side.png",
+          "sha256": "b1ba2672d1bbce6fb2915eae8a8458b63bb181c39a5a4c2145bfb66c900e4be0"
+        },
+        "overlay": {
+          "file": "tablet_portrait_light_search_results_overlay.png",
+          "sha256": "9df10b7a12a34411eb34fcf6b6d445e3cb2f31158fc665fb9468b38ff0d20b6d"
+        },
+        "difference": {
+          "file": "tablet_portrait_light_search_results_difference.png",
+          "sha256": "7845c2d23c464704a1c634bc9c62e0e265cecc9034e6f4f57143572b4a5f67de"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "detail",
+      "androidSHA256": "b0feba24c9fbf1226efb5f4a53f904446f10f48b2ab89bfb229024eb7669c22c",
+      "iosSHA256": "41092e10726d3113514b45728ceb4d6912bcb9058c6d800d0c676c30b2b69d99",
+      "iosProvenanceSHA256": "bc8d8641b3e83eaf4a950c1d55905bea678ced6a1fba62da35309d3f1bf9164b",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_light_detail_side-by-side.png",
+          "sha256": "f26513975e8b8d6d8d0ad9b086b0ec0f352ed93c042a50b97c33ff9021eeb437"
+        },
+        "overlay": {
+          "file": "tablet_portrait_light_detail_overlay.png",
+          "sha256": "f265164b8b18f76ac3f498b686f0c70bccfb6c2bf64854977608e2f54ec996bf"
+        },
+        "difference": {
+          "file": "tablet_portrait_light_detail_difference.png",
+          "sha256": "975d33cbedda66840079f98a1d6c914b9d0094db264b0ab9898da8f3d7a80b47"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "reader",
+      "androidSHA256": "0f794e45a1280d5365b7a4cfb9445304d9654c955bddfd2b5b43608d1a3e4d77",
+      "iosSHA256": "ad67c98d4553976a7dd2ab84936b377231dbf27ce44dda77e628588e868c1d7a",
+      "iosProvenanceSHA256": "1214387d18a0c71758084b442f7c87992cb06023b696754343126dfd0eecdf73",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_light_reader_side-by-side.png",
+          "sha256": "0e524e627f322623bcb0f9f156cc89b5419a9aeb9cd731f5d148fc4dd36281a9"
+        },
+        "overlay": {
+          "file": "tablet_portrait_light_reader_overlay.png",
+          "sha256": "2a6c72a02d6b07bb6bbb6e9362b1d0ea42e54c690efaff5387221138ac46fafa"
+        },
+        "difference": {
+          "file": "tablet_portrait_light_reader_difference.png",
+          "sha256": "439ac0a72f4cba5b00b58cf9b8846f4d7b7143ba26d30b7cbfe09c4016cb783c"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "reading_settings",
+      "androidSHA256": "7642607600e90dbc37e8492e727e78d0a4fbe1f6fdfd69e895ee9189fbc32456",
+      "iosSHA256": "535923c49cab373d3df08d7fa3e293bb95f35cd48dc16a6e05802f97ac1eeed1",
+      "iosProvenanceSHA256": "a41bb800267f28a76287712aac57378623f60a941b1767195034630090910916",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_light_reading_settings_side-by-side.png",
+          "sha256": "c4eef77a45ee5cd51c5d5698eaecfd7abc172aa0bd6dc3312aea98ce9d78dbf9"
+        },
+        "overlay": {
+          "file": "tablet_portrait_light_reading_settings_overlay.png",
+          "sha256": "2448b881dde262e814dcf451379f10b5fdd3c10a603fed06bf0c4e0dea9e381f"
+        },
+        "difference": {
+          "file": "tablet_portrait_light_reading_settings_difference.png",
+          "sha256": "2eec161c9d4e539eeecd45a6439b80d7fa88f69dfe87db8610c6d6c36232be15"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_light",
+      "page": "reader_directory",
+      "androidSHA256": "20ed694b633c12f0d399ecaceaa4eeebc7d652f1608b9eb49bf4a63fd1a1a216",
+      "iosSHA256": "beaa780c6e367ca1d9782dd7533005812541e44a2f3cf7baf5c578d24c5d8a00",
+      "iosProvenanceSHA256": "b64568d2f7a2e4b34ca38296d38e244f80b36480c066b3be6f911b73f7eb0090",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_light_reader_directory_side-by-side.png",
+          "sha256": "e8d8c59b90b481e6abbaee402461099c3112e6a81f44250c4dbb764aebdddfdb"
+        },
+        "overlay": {
+          "file": "tablet_portrait_light_reader_directory_overlay.png",
+          "sha256": "ef7639a126ab00d8739c7818372a17b74e3df9fc7e632557301f337fe0474b6d"
+        },
+        "difference": {
+          "file": "tablet_portrait_light_reader_directory_difference.png",
+          "sha256": "df7559e115c9b229cb238412d12194f0af47b726c2e4b5eefc174fdaae03feca"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "bookshelf_online",
+      "androidSHA256": "a57cf74b051807e75f141a8f112d90d02d89e46e108edffa1c6b32b45f70019b",
+      "iosSHA256": "ffc2066f2407710ac50da2f48fdd96884fce646f6783e0c8977794307ed36d4f",
+      "iosProvenanceSHA256": "501c63ae8f5705c276beb8dd5274360bee0a0b0ce439befe17ebe816b6ecc285",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_dark_bookshelf_online_side-by-side.png",
+          "sha256": "82bb1c8eaf25709aef1342da8beaf26ffad769cfc2242b3c0f87afc3306cf15c"
+        },
+        "overlay": {
+          "file": "tablet_portrait_dark_bookshelf_online_overlay.png",
+          "sha256": "13f0d8440199b7c3a075c6f07171fe34ac0335f7ee1221b3defe0e4f77fb52b6"
+        },
+        "difference": {
+          "file": "tablet_portrait_dark_bookshelf_online_difference.png",
+          "sha256": "b6931f51c6d7900838223c00d5db20340d815b39ebaf574c88300ad5b9ed2d64"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "discover",
+      "androidSHA256": "fb05baf210ef0b47d30046ea7fa90d87d6a0fef4a78cd1f6b2202024af752f9c",
+      "iosSHA256": "6936a6545b01e259fa15b19cf4b1765575806ea1e4b5d6fa6fd4e4a8eb7e1acf",
+      "iosProvenanceSHA256": "a2be3cb34c27515766c828a7bd26688abea759f441e83d5ee2a4a826ebe23a64",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_dark_discover_side-by-side.png",
+          "sha256": "eb342c9bd2e94c3d0885f256bc44caaa0dc8a9d800e3bdf728689561c30d6c66"
+        },
+        "overlay": {
+          "file": "tablet_portrait_dark_discover_overlay.png",
+          "sha256": "5118d71744b132184984af33ce30f6b88d7126a3bfe42dc57e7256778d938354"
+        },
+        "difference": {
+          "file": "tablet_portrait_dark_discover_difference.png",
+          "sha256": "d2b0b15f93f13075188c4fdc307386480aab10bc44c6cf6a5aa657f45718b355"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "source_drawer",
+      "androidSHA256": "379ece6c337ea0d50c6b9932bcd593c941a9f143935a82e78ea25fd90e1ab6ec",
+      "iosSHA256": "9fd2e12fdab9855524b1dc0e1381c1f0130c588aade88c80ff7d7717de6a476f",
+      "iosProvenanceSHA256": "ed637240941b961932b523c06a4901abcd90ee84a474611b444b1b282231a21d",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_dark_source_drawer_side-by-side.png",
+          "sha256": "ac6e420f654c7b683868a5ddb0c25790b982010911b71c24200965a24d3ee85f"
+        },
+        "overlay": {
+          "file": "tablet_portrait_dark_source_drawer_overlay.png",
+          "sha256": "a1918c2279ddfc0e729a8be491ba647c14d3ca94eb2c5535df60661f28d05c0b"
+        },
+        "difference": {
+          "file": "tablet_portrait_dark_source_drawer_difference.png",
+          "sha256": "fe110c90b09292986c1bb19335635bf9485cf7a0254e4103d24b1e69d130e53a"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "search_results",
+      "androidSHA256": "50687f639e941508013480754b4ce29225d7ee7b9cad69ae547deced766bebb8",
+      "iosSHA256": "c11b83c6c00cbd18b9ef34dcd783c85599f9b3a43c655ba1b080b4ce8df79d28",
+      "iosProvenanceSHA256": "5d1eeafe392dda037143490d8f42d6c9950ddc8b3303c0b2a0ca264d60616a8e",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_dark_search_results_side-by-side.png",
+          "sha256": "873f2eb951a8fe76c1397c9cf50eb34ebe24f12a2cc1d32904c633d2f4240a3e"
+        },
+        "overlay": {
+          "file": "tablet_portrait_dark_search_results_overlay.png",
+          "sha256": "81df8d0c56d13bc1b738f648c188da1862d838c592feb6678b835127722948a7"
+        },
+        "difference": {
+          "file": "tablet_portrait_dark_search_results_difference.png",
+          "sha256": "673bf90187274bfff3bc70b5fc67a480c6b60b19598e8b709f8e7b99c477f7bd"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "detail",
+      "androidSHA256": "c6e632296e4c3ad98c03ad05abc858ebcee86f5007b0e4829a8224ccf2b1dee6",
+      "iosSHA256": "229df1ac00e6b8e87e8d1a81dcbbe0b0d5c5c5a5c1dca3b0424c79112d6cd78b",
+      "iosProvenanceSHA256": "270756799a145a60f778003dcfbadbcea51bd2c89ba08f1ed19146dc3f6236d3",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_dark_detail_side-by-side.png",
+          "sha256": "beb8e36fa4bcae19502ca36623bcddd2f32d95e45e29871fd47cf9a61d46dc75"
+        },
+        "overlay": {
+          "file": "tablet_portrait_dark_detail_overlay.png",
+          "sha256": "565dfffdbbf8d18a91c4c40b376e148d395278ac7f2a2878477543a3b3bf8f4c"
+        },
+        "difference": {
+          "file": "tablet_portrait_dark_detail_difference.png",
+          "sha256": "55f4f32602cdd6ed09bf62cd266d957d15d0888612dde988679a58534c6419fd"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "reader",
+      "androidSHA256": "ac1f1c8b33bf7b32952b81e0106959c4c96043fc0f829d3e6aeb425158e02d6b",
+      "iosSHA256": "19f321f20d316588ce7a2ae774d60c6e611eadaedc2a37f30041c409340afc37",
+      "iosProvenanceSHA256": "fa39bf98434e6320ebb958bb9dfb65b720b81ac9887adf2aa2ee9b6d87c763ea",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_dark_reader_side-by-side.png",
+          "sha256": "b1beaeee7000c51e5e44211271ddd010af7d2dea6482bfef2ac98536c8cb9d1a"
+        },
+        "overlay": {
+          "file": "tablet_portrait_dark_reader_overlay.png",
+          "sha256": "ed8abd3456fc3697f1da0a022ffbfa1a931944ba68ab766b0f3ae3dc354cab9c"
+        },
+        "difference": {
+          "file": "tablet_portrait_dark_reader_difference.png",
+          "sha256": "07d7ba2b118ea93f9f390c9023cc5d617aa87ed8bf79938be4e9e09eeb5ee1ec"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "reading_settings",
+      "androidSHA256": "64caa84c0d0609458251a3c220c32ed1d319ec718609dcf6e6f4ca9ed2e10a21",
+      "iosSHA256": "30963eeb00e37dda037bac1b5b3bd0fd056dca3e2653b233c1fe907260ff2e5d",
+      "iosProvenanceSHA256": "df09ee7dac19fea7d5141c49e135f52f74e00a5b7dee4448261a6c553b3db9ef",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_dark_reading_settings_side-by-side.png",
+          "sha256": "9cdf6e47fa3e13c53f2386013732e4339bdb1549af02f4680a5650e613837830"
+        },
+        "overlay": {
+          "file": "tablet_portrait_dark_reading_settings_overlay.png",
+          "sha256": "b700d32ec74865e02254a831b518fbdd3d58ae572e1048ba58c83d1f2b0bb0c2"
+        },
+        "difference": {
+          "file": "tablet_portrait_dark_reading_settings_difference.png",
+          "sha256": "d4756442dc1cc4272d56e0f538316b8118bf296b9986446b0ac09860fa4d031e"
+        }
+      }
+    },
+    {
+      "case": "tablet_portrait_dark",
+      "page": "reader_directory",
+      "androidSHA256": "abbdf5f9a82ef735dd90bbdafb65e0c079313528107b7827e0fa7c1f3b232d3b",
+      "iosSHA256": "96ad5c7672f40302879f94e957cd0559a27b6981abc9548ff9554a4c9c0d6e21",
+      "iosProvenanceSHA256": "9aca3beb3fe075b29617736ae4f99e9ad54c33dd57b87754faa3474801cfe31b",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        834.0,
+        1210.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          1668,
+          2420
+        ],
+        "expectedPixels": [
+          1668,
+          2420
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_portrait_dark_reader_directory_side-by-side.png",
+          "sha256": "76959ccf6979cbed391b73cc7c22500eefe992acdf3e4b6dc9be0d0707dcf797"
+        },
+        "overlay": {
+          "file": "tablet_portrait_dark_reader_directory_overlay.png",
+          "sha256": "a58221b8dee018c07253b4ec1dfdc19c4c25b2e49e6269cc4bd95564c1f71ee8"
+        },
+        "difference": {
+          "file": "tablet_portrait_dark_reader_directory_difference.png",
+          "sha256": "5b2af5100bc23137528d3dac3340e80d15ea7add76478e8d3797247f1c9ea9e7"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "bookshelf_online",
+      "androidSHA256": "6cec5908edd7f5906ba1c72b0bebc3f0fb938056d29fcd5c4b8a611a4a510262",
+      "iosSHA256": "94501a7594a51b3f73d2374c9964f8a75f03157b3f20e125e49a0f6e86d0a579",
+      "iosProvenanceSHA256": "4c1230f58ac1a948656bf2aaff01d18c02847bc118da468e6e42882a9866e1ec",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_light_bookshelf_online_side-by-side.png",
+          "sha256": "2fdfead404a40632c449d6a909e712b1476c5f406b6904d22e3e708a16786ed2"
+        },
+        "overlay": {
+          "file": "tablet_landscape_light_bookshelf_online_overlay.png",
+          "sha256": "d390b148225a3f12831e5887d69fee0395c114360431a9639a0e863eb36d92bb"
+        },
+        "difference": {
+          "file": "tablet_landscape_light_bookshelf_online_difference.png",
+          "sha256": "94b951d264ccf146363ba038751cad22210558d5465f8b883010722aac3f79cd"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "discover",
+      "androidSHA256": "e6749bc80321244f975269c7101a6c7625dca59122afd6121a09f69c2c2161f4",
+      "iosSHA256": "4273954c3abb4ac391db23caa1e134ea13c232d96ff1524bc05f009dad286376",
+      "iosProvenanceSHA256": "2971b1fbbe7421d41ee1f5f1ef68c9c34408273d66620fc7ed2a33c38ae5895a",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_light_discover_side-by-side.png",
+          "sha256": "01ef8e8ac614e25788caae36483af599e62d46869822471a079499eb19008040"
+        },
+        "overlay": {
+          "file": "tablet_landscape_light_discover_overlay.png",
+          "sha256": "030cb3c8433c9c1a879744173f3e9b82cfa413be82553773b210c8499861f0a5"
+        },
+        "difference": {
+          "file": "tablet_landscape_light_discover_difference.png",
+          "sha256": "2d1f0cd9ff761c8ea5726f614c121fd08eb0e4f5f126d6263c41b1fba1c52684"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "source_drawer",
+      "androidSHA256": "bcc163b2b96d07e59230e1ae93721c13a5cfc30c5e963a97168fa1f508970d65",
+      "iosSHA256": "e38413677198227574a7ce9a21d13a8ab0704d867ebc7a8d04a41c083ff93d99",
+      "iosProvenanceSHA256": "baea36a5f7bb3d2963fe4332c2a0c0e2ea290b29b6faea56b53e1f51844f6d26",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_light_source_drawer_side-by-side.png",
+          "sha256": "c9b5f75913311956e1c2097eabdc754a899e64819373a19dcfd3885071a674ee"
+        },
+        "overlay": {
+          "file": "tablet_landscape_light_source_drawer_overlay.png",
+          "sha256": "a0cc2d2b1e21d26eac6908e749c1a1e9691ccd0875bc38c529105734c409aaf7"
+        },
+        "difference": {
+          "file": "tablet_landscape_light_source_drawer_difference.png",
+          "sha256": "e6b58059dab4392df177c92482dff71a43a728afab4908df162cdbd5d93b51d3"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "search_results",
+      "androidSHA256": "54a0f6df5a86410a36af1bdd6fcf8b4a1f0f237cf71ff9396584ecde30beef64",
+      "iosSHA256": "2aec6a82a5ad28e756a8a0d0c020bbdfcea8872f7b4e1de9a4bbec8172df750f",
+      "iosProvenanceSHA256": "e8f6c55225a70d20314677eaee59120680c1322f25ab2e5171906780c12de175",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_light_search_results_side-by-side.png",
+          "sha256": "5ee1670648efb8e4387802735127c6e0d58fc9512e2c448fa04bc75021669ed9"
+        },
+        "overlay": {
+          "file": "tablet_landscape_light_search_results_overlay.png",
+          "sha256": "4ff6bd265bce81924b56f1309fa61d1f78a0f505239ab2a52d15e66c08eadd8b"
+        },
+        "difference": {
+          "file": "tablet_landscape_light_search_results_difference.png",
+          "sha256": "970e6799a0a1a94215d9a7c6fe96c46050677ab487fed9ec6fc923fa0c0b78f8"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "detail",
+      "androidSHA256": "4b04a9f1d677ea2377590910c51c993bf7fc3cacf124e1669fe4da30da1e910b",
+      "iosSHA256": "07f13e61c8aa9dd63f961938397ea52825ea4cb1dbed9358d1b1d3c1bfcd3da4",
+      "iosProvenanceSHA256": "6401e0c32bc6f4697a8ff4093b7db0e34f1b0db1e3dbb79e708e6097d01e23ad",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_light_detail_side-by-side.png",
+          "sha256": "24a2e942618e33090188076cda1f3650280c4c0cc8d4fa560eb59e2c208fd86f"
+        },
+        "overlay": {
+          "file": "tablet_landscape_light_detail_overlay.png",
+          "sha256": "d704f8e01e065ea8bb91b9f1960112566feed44e331efa3042dd9002df0b6dcb"
+        },
+        "difference": {
+          "file": "tablet_landscape_light_detail_difference.png",
+          "sha256": "bfa539c82bbd1dea4bda16c4df4ae9e7bbe57afc56cee503b3552302a7f5a445"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "reader",
+      "androidSHA256": "cf5c3bae246751892b193602a06c8363c3d62937baaf1f3541633488b37944fb",
+      "iosSHA256": "646350b849dde181041b3a1df9f00d159722766ad18fcb59b1c667abcd59e817",
+      "iosProvenanceSHA256": "c124111803c8e1f327b2e4b2fc53353fcbfa712cec0a510282263e08deaf852c",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_light_reader_side-by-side.png",
+          "sha256": "9e42527d9c49a22108099b894c2f0fd8dd3613107f15e557179141f13450410d"
+        },
+        "overlay": {
+          "file": "tablet_landscape_light_reader_overlay.png",
+          "sha256": "b286df9c9c6c8ca3d06d16018e498aa76547f881e93a7fd056396544510b8edf"
+        },
+        "difference": {
+          "file": "tablet_landscape_light_reader_difference.png",
+          "sha256": "2e99c058a7197dd558bdb2f34aa02992d871405c72dea1d02d1eb3a83c8571fb"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "reading_settings",
+      "androidSHA256": "6c3de1414854f760de072a3b778b2325aa891f9e79c94d4a7e9a1ac6a37c84ab",
+      "iosSHA256": "7c62fa68103603d46c85ca0e50db8677062fb343c02fafb78b9da5bbf1109b62",
+      "iosProvenanceSHA256": "24b988b14f6583231682f48b8fd2e2e0a6f42946e49dc48d7b273e507759b17e",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_light_reading_settings_side-by-side.png",
+          "sha256": "ff3092ed1c5b58d87e9425612a5e7a104076f1312d7efa08b631cdafb6ced547"
+        },
+        "overlay": {
+          "file": "tablet_landscape_light_reading_settings_overlay.png",
+          "sha256": "cbefe80b1ba4ef7286d8b79cc1c2f602c4f2f227dc351390573a4cfbb7a1a7ca"
+        },
+        "difference": {
+          "file": "tablet_landscape_light_reading_settings_difference.png",
+          "sha256": "c12d76210a11d048f9036630e15c1a7c6acb326cdaa756923866a567d80b736c"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_light",
+      "page": "reader_directory",
+      "androidSHA256": "9698da09c39f1c0c62f6c158580d3983c98e4b341225a2ce118f9c45b8f9dde6",
+      "iosSHA256": "debefb74e21eabd7685abc26b2b31eea05aa9ab83f731e1e89f3a851506d4a14",
+      "iosProvenanceSHA256": "73d2631ade575ac380222a5e30613247742bbaaf3b4afeeda776e0725f2b2c3f",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_light_reader_directory_side-by-side.png",
+          "sha256": "f4e2090352ceda3cd9ea195203d0be8d857b89b646c85d2f45dd31df1b7a0b6f"
+        },
+        "overlay": {
+          "file": "tablet_landscape_light_reader_directory_overlay.png",
+          "sha256": "0f15c339fe42d684e11bb80964c362f8f7ae2fa00ecc7d8a4a0aa285d16e5899"
+        },
+        "difference": {
+          "file": "tablet_landscape_light_reader_directory_difference.png",
+          "sha256": "1030a147d951fda6b9274eaaa4c77482757b3e71f44b9f7ef454d195184329f7"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "bookshelf_online",
+      "androidSHA256": "576df2d9f347e254e13c6141d6634a5fa8d4a2208ad1f1af938179b40c270fb8",
+      "iosSHA256": "5816f40bf83cf2f12215ed31c7bdcbc4d5b3b9db7e43e903c64d7214d0ba2e5e",
+      "iosProvenanceSHA256": "ac6b540386d72c7066b15775bc5dae733974e16130e062f7eabd4ec80a783cb3",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_dark_bookshelf_online_side-by-side.png",
+          "sha256": "8a22fd6a428f3b5b0990483075da3238c449bba692e7e7cc1f104031b6474859"
+        },
+        "overlay": {
+          "file": "tablet_landscape_dark_bookshelf_online_overlay.png",
+          "sha256": "eebf0860069bd94b592a9c584a8baea3dd363816cdc2ef4637665092f149db13"
+        },
+        "difference": {
+          "file": "tablet_landscape_dark_bookshelf_online_difference.png",
+          "sha256": "bdf19ad2005f303826f1c4aae2139f4f5dc7439810136ff824d95299d6cf5be6"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "discover",
+      "androidSHA256": "8dfd52e2e09dd33da6d90c6c8833311f8b834af3cd8b1a717ac2f2aaf7430462",
+      "iosSHA256": "5d190a13262282910993f7b16f46c8968a8d539ff5583d9dd0e82a0c981465fa",
+      "iosProvenanceSHA256": "fc9e6a61c566af4fc605ef153e4516a7bb51a2b6ccabcdf8ae21620e196c4dfd",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_dark_discover_side-by-side.png",
+          "sha256": "ad57e9653ea89dc5d2cfc592d3fc76c91ae0895a5d2c50fb292932f723759088"
+        },
+        "overlay": {
+          "file": "tablet_landscape_dark_discover_overlay.png",
+          "sha256": "c056b9e22a4000109690d5fbc012172b5ced380f3cb38632c7c4e22ea6c70712"
+        },
+        "difference": {
+          "file": "tablet_landscape_dark_discover_difference.png",
+          "sha256": "cbb0014e1df253609fa3bdb2f1a3cab5aadfffba2af2f4146131ccd0bd6b4147"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "source_drawer",
+      "androidSHA256": "416cda88816d3d4ffc1d21b2fc1a98782dfa06fcd3a0c8226ffc14da45e08518",
+      "iosSHA256": "815d1e802632558eea6dcaf4954affc5efd5b03eb4e95e455df830a610ac8cb7",
+      "iosProvenanceSHA256": "f08521be428c64dae6acd3fd4b2e840cc5424e393640b616b494a95267cc6e84",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_dark_source_drawer_side-by-side.png",
+          "sha256": "9c0a07cfc5d0714941761cdcd07431771ba04e62f66d8353d75bcd6c4a0e8e28"
+        },
+        "overlay": {
+          "file": "tablet_landscape_dark_source_drawer_overlay.png",
+          "sha256": "faebd0dc7ceb94ff68da1ca30eb09924a8ccea930fb16f70ecd38893fc3ebf1d"
+        },
+        "difference": {
+          "file": "tablet_landscape_dark_source_drawer_difference.png",
+          "sha256": "26c87d180a0e52f338912fd8fe2b5e527bd2e628bba0e0e1cad501c1616af745"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "search_results",
+      "androidSHA256": "e72f7f22bd1942030b1401cd374e8f901aa936200e93f01e84330d631361cccb",
+      "iosSHA256": "063f767c97d6ffa3b721801ff3c930b15c5d197c655c903b84f3498071c4a242",
+      "iosProvenanceSHA256": "652be795511381819596bc80b2045b6dcf51780d905ff52d93c1781be0b50670",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_dark_search_results_side-by-side.png",
+          "sha256": "b04f81b4b93adda5f0fff945ea0455cb56a2409d2ff62faa9a910b91439394bd"
+        },
+        "overlay": {
+          "file": "tablet_landscape_dark_search_results_overlay.png",
+          "sha256": "07fca5c41349bf86a68ba27a69e1cfcf739839eab2984aa30c1cda2da0817ba0"
+        },
+        "difference": {
+          "file": "tablet_landscape_dark_search_results_difference.png",
+          "sha256": "5c6058518bc9309c5a3ff1c5cc7ad432191f8ff07af116544529725078a359a8"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "detail",
+      "androidSHA256": "21541582729e191a474ad099116011643b1cc92d61998f56bca4702234f122f4",
+      "iosSHA256": "815d48dad0bd720d4dd3c2d1d44ad57b634da0daeb05338caf64705b58d8195d",
+      "iosProvenanceSHA256": "20c0aebe4ee74c2c35b8e23d68a4d8eb723f3b1ce8b79e47325418a403aea853",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_dark_detail_side-by-side.png",
+          "sha256": "d1ded976ee1bac342c77a675525f24131ccd34b815cef805233092e468513cd1"
+        },
+        "overlay": {
+          "file": "tablet_landscape_dark_detail_overlay.png",
+          "sha256": "045323c4bb22724d0d283aadeacf86eaccc03e3c55e4ecea851fb010e9ea3ded"
+        },
+        "difference": {
+          "file": "tablet_landscape_dark_detail_difference.png",
+          "sha256": "96bd103b4122f3a1812170c2e5c65f46d53f679bb4ba94c801f1e19e0e476c71"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "reader",
+      "androidSHA256": "e14c9537e15b438e80e1e7451310e0ba310697b4fd5b578b1d0da363e0c0295d",
+      "iosSHA256": "a91a2ab0686cd2f458ead26d33d467511301982d5a08a9865739f605180d3afd",
+      "iosProvenanceSHA256": "29f6cfcddd7f4a33cc61c837aa350e90a6d029c9970f9bc6accf0dab66ec6bd7",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_dark_reader_side-by-side.png",
+          "sha256": "ead14b2390d809ecb5452c129632fe8ef3dee00e8de6c30b3c7eec42be481437"
+        },
+        "overlay": {
+          "file": "tablet_landscape_dark_reader_overlay.png",
+          "sha256": "40c6b013ac87d1faf88ba0905e7b8c28255215a4a9bb38801c721529c56427da"
+        },
+        "difference": {
+          "file": "tablet_landscape_dark_reader_difference.png",
+          "sha256": "f5d23ad55b0d447f43c4a5092d4accac1d9b251ce6148138238f61522d6477af"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "reading_settings",
+      "androidSHA256": "130a12d9f75845f523b4ba57699c802d083bb55609e7a36db64a8c5cbdc90faf",
+      "iosSHA256": "6554375a45f2134970dc51ee9f0b68db04394927fee1f2afe8b9eaeb35f06150",
+      "iosProvenanceSHA256": "a2adcdb2d70b40c073cb3e0aae8b3129ea90633ae428af0471f8b1c46b68a5b1",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_dark_reading_settings_side-by-side.png",
+          "sha256": "af2a0d9d920f4bfb0986f26ba4dd3a0f6d1507485b1ddd1c7a65deebab540983"
+        },
+        "overlay": {
+          "file": "tablet_landscape_dark_reading_settings_overlay.png",
+          "sha256": "ff9f5bc08056b31827f7166f1c0ff6d8753444773622cdc04e8b4610a29afab2"
+        },
+        "difference": {
+          "file": "tablet_landscape_dark_reading_settings_difference.png",
+          "sha256": "0d4bc4ec3801dd0f200accdba1a2514d933c2fab370742333670f514905f6dcb"
+        }
+      }
+    },
+    {
+      "case": "tablet_landscape_dark",
+      "page": "reader_directory",
+      "androidSHA256": "ace5933bcf4cf44a5a85986c35a40fa67bc0f7d38816c4697bc705644fbd228d",
+      "iosSHA256": "0d54842b4b15cc75a64f6259c0a741653f125c89c2fef88f26808e2f45b696fc",
+      "iosProvenanceSHA256": "b9f5fe3ff1cc26edb27971dd2e7cb403f83f159a8353e927442a4d099b9edd92",
+      "iosTestStatus": "Success",
+      "logicalSize": [
+        1210.0,
+        834.0
+      ],
+      "androidRaster": {
+        "encodedPixels": [
+          2420,
+          1668
+        ],
+        "exifOrientation": 1,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "iosRaster": {
+        "encodedPixels": [
+          1668,
+          2420
+        ],
+        "exifOrientation": 8,
+        "actualPixels": [
+          2420,
+          1668
+        ],
+        "expectedPixels": [
+          2420,
+          1668
+        ],
+        "deltaPixels": [
+          0,
+          0
+        ],
+        "roundingPolicy": "maximum one physical pixel; uniform density; outside-capture padding shown in magenta"
+      },
+      "componentReview": "pending",
+      "derived": {
+        "side-by-side": {
+          "file": "tablet_landscape_dark_reader_directory_side-by-side.png",
+          "sha256": "535e5a33ca92a06d6ad608436030615be50bb65e91a9356a59695f954f247b3f"
+        },
+        "overlay": {
+          "file": "tablet_landscape_dark_reader_directory_overlay.png",
+          "sha256": "f19d6389f8260ddc2a169a8733d7f0d5e663a3fc727b5a757614780362906d63"
+        },
+        "difference": {
+          "file": "tablet_landscape_dark_reader_directory_difference.png",
+          "sha256": "46528953f5438f71a5ff83460c67838c1b97a6ab97a8a4e9fbcfc73c342ca98e"
+        }
+      }
+    }
+  ],
+  "pending": [],
+  "visualGatePassed": false
+}

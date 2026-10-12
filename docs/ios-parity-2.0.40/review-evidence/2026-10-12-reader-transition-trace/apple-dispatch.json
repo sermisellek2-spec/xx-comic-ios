@@ -1,0 +1,11 @@
+{
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "inputSHA": "d0e0d38125d85053a9e719627ee7acc816fe158e",
+  "branch": "codex/reader-transition-d0e0d38",
+  "inputs": {
+    "validation_scope": "reader-modes",
+    "package_ipa": "false"
+  },
+  "dispatchHTTP": 204,
+  "dispatchedAtUTC": "2026-10-12T10:23:51.849095+00:00"
+}

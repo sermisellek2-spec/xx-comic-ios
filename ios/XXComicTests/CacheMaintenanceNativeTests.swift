@@ -5,7 +5,11 @@ import ComicCore
 final class CacheMaintenanceNativeTests: XCTestCase {
     func testOwnedNativeCacheRemovesSmallAndLargeResponsesAndPreservesOriginal() async throws {
         for initializer in ["diskPath", "directory"] {
-            let root = FileManager.default.temporaryDirectory.appendingPathComponent("native-response-cache-" + UUID().uuidString, isDirectory: true)
+            // diskPath is a subdirectory name in iOS, not an absolute path.
+            let parent = initializer == "diskPath"
+                ? try XCTUnwrap(FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first)
+                : FileManager.default.temporaryDirectory
+            let root = parent.appendingPathComponent("native-response-cache-" + UUID().uuidString, isDirectory: true)
             try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)
             defer { try? FileManager.default.removeItem(at: root) }
             let original = root.appendingPathComponent("original.cbz")
@@ -24,9 +28,11 @@ final class CacheMaintenanceNativeTests: XCTestCase {
             XCTAssertEqual(requests.compactMap { cache.cachedResponse(for: $0) }.count, 4)
             record(cache: cache, initializer: initializer, stage: "stored", requests: requests, directory: directory)
             let remaining = try await HTTPResponseCache(cache: cache).clear()
-            record(cache: cache, initializer: initializer, stage: "cleared", requests: requests, directory: directory)
             XCTAssertEqual(remaining.memoryBytes, Int64(cache.currentMemoryUsage), "Usage must retain the framework's actual byte accounting")
             XCTAssertEqual(remaining.diskBytes, Int64(cache.currentDiskUsage), "Index bytes cannot be hidden or subtracted")
+            // Probe lookups can reopen the framework's disk index. Compare the
+            // returned snapshot before performing those additional operations.
+            record(cache: cache, initializer: initializer, stage: "cleared", requests: requests, directory: directory)
             XCTAssertEqual(cache.memoryCapacity, 1024 * 1024)
             XCTAssertEqual(cache.diskCapacity, 8 * 1024 * 1024)
             for request in requests { XCTAssertNil(cache.cachedResponse(for: request), initializer) }
@@ -41,7 +47,8 @@ final class CacheMaintenanceNativeTests: XCTestCase {
         if initializer == "directory" {
             return URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 8 * 1024 * 1024, directory: directory)
         }
-        return URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 8 * 1024 * 1024, diskPath: directory.path)
+        let relativePath = directory.deletingLastPathComponent().lastPathComponent + "/" + directory.lastPathComponent
+        return URLCache(memoryCapacity: 1024 * 1024, diskCapacity: 8 * 1024 * 1024, diskPath: relativePath)
     }
 
     private func record(cache: URLCache, initializer: String, stage: String, requests: [URLRequest], directory: URL) {

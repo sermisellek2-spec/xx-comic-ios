@@ -1,0 +1,65 @@
+{
+  "revision": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "file": "app/src/main/java/com/xxcomic/MainActivity.java",
+  "ranges": [
+    {
+      "firstLine": 14913,
+      "lastLine": 14938,
+      "lines": [
+        "    private void clearAppCache() {",
+        "        if (mh18BrowserSession != null) mh18BrowserSession.clearCache();",
+        "        if (jmcomicBrowserSession != null) jmcomicBrowserSession.clearCache();",
+        "        android.webkit.WebStorage.getInstance().deleteAllData();",
+        "        android.webkit.CookieManager cookies = android.webkit.CookieManager.getInstance();",
+        "        cookies.removeAllCookies(ignored -> cookies.flush());",
+        "        synchronized (imageCacheLock) {",
+        "            deleteFiles(new File(getCacheDir(), \"images\"));",
+        "            imageCacheBytes = 0L;",
+        "        }",
+        "        imageMemoryCache.evictAll();",
+        "        readerCropBoundsCache.evictAll();",
+        "        Set<String> favoriteIds = new HashSet<>(favorites);",
+        "        summaries.keySet().retainAll(favoriteIds);",
+        "        details.keySet().retainAll(favoriteIds);",
+        "        chapters.clear();",
+        "        searchResults.clear();",
+        "        persistComicCachesAsync();",
+        "        showTab(2);",
+        "        localLibraryIo.submit(() -> {",
+        "            getLocalStorageManager().clearDerivedPagesCache();",
+        "            main.post(() -> {",
+        "                if (!activityDestroyed) showRemSuccessToast(\"缓存已清理，收藏与本地漫画已保留\");",
+        "            });",
+        "        });",
+        "    }"
+      ]
+    },
+    {
+      "firstLine": 14951,
+      "lastLine": 14970,
+      "lines": [
+        "    private void updateCacheSize() {",
+        "        updateCacheSize(true);",
+        "    }",
+        "",
+        "    private void updateCacheSize(boolean trimIfNeeded) {",
+        "        long imageBytes;",
+        "        synchronized (imageCacheLock) {",
+        "            imageCacheBytes = dirSize(new File(getCacheDir(), \"images\"));",
+        "            if (trimIfNeeded && imageCacheBytes > IMAGE_CACHE_MAX_BYTES) trimImageCache();",
+        "            imageBytes = imageCacheBytes;",
+        "        }",
+        "        long bytes = imageBytes",
+        "                + getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(SUMMARIES_CACHE_KEY, \"\").length()",
+        "                + getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(DETAILS_CACHE_KEY, \"\").length()",
+        "                + getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(CHAPTERS_CACHE_KEY, \"\").length();",
+        "        String updatedCacheSize = formatBytes(bytes);",
+        "        main.post(() -> {",
+        "            if (activityDestroyed) return;",
+        "            cacheSize = updatedCacheSize;",
+        "            getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().putString(\"cache.size\", updatedCacheSize).apply();"
+      ]
+    }
+  ],
+  "interpretation": "原版清理图片/章节/搜索，保留收藏对应摘要和详情；显示统计为图片加持久化JSON长度，源码未承诺所有元数据物理0。当前原零字节断言仍保留且Apple待复验，未据此宣称门槛通过。"
+}

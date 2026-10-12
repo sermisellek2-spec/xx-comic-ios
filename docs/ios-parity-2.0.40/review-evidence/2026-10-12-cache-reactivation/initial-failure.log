@@ -1,0 +1,34 @@
+[0/1] Planning build
+Building for debugging...
+[0/11] Write swift-version-24593BA9C3E375BF.txt
+[0/10] Write sources
+[3/10] Compiling ComicCoreTests CacheLateRestoreTests.swift
+[4/10] Emitting module ComicCoreTests
+[5/13] Wrapping AST for ComicCoreTests for debugging
+[6/13] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[7/14] Write sources
+[9/16] Emitting module ComicCorePackageDiscoveredTests
+[10/17] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[11/17] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[12/18] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[13/18] Write sources
+[14/18] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[16/20] Emitting module ComicCorePackageTests
+[17/20] Compiling ComicCorePackageTests runner.swift
+[18/20] Write Objects.LinkFileList
+[19/20] Linking ComicCorePackageTests.xctest
+Build complete! (36.21s)
+Test Suite 'Selected tests' started at 2026-10-12 10:32:43.352
+Test Suite 'CacheLateRestoreTests' started at 2026-10-12 10:32:43.369
+Test Case 'CacheLateRestoreTests.testCleanupAlsoRemovesAWritePublishedWhenDiskStorageReopens' started at 2026-10-12 10:32:43.369
+/work/Tests/ComicCoreTests/CacheLateRestoreTests.swift:23: error: CacheLateRestoreTests.testCleanupAlsoRemovesAWritePublishedWhenDiskStorageReopens : XCTAssertNil failed: "<CachedURLResponse: 0x000074bd48001aa0>" - A pending disk write must not undo cleanup when the original capacity returns
+/work/Tests/ComicCoreTests/CacheLateRestoreTests.swift:23: error: CacheLateRestoreTests.testCleanupAlsoRemovesAWritePublishedWhenDiskStorageReopens : XCTAssertNil failed: "<CachedURLResponse: 0x000074bd48001a50>" - A pending disk write must not undo cleanup when the original capacity returns
+Test Case 'CacheLateRestoreTests.testCleanupAlsoRemovesAWritePublishedWhenDiskStorageReopens' failed (0.412 seconds)
+Test Case 'CacheLateRestoreTests.testCleanupRemovesResponsesInAnInactiveDiskBackingStore' started at 2026-10-12 10:32:43.780
+/work/Tests/ComicCoreTests/CacheLateRestoreTests.swift:12: error: CacheLateRestoreTests.testCleanupRemovesResponsesInAnInactiveDiskBackingStore : XCTAssertNil failed: "<CachedURLResponse: 0x000074bd4c003630>" - Disabling storage must not hide an uncleared backing store
+/work/Tests/ComicCoreTests/CacheLateRestoreTests.swift:12: error: CacheLateRestoreTests.testCleanupRemovesResponsesInAnInactiveDiskBackingStore : XCTAssertNil failed: "<CachedURLResponse: 0x000074bd4c0033e0>" - Disabling storage must not hide an uncleared backing store
+Test Case 'CacheLateRestoreTests.testCleanupRemovesResponsesInAnInactiveDiskBackingStore' failed (0.403 seconds)
+Test Suite 'CacheLateRestoreTests' failed at 2026-10-12 10:32:44.183
+Executed 2 tests, with 4 failures (0 unexpected) in 0.814 (0.814) seconds
+Test Suite 'Selected tests' failed at 2026-10-12 10:32:44.183
+Executed 2 tests, with 4 failures (0 unexpected) in 0.814 (0.814) seconds
