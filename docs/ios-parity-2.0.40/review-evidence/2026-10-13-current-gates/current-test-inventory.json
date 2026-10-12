@@ -35,16 +35,16 @@
     "SettingsParityUITests": 8,
     "SourceConfigFilesUITests": 5,
     "SourceDrawerTests": 3,
+    "SourceGroupsParityUITests": 2,
     "SourceSwitchParityUITests": 5,
     "VisualMatrixUITests": 8,
     "VolumeManagerParityUITests": 5
   },
   "totals": {
     "native": 35,
-    "UI": 109
+    "UI": 111
   },
   "isRuntimeResult": false,
-  "checkedAtUTC": "2026-10-12T21:36:05.741831+00:00",
   "sourceFiles": {
     "ios/XXComicTests/BuiltinSourceRegistrationTests.swift": "74ef076f820e60b76da87822fb7049b080c5bf80b8d4e1221aff37e25c477f73",
     "ios/XXComicTests/CacheMaintenanceNativeTests.swift": "9e216dc67891672d596dbcb0f894256551acae1ecaf3653b14b5667a1272d417",
@@ -82,6 +82,7 @@
     "ios/XXComicUITests/SettingsParityUITests.swift": "3822b2d67f3c8ce3e35cf2d634942c744dea855b5dc396118bfbccac67222282",
     "ios/XXComicUITests/SourceConfigFilesUITests.swift": "97314e7acc1de1768bd3fe8618ad79a7929fec2af80bf0ccf13a4c0bae482be3",
     "ios/XXComicUITests/SourceDrawerTests.swift": "45b534863156197af2d0f8d142866f1bea80d7b99f301bb983ba1a0550cbf2e5",
+    "ios/XXComicUITests/SourceGroupsParityUITests.swift": "f1318b62f07f64ed2ba2db7d7c044dfd7f52a80adc43c33422038d857dd8bd4f",
     "ios/XXComicUITests/SourceSwitchParityUITests.swift": "74ce25e5570cda1f1fba5a3d7ed9d475c3c37ef0be385cc70b1f94e1e123d230",
     "ios/XXComicUITests/VisualMatrixUITests.swift": "74a449101aa113f85209f18b2acbad6acbcf208703efd2be857d9c186ac79082",
     "ios/XXComicUITests/VolumeManagerParityUITests.swift": "8763683fb584ec34d6118d6d4ea2800445298c5b77e50177c435edb88168efa0"

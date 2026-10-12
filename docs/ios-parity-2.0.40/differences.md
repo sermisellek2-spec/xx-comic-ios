@@ -159,3 +159,7 @@ D124：原日志页面与队列服务测试不代日志导出/取消清空和实
 ## D125 验证交互运行证据不足
 
 原UI只覆盖关闭和重开，不能据此把VERIFY-01的超时、重试、完成和返回记通过。补显式Debug本机HTTP驱动进入真实超时处理与完成消费者，复位/重启状态断言保留；Release隔离检查增加标记。93Swift语法两配置退出0，Apple影响及最终full待验。真实网站验证继续暂停，未被本机响应替代。详见[范围与边界](review-evidence/2026-10-13-verification-flow/README.md)。
+
+## D126 分组选源缺disabled项及表单反馈/呈现被丢弃
+
+冻结Android“全部”按当前51统计，选源也列未启用源；旧iOS按enabled目录计50且不能加入duya。改用当前ordered目录并标状态，取消不写成员、不改开关。新建/改名不再空名静默返回，实际Store错误可见；选源/错误等待表单关闭后呈现。新增2UI声明、94Swift两配置语法通过，Apple待验；不证明真实网站可用。[范围与原引用](review-evidence/2026-10-13-source-group-catalog/README.md)。

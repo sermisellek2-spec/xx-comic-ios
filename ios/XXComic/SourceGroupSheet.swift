@@ -24,10 +24,13 @@ final class SourceGroupSheet: UIViewController, UITableViewDataSource, UITableVi
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "完成", style: .done, target: self, action: #selector(dismissTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "新建分组", style: .plain, target: self, action: #selector(createGroupTapped))
+        navigationItem.leftBarButtonItem?.accessibilityIdentifier = "source-groups.close"
+        navigationItem.rightBarButtonItem?.accessibilityIdentifier = "source-groups.create"
 
         tableView.backgroundColor = Palette.background
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.accessibilityIdentifier = "source-groups.list"
         tableView.register(SourceGroupCell.self, forCellReuseIdentifier: "source_group_cell")
         tableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tableView)
@@ -59,14 +62,14 @@ final class SourceGroupSheet: UIViewController, UITableViewDataSource, UITableVi
         }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "保存", style: .default) { [weak self, weak alert] _ in
-            guard let self, let name = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return }
+            guard let self, let name = alert?.textFields?.first?.text else { return }
             do {
                 let newGroup = try self.environment.sourceGroupStore.create(name: name, sourceIds: [])
                 self.reloadGroups()
                 self.onGroupsChanged?()
                 self.showSelectSources(for: newGroup)
             } catch {
-                self.showError(error)
+                self.showGroupError(error)
             }
         })
         present(alert, animated: true)
@@ -81,7 +84,7 @@ final class SourceGroupSheet: UIViewController, UITableViewDataSource, UITableVi
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "source_group_cell", for: indexPath) as! SourceGroupCell
         let group = groups[indexPath.row]
-        let count = group.isBuiltin ? environment.sources.count : group.sourceIds.count
+        let count = group.isBuiltin ? environment.sourcePreferences.orderedIDs.count : group.sourceIds.count
         let isSelected = (group.id == environment.sourceGroupStore.selectedId)
         cell.configure(
             group: group,
@@ -105,7 +108,7 @@ final class SourceGroupSheet: UIViewController, UITableViewDataSource, UITableVi
             NotificationCenter.default.post(name: AppEnvironment.sourcesChanged, object: environment)
             dismiss(animated: true)
         } catch {
-            showError(error)
+            showGroupError(error)
         }
     }
 
@@ -116,7 +119,22 @@ final class SourceGroupSheet: UIViewController, UITableViewDataSource, UITableVi
             NotificationCenter.default.post(name: AppEnvironment.sourcesChanged, object: self?.environment)
         }
         let nav = UINavigationController(rootViewController: sheet)
-        present(nav, animated: true)
+        presentAfterForm(nav)
+    }
+
+    private func presentAfterForm(_ controller: UIViewController) {
+        if let form = presentedViewController as? UIAlertController {
+            form.dismiss(animated: true) { [weak self] in
+                guard let self, self.viewIfLoaded?.window != nil, self.presentedViewController == nil else { return }
+                self.present(controller, animated: true)
+            }
+        } else if presentedViewController == nil { present(controller, animated: true) }
+    }
+
+    private func showGroupError(_ error: Error) {
+        let alert = UIAlertController(title: "分组操作失败", message: error.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "确定", style: .default))
+        presentAfterForm(alert)
     }
 
     private func renameGroup(_ group: SourceGroup) {
@@ -128,13 +146,13 @@ final class SourceGroupSheet: UIViewController, UITableViewDataSource, UITableVi
         }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "保存", style: .default) { [weak self, weak alert] _ in
-            guard let self, let name = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return }
+            guard let self, let name = alert?.textFields?.first?.text else { return }
             do {
                 try self.environment.sourceGroupStore.rename(id: group.id, to: name)
                 self.reloadGroups()
                 self.onGroupsChanged?()
             } catch {
-                self.showError(error)
+                self.showGroupError(error)
             }
         })
         present(alert, animated: true)
@@ -156,7 +174,7 @@ final class SourceGroupSheet: UIViewController, UITableViewDataSource, UITableVi
                 self.onGroupsChanged?()
                 NotificationCenter.default.post(name: AppEnvironment.sourcesChanged, object: self.environment)
             } catch {
-                self.showError(error)
+                self.showGroupError(error)
             }
         })
         present(alert, animated: true)
@@ -247,6 +265,10 @@ final class SourceGroupCell: UITableViewCell {
         self.onSelectSources = onSelectSources
         self.onRename = onRename
         self.onDelete = onDelete
+        accessibilityIdentifier = "source-group.row." + group.id
+        selectSourcesButton.accessibilityIdentifier = "source-group.sources." + group.id
+        renameButton.accessibilityIdentifier = "source-group.rename." + group.id
+        deleteButton.accessibilityIdentifier = "source-group.delete." + group.id
 
         titleLabel.text = group.name
         titleLabel.textColor = isSelected ? Palette.accent : Palette.text
@@ -281,7 +303,11 @@ final class SourceGroupSourcesSelectSheet: UIViewController, UITableViewDataSour
         self.group = group
         self.onSaved = onSaved
         self.selectedIds = Set(group.sourceIds)
-        self.allSources = environment.sources
+        // Android's grouping uses the entire current catalog. Disabled sources
+        // remain assignable and retain their membership when enabled later.
+        self.allSources = environment.sourcePreferences.orderedIDs.compactMap { id in
+            environment.allSources.first { $0.id == id }
+        }
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -294,6 +320,8 @@ final class SourceGroupSourcesSelectSheet: UIViewController, UITableViewDataSour
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "取消", style: .plain, target: self, action: #selector(cancelTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "保存", style: .done, target: self, action: #selector(saveTapped))
+        navigationItem.leftBarButtonItem?.accessibilityIdentifier = "source-group.selection.cancel"
+        navigationItem.rightBarButtonItem?.accessibilityIdentifier = "source-group.selection.save"
 
         headerLabel.font = .systemFont(ofSize: 13, weight: .regular)
         headerLabel.textColor = Palette.secondaryText
@@ -304,6 +332,7 @@ final class SourceGroupSourcesSelectSheet: UIViewController, UITableViewDataSour
         tableView.backgroundColor = Palette.background
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.accessibilityIdentifier = "source-group.selection.list"
         tableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tableView)
 
@@ -347,7 +376,9 @@ final class SourceGroupSourcesSelectSheet: UIViewController, UITableViewDataSour
         let checked = selectedIds.contains(source.id)
 
         cell.backgroundColor = Palette.card
-        cell.textLabel?.text = source.name
+        cell.textLabel?.text = source.name + (environment.sourcePreferences.isEnabled(source.id) ? "" : "（未启用）")
+        cell.accessibilityIdentifier = "source-group.selection." + source.id
+        cell.accessibilityValue = checked ? "已选择" : "未选择"
         cell.textLabel?.textColor = checked ? Palette.accent : Palette.text
         cell.textLabel?.font = checked ? .systemFont(ofSize: 15, weight: .bold) : .systemFont(ofSize: 15, weight: .regular)
         cell.accessoryType = checked ? .checkmark : .none

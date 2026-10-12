@@ -1,0 +1,22 @@
+{
+  "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
+  "path": "app/src/main/java/com/xxcomic/MainActivity.java",
+  "sha256": "ebf97fb1e38241916e4a318b495bbe75edb3a6bb3c1e81435e8e0a05ca4ff515",
+  "groupBuiltinCount": "defaultSourceOrder().size()",
+  "groupChoice": "SourceOrder.normalize(sourceOrder, defaultSourceOrder()) includes disabled with label",
+  "nameValidation": "calls store and keeps actual validation feedback",
+  "ranges": {
+    "groupList": [
+      9911,
+      9989
+    ],
+    "nameForm": [
+      10017,
+      10079
+    ],
+    "sourceChoices": [
+      10086,
+      10149
+    ]
+  }
+}

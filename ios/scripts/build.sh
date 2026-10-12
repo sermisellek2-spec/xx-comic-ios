@@ -135,6 +135,15 @@ case "$validation_scope" in
       -only-testing:XXComicUITests/EpubReadingUITests
     )
     ;;
+  source-groups)
+    test_arguments+=(
+      -only-testing:XXComicTests
+      -only-testing:XXComicUITests/SourceGroupsParityUITests
+      -only-testing:XXComicUITests/SourceDrawerTests
+      -only-testing:XXComicUITests/CurrentParityUITests/testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup
+      -only-testing:XXComicUITests/CurrentParityUITests/testEmptyDiscoveryGroupDoesNotBlockGlobalSearch
+    )
+    ;;
   verification-ui)
     # Only the deterministic verification UI impact; actual site validation is paused.
     # SDK builds, Core, native tests and Release isolation still run. No IPA.
