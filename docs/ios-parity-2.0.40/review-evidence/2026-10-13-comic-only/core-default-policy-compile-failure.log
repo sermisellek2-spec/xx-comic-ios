@@ -1,0 +1,30 @@
+[0/1] Planning build
+Building for debugging...
+[0/5] Write sources
+[0/5] Write swift-version-24593BA9C3E375BF.txt
+[4/7] Compiling ComicCore EpubComicContent.swift
+[5/7] Compiling ComicCore KindlePublicationAdapter.swift
+[6/7] Emitting module ComicCore
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[7/8] Compiling ComicCore LocalKindleLibrary.swift
+[8/15] Wrapping AST for ComicCore for debugging
+[10/17] Compiling ComicCoreTests KindlePublicationTests.swift
+/work/Tests/ComicCoreTests/KindlePublicationTests.swift:59:50: error: extra argument 'requireComic' in call
+        try data.write(to: source, requireComic: false)
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~
+/work/Tests/ComicCoreTests/KindlePublicationTests.swift:182:54: error: extra argument 'requireComic' in call
+        try existing.write(to: target, requireComic: false)
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~
+[11/18] Emitting module ComicCoreTests
+[12/18] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+error: fatalError
+error: fatalError

@@ -1,0 +1,658 @@
+[0/1] Planning build
+Building for debugging...
+[0/12] Write sources
+[0/11] Write swift-version-24593BA9C3E375BF.txt
+[4/32] Emitting module ComicCore
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[5/32] Compiling ComicCore AntbywComicSource.swift
+[6/32] Compiling ComicCore AppTheme.swift
+[7/32] Compiling ComicCore AppUpdateChecker.swift
+[8/32] Compiling ComicCore BaoziComicSource.swift
+[9/32] Compiling ComicCore BatchImportPlanner.swift
+[10/32] Compiling ComicCore BatchImportRecoveryPlan.swift
+[11/32] Compiling ComicCore BatchImportSession.swift
+[12/32] Compiling ComicCore BatchImportWorker.swift
+[13/32] Compiling ComicCore BookshelfGroupStore.swift
+[14/32] Compiling ComicCore BookshelfLayoutHelper.swift
+[15/32] Compiling ComicCore BookshelfReadingStatus.swift
+[16/32] Compiling ComicCore BuiltinSourceCatalog.swift
+[17/32] Compiling ComicCore ChapterMatching.swift
+[18/32] Compiling ComicCore ComicBrowserSession.swift
+[19/32] Compiling ComicCore ComicDirectoryPreparation.swift
+[20/32] Compiling ComicCore ComicModels.swift
+[21/32] Compiling ComicCore ComicSource.swift
+[22/32] Compiling ComicCore ContentFingerprint.swift
+[23/32] Compiling ComicCore ContinuousReaderPages.swift
+[24/32] Compiling ComicCore CopyMangaComicSource.swift
+[25/32] Compiling ComicCore CopyMangaLiteral.swift
+[26/74] Compiling ComicCore FavoriteUpdateCoordinator.swift
+[27/74] Compiling ComicCore FileAccessCoordinator.swift
+[28/74] Compiling ComicCore FileDownloadWorker.swift
+[29/74] Compiling ComicCore FiveUmComicSource.swift
+[30/74] Compiling ComicCore FolderBookmarkStore.swift
+[31/74] Compiling ComicCore GmhComicSource.swift
+[32/74] Compiling ComicCore GuaziComicSource.swift
+[33/74] Compiling ComicCore HTML4EntityDecoder.swift
+[34/74] Compiling ComicCore HTTPResponseCache.swift
+[35/74] Compiling ComicCore Hanman18ComicSource.swift
+[36/74] Compiling ComicCore HiperdexComicSource.swift
+[37/74] Compiling ComicCore IOSUpdatePolicy.swift
+[38/74] Compiling ComicCore ImageEnhancementPolicy.swift
+[39/74] Compiling ComicCore JmComicSource.swift
+[40/74] Compiling ComicCore JmImageRestore.swift
+[41/74] Compiling ComicCore JmImageTransform.swift
+[42/74] Compiling ComicCore KindleEpubWriter.swift
+[43/74] Compiling ComicCore KindleFormatDetector.swift
+[44/74] Compiling ComicCore KindlePublicationAdapter.swift
+[45/74] Compiling ComicCore LibraryStore.swift
+[46/74] Compiling ComicCore LinkedFolderLibrary.swift
+[47/95] Compiling ComicCore LiumanhuaComicSource.swift
+[48/95] Compiling ComicCore LocalArchiveIndex.swift
+[49/95] Compiling ComicCore LocalCatalog.swift
+[50/95] Compiling ComicCore LocalCatalogStore.swift
+[51/95] Compiling ComicCore LocalComicSource.swift
+[52/95] Compiling ComicCore LocalEpubLibrary.swift
+[53/95] Compiling ComicCore LocalFolderIndex.swift
+[54/95] Compiling ComicCore LocalFolderSync.swift
+[55/95] Compiling ComicCore LocalImageProbe.swift
+[56/95] Compiling ComicCore LocalImportJournal.swift
+[57/95] Compiling ComicCore LocalImportPreparation.swift
+[58/95] Compiling ComicCore LocalKindleLibrary.swift
+[59/95] Compiling ComicCore LocalLibrary.swift
+[60/95] Compiling ComicCore LocalPdfLibrary.swift
+[61/95] Compiling ComicCore LocalReadingTarget.swift
+[62/95] Compiling ComicCore ManbenComicSource.swift
+[63/95] Compiling ComicCore ManhuaguiComicSource.swift
+[64/95] Compiling ComicCore ManhuaguiReader.swift
+[65/95] Compiling ComicCore ManwaComicSource.swift
+[66/95] Compiling ComicCore ManwaImageDecoder.swift
+[67/95] Compiling ComicCore Mh160ComicSource.swift
+[68/116] Compiling ComicCore CuimhComicSource.swift
+[69/116] Compiling ComicCore D5d6ComicSource.swift
+[70/116] Compiling ComicCore DeferredDeletionQueue.swift
+[71/116] Compiling ComicCore DingManhuaComicSource.swift
+[72/116] Compiling ComicCore DiscoveryHeaderGesture.swift
+[73/116] Compiling ComicCore DongmanLaComicSource.swift
+[74/116] Compiling ComicCore DownloadCoordinator.swift
+[75/116] Compiling ComicCore DownloadModels.swift
+[76/116] Compiling ComicCore DownloadOwnedDirectory.swift
+[77/116] Compiling ComicCore DownloadRuntime.swift
+[78/116] Compiling ComicCore DownloadStorageLocations.swift
+[79/116] Compiling ComicCore DownloadStore.swift
+[80/116] Compiling ComicCore EpubArchive.swift
+[81/116] Compiling ComicCore EpubComicContent.swift
+[82/116] Compiling ComicCore EpubParser.swift
+[83/116] Compiling ComicCore EpubPublication.swift
+[84/116] Compiling ComicCore EpubXML.swift
+[85/116] Compiling ComicCore ErrorLogSanitizer.swift
+[86/116] Compiling ComicCore ErrorLogStore.swift
+[87/116] Compiling ComicCore FavoriteRevision.swift
+[88/116] Compiling ComicCore FavoriteUpdateChecker.swift
+[89/137] Compiling ComicCore ReadingHabitTracker.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[90/137] Compiling ComicCore ReadingRules.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[91/137] Compiling ComicCore RetiredComicSource.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[92/137] Compiling ComicCore SearchRules.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[93/137] Compiling ComicCore SourceAES.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[94/137] Compiling ComicCore SourceConfigDocuments.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[95/137] Compiling ComicCore SourceConfigModels.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[96/137] Compiling ComicCore SourceErrorDescriptions.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[97/137] Compiling ComicCore SourceFilterSelection.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[98/137] Compiling ComicCore SourceGroupStore.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[99/137] Compiling ComicCore SourcePreferences.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[100/137] Compiling ComicCore StorageCalculator.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[101/137] Compiling ComicCore TextLocator.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[102/137] Compiling ComicCore UsageStatsClient.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[103/137] Compiling ComicCore WhiteMarginDetector.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[104/137] Compiling ComicCore XinmanhuaComicSource.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[105/137] Compiling ComicCore XinmanhuaImageDecoder.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[106/137] Compiling ComicCore ZIPDeflate.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[107/137] Compiling ComicCore ZIPDirectory.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[108/137] Compiling ComicCore ZaimanhuaComicSource.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[109/137] Compiling ComicCore resource_bundle_accessor.swift
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[110/137] Compiling ComicCore Mh18BrowserContentRules.swift
+[111/137] Compiling ComicCore Mh18BrowserTrust.swift
+[112/137] Compiling ComicCore Mh18ComicSource.swift
+[113/137] Compiling ComicCore Mh18CookieSynchronizer.swift
+[114/137] Compiling ComicCore Mh18VerificationAttempt.swift
+[115/137] Compiling ComicCore Mh18VerificationRules.swift
+[116/137] Compiling ComicCore MkzhanComicSource.swift
+[117/137] Compiling ComicCore NaturalPathOrder.swift
+[118/137] Compiling ComicCore NetworkMonitor.swift
+[119/137] Compiling ComicCore PalmDoc.swift
+[120/137] Compiling ComicCore PdfPublication.swift
+[121/137] Compiling ComicCore PdfRenderer.swift
+[122/137] Compiling ComicCore PublicComicSource.swift
+[123/137] Compiling ComicCore PublicSourceHTML.swift
+[124/137] Compiling ComicCore PublicSourceImages.swift
+[125/137] Compiling ComicCore PublicSourceRegistry.swift
+[126/137] Compiling ComicCore QuickPublicationInfo.swift
+[127/137] Compiling ComicCore ReaderLoadState.swift
+[128/137] Compiling ComicCore ReaderPreferences.swift
+[129/137] Compiling ComicCore ReaderSeekSession.swift
+[130/137] Compiling ComicCore ReaderSession.swift
+[131/138] Wrapping AST for ComicCore for debugging
+[133/162] Emitting module ComicCoreTests
+[134/185] Compiling ComicCoreTests AntbywSourceTests.swift
+[135/185] Compiling ComicCoreTests AppThemeTests.swift
+[136/185] Compiling ComicCoreTests AppUpdateCheckerTests.swift
+[137/185] Compiling ComicCoreTests BaoziSourceTests.swift
+[138/185] Compiling ComicCoreTests BatchImportPlannerTests.swift
+[139/185] Compiling ComicCoreTests BatchImportSessionTests.swift
+[140/185] Compiling ComicCoreTests BatchImportWorkerTests.swift
+[141/185] Compiling ComicCoreTests BookshelfGroupStoreTests.swift
+[142/185] Compiling ComicCoreTests BookshelfReadingStatusTests.swift
+[143/185] Compiling ComicCoreTests BuiltinSourceCatalogTests.swift
+[144/185] Compiling ComicCoreTests CacheBackendContinuityTests.swift
+[145/185] Compiling ComicCoreTests CacheLateRestoreTests.swift
+[146/185] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[147/185] Compiling ComicCoreTests ChapterMatchingTests.swift
+[148/185] Compiling ComicCoreTests ComicDirectoryPreparationTests.swift
+[149/185] Compiling ComicCoreTests ContentFingerprintTests.swift
+[150/185] Compiling ComicCoreTests ContinuousReaderPagesTests.swift
+[151/185] Compiling ComicCoreTests CopyMangaTests.swift
+[152/185] Compiling ComicCoreTests CuimhSourceTests.swift
+[153/185] Compiling ComicCoreTests D5d6SourceTests.swift
+[154/185] Compiling ComicCoreTests DefaultDownloadImageFetcherTests.swift
+[155/185] Compiling ComicCoreTests DeferredDeletionTests.swift
+[156/185] Compiling ComicCoreTests DingManhuaSourceTests.swift
+[157/207] Compiling ComicCoreTests DiscoveryHeaderGestureTests.swift
+[158/207] Compiling ComicCoreTests DongmanLaSourceTests.swift
+[159/207] Compiling ComicCoreTests DownloadCoordinatorTests.swift
+[160/207] Compiling ComicCoreTests DownloadDeletionTests.swift
+[161/207] Compiling ComicCoreTests DownloadFileCoordinationTests.swift
+[162/207] Compiling ComicCoreTests DownloadIdentityTests.swift
+[163/207] Compiling ComicCoreTests DownloadLocationTests.swift
+[164/207] Compiling ComicCoreTests DownloadOwnedDirectoryTests.swift
+[165/207] Compiling ComicCoreTests DownloadPersistenceTests.swift
+[166/207] Compiling ComicCoreTests DownloadRuntimeTests.swift
+[167/207] Compiling ComicCoreTests DownloadSchedulingTests.swift
+[168/207] Compiling ComicCoreTests DownloadStoreTests.swift
+[169/207] Compiling ComicCoreTests EpubComicContentTests.swift
+[170/207] Compiling ComicCoreTests EpubParserTests.swift
+[171/207] Compiling ComicCoreTests ErrorLogStoreTests.swift
+[172/207] Compiling ComicCoreTests FavoriteRevisionTests.swift
+[173/207] Compiling ComicCoreTests FavoriteUpdateCheckerTests.swift
+[174/207] Compiling ComicCoreTests FileDownloadWorkerTests.swift
+[175/207] Compiling ComicCoreTests FiveUmSourceTests.swift
+[176/207] Compiling ComicCoreTests FolderBookmarkStoreTests.swift
+[177/207] Compiling ComicCoreTests GmhSourceTests.swift
+[178/207] Compiling ComicCoreTests Hanman18SourceTests.swift
+[179/207] Compiling ComicCoreTests HiperdexSourceTests.swift
+[180/229] Compiling ComicCoreTests LocalOwnershipRecoveryTests.swift
+[181/229] Compiling ComicCoreTests LocalPdfLibraryTests.swift
+[182/229] Compiling ComicCoreTests LocalReadingRoutingTests.swift
+[183/229] Compiling ComicCoreTests LocalSeriesLifecycleTests.swift
+[184/229] Compiling ComicCoreTests LocalTestHTTPServer.swift
+[185/229] Compiling ComicCoreTests LocalTestHTTPServerTests.swift
+[186/229] Compiling ComicCoreTests ManbenSourceTests.swift
+[187/229] Compiling ComicCoreTests ManhuaguiTests.swift
+[188/229] Compiling ComicCoreTests ManwaImageDecoderTests.swift
+[189/229] Compiling ComicCoreTests ManwaSourceTests.swift
+[190/229] Compiling ComicCoreTests Mh160SourceTests.swift
+[191/229] Compiling ComicCoreTests Mh18BrowserContentRulesTests.swift
+[192/229] Compiling ComicCoreTests Mh18BrowserTrustTests.swift
+[193/229] Compiling ComicCoreTests Mh18CookieSynchronizerTests.swift
+[194/229] Compiling ComicCoreTests Mh18SourceTests.swift
+[195/229] Compiling ComicCoreTests Mh18VerificationAttemptTests.swift
+[196/229] Compiling ComicCoreTests Mh18VerificationRulesTests.swift
+[197/229] Compiling ComicCoreTests MkzhanSourceTests.swift
+[198/229] Compiling ComicCoreTests NaturalPathOrderTests.swift
+[199/229] Compiling ComicCoreTests NewPublicSourcesTests.swift
+[200/229] Compiling ComicCoreTests PdfRendererTests.swift
+[201/229] Compiling ComicCoreTests PreferencesTests.swift
+[202/251] Compiling ComicCoreTests PublicComicSourceTests.swift
+[203/251] Compiling ComicCoreTests QuickPublicationInfoTests.swift
+[204/251] Compiling ComicCoreTests ReaderLoadStateTests.swift
+[205/251] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+[206/251] Compiling ComicCoreTests ReaderSessionTests.swift
+[207/251] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+[208/251] Compiling ComicCoreTests ReadingRulesTests.swift
+[209/251] Compiling ComicCoreTests RetiredComicSourceTests.swift
+[210/251] Compiling ComicCoreTests SearchRulesTests.swift
+[211/251] Compiling ComicCoreTests SourceAESTests.swift
+[212/251] Compiling ComicCoreTests SourceConfigDocumentsTests.swift
+[213/251] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+[214/251] Compiling ComicCoreTests SourceGroupStoreTests.swift
+[215/251] Compiling ComicCoreTests SourceImportContractTests.swift
+[216/251] Compiling ComicCoreTests SourcePreferencesTests.swift
+[217/251] Compiling ComicCoreTests SourceSearchTrimTests.swift
+[218/251] Compiling ComicCoreTests StorageCalculatorTests.swift
+[219/251] Compiling ComicCoreTests UsageStatsClientTests.swift
+[220/251] Compiling ComicCoreTests UsageStatsReportingTests.swift
+[221/251] Compiling ComicCoreTests WhiteMarginTests.swift
+[222/251] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+[223/251] Compiling ComicCoreTests resource_bundle_accessor.swift
+[224/251] Compiling ComicCoreTests IOSUpdatePolicyTests.swift
+[225/251] Compiling ComicCoreTests ImageEnhancementPolicyTests.swift
+[226/251] Compiling ComicCoreTests JmImageRestoreTests.swift
+[227/251] Compiling ComicCoreTests JmImageTransformTests.swift
+[228/251] Compiling ComicCoreTests JmSourceTests.swift
+[229/251] Compiling ComicCoreTests KindleFormatTests.swift
+[230/251] Compiling ComicCoreTests KindlePublicationTests.swift
+[231/251] Compiling ComicCoreTests LegacyEpubFixture.swift
+[232/251] Compiling ComicCoreTests LegacyTextRecordTests.swift
+[233/251] Compiling ComicCoreTests LibraryStoreTests.swift
+[234/251] Compiling ComicCoreTests LinkedFolderLibraryTests.swift
+[235/251] Compiling ComicCoreTests LiumanhuaSourceTests.swift
+[236/251] Compiling ComicCoreTests LocalArchiveTests.swift
+[237/251] Compiling ComicCoreTests LocalCatalogTests.swift
+[238/251] Compiling ComicCoreTests LocalEpubLibraryTests.swift
+[239/251] Compiling ComicCoreTests LocalFolderSyncTests.swift
+[240/251] Compiling ComicCoreTests LocalFolderTests.swift
+[241/251] Compiling ComicCoreTests LocalImageProbeTests.swift
+[242/251] Compiling ComicCoreTests LocalImportFingerprintTests.swift
+[243/251] Compiling ComicCoreTests LocalImportPreparationTests.swift
+[244/251] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+[245/251] Compiling ComicCoreTests LocalLibraryTests.swift
+[246/254] Wrapping AST for ComicCoreTests for debugging
+[247/254] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[248/255] Write sources
+[250/257] Emitting module ComicCorePackageDiscoveredTests
+[251/257] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[252/258] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[253/259] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[254/259] Write sources
+[255/259] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[257/261] Emitting module ComicCorePackageTests
+[258/261] Compiling ComicCorePackageTests runner.swift
+[259/261] Write Objects.LinkFileList
+[260/261] Linking ComicCorePackageTests.xctest
+Build complete! (63.00s)
+Test Suite 'Selected tests' started at 2026-10-12 16:58:35.739
+Test Suite 'EpubComicContentTests' started at 2026-10-12 16:58:35.755
+Test Case 'EpubComicContentTests.testLegacySingleImageWithTextCannotSilentlyLoseItsText' started at 2026-10-12 16:58:35.755
+Test Case 'EpubComicContentTests.testLegacySingleImageWithTextCannotSilentlyLoseItsText' passed (0.032 seconds)
+Test Case 'EpubComicContentTests.testRealImageWrapperImportsAndReadsImageWithoutRenderingMarkup' started at 2026-10-12 16:58:35.787
+Test Case 'EpubComicContentTests.testRealImageWrapperImportsAndReadsImageWithoutRenderingMarkup' passed (0.032 seconds)
+Test Case 'EpubComicContentTests.testSvgImageAndWhitespaceAreSupportedWhileSvgTextIsRejected' started at 2026-10-12 16:58:35.819
+Test Case 'EpubComicContentTests.testSvgImageAndWhitespaceAreSupportedWhileSvgTextIsRejected' passed (0.0 seconds)
+Test Case 'EpubComicContentTests.testTextAndMixedWrappersRejectBeforeProbingWithoutChangingOriginalOrShelf' started at 2026-10-12 16:58:35.820
+Test Case 'EpubComicContentTests.testTextAndMixedWrappersRejectBeforeProbingWithoutChangingOriginalOrShelf' passed (0.481 seconds)
+Test Suite 'EpubComicContentTests' passed at 2026-10-12 16:58:36.301
+Executed 4 tests, with 0 failures (0 unexpected) in 0.546 (0.546) seconds
+Test Suite 'LegacyTextRecordTests' started at 2026-10-12 16:58:36.301
+Test Case 'LegacyTextRecordTests.testCorruptTextPositionDoesNotRebuildOrOverwriteLibrary' started at 2026-10-12 16:58:36.301
+Test Case 'LegacyTextRecordTests.testCorruptTextPositionDoesNotRebuildOrOverwriteLibrary' passed (0.004 seconds)
+Test Case 'LegacyTextRecordTests.testLegacyPositionsSurviveFavoriteAndMangaUpdatesWithoutAnAutomaticMigration' started at 2026-10-12 16:58:36.305
+Test Case 'LegacyTextRecordTests.testLegacyPositionsSurviveFavoriteAndMangaUpdatesWithoutAnAutomaticMigration' passed (0.009 seconds)
+Test Case 'LegacyTextRecordTests.testLocatorAndroidKeysMissingFieldsRoundTripAndCorruptTypes' started at 2026-10-12 16:58:36.314
+Test Case 'LegacyTextRecordTests.testLocatorAndroidKeysMissingFieldsRoundTripAndCorruptTypes' passed (0.001 seconds)
+Test Case 'LegacyTextRecordTests.testLocatorNormalizesConstructorAndDecodedValues' started at 2026-10-12 16:58:36.315
+Test Case 'LegacyTextRecordTests.testLocatorNormalizesConstructorAndDecodedValues' passed (0.0 seconds)
+Test Case 'LegacyTextRecordTests.testOldLibraryWithoutTextPositionsStillLoads' started at 2026-10-12 16:58:36.315
+Test Case 'LegacyTextRecordTests.testOldLibraryWithoutTextPositionsStillLoads' passed (0.002 seconds)
+Test Suite 'LegacyTextRecordTests' passed at 2026-10-12 16:58:36.317
+Executed 5 tests, with 0 failures (0 unexpected) in 0.016 (0.016) seconds
+Test Suite 'LocalEpubLibraryTests' started at 2026-10-12 16:58:36.317
+Test Case 'LocalEpubLibraryTests.testBadImagesDRMAndMissingResourcesNeverPublishOrAlterExistingBooks' started at 2026-10-12 16:58:36.317
+Test Case 'LocalEpubLibraryTests.testBadImagesDRMAndMissingResourcesNeverPublishOrAlterExistingBooks' passed (0.103 seconds)
+Test Case 'LocalEpubLibraryTests.testCRCFailureAndCancellationNeverReturnPartialResource' started at 2026-10-12 16:58:36.420
+Test Case 'LocalEpubLibraryTests.testCRCFailureAndCancellationNeverReturnPartialResource' passed (0.034 seconds)
+Test Case 'LocalEpubLibraryTests.testCancellationDuringCopyAndProbeCleansOnlyStaging' started at 2026-10-12 16:58:36.455
+Test Case 'LocalEpubLibraryTests.testCancellationDuringCopyAndProbeCleansOnlyStaging' passed (0.019 seconds)
+Test Case 'LocalEpubLibraryTests.testCorruptMetadataAndOwnedFileSymlinksAreRejected' started at 2026-10-12 16:58:36.474
+Test Case 'LocalEpubLibraryTests.testCorruptMetadataAndOwnedFileSymlinksAreRejected' passed (0.639 seconds)
+Test Case 'LocalEpubLibraryTests.testCoverPriorityAndUnreadableOptionalCoverFallback' started at 2026-10-12 16:58:37.113
+Test Case 'LocalEpubLibraryTests.testCoverPriorityAndUnreadableOptionalCoverFallback' passed (0.188 seconds)
+Test Case 'LocalEpubLibraryTests.testImportImageValidationCanExceedParserDefaultBudget' started at 2026-10-12 16:58:37.300
+Test Case 'LocalEpubLibraryTests.testImportImageValidationCanExceedParserDefaultBudget' passed (13.322 seconds)
+Test Case 'LocalEpubLibraryTests.testImportPreservesArchiveSpineChaptersAndLoadsActualBytes' started at 2026-10-12 16:58:50.622
+Test Case 'LocalEpubLibraryTests.testImportPreservesArchiveSpineChaptersAndLoadsActualBytes' passed (0.052 seconds)
+Test Case 'LocalEpubLibraryTests.testLegacyJSONAndMixedLibraryRemainReadable' started at 2026-10-12 16:58:50.674
+Test Case 'LocalEpubLibraryTests.testLegacyJSONAndMixedLibraryRemainReadable' passed (0.079 seconds)
+Test Case 'LocalEpubLibraryTests.testManifestAtLimitImportsAndReopens' started at 2026-10-12 16:58:50.753
+Test Case 'LocalEpubLibraryTests.testManifestAtLimitImportsAndReopens' passed (4.826 seconds)
+Test Case 'LocalEpubLibraryTests.testOriginalArchiveCopyCanExceedSingleImageLimit' started at 2026-10-12 16:58:55.579
+Test Case 'LocalEpubLibraryTests.testOriginalArchiveCopyCanExceedSingleImageLimit' passed (6.614 seconds)
+Test Case 'LocalEpubLibraryTests.testOversizedManifestIsRejectedBeforePublishingAndPreservesShelf' started at 2026-10-12 16:59:02.193
+Test Case 'LocalEpubLibraryTests.testOversizedManifestIsRejectedBeforePublishingAndPreservesShelf' passed (2.391 seconds)
+Test Case 'LocalEpubLibraryTests.testReopenedEpubUsesLogicalPageURLsAndSavedCover' started at 2026-10-12 16:59:04.584
+Test Case 'LocalEpubLibraryTests.testReopenedEpubUsesLogicalPageURLsAndSavedCover' passed (0.013 seconds)
+Test Case 'LocalEpubLibraryTests.testResourcePreviouslyReadAsTextStillRequiresImageProbe' started at 2026-10-12 16:59:04.598
+Test Case 'LocalEpubLibraryTests.testResourcePreviouslyReadAsTextStillRequiresImageProbe' passed (0.009 seconds)
+Test Case 'LocalEpubLibraryTests.testStreamingWriteAndReadShareBudgetAndRemovePartialOutput' started at 2026-10-12 16:59:04.607
+Test Case 'LocalEpubLibraryTests.testStreamingWriteAndReadShareBudgetAndRemovePartialOutput' passed (0.007 seconds)
+Test Case 'LocalEpubLibraryTests.testTextImportIsRejectedAndLegacyBookRefusesImageReaderWithoutDeletingFiles' started at 2026-10-12 16:59:04.614
+Test Case 'LocalEpubLibraryTests.testTextImportIsRejectedAndLegacyBookRefusesImageReaderWithoutDeletingFiles' passed (0.018 seconds)
+Test Case 'LocalEpubLibraryTests.testUnsafePageURLsAndResourcePathsAreRejected' started at 2026-10-12 16:59:04.631
+Test Case 'LocalEpubLibraryTests.testUnsafePageURLsAndResourcePathsAreRejected' passed (0.082 seconds)
+Test Suite 'LocalEpubLibraryTests' passed at 2026-10-12 16:59:04.714
+	 Executed 16 tests, with 0 failures (0 unexpected) in 28.396 (28.396) seconds
+Test Suite 'LocalImportFingerprintTests' started at 2026-10-12 16:59:04.714
+Test Case 'LocalImportFingerprintTests.testArchiveCopiesOriginalBeforeProbeAndPersistsItsHash' started at 2026-10-12 16:59:04.714
+Test Case 'LocalImportFingerprintTests.testArchiveCopiesOriginalBeforeProbeAndPersistsItsHash' passed (0.07 seconds)
+Test Case 'LocalImportFingerprintTests.testArchiveRequiresOwnedSourceArchiveFileOnReopening' started at 2026-10-12 16:59:04.784
+Test Case 'LocalImportFingerprintTests.testArchiveRequiresOwnedSourceArchiveFileOnReopening' passed (0.096 seconds)
+Test Case 'LocalImportFingerprintTests.testCancellationDuringPreparationCleansStaging' started at 2026-10-12 16:59:04.880
+Test Case 'LocalImportFingerprintTests.testCancellationDuringPreparationCleansStaging' passed (0.004 seconds)
+Test Case 'LocalImportFingerprintTests.testEpubPdfAndKindlePersistHashesOfTheirOwnedOriginalFiles' started at 2026-10-12 16:59:04.883
+Test Case 'LocalImportFingerprintTests.testEpubPdfAndKindlePersistHashesOfTheirOwnedOriginalFiles' passed (0.371 seconds)
+Test Case 'LocalImportFingerprintTests.testFolderPersistsOriginalPathManifestHashAfterExternalSourceChanges' started at 2026-10-12 16:59:05.254
+Test Case 'LocalImportFingerprintTests.testFolderPersistsOriginalPathManifestHashAfterExternalSourceChanges' passed (0.181 seconds)
+Test Case 'LocalImportFingerprintTests.testFolderRelativePathChangeAltersManifestFingerprint' started at 2026-10-12 16:59:05.435
+Test Case 'LocalImportFingerprintTests.testFolderRelativePathChangeAltersManifestFingerprint' passed (0.172 seconds)
+Test Case 'LocalImportFingerprintTests.testImagesImportHasImagesFormatAndNilFingerprint' started at 2026-10-12 16:59:05.607
+Test Case 'LocalImportFingerprintTests.testImagesImportHasImagesFormatAndNilFingerprint' passed (0.017 seconds)
+Test Case 'LocalImportFingerprintTests.testLegacyManifestWithoutFingerprintOrFormatRemainsReadable' started at 2026-10-12 16:59:05.624
+Test Case 'LocalImportFingerprintTests.testLegacyManifestWithoutFingerprintOrFormatRemainsReadable' passed (0.006 seconds)
+Test Case 'LocalImportFingerprintTests.testMetadataValidationRejectsInvalidFingerprintAndFormatCombinations' started at 2026-10-12 16:59:05.630
+Test Case 'LocalImportFingerprintTests.testMetadataValidationRejectsInvalidFingerprintAndFormatCombinations' passed (0.0 seconds)
+Test Suite 'LocalImportFingerprintTests' passed at 2026-10-12 16:59:05.630
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.916 (0.916) seconds
+Test Suite 'LocalImportPreparationTests' started at 2026-10-12 16:59:05.630
+Test Case 'LocalImportPreparationTests.testCancellationAtFinalPublishBoundaryStillReclaimsPreparedDirectory' started at 2026-10-12 16:59:05.630
+Test Case 'LocalImportPreparationTests.testCancellationAtFinalPublishBoundaryStillReclaimsPreparedDirectory' passed (0.008 seconds)
+Test Case 'LocalImportPreparationTests.testCancellationInPreparationAndAfterPreparationCleansOnlyCurrentImport' started at 2026-10-12 16:59:05.638
+Test Case 'LocalImportPreparationTests.testCancellationInPreparationAndAfterPreparationCleansOnlyCurrentImport' passed (0.022 seconds)
+Test Case 'LocalImportPreparationTests.testConcurrentPublishAndDiscardCopiesHaveOneTerminalOutcome' started at 2026-10-12 16:59:05.661
+Test Case 'LocalImportPreparationTests.testConcurrentPublishAndDiscardCopiesHaveOneTerminalOutcome' passed (0.008 seconds)
+Test Case 'LocalImportPreparationTests.testCrossLibraryIncludingSameDirectoryCannotPublishOrDiscardPreparation' started at 2026-10-12 16:59:05.669
+Test Case 'LocalImportPreparationTests.testCrossLibraryIncludingSameDirectoryCannotPublishOrDiscardPreparation' passed (0.01 seconds)
+Test Case 'LocalImportPreparationTests.testDiscardIOFailureIsReportedAndDoesNotRecurseIntoForeignContents' started at 2026-10-12 16:59:05.679
+Test Case 'LocalImportPreparationTests.testDiscardIOFailureIsReportedAndDoesNotRecurseIntoForeignContents' passed (0.01 seconds)
+Test Case 'LocalImportPreparationTests.testDiscardIsIdempotentAndCannotRemoveAnotherPreparationOrPublishedBook' started at 2026-10-12 16:59:05.690
+Test Case 'LocalImportPreparationTests.testDiscardIsIdempotentAndCannotRemoveAnotherPreparationOrPublishedBook' passed (0.017 seconds)
+Test Case 'LocalImportPreparationTests.testFinalPublishBoundaryPreservesExistingTargetsIncludingEmptyDirectoryAndSymlink' started at 2026-10-12 16:59:05.706
+Test Case 'LocalImportPreparationTests.testFinalPublishBoundaryPreservesExistingTargetsIncludingEmptyDirectoryAndSymlink' passed (0.032 seconds)
+Test Case 'LocalImportPreparationTests.testFinalPublishBoundaryRejectsReplacementSymlinkAndManifestMutation' started at 2026-10-12 16:59:05.738
+Test Case 'LocalImportPreparationTests.testFinalPublishBoundaryRejectsReplacementSymlinkAndManifestMutation' passed (0.041 seconds)
+Test Case 'LocalImportPreparationTests.testFolderAndRealZipKeepNaturalChapterOrderThroughPreparation' started at 2026-10-12 16:59:05.779
+Test Case 'LocalImportPreparationTests.testFolderAndRealZipKeepNaturalChapterOrderThroughPreparation' passed (0.311 seconds)
+Test Case 'LocalImportPreparationTests.testForeignDirectFileAndEmptyDirectorySurviveDiscardAndFailedPublication' started at 2026-10-12 16:59:06.090
+Test Case 'LocalImportPreparationTests.testForeignDirectFileAndEmptyDirectorySurviveDiscardAndFailedPublication' passed (0.033 seconds)
+Test Case 'LocalImportPreparationTests.testForeignEntriesAndReplacedOwnedFileSurvivePreparationFailure' started at 2026-10-12 16:59:06.123
+Test Case 'LocalImportPreparationTests.testForeignEntriesAndReplacedOwnedFileSurvivePreparationFailure' passed (0.032 seconds)
+Test Case 'LocalImportPreparationTests.testGrownManifestCannotExpandThePreparationReadBudget' started at 2026-10-12 16:59:06.156
+Test Case 'LocalImportPreparationTests.testGrownManifestCannotExpandThePreparationReadBudget' passed (0.012 seconds)
+Test Case 'LocalImportPreparationTests.testKnownFilenameReplacementIsNotOwnedForDiscardOrFailureCleanup' started at 2026-10-12 16:59:06.168
+Test Case 'LocalImportPreparationTests.testKnownFilenameReplacementIsNotOwnedForDiscardOrFailureCleanup' passed (0.017 seconds)
+Test Case 'LocalImportPreparationTests.testManifestIdentityTamperingAndMissingOrSymlinkResourcesAreRejectedAndCleaned' started at 2026-10-12 16:59:06.185
+Test Case 'LocalImportPreparationTests.testManifestIdentityTamperingAndMissingOrSymlinkResourcesAreRejectedAndCleaned' passed (0.037 seconds)
+Test Case 'LocalImportPreparationTests.testNativePdfPreparationAndPublicationUseRealRenderer' started at 2026-10-12 16:59:06.222
+/work/Tests/ComicCoreTests/LocalImportPreparationTests.swift:157: LocalImportPreparationTests.testNativePdfPreparationAndPublicationUseRealRenderer : Test skipped - Real PDF prepare/publish requires Apple CoreGraphics and ImageIO; Linux injection checks storage only.
+Test Case 'LocalImportPreparationTests.testNativePdfPreparationAndPublicationUseRealRenderer' skipped (0.0 seconds)
+Test Case 'LocalImportPreparationTests.testPdfInjectedStoragePreparationCopiesBeforeInspectAndOnlyRendersAtImport' started at 2026-10-12 16:59:06.222
+Test Case 'LocalImportPreparationTests.testPdfInjectedStoragePreparationCopiesBeforeInspectAndOnlyRendersAtImport' passed (0.065 seconds)
+Test Case 'LocalImportPreparationTests.testPreparedImagesAndRealEpubStayInvisibleUntilPublishedAndReopen' started at 2026-10-12 16:59:06.287
+Test Case 'LocalImportPreparationTests.testPreparedImagesAndRealEpubStayInvisibleUntilPublishedAndReopen' passed (0.081 seconds)
+Test Case 'LocalImportPreparationTests.testRealManifestWriteFailureRetainsForeignDirectoryAndReportsFailure' started at 2026-10-12 16:59:06.368
+Test Case 'LocalImportPreparationTests.testRealManifestWriteFailureRetainsForeignDirectoryAndReportsFailure' passed (0.06 seconds)
+Test Case 'LocalImportPreparationTests.testRealTextKindleCannotPublishAndKeepsOriginal' started at 2026-10-12 16:59:06.428
+Test Case 'LocalImportPreparationTests.testRealTextKindleCannotPublishAndKeepsOriginal' passed (0.008 seconds)
+Test Case 'LocalImportPreparationTests.testReplacedLibraryRootCannotPublishOrDeleteReplacementOrParkedPreparation' started at 2026-10-12 16:59:06.436
+Test Case 'LocalImportPreparationTests.testReplacedLibraryRootCannotPublishOrDeleteReplacementOrParkedPreparation' passed (0.008 seconds)
+Test Case 'LocalImportPreparationTests.testReplacedMovedAndExternalSymlinkStagingIsNeitherPublishedNorDeleted' started at 2026-10-12 16:59:06.444
+Test Case 'LocalImportPreparationTests.testReplacedMovedAndExternalSymlinkStagingIsNeitherPublishedNorDeleted' passed (0.021 seconds)
+Test Suite 'LocalImportPreparationTests' passed at 2026-10-12 16:59:06.465
+Executed 21 tests, with 1 test skipped and 0 failures (0 unexpected) in 0.835 (0.835) seconds
+Test Suite 'LocalKindleLibraryTests' started at 2026-10-12 16:59:06.465
+Test Case 'LocalKindleLibraryTests.testCancellationDuringOriginalCopyAndImageProbeNeverPublishes' started at 2026-10-12 16:59:06.465
+Test Case 'LocalKindleLibraryTests.testCancellationDuringOriginalCopyAndImageProbeNeverPublishes' passed (0.033 seconds)
+Test Case 'LocalKindleLibraryTests.testCancellationOrDeletedBookDuringActualRecoveryDoesNotResurrectBook' started at 2026-10-12 16:59:06.497
+Test Case 'LocalKindleLibraryTests.testCancellationOrDeletedBookDuringActualRecoveryDoesNotResurrectBook' passed (2.022 seconds)
+Test Case 'LocalKindleLibraryTests.testComicAndMixedKindleReadActualImageBytesAndExtensionOnlyLabels' started at 2026-10-12 16:59:08.520
+Test Case 'LocalKindleLibraryTests.testComicAndMixedKindleReadActualImageBytesAndExtensionOnlyLabels' passed (0.186 seconds)
+Test Case 'LocalKindleLibraryTests.testConcurrentActualResourceRequestsRebuildWithoutOverwriteOrResidue' started at 2026-10-12 16:59:08.706
+Test Case 'LocalKindleLibraryTests.testConcurrentActualResourceRequestsRebuildWithoutOverwriteOrResidue' passed (2.188 seconds)
+Test Case 'LocalKindleLibraryTests.testFinalPublishBoundaryPreservesConcurrentWinnerOnSuccessFailureAndCancellation' started at 2026-10-12 16:59:10.894
+Test Case 'LocalKindleLibraryTests.testFinalPublishBoundaryPreservesConcurrentWinnerOnSuccessFailureAndCancellation' passed (0.182 seconds)
+Test Case 'LocalKindleLibraryTests.testFinalPublishBoundaryRejectsReplacedSymlinkMovedAndDeletedDirectoriesWithoutWritingElsewhere' started at 2026-10-12 16:59:11.076
+Test Case 'LocalKindleLibraryTests.testFinalPublishBoundaryRejectsReplacedSymlinkMovedAndDeletedDirectoriesWithoutWritingElsewhere' passed (0.452 seconds)
+Test Case 'LocalKindleLibraryTests.testImportPreservesComicOriginalMetadataAndImageHistoryAcrossRecovery' started at 2026-10-12 16:59:11.528
+Test Case 'LocalKindleLibraryTests.testImportPreservesComicOriginalMetadataAndImageHistoryAcrossRecovery' passed (0.069 seconds)
+Test Case 'LocalKindleLibraryTests.testImportValidatesOwnedOriginalAndDerivedTogetherBeforeShelfPublication' started at 2026-10-12 16:59:11.597
+Test Case 'LocalKindleLibraryTests.testImportValidatesOwnedOriginalAndDerivedTogetherBeforeShelfPublication' passed (0.103 seconds)
+Test Case 'LocalKindleLibraryTests.testLegacyMetadataAndOrdinaryEpubMissingArchiveAreNotKindle' started at 2026-10-12 16:59:11.700
+Test Case 'LocalKindleLibraryTests.testLegacyMetadataAndOrdinaryEpubMissingArchiveAreNotKindle' passed (0.09 seconds)
+Test Case 'LocalKindleLibraryTests.testMissingSymlinkOriginalAndDerivedMismatchRefuseRecovery' started at 2026-10-12 16:59:11.790
+Test Case 'LocalKindleLibraryTests.testMissingSymlinkOriginalAndDerivedMismatchRefuseRecovery' passed (0.554 seconds)
+Test Case 'LocalKindleLibraryTests.testOldRecoveryCannotPublishIntoReplacedBookOrExternalSymlinkDirectory' started at 2026-10-12 16:59:12.344
+Test Case 'LocalKindleLibraryTests.testOldRecoveryCannotPublishIntoReplacedBookOrExternalSymlinkDirectory' passed (2.922 seconds)
+Test Case 'LocalKindleLibraryTests.testPersistedKindleCanReopenAndReadWhenOnlyDerivedArchiveIsMissing' started at 2026-10-12 16:59:15.267
+Test Case 'LocalKindleLibraryTests.testPersistedKindleCanReopenAndReadWhenOnlyDerivedArchiveIsMissing' passed (0.131 seconds)
+Test Case 'LocalKindleLibraryTests.testRecoveryOnlyReusesAnOwnedMatchingConcurrentWinner' started at 2026-10-12 16:59:15.398
+Test Case 'LocalKindleLibraryTests.testRecoveryOnlyReusesAnOwnedMatchingConcurrentWinner' passed (6.586 seconds)
+Test Case 'LocalKindleLibraryTests.testUnsupportedDamagedAndUnreadableImagesNeverPublishAndKeepOriginal' started at 2026-10-12 16:59:21.984
+Test Case 'LocalKindleLibraryTests.testUnsupportedDamagedAndUnreadableImagesNeverPublishAndKeepOriginal' passed (0.14 seconds)
+Test Suite 'LocalKindleLibraryTests' passed at 2026-10-12 16:59:22.124
+Executed 14 tests, with 0 failures (0 unexpected) in 15.659 (15.659) seconds
+Test Suite 'LocalReadingRoutingTests' started at 2026-10-12 16:59:22.124
+Test Case 'LocalReadingRoutingTests.testInvalidChapterOrSeriesThrowsTargetNotFound' started at 2026-10-12 16:59:22.124
+Test Case 'LocalReadingRoutingTests.testInvalidChapterOrSeriesThrowsTargetNotFound' passed (0.019 seconds)
+Test Case 'LocalReadingRoutingTests.testLegacySingleBookFallbackReadingTarget' started at 2026-10-12 16:59:22.143
+Test Case 'LocalReadingRoutingTests.testLegacySingleBookFallbackReadingTarget' passed (0.016 seconds)
+Test Case 'LocalReadingRoutingTests.testLegacyTextReadingTargetRejectsAndKeepsMetadataAndOriginal' started at 2026-10-12 16:59:22.159
+Test Case 'LocalReadingRoutingTests.testLegacyTextReadingTargetRejectsAndKeepsMetadataAndOriginal' passed (0.014 seconds)
+Test Case 'LocalReadingRoutingTests.testMultiVolumeSeriesChaptersConcatenationPreservesVolumeOrder' started at 2026-10-12 16:59:22.173
+Test Case 'LocalReadingRoutingTests.testMultiVolumeSeriesChaptersConcatenationPreservesVolumeOrder' passed (0.039 seconds)
+Test Case 'LocalReadingRoutingTests.testReadingTargetResolutionByChapterIdAndIndex' started at 2026-10-12 16:59:22.212
+Test Case 'LocalReadingRoutingTests.testReadingTargetResolutionByChapterIdAndIndex' passed (0.038 seconds)
+Test Case 'LocalReadingRoutingTests.testSingleVolumeSeriesChaptersEnumeration' started at 2026-10-12 16:59:22.251
+Test Case 'LocalReadingRoutingTests.testSingleVolumeSeriesChaptersEnumeration' passed (0.018 seconds)
+Test Case 'LocalReadingRoutingTests.testTextVolumeCannotBeAppendedAndExistingComicTargetsStayStable' started at 2026-10-12 16:59:22.269
+Test Case 'LocalReadingRoutingTests.testTextVolumeCannotBeAppendedAndExistingComicTargetsStayStable' passed (0.025 seconds)
+Test Case 'LocalReadingRoutingTests.testVolumeReorderingUpdatesReadingTargetIndicesWithoutChangingChapterIDs' started at 2026-10-12 16:59:22.293
+Test Case 'LocalReadingRoutingTests.testVolumeReorderingUpdatesReadingTargetIndicesWithoutChangingChapterIDs' passed (0.041 seconds)
+Test Suite 'LocalReadingRoutingTests' passed at 2026-10-12 16:59:22.335
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.211 (0.211) seconds
+Test Suite 'Selected tests' passed at 2026-10-12 16:59:22.335
+Executed 77 tests, with 1 test skipped and 0 failures (0 unexpected) in 46.578 (46.578) seconds
