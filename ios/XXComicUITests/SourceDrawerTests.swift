@@ -70,7 +70,27 @@ final class SourceDrawerTests: ParityUITestCase {
         XCTAssertTrue(source.label.contains("比卡漫画"))
     }
     private func revealSource(_ source: XCUIElement, in app: XCUIApplication) {
-        for _ in 0..<6 where !source.isHittable { app.scrollViews["filter.options"].swipeUp() }
+        let scroll = app.scrollViews["filter.options"]
+        for _ in 0..<12 {
+            if source.isHittable { break }
+            let target = source.frame, viewport = scroll.frame
+            if target.midY > viewport.maxY {
+                scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
+                    .press(forDuration: 0.05, thenDragTo: scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45)))
+            } else if target.midY < viewport.minY {
+                scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
+                    .press(forDuration: 0.05, thenDragTo: scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55)))
+            } else {
+                let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in source.isHittable }, object: source)
+                _ = XCTWaiter.wait(for: [ready], timeout: 1)
+            }
+        }
+        if !source.isHittable {
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "failure-source-grid-accessibility"; hierarchy.lifetime = .keepAlways; add(hierarchy)
+            let image = XCTAttachment(data: XCUIScreen.main.screenshot().pngRepresentation, uniformTypeIdentifier: "public.png")
+            image.name = "failure-source-grid"; image.lifetime = .keepAlways; add(image)
+        }
         XCTAssertTrue(source.isHittable, "The selected source must be reachable through the actual source grid")
     }
 }

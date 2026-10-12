@@ -1,0 +1,40 @@
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[0/3] Write swift-version-24593BA9C3E375BF.txt
+[3/5] Compiling ComicCoreTests BookshelfGroupStoreTests.swift
+[4/5] Emitting module ComicCoreTests
+[5/13] Wrapping AST for ComicCoreTests for debugging
+[6/13] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[7/14] Write sources
+[9/16] Emitting module ComicCorePackageDiscoveredTests
+[10/16] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[11/17] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[12/18] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[13/18] Write sources
+[14/18] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[16/20] Emitting module ComicCorePackageTests
+[17/20] Compiling ComicCorePackageTests runner.swift
+[18/20] Write Objects.LinkFileList
+[19/20] Linking ComicCorePackageTests.xctest
+Build complete! (38.70s)
+Test Suite 'Selected tests' started at 2026-10-12 06:19:12.544
+Test Suite 'BookshelfGroupStoreTests' started at 2026-10-12 06:19:12.560
+Test Case 'BookshelfGroupStoreTests.testCorruptExistingFileIsNotReplacedDuringInitializationOrMutation' started at 2026-10-12 06:19:12.560
+/work/Tests/ComicCoreTests/BookshelfGroupStoreTests.swift:174: error: BookshelfGroupStoreTests.testCorruptExistingFileIsNotReplacedDuringInitializationOrMutation : XCTAssertEqual failed: ("411 bytes") is not equal to ("18 bytes") -
+/work/Tests/ComicCoreTests/BookshelfGroupStoreTests.swift:175: error: BookshelfGroupStoreTests.testCorruptExistingFileIsNotReplacedDuringInitializationOrMutation : XCTAssertThrowsError failed: did not throw error -
+/work/Tests/ComicCoreTests/BookshelfGroupStoreTests.swift:177: error: BookshelfGroupStoreTests.testCorruptExistingFileIsNotReplacedDuringInitializationOrMutation : XCTAssertEqual failed: ("614 bytes") is not equal to ("18 bytes") -
+/work/Tests/ComicCoreTests/BookshelfGroupStoreTests.swift:178: error: BookshelfGroupStoreTests.testCorruptExistingFileIsNotReplacedDuringInitializationOrMutation : XCTAssertFalse failed -
+Test Case 'BookshelfGroupStoreTests.testCorruptExistingFileIsNotReplacedDuringInitializationOrMutation' failed (0.014 seconds)
+Test Case 'BookshelfGroupStoreTests.testFailedCreateDoesNotLeaveAnUnpersistedGroup' started at 2026-10-12 06:19:12.574
+/work/Tests/ComicCoreTests/BookshelfGroupStoreTests.swift:185: error: BookshelfGroupStoreTests.testFailedCreateDoesNotLeaveAnUnpersistedGroup : XCTAssertThrowsError failed: did not throw error -
+/work/Tests/ComicCoreTests/BookshelfGroupStoreTests.swift:186: error: BookshelfGroupStoreTests.testFailedCreateDoesNotLeaveAnUnpersistedGroup : XCTAssertEqual failed: ("["全部", "保存失败组"]") is not equal to ("["全部"]") -
+Test Case 'BookshelfGroupStoreTests.testFailedCreateDoesNotLeaveAnUnpersistedGroup' failed (0.01 seconds)
+Test Case 'BookshelfGroupStoreTests.testFailedMembershipSaveRollsBackAndCanBeRetried' started at 2026-10-12 06:19:12.584
+/work/Tests/ComicCoreTests/BookshelfGroupStoreTests.swift:201: error: BookshelfGroupStoreTests.testFailedMembershipSaveRollsBackAndCanBeRetried : XCTAssertFalse failed -
+/work/Tests/ComicCoreTests/BookshelfGroupStoreTests.swift:207: error: BookshelfGroupStoreTests.testFailedMembershipSaveRollsBackAndCanBeRetried : XCTAssertTrue failed -
+Test Case 'BookshelfGroupStoreTests.testFailedMembershipSaveRollsBackAndCanBeRetried' failed (0.115 seconds)
+Test Suite 'BookshelfGroupStoreTests' failed at 2026-10-12 06:19:12.698
+	 Executed 3 tests, with 8 failures (0 unexpected) in 0.138 (0.138) seconds
+Test Suite 'Selected tests' failed at 2026-10-12 06:19:12.698
+Executed 3 tests, with 8 failures (0 unexpected) in 0.138 (0.138) seconds

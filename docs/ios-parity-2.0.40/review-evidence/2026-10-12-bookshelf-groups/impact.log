@@ -1,0 +1,168 @@
+[0/1] Planning build
+Building for debugging...
+[0/5] Write sources
+[0/5] Write swift-version-24593BA9C3E375BF.txt
+[4/6] Compiling ComicCore BookshelfGroupStore.swift
+[5/6] Emitting module ComicCore
+/work/Sources/ComicCore/SourceConfigDocuments.swift:23:16: warning: stored property 'url' of 'Sendable'-conforming struct 'SourceConfigExportDocument' has non-sendable type 'URL'
+    public let url: URL
+               ^
+Foundation.URL:1:15: note: struct 'URL' does not conform to the 'Sendable' protocol
+public struct URL : ReferenceConvertible, Equatable {
+              ^
+/work/Sources/ComicCore/SourceConfigDocuments.swift:1:1: remark: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'Foundation'
+import Foundation
+^
+@preconcurrency 
+[6/7] Compiling ComicCore BookshelfLayoutHelper.swift
+[7/14] Wrapping AST for ComicCore for debugging
+[9/37] Emitting module ComicCoreTests
+[10/37] Compiling ComicCoreTests AntbywSourceTests.swift
+[11/37] Compiling ComicCoreTests AppThemeTests.swift
+[12/37] Compiling ComicCoreTests AppUpdateCheckerTests.swift
+[13/37] Compiling ComicCoreTests BaoziSourceTests.swift
+[14/37] Compiling ComicCoreTests BatchImportPlannerTests.swift
+[15/37] Compiling ComicCoreTests BatchImportSessionTests.swift
+[16/37] Compiling ComicCoreTests BatchImportWorkerTests.swift
+[17/37] Compiling ComicCoreTests BookshelfGroupStoreTests.swift
+[18/37] Compiling ComicCoreTests BookshelfReadingStatusTests.swift
+[19/37] Compiling ComicCoreTests BuiltinSourceCatalogTests.swift
+[20/37] Compiling ComicCoreTests CacheMaintenanceTests.swift
+[21/37] Compiling ComicCoreTests ChapterMatchingTests.swift
+[22/37] Compiling ComicCoreTests ComicDirectoryPreparationTests.swift
+[23/37] Compiling ComicCoreTests ContentFingerprintTests.swift
+[24/37] Compiling ComicCoreTests ContinuousReaderPagesTests.swift
+[25/37] Compiling ComicCoreTests CopyMangaTests.swift
+[26/37] Compiling ComicCoreTests CuimhSourceTests.swift
+[27/37] Compiling ComicCoreTests D5d6SourceTests.swift
+[28/37] Compiling ComicCoreTests DefaultDownloadImageFetcherTests.swift
+[29/37] Compiling ComicCoreTests DeferredDeletionTests.swift
+[30/37] Compiling ComicCoreTests DingManhuaSourceTests.swift
+[31/37] Compiling ComicCoreTests DiscoveryHeaderGestureTests.swift
+[32/80] Compiling ComicCoreTests DongmanLaSourceTests.swift
+[33/80] Compiling ComicCoreTests DownloadCoordinatorTests.swift
+[34/80] Compiling ComicCoreTests DownloadDeletionTests.swift
+[35/80] Compiling ComicCoreTests DownloadFileCoordinationTests.swift
+[36/80] Compiling ComicCoreTests DownloadIdentityTests.swift
+[37/80] Compiling ComicCoreTests DownloadLocationTests.swift
+[38/80] Compiling ComicCoreTests DownloadOwnedDirectoryTests.swift
+[39/80] Compiling ComicCoreTests DownloadPersistenceTests.swift
+[40/80] Compiling ComicCoreTests DownloadRuntimeTests.swift
+[41/80] Compiling ComicCoreTests DownloadSchedulingTests.swift
+[42/80] Compiling ComicCoreTests DownloadStoreTests.swift
+[43/80] Compiling ComicCoreTests EpubParserTests.swift
+[44/80] Compiling ComicCoreTests EpubReaderResourceTests.swift
+[45/80] Compiling ComicCoreTests EpubTextSessionTests.swift
+[46/80] Compiling ComicCoreTests ErrorLogStoreTests.swift
+[47/80] Compiling ComicCoreTests FavoriteRevisionTests.swift
+[48/80] Compiling ComicCoreTests FavoriteUpdateCheckerTests.swift
+[49/80] Compiling ComicCoreTests FileDownloadWorkerTests.swift
+[50/80] Compiling ComicCoreTests FiveUmSourceTests.swift
+[51/80] Compiling ComicCoreTests FolderBookmarkStoreTests.swift
+[52/80] Compiling ComicCoreTests GmhSourceTests.swift
+[53/80] Compiling ComicCoreTests Hanman18SourceTests.swift
+[54/101] Compiling ComicCoreTests LocalReadingRoutingTests.swift
+[55/101] Compiling ComicCoreTests LocalSeriesLifecycleTests.swift
+[56/101] Compiling ComicCoreTests LocalTestHTTPServer.swift
+[57/101] Compiling ComicCoreTests LocalTestHTTPServerTests.swift
+[58/101] Compiling ComicCoreTests ManbenSourceTests.swift
+[59/101] Compiling ComicCoreTests ManhuaguiTests.swift
+[60/101] Compiling ComicCoreTests ManwaImageDecoderTests.swift
+[61/101] Compiling ComicCoreTests ManwaSourceTests.swift
+[62/101] Compiling ComicCoreTests Mh160SourceTests.swift
+[63/101] Compiling ComicCoreTests Mh18BrowserTrustTests.swift
+[64/101] Compiling ComicCoreTests Mh18CookieSynchronizerTests.swift
+[65/101] Compiling ComicCoreTests Mh18SourceTests.swift
+[66/101] Compiling ComicCoreTests Mh18VerificationAttemptTests.swift
+[67/101] Compiling ComicCoreTests Mh18VerificationRulesTests.swift
+[68/101] Compiling ComicCoreTests MkzhanSourceTests.swift
+[69/101] Compiling ComicCoreTests NaturalPathOrderTests.swift
+[70/101] Compiling ComicCoreTests NewPublicSourcesTests.swift
+[71/101] Compiling ComicCoreTests PdfRendererTests.swift
+[72/101] Compiling ComicCoreTests PreferencesTests.swift
+[73/101] Compiling ComicCoreTests PublicComicSourceTests.swift
+[74/101] Compiling ComicCoreTests QuickPublicationInfoTests.swift
+[75/122] Compiling ComicCoreTests HiperdexSourceTests.swift
+[76/122] Compiling ComicCoreTests IOSUpdatePolicyTests.swift
+[77/122] Compiling ComicCoreTests ImageEnhancementPolicyTests.swift
+[78/122] Compiling ComicCoreTests JmImageTransformTests.swift
+[79/122] Compiling ComicCoreTests JmSourceTests.swift
+[80/122] Compiling ComicCoreTests KindleFormatTests.swift
+[81/122] Compiling ComicCoreTests KindlePublicationTests.swift
+[82/122] Compiling ComicCoreTests LibraryStoreTests.swift
+[83/122] Compiling ComicCoreTests LinkedFolderLibraryTests.swift
+[84/122] Compiling ComicCoreTests LiumanhuaSourceTests.swift
+[85/122] Compiling ComicCoreTests LocalArchiveTests.swift
+[86/122] Compiling ComicCoreTests LocalCatalogTests.swift
+[87/122] Compiling ComicCoreTests LocalEpubLibraryTests.swift
+[88/122] Compiling ComicCoreTests LocalFolderSyncTests.swift
+[89/122] Compiling ComicCoreTests LocalFolderTests.swift
+[90/122] Compiling ComicCoreTests LocalImportFingerprintTests.swift
+[91/122] Compiling ComicCoreTests LocalImportPreparationTests.swift
+[92/122] Compiling ComicCoreTests LocalKindleLibraryTests.swift
+[93/122] Compiling ComicCoreTests LocalLibraryTests.swift
+[94/122] Compiling ComicCoreTests LocalOwnershipRecoveryTests.swift
+[95/122] Compiling ComicCoreTests LocalPdfLibraryTests.swift
+[96/122] Compiling ComicCoreTests ReaderLoadStateTests.swift
+[97/122] Compiling ComicCoreTests ReaderSeekSessionTests.swift
+[98/122] Compiling ComicCoreTests ReaderSessionTests.swift
+[99/122] Compiling ComicCoreTests ReadingHabitTrackerTests.swift
+[100/122] Compiling ComicCoreTests ReadingRulesTests.swift
+[101/122] Compiling ComicCoreTests RetiredComicSourceTests.swift
+[102/122] Compiling ComicCoreTests SearchRulesTests.swift
+[103/122] Compiling ComicCoreTests SourceAESTests.swift
+[104/122] Compiling ComicCoreTests SourceConfigDocumentsTests.swift
+[105/122] Compiling ComicCoreTests SourceFilterSelectionTests.swift
+[106/122] Compiling ComicCoreTests SourceGroupStoreTests.swift
+[107/122] Compiling ComicCoreTests SourceImportContractTests.swift
+[108/122] Compiling ComicCoreTests SourcePreferencesTests.swift
+[109/122] Compiling ComicCoreTests SourceSearchTrimTests.swift
+[110/122] Compiling ComicCoreTests StorageCalculatorTests.swift
+[111/122] Compiling ComicCoreTests TextReadingTests.swift
+[112/122] Compiling ComicCoreTests UsageStatsClientTests.swift
+[113/122] Compiling ComicCoreTests UsageStatsReportingTests.swift
+[114/122] Compiling ComicCoreTests WhiteMarginTests.swift
+[115/122] Compiling ComicCoreTests XinmanhuaSourceTests.swift
+[116/122] Compiling ComicCoreTests resource_bundle_accessor.swift
+[117/125] Wrapping AST for ComicCoreTests for debugging
+[118/125] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageDiscoveredTests.derived/all-discovered-tests.swift
+[119/126] Write sources
+[121/128] Emitting module ComicCorePackageDiscoveredTests
+[122/128] Compiling ComicCorePackageDiscoveredTests ComicCoreTests.swift
+[123/129] Compiling ComicCorePackageDiscoveredTests all-discovered-tests.swift
+[124/130] /work/.build/x86_64-unknown-linux-gnu/debug/ComicCorePackageTests.derived/runner.swift
+[125/130] Write sources
+[126/130] Wrapping AST for ComicCorePackageDiscoveredTests for debugging
+[128/132] Emitting module ComicCorePackageTests
+[129/132] Compiling ComicCorePackageTests runner.swift
+[130/132] Write Objects.LinkFileList
+[131/132] Linking ComicCorePackageTests.xctest
+Build complete! (32.87s)
+Test Suite 'Selected tests' started at 2026-10-12 06:22:20.109
+Test Suite 'BookshelfGroupStoreTests' started at 2026-10-12 06:22:20.125
+Test Case 'BookshelfGroupStoreTests.testBookshelfLayoutHelper' started at 2026-10-12 06:22:20.125
+Test Case 'BookshelfGroupStoreTests.testBookshelfLayoutHelper' passed (0.009 seconds)
+Test Case 'BookshelfGroupStoreTests.testBuiltinGroupsExistByDefaultAndCannotBeDeletedOrRenamed' started at 2026-10-12 06:22:20.134
+Test Case 'BookshelfGroupStoreTests.testBuiltinGroupsExistByDefaultAndCannotBeDeletedOrRenamed' passed (0.003 seconds)
+Test Case 'BookshelfGroupStoreTests.testCorruptExistingFileIsNotReplacedDuringInitializationOrMutation' started at 2026-10-12 06:22:20.137
+Test Case 'BookshelfGroupStoreTests.testCorruptExistingFileIsNotReplacedDuringInitializationOrMutation' passed (0.004 seconds)
+Test Case 'BookshelfGroupStoreTests.testCorruptReadCanRetryAfterRestoringTheOriginalBackup' started at 2026-10-12 06:22:20.141
+Test Case 'BookshelfGroupStoreTests.testCorruptReadCanRetryAfterRestoringTheOriginalBackup' passed (0.011 seconds)
+Test Case 'BookshelfGroupStoreTests.testCreateRenameAndReorderCustomGroups' started at 2026-10-12 06:22:20.152
+Test Case 'BookshelfGroupStoreTests.testCreateRenameAndReorderCustomGroups' passed (0.01 seconds)
+Test Case 'BookshelfGroupStoreTests.testDeleteAndRestoreSnapshot' started at 2026-10-12 06:22:20.163
+Test Case 'BookshelfGroupStoreTests.testDeleteAndRestoreSnapshot' passed (0.01 seconds)
+Test Case 'BookshelfGroupStoreTests.testFailedCreateDoesNotLeaveAnUnpersistedGroup' started at 2026-10-12 06:22:20.173
+Test Case 'BookshelfGroupStoreTests.testFailedCreateDoesNotLeaveAnUnpersistedGroup' passed (0.009 seconds)
+Test Case 'BookshelfGroupStoreTests.testFailedMembershipSaveRollsBackAndCanBeRetried' started at 2026-10-12 06:22:20.182
+Test Case 'BookshelfGroupStoreTests.testFailedMembershipSaveRollsBackAndCanBeRetried' passed (0.011 seconds)
+Test Case 'BookshelfGroupStoreTests.testFailedRenameDeleteAndUndoPreserveCommittedState' started at 2026-10-12 06:22:20.193
+Test Case 'BookshelfGroupStoreTests.testFailedRenameDeleteAndUndoPreserveCommittedState' passed (0.018 seconds)
+Test Case 'BookshelfGroupStoreTests.testLegacyDataMigration' started at 2026-10-12 06:22:20.211
+Test Case 'BookshelfGroupStoreTests.testLegacyDataMigration' passed (0.003 seconds)
+Test Case 'BookshelfGroupStoreTests.testMemberOperationsAndScopeRemoval' started at 2026-10-12 06:22:20.214
+Test Case 'BookshelfGroupStoreTests.testMemberOperationsAndScopeRemoval' passed (0.015 seconds)
+Test Suite 'BookshelfGroupStoreTests' passed at 2026-10-12 06:22:20.230
+Executed 11 tests, with 0 failures (0 unexpected) in 0.104 (0.104) seconds
+Test Suite 'Selected tests' passed at 2026-10-12 06:22:20.230
+Executed 11 tests, with 0 failures (0 unexpected) in 0.104 (0.104) seconds

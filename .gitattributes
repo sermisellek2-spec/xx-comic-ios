@@ -40,3 +40,9 @@ docs/ios-parity-2.0.40/review-evidence/2026-10-12-config-files/impact-initial-co
 # Keep byte-addressed core failure and recovery evidence unchanged.
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-filter-consumers/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 docs/ios-parity-2.0.40/review-evidence/2026-10-12-filter-consumers/*.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-bookshelf-groups/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-bookshelf-groups/*.log whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci17-results/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Preserve the previous status prefixes exactly, including their final blank.
+docs/ios-parity-2.0.40/review-evidence/2026-10-12-ci17-results/historical-*.md whitespace=-blank-at-eof,blank-at-eol,space-before-tab,cr-at-eol

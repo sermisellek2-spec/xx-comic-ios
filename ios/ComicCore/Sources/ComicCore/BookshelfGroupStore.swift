@@ -77,23 +77,48 @@ public final class BookshelfGroupStore: @unchecked Sendable {
     private var onlineMembers: [String: Set<String>] = [:]
     private var localMembers: [String: Set<String>] = [:]
     private var isMigratedState: Bool = false
+    private var committedSnapshot = Snapshot()
+    private var loadFailure: BookshelfGroupPersistenceError?
+    private var lastPersistenceError: BookshelfGroupPersistenceError?
 
     public init(file: URL) {
         self.file = file
         lock.lock()
         defer { lock.unlock() }
-        loadLocked()
+        do {
+            try loadLocked()
+        } catch let error as BookshelfGroupPersistenceError {
+            loadFailure = error
+            lastPersistenceError = error
+        } catch {
+            loadFailure = .readFailed
+            lastPersistenceError = .readFailed
+        }
         ensureBuiltinGroupsLocked()
-        saveLocked()
+        committedSnapshot = snapshotLocked()
+        if loadFailure == nil { saveLocked() }
     }
 
-    private func loadLocked() {
-        guard FileManager.default.fileExists(atPath: file.path),
-              let data = try? Data(contentsOf: file),
-              let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data) else {
+    private func loadLocked() throws {
+        guard FileManager.default.fileExists(atPath: file.path) else {
+            if loadFailure != nil { throw BookshelfGroupPersistenceError.readFailed }
             return
         }
+        let data: Data
+        do { data = try Data(contentsOf: file) }
+        catch { throw BookshelfGroupPersistenceError.readFailed }
+        let snapshot: Snapshot
+        do { snapshot = try JSONDecoder().decode(Snapshot.self, from: data) }
+        catch { throw BookshelfGroupPersistenceError.invalidData }
+        guard snapshot.version == 1 else { throw BookshelfGroupPersistenceError.invalidData }
+        applyLocked(snapshot)
+    }
+
+    private func applyLocked(_ snapshot: Snapshot) {
         isMigratedState = snapshot.migrated
+        groupsById.removeAll()
+        onlineMembers.removeAll()
+        localMembers.removeAll()
         for g in snapshot.groups {
             groupsById[g.id] = g
         }
@@ -125,7 +150,7 @@ public final class BookshelfGroupStore: @unchecked Sendable {
         }
     }
 
-    private func saveLocked() {
+    private func snapshotLocked() -> Snapshot {
         var snapshot = Snapshot()
         snapshot.migrated = isMigratedState
         snapshot.groups = Array(groupsById.values)
@@ -135,10 +160,50 @@ public final class BookshelfGroupStore: @unchecked Sendable {
         for (k, v) in localMembers {
             snapshot.localMembers[k] = Array(v)
         }
-        if let data = try? JSONEncoder().encode(snapshot) {
+        return snapshot
+    }
+
+    @discardableResult
+    private func saveLocked() -> BookshelfGroupPersistenceError? {
+        if let loadFailure {
+            applyLocked(committedSnapshot)
+            lastPersistenceError = loadFailure
+            return loadFailure
+        }
+        let snapshot = snapshotLocked()
+        do {
+            let data = try JSONEncoder().encode(snapshot)
             let dir = file.deletingLastPathComponent()
-            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-            try? data.write(to: file, options: .atomic)
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            try data.write(to: file, options: .atomic)
+            committedSnapshot = snapshot
+            lastPersistenceError = nil
+            return nil
+        } catch {
+            applyLocked(committedSnapshot)
+            lastPersistenceError = .saveFailed
+            return .saveFailed
+        }
+    }
+
+    public var persistenceError: BookshelfGroupPersistenceError? {
+        lock.lock(); defer { lock.unlock() }
+        return lastPersistenceError
+    }
+
+    /// Retry reading the original file without replacing unreadable data.
+    public func retryLoading() throws {
+        lock.lock(); defer { lock.unlock() }
+        do {
+            try loadLocked()
+            loadFailure = nil
+            ensureBuiltinGroupsLocked()
+            committedSnapshot = snapshotLocked()
+            if let error = saveLocked() { throw error }
+        } catch let error as BookshelfGroupPersistenceError {
+            lastPersistenceError = error
+            if error != .saveFailed { loadFailure = error }
+            throw error
         }
     }
 
@@ -220,7 +285,7 @@ public final class BookshelfGroupStore: @unchecked Sendable {
         } else {
             localMembers[id] = []
         }
-        saveLocked()
+        if let error = saveLocked() { throw error }
         return group
     }
 
@@ -239,7 +304,7 @@ public final class BookshelfGroupStore: @unchecked Sendable {
 
         let updated = existing.withName(name)
         groupsById[id] = updated
-        saveLocked()
+        if let error = saveLocked() { throw error }
         return updated
     }
 
@@ -257,7 +322,7 @@ public final class BookshelfGroupStore: @unchecked Sendable {
         groupsById.removeValue(forKey: id)
 
         let snapshot = BookshelfGroupDeletionSnapshot(group: group, memberIds: members, orderIndex: group.orderIndex)
-        saveLocked()
+        if let error = saveLocked() { throw error }
         return snapshot
     }
 
@@ -426,6 +491,20 @@ public final class BookshelfGroupStore: @unchecked Sendable {
             }
         }
         if changed { saveLocked() }
+    }
+}
+
+public enum BookshelfGroupPersistenceError: LocalizedError, Equatable, Sendable {
+    case readFailed
+    case invalidData
+    case saveFailed
+
+    public var errorDescription: String? {
+        switch self {
+        case .readFailed: return "暂时无法读取分组数据，原文件已保留。请恢复文件访问后重试。"
+        case .invalidData: return "分组数据损坏或格式不支持，原文件已保留，请从备份恢复后重试。"
+        case .saveFailed: return "分组保存失败，本次更改未生效。请检查存储空间后重试。"
+        }
     }
 }
 

@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 import ComicCore
 
 @MainActor
-final class DownloadLocationViewController: UITableViewController, UIDocumentPickerDelegate {
+final class DownloadLocationViewController: UITableViewController, UIDocumentPickerDelegate, UIAdaptivePresentationControllerDelegate {
     private let locations: DownloadStorageLocations
     private var reauthorizingID: String?
     private var operation: Task<Void, Never>?
@@ -38,6 +38,7 @@ final class DownloadLocationViewController: UITableViewController, UIDocumentPic
             case 0:
                 cell.textLabel?.text = "当前目录"; cell.detailTextLabel?.text = locations.selectedName
                 cell.accessibilityIdentifier = "download.location.current"; cell.selectionStyle = .none
+                cell.accessibilityLabel = "当前目录"; cell.accessibilityValue = locations.selectedName
             case 1:
                 cell.textLabel?.text = "更改 · 选择文件夹"; cell.accessoryType = .disclosureIndicator
                 cell.accessibilityIdentifier = "download.location.choose"
@@ -71,8 +72,12 @@ final class DownloadLocationViewController: UITableViewController, UIDocumentPic
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder], asCopy: false)
         picker.delegate = self; picker.allowsMultipleSelection = false
         present(picker, animated: true)
+        picker.presentationController?.delegate = self
     }
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) { reauthorizingID = nil }
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        if let picker = presentationController.presentedViewController as? UIDocumentPickerViewController { documentPickerWasCancelled(picker) }
+    }
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let directory = urls.first else { return }
         let id = reauthorizingID; reauthorizingID = nil

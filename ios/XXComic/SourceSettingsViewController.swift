@@ -3,7 +3,7 @@ import ComicCore
 import UniformTypeIdentifiers
 
 @MainActor
-final class SourceSettingsViewController: UITableViewController, UIDocumentPickerDelegate {
+final class SourceSettingsViewController: UITableViewController, UIDocumentPickerDelegate, UIAdaptivePresentationControllerDelegate {
     private let environment: AppEnvironment
     let onVerified: (() -> Void)?
     private var verificationTask: Task<Void, Never>?
@@ -211,6 +211,7 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         configPicker = picker; configPickerPurpose = .importing
         configFeedback = "请选择站源配置文件"; updateConfigControls()
         present(picker, animated: true)
+        picker.presentationController?.delegate = self
     }
     private func exportConfig() {
         guard !configBusy else { return }
@@ -231,6 +232,7 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
                 self.configPicker = picker; self.configPickerPurpose = .exporting(document)
                 self.configFeedback = "请选择保存位置"; self.updateConfigControls()
                 self.present(picker, animated: true)
+                picker.presentationController?.delegate = self
             } catch {
                 guard let self, self.configGeneration == token, !Task.isCancelled else { return }
                 self.configFeedback = "导出失败，可重新导出重试"
@@ -244,7 +246,7 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         guard controller === configPicker, let purpose = configPickerPurpose else { return }
         configPicker = nil; configPickerPurpose = nil
         let token = configGeneration, worker = configDocuments
-        controller.dismiss(animated: true) { [weak self] in
+        let finishSelection: () -> Void = { [weak self] in
             guard let self, self.configGeneration == token else {
                 if case .exporting(let document) = purpose { Self.discardExport(document, worker: worker) }
                 return
@@ -258,13 +260,19 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
             case .exporting(let document): self.finishExport(document, saved: !urls.isEmpty)
             }
         }
+        if controller.presentingViewController != nil { controller.dismiss(animated: true, completion: finishSelection) }
+        else { finishSelection() }
+    }
+
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        if let picker = presentationController.presentedViewController as? UIDocumentPickerViewController { documentPickerWasCancelled(picker) }
     }
 
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
         guard controller === configPicker, let purpose = configPickerPurpose else { return }
         configPicker = nil; configPickerPurpose = nil
         let token = configGeneration, worker = configDocuments
-        controller.dismiss(animated: true) { [weak self] in
+        let finishCancellation: () -> Void = { [weak self] in
             guard let self, self.configGeneration == token else {
                 if case .exporting(let document) = purpose { Self.discardExport(document, worker: worker) }
                 return
@@ -275,6 +283,8 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
             case .exporting(let document): self.finishExport(document, saved: false)
             }
         }
+        if controller.presentingViewController != nil { controller.dismiss(animated: true, completion: finishCancellation) }
+        else { finishCancellation() }
     }
 
     private func readConfig(_ url: URL) {

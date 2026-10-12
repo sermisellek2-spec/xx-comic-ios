@@ -10,6 +10,7 @@ final class BookshelfGroupSelectSheet: UIViewController, UITableViewDataSource, 
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private var groups: [BookshelfGroup] = []
     private var selectedGroupIds: Set<String> = []
+    private var checkedPersistenceOnOpen = false
 
     var onGroupsUpdated: ((Set<String>) -> Void)?
 
@@ -56,14 +57,34 @@ final class BookshelfGroupSelectSheet: UIViewController, UITableViewDataSource, 
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
 
-        loadGroups()
+        loadGroups(resetSelection: true)
     }
 
-    private func loadGroups() {
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        guard !checkedPersistenceOnOpen else { return }
+        checkedPersistenceOnOpen = true
+        if let error = environment.bookshelfGroupStore.persistenceError {
+            showBookshelfGroupError(error, retry: { [weak self] in
+                guard let self else { return }
+                do {
+                    try self.environment.bookshelfGroupStore.retryLoading()
+                    self.loadGroups(resetSelection: true)
+                } catch { self.showBookshelfGroupError(error) }
+            })
+        }
+    }
+
+    private func loadGroups(resetSelection: Bool = false) {
         // Exclude builtin "全部" because comics are always members of "全部"
         groups = environment.bookshelfGroupStore.getGroups(scope: scope).filter { !$0.isBuiltin }
-        let currentGroups = environment.bookshelfGroupStore.getGroupsForComic(scope: scope, comicId: comicId)
-        selectedGroupIds = Set(currentGroups.filter { !$0.isBuiltin }.map(\.id))
+        if resetSelection {
+            let currentGroups = environment.bookshelfGroupStore.getGroupsForComic(scope: scope, comicId: comicId)
+            selectedGroupIds = Set(currentGroups.filter { !$0.isBuiltin }.map(\.id))
+        } else {
+            // Creating a group refreshes available rows, not the user's draft.
+            selectedGroupIds.formIntersection(groups.map(\.id))
+        }
         tableView.reloadData()
     }
 
@@ -73,6 +94,10 @@ final class BookshelfGroupSelectSheet: UIViewController, UITableViewDataSource, 
 
     @objc private func doneTapped() {
         environment.bookshelfGroupStore.updateComicGroups(scope: scope, comicId: comicId, targetGroupIds: selectedGroupIds)
+        if let error = environment.bookshelfGroupStore.persistenceError {
+            showBookshelfGroupError(error)
+            return
+        }
         environment.notifyLibraryChanged()
         onGroupsUpdated?(selectedGroupIds)
         dismiss(animated: true)
@@ -86,13 +111,13 @@ final class BookshelfGroupSelectSheet: UIViewController, UITableViewDataSource, 
         }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "创建", style: .default) { [weak self, weak alert] _ in
-            guard let self, let name = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return }
+            guard let self, let name = alert?.textFields?.first?.text else { return }
             do {
                 let g = try self.environment.bookshelfGroupStore.createGroup(scope: self.scope, rawName: name)
                 self.selectedGroupIds.insert(g.id)
                 self.loadGroups()
             } catch {
-                self.showError(error)
+                self.showBookshelfGroupError(error)
             }
         })
         present(alert, animated: true)
@@ -114,6 +139,9 @@ final class BookshelfGroupSelectSheet: UIViewController, UITableViewDataSource, 
         cell.textLabel?.textColor = Palette.text
         cell.accessoryType = isSelected ? .checkmark : .none
         cell.tintColor = Palette.accent
+        cell.accessibilityIdentifier = "bookshelf.group.select." + group.id
+        cell.accessibilityLabel = group.name
+        cell.accessibilityValue = isSelected ? "已选择" : "未选择"
         return cell
     }
 
@@ -126,5 +154,23 @@ final class BookshelfGroupSelectSheet: UIViewController, UITableViewDataSource, 
             selectedGroupIds.insert(group.id)
         }
         tableView.reloadRows(at: [indexPath], with: .automatic)
+    }
+}
+
+@MainActor
+extension UIViewController {
+    func presentBookshelfGroupAlert(_ alert: UIAlertController) {
+        if let current = presentedViewController as? UIAlertController {
+            current.dismiss(animated: true) { [weak self] in self?.present(alert, animated: true) }
+        } else if presentedViewController == nil {
+            present(alert, animated: true)
+        }
+    }
+
+    func showBookshelfGroupError(_ error: Error, retry: (() -> Void)? = nil) {
+        let alert = UIAlertController(title: "分组操作失败", message: error.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: retry == nil ? "确定" : "取消", style: .cancel))
+        if let retry { alert.addAction(UIAlertAction(title: "重试", style: .default) { _ in retry() }) }
+        presentBookshelfGroupAlert(alert)
     }
 }

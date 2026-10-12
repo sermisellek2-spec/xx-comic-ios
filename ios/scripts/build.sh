@@ -85,6 +85,7 @@ case "$validation_scope" in
   configuration-files)
     test_arguments+=(
       -only-testing:XXComicTests
+      -only-testing:XXComicUITests/BookshelfParityUITests
       -only-testing:XXComicUITests/CurrentParityUITests
       -only-testing:XXComicUITests/SourceDrawerTests
       -only-testing:XXComicUITests/ExternalFilesParityUITests

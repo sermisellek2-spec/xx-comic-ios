@@ -166,4 +166,93 @@ final class BookshelfGroupStoreTests: XCTestCase {
         XCTAssertEqual(BookshelfLayoutHelper.formatOnlineLatestChapter("第10话"), "更新至 第10话")
         XCTAssertEqual(BookshelfLayoutHelper.formatOnlineLatestChapter("更新至 第10话"), "更新至 第10话")
     }
+
+    func testCorruptExistingFileIsNotReplacedDuringInitializationOrMutation() throws {
+        let original = Data("{\"groups\": [broken".utf8)
+        try original.write(to: storeFile)
+        let damaged = BookshelfGroupStore(file: storeFile)
+        XCTAssertEqual(damaged.persistenceError, .invalidData)
+        XCTAssertEqual(try Data(contentsOf: storeFile), original)
+        XCTAssertThrowsError(try damaged.createGroup(scope: .online, rawName: "不得覆盖"))
+        damaged.migrateLegacyDataIfNeeded(legacyOnlineFavorites: ["old-favorite"], legacyLocalBookIds: nil)
+        XCTAssertEqual(try Data(contentsOf: storeFile), original)
+        XCTAssertFalse(damaged.isMigrated)
+    }
+
+    func testFailedCreateDoesNotLeaveAnUnpersistedGroup() throws {
+        let saved = try Data(contentsOf: storeFile)
+        try FileManager.default.removeItem(at: storeFile)
+        try FileManager.default.createDirectory(at: storeFile, withIntermediateDirectories: false)
+        XCTAssertThrowsError(try store.createGroup(scope: .online, rawName: "保存失败组"))
+        XCTAssertEqual(store.persistenceError, .saveFailed)
+        XCTAssertEqual(store.getGroups(scope: .online).map(\.name), ["全部"])
+        try FileManager.default.removeItem(at: storeFile)
+        try saved.write(to: storeFile)
+        let group = try store.createGroup(scope: .online, rawName: "重试成功组")
+        XCTAssertNil(store.persistenceError)
+        let reopened = BookshelfGroupStore(file: storeFile)
+        XCTAssertEqual(reopened.getGroup(id: group.id)?.name, "重试成功组")
+    }
+
+    func testFailedMembershipSaveRollsBackAndCanBeRetried() throws {
+        let group = try store.createGroup(scope: .online, rawName: "保留组")
+        store.addToScope(scope: .online, comicId: "comic-1")
+        let saved = try Data(contentsOf: storeFile)
+        try FileManager.default.removeItem(at: storeFile)
+        try FileManager.default.createDirectory(at: storeFile, withIntermediateDirectories: false)
+        store.updateComicGroups(scope: .online, comicId: "comic-1", targetGroupIds: [group.id])
+        XCTAssertEqual(store.persistenceError, .saveFailed)
+        XCTAssertFalse(store.containsComic(groupId: group.id, comicId: "comic-1"))
+        XCTAssertTrue(store.containsComic(groupId: BookshelfGroupStore.builtinOnlineAllId, comicId: "comic-1"))
+        try FileManager.default.removeItem(at: storeFile)
+        try saved.write(to: storeFile)
+        store.updateComicGroups(scope: .online, comicId: "comic-1", targetGroupIds: [group.id])
+        XCTAssertNil(store.persistenceError)
+        let reopened = BookshelfGroupStore(file: storeFile)
+        XCTAssertTrue(reopened.containsComic(groupId: group.id, comicId: "comic-1"))
+    }
+
+    func testCorruptReadCanRetryAfterRestoringTheOriginalBackup() throws {
+        let group = try store.createGroup(scope: .local, rawName: "我的原组")
+        store.addToGroup(groupId: group.id, comicId: "local-book")
+        let saved = try Data(contentsOf: storeFile)
+        let corrupt = Data([0xff, 0x00, 0xfe])
+        try corrupt.write(to: storeFile)
+        let damaged = BookshelfGroupStore(file: storeFile)
+        XCTAssertThrowsError(try damaged.retryLoading())
+        XCTAssertEqual(try Data(contentsOf: storeFile), corrupt)
+        try saved.write(to: storeFile)
+        try damaged.retryLoading()
+        XCTAssertNil(damaged.persistenceError)
+        XCTAssertEqual(damaged.getGroup(id: group.id)?.name, "我的原组")
+        XCTAssertTrue(damaged.containsComic(groupId: group.id, comicId: "local-book"))
+    }
+
+    func testFailedRenameDeleteAndUndoPreserveCommittedState() throws {
+        let group = try store.createGroup(scope: .local, rawName: "原名字")
+        store.addToGroup(groupId: group.id, comicId: "local-book")
+        let saved = try Data(contentsOf: storeFile)
+        try FileManager.default.removeItem(at: storeFile)
+        try FileManager.default.createDirectory(at: storeFile, withIntermediateDirectories: false)
+        XCTAssertThrowsError(try store.renameGroup(id: group.id, rawNewName: "未保存名字"))
+        XCTAssertThrowsError(try store.deleteGroup(id: group.id))
+        XCTAssertEqual(store.getGroup(id: group.id)?.name, "原名字")
+        XCTAssertTrue(store.containsComic(groupId: group.id, comicId: "local-book"))
+        try FileManager.default.removeItem(at: storeFile)
+        try saved.write(to: storeFile)
+        let deletion = try store.deleteGroup(id: group.id)
+        let afterDeletion = try Data(contentsOf: storeFile)
+        try FileManager.default.removeItem(at: storeFile)
+        try FileManager.default.createDirectory(at: storeFile, withIntermediateDirectories: false)
+        _ = store.restoreGroup(snapshot: deletion)
+        XCTAssertEqual(store.persistenceError, .saveFailed)
+        XCTAssertNil(store.getGroup(id: group.id))
+        try FileManager.default.removeItem(at: storeFile)
+        try afterDeletion.write(to: storeFile)
+        _ = store.restoreGroup(snapshot: deletion)
+        XCTAssertNil(store.persistenceError)
+        let reopened = BookshelfGroupStore(file: storeFile)
+        XCTAssertTrue(reopened.containsComic(groupId: group.id, comicId: "local-book"))
+        XCTAssertTrue(reopened.containsComic(groupId: BookshelfGroupStore.builtinLocalAllId, comicId: "local-book"))
+    }
 }

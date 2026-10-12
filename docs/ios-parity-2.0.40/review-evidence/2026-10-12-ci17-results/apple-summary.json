@@ -1,0 +1,442 @@
+{
+  "runId": 38199185049,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38199185049",
+  "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+  "scope": "configuration-files",
+  "conclusion": "failure",
+  "sdkBuilds": {
+    "Debug": "success",
+    "Release": "success"
+  },
+  "appleCore": {
+    "tests": 917,
+    "failures": 1,
+    "seconds": 137.746,
+    "failedTest": "CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses",
+    "reportedRemainingDiskBytes": 36864
+  },
+  "native": {
+    "iPhone 15 Pro": {
+      "tests": 25,
+      "failures": 0
+    },
+    "iPad Pro 11-inch (M4)": {
+      "tests": 25,
+      "failures": 0
+    }
+  },
+  "ui": [
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "tests": 31,
+      "caseStatuses": {
+        "Success": 24,
+        "Failure": 7
+      },
+      "cases": [
+        {
+          "test": "CurrentParityUITests/testBookshelfDownloadLoadsDirectoryAndReturnsToBookshelf()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testCancelledDownloadAfterPendingReadCanOpenReaderAgain()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testDetailDownloadLoadsOnDemandDirectoryAndCloses()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testEmptyDirectoryOffersRetryInsteadOfEmptySelection()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testEmptyDiscoveryGroupDoesNotBlockGlobalSearch()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testLateDetailSuccessKeepsDownloadFailureAndItsRetryAction()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testStartingDownloadCancelsPendingReadAndReturnsToDetail()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "CurrentParityUITests/testStartingReadCancelsPendingDownload()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "ExternalFilesParityUITests/testMissingExternalFolderCanBeReauthorizedThroughRealFiles()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "ExternalFilesParityUITests/testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "ExternalFilesParityUITests/testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SourceConfigFilesUITests/testCancellingImportAndExportLeavesConfigurationAndShowsNoFalseSuccess()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SourceConfigFilesUITests/testExportWrites51SourceJSONInExternalProviderAndCanReimportIt()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SourceConfigFilesUITests/testMalformedFileDoesNotPartiallyImportAndCanRetryWithoutLeavingManagement()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SourceConfigFilesUITests/testRealFilesImportPersistsSwitchesAndOrderAcrossRelaunch()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SourceConfigFilesUITests/testUnsupportedConfigurationIsReportedAndRetiredSourcesStayExcluded()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SourceDrawerTests/testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "SourceDrawerTests/testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPad Pro 11-inch (M4)"
+        }
+      ]
+    },
+    {
+      "device": "iPhone 15 Pro",
+      "tests": 31,
+      "caseStatuses": {
+        "Success": 20,
+        "Failure": 11
+      },
+      "cases": [
+        {
+          "test": "CurrentParityUITests/testBookshelfDownloadLoadsDirectoryAndReturnsToBookshelf()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testCancelledDownloadAfterPendingReadCanOpenReaderAgain()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testCancellingDirectoryLoadDoesNotOpenLateSelectionAndCanRetry()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testCompletedChapterOffersRedownloadAndItsReadButtonLoadsActualOfflinePixels()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testDetailDownloadLoadsOnDemandDirectoryAndCloses()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testDiscoveryToolsCollapseOnUpwardDragAndReturnOnDownwardDrag()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testEmptyDirectoryOffersRetryInsteadOfEmptySelection()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testEmptyDiscoveryGroupDoesNotBlockGlobalSearch()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testLateDetailSuccessKeepsDownloadFailureAndItsRetryAction()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testStartingDownloadCancelsPendingReadAndReturnsToDetail()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "CurrentParityUITests/testStartingReadCancelsPendingDownload()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "ExternalFilesParityUITests/testMissingExternalFolderCanBeReauthorizedThroughRealFiles()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "ExternalFilesParityUITests/testRealFilesDownloadLocationIsRetainedAndCompletedPixelsReadAfterRelaunch()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "ExternalFilesParityUITests/testRealFilesFolderSelectionAndBookmarkReadAfterRelaunch()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SourceConfigFilesUITests/testCancellingImportAndExportLeavesConfigurationAndShowsNoFalseSuccess()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SourceConfigFilesUITests/testExportWrites51SourceJSONInExternalProviderAndCanReimportIt()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SourceConfigFilesUITests/testMalformedFileDoesNotPartiallyImportAndCanRetryWithoutLeavingManagement()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SourceConfigFilesUITests/testRealFilesImportPersistsSwitchesAndOrderAcrossRelaunch()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SourceConfigFilesUITests/testUnsupportedConfigurationIsReportedAndRetiredSourcesStayExcluded()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SourceDrawerTests/testCategoryOnlySourceShowsUnsupportedSearchAndIsAbsentFromGlobalTabs()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SourceDrawerTests/testGlobalSearchWithoutResultsShowsEmptyFeedbackAndNoSourceTabs()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "SourceDrawerTests/testSourceDraftIsDiscardedOnCloseAndAppliedOnConfirm()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferenceLandscapeDark()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferenceLandscapeLight()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferencePortraitDark()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testSettingsReferencePortraitLight()",
+          "status": "Failure",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixLandscapeDark()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixLandscapeLight()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixPortraitDark()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        },
+        {
+          "test": "VisualMatrixUITests/testVisualMatrixPortraitLight()",
+          "status": "Success",
+          "revision": "852178e882080920bc32c349a4bbcfe76cb79283",
+          "device": "iPhone 15 Pro"
+        }
+      ]
+    }
+  ],
+  "artifactVerification": {
+    "originalLogs": {
+      "bytes": 456199,
+      "sha256": "3c9386966d44ca61642f6f4fc7fe5c61e18f864e440f3e04f6d6bb74068b658e"
+    },
+    "visualArchive": {
+      "bytes": 60488254,
+      "sha256": "380049fb671b5409d688afecf5480f6415d9339bed52776172f3a845dcfe0b56"
+    },
+    "originalExportedFilesVerified": 296
+  },
+  "notPassed": [
+    "cache physical-zero contract",
+    "Files all flows and both devices",
+    "source drawer",
+    "complete visual/geometry acceptance",
+    "complete non-source gate"
+  ],
+  "noIPA": true,
+  "currentCandidateChangesNotInRun": true
+}

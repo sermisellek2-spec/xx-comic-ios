@@ -79,12 +79,11 @@ final class SourceConfigFilesUITests: ParityUITestCase {
         app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(app.cells["settings.sources"].staticTexts["49 个开启"].exists)
     }
-    func testCancellingImportAndExportLeavesConfigurationAndShowsNoFalseSuccess() {
+    func testCancellingImportAndExportLeavesConfigurationAndShowsNoFalseSuccess() throws {
         let app = launch()
         for title in ["导入站源配置", "导出站源配置"] {
             menu(title, app: app)
-            let cancel = app.buttons.matching(NSPredicate(format: "label IN %@ AND identifier != %@", ["取消", "Cancel"], "source.config.cancel")).firstMatch
-            XCTAssertTrue(cancel.waitForExistence(timeout: 15)); cancel.tap()
+            try FilesPickerDriver(app: app).cancelPicker()
             XCTAssertTrue(app.buttons["source.config.more"].waitForExistence(timeout: 10))
             XCTAssertFalse(app.alerts.firstMatch.exists)
             XCTAssertEqual(app.switches["source.enabled.mh160"].value as? String, "1")

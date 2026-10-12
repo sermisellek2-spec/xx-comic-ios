@@ -8,6 +8,7 @@ final class BookshelfGroupSheet: UIViewController, UITableViewDataSource, UITabl
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private var groups: [BookshelfGroup] = []
     private var selectedGroupId: String
+    private var checkedPersistenceOnOpen = false
 
     var onGroupSelected: ((BookshelfGroup) -> Void)?
     var onGroupsChanged: (() -> Void)?
@@ -46,6 +47,22 @@ final class BookshelfGroupSheet: UIViewController, UITableViewDataSource, UITabl
         reloadGroups()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        guard !checkedPersistenceOnOpen else { return }
+        checkedPersistenceOnOpen = true
+        if let error = environment.bookshelfGroupStore.persistenceError {
+            showBookshelfGroupError(error, retry: { [weak self] in
+                guard let self else { return }
+                do {
+                    try self.environment.bookshelfGroupStore.retryLoading()
+                    self.reloadGroups()
+                    self.onGroupsChanged?()
+                } catch { self.showBookshelfGroupError(error) }
+            })
+        }
+    }
+
     private func reloadGroups() {
         groups = environment.bookshelfGroupStore.getGroups(scope: scope)
         tableView.reloadData()
@@ -63,14 +80,14 @@ final class BookshelfGroupSheet: UIViewController, UITableViewDataSource, UITabl
         }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "创建", style: .default) { [weak self, weak alert] _ in
-            guard let self, let name = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return }
+            guard let self, let name = alert?.textFields?.first?.text else { return }
             do {
                 let newGroup = try self.environment.bookshelfGroupStore.createGroup(scope: self.scope, rawName: name)
                 self.reloadGroups()
                 self.onGroupsChanged?()
                 self.onGroupSelected?(newGroup)
             } catch {
-                self.showError(error)
+                self.showBookshelfGroupError(error)
             }
         })
         present(alert, animated: true)
@@ -111,13 +128,13 @@ final class BookshelfGroupSheet: UIViewController, UITableViewDataSource, UITabl
         }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "确定", style: .default) { [weak self, weak alert] _ in
-            guard let self, let name = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return }
+            guard let self, let name = alert?.textFields?.first?.text else { return }
             do {
                 _ = try self.environment.bookshelfGroupStore.renameGroup(id: group.id, rawNewName: name)
                 self.reloadGroups()
                 self.onGroupsChanged?()
             } catch {
-                self.showError(error)
+                self.showBookshelfGroupError(error)
             }
         })
         present(alert, animated: true)
@@ -149,13 +166,18 @@ final class BookshelfGroupSheet: UIViewController, UITableViewDataSource, UITabl
                 undoAlert.addAction(UIAlertAction(title: "撤销", style: .default) { [weak self] _ in
                     guard let self else { return }
                     let restored = self.environment.bookshelfGroupStore.restoreGroup(snapshot: snapshot)
+                    if let error = self.environment.bookshelfGroupStore.persistenceError {
+                        self.showBookshelfGroupError(error)
+                        return
+                    }
+                    self.selectedGroupId = restored.id
                     self.reloadGroups()
                     self.onGroupsChanged?()
                     self.onGroupSelected?(restored)
                 })
-                self.present(undoAlert, animated: true)
+                self.presentBookshelfGroupAlert(undoAlert)
             } catch {
-                self.showError(error)
+                self.showBookshelfGroupError(error)
             }
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
@@ -233,6 +255,11 @@ final class BookshelfGroupSheet: UIViewController, UITableViewDataSource, UITabl
                        onRename: @escaping () -> Void, onDelete: @escaping () -> Void) {
             self.onRename = onRename
             self.onDelete = onDelete
+            accessibilityIdentifier = "bookshelf.group.manage." + group.id
+            renameButton.accessibilityIdentifier = "bookshelf.group.rename." + group.id
+            renameButton.accessibilityLabel = "重命名分组“\(group.name)”"
+            deleteButton.accessibilityIdentifier = "bookshelf.group.delete." + group.id
+            deleteButton.accessibilityLabel = "删除分组“\(group.name)”"
             titleLabel.text = group.name
             countLabel.text = group.isBuiltin ? "内置全部 · \(memberCount) 本" : "\(memberCount) 本漫画"
             checkmarkIcon.isHidden = !isSelected

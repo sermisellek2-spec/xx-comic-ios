@@ -21,6 +21,7 @@ private final class FilesFixtureViewController: UIViewController {
     private var token: String?
     private var configFolder: URL?
     private let exportStatus = UILabel()
+    private let downloadStatus = UILabel()
 
     override func viewDidLoad() {
         super.viewDidLoad(); view.backgroundColor = .systemBackground
@@ -34,7 +35,12 @@ private final class FilesFixtureViewController: UIViewController {
         verify.accessibilityIdentifier = "files.fixture.verify-export"
         verify.addTarget(self, action: #selector(verifyExport), for: .touchUpInside)
         exportStatus.numberOfLines = 0; exportStatus.accessibilityIdentifier = "files.fixture.export.status"
-        let stack = UIStackView(arrangedSubviews: [status, retire, verify, exportStatus])
+        let verifyDownload = UIButton(type: .system)
+        verifyDownload.setTitle("校验外部目录的下载像素", for: .normal)
+        verifyDownload.accessibilityIdentifier = "files.fixture.verify-download"
+        verifyDownload.addTarget(self, action: #selector(verifyDownloadedPixels), for: .touchUpInside)
+        downloadStatus.numberOfLines = 0; downloadStatus.accessibilityIdentifier = "files.fixture.download.status"
+        let stack = UIStackView(arrangedSubviews: [status, retire, verify, exportStatus, verifyDownload, downloadStatus])
         stack.axis = .vertical; stack.spacing = 20; stack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -85,6 +91,42 @@ private final class FilesFixtureViewController: UIViewController {
             let enabled = sources.filter { $0["enabled"] as? Bool == true }.count
             exportStatus.text = "已校验实际文件：51 个站源，\(enabled) 个开启；毒牙开启，漫画160关闭"
         } catch { exportStatus.text = "导出文件校验失败" }
+    }
+
+    @objc private func verifyDownloadedPixels() {
+        guard let selected, let token else { return }
+        downloadStatus.text = "正在检查外部目录下载副本…"
+        Task { [weak self] in
+            do {
+                try await Task.detached(priority: .utility) {
+                    let manager = FileManager.default
+                    let info = try selected.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+                    guard info.isDirectory == true, info.isSymbolicLink != true,
+                          try Data(contentsOf: selected.appendingPathComponent(".fixture-owner")) == Data(token.utf8),
+                          let original1 = UIImage(contentsOfFile: selected.appendingPathComponent("01.png").path),
+                          let original2 = UIImage(contentsOfFile: selected.appendingPathComponent("02.png").path),
+                          original1.size == CGSize(width: 32, height: 48), original2.size == original1.size else {
+                        throw CocoaError(.fileReadCorruptFile)
+                    }
+                    let root = selected.appendingPathComponent("XXComic/downloads", isDirectory: true)
+                    guard let entries = manager.enumerator(at: root, includingPropertiesForKeys: [.isSymbolicLinkKey, .isRegularFileKey, .fileSizeKey], options: [.skipsHiddenFiles]) else {
+                        throw CocoaError(.fileReadNoSuchFile)
+                    }
+                    var scanned = 0, found = false
+                    for case let file as URL in entries {
+                        scanned += 1
+                        guard scanned <= 4096 else { throw CocoaError(.fileReadTooLarge) }
+                        let properties = try file.resourceValues(forKeys: [.isSymbolicLinkKey, .isRegularFileKey, .fileSizeKey])
+                        guard properties.isSymbolicLink != true else { throw CocoaError(.fileReadNoPermission) }
+                        if file.pathExtension == "img", properties.isRegularFile == true,
+                           (properties.fileSize ?? 0) <= 1024 * 1024,
+                           let image = UIImage(contentsOfFile: file.path), image.size == CGSize(width: 384, height: 384) { found = true }
+                    }
+                    guard found else { throw CocoaError(.fileReadCorruptFile) }
+                }.value
+                self?.downloadStatus.text = "已校验外部目录下载像素：384×384，原文件保留"
+            } catch { self?.downloadStatus.text = "外部下载副本校验失败" }
+        }
     }
 
     private func image(_ index: Int) -> Data {

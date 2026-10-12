@@ -1,4 +1,4 @@
-﻿id,gate,area,requirement,android_reference,status,evidence
+id,gate,area,requirement,android_reference,status,evidence
 BASE-01,P0,基线,核验固定发布提交与527文件快照,baseline/manifest.json,通过,verify-baseline.ps1退出0；527文件与冻结ZIP哈希匹配；baseline/VERIFICATION.md
 BASE-02,P0,范围,逐页逐入口逐默认值补齐需求矩阵,MainActivity.java,待核对,完整方案/P0~P4报告已写；范围审计确认当前源无文件型站源实现，不新增预留协议入口；其余入口/默认值继续核对
 BASE-03,P0,测试,建立双方共用且Release隔离的确定性fixture,app/src/androidTest,待验收,共同JSON/真实384×384 PNG及Debug隔离；初始化不覆盖重启。screen-viewport-3重采64图，屏幕坐标/内容宽度/活动应用窗口/SHA核验，冻结527输入及APK不改；第二次16遮挡图拒绝并保留原ZIP。第十一轮iPhone32/64对照，iPad缺32，当前完整视觉待验收
@@ -12,7 +12,7 @@ VIS-05,P1,组件,底部抽屉展开收回遮罩和弹窗按钮布局,UIHelpers.j
 VIS-06,P1,状态,所有通用加载空错误重试禁用选中与按压反馈,MainActivity.java,待验收,D22 iPhone实际3项封面原生测试通过；全通用状态及8场景UI仍待验收
 VIS-07,P1,iPad,横竖屏弹层分享锚点键盘和触控命中,MainActivity.java;NavigationInsets.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：DetailViewController.swift;ComicGridViewController.swift
 SHELF-01,P2,书架,在线本地作用域及网格列表切换,bookshelf/BookshelfScope.java;BookshelfLayoutHelper.java,待验收,第十四轮网格列表保可见用例双设备通过；当前主标题/本地范围及完整8场景仍待全量验收
-SHELF-02,P2,分组,建立改名排序删除及移动分组不丢漫画,bookshelf/BookshelfGroupStore.java;BookshelfGroupSheet.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：BookshelfGroupStore.swift;BookshelfGroupStoreTests.swift;BookshelfGroupBar.swift
+SHELF-02,P2,分组,建立改名删除撤销及移动分组不丢漫画；保持默认顺序,bookshelf/BookshelfGroupStore.java;BookshelfGroupSheet.java,待验收,D86/D87：新建保留移动草稿；原文件损坏不覆盖、写入失败回滚、错误及重试接线。分组11影响/916 Linux完整2跳过0失败；4项新增UI待Apple。冻结管理页无排序入口；bookshelf-groups证据
 SHELF-03,P2,书架,单本长按管理取消及刷新/布局切换滚动锚点恢复,bookshelf/BookshelfActionSheet.java;BookshelfScrollAnchor.java,待验收,第十四轮网格列表切换保持实际可见作品双设备通过；单本长按/刷新/旋转/恢复完整范围待验收
 SHELF-04,P2,收藏,收藏撤销更新红点星标实际未读数量和最新章信息,favorite/FavoriteUpdateCoordinator.java;FavoriteStarBadgeView.java,待验收,第十四轮实际未读/最新章及取消收藏保历史双设备通过；完整红点/撤销/主题与视觉待验收
 SHELF-05,P2,换源,书架就地换源保留分组历史及阅读位置,MainActivity.java;favorite/FavoriteRevision.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：LibraryStore.swift;SourceSwitchSheet.swift;LibraryStoreTests.swift
