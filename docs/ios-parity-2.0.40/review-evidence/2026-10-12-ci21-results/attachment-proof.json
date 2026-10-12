@@ -1,0 +1,52 @@
+[
+  {
+    "file": "reader-enhancement/iPad_Pro_11-inch__M4_-reader-ai-metrics.json",
+    "sha256": "58ceed607efacabd8961eb45a039389b5f745a6c76694eab53cf5fc9bbd4567f",
+    "bytes": 348
+  },
+  {
+    "file": "reader-enhancement/iPad_Pro_11-inch__M4_-real-input-384x384.png",
+    "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+    "bytes": 70556
+  },
+  {
+    "file": "reader-enhancement/iPad_Pro_11-inch__M4_-coreml-output-768x768.png",
+    "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+    "bytes": 583242
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-1.png",
+    "sha256": "1febc6ebe304e6fdb090ef49ea900975d3044f7ba5514a96d0b2b2d4b4d44a78",
+    "bytes": 532709
+  },
+  {
+    "file": "ui-failures/iPad_Pro_11-inch__M4_-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-accessibility.txt",
+    "sha256": "25870210ca65393da16e37ea35124b57ed7f0b03c526f00f8e89ad035456966f",
+    "bytes": 4001
+  },
+  {
+    "file": "reader-enhancement/iPhone_15_Pro-reader-ai-metrics.json",
+    "sha256": "de55744f96eadccf5ae49a87104b0dc0482917fcc2092e5047f4888dec214c9b",
+    "bytes": 335
+  },
+  {
+    "file": "reader-enhancement/iPhone_15_Pro-real-input-384x384.png",
+    "sha256": "11ef4b0ed0680f48f218d5dcb07dbda42a0c51ee9554831a6aea2d96308e575b",
+    "bytes": 70556
+  },
+  {
+    "file": "reader-enhancement/iPhone_15_Pro-coreml-output-768x768.png",
+    "sha256": "8bb828628601df68a7bd77ab4c365bec922832de1b84d75c99fdae13e690b04d",
+    "bytes": 583242
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-1.png",
+    "sha256": "6bc039e80cc12166cb7dc3cba2f877bea311525b9747e51a38c458822312ea55",
+    "bytes": 405738
+  },
+  {
+    "file": "ui-failures/iPhone_15_Pro-ReaderSettingsParityUITests_testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage__-accessibility.txt",
+    "sha256": "aee091919cdd8221b450e0ad5c8a395c40cf33681c6b93c5f1de984b88f1ac76",
+    "bytes": 3842
+  }
+]

@@ -1,0 +1,3 @@
+*-manifest.json -text
+*-tests.json -text
+*.zip -text

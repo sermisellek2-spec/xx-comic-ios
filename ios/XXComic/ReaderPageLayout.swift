@@ -7,6 +7,16 @@ final class ReaderPageLayout: UICollectionViewFlowLayout {
     }
     override var flipsHorizontallyInOppositeLayoutDirection: Bool { false }
     private var usesMangaPages: Bool { reversesPages && scrollDirection == .horizontal }
+    @discardableResult
+    func scrollToLogicalPage(_ index: Int, animated: Bool) -> Bool {
+        guard scrollDirection == .horizontal, let collectionView, collectionView.bounds.width > 0 else { return false }
+        collectionView.layoutIfNeeded()
+        guard let attributes = layoutAttributesForItem(at: IndexPath(item: index, section: 0)) else { return false }
+        // A horizontal scrollToItem option can retain the previous strip's Y
+        // offset. Restore both axes against the actual logical page frame.
+        collectionView.setContentOffset(CGPoint(x: attributes.frame.minX, y: 0), animated: animated)
+        return true
+    }
     override var collectionViewContentSize: CGSize {
         guard usesMangaPages, let collectionView else { return super.collectionViewContentSize }
         guard collectionView.numberOfSections > 0 else { return .zero }

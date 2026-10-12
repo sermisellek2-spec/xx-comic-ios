@@ -25,7 +25,7 @@ final class ReaderMangaGeometryTests: XCTestCase {
         return collection
     }
     private func seek(_ index: Int, in collection: UICollectionView) -> Int? {
-        collection.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredHorizontally, animated: false)
+        XCTAssertTrue((collection.collectionViewLayout as? ReaderPageLayout)?.scrollToLogicalPage(index, animated: false) == true)
         collection.layoutIfNeeded()
         return collection.indexPathForItem(at: CGPoint(x: collection.bounds.midX, y: collection.bounds.midY))?.item
     }
@@ -55,5 +55,22 @@ final class ReaderMangaGeometryTests: XCTestCase {
         layout.reversesPages = false
         layout.invalidateLayout(); pages.layoutIfNeeded()
         XCTAssertEqual(seek(1, in: pages), 1)
+    }
+    func testStripToMangaAndNormalRestorationClearsThePreviousVerticalOffset() throws {
+        let source = Pages()
+        let pages = collection(source)
+        let layout = try XCTUnwrap(pages.collectionViewLayout as? ReaderPageLayout)
+        layout.reversesPages = false; layout.scrollDirection = .vertical
+        layout.itemSize = CGSize(width: pages.bounds.width, height: 500)
+        layout.invalidateLayout(); pages.layoutIfNeeded()
+        pages.setContentOffset(CGPoint(x: 0, y: 600), animated: false)
+        XCTAssertGreaterThan(pages.contentOffset.y, 0)
+        layout.scrollDirection = .horizontal; layout.reversesPages = true
+        layout.itemSize = pages.bounds.size; layout.invalidateLayout()
+        XCTAssertEqual(seek(1, in: pages), 1)
+        XCTAssertEqual(pages.contentOffset.y, 0, accuracy: 0.01)
+        layout.reversesPages = false; layout.invalidateLayout()
+        XCTAssertEqual(seek(1, in: pages), 1)
+        XCTAssertEqual(pages.contentOffset.y, 0, accuracy: 0.01)
     }
 }

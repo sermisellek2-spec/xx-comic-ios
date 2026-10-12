@@ -288,7 +288,12 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         super.viewDidLayoutSubviews()
         headerWidth?.constant = max(44, view.bounds.width - view.safeAreaInsets.left - view.safeAreaInsets.right - 32)
         if let position = pendingPosition, !viewportTransitioning, !images.isEmpty, pages.bounds.width > 0 {
-            pendingPosition = nil; restore(position)
+            // Reload/layout callbacks must still see the requested logical
+            // position until the new axis has been laid out and restored.
+            if restore(position) {
+                pendingPosition = nil
+                synchronizeContinuousSession(); updateBadge()
+            }
         }
         appendNextChapterIfNeeded()
     }
@@ -714,9 +719,12 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         } else { session.updateImage(position.imageIndex) }
         lastObservedPosition = (chapters[index], position)
     }
-    private func restore(_ position: ReaderPosition) {
-        guard !images.isEmpty else { return }
+    @discardableResult
+    private func restore(_ position: ReaderPosition) -> Bool {
+        guard !images.isEmpty else { return false }
+        let wasRestoring = restoring
         restoring = true
+        defer { restoring = wasRestoring }
         pages.layoutIfNeeded()
         let chapter = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex] : nil
         let activeImages = chapter.flatMap { continuousPages.segment(for: $0)?.imageURLs } ?? images
@@ -724,16 +732,17 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         let index = settings.layout == .strip
             ? (chapter.flatMap { continuousPages.globalIndex(for: $0, position: position) } ?? localIndex) : localIndex
         if settings.layout == .paged {
-            scrollToPage(index, animated: false)
+            guard layout.scrollToLogicalPage(index, animated: false) else { return false }
         } else if let frame = layout.layoutAttributesForItem(at: IndexPath(item: index, section: 0))?.frame {
             let maxY = max(0, pages.contentSize.height - pages.bounds.height)
             let tailIndex = chapter.flatMap { continuousPages.segment(for: $0)?.range.last } ?? images.count - 1
             let chapterEnd = layout.layoutAttributesForItem(at: IndexPath(item: tailIndex, section: 0))?.frame.maxY ?? pages.contentSize.height
             let target = position.isAtEnd(in: activeImages) ? max(0, chapterEnd - pages.bounds.height) : frame.minY + frame.height * CGFloat(position.offset)
             pages.setContentOffset(CGPoint(x: 0, y: max(0, min(maxY, target))), animated: false)
-        }
-        session.updateImage(localIndex); restoring = false
-        synchronizeContinuousSession(); updateBadge()
+        } else { return false }
+        session.updateImage(localIndex)
+        updateBadge()
+        return true
     }
     private func savePosition() {
         guard !loading, !restoring, !viewportTransitioning, !images.isEmpty, chapters.indices.contains(session.chapterIndex) else { return }
@@ -822,9 +831,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         }
     }
     private func scrollToPage(_ index: Int, animated: Bool) {
-        pages.layoutIfNeeded()
         guard images.indices.contains(index) else { return }
-        pages.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredHorizontally, animated: animated)
+        layout.scrollToLogicalPage(index, animated: animated)
     }
     private func changeChapter(_ delta: Int, atEnd: Bool = false) {
         if incompleteDirectory { loadDirectory(); return }

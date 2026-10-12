@@ -1,0 +1,67 @@
+{
+  "runId": 38223265455,
+  "url": "https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38223265455",
+  "revision": "5e2eb9da3b5236c19bac906165db7563cc6045eb",
+  "conclusion": "failure",
+  "scope": "reader-modes",
+  "sdkBuilds": {
+    "Debug": "success",
+    "Release": "success"
+  },
+  "appleCore": {
+    "tests": 929,
+    "failures": 1,
+    "seconds": 164.292,
+    "failedTest": "CacheMaintenanceTests.testDiskCleanupRestoresLimitsAndAllowsLaterResponses",
+    "remainingDiskBytes": 36864
+  },
+  "native": {
+    "testsPerDevice": 27,
+    "failuresPerDevice": 0,
+    "mangaGeometryTestsPerDevice": 2,
+    "mangaGeometryFailuresPerDevice": 0
+  },
+  "ui": [
+    {
+      "device": "iPad Pro 11-inch (M4)",
+      "tests": 16,
+      "passed": 15,
+      "failedCases": 1,
+      "failedTests": [
+        "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()"
+      ],
+      "failureAssertionRecords": 4
+    },
+    {
+      "device": "iPhone 15 Pro",
+      "tests": 16,
+      "passed": 15,
+      "failedCases": 1,
+      "failedTests": [
+        "ReaderSettingsParityUITests/testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage()"
+      ],
+      "failureAssertionRecords": 4
+    }
+  ],
+  "originalAttachmentsVerified": 10,
+  "ipaProduced": false,
+  "rootNavigationCandidateIncluded": false,
+  "rotationNewUICaseIncluded": false,
+  "artifactArchives": [
+    {
+      "file": "original-logs.zip",
+      "bytes": 790319,
+      "sha256": "90c77427229e9bb06709b7b43330ddc0839ce46d3ef71bf0f1c72a0583f3c7d7"
+    },
+    {
+      "file": "visual-original.zip",
+      "bytes": 909550,
+      "sha256": "d7f29413fc341f746bf19a01105924be7f7dceb1bc8844ed1abb5f52eb964eed"
+    },
+    {
+      "file": "reader-enhancement-original.zip",
+      "bytes": 1287244,
+      "sha256": "240a1ef7af663159b72a26e6cfd1f00508808bbb9c31b4ec1b460c6943ae0375"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "unchanged": true,
+  "inputs": 266,
+  "proof": "../2026-10-12-manga-mode/core-full-result.json",
+  "actualObserved": {
+    "tests": 922,
+    "skipped": 2,
+    "failures": 0,
+    "seconds": 153.305
+  },
+  "newCoreExecution": false
+}
