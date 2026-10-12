@@ -1,0 +1,20 @@
+{
+  "runID": 38315636893,
+  "inputSHA": "09bd0d7569e619a61d576de0a1711ead8499afbe",
+  "originalZip": "ios/build/ci43/build-log-original.zip",
+  "bytes": 220955,
+  "sha256": "09910bd4432ded5b5ff1b5f84fa780eaaaaeb3b6fac7f46d9064021aa75e9c20",
+  "errors": [
+    "/Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/ErrorLogInteractionTests.swift:34:48: error: implicit use of 'self' in closure; use 'self.' to make capture semantics explicit",
+    "** TEST FAILED **",
+    "/Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/ErrorLogInteractionTests.swift:34:48: error: implicit use of 'self' in closure; use 'self.' to make capture semantics explicit",
+    "** TEST FAILED **"
+  ],
+  "runtimeUIRan": false,
+  "observedBuildAndCoreSummaries": [
+    "** BUILD SUCCEEDED **",
+    "** BUILD SUCCEEDED **",
+    "\t Executed 929 tests, with 0 failures (0 unexpected) in 146.012 (146.084) seconds",
+    "\t Executed 929 tests, with 0 failures (0 unexpected) in 146.012 (146.086) seconds"
+  ]
+}

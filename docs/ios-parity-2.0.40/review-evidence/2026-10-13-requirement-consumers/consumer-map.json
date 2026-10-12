@@ -1,8 +1,8 @@
 {
   "baseline": "696e80a44ab36b19de6f630565df32978e55a19e",
-  "baseRevision": "d6456c08ee48de1a7ed5f81391429a9d48297487",
+  "baseRevision": "0208b0c3a604a04cb21669722fad18dc74c179de",
   "inputIdentity": "Actual working-file SHA256 per reference; baseRevision may precede uncommitted changes",
-  "checkedAtUTC": "2026-10-12T22:29:47.248688+00:00",
+  "checkedAtUTC": "2026-10-12T22:33:56.543812+00:00",
   "isRuntimeResult": false,
   "count": 76,
   "requirements": [
@@ -22,7 +22,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -50,7 +50,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -73,7 +73,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -96,7 +96,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -119,7 +119,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -2387,7 +2387,7 @@
         },
         {
           "path": "ios/XXComicTests/ErrorLogInteractionTests.swift",
-          "sha256": "68bd992ea526aee46a5a39624dfed4b20fbbdd2017c1fe428fa1bca8ac1fccf9",
+          "sha256": "9aedc9c337a426e4cab6bb3b9cf844ee230f9f7c9fdfe44ef45b4e9625f4558c",
           "declaredMethods": [
             "testCopyWritesTheStoredRedactedLogAndKeepsExportAvailable"
           ]
@@ -5763,7 +5763,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -5791,7 +5791,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -5814,7 +5814,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -5837,7 +5837,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -5860,7 +5860,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -5883,7 +5883,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -6047,7 +6047,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],
@@ -6070,7 +6070,7 @@
         },
         {
           "path": "docs/ios-parity-2.0.40/NON_SOURCE_GATE.md",
-          "sha256": "a630c1f5f055a8e8e57553d525a8d248c77035d101869920f2036dc84339b513"
+          "sha256": "fa882e5475be75cea9324e20a6669a99de73e4496cf8265e5a104647a3bbf9e0"
         }
       ],
       "testTrace": [],

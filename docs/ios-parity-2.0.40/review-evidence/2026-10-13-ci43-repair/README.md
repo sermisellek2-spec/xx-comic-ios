@@ -1,0 +1,7 @@
+# CI43 Apple测试编译失败及修复
+
+2026-10-13。指定仓库run38315636893，输入09bd0d7569e619a61d576de0a1711ead8499afbe。Debug模拟器与Release设备SDK构建成功，AppleCore929零失败；新增ErrorLogInteractionTests.swift34行lazy逃逸闭包遗漏显式self，Native测试编译失败，UI未运行。原build日志ZIP/SHA和真实诊断见original-failure.json；首次筛选误含withError方法声明，原筛选另存historical，不作为错误数量。
+
+仅加self.find，保留实际剪贴板等于已脱敏条目、敏感字段不泄漏、页内反馈、导出可用和无模态原断言。此前Windows95Swift语法通过不能发现Apple类型/捕获约束，该边界继续如实保留。采用同一错误Native输入的CI44/45已请求取消，身份/HTTP见superseded-runs.json，没有把未运行的恢复/目录检查记通过。
+
+当前修复还包括D128/129反馈换源前提、D130真实Files与像素/动画前提、D131目录顺序。保持36Native/111UI，当前95Swift两配置仅解析通过；下一轮同输入full实际运行全部影响范围、其他闭环和同内容视觉矩阵，不生成中间IPA。当前门槛仍未通过；真实站源暂停。

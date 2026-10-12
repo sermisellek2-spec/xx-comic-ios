@@ -1,0 +1,16 @@
+{
+  "repository": "sermisellek2-spec/xx-comic-ios",
+  "inputSHA": "0208b0c3a604a04cb21669722fad18dc74c179de",
+  "ref": "codex/comic-directory-order-0208b0c",
+  "inputs": {
+    "validation_scope": "reader-modes",
+    "package_ipa": "false",
+    "validated_run_id": ""
+  },
+  "dispatchHTTP": 204,
+  "expectedPerDevice": {
+    "native": 36,
+    "UI": 28
+  },
+  "isAcceptanceIPA": false
+}

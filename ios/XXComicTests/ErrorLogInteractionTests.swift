@@ -31,6 +31,6 @@ final class ErrorLogInteractionTests: XCTestCase {
 
     private func find(_ identifier: String, in view: UIView) -> UIView? {
         if view.accessibilityIdentifier == identifier { return view }
-        return view.subviews.lazy.compactMap { find(identifier, in: $0) }.first
+        return view.subviews.lazy.compactMap { self.find(identifier, in: $0) }.first
     }
 }

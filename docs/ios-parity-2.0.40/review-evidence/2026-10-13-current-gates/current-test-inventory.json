@@ -52,7 +52,7 @@
     "ios/XXComicTests/CoverFallbackTests.swift": "6a584cf8ca57667b31e7aabed7ca2d9d8b13c9db2ae1eea31c112839fb22d265",
     "ios/XXComicTests/DetailFeedbackStateTests.swift": "94a600fe9385583ac672b3ebc575dfb5ad72ed9016f0b89393f3b4a378f02a43",
     "ios/XXComicTests/DownloadLifecycleTests.swift": "d74d870b03cd2095620cba82c2eadb90fedc427d68959a30a2cd8c509ba5862e",
-    "ios/XXComicTests/ErrorLogInteractionTests.swift": "68bd992ea526aee46a5a39624dfed4b20fbbdd2017c1fe428fa1bca8ac1fccf9",
+    "ios/XXComicTests/ErrorLogInteractionTests.swift": "9aedc9c337a426e4cab6bb3b9cf844ee230f9f7c9fdfe44ef45b4e9625f4558c",
     "ios/XXComicTests/OfflineDownloadImageTests.swift": "dc011e4bc2ca240602dfa964e61c01184d12dcc4c57e196ddddb13200255472e",
     "ios/XXComicTests/ReaderEnhancementEngineTests.swift": "b427b5e6016b9d2eb1c02e71c44ed85f66ca06ade47c0783647569c6f53d3e7e",
     "ios/XXComicTests/ReaderMangaGeometryTests.swift": "90491af80e743fb4e991fa853a86211c69ed676060f6a0b8519cb220c0afac72",

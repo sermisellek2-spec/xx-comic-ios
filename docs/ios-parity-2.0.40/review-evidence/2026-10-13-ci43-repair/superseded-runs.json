@@ -1,0 +1,18 @@
+[
+  {
+    "runID": 38316334822,
+    "inputSHA": "d6456c08ee48de1a7ed5f81391429a9d48297487",
+    "previousStatus": "in_progress",
+    "previousConclusion": null,
+    "reason": "Same confirmed Native test compilation defect as CI43: implicit self in lazy closure. Superseded by repaired input; no pass claim.",
+    "cancelHTTP": 202
+  },
+  {
+    "runID": 38316990107,
+    "inputSHA": "0208b0c3a604a04cb21669722fad18dc74c179de",
+    "previousStatus": "in_progress",
+    "previousConclusion": null,
+    "reason": "Same confirmed Native test compilation defect as CI43: implicit self in lazy closure. Superseded by repaired input; no pass claim.",
+    "cancelHTTP": 202
+  }
+]
