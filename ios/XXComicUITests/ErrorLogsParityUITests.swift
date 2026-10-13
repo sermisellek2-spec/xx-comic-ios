@@ -37,23 +37,19 @@ final class ErrorLogsParityUITests: ParityUITestCase {
     }
 
     private func dismissSystemShareUI(in app: XCUIApplication) {
-        // Close the real system share UI using its own controls or popover dismissal region.
-        let close = app.buttons.matching(NSPredicate(format: "label IN %@", ["Close", "关闭"])).firstMatch
-        let popoverDismiss = app.otherElements["PopoverDismissRegion"]
-        let appeared = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            close.exists || popoverDismiss.exists
-        }, object: app)
-        XCTAssertEqual(XCTWaiter.wait(for: [appeared], timeout: 5), .completed, "The system share controller must expose its real close or popover dismiss control")
-        if close.exists {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            let popoverDismiss = app.otherElements["PopoverDismissRegion"].firstMatch
+            XCTAssertTrue(popoverDismiss.waitForExistence(timeout: 5), "The system share popover must expose its dismiss region on iPad")
+            popoverDismiss.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.85)).tap()
+            let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: popoverDismiss)
+            XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
+        } else {
+            let close = app.buttons.matching(NSPredicate(format: "label IN %@", ["Close", "关闭"])).firstMatch
+            XCTAssertTrue(close.waitForExistence(timeout: 5), "The system share controller must expose its real close control on iPhone")
             XCTAssertTrue(close.isHittable)
             close.tap()
-        } else {
-            XCTAssertTrue(popoverDismiss.exists)
-            popoverDismiss.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.85)).tap()
+            let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: close)
+            XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
         }
-        let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            !close.exists && !popoverDismiss.exists
-        }, object: app)
-        XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
     }
 }

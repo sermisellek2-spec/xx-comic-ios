@@ -43,8 +43,18 @@ final class VolumeManagerParityUITests: ParityUITestCase {
         app.tables["volumes.list"].cells.matching(NSPredicate(format: "label == %@", title)).firstMatch
     }
     private func verifyOriginals(_ host: XCUIApplication) {
-        host.activate(); host.buttons["files.fixture.verify-originals"].tap()
-        XCTAssertEqual(host.staticTexts["files.fixture.originals.status"].label, "原目录两张图片完整：32×48")
+        host.activate(); XCTAssertTrue(host.wait(for: .runningForeground, timeout: 5))
+        let button = host.buttons["files.fixture.verify-originals"]
+        let reachable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: button)
+        XCTAssertEqual(XCTWaiter.wait(for: [reachable], timeout: 5), .completed)
+        let status = host.staticTexts["files.fixture.originals.status"]
+        let expected = "原目录两张图片完整：32×48"
+        for _ in 0..<2 {
+            button.tap()
+            let finished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", expected), object: status)
+            if XCTWaiter.wait(for: [finished], timeout: 5) == .completed { break }
+        }
+        XCTAssertEqual(status.label, expected)
     }
     func testRealFilesAppendAndDragOrderRetainTheOriginalChapterAcrossRelaunch() throws {
         let (app, host) = launch()

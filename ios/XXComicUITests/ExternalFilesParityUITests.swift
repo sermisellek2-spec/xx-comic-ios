@@ -72,45 +72,51 @@ final class ExternalFilesParityUITests: ParityUITestCase {
             let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "\(count) 张图片 · 正常同步"), object: record)
             XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 20), .completed)
         }
-        func changeExternalFiles(_ identifier: String, expected: String) {
-            host.activate(); XCTAssertTrue(host.wait(for: .runningForeground, timeout: 5))
-            let button = host.buttons[identifier]
-            let reachable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: button)
-            XCTAssertEqual(XCTWaiter.wait(for: [reachable], timeout: 5), .completed); button.tap()
-            let finished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", expected), object: host.staticTexts["files.fixture.status"])
-            let result = XCTWaiter.wait(for: [finished], timeout: 5)
-            if result != .completed {
-                let image = XCTAttachment(data: XCUIScreen.main.screenshot().pngRepresentation, uniformTypeIdentifier: "public.png")
-                image.name = "external-host-change-failure"; image.lifetime = .keepAlways; add(image)
-                let tree = XCTAttachment(string: host.debugDescription); tree.name = "external-host-change-accessibility"; tree.lifetime = .keepAlways; add(tree)
-            }
-            XCTAssertEqual(result, .completed)
-        }
-        returnToStorage(); changeExternalFiles("files.fixture.change-images", expected: "已新增03并将02改名04：3张图片")
+        returnToStorage(); changeExternalFiles("files.fixture.change-images", expected: "已新增03并将02改名04：3张图片", host: host)
         XCTAssertEqual(host.staticTexts["files.fixture.status"].label, "已新增03并将02改名04：3张图片")
-        app.activate(); waitForCount(3)
+        app.activate(); XCTAssertTrue(app.wait(for: .runningForeground, timeout: 5)); waitForCount(3)
         app.navigationBars.buttons.firstMatch.tap(); read(app)
         let renamed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value CONTAINS %@", "第 3 页，共 3 页"), object: app.collectionViews["reader.pages"])
         XCTAssertEqual(XCTWaiter.wait(for: [renamed], timeout: 10), .completed, "Rename must retain the same page identity while the new picture shifts its index")
         app.sliders["reader.seek"].adjust(toNormalizedSliderPosition: 0.5)
         let changedPixels = app.images.matching(identifier: "reader.image").matching(NSPredicate(format: "value CONTAINS ':64x96'")).firstMatch
         XCTAssertTrue(changedPixels.waitForExistence(timeout: 15), "Decode the new external file, rather than a copied or stale image")
-        returnToStorage(); changeExternalFiles("files.fixture.remove-first-image", expected: "已移除01：2张图片，03和04保留")
+        returnToStorage(); changeExternalFiles("files.fixture.remove-first-image", expected: "已移除01：2张图片，03和04保留", host: host)
         XCTAssertEqual(host.staticTexts["files.fixture.status"].label, "已移除01：2张图片，03和04保留")
-        app.activate(); waitForCount(2); app.terminate(); app.launch()
+        app.activate(); XCTAssertTrue(app.wait(for: .runningForeground, timeout: 5)); waitForCount(2); app.terminate(); app.launch()
         XCTAssertTrue(app.tabBars.buttons["书架"].waitForExistence(timeout: 10)); app.tabBars.buttons["书架"].tap(); app.buttons["bookshelf.tab.1"].tap()
         let book = app.collectionViews.cells[folderName]; XCTAssertTrue(book.waitForExistence(timeout: 10)); book.tap(); app.buttons["detail.read"].tap()
         XCTAssertTrue(changedPixels.waitForExistence(timeout: 15))
         XCTAssertTrue((app.collectionViews["reader.pages"].value as? String)?.contains("第 1 页，共 2 页") == true)
         XCTAssertFalse(app.alerts.firstMatch.exists)
     }
+    private func changeExternalFiles(_ identifier: String, statusIdentifier: String = "files.fixture.status", expected: String, host: XCUIApplication) {
+        host.activate(); XCTAssertTrue(host.wait(for: .runningForeground, timeout: 5))
+        let button = host.buttons[identifier]
+        let reachable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: button)
+        XCTAssertEqual(XCTWaiter.wait(for: [reachable], timeout: 5), .completed)
+        let status = host.staticTexts[statusIdentifier]
+        var result: XCTWaiter.Result = .timedOut
+        for _ in 0..<2 {
+            button.tap()
+            let finished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", expected), object: status)
+            result = XCTWaiter.wait(for: [finished], timeout: 5)
+            if result == .completed { break }
+        }
+        if result != .completed {
+            let image = XCTAttachment(data: XCUIScreen.main.screenshot().pngRepresentation, uniformTypeIdentifier: "public.png")
+            image.name = "external-host-change-failure"; image.lifetime = .keepAlways; add(image)
+            let tree = XCTAttachment(string: host.debugDescription); tree.name = "external-host-change-accessibility"; tree.lifetime = .keepAlways; add(tree)
+        }
+        XCTAssertEqual(result, .completed)
+    }
     func testMissingExternalFolderCanBeReauthorizedThroughRealFiles() throws {
         let host = prepareHost(), app = launch()
         app.buttons["local.folder.link"].tap(); try choose(folderName, app: app)
         XCTAssertTrue(app.staticTexts["已关联文件夹；正文直接读取，原文件保留"].waitForExistence(timeout: 15))
-        host.activate(); host.buttons["files.fixture.retire"].tap()
+        changeExternalFiles("files.fixture.retire", expected: "原目录已失效；新目录：" + folderName + "_新", host: host)
         XCTAssertEqual(host.staticTexts["files.fixture.status"].label, "原目录已失效；新目录：" + folderName + "_新")
-        app.activate()
+        app.activate(); XCTAssertTrue(app.wait(for: .runningForeground, timeout: 5))
         let folder = app.cells.matching(NSPredicate(format: "identifier BEGINSWITH %@", "local.folder.")).firstMatch
         XCTAssertTrue(folder.waitForExistence(timeout: 10)); folder.tap()
         XCTAssertTrue(app.alerts["重新授权《\(folderName)》"].waitForExistence(timeout: 10))
@@ -138,11 +144,8 @@ final class ExternalFilesParityUITests: ParityUITestCase {
         app.cells["settings.downloads"].tap()
         let read = app.tables["download.tasks"].buttons["阅读"].firstMatch
         XCTAssertTrue(read.waitForExistence(timeout: 20)); XCTAssertTrue(read.isEnabled)
-        host.activate(); host.buttons["files.fixture.verify-download"].tap()
-        let external = host.staticTexts["files.fixture.download.status"]
-        expectation(for: NSPredicate(format: "label == %@", "已校验外部目录下载像素：384×384，原文件保留"), evaluatedWith: external)
-        waitForExpectations(timeout: 15)
-        app.activate()
+        changeExternalFiles("files.fixture.verify-download", statusIdentifier: "files.fixture.download.status", expected: "已校验外部目录下载像素：384×384，原文件保留", host: host)
+        app.activate(); XCTAssertTrue(app.wait(for: .runningForeground, timeout: 5))
         app.terminate(); app.launch()
         XCTAssertTrue(app.tabBars.buttons["设置"].waitForExistence(timeout: 10)); app.tabBars.buttons["设置"].tap()
         app.cells["settings.storage"].tap(); app.cells["storage.download-location"].tap()

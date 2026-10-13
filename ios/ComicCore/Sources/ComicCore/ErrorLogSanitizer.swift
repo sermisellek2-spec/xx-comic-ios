@@ -11,31 +11,31 @@ public enum ErrorLogSanitizer {
         guard !text.isEmpty else { return text }
         var result = text
 
-        // 1. 脱敏 URL query 中的敏感键值对
-        if let urlRegex = try? NSRegularExpression(pattern: #"([?&])([^=&#\s]+)=([^&#\s]*)"#, options: .caseInsensitive) {
-            let matches = urlRegex.matches(in: result, options: [], range: NSRange(location: 0, length: (result as NSString).length))
+        // 1. 脱敏 Authorization Bearer
+        if let bearerRegex = try? NSRegularExpression(pattern: #"(?i)bearer\s+[a-zA-Z0-9_\-\.]+"#) {
+            let range = NSRange(location: 0, length: (result as NSString).length)
+            result = bearerRegex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "Bearer [REDACTED]")
+        }
+
+        // 2. 脱敏 Cookie: ... 头部
+        if let cookieRegex = try? NSRegularExpression(pattern: #"(?i)cookie:\s*[^\r\n]+"#) {
+            let range = NSRange(location: 0, length: (result as NSString).length)
+            result = cookieRegex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "Cookie: [REDACTED]")
+        }
+
+        // 3. 脱敏 URL query 及独立行中的敏感键值对
+        if let kvRegex = try? NSRegularExpression(pattern: #"(?:[?&]|\b)([a-zA-Z0-9_]+)=([^&#\s;]*)"#, options: .caseInsensitive) {
+            let matches = kvRegex.matches(in: result, options: [], range: NSRange(location: 0, length: (result as NSString).length))
             for match in matches.reversed() {
-                guard match.numberOfRanges == 4 else { continue }
-                let keyRange = match.range(at: 2)
-                let valRange = match.range(at: 3)
+                guard match.numberOfRanges == 3 else { continue }
+                let keyRange = match.range(at: 1)
+                let valRange = match.range(at: 2)
                 let key = (result as NSString).substring(with: keyRange).lowercased()
                 if sensitiveKeys.contains(key) {
                     let nsResult = result as NSString
                     result = nsResult.replacingCharacters(in: valRange, with: "[REDACTED]")
                 }
             }
-        }
-
-        // 2. 脱敏 Authorization Bearer
-        if let bearerRegex = try? NSRegularExpression(pattern: #"(?i)bearer\s+[a-zA-Z0-9_\-\.]+"#) {
-            let range = NSRange(location: 0, length: (result as NSString).length)
-            result = bearerRegex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "Bearer [REDACTED]")
-        }
-
-        // 3. 脱敏 Cookie: ... 头部
-        if let cookieRegex = try? NSRegularExpression(pattern: #"(?i)cookie:\s*[^\r\n]+"#) {
-            let range = NSRange(location: 0, length: (result as NSString).length)
-            result = cookieRegex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "Cookie: [REDACTED]")
         }
 
         return result
