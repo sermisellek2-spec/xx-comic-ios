@@ -128,7 +128,7 @@ final class BookshelfParityUITests: ParityUITestCase {
         XCTAssertTrue(app.buttons["我的书架"].waitForExistence(timeout: 10)); app.buttons["我的书架"].tap()
         let book = app.collectionViews.cells["电锯人"]
         XCTAssertTrue(book.waitForExistence(timeout: 10))
-        book.press(forDuration: 1)
+        book.press(forDuration: 2.0)
         XCTAssertTrue(app.buttons["移动"].waitForExistence(timeout: 5)); app.buttons["移动"].tap()
         XCTAssertTrue(app.navigationBars["移动至分组"].waitForExistence(timeout: 5))
     }

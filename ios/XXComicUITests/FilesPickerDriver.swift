@@ -73,13 +73,17 @@ struct FilesPickerDriver {
         for _ in 0..<3 {
             if isShowingFolder(name) { break }
             iconTarget.doubleTap()
-            let opened = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in self.isShowingFolder(name) }, object: self.app)
-            if XCTWaiter.wait(for: [opened], timeout: 2.5) == .completed { break }
+            if waitForFolder(name, timeout: 2.5) { break }
             iconTarget.tap()
-            if XCTWaiter.wait(for: [opened], timeout: 2.5) == .completed { break }
+            if waitForFolder(name, timeout: 2.5) { break }
         }
         guard isShowingFolder(name) else { throw SelectionError.folderNotOpened }
         capture("target-folder")
+    }
+
+    private func waitForFolder(_ name: String, timeout: TimeInterval) -> Bool {
+        let expectation = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in self.isShowingFolder(name) }, object: self.app)
+        return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
     }
 
     func selectFile(_ name: String) throws {
