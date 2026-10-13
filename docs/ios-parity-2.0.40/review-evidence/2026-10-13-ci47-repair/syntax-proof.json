@@ -1,0 +1,53 @@
+{
+  "parentRevision": "83ef1524f1f5e0a423e2034905e276d6a49eea81",
+  "failedRunID": 38325901845,
+  "recordedAtUTC": "2026-10-13T00:27:38.061872+00:00",
+  "file": "ios/XXComicTests/FloatingImportBubbleTests.swift",
+  "workingSHA256": "4b455056ebec5737e9a4b27df2219a1f001e91c6974057bf289b2f816f95a0af",
+  "syntaxResults": [
+    {
+      "configuration": "release",
+      "exitCode": 0,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--mount",
+        "type=bind,source=F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port\\ios,target=/work",
+        "-w",
+        "/work",
+        "swift:5.10-jammy",
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "XXComicTests/FloatingImportBubbleTests.swift"
+      ],
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "configuration": "debug",
+      "exitCode": 0,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--mount",
+        "type=bind,source=F:\\softForCode\\codex-project\\xx-comic\\.worktrees\\ios-port\\ios,target=/work",
+        "-w",
+        "/work",
+        "swift:5.10-jammy",
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "-D",
+        "DEBUG",
+        "XXComicTests/FloatingImportBubbleTests.swift"
+      ],
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "productionAndCoreUnchanged": true,
+  "nativeAndUIWereNotRun": true,
+  "nextAppleRunPending": true,
+  "change": "Same expectation and accuracy; explicit Double subexpressions remove compiler constraint-solver timeout."
+}

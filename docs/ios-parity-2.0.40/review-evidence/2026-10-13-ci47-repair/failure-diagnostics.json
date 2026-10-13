@@ -1,0 +1,73 @@
+{
+  "revision": "83ef1524f1f5e0a423e2034905e276d6a49eea81",
+  "runID": 38325901845,
+  "errors": [
+    {
+      "file": "0_build.txt",
+      "line": 7716,
+      "context": [
+        "2026-10-13T00:18:31.2388850Z             ^",
+        "2026-10-13T00:18:31.2390480Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/FloatingImportBubbleTests.swift:32:9: error: the compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions",
+        "2026-10-13T00:18:31.2391600Z         XCTAssertEqual(fraction, (200 - 16) / (852.0 - 54 - 20 - 16), accuracy: 0.0001)",
+        "2026-10-13T00:18:31.2395310Z         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "2026-10-13T00:18:31.2411660Z "
+      ]
+    },
+    {
+      "file": "0_build.txt",
+      "line": 7853,
+      "context": [
+        "2026-10-13T00:18:31.5659940Z ",
+        "2026-10-13T00:18:31.5660100Z Testing failed:",
+        "2026-10-13T00:18:31.5694720Z \tThe compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions",
+        "2026-10-13T00:18:31.5695400Z \tTesting cancelled because the build failed.",
+        "2026-10-13T00:18:31.5695700Z "
+      ]
+    },
+    {
+      "file": "0_build.txt",
+      "line": 7857,
+      "context": [
+        "2026-10-13T00:18:31.5695700Z ",
+        "2026-10-13T00:18:31.5695800Z ** TEST FAILED **",
+        "2026-10-13T00:18:31.5696010Z ",
+        "2026-10-13T00:18:31.5696050Z ",
+        "2026-10-13T00:18:31.5696300Z The following build commands failed:"
+      ]
+    },
+    {
+      "file": "0_build.txt",
+      "line": 8145,
+      "context": [
+        "2026-10-13T00:20:30.7143640Z             ^",
+        "2026-10-13T00:20:30.7144790Z /Users/runner/work/xx-comic-ios/xx-comic-ios/ios/XXComicTests/FloatingImportBubbleTests.swift:32:9: error: the compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions",
+        "2026-10-13T00:20:30.7146520Z         XCTAssertEqual(fraction, (200 - 16) / (852.0 - 54 - 20 - 16), accuracy: 0.0001)",
+        "2026-10-13T00:20:30.7147570Z         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "2026-10-13T00:20:30.7153820Z "
+      ]
+    },
+    {
+      "file": "0_build.txt",
+      "line": 8215,
+      "context": [
+        "2026-10-13T00:20:30.7811790Z ",
+        "2026-10-13T00:20:30.7811930Z Testing failed:",
+        "2026-10-13T00:20:30.7829210Z \tThe compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions",
+        "2026-10-13T00:20:30.7831420Z \tTesting cancelled because the build failed.",
+        "2026-10-13T00:20:30.7832640Z "
+      ]
+    },
+    {
+      "file": "0_build.txt",
+      "line": 8219,
+      "context": [
+        "2026-10-13T00:20:30.7832640Z ",
+        "2026-10-13T00:20:30.7833420Z ** TEST FAILED **",
+        "2026-10-13T00:20:30.7835810Z ",
+        "2026-10-13T00:20:30.7836620Z ",
+        "2026-10-13T00:20:30.7839520Z The following build commands failed:"
+      ]
+    }
+  ],
+  "archiveSHA256": "25fe640f0d337853f8ae74a00b2e74823c5fc13cb07f3d4e46d553526a00b92b"
+}

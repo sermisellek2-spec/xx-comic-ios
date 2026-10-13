@@ -29,7 +29,9 @@ final class FloatingImportBubbleTests: XCTestCase {
         first.frame.origin = CGPoint(x: 25, y: 200); first.snapToEdge()
         XCTAssertTrue(defaults.bool(forKey: "floating_bubble_snap_left"))
         let fraction = defaults.double(forKey: "floating_bubble_y_fraction")
-        XCTAssertEqual(fraction, (200 - 16) / (852.0 - 54 - 20 - 16), accuracy: 0.0001)
+        let availableHeight: Double = 852.0 - 54.0 - 20.0 - 16.0
+        let expectedFraction: Double = (200.0 - 16.0) / availableHeight
+        XCTAssertEqual(fraction, expectedFraction, accuracy: 0.0001)
         let reopened = FloatingImportBubble(defaults: UserDefaults(suiteName: name)!)
         parent.addSubview(reopened); reopened.positionInParent()
         XCTAssertEqual(reopened.frame.origin.x, 16, accuracy: 0.01)
