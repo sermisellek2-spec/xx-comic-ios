@@ -94,14 +94,13 @@ final class EpubReadingUITests: ParityUITestCase {
         app.terminate(); app.launch(); app.buttons["本地书架"].tap()
         XCTAssertTrue(app.collectionViews.cells[title].waitForExistence(timeout: 10))
     }
-    func testImportMenuUsesComicFormatsAndEpubPickerCanBeCancelled() {
+    func testImportMenuUsesComicFormatsAndEpubPickerCanBeCancelled() throws {
         let app = launch(); app.buttons["bookshelf.import"].tap()
         XCTAssertTrue(app.buttons["EPUB 漫画"].exists); XCTAssertTrue(app.buttons["Kindle 漫画"].exists)
         XCTAssertFalse(app.buttons["EPUB 电子书"].exists); XCTAssertFalse(app.buttons["Kindle 电子书"].exists)
         app.buttons["EPUB 漫画"].tap()
-        let cancel = app.navigationBars.buttons.matching(NSPredicate(format: "label IN %@", ["取消", "Cancel"])).firstMatch
-        XCTAssertTrue(cancel.waitForExistence(timeout: 5)); cancel.tap()
-        XCTAssertTrue(app.buttons["本地书架"].waitForExistence(timeout: 5))
+        try FilesPickerDriver(app: app).cancelPicker()
+        XCTAssertTrue(app.buttons["本地书架"].waitForExistence(timeout: 10))
     }
 
     func testKindleComicRealImportUsesExistingImageReaderAndResume() {
