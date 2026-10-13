@@ -1,0 +1,77 @@
+id,gate,area,requirement,android_reference,status,evidence
+BASE-01,P0,基线,核验固定发布提交与527文件快照,baseline/manifest.json,通过,verify-baseline.ps1退出0；527文件与冻结ZIP哈希匹配；baseline/VERIFICATION.md
+BASE-02,P0,范围,逐页逐入口逐默认值补齐需求矩阵,MainActivity.java,待核对,完整方案/P0~P4报告已写；范围审计确认当前源无文件型站源实现，不新增预留协议入口；其余入口/默认值继续核对
+BASE-03,P0,测试,建立双方共用且Release隔离的确定性fixture,app/src/androidTest,待验收,双方共用确定性JSON/原始PNG及Debug/Release隔离；父CI34完整实际成功，最新Debug新增换源/日志fixture标记须同版本完整Apple隔离复验；不把父通过充当前。
+BASE-04,P0,环境,当前HEAD核心和Apple原生构建及UI基准实际运行,ios/scripts/build.sh,待验收,CI34父full及CI38缓存影响实际成功；CI39/40影响仍运行。最新35Native/111UI声明、94Swift两配置语法退出0；验证超时/重试/返回本机HTTP新增，Apple与最终full待实际验收。review-evidence/2026-10-13-verification-flow/README.md
+BASE-05,P0,视觉,建立8场景真实Android截图金标和设备元数据,app/src/androidTest,待验收,冻结Android64同内容原图及元数据保留，父64侧图全部人工查看；CI38八设置全看无重要缺陷，当前最终版本64+8+图标+分卷仍待实拍复核。
+VIS-01,P1,主题,完整浅深色token及默认跟随系统且设置落盘,UIHelpers.java;UiContrast.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：Palette.swift;AppTheme.swift;AppThemeController.swift
+VIS-02,P1,素材,启动图标应用图标插画及控件图标按实际原版,app/src/main/res;app/src/main/assets,待验收,CI34实际双设备主屏图标显示并点击打开、两SDK编译资源通过。18个不透明RGB图标保留；当前最新完整运行及最终IPA实际资源/签名安装需后续闭合。
+VIS-03,P1,导航,底栏标题细线工具区切页返回及安全区,MainActivity.java;NavigationInsets.java,待验收,CI23四种主题方向根导航UI双设备通过，根底栏原生实际17.33/17.5图标及5.33/5间距失败；当前实际frame修20/4/居中，原断言保留，Apple和组件视觉待复验；D97。
+VIS-04,P1,布局,封面密度动态列数卡片边距圆角文本与截断,CoverLayoutHelper.java;bookshelf/BookshelfLayoutHelper.java,待验收,书架16/6/110；发现16/8/110/3:4及13字标题；详情冻结封面与信息区。当前候选未Apple实拍，不由静态数值记通过
+VIS-05,P1,组件,底部抽屉展开收回遮罩和弹窗按钮布局,UIHelpers.java;MainActivity.java,待验收,阅读与站源分类均全宽底部面板；站源面板400内容高/拖动关闭/完整长名/选中/保存主题接线，原草稿与确认用例保留；8场景与完整UI待验收；852手机32对照已人工读取登记；D92/D93后续本地修复仅语法通过，新图/完整量测仍待验收。；D97/D98接续根底栏60pt纵排及设置滚动区65%窗口候选；93原生仅语法通过；root-navigation证据；Apple/UI/当前视觉待验收
+VIS-06,P1,状态,所有通用加载空错误重试禁用选中与按压反馈,MainActivity.java,待验收,D22 iPhone实际3项封面原生测试通过；全通用状态及8场景UI仍待验收
+VIS-07,P1,iPad,横竖屏弹层分享锚点键盘和触控命中,MainActivity.java;NavigationInsets.java,待验收,CI38八设置参考的清理完成和横屏标题安全区原断言双设备通过；64页父图人工已查看，当前新增分卷八方向/主题可达与实拍待Apple。最终64+8+分卷与主屏当前视觉待验。review-evidence/2026-10-13-volume-sync-coverage/README.md
+SHELF-01,P2,书架,在线本地作用域及网格列表切换,bookshelf/BookshelfScope.java;BookshelfLayoutHelper.java,待验收,第十四轮网格列表保可见用例双设备通过；当前主标题/本地范围及完整8场景仍待全量验收
+SHELF-02,P2,分组,建立改名删除撤销及移动分组不丢漫画；保持默认顺序,bookshelf/BookshelfGroupStore.java;BookshelfGroupSheet.java,待验收,D86/D87：新建保留移动草稿；原文件损坏不覆盖、写入失败回滚、错误及重试接线。分组11影响/916 Linux完整2跳过0失败；4项新增UI待Apple。冻结管理页无排序入口；bookshelf-groups证据；第19轮7书架UI双设备通过；完整8场景及持久化/恢复需求仍待验收。
+SHELF-03,P2,书架,单本长按管理取消及刷新/布局切换滚动锚点恢复,bookshelf/BookshelfActionSheet.java;BookshelfScrollAnchor.java,待验收,第十四轮网格列表切换保持实际可见作品双设备通过；单本长按/刷新/旋转/恢复完整范围待验收
+SHELF-04,P2,收藏,收藏撤销更新红点星标实际未读数量和最新章信息,favorite/FavoriteUpdateCoordinator.java;FavoriteStarBadgeView.java,待验收,第十四轮实际未读/最新章及取消收藏保历史双设备通过；完整红点/撤销/主题与视觉待验收
+SHELF-05,P2,换源,书架就地换源保留分组历史及阅读位置,MainActivity.java;favorite/FavoriteRevision.java,待验收,CI40库写失败保护原生通过；阅读换源用例遗漏先收起工具栏，D129补操作前提，保留原第2页/像素/收藏/组/返回/重启断言，当前待Apple复验。
+SHELF-06,P2,导入入口,悬浮导入及布局避让和导入方式选择,bookshelf/FloatingImportBubble.java;MainActivity.java,待验收,保留本地悬浮导入入口并加按钮无障碍标识；EPUB/Kindle用例改走该实际入口；拖动/避让/尺寸待运行
+HISTORY-01,P2,历史,历史入口续读清理删除和收藏生命周期独立,MainActivity.java,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
+DISC-01,P2,发现,站源分组管理选择及过滤范围按原版,MainActivity.java;source/SourceConfig.java,待验收,D126：内置计数/分组选源改按51当前目录并保留disabled标记，实际新建/保存/取消/改名/重启/错误/删除UI新增；Core原持久化规则未改。当前仅声明和语法通过，Apple待验。review-evidence/2026-10-13-source-group-catalog/README.md
+DISC-02,P2,搜索,单站分页全站返回异步合并严格同名置顶与去重,MainActivity.java;source,待验收,全站用全部启用可搜索源；当前搜索卡片及单站用户滚动分页，原UI行为断言保留并加首屏不提前到底；完整Apple待验收
+DISC-03,P2,搜索,空源标签隐藏人工选中稳定取消旧代次不抢页面,MainActivity.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：SearchRules.swift;DiscoverViewController.swift;SearchRulesTests.swift；第19轮source可达/确认实际失败；D96触摸取消滚动、顶部宽度和原用例复验候选。
+DISC-04,P2,分类,分类条件底部抽屉草稿确认取消和工具区收放,MainActivity.java;source/SourceConfig.java,待验收,当前站源分类底部面板、深色/完整源名、准确分类快捷项及工具区收放；草稿取消/确认断言保留，当前完整UI和8场景待验收
+DETAIL-01,P2,详情,封面文案布局卷信息收藏继续阅读与失败恢复,MainActivity.java;CoverLayoutHelper.java,待验收,D29：全宽190/220/250封面、圆角信息区/内联动作/标签与底部收藏阅读已修改；反馈状态6项通过；封面及控制器原生/视觉待验收；D92目录卡片54/提示11及收藏高密度后台缩略候选待原生视觉。
+DETAIL-02,P2,换源,详情换源搜索候选选择取消与范围不限发现分组,MainActivity.java,待验收,D123：严格同名/源ID/漫画ID、3并发增量与当前源、取消/10秒搜索/20秒目标超时、按需补目录/失败重试；相似结果/空态/空目录/取消及真实切换5UI待Apple。
+CONFIG-01,P2,配置,所有设置入口默认值取值范围即时生效与重启持久化,MainActivity.java,待验收,3+6+2当前设置/主题选择面板、自动跟随文案及淘汰左右手已修；SettingsParity持久化/即时生效未原生运行；其余默认值继续核对
+CONFIG-02,P2,源协议,稳定ID注册开关排序分组和配置消费者一致,DownloadSources.java;source/SourceConfig.java,待核对,D71/D79/D84：已核实路由接线与不消费筛选改动跳过；默认51/启用50往返不增生路由/警告。25影响、911 Linux完整/2 Apple PDF跳过/0失败；全部51源字段/Apple/UI仍待核对；entry-consumer-audit及filter-consumers记录
+CONFIG-03,P2,源配置,xx-comic.sources导入导出及不支持字段真实提示,source/SourceConfig.java,待验收,D81：Files文件闭环本地实现，51/50往返，24影响/910 Linux完整/2跳过/0失败。c8 Apple因启动storyboard元数据编译失败，5真实Files UI未运行；最小修复重跑原范围，保持待验收；config-files及ci16-repair/README.md
+CONFIG-04,P2,缓存,缓存查看清理确认与下载原包数据保护,MainActivity.java,待验收,CI38实际两个后端小/大正文及重开零命中，容量/原包/后来缓存及10秒UI保持；已有Cookie双设备清除，真实索引144016B如实显示。后续Core未改，最终完整交付回归仍待运行。review-evidence/2026-10-13-ci38-results/README.md
+CONFIG-05,P2,日志,日志查看导出清理与敏感字段脱敏,MainActivity.java,待验收,CI40日志详情脱敏/清空/重启通过，复制反馈与share根AX断言失败；D128本地修正为页内复制提示、真实系统关闭控件及关闭菜单后导出，新增实际剪贴板脱敏原生断言，待Apple修复复验及最终full。
+CONFIG-06,P2,关于更新,关于版本外链更新提示及iOS分发等效流程,update;MainActivity.java,待验收,关于计数已按当前51过滤；更新失败/重试/当前版/取消后重查真实隔离HTTP及浏览器/签名提示已补；Release原正式地址；待Apple；review-evidence/2026-10-12-settings-and-cache/README.md
+CONFIG-07,P2,统计,原版可选使用统计默认设置字段与关闭行为,UsageStatsClient.java;MainActivity.java,待验收,原5字段/默认开启/北京时间每日1次/15分钟重试/关闭持久化与取消/损坏保留已接真实消费者；6项隔离报告及4项既有核心通过；Apple前后台/设置待验收；设置取消/开关/重启UI候选已补，当前待Apple；review-evidence/2026-10-12-settings-and-cache/README.md
+READER-01,P3,模式,卷轴/普通/日漫三种独立模式；删除旧左右手设置，模式切换保留逻辑章页,reader/PagedReaderView.java;MainActivity.java,待验收,卷轴/普通/日漫保留、旧左右手/按钮映射不再消费；CI34父full模式/旋转/续读/重启实际通过。当前新增双指/大目录及最终35Native/111UI完整回归待验；文字按用户移除。review-evidence/2026-10-13-ci34-results/README.md
+READER-02,P3,手势,卷轴侧点横滑不切章单页手势及缩放平移取消,reader/PagedReaderView.java;ReaderNavigation.java,待验收,CI34普通/日漫单次横滑与卷轴边点/横滑保护通过；实际双指缩放/放大后平移/复位后翻页原缺界面覆盖，当前新增真实XCUI双指用例，影响和完整Apple待验。review-evidence/2026-10-13-volume-sync-coverage/README.md
+READER-03,P3,控制,工具条隐藏显示页数时间电量状态与返回路径,MainActivity.java,待验收,第十四轮条漫/单页控制条隐藏不改变图片双设备通过；当前冻结设置图标/小拇指及两主题完整视觉待验收；CI21默认日漫滑动跨章专用用例双设备通过；完整模式返回仍失败，D99候选待实际回归；CI22双设备控制条画布2与工具条2通过，当前候选完整视觉仍待验收。
+READER-04,P3,进度,进度拖动预览确认取消及章节定位,reader/ReaderSeekBar.java;ReaderSeekSession.java,待验收,CI38原生实际进度触控父尺寸/首末页命中与原章节UI通过；进度预览/取消/新章代次旧拖动未原生验收，当前新增UISlider真实事件链及预览泡边界/不提前提交/取消恢复/旧章不能提交，Apple待验。review-evidence/2026-10-13-volume-sync-coverage/README.md
+READER-05,P3,目录,按需加载关闭缓存正逆序当前章蓝条无搜索框,MainActivity.java,待验收,D131：冻结chapterDesc保存证据确认；阅读/详情共用chapter.desc偏好、切序实际落盘；原大目录UI增重开/详情/重启倒序及当前章可达，原按需目录/关闭/缓存检查保持，当前待Apple影响及full。
+READER-06,P3,目录,大目录快速滚动定位当前章末尾位置和返回来源,MainActivity.java,待验收,D130等待真实动画/定位且原200话/正逆序/选中/可达/返回断言不变；D131详情呈现后按当前章重定位，增阅读重开→详情→重启顺序/当前章，待Apple影响及当前full。
+READER-07,P3,换源,阅读中换源和章节对应保持续读历史,MainActivity.java;reader/ReaderPosition.java,待验收,CI40换源前即第2页断言失败：首边缘tap实际仅收起工具栏；D129补明确收起后再翻页，原换源后/返回详情/收藏/组/重启第2页断言保留，待Apple复验。
+READER-08,P3,恢复,图内位置旋转前后台重启和跨章恢复,reader/ReaderPosition.java;PagedReaderView.java,待验收,CI27图内Y往返、日漫第3页旋转双设备通过；iPhone完整模式/重启续读仍退页，当前迟到尺寸锚点修正待实际回归。当前Core269输入/Linux928执行2 Apple PDF跳过0失败；完整前后台/恢复不以局部结果关闭，D100。
+READER-09,P3,主题,独立阅读主题墨水屏去白边动画及默认值落盘,reader/ReaderSettingsSheet.java;ImageEnhancementPolicy.java,待验收,非法旧增强值按冻结Android回退关闭且读取不改写原值；相关16项Linux通过；阅读主题/墨水屏/动画/默认值完整UI仍待验收
+READER-10,P3,图像,普通增强开关原图对照关闭及失败回退,reader/ReaderEnhancementEngine.java,待验收,已有旧版原生AI故障/取消与原图对照证据；当前RemoteImageView改动后需回归，核心测试不替代Apple图像
+READER-11,P3,AI,离线2倍AI超分真实本地推理模型许可设备及内存,reader/GpuSuperResolution.java;app/src/main/cpp,待验收,冻结Android原训练权重/图转换已用于CoreML，父原生实际推理/回退/取消/复用成功；D127校正为冻结附带MIT许可与真实256/512/2.49MB，网络字节SHA保持。新metadata仅Windows格式检查，当前Apple模型编译/双设备完整推理和指标待full。review-evidence/2026-10-13-model-provenance/README.md
+READER-12,P3,解码,长图高清透明损坏图多图预取取消和内存保护,reader/ReaderDecodePolicy.java,待验收,旧版生产Cell取消/复用已有证据；当前RemoteImageView读图路径改动需Apple类型/解码/内存回归
+READER-13,P3,文字,文字阅读及排版功能按用户指令移除,ebook/TextReaderView.java;TextReaderSettingsSheet.java,用户移除,2026-10-13用户明确移除范围；专属页面/设置/偏好消费者/文字跳转已删除；原包和旧JSON兼容数据保留，不计入当前功能门槛。review-evidence/2026-10-13-comic-only/README.md
+READER-14,P3,连续阅读,卷轴末尾预取连续追加下一章；章内页码拖动与持久化；失败重试取消末章及模式旋转恢复,MainActivity.java:8108;8162;8211,待验收,CI27两设备10项连续阅读用例通过，含失败/重试/取消/末章/跨章/旋转/模式/重启；iPhone模式续读另1用例失败。当前候选也保留pending清空后迟到图片尺寸的锚点，主动seek/拖动可取消等待；完整交付版回归仍待验收。
+LOCAL-01,P4,格式,按基线实际边界完成图片ZIP与CBZ导入阅读,local/LocalImporter.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：LocalArchive.swift;LocalLibrary.swift;LocalArchiveTests.swift
+LOCAL-02,P4,格式,图片漫画EPUB目录与续读；纯文字和图文混排明确拒绝,ebook/EpubParser.java;local/LocalImporter.java,待验收,图片漫画EPUB及拒绝文字/混排边界父CI34实际通过；D130修生成图片scale1保留32×32原像素断言，成功目录隐藏过时加载AX按钮，当前同版本全量待验。
+LOCAL-03,P4,格式,PDF漫画与Kindle图片漫画实际支持边界真文件验证,pdf/PdfParser.java;local/LocalImporter.java,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
+LOCAL-04,P4,批量,多文件导入进度取消重启恢复及失败重试UI,local/BatchImportSession.java;BatchImportPlanner.java,待验收,f4eaf93核心恢复真实ZIP等通过；部分重选/重启第二卷两设备UI通过，其余3项被本地标题阻塞，当前修后再完整验收4项；不证明Files权限
+LOCAL-05,P4,合集,创建分卷混合卷追加重排撤销和稳定阅读身份,local;MainActivity.java,待验收,CI39分卷真实Files追加/重排/撤销/取消/重启断言失败原件保持；D130确认系统Open错匹配底层Done与fixture倍率，驱动限定真实DOC导航/文件列表，精确像素及原章节/原文件完整期望不放松，旋转等实际frame，待Apple复验。
+LOCAL-06,P4,指纹,同内容去重墓碑删除重导旧记录和位置恢复,local;MainActivity.java,待验收,本轮尚未完成当前版本全需求运行验收；历史实现线索：ContentFingerprint.swift;LocalCatalog.swift;ContentFingerprintTests.swift;LocalCatalogTests.swift
+LOCAL-07,P4,文件夹,直接索引授权持久化撤销和重新授权,local/SafFolderSource.java;FolderSource.java,待验收,第十四轮真实Files提供器出现，但授予父Documents导致目标目录/恢复/像素闭环失败；当前等目标目录导航再确认并留图/树；原书签/重启断言保留
+LOCAL-08,P4,同步,文件夹自动同步新增删除改名及前后台触发,local/LocalFolderSync.java;LocalFolderMonitor.java,待验收,真实外部host新增/改名/删除，不注入授权；CI39原卷轴页码不等整屏图身份，D130明确普通单页验原第2→第3→第1/64×96/重启，实际host前台/修改反馈后再自动同步；卷轴Core/连续阅读检查保持，当前待Apple复验。
+LOCAL-09,P4,数据保护,坏包低空间重复文件删除归属原文件和未知文件保护,local/LocalImporter.java;FolderIndexReconciler.java,待验收,D44已本地修：持久事务归属/活跃锁/中断导入和删除恢复，未知文件与替换/符号链接保留；整本所有卷预检后才删除，墓碑先落盘；10项新真实文件核心场景通过；完整Apple/磁盘/后台恢复待验收
+LOCAL-10,P4,删除撤销,整本本地书/下载书延迟移出与撤销到期删除任务协调且保留原文件历史,MainActivity.java:deleteLocalBookWithUndo,待验收,D24：3.5秒整本撤销/真实失败重试/页面独立；下载停工作者再预检精确删除、成功后清组不清在线历史；18项相关核心及新增位置保护通过；原生整本撤销用例未运行
+DOWNLOAD-01,P4,队列,章节文件选择排队并发暂停取消重试及批量管理,download/DownloadCoordinator.java;DownloadViews.java,待验收,CI40真实全部暂停/重启保持/继续完成/删章取消与确认已走通；空队列label绘制但零尺寸容器AX不可达，D128补完整约束/实际可达/零行及重启原断言，待Apple修复复验与最终full。
+DOWNLOAD-02,P4,续传,Range与ETag断网重启任务恢复及损坏修复,download/DownloadRuntime.java;FileDownloadWorker.java,待验收,第十四轮真实HTTP终止/重启自动续传与离线像素双设备通过；Range/ETag/断网/损坏等完整范围待验收
+DOWNLOAD-03,P4,书架,下载完成接入本地书架断网阅读和删除任务协调,download/DownloadStorageManager.java;MainActivity.java,待验收,D25：离线图像只读取完成任务已记录页并后台校验；9b1d4a2两设备离线解码各1项通过；断网/取消/重启及损坏修复完整UI仍待验收；D61统一真实损坏入口及返回重校验，独立关闭不被网络设置覆盖，当前章/连续下一章两个真文件修复UI待Apple
+DOWNLOAD-04,P4,位置,自定义目录授权映射可读命名和冲突处理,download/DownloadLocation.java;DownloadDirMapping.java;DownloadNamingPolicy.java,待验收,真实Files授权/书签/产物读取父full通过；CI39手机provider反复Browse失败，D130修驱动实际当前目录/父级/Browse一次及系统确认，保留真实文件下载目录/字节/重启断言；当前待Apple复验。
+DOWNLOAD-05,P4,策略,Wi-Fi开关持久化配额前后台调度和恢复提示,download/DownloadRuntime.java;DownloadService.java,待验收,第十四轮后台用例后续完成和像素通过，但Home立即状态仍前台；当前有界等待background后保留原相等断言；实际后台到期/配额仍待验收
+DOWNLOAD-06,P4,能力范围,核对当前源实际文件下载能力并剔除不可达旧入口,download/FileDownloadWorker.java;DownloadSources.java,通过,已从冻结Git对象完成静态范围核对：source包只声明FileSourceCapability，没有当前实现；正式工厂51源无可达文件型入口，旧完整/缺失断言撤回，不新增预留功能；stages/SOURCE_FILE_SCOPE.md与file-source-scope-proof.json；本地电子书导入仍在范围；此通过仅为范围核对，不代表队列/Files/后台或网站验收
+DOWNLOAD-07,P4,记录保护,下载写入失败回滚真实反馈与保存后恢复，不假报排队/完成,download/DownloadStore.java;DownloadRuntime.java,待验收,D70：真实downloads.json写入失败5项、下载影响回归53项通过，原断言保留；下载中心可见错误及实际重试入口已补，Apple界面/磁盘满/权限恢复待验收；review-evidence/2026-10-12-download-lifecycle/README.md
+VERIFY-01,P2,验证UI,验证等待成功取消过期和返回重试用fixture贯通,MainActivity.java;source,待验收,CI41/ee76295实际双SDK/Release隔离、Apple929核心、每设备35Native/2验证UI全部成功。实际超时/本机HTTP重试/完成返回/复位重启及关闭重开通过；不验真实站点/Cloudflare/TLS。当前最终full待验。review-evidence/2026-10-13-ci41-results/README.md
+GATE-01,P5,完整性,逐入口反查全部非站源需求与实际消费者无漏项,MainActivity.java;app/src/main,待核对,全76稳定需求消费者映射已建，静态存在不代实际；当前36/111声明，CI39/40失败原件保持并修复；CI41验证交互双设备成功，当前完整消费者对应最终同版本运行仍待闭合。
+GATE-02,P5,视觉,全应用8场景真截图叠图及逐组件对照,UIHelpers.java;app/src/main/res,待验收,父64同内容侧图与CI38八设置完整人工查看，无重要缺失/遮挡；当前交付版64+8+主屏/分卷实拍仍待，不代视觉门槛。
+GATE-03,P5,交互,全应用正常异常取消恢复长按手势和返回闭环,app/src/androidTest,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
+GATE-04,P5,平台,当前版本Apple构建及必要UI图像PDFWebKitFiles检查,ios/scripts/build.sh,待验收,最新35Native/111UI声明与94Swift两配置语法通过；CI39/40影响正在Apple运行，验证交互影响和最终同版本full待实际运行。
+GATE-05,P5,质量,性能恢复旧数据并发和Release无测试内容检查,app/src/main,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
+GATE-06,P5,门槛,全部非站源必需项通过输出NON_SOURCE_GATE为PASS,docs/IOS_2_0_40_GEMINI_PLAN.md,待验收,当前922项Linux全量/2个Apple PDF跳过/0失败与267输入、短漫画恢复及历史空header约束见review-evidence/2026-10-13-short-comic-recovery/README.md；当前完整Apple/UI/视觉待运行，父CI32不含该接续。
+SOURCE-01,P2,目录,生成22专用29公共稳定ID排序默认和退役矩阵,DownloadSources.java;source/PublicSourceRegistry.java,待验收,冻结51/22+29/默认50/duya关闭；注册/名字/排序核心及父Apple通过。D126分组“全部”原错计50、disabled不可选择已修，新增2UI待Apple；当前完整开关/导入/管理/关于及最终IPA复验待运行。
+SOURCE-02,P6,适配,拆为每源需求和报告逐一搜索分类详情目录图片下载,source;sources.csv,后置站源,2026-10-12用户明确暂停真实站源验收，后续用户自行判断需修复源；不得标通过，不作为本次总验收包前置。51当前/默认50目录、开关、配置与fixture流程仍在非站源范围。
+SOURCE-03,P6,配置,逐源真实消费routesfilters域名referer及custom边界,source/SourceConfig.java,后置站源,2026-10-12用户明确暂停真实站源验收，后续用户自行判断需修复源；不得标通过，不作为本次总验收包前置。51当前/默认50目录、开关、配置与fixture流程仍在非站源范围。
+SOURCE-04,P6,验证,逐源真实验证还原Cookie超时取消与网络提示,source,后置站源,2026-10-12用户明确暂停真实站源验收，后续用户自行判断需修复源；不得标通过，不作为本次总验收包前置。51当前/默认50目录、开关、配置与fixture流程仍在非站源范围。
+FINAL-01,P7,回归,当前HEAD全量非站源核心AppleUI视觉恢复和性能自验，真实站源验收暂停,docs/IOS_2_0_40_GEMINI_PLAN.md,待验收,用户要求非站源完整自验后先出总验收包；真实站源验收暂停并如实标未验收。仅sermisellek2-spec仓库打包，交付包含实际版本、图标、IPA SHA及签名方式；当前Apple/视觉/完整门槛未关闭。
+FINAL-02,P7,交付,版本一致IPA哈希签名安装说明阶段证据和总验收清单,ios/scripts/build.sh,待验收,用户要求非站源完整自验后先出总验收包；真实站源验收暂停并如实标未验收。仅sermisellek2-spec仓库打包，交付包含实际版本、图标、IPA SHA及签名方式；当前Apple/视觉/完整门槛未关闭。

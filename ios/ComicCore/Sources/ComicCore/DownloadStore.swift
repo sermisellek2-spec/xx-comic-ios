@@ -27,17 +27,20 @@ public struct DownloadStoreData: Codable, Sendable {
     public var tasks: [String: DownloadTask]
     public var snapshots: [String: ComicDetail]
     public var pages: [String: [DownloadPage]]
+    public var bookCreatedAt: [String: TimeInterval]?
 
     public init(version: Int = DownloadStoreData.currentVersion,
                 order: [String] = [],
                 tasks: [String: DownloadTask] = [:],
                 snapshots: [String: ComicDetail] = [:],
-                pages: [String: [DownloadPage]] = [:]) {
+                pages: [String: [DownloadPage]] = [:],
+                bookCreatedAt: [String: TimeInterval]? = nil) {
         self.version = version
         self.order = order
         self.tasks = tasks
         self.snapshots = snapshots
         self.pages = pages
+        self.bookCreatedAt = bookCreatedAt
     }
 }
 
@@ -159,10 +162,26 @@ public final class DownloadStore: DownloadRepository, @unchecked Sendable {
 
     @discardableResult
     public func saveSnapshot(_ detail: ComicDetail) -> Bool {
+        saveSnapshot(detail, createdAt: Date().timeIntervalSince1970)
+    }
+
+    @discardableResult
+    func saveSnapshot(_ detail: ComicDetail, createdAt: TimeInterval) -> Bool {
         commit { data in
             let id = try DownloadModels.bookId(source: detail.summary.sourceId, comic: detail.summary.comicId)
+            if data.snapshots[id] == nil {
+                var dates = data.bookCreatedAt ?? [:]
+                dates[id] = createdAt
+                data.bookCreatedAt = dates
+            }
             data.snapshots[id] = detail
         }
+    }
+
+    public func bookCreationDate(id: String) -> TimeInterval? {
+        lock.lock(); defer { lock.unlock() }
+        guard let date = data.bookCreatedAt?[id], date.isFinite else { return nil }
+        return date
     }
 
     public func snapshot(id: String) -> ComicDetail? {
@@ -212,6 +231,7 @@ public final class DownloadStore: DownloadRepository, @unchecked Sendable {
             for id in ids { data.tasks.removeValue(forKey: id); data.pages.removeValue(forKey: id) }
             data.order.removeAll { ids.contains($0) }
             data.snapshots.removeValue(forKey: bookId)
+            data.bookCreatedAt?.removeValue(forKey: bookId)
         }
     }
     public func removeConfirmedTask(_ id: String) throws {

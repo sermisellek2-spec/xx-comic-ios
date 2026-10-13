@@ -25,6 +25,47 @@ final class DownloadStoreTests: XCTestCase {
         XCTAssertTrue(store.pages(task: "nonexistent").isEmpty)
     }
 
+    func testDownloadBookCreationDateIsDurableAndSnapshotRefreshCannotReorderIt() throws {
+        let store = try DownloadStore(directory: tempDir)
+        let comic = ComicSummary(sourceId: "source", comicId: "comic", title: "Creation date")
+        let detail = ComicDetail(summary: comic, author: "", status: "", description: "", latestChapter: "", chapters: [])
+        let id = try DownloadModels.bookId(source: "source", comic: "comic")
+        XCTAssertTrue(store.saveSnapshot(detail, createdAt: 100))
+        XCTAssertTrue(store.saveSnapshot(detail, createdAt: 200))
+        XCTAssertEqual(store.bookCreationDate(id: id), 100)
+        XCTAssertEqual(try DownloadStore(directory: tempDir).bookCreationDate(id: id), 100)
+        try store.removeBook(id)
+        XCTAssertNil(store.bookCreationDate(id: id))
+        XCTAssertTrue(store.saveSnapshot(detail, createdAt: 300))
+        XCTAssertEqual(store.bookCreationDate(id: id), 300)
+    }
+
+    func testLegacyDownloadSnapshotKeepsUnknownCreationDateAndOriginalFileOnRead() throws {
+        let comic = ComicSummary(sourceId: "source", comicId: "comic", title: "Legacy")
+        let detail = ComicDetail(summary: comic, author: "", status: "", description: "", latestChapter: "", chapters: [])
+        let id = try DownloadModels.bookId(source: "source", comic: "comic")
+        let original = try JSONEncoder().encode(DownloadStoreData(snapshots: [id: detail]))
+        let file = tempDir.appendingPathComponent("downloads.json"); try original.write(to: file)
+        let store = try DownloadStore(directory: tempDir)
+        XCTAssertEqual(store.snapshot(id: id), detail)
+        XCTAssertNil(store.bookCreationDate(id: id))
+        XCTAssertEqual(try Data(contentsOf: file), original)
+        XCTAssertTrue(store.saveSnapshot(detail, createdAt: 500))
+        XCTAssertNil(store.bookCreationDate(id: id), "A later refresh cannot invent the lost original creation time")
+    }
+
+    func testFailedSnapshotPublicationCannotLeaveAnUncommittedCreationDate() throws {
+        let store = try DownloadStore(directory: tempDir)
+        let detail = ComicDetail(summary: ComicSummary(sourceId: "source", comicId: "comic", title: "Failed"), author: "", status: "", description: "", latestChapter: "", chapters: [])
+        let id = try DownloadModels.bookId(source: "source", comic: "comic")
+        try FileManager.default.createDirectory(at: store.fileURL, withIntermediateDirectories: false)
+        XCTAssertFalse(store.saveSnapshot(detail, createdAt: 100))
+        XCTAssertNil(store.snapshot(id: id)); XCTAssertNil(store.bookCreationDate(id: id))
+        try FileManager.default.removeItem(at: store.fileURL)
+        XCTAssertTrue(store.saveSnapshot(detail, createdAt: 200))
+        XCTAssertEqual(try DownloadStore(directory: tempDir).bookCreationDate(id: id), 200)
+    }
+
     func testConfirmedTaskWriteFailureCannotInventOrReplaceQueueRecords() throws {
         let store = try DownloadStore(directory: tempDir)
         let original = DownloadTask(id: "existing", bookId: "book", sourceId: "source", comicId: "comic", chapterId: "chapter", state: .completed)

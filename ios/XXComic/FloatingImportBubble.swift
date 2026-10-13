@@ -5,13 +5,18 @@ final class FloatingImportBubble: UIView {
     var onTap: (() -> Void)?
 
     private let iconView = UIImageView()
-    private var initialCenter = CGPoint.zero
+    private let defaults: UserDefaults
+    private var initialOrigin = CGPoint.zero
     private var isDragging = false
     private let bubbleSize: CGFloat = 54
     private let marginH: CGFloat = 16
-    private let marginV: CGFloat = 20
+    private let marginTop: CGFloat = 16
+    private let marginBottom: CGFloat = 20
+    private let leftKey = "floating_bubble_snap_left"
+    private let fractionKey = "floating_bubble_y_fraction"
 
-    override init(frame: CGRect) {
+    init(defaults: UserDefaults) {
+        self.defaults = defaults
         super.init(frame: CGRect(x: 0, y: 0, width: bubbleSize, height: bubbleSize))
         setupView()
     }
@@ -46,6 +51,7 @@ final class FloatingImportBubble: UIView {
         addGestureRecognizer(pan)
 
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+        tap.require(toFail: pan)
         addGestureRecognizer(tap)
     }
 
@@ -60,10 +66,13 @@ final class FloatingImportBubble: UIView {
 
         switch gesture.state {
         case .began:
-            initialCenter = center
+            layer.removeAllAnimations()
+            initialOrigin = frame.origin
             isDragging = true
         case .changed:
-            center = CGPoint(x: initialCenter.x + translation.x, y: initialCenter.y + translation.y)
+            guard let range = allowedOrigins else { return }
+            frame.origin = CGPoint(x: min(max(initialOrigin.x + translation.x, range.minX), range.maxX),
+                                   y: min(max(initialOrigin.y + translation.y, range.minY), range.maxY))
         case .ended, .cancelled:
             isDragging = false
             snapToEdge()
@@ -73,26 +82,33 @@ final class FloatingImportBubble: UIView {
     }
 
     func snapToEdge() {
-        guard let superview else { return }
-        let parentWidth = superview.bounds.width
-        let parentHeight = superview.bounds.height
-        let safeTop = superview.safeAreaInsets.top + marginV
-        let safeBottom = parentHeight - superview.safeAreaInsets.bottom - marginV - bubbleSize
-
-        let targetX = (center.x < parentWidth / 2) ? (marginH + bubbleSize / 2) : (parentWidth - marginH - bubbleSize / 2)
-        let clampedY = min(max(center.y, safeTop + bubbleSize / 2), safeBottom + bubbleSize / 2)
-
-        UIView.animate(withDuration: 0.25, delay: 0, options: [.curveEaseOut]) {
-            self.center = CGPoint(x: targetX, y: clampedY)
+        guard let superview, let range = allowedOrigins else { return }
+        let left = center.x < superview.bounds.midX
+        let y = min(max(frame.minY, range.minY), range.maxY)
+        let fraction = range.height > 0 ? (y - range.minY) / range.height : 1
+        defaults.set(left, forKey: leftKey)
+        defaults.set(Double(fraction), forKey: fractionKey)
+        let target = CGPoint(x: left ? range.minX : range.maxX, y: y)
+        UIView.animate(withDuration: 0.2, delay: 0, options: [.curveEaseOut, .beginFromCurrentState]) {
+            self.frame.origin = target
         }
     }
 
     func positionInParent() {
-        guard let superview else { return }
-        let parentWidth = superview.bounds.width
-        let parentHeight = superview.bounds.height
-        let bottom = parentHeight - superview.safeAreaInsets.bottom - marginV - bubbleSize
-        let x = parentWidth - marginH - bubbleSize
-        frame = CGRect(x: x, y: bottom, width: bubbleSize, height: bubbleSize)
+        guard !isDragging, let range = allowedOrigins else { return }
+        let stored = (defaults.object(forKey: fractionKey) as? NSNumber)?.doubleValue ?? 0.88
+        let fraction = stored.isFinite ? min(max(CGFloat(stored), 0), 1) : 0.88
+        let left = defaults.bool(forKey: leftKey)
+        frame = CGRect(x: left ? range.minX : range.maxX, y: range.minY + fraction * range.height,
+                       width: bubbleSize, height: bubbleSize)
+    }
+
+    private var allowedOrigins: CGRect? {
+        guard let superview, superview.bounds.width > 0, superview.bounds.height > 0 else { return nil }
+        let safe = superview.bounds.inset(by: superview.safeAreaInsets)
+        let minimum = CGPoint(x: safe.minX + marginH, y: safe.minY + marginTop)
+        return CGRect(x: minimum.x, y: minimum.y,
+                      width: max(0, safe.maxX - marginH - bubbleSize - minimum.x),
+                      height: max(0, safe.maxY - marginBottom - bubbleSize - minimum.y))
     }
 }

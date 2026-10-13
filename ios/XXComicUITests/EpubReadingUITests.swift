@@ -61,6 +61,17 @@ final class EpubReadingUITests: ParityUITestCase {
         app.terminate(); app.launch(); app.buttons["本地书架"].tap()
         app.collectionViews.cells["EPUB 验收·图片"].tap()
         XCTAssertTrue(resume.waitForExistence(timeout: 5)); resume.tap(); readyComic(app, chapter: "第二章")
+        back(app); back(app)
+        let shelfResume = app.buttons["bookshelf.resume"]
+        XCTAssertTrue(shelfResume.waitForExistence(timeout: 10))
+        XCTAssertEqual(shelfResume.value as? String, "EPUB 验收·图片，上次看到 · 第 2 话")
+        XCTAssertEqual(app.collectionViews.cells.element(boundBy: 0).label, "EPUB 验收·图片")
+        shelfResume.tap(); readyComic(app, chapter: "第二章")
+        app.terminate(); app.launch(); app.buttons["本地书架"].tap()
+        XCTAssertTrue(shelfResume.waitForExistence(timeout: 10))
+        XCTAssertEqual(shelfResume.value as? String, "EPUB 验收·图片，上次看到 · 第 2 话")
+        XCTAssertEqual(app.collectionViews.cells.element(boundBy: 0).label, "EPUB 验收·图片")
+        shelfResume.tap(); readyComic(app, chapter: "第二章")
     }
     func testTextAndMixedEpubImportsRejectWithoutPublishingABook() {
         let app = launch()

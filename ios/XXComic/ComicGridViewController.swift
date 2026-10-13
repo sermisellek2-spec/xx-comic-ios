@@ -182,7 +182,8 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     private let resumeSection = UIStackView()
     private let shelfMode = BookshelfTabsView()
     private let groupBar = BookshelfGroupBar()
-    private let floatingBubble = FloatingImportBubble()
+    private let floatingBubble: FloatingImportBubble
+    private var resumeEntry: LibraryEntry?
     private var currentGroupId: String = BookshelfGroupStore.builtinOnlineAllId
     private var currentScope: BookshelfScope { localMode ? .local : .online }
     private var layoutControl: UIButton?
@@ -212,6 +213,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
 
     init(environment: AppEnvironment, historyOnly: Bool = false) {
         self.historyOnly = historyOnly
+        floatingBubble = FloatingImportBubble(defaults: environment.defaults)
         super.init(environment: environment)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
@@ -460,38 +462,53 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         let anchor = renderedContext == currentContext ? captureAnchor() : nil
 
         if localMode {
-            resumeSection.isHidden = true
+            configureResume(nil)
             let local = environment.localLibrary, downloads = environment.downloadStore
+            let readTimes = Dictionary(grouping: environment.library.history, by: { $0.summary.sourceId }).mapValues { entries in
+                Dictionary(uniqueKeysWithValues: entries.map { ($0.summary.comicId, $0.reading?.updatedAt ?? 0) })
+            }
             let members = currentGroupId == BookshelfGroupStore.builtinLocalAllId ? nil : environment.bookshelfGroupStore.getMembers(groupId: currentGroupId)
             let worker = Task.detached(priority: .userInitiated) { () async throws -> [ComicSummary] in
                 let series = try await local.series()
-                var list: [ComicSummary] = []
+                var list: [(comic: ComicSummary, createdAt: TimeInterval)] = []
                 for record in series {
                     try Task.checkCancellation()
-                    list.append(try local.summary(for: record))
+                    list.append((try local.summary(for: record), record.createdAt))
                 }
                 let completedBookIDs = Set(downloads.list().filter { $0.state == .completed }.map(\.bookId))
-                for bookId in completedBookIDs {
+                for bookId in completedBookIDs.sorted() {
                     try Task.checkCancellation()
                     if let snapshot = downloads.snapshot(id: bookId),
-                       !list.contains(where: { $0.comicId == snapshot.summary.comicId && $0.sourceId == snapshot.summary.sourceId }) {
-                        list.append(snapshot.summary)
+                       !list.contains(where: { $0.comic.comicId == snapshot.summary.comicId && $0.comic.sourceId == snapshot.summary.sourceId }) {
+                        list.append((snapshot.summary, downloads.bookCreationDate(id: bookId) ?? 0))
                     }
                 }
-                if let members { list = list.filter { members.contains($0.comicId) } }
                 try Task.checkCancellation()
-                return list
+                return list.enumerated().sorted { left, right in
+                    let a = left.element, b = right.element
+                    let first = max(a.createdAt, readTimes[a.comic.sourceId]?[a.comic.comicId] ?? 0)
+                    let second = max(b.createdAt, readTimes[b.comic.sourceId]?[b.comic.comicId] ?? 0)
+                    if first != second { return first > second }
+                    if a.createdAt != b.createdAt { return a.createdAt > b.createdAt }
+                    return left.offset < right.offset
+                }.map { $0.element.comic }
             }
             refreshTask = Task { [weak self] in
                 guard let self else { worker.cancel(); return }
                 do {
                     let list = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
                     guard self.refreshID == token, self.context == currentContext, !Task.isCancelled else { return }
-                    self.comics = list.filter { comic in
+                    let owned = list.filter { comic in
                         if comic.sourceId == "local" { return !self.environment.localDeletion.containsLocalSeries(comic.comicId) }
                         guard let id = try? DownloadModels.bookId(source: comic.sourceId, comic: comic.comicId) else { return true }
                         return !self.environment.localDeletion.containsDownloadBook(id)
                     }
+                    let identities = Dictionary(grouping: owned, by: \.sourceId).mapValues { Set($0.map(\.comicId)) }
+                    let recent = self.environment.library.history.first { entry in
+                        identities[entry.summary.sourceId]?.contains(entry.summary.comicId) == true
+                    }
+                    self.configureResume(recent)
+                    self.comics = members.map { ids in owned.filter { ids.contains($0.comicId) } } ?? owned
                     self.renderedContext = currentContext
                     self.collection.reloadData()
                     self.restoreAnchor(anchor)
@@ -517,12 +534,16 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         restoreAnchor(anchor)
         status(comics.isEmpty ? (historyOnly ? "还没有阅读记录" : "书架空空的，去发现页找漫画吧") : "")
         let recent = environment.library.history.first { $0.summary.sourceId != "local" }
-        resumeSection.isHidden = recent == nil || historyOnly
-        if let recent {
-            resume.configure(comic: recent.summary, chapterIndex: recent.reading?.chapterIndex ?? 0, environment: environment)
-        }
+        configureResume(recent)
         if !historyOnly {
             environment.favoriteUpdateChecker.startAutoCheck()
+        }
+    }
+    private func configureResume(_ entry: LibraryEntry?) {
+        resumeEntry = historyOnly ? nil : entry
+        resumeSection.isHidden = resumeEntry == nil
+        if let entry = resumeEntry {
+            resume.configure(comic: entry.summary, chapterIndex: entry.reading?.chapterIndex ?? 0, environment: environment)
         }
     }
     @objc private func showHistory() {
@@ -784,7 +805,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     }
     deinit { importTask?.cancel(); downloadSelectionTask?.cancel() }
     @objc private func continueReading() {
-        guard let recent = environment.library.history.first(where: { $0.summary.sourceId != "local" }) else { return }
+        guard let recent = resumeEntry else { return }
         guard environment.source(for: recent.summary) != nil else { status("该站源暂不可用，已保留阅读记录。"); return }
         navigationController?.pushViewController(DetailViewController(comic: recent.summary, environment: environment, resumeOnAppear: true), animated: true)
     }

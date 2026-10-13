@@ -1,35 +1,38 @@
 # 当前执行状态
 
-更新：2026-10-13。Android冻结2.0.40 / 340 / `696e80a44ab36b19de6f630565df32978e55a19e`。用户仅最后总验收，上传及打包只用 `sermisellek2-spec/xx-comic-ios`。**当前非站源门槛未通过，尚无总验收IPA。**
+更新：2026-10-13。**本次完整验收正在运行，非站源门槛尚未通过，尚无总验收 IPA。** 用户只负责最后总验收；中间修复和验收由代理完成。
 
-按用户指令删除文字阅读/排版，保留图片漫画EPUB、PDF、Kindle；小说/图文混排新导入明确拒绝，旧JSON、历史、原包仅兼容，不误删。卷轴、普通、日漫RTL保留，旧左右手不恢复。真实站源继续暂停，不作为本次出包前置；当前51源、默认启用50（duya关）的目录和确定性流程仍在验收范围。
+Android 固定基线：2.0.40 / 340 / `696e80a44ab36b19de6f630565df32978e55a19e`，527 文件与冻结包 SHA 已重新核验。CI46 固定父输入：`af4d414780730e27b9c1817dee2804e1da347473`；补查本地书架 D132/D133 后需要另固定当前候选做完整验收，父输入不代新修正。
 
-CI34父输入1990c84已完整成功：两SDK/图标/Release隔离，Apple Core929项零失败，iPhone及iPad各30原生和93UI全部通过，无跳过；130张实拍已保存。[完整原件与边界](review-evidence/2026-10-13-ci34-results/README.md)。该版本不包含随后设置与缓存修正，不能标当前交付通过。
+## 本次范围
 
-CI37/ce0607c失败原件保持：手机directory正文/重开命中，平板实际Cookie清理超时。随后CI38/7f440e7影响复验实际成功：两SDK/图标/Release隔离，Apple929核心零失败，iPhone/iPad各32原生及6UI全部通过。两个后端正文与重开均零命中，已有Cookie实际删除，八设置清理前提与横屏安全区原断言通过。[CI38原件](review-evidence/2026-10-13-ci38-results/README.md)。这不是最终完整交付结果。
+- 按用户要求删除文字阅读器、排版页、文字偏好消费者和自动跳转；图片漫画 EPUB、PDF、Kindle 保留。纯文字/混排新导入明确拒绝；旧 JSON、历史和原包保留。
+- 阅读模式保留卷轴、普通、日漫 RTL；旧左右手及淘汰输入方式不影响当前手势。
+- 当前源目录 51（22 专用 + 29 公共），默认启用 50，duya 关闭；退役 baozimh/mhua5 仅兼容旧记录。
+- **真实站源验收按用户指令暂停，门槛通过后也不自动恢复。** 目录/分组/配置及本机 HTTP 的搜索、验证、换源、下载闭环仍验收。
+- CI、上传和打包只用 `sermisellek2-spec/xx-comic-ios`；不发布 Release，不要求再次认证或提供 Apple 凭据。
 
-缓存保留后端/容量、8秒失败/重试、10秒UI及正文/重开/原包/后来缓存断言。真实框架索引仍如实显示，没有伪造0或直接删数据库。当前Linux完整Core922项/2个Apple PDF跳过/0失败/148.348秒。Core生产此后未改。
+## 当前实际结果
 
-逐入口核对发现分卷追加/排序/撤销、外部文件夹实际变更、大目录快滚、双指缩放以及进度取消的用户闭环覆盖不足，正在补验。分卷页同时改为接近冻结安卓的底部卡片列表和后台文件操作，追加可取消，确认移除不依赖已关闭页面。CI39/aa53678的分卷/同步影响已失败，原件保留并修复中；随后逐需求反查修换源严格同名/取消/失败原记录保护，补阅读换源返回、日志与实际队列闭环。最新声明36原生/111UI，95Swift两配置仅语法通过，Apple影响与最终full待验。[补验范围与边界](review-evidence/2026-10-13-volume-sync-coverage/README.md)。
+[CI46 完整运行](https://github.com/sermisellek2-spec/xx-comic-ios/actions/runs/38317394451) 使用上述固定输入，full 范围，开发阶段不打 IPA。截至 2026-10-12 23:01 UTC，实际状态仍为 in_progress。
 
-父输入64页同内容侧图已逐组件检查；8设置侧图另已查看。布局/文字/控件未发现重要缺失；iPhone横屏设置分组标题未避开安全区，当前已修并在原八场景检查中补实际横向对齐约束，已在CI38八设置实拍确认；这些父图仍不代最新交付版。所有旧图均标父输入，不算当前视觉通过。[64页审查](review-evidence/2026-10-13-current-visual/ci33-comparison/manual-component-review.json)、[设置审查](review-evidence/2026-10-13-current-visual/settings-ci36-comparison/manual-component-review.json)、[安全区修正](review-evidence/2026-10-13-settings-safe-area/README.md)。
+| 检查 | 已观察结果 / 尚需结果 |
+| --- | --- |
+| Debug 模拟器 SDK / Release 设备 SDK | 本次日志已实际成功，图标编译与 Release fixture 隔离记录待完整原件归档 |
+| Apple 完整 ComicCore | 本次实际执行 929 项，0 失败，126.686 秒；不是 Linux 解析结果 |
+| iPhone / iPad Native、UI | 本次声明各 36 Native、111 UI；待完整运行及日志，未记通过 |
+| 当前视觉 | 待本次 64 同内容主页面、8 设置、8 分卷及主屏图标原图；父输入截图不代当前 |
+| 逐需求验收 | 76 稳定 ID，其中 72 当前范围、3 真实站源暂停、1 文字阅读移除；实际方法与人工决定分开记录 |
+| 同字节 IPA | 待完整运行和人工视觉通过后，用该次归档的 Release 文件组包，不重新构建冒充已验产物 |
 
-通过当前影响复验后自动运行同版本full，复核当前64页、8设置及主屏图标；全部门槛实际通过后，使用成功full保存的Release原字节组装总验收IPA，核对图标/版本/完整资源字节与SHA，用户自行签名安装。打包工具只做语法核验，尚未实际归档/打包，不要求用户中途试包。
+CI46 输入包含反馈/Files/分卷/同步/大目录与目录顺序修正，以及 CI43 新 Native 用例缺显式 self 的编译修复。原失败及原断言保留，未通过放宽断言获得通过。
 
-[阶段方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md)、[需求矩阵](requirements.csv)、[差异台账](differences.md)、[完整门槛](NON_SOURCE_GATE.md)。此前状态原文与失败均保留为历史证据；详见本轮目录的historical-STATUS-before-ci37.md。
+最新补查候选修复悬浮导入位置、实际本地续读与最近使用排序，新增下载首次创建时间的兼容持久化。Linux 完整 925 项 / 2 Apple PDF 跳过 / 0 失败，96 Swift 两配置语法退出 0；候选 39 Native / 112 UI 尚需同版本 Apple 运行，不能以该本机结果或 CI46 父结果关闭。[补查证据与边界](review-evidence/2026-10-13-local-shelf-parity/README.md)。
 
-[换源/日志/队列收尾](review-evidence/2026-10-13-final-user-flows/README.md) · [CI38八设置人工对照](review-evidence/2026-10-13-current-visual/settings-ci38-comparison/manual-component-review.json)。
+[本次身份和输入](review-evidence/2026-10-13-full-acceptance/README.md)；locked-inputs.json 记录 Git blob 与 Windows 工作字节，仅换行差异明确列出。新运行核对工具逐方法比对固定 Git 输入，视觉工具核对原图/元数据/SHA；均不自动赋予人工或总门槛通过。
 
-[验证超时/重试/返回](review-evidence/2026-10-13-verification-flow/README.md)：新增本机HTTP确定性交互用例，已在CI41双设备通过；CI40仍按23e9e56原输入验23UI，不包括该接续。
+## 历史结果边界
 
-分组接续D126：全部51/disabled选源、表单实际错误和关闭后呈现已修，2UI新增仅语法通过；[边界](review-evidence/2026-10-13-source-group-catalog/README.md)。
+CI34 父输入完整通过；CI38 缓存/设置、CI41 验证交互、CI42 分组管理影响通过。CI39、CI40 失败原件与修复保留；CI43 编译失败原件保留，CI44/45 同错误输入取消。它们均不替代当前 CI46 完整结果。[先前状态原文](review-evidence/2026-10-13-full-acceptance/historical-STATUS-before-ci46-consolidation.md)。
 
-[CI41验证交互实际成功](review-evidence/2026-10-13-ci41-results/README.md)：双设备超时/重试/完成返回及复位重启已实际通过，仅影响范围。当前分组接续与[模型许可校正](review-evidence/2026-10-13-model-provenance/README.md)仍须最终同版本完整复验。
-
-CI39恢复影响与CI40收尾影响失败原件已完整保存。CI40三失败方法已定位并本地修正：下载空态文本已绘制但容器零尺寸导致AX不可达，日志复制改为可读且不阻塞导出的页内反馈，系统分享改查真实关闭控制；换源用例补实际收起工具栏的前提，原第2页/像素/分组/重启断言不变。新增实际剪贴板脱敏原生断言；95Swift两配置仅语法通过，修复Apple复验待运行。[原失败与修正边界](review-evidence/2026-10-13-ci40-repair/README.md)
-
-[CI42分组管理实际通过](review-evidence/2026-10-13-ci42-results/README.md)：双设备35Native/7UI及Apple929核心零失败，不代当前full。CI39原Files错匹配、fixture屏幕倍率、目录加载AX与异步定位前提已本地修正，保留原文件/章节/像素/重启断言；新增范围包括配置Files驱动回归，36Native/36UI待Apple复验。[原失败与边界](review-evidence/2026-10-13-ci39-repair/README.md)。
-
-逐入口复查D131：阅读目录正逆序原未保存，现接同一详情偏好并补重开/详情/重启的实际顺序/当前章检查；95Swift仅语法通过，仍待Apple。[原安卓证据和改动](review-evidence/2026-10-13-directory-order/README.md)。
-
-CI43两SDK及Apple929Core通过，但新增日志Native用例缺显式self导致测试编译失败，UI未运行；已修正且原断言保留。CI44/45同错误输入任务已请求取消，不记任何未运行检查通过。当前全部修正合并到36Native/111UI同版本完整回归，门槛仍未过。[原日志及修复](review-evidence/2026-10-13-ci43-repair/README.md)。
+[阶段方案](../IOS_2_0_40_PHASED_DEVELOPMENT.md) · [需求矩阵](requirements.csv) · [差异台账](differences.md) · [完整门槛](NON_SOURCE_GATE.md) · [用户事项](USER_ITEMS.md)

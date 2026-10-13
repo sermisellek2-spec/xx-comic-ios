@@ -1,0 +1,23 @@
+{
+  "archive": "local-validation-originals.zip",
+  "sha256": "24816142d55978e5e8eb87ce31568f4824b61fe24724ab534829c2da51793df7",
+  "files": {
+    "core-full-test.log": {
+      "bytes": 2033,
+      "sha256": "33da6603fb3446369ceade731528cd7b6ab2451dcea03869210583a88d4bf0e4"
+    },
+    "core-full-test-retry-1.log": {
+      "bytes": 240143,
+      "sha256": "729f7e1f1d5ae471351086176ce44016b37440a78ff7a28012ad10aa88435803"
+    },
+    "final-release-syntax.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "final-debug-syntax.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "note": "Original bytes, including compiler whitespace, retained locally and archived unchanged; no log normalization."
+}

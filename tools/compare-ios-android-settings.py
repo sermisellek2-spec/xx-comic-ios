@@ -45,8 +45,10 @@ def main():
         stem = ("iphone" if device == "phone" else "ipad") + f"_{orientation}_{theme}_settings_reference_empty"
         apple = args.ios_dir / "visual-matrix" / (stem + ".png")
         provenance = args.ios_dir / "visual-provenance" / (stem + ".json")
-        visual.checked_apple(apple, records)
+        apple_record = visual.checked_apple(apple, records)
         visual.checked_apple(provenance, records)
+        if apple_record.get("status") != "Success":
+            raise ValueError("The original Apple settings test did not pass: " + stem)
         meta = read(provenance)
         if meta.get("preferredContentSizeCategory") not in ["UICTContentSizeCategoryL", "UIContentSizeCategoryL"]:
             raise ValueError("The actual Apple font-scale provenance differs")
@@ -54,6 +56,12 @@ def main():
         same_state = any(c.get("label") == "阅读与外观" for c in components) and any(c.get("text") == "阅读与外观" for c in capture["components"])
         if args.require_same_state and not same_state:
             raise ValueError("The actual first settings section is not visible on both platforms: " + stem)
+        state_labels = ["0 条", "50 个开启", "自动", "自动跟随"]
+        if args.require_same_state:
+            android_labels = {c.get("text") for c in capture["components"]}
+            apple_labels = {c.get("label") for c in components}
+            if not set(state_labels).issubset(android_labels & apple_labels):
+                raise ValueError("The captured empty library/source count/preferences differ: " + stem)
         expected = [393, 852] if device == "phone" else [834, 1210]
         if orientation == "landscape":
             expected.reverse()
@@ -75,6 +83,7 @@ def main():
             "case": stem, "androidSHA256": sha(android), "iosSHA256": sha(apple),
             "logicalWindow": expected, "iosTestStatus": records[apple.name]["status"],
             "AndroidComponents": capture["components"], "sameStateVerified": same_state,
+            "matchingStateLabels": state_labels if args.require_same_state else [],
             "componentReview": "pending",
         }))
     args.output.mkdir(parents=True)

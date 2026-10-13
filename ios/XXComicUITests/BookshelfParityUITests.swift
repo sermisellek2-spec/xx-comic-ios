@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 final class BookshelfParityUITests: ParityUITestCase {
     private func launch(large: Bool = false) -> XCUIApplication {
@@ -30,6 +31,73 @@ final class BookshelfParityUITests: ParityUITestCase {
         guard let title = visible?.label else { return }
         app.buttons["bookshelf.layout"].tap()
         XCTAssertTrue(list.cells[title].isHittable, "Layout switching must keep a visible book instead of returning to the top")
+    }
+
+    func testLocalImportDragKeepsItsEdgeAndPositionThroughLayoutRotationAndRelaunch() throws {
+        defer { XCUIDevice.shared.orientation = .portrait }
+        for dark in [false, true] {
+            XCUIDevice.shared.orientation = .portrait
+            let app = XCUIApplication()
+            app.launchArguments = ["--ui-testing", "--epub-fixtures", dark ? "--dark-mode" : "--light-mode"]
+            app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString
+            app.launch()
+            XCTAssertTrue(app.buttons["本地书架"].waitForExistence(timeout: 15)); app.buttons["本地书架"].tap()
+            let bubble = app.buttons["bookshelf.import"]
+            XCTAssertTrue(bubble.waitForExistence(timeout: 10)); XCTAssertTrue(bubble.isHittable)
+            let window = app.windows.firstMatch.frame
+            bubble.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.1,
+                thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.45)))
+            let snapped = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                abs(bubble.frame.minX - window.minX - 16) < 1 && bubble.isHittable
+            }, object: app)
+            XCTAssertEqual(XCTWaiter.wait(for: [snapped], timeout: 5), .completed)
+            XCTAssertFalse(app.buttons["EPUB 漫画"].exists, "Dragging must not open the import menu")
+            let saved = bubble.frame
+            app.buttons["我的书架"].tap(); app.buttons["本地书架"].tap()
+            app.buttons["bookshelf.layout"].tap()
+            XCTAssertEqual(bubble.frame.minX, saved.minX, accuracy: 1)
+            XCTAssertEqual(bubble.frame.minY, saved.minY, accuracy: 1)
+            for landscape in [false, true] {
+                XCUIDevice.shared.orientation = landscape ? .landscapeLeft : .portrait
+                let rotated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                    let frame = app.windows.firstMatch.frame
+                    return (frame.width > frame.height) == landscape && frame.contains(bubble.frame)
+                        && bubble.isHittable && bubble.frame.maxY <= app.tabBars.firstMatch.frame.minY - 19
+                }, object: app)
+                XCTAssertEqual(XCTWaiter.wait(for: [rotated], timeout: 5), .completed)
+                let frame = app.windows.firstMatch.frame
+                XCTAssertTrue(frame.contains(bubble.frame)); XCTAssertTrue(bubble.isHittable)
+                XCTAssertLessThan(bubble.frame.midX, frame.midX)
+                XCTAssertLessThanOrEqual(bubble.frame.maxY, app.tabBars.firstMatch.frame.minY - 20 + 1)
+                let prefix = UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
+                let name = "\(prefix)_\(landscape ? "landscape" : "portrait")_\(dark ? "dark" : "light")_local_import_bubble"
+                let screenshot = XCUIScreen.main.screenshot()
+                let shot = XCTAttachment(data: screenshot.pngRepresentation, uniformTypeIdentifier: "public.png")
+                shot.name = name; shot.lifetime = .keepAlways; add(shot)
+                let record: [String: Any] = ["scene": name, "fixtureID": "real-image-epub-bubble-v1",
+                    "appFrame": ["x": Double(frame.minX), "y": Double(frame.minY), "width": Double(frame.width), "height": Double(frame.height)],
+                    "screenScale": Double(UIScreen.main.scale), "rasterPixelSize": [screenshot.image.cgImage?.width ?? 0, screenshot.image.cgImage?.height ?? 0],
+                    "preferredContentSizeCategory": UIApplication.shared.preferredContentSizeCategory.rawValue,
+                    "capturedAtUTC": ISO8601DateFormatter().string(from: Date()), "accessibilitySnapshot": app.debugDescription,
+                    "steps": "Actual local bookshelf import-button drag, tab and layout changes, rotation; genuine image-only EPUB fixtures"]
+                let proof = XCTAttachment(data: try JSONSerialization.data(withJSONObject: record, options: .sortedKeys), uniformTypeIdentifier: "public.json")
+                proof.name = "provenance-" + name; proof.lifetime = .keepAlways; add(proof)
+            }
+            XCUIDevice.shared.orientation = .portrait
+            let portrait = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                app.windows.firstMatch.frame.height > app.windows.firstMatch.frame.width
+            }, object: app)
+            XCTAssertEqual(XCTWaiter.wait(for: [portrait], timeout: 5), .completed)
+            app.terminate(); app.launch()
+            XCTAssertTrue(app.buttons["本地书架"].waitForExistence(timeout: 15)); app.buttons["本地书架"].tap()
+            XCTAssertTrue(bubble.waitForExistence(timeout: 10)); XCTAssertTrue(bubble.isHittable)
+            XCTAssertEqual(bubble.frame.minX, saved.minX, accuracy: 1)
+            XCTAssertEqual(bubble.frame.minY, saved.minY, accuracy: 1)
+            bubble.tap()
+            XCTAssertTrue(app.buttons["EPUB 漫画"].waitForExistence(timeout: 5))
+            app.buttons["取消"].tap(); XCTAssertTrue(bubble.isHittable)
+            app.terminate()
+        }
     }
 
     func testResumeRowOpensSavedChapterWithOneTapAndRetainsReturnPath() {
