@@ -56,7 +56,7 @@ struct FilesPickerDriver {
     func openFolder(_ name: String) throws {
         if isShowingFolder(name) { capture("target-folder"); return }
         let cell = pickerRoot.cells.containing(.staticText, identifier: name).firstMatch
-        if !cell.waitForExistence(timeout: 5) || !cell.isHittable {
+        if !cell.waitForExistence(timeout: 3) || !cell.isHittable {
             let collection = pickerRoot.collectionViews.firstMatch
             if collection.exists {
                 for _ in 0..<4 where !cell.exists || !cell.isHittable {
@@ -69,21 +69,22 @@ struct FilesPickerDriver {
         }
         guard cell.waitForExistence(timeout: 5) else { throw SelectionError.folderNotOpened }
         let icon = cell.images.firstMatch
-        let iconTarget = icon.exists ? icon.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)) : cell.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5))
-        for _ in 0..<3 {
-            if isShowingFolder(name) { break }
-            iconTarget.doubleTap()
-            if waitForFolder(name, timeout: 2.5) { break }
-            iconTarget.tap()
-            if waitForFolder(name, timeout: 2.5) { break }
+        if icon.exists {
+            icon.doubleTap()
+        } else {
+            cell.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).doubleTap()
         }
-        guard isShowingFolder(name) else { throw SelectionError.folderNotOpened }
+        let opened = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in self.isShowingFolder(name) }, object: app)
+        if XCTWaiter.wait(for: [opened], timeout: 10) != .completed {
+            if icon.exists && icon.isHittable {
+                icon.tap()
+            } else if cell.exists && cell.isHittable {
+                cell.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).tap()
+            }
+            let retryOpened = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in self.isShowingFolder(name) }, object: app)
+            guard XCTWaiter.wait(for: [retryOpened], timeout: 5) == .completed else { throw SelectionError.folderNotOpened }
+        }
         capture("target-folder")
-    }
-
-    private func waitForFolder(_ name: String, timeout: TimeInterval) -> Bool {
-        let expectation = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in self.isShowingFolder(name) }, object: self.app)
-        return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
     }
 
     func selectFile(_ name: String) throws {
