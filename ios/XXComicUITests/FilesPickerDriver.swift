@@ -16,8 +16,12 @@ struct FilesPickerDriver {
     }
 
     private func isShowingFolder(_ name: String) -> Bool {
-        pickerBar.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name + ",")).firstMatch.exists
-            || pickerBar.staticTexts[name].exists || app.navigationBars[name].exists
+        pickerBar.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", name)).firstMatch.exists
+            || pickerBar.staticTexts[name].exists
+            || systemBars.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", name)).firstMatch.exists
+            || systemBars.staticTexts[name].exists
+            || app.navigationBars[name].exists
+            || app.navigationBars.matching(NSPredicate(format: "identifier BEGINSWITH[c] %@ OR label BEGINSWITH[c] %@", name, name)).firstMatch.exists
     }
 
     func openFixtureProvider() throws {
@@ -52,24 +56,45 @@ struct FilesPickerDriver {
     }
 
     func openFolder(_ name: String) throws {
+        if isShowingFolder(name) { capture("target-folder"); return }
         let cell = pickerRoot.cells.containing(.staticText, identifier: name).firstMatch
-        if !cell.waitForExistence(timeout: 2) || !cell.isHittable {
+        if !cell.waitForExistence(timeout: 3) || !cell.isHittable {
             let collection = pickerRoot.collectionViews.firstMatch
             let scrollView = collection.exists ? collection : pickerRoot
-            for _ in 0..<8 where !cell.exists || !cell.isHittable {
+            for _ in 0..<3 where !cell.exists || !cell.isHittable {
                 scrollView.swipeUp()
             }
-            for _ in 0..<8 where !cell.exists || !cell.isHittable {
+            for _ in 0..<3 where !cell.exists || !cell.isHittable {
                 scrollView.swipeDown()
             }
         }
-        guard cell.waitForExistence(timeout: 5), cell.isHittable else { throw SelectionError.folderNotOpened }
-        // In a folder chooser the icon supports opening a folder. Text taps may
-        // select it; the navigation bar itself has a fixed DOC identifier.
-        let icon = cell.images.firstMatch
-        if icon.exists && icon.isHittable { icon.doubleTap() } else { cell.doubleTap() }
+        guard cell.waitForExistence(timeout: 5) else { throw SelectionError.folderNotOpened }
+
         let opened = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in self.isShowingFolder(name) }, object: app)
-        guard XCTWaiter.wait(for: [opened], timeout: 10) == .completed else { throw SelectionError.folderNotOpened }
+        for _ in 0..<4 {
+            if isShowingFolder(name) { break }
+            let icon = cell.images.firstMatch
+            if icon.exists {
+                let target = icon.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+                target.doubleTap()
+            } else if cell.isHittable {
+                let target = cell.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5))
+                target.doubleTap()
+            } else {
+                cell.doubleTap()
+            }
+            if XCTWaiter.wait(for: [opened], timeout: 2.5) == .completed { break }
+
+            if icon.exists {
+                icon.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            } else if cell.isHittable {
+                cell.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).tap()
+            } else {
+                cell.tap()
+            }
+            if XCTWaiter.wait(for: [opened], timeout: 2.5) == .completed { break }
+        }
+        guard self.isShowingFolder(name) else { throw SelectionError.folderNotOpened }
         capture("target-folder")
     }
 
@@ -79,15 +104,19 @@ struct FilesPickerDriver {
         if !file.waitForExistence(timeout: 2) || !file.isHittable {
             let collection = pickerRoot.collectionViews.firstMatch
             let scrollView = collection.exists ? collection : pickerRoot
-            for _ in 0..<6 where !file.exists || !file.isHittable {
+            for _ in 0..<4 where !file.exists || !file.isHittable {
                 scrollView.swipeUp()
             }
-            for _ in 0..<6 where !file.exists || !file.isHittable {
+            for _ in 0..<4 where !file.exists || !file.isHittable {
                 scrollView.swipeDown()
             }
         }
-        guard file.waitForExistence(timeout: 5), file.isHittable else { throw SelectionError.fileNotFound }
-        file.tap()
+        guard file.waitForExistence(timeout: 5) else { throw SelectionError.fileNotFound }
+        if file.isHittable {
+            file.tap()
+        } else {
+            file.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
     }
 
     func confirmFolder() throws { try confirm(["打开", "Open", "完成", "Done"]) }
