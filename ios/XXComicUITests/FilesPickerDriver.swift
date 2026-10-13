@@ -16,12 +16,10 @@ struct FilesPickerDriver {
     }
 
     private func isShowingFolder(_ name: String) -> Bool {
-        pickerBar.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", name)).firstMatch.exists
+        pickerBar.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name + ",")).firstMatch.exists
             || pickerBar.staticTexts[name].exists
-            || systemBars.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", name)).firstMatch.exists
-            || systemBars.staticTexts[name].exists
             || app.navigationBars[name].exists
-            || app.navigationBars.matching(NSPredicate(format: "identifier BEGINSWITH[c] %@ OR label BEGINSWITH[c] %@", name, name)).firstMatch.exists
+            || (pickerRoot.exists && pickerRoot.identifier.contains(name))
     }
 
     func openFixtureProvider() throws {
@@ -58,57 +56,44 @@ struct FilesPickerDriver {
     func openFolder(_ name: String) throws {
         if isShowingFolder(name) { capture("target-folder"); return }
         let cell = pickerRoot.cells.containing(.staticText, identifier: name).firstMatch
-        if !cell.waitForExistence(timeout: 3) || !cell.isHittable {
+        if !cell.waitForExistence(timeout: 5) || !cell.isHittable {
             let collection = pickerRoot.collectionViews.firstMatch
-            let scrollView = collection.exists ? collection : pickerRoot
-            for _ in 0..<3 where !cell.exists || !cell.isHittable {
-                scrollView.swipeUp()
-            }
-            for _ in 0..<3 where !cell.exists || !cell.isHittable {
-                scrollView.swipeDown()
+            if collection.exists {
+                for _ in 0..<4 where !cell.exists || !cell.isHittable {
+                    collection.swipeUp()
+                }
+                for _ in 0..<4 where !cell.exists || !cell.isHittable {
+                    collection.swipeDown()
+                }
             }
         }
         guard cell.waitForExistence(timeout: 5) else { throw SelectionError.folderNotOpened }
-
-        let opened = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in self.isShowingFolder(name) }, object: app)
-        for _ in 0..<4 {
+        let icon = cell.images.firstMatch
+        let iconTarget = icon.exists ? icon.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)) : cell.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5))
+        for _ in 0..<3 {
             if isShowingFolder(name) { break }
-            let icon = cell.images.firstMatch
-            if icon.exists {
-                let target = icon.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-                target.doubleTap()
-            } else if cell.isHittable {
-                let target = cell.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5))
-                target.doubleTap()
-            } else {
-                cell.doubleTap()
-            }
+            iconTarget.doubleTap()
+            let opened = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in self.isShowingFolder(name) }, object: self.app)
             if XCTWaiter.wait(for: [opened], timeout: 2.5) == .completed { break }
-
-            if icon.exists {
-                icon.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            } else if cell.isHittable {
-                cell.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).tap()
-            } else {
-                cell.tap()
-            }
+            iconTarget.tap()
             if XCTWaiter.wait(for: [opened], timeout: 2.5) == .completed { break }
         }
-        guard self.isShowingFolder(name) else { throw SelectionError.folderNotOpened }
+        guard isShowingFolder(name) else { throw SelectionError.folderNotOpened }
         capture("target-folder")
     }
 
     func selectFile(_ name: String) throws {
         let stem = (name as NSString).deletingPathExtension
         let file = pickerRoot.cells.matching(NSPredicate(format: "identifier BEGINSWITH %@ OR label BEGINSWITH %@", name, stem)).firstMatch
-        if !file.waitForExistence(timeout: 2) || !file.isHittable {
+        if !file.waitForExistence(timeout: 5) || !file.isHittable {
             let collection = pickerRoot.collectionViews.firstMatch
-            let scrollView = collection.exists ? collection : pickerRoot
-            for _ in 0..<4 where !file.exists || !file.isHittable {
-                scrollView.swipeUp()
-            }
-            for _ in 0..<4 where !file.exists || !file.isHittable {
-                scrollView.swipeDown()
+            if collection.exists {
+                for _ in 0..<4 where !file.exists || !file.isHittable {
+                    collection.swipeUp()
+                }
+                for _ in 0..<4 where !file.exists || !file.isHittable {
+                    collection.swipeDown()
+                }
             }
         }
         guard file.waitForExistence(timeout: 5) else { throw SelectionError.fileNotFound }
