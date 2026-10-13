@@ -878,6 +878,11 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                         self?.refresh()
                     }
                     let nav = FilterDrawerNavigationController(rootViewController: vm)
+                    switch AppTheme(rawValue: self.environment.defaults.integer(forKey: "theme.mode")) ?? .automatic {
+                    case .automatic: nav.overrideUserInterfaceStyle = .unspecified
+                    case .light: nav.overrideUserInterfaceStyle = .light
+                    case .dark: nav.overrideUserInterfaceStyle = .dark
+                    }
                     self.present(nav, animated: true)
                 }
                 let renameAction = UIAction(title: "修改作品名称", image: UIImage(systemName: "pencil")) { [weak self] _ in

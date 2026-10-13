@@ -6,7 +6,9 @@ import ComicCore
 @MainActor
 final class ErrorLogInteractionTests: XCTestCase {
     func testCopyWritesTheStoredRedactedLogAndKeepsExportAvailable() throws {
-        let store = ErrorLogStore(userDefaults: nil)
+        let tempFile = FileManager.default.temporaryDirectory.appendingPathComponent("test_error_log_copy_\(UUID().uuidString).txt")
+        defer { try? FileManager.default.removeItem(at: tempFile) }
+        let store = ErrorLogStore(userDefaults: nil, fileURL: tempFile)
         store.append(title: "复制验收", error: NSError(domain: "Fixture", code: 1,
             userInfo: [NSLocalizedDescriptionKey: "文件校验失败\nAuthorization: Bearer TEST_AUTH_FIELD\nCookie: TEST_COOKIE_FIELD\ntoken=TEST_TOKEN_FIELD"]))
         let entry = try XCTUnwrap(store.entries().first)

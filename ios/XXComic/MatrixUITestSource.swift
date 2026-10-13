@@ -29,6 +29,8 @@ enum MatrixUITestFixtures {
             ErrorLogStore.shared.clear()
             ErrorLogStore.shared.append(title: "验收导入错误", detail: "文件校验失败\nAuthorization: Bearer TEST_AUTH_FIELD\nCookie: session=TEST_COOKIE_FIELD\nhttps://fixture.invalid/comic?token=TEST_TOKEN_FIELD")
             environment.defaults.set(true, forKey: "ui.matrix.errors.seeded")
+        } else if !environment.defaults.bool(forKey: "ui.matrix.library.seeded") {
+            ErrorLogStore.shared.clear()
         }
         for source in environment.allSources where !arguments.contains("--matrix-empty-library") && !environment.defaults.bool(forKey: "ui.matrix.library.seeded") {
             guard let fixture = source as? MatrixUITestSource else { continue }

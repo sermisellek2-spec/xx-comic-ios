@@ -53,7 +53,17 @@ struct FilesPickerDriver {
 
     func openFolder(_ name: String) throws {
         let cell = pickerRoot.cells.containing(.staticText, identifier: name).firstMatch
-        guard cell.waitForExistence(timeout: 10) else { throw SelectionError.folderNotOpened }
+        if !cell.waitForExistence(timeout: 2) || !cell.isHittable {
+            let collection = pickerRoot.collectionViews.firstMatch
+            let scrollView = collection.exists ? collection : pickerRoot
+            for _ in 0..<8 where !cell.exists || !cell.isHittable {
+                scrollView.swipeUp()
+            }
+            for _ in 0..<8 where !cell.exists || !cell.isHittable {
+                scrollView.swipeDown()
+            }
+        }
+        guard cell.waitForExistence(timeout: 5), cell.isHittable else { throw SelectionError.folderNotOpened }
         // In a folder chooser the icon supports opening a folder. Text taps may
         // select it; the navigation bar itself has a fixed DOC identifier.
         let icon = cell.images.firstMatch
@@ -66,7 +76,17 @@ struct FilesPickerDriver {
     func selectFile(_ name: String) throws {
         let stem = (name as NSString).deletingPathExtension
         let file = pickerRoot.cells.matching(NSPredicate(format: "identifier BEGINSWITH %@ OR label BEGINSWITH %@", name, stem)).firstMatch
-        guard file.waitForExistence(timeout: 10) else { throw SelectionError.fileNotFound }
+        if !file.waitForExistence(timeout: 2) || !file.isHittable {
+            let collection = pickerRoot.collectionViews.firstMatch
+            let scrollView = collection.exists ? collection : pickerRoot
+            for _ in 0..<6 where !file.exists || !file.isHittable {
+                scrollView.swipeUp()
+            }
+            for _ in 0..<6 where !file.exists || !file.isHittable {
+                scrollView.swipeDown()
+            }
+        }
+        guard file.waitForExistence(timeout: 5), file.isHittable else { throw SelectionError.fileNotFound }
         file.tap()
     }
 

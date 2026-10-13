@@ -238,10 +238,11 @@ extension VolumeManagerViewController: UIDocumentPickerDelegate {
 @MainActor
 private final class VolumeRowCell: UITableViewCell {
     var remove: (() -> Void)?
+    private let card = UIView()
     private let badge = UILabel(), titleLabel = UILabel(), formatLabel = UILabel(), deleteButton = UIButton(type: .system)
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier); backgroundColor = .clear; selectionStyle = .none; showsReorderControl = true
-        let card = UIView(); card.backgroundColor = Palette.surface; card.layer.cornerRadius = 10; card.layer.borderWidth = 1; card.layer.borderColor = Palette.border.cgColor
+        card.backgroundColor = Palette.surface; card.layer.cornerRadius = 10; card.layer.borderWidth = 1; card.layer.borderColor = Palette.border.cgColor
         card.translatesAutoresizingMaskIntoConstraints = false; contentView.addSubview(card)
         badge.font = .boldSystemFont(ofSize: 11); badge.textColor = Palette.text3; badge.textAlignment = .center; badge.backgroundColor = Palette.cardSoft; badge.layer.cornerRadius = 11; badge.clipsToBounds = true
         titleLabel.font = .systemFont(ofSize: 13); titleLabel.textColor = Palette.text; titleLabel.numberOfLines = 2
@@ -257,6 +258,10 @@ private final class VolumeRowCell: UITableViewCell {
         ])
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        card.layer.borderColor = Palette.border.cgColor
+    }
     func configure(_ volume: LocalBook, index: Int) {
         badge.text = String(index + 1); titleLabel.text = volume.title
         let format = volume.epub != nil ? "EPUB" : (volume.pdf != nil ? "PDF" : (volume.importFormat == .zip || volume.importFormat == .cbz ? "ZIP" : "图片"))

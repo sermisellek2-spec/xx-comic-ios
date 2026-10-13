@@ -478,6 +478,11 @@ final class DetailViewController: UIViewController {
             self?.localVolumesChanged()
         }
         let nav = FilterDrawerNavigationController(rootViewController: vm)
+        switch AppTheme(rawValue: environment.defaults.integer(forKey: "theme.mode")) ?? .automatic {
+        case .automatic: nav.overrideUserInterfaceStyle = .unspecified
+        case .light: nav.overrideUserInterfaceStyle = .light
+        case .dark: nav.overrideUserInterfaceStyle = .dark
+        }
         present(nav, animated: true)
     }
     private func localVolumesChanged() {

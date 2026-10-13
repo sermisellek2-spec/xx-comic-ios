@@ -21,15 +21,12 @@ final class ErrorLogsParityUITests: ParityUITestCase {
         XCTAssertFalse(app.alerts.firstMatch.exists)
         XCTAssertTrue(app.buttons["error.logs.export"].isHittable)
         app.buttons["error.logs.export"].tap()
-        // Close the real system share UI using its own controls or gesture.
-        let close = app.buttons.matching(NSPredicate(format: "label IN %@", ["Close", "关闭"])).firstMatch
-        XCTAssertTrue(close.waitForExistence(timeout: 5), "The system share controller must expose its real close control")
-        XCTAssertTrue(close.isHittable); close.tap()
+        dismissSystemShareUI(in: app)
         XCTAssertTrue(app.buttons["error.logs.copy"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["error.logs.copy.feedback"].exists)
         app.navigationBars.buttons.firstMatch.tap()
         app.buttons["error.logs.more"].tap(); app.buttons["导出全部日志"].tap()
-        XCTAssertTrue(close.waitForExistence(timeout: 5)); XCTAssertTrue(close.isHittable); close.tap()
+        dismissSystemShareUI(in: app)
         app.buttons["error.logs.more"].tap(); app.buttons["清空错误日志"].tap()
         XCTAssertTrue(app.alerts["清空错误日志"].waitForExistence(timeout: 5)); app.alerts["清空错误日志"].buttons["取消"].tap()
         XCTAssertTrue(row.exists)
@@ -37,5 +34,26 @@ final class ErrorLogsParityUITests: ParityUITestCase {
         XCTAssertTrue(app.staticTexts["error.logs.empty"].waitForExistence(timeout: 5))
         app.terminate(); app.launch(); app.tabBars.buttons["设置"].tap(); entry.tap()
         XCTAssertTrue(app.staticTexts["error.logs.empty"].waitForExistence(timeout: 5))
+    }
+
+    private func dismissSystemShareUI(in app: XCUIApplication) {
+        // Close the real system share UI using its own controls or popover dismissal region.
+        let close = app.buttons.matching(NSPredicate(format: "label IN %@", ["Close", "关闭"])).firstMatch
+        let popoverDismiss = app.otherElements["PopoverDismissRegion"]
+        let appeared = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            close.exists || popoverDismiss.exists
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [appeared], timeout: 5), .completed, "The system share controller must expose its real close or popover dismiss control")
+        if close.exists {
+            XCTAssertTrue(close.isHittable)
+            close.tap()
+        } else {
+            XCTAssertTrue(popoverDismiss.exists)
+            popoverDismiss.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.85)).tap()
+        }
+        let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            !close.exists && !popoverDismiss.exists
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
     }
 }

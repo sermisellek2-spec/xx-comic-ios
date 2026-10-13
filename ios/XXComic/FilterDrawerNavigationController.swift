@@ -28,6 +28,9 @@ private final class FilterDrawerPresentation: UIPresentationController {
         return CGRect(x: bounds.minX, y: bounds.maxY - height, width: bounds.width, height: height)
     }
     override func presentationTransitionWillBegin() {
+        if presentedViewController.overrideUserInterfaceStyle == .unspecified {
+            presentedViewController.overrideUserInterfaceStyle = presentingViewController.overrideUserInterfaceStyle
+        }
         guard let containerView else { return }
         backdrop.backgroundColor = UIColor(red: 10 / 255, green: 24 / 255, blue: 37 / 255, alpha: 145 / 255)
         backdrop.frame = containerView.bounds; backdrop.alpha = 0
