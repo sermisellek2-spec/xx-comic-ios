@@ -43,10 +43,10 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
     }
     override func numberOfSections(in tableView: UITableView) -> Int { 2 }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        section == 0 ? 1 : ids.count
+        section == 0 ? 2 : ids.count
     }
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        section == 0 ? "分组" : "全部站源"
+        section == 0 ? "分组与规则" : "全部站源"
     }
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
         guard section == 1 else { return nil }
@@ -56,15 +56,22 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         if indexPath.section == 0 {
             let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
             cell.backgroundColor = Palette.card
-            cell.textLabel?.text = "站源分组"
             cell.textLabel?.textColor = Palette.text
             cell.textLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-            let group = environment.sourceGroupStore.currentGroup
-            let customCount = max(0, environment.sourceGroupStore.groups.count - 1)
-            cell.detailTextLabel?.text = "当前：" + group.name + " · \(customCount) 个自定义分组"
             cell.detailTextLabel?.textColor = Palette.secondaryText
             cell.accessoryType = .disclosureIndicator
             cell.showsReorderControl = false
+            if indexPath.row == 0 {
+                cell.textLabel?.text = "站源分组"
+                let group = environment.sourceGroupStore.currentGroup
+                let customCount = max(0, environment.sourceGroupStore.groups.count - 1)
+                cell.detailTextLabel?.text = "当前：" + group.name + " · \(customCount) 个自定义分组"
+            } else {
+                cell.textLabel?.text = "规则与批量管理"
+                cell.accessibilityIdentifier = "source.rule.manager"
+                let ruleCount = RuleCatalog.shared.entries().filter { !$0.removed }.count
+                cell.detailTextLabel?.text = ruleCount > 0 ? "已安装 \(ruleCount) 个规则 · 支持订阅更新与批量管理" : "添加规则订阅、从文件导入或批量管理"
+            }
             return cell
         }
 
@@ -74,12 +81,13 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         cell.backgroundColor = Palette.card
         cell.textLabel?.text = source?.name
         let host = URL(string: source?.referer ?? "")?.host ?? ""
+        let vpnPrefix = SourceVpnPolicy.requiresVpn(sourceId: id) ? "[VPN] " : ""
         if let health = healthStatuses[id] {
-            cell.detailTextLabel?.text = "\(host) · \(health)"
+            cell.detailTextLabel?.text = vpnPrefix + "\(host) · \(health)"
         } else if id == "mh18" {
-            cell.detailTextLabel?.text = "18mh.org · " + environment.mh18BrowserSession.status
+            cell.detailTextLabel?.text = vpnPrefix + "18mh.org · " + environment.mh18BrowserSession.status
         } else {
-            cell.detailTextLabel?.text = host
+            cell.detailTextLabel?.text = vpnPrefix + host
         }
         cell.textLabel?.textColor = Palette.text
         cell.detailTextLabel?.textColor = Palette.secondaryText
@@ -117,7 +125,11 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         if indexPath.section == 0 {
-            showSourceGroups()
+            if indexPath.row == 0 {
+                showSourceGroups()
+            } else {
+                showRuleManager()
+            }
         }
     }
     override func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle { .none }
@@ -148,6 +160,10 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         let nav = UINavigationController(rootViewController: sheet)
         present(nav, animated: true)
     }
+    private func showRuleManager() {
+        let controller = SourceRuleManagerViewController(environment: environment)
+        navigationController?.pushViewController(controller, animated: true)
+    }
     @objc private func resetOrder() {
         environment.sourcePreferences.resetOrder()
         tableView.reloadData()
@@ -155,6 +171,9 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
     }
     @objc private func showMoreMenu() {
         let alert = UIAlertController(title: "站源管理", message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "规则与批量管理", style: .default) { [weak self] _ in
+            self?.showRuleManager()
+        })
         alert.addAction(UIAlertAction(title: "站源分组管理", style: .default) { [weak self] _ in
             self?.showSourceGroups()
         })

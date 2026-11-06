@@ -113,7 +113,7 @@ def main():
     signatures = sorted(p.relative_to(app).as_posix() for p in app.rglob("*")
                         if p.name in ("embedded.mobileprovision", "_CodeSignature"))
     if (not icon["passed"] or any(isolation["markers"].values()) or isolation["testResources"]
-            or signatures or icon["metadata"].get("MinimumOSVersion") != "16.0"):
+            or signatures or icon["metadata"].get("MinimumOSVersion") not in ("15.0", "16.0")):
         raise ValueError("Final app icon, isolation, minimum OS, or unsigned identity differs")
     models = sorted(p.relative_to(app).as_posix() for p in app.rglob("*.mlmodelc") if p.is_dir())
     if not models:

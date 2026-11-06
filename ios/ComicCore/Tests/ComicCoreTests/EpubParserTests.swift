@@ -319,11 +319,11 @@ final class EpubParserTests: XCTestCase {
             await fulfillment(of: [started], timeout: 2)
             // This small stored ZIP reaches matching well before cancellation; no pre-cancel shortcut.
             try await Task.sleep(nanoseconds: 50_000_000)
-            let cancelledAt = ContinuousClock.now
+            let cancelledAt = ProcessInfo.processInfo.systemUptime
             task.cancel()
             do { _ = try await task.value; XCTFail("运行中取消不能返回成功") }
             catch { XCTAssertTrue(error is CancellationError, "\(error)") }
-            XCTAssertLessThan(cancelledAt.duration(to: .now), .milliseconds(250), "\(tag) 匹配期间必须响应取消")
+            XCTAssertLessThan(ProcessInfo.processInfo.systemUptime - cancelledAt, 0.25, "\(tag) 匹配期间必须响应取消")
         }
     }
 }

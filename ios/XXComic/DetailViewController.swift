@@ -17,6 +17,7 @@ final class DetailViewController: UIViewController {
     private let read = UIButton(type: .system)
     private let directory = UIButton(type: .system)
     private let directoryArrow = UIImageView(image: UIImage(systemName: "chevron.right", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18, weight: .regular)))
+    private let chapterSectionView = DetailChapterSectionView()
     private let downloadButton = UIButton(type: .system)
     private let sourceSwitchButton = UIButton(type: .system)
     private let manageVolumes = UIButton(type: .system)
@@ -146,7 +147,33 @@ final class DetailViewController: UIViewController {
         retry.accessibilityIdentifier = "detail.feedback"
         retry.titleLabel?.numberOfLines = 0
 
-        var items: [UIView] = [titleRow, metadata, tagsRow, descriptionLabel, directory]
+        chapterSectionView.setOrder(desc: environment.defaults.bool(forKey: "chapter.list.descending"))
+        chapterSectionView.onSelectChapter = { [weak self] chapterIndex in
+            guard let self else { return }
+            let list = self.cachedChapters ?? self.cachedDetail?.chapters ?? []
+            guard list.indices.contains(chapterIndex) else { return }
+            self.openReader(chapters: list, index: chapterIndex, incomplete: false)
+        }
+        chapterSectionView.onOrderChanged = { [weak self] isDesc in
+            self?.environment.defaults.set(isDesc, forKey: "chapter.list.descending")
+        }
+        chapterSectionView.onOpenDrawer = { [weak self] in
+            self?.showDirectory()
+        }
+        chapterSectionView.onRetry = { [weak self] in
+            guard let self else { return }
+            Task { [weak self] in
+                guard let self else { return }
+                self.chapterSectionView.showLoading()
+                do {
+                    _ = try await self.chapters()
+                } catch {
+                    self.chapterSectionView.showError(error.localizedDescription)
+                }
+            }
+        }
+
+        var items: [UIView] = [titleRow, metadata, tagsRow, descriptionLabel, directory, chapterSectionView]
         var buttons = [favorite, directory, read, retry]
         if comic.sourceId == "local" {
             sourceSwitchButton.isHidden = true; downloadButton.isHidden = true
@@ -290,6 +317,31 @@ final class DetailViewController: UIViewController {
         directoryArrow.tintColor = Palette.text3
         directory.bringSubviewToFront(directoryArrow)
         directory.accessibilityValue = subtitle
+        syncChapterSection()
+    }
+    private func syncChapterSection() {
+        let list = cachedChapters ?? cachedDetail?.chapters ?? []
+        chapterSectionView.setOrder(desc: environment.defaults.bool(forKey: "chapter.list.descending"))
+        guard !list.isEmpty else {
+            if !detailLoaded {
+                chapterSectionView.showLoading()
+            } else {
+                chapterSectionView.bindChapters([], currentChapterIndex: 0, hasCurrent: false)
+            }
+            return
+        }
+        let saved = environment.library.entry(for: comic)?.reading
+        let hasCurrent = saved != nil
+        let currentIdx = list.firstIndex { $0.chapterId == saved?.chapter.chapterId } ?? saved?.chapterIndex ?? 0
+        var downloadedIds = Set<String>()
+        for ch in list {
+            if let taskId = try? DownloadModels.key(comic.sourceId, comic.comicId, ch.chapterId),
+               let task = environment.downloadRuntime.store.get(id: taskId),
+               task.state == .completed {
+                downloadedIds.insert(ch.chapterId)
+            }
+        }
+        chapterSectionView.bindChapters(list, currentChapterIndex: max(0, min(currentIdx, list.count - 1)), hasCurrent: hasCurrent, downloadedChapterIds: downloadedIds)
     }
     private func updateFeedback() {
         retry.setTitle(feedback.message, for: .normal)
@@ -690,10 +742,14 @@ final class ChapterListViewController: UITableViewController {
     static func navigation(_ controller: ChapterListViewController) -> UINavigationController {
         let navigation = UINavigationController(rootViewController: controller)
         if let sheet = navigation.sheetPresentationController {
-            sheet.detents = [
-                .custom(identifier: .init("collapsed")) { $0.maximumDetentValue * 0.55 },
-                .custom(identifier: .init("expanded")) { $0.maximumDetentValue * 0.92 }
-            ]
+            if #available(iOS 16.0, *) {
+                sheet.detents = [
+                    .custom(identifier: .init("collapsed")) { $0.maximumDetentValue * 0.55 },
+                    .custom(identifier: .init("expanded")) { $0.maximumDetentValue * 0.92 }
+                ]
+            } else {
+                sheet.detents = [.medium(), .large()]
+            }
             sheet.prefersGrabberVisible = true
             sheet.preferredCornerRadius = 16
             sheet.prefersScrollingExpandsWhenScrolledToEdge = true

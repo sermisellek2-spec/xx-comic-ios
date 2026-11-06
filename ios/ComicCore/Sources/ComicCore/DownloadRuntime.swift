@@ -284,6 +284,7 @@ public struct DownloadRuntimeActivity: Equatable, Sendable {
 
 public final class DownloadRuntime: @unchecked Sendable {
     public static let maxActiveWorkers = 2
+    public static let pageWorkersPerChapter = 6
 
     public let store: DownloadStore
     public let queue: DownloadCoordinator
@@ -294,6 +295,9 @@ public final class DownloadRuntime: @unchecked Sendable {
     private var activeWorkers = Set<String>()
     private var deletingBookIDs = Set<String>()
     private var deletingTaskIDs = Set<String>()
+    private var prefetchedChapters: [String: ChapterPage] = [:]
+    private var prefetchOrder: [String] = []
+    private var prefetchingKeys = Set<String>()
     private var isInitialized = false
     private var suspendedForBackground = false
     private var retryWake: Task<Void, Never>?
@@ -846,7 +850,7 @@ public final class DownloadRuntime: @unchecked Sendable {
                 throw DownloadError.corruptedData("站源解析器未配置")
             }
 
-            let chapter = try await resolver.resolveChapter(sourceId: task.sourceId, url: task.url)
+            let chapter = try await resolveChapterPage(task: task, resolver: resolver)
             try checkLease(task)
 
             let rawUrls = chapter.imageUrls
@@ -860,10 +864,11 @@ public final class DownloadRuntime: @unchecked Sendable {
             guard !uniqueUrls.isEmpty else {
                 throw DownloadError.invalidChapter
             }
+            if !task.sourceId.hasPrefix("fixture_") {
+                schedulePrefetchNextChapters(currentTaskId: task.id, resolver: resolver)
+            }
 
             let savedPages = Dictionary(uniqueKeysWithValues: store.pages(task: task.id).map { ($0.index, $0) })
-            var completedPages: [DownloadPage] = []
-            var totalBytes: Int64 = 0
 
             try withBookDirectory(task.bookId, access: .write) { book in
                 try checkLease(task)
@@ -872,66 +877,13 @@ public final class DownloadRuntime: @unchecked Sendable {
             let stagingDirectory = try stagingDirectory(task)
             staging = stagingDirectory
 
-            for (i, rawUrl) in uniqueUrls.enumerated() {
-                try checkLease(task)
-                let existingPage = savedPages[i]
-
-                let pageToUse: DownloadPage
-                if let existing = existingPage,
-                   DownloadModels.sameImage(existing.url, rawUrl),
-                   try isValidPage(existing, task: task) {
-                    pageToUse = existing
-                } else {
-                    let partFile = stagingDirectory.appendingPathComponent("\(i).part")
-                    try validateRegularFileIfPresent(partFile)
-                    let referer = resolver.resolveReferer(sourceId: task.sourceId, chapterUrl: task.url)
-
-                    var fetchResult: (bytes: Int64, hash: String)?
-                    let canRefresh = task.sourceId == "zaimanhua" || rawUrl.contains("#xx-")
-                    for attempt in 0..<(canRefresh ? 2 : 1) {
-                        try checkLease(task)
-                        let resolvedUrl = try await resolver.resolveImageUrl(sourceId: task.sourceId, imageUrl: rawUrl, force: attempt > 0)
-                        do {
-                            fetchResult = try await imageFetcher.fetch(
-                                sourceId: task.sourceId,
-                                url: resolvedUrl,
-                                referer: referer,
-                                destination: partFile,
-                                check: { [weak self] in
-                                    guard let self else { throw DownloadError.taskCancelled }
-                                    try self.checkLease(task)
-                                }
-                            )
-                            break
-                        } catch let httpError as DownloadHTTPError {
-                            if !canRefresh || attempt > 0 || (httpError.statusCode != 403 && httpError.statusCode != 410) {
-                                throw httpError
-                            }
-                        }
-                    }
-                    guard let fetchResult else {
-                        throw DownloadError.corruptedData("图片地址刷新失败")
-                    }
-
-                    let newPage = DownloadPage(index: i,
-                                               url: DownloadModels.imageIdentity(rawUrl),
-                                               path: "\(task.bookId)/\(task.id)/\(i).img",
-                                               hash: fetchResult.hash,
-                                               bytes: fetchResult.bytes)
-                    // Persist ownership before publication. A failed database
-                    // write cannot leave an unrecorded final image behind.
-                    try requireSaved(store.savePage(task: task.id, page: newPage))
-                    try withBookDirectory(task.bookId, access: .write) { book in
-                        let target = try chapterDirectory(task, in: book).appendingPathComponent("\(i).img")
-                        try publish(partFile, to: target, task: task)
-                    }
-                    pageToUse = newPage
-                }
-
-                completedPages.append(pageToUse)
-                totalBytes += pageToUse.bytes
-                if !queue.update(lease: task, state: .downloading, done: i + 1, total: uniqueUrls.count, bytes: totalBytes) { try checkLease(task) }
-            }
+            let (completedPages, totalBytes) = try await downloadChapterPages(
+                task: task,
+                resolver: resolver,
+                uniqueUrls: uniqueUrls,
+                savedPages: savedPages,
+                stagingDirectory: stagingDirectory
+            )
 
             try checkLease(task)
             if !queue.update(lease: task, state: .verifying, done: uniqueUrls.count, total: uniqueUrls.count, bytes: totalBytes) { try checkLease(task) }
@@ -975,6 +927,228 @@ public final class DownloadRuntime: @unchecked Sendable {
         } catch {
             handleDownloadError(error, task: task)
         }
+    }
+
+    private static func prefetchKey(sourceId: String, chapterUrl: String) -> String {
+        "\(sourceId)\n\(chapterUrl)"
+    }
+
+    private func resolveChapterPage(task: DownloadTask, resolver: DownloadSourceResolverProtocol) async throws -> ChapterPage {
+        if !task.sourceId.hasPrefix("fixture_"), !task.url.isEmpty {
+            let key = Self.prefetchKey(sourceId: task.sourceId, chapterUrl: task.url)
+            lock.lock()
+            let cached = prefetchedChapters.removeValue(forKey: key)
+            if cached != nil {
+                prefetchOrder.removeAll { $0 == key }
+            }
+            lock.unlock()
+            if let cached, !cached.imageUrls.isEmpty {
+                return cached
+            }
+        }
+        return try await resolver.resolveChapter(sourceId: task.sourceId, url: task.url)
+    }
+
+    private func schedulePrefetchNextChapters(currentTaskId: String, resolver: DownloadSourceResolverProtocol) {
+        Task.detached(priority: .utility) { [weak self] in
+            guard let self else { return }
+            let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+            let candidates = self.store.list().filter { candidate in
+                !candidate.isFileTask &&
+                candidate.id != currentTaskId &&
+                candidate.state == .queued &&
+                candidate.nextAttempt <= nowMs &&
+                !candidate.sourceId.hasPrefix("fixture_") &&
+                !candidate.url.isEmpty
+            }
+            var prefetchedCount = 0
+            for candidate in candidates {
+                self.lock.lock()
+                let canContinue = self.isInitialized && !self.suspendedForBackground && self.isNetworkConnected && (!self.isWifiOnly || self.isWifiConnected)
+                let key = Self.prefetchKey(sourceId: candidate.sourceId, chapterUrl: candidate.url)
+                let shouldFetch = canContinue && self.prefetchedChapters[key] == nil && self.prefetchingKeys.insert(key).inserted
+                self.lock.unlock()
+                if !canContinue { return }
+                if !shouldFetch { continue }
+                defer {
+                    self.lock.lock()
+                    self.prefetchingKeys.remove(key)
+                    self.lock.unlock()
+                }
+                if let page = try? await resolver.resolveChapter(sourceId: candidate.sourceId, url: candidate.url),
+                   !page.imageUrls.isEmpty {
+                    self.lock.lock()
+                    self.prefetchedChapters[key] = page
+                    self.prefetchOrder.removeAll { $0 == key }
+                    self.prefetchOrder.append(key)
+                    while self.prefetchOrder.count > 16 {
+                        let oldest = self.prefetchOrder.removeFirst()
+                        self.prefetchedChapters.removeValue(forKey: oldest)
+                    }
+                    self.lock.unlock()
+                }
+                prefetchedCount += 1
+                if prefetchedCount >= 2 { break }
+            }
+        }
+    }
+
+    private func downloadChapterPages(
+        task: DownloadTask,
+        resolver: DownloadSourceResolverProtocol,
+        uniqueUrls: [String],
+        savedPages: [Int: DownloadPage],
+        stagingDirectory: URL
+    ) async throws -> ([DownloadPage], Int64) {
+        let total = uniqueUrls.count
+        let canUseConcurrentPageWorkers = (imageFetcher is DefaultDownloadImageFetcher)
+            && !task.sourceId.hasPrefix("fixture_")
+            && !uniqueUrls.contains(where: { $0.contains("fixture.invalid") })
+        let concurrency = canUseConcurrentPageWorkers ? max(1, min(Self.pageWorkersPerChapter, total)) : 1
+        let referer = resolver.resolveReferer(sourceId: task.sourceId, chapterUrl: task.url)
+
+        if concurrency == 1 {
+            var completedPages: [DownloadPage] = []
+            completedPages.reserveCapacity(total)
+            var totalBytes: Int64 = 0
+            for (i, rawUrl) in uniqueUrls.enumerated() {
+                let page = try await downloadSinglePage(
+                    task: task,
+                    resolver: resolver,
+                    referer: referer,
+                    rawUrl: rawUrl,
+                    index: i,
+                    existingPage: savedPages[i],
+                    stagingDirectory: stagingDirectory
+                )
+                completedPages.append(page)
+                totalBytes += page.bytes
+                if !queue.update(lease: task, state: .downloading, done: i + 1, total: total, bytes: totalBytes) {
+                    try checkLease(task)
+                }
+            }
+            return (completedPages, totalBytes)
+        }
+
+        var orderedPages = Array<DownloadPage?>(repeating: nil, count: total)
+        var doneCount = 0
+        var totalBytes: Int64 = 0
+
+        try await withThrowingTaskGroup(of: (Int, DownloadPage).self) { group in
+            var nextIndex = 0
+            for _ in 0..<concurrency {
+                let index = nextIndex
+                nextIndex += 1
+                let rawUrl = uniqueUrls[index]
+                let existing = savedPages[index]
+                group.addTask { [self] in
+                    let page = try await self.downloadSinglePage(
+                        task: task,
+                        resolver: resolver,
+                        referer: referer,
+                        rawUrl: rawUrl,
+                        index: index,
+                        existingPage: existing,
+                        stagingDirectory: stagingDirectory
+                    )
+                    return (index, page)
+                }
+            }
+
+            while let (index, page) = try await group.next() {
+                orderedPages[index] = page
+                doneCount += 1
+                totalBytes += page.bytes
+                if !queue.update(lease: task, state: .downloading, done: doneCount, total: total, bytes: totalBytes) {
+                    try checkLease(task)
+                }
+                if nextIndex < total {
+                    let next = nextIndex
+                    nextIndex += 1
+                    let rawUrl = uniqueUrls[next]
+                    let existing = savedPages[next]
+                    group.addTask { [self] in
+                        let nextPage = try await self.downloadSinglePage(
+                            task: task,
+                            resolver: resolver,
+                            referer: referer,
+                            rawUrl: rawUrl,
+                            index: next,
+                            existingPage: existing,
+                            stagingDirectory: stagingDirectory
+                        )
+                        return (next, nextPage)
+                    }
+                }
+            }
+        }
+
+        let completedPages = try orderedPages.map { page -> DownloadPage in
+            guard let page else { throw DownloadError.corruptedData("章节页面下载未完成") }
+            return page
+        }
+        return (completedPages, totalBytes)
+    }
+
+    private func downloadSinglePage(
+        task: DownloadTask,
+        resolver: DownloadSourceResolverProtocol,
+        referer: String,
+        rawUrl: String,
+        index i: Int,
+        existingPage: DownloadPage?,
+        stagingDirectory: URL
+    ) async throws -> DownloadPage {
+        try checkLease(task)
+        if let existing = existingPage,
+           DownloadModels.sameImage(existing.url, rawUrl),
+           try isValidPage(existing, task: task) {
+            return existing
+        }
+
+        let partFile = stagingDirectory.appendingPathComponent("\(i).part")
+        try validateRegularFileIfPresent(partFile)
+
+        var fetchResult: (bytes: Int64, hash: String)?
+        let canRefresh = task.sourceId == "zaimanhua" || rawUrl.contains("#xx-")
+        for attempt in 0..<(canRefresh ? 2 : 1) {
+            try checkLease(task)
+            let resolvedUrl = try await resolver.resolveImageUrl(sourceId: task.sourceId, imageUrl: rawUrl, force: attempt > 0)
+            do {
+                fetchResult = try await imageFetcher.fetch(
+                    sourceId: task.sourceId,
+                    url: resolvedUrl,
+                    referer: referer,
+                    destination: partFile,
+                    check: { [weak self] in
+                        guard let self else { throw DownloadError.taskCancelled }
+                        try self.checkLease(task)
+                    }
+                )
+                break
+            } catch let httpError as DownloadHTTPError {
+                if !canRefresh || attempt > 0 || (httpError.statusCode != 403 && httpError.statusCode != 410) {
+                    throw httpError
+                }
+            }
+        }
+        guard let fetchResult else {
+            throw DownloadError.corruptedData("图片地址刷新失败")
+        }
+
+        let newPage = DownloadPage(index: i,
+                                   url: DownloadModels.imageIdentity(rawUrl),
+                                   path: "\(task.bookId)/\(task.id)/\(i).img",
+                                   hash: fetchResult.hash,
+                                   bytes: fetchResult.bytes)
+        // Persist ownership before publication. A failed database
+        // write cannot leave an unrecorded final image behind.
+        try requireSaved(store.savePage(task: task.id, page: newPage))
+        try withBookDirectory(task.bookId, access: .write) { book in
+            let target = try chapterDirectory(task, in: book).appendingPathComponent("\(i).img")
+            try publish(partFile, to: target, task: task)
+        }
+        return newPage
     }
 
     private func downloadFileTask(_ task: DownloadTask) async {

@@ -138,10 +138,10 @@ enum KindleEpubWriter {
     /// Every untrusted HTML regex shares this one monotonic deadline. ICU's progress
     /// callback can interrupt backtracking even when there has not been a match yet.
     private final class HTMLScan {
-        private let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+        private let deadline = ProcessInfo.processInfo.systemUptime + 2.0
         func check() throws {
             try Task.checkCancellation()
-            guard ContinuousClock.now < deadline else { throw EpubError.limitExceeded("Kindle HTML 扫描超过 2 秒") }
+            guard ProcessInfo.processInfo.systemUptime < deadline else { throw EpubError.limitExceeded("Kindle HTML 扫描超过 2 秒") }
         }
         private func matches(_ pattern: String, _ text: String, _ visit: (NSTextCheckingResult, NSString) throws -> Bool) throws {
             try check()

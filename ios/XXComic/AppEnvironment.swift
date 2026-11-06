@@ -80,7 +80,28 @@ final class AppEnvironment {
             result.append(PublicSourceRegistry.create(config))
         }
         let active = BuiltinSourceCatalog.activeIDs.compactMap { id in result.first { $0.id == id } }
-        return active + [
+        let extraSources: [any ComicSource] = [
+            KalamanhuaComicSource(config: preferences.config(for: "kalamanhua") ?? KalamanhuaComicSource.defaultConfig()),
+            MangaDexComicSource(config: preferences.config(for: "mangadex") ?? MangaDexComicSource.defaultConfig()),
+            XcomicComicSource(config: preferences.config(for: "xcomic") ?? XcomicComicSource.defaultConfig()),
+            HipmhComicSource(config: preferences.config(for: "hipmh") ?? HipmhComicSource.defaultConfig()),
+            GalleryComicSource(config: preferences.config(for: "nhentai") ?? GalleryComicSource.defaultConfig(id: "nhentai")),
+            GalleryComicSource(config: preferences.config(for: "wnacg") ?? GalleryComicSource.defaultConfig(id: "wnacg"))
+        ]
+        let ruleSources: [any ComicSource] = RuleCatalog.shared.enabledSources()
+        var combined: [any ComicSource] = active
+        var seenIDs = Set(combined.map(\.id))
+        for ruleSource in ruleSources {
+            if let existingIdx = combined.firstIndex(where: { $0.id == ruleSource.id }) {
+                combined[existingIdx] = ruleSource
+            } else if seenIDs.insert(ruleSource.id).inserted {
+                combined.append(ruleSource)
+            }
+        }
+        for src in extraSources where seenIDs.insert(src.id).inserted {
+            combined.append(src)
+        }
+        return combined + [
             RetiredComicSource(id: "baozimh", name: "包子漫画（已移除）"),
             RetiredComicSource(id: "mhua5", name: "漫画屋（已下线）")
         ]

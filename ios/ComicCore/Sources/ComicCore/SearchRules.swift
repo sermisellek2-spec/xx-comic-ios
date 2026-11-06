@@ -1,6 +1,8 @@
 import Foundation
 
 public enum SearchRules {
+    public static let exactMatchScore = 10000
+
     // Java String.trim removes only UTF-16 code units <= U+0020.
     // Foundation whitespace trimming and Swift canonical equality are broader.
     public static func trim(_ text: String) -> String {
@@ -13,18 +15,152 @@ public enum SearchRules {
         return !expected.isEmpty && trim(title).utf16.elementsEqual(expected.utf16)
     }
 
-    public static func prioritize(_ items: [ComicSummary], query: String) -> [ComicSummary] {
-        var exact: [ComicSummary] = []
-        var others: [ComicSummary] = []
-        for item in items {
-            if isExact(title: item.title, query: query) { exact.append(item) }
-            else { others.append(item) }
+    public static func calculateMatchScore(title: String, query: String) -> Int {
+        let rawTitle = trim(title)
+        let rawQuery = trim(query)
+        if rawTitle.isEmpty || rawQuery.isEmpty { return 0 }
+
+        if rawTitle.utf16.elementsEqual(rawQuery.utf16) { return exactMatchScore }
+
+        let lowerTitle = rawTitle.lowercased()
+        let lowerQuery = rawQuery.lowercased()
+        if lowerTitle.utf16.elementsEqual(lowerQuery.utf16) || lowerTitle == lowerQuery {
+            return 9900
         }
-        return exact + others
+
+        var normTitle = normalizeForMatch(lowerTitle)
+        var normQuery = normalizeForMatch(lowerQuery)
+        if normTitle.isEmpty { normTitle = lowerTitle }
+        if normQuery.isEmpty { normQuery = lowerQuery }
+
+        if normTitle.utf16.elementsEqual(normQuery.utf16) || normTitle == normQuery {
+            return 9500
+        }
+
+        // 半匹配 A：标题完整包含搜索词
+        if lowerTitle.contains(lowerQuery) || normTitle.contains(normQuery) {
+            let isPrefix = lowerTitle.hasPrefix(lowerQuery) || normTitle.hasPrefix(normQuery)
+            let isSuffix = lowerTitle.hasSuffix(lowerQuery) || normTitle.hasSuffix(normQuery)
+            let qLen = max(1, normQuery.utf16.count)
+            let tLen = max(qLen, normTitle.utf16.count)
+            let ratioBonus = Int((1500.0 * Double(qLen) / Double(tLen)).rounded())
+            let positionBonus = isPrefix ? 800 : (isSuffix ? 300 : 0)
+            return 7000 + positionBonus + ratioBonus
+        }
+
+        // 半匹配 B：搜索词完整包含标题（标题至少 2 个有效字符）
+        if normTitle.utf16.count >= 2 && (lowerQuery.contains(lowerTitle) || normQuery.contains(normTitle)) {
+            let isPrefix = lowerQuery.hasPrefix(lowerTitle) || normQuery.hasPrefix(normTitle)
+            let tLen = normTitle.utf16.count
+            let qLen = max(tLen, normQuery.utf16.count)
+            let ratioBonus = Int((900.0 * Double(tLen) / Double(qLen)).rounded())
+            return 5800 + (isPrefix ? 300 : 0) + ratioBonus
+        }
+
+        // 相似度匹配：当无直接包含关系时，按公共子序列与字符覆盖度评估相似度
+        let a = Array(normTitle.utf16)
+        let b = Array(normQuery.utf16)
+        if b.count < 2 || a.count < 2 { return 0 }
+
+        let lcs = longestCommonSubsequence(a, b)
+        let commonChars = countMatchedQueryChars(title: a, query: b)
+        let bestOverlap = max(lcs, commonChars)
+        let queryCoverage = Double(bestOverlap) / Double(b.count)
+        if bestOverlap < 2 || queryCoverage < 0.5 { return 0 }
+
+        let lcsQueryRatio = Double(lcs) / Double(b.count)
+        let lcsDice = (2.0 * Double(lcs)) / Double(b.count + a.count)
+        let charQueryRatio = Double(commonChars) / Double(b.count)
+        let similarity = 0.45 * lcsQueryRatio + 0.35 * lcsDice + 0.20 * charQueryRatio
+        return Int((1000.0 + similarity * 4500.0).rounded())
+    }
+
+    public static func bestMatchScore(_ items: [ComicSummary], query: String) -> Int {
+        guard !items.isEmpty else { return 0 }
+        let trimmedQuery = trim(query)
+        guard !trimmedQuery.isEmpty else { return 0 }
+        var best = 0
+        for item in items {
+            let score = calculateMatchScore(title: item.title, query: trimmedQuery)
+            if score > best {
+                best = score
+                if best >= exactMatchScore { break }
+            }
+        }
+        return best
+    }
+
+    public static func prioritize(_ items: [ComicSummary], query: String) -> [ComicSummary] {
+        guard !items.isEmpty else { return [] }
+        let trimmedQuery = trim(query)
+        guard !trimmedQuery.isEmpty else { return items }
+
+        var scores: [Int] = []
+        scores.reserveCapacity(items.count)
+        var hasPositive = false
+        for item in items {
+            let score = calculateMatchScore(title: item.title, query: trimmedQuery)
+            scores.append(score)
+            if score > 0 { hasPositive = true }
+        }
+
+        guard hasPositive else { return items }
+
+        var indexed = Array(items.indices)
+        indexed.sort { a, b in
+            let scoreA = scores[a]
+            let scoreB = scores[b]
+            if scoreA != scoreB {
+                return scoreA > scoreB
+            }
+            return a < b
+        }
+        return indexed.map { items[$0] }
     }
 
     public static func hasExact(_ items: [ComicSummary], query: String) -> Bool {
         items.contains { isExact(title: $0.title, query: query) }
+    }
+
+    private static func normalizeForMatch(_ input: String) -> String {
+        String(input.filter { $0.isLetter || $0.isNumber })
+    }
+
+    private static func longestCommonSubsequence(_ a: [UTF16.CodeUnit], _ b: [UTF16.CodeUnit]) -> Int {
+        let m = min(a.count, 64)
+        let n = min(b.count, 64)
+        guard m > 0, n > 0 else { return 0 }
+        var dp = [Int](repeating: 0, count: n + 1)
+        for i in 1...m {
+            var prev = 0
+            let ca = a[i - 1]
+            for j in 1...n {
+                let temp = dp[j]
+                if ca == b[j - 1] {
+                    dp[j] = prev + 1
+                } else {
+                    dp[j] = max(dp[j], dp[j - 1])
+                }
+                prev = temp
+            }
+        }
+        return dp[n]
+    }
+
+    private static func countMatchedQueryChars(title: [UTF16.CodeUnit], query: [UTF16.CodeUnit]) -> Int {
+        guard !title.isEmpty, !query.isEmpty else { return 0 }
+        var used = [Bool](repeating: false, count: title.count)
+        var matched = 0
+        for qc in query {
+            for j in 0..<title.count {
+                if !used[j] && title[j] == qc {
+                    used[j] = true
+                    matched += 1
+                    break
+                }
+            }
+        }
+        return matched
     }
 }
 
@@ -43,6 +179,21 @@ public enum SourceOrder {
             else { rest.append(item) }
         }
         return first + rest
+    }
+
+    public static func rankByScore<T>(_ items: [T], score: (T) -> Int) -> [T] {
+        guard items.count > 1 else { return items }
+        let scores = items.map(score)
+        var indexed = Array(items.indices)
+        indexed.sort { a, b in
+            let scoreA = scores[a]
+            let scoreB = scores[b]
+            if scoreA != scoreB {
+                return scoreA > scoreB
+            }
+            return a < b
+        }
+        return indexed.map { items[$0] }
     }
 }
 
@@ -92,9 +243,9 @@ public struct GlobalSearchState: Sendable {
         return true
     }
 
-    /// Sources with non-empty results, exact-match sources partitioned to front (DISC-03).
+    /// Sources with non-empty results, ranked by match relevance (DISC-03).
     public var visibleSourceIDs: [String] {
         let nonEmpty = sourceIDs.filter { !(results[$0]?.isEmpty ?? true) }
-        return SourceOrder.exactFirst(nonEmpty) { exactSourceIDs.contains($0) }
+        return SourceOrder.rankByScore(nonEmpty) { SearchRules.bestMatchScore(results[$0] ?? [], query: query) }
     }
 }

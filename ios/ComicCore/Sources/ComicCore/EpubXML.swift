@@ -13,7 +13,19 @@ enum EpubXML {
         var children: [Node] = []
         var content: [Content] = []
         init(_ name: String, _ attributes: [String: String] = [:], qualifiedName: String? = nil) {
-            self.name = name; self.attributes = attributes; self.qualifiedName = qualifiedName ?? name
+            let localName = name.split(separator: ":").last.map(String.init) ?? name
+            self.name = localName
+            var normalizedAttributes = attributes
+            for (key, value) in attributes {
+                if let colon = key.lastIndex(of: ":"), key != "epub:type", key != "xlink:href" {
+                    let localKey = String(key[key.index(after: colon)...])
+                    if normalizedAttributes[localKey] == nil {
+                        normalizedAttributes[localKey] = value
+                    }
+                }
+            }
+            self.attributes = normalizedAttributes
+            self.qualifiedName = qualifiedName ?? name
         }
         subscript(_ attribute: String) -> String { attributes[attribute] ?? "" }
         var text: String {

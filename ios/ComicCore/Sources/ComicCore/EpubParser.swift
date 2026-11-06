@@ -10,7 +10,7 @@ public enum EpubParser {
             if !path.isEmpty && (selected == nil || rootfile["media-type"].lowercased() == "application/oebps-package+xml") { selected = path }
         }
         guard let selected else { throw EpubError.invalid("META-INF/container.xml 缺少有效的 rootfile full-path") }
-        let opfPath = try EpubArchive.resolve(selected)
+        let opfPath = try archive.resolveExisting(selected)
         var hasDrm = false, hasFontObfuscation = false
         if archive.contains("META-INF/encryption.xml") {
             let encryption = try xml("META-INF/encryption.xml", archive)
@@ -44,7 +44,7 @@ public enum EpubParser {
             guard !id.isEmpty else { throw EpubError.invalid("manifest 包含缺少 id 的条目") }
             guard byID[id] == nil else { throw EpubError.invalid("manifest 包含重复的条目 id：\(id)") }
             guard !href.isEmpty else { throw EpubError.invalid("manifest item [\(id)] 缺少 href") }
-            let path = try EpubArchive.resolve(href, relativeTo: opfPath)
+            let path = try archive.resolveExisting(href, relativeTo: opfPath)
             let media = item["media-type"], properties = item["properties"]
             if properties.contains("cover-image") { cover = path }
             if properties.contains("nav") { navPath = path }
@@ -106,7 +106,7 @@ public enum EpubParser {
         var sources: [String] = []
         // ICU can backtrack quadratically on malformed tags. Its progress callback can stop
         // an in-flight match; the two patterns share one monotonic 500 ms time budget.
-        let deadline = ContinuousClock.now.advanced(by: .milliseconds(500))
+        let deadline = ProcessInfo.processInfo.systemUptime + 0.5
         var callbacks = 0
         var matchingError: Error?
         for pattern in patterns {
@@ -115,7 +115,7 @@ public enum EpubParser {
             regex.enumerateMatches(in: html, options: .reportProgress, range: NSRange(html.startIndex..., in: html)) { match, _, stop in
                 callbacks += 1
                 if Task.isCancelled { matchingError = CancellationError() }
-                else if callbacks % 128 == 0 && ContinuousClock.now >= deadline {
+                else if callbacks % 128 == 0 && ProcessInfo.processInfo.systemUptime >= deadline {
                     matchingError = EpubError.limitExceeded("XHTML 单图检查超过 500 毫秒：\(path)")
                 }
                 if matchingError != nil { stop.pointee = true; return }
@@ -123,10 +123,10 @@ public enum EpubParser {
             }
             if let matchingError { throw matchingError }
             try Task.checkCancellation()
-            guard ContinuousClock.now < deadline else { throw EpubError.limitExceeded("XHTML 单图检查超过 500 毫秒：\(path)") }
+            guard ProcessInfo.processInfo.systemUptime < deadline else { throw EpubError.limitExceeded("XHTML 单图检查超过 500 毫秒：\(path)") }
         }
         guard sources.count == 1 else { return nil }
-        let resolved = try EpubArchive.resolve(sources[0], relativeTo: path)
+        let resolved = try archive.resolveExisting(sources[0], relativeTo: path)
         return archive.contains(resolved) ? resolved : nil
     }
 
@@ -138,7 +138,7 @@ public enum EpubParser {
             try Task.checkCancellation()
             let anchor = node.descendants(ncx ? "content" : "a").first
             let raw = anchor?[ncx ? "src" : "href"] ?? ""
-            let href = SearchRules.trim(raw).isEmpty ? "" : try EpubArchive.resolve(raw, relativeTo: path)
+            let href = SearchRules.trim(raw).isEmpty ? "" : try archive.resolveExisting(raw, relativeTo: path)
             let title = SearchRules.trim(ncx ? (node.descendants("text").first?.text ?? "") : (anchor?.text ?? ""))
             let children = ncx ? node.children.filter { $0.name.lowercased() == "navpoint" }
                 : (node.descendants("ol").first?.children.filter { $0.name.lowercased() == "li" } ?? [])

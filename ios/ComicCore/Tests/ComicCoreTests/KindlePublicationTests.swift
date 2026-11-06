@@ -281,11 +281,11 @@ final class KindlePublicationTests: XCTestCase {
     }
     func testMaliciousHTMLHasBoundedRuntimeAndCleanup() throws {
         let bytes = fixture(text: [Data(String(repeating: "<", count: 300_000).utf8)])
-        let (source, target) = try files(bytes), start = ContinuousClock.now
+        let (source, target) = try files(bytes), start = ProcessInfo.processInfo.systemUptime
         XCTAssertThrowsError(try KindlePublicationAdapter.convert(source: source, to: target, requireComic: false)) {
             XCTAssertTrue($0.localizedDescription.contains("2 秒"))
         }
-        XCTAssertLessThan(start.duration(to: .now), .seconds(6))
+        XCTAssertLessThan(ProcessInfo.processInfo.systemUptime - start, 6.0)
         try assertClean(source, target, bytes)
     }
     func testCancellationDuringHTMLScanningCleansScratch() async throws {

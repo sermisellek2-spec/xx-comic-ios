@@ -772,6 +772,17 @@ private final class FilterViewController: UIViewController {
                     button.accessibilityIdentifier = "filter.source." + candidate.id
                     configureOption(button, title: candidate.name, selected: isSelected)
                     button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+                    if SourceVpnPolicy.requiresVpn(sourceId: candidate.id) {
+                        let vpnBadge = SourceVpnBadgeView()
+                        vpnBadge.isUserInteractionEnabled = false
+                        vpnBadge.isAccessibilityElement = false
+                        vpnBadge.translatesAutoresizingMaskIntoConstraints = false
+                        button.addSubview(vpnBadge)
+                        NSLayoutConstraint.activate([
+                            vpnBadge.topAnchor.constraint(equalTo: button.topAnchor, constant: 3),
+                            vpnBadge.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -3)
+                        ])
+                    }
                     button.addAction(UIAction { [weak self] _ in
                         guard let self else { return }
                         self.task?.cancel()

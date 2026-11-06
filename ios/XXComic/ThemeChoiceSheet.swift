@@ -11,7 +11,11 @@ final class ThemeChoiceSheet: UIViewController {
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .pageSheet
         if let sheet = sheetPresentationController {
-            sheet.detents = [.custom(identifier: .init("theme")) { _ in 218 }]
+            if #available(iOS 16.0, *) {
+                sheet.detents = [.custom(identifier: .init("theme")) { _ in 218 }]
+            } else {
+                sheet.detents = [.medium()]
+            }
             sheet.prefersGrabberVisible = true
             sheet.preferredCornerRadius = 16
         }

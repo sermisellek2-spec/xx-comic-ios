@@ -257,6 +257,7 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
         private let coverView = RemoteImageView()
         private let titleLabel = UILabel()
         private let sourceLabel = UILabel()
+        private let vpnBadge = SourceVpnBadgeView()
         private let latestLabel = UILabel()
         private let switchButton = UIButton(type: .system)
         private var onSwitch: (() -> Void)?
@@ -277,6 +278,14 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
             sourceLabel.font = .systemFont(ofSize: 13, weight: .medium)
             sourceLabel.textColor = Palette.accent
 
+            vpnBadge.translatesAutoresizingMaskIntoConstraints = false
+            vpnBadge.isHidden = true
+
+            let sourceRow = UIStackView(arrangedSubviews: [sourceLabel, vpnBadge, UIView()])
+            sourceRow.axis = .horizontal
+            sourceRow.spacing = 6
+            sourceRow.alignment = .center
+
             latestLabel.font = .systemFont(ofSize: 12)
             latestLabel.textColor = Palette.text2
 
@@ -288,7 +297,7 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
             switchButton.translatesAutoresizingMaskIntoConstraints = false
             switchButton.addTarget(self, action: #selector(switchTapped), for: .touchUpInside)
 
-            let textStack = UIStackView(arrangedSubviews: [titleLabel, sourceLabel, latestLabel])
+            let textStack = UIStackView(arrangedSubviews: [titleLabel, sourceRow, latestLabel])
             textStack.axis = .vertical
             textStack.spacing = 3
             textStack.translatesAutoresizingMaskIntoConstraints = false
@@ -326,6 +335,7 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
             self.onSwitch = onSwitch
             titleLabel.text = item.candidate.title
             sourceLabel.text = item.source.name + (current ? " · 当前站源" : "")
+            vpnBadge.isHidden = !SourceVpnPolicy.requiresVpn(sourceId: item.source.id)
             switchButton.setTitle(current ? "当前" : "切换", for: .normal)
             switchButton.isEnabled = !current
             switchButton.accessibilityIdentifier = "source-switch.select." + item.source.id

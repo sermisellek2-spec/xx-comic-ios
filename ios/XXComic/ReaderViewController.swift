@@ -11,6 +11,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var incompleteDirectory: Bool
     private var session: ReaderSession
     private var settings: ReaderPreferences
+    private lazy var spreadStore = SpreadStateStore(defaults: environment.defaults)
+    private lazy var doublePageStore = DoublePageStateStore(defaults: environment.defaults)
     private var images: [String] = []
     private var continuousPages = ContinuousReaderPages()
     private var continuationTask: Task<Void, Never>?
@@ -925,12 +927,151 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         savePosition()
         environment.readingHabits.userDidRead()
         environment.readingHabits.overlayVisibilityChanged(isVisible: true)
-        let controller = ReaderSettingsViewController(store: environment.preferences)
+        let bookKey = "\(comic.sourceId):\(comic.comicId)"
+        let spreadEnabled = spreadStore.isEnabled(bookKey: bookKey)
+        let doublePageEnabled = doublePageStore.isEnabled(bookKey: bookKey)
+        let autoScale = environment.defaults.bool(forKey: "reader.auto.scale.enabled")
+        let scaleMode = ReaderScalePolicy.normalize(environment.defaults.integer(forKey: "reader.scale.mode"))
+        let controller = ReaderSettingsViewController(
+            store: environment.preferences,
+            spreadEnabled: spreadEnabled,
+            doublePageEnabled: doublePageEnabled,
+            autoScaleEnabled: autoScale,
+            scaleMode: scaleMode
+        )
         controller.onChange = { [weak self] in self?.applySettings() }
+        controller.onAutoScaleChanged = { [weak self] enabled, mode in
+            guard let self else { return }
+            self.environment.defaults.set(enabled, forKey: "reader.auto.scale.enabled")
+            self.environment.defaults.set(ReaderScalePolicy.normalize(mode), forKey: "reader.scale.mode")
+            self.layout.invalidateLayout()
+            self.pages.reloadData()
+        }
+        controller.onSpreadEnabledChanged = { [weak self] enabled in
+            guard let self else { return }
+            self.spreadStore.setEnabled(bookKey: bookKey, enabled: enabled)
+            self.environment.defaults.set(enabled, forKey: "reader.spread.enabled")
+        }
+        controller.onSpreadActions = { [weak self] in
+            self?.presentSpreadActionsSheet(bookKey: bookKey)
+        }
+        controller.onDoublePageEnabledChanged = { [weak self] enabled in
+            guard let self else { return }
+            self.doublePageStore.setEnabled(bookKey: bookKey, enabled: enabled)
+            self.environment.defaults.set(enabled, forKey: "reader.double.page.enabled")
+        }
+        controller.onDoublePageActions = { [weak self] in
+            self?.presentDoublePageActionsSheet(bookKey: bookKey)
+        }
         controller.onClose = { [weak self] in self?.closeSheet() }
         controller.overrideUserInterfaceStyle = overrideUserInterfaceStyle
         present(controller, animated: true)
         controller.presentationController?.delegate = self
+    }
+
+    private func presentSpreadActionsSheet(bookKey: String) {
+        let isDark = settings.theme == .dark || (settings.theme == .system && traitCollection.userInterfaceStyle == .dark)
+        let pageIdx = session.imageIndex
+        let total = max(1, session.imageCount)
+        let chapterKey = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex].chapterId : "\(session.chapterIndex)"
+        let currentState = spreadStore.load(bookKey: bookKey, chapterKey: chapterKey)
+        let isRTL = currentState.isRightToLeft(defaultRightToLeft: settings.pageDirection == .rightToLeft)
+        let orderLabel = isRTL ? "右到左（日漫）" : "左到右（国漫/美漫）"
+        let isMerged = currentState.mergedFirsts.contains(pageIdx) || (pageIdx > 0 && currentState.mergedFirsts.contains(pageIdx - 1))
+        let finish: (() -> Void) -> Void = { [weak self] work in
+            if let presented = self?.presentedViewController {
+                presented.dismiss(animated: true, completion: work)
+            } else {
+                work()
+            }
+        }
+        finish { [weak self] in
+            guard let self else { return }
+            var currentActions: [ReaderSpreadAction] = []
+            if isMerged {
+                let firstIdx = currentState.mergedFirsts.contains(pageIdx) ? pageIdx : max(0, pageIdx - 1)
+                currentActions.append(ReaderSpreadAction("拆回单页", "取消当前跨页合并", true) { [weak self] in
+                    self?.spreadStore.split(bookKey: bookKey, chapterKey: chapterKey, first: firstIdx)
+                })
+            } else {
+                if pageIdx + 1 < total {
+                    currentActions.append(ReaderSpreadAction("与下一页合并为跨页", "合并第 \(pageIdx + 1) 页与第 \(pageIdx + 2) 页", true) { [weak self] in
+                        self?.spreadStore.merge(bookKey: bookKey, chapterKey: chapterKey, first: pageIdx)
+                    })
+                }
+                if pageIdx > 0 {
+                    currentActions.append(ReaderSpreadAction("与上一页合并为跨页", "合并第 \(pageIdx) 页与第 \(pageIdx + 1) 页", false) { [weak self] in
+                        self?.spreadStore.merge(bookKey: bookKey, chapterKey: chapterKey, first: pageIdx - 1)
+                    })
+                }
+            }
+            let maintenance: [ReaderSpreadAction] = [
+                ReaderSpreadAction("切换跨页方向（当前：\(orderLabel)）", "调整跨页左右拼接顺序", false) { [weak self] in
+                    self?.spreadStore.setRightToLeft(bookKey: bookKey, chapterKey: chapterKey, rightToLeft: !isRTL)
+                },
+                ReaderSpreadAction("重置本章跨页调整", "恢复本章自动跨页检测结果", false) { [weak self] in
+                    self?.spreadStore.clearManual(bookKey: bookKey, chapterKey: chapterKey)
+                }
+            ]
+            ReaderSpreadSheet.showActions(
+                from: self,
+                dark: isDark,
+                pageLabel: "第 \(pageIdx + 1) / \(total) 页",
+                spread: isMerged,
+                order: orderLabel,
+                status: nil,
+                current: currentActions,
+                maintenance: maintenance
+            )
+        }
+    }
+
+    private func presentDoublePageActionsSheet(bookKey: String) {
+        let isDark = settings.theme == .dark || (settings.theme == .system && traitCollection.userInterfaceStyle == .dark)
+        let pageIdx = session.imageIndex
+        let total = max(1, session.imageCount)
+        let chapterKey = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex].chapterId : "\(session.chapterIndex)"
+        let currentState = doublePageStore.load(bookKey: bookKey, chapterKey: chapterKey)
+        let isRTL = currentState.isRightToLeft(defaultRightToLeft: settings.pageDirection == .rightToLeft)
+        let orderLabel = isRTL ? "先右后左（日漫）" : "先左后右（国漫/美漫）"
+        let isSplit = currentState.splitSources.contains(pageIdx)
+        let finish: (() -> Void) -> Void = { [weak self] work in
+            if let presented = self?.presentedViewController {
+                presented.dismiss(animated: true, completion: work)
+            } else {
+                work()
+            }
+        }
+        finish { [weak self] in
+            guard let self else { return }
+            let currentActions: [ReaderSpreadAction] = [
+                isSplit
+                    ? ReaderSpreadAction("当前宽图不切页", "保持第 \(pageIdx + 1) 页完整显示", true) { [weak self] in
+                        self?.doublePageStore.keepWhole(bookKey: bookKey, chapterKey: chapterKey, sourceIndex: pageIdx)
+                    }
+                    : ReaderSpreadAction("当前页切为左右两页", "将第 \(pageIdx + 1) 页拆成两页阅读", true) { [weak self] in
+                        self?.doublePageStore.split(bookKey: bookKey, chapterKey: chapterKey, sourceIndex: pageIdx)
+                    }
+            ]
+            let maintenance: [ReaderSpreadAction] = [
+                ReaderSpreadAction("切换切页顺序（当前：\(orderLabel)）", "调整切页后左右阅读先后顺序", false) { [weak self] in
+                    self?.doublePageStore.setRightToLeft(bookKey: bookKey, chapterKey: chapterKey, rightToLeft: !isRTL)
+                },
+                ReaderSpreadAction("重置本章双页切页调整", "恢复本章自动宽图切页检测", false) { [weak self] in
+                    self?.doublePageStore.clearManual(bookKey: bookKey, chapterKey: chapterKey)
+                }
+            ]
+            ReaderSpreadSheet.showActions(
+                from: self,
+                dark: isDark,
+                title: "双页切页",
+                pageLabel: "第 \(pageIdx + 1) / \(total) 页",
+                stateSummary: isSplit ? "当前已切分为左右两页 · \(orderLabel)" : "当前整图显示 · \(orderLabel)",
+                status: nil,
+                current: currentActions,
+                maintenance: maintenance
+            )
+        }
     }
     @objc private func closeSheet() {
         guard let controller = presentedViewController else { return }
@@ -1074,8 +1215,23 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = max(1, collectionView.bounds.width)
-        if settings.layout == .paged { return CGSize(width: width, height: max(1, collectionView.bounds.height)) }
+        let viewportHeight = max(1, collectionView.bounds.height)
+        if settings.layout == .paged { return CGSize(width: width, height: viewportHeight) }
         let size = sizes[images[indexPath.item]] ?? CGSize(width: 3, height: 4)
+        if environment.defaults.bool(forKey: "reader.auto.scale.enabled") {
+            let mode = ReaderScalePolicy.normalize(environment.defaults.integer(forKey: "reader.scale.mode"))
+            let dims = ReaderScalePolicy.stripDimensions(
+                enabled: true,
+                mode: mode,
+                viewportWidth: Int(width),
+                viewportHeight: Int(viewportHeight),
+                imageWidth: Int(max(1, size.width)),
+                imageHeight: Int(max(1, size.height))
+            )
+            if dims.count >= 2, dims[0] > 0, dims[1] > 0 {
+                return CGSize(width: width, height: CGFloat(dims[1]))
+            }
+        }
         return CGSize(width: width, height: max(1, width * size.height / max(1, size.width)))
     }
     func scrollViewDidScroll(_ scrollView: UIScrollView) {

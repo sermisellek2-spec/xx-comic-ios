@@ -2,12 +2,12 @@ name: XXComic
 options:
   projectFormat: xcode15_3
   deploymentTarget:
-    iOS: '16.0'
+    iOS: '15.0'
   createIntermediateGroups: true
 settings:
   base:
     SWIFT_VERSION: '5.0'
-    IPHONEOS_DEPLOYMENT_TARGET: '16.0'
+    IPHONEOS_DEPLOYMENT_TARGET: '15.0'
     TARGETED_DEVICE_FAMILY: '1,2'
 packages:
   ComicCore:

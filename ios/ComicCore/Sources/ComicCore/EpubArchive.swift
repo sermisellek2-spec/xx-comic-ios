@@ -90,8 +90,9 @@ final class EpubArchive {
         } catch { throw Self.wrapped(error) }
     }
 
-    static func resolve(_ raw: String, relativeTo path: String = "") throws -> String {
-        let value = SearchRules.trim(raw).replacingOccurrences(of: "+", with: " ")
+    static func resolve(_ raw: String, relativeTo path: String = "", preservePlus: Bool = false) throws -> String {
+        let trimmed = SearchRules.trim(raw)
+        let value = preservePlus ? trimmed : trimmed.replacingOccurrences(of: "+", with: " ")
         guard let decoded = value.removingPercentEncoding else { throw EpubError.invalid("资源路径 URL 编码非法：\(raw)") }
         let stripped = String(decoded.prefix { $0 != "#" }).replacingOccurrences(of: "\\", with: "/")
         guard !stripped.hasPrefix("/"), !stripped.contains("\0"), !(stripped.split(separator: "/").first?.contains(":") ?? false) else {
@@ -99,6 +100,15 @@ final class EpubArchive {
         }
         let base = path.lastIndex(of: "/").map { String(path[...$0]) } ?? ""
         return try normalized(base + stripped)
+    }
+
+    func resolveExisting(_ raw: String, relativeTo path: String = "") throws -> String {
+        let resolved = try Self.resolve(raw, relativeTo: path, preservePlus: false)
+        if contains(resolved) || !raw.contains("+") {
+            return resolved
+        }
+        let literalPlus = try Self.resolve(raw, relativeTo: path, preservePlus: true)
+        return contains(literalPlus) ? literalPlus : resolved
     }
 
     static func normalized(_ value: String) throws -> String {

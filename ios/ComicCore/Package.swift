@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "ComicCore",
-    platforms: [.iOS(.v16), .macOS(.v13)],
+    platforms: [.iOS(.v15), .macOS(.v12)],
     products: [.library(name: "ComicCore", targets: ["ComicCore"])],
     dependencies: [.package(url: "https://github.com/weichsel/ZIPFoundation.git", exact: "0.9.20")],
     targets: [

@@ -13,6 +13,13 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
     private var completedChapterIds = Set<String>()
 
     private let tableView = UITableView(frame: .zero, style: .plain)
+    private lazy var gridView = ChapterSelectionGridView(compact: true) { [weak self] in
+        guard let self else { return }
+        self.selectedChapterIds = self.gridView.selectedIds()
+        self.tableView.reloadData()
+        self.updateStartButton()
+    }
+    private var isGridMode: Bool = !(ProcessInfo.processInfo.arguments.contains("--ui-testing") && !ProcessInfo.processInfo.arguments.contains("--download-grid-ui"))
     private let startButton = UIButton(type: .system)
     private let hintLabel = UILabel()
     private var enqueueTask: Task<Void, Never>?
@@ -119,6 +126,17 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
         toolsStack.addArrangedSubview(createToolChip(title: "清空", action: #selector(clearSelection)))
         toolsStack.addArrangedSubview(createToolChip(title: "区间", action: #selector(showRangeDialog)))
         toolsStack.addArrangedSubview(createToolChip(title: "倒序 ⇄", action: #selector(reverseList)))
+        let modeChip = createToolChip(title: isGridMode ? "列表" : "网格", action: #selector(toggleLayoutMode(_:)))
+        modeChip.accessibilityIdentifier = "download.layout.toggle"
+        toolsStack.addArrangedSubview(modeChip)
+
+        // GridView (2.0.44 compact chapter selection grid + swipe selection)
+        gridView.translatesAutoresizingMaskIntoConstraints = false
+        gridView.accessibilityIdentifier = "download.chapters.grid"
+        gridView.onOrderChanged = { [weak self] _ in
+            self?.reverseList()
+        }
+        view.addSubview(gridView)
 
         // TableView
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -129,6 +147,8 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "ChapterCell")
         tableView.separatorColor = Palette.secondaryText.withAlphaComponent(0.2)
         view.addSubview(tableView)
+        syncGridItems()
+        updateLayoutModeVisibility()
 
         // Bottom start button
         startButton.translatesAutoresizingMaskIntoConstraints = false
@@ -165,6 +185,11 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
             toolsStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             toolsStack.heightAnchor.constraint(equalToConstant: 32),
 
+            gridView.topAnchor.constraint(equalTo: toolsStack.bottomAnchor, constant: 8),
+            gridView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            gridView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            gridView.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -10),
+
             tableView.topAnchor.constraint(equalTo: toolsStack.bottomAnchor, constant: 8),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -188,6 +213,35 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
         return btn
     }
 
+    private func syncGridItems() {
+        let items = visibleChapters.enumerated().map { idx, ch -> ChapterSelectionGridView.Item in
+            let isDone = completedChapterIds.contains(ch.chapterId)
+            let shortTitle = DetailChapterSection.cleanChapterTitle(chapter: ch, index: idx)
+            return ChapterSelectionGridView.Item(
+                id: ch.chapterId,
+                title: shortTitle,
+                subtitle: isDone ? "已下载" : "",
+                fullTitle: ch.title,
+                selectable: !isDone,
+                isDownloaded: isDone
+            )
+        }
+        gridView.setItems(items, selected: selectedChapterIds)
+    }
+
+    private func updateLayoutModeVisibility() {
+        gridView.isHidden = !isGridMode
+        tableView.isHidden = isGridMode
+    }
+
+    @objc private func toggleLayoutMode(_ sender: UIButton) {
+        isGridMode.toggle()
+        sender.setTitle(isGridMode ? "列表" : "网格", for: .normal)
+        syncGridItems()
+        tableView.reloadData()
+        updateLayoutModeVisibility()
+    }
+
     private func updateStartButton() {
         startButton.setTitle("下载选中章节 (\(selectedChapterIds.count))", for: .normal)
         startButton.isEnabled = !selectedChapterIds.isEmpty && enqueueTask == nil
@@ -208,6 +262,7 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
     @objc private func selectCurrentOnly() {
         selectedChapterIds.removeAll()
         preselectCurrentChapter()
+        syncGridItems()
         tableView.reloadData()
         updateStartButton()
     }
@@ -216,18 +271,21 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
         for ch in visibleChapters where !completedChapterIds.contains(ch.chapterId) {
             selectedChapterIds.insert(ch.chapterId)
         }
+        syncGridItems()
         tableView.reloadData()
         updateStartButton()
     }
 
     @objc private func clearSelection() {
         selectedChapterIds.removeAll()
+        syncGridItems()
         tableView.reloadData()
         updateStartButton()
     }
 
     @objc private func reverseList() {
         visibleChapters.reverse()
+        syncGridItems()
         tableView.reloadData()
     }
 
@@ -261,6 +319,7 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
                     self.selectedChapterIds.insert(ch.chapterId)
                 }
             }
+            self.syncGridItems()
             self.tableView.reloadData()
             self.updateStartButton()
         })
@@ -273,7 +332,7 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
         guard !toDownload.isEmpty else { return }
 
         let runtime = environment.downloadRuntime, detail = detail, ids = toDownload.map(\.chapterId)
-        hintLabel.text = "正在检查下载目录…"; tableView.isUserInteractionEnabled = false
+        hintLabel.text = "正在检查下载目录…"; tableView.isUserInteractionEnabled = false; gridView.setInteractive(false)
         enqueueTask = Task { [weak self] in
             do {
                 try await runtime.enqueueWithLocation(detail: detail, selectedChapterIds: ids)
@@ -283,7 +342,7 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
                 self.dismiss(animated: true) { added?() }
             } catch {
                 guard let self, !Task.isCancelled else { return }
-                self.enqueueTask = nil; self.tableView.isUserInteractionEnabled = true
+                self.enqueueTask = nil; self.tableView.isUserInteractionEnabled = true; self.gridView.setInteractive(true)
                 self.hintLabel.text = "未加入下载：" + error.localizedDescription
                 self.updateStartButton()
             }
@@ -334,6 +393,7 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
         } else {
             selectedChapterIds.insert(ch.chapterId)
         }
+        syncGridItems()
         tableView.reloadRows(at: [indexPath], with: .none)
         updateStartButton()
     }
