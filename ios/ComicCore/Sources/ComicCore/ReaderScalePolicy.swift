@@ -104,4 +104,16 @@ public enum ReaderScalePolicy: Int, CaseIterable, Sendable {
                             imageWidth: iw, imageHeight: ih,
                             viewportWidth: vw, viewportHeight: vh).height.rounded()))
     }
+
+    public static func stripDimensions(
+        enabled: Bool,
+        mode: Int,
+        viewportWidth: Int,
+        viewportHeight: Int,
+        imageWidth: Int,
+        imageHeight: Int
+    ) -> [Int] {
+        let h = scrollHeight(enabled: enabled, mode: mode, iw: imageWidth, ih: imageHeight, vw: viewportWidth, vh: viewportHeight)
+        return [viewportWidth, h]
+    }
 }

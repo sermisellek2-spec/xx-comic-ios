@@ -247,6 +247,10 @@ public final class ReaderSpreadAction: @unchecked Sendable {
         self.destructive = destructive
         self.run = run
     }
+
+    convenience init(_ title: String, _ subtitle: String, _ destructive: Bool = false, run: @escaping () -> Void) {
+        self.init(title: title, subtitle: subtitle, icon: nil, destructive: destructive, run: run)
+    }
 }
 
 // MARK: - ReaderSpreadActionSheet
@@ -868,6 +872,7 @@ public final class ReaderSpreadPreviewSheet: UIViewController {
 
 // MARK: - ReaderSpreadSheet Namespace
 
+@MainActor
 public enum ReaderSpreadSheet {
     public typealias Action = ReaderSpreadAction
     public typealias ActionSheet = ReaderSpreadActionSheet

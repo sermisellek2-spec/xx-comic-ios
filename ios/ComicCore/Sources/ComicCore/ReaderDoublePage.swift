@@ -385,4 +385,52 @@ public final class DoublePageStateStore: @unchecked Sendable {
             }
         }
     }
+
+    public func isEnabled(bookKey: String) -> Bool {
+        enabled(bookKey)
+    }
+
+    public func setEnabled(bookKey: String, enabled: Bool) {
+        setEnabled(bookKey, enabled: enabled)
+    }
+
+    public func load(bookKey: String, chapterKey: String) -> DoublePageState {
+        let rules = manualRules(book: bookKey, revision: chapterKey)
+        var splits = Set<Int>()
+        for (idx, mode) in rules where mode == 1 {
+            splits.insert(idx)
+        }
+        let rtl = rightFirst(bookKey)
+        return DoublePageState(splitSources: splits, rightToLeft: rtl)
+    }
+
+    public func keepWhole(bookKey: String, chapterKey: String, sourceIndex: Int) {
+        try? setManual(book: bookKey, revision: chapterKey, index: sourceIndex, mode: -1)
+    }
+
+    public func split(bookKey: String, chapterKey: String, sourceIndex: Int) {
+        try? setManual(book: bookKey, revision: chapterKey, index: sourceIndex, mode: 1)
+    }
+
+    public func setRightToLeft(bookKey: String, chapterKey: String, rightToLeft: Bool) {
+        setRightFirst(bookKey, rightFirst: rightToLeft)
+    }
+
+    public func clearManual(bookKey: String, chapterKey: String) {
+        defaults.removeObject(forKey: self.chapterKey(bookKey, revision: chapterKey) + "manual")
+    }
+}
+
+public struct DoublePageState {
+    public var splitSources: Set<Int>
+    public var rightToLeft: Bool?
+
+    public init(splitSources: Set<Int> = [], rightToLeft: Bool? = nil) {
+        self.splitSources = splitSources
+        self.rightToLeft = rightToLeft
+    }
+
+    public func isRightToLeft(defaultRightToLeft: Bool) -> Bool {
+        rightToLeft ?? defaultRightToLeft
+    }
 }

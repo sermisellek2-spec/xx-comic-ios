@@ -797,4 +797,56 @@ public final class SpreadStateStore: @unchecked Sendable {
     public func retry(book: String, revision: String) {
         defaults.removeObject(forKey: chapterKey(book, revision: revision) + "complete.\(SpreadDetector.VERSION)")
     }
+
+    public func isEnabled(bookKey: String) -> Bool {
+        enabled(bookKey)
+    }
+
+    public func setEnabled(bookKey: String, enabled: Bool) {
+        setEnabled(bookKey, enabled: enabled)
+    }
+
+    public func load(bookKey: String, chapterKey: String) -> SpreadState {
+        let rules = manualRules(book: bookKey, revision: chapterKey)
+        var firsts = Set<Int>()
+        for (idx, dir) in rules where dir == 1 {
+            firsts.insert(idx)
+        }
+        let rtlKey = self.chapterKey(bookKey, revision: chapterKey) + "rtl"
+        let rtl: Bool? = defaults.object(forKey: rtlKey) as? Bool
+        return SpreadState(mergedFirsts: firsts, rightToLeft: rtl)
+    }
+
+    public func split(bookKey: String, chapterKey: String, first: Int) {
+        try? setManual(book: bookKey, revision: chapterKey, index: first, direction: nil)
+        try? setManual(book: bookKey, revision: chapterKey, index: first + 1, direction: nil)
+    }
+
+    public func merge(bookKey: String, chapterKey: String, first: Int) {
+        try? setManual(book: bookKey, revision: chapterKey, index: first, direction: 1)
+    }
+
+    public func setRightToLeft(bookKey: String, chapterKey: String, rightToLeft: Bool) {
+        let rtlKey = self.chapterKey(bookKey, revision: chapterKey) + "rtl"
+        defaults.set(rightToLeft, forKey: rtlKey)
+    }
+
+    public func clearManual(bookKey: String, chapterKey: String) {
+        defaults.removeObject(forKey: self.chapterKey(bookKey, revision: chapterKey) + "manual")
+        defaults.removeObject(forKey: self.chapterKey(bookKey, revision: chapterKey) + "rtl")
+    }
+}
+
+public struct SpreadState {
+    public var mergedFirsts: Set<Int>
+    public var rightToLeft: Bool?
+
+    public init(mergedFirsts: Set<Int> = [], rightToLeft: Bool? = nil) {
+        self.mergedFirsts = mergedFirsts
+        self.rightToLeft = rightToLeft
+    }
+
+    public func isRightToLeft(defaultRightToLeft: Bool) -> Bool {
+        rightToLeft ?? defaultRightToLeft
+    }
 }

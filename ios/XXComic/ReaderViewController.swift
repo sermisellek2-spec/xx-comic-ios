@@ -940,14 +940,14 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             scaleMode: scaleMode
         )
         controller.onChange = { [weak self] in self?.applySettings() }
-        controller.onAutoScaleChanged = { [weak self] enabled, mode in
+        controller.onAutoScaleChanged = { [weak self] (enabled: Bool, mode: Int) in
             guard let self else { return }
             self.environment.defaults.set(enabled, forKey: "reader.auto.scale.enabled")
             self.environment.defaults.set(ReaderScalePolicy.normalize(mode), forKey: "reader.scale.mode")
             self.layout.invalidateLayout()
             self.pages.reloadData()
         }
-        controller.onSpreadEnabledChanged = { [weak self] enabled in
+        controller.onSpreadEnabledChanged = { [weak self] (enabled: Bool) in
             guard let self else { return }
             self.spreadStore.setEnabled(bookKey: bookKey, enabled: enabled)
             self.environment.defaults.set(enabled, forKey: "reader.spread.enabled")
@@ -955,7 +955,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         controller.onSpreadActions = { [weak self] in
             self?.presentSpreadActionsSheet(bookKey: bookKey)
         }
-        controller.onDoublePageEnabledChanged = { [weak self] enabled in
+        controller.onDoublePageEnabledChanged = { [weak self] (enabled: Bool) in
             guard let self else { return }
             self.doublePageStore.setEnabled(bookKey: bookKey, enabled: enabled)
             self.environment.defaults.set(enabled, forKey: "reader.double.page.enabled")
@@ -978,7 +978,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         let isRTL = currentState.isRightToLeft(defaultRightToLeft: settings.pageDirection == .rightToLeft)
         let orderLabel = isRTL ? "右到左（日漫）" : "左到右（国漫/美漫）"
         let isMerged = currentState.mergedFirsts.contains(pageIdx) || (pageIdx > 0 && currentState.mergedFirsts.contains(pageIdx - 1))
-        let finish: (() -> Void) -> Void = { [weak self] work in
+        let finish: (@escaping () -> Void) -> Void = { [weak self] work in
             if let presented = self?.presentedViewController {
                 presented.dismiss(animated: true, completion: work)
             } else {
@@ -1035,7 +1035,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         let isRTL = currentState.isRightToLeft(defaultRightToLeft: settings.pageDirection == .rightToLeft)
         let orderLabel = isRTL ? "先右后左（日漫）" : "先左后右（国漫/美漫）"
         let isSplit = currentState.splitSources.contains(pageIdx)
-        let finish: (() -> Void) -> Void = { [weak self] work in
+        let finish: (@escaping () -> Void) -> Void = { [weak self] work in
             if let presented = self?.presentedViewController {
                 presented.dismiss(animated: true, completion: work)
             } else {
