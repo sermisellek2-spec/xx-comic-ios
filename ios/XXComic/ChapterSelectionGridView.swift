@@ -286,6 +286,14 @@ public final class ChapterSelectionGridView: UIView, UICollectionViewDataSource,
         updateTools()
     }
 
+    public func setInteractive(_ enabled: Bool) {
+        setInteractionEnabled(enabled)
+    }
+
+    public func setItems(_ items: [Item], selected: Set<String>? = nil) {
+        setEntries(items, selected: selected)
+    }
+
     public func setDescending(_ value: Bool) {
         if isDescending == value { return }
         cancelStroke()
