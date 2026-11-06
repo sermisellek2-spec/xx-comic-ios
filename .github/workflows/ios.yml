@@ -39,7 +39,7 @@ jobs:
       # Repair uploads now run the complete UI/visual matrix. Partial scopes
       # remain available for diagnosis and never permit packaging.
       IOS_VALIDATION_SCOPE: ${{ github.event.inputs.validation_scope || 'full' }}
-      IOS_PACKAGE_IPA: ${{ github.event.inputs.package_ipa || 'false' }}
+      IOS_PACKAGE_IPA: ${{ github.event.inputs.package_ipa || 'true' }}
 
     steps:
       - name: Checkout
