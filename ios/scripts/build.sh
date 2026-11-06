@@ -8,7 +8,8 @@ xcodegen generate --spec project.yml
 echo "==> 2. Building Debug scheme for simulator..."
 xcodebuild -project XXComic.xcodeproj -scheme XXComic -configuration Debug \
   -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-  -derivedDataPath build/simulator CODE_SIGNING_ALLOWED=NO build
+  -derivedDataPath build/simulator CODE_SIGNING_ALLOWED=NO \
+  SWIFT_ACTIVE_COMPILATION_CONDITIONS="DEBUG" build
 
 # Type-check both configurations before the longer runtime matrix. Packaging still requires all tests.
 echo "==> 3. Building Release scheme for iOS device..."
@@ -76,7 +77,7 @@ fi
 validation_scope="${IOS_VALIDATION_SCOPE:-full}"
 # macOS's Bash 3.2 treats an empty array expansion as unset under `set -u`.
 # Keep common xcodebuild arguments in the same, always nonempty array.
-test_arguments=(-project XXComic.xcodeproj -scheme XXComic -configuration Debug CODE_SIGNING_ALLOWED=NO)
+test_arguments=(-project XXComic.xcodeproj -scheme XXComic -configuration Debug CODE_SIGNING_ALLOWED=NO SWIFT_ACTIVE_COMPILATION_CONDITIONS="DEBUG")
 case "$validation_scope" in
   full) ;;
   foundation-import)

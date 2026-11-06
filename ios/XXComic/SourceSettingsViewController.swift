@@ -81,13 +81,12 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         cell.backgroundColor = Palette.card
         cell.textLabel?.text = source?.name
         let host = URL(string: source?.referer ?? "")?.host ?? ""
-        let vpnPrefix = SourceVpnPolicy.requiresVpn(sourceId: id) ? "[VPN] " : ""
         if let health = healthStatuses[id] {
-            cell.detailTextLabel?.text = vpnPrefix + "\(host) · \(health)"
+            cell.detailTextLabel?.text = "\(host) · \(health)"
         } else if id == "mh18" {
-            cell.detailTextLabel?.text = vpnPrefix + "18mh.org · " + environment.mh18BrowserSession.status
+            cell.detailTextLabel?.text = "18mh.org · " + environment.mh18BrowserSession.status
         } else {
-            cell.detailTextLabel?.text = vpnPrefix + host
+            cell.detailTextLabel?.text = host
         }
         cell.textLabel?.textColor = Palette.text
         cell.detailTextLabel?.textColor = Palette.secondaryText

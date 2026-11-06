@@ -757,7 +757,31 @@ final class SourceRulesTests: XCTestCase {
     // MARK: - RuleMigration Tests
 
     func testDependentFilterChoicesUseCachedMetadataAndKeepNativeValues() throws {
-        var rJson = Self.json(id: "comic51", version: 1)
+        let script = """
+        var source = {
+            latest: function(p) { return { items: [], hasMore: false }; },
+            search: function(q, p) { return { items: [], hasMore: false }; },
+            category: function(f, p) { return this.latest(p); },
+            detail: function(k) { return { id: k, title: '作品' }; },
+            chapters: function(k) { return []; },
+            chapter: function(u) { return { title: '章节', images: [] }; },
+            filters: function() {
+                return [
+                    {key: 'type', label: '频道', options: [
+                        {label: '全部', value: 'all'},
+                        {label: '女生', value: 'girl'},
+                        {label: '男生', value: 'boy'}
+                    ]},
+                    {key: 'tag', label: '题材', dependsOn: 'type', allValue: 'all', options: [
+                        {label: '全部', value: 'all'},
+                        {label: '恋爱', value: 'girl:17', parent: 'girl', selectedLabel: '恋爱'},
+                        {label: '热血', value: 'boy:1', parent: 'boy', selectedLabel: '热血'}
+                    ]}
+                ];
+            }
+        };
+        """
+        var rJson = Self.json(id: "comic51", version: 1, script: script)
         rJson["engineApi"] = 2
         let r = try RuleDefinition(json: rJson)
         let s = ScriptComicSource(rule: r, network: { _, _ in

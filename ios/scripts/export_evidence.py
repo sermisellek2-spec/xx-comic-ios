@@ -8,10 +8,14 @@ import sys
 
 bundle, output = Path(sys.argv[1]), Path(sys.argv[2])
 def get(identifier=None):
-    command = ['xcrun', 'xcresulttool', 'get', '--path', str(bundle), '--format', 'json']
+    base_cmd = ['xcrun', 'xcresulttool', 'get']
+    args = ['--path', str(bundle), '--format', 'json']
     if identifier:
-        command += ['--id', identifier]
-    return json.loads(subprocess.check_output(command))
+        args += ['--id', identifier]
+    try:
+        return json.loads(subprocess.check_output(base_cmd + ['--legacy'] + args, stderr=subprocess.PIPE))
+    except Exception:
+        return json.loads(subprocess.check_output(base_cmd + args))
 
 def unwrap(value):
     if isinstance(value, dict):

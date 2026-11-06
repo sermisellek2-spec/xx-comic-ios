@@ -98,7 +98,7 @@ final class AppEnvironment {
                 combined.append(ruleSource)
             }
         }
-        for src in extraSources where seenIDs.insert(src.id).inserted {
+        for src in extraSources where preferences.config(for: src.id) != nil && seenIDs.insert(src.id).inserted {
             combined.append(src)
         }
         return combined + [
