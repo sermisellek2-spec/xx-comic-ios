@@ -267,6 +267,7 @@ public final class ChapterSelectionGridView: UIView, UICollectionViewDataSource,
     public var selectedCount: Int { selection.count }
 
     public func isSelected(_ id: String) -> Bool { selection.contains(id) }
+    public func selectedIds() -> Set<String> { selection.selected }
 
     public func setOnOrderChanged(_ listener: ((Bool) -> Void)?) {
         orderChanged = listener
