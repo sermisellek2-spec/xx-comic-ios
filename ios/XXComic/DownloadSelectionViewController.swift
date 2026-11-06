@@ -13,7 +13,7 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
     private var completedChapterIds = Set<String>()
 
     private let tableView = UITableView(frame: .zero, style: .plain)
-    private lazy var gridView = ChapterSelectionGridView(compact: true) { [weak self] in
+    private lazy var gridView: ChapterSelectionGridView = ChapterSelectionGridView(compact: true) { [weak self] in
         guard let self else { return }
         self.selectedChapterIds = self.gridView.selectedIds()
         self.tableView.reloadData()

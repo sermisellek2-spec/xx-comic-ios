@@ -263,7 +263,6 @@ public final class ChapterSelectionGridView: UIView, UICollectionViewDataSource,
     // MARK: - Public Accessors
 
     public func selectionButton() -> UIButton { allButton }
-    public func orderButton() -> UIButton { orderButton }
 
     public var selectedCount: Int { selection.count }
 

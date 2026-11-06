@@ -240,7 +240,7 @@ public final class ReaderSpreadAction: @unchecked Sendable {
         self.run = run
     }
 
-    public init(title: String, subtitle: String, parityIcon: ParityIcon?, destructive: Bool = false, run: @escaping () -> Void) {
+    init(title: String, subtitle: String, parityIcon: ParityIcon?, destructive: Bool = false, run: @escaping () -> Void) {
         self.title = title
         self.subtitle = subtitle
         self.icon = parityIcon?.image(size: 20)
