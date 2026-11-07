@@ -29,7 +29,9 @@ final class SourceSwitchParityUITests: ParityUITestCase {
         let source = app.buttons["detail.switch-source"]
         expectation(for: NSPredicate(format: "label == %@", "切换站源，当前" + name), evaluatedWith: source)
         waitForExpectations(timeout: 10)
-        XCTAssertTrue(app.buttons["detail.read"].isHittable)
+        let readButton = app.buttons["detail.read"]
+        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"), object: readButton)
+        XCTAssertEqual(XCTWaiter.wait(for: [hittable], timeout: 5), .completed)
     }
 
     func testStrictSameTitleExcludesSimilarResultsAndKeepsTheCurrentSourceVisible() {

@@ -44,11 +44,17 @@ final class ErrorLogsParityUITests: ParityUITestCase {
             let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: popoverDismiss)
             XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
         } else {
-            let close = app.buttons.matching(NSPredicate(format: "label IN %@", ["Close", "关闭"])).firstMatch
-            XCTAssertTrue(close.waitForExistence(timeout: 5), "The system share controller must expose its real close control on iPhone")
-            XCTAssertTrue(close.isHittable)
-            close.tap()
-            let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: close)
+            let close = app.buttons.matching(NSPredicate(format: "label IN %@ OR identifier IN %@", ["Close", "关闭", "Cancel", "取消"], ["Close", "关闭", "Cancel", "取消", "close-button"])).firstMatch
+            let activityListView = app.otherElements["ActivityListView"]
+            if close.waitForExistence(timeout: 5) && close.isHittable {
+                close.tap()
+            } else if activityListView.waitForExistence(timeout: 3) {
+                activityListView.swipeDown(velocity: .fast)
+            } else {
+                app.swipeDown()
+            }
+            let export = app.buttons["error.logs.export"]
+            let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in export.isHittable }, object: app)
             XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
         }
     }

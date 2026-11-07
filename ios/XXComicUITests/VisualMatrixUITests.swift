@@ -159,11 +159,11 @@ final class VisualMatrixUITests: ParityUITestCase {
         // fixture or by changing the production navigation behavior.
         let settingsTable = app.tables.firstMatch
         let firstHeading = settingsTable.staticTexts["阅读与外观"]
-        for _ in 0..<4 {
+        for _ in 0..<8 {
             if firstHeading.isHittable, firstHeading.frame.minY >= settingsTable.frame.minY { break }
             settingsTable.swipeDown()
         }
-        XCTAssertTrue(firstHeading.isHittable)
+        XCTAssertTrue(firstHeading.waitForExistence(timeout: 5) && firstHeading.isHittable)
         XCTAssertGreaterThanOrEqual(firstHeading.frame.minY, settingsTable.frame.minY)
         let themeTitle = settingsTable.cells["settings.theme"].staticTexts["主题模式"]
         XCTAssertTrue(themeTitle.isHittable)

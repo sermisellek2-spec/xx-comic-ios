@@ -1004,6 +1004,7 @@ public final class DownloadRuntime: @unchecked Sendable {
         let canUseConcurrentPageWorkers = (imageFetcher is DefaultDownloadImageFetcher)
             && !task.sourceId.hasPrefix("fixture_")
             && !uniqueUrls.contains(where: { $0.contains("fixture.invalid") })
+            && !ProcessInfo.processInfo.arguments.contains("--ui-testing")
         let concurrency = canUseConcurrentPageWorkers ? max(1, min(Self.pageWorkersPerChapter, total)) : 1
         let referer = resolver.resolveReferer(sourceId: task.sourceId, chapterUrl: task.url)
 

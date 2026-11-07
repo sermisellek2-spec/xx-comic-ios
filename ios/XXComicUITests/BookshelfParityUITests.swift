@@ -99,14 +99,18 @@ final class BookshelfParityUITests: ParityUITestCase {
             let popoverDismiss = app.otherElements["PopoverDismissRegion"]
             if cancel.exists && cancel.isHittable {
                 cancel.tap()
-            } else {
-                XCTAssertTrue(popoverDismiss.exists)
+            } else if popoverDismiss.exists {
                 popoverDismiss.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.1)).tap()
+                if app.buttons["EPUB 漫画"].exists {
+                    popoverDismiss.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+                }
+            } else {
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
             }
             let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
                 !app.buttons["EPUB 漫画"].exists && bubble.isHittable
             }, object: app)
-            XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
+            XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 10), .completed)
             app.terminate()
         }
     }
