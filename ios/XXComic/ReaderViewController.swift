@@ -43,6 +43,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private let badgeTimeFormatter: DateFormatter = {
         let formatter = DateFormatter(); formatter.dateFormat = "HH:mm"; return formatter
     }()
+    private var headerWidth: NSLayoutConstraint?
     private let previous = UIButton(type: .system)
     private let nextButton = UIButton(type: .system)
     private let readerSeekBar = ReaderSeekBar()
@@ -123,9 +124,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         back.heightAnchor.constraint(equalToConstant: 44).isActive = true
         readerHeading.font = .systemFont(ofSize: 13, weight: .medium); readerHeading.textColor = .label
         readerHeading.lineBreakMode = .byTruncatingTail; readerHeading.accessibilityIdentifier = "reader.title"
-        readerHeading.textAlignment = .center
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: back)
-        navigationItem.titleView = readerHeading
+        let header = UIStackView(arrangedSubviews: [back, readerHeading]); header.alignment = .center
+        header.spacing = 0; header.translatesAutoresizingMaskIntoConstraints = false
+        headerWidth = header.widthAnchor.constraint(equalToConstant: 260); headerWidth?.isActive = true
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: header)
+        navigationItem.titleView = UIView(frame: .zero)
         layout.minimumLineSpacing = 0; layout.minimumInteritemSpacing = 0
         pages.dataSource = self; pages.delegate = self
         pages.register(ReaderImageCell.self, forCellWithReuseIdentifier: "image")
@@ -303,6 +306,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        headerWidth?.constant = max(44, view.bounds.width - view.safeAreaInsets.left - view.safeAreaInsets.right - 32)
         if let position = pendingPosition, !restoring, !viewportTransitioning, !images.isEmpty, pages.bounds.width > 0 {
             recordReaderTrace("layout.pending")
             // Reload/layout callbacks must still see the requested logical

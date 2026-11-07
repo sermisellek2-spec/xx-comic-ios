@@ -50,8 +50,12 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
     }
     private func controls(_ visible: Bool, in app: XCUIApplication) {
         let button = app.buttons["reader.settings"]
-        if (button.exists && button.isHittable) != visible {
+        for _ in 0..<2 where (button.exists && button.isHittable) != visible {
             app.collectionViews["reader.pages"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            let check = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                (button.exists && button.isHittable) == visible
+            }, object: app)
+            if XCTWaiter.wait(for: [check], timeout: 2) == .completed { break }
         }
         let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
             (button.exists && button.isHittable) == visible
