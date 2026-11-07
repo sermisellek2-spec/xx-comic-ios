@@ -248,7 +248,7 @@ public final class JavaScriptCoreEngine: ScriptEngine, @unchecked Sendable {
             }
         }
 
-        guard let result = targetFn.call(withArguments: jsArgs) else {
+        guard let result = sourceVal.invokeMethod(method, withArguments: jsArgs) else {
             if let err = thrownError { throw err }
             throw RuleError("规则没有返回数据")
         }

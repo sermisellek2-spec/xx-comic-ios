@@ -93,8 +93,13 @@ for action in root.get('actions', []):
             else:
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)
-            subprocess.run(['xcrun', 'xcresulttool', 'export', '--type', 'file', '--path', str(bundle),
-                            '--id', payload, '--output-path', str(target)], check=True)
+            export_cmd = ['xcrun', 'xcresulttool', 'export', '--type', 'file', '--path', str(bundle),
+                          '--id', payload, '--output-path', str(target)]
+            try:
+                subprocess.run(['xcrun', 'xcresulttool', 'export', '--legacy', '--type', 'file', '--path', str(bundle),
+                                '--id', payload, '--output-path', str(target)], check=True, stderr=subprocess.PIPE)
+            except Exception:
+                subprocess.run(export_cmd, check=True)
             records.append({'file': str(target), 'sha256': hashlib.sha256(target.read_bytes()).hexdigest(),
                             'revision': revision, 'device': device, 'destination': destination,
                             'test': test.get('identifier'), 'status': test.get('testStatus'),

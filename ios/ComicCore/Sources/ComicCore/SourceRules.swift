@@ -950,8 +950,7 @@ public final class RuleHttp: @unchecked Sendable {
 
     public static func checkHeader(_ key: String, _ value: String) throws {
         guard key.range(of: #"^[A-Za-z0-9-]{1,64}$"#, options: .regularExpression) != nil,
-              !value.contains("\r"),
-              !value.contains("\n"),
+              !value.unicodeScalars.contains(where: { $0.value == 10 || $0.value == 13 }),
               value.count <= 4096 else {
             throw RuleError("规则请求头无效或不支持")
         }

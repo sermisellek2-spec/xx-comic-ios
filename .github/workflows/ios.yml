@@ -31,7 +31,7 @@ concurrency:
 jobs:
   build:
     if: github.repository == 'sermisellek2-spec/xx-comic-ios' && (github.event.inputs.validated_run_id || '') == ''
-    runs-on: macos-latest
+    runs-on: macos-14
     # The full suite runs both devices sequentially, including the expanded
     # reading/Files recovery checks and every visual scene. Keep that coverage.
     timeout-minutes: 180
@@ -159,7 +159,7 @@ jobs:
 
   package-validated:
     if: github.repository == 'sermisellek2-spec/xx-comic-ios' && (github.event.inputs.validated_run_id || '') != ''
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 15
     permissions:
       contents: read
