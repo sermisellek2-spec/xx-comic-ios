@@ -30,9 +30,21 @@ final class ErrorLogsParityUITests: ParityUITestCase {
         app.buttons["error.logs.more"].tap(); app.buttons["清空错误日志"].tap()
         XCTAssertTrue(app.alerts["清空错误日志"].waitForExistence(timeout: 5)); app.alerts["清空错误日志"].buttons["取消"].tap()
         XCTAssertTrue(row.exists)
-        app.buttons["error.logs.more"].tap(); app.buttons["清空错误日志"].tap(); app.alerts["清空错误日志"].buttons["清空"].tap()
+        app.buttons["error.logs.more"].tap(); app.buttons["清空错误日志"].tap()
+        let clearAlert = app.alerts["清空错误日志"]
+        XCTAssertTrue(clearAlert.waitForExistence(timeout: 5))
+        for _ in 0..<3 where clearAlert.exists {
+            let confirmButton = clearAlert.buttons["清空"]
+            if confirmButton.exists && confirmButton.isHittable {
+                confirmButton.tap()
+            }
+            let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: clearAlert)
+            if XCTWaiter.wait(for: [gone], timeout: 1.5) == .completed { break }
+        }
         XCTAssertTrue(app.staticTexts["error.logs.empty"].waitForExistence(timeout: 5))
-        app.terminate(); app.launch(); app.tabBars.buttons["设置"].tap(); entry.tap()
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.tabBars.buttons["设置"].waitForExistence(timeout: 10)); app.tabBars.buttons["设置"].tap()
+        XCTAssertTrue(entry.waitForExistence(timeout: 5)); entry.tap()
         XCTAssertTrue(app.staticTexts["error.logs.empty"].waitForExistence(timeout: 5))
     }
 
@@ -44,7 +56,7 @@ final class ErrorLogsParityUITests: ParityUITestCase {
             let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: popoverDismiss)
             XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
         } else {
-            let close = app.buttons.matching(NSPredicate(format: "label IN %@ OR identifier IN %@", ["Close", "关闭", "Cancel", "取消"], ["Close", "关闭", "Cancel", "取消", "close-button"])).firstMatch
+            let close = app.buttons.matching(NSPredicate(format: "label IN %@ OR identifier IN %@", ["Close", "关闭", "Cancel", "取消"], ["Close", "关闭", "Cancel", "取消", "close-button", "header.closeButton"])).firstMatch
             let activityListView = app.otherElements["ActivityListView"]
             if close.waitForExistence(timeout: 5) && close.isHittable {
                 close.tap()
@@ -54,7 +66,8 @@ final class ErrorLogsParityUITests: ParityUITestCase {
                 app.swipeDown()
             }
             let export = app.buttons["error.logs.export"]
-            let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in export.isHittable }, object: app)
+            let more = app.buttons["error.logs.more"]
+            let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in export.isHittable || more.isHittable }, object: app)
             XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
         }
     }

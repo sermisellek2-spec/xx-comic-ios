@@ -65,6 +65,7 @@ enum MatrixUITestFixtures {
             environment.preferences.save(preferences)
             environment.defaults.set(true, forKey: "ui.matrix.preferences.seeded")
         }
+        _ = environment.defaults.synchronize()
         seedCorruptDownloadIfRequested(environment: environment)
     }
 

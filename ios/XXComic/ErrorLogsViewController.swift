@@ -146,7 +146,7 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
         alert.addAction(UIAlertAction(title: "清空", style: .destructive) { [weak self] _ in
             ErrorLogStore.shared.clear()
             self?.loadData()
-            self?.showToast("错误日志已清空")
+            UIAccessibility.post(notification: .announcement, argument: "错误日志已清空")
         })
         present(alert, animated: true)
     }

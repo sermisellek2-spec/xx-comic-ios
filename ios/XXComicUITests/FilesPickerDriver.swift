@@ -14,12 +14,28 @@ struct FilesPickerDriver {
     private var pickerRoot: XCUIElement {
         app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH 'DOC.browsingRoot'")).firstMatch
     }
+    private var providerCell: XCUIElement {
+        (pickerRoot.exists ? pickerRoot : app).cells.matching(NSPredicate(format: "identifier BEGINSWITH %@ OR label BEGINSWITH %@", "XXComic Files Fixture", "XXComic Files Fixture")).firstMatch
+    }
 
     private func isShowingFolder(_ name: String) -> Bool {
-        pickerBar.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name + ",")).firstMatch.exists
+        if pickerBar.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name + ",")).firstMatch.exists
             || pickerBar.staticTexts[name].exists
-            || app.navigationBars[name].exists
-            || (pickerRoot.exists && pickerRoot.identifier.contains(name))
+            || app.navigationBars[name].exists {
+            return true
+        }
+        let anyFolderMenu = pickerBar.buttons.matching(NSPredicate(format: "label CONTAINS ', '")).firstMatch
+        if anyFolderMenu.exists || pickerBar.staticTexts.firstMatch.exists {
+            return false
+        }
+        return pickerRoot.exists && pickerRoot.identifier.contains("Title: " + name)
+    }
+
+    private func waitForProviderOrFixtureRoot(timeout: TimeInterval) -> Bool {
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            self.isShowingFolder("XXComic Files Fixture") || (self.providerCell.exists && self.providerCell.isHittable)
+        }, object: app)
+        return XCTWaiter.wait(for: [ready], timeout: timeout) == .completed
     }
 
     func openFixtureProvider() throws {
@@ -27,25 +43,49 @@ struct FilesPickerDriver {
         capture("provider-start")
         let browse = app.tabBars.buttons.matching(NSPredicate(format: "label IN %@", ["浏览", "Browse"])).firstMatch
         let local = app.cells.containing(NSPredicate(format: "label IN %@", localNames)).firstMatch
-        let back = systemBars.buttons.matching(NSPredicate(format: "label IN %@", ["浏览", "Browse", "位置", "Locations", "返回", "Back"] + localNames)).firstMatch
+        let recents = app.cells.matching(NSPredicate(format: "identifier == 'DOC.sidebar.item.Recents' OR label IN %@", ["最近项目", "Recents"])).firstMatch
+        let back = systemBars.buttons.matching(NSPredicate(format: "(label IN %@ OR identifier == 'BackButton') AND identifier != 'DOC.navBarButton.backInHistory'", ["浏览", "Browse", "位置", "Locations", "返回", "Back"] + localNames)).firstMatch
         let sidebar = app.buttons.matching(NSPredicate(format: "label IN %@", ["显示边栏", "Show Sidebar"])).firstMatch
-        let provider = (pickerRoot.exists ? pickerRoot : app).cells.matching(NSPredicate(format: "identifier BEGINSWITH %@ OR label BEGINSWITH %@", "XXComic Files Fixture", "XXComic Files Fixture")).firstMatch
         let parent = systemBars.buttons.matching(NSPredicate(format: "label IN %@", ["XXComic Files Fixture"])).firstMatch
-        var selectedBrowse = false
-        for _ in 0..<10 {
+        var browseTapCount = 0
+        var tappedLocal = false
+        for _ in 0..<12 {
             if isShowingFolder("XXComic Files Fixture") { capture("provider-root"); return }
+            let provider = providerCell
             if provider.exists && provider.isHittable {
                 try openFolder("XXComic Files Fixture")
                 capture("provider-root"); return
             }
-            if local.exists && local.isHittable { local.tap() }
-            else if parent.exists && parent.isHittable { parent.tap() }
-            else if back.exists && back.isHittable { back.tap() }
-            else if sidebar.exists && sidebar.isHittable { sidebar.tap() }
-            else if browse.exists && browse.isHittable && !selectedBrowse { browse.tap(); selectedBrowse = true }
-            else {
+            if parent.exists && parent.isEnabled && parent.isHittable {
+                parent.tap()
+                _ = waitForProviderOrFixtureRoot(timeout: 2.0)
+            } else if back.exists && back.isEnabled && back.isHittable {
+                back.tap()
+                _ = waitForProviderOrFixtureRoot(timeout: 1.5)
+            } else if local.exists && local.isHittable {
+                if tappedLocal && recents.exists && recents.isHittable {
+                    recents.tap()
+                    tappedLocal = false
+                    let switched = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                        self.isShowingFolder("Recents") || self.isShowingFolder("最近项目")
+                    }, object: app)
+                    _ = XCTWaiter.wait(for: [switched], timeout: 1.5)
+                } else {
+                    local.tap()
+                    tappedLocal = true
+                    _ = waitForProviderOrFixtureRoot(timeout: 2.0)
+                }
+            } else if sidebar.exists && sidebar.isEnabled && sidebar.isHittable {
+                sidebar.tap()
+                let sidebarShown = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in local.isHittable }, object: app)
+                _ = XCTWaiter.wait(for: [sidebarShown], timeout: 1.5)
+            } else if browse.exists && browse.isHittable && browseTapCount < 2 {
+                browse.tap()
+                browseTapCount += 1
+                _ = waitForProviderOrFixtureRoot(timeout: 1.5)
+            } else {
                 let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-                    self.isShowingFolder("XXComic Files Fixture") || provider.isHittable || local.isHittable || parent.isHittable || back.isHittable || sidebar.isHittable
+                    self.isShowingFolder("XXComic Files Fixture") || self.providerCell.isHittable || local.isHittable || (parent.isEnabled && parent.isHittable) || (back.isEnabled && back.isHittable) || sidebar.isHittable
                 }, object: app)
                 if XCTWaiter.wait(for: [ready], timeout: 3) != .completed { break }
             }
@@ -62,13 +102,17 @@ struct FilesPickerDriver {
             cell = root.cells.containing(.staticText, identifier: name).firstMatch
         }
         if !cell.waitForExistence(timeout: 3) || !cell.isHittable {
-            let collection = app.collectionViews.firstMatch
+            let collection = (pickerRoot.exists ? pickerRoot : app).collectionViews.firstMatch
             if collection.exists {
+                var swipedUp = 0
                 for _ in 0..<4 where !cell.exists || !cell.isHittable {
                     collection.swipeUp()
+                    swipedUp += 1
                 }
-                for _ in 0..<4 where !cell.exists || !cell.isHittable {
-                    collection.swipeDown()
+                for _ in 0..<swipedUp where !cell.exists || !cell.isHittable {
+                    let start = collection.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+                    let end = collection.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+                    start.press(forDuration: 0.05, thenDragTo: end)
                 }
             }
         }
@@ -97,13 +141,17 @@ struct FilesPickerDriver {
         let root = pickerRoot.exists ? pickerRoot : app
         let file = root.cells.matching(NSPredicate(format: "identifier BEGINSWITH %@ OR label BEGINSWITH %@", name, stem)).firstMatch
         if !file.waitForExistence(timeout: 5) || !file.isHittable {
-            let collection = app.collectionViews.firstMatch
+            let collection = (pickerRoot.exists ? pickerRoot : app).collectionViews.firstMatch
             if collection.exists {
+                var swipedUp = 0
                 for _ in 0..<4 where !file.exists || !file.isHittable {
                     collection.swipeUp()
+                    swipedUp += 1
                 }
-                for _ in 0..<4 where !file.exists || !file.isHittable {
-                    collection.swipeDown()
+                for _ in 0..<swipedUp where !file.exists || !file.isHittable {
+                    let start = collection.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+                    let end = collection.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+                    start.press(forDuration: 0.05, thenDragTo: end)
                 }
             }
         }

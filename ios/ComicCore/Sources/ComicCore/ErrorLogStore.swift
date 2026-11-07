@@ -123,5 +123,6 @@ public final class ErrorLogStore: @unchecked Sendable {
             return
         }
         userDefaults?.set(text, forKey: key)
+        _ = userDefaults?.synchronize()
     }
 }
