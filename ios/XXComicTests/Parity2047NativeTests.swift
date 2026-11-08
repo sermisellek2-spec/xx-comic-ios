@@ -76,8 +76,10 @@ final class Parity2047NativeTests: XCTestCase {
         try environment.restoreFavorite(favSnapshot)
         XCTAssertTrue(environment.library.entry(for: comic)?.isFavorite == true)
         XCTAssertEqual(environment.library.entry(for: comic)?.reading?.position.imageIndex, 3)
+        let restoredGroups = environment.bookshelfGroupStore.getGroupsForComic(scope: .online, comicId: comic.comicId)
+        XCTAssertTrue(restoredGroups.contains(where: \.isBuiltin))
         XCTAssertEqual(
-            Set(environment.bookshelfGroupStore.getGroupsForComic(scope: .online, comicId: comic.comicId).map(\.id)),
+            Set(restoredGroups.filter { !$0.isBuiltin }.map(\.id)),
             Set([groupA.id, groupB.id])
         )
 
@@ -93,8 +95,10 @@ final class Parity2047NativeTests: XCTestCase {
         try environment.undoSourceReplacement(switchSnapshot)
         XCTAssertTrue(environment.library.entry(for: comic)?.isFavorite == true)
         XCTAssertNil(environment.library.entry(for: targetSummary))
+        let undoneGroups = environment.bookshelfGroupStore.getGroupsForComic(scope: .online, comicId: comic.comicId)
+        XCTAssertTrue(undoneGroups.contains(where: \.isBuiltin))
         XCTAssertEqual(
-            Set(environment.bookshelfGroupStore.getGroupsForComic(scope: .online, comicId: comic.comicId).map(\.id)),
+            Set(undoneGroups.filter { !$0.isBuiltin }.map(\.id)),
             Set([groupA.id, groupB.id])
         )
         XCTAssertTrue(environment.bookshelfGroupStore.getGroupsForComic(scope: .online, comicId: targetSummary.comicId).isEmpty)
