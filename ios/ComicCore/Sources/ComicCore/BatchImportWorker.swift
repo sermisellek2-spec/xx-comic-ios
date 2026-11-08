@@ -64,9 +64,9 @@ public actor BatchImportWorker {
         return ["jpg", "jpeg", "png", "webp", "gif", "bmp"].contains(ext)
     }
 
-    public static func createBookmark(for url: URL) throws -> Data {
+    public static func createBookmark(for url: URL, manageSecurityScope: Bool = true) throws -> Data {
         #if canImport(Darwin)
-        let scoped = url.startAccessingSecurityScopedResource()
+        let scoped = manageSecurityScope ? url.startAccessingSecurityScopedResource() : false
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         return try url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
         #else

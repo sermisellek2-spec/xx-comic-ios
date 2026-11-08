@@ -292,6 +292,7 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
 
     public func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let url = urls.first else { return }
+        let pickerScoped = url.startAccessingSecurityScopedResource()
         let reauthorizingID = reauthorizingFolderID; reauthorizingFolderID = nil
         let token = UUID(); folderAccessGeneration = token
         let coordinator = environment.folderSyncCoordinator
@@ -299,14 +300,15 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
         tableView.reloadSections(IndexSet(integer: 2), with: .none)
         folderAccessTask = Task { [weak self] in
             defer {
+                if pickerScoped { url.stopAccessingSecurityScopedResource() }
                 if self?.folderAccessGeneration == token {
                     self?.folderAccessTask = nil
                     self?.tableView.reloadSections(IndexSet(integer: 2), with: .none)
                 }
             }
             do {
-                if let reauthorizingID { _ = try await coordinator.reauthorize(id: reauthorizingID, url: url) }
-                else { _ = try await coordinator.linkFolder(url: url) }
+                if let reauthorizingID { _ = try await coordinator.reauthorize(id: reauthorizingID, url: url, alreadyScoped: pickerScoped) }
+                else { _ = try await coordinator.linkFolder(url: url, alreadyScoped: pickerScoped) }
                 guard let self, self.folderAccessGeneration == token, !Task.isCancelled else { return }
                 RemoteImageView.clearMemoryCache(); ReaderEnhancementEngine.shared.clearCache()
                 self.environment.notifyLibraryChanged()

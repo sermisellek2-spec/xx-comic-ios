@@ -40,13 +40,13 @@ struct FilesPickerDriver {
 
     func openFixtureProvider() throws {
         guard pickerBar.waitForExistence(timeout: 35) else { throw SelectionError.providerNotFound }
+        _ = waitForProviderOrFixtureRoot(timeout: 1.0)
         capture("provider-start")
         let browse = app.tabBars.buttons.matching(NSPredicate(format: "label IN %@", ["浏览", "Browse"])).firstMatch
         let local = app.cells.containing(NSPredicate(format: "label IN %@", localNames)).firstMatch
         let recents = app.cells.matching(NSPredicate(format: "identifier == 'DOC.sidebar.item.Recents' OR label IN %@", ["最近项目", "Recents"])).firstMatch
-        let back = systemBars.buttons.matching(NSPredicate(format: "(label IN %@ OR identifier == 'BackButton') AND identifier != 'DOC.navBarButton.backInHistory'", ["浏览", "Browse", "位置", "Locations", "返回", "Back"] + localNames)).firstMatch
+        let navBack = systemBars.buttons.matching(NSPredicate(format: "(label IN %@ OR identifier == 'BackButton') AND identifier != 'DOC.navBarButton.backInHistory'", ["XXComic Files Fixture", "浏览", "Browse", "位置", "Locations", "返回", "Back"] + localNames)).firstMatch
         let sidebar = app.buttons.matching(NSPredicate(format: "label IN %@", ["显示边栏", "Show Sidebar"])).firstMatch
-        let parent = systemBars.buttons.matching(NSPredicate(format: "label IN %@", ["XXComic Files Fixture"])).firstMatch
         var browseTapCount = 0
         var tappedLocal = false
         for _ in 0..<12 {
@@ -56,12 +56,10 @@ struct FilesPickerDriver {
                 try openFolder("XXComic Files Fixture")
                 capture("provider-root"); return
             }
-            if parent.exists && parent.isEnabled && parent.isHittable {
-                parent.tap()
+            if navBack.exists && navBack.isEnabled && navBack.isHittable {
+                if isShowingFolder("XXComic Files Fixture") || (providerCell.exists && providerCell.isHittable) { continue }
+                navBack.tap()
                 _ = waitForProviderOrFixtureRoot(timeout: 2.0)
-            } else if back.exists && back.isEnabled && back.isHittable {
-                back.tap()
-                _ = waitForProviderOrFixtureRoot(timeout: 1.5)
             } else if local.exists && local.isHittable {
                 if tappedLocal && recents.exists && recents.isHittable {
                     recents.tap()
@@ -85,7 +83,7 @@ struct FilesPickerDriver {
                 _ = waitForProviderOrFixtureRoot(timeout: 1.5)
             } else {
                 let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-                    self.isShowingFolder("XXComic Files Fixture") || self.providerCell.isHittable || local.isHittable || (parent.isEnabled && parent.isHittable) || (back.isEnabled && back.isHittable) || sidebar.isHittable
+                    self.isShowingFolder("XXComic Files Fixture") || self.providerCell.isHittable || local.isHittable || (navBack.isEnabled && navBack.isHittable) || sidebar.isHittable
                 }, object: app)
                 if XCTWaiter.wait(for: [ready], timeout: 3) != .completed { break }
             }

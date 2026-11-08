@@ -200,9 +200,19 @@ final class ReaderContinuityUITests: ParityUITestCase {
         XCTAssertTrue(saved?.contains("第2话") == true)
         XCUIDevice.shared.orientation = .landscapeLeft
         defer { XCUIDevice.shared.orientation = .portrait }
+        let rotatedLandscape = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            let win = app.windows.firstMatch.frame
+            return win.width > win.height && pages.frame.width > pages.frame.height * 1.2 && abs(pages.frame.width - win.width) < 4
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [rotatedLandscape], timeout: 5), .completed)
         XCTAssertGreaterThan(pages.frame.width, pages.frame.height)
         XCTAssertEqual(pages.value as? String, saved, "Rotation must restore the captured chapter, not whichever chapter temporarily occupies the old pixel offset")
         XCUIDevice.shared.orientation = .portrait
+        let rotatedPortrait = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            let win = app.windows.firstMatch.frame
+            return win.height > win.width && pages.frame.height > pages.frame.width * 1.2 && abs(pages.frame.width - win.width) < 4
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [rotatedPortrait], timeout: 5), .completed)
         XCTAssertLessThan(pages.frame.width, pages.frame.height)
         XCTAssertEqual(pages.value as? String, saved)
     }

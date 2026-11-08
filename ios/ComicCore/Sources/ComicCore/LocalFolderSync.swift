@@ -49,16 +49,20 @@ public final class LocalFolderSyncCoordinator: @unchecked Sendable {
     }
 
     /// Every link, migration, synchronization and deletion uses one writer.
-    public func linkFolder(url: URL, title: String? = nil) async throws -> SyncedFolderRecord {
+    public func linkFolder(url: URL, title: String? = nil, alreadyScoped: Bool = false) async throws -> SyncedFolderRecord {
         try await syncGate.execute {
             try Task.checkCancellation()
-            let bookmark = try BatchImportWorker.createBookmark(for: url)
+            #if canImport(Darwin)
+            let scoped = alreadyScoped ? false : url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            #endif
+            let bookmark = try BatchImportWorker.createBookmark(for: url, manageSecurityScope: false)
             let sameRecord = store.list().first { record in
                 guard let oldURL = try? BatchImportWorker.resolveBookmark(record.bookmarkData) else { return false }
                 return oldURL.standardizedFileURL == url.standardizedFileURL
             }
             if let record = sameRecord, try await library.series(id: record.seriesId) != nil {
-                return try await indexFolder(url: url, bookmark: bookmark, record: record)
+                return try await indexFolder(url: url, bookmark: bookmark, record: record, alreadyScoped: true)
             }
             let fingerprint = try LocalLibrary.linkedFolderIdentity(url)
             if let existing = try await library.findReadySeries(byFingerprint: fingerprint),
@@ -66,14 +70,10 @@ public final class LocalFolderSyncCoordinator: @unchecked Sendable {
                 let record = store.record(id: linked.recordID) ?? SyncedFolderRecord(
                     id: linked.recordID, folderName: title ?? existing.series.displayTitle,
                     bookmarkData: bookmark, seriesId: existing.series.id)
-                return try await indexFolder(url: url, bookmark: bookmark, record: record)
+                return try await indexFolder(url: url, bookmark: bookmark, record: record, alreadyScoped: true)
             }
             let recordID = sameRecord?.id ?? UUID().uuidString
             let folderTitle = title ?? sameRecord?.folderName ?? url.lastPathComponent
-            #if canImport(Darwin)
-            let scoped = url.startAccessingSecurityScopedResource()
-            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-            #endif
             let prepared = try await prepare(url: url, title: folderTitle, bookmark: bookmark, recordID: recordID, previous: nil)
             let imported = try await library.publishImport(prepared, explicitTitle: folderTitle)
             let record = SyncedFolderRecord(id: recordID, folderName: folderTitle, bookmarkData: bookmark,
@@ -91,12 +91,16 @@ public final class LocalFolderSyncCoordinator: @unchecked Sendable {
 
     /// A user-selected folder can restore a moved/revoked authorization while keeping
     /// the existing series, volume, chapter IDs, titles and retained page identities.
-    public func reauthorize(id: String, url: URL) async throws -> SyncedFolderRecord {
+    public func reauthorize(id: String, url: URL, alreadyScoped: Bool = false) async throws -> SyncedFolderRecord {
         try await syncGate.execute {
             try Task.checkCancellation()
             guard let record = store.record(id: id) else { throw LocalCatalogError.targetNotFound }
-            let bookmark = try BatchImportWorker.createBookmark(for: url)
-            return try await indexFolder(url: url, bookmark: bookmark, record: record)
+            #if canImport(Darwin)
+            let scoped = alreadyScoped ? false : url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            #endif
+            let bookmark = try BatchImportWorker.createBookmark(for: url, manageSecurityScope: false)
+            return try await indexFolder(url: url, bookmark: bookmark, record: record, alreadyScoped: true)
         }
     }
 
@@ -110,12 +114,12 @@ public final class LocalFolderSyncCoordinator: @unchecked Sendable {
         return try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
     }
 
-    private func indexFolder(url: URL, bookmark: Data, record: SyncedFolderRecord) async throws -> SyncedFolderRecord {
+    private func indexFolder(url: URL, bookmark: Data, record: SyncedFolderRecord, alreadyScoped: Bool = false) async throws -> SyncedFolderRecord {
         guard let series = try await library.series(id: record.seriesId), series.status == "ready",
               let first = series.volumeIDs.first else { throw LocalCatalogError.targetNotFound }
         let previous = try library.book(id: first)
         #if canImport(Darwin)
-        let scoped = url.startAccessingSecurityScopedResource()
+        let scoped = alreadyScoped ? false : url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         #endif
         let prepared = try await prepare(url: url, title: record.folderName, bookmark: bookmark,
@@ -176,7 +180,7 @@ public final class LocalFolderSyncCoordinator: @unchecked Sendable {
             defer { if scoped { folderURL.stopAccessingSecurityScopedResource() } }
             #endif
             guard FileManager.default.fileExists(atPath: folderURL.path) else { throw CocoaError(.fileNoSuchFile) }
-            let bookmark = try resolved.isStale ? BatchImportWorker.createBookmark(for: folderURL) : record.bookmarkData
+            let bookmark = try resolved.isStale ? BatchImportWorker.createBookmark(for: folderURL, manageSecurityScope: false) : record.bookmarkData
             guard let series = try await library.series(id: record.seriesId), series.status == "ready",
                   let first = series.volumeIDs.first else { throw LocalCatalogError.targetNotFound }
             let currentBook = try library.book(id: first)
