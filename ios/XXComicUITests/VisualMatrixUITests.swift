@@ -98,11 +98,11 @@ final class VisualMatrixUITests: ParityUITestCase {
         XCTAssertTrue(app.switches["reader.disable.page.animation"].waitForExistence(timeout: 5))
         capture(stem + "reading_settings")
         let comparison = app.switches["reader.enhancement.comparison"]
-        for _ in 0..<4 where !comparison.isHittable { app.scrollViews["reader.settings.content"].swipeUp() }
+        for _ in 0..<10 where !comparison.isHittable { app.scrollViews["reader.settings.content"].swipeUp() }
         XCTAssertTrue(comparison.isHittable)
         XCTAssertEqual(comparison.value as? String, "1"); comparison.tap()
         let enhancement = app.switches["reader.enhancement.enabled"]
-        for _ in 0..<4 where !enhancement.isHittable { app.scrollViews["reader.settings.content"].swipeDown() }
+        for _ in 0..<10 where !enhancement.isHittable { app.scrollViews["reader.settings.content"].swipeDown() }
         XCTAssertTrue(enhancement.isHittable); enhancement.tap()
         app.buttons["reader.settings.close"].tap()
         expectation(for: NSPredicate(format: "value CONTAINS ':384x384' AND NOT (value BEGINSWITH 'neural:')"), evaluatedWith: image)

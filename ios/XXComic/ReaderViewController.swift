@@ -13,6 +13,18 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var settings: ReaderPreferences
     private lazy var spreadStore = SpreadStateStore(defaults: environment.defaults)
     private lazy var doublePageStore = DoublePageStateStore(defaults: environment.defaults)
+    private var rawChapterURLs: [String: [String]] = [:]
+    private var spreadPlans: [String: SpreadPagePlan] = [:]
+    private var doublePagePlans: [String: DoublePagePlan] = [:]
+    private var virtualUnits: [String: SpreadPagePlan.Unit] = [:]
+    private var scanTask: Task<Void, Never>?
+    private var scanToken = UUID()
+    private var spreadSamples: [String: SpreadDetector.Sample] = [:]
+    private var doublePageSamples: [String: DoublePageDetector.Sample] = [:]
+    private var scanStatusText: String?
+    private var pendingAutoScanRefresh = false
+    private weak var activeSettingsSheet: ReaderSettingsViewController?
+    private var bookKey: String { "\(comic.sourceId):\(comic.comicId)" }
     private var images: [String] = []
     private var continuousPages = ContinuousReaderPages()
     private var continuationTask: Task<Void, Never>?
@@ -51,6 +63,15 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private let status = UIButton(type: .system)
     private let badge = ReaderOverlayBadge()
     private let enhancementBadge = UILabel()
+    private let extraDimOverlay = UIView()
+    private let pullHintLabel = ReaderPullHintLabel()
+    private var pullStartedAtTop = false
+    private var pullReadyToRelease = false
+    private var pullTargetChapterIndex: Int?
+    private var savedSystemBrightness: CGFloat?
+    private var oldInteractivePopEnabled: Bool?
+    private var lastInteractionUptime: TimeInterval = ProcessInfo.processInfo.systemUptime
+    private var pendingSaveTask: Task<Void, Never>?
     private var retryAction: (() -> Void)?
     private weak var downloadRepairController: UIViewController?
     private var downloadRepairAction: (() -> Void)?
@@ -101,7 +122,18 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         hidesBottomBarWhenPushed = true
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
-    deinit { loadTask?.cancel(); directoryTask?.cancel(); continuationTask?.cancel() }
+    deinit {
+        loadTask?.cancel(); directoryTask?.cancel(); continuationTask?.cancel(); scanTask?.cancel()
+        pendingSaveTask?.cancel()
+        if Thread.isMainThread {
+            MainActor.assumeIsolated {
+                UIApplication.shared.isIdleTimerDisabled = false
+                if let saved = savedSystemBrightness {
+                    UIScreen.main.brightness = saved
+                }
+            }
+        }
+    }
     override var prefersStatusBarHidden: Bool { true }
     override var preferredStatusBarStyle: UIStatusBarStyle { overrideUserInterfaceStyle == .dark ? .lightContent : .darkContent }
     override var prefersHomeIndicatorAutoHidden: Bool { fullscreen }
@@ -226,10 +258,26 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         enhancementBadge.isHidden = true
         enhancementBadge.accessibilityIdentifier = "reader.enhancement.badge"
 
-        for item in [pages, topChrome, bottomChrome, toolbar, chapterProgress, status, badge, enhancementBadge] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
+        extraDimOverlay.backgroundColor = .black
+        extraDimOverlay.alpha = 0
+        extraDimOverlay.isHidden = true
+        extraDimOverlay.isUserInteractionEnabled = false
+        extraDimOverlay.accessibilityIdentifier = "reader.extra.dim"
+
+        pullHintLabel.isHidden = true
+        pullHintLabel.alpha = 0
+        pullHintLabel.isUserInteractionEnabled = false
+        pullHintLabel.accessibilityIdentifier = "reader.pull.hint"
+
+        for item in [pages, extraDimOverlay, pullHintLabel, topChrome, bottomChrome, toolbar, chapterProgress, status, badge, enhancementBadge] { item.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(item) }
         NSLayoutConstraint.activate([
             pages.topAnchor.constraint(equalTo: view.topAnchor), pages.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             pages.leadingAnchor.constraint(equalTo: view.leadingAnchor), pages.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            extraDimOverlay.topAnchor.constraint(equalTo: view.topAnchor), extraDimOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            extraDimOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor), extraDimOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            pullHintLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 14),
+            pullHintLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            pullHintLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 34),
             toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor), toolbar.heightAnchor.constraint(equalToConstant: 88),
             topChrome.topAnchor.constraint(equalTo: view.topAnchor), topChrome.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -274,9 +322,17 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        if oldInteractivePopEnabled == nil {
+            oldInteractivePopEnabled = navigationController?.interactivePopGestureRecognizer?.isEnabled
+        }
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = false
+        noteUserInteraction()
+        applyKeepScreenPolicy(active: true)
+        applyBrightnessPolicy(active: true)
         habitTimer?.invalidate()
         habitTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             self?.environment.readingHabits.tick()
+            self?.checkKeepScreenIdleExpiration()
             self?.updateBadge()
         }
         syncHabitOverlay()
@@ -290,8 +346,15 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         if isMovingFromParent {
             downloadRepairAction = nil; downloadRepairController = nil
             loadTask?.cancel(); directoryTask?.cancel()
+            cancelScan()
             cancelContinuation()
             pages.visibleCells.forEach { ($0 as? ReaderImageCell)?.cancel() }
+            if let oldPop = oldInteractivePopEnabled {
+                navigationController?.interactivePopGestureRecognizer?.isEnabled = oldPop
+                oldInteractivePopEnabled = nil
+            }
+            applyKeepScreenPolicy(active: false)
+            applyBrightnessPolicy(active: false)
             navigationController?.setNavigationBarHidden(false, animated: false)
             navigationController?.overrideUserInterfaceStyle = oldNavigationStyle
             UIDevice.current.isBatteryMonitoringEnabled = oldBatteryMonitoring
@@ -369,6 +432,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         pages.semanticContentAttribute = .forceLeftToRight
         pages.isPagingEnabled = settings.layout == .paged
         pages.isScrollEnabled = settings.layout == .strip && !isZoomed
+        pages.alwaysBounceVertical = settings.layout == .strip
         let style: UIUserInterfaceStyle = settings.theme == .system ? UIScreen.main.traitCollection.userInterfaceStyle : (settings.theme == .dark ? .dark : .light)
         overrideUserInterfaceStyle = style
         navigationController?.overrideUserInterfaceStyle = style
@@ -376,6 +440,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         toolbar.backgroundColor = .clear
         badge.isHidden = !fullscreen || settings.fullyImmersive
         presentedViewController?.overrideUserInterfaceStyle = style
+        let isActiveWindow = viewIfLoaded?.window != nil && UIApplication.shared.applicationState == .active
+        applyKeepScreenPolicy(active: isActiveWindow)
+        applyBrightnessPolicy(active: isActiveWindow)
         for cell in pages.visibleCells { (cell as? ReaderImageCell)?.apply(settings) }
         if previousSettings.readingMode != settings.readingMode {
             pendingPositionNeedsContinuation = false
@@ -433,6 +500,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         guard chapters.indices.contains(index) else { return }
         savePosition()
         pendingPosition = nil; pendingPositionNeedsContinuation = false
+        cancelScan()
         cancelContinuation()
         lastObservedPosition = nil
         pagedAnchor = nil
@@ -453,14 +521,16 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 guard self.requestID == token else { return }
                 guard !page.imageUrls.isEmpty else { throw ReaderError.noImages }
                 let saved = restoreSaved ? self.environment.library.position(for: self.comic, chapterID: chapter.chapterId) : nil
-                let position = atEnd ? ReaderPosition(imageIndex: page.imageUrls.count - 1, offset: 0, atEnd: true)
+                let sourcePos = atEnd ? ReaderPosition(imageIndex: page.imageUrls.count - 1, offset: 0, atEnd: true)
                     : (saved ?? ReaderPosition(imageIndex: 0, offset: 0))
-                guard self.session.loaded(chapter: chapter, in: self.chapters, imageCount: page.imageUrls.count, position: position) else { throw ReaderError.chapterMissing }
-                self.session.updateImage(position.index(in: page.imageUrls))
-                self.images = page.imageUrls; self.sizes = [:]
+                let plan = self.buildPresentationPlan(for: chapter, rawURLs: page.imageUrls)
+                let position = self.displayPosition(from: sourcePos, plan: plan)
+                guard self.session.loaded(chapter: chapter, in: self.chapters, imageCount: plan.displayKeys.count, position: position) else { throw ReaderError.chapterMissing }
+                self.session.updateImage(position.index(in: plan.displayKeys))
+                self.images = plan.displayKeys; self.sizes = [:]
                 self.pagedAnchor = position.forPagedImage(at: self.session.imageIndex, in: self.images)
                 self.continuousPages = ContinuousReaderPages()
-                self.continuousPages.append(chapter: chapter, imageURLs: page.imageUrls)
+                self.continuousPages.append(chapter: chapter, imageURLs: plan.displayKeys)
                 self.title = chapter.title
                 self.updateReaderHeading(chapter)
                 self.loadState.chapterFinished(); self.updateLoadStatus(); self.lastSaved = nil
@@ -470,6 +540,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 self.updateBadge()
                 self.readerSeekBar.configure(currentPage: self.session.imageIndex, total: self.images.count, sessionToken: Int64(self.session.chapterIndex))
                 self.updateContinuationFooter()
+                self.startPresentationScan(for: chapter, plan: plan, anchor: sourcePos.index(in: page.imageUrls))
             } catch {
                 guard let self, self.requestID == token, !Task.isCancelled else { return }
                 if !(error is CancellationError) {
@@ -532,7 +603,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 let page = try await self.fetchChapterPage(chapter: chapter, index: index, comic: requestComic, chapters: requestChapters, source: requestSource)
                 try Task.checkCancellation()
                 guard self.continuationRequestID == token, self.requestID == sceneToken, self.settings.layout == .strip else { return }
-                guard self.continuousPages.append(chapter: chapter, imageURLs: page.imageUrls) else { throw ReaderError.noImages }
+                let plan = self.buildPresentationPlan(for: chapter, rawURLs: page.imageUrls)
+                guard self.continuousPages.append(chapter: chapter, imageURLs: plan.displayKeys) else { throw ReaderError.noImages }
                 let start = self.images.count
                 let appended = self.continuousPages.imageURLs
                 let inserted = (start..<appended.count).map { IndexPath(item: $0, section: 0) }
@@ -748,7 +820,18 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         recordReaderTrace("restore.end")
         return true
     }
+    private func scheduleSavePosition() {
+        pendingSaveTask?.cancel()
+        pendingSaveTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            guard let self, !Task.isCancelled else { return }
+            self.pendingSaveTask = nil
+            self.savePosition()
+        }
+    }
     private func savePosition() {
+        pendingSaveTask?.cancel()
+        pendingSaveTask = nil
         guard !loading, !restoring, !viewportTransitioning, !images.isEmpty, chapters.indices.contains(session.chapterIndex) else { return }
         synchronizeContinuousSession()
         let position = currentPosition()
@@ -758,12 +841,87 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     @discardableResult
     private func persistPosition(_ position: ReaderPosition, chapter: Chapter, chapterIndex: Int) -> Bool {
         do {
-            try environment.library.saveReading(comic, chapter: chapter, chapterIndex: chapterIndex, position: position)
+            let sourcePos = sourcePosition(from: position, chapter: chapter)
+            try environment.library.saveReading(comic, chapter: chapter, chapterIndex: chapterIndex, position: sourcePos)
             return true
         } catch { status.isHidden = false; status.setTitle("阅读位置保存失败：" + error.localizedDescription, for: .normal); return false }
     }
-    @objc private func saveBeforeBackground() { savePosition() }
-    @objc private func refreshReaderTheme() { if viewIfLoaded?.window != nil { applySettings() } }
+    @objc private func saveBeforeBackground() {
+        savePosition()
+        applyKeepScreenPolicy(active: false)
+        applyBrightnessPolicy(active: false)
+    }
+    @objc private func refreshReaderTheme() {
+        noteUserInteraction()
+        if viewIfLoaded?.window != nil { applySettings() }
+    }
+    private func noteUserInteraction() {
+        lastInteractionUptime = ProcessInfo.processInfo.systemUptime
+        let minutes = ReaderComfortPolicy.normalizeKeepScreenMinutes(settings.keepScreenMinutes)
+        if minutes != ReaderComfortPolicy.keepScreenSystem,
+           viewIfLoaded?.window != nil,
+           UIApplication.shared.applicationState == .active,
+           !UIApplication.shared.isIdleTimerDisabled {
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+    }
+    private func checkKeepScreenIdleExpiration() {
+        let minutes = ReaderComfortPolicy.normalizeKeepScreenMinutes(settings.keepScreenMinutes)
+        if ReaderComfortPolicy.isKeepScreenIdleExpired(
+            minutes: minutes,
+            lastInteractionUptime: lastInteractionUptime,
+            nowUptime: ProcessInfo.processInfo.systemUptime
+        ) {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+    }
+    private func applyKeepScreenPolicy(active: Bool) {
+        guard active else {
+            UIApplication.shared.isIdleTimerDisabled = false
+            return
+        }
+        let minutes = ReaderComfortPolicy.normalizeKeepScreenMinutes(settings.keepScreenMinutes)
+        switch minutes {
+        case ReaderComfortPolicy.keepScreenSystem:
+            UIApplication.shared.isIdleTimerDisabled = false
+        case ReaderComfortPolicy.keepScreenAlways:
+            UIApplication.shared.isIdleTimerDisabled = true
+        default:
+            let expired = ReaderComfortPolicy.isKeepScreenIdleExpired(
+                minutes: minutes,
+                lastInteractionUptime: lastInteractionUptime,
+                nowUptime: ProcessInfo.processInfo.systemUptime
+            )
+            UIApplication.shared.isIdleTimerDisabled = !expired
+        }
+    }
+    private func applyBrightnessPolicy(active: Bool) {
+        let dimAlpha = ReaderComfortPolicy.resolveExtraDimAlpha(readerVisible: active, dim: settings.brightnessDim)
+        extraDimOverlay.alpha = CGFloat(dimAlpha)
+        extraDimOverlay.isHidden = dimAlpha <= 0.001
+
+        guard active else {
+            if let saved = savedSystemBrightness {
+                UIScreen.main.brightness = saved
+                savedSystemBrightness = nil
+            }
+            return
+        }
+        if settings.brightnessFollowSystem {
+            if let saved = savedSystemBrightness {
+                UIScreen.main.brightness = saved
+                savedSystemBrightness = nil
+            }
+        } else {
+            if savedSystemBrightness == nil {
+                savedSystemBrightness = UIScreen.main.brightness
+            }
+            let target = CGFloat(ReaderComfortPolicy.clampBrightness(settings.brightnessLevel))
+            if abs(UIScreen.main.brightness - target) > 0.005 {
+                UIScreen.main.brightness = target
+            }
+        }
+    }
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         guard isViewLoaded else { return }
@@ -858,7 +1016,15 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         present(alert, animated: true)
     }
     @objc private func tapped(_ gesture: UITapGestureRecognizer) {
+        noteUserInteraction()
         let location = gesture.location(in: pages)
+        if let indexPath = pages.indexPathForItem(at: location),
+           let cell = pages.cellForItem(at: indexPath) as? ReaderImageCell,
+           cell.retryIfFailed() {
+            environment.readingHabits.userDidRead()
+            recordReaderTrace("tap.retry(\(indexPath.item))")
+            return
+        }
         let action = ReaderNavigation.tapAction(
             x: Double((location.x - pages.bounds.minX) / max(1, pages.bounds.width)),
             y: Double((location.y - pages.bounds.minY) / max(1, pages.bounds.height)),
@@ -910,7 +1076,14 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if let pan = gestureRecognizer as? UIPanGestureRecognizer, pan.view === pages {
             let velocity = pan.velocity(in: pages)
-            return settings.layout == .paged && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.1
+            guard settings.layout == .paged && !isZoomed && abs(velocity.x) > abs(velocity.y) * 1.1 else { return false }
+            let location = pan.location(in: pages)
+            if let indexPath = pages.indexPathForItem(at: location),
+               let cell = pages.cellForItem(at: indexPath) as? ReaderImageCell,
+               cell.canPanHorizontally(dx: velocity.x) {
+                return false
+            }
+            return true
         }
         return true
     }
@@ -923,45 +1096,432 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         }
         return true
     }
+
+    // MARK: - Virtual Presentation Plan (Spread & Double-Page)
+
+    private func chapterPositionKey(_ chapter: Chapter) -> String {
+        chapter.chapterId.isEmpty ? chapter.url : chapter.chapterId
+    }
+
+    private func currentSpreadStatusText() -> String {
+        guard spreadStore.enabled(bookKey) else {
+            return "当前按原页显示，开启后可自动识别和手动调整"
+        }
+        return scanStatusText ?? "只合并接缝明确的相邻图片，按本书记忆"
+    }
+
+    private func currentDoublePageStatusText() -> String {
+        guard doublePageStore.enabled(bookKey) else {
+            return "当前按原页显示，开启后会在本机识别宽页并切成左右两页"
+        }
+        return scanStatusText ?? "宽图自动切为左右两页，按本书记忆"
+    }
+
+    private func buildPresentationPlan(for chapter: Chapter, rawURLs: [String]) -> SpreadPagePlan {
+        let posKey = chapterPositionKey(chapter)
+        rawChapterURLs[posKey] = rawURLs
+        let book = bookKey
+        let plan: SpreadPagePlan
+        do {
+            if doublePageStore.enabled(book) {
+                let identity = DoublePagePlan(chapterIdentity: posKey, originals: rawURLs, enabled: false, rightFirst: doublePageStore.rightFirst(book))
+                let manual = try doublePageStore.manual(book: book, revision: identity.revision)
+                let automatic = doublePageStore.automatic(book: book, revision: identity.revision)
+                let doublePlan = DoublePagePlan(chapterIdentity: posKey, originals: rawURLs, enabled: true, rightFirst: doublePageStore.rightFirst(book), manual: manual, automatic: automatic)
+                doublePagePlans[posKey] = doublePlan
+                plan = SpreadPagePlan.fromDoublePagePlan(doublePlan)
+            } else if spreadStore.enabled(book) {
+                doublePagePlans.removeValue(forKey: posKey)
+                let identity = SpreadPagePlan(chapterIdentity: posKey, originals: rawURLs, enabled: false)
+                let manual = try spreadStore.manual(book: book, revision: identity.revision)
+                let automatic = spreadStore.automatic(book: book, revision: identity.revision)
+                plan = SpreadPagePlan(chapterIdentity: posKey, originals: rawURLs, enabled: true, manual: manual, automatic: automatic)
+            } else {
+                doublePagePlans.removeValue(forKey: posKey)
+                plan = SpreadPagePlan(chapterIdentity: posKey, originals: rawURLs, enabled: false)
+            }
+        } catch {
+            if doublePageStore.enabled(book) {
+                let fallback = DoublePagePlan(chapterIdentity: posKey, originals: rawURLs, enabled: false, rightFirst: doublePageStore.rightFirst(book))
+                doublePagePlans[posKey] = fallback
+                plan = SpreadPagePlan.fromDoublePagePlan(fallback)
+            } else {
+                doublePagePlans.removeValue(forKey: posKey)
+                plan = SpreadPagePlan(chapterIdentity: posKey, originals: rawURLs, enabled: false)
+            }
+        }
+        spreadPlans[posKey] = plan
+        for unit in plan.units where unit.isSpread || unit.isDoublePage {
+            virtualUnits[unit.key] = unit
+        }
+        return plan
+    }
+
+    private func displayPosition(from sourcePosition: ReaderPosition, plan: SpreadPagePlan) -> ReaderPosition {
+        guard !plan.units.isEmpty else { return sourcePosition }
+        if plan.units.count == plan.originals.count && plan.displayKeys == plan.originals {
+            return sourcePosition
+        }
+        let sourceIdx = sourcePosition.index(in: plan.originals)
+        let displayIdx = sourcePosition.atEnd && sourceIdx >= plan.originals.count - 1
+            ? max(0, plan.units.count - 1)
+            : plan.displayForSource(sourceIdx)
+        return ReaderPosition(
+            imageIndex: displayIdx,
+            offset: sourcePosition.offset,
+            atEnd: sourcePosition.atEnd,
+            linkedPageID: plan.displayKeys.indices.contains(displayIdx) ? ReaderPosition.linkedIdentity(in: plan.displayKeys[displayIdx]) : nil,
+            linkedTailID: plan.displayKeys.last.flatMap(ReaderPosition.linkedIdentity(in:))
+        )
+    }
+
+    private func sourcePosition(from displayPosition: ReaderPosition, chapter: Chapter) -> ReaderPosition {
+        guard let plan = spreadPlans[chapterPositionKey(chapter)], !plan.originals.isEmpty else {
+            return displayPosition
+        }
+        if plan.units.count == plan.originals.count && plan.displayKeys == plan.originals {
+            return displayPosition
+        }
+        let displayIdx = displayPosition.index(in: plan.displayKeys)
+        let sourceIdx = plan.unit(displayIdx)?.first ?? min(displayIdx, plan.originals.count - 1)
+        return ReaderPosition(
+            imageIndex: sourceIdx,
+            offset: displayPosition.offset,
+            atEnd: displayPosition.atEnd,
+            linkedPageID: plan.originals.indices.contains(sourceIdx) ? ReaderPosition.linkedIdentity(in: plan.originals[sourceIdx]) : nil,
+            linkedTailID: plan.originals.last.flatMap(ReaderPosition.linkedIdentity(in:))
+        )
+    }
+
+    private func activeSpreadPlan() -> SpreadPagePlan? {
+        guard chapters.indices.contains(session.chapterIndex) else { return nil }
+        return spreadPlans[chapterPositionKey(chapters[session.chapterIndex])]
+    }
+
+    private func activeDoublePagePlan() -> DoublePagePlan? {
+        guard chapters.indices.contains(session.chapterIndex) else { return nil }
+        return doublePagePlans[chapterPositionKey(chapters[session.chapterIndex])]
+    }
+
+    private func currentDisplayIndex() -> Int {
+        guard let plan = activeSpreadPlan(), !plan.units.isEmpty else { return 0 }
+        let pos = currentPosition()
+        return max(0, min(plan.units.count - 1, pos.imageIndex))
+    }
+
+    private func reloadCurrentChapterPresentation() {
+        guard !loading, chapters.indices.contains(session.chapterIndex) else { return }
+        synchronizeContinuousSession()
+        let activeChapter = chapters[session.chapterIndex]
+        let posKey = chapterPositionKey(activeChapter)
+        guard let activeRaw = rawChapterURLs[posKey], !activeRaw.isEmpty else { return }
+        let sourcePos = sourcePosition(from: currentPosition(), chapter: activeChapter)
+
+        let activePlan = buildPresentationPlan(for: activeChapter, rawURLs: activeRaw)
+        let newDisplayPos = displayPosition(from: sourcePos, plan: activePlan)
+
+        if settings.layout == .strip && continuousPages.segments.count > 1 {
+            let loadedChapters = continuousPages.segments.map(\.chapter)
+            var rebuilt = ContinuousReaderPages()
+            for ch in loadedChapters {
+                let chKey = chapterPositionKey(ch)
+                if let chRaw = rawChapterURLs[chKey], !chRaw.isEmpty {
+                    let chPlan = ContinuousReaderPages.matches(ch, activeChapter) ? activePlan : buildPresentationPlan(for: ch, rawURLs: chRaw)
+                    rebuilt.append(chapter: ch, imageURLs: chPlan.displayKeys)
+                }
+            }
+            continuousPages = rebuilt
+            images = rebuilt.imageURLs
+        } else {
+            continuousPages = ContinuousReaderPages()
+            continuousPages.append(chapter: activeChapter, imageURLs: activePlan.displayKeys)
+            images = activePlan.displayKeys
+        }
+
+        _ = session.loaded(chapter: activeChapter, in: chapters, imageCount: activePlan.displayKeys.count, position: newDisplayPos)
+        session.updateImage(newDisplayPos.index(in: activePlan.displayKeys))
+        pagedAnchor = newDisplayPos.forPagedImage(at: session.imageIndex, in: activePlan.displayKeys)
+        pendingPosition = newDisplayPos
+        pendingPositionNeedsContinuation = false
+        layout.invalidateLayout()
+        pages.reloadData()
+        view.setNeedsLayout()
+        updateBadge()
+        readerSeekBar.configure(currentPage: session.imageIndex, total: activePlan.displayKeys.count, sessionToken: Int64(session.chapterIndex))
+        updateContinuationFooter()
+        startPresentationScan(for: activeChapter, plan: activePlan, anchor: sourcePos.index(in: activeRaw))
+    }
+
+    private func cancelScan() {
+        scanToken = UUID()
+        scanTask?.cancel()
+        scanTask = nil
+        pendingAutoScanRefresh = false
+    }
+
+    private func updateSettingsScanStatus() {
+        activeSettingsSheet?.spreadStatus = currentSpreadStatusText()
+        activeSettingsSheet?.doublePageStatus = currentDoublePageStatusText()
+    }
+
+    private func scheduleAutoPresentationRefresh(expectedBook: String, expectedChapterKey: String) {
+        guard !pendingAutoScanRefresh else { return }
+        pendingAutoScanRefresh = true
+        Task { @MainActor [weak self] in
+            while let self, !self.leavingReader {
+                guard self.bookKey == expectedBook,
+                      self.chapters.indices.contains(self.session.chapterIndex),
+                      self.chapterPositionKey(self.chapters[self.session.chapterIndex]) == expectedChapterKey else {
+                    self.pendingAutoScanRefresh = false
+                    return
+                }
+                if self.isZoomed || self.pageAnimating || self.pages.isDragging || self.pages.isDecelerating {
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                    continue
+                }
+                self.pendingAutoScanRefresh = false
+                self.reloadCurrentChapterPresentation()
+                return
+            }
+            self?.pendingAutoScanRefresh = false
+        }
+    }
+
+    private func startPresentationScan(for chapter: Chapter, plan: SpreadPagePlan, anchor: Int) {
+        cancelScan()
+        let book = bookKey
+        let posKey = chapterPositionKey(chapter)
+        let referer = source.referer
+        let localLoader = localPageImage
+        let token = scanToken
+
+        if doublePageStore.enabled(book) {
+            guard let doublePlan = doublePagePlans[posKey], !doublePlan.originals.isEmpty else { return }
+            if doublePageStore.complete(book: book, revision: doublePlan.revision) {
+                scanStatusText = "本章识别完成，可手动修正"
+                updateSettingsScanStatus()
+                return
+            }
+            scanStatusText = "正在本机识别双页，原页可继续阅读"
+            updateSettingsScanStatus()
+            let total = doublePlan.originals.count
+            var order: [Int] = []
+            var added = Set<Int>()
+            for i in max(0, anchor - 4)..<min(total, anchor + 12) {
+                order.append(i); added.insert(i)
+            }
+            for i in 0..<total where !added.contains(i) { order.append(i) }
+
+            scanTask = Task { [weak self] in
+                guard let self else { return }
+                var found: [Int: DoublePageDetector.Sample] = [:]
+                var checked = 0
+                var failures = 0
+                for idx in order {
+                    if Task.isCancelled || self.scanToken != token || !self.doublePageStore.enabled(book) { return }
+                    let url = doublePlan.originals[idx]
+                    let sampleKey = doublePlan.revision + "\n" + url
+                    if let cached = self.doublePageSamples[sampleKey] {
+                        found[idx] = cached
+                    } else {
+                        do {
+                            if let dims = try await RemoteImageView.probeImageDimensions(url: url, referer: referer, localPageImage: localLoader),
+                               let sample = DoublePageDetector.measure(width: Int(dims.width), height: Int(dims.height)) {
+                                self.doublePageSamples[sampleKey] = sample
+                                found[idx] = sample
+                            } else {
+                                failures += 1
+                            }
+                        } catch {
+                            if Task.isCancelled || self.scanToken != token { return }
+                            failures += 1
+                        }
+                    }
+                    checked += 1
+                    self.scanStatusText = "正在识别双页 · \(checked) / \(total)"
+                    self.updateSettingsScanStatus()
+                }
+                guard !Task.isCancelled, self.scanToken == token, self.doublePageStore.enabled(book) else { return }
+                let allSamples: [DoublePageDetector.Sample?] = (0..<total).map { found[$0] }
+                let median = DoublePageDetector.median(allSamples)
+                var decisions: [Int: DoublePagePlan.Decision] = [:]
+                for i in 0..<total {
+                    if let s = allSamples[i] {
+                        let d = DoublePageDetector.decide(sample: s, chapterMedian: median, index: i, count: total)
+                        decisions[i] = DoublePagePlan.Decision(split: d.split, score: d.score, aspect: d.aspect)
+                    }
+                }
+                self.doublePageStore.saveAutomatic(book: book, revision: doublePlan.revision, decisions: decisions, complete: failures == 0)
+                self.scanStatusText = failures == 0 ? "本章识别完成，可手动修正" : "部分图片未能识别，可重新识别本章"
+                self.updateSettingsScanStatus()
+                let nextPlan = DoublePagePlan(
+                    chapterIdentity: posKey,
+                    originals: doublePlan.originals,
+                    enabled: true,
+                    rightFirst: self.doublePageStore.rightFirst(book),
+                    manual: self.doublePageStore.manualRules(book: book, revision: doublePlan.revision),
+                    automatic: decisions
+                )
+                if nextPlan.displayKeys != doublePlan.displayKeys {
+                    self.scheduleAutoPresentationRefresh(expectedBook: book, expectedChapterKey: posKey)
+                }
+            }
+            return
+        }
+
+        guard spreadStore.enabled(book), plan.originals.count >= 2 else { return }
+        if spreadStore.complete(book: book, revision: plan.revision) {
+            scanStatusText = "本章识别完成，可手动修正"
+            updateSettingsScanStatus()
+            return
+        }
+        scanStatusText = "正在本机识别跨页，原页可继续阅读"
+        updateSettingsScanStatus()
+        let pairs = plan.originals.count - 1
+        var order: [Int] = []
+        var added = Set<Int>()
+        for i in max(0, anchor - 8)..<min(pairs, anchor + 32) {
+            order.append(i); added.insert(i)
+        }
+        for i in 0..<pairs where !added.contains(i) { order.append(i) }
+
+        scanTask = Task { [weak self] in
+            guard let self else { return }
+            var decisions = self.spreadStore.automatic(book: book, revision: plan.revision)
+            var checked = 0
+            var failures = 0
+            var lastPublished = decisions.count
+
+            func loadSample(_ url: String) async throws -> SpreadDetector.Sample? {
+                let key = plan.revision + "\n" + url
+                if let cached = self.spreadSamples[key] { return cached }
+                let img = try await RemoteImageView.fetchDecodedImage(url: url, referer: referer, reader: true, maxPixelArea: 2_000_000, localPageImage: localLoader)
+                try Task.checkCancellation()
+                let sample = await Task.detached(priority: .utility) { () -> SpreadDetector.Sample? in
+                    guard let pixels = SpreadBitmapComposer.extractPixels(from: img) else { return nil }
+                    return SpreadDetector.Sample.read(pixels)
+                }.value
+                if let sample {
+                    if self.spreadSamples.count >= 64, let firstKey = self.spreadSamples.keys.first {
+                        self.spreadSamples.removeValue(forKey: firstKey)
+                    }
+                    self.spreadSamples[key] = sample
+                }
+                return sample
+            }
+
+            for idx in order {
+                if Task.isCancelled || self.scanToken != token || !self.spreadStore.enabled(book) { return }
+                do {
+                    let a = try await loadSample(plan.originals[idx])
+                    if Task.isCancelled || self.scanToken != token { return }
+                    let b = try await loadSample(plan.originals[idx + 1])
+                    if let a, let b {
+                        let res = await Task.detached(priority: .utility) {
+                            SpreadDetector.detect(a, b)
+                        }.value
+                        if res.merge {
+                            decisions[idx] = SpreadPagePlan.Decision(
+                                firstOnLeft: res.firstOnLeft,
+                                score: res.firstOnLeft ? res.forward.score : res.reverse.score
+                            )
+                        } else {
+                            decisions.removeValue(forKey: idx)
+                        }
+                    } else {
+                        failures += 1
+                    }
+                } catch {
+                    if Task.isCancelled || self.scanToken != token { return }
+                    failures += 1
+                }
+                checked += 1
+                let finished = checked == pairs
+                self.scanStatusText = finished
+                    ? (failures == 0 ? "本章识别完成，可手动修正" : "部分图片未能识别，可重新识别本章")
+                    : "正在识别跨页 · \(checked) / \(pairs)"
+                self.updateSettingsScanStatus()
+                if finished || (checked % 16 == 0 && decisions.count != lastPublished) {
+                    lastPublished = decisions.count
+                    self.spreadStore.saveAutomatic(book: book, revision: plan.revision, decisions: decisions, complete: finished && failures == 0)
+                    let nextPlan = SpreadPagePlan(
+                        chapterIdentity: posKey,
+                        originals: plan.originals,
+                        enabled: true,
+                        manual: self.spreadStore.manualRules(book: book, revision: plan.revision),
+                        automatic: decisions
+                    )
+                    if let current = self.activeSpreadPlan(), nextPlan.displayKeys != current.displayKeys {
+                        self.scheduleAutoPresentationRefresh(expectedBook: book, expectedChapterKey: posKey)
+                    }
+                }
+            }
+        }
+    }
+
     @objc private func showSettings() {
+        guard presentedViewController == nil else { return }
         savePosition()
         environment.readingHabits.userDidRead()
         environment.readingHabits.overlayVisibilityChanged(isVisible: true)
-        let bookKey = "\(comic.sourceId):\(comic.comicId)"
-        let spreadEnabled = spreadStore.isEnabled(bookKey: bookKey)
-        let doublePageEnabled = doublePageStore.isEnabled(bookKey: bookKey)
+        let book = bookKey
+        let spreadEnabled = spreadStore.enabled(book)
+        let doublePageEnabled = doublePageStore.enabled(book)
         let autoScale = environment.defaults.bool(forKey: "reader.auto.scale.enabled")
         let scaleMode = ReaderScalePolicy.normalize(environment.defaults.integer(forKey: "reader.scale.mode"))
         let controller = ReaderSettingsViewController(
             store: environment.preferences,
             spreadEnabled: spreadEnabled,
+            spreadStatus: currentSpreadStatusText(),
             doublePageEnabled: doublePageEnabled,
+            doublePageStatus: currentDoublePageStatusText(),
             autoScaleEnabled: autoScale,
             scaleMode: scaleMode
         )
+        activeSettingsSheet = controller
         controller.onChange = { [weak self] in self?.applySettings() }
         controller.onAutoScaleChanged = { [weak self] (enabled: Bool, mode: Int) in
             guard let self else { return }
+            let normalized = ReaderScalePolicy.normalize(mode)
             self.environment.defaults.set(enabled, forKey: "reader.auto.scale.enabled")
-            self.environment.defaults.set(ReaderScalePolicy.normalize(mode), forKey: "reader.scale.mode")
+            self.environment.defaults.set(normalized, forKey: "reader.scale.mode")
+            let pos = self.currentPosition()
+            self.pendingPosition = pos
             self.layout.invalidateLayout()
             self.pages.reloadData()
+            self.view.setNeedsLayout()
         }
         controller.onSpreadEnabledChanged = { [weak self] (enabled: Bool) in
             guard let self else { return }
-            self.spreadStore.setEnabled(bookKey: bookKey, enabled: enabled)
+            self.savePosition()
+            if enabled {
+                self.doublePageStore.setEnabled(book, enabled: false)
+                self.environment.defaults.set(false, forKey: "reader.double.page.enabled")
+            }
+            self.spreadStore.setEnabled(book, enabled: enabled)
             self.environment.defaults.set(enabled, forKey: "reader.spread.enabled")
+            self.scanStatusText = nil
+            self.reloadCurrentChapterPresentation()
+            self.updateSettingsScanStatus()
         }
         controller.onSpreadActions = { [weak self] in
-            self?.presentSpreadActionsSheet(bookKey: bookKey)
+            self?.presentSpreadActionsSheet(bookKey: book)
         }
         controller.onDoublePageEnabledChanged = { [weak self] (enabled: Bool) in
             guard let self else { return }
-            self.doublePageStore.setEnabled(bookKey: bookKey, enabled: enabled)
+            self.savePosition()
+            if enabled {
+                self.spreadStore.setEnabled(book, enabled: false)
+                self.environment.defaults.set(false, forKey: "reader.spread.enabled")
+            }
+            self.doublePageStore.setEnabled(book, enabled: enabled)
             self.environment.defaults.set(enabled, forKey: "reader.double.page.enabled")
+            self.scanStatusText = nil
+            self.reloadCurrentChapterPresentation()
+            self.updateSettingsScanStatus()
         }
         controller.onDoublePageActions = { [weak self] in
-            self?.presentDoublePageActionsSheet(bookKey: bookKey)
+            self?.presentDoublePageActionsSheet(bookKey: book)
         }
         controller.onClose = { [weak self] in self?.closeSheet() }
         controller.overrideUserInterfaceStyle = overrideUserInterfaceStyle
@@ -969,15 +1529,83 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         controller.presentationController?.delegate = self
     }
 
-    private func presentSpreadActionsSheet(bookKey: String) {
+    private func applySpreadRule(book: String, plan: SpreadPagePlan, index: Int, direction: Int?) {
+        guard book == bookKey, spreadStore.enabled(book), activeSpreadPlan()?.revision == plan.revision else { return }
+        savePosition()
+        do {
+            try spreadStore.setManual(book: book, revision: plan.revision, index: index, direction: direction)
+            reloadCurrentChapterPresentation()
+        } catch {
+            showError(error)
+        }
+    }
+
+    private func showSpreadPreview(book: String, plan: SpreadPagePlan, first: Int) {
+        guard book == bookKey, spreadStore.enabled(book), activeSpreadPlan()?.revision == plan.revision else { return }
+        guard first >= 0, first + 1 < plan.originals.count else { return }
+        if plan.unit(plan.displayForSource(first))?.isSpread == true || plan.unit(plan.displayForSource(first + 1))?.isSpread == true {
+            let alert = UIAlertController(title: nil, message: "相邻页面已属于跨页，请先拆开该组", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "确定", style: .default))
+            present(alert, animated: true)
+            return
+        }
         let isDark = settings.theme == .dark || (settings.theme == .system && traitCollection.userInterfaceStyle == .dark)
-        let pageIdx = session.imageIndex
-        let total = max(1, session.imageCount)
-        let chapterKey = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex].chapterId : "\(session.chapterIndex)"
-        let currentState = spreadStore.load(bookKey: bookKey, chapterKey: chapterKey)
-        let isRTL = currentState.isRightToLeft(defaultRightToLeft: settings.pageDirection == .rightToLeft)
-        let orderLabel = isRTL ? "右到左（日漫）" : "左到右（国漫/美漫）"
-        let isMerged = currentState.mergedFirsts.contains(pageIdx) || (pageIdx > 0 && currentState.mergedFirsts.contains(pageIdx - 1))
+        let preview = ReaderSpreadSheet.showPreview(from: self, dark: isDark, first: first)
+        preview.overrideUserInterfaceStyle = overrideUserInterfaceStyle
+        var firstOnLeft = settings.pageDirection != .rightToLeft
+        var loadRevision = 0
+        var previewTask: Task<Void, Never>?
+        let referer = source.referer
+        let localLoader = localPageImage
+        let urlA = plan.originals[first]
+        let urlB = plan.originals[first + 1]
+
+        let redraw: @MainActor () -> Void = { [weak self, weak preview] in
+            guard let self, let preview else { return }
+            loadRevision += 1
+            let rev = loadRevision
+            let leftFirst = firstOnLeft
+            previewTask?.cancel()
+            preview.loading(firstOnLeft: leftFirst)
+            previewTask = Task { @MainActor [weak self, weak preview] in
+                guard let self, let preview else { return }
+                do {
+                    async let imgA = RemoteImageView.fetchDecodedImage(url: urlA, referer: referer, reader: true, maxPixelArea: 4_000_000, localPageImage: localLoader)
+                    async let imgB = RemoteImageView.fetchDecodedImage(url: urlB, referer: referer, reader: true, maxPixelArea: 4_000_000, localPageImage: localLoader)
+                    let (a, b) = try await (imgA, imgB)
+                    try Task.checkCancellation()
+                    let composed = try await Task.detached(priority: .userInitiated) {
+                        try SpreadBitmapComposer.compose(first: a, second: b, firstOnLeft: leftFirst, maxPixels: 2_500_000, maxBytes: 10 * 1024 * 1024)
+                    }.value
+                    guard rev == loadRevision, !Task.isCancelled else { return }
+                    preview.loaded(composed.image)
+                } catch {
+                    guard rev == loadRevision, !Task.isCancelled else { return }
+                    preview.failed()
+                }
+                _ = self
+            }
+        }
+        preview.onSwap = {
+            firstOnLeft.toggle()
+            redraw()
+        }
+        preview.onRetry = {
+            redraw()
+        }
+        preview.onConfirm = { [weak self] in
+            self?.applySpreadRule(book: book, plan: plan, index: first, direction: firstOnLeft ? 1 : -1)
+        }
+        preview.onDismiss = {
+            previewTask?.cancel()
+            previewTask = nil
+        }
+        redraw()
+    }
+
+    private func presentSpreadActionsSheet(bookKey: String) {
+        guard spreadStore.enabled(bookKey), let plan = activeSpreadPlan(), let unit = plan.unit(currentDisplayIndex()) else { return }
+        let isDark = settings.theme == .dark || (settings.theme == .system && traitCollection.userInterfaceStyle == .dark)
         let finish: (@escaping () -> Void) -> Void = { [weak self] work in
             if let presented = self?.presentedViewController {
                 presented.dismiss(animated: true, completion: work)
@@ -988,53 +1616,124 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         finish { [weak self] in
             guard let self else { return }
             var currentActions: [ReaderSpreadAction] = []
-            if isMerged {
-                let firstIdx = currentState.mergedFirsts.contains(pageIdx) ? pageIdx : max(0, pageIdx - 1)
-                currentActions.append(ReaderSpreadAction("拆回单页", "取消当前跨页合并", true) { [weak self] in
-                    self?.spreadStore.split(bookKey: bookKey, chapterKey: chapterKey, first: firstIdx)
+            if unit.isSpread {
+                currentActions.append(ReaderSpreadAction(
+                    title: "左右互换",
+                    subtitle: "调整这两页的显示顺序",
+                    parityIcon: .swap
+                ) { [weak self] in
+                    self?.applySpreadRule(book: bookKey, plan: plan, index: unit.first, direction: unit.firstOnLeft ? -1 : 1)
+                })
+                currentActions.append(ReaderSpreadAction(
+                    title: "拆开，保持原页",
+                    subtitle: "分别阅读原页 \(unit.first + 1) 和 \(unit.last + 1)",
+                    parityIcon: .readerPage
+                ) { [weak self] in
+                    self?.applySpreadRule(book: bookKey, plan: plan, index: unit.first, direction: 0)
+                })
+                currentActions.append(ReaderSpreadAction(
+                    title: "恢复这组自动判断",
+                    subtitle: "移除这组的手动合并、拆开和顺序调整",
+                    parityIcon: .automatic
+                ) { [weak self] in
+                    self?.applySpreadRule(book: bookKey, plan: plan, index: unit.first, direction: nil)
                 })
             } else {
-                if pageIdx + 1 < total {
-                    currentActions.append(ReaderSpreadAction("与下一页合并为跨页", "合并第 \(pageIdx + 1) 页与第 \(pageIdx + 2) 页", true) { [weak self] in
-                        self?.spreadStore.merge(bookKey: bookKey, chapterKey: chapterKey, first: pageIdx)
+                if unit.first > 0 {
+                    currentActions.append(ReaderSpreadAction(
+                        title: "与前一页合并",
+                        subtitle: "预览原页 \(unit.first)–\(unit.first + 1)",
+                        parityIcon: .back
+                    ) { [weak self] in
+                        self?.showSpreadPreview(book: bookKey, plan: plan, first: unit.first - 1)
                     })
                 }
-                if pageIdx > 0 {
-                    currentActions.append(ReaderSpreadAction("与上一页合并为跨页", "合并第 \(pageIdx) 页与第 \(pageIdx + 1) 页", false) { [weak self] in
-                        self?.spreadStore.merge(bookKey: bookKey, chapterKey: chapterKey, first: pageIdx - 1)
+                if unit.first + 1 < plan.originals.count {
+                    currentActions.append(ReaderSpreadAction(
+                        title: "与后一页合并",
+                        subtitle: "预览原页 \(unit.first + 1)–\(unit.first + 2)",
+                        icon: UIImage(systemName: "chevron.right")
+                    ) { [weak self] in
+                        self?.showSpreadPreview(book: bookKey, plan: plan, first: unit.first)
                     })
                 }
+                currentActions.append(ReaderSpreadAction(
+                    title: "恢复此页附近自动判断",
+                    subtitle: "移除当前页与相邻页的手动调整",
+                    parityIcon: .automatic
+                ) { [weak self] in
+                    guard let self, self.activeSpreadPlan()?.revision == plan.revision else { return }
+                    self.savePosition()
+                    try? self.spreadStore.setManual(book: bookKey, revision: plan.revision, index: unit.first, direction: nil)
+                    if unit.first > 0 {
+                        try? self.spreadStore.setManual(book: bookKey, revision: plan.revision, index: unit.first - 1, direction: nil)
+                    }
+                    self.reloadCurrentChapterPresentation()
+                })
             }
+
+            let referer = self.source.referer
             let maintenance: [ReaderSpreadAction] = [
-                ReaderSpreadAction("切换跨页方向（当前：\(orderLabel)）", "调整跨页左右拼接顺序", false) { [weak self] in
-                    self?.spreadStore.setRightToLeft(bookKey: bookKey, chapterKey: chapterKey, rightToLeft: !isRTL)
+                ReaderSpreadAction(
+                    title: "重试当前图片",
+                    subtitle: "重新加载当前页的原始图片",
+                    parityIcon: .history
+                ) { [weak self] in
+                    guard let self else { return }
+                    RemoteImageView.removeCachedReaderImage(forKey: unit.key, referer: referer)
+                    if let u1 = unit.firstUrl { RemoteImageView.removeCachedReaderImage(forKey: u1, referer: referer) }
+                    if let u2 = unit.secondUrl { RemoteImageView.removeCachedReaderImage(forKey: u2, referer: referer) }
+                    self.reloadCurrentChapterPresentation()
                 },
-                ReaderSpreadAction("重置本章跨页调整", "恢复本章自动跨页检测结果", false) { [weak self] in
-                    self?.spreadStore.clearManual(bookKey: bookKey, chapterKey: chapterKey)
+                ReaderSpreadAction(
+                    title: "重新识别本章",
+                    subtitle: "重新检查接缝，保留人工修正",
+                    parityIcon: .automatic
+                ) { [weak self] in
+                    guard let self else { return }
+                    self.cancelScan()
+                    self.spreadSamples.removeAll()
+                    self.spreadStore.retry(book: bookKey, revision: plan.revision)
+                    self.reloadCurrentChapterPresentation()
+                },
+                ReaderSpreadAction(
+                    title: "清除本书人工修正",
+                    subtitle: "移除本书的手动调整，采用自动识别结果",
+                    parityIcon: .trash,
+                    destructive: true
+                ) { [weak self] in
+                    guard let self else { return }
+                    self.savePosition()
+                    self.spreadStore.clearManual(book: bookKey)
+                    self.reloadCurrentChapterPresentation()
                 }
             ]
-            ReaderSpreadSheet.showActions(
+
+            let orderText = unit.firstOnLeft
+                ? "\(unit.first + 1) 在左，\(unit.last + 1) 在右"
+                : "\(unit.last + 1) 在左，\(unit.first + 1) 在右"
+            let sheet = ReaderSpreadSheet.showActions(
                 from: self,
                 dark: isDark,
-                pageLabel: "第 \(pageIdx + 1) / \(total) 页",
-                spread: isMerged,
-                order: orderLabel,
-                status: nil,
+                pageLabel: unit.pageLabel(),
+                spread: unit.isSpread,
+                order: orderText,
+                status: self.currentSpreadStatusText(),
                 current: currentActions,
                 maintenance: maintenance
             )
+            sheet.overrideUserInterfaceStyle = self.overrideUserInterfaceStyle
         }
     }
 
     private func presentDoublePageActionsSheet(bookKey: String) {
+        guard doublePageStore.enabled(bookKey),
+              let presentation = activeSpreadPlan(),
+              let doublePlan = activeDoublePagePlan() else { return }
+        let displayIdx = currentDisplayIndex()
+        guard let displayUnit = presentation.unit(displayIdx),
+              let unit = doublePlan.unit(displayIdx) else { return }
         let isDark = settings.theme == .dark || (settings.theme == .system && traitCollection.userInterfaceStyle == .dark)
-        let pageIdx = session.imageIndex
-        let total = max(1, session.imageCount)
-        let chapterKey = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex].chapterId : "\(session.chapterIndex)"
-        let currentState = doublePageStore.load(bookKey: bookKey, chapterKey: chapterKey)
-        let isRTL = currentState.isRightToLeft(defaultRightToLeft: settings.pageDirection == .rightToLeft)
-        let orderLabel = isRTL ? "先右后左（日漫）" : "先左后右（国漫/美漫）"
-        let isSplit = currentState.splitSources.contains(pageIdx)
         let finish: (@escaping () -> Void) -> Void = { [weak self] work in
             if let presented = self?.presentedViewController {
                 presented.dismiss(animated: true, completion: work)
@@ -1044,33 +1743,90 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         }
         finish { [weak self] in
             guard let self else { return }
+            let rightFirst = doublePlan.rightFirst
+            let sourceIdx = unit.source
             let currentActions: [ReaderSpreadAction] = [
-                isSplit
-                    ? ReaderSpreadAction("当前宽图不切页", "保持第 \(pageIdx + 1) 页完整显示", true) { [weak self] in
-                        self?.doublePageStore.keepWhole(bookKey: bookKey, chapterKey: chapterKey, sourceIndex: pageIdx)
-                    }
-                    : ReaderSpreadAction("当前页切为左右两页", "将第 \(pageIdx + 1) 页拆成两页阅读", true) { [weak self] in
-                        self?.doublePageStore.split(bookKey: bookKey, chapterKey: chapterKey, sourceIndex: pageIdx)
-                    }
-            ]
-            let maintenance: [ReaderSpreadAction] = [
-                ReaderSpreadAction("切换切页顺序（当前：\(orderLabel)）", "调整切页后左右阅读先后顺序", false) { [weak self] in
-                    self?.doublePageStore.setRightToLeft(bookKey: bookKey, chapterKey: chapterKey, rightToLeft: !isRTL)
+                ReaderSpreadAction(
+                    title: rightFirst ? "右页在前" : "左页在前",
+                    subtitle: rightFirst ? "按本书记忆，点击切换为左页在前" : "按本书记忆，点击切换为右页在前",
+                    parityIcon: .swap
+                ) { [weak self] in
+                    guard let self, self.activeDoublePagePlan()?.revision == doublePlan.revision else { return }
+                    self.savePosition()
+                    self.doublePageStore.setRightFirst(bookKey, rightFirst: !rightFirst)
+                    self.reloadCurrentChapterPresentation()
                 },
-                ReaderSpreadAction("重置本章双页切页调整", "恢复本章自动宽图切页检测", false) { [weak self] in
-                    self?.doublePageStore.clearManual(bookKey: bookKey, chapterKey: chapterKey)
+                ReaderSpreadAction(
+                    title: unit.split ? "当前页保持整页" : "当前页强制切分",
+                    subtitle: unit.split ? "取消当前页的左右切分，按原图显示" : "忽略自动判断，将当前原图切成左右两页",
+                    parityIcon: unit.split ? .readerPage : .automatic
+                ) { [weak self] in
+                    guard let self, self.activeDoublePagePlan()?.revision == doublePlan.revision else { return }
+                    self.savePosition()
+                    try? self.doublePageStore.setManual(book: bookKey, revision: doublePlan.revision, index: sourceIdx, mode: unit.split ? -1 : 1)
+                    self.reloadCurrentChapterPresentation()
+                },
+                ReaderSpreadAction(
+                    title: "恢复当前页自动判断",
+                    subtitle: "移除当前页的强制切分或保持整页设置",
+                    parityIcon: .automatic
+                ) { [weak self] in
+                    guard let self, self.activeDoublePagePlan()?.revision == doublePlan.revision else { return }
+                    self.savePosition()
+                    try? self.doublePageStore.setManual(book: bookKey, revision: doublePlan.revision, index: sourceIdx, mode: nil)
+                    self.reloadCurrentChapterPresentation()
                 }
             ]
-            ReaderSpreadSheet.showActions(
+
+            let referer = self.source.referer
+            let maintenance: [ReaderSpreadAction] = [
+                ReaderSpreadAction(
+                    title: "重试当前图片",
+                    subtitle: "重新加载当前原图并切分显示",
+                    parityIcon: .history
+                ) { [weak self] in
+                    guard let self else { return }
+                    RemoteImageView.removeCachedReaderImage(forKey: displayUnit.key, referer: referer)
+                    RemoteImageView.removeCachedReaderImage(forKey: unit.originalUrl, referer: referer)
+                    self.reloadCurrentChapterPresentation()
+                },
+                ReaderSpreadAction(
+                    title: "重新识别本章",
+                    subtitle: "重新检查本章页面尺寸，保留人工修正",
+                    parityIcon: .automatic
+                ) { [weak self] in
+                    guard let self else { return }
+                    self.cancelScan()
+                    self.doublePageSamples.removeAll()
+                    self.doublePageStore.retry(book: bookKey, revision: doublePlan.revision)
+                    self.reloadCurrentChapterPresentation()
+                },
+                ReaderSpreadAction(
+                    title: "清除本书人工修正",
+                    subtitle: "所有页面恢复为自动判断结果",
+                    parityIcon: .trash,
+                    destructive: true
+                ) { [weak self] in
+                    guard let self else { return }
+                    self.savePosition()
+                    self.doublePageStore.clearManual(book: bookKey)
+                    self.reloadCurrentChapterPresentation()
+                }
+            ]
+
+            let orderText = rightFirst ? "右页在前，左页在后" : "左页在前，右页在后"
+            let summary = unit.split ? "已切分为左右两页 · \(orderText)" : "当前按原图整页显示 · \(orderText)"
+            let sheet = ReaderSpreadSheet.showActions(
                 from: self,
                 dark: isDark,
-                title: "双页切页",
-                pageLabel: "第 \(pageIdx + 1) / \(total) 页",
-                stateSummary: isSplit ? "当前已切分为左右两页 · \(orderLabel)" : "当前整图显示 · \(orderLabel)",
-                status: nil,
+                title: "自动切分双页",
+                pageLabel: unit.pageLabel(),
+                stateSummary: summary,
+                status: self.currentDoublePageStatusText(),
                 current: currentActions,
                 maintenance: maintenance
             )
+            sheet.overrideUserInterfaceStyle = self.overrideUserInterfaceStyle
         }
     }
     @objc private func closeSheet() {
@@ -1079,6 +1835,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
 
     private func sheetDidDismiss(_ controller: UIViewController) {
+        if controller === activeSettingsSheet { activeSettingsSheet = nil }
         syncHabitOverlay()
         guard controller === downloadRepairController else { return }
         let repair = downloadRepairAction
@@ -1086,7 +1843,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         repair?()
     }
     @objc private func showDirectory() {
-        guard chapters.indices.contains(session.chapterIndex) else { return }
+        guard presentedViewController == nil, chapters.indices.contains(session.chapterIndex) else { return }
         environment.readingHabits.userDidRead()
         environment.readingHabits.overlayVisibilityChanged(isVisible: true)
         let isDark = settings.theme == .dark || (settings.theme == .system && traitCollection.userInterfaceStyle == .dark)
@@ -1117,10 +1874,45 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
 
     private func showReaderSourceSheet() {
+        guard presentedViewController == nil else { return }
         savePosition()
+        let previousComic = comic
+        let previousChapters = chapters
+        let previousChapterIndex = session.chapterIndex
+        let previousIncomplete = incompleteDirectory
         let sheet = SourceSwitchSheet(comic: comic, environment: environment) { [weak self] targetDetail in
             guard let self else { return }
             self.applySwitchedSource(targetDetail: targetDetail)
+        }
+        sheet.onUndoSourceReplaced = { [weak self] _ in
+            guard let self, let restoredSource = self.environment.source(for: previousComic) else { return }
+            self.loadTask?.cancel(); self.directoryTask?.cancel(); self.directoryTask = nil
+            self.cancelScan()
+            self.cancelContinuation(); self.pendingPosition = nil; self.pendingPositionNeedsContinuation = false
+            self.rawChapterURLs.removeAll(); self.spreadPlans.removeAll(); self.doublePagePlans.removeAll(); self.virtualUnits.removeAll()
+            self.spreadSamples.removeAll(); self.doublePageSamples.removeAll(); self.scanStatusText = nil
+            self.lastSaved = nil; self.sizes = [:]
+            self.comic = previousComic
+            self.source = restoredSource
+            self.chapters = previousChapters
+            self.incompleteDirectory = previousIncomplete
+            let restoredIdx = previousChapters.indices.contains(previousChapterIndex) ? previousChapterIndex : 0
+            self.session = ReaderSession(chapterCount: previousChapters.count, chapterIndex: restoredIdx)
+            self.images = []
+            self.lastObservedPosition = nil
+            self.pagedAnchor = nil
+            self.pages.reloadData()
+            let fallbackDetail = ComicDetail(
+                summary: previousComic,
+                author: "",
+                description: "",
+                status: "",
+                latestChapter: previousChapters.last?.title,
+                chapters: previousChapters
+            )
+            self.onSourceChanged?(fallbackDetail)
+            self.loadChapter(restoredIdx, atEnd: false, restoreSaved: true)
+            self.updateMiddleButton()
         }
         let navigation = UINavigationController(rootViewController: sheet)
         navigation.navigationBar.tintColor = Palette.accent
@@ -1141,7 +1933,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         )
 
         loadTask?.cancel(); directoryTask?.cancel(); directoryTask = nil
+        cancelScan()
         cancelContinuation(); pendingPosition = nil; pendingPositionNeedsContinuation = false
+        rawChapterURLs.removeAll(); spreadPlans.removeAll(); doublePagePlans.removeAll(); virtualUnits.removeAll()
+        spreadSamples.removeAll(); doublePageSamples.removeAll(); scanStatusText = nil
         lastSaved = nil; sizes = [:]
         self.comic = targetDetail.summary
         self.source = targetSource
@@ -1175,6 +1970,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "image", for: indexPath) as! ReaderImageCell
         let url = images[indexPath.item]
+        let autoScale = environment.defaults.bool(forKey: "reader.auto.scale.enabled")
+        let scaleMode = ReaderScalePolicy.normalize(environment.defaults.integer(forKey: "reader.scale.mode"))
         cell.onZoom = { [weak self] zoomed in
             guard let self else { return }; self.isZoomed = zoomed
             self.pages.isScrollEnabled = self.settings.layout == .strip && !zoomed
@@ -1195,7 +1992,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 if !self.viewportTransitioning { self.restore(position) }
                 if self.pendingPosition != nil { self.view.setNeedsLayout() }
             }
-            self.savePosition()
+            self.scheduleSavePosition()
         }
         cell.onComparing = { [weak self] isComparing in
             guard let self else { return }
@@ -1207,7 +2004,16 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             }
         }
         cell.onEnhancement = { [weak self] in self?.updateBadge() }
-        cell.configure(url: url, referer: source.referer, settings: settings, localPageImage: localPageImage)
+        cell.configure(
+            url: url,
+            virtualUnit: virtualUnits[url],
+            referer: source.referer,
+            settings: settings,
+            autoScaleEnabled: autoScale,
+            scaleMode: scaleMode,
+            viewportHeight: max(1, collectionView.bounds.height),
+            localPageImage: localPageImage
+        )
         return cell
     }
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
@@ -1220,13 +2026,16 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         let size = sizes[images[indexPath.item]] ?? CGSize(width: 3, height: 4)
         if environment.defaults.bool(forKey: "reader.auto.scale.enabled") {
             let mode = ReaderScalePolicy.normalize(environment.defaults.integer(forKey: "reader.scale.mode"))
+            let screenScale = max(1, UIScreen.main.scale)
+            let iw = size.width <= 4 ? Int(max(1, size.width * 100)) : Int(max(1, (size.width / screenScale).rounded()))
+            let ih = size.height <= 4 ? Int(max(1, size.height * 100)) : Int(max(1, (size.height / screenScale).rounded()))
             let dims = ReaderScalePolicy.stripDimensions(
                 enabled: true,
                 mode: mode,
-                viewportWidth: Int(width),
-                viewportHeight: Int(viewportHeight),
-                imageWidth: Int(max(1, size.width)),
-                imageHeight: Int(max(1, size.height))
+                viewportWidth: Int(width.rounded()),
+                viewportHeight: Int(viewportHeight.rounded()),
+                imageWidth: iw,
+                imageHeight: ih
             )
             if dims.count >= 2, dims[0] > 0, dims[1] > 0 {
                 return CGSize(width: width, height: CGFloat(dims[1]))
@@ -1242,20 +2051,147 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         updateBadge()
         readerSeekBar.configure(currentPage: session.imageIndex, total: session.imageCount, sessionToken: Int64(session.chapterIndex))
         appendNextChapterIfNeeded()
+        updatePullPreviousChapterHint(scrollView)
     }
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        noteUserInteraction()
         if pendingPositionNeedsContinuation {
             pendingPosition = nil; pendingPositionNeedsContinuation = false
             synchronizeContinuousSession()
         }
+        pullStartedAtTop = settings.layout == .strip && !loading && (scrollView.contentOffset.y <= -scrollView.adjustedContentInset.top + 4)
+        pullReadyToRelease = false
+        pullTargetChapterIndex = nil
         environment.readingHabits.userDidRead(); setFullscreen(true, animated: true)
     }
-    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { savePosition() }
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        hidePullHint(animated: true)
+        savePosition()
+    }
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         pageAnimating = false; savePosition()
         recordReaderTrace("animation.end")
     }
-    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) { if !decelerate { savePosition() } }
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        let shouldTriggerPrevious = pullStartedAtTop && pullReadyToRelease
+        let targetChapter = pullTargetChapterIndex
+        pullStartedAtTop = false
+        pullReadyToRelease = false
+        pullTargetChapterIndex = nil
+        hidePullHint(animated: true)
+        if shouldTriggerPrevious, let targetChapter, chapters.indices.contains(targetChapter), !loading {
+            savePosition()
+            loadChapter(targetChapter, atEnd: false, restoreSaved: false)
+            return
+        }
+        if !decelerate { savePosition() }
+    }
+    private func topLoadedChapterIndex() -> Int {
+        if let firstSeg = continuousPages.segments.first,
+           let idx = chapters.firstIndex(where: { $0.chapterId == firstSeg.chapter.chapterId }) {
+            return idx
+        }
+        return session.chapterIndex
+    }
+    private func updatePullPreviousChapterHint(_ scrollView: UIScrollView) {
+        guard scrollView.isDragging, settings.layout == .strip, !loading, pullStartedAtTop else {
+            if !scrollView.isDragging { hidePullHint(animated: true) }
+            return
+        }
+        let pullDistance = -(scrollView.contentOffset.y + scrollView.adjustedContentInset.top)
+        if pullDistance < -6 {
+            pullStartedAtTop = false
+            pullReadyToRelease = false
+            pullTargetChapterIndex = nil
+            hidePullHint(animated: false)
+            return
+        }
+        let topIdx = topLoadedChapterIndex()
+        var hintText: String?
+        var ready = false
+        if topIdx > 0 {
+            if pullDistance >= 68 {
+                hintText = "松手加载上一章"
+                ready = true
+                pullTargetChapterIndex = topIdx - 1
+            } else if pullDistance >= 20 {
+                hintText = "继续下拉加载上一章"
+                pullTargetChapterIndex = topIdx - 1
+            } else {
+                pullTargetChapterIndex = nil
+            }
+        } else if pullDistance >= 36 {
+            hintText = "已经是第一章"
+            pullTargetChapterIndex = nil
+        }
+        pullReadyToRelease = ready
+        guard let hintText else {
+            hidePullHint(animated: true)
+            return
+        }
+        let isDark = overrideUserInterfaceStyle == .dark
+        pullHintLabel.applyStyle(text: hintText, isDark: isDark, ready: ready)
+        pullHintLabel.isHidden = false
+        pullHintLabel.alpha = 1
+        let ty = min(18, max(0, (pullDistance - 20) * 0.25))
+        pullHintLabel.transform = CGAffineTransform(translationX: 0, y: ty)
+    }
+    private func hidePullHint(animated: Bool) {
+        guard !pullHintLabel.isHidden else { return }
+        if animated {
+            UIView.animate(withDuration: 0.16, animations: {
+                self.pullHintLabel.alpha = 0
+                self.pullHintLabel.transform = .identity
+            }, completion: { _ in
+                if self.pullHintLabel.alpha < 0.05 {
+                    self.pullHintLabel.isHidden = true
+                }
+            })
+        } else {
+            pullHintLabel.alpha = 0
+            pullHintLabel.transform = .identity
+            pullHintLabel.isHidden = true
+        }
+    }
+}
+
+@MainActor
+private final class ReaderPullHintLabel: UILabel {
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        font = .systemFont(ofSize: 12, weight: .semibold)
+        textAlignment = .center
+        layer.cornerRadius = 17
+        layer.borderWidth = 1
+        clipsToBounds = true
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:)") }
+    override var intrinsicContentSize: CGSize {
+        let base = super.intrinsicContentSize
+        return CGSize(width: base.width + 28, height: max(34, base.height + 12))
+    }
+    func applyStyle(text: String, isDark: Bool, ready: Bool) {
+        self.text = text
+        if ready {
+            backgroundColor = isDark
+                ? UIColor(red: 22/255, green: 54/255, blue: 83/255, alpha: 0.96)
+                : UIColor(red: 234/255, green: 244/255, blue: 255/255, alpha: 0.96)
+            layer.borderColor = UIColor(red: 64/255, green: 153/255, blue: 237/255, alpha: 1).cgColor
+            textColor = isDark
+                ? UIColor(red: 140/255, green: 203/255, blue: 255/255, alpha: 1)
+                : UIColor(red: 9/255, green: 105/255, blue: 218/255, alpha: 1)
+        } else {
+            backgroundColor = isDark
+                ? UIColor(red: 28/255, green: 33/255, blue: 40/255, alpha: 0.94)
+                : UIColor(white: 1.0, alpha: 0.95)
+            layer.borderColor = isDark
+                ? UIColor(red: 68/255, green: 76/255, blue: 86/255, alpha: 1).cgColor
+                : UIColor(red: 208/255, green: 215/255, blue: 222/255, alpha: 1).cgColor
+            textColor = isDark
+                ? UIColor(red: 230/255, green: 237/255, blue: 243/255, alpha: 1)
+                : UIColor(red: 31/255, green: 35/255, blue: 40/255, alpha: 1)
+        }
+    }
 }
 
 private enum ReaderError: LocalizedError {
@@ -1274,12 +2210,20 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
     private let image = RemoteImageView()
     private let retry = UIButton(type: .system)
     private var url = "", referer = ""
+    private var virtualUnit: SpreadPagePlan.Unit?
+    private var virtualTask: Task<Void, Never>?
+    private var virtualToken = UUID()
     private var localPageImage: (@Sendable (URL) throws -> Data)?
     private var rawImage: UIImage?
     private var enhancedImage: UIImage?
     private var isComparing = false
     private var currentMode = 0
     private var comparisonEnabled = false
+    private var isStripLayout = true
+    private var autoScaleEnabled = false
+    private var scaleMode = ReaderScalePolicy.SMART
+    private var readerViewportHeight: CGFloat = 1
+    private(set) var isFailed = false
     private var enhancementTask: Task<Void, Never>?
     private var enhancementGeneration = UUID()
     #if DEBUG
@@ -1300,6 +2244,8 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
         scroll.delegate = self; scroll.minimumZoomScale = 1; scroll.maximumZoomScale = 4
         scroll.showsHorizontalScrollIndicator = false; scroll.showsVerticalScrollIndicator = false
         scroll.bouncesZoom = true
+        scroll.alwaysBounceVertical = false
+        scroll.alwaysBounceHorizontal = false
         image.contentMode = .scaleAspectFit
         image.isAccessibilityElement = true
         image.accessibilityIdentifier = "reader.image"
@@ -1314,14 +2260,38 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
 
         image.onLoaded = { [weak self] size in
             guard let self else { return }
+            self.isFailed = false
             self.retry.isHidden = true
             if let raw = self.image.image { self.displayLoadedImage(raw) }
+            self.applyGeometryLayout()
             let callback = self.onSize
             DispatchQueue.main.async { callback?(size) }
         }
-        image.onFailure = { [weak self] in self?.retry.isHidden = false; self?.retry.setTitle("图片加载失败 · 点击重试", for: .normal) }
+        image.onFailure = { [weak self] in
+            guard let self else { return }
+            self.isFailed = true
+            self.retry.isHidden = false
+            self.retry.setTitle("图片加载失败 · 点击重试", for: .normal)
+        }
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
+
+    func canPanHorizontally(dx: CGFloat) -> Bool {
+        guard scroll.contentSize.width > scroll.bounds.width + 1 else { return false }
+        if dx > 0 {
+            return scroll.contentOffset.x > 1
+        }
+        if dx < 0 {
+            return scroll.contentOffset.x < scroll.contentSize.width - scroll.bounds.width - 1
+        }
+        return false
+    }
+
+    func retryIfFailed() -> Bool {
+        guard isFailed else { return false }
+        reload()
+        return true
+    }
 
     func displayLoadedImage(_ raw: UIImage) {
         stopEnhancement()
@@ -1345,7 +2315,15 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
     private func updateImageAccessibility() {
         let method = isComparing ? "original" : enhancementMethod.rawValue
         let pixels = image.image?.cgImage
-        image.accessibilityValue = "\(method):\(pixels?.width ?? 0)x\(pixels?.height ?? 0)"
+        var base = "\(method):\(pixels?.width ?? 0)x\(pixels?.height ?? 0)"
+        if let unit = virtualUnit {
+            if unit.isSpread {
+                base += ";spread=\(unit.pageLabel())"
+            } else if unit.isDoublePage {
+                base += ";double=\(unit.pageLabel())"
+            }
+        }
+        image.accessibilityValue = base
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--ui-testing"), !comparisonEvents.isEmpty {
             image.accessibilityValue = (image.accessibilityValue ?? "") + ";comparison=" + comparisonEvents.joined(separator: ">")
@@ -1385,45 +2363,172 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
         updateImageAccessibility()
     }
 
+    private func applyGeometryLayout() {
+        guard scroll.zoomScale == 1, scroll.bounds.width > 0, scroll.bounds.height > 0 else { return }
+        guard autoScaleEnabled, let displayed = image.image, displayed.size.width > 0, displayed.size.height > 0 else {
+            image.contentMode = .scaleAspectFit
+            image.frame = scroll.bounds
+            scroll.contentSize = scroll.bounds.size
+            scroll.isScrollEnabled = !isStripLayout
+            return
+        }
+        let screenScale = max(1, UIScreen.main.scale)
+        let pixelW = CGFloat(displayed.cgImage?.width ?? Int(displayed.size.width * displayed.scale))
+        let pixelH = CGFloat(displayed.cgImage?.height ?? Int(displayed.size.height * displayed.scale))
+        let iw = max(1, Int((pixelW / screenScale).rounded()))
+        let ih = max(1, Int((pixelH / screenScale).rounded()))
+        let vw = max(1, Int(scroll.bounds.width.rounded()))
+        let vh = max(1, Int((isStripLayout ? readerViewportHeight : scroll.bounds.height).rounded()))
+        let g = ReaderScalePolicy.geometry(
+            enabled: true,
+            mode: scaleMode,
+            scroll: isStripLayout,
+            imageWidth: iw,
+            imageHeight: ih,
+            viewportWidth: vw,
+            viewportHeight: vh
+        )
+        let targetW = max(1, CGFloat(g.width))
+        let targetH = max(1, CGFloat(g.height))
+        let x = max(0, CGFloat(g.left))
+        let y = isStripLayout ? 0 : max(0, CGFloat(g.top))
+        image.contentMode = .scaleToFill
+        image.frame = CGRect(x: x, y: y, width: targetW, height: targetH)
+        let contentW = max(scroll.bounds.width, x + targetW)
+        let contentH = isStripLayout ? scroll.bounds.height : max(scroll.bounds.height, y + targetH)
+        scroll.contentSize = CGSize(width: contentW, height: contentH)
+        scroll.isScrollEnabled = !isStripLayout || contentW > scroll.bounds.width + 1
+    }
+
     override func layoutSubviews() {
         super.layoutSubviews()
         scroll.frame = contentView.bounds
-        if scroll.zoomScale == 1 { image.frame = scroll.bounds; scroll.contentSize = scroll.bounds.size }
+        applyGeometryLayout()
         retry.frame = CGRect(x: 0, y: max(0, bounds.midY - 22), width: bounds.width, height: 44)
     }
-    func configure(url: String, referer: String, settings: ReaderPreferences, localPageImage: (@Sendable (URL) throws -> Data)? = nil) {
+
+    func configure(
+        url: String,
+        virtualUnit: SpreadPagePlan.Unit? = nil,
+        referer: String,
+        settings: ReaderPreferences,
+        autoScaleEnabled: Bool = false,
+        scaleMode: Int = ReaderScalePolicy.SMART,
+        viewportHeight: CGFloat = 1,
+        localPageImage: (@Sendable (URL) throws -> Data)? = nil
+    ) {
         stopEnhancement()
+        virtualToken = UUID()
+        virtualTask?.cancel()
+        virtualTask = nil
         rawImage = nil
-        self.url = url; self.referer = referer
+        isFailed = false
+        self.url = url
+        self.virtualUnit = virtualUnit
+        self.referer = referer
         self.localPageImage = localPageImage
         self.currentMode = settings.enhancementMode
         self.comparisonEnabled = settings.enhancementComparison
+        self.isStripLayout = settings.layout == .strip
+        self.autoScaleEnabled = autoScaleEnabled
+        self.scaleMode = ReaderScalePolicy.normalize(scaleMode)
+        self.readerViewportHeight = max(1, viewportHeight)
         scroll.setZoomScale(1, animated: false)
+        scroll.contentOffset = .zero
         apply(settings)
         reload()
     }
+
     func apply(_ settings: ReaderPreferences) {
         let changedMode = currentMode != settings.enhancementMode
         if changedMode { stopEnhancement() }
         self.currentMode = settings.enhancementMode
         self.comparisonEnabled = settings.enhancementComparison
+        self.isStripLayout = settings.layout == .strip
         setZoomEnabled(settings.pinchZoom)
         image.setReaderEffects(crop: settings.cropWhiteMargins, vertical: settings.layout == .paged, ink: settings.inkScreen)
+        applyGeometryLayout()
         if changedMode, let raw = rawImage { displayLoadedImage(raw) }
     }
+
     func setZoomEnabled(_ enabled: Bool) {
         if !enabled { scroll.setZoomScale(1, animated: false) }
         scroll.maximumZoomScale = enabled ? 4 : 1
     }
+
     func toggleZoom() { scroll.setZoomScale(scroll.zoomScale > 1.05 ? 1 : min(2, scroll.maximumZoomScale), animated: true) }
-    @objc private func reload() { retry.isHidden = false; retry.setTitle("正在加载图片…", for: .normal); image.load(url, referer: referer, reader: true, localPageImage: localPageImage) }
+
+    @objc private func reload() {
+        isFailed = false
+        retry.isHidden = false
+        retry.setTitle("正在加载图片…", for: .normal)
+        virtualToken = UUID()
+        virtualTask?.cancel()
+        virtualTask = nil
+
+        guard let unit = virtualUnit, unit.isSpread || unit.isDoublePage else {
+            image.load(url, referer: referer, reader: true, localPageImage: localPageImage)
+            return
+        }
+
+        image.prepareForVirtualReaderLoad()
+        if let cached = RemoteImageView.cachedReaderImage(forKey: unit.key) {
+            image.displayPreloadedReaderImage(cached)
+            return
+        }
+
+        let token = virtualToken
+        let ref = referer
+        let localLoader = localPageImage
+        virtualTask = Task { [weak self] in
+            do {
+                let composedImage: UIImage
+                if unit.isSpread {
+                    guard let u1 = unit.firstUrl, let u2 = unit.secondUrl else {
+                        throw SpreadBitmapError.imageNotLoaded("跨页地址无效")
+                    }
+                    async let imgA = RemoteImageView.fetchDecodedImage(url: u1, referer: ref, reader: true, maxPixelArea: 8_000_000, localPageImage: localLoader)
+                    async let imgB = RemoteImageView.fetchDecodedImage(url: u2, referer: ref, reader: true, maxPixelArea: 8_000_000, localPageImage: localLoader)
+                    let (a, b) = try await (imgA, imgB)
+                    try Task.checkCancellation()
+                    composedImage = try await Task.detached(priority: .userInitiated) {
+                        try SpreadBitmapComposer.compose(first: a, second: b, firstOnLeft: unit.firstOnLeft).image
+                    }.value
+                } else {
+                    guard let origURL = unit.doubleOriginalUrl else {
+                        throw SpreadBitmapError.imageNotLoaded("双页原图地址无效")
+                    }
+                    let whole = try await RemoteImageView.fetchDecodedImage(url: origURL, referer: ref, reader: true, localPageImage: localLoader)
+                    try Task.checkCancellation()
+                    composedImage = try await Task.detached(priority: .userInitiated) {
+                        try SpreadBitmapComposer.cropDoublePage(image: whole, leftHalf: unit.doubleLeftHalf)
+                    }.value
+                }
+                try Task.checkCancellation()
+                guard let self, self.virtualToken == token else { return }
+                RemoteImageView.cacheReaderImage(composedImage, forKey: unit.key)
+                self.image.displayPreloadedReaderImage(composedImage)
+            } catch {
+                guard let self, self.virtualToken == token, !Task.isCancelled else { return }
+                self.image.onFailure?()
+            }
+        }
+    }
+
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { image }
     func scrollViewDidZoom(_ scrollView: UIScrollView) { onZoom?(scrollView.zoomScale > 1.05) }
     func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) { onUserAction?() }
-    func cancel() { stopEnhancement(); image.cancel() }
+    func cancel() {
+        virtualToken = UUID()
+        virtualTask?.cancel()
+        virtualTask = nil
+        stopEnhancement()
+        image.cancel()
+    }
     override func prepareForReuse() {
         super.prepareForReuse()
         cancel()
+        virtualUnit = nil
         localPageImage = nil
         onSize = nil
         onZoom = nil
@@ -1433,9 +2538,11 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
         rawImage = nil
         enhancedImage = nil
         isComparing = false
+        isFailed = false
         #if DEBUG
         comparisonEvents.removeAll()
         #endif
         scroll.setZoomScale(1, animated: false)
+        scroll.contentOffset = .zero
     }
 }

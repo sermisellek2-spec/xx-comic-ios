@@ -16,6 +16,7 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
     private var configPicker: UIDocumentPickerViewController?
     private var configPickerPurpose: ConfigPickerPurpose?
     private var configFeedback = ""
+    private var sourcesObserver: NSObjectProtocol?
     private var configBusy: Bool { configTask != nil || configPickerPurpose != nil }
     private var ids: [String] { environment.sourcePreferences.orderedIDs }
     init(environment: AppEnvironment, onVerified: (() -> Void)? = nil) {
@@ -23,6 +24,11 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         super.init(style: .insetGrouped)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
+    deinit {
+        if let sourcesObserver {
+            NotificationCenter.default.removeObserver(sourcesObserver)
+        }
+    }
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "站源管理"
@@ -31,6 +37,19 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         tableView.allowsSelectionDuringEditing = true
         updateConfigControls()
         environment.mh18BrowserSession.statusChanged = { [weak self] in self?.tableView.reloadData() }
+        sourcesObserver = NotificationCenter.default.addObserver(
+            forName: AppEnvironment.sourcesChanged,
+            object: environment,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.tableView.reloadData()
+            }
+        }
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tableView.reloadData()
     }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
@@ -43,13 +62,16 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
     }
     override func numberOfSections(in tableView: UITableView) -> Int { 2 }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        section == 0 ? 2 : ids.count
+        section == 0 ? 2 : max(1, ids.count)
     }
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         section == 0 ? "分组与规则" : "全部站源"
     }
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
         guard section == 1 else { return nil }
+        if ids.isEmpty {
+            return configFeedback.isEmpty ? nil : configFeedback
+        }
         return "拖动右侧手柄调整顺序。关闭站源不会删除收藏和阅读记录。" + (ids.contains("mh18") ? "18漫画的“重置”会结束浏览器会话及进行中的请求，保留站点 Cookie。" : "") + (configFeedback.isEmpty ? "" : "\n\n" + configFeedback)
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -69,17 +91,21 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
             } else {
                 cell.textLabel?.text = "规则与批量管理"
                 cell.accessibilityIdentifier = "source.rule.manager"
-                let ruleCount = RuleCatalog.shared.entries().filter { !$0.removed }.count
+                let ruleCount = environment.ruleCatalog.entries().filter { !$0.removed && !environment.ruleCatalog.hidden($0.rule.id) }.count
                 cell.detailTextLabel?.text = ruleCount > 0 ? "已安装 \(ruleCount) 个规则 · 支持订阅更新与批量管理" : "添加规则订阅、从文件导入或批量管理"
             }
             return cell
+        }
+
+        if ids.isEmpty {
+            return makeEmptySourcesCell()
         }
 
         let id = ids[indexPath.row]
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
         let source = environment.allSources.first { $0.id == id }
         cell.backgroundColor = Palette.card
-        cell.textLabel?.text = source?.name
+        cell.textLabel?.text = source?.name ?? id
         let host = URL(string: source?.referer ?? "")?.host ?? ""
         if let health = healthStatuses[id] {
             cell.detailTextLabel?.text = "\(host) · \(health)"
@@ -92,14 +118,13 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         cell.detailTextLabel?.textColor = Palette.secondaryText
         let toggle = UISwitch()
         toggle.isOn = environment.sourcePreferences.isEnabled(id)
-        toggle.accessibilityLabel = source?.name
+        toggle.accessibilityLabel = source?.name ?? id
         toggle.accessibilityIdentifier = "source.enabled." + id
         toggle.addAction(UIAction { [weak self, weak toggle] _ in
             guard let self, let toggle else { return }
-            self.environment.sourcePreferences.setEnabled(toggle.isOn, id: id)
-            self.notifyChanged()
+            self.environment.setSourceEnabled(toggle.isOn, id: id)
         }, for: .valueChanged)
-        cell.editingAccessoryView = toggle
+        let needsVpn = environment.requiresVpn(sourceId: id)
         if id == "mh18" {
             let verify = UIButton(type: .system)
             verify.setTitle("验证", for: .normal)
@@ -113,12 +138,86 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
             reset.accessibilityHint = "结束浏览器会话和进行中的请求，保留站点 Cookie"
             reset.accessibilityIdentifier = "source.reset.mh18"
             reset.addAction(UIAction { [weak self] _ in self?.environment.mh18BrowserSession.reset() }, for: .touchUpInside)
-            let controls = UIStackView(arrangedSubviews: [verify, reset, toggle])
+            var subviews: [UIView] = [verify, reset, toggle]
+            if needsVpn {
+                let badge = SourceVpnBadgeView()
+                badge.accessibilityIdentifier = "source.vpn.badge." + id
+                subviews.insert(badge, at: 0)
+            }
+            let controls = UIStackView(arrangedSubviews: subviews)
             controls.spacing = 8
-            controls.frame = CGRect(x: 0, y: 0, width: 156, height: 44)
+            controls.alignment = .center
+            let fitted = controls.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+            controls.frame = CGRect(x: 0, y: 0, width: max(156, fitted.width), height: 44)
             cell.editingAccessoryView = controls
+        } else if needsVpn {
+            let badge = SourceVpnBadgeView()
+            badge.accessibilityIdentifier = "source.vpn.badge." + id
+            let controls = UIStackView(arrangedSubviews: [badge, toggle])
+            controls.spacing = 8
+            controls.alignment = .center
+            let fitted = controls.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+            controls.frame = CGRect(x: 0, y: 0, width: fitted.width, height: max(32, fitted.height))
+            cell.editingAccessoryView = controls
+        } else {
+            cell.editingAccessoryView = toggle
         }
         cell.showsReorderControl = true
+        return cell
+    }
+    private func makeEmptySourcesCell() -> UITableViewCell {
+        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+        cell.backgroundColor = Palette.card
+        cell.selectionStyle = .none
+        cell.showsReorderControl = false
+        cell.accessibilityIdentifier = "source.settings.empty.card"
+
+        let illustration = UIImageView(image: UIImage(named: "rem_empty"))
+        illustration.contentMode = .scaleAspectFit
+        illustration.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.text = "还没有站源"
+        titleLabel.font = .systemFont(ofSize: 16, weight: .bold)
+        titleLabel.textColor = Palette.text
+        titleLabel.textAlignment = .center
+        titleLabel.accessibilityIdentifier = "source.settings.empty.title"
+
+        let subtitleLabel = UILabel()
+        subtitleLabel.text = "订阅规则仓库，预览确认后即可使用"
+        subtitleLabel.font = .systemFont(ofSize: 13, weight: .regular)
+        subtitleLabel.textColor = Palette.secondaryText
+        subtitleLabel.textAlignment = .center
+        subtitleLabel.numberOfLines = 0
+        subtitleLabel.accessibilityIdentifier = "source.settings.empty.subtitle"
+
+        let subscribeBtn = UIButton(type: .system)
+        subscribeBtn.setTitle("快速订阅", for: .normal)
+        subscribeBtn.titleLabel?.font = .systemFont(ofSize: 14, weight: .bold)
+        subscribeBtn.setTitleColor(Palette.onAccent, for: .normal)
+        subscribeBtn.backgroundColor = Palette.accent
+        subscribeBtn.layer.cornerRadius = 10
+        subscribeBtn.contentEdgeInsets = UIEdgeInsets(top: 10, left: 22, bottom: 10, right: 22)
+        subscribeBtn.accessibilityIdentifier = "source.settings.empty.quickSubscribe"
+        subscribeBtn.addAction(UIAction { [weak self] _ in
+            self?.showRuleManager(autoQuickSubscribe: true)
+        }, for: .touchUpInside)
+
+        let stack = UIStackView(arrangedSubviews: [illustration, titleLabel, subtitleLabel, subscribeBtn])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 10
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        cell.contentView.addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            illustration.widthAnchor.constraint(equalToConstant: 84),
+            illustration.heightAnchor.constraint(equalToConstant: 84),
+            stack.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 24),
+            stack.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -24),
+            stack.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 20),
+            stack.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -20)
+        ])
         return cell
     }
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -134,7 +233,7 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
     override func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle { .none }
     override func tableView(_ tableView: UITableView, shouldIndentWhileEditingRowAt indexPath: IndexPath) -> Bool { false }
     override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        indexPath.section == 1
+        indexPath.section == 1 && !ids.isEmpty
     }
     override func tableView(_ tableView: UITableView, targetIndexPathForMoveFromRowAt sourceIndexPath: IndexPath, toProposedIndexPath proposedDestinationIndexPath: IndexPath) -> IndexPath {
         if proposedDestinationIndexPath.section == 0 {
@@ -143,7 +242,7 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         return proposedDestinationIndexPath
     }
     override func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
-        guard sourceIndexPath.section == 1, destinationIndexPath.section == 1 else { return }
+        guard sourceIndexPath.section == 1, destinationIndexPath.section == 1, !ids.isEmpty else { return }
         var reordered = ids
         let id = reordered.remove(at: sourceIndexPath.row)
         reordered.insert(id, at: destinationIndexPath.row)
@@ -159,8 +258,12 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         let nav = UINavigationController(rootViewController: sheet)
         present(nav, animated: true)
     }
-    private func showRuleManager() {
-        let controller = SourceRuleManagerViewController(environment: environment)
+    private func showRuleManager(autoQuickSubscribe: Bool = false) {
+        let controller = SourceRuleManagerViewController(
+            environment: environment,
+            catalog: environment.ruleCatalog,
+            autoQuickSubscribe: autoQuickSubscribe
+        )
         navigationController?.pushViewController(controller, animated: true)
     }
     @objc private func resetOrder() {
@@ -384,7 +487,6 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
     }
     private func notifyChanged() {
         environment.reloadSources()
-        NotificationCenter.default.post(name: AppEnvironment.sourcesChanged, object: environment)
     }
     private func verifyMh18() {
         guard verificationTask == nil else { return }

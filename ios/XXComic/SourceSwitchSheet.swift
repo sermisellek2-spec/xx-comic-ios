@@ -29,6 +29,7 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
     private weak var loadingAlert: UIAlertController?
 
     var onSourceReplaced: ((ComicDetail) -> Void)?
+    var onUndoSourceReplaced: ((ComicSummary) -> Void)?
 
     init(environment: AppEnvironment, originalComic: ComicSummary, onSourceReplaced: ((ComicDetail) -> Void)? = nil) {
         self.environment = environment
@@ -179,6 +180,7 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
 
     private func performSwitch(to item: CandidateItem) {
         guard switchTask == nil, item.source.id != originalComic.sourceId else { return }
+        let presenterWindow = presentingViewController?.viewIfLoaded?.window ?? viewIfLoaded?.window
         let token = UUID(); switchGeneration = token
         let loadingAlert = UIAlertController(title: "正在换源…", message: "正在获取目录并对应阅读进度", preferredStyle: .alert)
         self.loadingAlert = loadingAlert
@@ -203,6 +205,7 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
                 let matchingIndex = ChapterMatching.findMatchingChapterIndex(chapters: detail.chapters, currentTitle: oldReading?.chapter.title, defaultIndex: oldReading?.chapterIndex ?? 0)
 
                 loadingAlert.actions.first?.isEnabled = false
+                let undoSnapshot = self.environment.captureSourceReplacementSnapshot(original: self.originalComic, target: detail.summary)
                 try self.environment.replaceSource(
                     original: self.originalComic,
                     target: detail,
@@ -212,8 +215,22 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
 
                 loadingAlert.dismiss(animated: true) { [weak self] in
                     guard let self, self.switchGeneration == token else { return }
+                    let env = self.environment
+                    let onUndo = self.onUndoSourceReplaced
+                    let sourceName = item.source.name
                     self.onSourceReplaced?(detail)
-                    self.dismiss(animated: true)
+                    self.dismiss(animated: true) {
+                        RemToastView.show(
+                            message: "已换源至 \(sourceName)",
+                            kind: .info,
+                            actionTitle: "撤销",
+                            duration: 4.5,
+                            window: presenterWindow
+                        ) {
+                            try? env.undoSourceReplacement(undoSnapshot)
+                            onUndo?(undoSnapshot.original)
+                        }
+                    }
                 }
             } catch {
                 guard self.switchGeneration == token, !Task.isCancelled else { return }
@@ -335,7 +352,7 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
             self.onSwitch = onSwitch
             titleLabel.text = item.candidate.title
             sourceLabel.text = item.source.name + (current ? " · 当前站源" : "")
-            vpnBadge.isHidden = !SourceVpnPolicy.requiresVpn(sourceId: item.source.id)
+            vpnBadge.isHidden = !environment.requiresVpn(sourceId: item.source.id)
             switchButton.setTitle(current ? "当前" : "切换", for: .normal)
             switchButton.isEnabled = !current
             switchButton.accessibilityIdentifier = "source-switch.select." + item.source.id

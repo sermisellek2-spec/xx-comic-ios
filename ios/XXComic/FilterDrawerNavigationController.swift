@@ -25,7 +25,10 @@ private final class FilterDrawerPresentation: UIPresentationController {
         let requested = presentedViewController.preferredContentSize.height
         let contentHeight = requested > 0 ? max(220, requested) : min(400, bounds.height * 0.62)
         let height = min(bounds.height - safe.top - 12, contentHeight + safe.bottom)
-        return CGRect(x: bounds.minX, y: bounds.maxY - height, width: bounds.width, height: height)
+        let maxWidth: CGFloat = 600
+        let width = bounds.width > maxWidth ? maxWidth : bounds.width
+        let x = bounds.minX + ((bounds.width - width) * 0.5).rounded()
+        return CGRect(x: x, y: bounds.maxY - height, width: width, height: height)
     }
     override func presentationTransitionWillBegin() {
         if presentedViewController.overrideUserInterfaceStyle == .unspecified {

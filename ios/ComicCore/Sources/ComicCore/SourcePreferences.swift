@@ -2,10 +2,18 @@ import Foundation
 
 public final class SourcePreferences {
     private let defaults: UserDefaults
-    private let defaultIDs: [String]
-    public init(defaults: UserDefaults, defaultIDs: [String]) {
+    private let initialDefaultIDs: [String]
+    public private(set) var availableIDs: [String]
+    private let importableIDs: [String]
+    public init(defaults: UserDefaults, defaultIDs: [String], importableIDs: [String]? = nil) {
         self.defaults = defaults
-        self.defaultIDs = defaultIDs
+        self.initialDefaultIDs = defaultIDs
+        self.availableIDs = defaultIDs
+        self.importableIDs = importableIDs ?? defaultIDs
+    }
+    public func updateAvailableIDs(_ ids: [String]) {
+        var seen = Set<String>()
+        self.availableIDs = ids.map(Self.canonicalID).filter { !$0.isEmpty && seen.insert($0).inserted }
     }
     public static func canonicalID(_ id: String) -> String {
         switch id {
@@ -28,12 +36,12 @@ public final class SourcePreferences {
         let json = defaults.string(forKey: "source.order") ?? "[]"
         let values = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [Any] ?? []
         let mapped = values.compactMap { ($0 as? String).map(Self.canonicalID) }
-        return SourceOrder.normalize(mapped, available: defaultIDs)
+        return SourceOrder.normalize(mapped, available: availableIDs)
     }
     public var enabledIDs: [String] { orderedIDs.filter(isEnabled) }
     public func isEnabled(_ id: String) -> Bool {
         let canonical = Self.canonicalID(id)
-        guard defaultIDs.contains(canonical) || defaultIDs.contains(id) else { return false }
+        guard availableIDs.contains(canonical) || availableIDs.contains(id) else { return false }
         if let val = defaults.object(forKey: "source.\(canonical).enabled") as? Bool {
             return val
         }
@@ -51,7 +59,7 @@ public final class SourcePreferences {
     }
     public func setEnabled(_ enabled: Bool, id: String) {
         let canonical = Self.canonicalID(id)
-        guard defaultIDs.contains(canonical) || defaultIDs.contains(id) else { return }
+        guard availableIDs.contains(canonical) || availableIDs.contains(id) else { return }
         defaults.set(enabled, forKey: "source.\(canonical).enabled")
         for alias in Self.legacyAliases(for: id) {
             defaults.set(enabled, forKey: "source.\(alias).enabled")
@@ -63,10 +71,10 @@ public final class SourcePreferences {
     public func setOrder(_ ids: [String]) {
         let mapped = ids.map(Self.canonicalID)
         // An array of strings always has a JSON representation.
-        guard let data = try? JSONEncoder().encode(SourceOrder.normalize(mapped, available: defaultIDs)), let json = String(data: data, encoding: .utf8) else { return }
+        guard let data = try? JSONEncoder().encode(SourceOrder.normalize(mapped, available: availableIDs)), let json = String(data: data, encoding: .utf8) else { return }
         defaults.set(json, forKey: "source.order")
     }
-    public func resetOrder() { setOrder(defaultIDs) }
+    public func resetOrder() { setOrder(initialDefaultIDs.isEmpty ? availableIDs : initialDefaultIDs) }
 
     public func config(for sourceId: String) -> SourceConfigItem? {
         let canonical = Self.canonicalID(sourceId)
@@ -90,7 +98,7 @@ public final class SourcePreferences {
 
     public func setConfig(_ item: SourceConfigItem, for sourceId: String) {
         let canonical = Self.canonicalID(sourceId)
-        guard defaultIDs.contains(canonical) || defaultIDs.contains(sourceId) else { return }
+        guard availableIDs.contains(canonical) || availableIDs.contains(sourceId) || importableIDs.contains(canonical) || importableIDs.contains(sourceId) else { return }
         if let data = try? JSONEncoder().encode(item) {
             defaults.set(data, forKey: "source.\(canonical).config")
             for alias in Self.legacyAliases(for: sourceId) {
@@ -144,16 +152,31 @@ public final class SourcePreferences {
     }
 
     public func importSnapshot() -> SourceImportSnapshot {
+        var seen = Set<String>()
+        let baseIDs = importableIDs.isEmpty
+            ? availableIDs
+            : (importableIDs + availableIDs).filter { !$0.isEmpty && seen.insert($0).inserted }
         var configurations: [String: SourceConfigItem] = [:]
-        for id in defaultIDs {
-            configurations[Self.canonicalID(id)] = (config(for: id) ?? SourceConfigItem(id: id, name: id)).withEnabled(isEnabled(id))
+        for id in baseIDs {
+            let currentEnabled = availableIDs.contains(Self.canonicalID(id)) ? isEnabled(id) : (SourceConfigDefaults.defaultConfig(for: Self.canonicalID(id))?.enabled ?? true)
+            configurations[Self.canonicalID(id)] = (config(for: id) ?? SourceConfigItem(id: id, name: id)).withEnabled(currentEnabled)
         }
-        return SourceImportSnapshot(defaultIDs: defaultIDs, order: orderedIDs, configurations: configurations)
+        return SourceImportSnapshot(defaultIDs: baseIDs, order: orderedIDs, configurations: configurations)
     }
 
     public func applyImport(_ prepared: PreparedSourceImport) throws -> SourceImportResult {
         try Task.checkCancellation()
         guard importSnapshot() == prepared.snapshot else { throw SourceConfigError.configurationChanged }
+        if !prepared.configurations.isEmpty {
+            var mergedAvailable = availableIDs
+            for config in prepared.configurations {
+                let canonical = Self.canonicalID(config.id)
+                if !mergedAvailable.contains(canonical) {
+                    mergedAvailable.append(canonical)
+                }
+            }
+            updateAvailableIDs(mergedAvailable)
+        }
         for config in prepared.configurations {
             setConfig(config, for: config.id)
             setEnabled(config.enabled, id: config.id)

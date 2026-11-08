@@ -773,10 +773,26 @@ public enum RuleImages {
     public static let MARK = "#xx-rule="
     private static let lock = NSLock()
     private static var metaCache = [String: [String: Any]]()
+    private static var resolvedCache = [String: [String: Any]]()
+
+    public struct Resolved: @unchecked Sendable {
+        public let rule: RuleDefinition
+        public let descriptor: [String: Any]
+        public let url: String
+        public let referer: String
+        public let headers: [String: String]
+        public let cookieHeader: String?
+        public let taggedUrl: String
+    }
 
     public static func isRule(_ url: String?) -> Bool {
         guard let url = url else { return false }
         return url.contains(MARK)
+    }
+
+    public static func strip(_ url: String) -> String {
+        guard let range = url.range(of: MARK) else { return url }
+        return String(url[..<range.lowerBound])
     }
 
     public static func tag(rule: RuleDefinition, image: [String: Any], chapter: String, index: Int) throws -> String {
@@ -907,6 +923,113 @@ public enum RuleImages {
                 throw RuleError("规则图片变换参数无效")
             }
         }
+    }
+
+    public static func resolve(catalog: RuleCatalog, tagged: String, force: Bool) throws -> Resolved {
+        let meta = try metadata(tagged)
+        guard let hash = meta["hash"] as? String,
+              let id = meta["id"] as? String,
+              let original = meta["image"] as? [String: Any] else {
+            throw RuleError("规则图片来源信息错误")
+        }
+        let source = try catalog.version(hash)
+        guard source.id == id else {
+            throw RuleError("图片规则身份不匹配")
+        }
+        let chapter = (meta["chapter"] as? String) ?? ""
+        let index = (meta["index"] as? Int) ?? -1
+        let d: [String: Any]
+        if !force {
+            lock.lock()
+            let cached = resolvedCache[tagged]
+            lock.unlock()
+            d = cached ?? original
+        } else {
+            var request = original
+            request["chapter"] = chapter
+            request["index"] = index
+            d = try source.image(request, force: true)
+        }
+        try validate(rule: source.rule, image: d)
+        guard let url = d["url"] as? String else {
+            throw RuleError("规则图片缺少地址")
+        }
+        let referer = (d["referer"] as? String) ?? (source.rule.baseUrl + "/")
+        var headers = [String: String]()
+        if let rawHeaders = d["headers"] as? [String: Any] {
+            for (k, v) in rawHeaders {
+                headers[k] = String(describing: v)
+            }
+        }
+        var cookies = RuleSessions.get(rule: source.rule, url: url)
+        if let descriptorCookies = try? RuleSessions.checked(d["cookies"] as? [String: Any]) {
+            for (k, v) in descriptorCookies {
+                cookies[k] = v
+            }
+        }
+        let cookieHeader = cookies.isEmpty ? nil : RuleSessions.header(cookies)
+        let refreshedTagged = try tag(rule: source.rule, image: d, chapter: chapter, index: index)
+
+        lock.lock()
+        if resolvedCache.count >= 512 {
+            resolvedCache.removeAll(keepingCapacity: true)
+        }
+        resolvedCache[tagged] = d
+        resolvedCache[refreshedTagged] = d
+        lock.unlock()
+
+        return Resolved(
+            rule: source.rule,
+            descriptor: d,
+            url: url,
+            referer: referer,
+            headers: headers,
+            cookieHeader: cookieHeader,
+            taggedUrl: refreshedTagged
+        )
+    }
+
+    public static func requestHeaders(
+        catalog: RuleCatalog? = nil,
+        tagged: String,
+        fallbackReferer: String = ""
+    ) throws -> (url: String, referer: String, headers: [String: String], cookieHeader: String?) {
+        if let catalog {
+            let resolved = try resolve(catalog: catalog, tagged: tagged, force: false)
+            return (resolved.url, resolved.referer, resolved.headers, resolved.cookieHeader)
+        }
+        let meta = try metadata(tagged)
+        lock.lock()
+        let cached = resolvedCache[tagged]
+        lock.unlock()
+        guard let d = cached ?? (meta["image"] as? [String: Any]),
+              let url = d["url"] as? String else {
+            throw RuleError("规则图片来源信息错误")
+        }
+        let referer = (d["referer"] as? String) ?? fallbackReferer
+        var headers = [String: String]()
+        if let rawHeaders = d["headers"] as? [String: Any] {
+            for (k, v) in rawHeaders {
+                headers[k] = String(describing: v)
+            }
+        }
+        let descriptorCookies = (try? RuleSessions.checked(d["cookies"] as? [String: Any])) ?? [:]
+        let cookieHeader = descriptorCookies.isEmpty ? nil : RuleSessions.header(descriptorCookies)
+        return (url, referer, headers, cookieHeader)
+    }
+
+    public static func decode(_ data: Data, tagged: String) throws -> Data {
+        guard isRule(tagged) else { return data }
+        lock.lock()
+        let cached = resolvedCache[tagged]
+        lock.unlock()
+        let descriptor: [String: Any]?
+        if let cached {
+            descriptor = cached
+        } else {
+            descriptor = try metadata(tagged)["image"] as? [String: Any]
+        }
+        return try RuleImageData.decode(descriptor: descriptor?["decode"] as? [String: Any], data: data)
     }
 }
 

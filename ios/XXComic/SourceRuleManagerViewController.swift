@@ -705,10 +705,12 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
     private let batchExportBtn = UIButton(type: .system)
     private let batchDeleteBtn = UIButton(type: .system)
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
+    private var autoQuickSubscribe: Bool
 
-    init(environment: AppEnvironment? = nil, catalog: RuleCatalog = .shared) {
+    init(environment: AppEnvironment? = nil, catalog: RuleCatalog? = nil, autoQuickSubscribe: Bool = false) {
         self.environment = environment
-        self.catalog = catalog
+        self.catalog = catalog ?? environment?.ruleCatalog ?? .shared
+        self.autoQuickSubscribe = autoQuickSubscribe
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -730,6 +732,14 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         loadRules()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if autoQuickSubscribe {
+            autoQuickSubscribe = false
+            quickSubscribeDefault()
+        }
     }
 
     // MARK: - Navigation Bar
@@ -1128,7 +1138,24 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
         items.insert(moved, at: destinationIndexPath.row)
 
         if let env = environment {
-            env.sourcePreferences.setOrder(items.map(\.rule.id))
+            let ruleIds = items.map(\.rule.id)
+            let ruleIdSet = Set(ruleIds.map(SourcePreferences.canonicalID))
+            var merged: [String] = []
+            var ruleIterator = ruleIds.makeIterator()
+            for existing in env.sourcePreferences.orderedIDs {
+                if ruleIdSet.contains(SourcePreferences.canonicalID(existing)) {
+                    if let nextRule = ruleIterator.next() {
+                        merged.append(nextRule)
+                    }
+                } else {
+                    merged.append(existing)
+                }
+            }
+            while let remaining = ruleIterator.next() {
+                merged.append(remaining)
+            }
+            env.sourcePreferences.setOrder(merged)
+            env.reloadSources()
         }
     }
 
@@ -1147,6 +1174,8 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
             guard let self else { return }
             do {
                 try self.catalog.store().change(ids: [entry.rule.id], action: "rollback")
+                self.catalog.refresh()
+                self.environment?.reloadSources()
                 self.loadRules()
                 self.showToast("已回退至上一版本")
             } catch {
@@ -1164,7 +1193,9 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
             catalog.refresh()
             if let env = environment {
                 env.sourcePreferences.setEnabled(enabled, id: id)
+                env.reloadSources()
             }
+            loadRules()
         } catch {
             showAlert(title: "设置失败", message: error.localizedDescription)
             loadRules()
@@ -1183,6 +1214,7 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
                 for id in ids {
                     env.sourcePreferences.setEnabled(action == "enable", id: id)
                 }
+                env.reloadSources()
             }
             loadRules()
             showToast("已批量\(action == "enable" ? "开启" : "关闭") \(ids.count) 个规则")
@@ -1206,6 +1238,14 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
             do {
                 try self.catalog.store().change(ids: ids, action: "delete")
                 self.catalog.refresh()
+                if let env = self.environment {
+                    if !env.usesLegacyBuiltinSources {
+                        for id in ids {
+                            env.defaults.removeObject(forKey: "source.\(SourcePreferences.canonicalID(id)).enabled")
+                        }
+                    }
+                    env.reloadSources()
+                }
                 self.selectedIds.removeAll()
                 self.loadRules()
                 self.showToast("已移除 \(ids.count) 个规则")
@@ -1244,29 +1284,30 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
 
     private func fetchAndPreviewUrl(url: String, isSubscription: Bool) {
         activityIndicator.startAnimating()
-        Task {
+        let catalog = self.catalog
+        Task { [weak self] in
             do {
-                let content = try RuleRepository.fetch(url)
-                guard let data = content.data(using: .utf8),
-                      let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                    throw RuleError("无法解析返回数据为 JSON")
-                }
-                let rules = try RuleRepository.read(root: root, origin: url)
-                let summary = try self.catalog.store().preview(rules)
-
-                await MainActor.run {
-                    self.activityIndicator.stopAnimating()
-                    self.showImportPreview(
-                        rules: rules,
-                        summary: summary,
-                        subscriptionUrl: isSubscription ? url : ""
-                    )
-                }
+                let (rules, summary) = try await Task.detached(priority: .userInitiated) { () throws -> ([RuleDefinition], String) in
+                    let content = try RuleRepository.fetch(url)
+                    guard let data = content.data(using: .utf8),
+                          let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                        throw RuleError("无法解析返回数据为 JSON")
+                    }
+                    let parsed = try RuleRepository.read(root: root, origin: url)
+                    let previewSummary = try catalog.store().preview(parsed)
+                    return (parsed, previewSummary)
+                }.value
+                guard let self else { return }
+                self.activityIndicator.stopAnimating()
+                self.showImportPreview(
+                    rules: rules,
+                    summary: summary,
+                    subscriptionUrl: isSubscription ? url : ""
+                )
             } catch {
-                await MainActor.run {
-                    self.activityIndicator.stopAnimating()
-                    self.showAlert(title: "读取规则失败", message: error.localizedDescription)
-                }
+                guard let self else { return }
+                self.activityIndicator.stopAnimating()
+                self.showAlert(title: "读取规则失败", message: error.localizedDescription)
             }
         }
     }
@@ -1282,25 +1323,31 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
         present(preview, animated: true)
     }
 
-    private func installRules(_ rules: [RuleDefinition], subscriptionUrl: String) {
+    func installRules(_ rules: [RuleDefinition], subscriptionUrl: String, showFeedback: Bool = true) {
         activityIndicator.startAnimating()
         let catalog = self.catalog
-        Task {
+        Task { [weak self] in
             do {
-                let msg = try catalog.store().install(
-                    rules,
-                    validator: { rule in try catalog.validate(rule) },
-                    subscription: subscriptionUrl
-                )
-                catalog.refresh()
-                await MainActor.run {
-                    self.activityIndicator.stopAnimating()
-                    self.loadRules()
+                let msg = try await Task.detached(priority: .userInitiated) { () throws -> String in
+                    let installedMsg = try catalog.store().install(
+                        rules,
+                        validator: { rule in try catalog.validate(rule) },
+                        subscription: subscriptionUrl
+                    )
+                    catalog.refresh()
+                    return installedMsg
+                }.value
+                guard let self else { return }
+                self.activityIndicator.stopAnimating()
+                self.environment?.reloadSources()
+                self.loadRules()
+                if showFeedback {
                     self.showToast("安装完成：\(msg)")
                 }
             } catch {
-                await MainActor.run {
-                    self.activityIndicator.stopAnimating()
+                guard let self else { return }
+                self.activityIndicator.stopAnimating()
+                if showFeedback {
                     self.showAlert(title: "安装失败", message: error.localizedDescription)
                 }
             }
@@ -1316,24 +1363,26 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
 
         activityIndicator.startAnimating()
         let catalog = self.catalog
-        Task {
+        Task { [weak self] in
             do {
-                let rules = try RuleSubscriptionUpdate.prepare(
-                    urls: repos,
-                    validator: { rule in try catalog.validate(rule) }
-                )
-                let message = try catalog.store().updateSubscriptions(rules)
-                catalog.refresh()
-                await MainActor.run {
-                    self.activityIndicator.stopAnimating()
-                    self.loadRules()
-                    self.showAlert(title: "站源已更新", message: message)
-                }
+                let message = try await Task.detached(priority: .userInitiated) { () throws -> String in
+                    let rules = try RuleSubscriptionUpdate.prepare(
+                        urls: repos,
+                        validator: { rule in try catalog.validate(rule) }
+                    )
+                    let msg = try catalog.store().updateSubscriptions(rules)
+                    catalog.refresh()
+                    return msg
+                }.value
+                guard let self else { return }
+                self.activityIndicator.stopAnimating()
+                self.environment?.reloadSources()
+                self.loadRules()
+                self.showAlert(title: "站源已更新", message: message)
             } catch {
-                await MainActor.run {
-                    self.activityIndicator.stopAnimating()
-                    self.showAlert(title: "更新未完成", message: error.localizedDescription)
-                }
+                guard let self else { return }
+                self.activityIndicator.stopAnimating()
+                self.showAlert(title: "更新未完成", message: error.localizedDescription)
             }
         }
     }
@@ -1350,32 +1399,33 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let url = urls.first else { return }
         activityIndicator.startAnimating()
-        Task {
+        let catalog = self.catalog
+        Task { [weak self] in
             do {
-                let data = try Data(contentsOf: url)
-                guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                    throw RuleError("无法解析文件为 JSON")
-                }
-                let rules: [RuleDefinition]
-                if (json["schema"] as? String) == "xx-comic.rules" {
-                    rules = try RuleStore.parse(json: json)
-                } else if (json["schema"] as? String) == "xx-comic.source-bundle",
-                          let rulesJson = json["rules"] as? [String: Any] {
-                    rules = try RuleStore.parse(json: rulesJson)
-                } else {
-                    rules = try RuleRepository.read(root: json, origin: nil)
-                }
-                let summary = try self.catalog.store().preview(rules)
-
-                await MainActor.run {
-                    self.activityIndicator.stopAnimating()
-                    self.showImportPreview(rules: rules, summary: summary, subscriptionUrl: "")
-                }
+                let (rules, summary) = try await Task.detached(priority: .userInitiated) { () throws -> ([RuleDefinition], String) in
+                    let data = try Data(contentsOf: url)
+                    guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                        throw RuleError("无法解析文件为 JSON")
+                    }
+                    let parsedRules: [RuleDefinition]
+                    if (json["schema"] as? String) == "xx-comic.rules" {
+                        parsedRules = try RuleStore.parse(json: json)
+                    } else if (json["schema"] as? String) == "xx-comic.source-bundle",
+                              let rulesJson = json["rules"] as? [String: Any] {
+                        parsedRules = try RuleStore.parse(json: rulesJson)
+                    } else {
+                        parsedRules = try RuleRepository.read(root: json, origin: nil)
+                    }
+                    let previewSummary = try catalog.store().preview(parsedRules)
+                    return (parsedRules, previewSummary)
+                }.value
+                guard let self else { return }
+                self.activityIndicator.stopAnimating()
+                self.showImportPreview(rules: rules, summary: summary, subscriptionUrl: "")
             } catch {
-                await MainActor.run {
-                    self.activityIndicator.stopAnimating()
-                    self.showAlert(title: "导入文件失败", message: error.localizedDescription)
-                }
+                guard let self else { return }
+                self.activityIndicator.stopAnimating()
+                self.showAlert(title: "导入文件失败", message: error.localizedDescription)
             }
         }
     }
@@ -1438,10 +1488,6 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
     }
 
     private func showToast(_ message: String) {
-        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
-        present(alert, animated: true)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            alert.dismiss(animated: true)
-        }
+        RemToastView.show(message: message, kind: .info, in: self)
     }
 }

@@ -83,6 +83,16 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
     private var doublePageSubtitleLabel: UILabel?
     private var doublePageActionsRow: UIView?
 
+    private var brightnessFollowSwitch: UISwitch?
+    private var brightnessSliderHost: UIView?
+    private var brightnessSlider: UISlider?
+    private var brightnessValueLabel: UILabel?
+    private var extraDimSwitch: UISwitch?
+    private var extraDimSliderHost: UIView?
+    private var extraDimSlider: UISlider?
+    private var extraDimValueLabel: UILabel?
+    private var keepScreenPills: [ReaderKeepScreenPill] = []
+
     private let toggles: [(String, String?, String, WritableKeyPath<ReaderPreferences, Bool>)] = [
         ("隐藏右下角状态信息", nil, "reader.fully.immersive", \.fullyImmersive),
         ("墨水屏模式", nil, "reader.display.mode", \.inkScreen),
@@ -94,7 +104,7 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
     init(store: ReaderPreferencesStore) {
         self.store = store
         self.settings = store.load()
-        let defaults = UserDefaults.standard
+        let defaults = store.defaults
         self.autoScaleEnabled = defaults.bool(forKey: "reader.auto.scale.enabled")
         self.scaleMode = ReaderScalePolicy.normalize(defaults.integer(forKey: "reader.scale.mode"))
         self.spreadEnabled = defaults.bool(forKey: "reader.spread.enabled")
@@ -151,9 +161,10 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         header.heightAnchor.constraint(equalToConstant: 40).isActive = true
         header.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(dragHeader(_:))))
 
-        let scroll = UIScrollView()
+        let scroll = ReaderSettingsScrollView()
         scroll.contentInsetAdjustmentBehavior = .never
         scroll.showsVerticalScrollIndicator = false
+        scroll.canCancelContentTouches = true
         scroll.accessibilityIdentifier = "reader.settings.content"
 
         content.axis = .vertical
@@ -164,6 +175,9 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
 
         // 2. Reading Theme
         content.addArrangedSubview(choiceRow(title: "阅读主题", items: [("默认", .automatic), ("深色", .moon), ("浅色", .sun)], group: 1))
+
+        // 2.5 Comfort: Brightness, Extra-Dim & Keep-Screen-On (Android 2.0.45 N1/N3)
+        setupComfortRows()
 
         // 3. Status Badge, Eink, Pinch Zoom
         for index in 0..<3 {
@@ -252,6 +266,206 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         updateSelections()
     }
 
+    private func setupComfortRows() {
+        let (followRow, followToggle, _) = switchRow(
+            title: "亮度跟随系统",
+            subtitle: nil,
+            identifier: ReaderComfortPolicy.prefBrightnessFollowSystem,
+            isOn: settings.brightnessFollowSystem
+        )
+        brightnessFollowSwitch = followToggle
+
+        let bLabel = UILabel()
+        bLabel.text = "阅读亮度"
+        bLabel.font = .systemFont(ofSize: 13)
+        bLabel.textColor = ReaderSettingColors.text
+
+        let bValue = UILabel()
+        bValue.text = "\(ReaderComfortPolicy.brightnessToPercent(settings.brightnessLevel))%"
+        bValue.font = .systemFont(ofSize: 12)
+        bValue.textColor = ReaderSettingColors.secondary
+        bValue.accessibilityIdentifier = "reader.brightness.value"
+        brightnessValueLabel = bValue
+
+        let bHeader = UIStackView(arrangedSubviews: [bLabel, UIView(), bValue])
+        bHeader.alignment = .center
+
+        let bSlider = UISlider()
+        bSlider.minimumValue = Float(ReaderComfortPolicy.minBrightnessLevel)
+        bSlider.maximumValue = Float(ReaderComfortPolicy.maxBrightnessLevel)
+        bSlider.value = Float(ReaderComfortPolicy.clampBrightness(settings.brightnessLevel))
+        bSlider.minimumTrackTintColor = ReaderSettingColors.accent
+        bSlider.accessibilityIdentifier = "reader.brightness.slider"
+        bSlider.accessibilityLabel = "阅读亮度调节"
+        brightnessSlider = bSlider
+
+        let bStack = UIStackView(arrangedSubviews: [bHeader, bSlider])
+        bStack.axis = .vertical
+        bStack.spacing = 4
+        bStack.translatesAutoresizingMaskIntoConstraints = false
+
+        let bHost = UIView()
+        bHost.translatesAutoresizingMaskIntoConstraints = false
+        bHost.addSubview(bStack)
+        let bTop = bStack.topAnchor.constraint(equalTo: bHost.topAnchor, constant: 2)
+        let bBottom = bStack.bottomAnchor.constraint(equalTo: bHost.bottomAnchor, constant: -8)
+        bTop.priority = .init(999); bBottom.priority = .init(999)
+        NSLayoutConstraint.activate([
+            bStack.leadingAnchor.constraint(equalTo: bHost.leadingAnchor, constant: 16),
+            bStack.trailingAnchor.constraint(equalTo: bHost.trailingAnchor),
+            bTop, bBottom
+        ])
+        bHost.isHidden = settings.brightnessFollowSystem
+        brightnessSliderHost = bHost
+
+        followToggle.addAction(UIAction { [weak self, weak followToggle] _ in
+            guard let self, let followToggle else { return }
+            self.settings.brightnessFollowSystem = followToggle.isOn
+            self.brightnessSliderHost?.isHidden = followToggle.isOn
+            self.save()
+        }, for: .valueChanged)
+
+        bSlider.addAction(UIAction { [weak self, weak bSlider] _ in
+            guard let self, let bSlider else { return }
+            let clamped = ReaderComfortPolicy.clampBrightness(Double(bSlider.value))
+            self.settings.brightnessLevel = clamped
+            self.brightnessValueLabel?.text = "\(ReaderComfortPolicy.brightnessToPercent(clamped))%"
+            if self.settings.brightnessFollowSystem {
+                self.settings.brightnessFollowSystem = false
+                self.brightnessFollowSwitch?.setOn(false, animated: true)
+                self.brightnessSliderHost?.isHidden = false
+            }
+            self.store.save(self.settings)
+            self.onChange?()
+        }, for: .valueChanged)
+
+        content.addArrangedSubview(followRow)
+        content.addArrangedSubview(bHost)
+
+        let extraDimOn = ReaderComfortPolicy.extraDimToPercent(settings.brightnessDim) > 0
+        let (dimRow, dimToggle, _) = switchRow(
+            title: "夜间超暗护眼",
+            subtitle: "低于系统最低亮度时叠加暗色护眼层，不影响控制栏",
+            identifier: "reader.brightness.dim.enabled",
+            isOn: extraDimOn
+        )
+        extraDimSwitch = dimToggle
+
+        let dLabel = UILabel()
+        dLabel.text = "护眼暗度"
+        dLabel.font = .systemFont(ofSize: 13)
+        dLabel.textColor = ReaderSettingColors.text
+
+        let initialDimPct = ReaderComfortPolicy.extraDimToPercent(settings.brightnessDim)
+        let dValue = UILabel()
+        dValue.text = initialDimPct == 0 ? "关闭" : "\(initialDimPct)%"
+        dValue.font = .systemFont(ofSize: 12)
+        dValue.textColor = ReaderSettingColors.secondary
+        dValue.accessibilityIdentifier = "reader.brightness.dim.value"
+        extraDimValueLabel = dValue
+
+        let dHeader = UIStackView(arrangedSubviews: [dLabel, UIView(), dValue])
+        dHeader.alignment = .center
+
+        let dSlider = UISlider()
+        dSlider.minimumValue = 0.05
+        dSlider.maximumValue = Float(ReaderComfortPolicy.maxExtraDim)
+        dSlider.value = Float(max(0.05, ReaderComfortPolicy.clampExtraDim(settings.brightnessDim > 0 ? settings.brightnessDim : 0.25)))
+        dSlider.minimumTrackTintColor = ReaderSettingColors.accent
+        dSlider.accessibilityIdentifier = "reader.brightness.dim.slider"
+        dSlider.accessibilityLabel = "夜间超暗护眼强度调节"
+        extraDimSlider = dSlider
+
+        let dStack = UIStackView(arrangedSubviews: [dHeader, dSlider])
+        dStack.axis = .vertical
+        dStack.spacing = 4
+        dStack.translatesAutoresizingMaskIntoConstraints = false
+
+        let dHost = UIView()
+        dHost.translatesAutoresizingMaskIntoConstraints = false
+        dHost.addSubview(dStack)
+        let dTop = dStack.topAnchor.constraint(equalTo: dHost.topAnchor, constant: 2)
+        let dBottom = dStack.bottomAnchor.constraint(equalTo: dHost.bottomAnchor, constant: -8)
+        dTop.priority = .init(999); dBottom.priority = .init(999)
+        NSLayoutConstraint.activate([
+            dStack.leadingAnchor.constraint(equalTo: dHost.leadingAnchor, constant: 16),
+            dStack.trailingAnchor.constraint(equalTo: dHost.trailingAnchor),
+            dTop, dBottom
+        ])
+        dHost.isHidden = !extraDimOn
+        extraDimSliderHost = dHost
+
+        dimToggle.addAction(UIAction { [weak self, weak dimToggle] _ in
+            guard let self, let dimToggle else { return }
+            if dimToggle.isOn {
+                let next = self.settings.brightnessDim >= 0.05 ? self.settings.brightnessDim : 0.25
+                self.settings.brightnessDim = ReaderComfortPolicy.clampExtraDim(next)
+                self.extraDimSlider?.value = Float(self.settings.brightnessDim)
+                self.extraDimValueLabel?.text = "\(ReaderComfortPolicy.extraDimToPercent(self.settings.brightnessDim))%"
+                self.extraDimSliderHost?.isHidden = false
+            } else {
+                self.settings.brightnessDim = 0
+                self.extraDimValueLabel?.text = "关闭"
+                self.extraDimSliderHost?.isHidden = true
+            }
+            self.save()
+        }, for: .valueChanged)
+
+        dSlider.addAction(UIAction { [weak self, weak dSlider] _ in
+            guard let self, let dSlider else { return }
+            let clamped = ReaderComfortPolicy.clampExtraDim(Double(dSlider.value))
+            self.settings.brightnessDim = clamped
+            let pct = ReaderComfortPolicy.extraDimToPercent(clamped)
+            self.extraDimValueLabel?.text = pct == 0 ? "关闭" : "\(pct)%"
+            self.store.save(self.settings)
+            self.onChange?()
+        }, for: .valueChanged)
+
+        content.addArrangedSubview(dimRow)
+        content.addArrangedSubview(dHost)
+
+        let keepTitle = UILabel()
+        keepTitle.text = "阅读时屏幕常亮"
+        keepTitle.font = .systemFont(ofSize: 14)
+        keepTitle.textColor = ReaderSettingColors.text
+
+        let pillsRow = UIStackView()
+        pillsRow.axis = .horizontal
+        pillsRow.spacing = 6
+        pillsRow.distribution = .fillEqually
+        keepScreenPills.removeAll()
+        for minutes in ReaderComfortPolicy.keepScreenOptions {
+            let pill = ReaderKeepScreenPill(minutes: minutes)
+            pill.addAction(UIAction { [weak self] _ in
+                guard let self else { return }
+                let normalized = ReaderComfortPolicy.normalizeKeepScreenMinutes(minutes)
+                guard self.settings.keepScreenMinutes != normalized else { return }
+                self.settings.keepScreenMinutes = normalized
+                self.save()
+            }, for: .touchUpInside)
+            keepScreenPills.append(pill)
+            pillsRow.addArrangedSubview(pill)
+        }
+
+        let keepStack = UIStackView(arrangedSubviews: [keepTitle, pillsRow])
+        keepStack.axis = .vertical
+        keepStack.spacing = 6
+        keepStack.translatesAutoresizingMaskIntoConstraints = false
+
+        let keepHost = UIView()
+        keepHost.translatesAutoresizingMaskIntoConstraints = false
+        keepHost.addSubview(keepStack)
+        let kTop = keepStack.topAnchor.constraint(equalTo: keepHost.topAnchor, constant: 6)
+        let kBottom = keepStack.bottomAnchor.constraint(equalTo: keepHost.bottomAnchor, constant: -8)
+        kTop.priority = .init(999); kBottom.priority = .init(999)
+        NSLayoutConstraint.activate([
+            keepStack.leadingAnchor.constraint(equalTo: keepHost.leadingAnchor),
+            keepStack.trailingAnchor.constraint(equalTo: keepHost.trailingAnchor),
+            kTop, kBottom
+        ])
+        content.addArrangedSubview(keepHost)
+    }
+
     private func setupAutoScaleRow() {
         let (scaleRow, scaleToggle, _) = switchRow(
             title: "自动缩放画面",
@@ -264,8 +478,8 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
             guard let self, let scaleToggle else { return }
             self.autoScaleEnabled = scaleToggle.isOn
             self.scaleOptionsContainer?.isHidden = !scaleToggle.isOn
-            UserDefaults.standard.set(self.autoScaleEnabled, forKey: "reader.auto.scale.enabled")
-            UserDefaults.standard.set(self.scaleMode, forKey: "reader.scale.mode")
+            self.store.defaults.set(self.autoScaleEnabled, forKey: "reader.auto.scale.enabled")
+            self.store.defaults.set(self.scaleMode, forKey: "reader.scale.mode")
             self.onAutoScaleChanged?(self.autoScaleEnabled, self.scaleMode)
             self.onChange?()
             self.userResized = false
@@ -292,7 +506,7 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
                     guard self.scaleMode != mode else { return }
                     self.scaleMode = mode
                     self.updateScaleChips()
-                    UserDefaults.standard.set(self.scaleMode, forKey: "reader.scale.mode")
+                    self.store.defaults.set(self.scaleMode, forKey: "reader.scale.mode")
                     self.onAutoScaleChanged?(true, self.scaleMode)
                     self.onChange?()
                 }, for: .touchUpInside)
@@ -341,12 +555,12 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
             guard let self, let spreadToggle else { return }
             self.spreadEnabled = spreadToggle.isOn
             self.spreadActionsRow?.isHidden = !spreadToggle.isOn
-            UserDefaults.standard.set(self.spreadEnabled, forKey: "reader.spread.enabled")
+            self.store.defaults.set(self.spreadEnabled, forKey: "reader.spread.enabled")
             if self.spreadEnabled && self.doublePageEnabled {
                 self.doublePageEnabled = false
                 self.doublePageSwitch?.setOn(false, animated: true)
                 self.doublePageActionsRow?.isHidden = true
-                UserDefaults.standard.set(false, forKey: "reader.double.page.enabled")
+                self.store.defaults.set(false, forKey: "reader.double.page.enabled")
                 self.onDoublePageEnabledChanged?(false)
             }
             self.onSpreadEnabledChanged?(self.spreadEnabled)
@@ -362,8 +576,11 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
             identifier: "reader.settings.spreadActions"
         )
         spreadActionControl.addAction(UIAction { [weak self] _ in
-            self?.close()
-            self?.onSpreadActions?()
+            guard let self else { return }
+            let action = self.onSpreadActions
+            self.dismiss(animated: true) {
+                action?()
+            }
         }, for: .touchUpInside)
         spreadActionView.isHidden = !spreadEnabled
         spreadActionsRow = spreadActionView
@@ -383,12 +600,12 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
             guard let self, let doublePageToggle else { return }
             self.doublePageEnabled = doublePageToggle.isOn
             self.doublePageActionsRow?.isHidden = !doublePageToggle.isOn
-            UserDefaults.standard.set(self.doublePageEnabled, forKey: "reader.double.page.enabled")
+            self.store.defaults.set(self.doublePageEnabled, forKey: "reader.double.page.enabled")
             if self.doublePageEnabled && self.spreadEnabled {
                 self.spreadEnabled = false
                 self.spreadSwitch?.setOn(false, animated: true)
                 self.spreadActionsRow?.isHidden = true
-                UserDefaults.standard.set(false, forKey: "reader.spread.enabled")
+                self.store.defaults.set(false, forKey: "reader.spread.enabled")
                 self.onSpreadEnabledChanged?(false)
             }
             self.onDoublePageEnabledChanged?(self.doublePageEnabled)
@@ -404,8 +621,11 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
             identifier: "reader.settings.doublePageActions"
         )
         doublePageActionControl.addAction(UIAction { [weak self] _ in
-            self?.close()
-            self?.onDoublePageActions?()
+            guard let self else { return }
+            let action = self.onDoublePageActions
+            self.dismiss(animated: true) {
+                action?()
+            }
         }, for: .touchUpInside)
         doublePageActionView.isHidden = !doublePageEnabled
         doublePageActionsRow = doublePageActionView
@@ -477,6 +697,10 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
             chip.updateSelection(isSelected: chip.mode == scaleMode, isDark: isDark)
         }
         scaleHintLabel?.text = ReaderScalePolicy.description(scaleMode)
+        let selectedMinutes = ReaderComfortPolicy.normalizeKeepScreenMinutes(settings.keepScreenMinutes)
+        for pill in keepScreenPills {
+            pill.updateSelection(isSelected: pill.minutes == selectedMinutes, isDark: isDark)
+        }
     }
 
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -490,9 +714,10 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         let contentWidth = view.bounds.width - view.safeAreaInsets.left - view.safeAreaInsets.right - 36
         let size = content.systemLayoutSizeFitting(CGSize(width: max(1, contentWidth), height: 0), withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
         let windowHeight = presentationController?.containerView?.bounds.height ?? view.window?.bounds.height ?? view.bounds.height
-        // The Android sheet caps its scrolling content at 65% of the window,
-        // while the handle, heading and bottom padding remain outside it.
-        let height = min(size.height, windowHeight * 0.65) + 82 + view.safeAreaInsets.bottom
+        // Cap scrolling content at 65% in portrait and 74% in compact landscape
+        // so all controls stay easily reachable via standard vertical swipes.
+        let maxFraction: CGFloat = windowHeight < 500 ? 0.74 : 0.65
+        let height = min(size.height, windowHeight * maxFraction) + 82 + view.safeAreaInsets.bottom
         if abs(preferredContentSize.height - height) > 1 { preferredContentSize.height = height }
     }
 
@@ -838,12 +1063,86 @@ private enum ReaderSettingColors {
 // MARK: - Presentation & Animation
 
 @MainActor
+private final class ReaderSettingsScrollView: UIScrollView {
+    override func touchesShouldCancel(in view: UIView) -> Bool {
+        if view is UIControl { return true }
+        return super.touchesShouldCancel(in: view)
+    }
+}
+
+@MainActor
+private final class ReaderKeepScreenPill: UIControl {
+    let minutes: Int
+    private let titleLabel = UILabel()
+
+    init(minutes: Int) {
+        self.minutes = minutes
+        super.init(frame: .zero)
+        layer.cornerRadius = 8
+        layer.borderWidth = 1
+        isAccessibilityElement = true
+        accessibilityIdentifier = "reader.keep.screen.\(minutes)"
+        accessibilityTraits = .button
+
+        titleLabel.text = ReaderComfortPolicy.keepScreenLabel(minutes)
+        titleLabel.font = .systemFont(ofSize: 12)
+        titleLabel.textAlignment = .center
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.minimumScaleFactor = 0.8
+        titleLabel.isUserInteractionEnabled = false
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(titleLabel)
+
+        NSLayoutConstraint.activate([
+            titleLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+            titleLabel.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 2),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -2),
+            heightAnchor.constraint(equalToConstant: 36)
+        ])
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:)") }
+
+    func updateSelection(isSelected: Bool, isDark: Bool) {
+        self.isSelected = isSelected
+        let label = ReaderComfortPolicy.keepScreenLabel(minutes)
+        accessibilityTraits = isSelected ? [.button, .selected] : .button
+        accessibilityLabel = "屏幕常亮 \(label)\(isSelected ? "，已选中" : "")"
+        if isSelected {
+            backgroundColor = isDark
+                ? UIColor(red: 22/255, green: 54/255, blue: 83/255, alpha: 1)
+                : UIColor(red: 234/255, green: 244/255, blue: 255/255, alpha: 1)
+            layer.borderColor = UIColor(red: 64/255, green: 153/255, blue: 237/255, alpha: 1).cgColor
+            titleLabel.textColor = isDark
+                ? UIColor(red: 140/255, green: 203/255, blue: 255/255, alpha: 1)
+                : UIColor(red: 9/255, green: 105/255, blue: 218/255, alpha: 1)
+            titleLabel.font = .systemFont(ofSize: 12, weight: .bold)
+        } else {
+            backgroundColor = isDark
+                ? UIColor(red: 37/255, green: 44/255, blue: 53/255, alpha: 1)
+                : UIColor(red: 246/255, green: 248/255, blue: 250/255, alpha: 1)
+            layer.borderColor = isDark
+                ? UIColor(red: 57/255, green: 66/255, blue: 77/255, alpha: 1).cgColor
+                : UIColor(red: 216/255, green: 222/255, blue: 228/255, alpha: 1).cgColor
+            titleLabel.textColor = isDark
+                ? UIColor(red: 230/255, green: 237/255, blue: 243/255, alpha: 1)
+                : UIColor(red: 31/255, green: 35/255, blue: 40/255, alpha: 1)
+            titleLabel.font = .systemFont(ofSize: 12, weight: .regular)
+        }
+    }
+}
+
+@MainActor
 private final class ReaderSettingsPresentation: UIPresentationController {
     private let backdrop = UIView()
     override var frameOfPresentedViewInContainerView: CGRect {
         guard let containerView else { return .zero }
         let height = min(containerView.bounds.height - containerView.safeAreaInsets.top, max(220, presentedViewController.preferredContentSize.height))
-        return CGRect(x: 0, y: containerView.bounds.maxY - height, width: containerView.bounds.width, height: height)
+        let maxWidth: CGFloat = 600
+        let width = containerView.bounds.width > maxWidth ? maxWidth : containerView.bounds.width
+        let x = ((containerView.bounds.width - width) * 0.5).rounded()
+        return CGRect(x: x, y: containerView.bounds.maxY - height, width: width, height: height)
     }
     override func presentationTransitionWillBegin() {
         guard let containerView else { return }

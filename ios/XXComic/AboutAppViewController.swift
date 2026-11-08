@@ -110,16 +110,16 @@ final class AboutAppViewController: UIViewController, UITableViewDataSource, UIT
 
         if indexPath.row == 0 {
             cell.textLabel?.text = "版本"
-            let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.40"
-            let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "340"
+            let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.47"
+            let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "347"
             cell.detailTextLabel?.text = "\(shortVersion) (\(buildVersion))"
         } else if indexPath.row == 1 {
             cell.textLabel?.text = "数据说明"
             cell.detailTextLabel?.text = "仅本地"
         } else {
             cell.textLabel?.text = "已接入站源"
-            let currentIDs = Set(BuiltinSourceCatalog.activeIDs)
-            cell.detailTextLabel?.text = "\(environment.allSources.filter { currentIDs.contains($0.id) }.count) 个"
+            let installedIDs = Set(environment.sourcePreferences.availableIDs).subtracting(BuiltinSourceCatalog.retiredIDs)
+            cell.detailTextLabel?.text = "\(environment.allSources.filter { installedIDs.contains($0.id) }.count) 个"
         }
         return cell
     }

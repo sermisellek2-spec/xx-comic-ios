@@ -2,10 +2,11 @@ import UIKit
 import ComicCore
 
 @MainActor
-final class DetailViewController: UIViewController {
+final class DetailViewController: UIViewController, UIScrollViewDelegate {
     private let environment: AppEnvironment
     private var comic: ComicSummary
     private var source: any ComicSource
+    private let scroll = UIScrollView()
     private let cover = RemoteImageView()
     private let heading = UILabel()
     private let descriptionLabel = UILabel()
@@ -36,6 +37,7 @@ final class DetailViewController: UIViewController {
     private var favoriteArtworkID = UUID()
     private var favoriteArtworkName: String?
     private var favoriteArtworkScale: CGFloat = 0
+    private var lastFavoriteTapUptime: TimeInterval = 0
     private var resumeOnAppear: Bool
 
     init(comic: ComicSummary, environment: AppEnvironment, resumeOnAppear: Bool = false) {
@@ -54,8 +56,9 @@ final class DetailViewController: UIViewController {
         let appearance = UINavigationBarAppearance(); appearance.configureWithTransparentBackground()
         navigationItem.standardAppearance = appearance; navigationItem.scrollEdgeAppearance = appearance; navigationItem.compactAppearance = appearance
         view.backgroundColor = Palette.card
-        let scroll = UIScrollView()
         scroll.contentInsetAdjustmentBehavior = .never
+        scroll.delegate = self
+        scroll.alwaysBounceVertical = true
         let content = UIStackView()
         content.axis = .vertical; content.spacing = 0
         let body = UIStackView()
@@ -219,6 +222,24 @@ final class DetailViewController: UIViewController {
         if heroTopInset.constant != topInset { heroTopInset.constant = topInset }
         let height: CGFloat = width > 900 ? 250 : (width > 600 ? 220 : 190)
         if heroHeight.constant != height { heroHeight.constant = height }
+        updateHeroTransform()
+    }
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        updateHeroTransform()
+    }
+    private func updateHeroTransform() {
+        let offsetY = scroll.contentOffset.y
+        let baseHeight = max(1, heroHeight?.constant ?? 190)
+        if offsetY < -0.5 {
+            let pull = -offsetY
+            let scale = min(1.6, 1 + pull / baseHeight)
+            cover.transform = CGAffineTransform(translationX: 0, y: offsetY * 0.5).scaledBy(x: scale, y: scale)
+        } else if offsetY > 0.5 {
+            let parallax = min(baseHeight * 0.35, offsetY * 0.32)
+            cover.transform = CGAffineTransform(translationX: 0, y: parallax)
+        } else if cover.transform != .identity {
+            cover.transform = .identity
+        }
     }
     private func setDownloadButton(loading: Bool) {
         downloadButton.setTitle(nil, for: .normal)
@@ -477,26 +498,74 @@ final class DetailViewController: UIViewController {
         read.isEnabled = true; updateButtons()
     }
     @objc private func toggleFavorite() {
+        let now = ProcessInfo.processInfo.systemUptime
+        guard now - lastFavoriteTapUptime >= 0.3 else { return }
+        lastFavoriteTapUptime = now
         do {
-            try environment.library.setFavorite(comic, favorite: environment.library.entry(for: comic)?.isFavorite != true)
-            environment.notifyLibraryChanged(); updateButtons()
+            let currentlyFavorite = environment.library.entry(for: comic)?.isFavorite == true
+            if currentlyFavorite {
+                let snapshot = try environment.removeFavoriteWithSnapshot(comic)
+                updateButtons()
+                RemToastView.show(
+                    message: "已移出书架",
+                    kind: .empty,
+                    actionTitle: "撤销",
+                    in: self
+                ) { [weak self] in
+                    guard let self else { return }
+                    do {
+                        try self.environment.restoreFavorite(snapshot)
+                        self.updateButtons()
+                    } catch {
+                        self.showError(error)
+                    }
+                }
+            } else {
+                try environment.setFavorite(comic, favorite: true)
+                updateButtons()
+                RemToastView.show(message: "已加入书架", kind: .success, in: self)
+            }
         } catch { showError(error) }
     }
     @objc private func favoriteLongPressed(_ gesture: UILongPressGestureRecognizer) {
-        guard gesture.state == .began else { return }
+        guard gesture.state == .began, presentedViewController == nil else { return }
         if environment.library.entry(for: comic)?.isFavorite != true {
-            try? environment.library.setFavorite(comic, favorite: true)
-            environment.notifyLibraryChanged()
+            try? environment.setFavorite(comic, favorite: true)
             updateButtons()
         }
         let sheet = BookshelfGroupSelectSheet(environment: environment, scope: .online, comicId: comic.comicId, comicTitle: comic.title)
         present(sheet, animated: true)
     }
     @objc private func openSourceSwitchSheet() {
+        guard presentedViewController == nil else { return }
         cancelDownloadSelection()
+        let previousComic = comic
+        let previousDetail = cachedDetail
+        let previousChapters = cachedChapters
         let sheet = SourceSwitchSheet(comic: comic, environment: environment) { [weak self] targetDetail in
             guard let self else { return }
             self.applySwitchedSource(targetDetail: targetDetail)
+        }
+        sheet.onUndoSourceReplaced = { [weak self] _ in
+            guard let self else { return }
+            if let previousDetail {
+                self.applySwitchedSource(targetDetail: previousDetail)
+                if let previousChapters, !previousChapters.isEmpty {
+                    self.cachedChapters = previousChapters
+                    self.updateDirectoryButton()
+                }
+            } else if let restoredSource = self.environment.source(for: previousComic) {
+                self.comic = previousComic
+                self.source = restoredSource
+                self.title = restoredSource.name
+                self.sourceSwitchButton.setTitle(restoredSource.name, for: .normal)
+                self.sourceSwitchButton.accessibilityLabel = "切换站源，当前" + restoredSource.name
+                self.cachedDetail = nil
+                self.cachedChapters = nil
+                self.detailLoaded = false
+                self.updateButtons()
+                self.loadDetail()
+            }
         }
         let navigation = UINavigationController(rootViewController: sheet)
         navigation.navigationBar.tintColor = Palette.accent
@@ -526,6 +595,7 @@ final class DetailViewController: UIViewController {
         self.environment.favoriteUpdateCoordinator.acknowledge(sourceId: targetDetail.summary.sourceId, comicId: targetDetail.summary.comicId, revision: revision)
     }
     @objc private func openVolumeManager() {
+        guard presentedViewController == nil else { return }
         let vm = VolumeManagerViewController(seriesId: comic.comicId, seriesTitle: comic.title, environment: environment) { [weak self] in
             self?.localVolumesChanged()
         }
@@ -553,6 +623,7 @@ final class DetailViewController: UIViewController {
         }
     }
     @objc private func showLocalManagementMenu() {
+        guard presentedViewController == nil else { return }
         let alert = UIAlertController(title: "漫画管理", message: nil, preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "管理分卷", style: .default) { [weak self] _ in
             self?.openVolumeManager()
@@ -638,6 +709,7 @@ final class DetailViewController: UIViewController {
         } catch { if directoryID == token { directoryTask = nil }; throw error }
     }
     @objc private func showDirectory() {
+        guard presentedViewController == nil else { return }
         if downloadTask != nil { cancelDownloadSelection() }
         feedback.endDownload(); updateFeedback()
         cancelPreparingRead()
@@ -828,7 +900,15 @@ final class ChapterListViewController: UITableViewController {
     private func scrollToSelected() {
         guard let selectedID, let selected = chapters.firstIndex(where: { $0.chapterId == selectedID }) else { return }
         tableView.layoutIfNeeded()
-        tableView.scrollToRow(at: IndexPath(row: descending ? chapters.count - 1 - selected : selected, section: 0), at: .top, animated: false)
+        let row = descending ? chapters.count - 1 - selected : selected
+        let indexPath = IndexPath(row: row, section: 0)
+        let rect = tableView.rectForRow(at: indexPath)
+        let windowHeight = view.window?.bounds.height ?? UIScreen.main.bounds.height
+        let visibleHeight = max(120, min(tableView.bounds.height, windowHeight * 0.48))
+        let minY = -tableView.adjustedContentInset.top
+        let maxY = max(minY, tableView.contentSize.height - visibleHeight)
+        let centeredY = max(minY, min(maxY, rect.midY - visibleHeight * 0.45))
+        tableView.setContentOffset(CGPoint(x: 0, y: centeredY), animated: false)
     }
     private func index(_ row: Int) -> Int { descending ? chapters.count - 1 - row : row }
     private func dismissSheet(then completion: (() -> Void)? = nil) {

@@ -22,8 +22,12 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
     private let history = UIStackView()
     private let tools = UIStackView()
     private let toolsHost = UIView()
+    private let emptySourcesGuide = UIView()
     private var collapsedToolsHeight: NSLayoutConstraint!
     private var toolsHidden = false
+    private var hasNoInstalledSources: Bool {
+        environment.sourcePreferences.orderedIDs.isEmpty && environment.sources.isEmpty
+    }
     private var headerGesture = DiscoveryHeaderGesture()
     private var sourceIndex = 0
     private var sourceIDs: [String] = []
@@ -137,7 +141,88 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
         refresh.addTarget(self, action: #selector(refreshResults), for: .valueChanged)
         collection.refreshControl = refresh
         collection.keyboardDismissMode = .onDrag
+        setupEmptySourcesGuide()
         start()
+    }
+
+    private func setupEmptySourcesGuide() {
+        emptySourcesGuide.isHidden = true
+        emptySourcesGuide.backgroundColor = Palette.background
+        emptySourcesGuide.translatesAutoresizingMaskIntoConstraints = false
+        emptySourcesGuide.accessibilityIdentifier = "discover.empty.sources"
+        view.addSubview(emptySourcesGuide)
+
+        let card = UIView()
+        card.backgroundColor = Palette.card
+        card.layer.cornerRadius = 16
+        card.layer.borderWidth = 1
+        card.layer.borderColor = Palette.border.cgColor
+        card.translatesAutoresizingMaskIntoConstraints = false
+        emptySourcesGuide.addSubview(card)
+
+        let imageView = UIImageView(image: UIImage(named: "rem_empty"))
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.text = "还没有站源"
+        titleLabel.font = .systemFont(ofSize: 18, weight: .bold)
+        titleLabel.textColor = Palette.text
+        titleLabel.textAlignment = .center
+
+        let subtitleLabel = UILabel()
+        subtitleLabel.text = "订阅站源规则或导入配置后即可浏览和搜索漫画"
+        subtitleLabel.font = .systemFont(ofSize: 13)
+        subtitleLabel.textColor = Palette.secondaryText
+        subtitleLabel.textAlignment = .center
+        subtitleLabel.numberOfLines = 0
+
+        let addButton = UIButton(type: .system)
+        addButton.setTitle("添加站源", for: .normal)
+        addButton.setTitleColor(.white, for: .normal)
+        addButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+        addButton.backgroundColor = Palette.accent
+        addButton.layer.cornerRadius = 10
+        addButton.accessibilityIdentifier = "discover.add.sources"
+        addButton.addTarget(self, action: #selector(openSourceSettingsFromGuide), for: .touchUpInside)
+        addButton.translatesAutoresizingMaskIntoConstraints = false
+
+        let stack = UIStackView(arrangedSubviews: [imageView, titleLabel, subtitleLabel, addButton])
+        stack.axis = .vertical
+        stack.spacing = 12
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(stack)
+
+        let cardWidth = card.widthAnchor.constraint(equalTo: emptySourcesGuide.widthAnchor, constant: -40)
+        cardWidth.priority = .defaultHigh
+
+        NSLayoutConstraint.activate([
+            emptySourcesGuide.topAnchor.constraint(equalTo: toolsHost.bottomAnchor),
+            emptySourcesGuide.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            emptySourcesGuide.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            emptySourcesGuide.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+
+            card.centerXAnchor.constraint(equalTo: emptySourcesGuide.centerXAnchor),
+            card.centerYAnchor.constraint(equalTo: emptySourcesGuide.centerYAnchor, constant: -16),
+            card.widthAnchor.constraint(lessThanOrEqualToConstant: 360),
+            cardWidth,
+
+            imageView.widthAnchor.constraint(equalToConstant: 96),
+            imageView.heightAnchor.constraint(equalToConstant: 96),
+            addButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 148),
+            addButton.heightAnchor.constraint(equalToConstant: 44),
+
+            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 24),
+            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -24),
+            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
+            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20)
+        ])
+    }
+
+    @objc private func openSourceSettingsFromGuide() {
+        let controller = SourceSettingsViewController(environment: environment)
+        navigationController?.pushViewController(controller, animated: true)
     }
     deinit { tasks.forEach { $0.cancel() }; scopeTask?.cancel() }
     override func viewDidDisappear(_ animated: Bool) {
@@ -161,6 +246,21 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
         searchOutline?.layer.borderColor = Palette.border.resolvedColor(with: traitCollection).cgColor
     }
     private func updateSourceMenu() {
+        if hasNoInstalledSources {
+            searchBar.resignFirstResponder()
+            searchBar.isEnabled = false
+            modeButton.isEnabled = false
+            searchOutline?.alpha = 0.55
+            updateSearchPlaceholder("请先添加站源")
+            sourceButton.isHidden = true
+            navigationItem.rightBarButtonItem = nil
+            filterButton.isEnabled = false
+            scopeTask?.cancel(); scopeSourceID = nil; scopeGroups = []; renderScopeGroups()
+            return
+        }
+        searchBar.isEnabled = true
+        modeButton.isEnabled = true
+        searchOutline?.alpha = 1.0
         filterButton.isEnabled = !environment.discoverySources.isEmpty
         sourceButton.isEnabled = !environment.discoverySources.isEmpty
         modeButton.setTitle(isGlobal ? "全站" : "单站", for: .normal)
@@ -300,6 +400,20 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
         submittedQuery = query ?? SearchRules.trim(searchBar.text ?? "")
         updateSourceMenu()
         history.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        if hasNoInstalledSources {
+            filterScroll.isHidden = true
+            sectionHeading.isHidden = true
+            tabs.isHidden = true
+            collection.refreshControl?.endRefreshing()
+            global = GlobalSearchState()
+            errors = [:]; finished = []
+            tabRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            status("")
+            emptySourcesGuide.isHidden = false
+            view.bringSubviewToFront(emptySourcesGuide)
+            return
+        }
+        emptySourcesGuide.isHidden = true
         sourceButton.isHidden = isGlobal; filterScroll.isHidden = isGlobal
         sectionHeading.text = submittedQuery.isEmpty ? "全部漫画" : "搜索结果"
         sectionHeading.isHidden = isGlobal && submittedQuery.isEmpty
@@ -416,7 +530,18 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
             let query = submittedQuery
             tasks.append(Task { [weak self] in
                 do {
-                    let items = try await source.search(keyword: query, page: 1)
+                    let items = try await withThrowingTaskGroup(of: [ComicSummary].self) { group in
+                        group.addTask {
+                            try await source.search(keyword: query, page: 1)
+                        }
+                        group.addTask {
+                            try await Task.sleep(nanoseconds: 15_000_000_000)
+                            throw URLError(.timedOut)
+                        }
+                        let first = try await group.next() ?? []
+                        group.cancelAll()
+                        return first
+                    }
                     try Task.checkCancellation()
                     guard let self, self.requestID == token else { return }
                     self.global.receive(sourceID: source.id, items: items, generation: generation)
@@ -772,7 +897,7 @@ private final class FilterViewController: UIViewController {
                     button.accessibilityIdentifier = "filter.source." + candidate.id
                     configureOption(button, title: candidate.name, selected: isSelected)
                     button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
-                    if SourceVpnPolicy.requiresVpn(sourceId: candidate.id) {
+                    if environment.requiresVpn(sourceId: candidate.id) {
                         let vpnBadge = SourceVpnBadgeView()
                         vpnBadge.isUserInteractionEnabled = false
                         vpnBadge.isAccessibilityElement = false

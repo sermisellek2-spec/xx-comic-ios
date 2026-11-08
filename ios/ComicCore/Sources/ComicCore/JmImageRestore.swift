@@ -5,7 +5,15 @@ import Foundation
 extension JmImageTransform {
     /// Restore the already sampled image, as Android's reader does before display effects.
     public static func restore(_ image: CGImage, imageURL: String) throws -> CGImage {
-        let count = try slices(imageURL: imageURL)
+        let count: Int
+        if RuleImages.isRule(imageURL) {
+            let trans = try RuleImages.transformation(imageURL)
+            count = trans.hasPrefix("bands:") ? (Int(trans.dropFirst("bands:".count)) ?? 0) : 0
+        } else if let bandRange = imageURL.range(of: "#xx-bands=") {
+            count = Int(imageURL[bandRange.upperBound...]) ?? 0
+        } else {
+            count = try slices(imageURL: imageURL)
+        }
         let strips = bounds(height: image.height, slices: count)
         guard !strips.isEmpty else { return image }
         let width = image.width, height = image.height

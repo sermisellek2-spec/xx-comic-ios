@@ -6,14 +6,16 @@ import FoundationNetworking
 /// VPN requirement metadata and helpers aligned with Android 2.0.44~2.0.45 `SourceVpnBadge` & `RuleDefinition`.
 public enum SourceVpnPolicy {
     public static let defaultVpnSourceIds: Set<String> = [
-        "mangadex", "xcomic", "nhentai", "wnacg", "hiperdex", "copy4000", "jm", "mh18", "hanman18"
+        "mangadex", "xcomic", "nhentai", "wnacg", "hiperdex", "copy4000", "jm", "jmcomic", "mh18", "hanman18"
     ]
 
     public static func requiresVpn(sourceId: String, ruleCatalog: RuleCatalog? = nil) -> Bool {
-        if let catalog = ruleCatalog, let entry = catalog.entries().first(where: { $0.rule.id == sourceId && !$0.removed }) {
+        let canonical = SourcePreferences.canonicalID(sourceId)
+        if let catalog = ruleCatalog,
+           let entry = catalog.entries().first(where: { ($0.rule.id == sourceId || $0.rule.id == canonical) && !$0.removed }) {
             return entry.rule.requiresVpn
         }
-        return defaultVpnSourceIds.contains(sourceId)
+        return defaultVpnSourceIds.contains(sourceId) || defaultVpnSourceIds.contains(canonical)
     }
 }
 

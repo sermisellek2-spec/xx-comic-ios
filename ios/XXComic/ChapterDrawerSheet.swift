@@ -162,6 +162,8 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
 
         panelHeightConstraint = panel.heightAnchor.constraint(equalToConstant: collapsedHeight)
         panelBottomConstraint = panel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: collapsedHeight)
+        let panelFillWidth = panel.widthAnchor.constraint(equalTo: view.widthAnchor)
+        panelFillWidth.priority = .defaultHigh
 
         NSLayoutConstraint.activate([
             backdrop.topAnchor.constraint(equalTo: view.topAnchor),
@@ -169,8 +171,11 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
             backdrop.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             backdrop.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
-            panel.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            panel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            panel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            panel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor),
+            panel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor),
+            panel.widthAnchor.constraint(lessThanOrEqualToConstant: 600),
+            panelFillWidth,
             panelHeightConstraint!,
             panelBottomConstraint!,
 
@@ -221,8 +226,9 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
 
     private func scrollToCurrentChapter() {
         guard hasCurrent, let row = orderIndexes.firstIndex(of: currentChapterIndex) else { return }
+        tableView.layoutIfNeeded()
         let indexPath = IndexPath(row: row, section: 0)
-        tableView.scrollToRow(at: indexPath, at: .top, animated: false)
+        tableView.scrollToRow(at: indexPath, at: .middle, animated: false)
     }
 
     @objc private func toggleOrder() {

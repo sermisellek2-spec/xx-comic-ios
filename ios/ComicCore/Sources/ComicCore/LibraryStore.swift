@@ -20,15 +20,20 @@ public struct LibraryEntry: Codable, Equatable, Sendable {
 
 /// Confine to the UI actor. Writes replace the snapshot atomically before memory changes.
 public final class LibraryStore {
+    public static let maxPositions = 600
+
     private struct Snapshot: Codable {
         var version = 1
         var entries: [String: LibraryEntry] = [:]
+        var positionOrder: [String]? = nil
     }
     private let file: URL
+    private let maxPositionsLimit: Int
     private var snapshot: Snapshot
 
-    public init(directory: URL) throws {
+    public init(directory: URL, maxPositions: Int = LibraryStore.maxPositions) throws {
         file = directory.appendingPathComponent("library.json")
+        maxPositionsLimit = max(1, maxPositions)
         if FileManager.default.fileExists(atPath: file.path) {
             snapshot = try JSONDecoder().decode(Snapshot.self, from: Data(contentsOf: file))
             guard snapshot.version == 1 else { throw LibraryError.unsupportedVersion }
@@ -60,11 +65,23 @@ public final class LibraryStore {
 
     public func saveReading(_ comic: ComicSummary, chapter: Chapter, chapterIndex: Int,
                             position: ReaderPosition, now: TimeInterval = Date().timeIntervalSince1970) throws {
+        let comicKey = Self.key(comic)
         var entry = entry(for: comic) ?? LibraryEntry(summary: comic, positions: [:])
         entry.summary = comic
         entry.reading = ReadingRecord(chapter: chapter, chapterIndex: max(0, chapterIndex), position: position, updatedAt: now)
         entry.positions[chapter.chapterId] = position
-        try persist(entry)
+
+        var next = snapshot
+        next.entries[comicKey] = entry
+        let token = "\(comicKey)\n\(chapter.chapterId)"
+        var order = next.positionOrder ?? Self.rebuildPositionOrder(entries: next.entries)
+        order.removeAll { $0 == token }
+        order.append(token)
+        Self.prunePositions(entries: &next.entries, order: &order, limit: maxPositionsLimit)
+        next.positionOrder = order
+        let data = try JSONEncoder().encode(next)
+        try data.write(to: file, options: .atomic)
+        snapshot = next
     }
 
     public func deleteHistory(for comic: ComicSummary) throws {
@@ -78,6 +95,11 @@ public final class LibraryStore {
             next.entries.removeValue(forKey: k)
         } else {
             next.entries[k] = entry
+        }
+        if var order = next.positionOrder {
+            let prefix = k + "\n"
+            order.removeAll { $0.hasPrefix(prefix) }
+            next.positionOrder = order
         }
         let data = try JSONEncoder().encode(next)
         try data.write(to: file, options: .atomic)
@@ -98,6 +120,29 @@ public final class LibraryStore {
         }
         var next = snapshot
         next.entries = nextEntries
+        if next.positionOrder != nil {
+            next.positionOrder = []
+        }
+        let data = try JSONEncoder().encode(next)
+        try data.write(to: file, options: .atomic)
+        snapshot = next
+    }
+
+    public func restoreEntries(_ updates: [(ComicSummary, LibraryEntry?)]) throws {
+        var next = snapshot
+        for (comic, restored) in updates {
+            let k = Self.key(comic)
+            if let restored {
+                next.entries[k] = restored
+            } else {
+                next.entries.removeValue(forKey: k)
+            }
+        }
+        if next.positionOrder != nil {
+            var order = Self.rebuildPositionOrder(entries: next.entries)
+            Self.prunePositions(entries: &next.entries, order: &order, limit: maxPositionsLimit)
+            next.positionOrder = order
+        }
         let data = try JSONEncoder().encode(next)
         try data.write(to: file, options: .atomic)
         snapshot = next
@@ -147,6 +192,52 @@ public final class LibraryStore {
 
     private func sorted(_ entries: [LibraryEntry]) -> [LibraryEntry] {
         entries.sorted { $0.sortTime == $1.sortTime ? Self.key($0.summary) < Self.key($1.summary) : $0.sortTime > $1.sortTime }
+    }
+
+    private static func rebuildPositionOrder(entries: [String: LibraryEntry]) -> [String] {
+        let orderedComics = entries.sorted { a, b in
+            let ta = a.value.reading?.updatedAt ?? a.value.favoriteAt ?? 0
+            let tb = b.value.reading?.updatedAt ?? b.value.favoriteAt ?? 0
+            return ta == tb ? a.key < b.key : ta < tb
+        }
+        var result: [String] = []
+        for (comicKey, entry) in orderedComics {
+            let activeId = entry.reading?.chapter.chapterId
+            for chapterId in entry.positions.keys.sorted() where chapterId != activeId {
+                result.append("\(comicKey)\n\(chapterId)")
+            }
+            if let activeId, entry.positions[activeId] != nil {
+                result.append("\(comicKey)\n\(activeId)")
+            }
+        }
+        return result
+    }
+
+    private static func prunePositions(entries: inout [String: LibraryEntry], order: inout [String], limit: Int) {
+        var total = entries.values.reduce(0) { $0 + $1.positions.count }
+        guard total > limit else { return }
+        var idx = 0
+        while total > limit && idx < order.count {
+            let token = order[idx]
+            guard let nl = token.firstIndex(of: "\n") else {
+                order.remove(at: idx)
+                continue
+            }
+            let comicKey = String(token[..<nl])
+            let chapterId = String(token[token.index(after: nl)...])
+            guard var entry = entries[comicKey], entry.positions[chapterId] != nil else {
+                order.remove(at: idx)
+                continue
+            }
+            if entry.reading?.chapter.chapterId == chapterId {
+                idx += 1
+                continue
+            }
+            entry.positions.removeValue(forKey: chapterId)
+            entries[comicKey] = entry
+            order.remove(at: idx)
+            total -= 1
+        }
     }
 
     private static func key(_ comic: ComicSummary) -> String {

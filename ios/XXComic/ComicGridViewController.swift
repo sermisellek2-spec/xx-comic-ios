@@ -955,6 +955,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                 guard let self else { return }
                 let sheet = SourceSwitchSheet(environment: self.environment, originalComic: comic)
                 sheet.onSourceReplaced = { [weak self] _ in self?.refresh() }
+                sheet.onUndoSourceReplaced = { [weak self] _ in self?.refresh() }
                 let nav = UINavigationController(rootViewController: sheet)
                 self.present(nav, animated: true)
             }
@@ -964,13 +965,25 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             let deleteAction = UIAction(title: "移出收藏", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
                 guard let self else { return }
                 do {
-                    try self.environment.setFavorite(comic, favorite: false)
+                    let snapshot = try self.environment.removeFavoriteWithSnapshot(comic)
                     self.refresh()
-                    self.status("已移出收藏 · 点击撤销") { [weak self] in
+                    let undoAction: () -> Void = { [weak self] in
                         guard let self else { return }
-                        do { try self.environment.setFavorite(comic, favorite: true); self.refresh() }
-                        catch { self.showError(error) }
+                        do {
+                            try self.environment.restoreFavorite(snapshot)
+                            self.refresh()
+                        } catch {
+                            self.showError(error)
+                        }
                     }
+                    self.status("已移出收藏 · 点击撤销", retry: undoAction)
+                    RemToastView.show(
+                        message: "已移出《\(comic.title)》",
+                        kind: .empty,
+                        actionTitle: "撤销",
+                        in: self,
+                        onAction: undoAction
+                    )
                 } catch { self.showError(error) }
             }
             return UIMenu(children: [moveAction, switchSourceAction, downloadAction, deleteAction])

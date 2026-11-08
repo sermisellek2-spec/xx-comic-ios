@@ -109,7 +109,7 @@ public enum SpreadDetector {
 
     public typealias Pixels = SpreadDetectorPixels
 
-    public final class Sample {
+    public final class Sample: @unchecked Sendable {
         public let width: Int
         public let height: Int
         fileprivate let left: [[Float]]

@@ -60,7 +60,8 @@ public final class DefaultDownloadImageFetcher: DownloadImageFetcherProtocol, @u
                       destination: URL,
                       check: @escaping () throws -> Void) async throws -> (bytes: Int64, hash: String) {
         try check()
-        let cleanUrl = PublicSourceImages.strip(url)
+        let ruleInfo = RuleImages.isRule(url) ? (try? RuleImages.requestHeaders(tagged: url, fallbackReferer: referer)) : nil
+        let cleanUrl = ruleInfo?.url ?? RuleImages.strip(PublicSourceImages.strip(url))
         guard let requestUrl = URL(string: cleanUrl) else {
             throw DownloadError.corruptedData("无效的图片地址")
         }
@@ -70,9 +71,17 @@ public final class DefaultDownloadImageFetcher: DownloadImageFetcherProtocol, @u
         request.setValue("image/webp,image/apng,image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
         request.setValue("zh-CN,zh;q=0.9,en;q=0.8", forHTTPHeaderField: "Accept-Language")
         request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
-        let effectiveReferer = PublicSourceImages.referer(url, fallback: referer)
+        let effectiveReferer = ruleInfo?.referer ?? PublicSourceImages.referer(url, fallback: referer)
         if !effectiveReferer.isEmpty {
             request.setValue(effectiveReferer, forHTTPHeaderField: "Referer")
+        }
+        if let ruleInfo {
+            if let cookieHeader = ruleInfo.cookieHeader, !cookieHeader.isEmpty {
+                request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+            }
+            for (k, v) in ruleInfo.headers {
+                request.setValue(v, forHTTPHeaderField: k)
+            }
         }
 
         let destDir = destination.deletingLastPathComponent()
@@ -228,7 +237,13 @@ public final class DefaultDownloadImageFetcher: DownloadImageFetcherProtocol, @u
             }
 
             var rawData = try Data(contentsOf: destination)
-            if !PublicSourceImages.sourceId(url).isEmpty || PublicSourceRegistry.contains(sourceId) {
+            if RuleImages.isRule(url) {
+                let decoded = try RuleImages.decode(rawData, tagged: url)
+                if decoded != rawData {
+                    try decoded.write(to: destination, options: .atomic)
+                    rawData = decoded
+                }
+            } else if !PublicSourceImages.sourceId(url).isEmpty || PublicSourceRegistry.contains(sourceId) {
                 let decoded = try PublicSourceImages.decodeForSource(sourceId: sourceId, url: url, data: rawData)
                 if decoded != rawData {
                     try decoded.write(to: destination, options: .atomic)

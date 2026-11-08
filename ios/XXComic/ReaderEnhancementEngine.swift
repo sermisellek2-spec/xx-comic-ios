@@ -39,11 +39,32 @@ final class ReaderEnhancementEngine {
     private var isModelLoaded = false
     private var isClosed = false
     private var cacheGeneration = UUID()
+    private var lastMemoryWarningUptime: TimeInterval = -1_000_000
 
     init(tilePredictor: TilePredictor? = nil) {
         self.tilePredictor = tilePredictor ?? Self.predictTile
         // Limit cache size to 64MB
         cache.totalCostLimit = 64 * 1024 * 1024
+    }
+
+    func handleMemoryWarning() {
+        lastMemoryWarningUptime = ProcessInfo.processInfo.systemUptime
+        clearCache()
+        mlModel = nil
+        isModelLoaded = false
+    }
+
+    var isTransientlyThrottled: Bool {
+        let now = ProcessInfo.processInfo.systemUptime
+        if now >= lastMemoryWarningUptime && (now - lastMemoryWarningUptime) < 30 {
+            return true
+        }
+        let thermal = ProcessInfo.processInfo.thermalState
+        if thermal == .critical { return true }
+        if thermal == .serious && !ProcessInfo.processInfo.arguments.contains("--ui-testing") {
+            return true
+        }
+        return false
     }
 
     /// Checks whether enhancement is supported given current device thermals and RAM.
@@ -255,6 +276,14 @@ final class ReaderEnhancementEngine {
 
         if let cached = cache.object(forKey: key) {
             return cached.result
+        }
+
+        if isTransientlyThrottled {
+            return Result(
+                image: original,
+                method: mode == ImageEnhancementPolicy.modeSmart ? .fallback : .original,
+                tilesProcessed: 0
+            )
         }
 
         // Run enhancement on background thread

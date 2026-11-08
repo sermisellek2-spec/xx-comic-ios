@@ -87,6 +87,11 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         environment?.reportUsageStatsIfNeeded()
     }
 
+    func applicationDidReceiveMemoryWarning(_ application: UIApplication) {
+        RemoteImageView.clearMemoryCache()
+        ReaderEnhancementEngine.shared.handleMemoryWarning()
+    }
+
     private func navigation(_ root: UIViewController, title: String, icon: ParityIcon) -> UINavigationController {
         root.title = title
         let heading = UILabel()

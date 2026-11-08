@@ -1,4 +1,5 @@
 import Foundation
+import Dispatch
 
 public enum BookshelfScope: String, Codable, CaseIterable, Sendable {
     case online
@@ -73,6 +74,9 @@ public final class BookshelfGroupStore: @unchecked Sendable {
 
     private let lock = NSLock()
     private let file: URL
+    private let asyncPersistence: Bool
+    private let writerQueue: DispatchQueue?
+    private var writeGeneration: UInt64 = 0
     private var groupsById: [String: BookshelfGroup] = [:]
     private var onlineMembers: [String: Set<String>] = [:]
     private var localMembers: [String: Set<String>] = [:]
@@ -81,8 +85,10 @@ public final class BookshelfGroupStore: @unchecked Sendable {
     private var loadFailure: BookshelfGroupPersistenceError?
     private var lastPersistenceError: BookshelfGroupPersistenceError?
 
-    public init(file: URL) {
+    public init(file: URL, asyncPersistence: Bool = false) {
         self.file = file
+        self.asyncPersistence = asyncPersistence
+        self.writerQueue = asyncPersistence ? DispatchQueue(label: "com.xxcomic.BookshelfGroupStore.writer", qos: .utility) : nil
         lock.lock()
         defer { lock.unlock() }
         do {
@@ -96,7 +102,11 @@ public final class BookshelfGroupStore: @unchecked Sendable {
         }
         ensureBuiltinGroupsLocked()
         committedSnapshot = snapshotLocked()
-        if loadFailure == nil { saveLocked() }
+        if loadFailure == nil { _ = saveSynchronouslyLocked() }
+    }
+
+    public func flush() {
+        writerQueue?.sync {}
     }
 
     private func loadLocked() throws {
@@ -164,7 +174,7 @@ public final class BookshelfGroupStore: @unchecked Sendable {
     }
 
     @discardableResult
-    private func saveLocked() -> BookshelfGroupPersistenceError? {
+    private func saveSynchronouslyLocked() -> BookshelfGroupPersistenceError? {
         if let loadFailure {
             applyLocked(committedSnapshot)
             lastPersistenceError = loadFailure
@@ -186,6 +196,43 @@ public final class BookshelfGroupStore: @unchecked Sendable {
         }
     }
 
+    @discardableResult
+    private func saveLocked() -> BookshelfGroupPersistenceError? {
+        if let loadFailure {
+            applyLocked(committedSnapshot)
+            lastPersistenceError = loadFailure
+            return loadFailure
+        }
+        guard asyncPersistence, let writerQueue else {
+            return saveSynchronouslyLocked()
+        }
+        let previousSnapshot = committedSnapshot
+        let snapshot = snapshotLocked()
+        committedSnapshot = snapshot
+        lastPersistenceError = nil
+        writeGeneration &+= 1
+        let generation = writeGeneration
+        let targetFile = file
+        writerQueue.async { [weak self] in
+            do {
+                let data = try JSONEncoder().encode(snapshot)
+                let dir = targetFile.deletingLastPathComponent()
+                try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                try data.write(to: targetFile, options: .atomic)
+            } catch {
+                guard let self else { return }
+                self.lock.lock()
+                if self.writeGeneration == generation {
+                    self.committedSnapshot = previousSnapshot
+                    self.applyLocked(previousSnapshot)
+                    self.lastPersistenceError = .saveFailed
+                }
+                self.lock.unlock()
+            }
+        }
+        return nil
+    }
+
     public var persistenceError: BookshelfGroupPersistenceError? {
         lock.lock(); defer { lock.unlock() }
         return lastPersistenceError
@@ -199,7 +246,7 @@ public final class BookshelfGroupStore: @unchecked Sendable {
             loadFailure = nil
             ensureBuiltinGroupsLocked()
             committedSnapshot = snapshotLocked()
-            if let error = saveLocked() { throw error }
+            if let error = saveSynchronouslyLocked() { throw error }
         } catch let error as BookshelfGroupPersistenceError {
             lastPersistenceError = error
             if error != .saveFailed { loadFailure = error }
