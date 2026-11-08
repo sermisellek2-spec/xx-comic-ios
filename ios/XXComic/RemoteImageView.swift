@@ -132,7 +132,7 @@ final class RemoteImageView: UIImageView {
         }
     }
 
-    private static func decodeImageBytes(_ data: Data, for text: String) throws -> Data {
+    nonisolated private static func decodeImageBytes(_ data: Data, for text: String) throws -> Data {
         if RuleImages.isRule(text) {
             return try RuleImages.decode(data, tagged: text)
         } else if !PublicSourceImages.sourceId(text).isEmpty {

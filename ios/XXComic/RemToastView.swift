@@ -130,6 +130,15 @@ final class RemToastView: UIView {
         }
     }
 
+    private static func resolveHostWindow(explicitWindow: UIWindow?, presenter: UIViewController?) -> UIWindow? {
+        if let explicitWindow { return explicitWindow }
+        if let presenterWindow = presenter?.viewIfLoaded?.window { return presenterWindow }
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let allWindows = scenes.flatMap(\.windows)
+        if let key = allWindows.first(where: \.isKeyWindow) { return key }
+        return allWindows.first
+    }
+
     @discardableResult
     static func show(
         message: String,
@@ -140,17 +149,7 @@ final class RemToastView: UIView {
         window explicitWindow: UIWindow? = nil,
         onAction: (() -> Void)? = nil
     ) -> RemToastView? {
-        let hostWindow = explicitWindow
-            ?? presenter?.viewIfLoaded?.window
-            ?? UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap(\.windows)
-                .first { $0.isKeyWindow }
-            ?? UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap(\.windows)
-                .first
-        guard let window = hostWindow else { return nil }
+        guard let window = resolveHostWindow(explicitWindow: explicitWindow, presenter: presenter) else { return nil }
 
         currentToast?.dismiss(animated: false)
 

@@ -1392,7 +1392,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             var failures = 0
             var lastPublished = decisions.count
 
-            func loadSample(_ url: String) async throws -> SpreadDetector.Sample? {
+            @MainActor func loadSample(_ url: String) async throws -> SpreadDetector.Sample? {
                 let key = plan.revision + "\n" + url
                 if let cached = self.spreadSamples[key] { return cached }
                 let img = try await RemoteImageView.fetchDecodedImage(url: url, referer: referer, reader: true, maxPixelArea: 2_000_000, localPageImage: localLoader)
@@ -1905,8 +1905,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             let fallbackDetail = ComicDetail(
                 summary: previousComic,
                 author: "",
-                description: "",
                 status: "",
+                description: "",
                 latestChapter: previousChapters.last?.title,
                 chapters: previousChapters
             )
