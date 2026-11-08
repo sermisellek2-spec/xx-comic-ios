@@ -1907,7 +1907,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 author: "",
                 status: "",
                 description: "",
-                latestChapter: previousChapters.last?.title,
+                latestChapter: previousChapters.last?.title ?? "",
                 chapters: previousChapters
             )
             self.onSourceChanged?(fallbackDetail)
