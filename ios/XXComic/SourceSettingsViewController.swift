@@ -149,6 +149,7 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
             controls.alignment = .center
             let fitted = controls.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
             controls.frame = CGRect(x: 0, y: 0, width: max(156, fitted.width), height: 44)
+            controls.layoutIfNeeded()
             cell.editingAccessoryView = controls
         } else if needsVpn {
             let badge = SourceVpnBadgeView()
@@ -158,6 +159,7 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
             controls.alignment = .center
             let fitted = controls.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
             controls.frame = CGRect(x: 0, y: 0, width: fitted.width, height: max(32, fitted.height))
+            controls.layoutIfNeeded()
             cell.editingAccessoryView = controls
         } else {
             cell.editingAccessoryView = toggle

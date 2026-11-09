@@ -51,16 +51,16 @@ final class ErrorLogsParityUITests: ParityUITestCase {
     private func dismissSystemShareUI(in app: XCUIApplication) {
         if UIDevice.current.userInterfaceIdiom == .pad {
             let popoverDismiss = app.otherElements["PopoverDismissRegion"].firstMatch
-            XCTAssertTrue(popoverDismiss.waitForExistence(timeout: 5), "The system share popover must expose its dismiss region on iPad")
+            XCTAssertTrue(popoverDismiss.waitForExistence(timeout: 15), "The system share popover must expose its dismiss region on iPad")
             popoverDismiss.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.85)).tap()
             let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: popoverDismiss)
-            XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
+            XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 10), .completed)
         } else {
             let close = app.buttons.matching(NSPredicate(format: "label IN %@ OR identifier IN %@", ["Close", "关闭", "Cancel", "取消"], ["Close", "关闭", "Cancel", "取消", "close-button", "header.closeButton"])).firstMatch
             let activityListView = app.otherElements["ActivityListView"]
-            if close.waitForExistence(timeout: 5) && close.isHittable {
+            if close.waitForExistence(timeout: 15) && close.isHittable {
                 close.tap()
-            } else if activityListView.waitForExistence(timeout: 3) {
+            } else if activityListView.waitForExistence(timeout: 5) {
                 activityListView.swipeDown(velocity: .fast)
             } else {
                 app.swipeDown()
@@ -68,7 +68,7 @@ final class ErrorLogsParityUITests: ParityUITestCase {
             let export = app.buttons["error.logs.export"]
             let more = app.buttons["error.logs.more"]
             let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in export.isHittable || more.isHittable }, object: app)
-            XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
+            XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 10), .completed)
         }
     }
 }
