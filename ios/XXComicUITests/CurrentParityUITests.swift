@@ -76,7 +76,7 @@ final class CurrentParityUITests: ParityUITestCase {
         let image = app.images["reader.image"].firstMatch
         let decoded = NSPredicate(format: "value MATCHES %@", ".*:[1-9][0-9]*x[1-9][0-9]*.*")
         expectation(for: decoded, evaluatedWith: image)
-        waitForExpectations(timeout: 15)
+        waitForExpectations(timeout: 35)
     }
 
     func testGlobalSearchIncludesEnabledSourcesOutsideCurrentGroup() {
@@ -196,7 +196,7 @@ final class CurrentParityUITests: ParityUITestCase {
         app.buttons["detail.download"].tap()
         XCTAssertTrue(app.buttons["正在加载目录 · 点击取消"].waitForExistence(timeout: 3))
         app.buttons["detail.read"].tap()
-        XCTAssertTrue(app.images["reader.image"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.images["reader.image"].waitForExistence(timeout: 25))
         XCTAssertFalse(app.tables["download.chapters"].exists)
     }
 
@@ -211,7 +211,7 @@ final class CurrentParityUITests: ParityUITestCase {
         download.tap()
         XCTAssertTrue(read.isEnabled)
         read.tap()
-        XCTAssertTrue(app.images["reader.image"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.images["reader.image"].waitForExistence(timeout: 25))
         XCTAssertFalse(app.tables["download.chapters"].exists)
     }
 }

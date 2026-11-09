@@ -34,7 +34,7 @@ jobs:
     runs-on: macos-15
     # The full suite runs both devices sequentially, including the expanded
     # reading/Files recovery checks and every visual scene. Keep that coverage.
-    timeout-minutes: 180
+    timeout-minutes: 270
     env:
       # Repair uploads now run the complete UI/visual matrix. Partial scopes
       # remain available for diagnosis and never permit packaging.

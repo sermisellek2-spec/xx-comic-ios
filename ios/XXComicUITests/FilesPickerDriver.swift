@@ -40,7 +40,6 @@ struct FilesPickerDriver {
 
     func openFixtureProvider() throws {
         guard pickerBar.waitForExistence(timeout: 35) else { throw SelectionError.providerNotFound }
-        _ = waitForProviderOrFixtureRoot(timeout: 1.0)
         capture("provider-start")
         let browse = app.tabBars.buttons.matching(NSPredicate(format: "label IN %@", ["浏览", "Browse"])).firstMatch
         let local = app.cells.containing(NSPredicate(format: "label IN %@", localNames)).firstMatch
