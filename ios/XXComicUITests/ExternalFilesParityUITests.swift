@@ -28,16 +28,10 @@ final class ExternalFilesParityUITests: ParityUITestCase {
         return app
     }
     private func choose(_ name: String, app: XCUIApplication) throws {
-        let files = FilesPickerDriver(app: app, capture: captureFilesState)
+        let files = FilesPickerDriver(app: app)
         try files.openFixtureProvider()
         try files.openFolder(name)
         try files.confirmFolder()
-    }
-    private func captureFilesState(_ name: String) {
-        let image = XCTAttachment(data: XCUIScreen.main.screenshot().pngRepresentation, uniformTypeIdentifier: "public.png")
-        image.name = "files-" + name; image.lifetime = .keepAlways; add(image)
-        let tree = XCTAttachment(string: XCUIApplication().debugDescription)
-        tree.name = "files-" + name + "-accessibility"; tree.lifetime = .keepAlways; add(tree)
     }
     private func read(_ app: XCUIApplication) {
         app.tabBars.buttons["书架"].tap(); app.buttons["bookshelf.tab.1"].tap()

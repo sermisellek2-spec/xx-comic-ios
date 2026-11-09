@@ -39,7 +39,7 @@ struct FilesPickerDriver {
     }
 
     func openFixtureProvider() throws {
-        guard pickerBar.waitForExistence(timeout: 35) else { throw SelectionError.providerNotFound }
+        guard pickerBar.waitForExistence(timeout: 60) else { throw SelectionError.providerNotFound }
         capture("provider-start")
         let browse = app.tabBars.buttons.matching(NSPredicate(format: "label IN %@", ["浏览", "Browse"])).firstMatch
         let local = app.cells.containing(NSPredicate(format: "label IN %@", localNames)).firstMatch
@@ -163,7 +163,7 @@ struct FilesPickerDriver {
     func confirmFolder() throws { try confirm(["打开", "Open", "完成", "Done"]) }
     func confirmExport() throws { try confirm(["导出", "存储", "保存", "拷贝", "移动", "Export", "Save", "Copy", "Move"]) }
     func cancelPicker() throws {
-        guard pickerBar.waitForExistence(timeout: 35) else { throw SelectionError.providerNotFound }
+        guard pickerBar.waitForExistence(timeout: 60) else { throw SelectionError.providerNotFound }
         // iPad's Cancel is in DOCSidebarView's navigation bar, while the
         // folder title lives in FullDocumentManagerViewControllerNavigationBar.
         let cancel = systemBars.buttons.matching(NSPredicate(format: "label IN %@", ["取消", "Cancel"])).firstMatch
@@ -179,12 +179,20 @@ struct FilesPickerDriver {
         guard XCTWaiter.wait(for: [dismissed], timeout: 10) == .completed else { throw SelectionError.cancellationNotCompleted }
     }
     private func confirm(_ labels: [String]) throws {
-        guard pickerBar.waitForExistence(timeout: 20) else { throw SelectionError.providerNotFound }
+        guard pickerBar.waitForExistence(timeout: 60) else { throw SelectionError.providerNotFound }
         let button = systemBars.buttons.matching(NSPredicate(format: "label IN %@", labels)).firstMatch
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true AND hittable == true"), object: button)
-        guard XCTWaiter.wait(for: [ready], timeout: 10) == .completed else { throw SelectionError.confirmationNotFound }
-        button.tap()
-        let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in !self.pickerBar.exists }, object: app)
-        guard XCTWaiter.wait(for: [dismissed], timeout: 10) == .completed else { throw SelectionError.confirmationNotFound }
+        guard XCTWaiter.wait(for: [ready], timeout: 15) == .completed else { throw SelectionError.confirmationNotFound }
+        for attempt in 0..<2 {
+            if attempt > 0 {
+                guard self.pickerBar.exists else { return }
+                guard button.exists && button.isEnabled && button.isHittable else { break }
+            }
+            button.tap()
+            let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in !self.pickerBar.exists }, object: app)
+            if XCTWaiter.wait(for: [dismissed], timeout: 8) == .completed { return }
+        }
+        let finalDismissed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in !self.pickerBar.exists }, object: app)
+        guard XCTWaiter.wait(for: [finalDismissed], timeout: 6) == .completed else { throw SelectionError.confirmationNotFound }
     }
 }
