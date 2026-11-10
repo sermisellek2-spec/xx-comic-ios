@@ -205,11 +205,23 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             if self.settings.layout == .paged {
                 self.scrollToPage(target, animated: false)
             } else {
-                self.pages.scrollToItem(at: IndexPath(item: target, section: 0), at: .top, animated: false)
+                let wasRestoring = self.restoring
+                self.restoring = true
+                if let frame = self.layout.layoutAttributesForItem(at: IndexPath(item: target, section: 0))?.frame {
+                    let maxY = max(0, self.pages.contentSize.height - self.pages.bounds.height)
+                    self.pages.setContentOffset(CGPoint(x: 0, y: max(0, min(maxY, frame.minY))), animated: false)
+                } else {
+                    self.pages.scrollToItem(at: IndexPath(item: target, section: 0), at: .top, animated: false)
+                }
+                self.pages.layoutIfNeeded()
+                self.restoring = wasRestoring
+                self.lastObservedPosition = (chapter, ReaderPosition(imageIndex: pageIndex, offset: 0))
             }
             self.session.updateImage(pageIndex)
+            self.readerSeekBar.configure(currentPage: self.session.imageIndex, total: self.session.imageCount, sessionToken: Int64(self.session.chapterIndex))
             self.updateBadge()
             self.savePosition()
+            self.updateBadge()
         }
 
         row1.addArrangedSubview(previous)

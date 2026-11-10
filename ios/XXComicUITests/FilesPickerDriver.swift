@@ -196,7 +196,7 @@ struct FilesPickerDriver {
         // iPad's Cancel is in DOCSidebarView's navigation bar, while the
         // folder title lives in FullDocumentManagerViewControllerNavigationBar.
         let cancel = systemBars.buttons.matching(NSPredicate(format: "label IN %@", ["取消", "Cancel"])).firstMatch
-        if cancel.exists && cancel.isHittable { cancel.tap() }
+        if waitUntil(timeout: 5, { cancel.exists && cancel.isHittable }) { cancel.tap() }
         else {
             // Folder/export sheets on iPhone expose a pull-down dismissal,
             // with no Cancel button in their actual navigation hierarchy.

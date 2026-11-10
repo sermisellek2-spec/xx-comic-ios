@@ -129,7 +129,7 @@ final class EpubReadingUITests: ParityUITestCase {
             XCTAssertFalse(app.webViews.firstMatch.exists)
         }
     }
-    func testKindleUnsupportedImportShowsParserReasonAndPickerEntryWorks() {
+    func testKindleUnsupportedImportShowsParserReasonAndPickerEntryWorks() throws {
         let app = launchKindle()
         for kind in ["KF8", "DRM"] {
             let title = importKindle(kind, app: app)
@@ -137,6 +137,7 @@ final class EpubReadingUITests: ParityUITestCase {
             XCTAssertTrue(error.waitForExistence(timeout: 15)); XCTAssertFalse(app.collectionViews.cells[title].exists)
         }
         app.buttons["本地书架"].tap(); app.buttons["bookshelf.import"].tap(); app.buttons["Kindle 漫画"].tap()
-        XCTAssertTrue(app.navigationBars.buttons["取消"].waitForExistence(timeout: 5)); app.navigationBars.buttons["取消"].tap()
+        try FilesPickerDriver(app: app).cancelPicker()
+        XCTAssertTrue(app.buttons["本地书架"].waitForExistence(timeout: 10))
     }
 }

@@ -18,11 +18,10 @@ final class DownloadLocationParityUITests: ParityUITestCase {
         app.alerts.buttons["取消"].tap()
         XCTAssertEqual(app.cells["download.location.current"].label, current)
     }
-    func testFilesPickerCanCancelWithoutChangingDefault() {
+    func testFilesPickerCanCancelWithoutChangingDefault() throws {
         let app = launch(), current = app.cells["download.location.current"].label
         app.cells["download.location.choose"].tap(); app.alerts.buttons["选择文件夹"].tap()
-        let cancel = app.navigationBars.buttons["取消"]
-        XCTAssertTrue(cancel.waitForExistence(timeout: 10)); cancel.tap()
+        try FilesPickerDriver(app: app).cancelPicker()
         XCTAssertTrue(app.cells["download.location.current"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.cells["download.location.current"].label, current)
     }
