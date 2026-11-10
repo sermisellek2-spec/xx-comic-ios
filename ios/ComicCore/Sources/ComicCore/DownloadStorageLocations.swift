@@ -75,7 +75,8 @@ public final class DownloadStorageLocations: @unchecked Sendable {
     private let file: URL
     private let access: BookmarkAccess
     private let coordinator: FileAccessCoordinator
-    private let lock = NSRecursiveLock()
+    private let stateLock = NSLock()
+    private let mutationLock = NSRecursiveLock()
     private var state: State
     private var scopes: [String: URL] = [:]
 
@@ -99,32 +100,40 @@ public final class DownloadStorageLocations: @unchecked Sendable {
             } catch { throw DownloadLocationError.invalidStore }
         } else { state = State() }
     }
-    deinit { scopes.values.forEach(access.stop) }
-    public var selectedID: String { lock.lock(); defer { lock.unlock() }; return state.selectedID }
+    deinit {
+        stateLock.lock()
+        let activeScopes = Array(scopes.values)
+        scopes.removeAll()
+        stateLock.unlock()
+        activeScopes.forEach(access.stop)
+    }
+    public var selectedID: String { stateLock.lock(); defer { stateLock.unlock() }; return state.selectedID }
     public var selectedName: String {
-        lock.lock(); defer { lock.unlock() }
+        stateLock.lock(); defer { stateLock.unlock() }
         return state.locations[state.selectedID].map { "自定义目录：" + $0.name + " (XXComic/downloads)" } ?? "应用私有存储 (默认)"
     }
-    public var locations: [Location] { lock.lock(); defer { lock.unlock() }; return state.locations.values.sorted { $0.name < $1.name } }
+    public var locations: [Location] { stateLock.lock(); defer { stateLock.unlock() }; return state.locations.values.sorted { $0.name < $1.name } }
     public func useDefault() throws {
-        lock.lock(); defer { lock.unlock() }
-        var next = state; next.selectedID = Self.defaultID; try persist(next)
+        mutationLock.lock(); defer { mutationLock.unlock() }
+        stateLock.lock(); defer { stateLock.unlock() }
+        var next = state; next.selectedID = Self.defaultID; try persistLocked(next)
     }
 
     /// Called on a worker after Files returns its scoped URL. A URL string is never stored as permission.
     @discardableResult public func select(directory: URL, reauthorizing id: String? = nil) throws -> String {
-        lock.lock(); defer { lock.unlock() }
+        mutationLock.lock(); defer { mutationLock.unlock() }
         try Task.checkCancellation()
         guard access.start(directory) else { throw DownloadLocationError.permissionRequired(directory.lastPathComponent) }
         var retainScope = false
         defer { if !retainScope { access.stop(directory) } }
+        let snapshot: State = { stateLock.lock(); defer { stateLock.unlock() }; return state }()
         try coordinator.coordinate(directory, access: .write) { coordinated in
             guard coordinated.standardizedFileURL == directory.standardizedFileURL else { throw DownloadLocationError.wrongFolder }
             let root = try externalRoot(coordinated, create: true)
             if let id {
-                guard state.locations[id] != nil else { throw DownloadLocationError.unknownLocation }
+                guard snapshot.locations[id] != nil else { throw DownloadLocationError.unknownLocation }
                 // Reauthorization cannot silently point old books at a different, empty folder.
-                for (bookID, mapping) in state.books where mapping.locationID == id {
+                for (bookID, mapping) in snapshot.books where mapping.locationID == id {
                     let book = root.appendingPathComponent(mapping.bookName, isDirectory: true)
                     try assertDirectory(book, create: false)
                     guard (try? ownershipID(in: book)) == bookID else { throw DownloadLocationError.wrongFolder }
@@ -141,39 +150,69 @@ public final class DownloadStorageLocations: @unchecked Sendable {
         try Task.checkCancellation()
         let locationID = id ?? "files_" + UUID().uuidString
         let bookmark = try access.create(directory)
-        var next = state
-        next.locations[locationID] = Location(id: locationID, name: directory.lastPathComponent, bookmark: bookmark)
-        next.selectedID = locationID
-        try persist(next)
-        if let old = scopes[locationID] { access.stop(old) }
-        scopes[locationID] = directory; retainScope = true
+        var oldScopeToStop: URL?
+        stateLock.lock()
+        do {
+            var next = state
+            next.locations[locationID] = Location(id: locationID, name: directory.lastPathComponent, bookmark: bookmark)
+            next.selectedID = locationID
+            try persistLocked(next)
+            oldScopeToStop = scopes[locationID]
+            scopes[locationID] = directory
+            retainScope = true
+            stateLock.unlock()
+        } catch {
+            stateLock.unlock()
+            throw error
+        }
+        if let old = oldScopeToStop { access.stop(old) }
         return locationID
     }
 
     public func prepare(_ task: DownloadTask, comicTitle: String, locationID requestedLocation: String? = nil) throws {
-        lock.lock(); defer { lock.unlock() }
+        mutationLock.lock(); defer { mutationLock.unlock() }
         try Task.checkCancellation()
         guard Self.component(task.bookId), Self.component(task.id) else { throw DownloadLocationError.unsafePath }
-        if state.books[task.bookId] == nil {
-            var next = state
+        let existingMapping: (mapping: Mapping?, defaultSelection: String) = {
+            stateLock.lock(); defer { stateLock.unlock() }
+            return (state.books[task.bookId], state.selectedID)
+        }()
+        if existingMapping.mapping == nil {
             let legacy = FileManager.default.fileExists(atPath: privateDirectory.appendingPathComponent(task.bookId).path)
-            let locationID = legacy ? Self.defaultID : (requestedLocation ?? state.selectedID)
-            try withRoot(locationID, access: .write, create: true) { root in
+            let locationID = legacy ? Self.defaultID : (requestedLocation ?? existingMapping.defaultSelection)
+            let created = try withRoot(locationID, access: .write, create: true) { root -> Mapping in
                 let name = legacy ? task.bookId : try uniqueName(title: comicTitle + "_" + task.sourceId, id: task.bookId, in: root)
                 let book = root.appendingPathComponent(name, isDirectory: true)
                 try assertDirectory(book, create: true)
                 if !legacy { try Data(task.bookId.utf8).write(to: book.appendingPathComponent(Self.ownershipFile), options: .withoutOverwriting) }
-                next.books[task.bookId] = Mapping(locationID: locationID, bookName: name, chapters: [:], legacy: legacy)
+                return Mapping(locationID: locationID, bookName: name, chapters: [:], legacy: legacy)
             }
-            try persist(next)
+            stateLock.lock()
+            do {
+                var next = state
+                next.books[task.bookId] = created
+                try persistLocked(next)
+                stateLock.unlock()
+            } catch {
+                stateLock.unlock()
+                throw error
+            }
         }
-        if !task.isFileTask, state.books[task.bookId]!.chapters[task.id] == nil {
-            var next = state
-            try withBookDirectory(bookID: task.bookId, access: .read) { book in
-                let name = next.books[task.bookId]!.legacy ? task.id : try uniqueName(title: task.title, id: task.id, in: book)
-                next.books[task.bookId]!.chapters[task.id] = name
+        let currentBook: Mapping? = { stateLock.lock(); defer { stateLock.unlock() }; return state.books[task.bookId] }()
+        if !task.isFileTask, let currentBook, currentBook.chapters[task.id] == nil {
+            let chapterDirName = try withBookDirectory(bookID: task.bookId, access: .read) { book in
+                currentBook.legacy ? task.id : try uniqueName(title: task.title, id: task.id, in: book)
             }
-            try persist(next)
+            stateLock.lock()
+            do {
+                var next = state
+                next.books[task.bookId]?.chapters[task.id] = chapterDirName
+                try persistLocked(next)
+                stateLock.unlock()
+            } catch {
+                stateLock.unlock()
+                throw error
+            }
         }
     }
     public func bookDirectory(bookID: String) throws -> URL {
@@ -199,23 +238,28 @@ public final class DownloadStorageLocations: @unchecked Sendable {
         return try chapterDirectory(task).appendingPathComponent("\(page.index).img")
     }
     public func chapterName(_ task: DownloadTask) -> String {
-        lock.lock(); defer { lock.unlock() }; return state.books[task.bookId]?.chapters[task.id] ?? task.id
+        stateLock.lock(); defer { stateLock.unlock() }; return state.books[task.bookId]?.chapters[task.id] ?? task.id
     }
     public func hasOwnershipMarker(bookID: String) -> Bool {
-        lock.lock(); defer { lock.unlock() }; return state.books[bookID].map { !$0.legacy } ?? false
+        stateLock.lock(); defer { stateLock.unlock() }; return state.books[bookID].map { !$0.legacy } ?? false
     }
     public func removeMapping(bookID: String) throws {
-        lock.lock(); defer { lock.unlock() }; var next = state; next.books.removeValue(forKey: bookID); try persist(next)
+        mutationLock.lock(); defer { mutationLock.unlock() }
+        stateLock.lock(); defer { stateLock.unlock() }
+        var next = state; next.books.removeValue(forKey: bookID); try persistLocked(next)
     }
 
     /// All provider I/O, including ownership checks, happens within this bounded accessor.
     /// The callback must not start asynchronous work or another coordination request.
     public func withBookDirectory<T>(bookID: String, access mode: FileAccessCoordinator.Access, body: (URL) throws -> T) throws -> T {
-        lock.lock(); defer { lock.unlock() }
         guard Self.component(bookID) else { throw DownloadLocationError.unsafePath }
-        let mapping = state.books[bookID]
-        let locationID = mapping?.locationID ?? Self.defaultID
-        let base = try resolvedDirectory(locationID)
+        let (mapping, locationID, base): (Mapping?, String, URL) = try {
+            stateLock.lock(); defer { stateLock.unlock() }
+            let mapping = state.books[bookID]
+            let locationID = mapping?.locationID ?? Self.defaultID
+            let base = try resolvedDirectoryLocked(locationID)
+            return (mapping, locationID, base)
+        }()
         let root = locationID == Self.defaultID ? base : base.appendingPathComponent("XXComic", isDirectory: true).appendingPathComponent("downloads", isDirectory: true)
         let book = root.appendingPathComponent(mapping?.bookName ?? bookID, isDirectory: true)
         return try coordinator.coordinate(book, access: mode) { coordinated in
@@ -237,10 +281,13 @@ public final class DownloadStorageLocations: @unchecked Sendable {
 
     /// Locate a previously recorded page without reading arbitrary paths from a URL.
     public func relativePath(of url: URL, bookID: String) throws -> String? {
-        lock.lock(); defer { lock.unlock() }
         guard url.isFileURL, Self.component(bookID) else { throw DownloadLocationError.unsafePath }
-        let mapping = state.books[bookID], id = mapping?.locationID ?? Self.defaultID
-        let base = try resolvedDirectory(id)
+        let (mapping, id, base): (Mapping?, String, URL) = try {
+            stateLock.lock(); defer { stateLock.unlock() }
+            let mapping = state.books[bookID], id = mapping?.locationID ?? Self.defaultID
+            let base = try resolvedDirectoryLocked(id)
+            return (mapping, id, base)
+        }()
         let root = id == Self.defaultID ? base : base.appendingPathComponent("XXComic").appendingPathComponent("downloads")
         let prefix = root.appendingPathComponent(mapping?.bookName ?? bookID).standardizedFileURL.path + "/"
         let path = url.standardizedFileURL.path
@@ -253,14 +300,14 @@ public final class DownloadStorageLocations: @unchecked Sendable {
         return value
     }
     private func withRoot<T>(_ id: String, access mode: FileAccessCoordinator.Access, create: Bool, body: (URL) throws -> T) throws -> T {
-        let base = try resolvedDirectory(id)
+        let base = try { stateLock.lock(); defer { stateLock.unlock() }; return try resolvedDirectoryLocked(id) }()
         return try coordinator.coordinate(base, access: mode) { coordinated in
             guard coordinated.standardizedFileURL == base.standardizedFileURL else { throw DownloadLocationError.permissionRequired(base.lastPathComponent) }
             if id == Self.defaultID { try assertDirectory(coordinated, create: create); return try body(coordinated) }
             return try body(externalRoot(coordinated, create: create))
         }
     }
-    private func resolvedDirectory(_ id: String) throws -> URL {
+    private func resolvedDirectoryLocked(_ id: String) throws -> URL {
         if id == Self.defaultID { return privateDirectory }
         guard let location = state.locations[id] else { throw DownloadLocationError.unknownLocation }
         do {
@@ -307,7 +354,7 @@ public final class DownloadStorageLocations: @unchecked Sendable {
         throw DownloadLocationError.unsafePath
     }
     private static func component(_ value: String) -> Bool { !value.isEmpty && value != "." && value != ".." && !value.contains("/") && !value.contains("\\") }
-    private func persist(_ next: State) throws {
+    private func persistLocked(_ next: State) throws {
         try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
         try JSONEncoder().encode(next).write(to: file, options: .atomic)
         state = next

@@ -15,15 +15,34 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         app.launchEnvironment["XXCOMIC_UI_TEST_SESSION"] = UUID().uuidString; app.launch(); open(app)
         return app
     }
+    private func selectLayout(_ index: Int, in app: XCUIApplication) {
+        let layout = app.buttons["reader.layout.\(index)"]
+        XCTAssertTrue(layout.waitForExistence(timeout: 5))
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: layout)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 5), .completed)
+        for _ in 0..<2 where !layout.isSelected {
+            layout.tap()
+            let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "selected == true"), object: layout)
+            if XCTWaiter.wait(for: [selected], timeout: 2) == .completed { break }
+        }
+        XCTAssertTrue(layout.isSelected)
+    }
+    private func closeSettings(_ app: XCUIApplication) {
+        let close = app.buttons["reader.settings.close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 5))
+        close.tap()
+        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: close)
+        XCTAssertEqual(XCTWaiter.wait(for: [gone], timeout: 5), .completed)
+    }
     func testModeThemeAndSwitchSelectionPersistAfterRelaunch() {
         let app = launch()
-        app.buttons["reader.layout.1"].tap(); app.buttons["reader.theme.1"].tap()
+        selectLayout(1, in: app); app.buttons["reader.theme.1"].tap()
         let crop = app.switches["reader.crop.white.margins"]
         XCTAssertTrue(crop.waitForExistence(timeout: 5))
         for _ in 0..<10 where !crop.isHittable { app.scrollViews["reader.settings.content"].swipeUp() }
         XCTAssertTrue(crop.isHittable); crop.tap()
         XCTAssertEqual(crop.value as? String, "1")
-        app.buttons["reader.settings.close"].tap()
+        closeSettings(app)
         app.terminate(); app.launch(); open(app)
         XCTAssertTrue(app.buttons["reader.layout.1"].isSelected)
         XCTAssertTrue(app.buttons["reader.theme.1"].isSelected)
@@ -63,7 +82,7 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 3), .completed)
     }
     func testActualPinchAndZoomedPanDoNotTurnThePageAndTurningResumesAfterZoomReset() {
-        let app = launch(); app.buttons["reader.layout.1"].tap(); app.buttons["reader.settings.close"].tap(); page(1, in: app)
+        let app = launch(); selectLayout(1, in: app); closeSettings(app); page(1, in: app)
         controls(false, in: app)
         let pages = app.collectionViews["reader.pages"], image = app.images["reader.image"].firstMatch
         let width = image.frame.width
@@ -78,27 +97,26 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
     }
     func testMangaTapsModeSwitchAndRelaunchPreserveTheCurrentLogicalPage() {
         let app = launch()
-        app.buttons["reader.layout.2"].tap()
-        XCTAssertTrue(app.buttons["reader.layout.2"].isSelected)
-        app.buttons["reader.settings.close"].tap(); page(1, in: app)
+        selectLayout(2, in: app)
+        closeSettings(app); page(1, in: app)
         controls(false, in: app)
         let pages = app.collectionViews["reader.pages"]
         pages.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap(); page(2, in: app)
         pages.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap(); page(1, in: app)
         pages.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap(); page(2, in: app)
         controls(true, in: app)
-        app.buttons["reader.settings"].tap(); app.buttons["reader.layout.1"].tap(); app.buttons["reader.settings.close"].tap()
+        app.buttons["reader.settings"].tap(); selectLayout(1, in: app); closeSettings(app)
         page(2, in: app); controls(false, in: app)
         pages.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap(); page(3, in: app)
         controls(true, in: app)
-        app.buttons["reader.settings"].tap(); app.buttons["reader.layout.0"].tap(); app.buttons["reader.settings.close"].tap(); page(3, in: app)
-        app.buttons["reader.settings"].tap(); app.buttons["reader.layout.2"].tap(); app.buttons["reader.settings.close"].tap(); page(3, in: app)
+        app.buttons["reader.settings"].tap(); selectLayout(0, in: app); closeSettings(app); page(3, in: app)
+        app.buttons["reader.settings"].tap(); selectLayout(2, in: app); closeSettings(app); page(3, in: app)
         app.buttons["reader.back"].tap()
         XCTAssertTrue(app.buttons["detail.read"].waitForExistence(timeout: 5))
         app.terminate(); app.launch(); open(app)
         XCTAssertTrue(app.buttons["reader.layout.2"].isSelected)
         XCTAssertFalse(app.staticTexts["左右手模式"].exists)
-        app.buttons["reader.settings.close"].tap(); page(3, in: app)
+        closeSettings(app); page(3, in: app)
     }
     func testArchivedButtonPreferenceKeepsNormalAndMangaTurnsUsableAfterRelaunch() {
         let app = XCUIApplication()
@@ -107,13 +125,13 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         app.launch(); open(app)
         XCTAssertTrue(app.buttons["reader.layout.1"].isSelected)
         XCTAssertFalse(app.staticTexts["翻页方式"].exists)
-        app.buttons["reader.settings.close"].tap(); page(1, in: app)
+        closeSettings(app); page(1, in: app)
         controls(false, in: app)
         let pages = app.collectionViews["reader.pages"]
         pages.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap(); page(2, in: app)
         pages.swipeLeft(); page(3, in: app)
         controls(true, in: app)
-        app.buttons["reader.settings"].tap(); app.buttons["reader.layout.2"].tap(); app.buttons["reader.settings.close"].tap()
+        app.buttons["reader.settings"].tap(); selectLayout(2, in: app); closeSettings(app)
         page(3, in: app); controls(false, in: app)
         pages.swipeRight(); page(4, in: app)
         pages.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap(); page(3, in: app)
@@ -122,19 +140,19 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         app.terminate(); app.launch(); open(app)
         XCTAssertTrue(app.buttons["reader.layout.2"].isSelected)
         XCTAssertFalse(app.staticTexts["翻页方式"].exists)
-        app.buttons["reader.settings.close"].tap(); page(3, in: app)
+        closeSettings(app); page(3, in: app)
         controls(false, in: app); pages.swipeRight(); page(4, in: app)
     }
     func testDefaultMangaSwipeAdvancesOnceAndCrossesToTheNextLogicalChapter() {
         let app = launch()
-        app.buttons["reader.layout.2"].tap(); app.buttons["reader.settings.close"].tap(); page(1, in: app)
+        selectLayout(2, in: app); closeSettings(app); page(1, in: app)
         let pages = app.collectionViews["reader.pages"]
         pages.swipeRight(); page(2, in: app)
         pages.swipeLeft(); page(1, in: app)
         for next in 2...4 { pages.swipeRight(); page(next, in: app) }
         pages.swipeRight(); page(1, chapter: 2, in: app)
         controls(true, in: app)
-        app.buttons["reader.settings"].tap(); app.buttons["reader.layout.1"].tap(); app.buttons["reader.settings.close"].tap()
+        app.buttons["reader.settings"].tap(); selectLayout(1, in: app); closeSettings(app)
         page(1, chapter: 2, in: app)
         pages.swipeLeft(); page(2, chapter: 2, in: app)
     }
@@ -142,7 +160,7 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         defer { XCUIDevice.shared.orientation = .portrait }
         XCUIDevice.shared.orientation = .portrait
         let app = launch()
-        app.buttons["reader.layout.2"].tap(); app.buttons["reader.settings.close"].tap(); page(1, in: app)
+        selectLayout(2, in: app); closeSettings(app); page(1, in: app)
         let pages = app.collectionViews["reader.pages"]
         pages.swipeRight(); page(2, in: app)
         pages.swipeRight(); page(3, in: app)
@@ -165,7 +183,7 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
     func testStripImageOffsetSurvivesNormalMangaAndPagedRelaunch() {
         let app = launch()
         XCTAssertTrue(app.buttons["reader.layout.0"].isSelected)
-        app.buttons["reader.settings.close"].tap()
+        closeSettings(app)
         controls(false, in: app)
         let pages = app.collectionViews["reader.pages"]
         let start = pages.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
@@ -181,15 +199,15 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         let value = pages.value as? String
         for mode in [1, 2] {
             controls(true, in: app)
-            app.buttons["reader.settings"].tap(); app.buttons["reader.layout.\(mode)"].tap()
-            app.buttons["reader.settings.close"].tap()
+            app.buttons["reader.settings"].tap(); selectLayout(mode, in: app)
+            closeSettings(app)
             XCTAssertEqual(pages.value as? String, value)
         }
         controls(true, in: app); app.buttons["reader.back"].tap()
         XCTAssertTrue(app.buttons["detail.read"].waitForExistence(timeout: 5))
         app.terminate(); app.launch(); open(app)
         XCTAssertTrue(app.buttons["reader.layout.2"].isSelected)
-        app.buttons["reader.layout.0"].tap(); app.buttons["reader.settings.close"].tap()
+        selectLayout(0, in: app); closeSettings(app)
         let restored = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
             guard let frame = topImageFrame() else { return false }
             return (pages.value as? String) == value && abs(frame.minY - original.minY) <= 1 && abs(frame.height - original.height) <= 1
@@ -220,7 +238,7 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
         for _ in 0..<10 where !enabled.isHittable { app.scrollViews["reader.settings.content"].swipeDown() }
         enabled.tap()
         XCTAssertFalse(comparison.exists)
-        app.buttons["reader.settings.close"].tap()
+        closeSettings(app)
         let image = app.images["reader.image"].firstMatch
         expectation(for: NSPredicate(format: "value CONTAINS ':384x384' AND NOT (value BEGINSWITH 'neural:')"), evaluatedWith: image)
         waitForExpectations(timeout: 15)

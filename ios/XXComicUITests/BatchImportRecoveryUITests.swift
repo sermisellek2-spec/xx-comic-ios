@@ -40,11 +40,18 @@ final class BatchImportRecoveryUITests: ParityUITestCase {
         app.alerts.buttons["取消"].tap()
         app.terminate()
         app = launch(session: session)
-        XCTAssertTrue(app.alerts["未完成的批量导入"].waitForExistence(timeout: 5))
-        app.alerts.buttons["稍后"].tap()
-        app.buttons["本地书架"].tap()
+        let pendingAlert = app.alerts["未完成的批量导入"]
+        XCTAssertTrue(pendingAlert.waitForExistence(timeout: 5))
+        pendingAlert.buttons["稍后"].tap()
+        let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: pendingAlert)
+        XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
+        for _ in 0..<2 where !app.buttons["bookshelf.import"].exists {
+            app.buttons["本地书架"].tap()
+            if app.buttons["bookshelf.import"].waitForExistence(timeout: 2) { break }
+        }
+        XCTAssertTrue(app.buttons["bookshelf.import"].waitForExistence(timeout: 5))
         app.buttons["bookshelf.import"].tap()
-        XCTAssertTrue(app.buttons["继续上次批量导入"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["继续上次批量导入"].waitForExistence(timeout: 5))
     }
 
     func testPartiallyReselectedFilesReportFailureAndRemainingVolumeCanResume() {

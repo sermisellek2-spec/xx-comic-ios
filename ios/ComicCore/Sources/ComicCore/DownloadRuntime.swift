@@ -1320,14 +1320,27 @@ public final class DownloadRuntime: @unchecked Sendable {
         guard pages.count == task.totalPages else {
             throw DownloadError.corruptedData("下载文件损坏，请到下载中心重试本章")
         }
-        var urls: [String] = []
-        for page in pages {
-            try Task.checkCancellation()
-            let fileURL = try pageURL(page, task: task)
-            guard try isValidPage(page, task: task) else {
-                throw DownloadError.corruptedData("下载文件缺失或损坏，请到下载中心重新下载本章")
+        let urls: [String] = try withBookDirectory(task.bookId, access: .read) { book in
+            let chapterDir = try chapterDirectory(task, in: book)
+            var resolved: [String] = []
+            resolved.reserveCapacity(pages.count)
+            for page in pages {
+                try Task.checkCancellation()
+                guard page.path == "\(task.bookId)/\(task.id)/\(page.index).img", page.index >= 0 else {
+                    throw DownloadError.invalidIdentity
+                }
+                let target = chapterDir.appendingPathComponent("\(page.index).img")
+                do {
+                    let bytes = try FileAccessCoordinator.readRegularFile(target, maximumBytes: DefaultDownloadImageFetcher.maxPageBytes)
+                    guard bytes.count == page.bytes, DownloadModels.sha256Hex(bytes) == page.hash else {
+                        throw DownloadError.corruptedData("下载文件缺失或损坏，请到下载中心重新下载本章")
+                    }
+                } catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
+                    throw DownloadError.corruptedData("下载文件缺失或损坏，请到下载中心重新下载本章")
+                }
+                resolved.append(target.absoluteString)
             }
-            urls.append(fileURL.absoluteString)
+            return resolved
         }
         return ChapterPage(chapterId: chapter.chapterId, title: chapter.title, nextPageUrl: "", imageUrls: urls)
     }

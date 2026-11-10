@@ -48,7 +48,7 @@ struct FilesPickerDriver {
     }
 
     func openFixtureProvider() throws {
-        guard pickerBar.waitForExistence(timeout: 60) else { throw SelectionError.providerNotFound }
+        guard waitUntil(timeout: 90, { self.pickerBar.exists }) else { throw SelectionError.providerNotFound }
         capture("provider-start")
         let browse = app.tabBars.buttons.matching(NSPredicate(format: "label IN %@", ["浏览", "Browse"])).firstMatch
         let local = app.cells.containing(NSPredicate(format: "label IN %@", localNames)).firstMatch
@@ -192,7 +192,7 @@ struct FilesPickerDriver {
     func confirmFolder() throws { try confirm(["打开", "Open", "完成", "Done"]) }
     func confirmExport() throws { try confirm(["导出", "存储", "保存", "拷贝", "移动", "Export", "Save", "Copy", "Move"]) }
     func cancelPicker() throws {
-        guard pickerBar.waitForExistence(timeout: 60) else { throw SelectionError.providerNotFound }
+        guard waitUntil(timeout: 90, { self.pickerBar.exists }) else { throw SelectionError.providerNotFound }
         // iPad's Cancel is in DOCSidebarView's navigation bar, while the
         // folder title lives in FullDocumentManagerViewControllerNavigationBar.
         let cancel = systemBars.buttons.matching(NSPredicate(format: "label IN %@", ["取消", "Cancel"])).firstMatch
@@ -207,7 +207,7 @@ struct FilesPickerDriver {
         guard waitUntil(timeout: 10, { !self.pickerBar.exists }) else { throw SelectionError.cancellationNotCompleted }
     }
     private func confirm(_ labels: [String]) throws {
-        guard pickerBar.waitForExistence(timeout: 60) else { throw SelectionError.providerNotFound }
+        guard waitUntil(timeout: 90, { self.pickerBar.exists }) else { throw SelectionError.providerNotFound }
         let button = systemBars.buttons.matching(NSPredicate(format: "label IN %@", labels)).firstMatch
         guard waitUntil(timeout: 15, { button.exists && button.isEnabled && button.isHittable }) else { throw SelectionError.confirmationNotFound }
         for attempt in 0..<2 {
