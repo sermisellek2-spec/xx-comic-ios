@@ -8,13 +8,35 @@ final class SettingsParityUITests: ParityUITestCase {
         app.launch()
         XCTAssertTrue(app.tabBars.buttons["设置"].waitForExistence(timeout: 10))
         app.tabBars.buttons["设置"].tap()
+        let table = app.tables.firstMatch
+        XCTAssertTrue(table.waitForExistence(timeout: 5))
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            let first = table.cells.firstMatch
+            return first.exists && !first.frame.isEmpty
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 5), .completed)
         return app
     }
 
     private func openItem(_ identifier: String, app: XCUIApplication) {
+        let table = app.tables.firstMatch
+        XCTAssertTrue(table.waitForExistence(timeout: 5))
+        let laidOut = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            let first = table.cells.firstMatch
+            return first.exists && !first.frame.isEmpty
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [laidOut], timeout: 5), .completed)
         let cell = app.tables.cells[identifier]
-        for _ in 0..<6 where !cell.isHittable { app.tables.firstMatch.swipeUp() }
-        XCTAssertTrue(cell.waitForExistence(timeout: 5)); XCTAssertTrue(cell.isHittable); cell.tap()
+        for _ in 0..<6 where !cell.isSafelyHittable(in: app) {
+            if cell.exists, !cell.frame.isEmpty, cell.frame.maxY <= table.frame.minY + 10 {
+                table.swipeDown()
+            } else {
+                table.swipeUp()
+            }
+        }
+        XCTAssertTrue(cell.waitForExistence(timeout: 5))
+        XCTAssertTrue(cell.isSafelyHittable(in: app))
+        cell.tap()
     }
     private func dismissAlert(_ app: XCUIApplication, button: String) {
         app.alerts.buttons[button].tap()
@@ -130,7 +152,7 @@ final class SettingsParityUITests: ParityUITestCase {
 
     func testCacheCleanupKeepsLibraryAndFixtureDiscovery() {
         let app = launch()
-        app.tables.cells["settings.cache"].tap()
+        openItem("settings.cache", app: app)
         app.buttons["确认清理"].tap()
         app.buttons["立即清理"].tap()
         waitForCacheCleanupResult(in: app)

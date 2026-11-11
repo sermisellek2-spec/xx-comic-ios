@@ -9,7 +9,8 @@ final class LocalDeletionParityUITests: ParityUITestCase {
         app.tabBars.buttons["设置"].tap()
         app.tables.staticTexts["本地存储管理"].tap()
         let book = app.tables.staticTexts["EPUB 验收·图片"]
-        for _ in 0..<8 where !book.isHittable { app.tables.firstMatch.swipeUp() }
+        XCTAssertTrue(app.tables.firstMatch.waitForExistence(timeout: 5))
+        for _ in 0..<8 where !book.isSafelyHittable(in: app) { app.tables.firstMatch.swipeUp() }
         XCTAssertTrue(book.waitForExistence(timeout: 10)); book.tap()
         app.buttons["删除选中"].tap()
         app.alerts.buttons["删除"].tap()
@@ -24,7 +25,8 @@ final class LocalDeletionParityUITests: ParityUITestCase {
         app.tabBars.buttons["书架"].tap()
         app.buttons["本地书架"].tap()
         let book = app.collectionViews.cells["EPUB 验收·图片"]
-        for _ in 0..<6 where !book.isHittable { app.collectionViews.firstMatch.swipeUp() }
+        XCTAssertTrue(app.collectionViews.firstMatch.waitForExistence(timeout: 5))
+        for _ in 0..<6 where !book.isSafelyHittable(in: app) { app.collectionViews.firstMatch.swipeUp() }
         XCTAssertTrue(book.waitForExistence(timeout: 5)); book.tap()
         app.buttons["章节目录"].tap()
         XCTAssertTrue(app.tables.cells.firstMatch.waitForExistence(timeout: 10)); app.tables.cells.firstMatch.tap()

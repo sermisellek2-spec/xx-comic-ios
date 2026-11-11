@@ -77,26 +77,26 @@ final class Parity2047SyncUITests: ParityUITestCase {
         XCTAssertTrue(content.waitForExistence(timeout: 5))
 
         let followSwitch = app.switches["reader.brightness.follow.system"]
-        for _ in 0..<6 where !followSwitch.isHittable { content.swipeUp() }
-        XCTAssertTrue(followSwitch.isHittable)
+        for _ in 0..<6 where !followSwitch.isSafelyHittable(in: app) { content.swipeUp() }
+        XCTAssertTrue(followSwitch.isSafelyHittable(in: app))
         XCTAssertEqual(followSwitch.value as? String, "1")
-        XCTAssertFalse(app.sliders["reader.brightness.slider"].isHittable)
+        XCTAssertFalse(app.sliders["reader.brightness.slider"].isSafelyHittable(in: app))
 
         followSwitch.tap()
         XCTAssertEqual(followSwitch.value as? String, "0")
         XCTAssertTrue(app.sliders["reader.brightness.slider"].waitForExistence(timeout: 5))
 
         let dimSwitch = app.switches["reader.brightness.dim.enabled"]
-        for _ in 0..<6 where !dimSwitch.isHittable { content.swipeUp() }
-        XCTAssertTrue(dimSwitch.isHittable)
+        for _ in 0..<6 where !dimSwitch.isSafelyHittable(in: app) { content.swipeUp() }
+        XCTAssertTrue(dimSwitch.isSafelyHittable(in: app))
         XCTAssertEqual(dimSwitch.value as? String, "0")
         dimSwitch.tap()
         XCTAssertEqual(dimSwitch.value as? String, "1")
         XCTAssertTrue(app.sliders["reader.brightness.dim.slider"].waitForExistence(timeout: 5))
 
         let keep30 = app.buttons["reader.keep.screen.30"]
-        for _ in 0..<6 where !keep30.isHittable { content.swipeUp() }
-        XCTAssertTrue(keep30.isHittable)
+        for _ in 0..<6 where !keep30.isSafelyHittable(in: app) { content.swipeUp() }
+        XCTAssertTrue(keep30.isSafelyHittable(in: app))
         keep30.tap()
         XCTAssertTrue(keep30.isSelected)
 

@@ -13,7 +13,8 @@ final class ReaderEnhancementUITests: ParityUITestCase {
 
         // Open picture comic EPUB
         let cell = app.collectionViews.cells["EPUB 验收·图片"]
-        for _ in 0..<5 where !cell.isHittable { app.collectionViews.firstMatch.swipeUp() }
+        XCTAssertTrue(app.collectionViews.firstMatch.waitForExistence(timeout: 5))
+        for _ in 0..<5 where !cell.isSafelyHittable(in: app) { app.collectionViews.firstMatch.swipeUp() }
         XCTAssertTrue(cell.waitForExistence(timeout: 10))
         cell.tap()
 

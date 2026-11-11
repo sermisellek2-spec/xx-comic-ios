@@ -30,10 +30,11 @@ final class SourceGroupsParityUITests: ParityUITestCase {
     }
     private func reveal(_ option: XCUIElement, app: XCUIApplication, upwards: Bool) {
         let table = app.tables["source-group.selection.list"]
-        for _ in 0..<18 where !option.isHittable {
+        XCTAssertTrue(table.waitForExistence(timeout: 5))
+        for _ in 0..<18 where !option.isSafelyHittable(in: app) {
             if upwards { table.swipeUp() } else { table.swipeDown() }
         }
-        XCTAssertTrue(option.isHittable)
+        XCTAssertTrue(option.isSafelyHittable(in: app))
     }
     func testDisabledSourceCanJoinAGroupAndSavedMembershipSurvivesCancelRenameAndRelaunch() {
         let app = launch(); create("站源验收组", app: app)
@@ -87,7 +88,7 @@ final class SourceGroupsParityUITests: ParityUITestCase {
         XCTAssertEqual(app.switches["source.enabled.mh160"].value as? String, "1")
         app.tables.firstMatch.swipeUp()
         let duya = app.switches["source.enabled.duya"]
-        for _ in 0..<18 where !duya.isHittable { app.tables.firstMatch.swipeUp() }
+        for _ in 0..<18 where !duya.isSafelyHittable(in: app) { app.tables.firstMatch.swipeUp() }
         XCTAssertEqual(duya.value as? String, "0")
         app.terminate(); app.launch(); management(app)
         XCTAssertFalse(row("空组验收", app: app).exists)

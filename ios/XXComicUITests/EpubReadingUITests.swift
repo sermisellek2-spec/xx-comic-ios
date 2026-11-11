@@ -39,8 +39,8 @@ final class EpubReadingUITests: ParityUITestCase {
         let item = app.buttons["验收 " + format + "·" + kind]
         let menu = app.scrollViews.containing(.button, identifier: format + " 漫画").firstMatch
         XCTAssertTrue(menu.waitForExistence(timeout: 5))
-        for _ in 0..<4 where !item.isHittable { menu.swipeUp() }
-        XCTAssertTrue(item.isHittable); item.tap()
+        for _ in 0..<4 where !item.isSafelyHittable(in: app) { menu.swipeUp() }
+        XCTAssertTrue(item.isSafelyHittable(in: app)); item.tap()
         let alert = app.alerts["导入 " + format + " 漫画"]
         XCTAssertTrue(alert.waitForExistence(timeout: 5))
         let title = format + " 验收·" + kind + "·" + String(UUID().uuidString.prefix(6))

@@ -1,5 +1,16 @@
 import XCTest
 
+extension XCUIElement {
+    func isSafelyHittable(in app: XCUIApplication) -> Bool {
+        guard exists else { return false }
+        let rect = frame
+        guard !rect.isEmpty, rect.width > 1, rect.height > 1 else { return false }
+        let windowRect = app.windows.firstMatch.frame
+        guard !windowRect.isEmpty, windowRect.intersects(rect) else { return false }
+        return isHittable
+    }
+}
+
 /// Record the actual failed screen in a portable format even when Xcode's
 /// automatically generated diagnostic attachment is not a PNG.
 class ParityUITestCase: XCTestCase {
