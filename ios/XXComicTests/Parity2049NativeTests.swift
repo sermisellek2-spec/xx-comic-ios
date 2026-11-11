@@ -140,14 +140,25 @@ final class Parity2049NativeTests: XCTestCase {
     }
 
     func testRuleWebRendererExecutesDynamicDomWaitSelectorAndBlocksImages() async throws {
-        let hitLock = NSLock()
-        var imageHits = 0
+        final class HitCounter: @unchecked Sendable {
+            private let lock = NSLock()
+            private var value = 0
+            func increment() {
+                lock.lock()
+                value += 1
+                lock.unlock()
+            }
+            func get() -> Int {
+                lock.lock()
+                defer { lock.unlock() }
+                return value
+            }
+        }
+        let imageHits = HitCounter()
 
         let server = try NativeLoopbackServer { path in
             if path == "/blocked.png" {
-                hitLock.lock()
-                imageHits += 1
-                hitLock.unlock()
+                imageHits.increment()
                 return .init(status: 200, contentType: "image/png", body: Data([0x89, 0x50, 0x4E, 0x47]))
             }
             let html = """
@@ -170,9 +181,9 @@ final class Parity2049NativeTests: XCTestCase {
         let pageURL = "http://127.0.0.1:\(server.port)/page"
         let script = """
         var source = {
-          latest: function(p){return [];},
+          latest: function(p){return {items:[],hasMore:false};},
           filters: function(){return [];},
-          category: function(f,p){return [];},
+          category: function(f,p){return {items:[],hasMore:false};},
           detail: function(id){return {title:'t',chapters:[]};},
           chapters: function(id){return [];},
           chapter: function(u){return {images:['https://127.0.0.1/1.jpg']};},
@@ -180,7 +191,7 @@ final class Parity2049NativeTests: XCTestCase {
             var r = xx.render('\(pageURL)', { waitSelector: '#ready-chapter', waitMs: 30, timeoutMs: 8000 });
             var nodes = xx.select(r.body, '#ready-chapter', r.url);
             var title = nodes.length ? nodes[0].text : 'missing';
-            return [{ id: '1', title: title, cover: '' }];
+            return { items: [{ id: '1', title: title, cover: '' }], hasMore: false };
           }
         };
         """
@@ -205,13 +216,15 @@ final class Parity2049NativeTests: XCTestCase {
         catalog.refresh()
 
         let source = try XCTUnwrap(catalog.source("render_dom_rule"))
-        let results = try await source.search(keyword: "test", page: 1)
+        let results: [ComicSummary]
+        do {
+            results = try await source.search(keyword: "test", page: 1)
+        } catch {
+            XCTFail("render_dom_rule search threw: \((error as? LocalizedError)?.errorDescription ?? String(describing: error))")
+            return
+        }
         XCTAssertEqual(results.first?.title, "Rendered-2049")
-
-        hitLock.lock()
-        let recordedImageHits = imageHits
-        hitLock.unlock()
-        XCTAssertEqual(recordedImageHits, 0, "WKContentRuleList must block subresource image loads during xx.render")
+        XCTAssertEqual(imageHits.get(), 0, "WKContentRuleList must block subresource image loads during xx.render")
     }
 
     func testRemoteImageViewRestoresScrambledCoverAndAutoRefreshesBrokenImageNode() async throws {

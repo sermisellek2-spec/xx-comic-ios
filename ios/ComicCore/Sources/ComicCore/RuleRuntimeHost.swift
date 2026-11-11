@@ -797,7 +797,34 @@ public enum RuleWebRenderer {
 }
 
 #if canImport(WebKit)
-private final class WebKitHeadlessSession: NSObject, WKNavigationDelegate, @unchecked Sendable {
+private final class WebKitNavigationBridge: NSObject, WKNavigationDelegate {
+    weak var session: WebKitHeadlessSession?
+
+    init(session: WebKitHeadlessSession) {
+        self.session = session
+        super.init()
+    }
+
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationAction: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        session?.handleNavigationPolicy(navigationAction: navigationAction, decisionHandler: decisionHandler) ?? decisionHandler(.cancel)
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        session?.complete(error: RuleError("网页加载失败：" + error.localizedDescription))
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        session?.complete(error: RuleError("网页渲染失败：" + error.localizedDescription))
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        session?.scheduleExtraction()
+    }
+}
+
+private final class WebKitHeadlessSession: @unchecked Sendable {
     private static let ruleListLock = NSLock()
     private static var cachedBlockList: WKContentRuleList?
 
@@ -814,6 +841,7 @@ private final class WebKitHeadlessSession: NSObject, WKNavigationDelegate, @unch
     private var resultDict: [String: Any]?
     private var resultError: Error?
     private var webView: WKWebView?
+    private var navBridge: WebKitNavigationBridge?
     private var pollTimer: DispatchSourceTimer?
 
     private init(http: RuleHttp, waitSelector: String, waitMs: Int, timeoutMs: Int, cancelToken: RuleCancelToken) {
@@ -823,7 +851,6 @@ private final class WebKitHeadlessSession: NSObject, WKNavigationDelegate, @unch
         self.timeoutMs = timeoutMs
         self.deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
         self.cancelToken = cancelToken
-        super.init()
     }
 
     private static func obtainBlockRuleList() -> WKContentRuleList? {
@@ -895,11 +922,13 @@ private final class WebKitHeadlessSession: NSObject, WKNavigationDelegate, @unch
             if let blockList {
                 config.userContentController.add(blockList)
             }
+            let bridge = WebKitNavigationBridge(session: session)
             let wv = WKWebView(frame: CGRect(x: 0, y: 0, width: 390, height: 844), configuration: config)
-            wv.navigationDelegate = session
+            wv.navigationDelegate = bridge
             wv.customUserAgent = userAgent
             session.stateLock.lock()
             session.webView = wv
+            session.navBridge = bridge
             let alreadyDone = session.finished
             session.stateLock.unlock()
             if alreadyDone {
@@ -948,9 +977,8 @@ private final class WebKitHeadlessSession: NSObject, WKNavigationDelegate, @unch
         return dict
     }
 
-    func webView(_ webView: WKWebView,
-                 decidePolicyFor navigationAction: WKNavigationAction,
-                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    fileprivate func handleNavigationPolicy(navigationAction: WKNavigationAction,
+                                            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = navigationAction.request.url else {
             decisionHandler(.cancel)
             return
@@ -960,7 +988,6 @@ private final class WebKitHeadlessSession: NSObject, WKNavigationDelegate, @unch
             decisionHandler(.allow)
             return
         }
-        // Only enforce domain/cleartext check on main frame navigations; block non-HTTP schemes
         let scheme = url.scheme?.lowercased() ?? ""
         guard scheme == "http" || scheme == "https" else {
             decisionHandler(.cancel)
@@ -976,7 +1003,6 @@ private final class WebKitHeadlessSession: NSObject, WKNavigationDelegate, @unch
                 complete(error: error)
             }
         } else {
-            // Subframe: only allow authorized hosts
             if let host = url.host, http.rule.allows(host),
                (scheme == "https" || http.rule.allowsCleartext(host) || (http.debug && host == "127.0.0.1")) {
                 decisionHandler(.allow)
@@ -986,19 +1012,7 @@ private final class WebKitHeadlessSession: NSObject, WKNavigationDelegate, @unch
         }
     }
 
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        complete(error: RuleError("网页加载失败：" + error.localizedDescription))
-    }
-
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        complete(error: RuleError("网页渲染失败：" + error.localizedDescription))
-    }
-
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        scheduleExtraction()
-    }
-
-    private func scheduleExtraction() {
+    fileprivate func scheduleExtraction() {
         let selectorJson = RuleScript.quoteJsonString(waitSelector)
         let timer = DispatchSource.makeTimerSource(queue: .main)
         stateLock.lock()
@@ -1071,7 +1085,7 @@ private final class WebKitHeadlessSession: NSObject, WKNavigationDelegate, @unch
         timer.resume()
     }
 
-    private func complete(dict: [String: Any]? = nil, error: Error? = nil) {
+    fileprivate func complete(dict: [String: Any]? = nil, error: Error? = nil) {
         stateLock.lock()
         if finished {
             stateLock.unlock()
@@ -1095,6 +1109,7 @@ private final class WebKitHeadlessSession: NSObject, WKNavigationDelegate, @unch
             self.stateLock.lock()
             let wv = self.webView
             self.webView = nil
+            self.navBridge = nil
             self.stateLock.unlock()
             wv?.stopLoading()
             wv?.navigationDelegate = nil

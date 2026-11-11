@@ -99,6 +99,26 @@ public enum RuleScript {
         }
         return "\"\(str)\""
     }
+
+    private static let tightWhilePattern = try! NSRegularExpression(pattern: #"while\s*\(\s*(?:true|1)\s*\)\s*\{([^}{]*)\}"#, options: [])
+    private static let tightForPattern = try! NSRegularExpression(pattern: #"for\s*\(\s*;\s*;\s*\)\s*\{([^}{]*)\}"#, options: [])
+    private static let loopExitPattern = try! NSRegularExpression(pattern: #"\b(?:break|return|throw)\b"#, options: [])
+
+    public static func hasUnboundedTightLoop(_ script: String) -> Bool {
+        let ns = script as NSString
+        let fullRange = NSRange(location: 0, length: ns.length)
+        for regex in [tightWhilePattern, tightForPattern] {
+            for match in regex.matches(in: script, options: [], range: fullRange) {
+                guard match.numberOfRanges > 1 else { continue }
+                let body = ns.substring(with: match.range(at: 1))
+                let bodyRange = NSRange(location: 0, length: (body as NSString).length)
+                if loopExitPattern.firstMatch(in: body, options: [], range: bodyRange) == nil {
+                    return true
+                }
+            }
+        }
+        return false
+    }
 }
 
 // MARK: - PublicHTMLElement Extension
@@ -138,8 +158,8 @@ public final class JavaScriptCoreEngine: ScriptEngine, @unchecked Sendable {
     public init() {}
 
     public func invoke(rule: RuleDefinition, method: String, args: [Any], network: @escaping @Sendable (String, String) throws -> String) throws -> String {
-        // Guard against endless loops
-        if rule.script.contains("while(true)") || rule.script.contains("while (true)") {
+        // Guard against unconditional tight endless loops while allowing bounded pagination loops
+        if RuleScript.hasUnboundedTightLoop(rule.script) {
             throw RuleError("规则执行超时或计算过多，请更换规则后重试")
         }
 
@@ -307,7 +327,7 @@ public final class DeterministicScriptEngine: ScriptEngine, @unchecked Sendable 
     public func invoke(rule: RuleDefinition, method: String, args: [Any], network: @escaping @Sendable (String, String) throws -> String) throws -> String {
         let script = rule.script
 
-        if script.contains("while(true)") || script.contains("while (true)") {
+        if RuleScript.hasUnboundedTightLoop(script) {
             throw RuleError("规则执行超时或计算过多，请更换规则后重试")
         }
 

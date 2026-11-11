@@ -352,4 +352,27 @@ final class Parity2049CoreTests: XCTestCase {
         let sorted = policy.sortForDispatch(input) { id in id == "vpn_source" }
         XCTAssertEqual(sorted, ["fast_direct", "unseen_direct", "slow_direct", "vpn_source", "flaky_timeout"])
     }
+
+    func testTightEndlessLoopDetectorAllowsBoundedPaginationInAll111RealRules() throws {
+        XCTAssertTrue(RuleScript.hasUnboundedTightLoop("source.latest=function(){while(true){}};"))
+        XCTAssertTrue(RuleScript.hasUnboundedTightLoop("for(;;){ var x = 1; }"))
+        XCTAssertFalse(RuleScript.hasUnboundedTightLoop("while(true){ var r = next(); if (!r) break; }"))
+
+        let repoRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let bundleURL = repoRoot.appendingPathComponent("rules/dist/xx-comic-all-sources.xxrules.json")
+        if FileManager.default.fileExists(atPath: bundleURL.path) {
+            let data = try Data(contentsOf: bundleURL)
+            let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+            let bundle = try RuleStore.parseCompatible(json: json)
+            XCTAssertEqual(bundle.rules.count, 111)
+            for rule in bundle.rules {
+                XCTAssertFalse(RuleScript.hasUnboundedTightLoop(rule.script), "False positive on \(rule.id)")
+            }
+        }
+    }
 }
