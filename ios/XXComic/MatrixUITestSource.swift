@@ -196,8 +196,8 @@ private final class MatrixUITestHTTPServer: @unchecked Sendable {
         }
         let fail = count == 1 && flags.contains("--matrix-update-fail-once")
         let current = flags.contains("--matrix-update-current")
-        let release = AppRelease(versionName: current ? "2.0.47" : "2.0.48", versionCode: current ? 347 : 350,
-                                 releaseNotes: "验收新版本说明", downloadUrl: "https://github.com/sermisellek2-spec/xx-comic-ios/releases/tag/2.0.48")
+        let release = AppRelease(versionName: current ? "2.0.49" : "2.0.50", versionCode: current ? 349 : 350,
+                                 releaseNotes: "验收新版本说明", downloadUrl: "https://github.com/sermisellek2-spec/xx-comic-ios/releases/tag/2.0.50")
         guard let body = try? JSONEncoder().encode(release) else { connection.cancel(); return }
         let status = fail ? "503 Service Unavailable" : "200 OK"
         var response = Data("HTTP/1.1 \(status)\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nContent-Length: \(body.count)\r\nConnection: close\r\n\r\n".utf8)

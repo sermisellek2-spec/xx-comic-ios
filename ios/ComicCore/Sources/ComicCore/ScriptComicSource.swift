@@ -22,7 +22,7 @@ public enum RuleScript {
     ]
 
     public static let PRELUDE =
-        "var xx=Object.freeze({request:function(o){return JSON.parse(__host('http',JSON.stringify(o)));},get:function(u,h){var r=this.request({url:u,headers:h||{}});if(r.error)throw Error(r.error);if(r.status<200||r.status>=300)throw Error('站点请求失败 HTTP '+r.status);return r;},select:function(h,s,b){return JSON.parse(__host('select',JSON.stringify({html:h,selector:s,base:b||''})));},resolve:function(b,u){return JSON.parse(__host('resolve',JSON.stringify({base:b,url:u})));},cacheGet:function(k){var r=JSON.parse(__host('cache',JSON.stringify({action:'get',key:k})));if(r&&r.error)throw Error(r.error);return r;},cacheSet:function(k,v){var r=JSON.parse(__host('cache',JSON.stringify({action:'set',key:k,value:v})));if(r&&r.error)throw Error(r.error);return r;},convert:function(o){return JSON.parse(__host('convert',JSON.stringify(o)));}});"
+        "var xx=Object.freeze({request:function(o){return JSON.parse(__host('http',JSON.stringify(o)));},get:function(u,h){var r=this.request({url:u,headers:h||{}});if(r.error)throw Error(r.error);if(r.status<200||r.status>=300)throw Error('站点请求失败 HTTP '+r.status);return r;},render:function(u,o){var a={url:u};if(o&&typeof o==='object'){for(var k in o)if(Object.prototype.hasOwnProperty.call(o,k))a[k]=o[k];a.url=u;}var r=JSON.parse(__host('render',JSON.stringify(a)));if(r&&r.error)throw Error(r.error);return r;},select:function(h,s,b){return JSON.parse(__host('select',JSON.stringify({html:h,selector:s,base:b||''})));},resolve:function(b,u){return JSON.parse(__host('resolve',JSON.stringify({base:b,url:u})));},cacheGet:function(k){var r=JSON.parse(__host('cache',JSON.stringify({action:'get',key:k})));if(r&&r.error)throw Error(r.error);return r;},cacheSet:function(k,v){var r=JSON.parse(__host('cache',JSON.stringify({action:'set',key:k,value:v})));if(r&&r.error)throw Error(r.error);return r;},convert:function(o){return JSON.parse(__host('convert',JSON.stringify(o)));}});"
 
     public static func invoke(rule: RuleDefinition, method: String, args: [Any], network: @escaping Host) throws -> String {
         #if canImport(JavaScriptCore)
@@ -159,8 +159,11 @@ public final class JavaScriptCoreEngine: ScriptEngine, @unchecked Sendable {
         }
 
         var requestCount = 0
+        var renderCount = 0
+        var cancelAbortError: RuleCancelledError?
         let hostBlock: @convention(block) (String, String) -> String = { op, data in
             do {
+                try RuleCancelToken.current?.throwIfCancelled()
                 guard data.utf8.count <= 6 * 1024 * 1024 else {
                     throw RuleError("规则请求过大")
                 }
@@ -171,10 +174,29 @@ public final class JavaScriptCoreEngine: ScriptEngine, @unchecked Sendable {
                     }
                     return try network(op, data)
                 }
+                if op == "render" {
+                    guard rule.engineApi >= 3 && rule.requiresCapability("render") else {
+                        throw RuleError("此规则未声明网页渲染权限")
+                    }
+                    renderCount += 1
+                    if renderCount > 4 {
+                        throw RuleError("单次规则网页渲染次数超限")
+                    }
+                    requestCount += 1
+                    if requestCount > rule.requestLimit {
+                        throw RuleError("单次规则请求次数过多，请稍后重试或更新规则")
+                    }
+                    return try network(op, data)
+                }
                 if op == "cache" {
                     return try network(op, data)
                 }
                 return try RuleScript.local(op: op, data: data)
+            } catch let cancelled as RuleCancelledError {
+                cancelAbortError = cancelled
+                let msg = cancelled.message
+                context.exception = JSValue(newErrorFromMessage: msg, in: context)
+                return "{}"
             } catch {
                 let msg = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                 context.exception = JSValue(newErrorFromMessage: msg, in: context)
@@ -190,6 +212,7 @@ public final class JavaScriptCoreEngine: ScriptEngine, @unchecked Sendable {
         let fullScript = RuleScript.PRELUDE + "\nvar env=Object.freeze(" + envJson + ");\n" + rule.script
         context.evaluateScript(fullScript)
 
+        if let cancelErr = cancelAbortError { throw cancelErr }
         if let err = thrownError { throw err }
 
         guard let sourceVal = context.objectForKeyedSubscript("source"),
@@ -249,10 +272,12 @@ public final class JavaScriptCoreEngine: ScriptEngine, @unchecked Sendable {
         }
 
         guard let result = sourceVal.invokeMethod(method, withArguments: jsArgs) else {
+            if let cancelErr = cancelAbortError { throw cancelErr }
             if let err = thrownError { throw err }
             throw RuleError("规则没有返回数据")
         }
 
+        if let cancelErr = cancelAbortError { throw cancelErr }
         if let err = thrownError { throw err }
         if result.isUndefined {
             throw RuleError("规则没有返回数据")
@@ -385,6 +410,37 @@ public final class DeterministicScriptEngine: ScriptEngine, @unchecked Sendable 
         if script.contains("typeof leaked") {
             let leakedType = script.contains("var leaked=1;") ? "number" : "undefined"
             return "{\"items\":[{\"id\":\"1\",\"title\":\"\(leakedType)\",\"cover\":\"\"}],\"hasMore\":false}"
+        }
+        if script.contains("xx.render(") {
+            guard rule.engineApi >= 3 && rule.requiresCapability("render") else {
+                throw RuleError("此规则未声明网页渲染权限")
+            }
+            let occurrences = script.components(separatedBy: "xx.render(").count - 1
+            var renderCount = 0
+            for _ in 0..<occurrences {
+                renderCount += 1
+                if renderCount > 4 {
+                    throw RuleError("单次规则网页渲染次数超限")
+                }
+                let renderResp = try network("render", "{\"url\":\"\(rule.baseUrl)/render\"}")
+                if let respData = renderResp.data(using: .utf8),
+                   let respObj = (try? JSONSerialization.jsonObject(with: respData)) as? [String: Any],
+                   let errMsg = respObj["error"] as? String, !errMsg.isEmpty {
+                    throw RuleError("规则执行失败：" + errMsg)
+                }
+            }
+            return "{\"items\":[{\"id\":\"rendered\",\"title\":\"渲染成功\",\"cover\":\"\"}],\"hasMore\":false}"
+        }
+        if script.contains("xx.get(env.baseUrl)") {
+            let reqResp = try network("http", "{\"url\":\"\(rule.baseUrl)\",\"method\":\"GET\",\"headers\":{}}")
+            if let respData = reqResp.data(using: .utf8),
+               let respObj = (try? JSONSerialization.jsonObject(with: respData)) as? [String: Any] {
+                if let errMsg = respObj["error"] as? String, !errMsg.isEmpty {
+                    throw RuleError("规则执行失败：" + errMsg)
+                }
+                let bodyStr = (respObj["body"] as? String) ?? "ok"
+                return "{\"items\":[{\"id\":\"live1\",\"title\":\"\(bodyStr)\",\"cover\":\"\"}],\"hasMore\":false}"
+            }
         }
         if script.contains("graphql") && script.contains("xx.select") {
             let reqJson = "{\"url\":\"\(rule.baseUrl)/graphql\",\"method\":\"POST\",\"headers\":{\"Content-Type\":\"application/json\"},\"body\":\"{\\\"query\\\":\\\"{ comics { id } }\\\"}\"}"
@@ -591,12 +647,48 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
         return result
     }
 
+    private func runAsync<T: Sendable>(_ operation: @escaping @Sendable () throws -> T) async throws -> T {
+        try Task.checkCancellation()
+        let token = RuleCancelToken()
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                if Task.isCancelled {
+                    token.cancel()
+                    continuation.resume(throwing: CancellationError())
+                    return
+                }
+                DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        let value = try RuleCancelToken.withCurrent(token) {
+                            try operation()
+                        }
+                        if token.isCancelled {
+                            continuation.resume(throwing: CancellationError())
+                        } else {
+                            continuation.resume(returning: value)
+                        }
+                    } catch is RuleCancelledError {
+                        continuation.resume(throwing: CancellationError())
+                    } catch {
+                        if error.localizedDescription.contains("RULE_VERIFICATION_REQUIRED:") {
+                            continuation.resume(throwing: Mh18SourceError.verificationRequired)
+                        } else {
+                            continuation.resume(throwing: error)
+                        }
+                    }
+                }
+            }
+        } onCancel: {
+            token.cancel()
+        }
+    }
+
     public func latest(page: Int) throws -> [ComicSummary] {
         try listing("latest", max(1, page))
     }
 
     public func latest(page: Int) async throws -> [ComicSummary] {
-        try listing("latest", max(1, page))
+        try await runAsync { try self.listing("latest", max(1, page)) }
     }
 
     public func search(keyword: String, page: Int) throws -> [ComicSummary] {
@@ -604,7 +696,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
     }
 
     public func search(keyword: String, page: Int) async throws -> [ComicSummary] {
-        try syncSearch(keyword: keyword, page: page)
+        try await runAsync { try self.syncSearch(keyword: keyword, page: page) }
     }
 
     private func syncSearch(keyword: String, page: Int) throws -> [ComicSummary] {
@@ -618,7 +710,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
     }
 
     public func category(filters: [String: String], page: Int) async throws -> [ComicSummary] {
-        try listing("category", filters, max(1, page))
+        try await runAsync { try self.listing("category", filters, max(1, page)) }
     }
 
     public func category(region: String?, state: String?, page: Int) throws -> [ComicSummary] {
@@ -644,7 +736,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
     }
 
     public func filterGroups() async throws -> [SourceFilterGroup] {
-        try syncFilterGroups()
+        try await runAsync { try self.syncFilterGroups() }
     }
 
     private func syncFilterGroups() throws -> [SourceFilterGroup] {
@@ -796,7 +888,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
     }
 
     public func detail(comicId: String) async throws -> ComicDetail {
-        try syncDetail(comicId: comicId)
+        try await runAsync { try self.syncDetail(comicId: comicId) }
     }
 
     private func syncDetail(comicId: String) throws -> ComicDetail {
@@ -829,7 +921,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
     }
 
     public func chapters(comicId: String) async throws -> [Chapter] {
-        try syncChapters(comicId: comicId)
+        try await runAsync { try self.syncChapters(comicId: comicId) }
     }
 
     private func syncChapters(comicId: String) throws -> [Chapter] {
@@ -865,7 +957,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
     }
 
     public func chapter(url: String) async throws -> ChapterPage {
-        try syncChapter(url: url)
+        try await runAsync { try self.syncChapter(url: url) }
     }
 
     private func syncChapter(url: String) throws -> ChapterPage {
@@ -922,8 +1014,13 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
     private func checkUrl(_ urlString: String) throws {
         let checkTarget = rule.engineApi >= 2 ? urlString.components(separatedBy: "#")[0] : urlString
         try RuleDefinition.validateHttp(checkTarget)
-        guard let host = URL(string: urlString)?.host, rule.allows(host) else {
+        guard let parsed = URL(string: urlString), let host = parsed.host, rule.allows(host) else {
             throw RuleError("规则返回了未授权域名")
+        }
+        if parsed.scheme?.lowercased() == "http" &&
+           host.lowercased() != "127.0.0.1" &&
+           !rule.allowsCleartext(host) {
+            throw RuleError("规则未声明该域名的明文 HTTP 访问权限")
         }
     }
 }

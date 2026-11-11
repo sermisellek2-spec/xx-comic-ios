@@ -34,6 +34,10 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
     private var filters: [String: String] = [:]
     private var requestID = UUID()
     private var tasks: [Task<Void, Never>] = []
+    private var pendingGlobalSources: [any ComicSource] = []
+    private var activeGlobalCount = 0
+    private var currentGlobalGeneration = UUID()
+    private var detailIdleObserverID: UUID?
     private var global = GlobalSearchState()
     private var errors: [String: Error] = [:]
     private var finished = Set<String>()
@@ -49,6 +53,9 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
         super.viewDidLoad()
         sourceIDs = environment.discoverySources.map(\.id)
         NotificationCenter.default.addObserver(self, selector: #selector(sourcesChanged), name: AppEnvironment.sourcesChanged, object: environment)
+        detailIdleObserverID = environment.observeForegroundDetailIdle { [weak self] in
+            self?.pumpGlobalDispatchQueue()
+        }
         title = "发现"
         tools.axis = .vertical; tools.spacing = 2
         header.layoutMargins = UIEdgeInsets(top: 6, left: 16, bottom: 0, right: 16)
@@ -224,13 +231,39 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
         let controller = SourceSettingsViewController(environment: environment)
         navigationController?.pushViewController(controller, animated: true)
     }
-    deinit { tasks.forEach { $0.cancel() }; scopeTask?.cancel() }
+    deinit {
+        tasks.forEach { $0.cancel() }
+        scopeTask?.cancel()
+        if let observerID = detailIdleObserverID {
+            let env = environment
+            Task { @MainActor in env.removeForegroundDetailIdleObserver(observerID) }
+        }
+    }
+    private func cancelActiveRequests() {
+        requestID = UUID()
+        tasks.forEach { $0.cancel() }
+        tasks = []
+        pendingGlobalSources = []
+        activeGlobalCount = 0
+    }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         headerGesture.end()
         if presentedViewController != nil { return }
+        let isChildPushedInSameTab: Bool = {
+            guard let nav = navigationController,
+                  nav.viewControllers.contains(self),
+                  nav.viewControllers.count > 1 else { return false }
+            if let tab = nav.tabBarController {
+                return tab.selectedViewController === nav
+            }
+            return true
+        }()
+        if isChildPushedInSameTab && isGlobal && !submittedQuery.isEmpty {
+            return
+        }
         needsReload = loading || (isGlobal && !submittedQuery.isEmpty && finished.count < environment.searchSources.count)
-        requestID = UUID(); tasks.forEach { $0.cancel() }; tasks = []
+        cancelActiveRequests()
         scopeTask?.cancel(); scopeSourceID = nil; scopeRequestID = UUID()
         loading = false
     }
@@ -393,8 +426,7 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
 
     private func start(query: String? = nil, restoringGlobalSourceID: String? = nil) {
         setToolsHidden(false, animated: false)
-        requestID = UUID()
-        tasks.forEach { $0.cancel() }; tasks = []
+        cancelActiveRequests()
         loading = false; ended = false; nextPage = 1
         comics = []; collection.reloadData()
         submittedQuery = query ?? SearchRules.trim(searchBar.text ?? "")
@@ -521,21 +553,51 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
     }
 
     private func loadGlobal(restoringSelectedSourceID: String? = nil) {
-        let token = requestID
         let searchSources = environment.searchSources
-        let generation = global.begin(query: submittedQuery, sourceIDs: searchSources.map(\.id), restoringSelectedSourceID: restoringSelectedSourceID)
+        currentGlobalGeneration = global.begin(
+            query: submittedQuery,
+            sourceIDs: searchSources.map(\.id),
+            restoringSelectedSourceID: restoringSelectedSourceID
+        )
         errors = [:]; finished = []
+        let byID = Dictionary(uniqueKeysWithValues: searchSources.map { ($0.id, $0) })
+        let sortedIDs = GlobalSearchDispatchPolicy.shared.sortForDispatch(searchSources.map(\.id)) { id in
+            environment.requiresVpn(sourceId: id)
+        }
+        pendingGlobalSources = sortedIDs.compactMap { byID[$0] }
+        activeGlobalCount = 0
         refreshGlobal()
-        for source in searchSources {
-            let query = submittedQuery
+        pumpGlobalDispatchQueue()
+    }
+
+    private func pumpGlobalDispatchQueue() {
+        guard isGlobal, !submittedQuery.isEmpty else { return }
+        guard !environment.isForegroundDetailBusy else { return }
+        let token = requestID
+        let generation = currentGlobalGeneration
+        let query = submittedQuery
+        while activeGlobalCount < GlobalSearchDispatchPolicy.maxConcurrency, !pendingGlobalSources.isEmpty {
+            let source = pendingGlobalSources.removeFirst()
+            activeGlobalCount += 1
+            let timeoutMs = GlobalSearchDispatchPolicy.shared.timeoutMilliseconds(
+                for: source.id,
+                requiresVpn: environment.requiresVpn(sourceId: source.id)
+            )
+            let startedUptime = ProcessInfo.processInfo.systemUptime
             tasks.append(Task { [weak self] in
+                defer {
+                    if let self, self.requestID == token {
+                        self.activeGlobalCount = max(0, self.activeGlobalCount - 1)
+                        self.pumpGlobalDispatchQueue()
+                    }
+                }
                 do {
                     let items = try await withThrowingTaskGroup(of: [ComicSummary].self) { group in
                         group.addTask {
                             try await source.search(keyword: query, page: 1)
                         }
                         group.addTask {
-                            try await Task.sleep(nanoseconds: 15_000_000_000)
+                            try await Task.sleep(nanoseconds: UInt64(max(1000, timeoutMs)) * 1_000_000)
                             throw URLError(.timedOut)
                         }
                         let first = try await group.next() ?? []
@@ -543,11 +605,15 @@ final class DiscoverViewController: ComicGridViewController, UITextFieldDelegate
                         return first
                     }
                     try Task.checkCancellation()
+                    let elapsedMs = Int((ProcessInfo.processInfo.systemUptime - startedUptime) * 1000)
+                    GlobalSearchDispatchPolicy.shared.recordSuccess(sourceID: source.id, elapsedMs: elapsedMs)
                     guard let self, self.requestID == token else { return }
                     self.global.receive(sourceID: source.id, items: items, generation: generation)
                     self.finished.insert(source.id); self.refreshGlobal()
                 } catch {
                     guard let self, self.requestID == token, !Task.isCancelled else { return }
+                    let isTimeout = (error as? URLError)?.code == .timedOut
+                    GlobalSearchDispatchPolicy.shared.recordFailure(sourceID: source.id, timedOut: isTimeout)
                     self.errors[source.id] = error
                     self.finished.insert(source.id); self.refreshGlobal()
                 }

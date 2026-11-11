@@ -618,6 +618,12 @@ final class RuleDetailSheet: UIViewController {
         addInfoItem(stack: stack, label: "站点地址", value: rule.baseUrl)
         addInfoItem(stack: stack, label: "网络要求", value: rule.requiresVpn ? "需要 VPN" : "直连")
         addInfoItem(stack: stack, label: "域名授权", value: rule.hosts.joined(separator: "、"))
+        if !rule.cleartextHosts.isEmpty {
+            addInfoItem(stack: stack, label: "明文域名", value: rule.cleartextHosts.sorted().joined(separator: "、"))
+        }
+        if !rule.requires.isEmpty {
+            addInfoItem(stack: stack, label: "附加能力", value: rule.requires.sorted().joined(separator: "、"))
+        }
 
         let noteLabel = UILabel()
         noteLabel.text = "仅允许访问规则中声明的域名；规则在沙盒内运行，不能读取设备敏感信息或账号。切换版本保留漫画与阅读记录。"
@@ -1293,9 +1299,15 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
                           let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                         throw RuleError("无法解析返回数据为 JSON")
                     }
-                    let parsed = try RuleRepository.read(root: root, origin: url)
-                    let previewSummary = try catalog.store().preview(parsed)
-                    return (parsed, previewSummary)
+                    let bundle = try RuleRepository.readCompatible(root: root, origin: url)
+                    if bundle.rules.isEmpty && bundle.skipped > 0 {
+                        throw UnsupportedRuleError("全部 \(bundle.skipped) 个规则需要升级客户端后才能安装")
+                    }
+                    var previewSummary = try catalog.store().preview(bundle.rules)
+                    if bundle.skipped > 0 {
+                        previewSummary += " · 跳过 \(bundle.skipped)（需升级客户端）"
+                    }
+                    return (bundle.rules, previewSummary)
                 }.value
                 guard let self else { return }
                 self.activityIndicator.stopAnimating()
@@ -1366,11 +1378,17 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
         Task { [weak self] in
             do {
                 let message = try await Task.detached(priority: .userInitiated) { () throws -> String in
-                    let rules = try RuleSubscriptionUpdate.prepare(
+                    let prepared = try RuleSubscriptionUpdate.prepareCompatible(
                         urls: repos,
                         validator: { rule in try catalog.validate(rule) }
                     )
-                    let msg = try catalog.store().updateSubscriptions(rules)
+                    if prepared.rules.isEmpty && prepared.skipped > 0 {
+                        throw UnsupportedRuleError("订阅中的 \(prepared.skipped) 个规则需要升级客户端后才能更新")
+                    }
+                    var msg = try catalog.store().updateSubscriptions(prepared.rules)
+                    if prepared.skipped > 0 {
+                        msg += " · 跳过 \(prepared.skipped)（需升级客户端）"
+                    }
                     catalog.refresh()
                     return msg
                 }.value
@@ -1407,17 +1425,23 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
                     guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                         throw RuleError("无法解析文件为 JSON")
                     }
-                    let parsedRules: [RuleDefinition]
+                    let bundle: RuleStore.Bundle
                     if (json["schema"] as? String) == "xx-comic.rules" {
-                        parsedRules = try RuleStore.parse(json: json)
+                        bundle = try RuleStore.parseCompatible(json: json)
                     } else if (json["schema"] as? String) == "xx-comic.source-bundle",
                               let rulesJson = json["rules"] as? [String: Any] {
-                        parsedRules = try RuleStore.parse(json: rulesJson)
+                        bundle = try RuleStore.parseCompatible(json: rulesJson)
                     } else {
-                        parsedRules = try RuleRepository.read(root: json, origin: nil)
+                        bundle = try RuleRepository.readCompatible(root: json, origin: nil)
                     }
-                    let previewSummary = try catalog.store().preview(parsedRules)
-                    return (parsedRules, previewSummary)
+                    if bundle.rules.isEmpty && bundle.skipped > 0 {
+                        throw UnsupportedRuleError("文件中的 \(bundle.skipped) 个规则需要升级客户端后才能导入")
+                    }
+                    var previewSummary = try catalog.store().preview(bundle.rules)
+                    if bundle.skipped > 0 {
+                        previewSummary += " · 跳过 \(bundle.skipped)（需升级客户端）"
+                    }
+                    return (bundle.rules, previewSummary)
                 }.value
                 guard let self else { return }
                 self.activityIndicator.stopAnimating()

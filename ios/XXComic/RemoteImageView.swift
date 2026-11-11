@@ -49,7 +49,27 @@ final class RemoteImageView: UIImageView {
         cache.removeObject(forKey: resolvedCacheKey(url: key, referer: referer, reader: true))
     }
 
-    static func fetchImageData(url text: String, referer: String, localPageImage: (@Sendable (URL) throws -> Data)? = nil) async throws -> Data {
+    nonisolated private static func isAllowedCleartextImageHost(_ host: String) -> Bool {
+        let lower = host.lowercased()
+        #if DEBUG
+        if lower == "127.0.0.1" || lower == "localhost" || lower == "::1" || lower == "[::1]" {
+            return true
+        }
+        #endif
+        let allowedSuffixes = RuleDefinition.LEGACY_CLEARTEXT_HOSTS.union(["works.xinmanhua.net"])
+        for domain in allowedSuffixes {
+            if lower == domain || lower.hasSuffix("." + domain) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private static func fetchDecodedImageBytes(
+        url text: String,
+        referer: String,
+        localPageImage: (@Sendable (URL) throws -> Data)? = nil
+    ) async throws -> (data: Data, resolvedText: String) {
         let initialURLString = RuleImages.isRule(text) ? RuleImages.strip(text) : text
         guard let url = URL(string: initialURLString),
               ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") || (["xxcomic-epub", "xxcomic-pdf", "xxcomic-folder"].contains(url.scheme ?? "") && localPageImage != nil) else {
@@ -74,9 +94,10 @@ final class RemoteImageView: UIImageView {
                 let bytes = try localPageImage(url)
                 try Task.checkCancellation()
                 guard bytes.count <= LocalLibrary.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
-                return bytes
+                return try Self.decodeImageBytes(bytes, for: text)
             }
-            return try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+            let decoded = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+            return (decoded, text)
         } else if url.isFileURL {
             let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
             let resolved = url.resolvingSymlinksInPath().standardizedFileURL
@@ -84,52 +105,97 @@ final class RemoteImageView: UIImageView {
             let allowed = support.appendingPathComponent(suffix).appendingPathComponent("Local").resolvingSymlinksInPath()
             guard resolved.path.hasPrefix(allowed.path + "/") else { throw URLError(.noPermissionsToReadFile) }
             let worker = Task.detached(priority: .userInitiated) {
-                try FileAccessCoordinator.system.coordinate(resolved, access: .read) {
+                let bytes = try FileAccessCoordinator.system.coordinate(resolved, access: .read) {
                     try FileAccessCoordinator.readRegularFile($0, maximumBytes: Int64(LocalLibrary.maximumImageBytes))
                 }
+                return try Self.decodeImageBytes(bytes, for: text)
             }
-            return try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+            let decoded = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+            return (decoded, text)
         } else {
-            let isSigned = text.contains("#xx-")
-            for attempt in 0..<(isSigned ? 2 : 1) {
-                let resolvedText: String
-                if isSigned, let resolver = Self.imageUrlResolver {
-                    resolvedText = try await resolver(text, attempt > 0)
-                } else {
-                    resolvedText = RuleImages.strip(PublicSourceImages.strip(text))
+            let isRule = RuleImages.isRule(text)
+            let isSigned = isRule || text.contains("#xx-")
+            let maxAttempts = isSigned ? 2 : 1
+            let hasResolver = Self.imageUrlResolver != nil
+            var lastError: Error = URLError(.badServerResponse)
+            for attempt in 0..<maxAttempts {
+                try Task.checkCancellation()
+                if attempt > 0 && isRule {
+                    RuleImages.invalidateResolved(text)
                 }
-                let ruleInfo = RuleImages.isRule(resolvedText) ? (try? RuleImages.requestHeaders(tagged: resolvedText, fallbackReferer: effectiveReferer)) : nil
-                let targetUrlText = ruleInfo?.url ?? RuleImages.strip(PublicSourceImages.strip(resolvedText))
-                guard let resolvedURL = URL(string: targetUrlText) else {
-                    throw URLError(.badURL)
-                }
-                var req = request
-                req.url = resolvedURL
-                let ref = ruleInfo?.referer ?? PublicSourceImages.referer(resolvedText, fallback: effectiveReferer)
-                if !ref.isEmpty {
-                    req.setValue(ref, forHTTPHeaderField: "Referer")
-                }
-                if let ruleInfo {
-                    if let cookieHeader = ruleInfo.cookieHeader, !cookieHeader.isEmpty {
-                        req.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+                do {
+                    let resolvedText: String
+                    if isSigned, let resolver = Self.imageUrlResolver {
+                        resolvedText = try await resolver(text, attempt > 0)
+                    } else {
+                        resolvedText = isRule ? text : RuleImages.strip(PublicSourceImages.strip(text))
                     }
-                    for (k, v) in ruleInfo.headers {
-                        req.setValue(v, forHTTPHeaderField: k)
+                    let ruleInfo = RuleImages.isRule(resolvedText) ? (try? RuleImages.requestHeaders(tagged: resolvedText, fallbackReferer: effectiveReferer)) : nil
+                    let targetUrlText = ruleInfo?.url ?? RuleImages.strip(PublicSourceImages.strip(resolvedText))
+                    guard let resolvedURL = URL(string: targetUrlText),
+                          let scheme = resolvedURL.scheme?.lowercased(),
+                          scheme == "https" || scheme == "http" else {
+                        throw URLError(.badURL)
                     }
-                }
-                let (bytes, response) = try await URLSession.shared.data(for: req)
-                if let http = response as? HTTPURLResponse {
-                    if isSigned && attempt == 0 && (http.statusCode == 403 || http.statusCode == 410) {
+                    if scheme == "http" && (!isRule || !hasResolver) {
+                        guard let host = resolvedURL.host, isAllowedCleartextImageHost(host) else {
+                            throw URLError(.appTransportSecurityRequiresSecureConnection)
+                        }
+                    }
+                    var req = request
+                    req.url = resolvedURL
+                    let ref = ruleInfo?.referer ?? PublicSourceImages.referer(resolvedText, fallback: effectiveReferer)
+                    if !ref.isEmpty {
+                        req.setValue(ref, forHTTPHeaderField: "Referer")
+                    }
+                    if let ruleInfo {
+                        if let cookieHeader = ruleInfo.cookieHeader, !cookieHeader.isEmpty {
+                            req.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+                        }
+                        for (k, v) in ruleInfo.headers {
+                            req.setValue(v, forHTTPHeaderField: k)
+                        }
+                    }
+                    let (bytes, response) = try await URLSession.shared.data(for: req)
+                    try Task.checkCancellation()
+                    guard let http = response as? HTTPURLResponse else {
+                        throw URLError(.badServerResponse)
+                    }
+                    guard (200..<300).contains(http.statusCode), bytes.count <= 40 * 1024 * 1024 else {
+                        throw URLError(.badServerResponse)
+                    }
+                    if isRule && RuleImages.isNonImageContentType(http.value(forHTTPHeaderField: "Content-Type")) {
+                        throw URLError(.cannotDecodeContentData)
+                    }
+                    let decodeTarget = RuleImages.isRule(resolvedText) ? resolvedText : text
+                    let worker = Task.detached(priority: .userInitiated) { () throws -> Data in
+                        try Task.checkCancellation()
+                        let out = try Self.decodeImageBytes(bytes, for: decodeTarget)
+                        if isRule {
+                            guard RuleImageData.isImage(out) || CGImageSourceCreateWithData(out as CFData, nil) != nil else {
+                                throw URLError(.cannotDecodeContentData)
+                            }
+                        }
+                        return out
+                    }
+                    let decoded = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+                    return (decoded, decodeTarget)
+                } catch {
+                    if error is CancellationError || Task.isCancelled {
+                        throw error
+                    }
+                    lastError = error
+                    if attempt + 1 < maxAttempts {
                         continue
                     }
-                    if (200..<300).contains(http.statusCode), bytes.count <= 40 * 1024 * 1024 {
-                        return bytes
-                    }
                 }
-                throw URLError(.badServerResponse)
             }
-            throw URLError(.badServerResponse)
+            throw lastError
         }
+    }
+
+    static func fetchImageData(url text: String, referer: String, localPageImage: (@Sendable (URL) throws -> Data)? = nil) async throws -> Data {
+        try await fetchDecodedImageBytes(url: text, referer: referer, localPageImage: localPageImage).data
     }
 
     nonisolated private static func decodeImageBytes(_ data: Data, for text: String) throws -> Data {
@@ -158,11 +224,10 @@ final class RemoteImageView: UIImageView {
             return cached
         }
         let cacheToken = Self.cacheGeneration
-        let data = try await fetchImageData(url: text, referer: referer, localPageImage: localPageImage)
+        let (imageData, effectiveText) = try await fetchDecodedImageBytes(url: text, referer: referer, localPageImage: localPageImage)
         try Task.checkCancellation()
         let decoder = Task.detached(priority: .userInitiated) { () throws -> UIImage? in
             try Task.checkCancellation()
-            let imageData = try Self.decodeImageBytes(data, for: text)
             guard let source = CGImageSourceCreateWithData(imageData as CFData, nil) else { return nil }
             var maximumDimension = 4096
             if reader, let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
@@ -177,7 +242,23 @@ final class RemoteImageView: UIImageView {
                 kCGImageSourceThumbnailMaxPixelSize: maximumDimension,
                 kCGImageSourceCreateThumbnailWithTransform: true
             ] as CFDictionary) else { return nil }
-            return UIImage(cgImage: reader ? try JmImageTransform.restore(image, imageURL: text) : image)
+            let shouldRestore = reader
+                || RuleImages.isRule(effectiveText)
+                || RuleImages.isRule(text)
+                || effectiveText.contains("#xx-tx=")
+                || effectiveText.contains("#xx-bands=")
+                || effectiveText.contains("#jm-origin=")
+                || text.contains("#xx-tx=")
+                || text.contains("#xx-bands=")
+                || text.contains("#jm-origin=")
+            if shouldRestore {
+                var restored = try JmImageTransform.restore(image, imageURL: effectiveText)
+                if restored === image && effectiveText != text {
+                    restored = try JmImageTransform.restore(image, imageURL: text)
+                }
+                return UIImage(cgImage: restored)
+            }
+            return UIImage(cgImage: image)
         }
         let decoded = try await withTaskCancellationHandler { try await decoder.value } onCancel: { decoder.cancel() }
         try Task.checkCancellation()
@@ -197,11 +278,10 @@ final class RemoteImageView: UIImageView {
         if let cached = Self.cache.object(forKey: key), let cg = cached.cgImage {
             return CGSize(width: cg.width, height: cg.height)
         }
-        let data = try await fetchImageData(url: text, referer: referer, localPageImage: localPageImage)
+        let (imageData, _) = try await fetchDecodedImageBytes(url: text, referer: referer, localPageImage: localPageImage)
         try Task.checkCancellation()
         let prober = Task.detached(priority: .utility) { () throws -> CGSize? in
             try Task.checkCancellation()
-            let imageData = try Self.decodeImageBytes(data, for: text)
             guard let source = CGImageSourceCreateWithData(imageData as CFData, nil),
                   let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
                   let width = properties[kCGImagePropertyPixelWidth] as? NSNumber,

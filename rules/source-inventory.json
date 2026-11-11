@@ -1,0 +1,632 @@
+{
+  "sources": [
+    {
+      "id": "mh160",
+      "staticHosts": [
+        "*.mh160mh.com",
+        "*.miyeye.cn",
+        "*.tgmhfc.uk",
+        "p.miyeye.cn",
+        "www.mh160mh.com",
+        "xwdf.tgmhfc.uk"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "gmh",
+      "staticHosts": [
+        "*.6wm.top",
+        "*.apikk.top",
+        "*.g-mh.org",
+        "c-nd2-1.6wm.top",
+        "m.g-mh.org",
+        "v2.apikk.top"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "mh18",
+      "staticHosts": [
+        "*.18mh.org",
+        "18mh.org"
+      ],
+      "requiresVpn": true
+    },
+    {
+      "id": "jmcomic",
+      "staticHosts": [
+        "*.18comic.vip",
+        "18comic.vip"
+      ],
+      "requiresVpn": true
+    },
+    {
+      "id": "mkzhan",
+      "staticHosts": [
+        "*.mkzcdn.com",
+        "*.mkzhan.com",
+        "comic.mkzcdn.com",
+        "content.mkzcdn.com",
+        "www.mkzhan.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "hiperdex",
+      "staticHosts": [
+        "hiperdex.com"
+      ],
+      "requiresVpn": true
+    },
+    {
+      "id": "manhuagui",
+      "staticHosts": [
+        "*.hamreus.com",
+        "*.manhuagui.com",
+        "*.mhgui.com",
+        "cf.mhgui.com",
+        "eu2.hamreus.com",
+        "www.manhuagui.com"
+      ],
+      "requiresVpn": true
+    },
+    {
+      "id": "hanman18",
+      "staticHosts": [
+        "*.hanman18.com",
+        "azminv2.hanman18.com",
+        "hanman18.com"
+      ],
+      "requiresVpn": true
+    },
+    {
+      "id": "d5d6",
+      "staticHosts": [
+        "*.d5d6.com",
+        "*.testrainshine.top",
+        "img.testrainshine.top",
+        "www.d5d6.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "manben",
+      "staticHosts": [
+        "*.cdndm5.com",
+        "*.manben.com",
+        "manhua1031-61-174-50-98.cdndm5.com",
+        "www.manben.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "manhuazhan",
+      "staticHosts": [
+        "*.5um.net",
+        "*.60ti.com",
+        "manhua.5um.net",
+        "www.60ti.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "bbyin",
+      "staticHosts": [
+        "*.5um.net",
+        "bbyin.com",
+        "manhua.5um.net"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "antbyw",
+      "staticHosts": [
+        "*.antbyw.com",
+        "imgmh3.antbyw.com",
+        "www.antbyw.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "cuimh",
+      "staticHosts": [
+        "*.325784.xyz",
+        "*.baipiaoguai.org",
+        "*.baozimh.com",
+        "*.cuimh.com",
+        "*.ecombdimg.com",
+        "img1.baipiaoguai.org",
+        "p6.ecombdimg.com",
+        "s2.325784.xyz",
+        "static-tw.baozimh.com",
+        "www.cuimh.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "liumanhua",
+      "staticHosts": [
+        "*.baozimh.com",
+        "*.baozimhcn.com",
+        "*.bzcdn.net",
+        "*.liumanhua.com",
+        "s2.bzcdn.net",
+        "static-tw.baozimh.com",
+        "static-tw.baozimhcn.com",
+        "www.liumanhua.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "copy4000",
+      "staticHosts": [
+        "*.copy4000.com",
+        "*.elfgjfghkk.club",
+        "*.fgjfghkkcenter.club",
+        "*.manga2026.xyz",
+        "*.mangafunb.fun",
+        "api.manga2026.xyz",
+        "mapi.elfgjfghkk.club",
+        "mapi.fgjfghkkcenter.club",
+        "www.copy4000.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "manwa",
+      "staticHosts": [
+        "*.mhttu.cc",
+        "*.mwtuwu.cc",
+        "*.mwzu.cc",
+        "manwace.cc",
+        "manwaxu.cc",
+        "mhttu.cc",
+        "mwtuwu.cc",
+        "tu.mwzu.cc"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "dingmanhua",
+      "staticHosts": [
+        "*.dingmanhua.com",
+        "image1.dingmanhua.com",
+        "www.dingmanhua.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "dongmanla",
+      "staticHosts": [
+        "*.dongman.la",
+        "img.dongman.la",
+        "www.dongman.la"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "xinmanhua",
+      "staticHosts": [
+        "*.xinmanhua.net",
+        "works.xinmanhua.net",
+        "xapi.xinmanhua.net"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "zaimanhua",
+      "staticHosts": [
+        "*.zaimanhua.com",
+        "images.zaimanhua.com",
+        "manhua.zaimanhua.com",
+        "v4api.zaimanhua.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "guazi",
+      "staticHosts": [
+        "*.guazicdn.com",
+        "*.guazimanhua.com",
+        "img.guazicdn.com",
+        "www.guazimanhua.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "kalamanhua",
+      "staticHosts": [
+        "*.kalaimg.top",
+        "*.kalamanhua.com",
+        "image.kalaimg.top",
+        "www.kalamanhua.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "dm5",
+      "staticHosts": [
+        "*.cdndm5.com",
+        "*.dm5.com",
+        "m.dm5.com",
+        "manhua1035-61-174-50-98.cdndm5.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "kkk",
+      "staticHosts": [
+        "*.1kkk.com",
+        "*.cdndm5.com",
+        "m.1kkk.com",
+        "manhua1035-61-174-50-98.cdndm5.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "manhuaren",
+      "staticHosts": [
+        "*.cdndm5.com",
+        "*.manhuaren.com",
+        "manhua1035-61-174-50-98.cdndm5.com",
+        "www.manhuaren.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "dongman",
+      "staticHosts": [
+        "*.dongmanmanhua.cn",
+        "cdn.dongmanmanhua.cn",
+        "www.dongmanmanhua.cn"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "dogemanga",
+      "staticHosts": [
+        "dogemanga.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "sisi",
+      "staticHosts": [
+        "*.baozicdn.com",
+        "*.baozimh.com",
+        "*.baozimh.org",
+        "*.hhhmh.top",
+        "*.mangafuna.xyz",
+        "*.maomimh.com",
+        "*.sisimanhua.com",
+        "*.xiaoqinre.com",
+        "cover1.baozimh.org",
+        "hi77-overseas.mangafuna.xyz",
+        "img.hhhmh.top",
+        "img.maomimh.com",
+        "m.sisimanhua.com",
+        "res1.xiaoqinre.com",
+        "s2.baozicdn.com",
+        "static-tw.baozimh.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "manxiaosi",
+      "staticHosts": [
+        "*.jjmhw10.top",
+        "*.pknbc.com",
+        "www.jjmhw10.top",
+        "www.pknbc.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "lele",
+      "staticHosts": [
+        "*.du8.in",
+        "*.hmwu.cc",
+        "*.yymhimg.top",
+        "img1.du8.in",
+        "w.yymhimg.top",
+        "www.hmwu.cc"
+      ],
+      "requiresVpn": true
+    },
+    {
+      "id": "tuku",
+      "staticHosts": [
+        "*.tuku.cc",
+        "image1013.tuku.cc",
+        "image1016.tuku.cc",
+        "www.tuku.cc"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "ycy",
+      "staticHosts": [
+        "*.baipiaoguai.org",
+        "*.ycymh.com",
+        "img1.baipiaoguai.org",
+        "newmwimserv15.cc",
+        "newmwimserv16.cc",
+        "newmwtuyuan14.cc",
+        "newmwtuyuan15.cc",
+        "newmwtuyuan16.cc",
+        "newmwtuyuan7.cc",
+        "www.ycymh.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "miaoqu",
+      "staticHosts": [
+        "*.baozimh.com",
+        "*.baozimhcn.com",
+        "*.bzcdn.net",
+        "*.miaoqumh.org",
+        "s2.bzcdn.net",
+        "static-tw.baozimh.com",
+        "static-tw.baozimhcn.com",
+        "www.miaoqumh.org"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "waiwai",
+      "staticHosts": [
+        "*.77comic.com",
+        "*.waiwaimhx.com",
+        "123.77comic.com",
+        "m.waiwaimhx.com"
+      ],
+      "requiresVpn": true
+    },
+    {
+      "id": "tuhao",
+      "staticHosts": [
+        "*.larton.cn",
+        "*.mkzcdn.com",
+        "content.mkzcdn.com",
+        "www.larton.cn"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "manshiduo",
+      "staticHosts": [
+        "*.baipiaoguai.org",
+        "img1.baipiaoguai.org",
+        "manshiduo.org",
+        "newmwimserv15.cc",
+        "newmwtuyuan14.cc",
+        "newmwtuyuan16.cc"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "dumanwu",
+      "staticHosts": [
+        "*.546457.xyz",
+        "*.baipiaoguai.org",
+        "*.dumanwu.org",
+        "*.ecombdimg.com",
+        "dmw.546457.xyz",
+        "img1.baipiaoguai.org",
+        "m.dumanwu.org",
+        "p6.ecombdimg.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "ciyuan",
+      "staticHosts": [
+        "*.546457.xyz",
+        "*.baipiaoguai.org",
+        "*.ecombdimg.com",
+        "ciyuanman.com",
+        "dmw.546457.xyz",
+        "img1.baipiaoguai.org",
+        "p6.ecombdimg.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "wmanhua",
+      "staticHosts": [
+        "*.wmanhua.com",
+        "image4.wmanhua.com",
+        "www.wmanhua.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "aba",
+      "staticHosts": [
+        "*.aabamh.com",
+        "*.abamhc1.click",
+        "*.se8manhua.club",
+        "cfpic.se8manhua.club",
+        "cover.aabamh.com",
+        "www.abamhc1.click"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "comic51",
+      "staticHosts": [
+        "*.favcomic.xyz",
+        "*.popwow.top",
+        "ccdeoo.popwow.top",
+        "cdn.favcomic.xyz",
+        "www.favcomic.xyz"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "dmanhua",
+      "staticHosts": [
+        "*.dmanhua.com",
+        "image1.dmanhua.com",
+        "www.dmanhua.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "mh360",
+      "staticHosts": [
+        "*.360mh.cc",
+        "*.baozimh.com",
+        "*.bzcdn.net",
+        "*.mkzcdn.com",
+        "oss.mkzcdn.com",
+        "s1.bzcdn.net",
+        "s2.bzcdn.net",
+        "static-tw.baozimh.com",
+        "www.360mh.cc"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "favcomic",
+      "staticHosts": [
+        "*.favcomic.com",
+        "mcidea.asia",
+        "www.favcomic.com"
+      ],
+      "requiresVpn": true
+    },
+    {
+      "id": "ttk",
+      "staticHosts": [
+        "*.baipiaoguai.org",
+        "*.ttkmh.com",
+        "img1.baipiaoguai.org",
+        "newmwimserv1.cc",
+        "newmwimserv15.cc",
+        "newmwimserv16.cc",
+        "newmwtuyuan1.cc",
+        "newmwtuyuan14.cc",
+        "newmwtuyuan15.cc",
+        "newmwtuyuan16.cc",
+        "newmwtuyuan7.cc",
+        "www.ttkmh.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "laiman",
+      "staticHosts": [
+        "*.baipiaoguai.org",
+        "*.laimanhua.org",
+        "img1.baipiaoguai.org",
+        "m.laimanhua.org",
+        "newmwtuyuan14.cc",
+        "newmwtuyuan16.cc"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "lmanhua",
+      "staticHosts": [
+        "*.534zm.com",
+        "*.dmzj.com",
+        "*.hujw.com",
+        "d1.hujw.com",
+        "f2-img.534zm.com",
+        "images.dmzj.com",
+        "lmanhua.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "mangabz",
+      "staticHosts": [
+        "*.mangabz.com",
+        "image.mangabz.com",
+        "www.mangabz.com"
+      ],
+      "requiresVpn": true
+    },
+    {
+      "id": "haokan",
+      "staticHosts": [
+        "*.5um.net",
+        "*.haokantxt.com",
+        "manga.5um.net",
+        "www.haokantxt.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "s311",
+      "staticHosts": [
+        "*.311s.com",
+        "*.5um.net",
+        "manga.5um.net",
+        "www.311s.com"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "ffppt",
+      "staticHosts": [
+        "*.534zm.com",
+        "*.dongman.la",
+        "*.hujw.com",
+        "f2-img.534zm.com",
+        "ffppt.com",
+        "img.dongman.la"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "mangadex",
+      "staticHosts": [
+        "*.mangadex.network",
+        "*.mangadex.org",
+        "api.mangadex.org",
+        "cmdxd98sb0x3yprd.mangadex.network",
+        "mangadex.org",
+        "uploads.mangadex.org"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "hipmh",
+      "staticHosts": [
+        "*.hipmh.com",
+        "*.hipmh.top",
+        "*.s3file.top",
+        "*.s3imgs.top",
+        "cover.s3imgs.top",
+        "hip-tx-1.s3imgs.top",
+        "hipapi1.s3file.top",
+        "m.hipmh.com",
+        "reader.hipmh.top"
+      ],
+      "requiresVpn": false
+    },
+    {
+      "id": "nhentai",
+      "staticHosts": [
+        "*.nhentai.net",
+        "i.nhentai.net",
+        "nhentai.net",
+        "t.nhentai.net"
+      ],
+      "requiresVpn": true
+    },
+    {
+      "id": "wnacg",
+      "staticHosts": [
+        "*.wn001.cfd",
+        "*.wnimg2.cfd",
+        "img5.wnimg2.cfd",
+        "www.wn001.cfd"
+      ],
+      "requiresVpn": true
+    }
+  ]
+}

@@ -1,11 +1,125 @@
 import UIKit
+import ImageIO
 import ComicCore
+
+private final class Mh18RuleBrowserBridge: RuleBrowserSession, @unchecked Sendable {
+    private weak var session: Mh18BrowserSession?
+
+    init(session: Mh18BrowserSession) {
+        self.session = session
+    }
+
+    func fetch(_ urlString: String) throws -> String {
+        let cancelToken = RuleCancelToken.current
+        try cancelToken?.throwIfCancelled()
+        guard let url = URL(string: urlString) else {
+            throw RuleError("地址格式无效")
+        }
+        let sema = DispatchSemaphore(value: 0)
+        let lock = NSLock()
+        var result: Result<String, Error>?
+
+        let task = Task { @MainActor [weak self] in
+            do {
+                guard let session = self?.session else {
+                    throw RuleError("验证会话不可用")
+                }
+                let html = try await session.fetch(url)
+                lock.lock()
+                result = .success(html)
+                lock.unlock()
+            } catch {
+                lock.lock()
+                result = .failure(error)
+                lock.unlock()
+            }
+            sema.signal()
+        }
+
+        let handle = try cancelToken?.register {
+            task.cancel()
+        }
+        defer {
+            handle?.close()
+            task.cancel()
+        }
+
+        let deadline = Date(timeIntervalSinceNow: 15.0)
+        if Thread.isMainThread {
+            while sema.wait(timeout: .now()) == .timedOut {
+                try cancelToken?.throwIfCancelled()
+                if Date() >= deadline {
+                    throw RuleError("验证会话请求超时")
+                }
+                RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.01))
+            }
+        } else {
+            while sema.wait(timeout: .now() + .milliseconds(50)) == .timedOut {
+                try cancelToken?.throwIfCancelled()
+                if Date() >= deadline {
+                    throw RuleError("验证会话请求超时")
+                }
+            }
+        }
+        try cancelToken?.throwIfCancelled()
+
+        lock.lock()
+        let finalResult = result
+        lock.unlock()
+
+        switch finalResult {
+        case .success(let html):
+            return html
+        case .failure(let error):
+            if (error as? Mh18SourceError) == .verificationRequired {
+                throw RuleError("RULE_VERIFICATION_REQUIRED:需要验证")
+            }
+            if error is CancellationError {
+                throw RuleCancelledError("规则调用已取消")
+            }
+            throw error
+        case .none:
+            throw RuleError("验证会话未返回响应")
+        }
+    }
+}
 
 @MainActor
 final class AppEnvironment {
     let preferences: ReaderPreferencesStore
     let defaults: UserDefaults
     let mh18BrowserSession: Mh18BrowserSession
+    private let ruleBrowserBridge: Mh18RuleBrowserBridge
+    private var activeForegroundDetailTokens = Set<UUID>()
+    private var foregroundDetailIdleObservers: [UUID: () -> Void] = [:]
+    var isForegroundDetailBusy: Bool { !activeForegroundDetailTokens.isEmpty }
+
+    func beginForegroundDetailLoad() -> UUID {
+        let token = UUID()
+        activeForegroundDetailTokens.insert(token)
+        return token
+    }
+
+    func endForegroundDetailLoad(_ token: UUID) {
+        guard activeForegroundDetailTokens.remove(token) != nil else { return }
+        if activeForegroundDetailTokens.isEmpty {
+            let callbacks = Array(foregroundDetailIdleObservers.values)
+            for callback in callbacks {
+                callback()
+            }
+        }
+    }
+
+    @discardableResult
+    func observeForegroundDetailIdle(_ handler: @escaping () -> Void) -> UUID {
+        let id = UUID()
+        foregroundDetailIdleObservers[id] = handler
+        return id
+    }
+
+    func removeForegroundDetailIdleObserver(_ id: UUID) {
+        foregroundDetailIdleObservers.removeValue(forKey: id)
+    }
     let readingHabits: ReadingHabitTracker
     let usageStats: UsageStatsClient
     private var usageStatsTask: Task<Void, Never>?
@@ -186,6 +300,11 @@ final class AppEnvironment {
         }
         usesLegacyBuiltinSources = forceFreshInstall ? false : Self.resolveLegacyBuiltinEnabled(defaults: defaults, appDirectory: appDir)
         mh18BrowserSession = Mh18BrowserSession(defaults: defaults)
+        let browserBridge = Mh18RuleBrowserBridge(session: mh18BrowserSession)
+        ruleBrowserBridge = browserBridge
+        for origin in ["https://18mh.org", "https://www.18mh.org", "https://18comic.vip", "https://18comic.org", "https://jmcomic-zzz.org", "https://jmcomic-zzz.one"] {
+            try? RuleWebSessions.fallback(origin, browserBridge)
+        }
         let initialAvailableIDs = Self.computeAvailableSourceIDs(
             defaults: defaults,
             usesLegacyBuiltinSources: usesLegacyBuiltinSources,
@@ -530,8 +649,8 @@ final class AppEnvironment {
         #endif
         guard usageStatsTask == nil else { return }
         let info = UsageStatsApplicationInfo(
-            appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.47",
-            versionCode: Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "347") ?? 347,
+            appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.49",
+            versionCode: Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "349") ?? 349,
             osVersion: UIDevice.current.systemVersion, deviceModel: "Apple " + UIDevice.current.model)
         let client = usageStats
         let token = UUID(); usageStatsGeneration = token
@@ -662,7 +781,14 @@ final class EnvironmentSourceResolver: DownloadSourceResolverProtocol, @unchecke
         if RuleImages.isRule(coverUrl) {
             let rawData = try Data(contentsOf: tempURL)
             try? FileManager.default.removeItem(at: tempURL)
-            let decoded = try RuleImages.decode(rawData, tagged: coverUrl)
+            var decoded = try RuleImages.decode(rawData, tagged: coverUrl)
+            if let tx = try? RuleImages.transformation(coverUrl), !tx.isEmpty,
+               let src = CGImageSourceCreateWithData(decoded as CFData, nil),
+               let cg = CGImageSourceCreateImageAtIndex(src, 0, nil),
+               let restored = try? JmImageTransform.restore(cg, imageURL: coverUrl),
+               let png = UIImage(cgImage: restored).pngData() {
+                decoded = png
+            }
             try decoded.write(to: destination, options: .atomic)
         } else if !PublicSourceImages.sourceId(coverUrl).isEmpty || PublicSourceRegistry.contains(sourceId) {
             let rawData = try Data(contentsOf: tempURL)

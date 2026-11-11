@@ -205,6 +205,7 @@ public struct GlobalSearchState: Sendable {
     public private(set) var selectedSourceID: String?
     public private(set) var results: [String: [ComicSummary]] = [:]
     public private(set) var exactSourceIDs = Set<String>()
+    private var bestScores: [String: Int] = [:]
     private var manuallySelected = false
     private var selectedFirstResult = false
 
@@ -233,19 +234,144 @@ public struct GlobalSearchState: Sendable {
     @discardableResult
     public mutating func receive(sourceID: String, items: [ComicSummary], generation: UUID) -> Bool {
         guard generation == self.generation, sourceIDs.contains(sourceID) else { return false }
-        results[sourceID] = SearchRules.prioritize(items, query: query)
-        if SearchRules.hasExact(items, query: query) { exactSourceIDs.insert(sourceID) }
+        let prioritized = SearchRules.prioritize(items, query: query)
+        results[sourceID] = prioritized
+        bestScores[sourceID] = SearchRules.bestMatchScore(prioritized, query: query)
+        if SearchRules.hasExact(prioritized, query: query) { exactSourceIDs.insert(sourceID) }
         else { exactSourceIDs.remove(sourceID) }
-        if !items.isEmpty && !manuallySelected && !selectedFirstResult {
+        if !prioritized.isEmpty && !manuallySelected && !selectedFirstResult {
             selectedSourceID = sourceID
             selectedFirstResult = true
         }
         return true
     }
 
-    /// Sources with non-empty results, ranked by match relevance (DISC-03).
+    /// Sources with non-empty results, ranked by match relevance (DISC-03), preserving user sourceIDs tie-break.
     public var visibleSourceIDs: [String] {
         let nonEmpty = sourceIDs.filter { !(results[$0]?.isEmpty ?? true) }
-        return SourceOrder.rankByScore(nonEmpty) { SearchRules.bestMatchScore(results[$0] ?? [], query: query) }
+        return SourceOrder.rankByScore(nonEmpty) { bestScores[$0] ?? 0 }
+    }
+}
+
+/// Fast-source priority dispatch scheduler for 100+ source global search (2.0.49 parity).
+/// Only reorders network dispatch order; UI tab order remains controlled by `GlobalSearchState.visibleSourceIDs`.
+public final class GlobalSearchDispatchPolicy: @unchecked Sendable {
+    public static let shared = GlobalSearchDispatchPolicy()
+    public static let maxConcurrency = 12
+    public static let fastThresholdMs = 2000
+    public static let defaultTimeoutMs = 8000
+
+    public enum Tier: Int, Comparable, Sendable {
+        case fastVerified = 0      // Recent search succeeded in < 2000ms
+        case normal = 1            // Unclassified non-VPN or >= 2000ms success
+        case requiresVpn = 2       // Unclassified VPN-flagged source
+        case recentSlowOrFailed = 3 // Recent timeout or network failure
+
+        public static func < (lhs: Tier, rhs: Tier) -> Bool {
+            lhs.rawValue < rhs.rawValue
+        }
+    }
+
+    private struct SourceTelemetry: Sendable {
+        var tier: Tier
+        var latencyMs: Int
+    }
+
+    private let lock = NSLock()
+    private var telemetry: [String: SourceTelemetry] = [:]
+
+    public init() {}
+
+    public func reset() {
+        lock.lock()
+        telemetry.removeAll()
+        lock.unlock()
+    }
+
+    public func recordSuccess(sourceID: String, elapsedMs: Int) {
+        let clamped = max(1, min(60_000, elapsedMs))
+        let nextTier: Tier = clamped < Self.fastThresholdMs ? .fastVerified : .normal
+        lock.lock()
+        if let old = telemetry[sourceID] {
+            let smoothed = (old.latencyMs + clamped) / 2
+            telemetry[sourceID] = SourceTelemetry(tier: smoothed < Self.fastThresholdMs ? .fastVerified : nextTier, latencyMs: smoothed)
+        } else {
+            telemetry[sourceID] = SourceTelemetry(tier: nextTier, latencyMs: clamped)
+        }
+        lock.unlock()
+    }
+
+    public func recordFailure(sourceID: String, timedOut: Bool) {
+        let penaltyMs = timedOut ? 30_000 : 25_000
+        lock.lock()
+        telemetry[sourceID] = SourceTelemetry(tier: .recentSlowOrFailed, latencyMs: penaltyMs)
+        lock.unlock()
+    }
+
+    public func tier(for sourceID: String, requiresVpn: Bool) -> Tier {
+        lock.lock()
+        let recorded = telemetry[sourceID]
+        lock.unlock()
+        if let recorded {
+            return recorded.tier
+        }
+        return requiresVpn ? .requiresVpn : .normal
+    }
+
+    public func estimatedLatencyMs(for sourceID: String, requiresVpn: Bool) -> Int {
+        lock.lock()
+        let recorded = telemetry[sourceID]
+        lock.unlock()
+        if let recorded {
+            return recorded.latencyMs
+        }
+        return requiresVpn ? 8_000 : 3_000
+    }
+
+    public func timeoutMilliseconds(for sourceID: String, requiresVpn: Bool) -> Int {
+        let t = tier(for: sourceID, requiresVpn: requiresVpn)
+        switch t {
+        case .fastVerified, .normal:
+            return Self.defaultTimeoutMs
+        case .requiresVpn:
+            return 8_500
+        case .recentSlowOrFailed:
+            return 6_500
+        }
+    }
+
+    public func sortForDispatch(_ sourceIDs: [String], requiresVpn: (String) -> Bool) -> [String] {
+        guard sourceIDs.count > 1 else { return sourceIDs }
+        lock.lock()
+        let snapshot = telemetry
+        lock.unlock()
+
+        struct Entry {
+            let id: String
+            let index: Int
+            let tier: Tier
+            let latencyMs: Int
+        }
+        var entries = [Entry]()
+        entries.reserveCapacity(sourceIDs.count)
+        for (index, id) in sourceIDs.enumerated() {
+            if let rec = snapshot[id] {
+                entries.append(Entry(id: id, index: index, tier: rec.tier, latencyMs: rec.latencyMs))
+            } else {
+                let vpn = requiresVpn(id)
+                entries.append(Entry(
+                    id: id,
+                    index: index,
+                    tier: vpn ? .requiresVpn : .normal,
+                    latencyMs: vpn ? 8_000 : 3_000
+                ))
+            }
+        }
+        entries.sort { a, b in
+            if a.tier != b.tier { return a.tier < b.tier }
+            if a.latencyMs != b.latencyMs { return a.latencyMs < b.latencyMs }
+            return a.index < b.index
+        }
+        return entries.map(\.id)
     }
 }

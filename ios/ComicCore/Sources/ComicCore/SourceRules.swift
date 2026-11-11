@@ -15,9 +15,23 @@ import CommonCrypto
 
 /// Immutable, portable source identity. No device credentials are stored in definitions.
 public final class RuleDefinition: @unchecked Sendable, Equatable {
-    public static let API: Int = 2
+    public static let API: Int = 3
     public static let MAX_SCRIPT: Int = 512 * 1024
     public static let MAX_PACKAGE: Int = 16 * 1024 * 1024
+
+    public static let SUPPORTED_CAPABILITIES: Set<String> = [
+        "cleartext", "decodePipeline", "tiles", "stripes", "binaryHttp", "cryptoV3", "minInterval", "render"
+    ]
+
+    public static let LEGACY_CLEARTEXT_HOSTS: Set<String> = [
+        "www.aymry.com",
+        "www.mh250.com",
+        "www.xiuxmanhua.com",
+        "123.77comic.com",
+        "content.mkzcdn.com",
+        "img.maomimh.com",
+        "pp1.tupian.run"
+    ]
 
     public let id: String
     public let name: String
@@ -30,6 +44,7 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
     public let engineApi: Int
     public let requestLimit: Int
     public let timeoutSeconds: Int
+    public let minIntervalMs: Int
     public let replacesNative: Bool
     public let imageRefresh: Bool
     public let supportsSearch: Bool
@@ -37,6 +52,8 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
     public let requiresVpn: Bool
     private let vpnDeclared: Bool
     public let hosts: [String]
+    public let requires: [String]
+    public let cleartextHosts: [String]
 
     public init(json: [String: Any]) throws {
         guard let id = json["id"] as? String,
@@ -59,12 +76,23 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
             throw RuleError("站源 ID 无效或已保留")
         }
 
-        guard !self.name.isEmpty, self.name.count <= 80, version >= 1 else {
+        guard !self.name.isEmpty, self.name.count <= 80, version >= 1, engineApi >= 1 else {
             throw RuleError("站源名称或版本无效")
         }
 
-        guard engineApi >= 1 && engineApi <= Self.API else {
-            throw RuleError("此规则需要其他版本的规则引擎")
+        let scriptTrimmed = script.trimmingCharacters(in: .whitespacesAndNewlines)
+        let scriptBytes = Data(script.utf8)
+        guard !scriptTrimmed.isEmpty, scriptBytes.count <= Self.MAX_SCRIPT else {
+            throw RuleError("规则脚本为空或超过 512KiB")
+        }
+        self.script = script
+        self.scriptSha256 = Self.sha(scriptBytes)
+        guard self.scriptSha256.caseInsensitiveCompare(scriptSha256) == .orderedSame else {
+            throw RuleError("规则脚本校验失败")
+        }
+
+        if engineApi > Self.API {
+            throw UnsupportedRuleError("此规则需要升级规则引擎（API \(engineApi)）")
         }
         self.engineApi = engineApi
 
@@ -84,8 +112,11 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
 
         self.requestLimit = (json["requestLimit"] as? Int) ?? 40
         self.timeoutSeconds = (json["timeoutSeconds"] as? Int) ?? 90
+        self.minIntervalMs = (json["minIntervalMs"] as? Int) ?? 50
 
-        guard requestLimit >= 1 && requestLimit <= 512 && timeoutSeconds >= 10 && timeoutSeconds <= 240 else {
+        guard requestLimit >= 1 && requestLimit <= 512 &&
+              timeoutSeconds >= 10 && timeoutSeconds <= 240 &&
+              minIntervalMs >= 0 && minIntervalMs <= 10000 else {
             throw RuleError("规则执行配额无效")
         }
         if engineApi < 2 && (requestLimit != 40 || timeoutSeconds != 90) {
@@ -97,6 +128,31 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
         if engineApi == 1 && !supportsSearch {
             throw RuleError("搜索能力声明需要规则引擎 API 2")
         }
+        if json["minIntervalMs"] != nil && engineApi < 3 {
+            throw RuleError("请求间隔配置需要规则引擎 API 3")
+        }
+
+        if let reqAny = json["requires"] {
+            guard engineApi >= 3 else {
+                throw RuleError("能力声明需要规则引擎 API 3")
+            }
+            guard let reqList = reqAny as? [String], reqList.count <= 32 else {
+                throw RuleError("规则能力声明格式无效")
+            }
+            var reqSet = Set<String>()
+            for cap in reqList {
+                guard cap.range(of: #"^[a-zA-Z][a-zA-Z0-9_]{0,31}$"#, options: .regularExpression) != nil else {
+                    throw RuleError("规则能力名称格式无效")
+                }
+                guard Self.SUPPORTED_CAPABILITIES.contains(cap) else {
+                    throw UnsupportedRuleError("规则需要新版能力：\(cap)")
+                }
+                reqSet.insert(cap)
+            }
+            self.requires = reqSet.sorted()
+        } else {
+            self.requires = []
+        }
 
         var cleanedBase = rawBaseUrl
         while cleanedBase.hasSuffix("/") {
@@ -105,19 +161,8 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
         self.baseUrl = cleanedBase
         try Self.validateHttp(self.baseUrl)
 
-        guard let baseHost = URL(string: self.baseUrl)?.host else {
+        guard let parsedBase = URL(string: self.baseUrl), let baseHost = parsedBase.host else {
             throw RuleError("站点域名不在授权列表中")
-        }
-
-        let scriptTrimmed = script.trimmingCharacters(in: .whitespacesAndNewlines)
-        let scriptBytes = Data(script.utf8)
-        guard !scriptTrimmed.isEmpty, scriptBytes.count <= Self.MAX_SCRIPT else {
-            throw RuleError("规则脚本为空或超过 512KiB")
-        }
-        self.script = script
-        self.scriptSha256 = Self.sha(scriptBytes)
-        guard self.scriptSha256.caseInsensitiveCompare(scriptSha256) == .orderedSame else {
-            throw RuleError("规则脚本校验失败")
         }
 
         self.replacesNative = (json["replacesNative"] as? Bool) ?? false
@@ -129,19 +174,40 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
         var allow = Set<String>()
         for h in hostsList {
             let host = h.lowercased()
-            guard host.count <= 253,
-                  host.range(of: #"^(?:\*\.)?[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"#, options: .regularExpression) != nil,
-                  !host.contains("..") else {
-                throw RuleError("域名授权格式无效")
-            }
+            try Self.validateHostPattern(host)
             allow.insert(host)
         }
-        self.hosts = allow.sorted()
+        let sortedHosts = allow.sorted()
+        self.hosts = sortedHosts
+
+        if let clearAny = json["cleartextHosts"] {
+            guard engineApi >= 3 else {
+                throw RuleError("明文域名声明需要规则引擎 API 3")
+            }
+            guard let clearList = clearAny as? [String], clearList.count <= 64 else {
+                throw RuleError("明文域名数量无效")
+            }
+            var clearSet = Set<String>()
+            for rawCh in clearList {
+                let ch = rawCh.lowercased()
+                try Self.validateHostPattern(ch)
+                guard Self.coversHostPattern(sortedHosts, candidate: ch) else {
+                    throw RuleError("明文域名必须在 hosts 授权范围内")
+                }
+                clearSet.insert(ch)
+            }
+            self.cleartextHosts = clearSet.sorted()
+        } else {
+            self.cleartextHosts = []
+        }
 
         // Java identity serialization uses ArrayList.toString() which produces: "[elem1, elem2]"
         let hostsString = "[" + self.hosts.joined(separator: ", ") + "]"
+        let requiresString = "[" + self.requires.joined(separator: ", ") + "]"
+        let cleartextString = "[" + self.cleartextHosts.joined(separator: ", ") + "]"
         let identity = "\(id)\n\(version)\n\(self.name)\n\(self.baseUrl)\n\(hostsString)\n\(self.replacesNative)\n\(self.imageRefresh)\n\(self.scriptSha256)"
             + (engineApi == 1 ? "" : "\napi=\(engineApi)\nsearch=\(supportsSearch)\nbrowser=\(browserSession)\nrequests=\(requestLimit)\ntimeout=\(timeoutSeconds)")
+            + (engineApi < 3 ? "" : "\nrequires=\(requiresString)\ncleartext=\(cleartextString)\ninterval=\(minIntervalMs)")
 
         self.coreHash = Self.sha(Data(identity.utf8))
         self.hash = self.vpnDeclared
@@ -151,18 +217,62 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
         guard self.allows(baseHost) else {
             throw RuleError("站点域名不在授权列表中")
         }
+        if parsedBase.scheme?.lowercased() == "http" &&
+           baseHost.lowercased() != "127.0.0.1" &&
+           !self.allowsCleartext(baseHost) {
+            throw RuleError("明文 HTTP 站点域名须声明于 cleartextHosts")
+        }
     }
 
-    public func allows(_ host: String?) -> Bool {
-        guard let host = host?.lowercased() else { return false }
-        for allowed in hosts {
-            if host == allowed { return true }
+    private static func validateHostPattern(_ host: String) throws {
+        guard host.count <= 253,
+              host.range(of: #"^(?:\*\.)?[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"#, options: .regularExpression) != nil,
+              !host.contains("..") else {
+            throw RuleError("域名授权格式无效")
+        }
+    }
+
+    private static func matchesHostList(_ patterns: [String], host: String) -> Bool {
+        let normalized = host.lowercased()
+        for allowed in patterns {
+            if normalized == allowed { return true }
             if allowed.hasPrefix("*.") {
                 let suffix = String(allowed.dropFirst())
-                if host.hasSuffix(suffix) { return true }
+                if normalized.hasSuffix(suffix) { return true }
             }
         }
         return false
+    }
+
+    private static func coversHostPattern(_ patterns: [String], candidate: String) -> Bool {
+        if !candidate.hasPrefix("*.") {
+            return matchesHostList(patterns, host: candidate)
+        }
+        for allowed in patterns {
+            if candidate == allowed { return true }
+            if allowed.hasPrefix("*.") && candidate.hasSuffix(String(allowed.dropFirst())) {
+                return true
+            }
+        }
+        return false
+    }
+
+    public func allows(_ host: String?) -> Bool {
+        guard let host = host else { return false }
+        return Self.matchesHostList(hosts, host: host)
+    }
+
+    public func allowsCleartext(_ host: String?) -> Bool {
+        guard let host = host else { return false }
+        let normalized = host.lowercased()
+        if engineApi >= 3 {
+            return Self.matchesHostList(cleartextHosts, host: normalized)
+        }
+        return Self.LEGACY_CLEARTEXT_HOSTS.contains(normalized)
+    }
+
+    public func requiresCapability(_ capability: String) -> Bool {
+        requires.contains(capability)
     }
 
     public func hasVpnDeclaration() -> Bool {
@@ -187,6 +297,17 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
             dict["browserSession"] = browserSession
             dict["requestLimit"] = requestLimit
             dict["timeoutSeconds"] = timeoutSeconds
+        }
+        if engineApi >= 3 {
+            if !requires.isEmpty {
+                dict["requires"] = requires
+            }
+            if !cleartextHosts.isEmpty {
+                dict["cleartextHosts"] = cleartextHosts
+            }
+            if minIntervalMs != 50 {
+                dict["minIntervalMs"] = minIntervalMs
+            }
         }
         if vpnDeclared {
             dict["requiresVpn"] = requiresVpn
@@ -280,10 +401,7 @@ public enum RuleCrypto {
 
         case "base64Decode":
             let decoded = try RuleBase64.decode(dataStr)
-            guard let text = String(data: decoded, encoding: .utf8) else {
-                throw RuleError("UTF-8 解码失败")
-            }
-            return text
+            return try encodeBytes(decoded, encoding: (args["outputEncoding"] as? String) ?? "utf8")
 
         case "base64Latin1":
             let decoded = try RuleBase64.decode(dataStr)
@@ -298,6 +416,14 @@ public enum RuleCrypto {
             }
             return RuleBase64.encode(raw, false)
 
+        case "hexEncode":
+            let raw = try parseBinary(dataStr, encoding: (args["dataEncoding"] as? String) ?? "utf8")
+            return toHex(raw)
+
+        case "hexDecode":
+            let raw = try parseBinary(dataStr, encoding: "hex")
+            return try encodeBytes(raw, encoding: (args["outputEncoding"] as? String) ?? "utf8")
+
         case "urlEncode":
             let charset = (args["charset"] as? String) ?? "UTF-8"
             guard ["UTF-8", "GBK", "GB2312", "Big5"].contains(charset) else {
@@ -309,16 +435,38 @@ public enum RuleCrypto {
             return pinyin(dataStr)
 
         case "md5":
-            return md5Hex(Data(dataStr.utf8))
+            let input = try parseBinary(dataStr, encoding: (args["dataEncoding"] as? String) ?? "utf8")
+            let digest = try parseBinary(md5Hex(input), encoding: "hex")
+            return try encodeBytes(digest, encoding: (args["outputEncoding"] as? String) ?? "hex")
 
         case "sha1":
-            return sha1Hex(Data(dataStr.utf8))
+            let input = try parseBinary(dataStr, encoding: (args["dataEncoding"] as? String) ?? "utf8")
+            let digest = try parseBinary(sha1Hex(input), encoding: "hex")
+            return try encodeBytes(digest, encoding: (args["outputEncoding"] as? String) ?? "hex")
 
         case "sha512":
-            return sha512Hex(Data(dataStr.utf8))
+            let input = try parseBinary(dataStr, encoding: (args["dataEncoding"] as? String) ?? "utf8")
+            let digest = try parseBinary(sha512Hex(input), encoding: "hex")
+            return try encodeBytes(digest, encoding: (args["outputEncoding"] as? String) ?? "hex")
 
         case "sha256":
-            return RuleDefinition.sha(Data(dataStr.utf8))
+            let input = try parseBinary(dataStr, encoding: (args["dataEncoding"] as? String) ?? "utf8")
+            let digest = try parseBinary(RuleDefinition.sha(input), encoding: "hex")
+            return try encodeBytes(digest, encoding: (args["outputEncoding"] as? String) ?? "hex")
+
+        case "hmacSha1", "hmacSha256":
+            guard let keyStr = args["key"] as? String else {
+                throw RuleError("HMAC 缺少密钥")
+            }
+            let keyBytes = try parseBinary(keyStr, encoding: (args["keyEncoding"] as? String) ?? "utf8")
+            guard !keyBytes.isEmpty else {
+                throw RuleError("HMAC 密钥不能为空")
+            }
+            let input = try parseBinary(dataStr, encoding: (args["dataEncoding"] as? String) ?? "utf8")
+            let mac = type == "hmacSha1"
+                ? SourceAES.hmacSha1(data: input, key: keyBytes)
+                : SourceAES.hmacSha256(data: input, key: keyBytes)
+            return try encodeBytes(mac, encoding: (args["outputEncoding"] as? String) ?? "hex")
 
         case "int64":
             guard let aStr = args["a"] as? String,
@@ -334,6 +482,7 @@ public enum RuleCrypto {
             case "and": return String(left & right)
             case "or":  return String(left | right)
             case "add": return String(left &+ right)
+            case "sub": return String(left &- right)
             case "mod":
                 guard right != 0 else { throw RuleError("整数运算除数不能为零") }
                 return String(left % right)
@@ -342,21 +491,38 @@ public enum RuleCrypto {
             }
 
         case "inflate", "gzip":
-            let raw = try RuleBase64.decode(dataStr)
+            let raw = try parseBinary(dataStr, encoding: (args["dataEncoding"] as? String) ?? "base64")
             let decompressed = try decompress(raw, isGzip: type == "gzip")
-            guard let text = String(data: decompressed, encoding: .utf8) else {
-                throw RuleError("解压后数据不是有效 UTF-8")
-            }
-            return text
+            return try encodeBytes(decompressed, encoding: (args["outputEncoding"] as? String) ?? "utf8")
 
-        case "aesCbcDecrypt", "aesEcbDecrypt":
+        case "aesCbcDecrypt", "aesEcbDecrypt", "aesCtrDecrypt":
             let encoding = (args["dataEncoding"] as? String) ?? "base64"
             let binaryData = try parseBinary(dataStr, encoding: encoding)
             let decrypted = try decrypt(input: binaryData, args: args)
-            guard let text = String(data: decrypted, encoding: .utf8) else {
-                throw RuleError("解密后数据不是有效 UTF-8")
+            return try encodeBytes(decrypted, encoding: (args["outputEncoding"] as? String) ?? "utf8")
+
+        case "aesCbcEncrypt", "aesEcbEncrypt", "aesCtrEncrypt":
+            let encoding = (args["dataEncoding"] as? String) ?? "utf8"
+            let binaryData = try parseBinary(dataStr, encoding: encoding)
+            let encrypted = try encrypt(input: binaryData, args: args)
+            return try encodeBytes(encrypted, encoding: (args["outputEncoding"] as? String) ?? "base64")
+
+        case "xorBytes":
+            guard let keyStr = args["key"] as? String else {
+                throw RuleError("缺少 XOR 密钥")
             }
-            return text
+            let src = try parseBinary(dataStr, encoding: (args["dataEncoding"] as? String) ?? "base64")
+            let xorKey = try parseBinary(keyStr, encoding: (args["keyEncoding"] as? String) ?? "base64")
+            guard !xorKey.isEmpty, xorKey.count <= 4096 else {
+                throw RuleError("XOR 密钥长度无效")
+            }
+            var out = [UInt8](repeating: 0, count: src.count)
+            let srcBytes = Array(src)
+            let keyBytes = Array(xorKey)
+            for i in 0..<srcBytes.count {
+                out[i] = srcBytes[i] ^ keyBytes[i % keyBytes.count]
+            }
+            return try encodeBytes(Data(out), encoding: (args["outputEncoding"] as? String) ?? "utf8")
 
         default:
             throw RuleError("不支持的编码方式")
@@ -364,12 +530,21 @@ public enum RuleCrypto {
     }
 
     public static func decrypt(input: Data, args: [String: Any]) throws -> Data {
-        let isEcb = (args["type"] as? String) == "aesEcbDecrypt"
+        let type = (args["type"] as? String) ?? "aesCbcDecrypt"
+        let isEcb = type == "aesEcbDecrypt"
+        let isCtr = type == "aesCtrDecrypt"
+        let padding = (args["padding"] as? String) ?? (isCtr ? "NoPadding" : "PKCS5Padding")
+        guard padding == "PKCS5Padding" || padding == "NoPadding" else {
+            throw RuleError("不支持此填充模式")
+        }
         guard let keyStr = args["key"] as? String else {
             throw RuleError("缺少解密密钥")
         }
         let keyEncoding = (args["keyEncoding"] as? String) ?? "base64"
         let key = try parseBinary(keyStr, encoding: keyEncoding)
+        guard [16, 24, 32].contains(key.count) else {
+            throw RuleError("AES 密钥长度无效")
+        }
 
         var ciphertext = input
         let iv: Data
@@ -379,30 +554,88 @@ public enum RuleCrypto {
             let ivPrefix = (args["ivPrefix"] as? Bool) ?? false
             if ivPrefix {
                 guard ciphertext.count >= 16 else { throw RuleError("加密数据不完整") }
-                iv = ciphertext.prefix(16)
-                ciphertext = ciphertext.dropFirst(16)
+                iv = Data(ciphertext.prefix(16))
+                ciphertext = Data(ciphertext.dropFirst(16))
             } else {
                 guard let ivStr = args["iv"] as? String else { throw RuleError("缺少解密向量") }
                 let ivEncoding = (args["ivEncoding"] as? String) ?? "base64"
                 iv = try parseBinary(ivStr, encoding: ivEncoding)
             }
+            guard iv.count == 16 else {
+                throw RuleError("AES 初始向量长度无效")
+            }
         }
 
+        let pkcs7 = (padding == "PKCS5Padding")
         do {
             if isEcb {
-                return try aesEcbDecrypt(ciphertext, key: key)
+                return try SourceAES.ecbDecrypt(ciphertext, key: key, pkcs7: pkcs7)
+            } else if isCtr {
+                return try SourceAES.ctrCrypt(ciphertext, key: key, iv: iv)
             } else {
-                return try SourceAES.decrypt(ciphertext, key: key, iv: iv)
+                return try SourceAES.cbcDecrypt(ciphertext, key: key, iv: iv, pkcs7: pkcs7)
             }
         } catch {
-            throw RuleError("规则图片解码失败")
+            throw RuleError("规则数据解密失败")
         }
     }
 
-    private static func parseBinary(_ text: String, encoding: String) throws -> Data {
+    public static func encrypt(input: Data, args: [String: Any]) throws -> Data {
+        let type = (args["type"] as? String) ?? "aesCbcEncrypt"
+        let isEcb = type == "aesEcbEncrypt"
+        let isCtr = type == "aesCtrEncrypt"
+        let padding = (args["padding"] as? String) ?? (isCtr ? "NoPadding" : "PKCS5Padding")
+        guard padding == "PKCS5Padding" || padding == "NoPadding" else {
+            throw RuleError("不支持此填充模式")
+        }
+        guard let keyStr = args["key"] as? String else {
+            throw RuleError("缺少加密密钥")
+        }
+        let key = try parseBinary(keyStr, encoding: (args["keyEncoding"] as? String) ?? "base64")
+        guard [16, 24, 32].contains(key.count) else {
+            throw RuleError("AES 密钥长度无效")
+        }
+        let iv: Data
+        if isEcb {
+            iv = Data()
+        } else {
+            guard let ivStr = args["iv"] as? String else { throw RuleError("缺少加密向量") }
+            iv = try parseBinary(ivStr, encoding: (args["ivEncoding"] as? String) ?? "base64")
+            guard iv.count == 16 else {
+                throw RuleError("AES 初始向量长度无效")
+            }
+        }
+        let pkcs7 = (padding == "PKCS5Padding")
+        do {
+            let encrypted: Data
+            if isEcb {
+                encrypted = try SourceAES.ecbEncrypt(input, key: key, pkcs7: pkcs7)
+            } else if isCtr {
+                encrypted = try SourceAES.ctrCrypt(input, key: key, iv: iv)
+            } else {
+                encrypted = try SourceAES.cbcEncrypt(input, key: key, iv: iv, pkcs7: pkcs7)
+            }
+            if !isEcb && ((args["ivPrefix"] as? Bool) == true) {
+                var prefixed = Data(capacity: 16 + encrypted.count)
+                prefixed.append(iv)
+                prefixed.append(encrypted)
+                return prefixed
+            }
+            return encrypted
+        } catch {
+            throw RuleError("规则数据加密失败")
+        }
+    }
+
+    static func parseBinary(_ text: String, encoding: String) throws -> Data {
         switch encoding {
         case "utf8":
             return Data(text.utf8)
+        case "latin1":
+            guard let d = text.data(using: .isoLatin1) else {
+                throw RuleError("Latin1 编码失败")
+            }
+            return d
         case "base64":
             return try RuleBase64.decode(text)
         case "hex":
@@ -410,6 +643,7 @@ public enum RuleCrypto {
                 throw RuleError("十六进制数据无效")
             }
             var data = Data()
+            data.reserveCapacity(text.count / 2)
             var index = text.startIndex
             while index < text.endIndex {
                 let next = text.index(index, offsetBy: 2)
@@ -422,6 +656,30 @@ public enum RuleCrypto {
         default:
             throw RuleError("不支持此二进制编码")
         }
+    }
+
+    private static func encodeBytes(_ data: Data, encoding: String) throws -> String {
+        switch encoding {
+        case "utf8":
+            return String(decoding: data, as: UTF8.self)
+        case "latin1":
+            guard let str = String(data: data, encoding: .isoLatin1) else {
+                throw RuleError("Latin1 解码失败")
+            }
+            return str
+        case "base64":
+            return RuleBase64.encode(data, false)
+        case "base64url":
+            return RuleBase64.encode(data, true)
+        case "hex":
+            return toHex(data)
+        default:
+            throw RuleError("不支持此输出编码")
+        }
+    }
+
+    private static func toHex(_ data: Data) -> String {
+        data.map { String(format: "%02x", $0) }.joined()
     }
 
     private static func urlEncode(_ text: String, charset: String) throws -> String {
@@ -514,54 +772,6 @@ public enum RuleCrypto {
     }
     #endif
 
-    private static func aesEcbDecrypt(_ ciphertext: Data, key: Data) throws -> Data {
-        guard [16, 24, 32].contains(key.count), !ciphertext.isEmpty, ciphertext.count.isMultiple(of: 16) else {
-            throw RuleError("加密数据格式无效")
-        }
-        #if canImport(CommonCrypto)
-        var output = Data(count: ciphertext.count)
-        let capacity = output.count
-        var written = 0
-        let status = output.withUnsafeMutableBytes { out in
-            ciphertext.withUnsafeBytes { cipherBytes in
-                key.withUnsafeBytes { keyBytes in
-                    CCCrypt(CCOperation(kCCDecrypt), CCAlgorithm(kCCAlgorithmAES),
-                            CCOptions(kCCOptionPKCS7Padding | kCCOptionECBMode),
-                            keyBytes.baseAddress, key.count, nil,
-                            cipherBytes.baseAddress, ciphertext.count, out.baseAddress, capacity, &written)
-                }
-            }
-        }
-        guard status == kCCSuccess else { throw RuleError("ECB 解密失败") }
-        output.count = written
-        return output
-        #elseif os(Linux)
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("xxcomic-ecb-" + UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
-        defer { try? FileManager.default.removeItem(at: directory) }
-        let input = directory.appendingPathComponent("input"), result = directory.appendingPathComponent("output")
-        try ciphertext.write(to: input)
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/openssl")
-        process.arguments = ["enc", "-d", "-aes-\(key.count * 8)-ecb", "-nopad", "-K", key.map { String(format: "%02x", $0) }.joined(),
-                             "-in", input.path, "-out", result.path]
-        process.standardOutput = FileHandle.nullDevice
-        process.standardError = FileHandle.nullDevice
-        try process.run()
-        process.waitUntilExit()
-        guard process.terminationStatus == 0 else { throw RuleError("ECB 解密失败") }
-        let padded = try Data(contentsOf: result)
-        guard let padding = padded.last, (1...16).contains(Int(padding)),
-              padded.count >= Int(padding),
-              padded.suffix(Int(padding)).allSatisfy({ $0 == padding }) else {
-            throw RuleError("ECB 填充无效")
-        }
-        return Data(padded.dropLast(Int(padding)))
-        #else
-        throw RuleError("当前平台不支持 ECB 解密")
-        #endif
-    }
-
     private static func decompress(_ data: Data, isGzip: Bool) throws -> Data {
         var stream = z_stream()
         // 32 + MAX_WBITS enables zlib or gzip automatic header detection
@@ -604,47 +814,173 @@ public enum RuleCrypto {
 // MARK: - RuleImageData
 
 public enum RuleImageData {
+    private static let maxBase64Bytes = 32 * 1024 * 1024
+
     public static func validate(rule: RuleDefinition, descriptor: [String: Any]) throws {
-        guard let type = descriptor["type"] as? String else {
+        try validate(rule: rule, spec: descriptor)
+    }
+
+    public static func validate(rule: RuleDefinition, spec: Any?) throws {
+        guard let spec = spec, !(spec is NSNull) else { return }
+        if let dict = spec as? [String: Any] {
+            try validateStep(rule: rule, d: dict)
+            return
+        }
+        if let arr = spec as? [Any] {
+            guard rule.engineApi >= 3 else {
+                throw RuleError("多步图片解码管线需要规则引擎 API 3")
+            }
+            guard arr.count >= 1 && arr.count <= 8 else {
+                throw RuleError("图片解码步骤数量无效")
+            }
+            for item in arr {
+                guard let step = item as? [String: Any] else {
+                    throw RuleError("图片解码步骤格式无效")
+                }
+                try validateStep(rule: rule, d: step)
+            }
+            return
+        }
+        throw RuleError("图片解码配置格式无效")
+    }
+
+    private static func validateStep(rule: RuleDefinition, d: [String: Any]) throws {
+        guard let type = d["type"] as? String else {
             throw RuleError("缺少图片解码类型")
         }
         if type == "prefix" {
             if rule.engineApi < 2 { throw RuleError("图片前缀解码需要规则引擎 API 2") }
-            guard let count = descriptor["bytes"] as? Int,
-                  let magicStr = descriptor["magic"] as? String else {
+            guard let count = d["bytes"] as? Int, count >= 1 && count <= 65536 else {
                 throw RuleError("图片前缀参数无效")
             }
-            let marker = try RuleBase64.decode(magicStr)
-            guard count >= 1 && count <= 65536 && marker.count >= 1 && marker.count <= count else {
-                throw RuleError("图片前缀参数无效")
+            let magicOpt = d["magic"] as? String
+            if rule.engineApi < 3 || (magicOpt != nil && !(magicOpt?.isEmpty ?? true)) {
+                guard let magicStr = magicOpt else {
+                    throw RuleError("图片前缀参数无效")
+                }
+                let marker = try RuleBase64.decode(magicStr)
+                guard marker.count >= 1 && marker.count <= count else {
+                    throw RuleError("图片前缀参数无效")
+                }
             }
             return
         }
-        guard type == "aesCbc" else {
-            throw RuleError("此图片解码需要升级规则引擎")
-        }
-        guard let keyStr = descriptor["key"] as? String else {
-            throw RuleError("缺少解码密钥")
-        }
-        let keyLen = try RuleBase64.decode(keyStr).count
-        guard [16, 24, 32].contains(keyLen) else {
-            throw RuleError("图片解码密钥无效")
-        }
-        let ivPrefix = (descriptor["ivPrefix"] as? Bool) ?? false
-        let passIfPlain = (descriptor["passIfPlain"] as? Bool) ?? false
-        if (ivPrefix || passIfPlain) && rule.engineApi < 2 {
-            throw RuleError("图片解码参数需要规则引擎 API 2")
-        }
-        if !ivPrefix {
-            guard let ivStr = descriptor["iv"] as? String,
-                  try RuleBase64.decode(ivStr).count == 16 else {
-                throw RuleError("图片解码向量无效")
+        if type == "aesCbc" {
+            let keyEncoding = (d["keyEncoding"] as? String) ?? "base64"
+            let ivEncoding = (d["ivEncoding"] as? String) ?? "base64"
+            let padding = (d["padding"] as? String) ?? "PKCS5Padding"
+            if rule.engineApi < 3 && (keyEncoding != "base64" || ivEncoding != "base64" || padding != "PKCS5Padding") {
+                throw RuleError("图片解码编码参数需要规则引擎 API 3")
             }
+            guard let keyStr = d["key"] as? String else {
+                throw RuleError("缺少解码密钥")
+            }
+            let keyLen = try RuleCrypto.parseBinary(keyStr, encoding: keyEncoding).count
+            guard [16, 24, 32].contains(keyLen) else {
+                throw RuleError("图片解码密钥无效")
+            }
+            guard padding == "PKCS5Padding" || padding == "NoPadding" else {
+                throw RuleError("图片解码填充无效")
+            }
+            let ivPrefix = (d["ivPrefix"] as? Bool) ?? false
+            let passIfPlain = (d["passIfPlain"] as? Bool) ?? false
+            if (ivPrefix || passIfPlain) && rule.engineApi < 2 {
+                throw RuleError("图片解码参数需要规则引擎 API 2")
+            }
+            if !ivPrefix {
+                guard let ivStr = d["iv"] as? String,
+                      try RuleCrypto.parseBinary(ivStr, encoding: ivEncoding).count == 16 else {
+                    throw RuleError("图片解码向量无效")
+                }
+            }
+            return
         }
+        if type == "aesEcb" {
+            guard rule.engineApi >= 3 else {
+                throw RuleError("AES-ECB 图片解码需要规则引擎 API 3")
+            }
+            guard let keyStr = d["key"] as? String else {
+                throw RuleError("缺少解码密钥")
+            }
+            let keyLen = try RuleCrypto.parseBinary(keyStr, encoding: (d["keyEncoding"] as? String) ?? "base64").count
+            guard [16, 24, 32].contains(keyLen) else {
+                throw RuleError("图片解码密钥无效")
+            }
+            let padding = (d["padding"] as? String) ?? "PKCS5Padding"
+            guard padding == "PKCS5Padding" || padding == "NoPadding" else {
+                throw RuleError("图片解码填充无效")
+            }
+            return
+        }
+        if type == "aesCtr" {
+            guard rule.engineApi >= 3 else {
+                throw RuleError("AES-CTR 图片解码需要规则引擎 API 3")
+            }
+            guard let keyStr = d["key"] as? String else {
+                throw RuleError("缺少解码密钥")
+            }
+            let keyLen = try RuleCrypto.parseBinary(keyStr, encoding: (d["keyEncoding"] as? String) ?? "base64").count
+            guard [16, 24, 32].contains(keyLen) else {
+                throw RuleError("图片解码密钥无效")
+            }
+            let ivPrefix = (d["ivPrefix"] as? Bool) ?? false
+            if !ivPrefix {
+                guard let ivStr = d["iv"] as? String,
+                      try RuleCrypto.parseBinary(ivStr, encoding: (d["ivEncoding"] as? String) ?? "base64").count == 16 else {
+                    throw RuleError("图片解码向量无效")
+                }
+            }
+            return
+        }
+        if type == "xor" {
+            guard rule.engineApi >= 3 else {
+                throw RuleError("XOR 图片解码需要规则引擎 API 3")
+            }
+            guard let keyStr = d["key"] as? String else {
+                throw RuleError("XOR 密钥无效")
+            }
+            let key = try RuleCrypto.parseBinary(keyStr, encoding: (d["keyEncoding"] as? String) ?? "base64")
+            guard key.count >= 1 && key.count <= 4096 else {
+                throw RuleError("XOR 密钥无效")
+            }
+            let skip = (d["skipBytes"] as? Int) ?? 0
+            guard skip >= 0 && skip <= 65536 else {
+                throw RuleError("XOR 偏移无效")
+            }
+            return
+        }
+        if type == "base64" {
+            guard rule.engineApi >= 3 else {
+                throw RuleError("Base64 图片解码需要规则引擎 API 3")
+            }
+            return
+        }
+        throw RuleError("此图片解码需要升级规则引擎")
     }
 
     public static func decode(descriptor: [String: Any]?, data: Data) throws -> Data {
-        guard let d = descriptor else { return data }
+        try decode(spec: descriptor, data: data)
+    }
+
+    public static func decode(spec: Any?, data: Data) throws -> Data {
+        guard let spec = spec, !(spec is NSNull) else { return data }
+        if let dict = spec as? [String: Any] {
+            return try decodeStep(d: dict, data: data, lastStep: true)
+        }
+        if let arr = spec as? [Any] {
+            var current = data
+            for (i, item) in arr.enumerated() {
+                guard let step = item as? [String: Any] else {
+                    throw RuleError("图片解码配置无效")
+                }
+                current = try decodeStep(d: step, data: current, lastStep: i == arr.count - 1)
+            }
+            return current
+        }
+        throw RuleError("图片解码配置无效")
+    }
+
+    private static func decodeStep(d: [String: Any], data: Data, lastStep: Bool) throws -> Data {
         let type = (d["type"] as? String) ?? ""
         let passIfPlain = (d["passIfPlain"] as? Bool) ?? false
 
@@ -653,43 +989,100 @@ public enum RuleImageData {
         }
 
         if type == "prefix" {
-            guard let count = d["bytes"] as? Int, count >= 1 && count <= 65536,
-                  let magicStr = d["magic"] as? String else {
+            guard let count = d["bytes"] as? Int, count >= 1 && count <= 65536 else {
                 throw RuleError("图片前缀参数无效")
             }
-            let marker = try RuleBase64.decode(magicStr)
-            if data.count < marker.count || data.prefix(marker.count) != marker {
-                return data
+            if let magicStr = d["magic"] as? String, !magicStr.isEmpty {
+                let marker = try RuleBase64.decode(magicStr)
+                if data.count < marker.count || data.prefix(marker.count) != marker {
+                    return data
+                }
             }
             guard data.count >= count else {
                 throw RuleError("图片数据不完整")
             }
-            let remainder = data.dropFirst(count)
-            guard isImage(Data(remainder)) else {
+            let remainder = Data(data.dropFirst(count))
+            if lastStep && !isImage(remainder) {
                 throw RuleError("图片前缀后的数据损坏")
             }
-            return Data(remainder)
+            return remainder
         }
 
-        if type == "aesCbc" {
+        if type == "xor" {
+            guard let keyStr = d["key"] as? String else {
+                throw RuleError("XOR 密钥无效")
+            }
+            let key = Array(try RuleCrypto.parseBinary(keyStr, encoding: (d["keyEncoding"] as? String) ?? "base64"))
+            guard key.count >= 1 && key.count <= 4096 else {
+                throw RuleError("XOR 密钥无效")
+            }
+            let skip = (d["skipBytes"] as? Int) ?? 0
+            guard skip >= 0 && skip <= 65536 else {
+                throw RuleError("XOR 偏移无效")
+            }
+            var bytes = Array(data)
+            if skip < bytes.count {
+                for i in skip..<bytes.count {
+                    bytes[i] ^= key[(i - skip) % key.count]
+                }
+            }
+            return Data(bytes)
+        }
+
+        if type == "base64" {
+            guard data.count <= maxBase64Bytes else {
+                throw RuleError("Base64 图片超过大小限制")
+            }
+            var text = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+            if let commaIdx = text.firstIndex(of: ",") {
+                let dist = text.distance(from: text.startIndex, to: commaIdx)
+                if dist > 0 && dist < 128 && text[..<commaIdx].contains(";base64") {
+                    text = String(text[text.index(after: commaIdx)...])
+                }
+            }
+            return try RuleBase64.decode(text)
+        }
+
+        if type == "aesEcb" {
             guard let keyStr = d["key"] as? String else { throw RuleError("缺少解码密钥") }
-            let key = try RuleBase64.decode(keyStr)
+            let key = try RuleCrypto.parseBinary(keyStr, encoding: (d["keyEncoding"] as? String) ?? "base64")
+            let padding = (d["padding"] as? String) ?? "PKCS5Padding"
+            do {
+                return try SourceAES.ecbDecrypt(data, key: key, pkcs7: padding == "PKCS5Padding")
+            } catch {
+                throw RuleError("规则图片解码失败")
+            }
+        }
+
+        if type == "aesCbc" || type == "aesCtr" {
+            let isCtr = (type == "aesCtr")
+            guard let keyStr = d["key"] as? String else { throw RuleError("缺少解码密钥") }
+            let key = try RuleCrypto.parseBinary(keyStr, encoding: (d["keyEncoding"] as? String) ?? "base64")
             let ivPrefix = (d["ivPrefix"] as? Bool) ?? false
 
             var ciphertext = data
             let iv: Data
             if ivPrefix {
                 guard ciphertext.count >= 16 else { throw RuleError("图片数据不完整") }
-                iv = ciphertext.prefix(16)
-                ciphertext = ciphertext.dropFirst(16)
+                iv = Data(ciphertext.prefix(16))
+                ciphertext = Data(ciphertext.dropFirst(16))
             } else {
                 guard let ivStr = d["iv"] as? String else { throw RuleError("缺少解密向量") }
-                iv = try RuleBase64.decode(ivStr)
+                iv = try RuleCrypto.parseBinary(ivStr, encoding: (d["ivEncoding"] as? String) ?? "base64")
             }
-            return try SourceAES.decrypt(ciphertext, key: key, iv: iv)
+            let padding = isCtr ? "NoPadding" : ((d["padding"] as? String) ?? "PKCS5Padding")
+            do {
+                if isCtr {
+                    return try SourceAES.ctrCrypt(ciphertext, key: key, iv: iv)
+                } else {
+                    return try SourceAES.cbcDecrypt(ciphertext, key: key, iv: iv, pkcs7: padding == "PKCS5Padding")
+                }
+            } catch {
+                throw RuleError("规则图片解码失败")
+            }
         }
 
-        return data
+        throw RuleError("此图片解码需要升级规则引擎")
     }
 
     public static func isImage(_ b: Data) -> Bool {
@@ -866,20 +1259,50 @@ public enum RuleImages {
     public static func transformation(_ tagged: String) throws -> String {
         guard isRule(tagged) else { return "" }
         do {
-            let meta = try metadata(tagged)
-            guard let image = meta["image"] as? [String: Any],
-                  let transform = image["transform"] as? [String: Any] else { return "" }
-            let type = (transform["type"] as? String) ?? ""
-            guard let bands = transform["bands"] as? Int,
-                  type == "reverseBands", bands >= 2 && bands <= 100 else {
-                throw RuleError("图片变换参数无效")
+            lock.lock()
+            let cached = resolvedCache[tagged]
+            lock.unlock()
+            let descriptor: [String: Any]?
+            if let cached {
+                descriptor = cached
+            } else {
+                descriptor = try metadata(tagged)["image"] as? [String: Any]
             }
-            return "bands:\(bands)"
+            guard let transform = descriptor?["transform"] as? [String: Any] else { return "" }
+            return try RuleBitmapTransform.validateAndSerialize(rule: nil, transform: transform)
         } catch let err as RuleError {
             throw err
         } catch {
             throw RuleError("图片变换信息损坏")
         }
+    }
+
+    public static func canRefresh(_ tagged: String, catalog: RuleCatalog? = nil) -> Bool {
+        guard isRule(tagged) else { return false }
+        if let meta = try? metadata(tagged),
+           let id = meta["id"] as? String,
+           let cat = catalog,
+           let source = cat.source(id) {
+            return source.rule.imageRefresh
+        }
+        if let meta = try? metadata(tagged),
+           let hash = meta["hash"] as? String,
+           let cat = catalog,
+           let source = try? cat.version(hash) {
+            return source.rule.imageRefresh
+        }
+        return false
+    }
+
+    public static func invalidateResolved(_ tagged: String) {
+        lock.lock()
+        resolvedCache.removeValue(forKey: tagged)
+        lock.unlock()
+    }
+
+    public static func isNonImageContentType(_ contentType: String?) -> Bool {
+        guard let ct = contentType?.lowercased(), !ct.isEmpty else { return false }
+        return ct.contains("text/html") || ct.contains("text/plain") || ct.contains("application/json") || ct.contains("text/xml")
     }
 
     public static func validate(rule: RuleDefinition, image: [String: Any]) throws {
@@ -891,8 +1314,13 @@ public enum RuleImages {
             throw RuleError("规则图片缺少地址")
         }
         try RuleDefinition.validateHttp(url)
-        guard let host = URL(string: url)?.host, rule.allows(host) else {
+        guard let parsed = URL(string: url), let host = parsed.host, rule.allows(host) else {
             throw RuleError("图片域名未获规则授权")
+        }
+        if parsed.scheme?.lowercased() == "http" &&
+           host.lowercased() != "127.0.0.1" &&
+           !rule.allowsCleartext(host) {
+            throw RuleError("规则未声明该图片域名的明文 HTTP 权限")
         }
 
         if let headers = image["headers"] as? [String: Any] {
@@ -906,8 +1334,8 @@ public enum RuleImages {
         try RuleHttp.checkHeader("Referer", referer)
         try RuleDefinition.validateHttp(referer)
 
-        if let decode = image["decode"] as? [String: Any] {
-            try RuleImageData.validate(rule: rule, descriptor: decode)
+        if let decodeSpec = image["decode"] {
+            try RuleImageData.validate(rule: rule, spec: decodeSpec)
         }
 
         if let cookies = image["cookies"] as? [String: Any] {
@@ -915,13 +1343,12 @@ public enum RuleImages {
             _ = try RuleSessions.checked(cookies)
         }
 
-        if let transform = image["transform"] as? [String: Any] {
-            guard rule.engineApi >= 2,
-                  (transform["type"] as? String) == "reverseBands",
-                  let bands = transform["bands"] as? Int,
-                  bands >= 2 && bands <= 100 else {
+        if let transformAny = image["transform"] {
+            guard !(transformAny is NSNull) else { return }
+            guard let transform = transformAny as? [String: Any] else {
                 throw RuleError("规则图片变换参数无效")
             }
+            _ = try RuleBitmapTransform.validateAndSerialize(rule: rule, transform: transform)
         }
     }
 
@@ -1029,64 +1456,289 @@ public enum RuleImages {
         } else {
             descriptor = try metadata(tagged)["image"] as? [String: Any]
         }
-        return try RuleImageData.decode(descriptor: descriptor?["decode"] as? [String: Any], data: data)
-    }
-}
-
-// MARK: - RuleHttp
-
-public final class RuleHttp: @unchecked Sendable {
-    public let rule: RuleDefinition
-    public let debug: Bool
-    private let cancelled: @Sendable () -> Bool
-    private let timeoutMillis: Int
-
-    private static let lock = NSLock()
-    private static var nextTimes = [String: Int64]()
-
-    public init(rule: RuleDefinition, debug: Bool = false, cancelled: @escaping @Sendable () -> Bool = { false }, timeoutMillis: Int = 20000) {
-        self.rule = rule
-        self.debug = debug
-        self.cancelled = cancelled
-        self.timeoutMillis = timeoutMillis
-    }
-
-    public func checkUrl(_ urlString: String) throws {
-        try RuleDefinition.validateHttp(urlString)
-        guard let host = URL(string: urlString)?.host else {
-            throw RuleError("规则请求了未授权的域名")
-        }
-        guard rule.allows(host) else {
-            throw RuleError("规则请求了未授权的域名")
-        }
-        if !debug {
-            try checkNonLocalHost(host)
-        }
-    }
-
-    private func checkNonLocalHost(_ host: String) throws {
-        let lower = host.lowercased()
-        if lower == "localhost" || lower.hasSuffix(".local") || lower.hasPrefix("127.") || lower == "0.0.0.0" || lower == "::1" {
-            throw RuleError("规则不能访问本地网络")
-        }
-    }
-
-    public static func checkHeader(_ key: String, _ value: String) throws {
-        guard key.range(of: #"^[A-Za-z0-9-]{1,64}$"#, options: .regularExpression) != nil,
-              !value.unicodeScalars.contains(where: { $0.value == 10 || $0.value == 13 }),
-              value.count <= 4096 else {
-            throw RuleError("规则请求头无效或不支持")
-        }
-        let lowerKey = key.lowercased()
-        if ["host", "connection", "content-length", "proxy-authorization", "cookie"].contains(lowerKey) {
-            throw RuleError("规则请求头无效或不支持")
-        }
+        return try RuleImageData.decode(spec: descriptor?["decode"], data: data)
     }
 }
 
 // MARK: - RuleBitmapTransform
 
 public enum RuleBitmapTransform {
+    public static let PREFIX_TX = "rule-tx:"
+
+    public struct Op: Equatable, Sendable {
+        public let srcLeft: Int
+        public let srcTop: Int
+        public let srcRight: Int
+        public let srcBottom: Int
+        public let dstLeft: Int
+        public let dstTop: Int
+        public let dstRight: Int
+        public let dstBottom: Int
+        public let rotation: Int
+        public let flipX: Bool
+        public let flipY: Bool
+
+        public init(
+            srcLeft: Int, srcTop: Int, srcRight: Int, srcBottom: Int,
+            dstLeft: Int, dstTop: Int, dstRight: Int, dstBottom: Int,
+            rotation: Int, flipX: Bool, flipY: Bool
+        ) {
+            self.srcLeft = srcLeft
+            self.srcTop = srcTop
+            self.srcRight = srcRight
+            self.srcBottom = srcBottom
+            self.dstLeft = dstLeft
+            self.dstTop = dstTop
+            self.dstRight = dstRight
+            self.dstBottom = dstBottom
+            self.rotation = rotation
+            self.flipX = flipX
+            self.flipY = flipY
+        }
+    }
+
+    public static func isSupported(_ transform: String?) -> Bool {
+        guard let transform = transform else { return false }
+        if transform.hasPrefix(PREFIX_TX) { return true }
+        return transform.range(of: #"^bands:[0-9]{1,3}$"#, options: .regularExpression) != nil
+    }
+
+    public static func validateAndSerialize(rule: RuleDefinition?, transform: [String: Any]?) throws -> String {
+        guard let t = transform else { return "" }
+        let type = (t["type"] as? String) ?? ""
+        if type == "reverseBands" {
+            if let rule = rule, rule.engineApi < 2 {
+                throw RuleError("图片分带还原需要规则引擎 API 2")
+            }
+            guard let bands = t["bands"] as? Int, bands >= 2 && bands <= 100 else {
+                throw RuleError("规则图片变换参数无效")
+            }
+            return "bands:\(bands)"
+        }
+        if type == "stripes" {
+            if let rule = rule, rule.engineApi < 3 {
+                throw RuleError("图片条带重排需要规则引擎 API 3")
+            }
+            let axis = (t["axis"] as? String) ?? "horizontal"
+            guard axis == "horizontal" || axis == "vertical" else {
+                throw RuleError("图片条带方向无效")
+            }
+            let order = try parsePermutation(t["order"], minLen: 2, maxLen: 256)
+            var canonical: [String: Any] = [
+                "type": "stripes",
+                "axis": axis,
+                "order": order
+            ]
+            if (t["flipX"] as? Bool) == true { canonical["flipX"] = true }
+            if (t["flipY"] as? Bool) == true { canonical["flipY"] = true }
+            let data = try JSONSerialization.data(withJSONObject: canonical, options: [.sortedKeys])
+            return PREFIX_TX + String(decoding: data, as: UTF8.self)
+        }
+        if type == "tiles" {
+            if let rule = rule, rule.engineApi < 3 {
+                throw RuleError("图片网格拼图还原需要规则引擎 API 3")
+            }
+            guard let cols = t["cols"] as? Int, let rows = t["rows"] as? Int,
+                  cols >= 1, cols <= 64, rows >= 1, rows <= 64,
+                  cols * rows >= 2, cols * rows <= 4096 else {
+                throw RuleError("图片网格尺寸无效")
+            }
+            let total = cols * rows
+            let order = try parsePermutation(t["order"], minLen: total, maxLen: total)
+            var canonical: [String: Any] = [
+                "type": "tiles",
+                "cols": cols,
+                "rows": rows,
+                "order": order
+            ]
+            if let rotAny = t["rotations"] {
+                guard let rotArr = rotAny as? [Int], rotArr.count == total else {
+                    throw RuleError("图片块旋转数组长度无效")
+                }
+                var rots = [Int]()
+                rots.reserveCapacity(total)
+                for rawR in rotArr {
+                    let r = ((rawR % 360) + 360) % 360
+                    guard r == 0 || r == 90 || r == 180 || r == 270 else {
+                        throw RuleError("图片块旋转角度仅支持 0/90/180/270")
+                    }
+                    rots.append(r)
+                }
+                canonical["rotations"] = rots
+            }
+            if (t["flipX"] as? Bool) == true { canonical["flipX"] = true }
+            if (t["flipY"] as? Bool) == true { canonical["flipY"] = true }
+            let data = try JSONSerialization.data(withJSONObject: canonical, options: [.sortedKeys])
+            return PREFIX_TX + String(decoding: data, as: UTF8.self)
+        }
+        throw RuleError("规则图片变换参数无效")
+    }
+
+    private static func parsePermutation(_ raw: Any?, minLen: Int, maxLen: Int) throws -> [Int] {
+        guard let arr = raw as? [Int] else {
+            throw RuleError("图片重排索引数量无效")
+        }
+        let n = arr.count
+        guard n >= minLen && n <= maxLen else {
+            throw RuleError("图片重排索引数量无效")
+        }
+        var seen = [Bool](repeating: false, count: n)
+        for v in arr {
+            guard v >= 0 && v < n && !seen[v] else {
+                throw RuleError("图片重排索引须为 0..N-1 的全排列")
+            }
+            seen[v] = true
+        }
+        return arr
+    }
+
+    public static func plan(width: Int, height: Int, transform: String) -> [Op] {
+        guard width >= 1, height >= 1, isSupported(transform) else { return [] }
+        if transform.hasPrefix("bands:") {
+            guard let count = Int(transform.dropFirst(6)),
+                  count >= 2, count <= 100, height >= count,
+                  let bandList = try? bounds(height: height, count: count) else {
+                return []
+            }
+            return bandList.map { b in
+                Op(srcLeft: 0, srcTop: b[0], srcRight: width, srcBottom: b[1],
+                   dstLeft: 0, dstTop: b[2], dstRight: width, dstBottom: b[3],
+                   rotation: 0, flipX: false, flipY: false)
+            }
+        }
+        let jsonPart = String(transform.dropFirst(PREFIX_TX.count))
+        guard let data = jsonPart.data(using: .utf8),
+              let spec = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              let type = spec["type"] as? String else {
+            return []
+        }
+        let flipX = (spec["flipX"] as? Bool) ?? false
+        let flipY = (spec["flipY"] as? Bool) ?? false
+
+        if type == "stripes" {
+            let vertical = ((spec["axis"] as? String) ?? "horizontal") == "vertical"
+            guard let order = try? parsePermutation(spec["order"], minLen: 2, maxLen: 256) else {
+                return []
+            }
+            let n = order.count
+            let total = vertical ? width : height
+            let step = total / n
+            guard step >= 1 else { return [] }
+            var ops = [Op]()
+            ops.reserveCapacity(n + 1)
+            for i in 0..<n {
+                let s = order[i]
+                if vertical {
+                    ops.append(Op(
+                        srcLeft: s * step, srcTop: 0, srcRight: (s + 1) * step, srcBottom: height,
+                        dstLeft: i * step, dstTop: 0, dstRight: (i + 1) * step, dstBottom: height,
+                        rotation: 0, flipX: flipX, flipY: flipY
+                    ))
+                } else {
+                    ops.append(Op(
+                        srcLeft: 0, srcTop: s * step, srcRight: width, srcBottom: (s + 1) * step,
+                        dstLeft: 0, dstTop: i * step, dstRight: width, dstBottom: (i + 1) * step,
+                        rotation: 0, flipX: flipX, flipY: flipY
+                    ))
+                }
+            }
+            let covered = n * step
+            if covered < total {
+                if vertical {
+                    ops.append(Op(srcLeft: covered, srcTop: 0, srcRight: width, srcBottom: height,
+                                  dstLeft: covered, dstTop: 0, dstRight: width, dstBottom: height,
+                                  rotation: 0, flipX: false, flipY: false))
+                } else {
+                    ops.append(Op(srcLeft: 0, srcTop: covered, srcRight: width, srcBottom: height,
+                                  dstLeft: 0, dstTop: covered, dstRight: width, dstBottom: height,
+                                  rotation: 0, flipX: false, flipY: false))
+                }
+            }
+            return ops
+        }
+
+        if type == "tiles" {
+            guard let cols = spec["cols"] as? Int, let rows = spec["rows"] as? Int,
+                  cols >= 1, rows >= 1 else {
+                return []
+            }
+            let count = cols * rows
+            guard let order = try? parsePermutation(spec["order"], minLen: count, maxLen: count) else {
+                return []
+            }
+            let rotArr = spec["rotations"] as? [Int]
+            let cellW = width / cols
+            let cellH = height / rows
+            guard cellW >= 1 && cellH >= 1 else { return [] }
+            var ops = [Op]()
+            ops.reserveCapacity(count + 2)
+            for idx in 0..<count {
+                let sIdx = order[idx]
+                let srcCol = sIdx % cols
+                let srcRow = sIdx / cols
+                let dstCol = idx % cols
+                let dstRow = idx / cols
+                var rot = (rotArr != nil && idx < rotArr!.count) ? (((rotArr![idx] % 360) + 360) % 360) : 0
+                if (rot == 90 || rot == 270) && cellW != cellH {
+                    rot = 0
+                }
+                ops.append(Op(
+                    srcLeft: srcCol * cellW, srcTop: srcRow * cellH, srcRight: (srcCol + 1) * cellW, srcBottom: (srcRow + 1) * cellH,
+                    dstLeft: dstCol * cellW, dstTop: dstRow * cellH, dstRight: (dstCol + 1) * cellW, dstBottom: (dstRow + 1) * cellH,
+                    rotation: rot, flipX: flipX, flipY: flipY
+                ))
+            }
+            let coveredW = cols * cellW
+            let coveredH = rows * cellH
+            if coveredW < width {
+                ops.append(Op(srcLeft: coveredW, srcTop: 0, srcRight: width, srcBottom: coveredH,
+                              dstLeft: coveredW, dstTop: 0, dstRight: width, dstBottom: coveredH,
+                              rotation: 0, flipX: false, flipY: false))
+            }
+            if coveredH < height {
+                ops.append(Op(srcLeft: 0, srcTop: coveredH, srcRight: width, srcBottom: height,
+                              dstLeft: 0, dstTop: coveredH, dstRight: width, dstBottom: height,
+                              rotation: 0, flipX: false, flipY: false))
+            }
+            return ops
+        }
+        return []
+    }
+
+    public static func applyToArgb(_ source: [UInt32], width: Int, height: Int, transform: String) -> [UInt32] {
+        let ops = plan(width: width, height: height, transform: transform)
+        guard !ops.isEmpty, source.count >= width * height else { return source }
+        var out = source
+        for op in ops {
+            let w = op.dstRight - op.dstLeft
+            let h = op.dstBottom - op.dstTop
+            for dy in 0..<h {
+                for dx in 0..<w {
+                    var sx = dx
+                    var sy = dy
+                    if op.rotation == 90 {
+                        sx = dy
+                        sy = w - 1 - dx
+                    } else if op.rotation == 180 {
+                        sx = w - 1 - dx
+                        sy = h - 1 - dy
+                    } else if op.rotation == 270 {
+                        sx = h - 1 - dy
+                        sy = dx
+                    }
+                    if op.flipX {
+                        sx = (op.srcRight - op.srcLeft) - 1 - sx
+                    }
+                    if op.flipY {
+                        sy = (op.srcBottom - op.srcTop) - 1 - sy
+                    }
+                    out[(op.dstTop + dy) * width + (op.dstLeft + dx)] = source[(op.srcTop + sy) * width + (op.srcLeft + sx)]
+                }
+            }
+        }
+        return out
+    }
+
     public static func bounds(height: Int, count: Int) throws -> [[Int]] {
         guard height >= 1, count >= 2, count <= 100, height >= count else {
             throw RuleError("图片分带参数无效")
@@ -1196,27 +1848,65 @@ public enum RuleImportStates {
 
 // MARK: - RuleRepository
 
+private final class RepositoryNoRedirectDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    func urlSession(_ session: URLSession,
+                    task: URLSessionTask,
+                    willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest,
+                    completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
+    }
+}
+
 public enum RuleRepository {
-    public static let DEFAULT_URL = "https://weifeng.cloud/rules/index.json"
+    public static let LEGACY_DEFAULT_URL = "https://weifeng.cloud/rules/index.json"
+    public static let DEFAULT_URL = "https://weifeng.cloud/rules/v3/index.json"
+
+    private static let fetchSession: URLSession = {
+        let config = URLSessionConfiguration.ephemeral
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        config.timeoutIntervalForRequest = 20
+        config.timeoutIntervalForResource = 30
+        return URLSession(configuration: config, delegate: RepositoryNoRedirectDelegate(), delegateQueue: nil)
+    }()
 
     public static func fetch(_ url: String) throws -> String {
-        try RuleDefinition.validateHttp(url)
-        guard url.hasPrefix("https://") else {
-            throw RuleError("规则下载与订阅需要 HTTPS")
+        var currentUrl = url
+        for _ in 0..<6 {
+            try RuleDefinition.validateHttp(currentUrl)
+            guard currentUrl.lowercased().hasPrefix("https://") else {
+                throw RuleError("规则下载与订阅需要 HTTPS")
+            }
+            guard let u = URL(string: currentUrl) else { throw RuleError("地址无效") }
+            let (data, response) = try synchronousGet(u)
+            guard let http = response as? HTTPURLResponse else { throw RuleError("响应类型无效") }
+            if [301, 302, 303, 307, 308].contains(http.statusCode) {
+                var location: String?
+                for (k, v) in http.allHeaderFields {
+                    if String(describing: k).caseInsensitiveCompare("Location") == .orderedSame {
+                        location = String(describing: v)
+                        break
+                    }
+                }
+                guard let loc = location, !loc.isEmpty,
+                      let nextUrl = URL(string: loc, relativeTo: u)?.absoluteURL else {
+                    throw RuleError("规则下载跳转地址无效")
+                }
+                currentUrl = nextUrl.absoluteString
+                continue
+            }
+            guard http.statusCode == 200 else {
+                throw RuleError("规则下载失败 HTTP \(http.statusCode)")
+            }
+            guard data.count < RuleDefinition.MAX_PACKAGE else {
+                throw RuleError("规则包超过 16MiB")
+            }
+            guard let text = String(data: data, encoding: .utf8) else {
+                throw RuleError("规则包编码错误")
+            }
+            return text
         }
-        guard let u = URL(string: url) else { throw RuleError("地址无效") }
-        let (data, response) = try synchronousGet(u)
-        guard let http = response as? HTTPURLResponse else { throw RuleError("响应类型无效") }
-        guard http.statusCode == 200 else {
-            throw RuleError("规则下载失败 HTTP \(http.statusCode)")
-        }
-        guard data.count < RuleDefinition.MAX_PACKAGE else {
-            throw RuleError("规则包超过 16MiB")
-        }
-        guard let text = String(data: data, encoding: .utf8) else {
-            throw RuleError("规则包编码错误")
-        }
-        return text
+        throw RuleError("规则下载跳转过多")
     }
 
     public static func read(
@@ -1224,8 +1914,28 @@ public enum RuleRepository {
         origin: String?,
         fetcher: (String) throws -> String = { url in try fetch(url) }
     ) throws -> [RuleDefinition] {
+        try readInternal(root: root, origin: origin, compatible: false, fetcher: fetcher).rules
+    }
+
+    public static func readCompatible(
+        root: [String: Any],
+        origin: String?,
+        fetcher: (String) throws -> String = { url in try fetch(url) }
+    ) throws -> RuleStore.Bundle {
+        try readInternal(root: root, origin: origin, compatible: true, fetcher: fetcher)
+    }
+
+    private static func readInternal(
+        root: [String: Any],
+        origin: String?,
+        compatible: Bool,
+        fetcher: (String) throws -> String
+    ) throws -> RuleStore.Bundle {
         if (root["schema"] as? String) == "xx-comic.rules" {
-            return try RuleStore.parse(json: root)
+            if compatible {
+                return try RuleStore.parseCompatible(json: root)
+            }
+            return RuleStore.Bundle(rules: try RuleStore.parse(json: root), skippedUnsupported: 0)
         }
         guard (root["schema"] as? String) == "xx-comic.rule-repository",
               (root["version"] as? Int) == 1 else {
@@ -1238,6 +1948,7 @@ public enum RuleRepository {
         var result = [RuleDefinition]()
         var ids = Set<String>()
         var total = 0
+        var skipped = 0
         for p in files {
             guard var url = p["url"] as? String,
                   let expectedSha = p["sha256"] as? String else {
@@ -1260,8 +1971,14 @@ public enum RuleRepository {
                   let packJson = try? JSONSerialization.jsonObject(with: packData) as? [String: Any] else {
                 throw RuleError("仓库规则包解析错误")
             }
-            let parsed = try RuleStore.parse(json: packJson)
-            for r in parsed {
+            let bundle: RuleStore.Bundle
+            if compatible {
+                bundle = try RuleStore.parseCompatible(json: packJson)
+            } else {
+                bundle = RuleStore.Bundle(rules: try RuleStore.parse(json: packJson), skippedUnsupported: 0)
+            }
+            skipped += bundle.skippedUnsupported
+            for r in bundle.rules {
                 guard ids.insert(r.id).inserted else {
                     throw RuleError("仓库包含重复站源 ID")
                 }
@@ -1271,7 +1988,7 @@ public enum RuleRepository {
                 throw RuleError("仓库规则数量过多")
             }
         }
-        return result
+        return RuleStore.Bundle(rules: result, skippedUnsupported: skipped)
     }
 
     private static func synchronousGet(_ url: URL) throws -> (Data, URLResponse) {
@@ -1282,7 +1999,7 @@ public enum RuleRepository {
 
         var req = URLRequest(url: url)
         req.timeoutInterval = 20
-        let task = URLSession.shared.dataTask(with: req) { data, resp, err in
+        let task = fetchSession.dataTask(with: req) { data, resp, err in
             resultData = data
             resultResponse = resp
             resultError = err
@@ -1300,20 +2017,51 @@ public enum RuleRepository {
 // MARK: - RuleSubscriptionUpdate
 
 public enum RuleSubscriptionUpdate {
+    public struct Prepared: @unchecked Sendable {
+        public let rules: [RuleDefinition]
+        public let skippedUnsupported: Int
+
+        public init(rules: [RuleDefinition], skippedUnsupported: Int) {
+            self.rules = rules
+            self.skippedUnsupported = skippedUnsupported
+        }
+
+        public var skipped: Int { skippedUnsupported }
+    }
+
     public static func prepare(
         urls: [String],
         validator: (RuleDefinition) throws -> Void,
         fetcher: (String) throws -> String = { url in try RuleRepository.fetch(url) }
     ) throws -> [RuleDefinition] {
+        try prepareInternal(urls: urls, compatible: false, validator: validator, fetcher: fetcher).rules
+    }
+
+    public static func prepareCompatible(
+        urls: [String],
+        validator: (RuleDefinition) throws -> Void,
+        fetcher: (String) throws -> String = { url in try RuleRepository.fetch(url) }
+    ) throws -> Prepared {
+        try prepareInternal(urls: urls, compatible: true, validator: validator, fetcher: fetcher)
+    }
+
+    private static func prepareInternal(
+        urls: [String],
+        compatible: Bool,
+        validator: (RuleDefinition) throws -> Void,
+        fetcher: (String) throws -> String
+    ) throws -> Prepared {
         guard !urls.isEmpty else {
             throw RuleError("暂无订阅，请先添加规则订阅")
         }
         var merged = [String: RuleDefinition]()
+        var ordered = [RuleDefinition]()
         var totalBytes = 0
+        var skipped = 0
         for url in urls {
             try Task.checkCancellation()
             try RuleDefinition.validateHttp(url)
-            guard url.hasPrefix("https://") else {
+            guard url.lowercased().hasPrefix("https://") else {
                 throw RuleError("订阅地址需要 HTTPS")
             }
             let body = try fetcher(url)
@@ -1324,8 +2072,11 @@ public enum RuleSubscriptionUpdate {
             guard (root["schema"] as? String) == "xx-comic.rule-repository" else {
                 throw RuleError("订阅需要规则仓库索引，请使用网址导入读取单个规则包")
             }
-            let rules = try RuleRepository.read(root: root, origin: url, fetcher: fetcher)
-            for rule in rules {
+            let bundle = compatible
+                ? try RuleRepository.readCompatible(root: root, origin: url, fetcher: fetcher)
+                : RuleStore.Bundle(rules: try RuleRepository.read(root: root, origin: url, fetcher: fetcher), skippedUnsupported: 0)
+            skipped += bundle.skippedUnsupported
+            for rule in bundle.rules {
                 try Task.checkCancellation()
                 if let old = merged[rule.id] {
                     if old.hash != rule.hash {
@@ -1339,10 +2090,14 @@ public enum RuleSubscriptionUpdate {
                 }
                 try validator(rule)
                 merged[rule.id] = rule
+                ordered.append(rule)
             }
         }
         try Task.checkCancellation()
-        return Array(merged.values)
+        if ordered.isEmpty && skipped > 0 {
+            throw RuleError("订阅中的 \(skipped) 个站源均需升级新版客户端后使用")
+        }
+        return Prepared(rules: ordered, skippedUnsupported: skipped)
     }
 }
 
@@ -1365,6 +2120,18 @@ public final class RuleStore: @unchecked Sendable {
         }
     }
 
+    public struct Bundle: @unchecked Sendable {
+        public let rules: [RuleDefinition]
+        public let skippedUnsupported: Int
+
+        public init(rules: [RuleDefinition], skippedUnsupported: Int) {
+            self.rules = rules
+            self.skippedUnsupported = skippedUnsupported
+        }
+
+        public var skipped: Int { skippedUnsupported }
+    }
+
     private let lock = NSLock()
     private let directory: URL
     private let versionsDir: URL
@@ -1378,6 +2145,7 @@ public final class RuleStore: @unchecked Sendable {
     private var writable = true
     private var primaryValid = false
     private var defaultRepositoryInitialized = false
+    private var defaultRepositoryV3Migrated = false
     public private(set) var recoveryMessage = ""
 
     public init(directory: URL) throws {
@@ -1436,12 +2204,30 @@ public final class RuleStore: @unchecked Sendable {
     public func ensureDefaultRepository() throws {
         lock.lock()
         defer { lock.unlock() }
-        if defaultRepositoryInitialized { return }
-        var next = internalRepositories
-        if !next.contains(RuleRepository.DEFAULT_URL) && next.count < 16 {
-            next.append(RuleRepository.DEFAULT_URL)
+        if !defaultRepositoryInitialized {
+            var next = [String]()
+            for repo in internalRepositories {
+                let mapped = (repo == RuleRepository.LEGACY_DEFAULT_URL) ? RuleRepository.DEFAULT_URL : repo
+                if !next.contains(mapped) {
+                    next.append(mapped)
+                }
+            }
+            if !next.contains(RuleRepository.DEFAULT_URL) && next.count < 16 {
+                next.append(RuleRepository.DEFAULT_URL)
+            }
+            try commit(nextEntries: internalEntries, nextOrder: internalOrder, nextHidden: internalHidden, nextRepos: next, initialized: true, v3Migrated: true)
+            return
         }
-        try commit(nextEntries: internalEntries, nextOrder: internalOrder, nextHidden: internalHidden, nextRepos: next, initialized: true)
+        if !defaultRepositoryV3Migrated {
+            var next = [String]()
+            for repo in internalRepositories {
+                let mapped = (repo == RuleRepository.LEGACY_DEFAULT_URL) ? RuleRepository.DEFAULT_URL : repo
+                if !next.contains(mapped) {
+                    next.append(mapped)
+                }
+            }
+            try commit(nextEntries: internalEntries, nextOrder: internalOrder, nextHidden: internalHidden, nextRepos: next, initialized: true, v3Migrated: true)
+        }
     }
 
     public func updateSubscriptions(_ rules: [RuleDefinition], initialStates: [String: Bool] = [:]) throws -> String {
@@ -1509,6 +2295,14 @@ public final class RuleStore: @unchecked Sendable {
     }
 
     public static func parse(json: Any) throws -> [RuleDefinition] {
+        try parseInternal(json: json, compatible: false).rules
+    }
+
+    public static func parseCompatible(json: Any) throws -> Bundle {
+        try parseInternal(json: json, compatible: true)
+    }
+
+    private static func parseInternal(json: Any, compatible: Bool) throws -> Bundle {
         guard let dict = json as? [String: Any],
               (dict["schema"] as? String) == "xx-comic.rules",
               (dict["version"] as? Int) == 1 else {
@@ -1520,14 +2314,23 @@ public final class RuleStore: @unchecked Sendable {
         }
         var rules = [RuleDefinition]()
         var ids = Set<String>()
+        var skipped = 0
         for row in sources {
-            let r = try RuleDefinition(json: row)
-            guard ids.insert(r.id).inserted else {
-                throw RuleError("同一批规则包含重复 ID：\(r.id)")
+            do {
+                let r = try RuleDefinition(json: row)
+                guard ids.insert(r.id).inserted else {
+                    throw RuleError("同一批规则包含重复 ID：\(r.id)")
+                }
+                rules.append(r)
+            } catch let unsupported as UnsupportedRuleError {
+                if compatible {
+                    skipped += 1
+                    continue
+                }
+                throw unsupported
             }
-            rules.append(r)
         }
-        return rules
+        return Bundle(rules: rules, skippedUnsupported: skipped)
     }
 
     public func preview(_ rules: [RuleDefinition]) throws -> String {
@@ -1730,6 +2533,7 @@ public final class RuleStore: @unchecked Sendable {
         self.internalHidden = h
         self.internalRepositories = repos
         self.defaultRepositoryInitialized = (root["defaultRepositoryInitialized"] as? Bool) ?? false
+        self.defaultRepositoryV3Migrated = (root["defaultRepositoryV3Migrated"] as? Bool) ?? false
     }
 
     private func commit(
@@ -1737,11 +2541,13 @@ public final class RuleStore: @unchecked Sendable {
         nextOrder: [String],
         nextHidden: Set<String>,
         nextRepos: [String],
-        initialized: Bool
+        initialized: Bool,
+        v3Migrated: Bool? = nil
     ) throws {
         try ensureWritable()
         try Task.checkCancellation()
 
+        let nextMigrated = v3Migrated ?? self.defaultRepositoryV3Migrated
         var rows = [[String: Any]]()
         for id in nextOrder {
             guard let e = nextEntries[id] else { continue }
@@ -1758,6 +2564,7 @@ public final class RuleStore: @unchecked Sendable {
             "entries": rows,
             "hidden": Array(nextHidden),
             "defaultRepositoryInitialized": initialized,
+            "defaultRepositoryV3Migrated": nextMigrated,
             "repositories": nextRepos
         ]
         let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted])
@@ -1789,6 +2596,7 @@ public final class RuleStore: @unchecked Sendable {
         self.internalHidden = nextHidden
         self.internalRepositories = nextRepos
         self.defaultRepositoryInitialized = initialized
+        self.defaultRepositoryV3Migrated = nextMigrated
     }
 
     private func ensureWritable() throws {
@@ -1823,12 +2631,18 @@ public final class RuleCatalog: @unchecked Sendable {
     }
 
     private let lock = NSLock()
+    private let debugMode: Bool
     private var internalStore: RuleStore?
     private var snapshot: Snapshot
     public private(set) var error: String = ""
     private var versionsByHash = [String: ScriptComicSource]()
 
-    public init(directory: URL) {
+    public init(directory: URL, debug: Bool? = nil) {
+        #if DEBUG
+        self.debugMode = debug ?? true
+        #else
+        self.debugMode = debug ?? false
+        #endif
         self.snapshot = Snapshot(entries: [], hidden: [], repositories: [], clients: [:])
         do {
             let s = try RuleStore(directory: directory)
@@ -1837,6 +2651,13 @@ public final class RuleCatalog: @unchecked Sendable {
             self.refresh()
         } catch {
             self.error = "规则目录无法读取，原有文件已保留，请重试"
+        }
+    }
+
+    private func makeProductionSource(for rule: RuleDefinition) -> ScriptComicSource {
+        let isDebug = self.debugMode
+        return ScriptComicSource(rule: rule) { r, method, args in
+            try RuleHostExecutor.invoke(rule: r, method: method, args: args, debug: isDebug)
         }
     }
 
@@ -1858,7 +2679,7 @@ public final class RuleCatalog: @unchecked Sendable {
         let next = s.entries()
         var map = [String: ScriptComicSource]()
         for e in next {
-            let client = ScriptComicSource(rule: e.rule)
+            let client = makeProductionSource(for: e.rule)
             versionsByHash[e.rule.hash] = client
             if !e.removed {
                 map[e.rule.id] = client
@@ -1920,7 +2741,7 @@ public final class RuleCatalog: @unchecked Sendable {
         lock.unlock()
 
         let r = try store().version(hash)
-        let created = ScriptComicSource(rule: r)
+        let created = makeProductionSource(for: r)
         lock.lock()
         versionsByHash[hash] = created
         lock.unlock()
@@ -1928,7 +2749,9 @@ public final class RuleCatalog: @unchecked Sendable {
     }
 
     public func validate(_ rule: RuleDefinition) throws {
-        try ScriptComicSource(rule: rule).validate()
+        try ScriptComicSource(rule: rule, network: { _, _ in
+            throw RuleError("初始化禁止请求网络")
+        }).validate()
     }
 }
 
@@ -1961,10 +2784,18 @@ public final class MissingRuleSource: ComicSource, @unchecked Sendable {
 
 // MARK: - RuleError
 
-public struct RuleError: LocalizedError, Equatable {
+public class RuleError: LocalizedError, Equatable, @unchecked Sendable {
     public let message: String
     public init(_ message: String) {
         self.message = message
     }
     public var errorDescription: String? { message }
+
+    public static func == (lhs: RuleError, rhs: RuleError) -> Bool {
+        type(of: lhs) == type(of: rhs) && lhs.message == rhs.message
+    }
 }
+
+public final class UnsupportedRuleError: RuleError {}
+
+public final class RuleCancelledError: RuleError {}

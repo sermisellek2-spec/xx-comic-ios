@@ -108,8 +108,8 @@ final class SettingsViewController: UITableViewController {
     }
 
     private var installedVersionLabel: String {
-        let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.47"
-        let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "347"
+        let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.49"
+        let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "349"
         return "\(shortVersion) (\(buildVersion))"
     }
 
@@ -176,7 +176,7 @@ final class SettingsViewController: UITableViewController {
         case (2, 0):
             return SettingsMenuCell(icon: .automatic, title: "版本更新", value: installedVersionLabel, identifier: "settings.update")
         default:
-            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.47"
+            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.49"
             return SettingsMenuCell(icon: .profile, title: "关于 App", value: version, identifier: "settings.about")
         }
     }
@@ -218,8 +218,8 @@ final class SettingsViewController: UITableViewController {
     private func checkForUpdate() {
         updateTask?.cancel()
         let token = UUID(); updateGeneration = token
-        let currentCode = Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "347") ?? 347
-        let currentName = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.47"
+        let currentCode = Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "349") ?? 349
+        let currentName = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.49"
 
         let progressAlert = UIAlertController(title: "检查更新中…", message: "正在获取最新版本信息", preferredStyle: .alert)
         progressAlert.addAction(UIAlertAction(title: "取消", style: .cancel) { [weak self] _ in

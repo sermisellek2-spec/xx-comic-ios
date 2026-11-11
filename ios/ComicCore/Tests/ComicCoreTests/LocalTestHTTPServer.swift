@@ -10,6 +10,14 @@ public final class LocalTestHTTPServer: @unchecked Sendable {
         public let method: String
         public let path: String
         public let headers: [String: String]
+        public let body: Data
+
+        public init(method: String, path: String, headers: [String: String], body: Data = Data()) {
+            self.method = method
+            self.path = path
+            self.headers = headers
+            self.body = body
+        }
 
         public func header(_ name: String) -> String? {
             headers.first { $0.key.caseInsensitiveCompare(name) == .orderedSame }?.value
@@ -124,7 +132,9 @@ public final class LocalTestHTTPServer: @unchecked Sendable {
                     break
                 }
 
-                self.handleClient(clientFd)
+                DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                    self?.handleClient(clientFd)
+                }
             }
         }
         self.workerThread = thread
@@ -145,6 +155,10 @@ public final class LocalTestHTTPServer: @unchecked Sendable {
 
     private func handleClient(_ clientFd: Int32) {
         defer { close(clientFd) }
+        #if canImport(Darwin)
+        var noSigPipe: Int32 = 1
+        setsockopt(clientFd, SOL_SOCKET, SO_NOSIGPIPE, &noSigPipe, socklen_t(MemoryLayout<Int32>.size))
+        #endif
 
         var buffer = [UInt8](repeating: 0, count: 4096)
         var receivedData = Data()
@@ -182,13 +196,28 @@ public final class LocalTestHTTPServer: @unchecked Sendable {
             headers[key] = value
         }
 
-        let request = Request(method: method, path: fullPath, headers: headers)
+        var bodyData = Data(receivedData.suffix(from: headerRange.upperBound))
+        if let lenStr = headers.first(where: { $0.key.caseInsensitiveCompare("Content-Length") == .orderedSame })?.value,
+           let expectedLen = Int(lenStr), expectedLen > bodyData.count, expectedLen <= 4 * 1024 * 1024 {
+            while bodyData.count < expectedLen {
+                let bytesRead = read(clientFd, &buffer, min(buffer.count, expectedLen - bodyData.count))
+                if bytesRead <= 0 { break }
+                bodyData.append(buffer, count: bytesRead)
+            }
+        }
+
+        let request = Request(method: method, path: fullPath, headers: headers, body: bodyData)
         lock.lock()
         rawRequests.append(request)
         let handler = routes[path] ?? routes["*"]
         lock.unlock()
 
         let response = handler?(request) ?? Response(statusCode: 404, statusText: "Not Found", headers: [:], body: Data("Not Found".utf8))
+
+        lock.lock()
+        let stillRunning = isRunning
+        lock.unlock()
+        guard stillRunning else { return }
 
         var headerBytes = "HTTP/1.1 \(response.statusCode) \(response.statusText)\r\nConnection: close\r\n"
         var finalHeaders = response.headers
@@ -200,10 +229,16 @@ public final class LocalTestHTTPServer: @unchecked Sendable {
         }
         headerBytes += "\r\n"
 
+        #if canImport(Darwin)
+        let sendFlags: Int32 = 0
+        #else
+        let sendFlags: Int32 = Int32(MSG_NOSIGNAL)
+        #endif
+
         if let headData = headerBytes.data(using: .utf8) {
             headData.withUnsafeBytes { rawPtr in
                 if let ptr = rawPtr.baseAddress {
-                    _ = write(clientFd, ptr, headData.count)
+                    _ = send(clientFd, ptr, headData.count, sendFlags)
                 }
             }
         }
@@ -211,7 +246,7 @@ public final class LocalTestHTTPServer: @unchecked Sendable {
         if !response.body.isEmpty {
             response.body.withUnsafeBytes { rawPtr in
                 if let ptr = rawPtr.baseAddress {
-                    _ = write(clientFd, ptr, response.body.count)
+                    _ = send(clientFd, ptr, response.body.count, sendFlags)
                 }
             }
         }

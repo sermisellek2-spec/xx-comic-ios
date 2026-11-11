@@ -115,6 +115,15 @@ public final class FileDownloadWorker: @unchecked Sendable {
               url.user == nil else {
             throw DownloadError.corruptedData("文件地址协议不支持")
         }
+        let initialHost = url.host?.lowercased() ?? ""
+        #if DEBUG
+        let allowInitialHttp = (scheme == "http" && (initialHost == "127.0.0.1" || initialHost == "localhost"))
+        #else
+        let allowInitialHttp = false
+        #endif
+        guard scheme == "https" || allowInitialHttp else {
+            throw DownloadError.corruptedData("文件下载仅支持 HTTPS 安全连接")
+        }
 
         var headers = resource.headers
 

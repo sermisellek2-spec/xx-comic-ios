@@ -8,7 +8,12 @@ let package = Package(
     dependencies: [.package(url: "https://github.com/weichsel/ZIPFoundation.git", exact: "0.9.20")],
     targets: [
         .systemLibrary(name: "ComicZlib", pkgConfig: "zlib", providers: [.apt(["zlib1g-dev"])]),
-        .target(name: "ComicCore", dependencies: ["ComicZlib", .product(name: "ZIPFoundation", package: "ZIPFoundation")], resources: [.copy("Resources/ZIPFoundation-LICENSE.txt"), .copy("Resources/public-sources.json")]),
+        .target(
+            name: "ComicCore",
+            dependencies: ["ComicZlib", .product(name: "ZIPFoundation", package: "ZIPFoundation")],
+            resources: [.copy("Resources/ZIPFoundation-LICENSE.txt"), .copy("Resources/public-sources.json")],
+            swiftSettings: [.define("DEBUG", .when(configuration: .debug))]
+        ),
         .testTarget(
             name: "ComicCoreTests",
             dependencies: ["ComicCore"],

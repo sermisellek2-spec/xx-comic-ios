@@ -171,8 +171,13 @@ public enum DownloadModels {
     public static func imageIdentity(_ url: String) -> String {
         if RuleImages.isRule(url) {
             let baseIdentity = RuleImages.cacheIdentity(url)
-            if let trans = try? RuleImages.transformation(url), trans.hasPrefix("bands:") {
-                return baseIdentity + "#xx-bands=" + trans.dropFirst("bands:".count)
+            if let trans = try? RuleImages.transformation(url), !trans.isEmpty {
+                if trans.hasPrefix("bands:") {
+                    return baseIdentity + "#xx-bands=" + trans.dropFirst("bands:".count)
+                }
+                if trans.hasPrefix(RuleBitmapTransform.PREFIX_TX) {
+                    return baseIdentity + "#xx-tx=" + RuleBase64.encode(Data(trans.utf8), true)
+                }
             }
             return baseIdentity
         }

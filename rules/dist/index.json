@@ -1,0 +1,10 @@
+{
+  "schema": "xx-comic.rule-repository",
+  "version": 1,
+  "packages": [
+    {
+      "url": "xx-comic-all-sources.xxrules.json",
+      "sha256": "5827d937922b07375f174ef547c8830ec9fb96ac325f4ec5bd261ec030fd0917"
+    }
+  ]
+}

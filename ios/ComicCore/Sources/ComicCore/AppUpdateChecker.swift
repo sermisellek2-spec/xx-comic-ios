@@ -52,6 +52,16 @@ public final class AppUpdateChecker: @unchecked Sendable {
     }
 
     public func fetchRelease(url: URL = URL(string: defaultMetadataURL)!) async throws -> AppRelease {
+        let scheme = url.scheme?.lowercased() ?? ""
+        let host = url.host?.lowercased() ?? ""
+        #if DEBUG
+        let allowHttp = (scheme == "http" && (host == "127.0.0.1" || host == "localhost"))
+        #else
+        let allowHttp = false
+        #endif
+        guard scheme == "https" || allowHttp else {
+            throw URLError(.appTransportSecurityRequiresSecureConnection)
+        }
         var request = URLRequest(url: url)
         request.timeoutInterval = 10
         request.setValue("application/json", forHTTPHeaderField: "Accept")

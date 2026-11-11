@@ -33,6 +33,8 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
     private var readID = UUID()
     private var downloadTask: Task<Void, Never>?
     private var downloadID = UUID()
+    private var detailBusyToken: UUID?
+    private var directoryBusyToken: UUID?
     private var feedback = DetailFeedbackState()
     private var favoriteArtworkID = UUID()
     private var favoriteArtworkName: String?
@@ -277,7 +279,9 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
         super.viewDidDisappear(animated)
         guard presentedViewController == nil else { return }
         detailTask?.cancel(); detailTask = nil
+        if let busy = detailBusyToken { environment.endForegroundDetailLoad(busy); detailBusyToken = nil }
         directoryID = UUID(); directoryTask?.cancel(); directoryTask = nil
+        if let busy = directoryBusyToken { environment.endForegroundDetailLoad(busy); directoryBusyToken = nil }
         readID = UUID(); readTask?.cancel(); readTask = nil; read.isEnabled = true
         cancelDownloadSelection()
         cover.cancel()
@@ -371,10 +375,25 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
     }
     @objc private func loadDetail() {
         detailTask?.cancel()
+        if let prevBusy = detailBusyToken {
+            environment.endForegroundDetailLoad(prevBusy)
+            detailBusyToken = nil
+        }
         feedback.setDetail("正在加载详情…")
         updateFeedback()
         let id = comic.comicId
+        let env = environment
+        let busyToken = comic.sourceId == "local" ? nil : env.beginForegroundDetailLoad()
+        detailBusyToken = busyToken
         detailTask = Task { [weak self, source] in
+            defer {
+                if let busyToken {
+                    env.endForegroundDetailLoad(busyToken)
+                    if self?.detailBusyToken == busyToken {
+                        self?.detailBusyToken = nil
+                    }
+                }
+            }
             do {
                 let detail: ComicDetail
                 do {
@@ -682,9 +701,24 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
         if let cachedChapters { return cachedChapters }
         if directoryTask == nil {
             directoryID = UUID()
+            if let prevBusy = directoryBusyToken {
+                environment.endForegroundDetailLoad(prevBusy)
+                directoryBusyToken = nil
+            }
             let id = comic.comicId
             let sourceId = comic.sourceId
+            let env = environment
+            let busyToken = sourceId == "local" ? nil : env.beginForegroundDetailLoad()
+            directoryBusyToken = busyToken
             directoryTask = Task { [source, weak self] in
+                defer {
+                    if let busyToken {
+                        env.endForegroundDetailLoad(busyToken)
+                        if self?.directoryBusyToken == busyToken {
+                            self?.directoryBusyToken = nil
+                        }
+                    }
+                }
                 do {
                     return try await source.chapters(comicId: id)
                 } catch {

@@ -48,7 +48,7 @@ def inspect_product(app, revision, variant):
             for name in files)
     checks = {
         'bundle': info.get('CFBundleIdentifier') == 'com.xxcomic.ios',
-        'version': info.get('CFBundleShortVersionString') == '2.0.47' and info.get('CFBundleVersion') == '347',
+        'version': info.get('CFBundleShortVersionString') == '2.0.49' and info.get('CFBundleVersion') == '349',
         'deviceFamilies': set(info.get('UIDeviceFamily', [])) == {1, 2},
         'phoneIconMetadataAndPNG': has_icon(phone),
         'padIconMetadataAndPNG': has_icon(pad),

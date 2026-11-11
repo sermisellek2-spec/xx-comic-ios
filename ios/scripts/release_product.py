@@ -119,7 +119,7 @@ def package(args):
             if len(data) != expected["bytes"] or hashlib.sha256(data).hexdigest() != expected["sha256"]:
                 raise ValueError("A validated app resource changed")
         info = plistlib.loads(source.read("XXComic.app/Info.plist"))
-        if (info.get("CFBundleIdentifier"), info.get("CFBundleShortVersionString"), info.get("CFBundleVersion")) != ("com.xxcomic.ios", "2.0.47", "347"):
+        if (info.get("CFBundleIdentifier"), info.get("CFBundleShortVersionString"), info.get("CFBundleVersion")) != ("com.xxcomic.ios", "2.0.49", "349"):
             raise ValueError("Unexpected app identity")
         args.output.mkdir(parents=True, exist_ok=False)
         ipa = args.output / "XXComic-unsigned.ipa"

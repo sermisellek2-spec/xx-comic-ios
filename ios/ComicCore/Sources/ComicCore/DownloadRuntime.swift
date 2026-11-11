@@ -1126,7 +1126,8 @@ public final class DownloadRuntime: @unchecked Sendable {
         try validateRegularFileIfPresent(partFile)
 
         var fetchResult: (bytes: Int64, hash: String)?
-        let canRefresh = task.sourceId == "zaimanhua" || rawUrl.contains("#xx-")
+        let isRuleImage = RuleImages.isRule(rawUrl)
+        let canRefresh = isRuleImage || task.sourceId == "zaimanhua" || rawUrl.contains("#xx-")
         for attempt in 0..<(canRefresh ? 2 : 1) {
             try checkLease(task)
             let resolvedUrl = try await resolver.resolveImageUrl(sourceId: task.sourceId, imageUrl: rawUrl, force: attempt > 0)
@@ -1143,9 +1144,22 @@ public final class DownloadRuntime: @unchecked Sendable {
                 )
                 break
             } catch let httpError as DownloadHTTPError {
-                if !canRefresh || attempt > 0 || (httpError.statusCode != 403 && httpError.statusCode != 410) {
+                if !canRefresh || attempt > 0 {
                     throw httpError
                 }
+                if isRuleImage {
+                    guard httpError.statusCode >= 400 else { throw httpError }
+                    RuleImages.invalidateResolved(rawUrl)
+                } else if httpError.statusCode != 403 && httpError.statusCode != 410 {
+                    throw httpError
+                }
+            } catch {
+                let cancelled = (error is CancellationError) || ((error as? DownloadError) == .taskCancelled) || Task.isCancelled
+                if !isRuleImage || attempt > 0 || cancelled {
+                    throw error
+                }
+                try checkLease(task)
+                RuleImages.invalidateResolved(rawUrl)
             }
         }
         guard let fetchResult else {
@@ -1338,7 +1352,15 @@ public final class DownloadRuntime: @unchecked Sendable {
                 } catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
                     throw DownloadError.corruptedData("下载文件缺失或损坏，请到下载中心重新下载本章")
                 }
-                resolved.append(target.absoluteString)
+                var offlineUrl = target.absoluteString
+                if let txRange = page.url.range(of: "#xx-tx=") {
+                    offlineUrl += String(page.url[txRange.lowerBound...])
+                } else if let bandRange = page.url.range(of: "#xx-bands=") {
+                    offlineUrl += String(page.url[bandRange.lowerBound...])
+                } else if page.url.contains("?scramble_id=") {
+                    offlineUrl += "#jm-origin=" + RuleBase64.encode(Data(page.url.utf8), true)
+                }
+                resolved.append(offlineUrl)
             }
             return resolved
         }

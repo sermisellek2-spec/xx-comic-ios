@@ -59,7 +59,7 @@ def main():
     debug, release = inspect(args.debug_app), inspect(args.release_app)
     errors = []
     for variant, result in (("Debug", debug), ("Release", release)):
-        if (result["bundleID"], result["version"], str(result["build"])) != ("com.xxcomic.ios", "2.0.47", "347"):
+        if (result["bundleID"], result["version"], str(result["build"])) != ("com.xxcomic.ios", "2.0.49", "349"):
             errors.append(variant + " version or bundle identity differs from baseline")
     if not all(debug["markers"].values()):
         errors.append("Debug control lacks expected fixture markers; absence in Release cannot alone prove this check")

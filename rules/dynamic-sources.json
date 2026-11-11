@@ -1,0 +1,980 @@
+{
+  "sources": [
+    {
+      "id": "manga51",
+      "name": "51漫画（51manga）",
+      "baseUrl": "https://m.51manga.com",
+      "adapter": "manga51",
+      "hosts": [
+        "m.51manga.com",
+        "www.51manga.com",
+        "*.baipiaoguai.org",
+        "*.325784.xyz",
+        "mmwwccffiimmgg1.cc",
+        "newmwimserv16.cc",
+        "newmwtuyuan1.cc",
+        "newmwimserv6.cc"
+      ],
+      "version": 3,
+      "requiresVpn": false
+    },
+    {
+      "id": "bukamh",
+      "name": "布卡漫画",
+      "baseUrl": "https://www.bukamh.com",
+      "adapter": "bukamh",
+      "hosts": [
+        "www.bukamh.com",
+        "*.bukamh.com",
+        "*.baozimh.com",
+        "*.baozimhcn.com",
+        "*.bzcdn.net",
+        "*.baipiaoguai.org",
+        "*.325784.xyz"
+      ],
+      "version": 2,
+      "requiresVpn": false
+    },
+    {
+      "id": "manwang",
+      "name": "漫网",
+      "baseUrl": "https://www.manwang.net",
+      "adapter": "manwang",
+      "hosts": [
+        "www.manwang.net",
+        "*.manwang.net",
+        "*.ecombdimg.com",
+        "*.546457.xyz",
+        "*.baipiaoguai.org",
+        "*.325784.xyz"
+      ],
+      "version": 2,
+      "requiresVpn": false
+    },
+    {
+      "id": "mh36",
+      "name": "36漫画",
+      "baseUrl": "https://www.36mh.org",
+      "adapter": "mh36",
+      "hosts": [
+        "www.36mh.org",
+        "*.36mh.org",
+        "*.ecombdimg.com",
+        "*.546457.xyz",
+        "*.baipiaoguai.org",
+        "*.325784.xyz"
+      ],
+      "version": 2,
+      "requiresVpn": false
+    },
+    {
+      "id": "gfmh",
+      "name": "古风漫画",
+      "baseUrl": "https://gfmh.app",
+      "adapter": "gfmh",
+      "hosts": [
+        "gfmh.app",
+        "*.gfmh.app",
+        "*.325784.xyz",
+        "*.baozimh.org",
+        "*.6wm.top"
+      ],
+      "version": 2,
+      "requiresVpn": false
+    },
+    {
+      "id": "godamh",
+      "name": "GoDa漫画",
+      "baseUrl": "https://godamh.com",
+      "adapter": "related",
+      "hosts": [
+        "godamh.com",
+        "*.godamh.com",
+        "*.6wm.top",
+        "*.apikk.top",
+        "*.g-mh.org",
+        "*.mangabuddy.in"
+      ],
+      "version": 2,
+      "requiresVpn": false
+    },
+    {
+      "id": "baozi_org",
+      "name": "包子漫画.org",
+      "baseUrl": "https://baozimh.org",
+      "adapter": "related",
+      "hosts": [
+        "baozimh.org",
+        "*.baozimh.org",
+        "*.6wm.top",
+        "*.apikk.top",
+        "*.g-mh.org",
+        "*.mangabuddy.in"
+      ],
+      "version": 2,
+      "requiresVpn": false
+    },
+    {
+      "id": "zhijian",
+      "name": "纸间",
+      "baseUrl": "https://zhijianman.com",
+      "adapter": "zhijian",
+      "hosts": [
+        "zhijianman.com",
+        "img.douyinjx.com"
+      ],
+      "version": 2,
+      "requiresVpn": false,
+      "supportsSearch": true,
+      "scriptFile": "ten-html.js",
+      "filterFile": "filters/zhijian.js"
+    },
+    {
+      "id": "wacartoon",
+      "name": "哇咔漫画",
+      "baseUrl": "https://wacartoon.com",
+      "adapter": "wacartoon",
+      "hosts": [
+        "wacartoon.com",
+        "img.wacartoon.com"
+      ],
+      "version": 2,
+      "requiresVpn": false,
+      "supportsSearch": true,
+      "scriptFile": "ten-html.js",
+      "filterFile": "filters/wacartoon.js"
+    },
+    {
+      "id": "yimmh",
+      "name": "忆漫画",
+      "baseUrl": "https://www.yimmh.com",
+      "adapter": "yimmh",
+      "hosts": [
+        "www.yimmh.com",
+        "one.justpic.sbs",
+        "pppic.greenkosovo.com"
+      ],
+      "version": 2,
+      "requiresVpn": false,
+      "supportsSearch": false,
+      "scriptFile": "ten-html.js",
+      "filterFile": "filters/yimmh.js"
+    },
+    {
+      "id": "hazelmaka",
+      "name": "榛果漫画",
+      "baseUrl": "https://hazelmaka.com",
+      "adapter": "hazelmaka",
+      "hosts": [
+        "hazelmaka.com",
+        "img.hazelmaka.com"
+      ],
+      "version": 2,
+      "requiresVpn": false,
+      "supportsSearch": true,
+      "scriptFile": "ten-html.js",
+      "filterFile": "filters/hazelmaka.js"
+    },
+    {
+      "id": "manhuaku",
+      "name": "漫画库",
+      "baseUrl": "https://www.manhuaku.com.cn",
+      "adapter": "manhuaku",
+      "hosts": [
+        "www.manhuaku.com.cn",
+        "image1.manhuaku.com.cn"
+      ],
+      "version": 1,
+      "requiresVpn": false,
+      "supportsSearch": true,
+      "scriptFile": "ten-html.js"
+    },
+    {
+      "id": "manhuapi",
+      "name": "漫画皮",
+      "baseUrl": "https://www.manhuapi.cc",
+      "adapter": "manhuapi",
+      "hosts": [
+        "www.manhuapi.cc",
+        "www.wmanhuapi.com",
+        "manhuapi.dwdghg.com"
+      ],
+      "version": 2,
+      "requiresVpn": false,
+      "supportsSearch": false,
+      "scriptFile": "ten-html.js",
+      "filterFile": "filters/manhuapi.js"
+    },
+    {
+      "id": "relamanhua",
+      "name": "热辣漫画（免费）",
+      "baseUrl": "https://www.manga2026.com",
+      "adapter": "relamanhua",
+      "hosts": [
+        "www.manga2026.com",
+        "*.mangafunb.fun"
+      ],
+      "version": 2,
+      "requiresVpn": true,
+      "supportsSearch": true,
+      "scriptFile": "ten-special.js",
+      "filterFile": "filters/relamanhua.js"
+    },
+    {
+      "id": "jcomic",
+      "name": "JComic",
+      "baseUrl": "https://jcomic.net",
+      "adapter": "jcomic",
+      "hosts": [
+        "jcomic.net",
+        "images.jcomic.net"
+      ],
+      "version": 2,
+      "requiresVpn": true,
+      "supportsSearch": true,
+      "scriptFile": "ten-special.js",
+      "filterFile": "filters/jcomic.js"
+    },
+    {
+      "id": "hcomic",
+      "name": "H-Comic",
+      "baseUrl": "https://h-comic.com",
+      "adapter": "hcomic",
+      "hosts": [
+        "h-comic.com",
+        "h-comic.link"
+      ],
+      "version": 2,
+      "requiresVpn": true,
+      "supportsSearch": true,
+      "scriptFile": "ten-special.js",
+      "filterFile": "filters/hcomic.js"
+    },
+    {
+      "id": "bilimanga",
+      "name": "嗶哩漫畫",
+      "baseUrl": "https://www.bilimanga.net",
+      "adapter": "bilimanga",
+      "hosts": [
+        "www.bilimanga.net",
+        "w.motiezw.com",
+        "i.motiezw.com"
+      ],
+      "version": 3,
+      "requiresVpn": true,
+      "supportsSearch": false,
+      "scriptFile": "ten-html.js",
+      "filterFile": "filters/bilimanga.js"
+    },
+    {
+      "id": "pufeimh",
+      "name": "扑飞漫画",
+      "baseUrl": "https://www.pufeimh.com",
+      "adapter": "pufeimh",
+      "hosts": [
+        "www.pufeimh.com",
+        "*.pufeimh.com",
+        "*.325784.xyz",
+        "*.baipiaoguai.org",
+        "*.6wm.top",
+        "*.546457.xyz"
+      ],
+      "version": 2,
+      "requiresVpn": false,
+      "supportsSearch": true,
+      "scriptFile": "chinese-free.js",
+      "filterFile": "filters/pufeimh.js"
+    },
+    {
+      "id": "bbboy",
+      "name": "啵乐",
+      "baseUrl": "https://bbboy.cc",
+      "adapter": "bbboy",
+      "hosts": [
+        "bbboy.cc",
+        "assets.bbboy.cc",
+        "img.bbboy.cc"
+      ],
+      "version": 2,
+      "requiresVpn": false,
+      "supportsSearch": true,
+      "scriptFile": "chinese-free.js",
+      "filterFile": "filters/bbboy.js"
+    },
+    {
+      "id": "rouman",
+      "name": "肉漫屋",
+      "baseUrl": "https://rouman5.com",
+      "adapter": "rouman",
+      "hosts": [
+        "rouman5.com",
+        "towm85.xyz",
+        "*.kelv47.xyz"
+      ],
+      "version": 1,
+      "requiresVpn": true,
+      "supportsSearch": true,
+      "scriptFile": "chinese-free.js"
+    },
+    {
+      "id": "mh92",
+      "name": "92漫画",
+      "baseUrl": "https://www.92mh.com",
+      "adapter": "mh92",
+      "hosts": [
+        "www.92mh.com",
+        "cover.alltucdn.cc",
+        "pic92.tingliu.cc",
+        "tu2.92mh.com"
+      ],
+      "version": 1,
+      "requiresVpn": false,
+      "supportsSearch": true,
+      "scriptFile": "three-more.js",
+      "filterFile": "filters/mh92.js"
+    },
+    {
+      "id": "mh456",
+      "name": "漫画456",
+      "baseUrl": "https://www.manhua456.net",
+      "adapter": "mh456",
+      "hosts": [
+        "www.manhua456.net",
+        "*.tgmhfc.uk",
+        "p.miyeye.cn"
+      ],
+      "version": 1,
+      "requiresVpn": false,
+      "supportsSearch": true,
+      "scriptFile": "three-more.js",
+      "filterFile": "filters/mh456.js"
+    },
+    {
+      "id": "ho5ho",
+      "name": "Ho5Ho",
+      "baseUrl": "https://www.ho5ho.com",
+      "adapter": "ho5ho",
+      "hosts": [
+        "www.ho5ho.com",
+        "ho5hocdn1.b-cdn.net",
+        "hhmg2.b-cdn.net"
+      ],
+      "version": 1,
+      "requiresVpn": true,
+      "supportsSearch": true,
+      "requestLimit": 512,
+      "timeoutSeconds": 240,
+      "scriptFile": "three-more.js",
+      "filterFile": "filters/ho5ho.js"
+    },
+    {
+      "id": "webtoon_zh",
+      "name": "LINE WEBTOON（繁中）",
+      "baseUrl": "https://www.webtoons.com",
+      "adapter": "webtoon_zh",
+      "hosts": [
+        "www.webtoons.com",
+        "m.webtoons.com",
+        "webtoon-phinf.pstatic.net",
+        "swebtoon-phinf.pstatic.net"
+      ],
+      "version": 1,
+      "requiresVpn": true,
+      "supportsSearch": true,
+      "requestLimit": 64,
+      "timeoutSeconds": 120,
+      "scriptFile": "webtoon.js"
+    },
+    {
+      "id": "yamibo",
+      "name": "百合会（公开漫画）",
+      "baseUrl": "https://www.yamibo.com",
+      "adapter": "yamibo",
+      "hosts": [
+        "www.yamibo.com",
+        "img.yamibo.com"
+      ],
+      "version": 3,
+      "requiresVpn": false,
+      "supportsSearch": false,
+      "requestLimit": 256,
+      "timeoutSeconds": 240,
+      "scriptFile": "research.js"
+    },
+    {
+      "id": "veryim",
+      "name": "非常爱漫",
+      "baseUrl": "https://www.veryim.com",
+      "adapter": "veryim",
+      "hosts": [
+        "www.veryim.com",
+        "*.du8.in",
+        "img.fuman.me",
+        "*.fuman.me"
+      ],
+      "version": 4,
+      "requiresVpn": false,
+      "supportsSearch": true,
+      "requestLimit": 256,
+      "timeoutSeconds": 240,
+      "scriptFile": "research.js"
+    },
+    {
+      "id": "manhuayu",
+      "name": "漫画鱼",
+      "baseUrl": "https://www.manhuayu88.com",
+      "adapter": "manhuayu",
+      "hosts": [
+        "www.manhuayu88.com",
+        "*.manhuayu88.com",
+        "*.mhpic.net"
+      ],
+      "version": 3,
+      "requiresVpn": false,
+      "supportsSearch": true,
+      "requestLimit": 256,
+      "timeoutSeconds": 240,
+      "scriptFile": "research.js"
+    },
+    {
+      "id": "nnhanman",
+      "name": "鸟鸟韩漫",
+      "baseUrl": "https://nnhanman.xyz",
+      "adapter": "nnhanman",
+      "hosts": [
+        "nnhanman.xyz",
+        "*.niaopic.com",
+        "*.nnpic.com",
+        "*.nnpic.xyz"
+      ],
+      "version": 3,
+      "requiresVpn": true,
+      "supportsSearch": true,
+      "requestLimit": 256,
+      "timeoutSeconds": 240,
+      "scriptFile": "research.js"
+    },
+    {
+      "id": "utifa",
+      "name": "Utifa",
+      "baseUrl": "https://bx.yaimer.com",
+      "adapter": "utifa",
+      "hosts": [
+        "bx.yaimer.com",
+        "my.microsoftpersonalcontent.com"
+      ],
+      "version": 3,
+      "requiresVpn": false,
+      "supportsSearch": true,
+      "requestLimit": 256,
+      "timeoutSeconds": 240,
+      "scriptFile": "research.js"
+    },
+    {
+      "id": "asmhentai",
+      "name": "AsmHentai（中文）",
+      "baseUrl": "https://asmhentai.com",
+      "adapter": "asmhentai",
+      "hosts": [
+        "asmhentai.com",
+        "images.asmhentai.com"
+      ],
+      "version": 4,
+      "requiresVpn": true,
+      "supportsSearch": true,
+      "requestLimit": 256,
+      "timeoutSeconds": 240,
+      "scriptFile": "reviewed/asmhentai.js",
+      "reviewedProfile": "profiles/asmhentai.json"
+    },
+    {
+      "id": "hentaihand",
+      "name": "HentaiHand（中文）",
+      "baseUrl": "https://hentaihand.com",
+      "adapter": "hentaihand",
+      "hosts": [
+        "hentaihand.com",
+        "cdn.hentaihand.com"
+      ],
+      "version": 3,
+      "requiresVpn": true,
+      "supportsSearch": true,
+      "requestLimit": 256,
+      "timeoutSeconds": 240,
+      "scriptFile": "research.js"
+    },
+    {
+      "id": "baozimh_com",
+      "name": "包子漫画.com（恢复入口）",
+      "baseUrl": "https://www.baozimhcn.com",
+      "adapter": "baozimh_com",
+      "hosts": [
+        "www.baozimhcn.com",
+        "www.baozimh.com",
+        "*.baozimh.com",
+        "*.baozimhcn.com",
+        "*.twbzmg.com",
+        "*.bzcdn.net"
+      ],
+      "version": 3,
+      "requiresVpn": true,
+      "supportsSearch": true,
+      "requestLimit": 256,
+      "timeoutSeconds": 240,
+      "scriptFile": "research.js"
+    },
+    {
+      "id": "threehentai_zh",
+      "name": "3Hentai（中文）",
+      "baseUrl": "https://3hentai.net",
+      "hosts": [
+        "3hentai.net",
+        "s1.3hentai.xyz",
+        "s2.3hentai.xyz",
+        "s4.3hentai.xyz",
+        "s9.3hentai.xyz"
+      ],
+      "version": 1,
+      "requiresVpn": true,
+      "requestLimit": 128,
+      "timeoutSeconds": 240,
+      "adapter": "threehentai",
+      "scriptFile": "threehentai.js"
+    },
+    {
+      "id": "fuman",
+      "name": "腐漫",
+      "baseUrl": "https://www.fumanmanhua.com",
+      "adapter": "fuman",
+      "hosts": [
+        "www.fumanmanhua.com",
+        "fumanmanhua.com",
+        "img.uumanhua.xyz"
+      ],
+      "version": 3,
+      "requiresVpn": false,
+      "scriptFile": "reviewed/fuman.js",
+      "reviewedProfile": "profiles/fuman.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 64,
+      "timeoutSeconds": 240
+    },
+    {
+      "id": "hentaienvy_zh",
+      "name": "HentaiEnvy 中文",
+      "baseUrl": "https://hentaienvy.com",
+      "adapter": "hentaienvy",
+      "hosts": [
+        "hentaienvy.com",
+        "*.hentaienvy.com"
+      ],
+      "version": 1,
+      "requiresVpn": true,
+      "scriptFile": "reviewed/hentaienvy_zh.js",
+      "reviewedProfile": "profiles/hentaienvy_zh.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 128,
+      "timeoutSeconds": 240
+    },
+    {
+      "id": "darenmanhua",
+      "name": "大人漫画",
+      "baseUrl": "https://drmh3.com",
+      "adapter": "darenmanhua",
+      "hosts": [
+        "drmh3.com",
+        "*.18rouman.vip"
+      ],
+      "version": 3,
+      "requiresVpn": false,
+      "scriptFile": "reviewed/darenmanhua.js",
+      "reviewedProfile": "profiles/darenmanhua.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 96,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "h18_zh",
+      "name": "18H 中文",
+      "baseUrl": "https://18h.mm-cg.com",
+      "adapter": "h18_zh",
+      "hosts": [
+        "18h.mm-cg.com",
+        "*.eemmhh01.com"
+      ],
+      "version": 3,
+      "requiresVpn": false,
+      "scriptFile": "reviewed/h18_zh.js",
+      "reviewedProfile": "profiles/h18_zh.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 96,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "coserlab",
+      "name": "Coser Lab",
+      "baseUrl": "https://coserlab.io",
+      "adapter": "coserlab",
+      "hosts": [
+        "coserlab.io",
+        "autoselect.nian.nz"
+      ],
+      "version": 1,
+      "requiresVpn": true,
+      "scriptFile": "reviewed/coserlab.js",
+      "reviewedProfile": "profiles/coserlab.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 96,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "fushihui",
+      "name": "浮世绘",
+      "baseUrl": "https://www.fushihui.cc",
+      "adapter": "fushihui",
+      "hosts": [
+        "www.fushihui.cc",
+        "*.fushihui.cc",
+        "i.05ii.cc"
+      ],
+      "version": 1,
+      "requiresVpn": false,
+      "scriptFile": "reviewed/fushihui.js",
+      "reviewedProfile": "profiles/fushihui.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 96,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "coserindex",
+      "name": "CoserIndex（人物相册）",
+      "baseUrl": "https://coserindex.com",
+      "adapter": "coserindex",
+      "hosts": [
+        "coserindex.com"
+      ],
+      "version": 1,
+      "requiresVpn": false,
+      "scriptFile": "reviewed/coserindex.js",
+      "reviewedProfile": "profiles/coserindex.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 96,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "hentaiclub",
+      "name": "绅士会所",
+      "baseUrl": "https://www.hentaiclub.net",
+      "adapter": "hentaiclub",
+      "hosts": [
+        "www.hentaiclub.net",
+        "*.sshs.rip"
+      ],
+      "version": 2,
+      "requiresVpn": true,
+      "scriptFile": "reviewed/hentaiclub.js",
+      "reviewedProfile": "profiles/hentaiclub.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 96,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "xasiat_albums",
+      "name": "XAsiat Albums",
+      "baseUrl": "https://www.xasiat.com",
+      "adapter": "xasiat_albums",
+      "hosts": [
+        "www.xasiat.com",
+        "*.xascdn.li"
+      ],
+      "version": 4,
+      "requiresVpn": true,
+      "scriptFile": "reviewed/xasiat_albums.js",
+      "reviewedProfile": "profiles/xasiat_albums.json",
+      "imageRefresh": true,
+      "supportsSearch": true,
+      "requestLimit": 96,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "cosplaytele",
+      "name": "CosplayTele",
+      "baseUrl": "https://cosplaytele.com",
+      "adapter": "cosplaytele",
+      "hosts": [
+        "cosplaytele.com"
+      ],
+      "version": 2,
+      "requiresVpn": true,
+      "scriptFile": "reviewed/cosplaytele.js",
+      "reviewedProfile": "profiles/cosplaytele.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 96,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "girlstop",
+      "name": "GirlsTop",
+      "baseUrl": "https://en.girlstop.info",
+      "adapter": "girlstop",
+      "hosts": [
+        "en.girlstop.info",
+        "girlstop.top"
+      ],
+      "version": 3,
+      "requiresVpn": true,
+      "scriptFile": "reviewed/girlstop.js",
+      "reviewedProfile": "profiles/girlstop.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 256,
+      "timeoutSeconds": 180
+    },
+    {
+      "id": "pornpics",
+      "name": "PornPics",
+      "baseUrl": "https://www.pornpics.com",
+      "adapter": "pornpics",
+      "hosts": [
+        "www.pornpics.com",
+        "cdni.pornpics.com"
+      ],
+      "version": 3,
+      "requiresVpn": true,
+      "scriptFile": "reviewed/pornpics.js",
+      "reviewedProfile": "profiles/pornpics.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 128,
+      "timeoutSeconds": 180
+    },
+    {
+      "id": "earl123",
+      "name": "饭团漫画",
+      "baseUrl": "https://earl123.com",
+      "adapter": "earl123",
+      "hosts": [
+        "earl123.com",
+        "store.earl123.com"
+      ],
+      "version": 1,
+      "requiresVpn": true,
+      "scriptFile": "reviewed/earl123.js",
+      "reviewedProfile": "profiles/earl123.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 256,
+      "timeoutSeconds": 180
+    },
+    {
+      "id": "wwzu_lhh",
+      "name": "闲沐连环画",
+      "baseUrl": "https://www.wwzu.com",
+      "adapter": "wwzu_lhh",
+      "hosts": [
+        "www.wwzu.com",
+        "photourl.wwzu.com"
+      ],
+      "version": 1,
+      "requiresVpn": false,
+      "scriptFile": "reviewed/wwzu_lhh.js",
+      "reviewedProfile": "profiles/wwzu_lhh.json",
+      "imageRefresh": false,
+      "supportsSearch": true
+    },
+    {
+      "id": "zhlhh",
+      "name": "中华连环画数字阅读馆",
+      "baseUrl": "https://wx.zhlhh.com",
+      "adapter": "zhlhh",
+      "hosts": [
+        "wx.zhlhh.com"
+      ],
+      "version": 1,
+      "requiresVpn": false,
+      "scriptFile": "reviewed/zhlhh.js",
+      "reviewedProfile": "profiles/zhlhh.json",
+      "imageRefresh": false,
+      "supportsSearch": true
+    },
+    {
+      "id": "webtoon_canvas_zh",
+      "name": "LINE WEBTOON CANVAS（繁中）",
+      "baseUrl": "https://www.webtoons.com",
+      "adapter": "webtoon_canvas_zh",
+      "hosts": [
+        "www.webtoons.com",
+        "m.webtoons.com",
+        "webtoon-phinf.pstatic.net",
+        "swebtoon-phinf.pstatic.net"
+      ],
+      "version": 1,
+      "requiresVpn": true,
+      "scriptFile": "reviewed/webtoon_canvas_zh.js",
+      "reviewedProfile": "profiles/webtoon_canvas_zh.json",
+      "imageRefresh": false,
+      "supportsSearch": true
+    },
+    {
+      "id": "archive_lhh",
+      "name": "Internet Archive 连环画",
+      "baseUrl": "https://archive.org",
+      "adapter": "archive_lhh",
+      "hosts": [
+        "archive.org",
+        "*.us.archive.org"
+      ],
+      "version": 1,
+      "requiresVpn": true,
+      "scriptFile": "reviewed/archive_lhh.js",
+      "reviewedProfile": "profiles/archive_lhh.json",
+      "imageRefresh": false,
+      "supportsSearch": true
+    },
+    {
+      "id": "qinqin_nb",
+      "name": "亲亲漫画",
+      "baseUrl": "https://nubbub.com",
+      "adapter": "qinqin_nb",
+      "hosts": [
+        "nubbub.com",
+        "*.bmwz1.com"
+      ],
+      "version": 2,
+      "requiresVpn": false,
+      "scriptFile": "reviewed/qinqin_nb.js",
+      "reviewedProfile": "profiles/qinqin_nb.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 128,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "mh242",
+      "name": "242漫画网",
+      "baseUrl": "https://242mh.com",
+      "adapter": "mh242",
+      "hosts": [
+        "242mh.com",
+        "*.ypzps.com",
+        "img.kkgogo.com"
+      ],
+      "version": 1,
+      "requiresVpn": false,
+      "scriptFile": "reviewed/mh242.js",
+      "reviewedProfile": "profiles/mh242.json",
+      "imageRefresh": false,
+      "supportsSearch": true,
+      "requestLimit": 32,
+      "timeoutSeconds": 60
+    },
+    {
+      "id": "acgn",
+      "name": "动漫戏说",
+      "baseUrl": "https://comic.acgn.cc",
+      "adapter": "acgn",
+      "hosts": [
+        "comic.acgn.cc",
+        "*.acgn.cc",
+        "img.acgn.cc"
+      ],
+      "version": 2,
+      "engineApi": 2,
+      "requiresVpn": false,
+      "scriptFile": "template-html.js",
+      "reviewedProfile": "profiles/acgn.json",
+      "imageRefresh": true,
+      "supportsSearch": false,
+      "requestLimit": 48,
+      "timeoutSeconds": 90
+    },
+    {
+      "id": "guoman8",
+      "name": "国漫吧",
+      "baseUrl": "https://m.guoman8.cc",
+      "adapter": "guoman8",
+      "hosts": [
+        "m.guoman8.cc",
+        "www.guoman8.cc",
+        "*.guoman8.cc",
+        "img.guomanba.cc",
+        "*.guomanba.cc",
+        "js.tingliu.cc",
+        "images.tingliu.cc",
+        "*.tingliu.cc",
+        "imagesold.502215.com",
+        "*.502215.com",
+        "tukaobei.haotu90.top",
+        "*.haotu90.top",
+        "images.720rs.com",
+        "*.720rs.com",
+        "i.mangagod.com",
+        "*.mangagod.com",
+        "easyread.nosdn.127.net",
+        "*.nosdn.127.net",
+        "*.127.net"
+      ],
+      "cleartextHosts": [
+        "tukaobei.haotu90.top",
+        "*.haotu90.top",
+        "js.tingliu.cc",
+        "images.tingliu.cc",
+        "*.tingliu.cc",
+        "imagesold.502215.com",
+        "*.502215.com",
+        "img.guoman8.cc",
+        "*.guoman8.cc",
+        "img.guomanba.cc",
+        "*.guomanba.cc",
+        "images.720rs.com",
+        "*.720rs.com",
+        "i.mangagod.com",
+        "*.mangagod.com",
+        "easyread.nosdn.127.net",
+        "*.nosdn.127.net",
+        "*.127.net"
+      ],
+      "version": 2,
+      "engineApi": 3,
+      "minIntervalMs": 250,
+      "requiresVpn": false,
+      "scriptFile": "template-html.js",
+      "reviewedProfile": "profiles/guoman8.json",
+      "imageRefresh": true,
+      "supportsSearch": true,
+      "requestLimit": 64,
+      "timeoutSeconds": 90
+    },
+    {
+      "id": "ehentai",
+      "name": "E-Hentai（中文漫画）",
+      "baseUrl": "https://e-hentai.org",
+      "adapter": "ehentai",
+      "hosts": [
+        "e-hentai.org",
+        "*.e-hentai.org",
+        "ehgt.org",
+        "*.ehgt.org",
+        "*.hath.network"
+      ],
+      "version": 2,
+      "engineApi": 3,
+      "minIntervalMs": 350,
+      "requiresVpn": true,
+      "scriptFile": "ehentai.js",
+      "imageRefresh": true,
+      "supportsSearch": true,
+      "requestLimit": 128,
+      "timeoutSeconds": 180
+    }
+  ]
+}
