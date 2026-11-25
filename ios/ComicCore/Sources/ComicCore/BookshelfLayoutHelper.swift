@@ -26,12 +26,33 @@ public final class BookshelfLayoutHelper {
         defaults.set(isGrid ? layoutGrid : layoutList, forKey: prefKey(scope: scope))
     }
 
+    public static let colorUpdateBlueNight: UInt32 = 0xFF6AB8F3
+    public static let colorNoUpdateGrayDay: UInt32 = 0xFF5A6E80
+    public static let colorNoUpdateGrayNight: UInt32 = 0xFF3B4F63
+
     public static func resolveBadgeColor(hasUpdate: Bool) -> UInt32 {
         hasUpdate ? colorUpdateBlue : colorNoUpdateGray
     }
 
+    public static func resolveBadgeColor(hasUpdate: Bool, nightTheme: Bool) -> UInt32 {
+        if nightTheme {
+            return hasUpdate ? colorUpdateBlueNight : colorNoUpdateGrayNight
+        }
+        return hasUpdate ? colorUpdateBlue : colorNoUpdateGrayDay
+    }
+
+    public static func resolveBadgeTextColor(hasUpdate: Bool, nightTheme: Bool) -> UInt32 {
+        (nightTheme && hasUpdate) ? 0xFF0A1825 : 0xFFFFFFFF
+    }
+
     public static func formatUnreadBadgeText(count: Int) -> String {
-        if count <= 0 { return "" }
+        formatUnreadBadgeText(count: count, hasUpdate: false)
+    }
+
+    public static func formatUnreadBadgeText(count: Int, hasUpdate: Bool) -> String {
+        if count <= 0 {
+            return hasUpdate ? "新" : ""
+        }
         if count > 99 { return "99+" }
         return String(count)
     }

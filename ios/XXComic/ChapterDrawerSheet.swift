@@ -5,7 +5,7 @@ import ComicCore
 /// Two-stage height (starts half-screen ~55%, expands to ~92%), order toggle (正序/倒序),
 /// left vertical blue indicator bar (▌) on current chapter, fast scroller, and NO search box.
 @MainActor
-final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITableViewDelegate {
+final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate {
     private let chapters: [Chapter]
     private let currentChapterIndex: Int
     private let hasCurrent: Bool
@@ -23,12 +23,14 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
     private let orderBtn = UIButton(type: .system)
     private let tableView = UITableView(frame: .zero, style: .plain)
     private var fastScroller: ChapterFastScroller?
+    private var tableTrailingConstraint: NSLayoutConstraint?
 
     private var collapsedHeight: CGFloat = 0
     private var expandedHeight: CGFloat = 0
     private var panelHeightConstraint: NSLayoutConstraint?
     private var panelBottomConstraint: NSLayoutConstraint?
     private var isExpanded = false
+    private var panelPanGesture: UIPanGestureRecognizer?
 
     init(
         chapters: [Chapter],
@@ -150,20 +152,33 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
         panel.addSubview(tableView)
 
         // Fast Scroller
-        let scroller = ChapterFastScroller(tableView: tableView)
+        let scrollerColor = isReader
+            ? (isDarkReader ? UIColor(red: 88/255, green: 166/255, blue: 255/255, alpha: 1) : UIColor(red: 9/255, green: 105/255, blue: 218/255, alpha: 1))
+            : Palette.accent
+        let trackColor = isReader
+            ? (isDarkReader ? UIColor(red: 68/255, green: 76/255, blue: 86/255, alpha: 1) : UIColor(red: 208/255, green: 215/255, blue: 222/255, alpha: 1))
+            : Palette.borderSoft
+        let scroller = ChapterFastScroller(tableView: tableView, accentColor: scrollerColor, trackColor: trackColor)
         scroller.accessibilityIdentifier = "chapter.drawer.fast-scroll"
         scroller.translatesAutoresizingMaskIntoConstraints = false
+        scroller.onScrollableChanged = { [weak self] scrollable in
+            self?.applyFastScrollerVisibility(scrollable)
+        }
         panel.addSubview(scroller)
         fastScroller = scroller
 
         // Pan gesture for dragging panel
         let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        pan.delegate = self
         panel.addGestureRecognizer(pan)
+        panelPanGesture = pan
 
         panelHeightConstraint = panel.heightAnchor.constraint(equalToConstant: collapsedHeight)
         panelBottomConstraint = panel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: collapsedHeight)
         let panelFillWidth = panel.widthAnchor.constraint(equalTo: view.widthAnchor)
         panelFillWidth.priority = .defaultHigh
+        let trailingConstraint = tableView.trailingAnchor.constraint(equalTo: panel.safeAreaLayoutGuide.trailingAnchor, constant: 0)
+        tableTrailingConstraint = trailingConstraint
 
         NSLayoutConstraint.activate([
             backdrop.topAnchor.constraint(equalTo: view.topAnchor),
@@ -203,7 +218,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
 
             tableView.topAnchor.constraint(equalTo: header.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: scroller.leadingAnchor),
+            trailingConstraint,
             tableView.bottomAnchor.constraint(equalTo: panel.bottomAnchor),
 
             scroller.topAnchor.constraint(equalTo: tableView.topAnchor),
@@ -211,6 +226,20 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
             scroller.widthAnchor.constraint(equalToConstant: 44),
             scroller.bottomAnchor.constraint(equalTo: panel.safeAreaLayoutGuide.bottomAnchor)
         ])
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        fastScroller?.refreshScrollableState()
+    }
+
+    private func applyFastScrollerVisibility(_ scrollable: Bool) {
+        fastScroller?.isHidden = !scrollable
+        fastScroller?.isUserInteractionEnabled = scrollable
+        let targetConstant: CGFloat = scrollable ? -44 : 0
+        if tableTrailingConstraint?.constant != targetConstant {
+            tableTrailingConstraint?.constant = targetConstant
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -221,6 +250,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
             self.view.layoutIfNeeded()
         } completion: { _ in
             self.scrollToCurrentChapter()
+            self.fastScroller?.refreshScrollableState()
         }
     }
 
@@ -238,6 +268,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
         rebuildOrderIndexes()
         tableView.reloadData()
         scrollToCurrentChapter()
+        fastScroller?.refreshScrollableState()
     }
 
     @objc private func toggleHeight() {
@@ -249,25 +280,40 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
         panelHeightConstraint?.constant = height
         UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
             self.view.layoutIfNeeded()
+        } completion: { _ in
+            self.fastScroller?.refreshScrollableState()
         }
     }
 
     @objc private func handlePan(_ recognizer: UIPanGestureRecognizer) {
-        let translation = recognizer.translation(in: view)
+        let deltaY = recognizer.translation(in: view).y
+        recognizer.setTranslation(.zero, in: view)
         let currentH = panelHeightConstraint?.constant ?? collapsedHeight
+        let currentBottom = panelBottomConstraint?.constant ?? 0
         switch recognizer.state {
         case .changed:
-            if translation.y < 0 { // dragging up
-                let newH = min(expandedHeight, currentH - translation.y)
-                panelHeightConstraint?.constant = newH
-            } else if translation.y > 0 && currentH <= collapsedHeight { // dragging down to dismiss
-                panelBottomConstraint?.constant = translation.y
+            if deltaY < 0 {
+                if currentBottom > 0 {
+                    let nextBottom = max(0, currentBottom + deltaY)
+                    panelBottomConstraint?.constant = nextBottom
+                } else {
+                    let nextH = min(expandedHeight, currentH - deltaY)
+                    panelHeightConstraint?.constant = nextH
+                }
+            } else if deltaY > 0 {
+                if currentH > collapsedHeight {
+                    let nextH = max(collapsedHeight, currentH - deltaY)
+                    panelHeightConstraint?.constant = nextH
+                } else {
+                    panelBottomConstraint?.constant = max(0, currentBottom + deltaY)
+                }
             }
         case .ended, .cancelled:
             let velocity = recognizer.velocity(in: view)
             if velocity.y > 400 || (panelBottomConstraint?.constant ?? 0) > 100 {
                 dismissSheet()
             } else if velocity.y < -300 {
+                panelBottomConstraint?.constant = 0
                 setPanelHeight(expandedHeight)
                 isExpanded = true
             } else {
@@ -282,6 +328,33 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
             }
         default: break
         }
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        if gestureRecognizer === panelPanGesture, let scroller = fastScroller, !scroller.isHidden {
+            let pt = touch.location(in: scroller)
+            if scroller.bounds.contains(pt) {
+                return false
+            }
+        }
+        return true
+    }
+
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard gestureRecognizer === panelPanGesture, let pan = gestureRecognizer as? UIPanGestureRecognizer else {
+            return true
+        }
+        let velocity = pan.velocity(in: panel)
+        guard abs(velocity.y) >= abs(velocity.x) else { return false }
+        let location = pan.location(in: panel)
+        if tableView.frame.contains(location) {
+            let atTop = tableView.contentOffset.y <= -tableView.adjustedContentInset.top + 1
+            if velocity.y < 0 {
+                return !isExpanded
+            }
+            return atTop
+        }
+        return true
     }
 
     @objc private func dismissSheet() {
@@ -322,7 +395,7 @@ final class ChapterDrawerSheet: UIViewController, UITableViewDataSource, UITable
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        fastScroller?.setNeedsDisplay()
+        fastScroller?.refreshScrollableState()
     }
 }
 

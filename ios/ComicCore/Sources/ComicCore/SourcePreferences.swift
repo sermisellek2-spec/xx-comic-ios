@@ -80,20 +80,47 @@ public final class SourcePreferences {
         let canonical = Self.canonicalID(sourceId)
         if let data = defaults.data(forKey: "source.\(canonical).config"),
            let item = try? JSONDecoder().decode(SourceConfigItem.self, from: data) {
-            return item
+            return Self.migratedConfig(item)
         }
         for alias in Self.legacyAliases(for: sourceId) {
             if let legacyData = defaults.data(forKey: "source.\(alias).config"),
                let item = try? JSONDecoder().decode(SourceConfigItem.self, from: legacyData) {
-                return item
+                return Self.migratedConfig(item)
             }
         }
         if canonical != sourceId,
            let directData = defaults.data(forKey: "source.\(sourceId).config"),
            let item = try? JSONDecoder().decode(SourceConfigItem.self, from: directData) {
-            return item
+            return Self.migratedConfig(item)
         }
         return SourceConfigDefaults.defaultConfig(for: canonical) ?? SourceConfigDefaults.defaultConfig(for: sourceId)
+    }
+
+    private static func migratedConfig(_ item: SourceConfigItem) -> SourceConfigItem {
+        guard item.id == "manwa" else { return item }
+        var trimmedBase = item.baseUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        while trimmedBase.hasSuffix("/") && trimmedBase.count > 8 {
+            trimmedBase.removeLast()
+        }
+        if trimmedBase.caseInsensitiveCompare("https://manwace.cc") == .orderedSame
+            || trimmedBase.caseInsensitiveCompare("https://manwads.cc") == .orderedSame {
+            let fallback = SourceConfigDefaults.manwa(enabled: item.enabled)
+            return SourceConfigItem(
+                id: item.id,
+                name: item.name,
+                domain: fallback.domain,
+                baseUrl: fallback.baseUrl,
+                referer: fallback.referer,
+                latestPath: item.latestPath,
+                searchPath: item.searchPath,
+                categoryPath: item.categoryPath,
+                detailPath: item.detailPath,
+                enabled: item.enabled,
+                routes: item.routes,
+                filters: item.filters
+            )
+        }
+        return item
     }
 
     public func setConfig(_ item: SourceConfigItem, for sourceId: String) {
@@ -267,7 +294,7 @@ public final class SourcePreferences {
             for address in [config.baseUrl, config.referer] where !address.isEmpty {
                 guard let url = URL(string: address), ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.host != nil else { throw SourceConfigError.invalidFields }
             }
-            prepared.append(config)
+            prepared.append(Self.migratedConfig(config))
         }
         for (index, item) in custom.enumerated() {
             try Task.checkCancellation()

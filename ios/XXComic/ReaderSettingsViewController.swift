@@ -29,16 +29,21 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
             if isViewLoaded {
                 spreadSwitch?.isOn = spreadEnabled
                 spreadActionsRow?.isHidden = !spreadEnabled
+                spreadSubtitleLabel?.text = Self.resolveSpreadSubtitle(status: spreadStatus, enabled: spreadEnabled)
             }
         }
     }
     var spreadStatus: String? {
         didSet {
+            initialSpreadStatus = spreadStatus
+            initialSpreadEnabled = spreadEnabled
             if isViewLoaded {
-                spreadSubtitleLabel?.text = spreadStatus ?? "只合并接缝明确的相邻图片，按本书记忆"
+                spreadSubtitleLabel?.text = Self.resolveSpreadSubtitle(status: spreadStatus, enabled: spreadEnabled)
             }
         }
     }
+    private var initialSpreadStatus: String?
+    private var initialSpreadEnabled: Bool = false
     var onSpreadEnabledChanged: ((Bool) -> Void)?
     var onSpreadActions: (() -> Void)?
 
@@ -53,7 +58,9 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
     var doublePageStatus: String? {
         didSet {
             if isViewLoaded {
-                doublePageSubtitleLabel?.text = doublePageStatus ?? "宽图自动切为左右两页，按本书记忆"
+                doublePageSubtitleLabel?.text = doublePageStatus ?? (doublePageEnabled
+                    ? "宽图自动切为左右两页，按本书记忆"
+                    : "当前按原页显示，开启后会在本机识别宽页并切成左右两页")
             }
         }
     }
@@ -96,7 +103,7 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
     private let toggles: [(String, String?, String, WritableKeyPath<ReaderPreferences, Bool>)] = [
         ("隐藏右下角状态信息", nil, "reader.fully.immersive", \.fullyImmersive),
         ("墨水屏模式", nil, "reader.display.mode", \.inkScreen),
-        ("搓指放大", nil, "reader.pinch.zoom", \.pinchZoom),
+        ("双指缩放", nil, "reader.pinch.zoom", \.pinchZoom),
         ("禁止动画翻页", "开启后直接切页，左右滑动仅在单页模式生效", "reader.disable.page.animation", \.disablePageAnimation),
         ("去白边", "自动裁去图片外围白边，原文件不变", "reader.crop.white.margins", \.cropWhiteMargins)
     ]
@@ -108,6 +115,7 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         self.autoScaleEnabled = defaults.bool(forKey: "reader.auto.scale.enabled")
         self.scaleMode = ReaderScalePolicy.normalize(defaults.integer(forKey: "reader.scale.mode"))
         self.spreadEnabled = defaults.bool(forKey: "reader.spread.enabled")
+        self.initialSpreadEnabled = self.spreadEnabled
         self.doublePageEnabled = defaults.bool(forKey: "reader.double.page.enabled")
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .custom
@@ -124,7 +132,9 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
                      scaleMode: Int = ReaderScalePolicy.SMART) {
         self.init(store: store)
         self.spreadEnabled = spreadEnabled
+        self.initialSpreadEnabled = spreadEnabled
         self.spreadStatus = spreadStatus
+        self.initialSpreadStatus = spreadStatus
         self.doublePageEnabled = doublePageEnabled
         self.doublePageStatus = doublePageStatus
         self.autoScaleEnabled = autoScaleEnabled
@@ -542,10 +552,30 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
         content.addArrangedSubview(scaleHost)
     }
 
+    private static func resolveSpreadSubtitle(status: String?, enabled: Bool) -> String {
+        if let trimmed = status?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty {
+            return trimmed
+        }
+        return enabled
+            ? "已开启跨页还原，只合并接缝明确的相邻图片"
+            : "只合并接缝明确的相邻图片，按本书记忆"
+    }
+
+    private static func resolveSpreadToggleSubtitle(initialStatus: String?, initialEnabled: Bool, checked: Bool) -> String {
+        if checked == initialEnabled,
+           let trimmed = initialStatus?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !trimmed.isEmpty {
+            return trimmed
+        }
+        return checked
+            ? "已开启跨页还原，只合并接缝明确的相邻图片"
+            : "当前按原页显示，开启后可自动识别和手动调整"
+    }
+
     private func setupSpreadRestorationRow() {
         let (spreadRow, spreadToggle, spreadSubLabel) = switchRow(
             title: "跨页还原（自动识别）",
-            subtitle: spreadStatus ?? "只合并接缝明确的相邻图片，按本书记忆",
+            subtitle: Self.resolveSpreadSubtitle(status: spreadStatus, enabled: spreadEnabled),
             identifier: "reader.settings.spread",
             isOn: spreadEnabled
         )
@@ -555,11 +585,17 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
             guard let self, let spreadToggle else { return }
             self.spreadEnabled = spreadToggle.isOn
             self.spreadActionsRow?.isHidden = !spreadToggle.isOn
+            self.spreadSubtitleLabel?.text = Self.resolveSpreadToggleSubtitle(
+                initialStatus: self.initialSpreadStatus,
+                initialEnabled: self.initialSpreadEnabled,
+                checked: spreadToggle.isOn
+            )
             self.store.defaults.set(self.spreadEnabled, forKey: "reader.spread.enabled")
             if self.spreadEnabled && self.doublePageEnabled {
                 self.doublePageEnabled = false
                 self.doublePageSwitch?.setOn(false, animated: true)
                 self.doublePageActionsRow?.isHidden = true
+                self.doublePageSubtitleLabel?.text = "当前按原页显示，开启后会在本机识别宽页并切成左右两页"
                 self.store.defaults.set(false, forKey: "reader.double.page.enabled")
                 self.onDoublePageEnabledChanged?(false)
             }
@@ -588,9 +624,12 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
     }
 
     private func setupDoublePageRow() {
+        let initialDoubleSub = doublePageStatus ?? (doublePageEnabled
+            ? "宽图自动切为左右两页，按本书记忆"
+            : "当前按原页显示，开启后会在本机识别宽页并切成左右两页")
         let (doublePageRow, doublePageToggle, doublePageSubLabel) = switchRow(
             title: "自动切分双页",
-            subtitle: doublePageStatus ?? "宽图自动切为左右两页，按本书记忆",
+            subtitle: initialDoubleSub,
             identifier: "reader.settings.doublePage",
             isOn: doublePageEnabled
         )
@@ -600,11 +639,19 @@ final class ReaderSettingsViewController: UIViewController, UIViewControllerTran
             guard let self, let doublePageToggle else { return }
             self.doublePageEnabled = doublePageToggle.isOn
             self.doublePageActionsRow?.isHidden = !doublePageToggle.isOn
+            self.doublePageSubtitleLabel?.text = doublePageToggle.isOn
+                ? (self.doublePageStatus ?? "宽图自动切为左右两页，按本书记忆")
+                : "当前按原页显示，开启后会在本机识别宽页并切成左右两页"
             self.store.defaults.set(self.doublePageEnabled, forKey: "reader.double.page.enabled")
             if self.doublePageEnabled && self.spreadEnabled {
                 self.spreadEnabled = false
                 self.spreadSwitch?.setOn(false, animated: true)
                 self.spreadActionsRow?.isHidden = true
+                self.spreadSubtitleLabel?.text = Self.resolveSpreadToggleSubtitle(
+                    initialStatus: self.initialSpreadStatus,
+                    initialEnabled: self.initialSpreadEnabled,
+                    checked: false
+                )
                 self.store.defaults.set(false, forKey: "reader.spread.enabled")
                 self.onSpreadEnabledChanged?(false)
             }

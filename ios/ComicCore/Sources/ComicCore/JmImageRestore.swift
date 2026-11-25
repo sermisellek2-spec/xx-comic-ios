@@ -38,7 +38,7 @@ extension JmImageTransform {
     }
 
     /// Restore the already sampled image (`reverseBands`, `stripes`, `tiles`) before display effects.
-    public static func restore(_ image: CGImage, imageURL: String) throws -> CGImage {
+    public static func restore(_ image: CGImage, imageURL: String, origWidth: Int? = nil, origHeight: Int? = nil) throws -> CGImage {
         let transform = try resolveTransformSpec(imageURL: imageURL)
         guard !transform.isEmpty else { return image }
 
@@ -46,7 +46,9 @@ extension JmImageTransform {
         guard width > 0, height > 0, width <= Int.max / 4,
               height <= Int.max / (width * 4) else { throw TransformError.decodeFailed }
 
-        let ops = RuleBitmapTransform.plan(width: width, height: height, transform: transform)
+        let resolvedOrigW = (origWidth ?? 0) > 0 ? origWidth! : width
+        let resolvedOrigH = (origHeight ?? 0) > 0 ? origHeight! : height
+        let ops = RuleBitmapTransform.plan(width: width, height: height, origWidth: resolvedOrigW, origHeight: resolvedOrigH, transform: transform)
         guard !ops.isEmpty else { return image }
 
         let rowBytes = width * 4

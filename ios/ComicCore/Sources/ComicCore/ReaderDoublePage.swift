@@ -59,10 +59,13 @@ public enum DoublePageDetector {
     public static func decide(sample: Sample?, chapterMedian: Double, index: Int = 0, count: Int = 0) -> Decision {
         // A landscape chapter is an opt-in indication of consistently scanned spreads.
         // Include narrower cover/back matter when its half still has portrait geometry.
-        guard let sample, chapterMedian >= 1.05 else {
+        guard let sample else {
             return Decision(split: false, score: 0, aspect: 0)
         }
         let aspect = sample.aspect
+        if chapterMedian.isNaN || chapterMedian < 1.05 {
+            return Decision(split: false, score: 0, aspect: aspect)
+        }
         let minimum = max(1.05, chapterMedian * 0.72)
         let maximum = min(1.95, chapterMedian * 1.35)
         let wideEnough = aspect >= minimum && aspect <= maximum

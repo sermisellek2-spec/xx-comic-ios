@@ -120,6 +120,7 @@ final class AppEnvironment {
     func removeForegroundDetailIdleObserver(_ id: UUID) {
         foregroundDetailIdleObservers.removeValue(forKey: id)
     }
+
     let readingHabits: ReadingHabitTracker
     let usageStats: UsageStatsClient
     private var usageStatsTask: Task<Void, Never>?
@@ -128,6 +129,22 @@ final class AppEnvironment {
     let localLibrary: LocalLibrary
     let bookshelfGroupStore: BookshelfGroupStore
     let sourceGroupStore: SourceGroupStore
+    let blacklistStore: ComicBlacklistStore
+    let recommendProfileStore: RecommendProfileStore
+    let recommendCandidatePool: RecommendCandidatePool
+    let recommendHarvester: RecommendHarvester
+    let diskCacheStore: ComicDiskCacheStore
+    let imageCacheTrimmer: ImageDiskCacheTrimmer
+    let detailSourceSearch = DetailSourceSearch()
+    private var cachedSummariesList: [ComicSummary] = []
+    private var cachedSummaryOrder: [String] = []
+    var cachedDetails: [String: ComicDiskCacheStore.CachedDetailEntry] = [:]
+    private var cachedDetailOrder: [String] = []
+    private var cachedChapterPages: [String: ChapterPage] = [:]
+    private var cachedChapterPageOrder: [String] = []
+    private static let maxCachedSummaries = 240
+    private static let maxCachedDetails = 160
+    private static let maxCachedChapterPages = 40
     let favoriteUpdateCoordinator: FavoriteUpdateCoordinator
     let favoriteUpdateChecker: FavoriteUpdateChecker
     let folderBookmarkStore: FolderBookmarkStore
@@ -155,6 +172,8 @@ final class AppEnvironment {
     var discoverySources: [any ComicSource] { sourceGroupStore.visibleSources(sources, idExtractor: \.id) }
     static let libraryChanged = Notification.Name("XXComic.libraryChanged")
     static let sourcesChanged = Notification.Name("XXComic.sourcesChanged")
+    static let blacklistChanged = Notification.Name("XXComic.blacklistChanged")
+    static let recommendProfileChanged = Notification.Name("XXComic.recommendProfileChanged")
     private static let legacyBuiltinEnabledKey = "source.legacyBuiltinEnabled"
 
     static func resolveLegacyBuiltinEnabled(defaults: UserDefaults, appDirectory: URL) -> Bool {
@@ -266,7 +285,7 @@ final class AppEnvironment {
         var seenIDs = Set(combined.map(\.id))
         if let catalog = ruleCatalog {
             for entry in catalog.entries() where !entry.removed && !catalog.hidden(entry.rule.id) {
-                guard let ruleSource = catalog.source(entry.rule.id) else { continue }
+                guard let ruleSource = catalog.comicSource(entry.rule.id) ?? catalog.source(entry.rule.id) else { continue }
                 if let existingIdx = combined.firstIndex(where: { $0.id == ruleSource.id }) {
                     if entry.enabled || !preferences.availableIDs.contains(ruleSource.id) || catalog.entry(for: ruleSource.id) != nil {
                         combined[existingIdx] = ruleSource
@@ -338,6 +357,26 @@ final class AppEnvironment {
         )
         bookshelfGroupStore.migrateLegacyDataIfNeeded(legacyOnlineFavorites: library.favorites.map(\.summary.comicId), legacyLocalBookIds: nil)
         sourceGroupStore = SourceGroupStore(directory: appDir)
+        blacklistStore = ComicBlacklistStore(directory: appDir, asyncPersistence: useAsyncGroupPersistence)
+        recommendProfileStore = RecommendProfileStore(directory: appDir, asyncPersistence: useAsyncGroupPersistence)
+        recommendHarvester = RecommendHarvester(filesDir: appDir)
+        recommendCandidatePool = recommendHarvester.candidatePool
+        diskCacheStore = ComicDiskCacheStore(cacheDir: appDir.appendingPathComponent("comic_caches", isDirectory: true))
+        imageCacheTrimmer = RemoteImageView.configureDiskCache(directory: RemoteImageView.diskCacheDirectory(in: appDir))
+
+        let initialSummaries = diskCacheStore.readSummaries()
+        cachedSummariesList = initialSummaries
+        cachedSummaryOrder = initialSummaries.map { Self.detailCacheKey(sourceId: $0.sourceId, comicId: $0.comicId) }
+        for entry in diskCacheStore.readDetailEntries() {
+            let key = Self.detailCacheKey(sourceId: entry.summary.sourceId, comicId: entry.summary.comicId)
+            cachedDetails[key] = entry
+            cachedDetailOrder.append(key)
+        }
+        for page in diskCacheStore.readChapters() where !page.chapterId.isEmpty {
+            cachedChapterPages[page.chapterId] = page
+            cachedChapterPageOrder.append(page.chapterId)
+        }
+
         let downloadsDir = appDir.appendingPathComponent("Downloads", isDirectory: true)
         downloadStore = try DownloadStore(directory: downloadsDir)
         downloadLocations = try DownloadStorageLocations(file: appDir.appendingPathComponent("download-locations.json"), privateDirectory: downloadsDir)
@@ -346,6 +385,11 @@ final class AppEnvironment {
         RemoteImageView.imageUrlResolver = { [weak resolver] imageUrl, force in
             guard let resolver else { return imageUrl.components(separatedBy: "#")[0] }
             return try await resolver.resolveImageUrl(sourceId: "", imageUrl: imageUrl, force: force)
+        }
+        RemoteImageView.refererResolver = { [weak resolver] sourceId, url in
+            guard let resolver else { return nil }
+            let resolved = resolver.resolveReferer(sourceId: sourceId, chapterUrl: url)
+            return resolved.isEmpty ? nil : resolved
         }
         downloadRuntime = DownloadRuntime(store: downloadStore, downloadsDirectory: downloadsDir, sourceResolver: resolver, storageLocations: downloadLocations)
         downloadRuntime.isWifiOnly = defaults.object(forKey: "downloads.wifiOnly") as? Bool ?? true
@@ -415,6 +459,8 @@ final class AppEnvironment {
             Task { @MainActor [weak self] in
                 self?.cancelFolderSynchronization()
                 self?.bookshelfGroupStore.flush()
+                self?.blacklistStore.flush()
+                self?.recommendProfileStore.flush()
             }
         })
         startFolderSynchronization(recover: true)
@@ -435,6 +481,225 @@ final class AppEnvironment {
         for token in folderObservers { NotificationCenter.default.removeObserver(token) }
         usageStatsTask?.cancel()
     }
+
+    // MARK: - Blacklist & Visibility Helpers
+
+    func visibleHistory() -> [LibraryEntry] {
+        library.history.filter { !blacklistStore.isBlacklistedTitle($0.summary.title) }
+    }
+
+    func visibleFavorites() -> [LibraryEntry] {
+        library.favorites.filter { !blacklistStore.isBlacklistedTitle($0.summary.title) }
+    }
+
+    func isRetiredSource(_ sourceId: String) -> Bool {
+        RetiredComicSource.isBuiltinRetired(sourceId)
+            || BuiltinSourceCatalog.retiredIDs.contains(sourceId)
+            || ruleCatalog.isRetiredSource(sourceId)
+    }
+
+    func hasActiveDownloads(forTitle title: String) -> Bool {
+        !matchingPausableBookIds(forTitle: title).isEmpty
+    }
+
+    private func matchingPausableBookIds(forTitle title: String) -> [String] {
+        let targetKey = ComicTitleNormalizer.normalize(title)
+        guard !targetKey.isEmpty else { return [] }
+        var bookIds = Set<String>()
+        for task in downloadStore.list() where DownloadModels.active(task.state) || task.state == .queued || task.state == .waitingNetwork {
+            if let detail = downloadStore.snapshot(id: task.bookId),
+               ComicTitleNormalizer.normalize(detail.summary.title) == targetKey {
+                bookIds.insert(task.bookId)
+            }
+        }
+        return Array(bookIds)
+    }
+
+    @discardableResult
+    func addToBlacklist(
+        title: String,
+        sourceId: String,
+        sourceName: String,
+        comicId: String,
+        coverUrl: String,
+        pauseDownloads: Bool
+    ) -> BlacklistEntry? {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalized = ComicTitleNormalizer.normalize(trimmedTitle)
+        guard !normalized.isEmpty else { return nil }
+
+        let groupSummary: String
+        if !comicId.isEmpty {
+            let scope: BookshelfScope = sourceId == "local" ? .local : .online
+            let customGroups = bookshelfGroupStore.getGroupsForComic(scope: scope, comicId: comicId)
+                .filter { !$0.isBuiltin }
+                .map(\.name)
+            groupSummary = customGroups.joined(separator: "、")
+        } else {
+            groupSummary = ""
+        }
+
+        let resolvedSourceName = sourceName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? (allSources.first(where: { $0.id == sourceId })?.name ?? sourceId)
+            : sourceName
+        let entry = BlacklistEntry(
+            normalizedTitle: normalized,
+            displayTitle: trimmedTitle,
+            coverUrl: coverUrl,
+            comicId: comicId,
+            sourceId: sourceId,
+            sourceName: resolvedSourceName,
+            originScope: sourceId == "local" ? "local" : "online",
+            originLabel: resolvedSourceName,
+            groupSummary: groupSummary,
+            blacklistedAt: Int64(Date().timeIntervalSince1970 * 1000)
+        )
+        guard blacklistStore.add(entry) else { return nil }
+        if pauseDownloads {
+            let bookIds = matchingPausableBookIds(forTitle: trimmedTitle)
+            if !bookIds.isEmpty {
+                downloadRuntime.pauseTasks(forBookIds: bookIds)
+            }
+        }
+        NotificationCenter.default.post(name: Self.blacklistChanged, object: self)
+        notifyLibraryChanged()
+        return entry
+    }
+
+    @discardableResult
+    func restoreFromBlacklist(normalizedTitle: String) -> Bool {
+        let removed = blacklistStore.removeByNormalizedTitle(normalizedTitle)
+        if removed {
+            NotificationCenter.default.post(name: Self.blacklistChanged, object: self)
+            notifyLibraryChanged()
+        }
+        return removed
+    }
+
+    @discardableResult
+    func restoreFromBlacklist(normalizedTitles: [String]) -> Int {
+        let count = blacklistStore.removeByNormalizedTitles(normalizedTitles)
+        if count > 0 {
+            NotificationCenter.default.post(name: Self.blacklistChanged, object: self)
+            notifyLibraryChanged()
+        }
+        return count
+    }
+
+    @discardableResult
+    func clearBlacklist() -> Int {
+        let count = blacklistStore.clearAll()
+        if count > 0 {
+            NotificationCenter.default.post(name: Self.blacklistChanged, object: self)
+            notifyLibraryChanged()
+        }
+        return count
+    }
+
+    // MARK: - Bounded Comic Disk Cache Helpers
+
+    private static func detailCacheKey(sourceId: String, comicId: String) -> String {
+        "\(sourceId)\n\(comicId)"
+    }
+
+    func cachedSummary(sourceId: String, comicId: String) -> ComicSummary? {
+        cachedSummariesList.first { $0.sourceId == sourceId && $0.comicId == comicId }
+    }
+
+    func saveCachedSummary(_ summary: ComicSummary) {
+        let key = Self.detailCacheKey(sourceId: summary.sourceId, comicId: summary.comicId)
+        cachedSummariesList.removeAll { Self.detailCacheKey(sourceId: $0.sourceId, comicId: $0.comicId) == key }
+        cachedSummaryOrder.removeAll { $0 == key }
+        cachedSummariesList.append(summary)
+        cachedSummaryOrder.append(key)
+        while cachedSummariesList.count > Self.maxCachedSummaries, let oldest = cachedSummaryOrder.first {
+            cachedSummaryOrder.removeFirst()
+            cachedSummariesList.removeAll { Self.detailCacheKey(sourceId: $0.sourceId, comicId: $0.comicId) == oldest }
+        }
+        persistDiskCachesAsync()
+    }
+
+    func cachedDetail(sourceId: String, comicId: String) -> ComicDetail? {
+        let key = Self.detailCacheKey(sourceId: sourceId, comicId: comicId)
+        return cachedDetails[key]?.restoredWithRevisionCheck().detail
+    }
+
+    func saveCachedDetail(_ detail: ComicDetail) {
+        let key = Self.detailCacheKey(sourceId: detail.summary.sourceId, comicId: detail.summary.comicId)
+        let ruleVersion = ruleCatalog.entry(for: detail.summary.sourceId)?.rule.version
+        let entry = ComicDiskCacheStore.CachedDetailEntry(detail: detail, sourceRuleVersion: ruleVersion)
+        cachedDetails[key] = entry
+        cachedDetailOrder.removeAll { $0 == key }
+        cachedDetailOrder.append(key)
+        while cachedDetailOrder.count > Self.maxCachedDetails {
+            let evicted = cachedDetailOrder.removeFirst()
+            cachedDetails.removeValue(forKey: evicted)
+        }
+        persistDiskCachesAsync()
+    }
+
+    func cachedChapterPage(chapterId: String) -> ChapterPage? {
+        cachedChapterPages[chapterId]
+    }
+
+    func saveCachedChapterPage(_ page: ChapterPage) {
+        guard !page.chapterId.isEmpty else { return }
+        cachedChapterPages[page.chapterId] = page
+        cachedChapterPageOrder.removeAll { $0 == page.chapterId }
+        cachedChapterPageOrder.append(page.chapterId)
+        while cachedChapterPageOrder.count > Self.maxCachedChapterPages {
+            let evicted = cachedChapterPageOrder.removeFirst()
+            cachedChapterPages.removeValue(forKey: evicted)
+        }
+        persistDiskCachesAsync()
+    }
+
+    func invalidateChapterCachesForUpdatedRules(_ updatedRuleIds: Set<String>) {
+        var ruleVersions: [String: Int] = [:]
+        for entry in ruleCatalog.entries() {
+            ruleVersions[entry.rule.id] = entry.rule.version
+        }
+        var invalidatedChapterKeys = Set<String>()
+        for key in cachedDetails.keys {
+            guard let entry = cachedDetails[key] else { continue }
+            if ComicDiskCacheStore.isLocalSourceOrComic(entry.detail) || entry.chapters.isEmpty { continue }
+            let srcId = entry.summary.sourceId
+            let newVer = ruleVersions[srcId] ?? 0
+            let cachedVer = entry.sourceRuleVersion ?? 0
+            if updatedRuleIds.contains(srcId) || (cachedVer > 0 && newVer > cachedVer) {
+                for ch in entry.chapters {
+                    if !ch.chapterId.isEmpty { invalidatedChapterKeys.insert(ch.chapterId) }
+                    if !ch.url.isEmpty { invalidatedChapterKeys.insert(ch.url) }
+                }
+                var updated = entry
+                updated.chapters = []
+                updated.sourceRuleVersion = nil
+                cachedDetails[key] = updated
+            }
+        }
+        for key in invalidatedChapterKeys {
+            cachedChapterPages.removeValue(forKey: key)
+            cachedChapterPageOrder.removeAll { $0 == key }
+        }
+        let store = diskCacheStore
+        let ids = updatedRuleIds
+        let versions = ruleVersions
+        Task.detached(priority: .utility) {
+            store.invalidateDetailsAndChapters(forSourceIds: ids, ruleVersions: versions)
+        }
+    }
+
+    private func persistDiskCachesAsync() {
+        let summaries = cachedSummariesList
+        let details = cachedDetailOrder.compactMap { cachedDetails[$0] }
+        let chapters = cachedChapterPageOrder.compactMap { cachedChapterPages[$0] }
+        let store = diskCacheStore
+        Task.detached(priority: .utility) {
+            try? store.writeSnapshots(summaries: summaries, details: details, chapters: chapters)
+        }
+    }
+
+    // MARK: - Folder Sync & Library Mutations
 
     func cancelFolderSynchronization() {
         folderSyncGeneration = UUID()
@@ -617,30 +882,77 @@ final class AppEnvironment {
         NotificationCenter.default.post(name: Self.sourcesChanged, object: self)
     }
 
-    func source(for comic: ComicSummary) -> (any ComicSource)? { comic.sourceId == "local" ? localSource : allSources.first { $0.id == comic.sourceId } }
+    func source(for comic: ComicSummary) -> (any ComicSource)? {
+        if comic.sourceId == "local" {
+            return localSource
+        }
+        if let found = allSources.first(where: { $0.id == comic.sourceId }) {
+            return found
+        }
+        if RetiredComicSource.isBuiltinRetired(comic.sourceId) || ruleCatalog.isRetiredSource(comic.sourceId) {
+            let retiredName = RetiredComicSource.builtinRetiredName(for: comic.sourceId)
+                ?? ruleCatalog.retiredSourceName(comic.sourceId)
+            return RetiredComicSource(id: comic.sourceId, name: retiredName.isEmpty ? comic.sourceId : retiredName)
+        }
+        return nil
+    }
+
+    func totalCacheBytes() async throws -> (memoryBytes: Int64, diskBytes: Int64, totalBytes: Int64) {
+        let http = try await responseCache.usage()
+        let diskStore = diskCacheStore
+        let trimmer = imageCacheTrimmer
+        let extraDisk = await Task.detached(priority: .utility) {
+            diskStore.totalBytes() + trimmer.getTrackedBytes()
+        }.value
+        let combinedDisk = http.diskBytes + extraDisk
+        return (memoryBytes: http.memoryBytes, diskBytes: combinedDisk, totalBytes: http.memoryBytes + combinedDisk)
+    }
+
     func clearCaches() async throws -> HTTPResponseCacheUsage {
         try Task.checkCancellation()
         RemoteImageView.clearMemoryCache()
         ReaderEnhancementEngine.shared.clearCache()
+        HTTPCookieStorage.shared.removeCookies(since: .distantPast)
         #if DEBUG
         let trace = ProcessInfo.processInfo.arguments.contains("--ui-testing")
         let started = ProcessInfo.processInfo.systemUptime
         if trace { print("CACHE_UI stage=begin") }
         #endif
+        cachedSummariesList.removeAll()
+        cachedSummaryOrder.removeAll()
+        cachedDetails.removeAll()
+        cachedDetailOrder.removeAll()
+        cachedChapterPages.removeAll()
+        cachedChapterPageOrder.removeAll()
+
+        let diskStore = diskCacheStore
+        let trimmer = imageCacheTrimmer
+        let extraRemainingTask = Task.detached(priority: .utility) { () -> Int64 in
+            _ = diskStore.clear()
+            RemoteImageView.clearDiskCacheFiles(using: trimmer)
+            return diskStore.totalBytes() + trimmer.getTrackedBytes()
+        }
+
         async let browser: Void = try mh18BrowserSession.clearCache()
         async let http: HTTPResponseCacheUsage = responseCache.clear()
-        let (_, remaining) = try await (browser, http)
+        let (_, httpRemaining, extraDisk) = try await (browser, http, extraRemainingTask.value)
+        let remaining = HTTPResponseCacheUsage(
+            memoryBytes: httpRemaining.memoryBytes,
+            diskBytes: httpRemaining.diskBytes + extraDisk
+        )
         #if DEBUG
         if trace { print("CACHE_UI stage=finished elapsed=\(ProcessInfo.processInfo.systemUptime - started) memory=\(remaining.memoryBytes) disk=\(remaining.diskBytes)") }
         #endif
         reloadSources()
         return remaining
     }
+
     func setUsageStatsEnabled(_ enabled: Bool) throws {
         try usageStats.setEnabled(enabled)
         if enabled { reportUsageStatsIfNeeded() }
         else { cancelUsageStatsReport() }
     }
+
     func reportUsageStatsIfNeeded() {
         #if DEBUG
         guard !ProcessInfo.processInfo.arguments.contains("--ui-testing") else { return }
@@ -649,8 +961,8 @@ final class AppEnvironment {
         #endif
         guard usageStatsTask == nil else { return }
         let info = UsageStatsApplicationInfo(
-            appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.49",
-            versionCode: Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "349") ?? 349,
+            appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0.56",
+            versionCode: Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "356") ?? 356,
             osVersion: UIDevice.current.systemVersion, deviceModel: "Apple " + UIDevice.current.model)
         let client = usageStats
         let token = UUID(); usageStatsGeneration = token
@@ -659,6 +971,7 @@ final class AppEnvironment {
             await self?.finishUsageStatsReport(token)
         }
     }
+
     private func finishUsageStatsReport(_ token: UUID) { if usageStatsGeneration == token { usageStatsTask = nil } }
     func cancelUsageStatsReport() { usageStatsGeneration = UUID(); usageStatsTask?.cancel(); usageStatsTask = nil }
     func notifyLibraryChanged() { NotificationCenter.default.post(name: Self.libraryChanged, object: nil) }
@@ -700,19 +1013,33 @@ final class EnvironmentSourceResolver: DownloadSourceResolverProtocol, @unchecke
     }
 
     func resolveReferer(sourceId: String, chapterUrl: String) -> String {
-        guard let source = sources.first(where: { $0.id == sourceId }) else {
-            return ""
+        if let source = sources.first(where: { $0.id == sourceId }) {
+            if let failover = source as? FailoverComicSource {
+                return failover.referer(forUrl: chapterUrl) ?? source.referer
+            }
+            if source is ScriptComicSource || PublicSourceRegistry.contains(sourceId) {
+                return source.referer.isEmpty ? chapterUrl : source.referer
+            }
+            if sourceId == "baozimh" || sourceId == "mkzhan" || sourceId == "hiperdex" ||
+               sourceId == "hanman18" || sourceId == "d5d6" || sourceId == "antbyw" ||
+               sourceId == "xinmanhua" || sourceId == "zaimanhua" ||
+               sourceId == "jmcomic" || chapterUrl.isEmpty {
+                return source.referer
+            }
+            return chapterUrl
         }
-        if source is ScriptComicSource || PublicSourceRegistry.contains(sourceId) {
-            return source.referer.isEmpty ? chapterUrl : source.referer
+        if sourceId.isEmpty, !chapterUrl.isEmpty, let host = URL(string: chapterUrl)?.host?.lowercased() {
+            for src in sources {
+                if let failover = src as? FailoverComicSource {
+                    for member in failover.members where member.rule.allows(host) {
+                        return failover.referer(forUrl: chapterUrl) ?? member.referer
+                    }
+                } else if let script = src as? ScriptComicSource, script.rule.allows(host) {
+                    return script.referer
+                }
+            }
         }
-        if sourceId == "baozimh" || sourceId == "mkzhan" || sourceId == "hiperdex" ||
-           sourceId == "hanman18" || sourceId == "d5d6" || sourceId == "antbyw" ||
-           sourceId == "xinmanhua" || sourceId == "zaimanhua" ||
-           sourceId == "jmcomic" || chapterUrl.isEmpty {
-            return source.referer
-        }
-        return chapterUrl
+        return ""
     }
 
     func resolveImageUrl(sourceId: String, imageUrl: String, force: Bool) async throws -> String {

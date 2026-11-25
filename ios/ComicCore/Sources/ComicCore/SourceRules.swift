@@ -17,10 +17,15 @@ import CommonCrypto
 public final class RuleDefinition: @unchecked Sendable, Equatable {
     public static let API: Int = 3
     public static let MAX_SCRIPT: Int = 512 * 1024
-    public static let MAX_PACKAGE: Int = 16 * 1024 * 1024
+    public static let MAX_PACKAGE: Int = 32 * 1024 * 1024
 
     public static let SUPPORTED_CAPABILITIES: Set<String> = [
-        "cleartext", "decodePipeline", "tiles", "stripes", "binaryHttp", "cryptoV3", "minInterval", "render"
+        "cleartext", "decodePipeline", "tiles", "stripes", "binaryHttp", "cryptoV3", "minInterval", "render",
+        "avif", "lenientCookies"
+    ]
+
+    public static let SUPPORTED_FALLBACK_MODES: Set<String> = [
+        "sameId", "kanId", "ehGid", "search", "feed"
     ]
 
     public static let LEGACY_CLEARTEXT_HOSTS: Set<String> = [
@@ -40,6 +45,9 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
     public let scriptSha256: String
     public let hash: String
     public let coreHash: String
+    public let fallbackOf: String
+    public let fallbackMode: String
+    public let fallbackOrder: Int
     public let version: Int
     public let engineApi: Int
     public let requestLimit: Int
@@ -54,6 +62,8 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
     public let hosts: [String]
     public let requires: [String]
     public let cleartextHosts: [String]
+
+    public var isFallback: Bool { !fallbackOf.isEmpty }
 
     public init(json: [String: Any]) throws {
         guard let id = json["id"] as? String,
@@ -108,6 +118,67 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
         } else {
             self.vpnDeclared = false
             self.requiresVpn = false
+        }
+
+        var rawFallbackOf = ""
+        if let fbAny = json["fallbackOf"], !(fbAny is NSNull) {
+            guard let fbStr = fbAny as? String else {
+                throw RuleError("备用关联字段格式无效")
+            }
+            rawFallbackOf = fbStr
+        }
+        if !rawFallbackOf.isEmpty {
+            guard rawFallbackOf.range(of: #"^[a-z][a-z0-9_]{1,63}$"#, options: .regularExpression) != nil,
+                  rawFallbackOf != id else {
+                throw RuleError("备用关联主源 ID 无效")
+            }
+        }
+        self.fallbackOf = rawFallbackOf
+        if rawFallbackOf.isEmpty {
+            if let ordAny = json["fallbackOrder"], !(ordAny is NSNull) {
+                guard let num = ordAny as? NSNumber,
+                      !JsonValueHelper.isJsonBoolean(ordAny),
+                      num.int64Value == 0,
+                      Double(truncating: num) == 0 else {
+                    throw RuleError("非备用规则不可声明 fallbackOrder")
+                }
+            }
+            if let modeAny = json["fallbackMode"], !(modeAny is NSNull) {
+                guard let modeStr = modeAny as? String, modeStr.isEmpty else {
+                    throw RuleError("非备用规则不可声明 fallbackMode")
+                }
+            }
+            self.fallbackOrder = 0
+            self.fallbackMode = ""
+        } else {
+            var order = 1
+            if let ordAny = json["fallbackOrder"], !(ordAny is NSNull) {
+                guard let num = ordAny as? NSNumber,
+                      !JsonValueHelper.isJsonBoolean(ordAny) else {
+                    throw RuleError("备用排序无效")
+                }
+                let dv = num.doubleValue
+                let lv = num.int64Value
+                guard dv.isFinite && Double(lv) == dv else {
+                    throw RuleError("备用排序无效")
+                }
+                guard lv >= 1 && lv <= 64 else {
+                    throw RuleError("备用排序超出范围")
+                }
+                order = Int(lv)
+            }
+            self.fallbackOrder = order
+            var mode = "search"
+            if let modeAny = json["fallbackMode"], !(modeAny is NSNull) {
+                guard let modeStr = modeAny as? String else {
+                    throw RuleError("备用匹配模式无效")
+                }
+                mode = modeStr
+            }
+            guard Self.SUPPORTED_FALLBACK_MODES.contains(mode) else {
+                throw RuleError("备用匹配模式不支持")
+            }
+            self.fallbackMode = mode
         }
 
         self.requestLimit = (json["requestLimit"] as? Int) ?? 40
@@ -210,9 +281,15 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
             + (engineApi < 3 ? "" : "\nrequires=\(requiresString)\ncleartext=\(cleartextString)\ninterval=\(minIntervalMs)")
 
         self.coreHash = Self.sha(Data(identity.utf8))
-        self.hash = self.vpnDeclared
-            ? Self.sha(Data((identity + "\nrequiresVpn=\(self.requiresVpn)").utf8))
-            : self.coreHash
+        let fallbackDeclared = !self.fallbackOf.isEmpty
+        if self.vpnDeclared || fallbackDeclared {
+            let fullIdentity = identity
+                + (self.vpnDeclared ? "\nrequiresVpn=\(self.requiresVpn)" : "")
+                + (fallbackDeclared ? "\nfallback=\(self.fallbackOf):\(self.fallbackOrder):\(self.fallbackMode)" : "")
+            self.hash = Self.sha(Data(fullIdentity.utf8))
+        } else {
+            self.hash = self.coreHash
+        }
 
         guard self.allows(baseHost) else {
             throw RuleError("站点域名不在授权列表中")
@@ -311,6 +388,11 @@ public final class RuleDefinition: @unchecked Sendable, Equatable {
         }
         if vpnDeclared {
             dict["requiresVpn"] = requiresVpn
+        }
+        if isFallback {
+            dict["fallbackOf"] = fallbackOf
+            dict["fallbackOrder"] = fallbackOrder
+            dict["fallbackMode"] = fallbackMode
         }
         return dict
     }
@@ -1096,6 +1178,48 @@ public enum RuleImageData {
         // WEBP: RIFF....WEBP
         if b[0] == 0x52 && b[1] == 0x49 && b[2] == 0x46 && b[3] == 0x46 &&
            b[8] == 0x57 && b[9] == 0x45 && b[10] == 0x42 && b[11] == 0x50 { return true }
+        // ISO BMFF (AVIF / HEIC)
+        if isIsoBmffImageHeader(b) { return true }
+        return false
+    }
+
+    public static func isIsoBmffImageHeader(_ data: Data, offset: Int = 0, length: Int? = nil) -> Bool {
+        let len = length ?? data.count
+        guard offset >= 0, len <= data.count else { return false }
+        let available = len - offset
+        guard available >= 12 else { return false }
+        let bytes = Array(data)
+        guard bytes[offset + 4] == 0x66, // f
+              bytes[offset + 5] == 0x74, // t
+              bytes[offset + 6] == 0x79, // y
+              bytes[offset + 7] == 0x70  // p
+        else { return false }
+        let boxSize: UInt64 = (UInt64(bytes[offset]) << 24)
+            | (UInt64(bytes[offset + 1]) << 16)
+            | (UInt64(bytes[offset + 2]) << 8)
+            | UInt64(bytes[offset + 3])
+        guard boxSize >= 12 && boxSize <= 4096 else { return false }
+        if isIsoBmffImageBrand(bytes, offset + 8) { return true }
+        let boxEnd = min(UInt64(len), UInt64(offset) + boxSize)
+        var off = offset + 16
+        while UInt64(off + 4) <= boxEnd {
+            if isIsoBmffImageBrand(bytes, off) { return true }
+            off += 4
+        }
+        return false
+    }
+
+    private static func isIsoBmffImageBrand(_ b: [UInt8], _ off: Int) -> Bool {
+        // avif / avis / mif1 / heic / heix
+        if b[off] == 0x61 && b[off + 1] == 0x76 && b[off + 2] == 0x69 && (b[off + 3] == 0x66 || b[off + 3] == 0x73) {
+            return true
+        }
+        if b[off] == 0x6D && b[off + 1] == 0x69 && b[off + 2] == 0x66 && b[off + 3] == 0x31 {
+            return true
+        }
+        if b[off] == 0x68 && b[off + 1] == 0x65 && b[off + 2] == 0x69 && (b[off + 3] == 0x63 || b[off + 3] == 0x78) {
+            return true
+        }
         return false
     }
 }
@@ -1103,8 +1227,10 @@ public enum RuleImageData {
 // MARK: - RuleSessions
 
 public enum RuleSessions {
+    private static let maxJars = 512
     private static let lock = NSLock()
     private static var jars = [String: [String: String]]()
+    private static var jarOrder = [String]()
 
     public static func checked(_ cookies: [String: Any]?) throws -> [String: String] {
         guard let cookies = cookies else { return [:] }
@@ -1134,7 +1260,9 @@ public enum RuleSessions {
         let k = key(rule: rule, url: url)
         lock.lock()
         defer { lock.unlock() }
-        return jars[k] ?? [:]
+        guard let values = jars[k] else { return [:] }
+        touchJarLocked(k)
+        return values
     }
 
     public static func receive(rule: RuleDefinition, url: String, fresh: [String: String]) {
@@ -1147,7 +1275,55 @@ public enum RuleSessions {
             if val.isEmpty { current.removeValue(forKey: key) }
             else { current[key] = val }
         }
-        jars[k] = current
+        setJarLocked(k, values: current)
+    }
+
+    public static func receiveResponse(rule: RuleDefinition, url: String, fresh: [String: String]) {
+        if rule.engineApi < 2 || fresh.isEmpty { return }
+        let k = key(rule: rule, url: url)
+        lock.lock()
+        defer { lock.unlock() }
+        var values = jars[k] ?? [:]
+        for (name, value) in fresh {
+            guard name.range(of: #"^[A-Za-z0-9_.$-]{1,128}$"#, options: .regularExpression) != nil,
+                  value.count <= 4096,
+                  !value.contains(";"),
+                  !value.contains("\r"),
+                  !value.contains("\n") else {
+                continue
+            }
+            if value.isEmpty {
+                values.removeValue(forKey: name)
+            } else if values[name] != nil || values.count < 32 {
+                var nextTotal = name.count + value.count
+                for (existingName, existingVal) in values where existingName != name {
+                    nextTotal += existingName.count + existingVal.count
+                }
+                if nextTotal <= 16384 {
+                    values[name] = value
+                }
+            }
+        }
+        setJarLocked(k, values: values)
+    }
+
+    private static func touchJarLocked(_ key: String) {
+        if let idx = jarOrder.firstIndex(of: key) {
+            jarOrder.remove(at: idx)
+            jarOrder.append(key)
+        }
+    }
+
+    private static func setJarLocked(_ key: String, values: [String: String]) {
+        if jars[key] == nil && jars.count >= maxJars, let eldest = jarOrder.first {
+            jarOrder.removeFirst()
+            jars.removeValue(forKey: eldest)
+        }
+        jars[key] = values
+        if let idx = jarOrder.firstIndex(of: key) {
+            jarOrder.remove(at: idx)
+        }
+        jarOrder.append(key)
     }
 
     public static func header(_ values: [String: String]) -> String {
@@ -1269,7 +1445,7 @@ public enum RuleImages {
                 descriptor = try metadata(tagged)["image"] as? [String: Any]
             }
             guard let transform = descriptor?["transform"] as? [String: Any] else { return "" }
-            return try RuleBitmapTransform.validateAndSerialize(rule: nil, transform: transform)
+            return try RuleBitmapTransform.validateAndSerialize(engineApi: RuleDefinition.API, transform: transform)
         } catch let err as RuleError {
             throw err
         } catch {
@@ -1366,13 +1542,13 @@ public enum RuleImages {
         let chapter = (meta["chapter"] as? String) ?? ""
         let index = (meta["index"] as? Int) ?? -1
         let d: [String: Any]
+        lock.lock()
+        let cached = resolvedCache[tagged]
+        lock.unlock()
         if !force {
-            lock.lock()
-            let cached = resolvedCache[tagged]
-            lock.unlock()
             d = cached ?? original
         } else {
-            var request = original
+            var request = cached ?? original
             request["chapter"] = chapter
             request["index"] = index
             d = try source.image(request, force: true)
@@ -1464,6 +1640,8 @@ public enum RuleImages {
 
 public enum RuleBitmapTransform {
     public static let PREFIX_TX = "rule-tx:"
+    private static let maxDimensionBound = 65536
+    private static let boundKeys = ["minWidth", "maxWidth", "minHeight", "maxHeight"]
 
     public struct Op: Equatable, Sendable {
         public let srcLeft: Int
@@ -1504,19 +1682,43 @@ public enum RuleBitmapTransform {
     }
 
     public static func validateAndSerialize(rule: RuleDefinition?, transform: [String: Any]?) throws -> String {
+        try validateAndSerialize(engineApi: rule?.engineApi ?? RuleDefinition.API, transform: transform)
+    }
+
+    public static func validateAndSerialize(engineApi: Int, transform: [String: Any]?) throws -> String {
         guard let t = transform else { return "" }
         let type = (t["type"] as? String) ?? ""
         if type == "reverseBands" {
-            if let rule = rule, rule.engineApi < 2 {
+            if engineApi < 2 {
                 throw RuleError("图片分带还原需要规则引擎 API 2")
             }
             guard let bands = t["bands"] as? Int, bands >= 2 && bands <= 100 else {
                 throw RuleError("规则图片变换参数无效")
             }
+            let axis = (t["axis"] as? String) ?? "horizontal"
+            guard axis == "horizontal" || axis == "vertical" else {
+                throw RuleError("图片条带方向无效")
+            }
+            let hasBounds = hasAnyDimensionBound(t)
+            if axis == "vertical" || hasBounds {
+                if engineApi < 3 {
+                    throw RuleError("图片分带扩展参数需要规则引擎 API 3")
+                }
+                var canonical: [String: Any] = [
+                    "type": "reverseBands",
+                    "bands": bands
+                ]
+                if axis != "horizontal" {
+                    canonical["axis"] = axis
+                }
+                try copyDimensionBounds(from: t, to: &canonical)
+                let data = try JSONSerialization.data(withJSONObject: canonical, options: [.sortedKeys])
+                return PREFIX_TX + String(decoding: data, as: UTF8.self)
+            }
             return "bands:\(bands)"
         }
         if type == "stripes" {
-            if let rule = rule, rule.engineApi < 3 {
+            if engineApi < 3 {
                 throw RuleError("图片条带重排需要规则引擎 API 3")
             }
             let axis = (t["axis"] as? String) ?? "horizontal"
@@ -1531,11 +1733,12 @@ public enum RuleBitmapTransform {
             ]
             if (t["flipX"] as? Bool) == true { canonical["flipX"] = true }
             if (t["flipY"] as? Bool) == true { canonical["flipY"] = true }
+            try copyDimensionBounds(from: t, to: &canonical)
             let data = try JSONSerialization.data(withJSONObject: canonical, options: [.sortedKeys])
             return PREFIX_TX + String(decoding: data, as: UTF8.self)
         }
         if type == "tiles" {
-            if let rule = rule, rule.engineApi < 3 {
+            if engineApi < 3 {
                 throw RuleError("图片网格拼图还原需要规则引擎 API 3")
             }
             guard let cols = t["cols"] as? Int, let rows = t["rows"] as? Int,
@@ -1568,10 +1771,59 @@ public enum RuleBitmapTransform {
             }
             if (t["flipX"] as? Bool) == true { canonical["flipX"] = true }
             if (t["flipY"] as? Bool) == true { canonical["flipY"] = true }
+            try copyDimensionBounds(from: t, to: &canonical)
             let data = try JSONSerialization.data(withJSONObject: canonical, options: [.sortedKeys])
             return PREFIX_TX + String(decoding: data, as: UTF8.self)
         }
         throw RuleError("规则图片变换参数无效")
+    }
+
+    private static func hasAnyDimensionBound(_ t: [String: Any]) -> Bool {
+        for key in boundKeys {
+            if let v = t[key], !(v is NSNull) { return true }
+        }
+        return false
+    }
+
+    private static func copyDimensionBounds(from src: [String: Any], to dst: inout [String: Any]) throws {
+        let minW = try readDimensionBound(src, key: "minWidth")
+        let maxW = try readDimensionBound(src, key: "maxWidth")
+        let minH = try readDimensionBound(src, key: "minHeight")
+        let maxH = try readDimensionBound(src, key: "maxHeight")
+        if minW > 0 && maxW > 0 && minW > maxW { throw RuleError("图片宽度限制范围无效") }
+        if minH > 0 && maxH > 0 && minH > maxH { throw RuleError("图片高度限制范围无效") }
+        if minW > 0 { dst["minWidth"] = minW }
+        if maxW > 0 { dst["maxWidth"] = maxW }
+        if minH > 0 { dst["minHeight"] = minH }
+        if maxH > 0 { dst["maxHeight"] = maxH }
+    }
+
+    private static func readDimensionBound(_ t: [String: Any], key: String) throws -> Int {
+        guard let raw = t[key], !(raw is NSNull) else { return 0 }
+        guard let num = raw as? NSNumber, !JsonValueHelper.isJsonBoolean(raw) else {
+            throw RuleError("图片变换尺寸约束无效：\(key)")
+        }
+        let dv = num.doubleValue
+        let lv = num.int64Value
+        guard dv.isFinite && Double(lv) == dv else {
+            throw RuleError("图片变换尺寸约束无效：\(key)")
+        }
+        guard lv >= 1 && lv <= Int64(maxDimensionBound) else {
+            throw RuleError("图片变换尺寸约束超出范围：\(key)")
+        }
+        return Int(lv)
+    }
+
+    private static func matchesDimensionBounds(origWidth: Int, origHeight: Int, spec: [String: Any]) -> Bool {
+        let minW = (spec["minWidth"] as? Int) ?? 0
+        let maxW = (spec["maxWidth"] as? Int) ?? 0
+        let minH = (spec["minHeight"] as? Int) ?? 0
+        let maxH = (spec["maxHeight"] as? Int) ?? 0
+        if minW > 0 && origWidth < minW { return false }
+        if maxW > 0 && origWidth > maxW { return false }
+        if minH > 0 && origHeight < minH { return false }
+        if maxH > 0 && origHeight > maxH { return false }
+        return true
     }
 
     private static func parsePermutation(_ raw: Any?, minLen: Int, maxLen: Int) throws -> [Int] {
@@ -1593,7 +1845,11 @@ public enum RuleBitmapTransform {
     }
 
     public static func plan(width: Int, height: Int, transform: String) -> [Op] {
-        guard width >= 1, height >= 1, isSupported(transform) else { return [] }
+        plan(width: width, height: height, origWidth: width, origHeight: height, transform: transform)
+    }
+
+    public static func plan(width: Int, height: Int, origWidth: Int, origHeight: Int, transform: String) -> [Op] {
+        guard width >= 1, height >= 1, origWidth >= 1, origHeight >= 1, isSupported(transform) else { return [] }
         if transform.hasPrefix("bands:") {
             guard let count = Int(transform.dropFirst(6)),
                   count >= 2, count <= 100, height >= count,
@@ -1609,11 +1865,35 @@ public enum RuleBitmapTransform {
         let jsonPart = String(transform.dropFirst(PREFIX_TX.count))
         guard let data = jsonPart.data(using: .utf8),
               let spec = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              matchesDimensionBounds(origWidth: origWidth, origHeight: origHeight, spec: spec),
               let type = spec["type"] as? String else {
             return []
         }
         let flipX = (spec["flipX"] as? Bool) ?? false
         let flipY = (spec["flipY"] as? Bool) ?? false
+
+        if type == "reverseBands" {
+            guard let count = spec["bands"] as? Int else { return [] }
+            let vertical = ((spec["axis"] as? String) ?? "horizontal") == "vertical"
+            guard count >= 2, count <= 100, (vertical ? width >= count : height >= count) else {
+                return []
+            }
+            if vertical {
+                guard let vList = try? verticalBounds(width: width, count: count) else { return [] }
+                return vList.map { b in
+                    Op(srcLeft: b[0], srcTop: 0, srcRight: b[1], srcBottom: height,
+                       dstLeft: b[2], dstTop: 0, dstRight: b[3], dstBottom: height,
+                       rotation: 0, flipX: false, flipY: false)
+                }
+            } else {
+                guard let hList = try? bounds(height: height, count: count) else { return [] }
+                return hList.map { b in
+                    Op(srcLeft: 0, srcTop: b[0], srcRight: width, srcBottom: b[1],
+                       dstLeft: 0, dstTop: b[2], dstRight: width, dstBottom: b[3],
+                       rotation: 0, flipX: false, flipY: false)
+                }
+            }
+        }
 
         if type == "stripes" {
             let vertical = ((spec["axis"] as? String) ?? "horizontal") == "vertical"
@@ -1706,7 +1986,18 @@ public enum RuleBitmapTransform {
     }
 
     public static func applyToArgb(_ source: [UInt32], width: Int, height: Int, transform: String) -> [UInt32] {
-        let ops = plan(width: width, height: height, transform: transform)
+        applyToArgb(source, width: width, height: height, origWidth: width, origHeight: height, transform: transform)
+    }
+
+    public static func applyToArgb(
+        _ source: [UInt32],
+        width: Int,
+        height: Int,
+        origWidth: Int,
+        origHeight: Int,
+        transform: String
+    ) -> [UInt32] {
+        let ops = plan(width: width, height: height, origWidth: origWidth, origHeight: origHeight, transform: transform)
         guard !ops.isEmpty, source.count >= width * height else { return source }
         var out = source
         for op in ops {
@@ -1751,6 +2042,26 @@ public enum RuleBitmapTransform {
             let start = height - y - h
             result[i] = [start, start + h, y, y + h]
             y += h
+        }
+        return result
+    }
+
+    public static func verticalBounds(width: Int, count: Int) throws -> [[Int]] {
+        guard width >= 1, count >= 2, count <= 100, width >= count else {
+            throw RuleError("图片分带参数无效")
+        }
+        var result = [[Int]](repeating: [0, 0, 0, 0], count: count)
+        let step = width / count
+        let covered = step * (count - 1)
+        for i in 1...count {
+            if i == count {
+                let remWidth = width - covered
+                result[i - 1] = [0, remWidth, covered, covered + remWidth]
+            } else {
+                let srcLeft = width - step * i
+                let dstLeft = step * (i - 1)
+                result[i - 1] = [srcLeft, srcLeft + step, dstLeft, dstLeft + step]
+            }
         }
         return result
     }
@@ -1861,11 +2172,45 @@ private final class RepositoryNoRedirectDelegate: NSObject, URLSessionTaskDelega
 public enum RuleRepository {
     public static let LEGACY_DEFAULT_URL = "https://weifeng.cloud/rules/index.json"
     public static let DEFAULT_URL = "https://weifeng.cloud/rules/v3/index.json"
+    public static let FETCH_TIMEOUT_SECONDS: TimeInterval = 20
+
+    public static func isOfficialRepositoryUrl(_ url: String?) -> Bool {
+        guard let raw = url?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty,
+              let parsed = URL(string: raw),
+              parsed.scheme?.lowercased() == "https",
+              parsed.user == nil,
+              parsed.password == nil,
+              parsed.host?.lowercased() == "weifeng.cloud" else {
+            return false
+        }
+        if let port = parsed.port, port != 443 {
+            return false
+        }
+        let path = parsed.path
+        return path == "/rules/index.json" || path == "/rules/v3/index.json"
+    }
+
+    public static func parseRetiredSources(_ root: [String: Any]?) -> [String: String] {
+        guard let root, let rows = root["retiredSources"] as? [[String: Any]], !rows.isEmpty else {
+            return [:]
+        }
+        var retired = [String: String]()
+        for item in rows {
+            guard let rawId = item["id"] as? String else { continue }
+            let id = rawId.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !id.isEmpty else { continue }
+            let name = (item["name"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if retired[id] == nil || !name.isEmpty {
+                retired[id] = name
+            }
+        }
+        return retired
+    }
 
     private static let fetchSession: URLSession = {
         let config = URLSessionConfiguration.ephemeral
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
-        config.timeoutIntervalForRequest = 20
+        config.timeoutIntervalForRequest = FETCH_TIMEOUT_SECONDS
         config.timeoutIntervalForResource = 30
         return URLSession(configuration: config, delegate: RepositoryNoRedirectDelegate(), delegateQueue: nil)
     }()
@@ -1873,6 +2218,10 @@ public enum RuleRepository {
     public static func fetch(_ url: String) throws -> String {
         var currentUrl = url
         for _ in 0..<6 {
+            try RuleCancelToken.current?.throwIfCancelled()
+            if Task.isCancelled {
+                throw RuleCancelledError("规则下载已取消")
+            }
             try RuleDefinition.validateHttp(currentUrl)
             guard currentUrl.lowercased().hasPrefix("https://") else {
                 throw RuleError("规则下载与订阅需要 HTTPS")
@@ -1888,7 +2237,7 @@ public enum RuleRepository {
                         break
                     }
                 }
-                guard let loc = location, !loc.isEmpty,
+                guard let loc = location?.trimmingCharacters(in: .whitespacesAndNewlines), !loc.isEmpty,
                       let nextUrl = URL(string: loc, relativeTo: u)?.absoluteURL else {
                     throw RuleError("规则下载跳转地址无效")
                 }
@@ -1898,15 +2247,47 @@ public enum RuleRepository {
             guard http.statusCode == 200 else {
                 throw RuleError("规则下载失败 HTTP \(http.statusCode)")
             }
-            guard data.count < RuleDefinition.MAX_PACKAGE else {
-                throw RuleError("规则包超过 16MiB")
+            guard data.count <= RuleDefinition.MAX_PACKAGE else {
+                throw RuleError("规则包超过 32MiB")
             }
-            guard let text = String(data: data, encoding: .utf8) else {
-                throw RuleError("规则包编码错误")
-            }
-            return text
+            return decodeResponseBody(data, contentType: headerValue(http, name: "Content-Type"))
         }
         throw RuleError("规则下载跳转过多")
+    }
+
+    private static func headerValue(_ http: HTTPURLResponse, name: String) -> String? {
+        for (k, v) in http.allHeaderFields {
+            if String(describing: k).caseInsensitiveCompare(name) == .orderedSame {
+                return String(describing: v)
+            }
+        }
+        return nil
+    }
+
+    private static func decodeResponseBody(_ data: Data, contentType: String?) -> String {
+        if data.isEmpty { return "" }
+        var bytes = data
+        var encoding: String.Encoding = .utf8
+        if let ct = contentType,
+           let range = ct.range(of: #"charset\s*=\s*['"]?([A-Za-z0-9_\-]+)"#, options: [.regularExpression, .caseInsensitive]) {
+            let sub = String(ct[range])
+            if let eq = sub.firstIndex(of: "=") {
+                let rawCharset = sub[sub.index(after: eq)...].trimmingCharacters(in: CharacterSet(charactersIn: " \"';")).uppercased()
+                if rawCharset.contains("GB") {
+                    let cfEnc = CFStringEncodings.GB_18030_2000.rawValue
+                    encoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(cfEnc)))
+                } else if rawCharset.contains("BIG5") {
+                    let cfEnc = CFStringEncodings.big5.rawValue
+                    encoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(cfEnc)))
+                } else if rawCharset == "ISO-8859-1" || rawCharset == "LATIN1" {
+                    encoding = .isoLatin1
+                }
+            }
+        }
+        if encoding == .utf8 && bytes.count >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF {
+            bytes = bytes.dropFirst(3)
+        }
+        return String(data: bytes, encoding: encoding) ?? String(decoding: bytes, as: UTF8.self)
     }
 
     public static func read(
@@ -1961,7 +2342,7 @@ public enum RuleRepository {
             let bytes = Data(body.utf8)
             total += bytes.count
             if total > RuleDefinition.MAX_PACKAGE {
-                throw RuleError("整批规则超过 16MiB")
+                throw RuleError("整批规则超过 32MiB")
             }
             let actualSha = RuleDefinition.sha(bytes)
             guard actualSha.caseInsensitiveCompare(expectedSha) == .orderedSame else {
@@ -1971,24 +2352,27 @@ public enum RuleRepository {
                   let packJson = try? JSONSerialization.jsonObject(with: packData) as? [String: Any] else {
                 throw RuleError("仓库规则包解析错误")
             }
-            let bundle: RuleStore.Bundle
             if compatible {
-                bundle = try RuleStore.parseCompatible(json: packJson)
+                let part = try RuleStore.parsePackageAllowEmpty(json: packJson, seenIds: &ids)
+                result.append(contentsOf: part.rules)
+                skipped += part.skippedUnsupported
             } else {
-                bundle = RuleStore.Bundle(rules: try RuleStore.parse(json: packJson), skippedUnsupported: 0)
-            }
-            skipped += bundle.skippedUnsupported
-            for r in bundle.rules {
-                guard ids.insert(r.id).inserted else {
-                    throw RuleError("仓库包含重复站源 ID")
+                for r in try RuleStore.parse(json: packJson) {
+                    guard ids.insert(r.id).inserted else {
+                        throw RuleError("仓库包含重复站源 ID")
+                    }
+                    result.append(r)
                 }
-                result.append(r)
             }
             if result.count > RuleStore.MAX_SOURCES {
                 throw RuleError("仓库规则数量过多")
             }
         }
-        return RuleStore.Bundle(rules: result, skippedUnsupported: skipped)
+        if compatible && result.isEmpty && skipped > 0 {
+            throw UnsupportedRuleError("仓库中的 \(skipped) 个站源均需升级客户端后使用")
+        }
+        let retired = (origin != nil && isOfficialRepositoryUrl(origin)) ? parseRetiredSources(root) : [:]
+        return RuleStore.Bundle(rules: result, skippedUnsupported: skipped, retiredSources: retired)
     }
 
     private static func synchronousGet(_ url: URL) throws -> (Data, URLResponse) {
@@ -1998,17 +2382,32 @@ public enum RuleRepository {
         let sema = DispatchSemaphore(value: 0)
 
         var req = URLRequest(url: url)
-        req.timeoutInterval = 20
+        req.timeoutInterval = FETCH_TIMEOUT_SECONDS
+        req.setValue(RuleHttp.defaultUserAgent, forHTTPHeaderField: "User-Agent")
+        req.setValue("application/json, text/plain;q=0.9, */*;q=0.8", forHTTPHeaderField: "Accept")
         let task = fetchSession.dataTask(with: req) { data, resp, err in
             resultData = data
             resultResponse = resp
             resultError = err
             sema.signal()
         }
+        let cancelHandle = try RuleCancelToken.current?.register {
+            task.cancel()
+        }
+        defer { cancelHandle?.close() }
         task.resume()
         sema.wait()
 
-        if let err = resultError { throw err }
+        if let token = RuleCancelToken.current, token.isCancelled {
+            throw RuleCancelledError("规则下载已取消")
+        }
+        if let err = resultError {
+            let nsErr = err as NSError
+            if nsErr.domain == NSURLErrorDomain && nsErr.code == NSURLErrorCancelled {
+                throw RuleCancelledError("规则下载已取消")
+            }
+            throw err
+        }
         guard let d = resultData, let r = resultResponse else { throw RuleError("请求无响应") }
         return (d, r)
     }
@@ -2020,10 +2419,12 @@ public enum RuleSubscriptionUpdate {
     public struct Prepared: @unchecked Sendable {
         public let rules: [RuleDefinition]
         public let skippedUnsupported: Int
+        public let retiredSources: [String: String]
 
-        public init(rules: [RuleDefinition], skippedUnsupported: Int) {
+        public init(rules: [RuleDefinition], skippedUnsupported: Int, retiredSources: [String: String] = [:]) {
             self.rules = rules
             self.skippedUnsupported = skippedUnsupported
+            self.retiredSources = retiredSources
         }
 
         public var skipped: Int { skippedUnsupported }
@@ -2056,10 +2457,12 @@ public enum RuleSubscriptionUpdate {
         }
         var merged = [String: RuleDefinition]()
         var ordered = [RuleDefinition]()
+        var retiredSources = [String: String]()
         var totalBytes = 0
         var skipped = 0
         for url in urls {
             try Task.checkCancellation()
+            try RuleCancelToken.current?.throwIfCancelled()
             try RuleDefinition.validateHttp(url)
             guard url.lowercased().hasPrefix("https://") else {
                 throw RuleError("订阅地址需要 HTTPS")
@@ -2076,8 +2479,17 @@ public enum RuleSubscriptionUpdate {
                 ? try RuleRepository.readCompatible(root: root, origin: url, fetcher: fetcher)
                 : RuleStore.Bundle(rules: try RuleRepository.read(root: root, origin: url, fetcher: fetcher), skippedUnsupported: 0)
             skipped += bundle.skippedUnsupported
+            if RuleRepository.isOfficialRepositoryUrl(url) && !bundle.retiredSources.isEmpty {
+                for (rid, rname) in bundle.retiredSources {
+                    let cleanName = rname.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if retiredSources[rid] == nil || !cleanName.isEmpty {
+                        retiredSources[rid] = cleanName
+                    }
+                }
+            }
             for rule in bundle.rules {
                 try Task.checkCancellation()
+                try RuleCancelToken.current?.throwIfCancelled()
                 if let old = merged[rule.id] {
                     if old.hash != rule.hash {
                         throw RuleError("多个订阅提供不同版本的站源：\(rule.name)，请先处理订阅冲突")
@@ -2094,17 +2506,21 @@ public enum RuleSubscriptionUpdate {
             }
         }
         try Task.checkCancellation()
+        try RuleCancelToken.current?.throwIfCancelled()
         if ordered.isEmpty && skipped > 0 {
-            throw RuleError("订阅中的 \(skipped) 个站源均需升级新版客户端后使用")
+            throw UnsupportedRuleError("订阅中的 \(skipped) 个站源均需升级客户端后使用")
         }
-        return Prepared(rules: ordered, skippedUnsupported: skipped)
+        for activeId in merged.keys {
+            retiredSources.removeValue(forKey: activeId)
+        }
+        return Prepared(rules: ordered, skippedUnsupported: skipped, retiredSources: retiredSources)
     }
 }
 
 // MARK: - RuleStore
 
 public final class RuleStore: @unchecked Sendable {
-    public static let MAX_SOURCES = 256
+    public static let MAX_SOURCES = 512
 
     public final class Entry: @unchecked Sendable {
         public let rule: RuleDefinition
@@ -2123,13 +2539,25 @@ public final class RuleStore: @unchecked Sendable {
     public struct Bundle: @unchecked Sendable {
         public let rules: [RuleDefinition]
         public let skippedUnsupported: Int
+        public let retiredSources: [String: String]
 
-        public init(rules: [RuleDefinition], skippedUnsupported: Int) {
+        public init(rules: [RuleDefinition], skippedUnsupported: Int, retiredSources: [String: String] = [:]) {
             self.rules = rules
             self.skippedUnsupported = skippedUnsupported
+            self.retiredSources = retiredSources
         }
 
         public var skipped: Int { skippedUnsupported }
+    }
+
+    public struct SubscriptionOutcome: Equatable, Sendable {
+        public let summary: String
+        public let cleanedRetiredCount: Int
+
+        public init(summary: String, cleanedRetiredCount: Int) {
+            self.summary = summary
+            self.cleanedRetiredCount = cleanedRetiredCount
+        }
     }
 
     private let lock = NSLock()
@@ -2142,6 +2570,7 @@ public final class RuleStore: @unchecked Sendable {
     private var internalOrder = [String]()
     private var internalHidden = Set<String>()
     private var internalRepositories = [String]()
+    private var internalRetiredSources = [String: String]()
     private var writable = true
     private var primaryValid = false
     private var defaultRepositoryInitialized = false
@@ -2189,6 +2618,40 @@ public final class RuleStore: @unchecked Sendable {
         return internalOrder.compactMap { internalEntries[$0] }
     }
 
+    public static func isEffectiveHiddenBackup(
+        rule: RuleDefinition?,
+        entryMap: [String: Entry],
+        hiddenIds: Set<String>?
+    ) -> Bool {
+        guard let rule, rule.isFallback,
+              let primary = entryMap[rule.fallbackOf] else {
+            return false
+        }
+        return !primary.removed
+            && (hiddenIds == nil || !hiddenIds!.contains(primary.rule.id))
+            && !primary.rule.isFallback
+    }
+
+    public func isHiddenBackup(_ id: String) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let entry = internalEntries[id] else { return false }
+        return Self.isEffectiveHiddenBackup(rule: entry.rule, entryMap: internalEntries, hiddenIds: internalHidden)
+    }
+
+    public func visibleEntries() -> [Entry] {
+        lock.lock()
+        defer { lock.unlock() }
+        var out = [Entry]()
+        for id in internalOrder {
+            guard let entry = internalEntries[id] else { continue }
+            if !Self.isEffectiveHiddenBackup(rule: entry.rule, entryMap: internalEntries, hiddenIds: internalHidden) {
+                out.append(entry)
+            }
+        }
+        return out
+    }
+
     public func hidden() -> Set<String> {
         lock.lock()
         defer { lock.unlock() }
@@ -2201,36 +2664,63 @@ public final class RuleStore: @unchecked Sendable {
         return internalRepositories
     }
 
+    public func retiredSources() -> [String: String] {
+        lock.lock()
+        defer { lock.unlock() }
+        return internalRetiredSources
+    }
+
     public func ensureDefaultRepository() throws {
         lock.lock()
         defer { lock.unlock() }
-        if !defaultRepositoryInitialized {
-            var next = [String]()
-            for repo in internalRepositories {
-                let mapped = (repo == RuleRepository.LEGACY_DEFAULT_URL) ? RuleRepository.DEFAULT_URL : repo
-                if !next.contains(mapped) {
-                    next.append(mapped)
-                }
+        var changed = false
+        var next = [String]()
+        for repo in internalRepositories {
+            let mapped = (repo == RuleRepository.LEGACY_DEFAULT_URL) ? RuleRepository.DEFAULT_URL : repo
+            if mapped != repo { changed = true }
+            if !next.contains(mapped) {
+                next.append(mapped)
+            } else {
+                changed = true
             }
+        }
+        if !defaultRepositoryInitialized {
             if !next.contains(RuleRepository.DEFAULT_URL) && next.count < 16 {
                 next.append(RuleRepository.DEFAULT_URL)
             }
-            try commit(nextEntries: internalEntries, nextOrder: internalOrder, nextHidden: internalHidden, nextRepos: next, initialized: true, v3Migrated: true)
+            try commit(
+                nextEntries: internalEntries,
+                nextOrder: internalOrder,
+                nextHidden: internalHidden,
+                nextRepos: next,
+                initialized: true,
+                v3Migrated: true,
+                nextRetired: internalRetiredSources
+            )
             return
         }
-        if !defaultRepositoryV3Migrated {
-            var next = [String]()
-            for repo in internalRepositories {
-                let mapped = (repo == RuleRepository.LEGACY_DEFAULT_URL) ? RuleRepository.DEFAULT_URL : repo
-                if !next.contains(mapped) {
-                    next.append(mapped)
-                }
-            }
-            try commit(nextEntries: internalEntries, nextOrder: internalOrder, nextHidden: internalHidden, nextRepos: next, initialized: true, v3Migrated: true)
+        if !defaultRepositoryV3Migrated || changed {
+            try commit(
+                nextEntries: internalEntries,
+                nextOrder: internalOrder,
+                nextHidden: internalHidden,
+                nextRepos: next,
+                initialized: true,
+                v3Migrated: true,
+                nextRetired: internalRetiredSources
+            )
         }
     }
 
     public func updateSubscriptions(_ rules: [RuleDefinition], initialStates: [String: Bool] = [:]) throws -> String {
+        try updateSubscriptionsDetailed(rules, initialStates: initialStates, retiredOfficial: [:]).summary
+    }
+
+    public func updateSubscriptionsDetailed(
+        _ rules: [RuleDefinition],
+        initialStates: [String: Bool] = [:],
+        retiredOfficial: [String: String] = [:]
+    ) throws -> SubscriptionOutcome {
         lock.lock()
         defer { lock.unlock() }
         try ensureWritable()
@@ -2238,18 +2728,20 @@ public final class RuleStore: @unchecked Sendable {
         var nextEntries = internalEntries
         var nextOrder = internalOrder
         var nextHidden = internalHidden
+        var nextRetiredSources = internalRetiredSources
         var ids = Set<String>()
-        var added = 0, updated = 0, same = 0
+        var anyStoredChange = false
 
         for rule in rules {
             try Task.checkCancellation()
+            try RuleCancelToken.current?.throwIfCancelled()
             guard ids.insert(rule.id).inserted else {
                 throw RuleError("订阅包含重复站源 ID：\(rule.id)")
             }
+            nextRetiredSources.removeValue(forKey: rule.id)
             let old = internalEntries[rule.id]
             try checkVersion(old: old, r: rule)
             if let old = old, old.rule.hash == rule.hash {
-                same += 1
                 continue
             }
             try saveVersion(rule)
@@ -2260,20 +2752,55 @@ public final class RuleStore: @unchecked Sendable {
                 nextOrder.append(rule.id)
             }
             nextHidden.remove(rule.id)
-            if old == nil { added += 1 } else { updated += 1 }
+            anyStoredChange = true
         }
 
+        syncBackupEnabledStates(
+            next: &nextEntries,
+            nextHidden: nextHidden,
+            batch: rules,
+            explicitStates: initialStates
+        )
+        let beforeCleanup = nextEntries
+        let beforeCleanupHidden = nextHidden
+        var retiredCleanupChanged = false
+        let cleanedVisibleCount = Self.applyRetiredCleanup(
+            targetEntries: &nextEntries,
+            targetOrder: &nextOrder,
+            targetHidden: &nextHidden,
+            targetRetiredSources: &nextRetiredSources,
+            activeIds: ids,
+            retiredOfficial: retiredOfficial,
+            beforeCleanup: beforeCleanup,
+            beforeCleanupHidden: beforeCleanupHidden,
+            changedOut: &retiredCleanupChanged
+        )
+        let summary = summarizeBatch(
+            rules: rules,
+            afterMap: nextEntries,
+            afterHidden: nextHidden,
+            cleanedVisibleCount: cleanedVisibleCount
+        )
+
         if nextEntries.count > Self.MAX_SOURCES {
-            throw RuleError("规则站源超过 256 个上限")
+            throw RuleError("规则站源超过 512 个上限")
         }
         let total = nextEntries.values.reduce(0) { $0 + $1.rule.script.utf8.count }
         if total > RuleDefinition.MAX_PACKAGE {
-            throw RuleError("已保存规则脚本总量超过 16MiB")
+            throw RuleError("已保存规则脚本总量超过 32MiB")
         }
-        if added + updated > 0 {
-            try commit(nextEntries: nextEntries, nextOrder: nextOrder, nextHidden: nextHidden, nextRepos: internalRepositories, initialized: defaultRepositoryInitialized)
+        let retiredMapChanged = (nextRetiredSources != internalRetiredSources)
+        if anyStoredChange || retiredCleanupChanged || retiredMapChanged {
+            try commit(
+                nextEntries: nextEntries,
+                nextOrder: nextOrder,
+                nextHidden: nextHidden,
+                nextRepos: internalRepositories,
+                initialized: defaultRepositoryInitialized,
+                nextRetired: nextRetiredSources
+            )
         }
-        return "新增 \(added) · 更新 \(updated) · 不变 \(same)"
+        return SubscriptionOutcome(summary: summary, cleanedRetiredCount: cleanedVisibleCount)
     }
 
     public func version(_ hash: String) throws -> RuleDefinition {
@@ -2295,14 +2822,40 @@ public final class RuleStore: @unchecked Sendable {
     }
 
     public static func parse(json: Any) throws -> [RuleDefinition] {
-        try parseInternal(json: json, compatible: false).rules
+        guard let dict = json as? [String: Any],
+              (dict["schema"] as? String) == "xx-comic.rules",
+              (dict["version"] as? Int) == 1,
+              let sources = dict["sources"] as? [[String: Any]],
+              !sources.isEmpty && sources.count <= MAX_SOURCES else {
+            if let dict = json as? [String: Any],
+               (dict["schema"] as? String) == "xx-comic.rules",
+               (dict["version"] as? Int) == 1 {
+                throw RuleError("规则包的站源数量无效")
+            }
+            throw RuleError("不是支持的 XX Comic 规则文件")
+        }
+        var rules = [RuleDefinition]()
+        var ids = Set<String>()
+        for row in sources {
+            let r = try RuleDefinition(json: row)
+            guard ids.insert(r.id).inserted else {
+                throw RuleError("同一批规则包含重复 ID：\(r.id)")
+            }
+            rules.append(r)
+        }
+        return rules
     }
 
     public static func parseCompatible(json: Any) throws -> Bundle {
-        try parseInternal(json: json, compatible: true)
+        var ids = Set<String>()
+        let bundle = try parsePackageAllowEmpty(json: json, seenIds: &ids)
+        if bundle.rules.isEmpty && bundle.skippedUnsupported > 0 {
+            throw UnsupportedRuleError("规则包中的 \(bundle.skippedUnsupported) 个站源均需升级客户端后使用")
+        }
+        return bundle
     }
 
-    private static func parseInternal(json: Any, compatible: Bool) throws -> Bundle {
+    static func parsePackageAllowEmpty(json: Any, seenIds: inout Set<String>) throws -> Bundle {
         guard let dict = json as? [String: Any],
               (dict["schema"] as? String) == "xx-comic.rules",
               (dict["version"] as? Int) == 1 else {
@@ -2313,38 +2866,216 @@ public final class RuleStore: @unchecked Sendable {
             throw RuleError("规则包的站源数量无效")
         }
         var rules = [RuleDefinition]()
-        var ids = Set<String>()
         var skipped = 0
         for row in sources {
+            guard let rawId = row["id"] as? String else {
+                throw RuleError("规则包格式错误")
+            }
+            guard seenIds.insert(rawId).inserted else {
+                throw RuleError("同一批规则包含重复 ID：\(rawId)")
+            }
             do {
-                let r = try RuleDefinition(json: row)
-                guard ids.insert(r.id).inserted else {
-                    throw RuleError("同一批规则包含重复 ID：\(r.id)")
-                }
-                rules.append(r)
-            } catch let unsupported as UnsupportedRuleError {
-                if compatible {
-                    skipped += 1
-                    continue
-                }
-                throw unsupported
+                rules.append(try RuleDefinition(json: row))
+            } catch is UnsupportedRuleError {
+                skipped += 1
             }
         }
         return Bundle(rules: rules, skippedUnsupported: skipped)
     }
 
-    public func preview(_ rules: [RuleDefinition]) throws -> String {
+    public func preview(_ rules: [RuleDefinition], retiredOfficial: [String: String] = [:]) throws -> String {
         lock.lock()
         defer { lock.unlock() }
-        var added = 0, updated = 0, same = 0
+        var simulated = internalEntries
+        var simulatedOrder = internalOrder
+        var simulatedHidden = internalHidden
+        var activeIds = Set<String>()
         for r in rules {
             let old = internalEntries[r.id]
             try checkVersion(old: old, r: r)
-            if old == nil { added += 1 }
-            else if old!.rule.hash == r.hash { same += 1 }
-            else { updated += 1 }
+            simulated[r.id] = Entry(
+                rule: r,
+                previous: old == nil ? "" : old!.rule.hash,
+                enabled: old == nil || old!.enabled,
+                removed: false
+            )
+            if !simulatedOrder.contains(r.id) {
+                simulatedOrder.append(r.id)
+            }
+            simulatedHidden.remove(r.id)
+            activeIds.insert(r.id)
+        }
+        let beforeCleanup = simulated
+        let beforeCleanupHidden = simulatedHidden
+        var unusedRetired: [String: String]? = nil
+        var unusedChanged = false
+        let cleanedVisibleCount = Self.applyRetiredCleanup(
+            targetEntries: &simulated,
+            targetOrder: &simulatedOrder,
+            targetHidden: &simulatedHidden,
+            targetRetiredSources: &unusedRetired,
+            activeIds: activeIds,
+            retiredOfficial: retiredOfficial,
+            beforeCleanup: beforeCleanup,
+            beforeCleanupHidden: beforeCleanupHidden,
+            changedOut: &unusedChanged
+        )
+        return summarizeBatch(
+            rules: rules,
+            afterMap: simulated,
+            afterHidden: simulatedHidden,
+            cleanedVisibleCount: cleanedVisibleCount
+        )
+    }
+
+    private static func applyRetiredCleanup(
+        targetEntries: inout [String: Entry],
+        targetOrder: inout [String],
+        targetHidden: inout Set<String>,
+        targetRetiredSources: inout [String: String]?,
+        activeIds: Set<String>,
+        retiredOfficial: [String: String],
+        beforeCleanup: [String: Entry],
+        beforeCleanupHidden: Set<String>,
+        changedOut: inout Bool
+    ) -> Int {
+        guard !retiredOfficial.isEmpty else { return 0 }
+        var cleanedVisibleCount = 0
+        for (rawId, rawName) in retiredOfficial {
+            let rid = rawId.trimmingCharacters(in: .whitespacesAndNewlines)
+            if rid.isEmpty || activeIds.contains(rid) { continue }
+            var rname = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+            if var retiredMap = targetRetiredSources {
+                if rname.isEmpty, let existing = retiredMap[rid]?.trimmingCharacters(in: .whitespacesAndNewlines), !existing.isEmpty {
+                    rname = existing
+                }
+                retiredMap[rid] = rname
+                targetRetiredSources = retiredMap
+            }
+            if let removed = targetEntries.removeValue(forKey: rid) {
+                targetOrder.removeAll(where: { $0 == rid })
+                if !removed.removed
+                    && !beforeCleanupHidden.contains(rid)
+                    && !isEffectiveHiddenBackup(rule: removed.rule, entryMap: beforeCleanup, hiddenIds: beforeCleanupHidden) {
+                    cleanedVisibleCount += 1
+                }
+                targetHidden.insert(rid)
+                changedOut = true
+            }
+            let backupIds = targetEntries.values
+                .filter { $0.rule.fallbackOf == rid }
+                .map { $0.rule.id }
+            for bid in backupIds {
+                targetHidden.insert(bid)
+                targetEntries.removeValue(forKey: bid)
+                targetOrder.removeAll(where: { $0 == bid })
+                changedOut = true
+            }
+        }
+        return cleanedVisibleCount
+    }
+
+    private static func applyRetiredCleanup(
+        targetEntries: inout [String: Entry],
+        targetOrder: inout [String],
+        targetHidden: inout Set<String>,
+        targetRetiredSources: inout [String: String],
+        activeIds: Set<String>,
+        retiredOfficial: [String: String],
+        beforeCleanup: [String: Entry],
+        beforeCleanupHidden: Set<String>,
+        changedOut: inout Bool
+    ) -> Int {
+        var optionalRetired: [String: String]? = targetRetiredSources
+        let count = applyRetiredCleanup(
+            targetEntries: &targetEntries,
+            targetOrder: &targetOrder,
+            targetHidden: &targetHidden,
+            targetRetiredSources: &optionalRetired,
+            activeIds: activeIds,
+            retiredOfficial: retiredOfficial,
+            beforeCleanup: beforeCleanup,
+            beforeCleanupHidden: beforeCleanupHidden,
+            changedOut: &changedOut
+        )
+        if let updated = optionalRetired {
+            targetRetiredSources = updated
+        }
+        return count
+    }
+
+    private func summarizeBatch(
+        rules: [RuleDefinition],
+        afterMap: [String: Entry],
+        afterHidden: Set<String>,
+        cleanedVisibleCount: Int
+    ) -> String {
+        var added = 0, updated = 0, same = 0
+        var visibleSameIds = Set<String>()
+        var visibleChangedIds = Set<String>()
+        var primariesWithChangedBackup = Set<String>()
+        for r in rules {
+            let old = internalEntries[r.id]
+            let backup = Self.isEffectiveHiddenBackup(rule: r, entryMap: afterMap, hiddenIds: afterHidden)
+            if backup {
+                if old == nil
+                    || old!.removed
+                    || internalHidden.contains(r.id)
+                    || old!.rule.hash != r.hash {
+                    primariesWithChangedBackup.insert(r.fallbackOf)
+                }
+                continue
+            }
+            if old == nil {
+                added += 1
+                visibleChangedIds.insert(r.id)
+            } else if old!.rule.hash == r.hash {
+                same += 1
+                visibleSameIds.insert(r.id)
+            } else {
+                updated += 1
+                visibleChangedIds.insert(r.id)
+            }
+        }
+        for primaryId in primariesWithChangedBackup {
+            if visibleChangedIds.contains(primaryId) { continue }
+            if visibleSameIds.remove(primaryId) != nil {
+                same -= 1
+                updated += 1
+            } else {
+                updated += 1
+            }
+        }
+        if cleanedVisibleCount > 0 {
+            return "新增 \(added) · 更新 \(updated) · 清理下线 \(cleanedVisibleCount) · 不变 \(same)"
         }
         return "新增 \(added) · 更新 \(updated) · 不变 \(same)"
+    }
+
+    private func syncBackupEnabledStates(
+        next: inout [String: Entry],
+        nextHidden: Set<String>,
+        batch: [RuleDefinition],
+        explicitStates: [String: Bool]
+    ) {
+        for r in batch {
+            guard Self.isEffectiveHiddenBackup(rule: r, entryMap: next, hiddenIds: nextHidden),
+                  explicitStates[r.id] == nil else {
+                continue
+            }
+            let oldBackup = internalEntries[r.id]
+            if let currentBackup = next[r.id],
+               let primary = next[r.fallbackOf],
+               (oldBackup == nil || internalEntries[r.fallbackOf] == nil || explicitStates[r.fallbackOf] != nil),
+               currentBackup.enabled != primary.enabled {
+                next[r.id] = Entry(
+                    rule: currentBackup.rule,
+                    previous: currentBackup.previous,
+                    enabled: primary.enabled,
+                    removed: currentBackup.removed
+                )
+            }
+        }
     }
 
     private func checkVersion(old: Entry?, r: RuleDefinition) throws {
@@ -2363,9 +3094,10 @@ public final class RuleStore: @unchecked Sendable {
         validator: (RuleDefinition) throws -> Void,
         restoreNative: Set<String> = [],
         subscription: String = "",
-        states: [String: Bool] = [:]
+        states: [String: Bool] = [:],
+        retiredOfficial: [String: String] = [:]
     ) throws -> String {
-        let message = try preview(rules)
+        let message = try preview(rules, retiredOfficial: retiredOfficial)
         lock.lock()
         defer { lock.unlock() }
         try ensureWritable()
@@ -2375,6 +3107,7 @@ public final class RuleStore: @unchecked Sendable {
         var visible = internalHidden
         visible.subtract(restoreNative)
         var nextRepos = internalRepositories
+        var nextRetiredSources = internalRetiredSources
 
         if !subscription.isEmpty {
             try RuleDefinition.validateHttp(subscription)
@@ -2387,6 +3120,7 @@ public final class RuleStore: @unchecked Sendable {
             }
         }
 
+        var activeIds = Set<String>()
         for r in rules {
             let old = nextEntries[r.id]
             try validator(r)
@@ -2398,17 +3132,41 @@ public final class RuleStore: @unchecked Sendable {
                 nextOrder.append(r.id)
             }
             visible.remove(r.id)
+            nextRetiredSources.removeValue(forKey: r.id)
+            activeIds.insert(r.id)
         }
+        syncBackupEnabledStates(next: &nextEntries, nextHidden: visible, batch: rules, explicitStates: states)
+        let beforeCleanup = nextEntries
+        let beforeCleanupHidden = visible
+        var unusedChanged = false
+        _ = Self.applyRetiredCleanup(
+            targetEntries: &nextEntries,
+            targetOrder: &nextOrder,
+            targetHidden: &visible,
+            targetRetiredSources: &nextRetiredSources,
+            activeIds: activeIds,
+            retiredOfficial: retiredOfficial,
+            beforeCleanup: beforeCleanup,
+            beforeCleanupHidden: beforeCleanupHidden,
+            changedOut: &unusedChanged
+        )
 
         if nextEntries.count > Self.MAX_SOURCES {
-            throw RuleError("规则站源超过 256 个上限")
+            throw RuleError("规则站源超过 512 个上限")
         }
         let total = nextEntries.values.reduce(0) { $0 + $1.rule.script.utf8.count }
         if total > RuleDefinition.MAX_PACKAGE {
-            throw RuleError("已保存规则脚本总量超过 16MiB，请精简规则后重试")
+            throw RuleError("已保存规则脚本总量超过 32MiB，请精简规则后重试")
         }
 
-        try commit(nextEntries: nextEntries, nextOrder: nextOrder, nextHidden: visible, nextRepos: nextRepos, initialized: defaultRepositoryInitialized)
+        try commit(
+            nextEntries: nextEntries,
+            nextOrder: nextOrder,
+            nextHidden: visible,
+            nextRepos: nextRepos,
+            initialized: defaultRepositoryInitialized,
+            nextRetired: nextRetiredSources
+        )
         return message
     }
 
@@ -2418,8 +3176,24 @@ public final class RuleStore: @unchecked Sendable {
         var nextEntries = internalEntries
         var nextOrder = internalOrder
         var nextHidden = internalHidden
+        var targets = [String]()
+        var targetSet = Set<String>()
+        for id in ids where targetSet.insert(id).inserted {
+            targets.append(id)
+        }
+        if ["enable", "disable", "delete", "restore", "native"].contains(action) {
+            for id in ids {
+                for candidateId in internalOrder {
+                    if let candidate = internalEntries[candidateId],
+                       candidate.rule.fallbackOf == id,
+                       targetSet.insert(candidateId).inserted {
+                        targets.append(candidateId)
+                    }
+                }
+            }
+        }
 
-        for id in ids {
+        for id in targets {
             let old = nextEntries[id]
             if action == "delete" {
                 nextEntries.removeValue(forKey: id)
@@ -2442,7 +3216,14 @@ public final class RuleStore: @unchecked Sendable {
                 nextHidden.remove(id)
             }
         }
-        try commit(nextEntries: nextEntries, nextOrder: nextOrder, nextHidden: nextHidden, nextRepos: internalRepositories, initialized: defaultRepositoryInitialized)
+        try commit(
+            nextEntries: nextEntries,
+            nextOrder: nextOrder,
+            nextHidden: nextHidden,
+            nextRepos: internalRepositories,
+            initialized: defaultRepositoryInitialized,
+            nextRetired: internalRetiredSources
+        )
     }
 
     public func repository(_ url: String, add: Bool) throws {
@@ -2459,7 +3240,14 @@ public final class RuleStore: @unchecked Sendable {
         } else if !add {
             next.removeAll(where: { $0 == url })
         }
-        try commit(nextEntries: internalEntries, nextOrder: internalOrder, nextHidden: internalHidden, nextRepos: next, initialized: defaultRepositoryInitialized)
+        try commit(
+            nextEntries: internalEntries,
+            nextOrder: internalOrder,
+            nextHidden: internalHidden,
+            nextRepos: next,
+            initialized: defaultRepositoryInitialized,
+            nextRetired: internalRetiredSources
+        )
     }
 
     public static func pack(_ rules: [RuleDefinition]) throws -> [String: Any] {
@@ -2527,11 +3315,21 @@ public final class RuleStore: @unchecked Sendable {
         if let subs = root["repositories"] as? [String] {
             repos = subs
         }
+        var retired = [String: String]()
+        if let retiredObj = root["retiredSources"] as? [String: Any] {
+            for (rawKey, rawVal) in retiredObj {
+                let cleanId = rawKey.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !cleanId.isEmpty else { continue }
+                let cleanName = (rawVal as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                retired[cleanId] = cleanName
+            }
+        }
 
         self.internalEntries = loaded
         self.internalOrder = order
         self.internalHidden = h
         self.internalRepositories = repos
+        self.internalRetiredSources = retired
         self.defaultRepositoryInitialized = (root["defaultRepositoryInitialized"] as? Bool) ?? false
         self.defaultRepositoryV3Migrated = (root["defaultRepositoryV3Migrated"] as? Bool) ?? false
     }
@@ -2542,12 +3340,14 @@ public final class RuleStore: @unchecked Sendable {
         nextHidden: Set<String>,
         nextRepos: [String],
         initialized: Bool,
-        v3Migrated: Bool? = nil
+        v3Migrated: Bool? = nil,
+        nextRetired: [String: String]? = nil
     ) throws {
         try ensureWritable()
         try Task.checkCancellation()
 
         let nextMigrated = v3Migrated ?? self.defaultRepositoryV3Migrated
+        let nextRetiredMap = nextRetired ?? self.internalRetiredSources
         var rows = [[String: Any]]()
         for id in nextOrder {
             guard let e = nextEntries[id] else { continue }
@@ -2559,7 +3359,7 @@ public final class RuleStore: @unchecked Sendable {
             ])
         }
 
-        let root: [String: Any] = [
+        var root: [String: Any] = [
             "version": 1,
             "entries": rows,
             "hidden": Array(nextHidden),
@@ -2567,6 +3367,9 @@ public final class RuleStore: @unchecked Sendable {
             "defaultRepositoryV3Migrated": nextMigrated,
             "repositories": nextRepos
         ]
+        if !nextRetiredMap.isEmpty {
+            root["retiredSources"] = nextRetiredMap
+        }
         let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted])
 
         let temp = directory.appendingPathComponent("index.tmp")
@@ -2595,6 +3398,7 @@ public final class RuleStore: @unchecked Sendable {
         self.internalOrder = nextOrder
         self.internalHidden = nextHidden
         self.internalRepositories = nextRepos
+        self.internalRetiredSources = nextRetiredMap
         self.defaultRepositoryInitialized = initialized
         self.defaultRepositoryV3Migrated = nextMigrated
     }
@@ -2609,6 +3413,8 @@ public final class RuleStore: @unchecked Sendable {
 // MARK: - RuleCatalog
 
 public final class RuleCatalog: @unchecked Sendable {
+    public static let BUILTIN_RETIRED_SOURCES: [String: String] = RetiredComicSource.builtinRetiredSources
+
     public static let shared: RuleCatalog = {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
@@ -2618,20 +3424,40 @@ public final class RuleCatalog: @unchecked Sendable {
 
     private final class Snapshot: @unchecked Sendable {
         let entries: [RuleStore.Entry]
+        let entryMap: [String: RuleStore.Entry]
         let hidden: Set<String>
         let repositories: [String]
+        let retiredSources: [String: String]
         let clients: [String: ScriptComicSource]
+        let backupsByPrimary: [String: [ScriptComicSource]]
+        let comicSources: [String: any ComicSource]
 
-        init(entries: [RuleStore.Entry], hidden: Set<String>, repositories: [String], clients: [String: ScriptComicSource]) {
+        init(
+            entries: [RuleStore.Entry],
+            entryMap: [String: RuleStore.Entry],
+            hidden: Set<String>,
+            repositories: [String],
+            retiredSources: [String: String],
+            clients: [String: ScriptComicSource],
+            backupsByPrimary: [String: [ScriptComicSource]],
+            comicSources: [String: any ComicSource]
+        ) {
             self.entries = entries
+            self.entryMap = entryMap
             self.hidden = hidden
             self.repositories = repositories
+            self.retiredSources = retiredSources
             self.clients = clients
+            self.backupsByPrimary = backupsByPrimary
+            self.comicSources = comicSources
         }
     }
 
     private let lock = NSLock()
     private let debugMode: Bool
+    private let customInvoker: ScriptComicSource.Invoker?
+    public let routeStore: FailoverRouteStore
+    public let contextRegistry: FailoverContextRegistry
     private var internalStore: RuleStore?
     private var snapshot: Snapshot
     public private(set) var error: String = ""
@@ -2643,18 +3469,62 @@ public final class RuleCatalog: @unchecked Sendable {
         #else
         self.debugMode = debug ?? false
         #endif
-        self.snapshot = Snapshot(entries: [], hidden: [], repositories: [], clients: [:])
+        self.customInvoker = nil
+        self.routeStore = FailoverRouteStore(fileURL: directory.appendingPathComponent("failover-routes.json"))
+        self.contextRegistry = FailoverContextRegistry(healthFileURL: directory.appendingPathComponent("failover-health.json"))
+        self.snapshot = Snapshot(
+            entries: [],
+            entryMap: [:],
+            hidden: [],
+            repositories: [],
+            retiredSources: [:],
+            clients: [:],
+            backupsByPrimary: [:],
+            comicSources: [:]
+        )
         do {
             let s = try RuleStore(directory: directory)
             self.internalStore = s
             try? s.ensureDefaultRepository()
-            self.refresh()
+            self.refresh(clearHealth: false)
         } catch {
             self.error = "规则目录无法读取，原有文件已保留，请重试"
         }
     }
 
+    public init(
+        store: RuleStore,
+        routeStore: FailoverRouteStore? = nil,
+        contextRegistry: FailoverContextRegistry? = nil,
+        debug: Bool? = nil,
+        invoker: ScriptComicSource.Invoker? = nil
+    ) {
+        #if DEBUG
+        self.debugMode = debug ?? true
+        #else
+        self.debugMode = debug ?? false
+        #endif
+        self.internalStore = store
+        self.routeStore = routeStore ?? FailoverRouteStore(fileURL: nil)
+        self.contextRegistry = contextRegistry ?? FailoverContextRegistry()
+        self.customInvoker = invoker
+        self.snapshot = Snapshot(
+            entries: [],
+            entryMap: [:],
+            hidden: [],
+            repositories: [],
+            retiredSources: [:],
+            clients: [:],
+            backupsByPrimary: [:],
+            comicSources: [:]
+        )
+        self.refresh(clearHealth: true)
+    }
+
     private func makeProductionSource(for rule: RuleDefinition) -> ScriptComicSource {
+        if let customInvoker {
+            return ScriptComicSource(rule: rule, invoker: customInvoker)
+        }
         let isDebug = self.debugMode
         return ScriptComicSource(rule: rule) { r, method, args in
             try RuleHostExecutor.invoke(rule: r, method: method, args: args, debug: isDebug)
@@ -2670,28 +3540,107 @@ public final class RuleCatalog: @unchecked Sendable {
         return s
     }
 
-    public func refresh() {
+    public func refresh(clearHealth: Bool = true) {
         lock.lock()
         guard let s = internalStore else {
             lock.unlock()
             return
         }
+        if clearHealth {
+            contextRegistry.clearHealth()
+        }
         let next = s.entries()
+        let hiddenSet = s.hidden()
+        var entryMap = [String: RuleStore.Entry]()
         var map = [String: ScriptComicSource]()
         for e in next {
+            entryMap[e.rule.id] = e
             let client = makeProductionSource(for: e.rule)
             versionsByHash[e.rule.hash] = client
             if !e.removed {
                 map[e.rule.id] = client
             }
         }
-        self.snapshot = Snapshot(entries: next, hidden: s.hidden(), repositories: s.repositories(), clients: map)
+
+        var backupsByPrimary = [String: [ScriptComicSource]]()
+        for e in next {
+            if e.enabled && !e.removed && RuleStore.isEffectiveHiddenBackup(rule: e.rule, entryMap: entryMap, hiddenIds: hiddenSet),
+               let backupClient = map[e.rule.id] {
+                backupsByPrimary[e.rule.fallbackOf, default: []].append(backupClient)
+            }
+        }
+        for (primaryId, list) in backupsByPrimary {
+            backupsByPrimary[primaryId] = list.sorted { a, b in
+                if a.rule.fallbackOrder != b.rule.fallbackOrder {
+                    return a.rule.fallbackOrder < b.rule.fallbackOrder
+                }
+                return a.id < b.id
+            }
+        }
+
+        var comicSources = [String: any ComicSource]()
+        for e in next where !e.removed {
+            let id = e.rule.id
+            guard let client = map[id] else { continue }
+            if RuleStore.isEffectiveHiddenBackup(rule: e.rule, entryMap: entryMap, hiddenIds: hiddenSet) {
+                let primaryEntry = entryMap[e.rule.fallbackOf]
+                let primaryClient = primaryEntry.flatMap { map[$0.rule.id] }
+                var chain = [client]
+                if let primaryClient, primaryEntry?.enabled == true {
+                    chain.append(primaryClient)
+                }
+                if let siblings = backupsByPrimary[e.rule.fallbackOf] {
+                    for sib in siblings where sib.id != id {
+                        chain.append(sib)
+                    }
+                }
+                let name = primaryEntry?.rule.name ?? e.rule.name
+                comicSources[id] = FailoverComicSource(
+                    identitySourceId: id,
+                    displayName: name,
+                    members: chain,
+                    routeStore: routeStore,
+                    contextRegistry: contextRegistry
+                )
+            } else {
+                let backups = backupsByPrimary[id] ?? []
+                if backups.isEmpty {
+                    comicSources[id] = client
+                } else {
+                    comicSources[id] = FailoverComicSource(
+                        identitySourceId: id,
+                        displayName: e.rule.name,
+                        members: [client] + backups,
+                        routeStore: routeStore,
+                        contextRegistry: contextRegistry
+                    )
+                }
+            }
+        }
+
+        self.snapshot = Snapshot(
+            entries: next,
+            entryMap: entryMap,
+            hidden: hiddenSet,
+            repositories: s.repositories(),
+            retiredSources: s.retiredSources(),
+            clients: map,
+            backupsByPrimary: backupsByPrimary,
+            comicSources: comicSources
+        )
         self.error = s.recoveryMessage
         lock.unlock()
     }
 
     public func entries() -> [RuleStore.Entry] {
         snapshot.entries
+    }
+
+    public func visibleEntries() -> [RuleStore.Entry] {
+        let cur = snapshot
+        return cur.entries.filter {
+            !RuleStore.isEffectiveHiddenBackup(rule: $0.rule, entryMap: cur.entryMap, hiddenIds: cur.hidden)
+        }
     }
 
     public func entry(for id: String) -> RuleStore.Entry? {
@@ -2706,27 +3655,101 @@ public final class RuleCatalog: @unchecked Sendable {
         snapshot.hidden.contains(id)
     }
 
+    public func isRetiredSource(_ sourceId: String?) -> Bool {
+        guard let sourceId, !sourceId.isEmpty else { return false }
+        let cur = snapshot
+        if let active = cur.entryMap[sourceId], !active.removed, !cur.hidden.contains(sourceId) {
+            return false
+        }
+        return Self.BUILTIN_RETIRED_SOURCES[sourceId] != nil || cur.retiredSources[sourceId] != nil
+    }
+
+    public func retiredSourceName(_ sourceId: String?) -> String {
+        guard let sourceId, !sourceId.isEmpty else { return "" }
+        let cur = snapshot
+        if let persisted = cur.retiredSources[sourceId]?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !persisted.isEmpty {
+            return persisted
+        }
+        return Self.BUILTIN_RETIRED_SOURCES[sourceId] ?? ""
+    }
+
+    public func isHiddenBackup(_ id: String) -> Bool {
+        let cur = snapshot
+        guard let entry = cur.entryMap[id] else { return false }
+        return RuleStore.isEffectiveHiddenBackup(rule: entry.rule, entryMap: cur.entryMap, hiddenIds: cur.hidden)
+    }
+
+    public func primaryIdOrSelf(_ id: String) -> String {
+        let cur = snapshot
+        if let entry = cur.entryMap[id],
+           RuleStore.isEffectiveHiddenBackup(rule: entry.rule, entryMap: cur.entryMap, hiddenIds: cur.hidden) {
+            return entry.rule.fallbackOf
+        }
+        return id
+    }
+
+    public func displayName(_ id: String) -> String {
+        let cur = snapshot
+        guard let entry = cur.entryMap[id] else { return "" }
+        if RuleStore.isEffectiveHiddenBackup(rule: entry.rule, entryMap: cur.entryMap, hiddenIds: cur.hidden),
+           let primary = cur.entryMap[entry.rule.fallbackOf] {
+            return primary.rule.name
+        }
+        return entry.rule.name
+    }
+
+    public func backupsOf(_ primaryId: String) -> [ScriptComicSource] {
+        snapshot.backupsByPrimary[primaryId] ?? []
+    }
+
+    public func rawSource(_ id: String) -> ScriptComicSource? {
+        snapshot.clients[id]
+    }
+
     public func source(_ id: String) -> ScriptComicSource? {
         snapshot.clients[id]
     }
 
+    public func comicSource(_ id: String) -> (any ComicSource)? {
+        snapshot.comicSources[id]
+    }
+
     public func enabled(_ id: String) -> Bool {
-        for e in snapshot.entries {
-            if e.rule.id == id {
-                return e.enabled && !e.removed
-            }
+        let cur = snapshot
+        guard let entry = cur.entryMap[id] else { return false }
+        if RuleStore.isEffectiveHiddenBackup(rule: entry.rule, entryMap: cur.entryMap, hiddenIds: cur.hidden) {
+            guard let primary = cur.entryMap[entry.rule.fallbackOf] else { return false }
+            return primary.enabled && !primary.removed
         }
-        return false
+        return entry.enabled && !entry.removed
     }
 
     public func enabledSources() -> [ScriptComicSource] {
         let cur = snapshot
         var out = [ScriptComicSource]()
         for e in cur.entries {
-            if e.enabled && !e.removed && !cur.hidden.contains(e.rule.id) {
-                if let c = cur.clients[e.rule.id] {
-                    out.append(c)
-                }
+            if e.enabled
+                && !e.removed
+                && !cur.hidden.contains(e.rule.id)
+                && !RuleStore.isEffectiveHiddenBackup(rule: e.rule, entryMap: cur.entryMap, hiddenIds: cur.hidden),
+               let c = cur.clients[e.rule.id] {
+                out.append(c)
+            }
+        }
+        return out
+    }
+
+    public func enabledComicSources() -> [any ComicSource] {
+        let cur = snapshot
+        var out = [any ComicSource]()
+        for e in cur.entries {
+            if e.enabled
+                && !e.removed
+                && !cur.hidden.contains(e.rule.id)
+                && !RuleStore.isEffectiveHiddenBackup(rule: e.rule, entryMap: cur.entryMap, hiddenIds: cur.hidden),
+               let source = cur.comicSources[e.rule.id] {
+                out.append(source)
             }
         }
         return out
@@ -2753,23 +3776,73 @@ public final class RuleCatalog: @unchecked Sendable {
             throw RuleError("初始化禁止请求网络")
         }).validate()
     }
+
+    public func seedSummary(_ summary: ComicSummary?) {
+        guard let summary else { return }
+        findFailoverSource(sourceId: summary.sourceId, comicId: summary.comicId)?.seedFromSummary(summary)
+    }
+
+    public func seedDetail(_ detail: ComicDetail?) {
+        guard let detail else { return }
+        findFailoverSource(sourceId: detail.summary.sourceId, comicId: detail.summary.comicId)?.seedFromDetail(detail)
+    }
+
+    public func seedChapter(
+        sourceId: String?,
+        comicId: String?,
+        title: String?,
+        author: String?,
+        chapter: Chapter?
+    ) {
+        guard let comicId, !comicId.isEmpty,
+              chapter != nil || !(title ?? "").isEmpty else {
+            return
+        }
+        findFailoverSource(sourceId: sourceId, comicId: comicId)?.seedChapter(
+            comicId: comicId,
+            title: title,
+            author: author,
+            chapter: chapter
+        )
+    }
+
+    private func findFailoverSource(sourceId: String?, comicId: String?) -> FailoverComicSource? {
+        var resolvedId = sourceId ?? ""
+        if resolvedId.isEmpty, let comicId, let colon = comicId.firstIndex(of: ":") {
+            resolvedId = String(comicId[..<colon])
+        }
+        guard !resolvedId.isEmpty else { return nil }
+        return comicSource(resolvedId) as? FailoverComicSource
+    }
 }
 
 // MARK: - MissingRuleSource
 
 public final class MissingRuleSource: ComicSource, @unchecked Sendable {
     public let id: String
-    public let name: String = "未安装站源"
+    public let isRetired: Bool
+    private let displayName: String
+    public var name: String {
+        if isRetired {
+            return displayName.isEmpty ? "已下线站源" : displayName
+        }
+        return "未安装站源"
+    }
     public let referer: String = ""
     public let supportsSearch: Bool = false
     public var domain: String { "" }
 
-    public init(id: String? = nil) {
+    public init(id: String? = nil, retired: Bool = false, displayName: String = "") {
         self.id = id ?? "missing"
+        self.isRetired = retired
+        self.displayName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func missing() -> Error {
-        RuleError("此站源已移除，请在站源管理恢复或重新导入规则；下载内容仍可离线阅读")
+        if isRetired {
+            return RuleError("该站源已下线，请在详情页换源或阅读已下载章节")
+        }
+        return RuleError("此站源已移除，请在站源管理恢复或重新导入规则；下载内容仍可离线阅读")
     }
 
     public func latest(page: Int) async throws -> [ComicSummary] { throw missing() }

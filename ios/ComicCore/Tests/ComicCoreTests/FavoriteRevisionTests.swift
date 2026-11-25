@@ -31,15 +31,16 @@ final class FavoriteRevisionTests: XCTestCase {
     }
 
     func testChapterNumberExtractionAndNormalization() {
-        XCTAssertEqual(FavoriteRevision.extractChapterNumber("第12话"), 12)
+        XCTAssertEqual(FavoriteRevision.extractChapterNumber("第１２话"), 12)
         XCTAssertEqual(FavoriteRevision.extractChapterNumber("Chapter 45 - Finale"), 45)
+        XCTAssertEqual(FavoriteRevision.extractChapterNumber("2026-01 新年贺图"), nil)
         XCTAssertEqual(FavoriteRevision.extractChapterNumber("番外篇"), nil)
 
-        let url1 = "https://example.com/comic/123/ch1?query=abc#section2"
-        XCTAssertEqual(FavoriteRevision.normalizeChapterUrl(url1), "/comic/123/ch1")
+        let url1 = "https://example.com/comic/123/ch1?token=secret&query=abc&t=1700000000#section2"
+        XCTAssertEqual(FavoriteRevision.normalizeChapterUrl(url1), "/comic/123/ch1?query=abc")
 
-        let url2 = "/comic/123/ch1?section_slot=2&other=trash"
-        XCTAssertEqual(FavoriteRevision.normalizeChapterUrl(url2), "/comic/123/ch1?section_slot=2")
+        let url2 = "/comic/123/ch1?section_slot=2&b=2&a=1&utm_source=x"
+        XCTAssertEqual(FavoriteRevision.normalizeChapterUrl(url2), "/comic/123/ch1?a=1&b=2&section_slot=2")
     }
 
     func testHasNewChaptersDetection() {

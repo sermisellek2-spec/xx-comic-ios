@@ -2,15 +2,16 @@ import XCTest
 @testable import ComicCore
 
 final class BuiltinSourceCatalogTests: XCTestCase {
-    // Taken from Android 2.0.40's frozen defaultSourceOrder and public registry, not iOS helpers.
+    // Taken from Android 2.0.56's defaultSourceOrder and public registry, not iOS helpers.
     private let androidIDs = [
         "mh160", "gmh", "mh18", "jmcomic", "mkzhan", "hiperdex", "manhuagui", "hanman18",
         "d5d6", "manben", "manhuazhan", "bbyin", "antbyw", "cuimh", "liumanhua", "copy4000",
         "manwa", "dingmanhua", "dongmanla", "xinmanhua", "zaimanhua", "guazi",
-        "dm5", "kkk", "manhuaren", "dongman", "dogemanga", "sisi", "manxiaosi", "lele",
+        "kalamanhua", "dm5", "kkk", "manhuaren", "dongman", "dogemanga", "sisi", "manxiaosi", "lele",
         "tuku", "ycy", "miaoqu", "aimi", "duya", "xiuxiu", "waiwai", "mh250", "tuhao",
         "manshiduo", "dumanwu", "ciyuan", "wmanhua", "aba", "comic51", "dmanhua", "mh360",
-        "favcomic", "ttk", "laiman", "lmanhua"
+        "favcomic", "ttk", "laiman", "lmanhua",
+        "mangabz", "haokan", "s311", "ffppt", "mangadex", "xcomic", "hipmh", "nhentai", "wnacg"
     ]
 
     func testFreshSourceManagementShowsExactlyAndroidCurrentSourcesAndOrder() throws {
@@ -19,8 +20,8 @@ final class BuiltinSourceCatalogTests: XCTestCase {
         defer { defaults.removePersistentDomain(forName: suite) }
         let preferences = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.activeIDs)
         XCTAssertEqual(preferences.orderedIDs, androidIDs)
-        XCTAssertEqual(Set(preferences.orderedIDs).count, 51)
-        XCTAssertEqual(preferences.enabledIDs.count, 50)
+        XCTAssertEqual(Set(preferences.orderedIDs).count, 61)
+        XCTAssertEqual(preferences.enabledIDs.count, 60)
         XCTAssertEqual(Set(preferences.orderedIDs).subtracting(preferences.enabledIDs), ["duya"])
         XCTAssertFalse(preferences.orderedIDs.contains("haoman"))
     }

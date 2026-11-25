@@ -103,7 +103,7 @@ private final class NativeLoopbackServer: @unchecked Sendable {
 @MainActor
 final class Parity2049NativeTests: XCTestCase {
 
-    func testAll111RealV3BundleRulesParseValidateAndPreserveCapabilities() throws {
+    func testAll162RealV3BundleRulesParseValidateAndPreserveCapabilities() throws {
         let repoRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
@@ -114,9 +114,9 @@ final class Parity2049NativeTests: XCTestCase {
 
         let bundle = try RuleStore.parseCompatible(json: json)
         XCTAssertEqual(bundle.skipped, 0)
-        XCTAssertEqual(bundle.rules.count, 111)
+        XCTAssertEqual(bundle.rules.count, 162)
 
-        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("Validate111-" + UUID().uuidString, isDirectory: true)
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("Validate162-" + UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: tempDir) }
         let catalog = RuleCatalog(directory: tempDir, debug: true)
 
@@ -136,7 +136,8 @@ final class Parity2049NativeTests: XCTestCase {
         XCTAssertNotNil(byID["manwa"])
         XCTAssertNotNil(byID["xinmanhua"])
         XCTAssertNotNil(byID["jmcomic"])
-        XCTAssertEqual(bundle.rules.filter(\.requiresVpn).count, 34)
+        XCTAssertEqual(bundle.rules.filter(\.requiresVpn).count, 61)
+        XCTAssertEqual(bundle.rules.filter { !$0.fallbackOf.isEmpty }.count, 22)
     }
 
     func testRuleWebRendererExecutesDynamicDomWaitSelectorAndBlocksImages() async throws {

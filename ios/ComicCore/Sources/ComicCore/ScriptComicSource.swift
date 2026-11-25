@@ -24,6 +24,112 @@ public enum RuleScript {
     public static let PRELUDE =
         "var xx=Object.freeze({request:function(o){return JSON.parse(__host('http',JSON.stringify(o)));},get:function(u,h){var r=this.request({url:u,headers:h||{}});if(r.error)throw Error(r.error);if(r.status<200||r.status>=300)throw Error('站点请求失败 HTTP '+r.status);return r;},render:function(u,o){var a={url:u};if(o&&typeof o==='object'){for(var k in o)if(Object.prototype.hasOwnProperty.call(o,k))a[k]=o[k];a.url=u;}var r=JSON.parse(__host('render',JSON.stringify(a)));if(r&&r.error)throw Error(r.error);return r;},select:function(h,s,b){return JSON.parse(__host('select',JSON.stringify({html:h,selector:s,base:b||''})));},resolve:function(b,u){return JSON.parse(__host('resolve',JSON.stringify({base:b,url:u})));},cacheGet:function(k){var r=JSON.parse(__host('cache',JSON.stringify({action:'get',key:k})));if(r&&r.error)throw Error(r.error);return r;},cacheSet:function(k,v){var r=JSON.parse(__host('cache',JSON.stringify({action:'set',key:k,value:v})));if(r&&r.error)throw Error(r.error);return r;},convert:function(o){return JSON.parse(__host('convert',JSON.stringify(o)));}});"
 
+    public static let scriptCacheLimit = 64
+    public static let domCacheLimit = 3
+
+    private static let cacheLock = NSLock()
+    private static var scriptSourceCache: [String: String] = [:]
+    private static var scriptSourceOrder: [String] = []
+    private static var scriptCompileCount: Int64 = 0
+    private static var domParseCount: Int64 = 0
+
+    fileprivate final class DomCache {
+        private struct Key: Hashable {
+            let html: String
+            let base: String
+        }
+
+        private var map: [Key: PublicHTMLDocument] = [:]
+        private var order: [Key] = []
+
+        func getOrParse(html: String, base: String) -> PublicHTMLDocument {
+            let key = Key(html: html, base: base)
+            if let existing = map[key] {
+                if let idx = order.firstIndex(of: key) {
+                    order.remove(at: idx)
+                    order.append(key)
+                }
+                return existing
+            }
+            let doc = PublicHTMLDocument.parse(html, baseUri: base)
+            RuleScript.recordDomParse()
+            if map.count >= RuleScript.domCacheLimit, let eldest = order.first {
+                order.removeFirst()
+                map.removeValue(forKey: eldest)
+            }
+            order.append(key)
+            map[key] = doc
+            return doc
+        }
+    }
+
+    private static func recordDomParse() {
+        cacheLock.lock()
+        domParseCount += 1
+        cacheLock.unlock()
+    }
+
+    fileprivate static func cachedPreparedScript(for rule: RuleDefinition, envJson: String) throws -> String {
+        let key = "\(rule.hash)\0\(envJson)\0\(rule.script)"
+        cacheLock.lock()
+        if let cached = scriptSourceCache[key] {
+            if let idx = scriptSourceOrder.firstIndex(of: key) {
+                scriptSourceOrder.remove(at: idx)
+                scriptSourceOrder.append(key)
+            }
+            cacheLock.unlock()
+            return cached
+        }
+        cacheLock.unlock()
+
+        if hasUnboundedTightLoop(rule.script) {
+            throw RuleError("规则执行超时或计算过多，请更换规则后重试")
+        }
+        let prepared = PRELUDE + "\nvar env=Object.freeze(" + envJson + ");\n" + rule.script
+
+        cacheLock.lock()
+        if let existing = scriptSourceCache[key] {
+            cacheLock.unlock()
+            return existing
+        }
+        if scriptSourceCache.count >= scriptCacheLimit, let eldest = scriptSourceOrder.first {
+            scriptSourceOrder.removeFirst()
+            scriptSourceCache.removeValue(forKey: eldest)
+        }
+        scriptSourceOrder.append(key)
+        scriptSourceCache[key] = prepared
+        scriptCompileCount += 1
+        cacheLock.unlock()
+        return prepared
+    }
+
+    public static func scriptCacheSizeForTesting() -> Int {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        return scriptSourceCache.count
+    }
+
+    public static func scriptCompileCountForTesting() -> Int64 {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        return scriptCompileCount
+    }
+
+    public static func domParseCountForTesting() -> Int64 {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        return domParseCount
+    }
+
+    public static func clearCachesForTesting() {
+        cacheLock.lock()
+        scriptSourceCache.removeAll()
+        scriptSourceOrder.removeAll()
+        scriptCompileCount = 0
+        domParseCount = 0
+        cacheLock.unlock()
+    }
+
     public static func invoke(rule: RuleDefinition, method: String, args: [Any], network: @escaping Host) throws -> String {
         #if canImport(JavaScriptCore)
         return try JavaScriptCoreEngine().invoke(rule: rule, method: method, args: args, network: network)
@@ -33,6 +139,10 @@ public enum RuleScript {
     }
 
     public static func local(op: String, data: String) throws -> String {
+        try local(op: op, data: data, domCache: nil)
+    }
+
+    fileprivate static func local(op: String, data: String, domCache: DomCache?) throws -> String {
         guard let dataBytes = data.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: dataBytes) as? [String: Any] else {
             throw RuleError("宿主参数无效")
@@ -54,7 +164,13 @@ public enum RuleScript {
                 throw RuleError("选择参数无效")
             }
             let base = (json["base"] as? String) ?? ""
-            let doc = PublicHTMLDocument.parse(html, baseUri: base)
+            let doc: PublicHTMLDocument
+            if let domCache {
+                doc = domCache.getOrParse(html: html, base: base)
+            } else {
+                doc = PublicHTMLDocument.parse(html, baseUri: base)
+                recordDomParse()
+            }
             let elements = doc.select(selector)
             guard elements.count < 10000 else {
                 throw RuleError("HTML 匹配结果过多")
@@ -178,6 +294,12 @@ public final class JavaScriptCoreEngine: ScriptEngine, @unchecked Sendable {
             context.globalObject.deleteProperty(name)
         }
 
+        let envDict: [String: Any] = ["id": rule.id, "baseUrl": rule.baseUrl, "api": rule.engineApi]
+        let envData = (try? JSONSerialization.data(withJSONObject: envDict, options: [])) ?? Data()
+        let envJson = String(decoding: envData, as: UTF8.self)
+        let fullScript = try RuleScript.cachedPreparedScript(for: rule, envJson: envJson)
+        let domCache = RuleScript.DomCache()
+
         var requestCount = 0
         var renderCount = 0
         var cancelAbortError: RuleCancelledError?
@@ -211,7 +333,7 @@ public final class JavaScriptCoreEngine: ScriptEngine, @unchecked Sendable {
                 if op == "cache" {
                     return try network(op, data)
                 }
-                return try RuleScript.local(op: op, data: data)
+                return try RuleScript.local(op: op, data: data, domCache: domCache)
             } catch let cancelled as RuleCancelledError {
                 cancelAbortError = cancelled
                 let msg = cancelled.message
@@ -225,11 +347,6 @@ public final class JavaScriptCoreEngine: ScriptEngine, @unchecked Sendable {
         }
         context.setObject(hostBlock, forKeyedSubscript: "__host" as NSString)
 
-        let envDict: [String: Any] = ["id": rule.id, "baseUrl": rule.baseUrl, "api": rule.engineApi]
-        let envData = (try? JSONSerialization.data(withJSONObject: envDict, options: [])) ?? Data()
-        let envJson = String(decoding: envData, as: UTF8.self)
-
-        let fullScript = RuleScript.PRELUDE + "\nvar env=Object.freeze(" + envJson + ");\n" + rule.script
         context.evaluateScript(fullScript)
 
         if let cancelErr = cancelAbortError { throw cancelErr }
@@ -326,10 +443,11 @@ public final class DeterministicScriptEngine: ScriptEngine, @unchecked Sendable 
 
     public func invoke(rule: RuleDefinition, method: String, args: [Any], network: @escaping @Sendable (String, String) throws -> String) throws -> String {
         let script = rule.script
-
-        if RuleScript.hasUnboundedTightLoop(script) {
-            throw RuleError("规则执行超时或计算过多，请更换规则后重试")
-        }
+        let envDict: [String: Any] = ["id": rule.id, "baseUrl": rule.baseUrl, "api": rule.engineApi]
+        let envData = (try? JSONSerialization.data(withJSONObject: envDict, options: [])) ?? Data()
+        let envJson = String(decoding: envData, as: UTF8.self)
+        _ = try RuleScript.cachedPreparedScript(for: rule, envJson: envJson)
+        let domCache = RuleScript.DomCache()
 
         // Validate top-level calls
         if let sourceIdx = script.range(of: "var source")?.lowerBound {
@@ -366,19 +484,19 @@ public final class DeterministicScriptEngine: ScriptEngine, @unchecked Sendable 
         // Method dispatch
         switch method {
         case "latest":
-            return try executeLatest(rule: rule, script: script, args: args, network: network)
+            return try executeLatest(rule: rule, script: script, args: args, domCache: domCache, network: network)
         case "search":
             let q = (args.first as? String) ?? ""
             let p = args.count > 1 ? (args[1] as? Int ?? 1) : 1
             if q.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 return "{\"items\":[],\"hasMore\":false}"
             }
-            return try executeLatest(rule: rule, script: script, args: [p], network: network)
+            return try executeLatest(rule: rule, script: script, args: [p], domCache: domCache, network: network)
         case "filters":
             return executeFilters(rule: rule, script: script)
         case "category":
             let p = args.count > 1 ? (args[1] as? Int ?? 1) : 1
-            return try executeLatest(rule: rule, script: script, args: [p], network: network)
+            return try executeLatest(rule: rule, script: script, args: [p], domCache: domCache, network: network)
         case "detail":
             let key = (args.first as? String) ?? ""
             if script.contains("Array(50000).join") {
@@ -415,7 +533,7 @@ public final class DeterministicScriptEngine: ScriptEngine, @unchecked Sendable 
         }
     }
 
-    private func executeLatest(rule: RuleDefinition, script: String, args: [Any], network: @escaping @Sendable (String, String) throws -> String) throws -> String {
+    private func executeLatest(rule: RuleDefinition, script: String, args: [Any], domCache: RuleScript.DomCache, network: @escaping @Sendable (String, String) throws -> String) throws -> String {
         let p = (args.first as? Int) ?? 1
         if script.contains("return {items:[]};") {
             return "{\"items\":[]}"
@@ -474,7 +592,7 @@ public final class DeterministicScriptEngine: ScriptEngine, @unchecked Sendable 
                 throw RuleError("GraphQL 解析失败")
             }
             let selJson = "{\"html\":\"<a href=\\\"/中文\\\">中文</a>\",\"selector\":\"a\",\"base\":\"\(rule.baseUrl)\"}"
-            let selResp = try RuleScript.local(op: "select", data: selJson)
+            let selResp = try RuleScript.local(op: "select", data: selJson, domCache: domCache)
             guard let selData = selResp.data(using: .utf8),
                   let selArr = try? JSONSerialization.jsonObject(with: selData) as? [[String: Any]],
                   let first = selArr.first, let title = first["text"] as? String else {
@@ -551,6 +669,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
     public var name: String { rule.name }
     public var referer: String { rule.baseUrl + "/" }
     public var supportsSearch: Bool { rule.supportsSearch }
+    public var searchRequiresVpn: Bool { rule.requiresVpn }
     public var domain: String {
         URL(string: rule.baseUrl)?.host ?? ""
     }
@@ -670,6 +789,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
     private func runAsync<T: Sendable>(_ operation: @escaping @Sendable () throws -> T) async throws -> T {
         try Task.checkCancellation()
         let token = RuleCancelToken()
+        let inheritedBackground = RuleCallPriority.currentIsBackground()
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
                 if Task.isCancelled {
@@ -679,8 +799,10 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
                 }
                 DispatchQueue.global(qos: .userInitiated).async {
                     do {
-                        let value = try RuleCancelToken.withCurrent(token) {
-                            try operation()
+                        let value = try RuleCallPriority.withPriority(isBackground: inheritedBackground) {
+                            try RuleCancelToken.withCurrent(token) {
+                                try operation()
+                            }
                         }
                         if token.isCancelled {
                             continuation.resume(throwing: CancellationError())
@@ -747,6 +869,10 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
         return hasMoreResults[key] ?? false
     }
 
+    public func hasMoreSearchPage(_ result: [ComicSummary]) -> Bool {
+        hasMoreCategoryPage(result)
+    }
+
     private func resultKey(_ result: [ComicSummary]) -> String {
         result.map { $0.comicId }.joined(separator: ",")
     }
@@ -778,6 +904,16 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
             }
             guard key.count <= 128, label.count <= 100 else {
                 throw RuleError("规则分类文字过长")
+            }
+            var exclusiveGroup = ""
+            if let rawExcl = g["exclusiveGroup"], !(rawExcl is NSNull) {
+                guard let exclStr = rawExcl as? String else {
+                    throw RuleError("规则分类格式错误")
+                }
+                guard exclStr.count <= 64 else {
+                    throw RuleError("规则分类互斥配置过长")
+                }
+                exclusiveGroup = exclStr.trimmingCharacters(in: .whitespacesAndNewlines)
             }
             guard opts.count <= maxOptions else {
                 throw RuleError("筛选选项过多")
@@ -816,7 +952,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
                 }
             }
 
-            out.append(SourceFilterGroup(key: key, label: label, options: options))
+            out.append(SourceFilterGroup(key: key, label: label, options: options, exclusiveGroup: exclusiveGroup))
             if let d = dep {
                 dependencies[key] = d
             }
@@ -841,7 +977,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
         return out
     }
 
-    public func filterGroupsForSelection(_ selection: [String: String]?) -> [SourceFilterGroup] {
+    public func filterGroupsForSelection(_ selection: [String: String]) -> [SourceFilterGroup] {
         filterLock.lock()
         let snapshot = internalFilterSnapshot
         filterLock.unlock()
@@ -852,7 +988,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
                 result.append(group)
                 continue
             }
-            let selected = selection?[d.key]
+            let selected = selection[d.key]
             let isAll = (selected == nil || selected!.isEmpty || selected == d.all)
             var options = [SourceFilterOption]()
             for opt in group.options {
@@ -867,7 +1003,7 @@ public final class ScriptComicSource: ComicSource, @unchecked Sendable {
                     options.append(SourceFilterOption(label: finalLabel, value: opt.value))
                 }
             }
-            result.append(SourceFilterGroup(key: group.key, label: group.label, options: options))
+            result.append(SourceFilterGroup(key: group.key, label: group.label, options: options, exclusiveGroup: group.exclusiveGroup))
         }
         return result
     }

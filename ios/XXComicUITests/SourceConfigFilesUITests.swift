@@ -42,7 +42,7 @@ final class SourceConfigFilesUITests: ParityUITestCase {
         XCTAssertEqual(app.switches["source.enabled.duya"].value as? String, "1")
         XCTAssertEqual(app.switches["source.enabled.mh160"].value as? String, "0")
     }
-    func testExportWrites51SourceJSONInExternalProviderAndCanReimportIt() throws {
+    func testExportWrites61SourceJSONInExternalProviderAndCanReimportIt() throws {
         let host = prepareHost(), app = launch(); try importChanged(app)
         menu("导出站源配置", app: app)
         let files = FilesPickerDriver(app: app)
@@ -53,7 +53,7 @@ final class SourceConfigFilesUITests: ParityUITestCase {
         let reachable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: verifyButton)
         XCTAssertEqual(XCTWaiter.wait(for: [reachable], timeout: 5), .completed)
         let exportStatus = host.staticTexts["files.fixture.export.status"]
-        let expectedExport = "已校验实际文件：51 个站源，50 个开启；毒牙开启，漫画160关闭"
+        let expectedExport = "已校验实际文件：61 个站源，60 个开启；毒牙开启，漫画160关闭"
         for _ in 0..<2 {
             verifyButton.tap()
             let finished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", expectedExport), object: exportStatus)
@@ -87,7 +87,7 @@ final class SourceConfigFilesUITests: ParityUITestCase {
         result.buttons["确定"].tap()
         XCTAssertEqual(app.switches["source.enabled.gmh"].value as? String, "0")
         app.navigationBars.buttons.firstMatch.tap()
-        XCTAssertTrue(app.cells["settings.sources"].staticTexts["49 个开启"].exists)
+        XCTAssertTrue(app.cells["settings.sources"].staticTexts["59 个开启"].exists)
     }
     func testCancellingImportAndExportLeavesConfigurationAndShowsNoFalseSuccess() throws {
         let app = launch()

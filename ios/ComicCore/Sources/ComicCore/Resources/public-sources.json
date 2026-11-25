@@ -1,5 +1,15 @@
 [
   {
+    "id": "kalamanhua",
+    "name": "卡拉漫画",
+    "available": true,
+    "base": "https://www.kalamanhua.com",
+    "family": "kala",
+    "latest": "/type/26-----.html",
+    "search": "/search/wd/{keyword}.html",
+    "notice": "优先 G 线目录，支持分类筛选、搜索和下载；站点验证失败可重试。"
+  },
+  {
     "id": "dm5",
     "name": "动漫屋",
     "available": true,
@@ -552,15 +562,15 @@
     "base": "https://www.pknbc.com",
     "family": "dom",
     "detailPattern": "/book/\\d+",
-    "cards": ".manga-list li, .book-list li",
+    "cards": ".manga-list-2 li, .mh-list li, .manga-list li, .book-list li",
     "catalog": "#detail-list-select a",
-    "reader": "#cp_img img.lazy",
+    "reader": ".comicpage img, #cp_img img",
     "search": "/search?keyword={keyword}&page={page}",
-    "latest": "/booklist?tag=全部&page={page}",
+    "latest": "/booklist?tag=%E5%85%A8%E9%83%A8&page={page}",
     "filters": [
       {
         "label": "全部",
-        "path": "/booklist?tag=全部&page={page}"
+        "path": "/booklist?tag=%E5%85%A8%E9%83%A8&page={page}"
       },
       {
         "label": "连载",
@@ -643,8 +653,8 @@
     "family": "dom",
     "detailPattern": "/manga-\\d+/",
     "cards": ".manga-content-item, .rank-item, .swiper-card-item",
-    "catalog": ".chapter-wrap a",
-    "reader": ".container img[data-original]",
+    "catalog": ".chapter-wrap a, .manga-chapter-wrap a",
+    "reader": ".read-doc-center img[data-original], .container img[data-original]",
     "search": "/search?title={keyword}&page={page}",
     "latest": "/comics-order2-p{page}/",
     "filters": [
@@ -855,7 +865,7 @@
     "notice": "搜索暂不可用，可从分类阅读",
     "sampleDetail": "https://www.miaoqumh.org/douluodalu5zhongshengtangsan",
     "sampleChapter": "https://www.miaoqumh.org/233587/58303.html",
-    "decoder": "xor",
+    "decoder": "aes",
     "readerPagination": false,
     "reverseCatalog": false,
     "auditIndex": 11
@@ -4515,11 +4525,11 @@
     "base": "https://www.wmanhua.com",
     "family": "wd",
     "detailPattern": "/comic/\\d+\\.html",
-    "cards": ".card-content, .manga-card",
+    "cards": "section.catalog a.book, a.book",
     "catalog": "",
     "reader": "",
-    "search": "/search?query={keyword}&page={page}",
-    "latest": "/sort?category=0&tag=0&page={page}",
+    "search": "/search?keyword={keyword}&page={page}",
+    "latest": "/sort?order=desc&page={page}",
     "filters": [
       {
         "label": "全部",
@@ -4616,11 +4626,11 @@
     ],
     "network": "部分线路可直连",
     "notice": "",
-    "sampleDetail": "https://www.wmanhua.com/comic/5971.html",
-    "sampleChapter": "https://www.wmanhua.com/chapter/5971-931502.html",
+    "sampleDetail": "https://www.wmanhua.com/comic/5314.html",
+    "sampleChapter": "https://www.wmanhua.com/chapter/5314-308720.html",
     "decoder": "numbered",
     "readerPagination": false,
-    "reverseCatalog": true,
+    "reverseCatalog": false,
     "auditIndex": 21,
     "filterGroups": [
       {
@@ -5038,7 +5048,7 @@
     "detailPattern": "/book/\\d+",
     "cards": ".mh-item, .manga-list li, .book-list li",
     "catalog": "#detail-list-select a",
-    "reader": "#cp_img img.lazy",
+    "reader": ".comicpage img, #cp_img img",
     "search": "/search?keyword={keyword}&page={page}",
     "latest": "/booklist?end=0&page={page}",
     "filters": [
@@ -6364,7 +6374,7 @@
     "detailPattern": "/index.php/comic/[^/]+",
     "cards": ".comic-item, .comic-list-item, .common-comic-item",
     "catalog": ".chapter-item a, .j-chapter-item a",
-    "reader": ".comic-page img",
+    "reader": ".rd-article__pic img, .comic-page img",
     "search": "/index.php/search?key={keyword}",
     "latest": "/index.php/category/page/{page}",
     "filters": [
@@ -6948,5 +6958,131 @@
     "readerPagination": false,
     "reverseCatalog": true,
     "auditIndex": 32
+  },
+  {
+    "id": "mangabz",
+    "name": "MangaBZ",
+    "available": true,
+    "base": "https://www.mangabz.com",
+    "family": "reviewedHtml",
+    "detailPattern": "/\\d+bz/",
+    "cards": ".mh-item, .manga-i-list-item, .manga-item",
+    "catalog": ".detail-list-item a, a.detail-list-form-item",
+    "reader": "",
+    "search": "native",
+    "latest": "native",
+    "notice": "原生适配，支持分类、搜索、阅读与下载；网站验证或限流时可稍后重试。"
+  },
+  {
+    "id": "haokan",
+    "name": "好看漫画",
+    "available": true,
+    "base": "https://www.haokantxt.com",
+    "family": "reviewedHtml",
+    "detailPattern": "/comic_[^/?]+\\.html",
+    "cards": ".comic-list .comic-item,a.comic-item,a.comic-cover",
+    "catalog": "a[href*=chapter_]",
+    "reader": "img.comic-image",
+    "search": "native",
+    "latest": "native",
+    "notice": "原生适配，支持分类、搜索、阅读与下载；网站验证或限流时可稍后重试。"
+  },
+  {
+    "id": "s311",
+    "name": "311漫画",
+    "available": true,
+    "base": "https://www.311s.com",
+    "family": "reviewedHtml",
+    "detailPattern": "/comic_[^/?]+\\.html",
+    "cards": ".comic-list .comic-item,a.comic-item,a.comic-cover",
+    "catalog": "a[href*=chapter_]",
+    "reader": "img.comic-image",
+    "search": "native",
+    "latest": "native",
+    "notice": "原生适配，支持分类、搜索、阅读与下载；网站验证或限流时可稍后重试。"
+  },
+  {
+    "id": "ffppt",
+    "name": "飞翔漫画",
+    "available": true,
+    "base": "https://ffppt.com",
+    "family": "reviewedHtml",
+    "detailPattern": "/novel\\d+/",
+    "cards": ".home-truyendecu",
+    "catalog": "#list-chapter a",
+    "reader": "img.comic_img",
+    "search": "native",
+    "latest": "native",
+    "notice": "原生适配，支持分类、搜索、阅读与下载；网站验证或限流时可稍后重试。"
+  },
+  {
+    "id": "mangadex",
+    "name": "MangaDex",
+    "available": true,
+    "base": "https://mangadex.org",
+    "family": "reviewedDex",
+    "detailPattern": "",
+    "cards": "",
+    "catalog": "",
+    "reader": "",
+    "search": "native",
+    "latest": "native",
+    "notice": "原生适配，支持分类、搜索、阅读与下载；网站验证或限流时可稍后重试。仅列中文译本。"
+  },
+  {
+    "id": "xcomic",
+    "name": "XCOMIC",
+    "available": true,
+    "base": "https://xcomic.me",
+    "family": "reviewedXcomic",
+    "detailPattern": "",
+    "cards": "",
+    "catalog": "",
+    "reader": "",
+    "search": "native",
+    "latest": "native",
+    "notice": "原生适配，支持分类、搜索、阅读与下载；网站验证或限流时可稍后重试。仅列中文译本。"
+  },
+  {
+    "id": "hipmh",
+    "name": "嬉皮漫画",
+    "available": true,
+    "base": "https://m.hipmh.com",
+    "family": "reviewedHip",
+    "detailPattern": "",
+    "cards": "",
+    "catalog": "",
+    "reader": "",
+    "search": "native",
+    "latest": "native",
+    "notice": "原生适配，支持分类、搜索、阅读与下载；网站验证或限流时可稍后重试。"
+  },
+  {
+    "id": "nhentai",
+    "name": "nhentai",
+    "available": true,
+    "base": "https://nhentai.net",
+    "family": "reviewedGallery",
+    "detailPattern": "",
+    "cards": "",
+    "catalog": "",
+    "reader": "",
+    "search": "native",
+    "latest": "native",
+    "notice": "原生适配，支持分类、搜索、阅读与下载；网站验证或限流时可稍后重试。仅列中文译本。单册作品一册一章。"
+  },
+  {
+    "id": "wnacg",
+    "name": "绅士漫画 WNACG",
+    "available": true,
+    "base": "https://www.wn001.cfd",
+    "family": "reviewedGallery",
+    "detailPattern": "",
+    "cards": "",
+    "catalog": "",
+    "reader": "",
+    "search": "native",
+    "latest": "native",
+    "notice": "原生适配，支持分类、搜索、阅读与下载；网站验证或限流时可稍后重试。单册作品一册一章。"
   }
 ]

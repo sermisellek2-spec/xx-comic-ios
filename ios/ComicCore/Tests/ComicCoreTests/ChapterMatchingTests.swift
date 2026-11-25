@@ -24,21 +24,28 @@ final class ChapterMatchingTests: XCTestCase {
     func testFindMatchingChapterIndexNormalizedMatch() {
         let chapters = [
             Chapter(chapterId: "ch1", title: "第1话", url: "/1"),
-            Chapter(chapterId: "ch2", title: "第2话 特别篇", url: "/2"),
-            Chapter(chapterId: "ch3", title: "第3话", url: "/3")
+            Chapter(chapterId: "ch2", title: "第 2 话 特别篇", url: "/2"),
+            Chapter(chapterId: "ch3", title: "第3话", url: "/3"),
+            Chapter(chapterId: "ch100", title: "第100话 决战", url: "/100")
         ]
-        // Target has "1话" without "第"
+        // Target matches by structured chapter key via FailoverChapterAligner
         XCTAssertEqual(ChapterMatching.findMatchingChapterIndex(chapters: chapters, currentTitle: "1话", defaultIndex: 2), 0)
-        // Target has "2 特别篇"
-        XCTAssertEqual(ChapterMatching.findMatchingChapterIndex(chapters: chapters, currentTitle: "2特别篇", defaultIndex: 0), 1)
+        XCTAssertEqual(ChapterMatching.findMatchingChapterIndex(chapters: chapters, currentTitle: "Ch.2 特别篇", defaultIndex: 0), 1)
+        // Must NOT falsely match "第100话 决战" when looking for "第1话" or vice versa
+        let distinctChapters = [
+            Chapter(chapterId: "ch100", title: "第100话 决战", url: "/100"),
+            Chapter(chapterId: "ch1", title: "第1话", url: "/1")
+        ]
+        XCTAssertEqual(ChapterMatching.findMatchingChapterIndex(chapters: distinctChapters, currentTitle: "第1话", defaultIndex: 0), 1)
     }
 
-    func testFindMatchingChapterIndexSubstringMatch() {
+    func testFindMatchingChapterIndexDoesNotFalseMatchSubstrings() {
         let chapters = [
-            Chapter(chapterId: "ch1", title: "01", url: "/1"),
-            Chapter(chapterId: "ch2", title: "02 新的旅程", url: "/2")
+            Chapter(chapterId: "ch1", title: "第100话 决战", url: "/100"),
+            Chapter(chapterId: "ch2", title: "番外篇 新的旅程", url: "/extra")
         ]
-        XCTAssertEqual(ChapterMatching.findMatchingChapterIndex(chapters: chapters, currentTitle: "新的旅程", defaultIndex: 0), 1)
+        XCTAssertEqual(ChapterMatching.findMatchingChapterIndex(chapters: chapters, currentTitle: "第1话", defaultIndex: 1), 1)
+        XCTAssertEqual(ChapterMatching.findMatchingChapterIndex(chapters: chapters, currentTitle: "番外", defaultIndex: 0), 1)
     }
 
     func testFindMatchingChapterIndexFallback() {

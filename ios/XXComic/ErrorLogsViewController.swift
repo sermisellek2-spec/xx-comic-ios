@@ -23,7 +23,7 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "错误日志"
+        SecondaryHeaderBar.apply(to: self, title: "错误日志")
         view.backgroundColor = Palette.background
 
         setupNavigation()
@@ -33,18 +33,17 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        SecondaryHeaderBar.configureNavigationBarAppearance(for: navigationController)
         loadData()
     }
 
     private func setupNavigation() {
-        let moreButton = UIBarButtonItem(
-            image: UIImage(systemName: "ellipsis"),
-            style: .plain,
+        navigationItem.rightBarButtonItem = SecondaryHeaderBar.moreButton(
+            accessibilityLabel: "日志更多操作",
+            accessibilityIdentifier: "error.logs.more",
             target: self,
             action: #selector(showMoreMenu)
         )
-        navigationItem.rightBarButtonItem = moreButton
-        moreButton.accessibilityIdentifier = "error.logs.more"
     }
 
     private func setupViews() {
@@ -61,7 +60,7 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
         emptyView.spacing = 8
         view.addSubview(emptyView)
 
-        emptyImage.image = UIImage(named: "rem_empty")
+        AppIllustrationCache.bind(emptyImage, assetName: "rem_empty", maxSideDp: 148)
         emptyImage.contentMode = .scaleAspectFit
         emptyImage.translatesAutoresizingMaskIntoConstraints = false
         emptyImage.widthAnchor.constraint(equalToConstant: 80).isActive = true
@@ -93,7 +92,7 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
 
     private func loadData() {
         entries = ErrorLogStore.shared.entries()
-        navigationItem.prompt = entries.isEmpty ? nil : "\(entries.count) 条"
+        SecondaryHeaderBar.updateMeta(entries.isEmpty ? nil : "\(entries.count) 条", on: self)
         emptyView.isHidden = !entries.isEmpty
         tableView.isHidden = entries.isEmpty
         tableView.reloadData()
@@ -179,8 +178,8 @@ final class ErrorLogsViewController: UIViewController, UITableViewDataSource, UI
         cell.backgroundColor = Palette.card
         cell.accessoryType = .disclosureIndicator
 
-        cell.imageView?.image = UIImage(systemName: "bolt.fill")
-        cell.imageView?.tintColor = .systemRed
+        cell.imageView?.image = ParityIcon.lightning.image(size: 18)
+        cell.imageView?.tintColor = Palette.danger
 
         cell.textLabel?.text = entry.title
         cell.textLabel?.font = .systemFont(ofSize: 14, weight: .bold)
@@ -228,11 +227,15 @@ final class ErrorLogDetailViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "错误日志"
-        navigationItem.prompt = "详细信息"
+        SecondaryHeaderBar.apply(to: self, title: "错误日志", meta: "详细信息")
         view.backgroundColor = Palette.background
 
         setupViews()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        SecondaryHeaderBar.configureNavigationBarAppearance(for: navigationController)
     }
 
     private func setupViews() {

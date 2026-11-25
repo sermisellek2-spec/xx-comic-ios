@@ -30,7 +30,9 @@ final class VolumeManagerViewController: UIViewController, UITableViewDataSource
     deinit { loadTask?.cancel(); pendingDeletion?.timer.invalidate() }
 
     override func viewDidLoad() {
-        super.viewDidLoad(); view.backgroundColor = Palette.card
+        super.viewDidLoad()
+        SecondaryHeaderBar.configureNavigationBarAppearance(for: navigationController)
+        view.backgroundColor = Palette.card
         let handleHost = UIView(), handle = UIView()
         handle.backgroundColor = Palette.border; handle.layer.cornerRadius = 2
         handle.translatesAutoresizingMaskIntoConstraints = false; handleHost.addSubview(handle)

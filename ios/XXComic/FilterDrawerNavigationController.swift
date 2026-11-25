@@ -23,8 +23,9 @@ private final class FilterDrawerPresentation: UIPresentationController {
         guard let bounds = containerView?.bounds else { return .zero }
         let safe = containerView?.safeAreaInsets ?? .zero
         let requested = presentedViewController.preferredContentSize.height
-        let contentHeight = requested > 0 ? max(220, requested) : min(400, bounds.height * 0.62)
-        let height = min(bounds.height - safe.top - 12, contentHeight + safe.bottom)
+        let maxSheetHeight = max(260, (bounds.height - safe.top - 12) * 0.78)
+        let contentHeight = requested > 0 ? max(220, requested) : min(440, bounds.height * 0.64)
+        let height = min(maxSheetHeight, contentHeight + safe.bottom)
         let maxWidth: CGFloat = 600
         let width = bounds.width > maxWidth ? maxWidth : bounds.width
         let x = bounds.minX + ((bounds.width - width) * 0.5).rounded()
@@ -35,7 +36,7 @@ private final class FilterDrawerPresentation: UIPresentationController {
             presentedViewController.overrideUserInterfaceStyle = presentingViewController.overrideUserInterfaceStyle
         }
         guard let containerView else { return }
-        backdrop.backgroundColor = UIColor(red: 10 / 255, green: 24 / 255, blue: 37 / 255, alpha: 145 / 255)
+        backdrop.backgroundColor = Palette.scrim
         backdrop.frame = containerView.bounds; backdrop.alpha = 0
         backdrop.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(close)))
         containerView.insertSubview(backdrop, at: 0)
@@ -49,6 +50,8 @@ private final class FilterDrawerPresentation: UIPresentationController {
         presentedView?.frame = frameOfPresentedViewInContainerView
         presentedView?.layer.cornerRadius = 16
         presentedView?.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        presentedView?.layer.borderWidth = 0.5
+        presentedView?.layer.borderColor = Palette.borderSoft.cgColor
         presentedView?.clipsToBounds = true
     }
     override func preferredContentSizeDidChange(forChildContentContainer container: UIContentContainer) {

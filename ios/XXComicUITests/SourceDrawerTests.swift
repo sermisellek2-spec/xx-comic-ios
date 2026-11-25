@@ -26,17 +26,26 @@ final class SourceDrawerTests: ParityUITestCase {
         XCTAssertTrue(app.collectionViews.cells["电锯人"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["已经到底了"].waitForExistence(timeout: 2), "A short first page must not start paging before the user scrolls")
         app.buttons["discover.source"].tap()
-        let source = app.buttons["filter.source.cuimh"]
+        let chooser = app.tables["source.chooser.list"]
+        XCTAssertTrue(chooser.waitForExistence(timeout: 5))
+        let searchField = app.descendants(matching: .any)["source.chooser.search"]
+        if searchField.exists && searchField.isHittable {
+            searchField.tap()
+            searchField.typeText("cuimh")
+        }
+        let source = chooser.cells["source.chooser.item.cuimh"]
+        for _ in 0..<10 where !source.isSafelyHittable(in: app) {
+            chooser.swipeUp()
+        }
         XCTAssertTrue(source.waitForExistence(timeout: 5))
-        revealSource(source, in: app)
         source.tap()
-        app.buttons["filter.confirm"].tap()
         let search = app.descendants(matching: .any)["discover.search"]
         search.tap()
         // Android exposes only sources that returned results. Use a title in
         // the shared fixture so the supported-source assertions have results.
         search.typeText("电锯人\n")
         XCTAssertTrue(app.buttons["催漫画暂不支持搜索"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.collectionViews.cells.count, 0)
         app.buttons["discover.search.mode"].tap()
         XCTAssertTrue(app.buttons["discover.global.mh160"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["discover.global.baozimh"].exists)
@@ -53,19 +62,39 @@ final class SourceDrawerTests: ParityUITestCase {
         let source = app.buttons["discover.source"]
         XCTAssertTrue(source.waitForExistence(timeout: 5))
         let original = source.label
+
+        // Closing SourceChooserSheet preserves original source
         source.tap()
-        let candidate = app.buttons["filter.source.bbyin"]
+        XCTAssertTrue(app.buttons["source.chooser.close"].waitForExistence(timeout: 5))
+        app.buttons["source.chooser.close"].tap()
+        XCTAssertTrue(source.waitForExistence(timeout: 5))
+        XCTAssertEqual(source.label, original)
+
+        // Selecting in SourceChooserSheet applies the chosen source
+        source.tap()
+        let chooser = app.tables["source.chooser.list"]
+        XCTAssertTrue(chooser.waitForExistence(timeout: 5))
+        let chooserSearch = app.descendants(matching: .any)["source.chooser.search"]
+        if chooserSearch.exists && chooserSearch.isHittable {
+            chooserSearch.tap()
+            chooserSearch.typeText("bbyin")
+        }
+        let chosen = chooser.cells["source.chooser.item.bbyin"]
+        XCTAssertTrue(chosen.waitForExistence(timeout: 5))
+        chosen.tap()
+        XCTAssertTrue(source.waitForExistence(timeout: 5))
+        XCTAssertTrue(source.label.contains("比卡漫画"))
+
+        // Filter drawer close discards draft source switch
+        XCTAssertTrue(app.buttons["discover.filter.button"].waitForExistence(timeout: 5))
+        app.buttons["discover.filter.button"].tap()
+        XCTAssertTrue(app.buttons["filter.section.0"].waitForExistence(timeout: 5))
+        app.buttons["filter.section.0"].tap()
+        let candidate = app.buttons["filter.source.mh160"]
         XCTAssertTrue(candidate.waitForExistence(timeout: 5))
         revealSource(candidate, in: app)
         candidate.tap()
         app.buttons["filter.close"].tap()
-        XCTAssertTrue(source.waitForExistence(timeout: 5))
-        XCTAssertEqual(source.label, original)
-        source.tap()
-        let confirmedCandidate = app.buttons["filter.source.bbyin"]
-        revealSource(confirmedCandidate, in: app)
-        confirmedCandidate.tap()
-        app.buttons["filter.confirm"].tap()
         XCTAssertTrue(source.waitForExistence(timeout: 5))
         XCTAssertTrue(source.label.contains("比卡漫画"))
     }

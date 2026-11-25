@@ -69,9 +69,9 @@ final class VisualMatrixUITests: ParityUITestCase {
         XCTAssertTrue(app.collectionViews.cells["电锯人"].waitForExistence(timeout: 5))
         capture(stem + "discover")
         app.buttons["discover.source"].tap()
-        XCTAssertTrue(app.buttons["filter.close"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["source.chooser.close"].waitForExistence(timeout: 5))
         capture(stem + "source_drawer")
-        app.buttons["filter.close"].tap()
+        app.buttons["source.chooser.close"].tap()
         let search = app.descendants(matching: .any)["discover.search"]
         XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("电锯人\n")
         XCTAssertTrue(app.collectionViews.cells["电锯人"].waitForExistence(timeout: 5))
@@ -121,8 +121,12 @@ final class VisualMatrixUITests: ParityUITestCase {
         XCTAssertTrue(app.tabBars.buttons["设置"].waitForExistence(timeout: 5))
         app.tabBars.buttons["设置"].tap()
         capture(stem + "settings")
+        let settingsList = app.tables.firstMatch
         for (label, name) in [("下载中心", "downloads"), ("缓存清理", "cache_cleanup")] {
             let item = app.tables.staticTexts[label]
+            for _ in 0..<6 where !item.isSafelyHittable(in: app) {
+                settingsList.swipeUp()
+            }
             XCTAssertTrue(item.waitForExistence(timeout: 5)); item.tap()
             XCTAssertTrue(app.navigationBars.buttons.firstMatch.waitForExistence(timeout: 5))
             capture(stem + name)
@@ -134,7 +138,7 @@ final class VisualMatrixUITests: ParityUITestCase {
     func testVisualMatrixLandscapeLight() { exercise(landscape: true, dark: false) }
     func testVisualMatrixLandscapeDark() { exercise(landscape: true, dark: true) }
 
-    // Matches the empty library / 51 sources / disabled statistics Android reference.
+    // Matches the empty library / 61 sources / disabled statistics Android reference.
     // Attachments become comparison evidence only after this actually runs on Apple.
     private func settingsReference(landscape: Bool, dark: Bool) {
         XCUIDevice.shared.orientation = landscape ? .landscapeLeft : .portrait
@@ -171,9 +175,9 @@ final class VisualMatrixUITests: ParityUITestCase {
         XCTAssertGreaterThanOrEqual(headingInsetFromTitle, 0)
         XCTAssertLessThanOrEqual(headingInsetFromTitle, 64,
                                 "分组标题必须与卡片一起避开横屏刘海安全区")
-        XCTAssertEqual(app.tables.cells.count, 11)
+        XCTAssertEqual(app.tables.cells.count, 13)
         XCTAssertTrue(app.tables.cells["settings.theme"].staticTexts["自动"].exists)
-        XCTAssertTrue(app.tables.cells["settings.sources"].staticTexts["50 个开启"].exists)
+        XCTAssertTrue(app.tables.cells["settings.sources"].staticTexts["60 个开启"].exists)
         XCTAssertTrue(app.tables.cells["settings.history"].staticTexts["0 条"].exists)
         let frame = app.windows.firstMatch.frame
         XCTAssertEqual(frame.width > frame.height, landscape)

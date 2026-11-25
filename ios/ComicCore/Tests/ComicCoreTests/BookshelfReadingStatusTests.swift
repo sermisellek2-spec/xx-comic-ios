@@ -28,8 +28,16 @@ final class BookshelfReadingStatusTests: XCTestCase {
         let chapters = [Chapter(chapterId: "1", title: "目录末章", url: "https://fixture.invalid/1")]
         let detail = ComicDetail(summary: comic, author: "", status: "", description: "", latestChapter: "  详情最新  ", chapters: chapters)
         let status = BookshelfReadingStatus(comic: comic, reading: nil, revision: FavoriteRevision(chapterCount: 9), detail: detail)
-        XCTAssertEqual(status.unreadCount, 1)
+        XCTAssertEqual(status.unreadCount, 9)
         XCTAssertEqual(status.latestChapter, "详情最新")
+        let pendingStatus = BookshelfReadingStatus(
+            comic: comic,
+            reading: nil,
+            revision: FavoriteRevision(latestChapterName: "第10话", chapterCount: 10),
+            detail: detail,
+            pendingUpdate: true
+        )
+        XCTAssertEqual(pendingStatus.latestChapter, "第10话")
         let empty = ComicSummary(sourceId: "mh160", comicId: "mh160:empty", title: "Empty")
         XCTAssertEqual(BookshelfReadingStatus(comic: empty, reading: nil, revision: FavoriteRevision(latestChapterName: "观测最新")).latestChapter, "观测最新")
     }

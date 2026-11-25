@@ -10,13 +10,13 @@ import PDFKit
 final class PdfRendererTests: XCTestCase {
     func testAndroidScaleRoundingAndPixelBudget() throws {
         XCTAssertEqual(try PdfPublication.renderSize(width: 600, height: 800), .init(width: 1500, height: 2000))
-        XCTAssertEqual(try PdfPublication.renderSize(width: 600, height: 800, maximumDimension: 720), .init(width: 600, height: 800))
+        XCTAssertEqual(try PdfPublication.renderSize(width: 600, height: 800, maximumDimension: 720), .init(width: 540, height: 720))
         XCTAssertEqual(try PdfPublication.renderSize(width: 101, height: 201), .init(width: 253, height: 503))
         for pair in [(100_000.0, 100_000.0), (Double.greatestFiniteMagnitude, 1.0), (1.0, Double.greatestFiniteMagnitude), (1e200, 1e200)] {
             let size = try PdfPublication.renderSize(width: pair.0, height: pair.1)
             XCTAssertGreaterThanOrEqual(size.width, 1)
             XCTAssertGreaterThanOrEqual(size.height, 1)
-            XCTAssertLessThanOrEqual(size.width * size.height, 24_000_000)
+            XCTAssertLessThanOrEqual(size.width * size.height, 6_000_000)
         }
         for invalid in [0, -1, Double.infinity, Double.nan] {
             XCTAssertThrowsError(try PdfPublication.renderSize(width: invalid, height: 800))

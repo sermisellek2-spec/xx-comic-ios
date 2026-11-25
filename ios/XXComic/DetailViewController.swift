@@ -23,6 +23,10 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
     private let sourceSwitchButton = UIButton(type: .system)
     private let manageVolumes = UIButton(type: .system)
     private let retry = UIButton(type: .system)
+    private var bodyStack: UIStackView?
+    private var retiredBannerView: UIView?
+    private var isScrolledHeaderVisible = false
+    private var hasEnteredDetail = false
     private var cachedDetail: ComicDetail?
     private var detailTask: Task<Void, Never>?
     private var directoryTask: Task<[Chapter], Error>?
@@ -45,7 +49,7 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
     init(comic: ComicSummary, environment: AppEnvironment, resumeOnAppear: Bool = false) {
         self.comic = comic; self.environment = environment
         self.resumeOnAppear = resumeOnAppear
-        source = environment.source(for: comic)!
+        source = environment.source(for: comic) ?? RetiredComicSource(id: comic.sourceId, name: comic.sourceId)
         super.init(nibName: nil, bundle: nil)
         hidesBottomBarWhenPushed = true
     }
@@ -54,9 +58,7 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = source.name
-        navigationItem.titleView = UIView(frame: .zero)
-        let appearance = UINavigationBarAppearance(); appearance.configureWithTransparentBackground()
-        navigationItem.standardAppearance = appearance; navigationItem.scrollEdgeAppearance = appearance; navigationItem.compactAppearance = appearance
+        applyNavigationBarStyle(scrolled: false)
         view.backgroundColor = Palette.card
         scroll.contentInsetAdjustmentBehavior = .never
         scroll.delegate = self
@@ -193,11 +195,13 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
             buttons.append(contentsOf: [sourceSwitchButton, downloadButton])
         }
         items.append(retry)
+        bodyStack = body
         let topInset = UIView(); topInset.backgroundColor = Palette.background
         heroTopInset = topInset.heightAnchor.constraint(equalToConstant: 0); heroTopInset.isActive = true
         content.addArrangedSubview(topInset); content.addArrangedSubview(cover); content.addArrangedSubview(body)
         content.setCustomSpacing(-12, after: cover)
         for item in items { body.addArrangedSubview(item) }
+        updateRetiredBannerState()
         let bodyFill = UIView(); bodyFill.setContentHuggingPriority(.defaultLow, for: .vertical)
         body.addArrangedSubview(bodyFill)
         for button in buttons {
@@ -214,8 +218,10 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
             content.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
             content.heightAnchor.constraint(greaterThanOrEqualTo: scroll.frameLayoutGuide.heightAnchor)
         ])
+        seedAndRenderProvisionalMetadata()
         cover.loadCover(comic, referer: source.referer, library: environment.localLibrary)
         loadDetail()
+        scheduleDelayedSourceSearch()
     }
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -228,6 +234,152 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
     }
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         updateHeroTransform()
+        let threshold = max(60, (heroHeight?.constant ?? 190) - 36)
+        let scrolled = scrollView.contentOffset.y > threshold
+        if scrolled != isScrolledHeaderVisible {
+            applyNavigationBarStyle(scrolled: scrolled)
+        }
+    }
+
+    private func applyNavigationBarStyle(scrolled: Bool) {
+        isScrolledHeaderVisible = scrolled
+        if scrolled {
+            SecondaryHeaderBar.apply(to: self, title: comic.title, meta: source.name)
+        } else {
+            title = source.name
+            navigationItem.titleView = UIView(frame: .zero)
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithTransparentBackground()
+            navigationItem.standardAppearance = appearance
+            navigationItem.scrollEdgeAppearance = appearance
+            navigationItem.compactAppearance = appearance
+        }
+    }
+
+    private var isRetiredComic: Bool {
+        environment.isRetiredSource(comic.sourceId)
+            || source is RetiredComicSource
+            || (source as? MissingRuleSource)?.isRetired == true
+    }
+
+    private func updateRetiredBannerState() {
+        let retired = isRetiredComic && comic.sourceId != "local"
+        if comic.sourceId != "local" {
+            downloadButton.isHidden = retired
+            downloadButton.isEnabled = !retired
+        }
+        if retired {
+            if retiredBannerView == nil, let bodyStack {
+                let banner = RetiredSourceBadgeView.createDetailBanner { [weak self] in
+                    self?.openSourceSwitchSheet()
+                }
+                retiredBannerView = banner
+                let insertIdx = min(2, bodyStack.arrangedSubviews.count)
+                bodyStack.insertArrangedSubview(banner, at: insertIdx)
+            }
+            retiredBannerView?.isHidden = false
+        } else {
+            retiredBannerView?.isHidden = true
+        }
+    }
+
+    private func seedAndRenderProvisionalMetadata() {
+        environment.ruleCatalog.seedSummary(comic)
+        (source as? FailoverComicSource)?.seedFromSummary(comic)
+
+        if !comic.subtitle.isEmpty {
+            metadataLabel.text = comic.subtitle
+        }
+        applyTags(comic.tags)
+
+        if let diskCached = environment.cachedDetail(sourceId: comic.sourceId, comicId: comic.comicId) {
+            cachedDetail = diskCached
+            if !diskCached.chapters.isEmpty {
+                cachedChapters = diskCached.chapters
+            }
+            updateDetailText(diskCached)
+            environment.ruleCatalog.seedDetail(diskCached)
+            (source as? FailoverComicSource)?.seedFromDetail(diskCached)
+            updateButtons()
+        }
+
+        if comic.sourceId == "local" {
+            loadLocalPublicationMetadata()
+        }
+    }
+
+    private func applyTags(_ tags: [String]) {
+        tagsRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        for tag in tags.prefix(5) {
+            let label = DetailTagLabel(); label.text = tag
+            label.font = .systemFont(ofSize: 12); label.textColor = Palette.text2
+            label.backgroundColor = Palette.card; label.layer.cornerRadius = 14; label.clipsToBounds = true
+            label.layer.borderWidth = 1 / UIScreen.main.scale; label.layer.borderColor = Palette.border.cgColor
+            tagsRow.addArrangedSubview(label)
+        }
+        let spacer = UIView(); spacer.setContentHuggingPriority(.defaultLow, for: .horizontal); tagsRow.addArrangedSubview(spacer)
+        tagsRow.isHidden = tags.isEmpty
+    }
+
+    private func loadLocalPublicationMetadata() {
+        let library = environment.localLibrary
+        let seriesId = comic.comicId
+        Task.detached(priority: .utility) { [weak self] in
+            guard let series = try? await library.series(id: seriesId) else { return }
+            let volumes = (try? library.volumes(for: series)) ?? []
+            var totalBytes: Int64 = 0
+            var formats = Set<String>()
+            var extraInfo: String?
+            for vol in volumes {
+                let dir = library.directory.appendingPathComponent(vol.id, isDirectory: true)
+                totalBytes += (try? StorageCalculator.directorySize(at: dir)) ?? 0
+                if vol.epub != nil {
+                    formats.insert("EPUB")
+                    if extraInfo == nil {
+                        let sourceFile = dir.appendingPathComponent("book.epub")
+                        if FileManager.default.fileExists(atPath: sourceFile.path),
+                           let quick = try? QuickPublicationInfo.read(sourceFile, formatOrFileName: "book.epub"),
+                           !quick.seriesTitle.isEmpty {
+                            extraInfo = quick.seriesTitle
+                        }
+                    }
+                } else if vol.pdf != nil {
+                    formats.insert("PDF")
+                } else {
+                    switch vol.importFormat {
+                    case .zip: formats.insert("ZIP")
+                    case .cbz: formats.insert("CBZ")
+                    case .mobi: formats.insert("MOBI")
+                    case .azw: formats.insert("AZW")
+                    case .azw3: formats.insert("AZW3")
+                    case .epub: formats.insert("EPUB")
+                    case .pdf: formats.insert("PDF")
+                    case .folder: formats.insert("文件夹")
+                    case .images, .none: formats.insert("图片")
+                    }
+                }
+            }
+            let formatText = formats.isEmpty ? "本地" : formats.sorted().joined(separator: "/")
+            let sizeText = totalBytes > 0 ? " · \(StorageCalculator.formatBytes(totalBytes))" : ""
+            let volText = volumes.count > 1 ? " · 共 \(volumes.count) 卷" : ""
+            let seriesSuffix = extraInfo.map { " · \($0)" } ?? ""
+            let line = "本地漫画 · \(formatText)\(sizeText)\(volText)\(seriesSuffix)"
+            await MainActor.run { [weak self] in
+                guard let self, self.comic.comicId == seriesId else { return }
+                self.metadataLabel.text = line
+            }
+        }
+    }
+
+    private func scheduleDelayedSourceSearch() {
+        guard comic.sourceId != "local", !comic.title.isEmpty else { return }
+        let blacklist = environment.blacklistStore
+        environment.detailSourceSearch.startDelayed(
+            delayMs: 1200,
+            current: comic,
+            sources: environment.searchSources,
+            titleExcludeFilter: { title in blacklist.isBlacklistedTitle(title) }
+        ) { _, _ in }
     }
     private func updateHeroTransform() {
         let offsetY = scroll.contentOffset.y
@@ -250,21 +402,20 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
         downloadButton.accessibilityLabel = loading ? "正在加载目录 · 点击取消" : "下载章节"
     }
     private func updateDetailText(_ detail: ComicDetail) {
-        metadataLabel.text = (detail.status.isEmpty ? "未知状态" : detail.status) + " · " + (detail.author.isEmpty ? "未知作者" : detail.author)
-        descriptionLabel.text = detail.description.isEmpty ? "暂无简介" : detail.description
-        tagsRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        for tag in detail.summary.tags.prefix(5) {
-            let label = DetailTagLabel(); label.text = tag
-            label.font = .systemFont(ofSize: 12); label.textColor = Palette.text2
-            label.backgroundColor = Palette.card; label.layer.cornerRadius = 14; label.clipsToBounds = true
-            label.layer.borderWidth = 1 / UIScreen.main.scale; label.layer.borderColor = Palette.border.cgColor
-            tagsRow.addArrangedSubview(label)
+        if comic.sourceId != "local" {
+            metadataLabel.text = (detail.status.isEmpty ? "未知状态" : detail.status) + " · " + (detail.author.isEmpty ? "未知作者" : detail.author)
         }
-        let spacer = UIView(); spacer.setContentHuggingPriority(.defaultLow, for: .horizontal); tagsRow.addArrangedSubview(spacer)
-        tagsRow.isHidden = detail.summary.tags.isEmpty
+        descriptionLabel.text = detail.description.isEmpty ? "暂无简介" : detail.description
+        applyTags(detail.summary.tags)
     }
     override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated); updateButtons()
+        super.viewWillAppear(animated)
+        applyNavigationBarStyle(scrolled: isScrolledHeaderVisible)
+        if !hasEnteredDetail {
+            hasEnteredDetail = true
+            environment.favoriteUpdateCoordinator.onUserEnterDetail(sourceId: comic.sourceId, comicId: comic.comicId)
+        }
+        updateButtons()
         if !detailLoaded && detailTask == nil { loadDetail() }
         if cover.needsReload { cover.loadCover(comic, referer: source.referer, library: environment.localLibrary) }
     }
@@ -278,12 +429,15 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         guard presentedViewController == nil else { return }
+        let leavingDetail = isMovingFromParent || isBeingDismissed || navigationController?.isBeingDismissed == true
+        guard leavingDetail else { return }
         detailTask?.cancel(); detailTask = nil
         if let busy = detailBusyToken { environment.endForegroundDetailLoad(busy); detailBusyToken = nil }
         directoryID = UUID(); directoryTask?.cancel(); directoryTask = nil
         if let busy = directoryBusyToken { environment.endForegroundDetailLoad(busy); directoryBusyToken = nil }
         readID = UUID(); readTask?.cancel(); readTask = nil; read.isEnabled = true
         cancelDownloadSelection()
+        environment.detailSourceSearch.detach()
         cover.cancel()
         favoriteArtworkID = UUID(); favoriteArtworkName = nil
     }
@@ -411,15 +565,33 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
                 guard let self else { return }
                 self.comic = detail.summary
                 self.cachedDetail = detail
+                if !detail.chapters.isEmpty {
+                    self.cachedChapters = detail.chapters
+                }
                 self.detailLoaded = true
                 self.heading.text = detail.summary.title
                 self.updateDetailText(detail)
+                if detail.summary.sourceId == "local" {
+                    self.loadLocalPublicationMetadata()
+                }
+                self.environment.saveCachedSummary(detail.summary)
+                self.environment.saveCachedDetail(detail)
+                self.environment.ruleCatalog.seedDetail(detail)
+                (self.source as? FailoverComicSource)?.seedFromDetail(detail)
                 self.cover.loadCover(detail.summary, referer: source.referer, library: self.environment.localLibrary)
                 self.feedback.setDetail(nil)
                 self.updateFeedback()
                 self.updateButtons()
-                let revision = FavoriteRevision.fromChapters(latestChapterName: detail.latestChapter, chapters: detail.chapters)
-                self.environment.favoriteUpdateCoordinator.acknowledge(sourceId: detail.summary.sourceId, comicId: detail.summary.comicId, revision: revision)
+                if !detail.chapters.isEmpty {
+                    self.environment.favoriteUpdateCoordinator.onDetailChaptersObserved(
+                        sourceId: detail.summary.sourceId,
+                        comicId: detail.summary.comicId,
+                        detail: detail
+                    )
+                } else {
+                    let revision = FavoriteRevision.fromChapters(latestChapterName: detail.latestChapter, chapters: detail.chapters)
+                    self.environment.favoriteUpdateCoordinator.acknowledge(sourceId: detail.summary.sourceId, comicId: detail.summary.comicId, revision: revision)
+                }
             } catch {
                 guard let self, !Task.isCancelled else { return }
                 if !(error is CancellationError) {
@@ -558,6 +730,7 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
     @objc private func openSourceSwitchSheet() {
         guard presentedViewController == nil else { return }
         cancelDownloadSelection()
+        environment.detailSourceSearch.flushPendingStartNow()
         let previousComic = comic
         let previousDetail = cachedDetail
         let previousChapters = cachedChapters
@@ -606,12 +779,25 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
         self.cachedChapters = targetDetail.chapters.isEmpty ? nil : targetDetail.chapters
         self.detailLoaded = true
         self.heading.text = targetDetail.summary.title
+        self.updateRetiredBannerState()
         self.updateDetailText(targetDetail)
+        self.environment.saveCachedSummary(targetDetail.summary)
+        self.environment.saveCachedDetail(targetDetail)
+        self.environment.ruleCatalog.seedDetail(targetDetail)
+        (newSource as? FailoverComicSource)?.seedFromDetail(targetDetail)
         self.cover.loadCover(targetDetail.summary, referer: newSource.referer, library: self.environment.localLibrary)
         self.updateFeedback()
         self.updateButtons()
-        let revision = FavoriteRevision.fromChapters(latestChapterName: targetDetail.latestChapter, chapters: targetDetail.chapters)
-        self.environment.favoriteUpdateCoordinator.acknowledge(sourceId: targetDetail.summary.sourceId, comicId: targetDetail.summary.comicId, revision: revision)
+        if !targetDetail.chapters.isEmpty {
+            self.environment.favoriteUpdateCoordinator.onDetailChaptersObserved(
+                sourceId: targetDetail.summary.sourceId,
+                comicId: targetDetail.summary.comicId,
+                detail: targetDetail
+            )
+        } else {
+            let revision = FavoriteRevision.fromChapters(latestChapterName: targetDetail.latestChapter, chapters: targetDetail.chapters)
+            self.environment.favoriteUpdateCoordinator.acknowledge(sourceId: targetDetail.summary.sourceId, comicId: targetDetail.summary.comicId, revision: revision)
+        }
     }
     @objc private func openVolumeManager() {
         guard presentedViewController == nil else { return }
@@ -738,6 +924,25 @@ final class DetailViewController: UIViewController, UIScrollViewDelegate {
             let result = try await directoryTask!.value
             guard directoryID == token else { throw CancellationError() }
             cachedChapters = result.isEmpty ? nil : result; directoryTask = nil
+            if !result.isEmpty {
+                let updatedDetail = ComicDetail(
+                    summary: cachedDetail?.summary ?? comic,
+                    author: cachedDetail?.author ?? "",
+                    status: cachedDetail?.status ?? "",
+                    description: cachedDetail?.description ?? "",
+                    latestChapter: cachedDetail?.latestChapter ?? result.last?.title ?? "",
+                    chapters: result
+                )
+                cachedDetail = updatedDetail
+                environment.saveCachedDetail(updatedDetail)
+                environment.ruleCatalog.seedDetail(updatedDetail)
+                (source as? FailoverComicSource)?.seedFromDetail(updatedDetail)
+                environment.favoriteUpdateCoordinator.onDetailChaptersObserved(
+                    sourceId: comic.sourceId,
+                    comicId: comic.comicId,
+                    detail: updatedDetail
+                )
+            }
             updateDirectoryButton()
             return result
         } catch { if directoryID == token { directoryTask = nil }; throw error }

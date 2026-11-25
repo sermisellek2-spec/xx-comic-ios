@@ -116,20 +116,48 @@ public final class DetailChapterSectionView: UIView {
         render(autoScrollSegment: false)
     }
 
+    public static func hasSameChapterSequence(_ a: [Chapter], _ b: [Chapter]) -> Bool {
+        guard a.count == b.count else { return false }
+        for (ca, cb) in zip(a, b) {
+            if ca.chapterId != cb.chapterId
+                || ca.url != cb.url
+                || ca.title != cb.title
+                || ca.sectionSlot != cb.sectionSlot
+                || ca.chapterSlot != cb.chapterSlot {
+                return false
+            }
+        }
+        return true
+    }
+
     public func bindChapters(
         _ loadedChapters: [Chapter]?,
         currentChapterIndex: Int,
         hasCurrent: Bool,
         downloadedChapterIds: Set<String> = []
     ) {
-        self.chapters = loadedChapters ?? []
+        let nextChapters = loadedChapters ?? []
+        let sameSequence = Self.hasSameChapterSequence(self.chapters, nextChapters)
+        if sameSequence
+            && self.currentChapterIndex == currentChapterIndex
+            && self.hasCurrent == hasCurrent
+            && self.downloadedChapterIds == downloadedChapterIds
+            && !self.loading
+            && self.errorMessage.isEmpty {
+            return
+        }
+        self.chapters = nextChapters
         self.currentChapterIndex = currentChapterIndex
         self.hasCurrent = hasCurrent
         self.downloadedChapterIds = downloadedChapterIds
         self.loading = false
         self.errorMessage = ""
-        self.selectedSegmentIndex = -1
-        render(autoScrollSegment: true)
+        if !sameSequence {
+            self.selectedSegmentIndex = -1
+            self.isExpanded = false
+            self.segmentScrollX = 0
+        }
+        render(autoScrollSegment: !sameSequence)
     }
 
     public func setOrder(desc: Bool) {

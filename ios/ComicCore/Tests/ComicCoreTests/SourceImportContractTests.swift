@@ -39,7 +39,7 @@ final class SourceImportContractTests: XCTestCase {
             XCTAssertEqual(result.totalSources, 0)
             XCTAssertEqual(result.skippedSources, ["unknown", "custom-fixture"])
             XCTAssertFalse(result.warnings.isEmpty)
-            XCTAssertEqual(store.orderedIDs.count, 51)
+            XCTAssertEqual(store.orderedIDs.count, 61)
             XCTAssertFalse(store.isEnabled("unknown"))
         }
     }
@@ -117,8 +117,8 @@ final class SourceImportContractTests: XCTestCase {
             }
             let original = Dictionary(uniqueKeysWithValues: sources.map { ($0.id, store.config(for: $0.id)!) })
             let result = try store.importConfig(jsonString: store.exportConfig(sources: sources))
-            XCTAssertEqual(result.totalSources, 51)
-            XCTAssertEqual(result.enabledCount, 50)
+            XCTAssertEqual(result.totalSources, 61)
+            XCTAssertEqual(result.enabledCount, 60)
             XCTAssertEqual(result.warnings, [])
             for source in sources {
                 XCTAssertEqual(store.config(for: source.id)?.routes, original[source.id]?.routes, source.id)
@@ -176,7 +176,7 @@ final class SourceImportContractTests: XCTestCase {
                 }
             }
             XCTAssertEqual(result.totalSources, fields.count)
-            XCTAssertEqual(store.orderedIDs.count, 51)
+            XCTAssertEqual(store.orderedIDs.count, 61)
         }
     }
 }

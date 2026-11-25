@@ -13,7 +13,7 @@ final class SourceGroupsParityUITests: ParityUITestCase {
         app.tabBars.buttons["设置"].tap(); app.tables.staticTexts["站源管理"].tap()
         app.tables.staticTexts["站源分组"].tap()
         XCTAssertTrue(app.buttons["source-groups.create"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.cells["source-group.row.builtin_source_all"].staticTexts["(51)"].exists)
+        XCTAssertTrue(app.cells["source-group.row.builtin_source_all"].staticTexts["(61)"].exists)
     }
     private func create(_ name: String, app: XCUIApplication) {
         app.buttons["source-groups.create"].tap()

@@ -140,15 +140,15 @@ private final class FilesFixtureViewController: UIViewController {
             let data = try Data(contentsOf: configFolder.appendingPathComponent("xx-comic-sources.json"))
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   json["schema"] as? String == "xx-comic.sources", json["version"] as? Int == 2,
-                  let sources = json["sources"] as? [[String: Any]], sources.count == 51,
-                  Set(sources.compactMap { $0["id"] as? String }).count == 51,
+                  let sources = json["sources"] as? [[String: Any]], sources.count == 61,
+                  Set(sources.compactMap { $0["id"] as? String }).count == 61,
                   sources.first(where: { $0["id"] as? String == "duya" })?["enabled"] as? Bool == true,
                   sources.first(where: { $0["id"] as? String == "mh160" })?["enabled"] as? Bool == false,
-                  let order = json["sourceOrder"] as? [String], order.count == 51, Array(order.prefix(2)) == ["duya", "mh160"] else {
+                  let order = json["sourceOrder"] as? [String], order.count == 61, Array(order.prefix(2)) == ["duya", "mh160"] else {
                 throw CocoaError(.fileReadCorruptFile)
             }
             let enabled = sources.filter { $0["enabled"] as? Bool == true }.count
-            exportStatus.text = "已校验实际文件：51 个站源，\(enabled) 个开启；毒牙开启，漫画160关闭"
+            exportStatus.text = "已校验实际文件：61 个站源，\(enabled) 个开启；毒牙开启，漫画160关闭"
         } catch { exportStatus.text = "导出文件校验失败" }
     }
 

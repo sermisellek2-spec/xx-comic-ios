@@ -368,12 +368,14 @@ final class SourceRuleCell: UITableViewCell {
 
     func configure(
         entry: RuleStore.Entry,
+        requiresVpn: Bool? = nil,
         isBatchMode: Bool,
         isSelected: Bool
     ) {
         let rule = entry.rule
+        let showVpn = requiresVpn ?? rule.requiresVpn
         titleLabel.text = rule.name
-        vpnBadge.isHidden = !rule.requiresVpn
+        vpnBadge.isHidden = !showVpn
         vpnBadge.accessibilityIdentifier = "source.vpn.badge." + rule.id
 
         let host = URL(string: rule.baseUrl)?.host ?? rule.baseUrl
@@ -724,7 +726,7 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "规则与批量管理"
+        SecondaryHeaderBar.apply(to: self, title: "规则与批量管理")
         view.backgroundColor = Palette.background
 
         setupNavigationBar()
@@ -751,15 +753,12 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
     // MARK: - Navigation Bar
 
     private func setupNavigationBar() {
-        let moreButton = UIBarButtonItem(
-            image: UIImage(systemName: "ellipsis.circle"),
-            style: .plain,
+        navigationItem.rightBarButtonItem = SecondaryHeaderBar.moreButton(
+            accessibilityLabel: "规则更多操作",
+            accessibilityIdentifier: "source.rule.moreActions",
             target: self,
             action: #selector(showMoreDrawer)
         )
-        moreButton.accessibilityIdentifier = "source.rule.moreActions"
-        moreButton.accessibilityLabel = "规则更多操作"
-        navigationItem.rightBarButtonItem = moreButton
     }
 
     // MARK: - Setup Views
@@ -1005,8 +1004,9 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
 
     func loadRules() {
         catalog.refresh()
-        items = catalog.entries().filter { !$0.removed && !catalog.hidden($0.rule.id) }
+        items = catalog.visibleEntries().filter { !$0.removed && !catalog.hidden($0.rule.id) }
         let hasRules = !items.isEmpty
+        SecondaryHeaderBar.updateMeta(hasRules ? "\(items.count) 个" : nil, on: self)
 
         tableView.isHidden = !hasRules
         emptyScrollView.isHidden = hasRules
@@ -1068,14 +1068,12 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
         tableView.setEditing(isBatchMode, animated: true)
 
         if isBatchMode {
-            let doneButton = UIBarButtonItem(
+            navigationItem.rightBarButtonItem = SecondaryHeaderBar.textButton(
                 title: "完成",
-                style: .done,
+                accessibilityIdentifier: "source.rule.exitBatch",
                 target: self,
                 action: #selector(exitBatchMode)
             )
-            doneButton.accessibilityIdentifier = "source.rule.exitBatch"
-            navigationItem.rightBarButtonItem = doneButton
         } else {
             setupNavigationBar()
         }
@@ -1111,7 +1109,8 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
         let entry = items[indexPath.row]
         let isSelected = selectedIds.contains(entry.rule.id)
 
-        cell.configure(entry: entry, isBatchMode: isBatchMode, isSelected: isSelected)
+        let needsVpn = entry.rule.requiresVpn || (environment?.requiresVpn(sourceId: entry.rule.id) ?? false)
+        cell.configure(entry: entry, requiresVpn: needsVpn, isBatchMode: isBatchMode, isSelected: isSelected)
         cell.onSwitchToggled = { [weak self] enabled in
             self?.setRule(entry.rule.id, enabled: enabled)
         }
@@ -1377,7 +1376,7 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
         let catalog = self.catalog
         Task { [weak self] in
             do {
-                let message = try await Task.detached(priority: .userInitiated) { () throws -> String in
+                let (message, cleanedRetiredCount, updatedIds) = try await Task.detached(priority: .userInitiated) { () throws -> (String, Int, Set<String>) in
                     let prepared = try RuleSubscriptionUpdate.prepareCompatible(
                         urls: repos,
                         validator: { rule in try catalog.validate(rule) }
@@ -1385,17 +1384,29 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
                     if prepared.rules.isEmpty && prepared.skipped > 0 {
                         throw UnsupportedRuleError("订阅中的 \(prepared.skipped) 个规则需要升级客户端后才能更新")
                     }
-                    var msg = try catalog.store().updateSubscriptions(prepared.rules)
+                    let outcome = try catalog.store().updateSubscriptionsDetailed(
+                        prepared.rules,
+                        initialStates: [:],
+                        retiredOfficial: prepared.retiredSources
+                    )
+                    var msg = outcome.summary
                     if prepared.skipped > 0 {
                         msg += " · 跳过 \(prepared.skipped)（需升级客户端）"
                     }
+                    if outcome.cleanedRetiredCount > 0 {
+                        msg += "\n\n已清理 \(outcome.cleanedRetiredCount) 个已下线官方站源，书架中对应漫画与离线下载均已保留，并标记为“站源已下线”。"
+                    }
                     catalog.refresh()
-                    return msg
+                    return (msg, outcome.cleanedRetiredCount, Set(prepared.rules.map(\.id)))
                 }.value
                 guard let self else { return }
                 self.activityIndicator.stopAnimating()
+                self.environment?.invalidateChapterCachesForUpdatedRules(updatedIds)
                 self.environment?.reloadSources()
                 self.loadRules()
+                if cleanedRetiredCount > 0 {
+                    self.showToast("已清理 \(cleanedRetiredCount) 个已下线官方站源，书架记录与下载已保留")
+                }
                 self.showAlert(title: "站源已更新", message: message)
             } catch {
                 guard let self else { return }
@@ -1454,13 +1465,27 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
         }
     }
 
+    private func expandWithPairedBackups(_ primaryRules: [RuleDefinition]) -> [RuleDefinition] {
+        var seen = Set<String>()
+        var expanded: [RuleDefinition] = []
+        for rule in primaryRules {
+            if seen.insert(rule.id).inserted {
+                expanded.append(rule)
+            }
+            for backup in catalog.backupsOf(rule.id) where seen.insert(backup.rule.id).inserted {
+                expanded.append(backup.rule)
+            }
+        }
+        return expanded
+    }
+
     private func exportSelectedRules() {
         let selectedRules = items.filter { selectedIds.contains($0.rule.id) }.map(\.rule)
         guard !selectedRules.isEmpty else {
             showToast("请先选择站源")
             return
         }
-        exportRules(selectedRules)
+        exportRules(expandWithPairedBackups(selectedRules))
     }
 
     private func exportAllRules() {
@@ -1469,7 +1494,7 @@ final class SourceRuleManagerViewController: UIViewController, UITableViewDataSo
             showToast("当前暂无已安装规则可导出")
             return
         }
-        exportRules(allRules)
+        exportRules(expandWithPairedBackups(allRules))
     }
 
     private func exportRules(_ rules: [RuleDefinition]) {

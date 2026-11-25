@@ -19,10 +19,6 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
     private var candidates: [CandidateItem] = []
     private var isSearching = false
     private var searchGeneration = UUID()
-    private var pendingSources: [any ComicSource] = []
-    private var searchTasks: [String: Task<Void, Never>] = [:]
-    private var searchTimeouts: [String: Task<Void, Never>] = [:]
-    private var searchRequests: [String: UUID] = [:]
     private var switchGeneration = UUID()
     private var switchTask: Task<Void, Never>?
     private var switchTimeout: Task<Void, Never>?
@@ -46,11 +42,15 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "换源 · \(originalComic.title)"
+        SecondaryHeaderBar.apply(to: self, title: "换源 · \(originalComic.title)")
         view.backgroundColor = Palette.background
 
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "取消", style: .plain, target: self, action: #selector(cancelTapped))
-        navigationItem.leftBarButtonItem?.accessibilityIdentifier = "source-switch.cancel"
+        navigationItem.leftBarButtonItem = SecondaryHeaderBar.textButton(
+            title: "取消",
+            accessibilityIdentifier: "source-switch.cancel",
+            target: self,
+            action: #selector(cancelTapped)
+        )
 
         tableView.backgroundColor = Palette.background
         tableView.dataSource = self
@@ -103,58 +103,80 @@ final class SourceSwitchSheet: UIViewController, UITableViewDataSource, UITableV
 
     private func cancelSearch() {
         searchGeneration = UUID()
-        searchTasks.values.forEach { $0.cancel() }
-        searchTimeouts.values.forEach { $0.cancel() }
-        searchTasks.removeAll(); searchTimeouts.removeAll(); searchRequests.removeAll()
-        pendingSources.removeAll(); isSearching = false
+        environment.detailSourceSearch.detach()
+        isSearching = false
     }
 
     @objc private func startSearch() {
         guard switchTask == nil else { return }
-        cancelSearch(); candidates = []
-        if let source = environment.source(for: originalComic) {
-            candidates = [CandidateItem(source: source, candidate: originalComic, latestChapter: originalComic.subtitle)]
-        }
+        searchGeneration = UUID()
+        let token = searchGeneration
+        candidates = []
+        let currentSource = environment.source(for: originalComic)
+            ?? RetiredComicSource(id: originalComic.sourceId, name: originalComic.sourceId)
+        candidates = [CandidateItem(source: currentSource, candidate: originalComic, latestChapter: originalComic.subtitle)]
+
         let query = SearchRules.trim(originalComic.title)
-        pendingSources = query.isEmpty ? [] : environment.searchSources.filter { $0.id != originalComic.sourceId }
-        startNextSearches(query: query, generation: searchGeneration)
+        guard !query.isEmpty else {
+            isSearching = false
+            renderSearch()
+            return
+        }
+
+        isSearching = true
+        renderSearch()
+
+        let blacklist = environment.blacklistStore
+        let searchSources = environment.searchSources
+        environment.detailSourceSearch.start(
+            current: originalComic,
+            sources: searchSources,
+            titleExcludeFilter: { title in blacklist.isBlacklistedTitle(title) }
+        ) { [weak self] items, loading in
+            Task { @MainActor [weak self] in
+                guard let self, self.searchGeneration == token else { return }
+                self.applyDetailSearchResults(items: items, loading: loading)
+            }
+        }
+        environment.detailSourceSearch.flushPendingStartNow()
     }
 
-    private func startNextSearches(query: String, generation: UUID) {
-        guard searchGeneration == generation else { return }
-        // Android runs three requests and starts each 10-second timeout when
-        // it leaves the queue. One slow source must not hide ready candidates.
-        while searchTasks.count < 3, !pendingSources.isEmpty {
-            let source = pendingSources.removeFirst(), id = source.id, request = UUID()
-            searchRequests[id] = request
-            searchTasks[id] = Task { [weak self] in
-                let items = (try? await source.search(keyword: query, page: 1)) ?? []
-                guard !Task.isCancelled else { return }
-                let exact = items.first { $0.sourceId == id && !$0.comicId.isEmpty && SearchRules.isExact(title: $0.title, query: query) }
-                self?.finishSearch(source: source, candidate: exact, query: query, generation: generation, request: request)
+    private func applyDetailSearchResults(items: [ComicSummary], loading: Bool) {
+        var nextCandidates: [CandidateItem] = []
+        var seenSources = Set<String>()
+
+        for item in items {
+            let isOriginal = (item.sourceId == originalComic.sourceId && item.comicId == originalComic.comicId)
+            if !isOriginal && environment.blacklistStore.isBlacklistedTitle(item.title) {
+                continue
             }
-            searchTimeouts[id] = Task { [weak self] in
-                do { try await Task.sleep(nanoseconds: 10_000_000_000) } catch { return }
-                self?.finishSearch(source: source, candidate: nil, query: query, generation: generation, request: request)
-            }
+            guard seenSources.insert(item.sourceId).inserted else { continue }
+            let src = environment.source(for: item)
+                ?? environment.allSources.first(where: { $0.id == item.sourceId })
+                ?? RetiredComicSource(id: item.sourceId, name: item.sourceId)
+            nextCandidates.append(CandidateItem(source: src, candidate: item, latestChapter: item.subtitle))
         }
+
+        if !seenSources.contains(originalComic.sourceId) {
+            let currentSource = environment.source(for: originalComic)
+                ?? RetiredComicSource(id: originalComic.sourceId, name: originalComic.sourceId)
+            nextCandidates.insert(
+                CandidateItem(source: currentSource, candidate: originalComic, latestChapter: originalComic.subtitle),
+                at: 0
+            )
+        }
+
+        let order = [originalComic.sourceId] + environment.searchSources.map(\.id)
+        nextCandidates.sort {
+            (order.firstIndex(of: $0.source.id) ?? Int.max) < (order.firstIndex(of: $1.source.id) ?? Int.max)
+        }
+        candidates = nextCandidates
+        isSearching = loading
         renderSearch()
     }
 
-    private func finishSearch(source: any ComicSource, candidate: ComicSummary?, query: String, generation: UUID, request: UUID) {
-        guard searchGeneration == generation, searchRequests[source.id] == request else { return }
-        searchTasks.removeValue(forKey: source.id)?.cancel()
-        searchTimeouts.removeValue(forKey: source.id)?.cancel()
-        searchRequests.removeValue(forKey: source.id)
-        if let candidate { candidates.append(CandidateItem(source: source, candidate: candidate, latestChapter: candidate.subtitle)) }
-        let order = [originalComic.sourceId] + environment.searchSources.map(\.id)
-        candidates.sort { (order.firstIndex(of: $0.source.id) ?? Int.max) < (order.firstIndex(of: $1.source.id) ?? Int.max) }
-        startNextSearches(query: query, generation: generation)
-    }
-
     private func renderSearch() {
-        isSearching = !pendingSources.isEmpty || !searchTasks.isEmpty
-        title = "换源列表（\(candidates.count)）"
+        SecondaryHeaderBar.apply(to: self, title: "换源列表（\(candidates.count)）")
         statusLabel.text = isSearching ? "正在查找同名漫画…" : candidates.count <= 1 ? "暂未找到其他同名站源" : "选择站源，保留收藏与阅读进度"
         isSearching ? activityIndicator.startAnimating() : activityIndicator.stopAnimating()
         retrySearch.isHidden = isSearching

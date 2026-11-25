@@ -37,6 +37,7 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        SecondaryHeaderBar.configureNavigationBarAppearance(for: navigationController)
         setupSheetPresentation()
         view.backgroundColor = Palette.card
 
@@ -105,8 +106,12 @@ final class DownloadSelectionViewController: UIViewController, UITableViewDataSo
         headerView.addSubview(hintLabel)
 
         let closeButton = UIButton(type: .system)
-        closeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
-        closeButton.tintColor = Palette.secondaryText
+        closeButton.setImage(ParityIcon.close.image(size: 18), for: .normal)
+        closeButton.tintColor = Palette.accent
+        closeButton.backgroundColor = Palette.accentSoft
+        closeButton.layer.cornerRadius = SecondaryHeaderBar.cardCornerRadius
+        closeButton.layer.borderWidth = 1
+        closeButton.layer.borderColor = Palette.borderSoft.cgColor
         closeButton.accessibilityLabel = "关闭下载选择"
         closeButton.accessibilityIdentifier = "download.close"
         closeButton.addTarget(self, action: #selector(dismissSelf), for: .touchUpInside)

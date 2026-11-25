@@ -10,6 +10,37 @@ public enum RetiredSourceError: LocalizedError, Equatable {
 }
 
 public struct RetiredComicSource: ComicSource {
+    public static let builtinRetiredSources: [String: String] = [
+        // Historical retired sources (7)
+        "baozimh": "包子漫画",
+        "mhua5": "漫画屋",
+        "duya": "毒牙漫画",
+        "xcomic": "XCOMIC",
+        "mh250": "250漫画",
+        "xiuxiu": "羞羞漫画",
+        "aimi": "艾米漫画",
+        // Current batch retired sources (9)
+        "comic51": "51漫画",
+        "favcomic": "喜漫漫画",
+        "waiwai": "歪歪漫画",
+        "hiperdex": "HiperDEX",
+        "momic": "MOMIC",
+        "jcomic": "JComic",
+        "fuman": "腐漫",
+        "pipigou_bika": "哔咔庇护所",
+        "cl1024_pic": "1024图区"
+    ]
+
+    public static func isBuiltinRetired(_ sourceId: String?) -> Bool {
+        guard let sourceId, !sourceId.isEmpty else { return false }
+        return builtinRetiredSources[sourceId] != nil
+    }
+
+    public static func builtinRetiredName(for sourceId: String?) -> String? {
+        guard let sourceId, !sourceId.isEmpty else { return nil }
+        return builtinRetiredSources[sourceId]
+    }
+
     public let id: String
     public let name: String
     public let referer = ""

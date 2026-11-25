@@ -22,6 +22,26 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
     var usesDiscoveryLayout: Bool { false }
     func bookshelfStatus(for comic: ComicSummary) -> BookshelfReadingStatus? { nil }
     private let emptyArtwork = UIImageView(image: UIImage(named: "rem_empty"))
+    private var needsCollectionRefresh = false
+    private var gridObservers: [NSObjectProtocol] = []
+    private static let retiredCoverPillTag = 99412
+
+    deinit {
+        for observer in gridObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
+    func markNeedsRefresh() {
+        needsCollectionRefresh = true
+    }
+
+    @discardableResult
+    func consumeNeedsRefresh() -> Bool {
+        let dirty = needsCollectionRefresh
+        needsCollectionRefresh = false
+        return dirty
+    }
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -73,38 +93,90 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
             statusButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16), statusButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             statusButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 36)
         ])
+        for name in [AppEnvironment.libraryChanged, AppEnvironment.blacklistChanged, AppEnvironment.sourcesChanged] {
+            let token = NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.markNeedsRefresh()
+                }
+            }
+            gridObservers.append(token)
+        }
     }
     @objc private func retryPressed() { retry?() }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         guard presentedViewController == nil else { return }
-        collection.visibleCells.forEach {
-            ($0 as? ComicCell)?.cover.cancel()
-            ($0 as? ComicListCell)?.cover.cancel()
+        if isMovingFromParent || isBeingDismissed || navigationController?.isBeingDismissed == true {
+            collection.visibleCells.forEach {
+                ($0 as? ComicCell)?.cover.cancel()
+                ($0 as? ComicListCell)?.cover.cancel()
+            }
         }
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        collection.reloadData()
+        if consumeNeedsRefresh() {
+            collection.reloadData()
+        } else {
+            updateVisibleCellBadgesAndLatest()
+        }
+    }
+    func updateVisibleCellBadgesAndLatest() {
+        for indexPath in collection.indexPathsForVisibleItems {
+            guard comics.indices.contains(indexPath.item) else { continue }
+            let comic = comics[indexPath.item]
+            let readingStatus = bookshelfStatus(for: comic)
+            let hasUpdate = environment.favoriteUpdateCoordinator.hasPendingUpdate(sourceId: comic.sourceId, comicId: comic.comicId)
+            let badgeText = readingStatus.map { BookshelfLayoutHelper.formatUnreadBadgeText(count: $0.unreadCount, hasUpdate: hasUpdate) }
+            let badgeColor = hasUpdate ? Palette.updateBlue : Palette.noUpdateGray
+            if let cell = collection.cellForItem(at: indexPath) as? ComicCell {
+                cell.updateBadgeAndLatest(badgeText: badgeText, badgeColor: badgeColor, latestChapter: readingStatus?.latestChapter)
+                cell.accessibilityValue = readingStatus.map { "未读 \($0.unreadCount < 0 ? "未知" : String($0.unreadCount)) · " + BookshelfLayoutHelper.formatOnlineLatestChapter($0.latestChapter) }
+                syncRetiredCoverPill(on: cell.cover, retired: environment.isRetiredSource(comic.sourceId))
+            }
+        }
+    }
+    private func syncRetiredCoverPill(on coverView: UIView, retired: Bool) {
+        let existing = coverView.viewWithTag(Self.retiredCoverPillTag)
+        if retired {
+            if let existing {
+                existing.isHidden = false
+            } else {
+                let pill = RetiredSourceBadgeView.createCoverPill()
+                pill.tag = Self.retiredCoverPillTag
+                pill.translatesAutoresizingMaskIntoConstraints = false
+                coverView.addSubview(pill)
+                NSLayoutConstraint.activate([
+                    pill.topAnchor.constraint(equalTo: coverView.topAnchor, constant: 6),
+                    pill.leadingAnchor.constraint(equalTo: coverView.leadingAnchor, constant: 6)
+                ])
+            }
+        } else {
+            existing?.isHidden = true
+        }
     }
     func status(_ text: String, retry: (() -> Void)? = nil) {
         statusButton.setTitle(text, for: .normal); self.retry = retry
         emptyArtwork.isHidden = !comics.isEmpty
         emptyArtwork.image = UIImage(named: retry != nil ? "rem_error" : (text.contains("正在") ? "rem_loading" : "rem_empty"))
     }
+    func numberOfSections(in collectionView: UICollectionView) -> Int { 1 }
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int { comics.count }
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let comic = comics[indexPath.item]
         let readingStatus = bookshelfStatus(for: comic)
         let hasUpdate = environment.favoriteUpdateCoordinator.hasPendingUpdate(sourceId: comic.sourceId, comicId: comic.comicId)
-        let badgeText = readingStatus.map { BookshelfLayoutHelper.formatUnreadBadgeText(count: $0.unreadCount) }
+        let badgeText = readingStatus.map { BookshelfLayoutHelper.formatUnreadBadgeText(count: $0.unreadCount, hasUpdate: hasUpdate) }
         let badgeColor = hasUpdate ? Palette.updateBlue : Palette.noUpdateGray
         let source = environment.source(for: comic)
+        let isRetired = environment.isRetiredSource(comic.sourceId)
 
         if isListLayout {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "comic_list", for: indexPath) as! ComicListCell
+            let baseSubtitle = readingStatus == nil ? nil : source?.name
+            let subtitleText = isRetired ? [baseSubtitle, RetiredSourceBadgeView.badgeText].compactMap { $0 }.joined(separator: " · ") : baseSubtitle
             cell.configure(comic, referer: source?.referer ?? "", library: environment.localLibrary,
-                           subtitle: readingStatus == nil ? nil : source?.name,
+                           subtitle: subtitleText,
                            detail: readingStatus.map { BookshelfLayoutHelper.formatOnlineLatestChapter($0.latestChapter) + "\n阅读至 " + $0.readingDescription },
                            badgeText: badgeText, badgeColor: badgeColor, largeCover: usesBookshelfLayout)
             cell.accessibilityValue = readingStatus.map { "未读 \($0.unreadCount < 0 ? "未知" : String($0.unreadCount)) · " + BookshelfLayoutHelper.formatOnlineLatestChapter($0.latestChapter) }
@@ -115,6 +187,7 @@ class ComicGridViewController: UIViewController, UICollectionViewDataSource, UIC
                            badgeText: badgeText, badgeColor: badgeColor,
                            sourceName: usesBookshelfLayout ? source?.name : nil, latestChapter: readingStatus?.latestChapter)
             cell.setDiscoveryStyle(usesDiscoveryLayout)
+            syncRetiredCoverPill(on: cell.cover, retired: isRetired)
             cell.accessibilityValue = readingStatus.map { "未读 \($0.unreadCount < 0 ? "未知" : String($0.unreadCount)) · " + BookshelfLayoutHelper.formatOnlineLatestChapter($0.latestChapter) }
             return cell
         }
@@ -194,12 +267,36 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     private var refreshTask: Task<Void, Never>?
     private var refreshID = UUID()
     private var renderedContext: String?
+    private var needsBookshelfRefresh = true
+    private struct HistoryRowModel: Equatable {
+        let entry: LibraryEntry
+        let comic: ComicSummary
+        let isRetired: Bool
+        let progressText: String
+        let relativeTimeText: String
+    }
+    private struct HistorySectionModel: Equatable {
+        let title: String
+        let rows: [HistoryRowModel]
+    }
+    private var historySections: [HistorySectionModel] = []
     private var context: String { "\(historyOnly)-\(currentScope.rawValue)-\(currentGroupId)" }
     override var usesBookshelfLayout: Bool { !historyOnly }
+    override func markNeedsRefresh() {
+        super.markNeedsRefresh()
+        needsBookshelfRefresh = true
+    }
     override func bookshelfStatus(for comic: ComicSummary) -> BookshelfReadingStatus? {
         guard !historyOnly, !localMode else { return nil }
         let state = environment.favoriteUpdateCoordinator.state(sourceId: comic.sourceId, comicId: comic.comicId)
-        return BookshelfReadingStatus(comic: comic, reading: environment.library.entry(for: comic)?.reading, revision: state?.observedRevision)
+        let detail = environment.cachedDetail(sourceId: comic.sourceId, comicId: comic.comicId)
+        return BookshelfReadingStatus(
+            comic: comic,
+            reading: environment.library.entry(for: comic)?.reading,
+            revision: state?.observedRevision,
+            detail: detail,
+            pendingUpdate: state?.pendingUpdate ?? false
+        )
     }
     private enum ImportKind: Sendable { case images, folder, archive, epub, pdf, kindle }
     private enum ImportPickerIntent { case single(ImportKind), batch, resume(String) }
@@ -220,14 +317,18 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = historyOnly ? "阅读历史" : "书架"
         if !historyOnly {
+            title = "书架"
             environment.favoriteUpdateCoordinator.onRevisionObserved = { [weak self] _, _ in
                 Task { @MainActor [weak self] in
                     guard let self, self.viewIfLoaded?.window != nil else { return }
-                    let anchor = self.captureAnchor()
-                    self.collection.reloadData()
-                    self.restoreAnchor(anchor)
+                    if self.isListLayout {
+                        let anchor = self.captureAnchor()
+                        self.collection.reloadData()
+                        self.restoreAnchor(anchor)
+                    } else {
+                        self.updateVisibleCellBadgesAndLatest()
+                    }
                 }
             }
             let layoutImg = (isListLayout ? ParityIcon.layoutGrid : .layoutList).image(size: 16)
@@ -293,7 +394,21 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             // An empty stack has no intrinsic height. Keep it from consuming
             // the history grid's space when this page has no bookshelf header.
             header.heightAnchor.constraint(equalToConstant: 0).isActive = true
-            navigationItem.rightBarButtonItem = UIBarButtonItem(title: "清空", style: .plain, target: self, action: #selector(clearHistoryTapped))
+            SecondaryHeaderBar.apply(to: self, title: "阅读历史")
+            if let layout = collection.collectionViewLayout as? UICollectionViewFlowLayout {
+                layout.minimumLineSpacing = 0
+                layout.minimumInteritemSpacing = 0
+                layout.sectionInset = UIEdgeInsets(top: 6, left: 16, bottom: 16, right: 16)
+            }
+            collection.register(HistoryRowCell.self, forCellWithReuseIdentifier: "history_row")
+            collection.register(HistorySectionHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "history_header")
+            collection.register(HistoryFooterView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: "history_footer")
+            navigationItem.rightBarButtonItem = SecondaryHeaderBar.textButton(
+                title: "清空",
+                accessibilityIdentifier: "history.clear",
+                target: self,
+                action: #selector(clearHistoryTapped)
+            )
         }
     }
 
@@ -369,7 +484,20 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
     }
     override func viewWillAppear(_ animated: Bool) {
         navigationController?.setNavigationBarHidden(!historyOnly, animated: animated)
-        super.viewWillAppear(animated); refresh()
+        let wasDirty = needsBookshelfRefresh
+        super.viewWillAppear(animated)
+        if historyOnly {
+            SecondaryHeaderBar.configureNavigationBarAppearance(for: navigationController)
+        }
+        let expectedList = !BookshelfLayoutHelper.isGridMode(defaults: environment.defaults, scope: currentScope)
+        if wasDirty || renderedContext != context || (!historyOnly && isListLayout != expectedList) || comics.isEmpty {
+            refresh()
+        } else {
+            updateVisibleCellBadgesAndLatest()
+            if !historyOnly {
+                environment.favoriteUpdateChecker.startAutoCheck()
+            }
+        }
     }
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
@@ -435,6 +563,8 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         }
     }
     private func refresh() {
+        needsBookshelfRefresh = false
+        _ = consumeNeedsRefresh()
         refreshID = UUID(); refreshTask?.cancel(); refreshTask = nil
         let token = refreshID
         isListLayout = !BookshelfLayoutHelper.isGridMode(defaults: environment.defaults, scope: currentScope)
@@ -464,7 +594,8 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         if localMode {
             configureResume(nil)
             let local = environment.localLibrary, downloads = environment.downloadStore
-            let readTimes = Dictionary(grouping: environment.library.history, by: { $0.summary.sourceId }).mapValues { entries in
+            let visibleHistoryEntries = environment.visibleHistory()
+            let readTimes = Dictionary(grouping: visibleHistoryEntries, by: { $0.summary.sourceId }).mapValues { entries in
                 Dictionary(uniqueKeysWithValues: entries.map { ($0.summary.comicId, $0.reading?.updatedAt ?? 0) })
             }
             let members = currentGroupId == BookshelfGroupStore.builtinLocalAllId ? nil : environment.bookshelfGroupStore.getMembers(groupId: currentGroupId)
@@ -499,19 +630,25 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                     let list = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
                     guard self.refreshID == token, self.context == currentContext, !Task.isCancelled else { return }
                     let owned = list.filter { comic in
+                        if self.environment.blacklistStore.isBlacklistedTitle(comic.title) { return false }
                         if comic.sourceId == "local" { return !self.environment.localDeletion.containsLocalSeries(comic.comicId) }
                         guard let id = try? DownloadModels.bookId(source: comic.sourceId, comic: comic.comicId) else { return true }
                         return !self.environment.localDeletion.containsDownloadBook(id)
                     }
                     let identities = Dictionary(grouping: owned, by: \.sourceId).mapValues { Set($0.map(\.comicId)) }
-                    let recent = self.environment.library.history.first { entry in
+                    let recent = self.environment.visibleHistory().first { entry in
                         identities[entry.summary.sourceId]?.contains(entry.summary.comicId) == true
                     }
                     self.configureResume(recent)
-                    self.comics = members.map { ids in owned.filter { ids.contains($0.comicId) } } ?? owned
-                    self.renderedContext = currentContext
-                    self.collection.reloadData()
-                    self.restoreAnchor(anchor)
+                    let nextLocalComics = members.map { ids in owned.filter { ids.contains($0.comicId) } } ?? owned
+                    if self.renderedContext == currentContext && self.comics == nextLocalComics && !self.isListLayout {
+                        self.updateVisibleCellBadgesAndLatest()
+                    } else {
+                        self.comics = nextLocalComics
+                        self.renderedContext = currentContext
+                        self.collection.reloadData()
+                        self.restoreAnchor(anchor)
+                    }
                     self.status(self.importFeedback ?? (self.comics.isEmpty ? "本地书架空空的，点击导入添加图片、文件夹、ZIP/CBZ、EPUB、PDF 或 Kindle" : ""))
                 } catch {
                     guard self.refreshID == token, !Task.isCancelled else { return }
@@ -520,30 +657,53 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             }
             return
         }
-        var list = (historyOnly ? environment.library.history : environment.library.favorites).map(\.summary)
-        #if DEBUG
-        if historyOnly, ProcessInfo.processInfo.arguments.contains("--ui-testing") { print("HISTORY_UI count=\(list.count) titles=\(list.map(\.title))") }
-        #endif
-        if !historyOnly && currentGroupId != BookshelfGroupStore.builtinOnlineAllId {
+
+        if historyOnly {
+            let entries = environment.visibleHistory()
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing") {
+                print("HISTORY_UI count=\(entries.count) titles=\(entries.map(\.summary.title))")
+            }
+            #endif
+            historySections = buildHistorySections(from: entries)
+            comics = entries.map(\.summary)
+            renderedContext = currentContext
+            SecondaryHeaderBar.updateMeta(entries.isEmpty ? nil : "\(entries.count) 条", on: self)
+            SecondaryHeaderBar.updateTextButton(navigationItem.rightBarButtonItem, title: "清空", isHidden: entries.isEmpty)
+            collection.reloadData()
+            status(comics.isEmpty ? "还没有阅读记录" : "")
+            configureResume(nil)
+            return
+        }
+
+        var list = environment.visibleFavorites().map(\.summary)
+        if currentGroupId != BookshelfGroupStore.builtinOnlineAllId {
             let members = environment.bookshelfGroupStore.getMembers(groupId: currentGroupId)
             list = list.filter { members.contains($0.comicId) }
         }
-        comics = list
-        renderedContext = currentContext
-        collection.reloadData()
-        restoreAnchor(anchor)
-        status(comics.isEmpty ? (historyOnly ? "还没有阅读记录" : "书架空空的，去发现页找漫画吧") : "")
-        let recent = environment.library.history.first { $0.summary.sourceId != "local" }
+        let recent = environment.visibleHistory().first { $0.summary.sourceId != "local" }
         configureResume(recent)
-        if !historyOnly {
-            environment.favoriteUpdateChecker.startAutoCheck()
+        if renderedContext == currentContext && comics == list && !isListLayout {
+            updateVisibleCellBadgesAndLatest()
+        } else {
+            comics = list
+            renderedContext = currentContext
+            collection.reloadData()
+            restoreAnchor(anchor)
         }
+        status(comics.isEmpty ? "书架空空的，去发现页找漫画吧" : "")
+        environment.favoriteUpdateChecker.startAutoCheck()
     }
     private func configureResume(_ entry: LibraryEntry?) {
         resumeEntry = historyOnly ? nil : entry
         resumeSection.isHidden = resumeEntry == nil
         if let entry = resumeEntry {
-            resume.configure(comic: entry.summary, chapterIndex: entry.reading?.chapterIndex ?? 0, environment: environment)
+            resume.configure(
+                comic: entry.summary,
+                chapterIndex: entry.reading?.chapterIndex ?? 0,
+                chapterTitle: entry.reading?.chapter.title,
+                environment: environment
+            )
         }
     }
     @objc private func showHistory() {
@@ -851,17 +1011,225 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             }
         }
     }
-    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        let comic = comics[indexPath.item]
-        if historyOnly {
-            return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
-                let deleteAction = UIAction(title: "删除此条历史", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
-                    guard let self else { return }
-                    self.deleteHistoryConfirmed(comic)
-                }
-                return UIMenu(children: [deleteAction])
+    private func removeHistory(for comic: ComicSummary) {
+        let title = comic.title.isEmpty ? "这条记录" : comic.title
+        let alert = UIAlertController(
+            title: "删除这条记录？",
+            message: "只移除《\(title)》的阅读位置，书架收藏保持不变。",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "删除", style: .destructive) { [weak self] _ in
+            self?.deleteHistoryConfirmed(comic)
+        })
+        present(alert, animated: true)
+    }
+
+    private func buildHistorySections(from entries: [LibraryEntry]) -> [HistorySectionModel] {
+        guard !entries.isEmpty else { return [] }
+        let calendar = Calendar.current
+        var todayRows: [HistoryRowModel] = []
+        var yesterdayRows: [HistoryRowModel] = []
+        var earlierRows: [HistoryRowModel] = []
+        let now = Date()
+
+        for entry in entries {
+            let comic = entry.summary
+            let timestamp = entry.reading?.updatedAt ?? entry.sortTime
+            let date = Date(timeIntervalSince1970: timestamp)
+            let chapterTitle = entry.reading?.chapter.title.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let progressText: String
+            if !chapterTitle.isEmpty {
+                progressText = HistoryProgressLabel.label(savedIndex: 0, titles: [chapterTitle])
+            } else {
+                progressText = HistoryProgressLabel.label(savedIndex: entry.reading?.chapterIndex ?? -1, titles: [])
+            }
+            let row = HistoryRowModel(
+                entry: entry,
+                comic: comic,
+                isRetired: environment.isRetiredSource(comic.sourceId),
+                progressText: progressText,
+                relativeTimeText: Self.formatRelativeHistoryTime(date, now: now)
+            )
+            if calendar.isDateInToday(date) {
+                todayRows.append(row)
+            } else if calendar.isDateInYesterday(date) {
+                yesterdayRows.append(row)
+            } else {
+                earlierRows.append(row)
             }
         }
+
+        var sections: [HistorySectionModel] = []
+        if !todayRows.isEmpty { sections.append(HistorySectionModel(title: "今天", rows: todayRows)) }
+        if !yesterdayRows.isEmpty { sections.append(HistorySectionModel(title: "昨天", rows: yesterdayRows)) }
+        if !earlierRows.isEmpty { sections.append(HistorySectionModel(title: "更早", rows: earlierRows)) }
+        return sections
+    }
+
+    private static func formatRelativeHistoryTime(_ date: Date, now: Date) -> String {
+        let elapsed = max(0, now.timeIntervalSince(date))
+        if elapsed < 60 { return "刚刚" }
+        if elapsed < 3600 { return "\(Int(elapsed / 60)) 分钟前" }
+        if elapsed < 86400 { return "\(Int(elapsed / 3600)) 小时前" }
+        if elapsed < 7 * 86400 { return "\(Int(elapsed / 86400)) 天前" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM-dd"
+        return formatter.string(from: date)
+    }
+
+    override func numberOfSections(in collectionView: UICollectionView) -> Int {
+        historyOnly ? historySections.count : 1
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        historyOnly ? historySections[section].rows.count : super.collectionView(collectionView, numberOfItemsInSection: section)
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard historyOnly else {
+            return super.collectionView(collectionView, cellForItemAt: indexPath)
+        }
+        let section = historySections[indexPath.section]
+        let row = section.rows[indexPath.item]
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "history_row", for: indexPath) as! HistoryRowCell
+        let source = environment.source(for: row.comic)
+        cell.configure(
+            comic: row.comic,
+            referer: source?.referer ?? "",
+            library: environment.localLibrary,
+            subtitle: "\(row.progressText) · \(row.relativeTimeText)",
+            isRetired: row.isRetired,
+            isFirst: indexPath.item == 0,
+            isLast: indexPath.item == section.rows.count - 1
+        ) { [weak self] in
+            self?.removeHistory(for: row.comic)
+        }
+        return cell
+    }
+
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+        if kind == UICollectionView.elementKindSectionHeader {
+            let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "history_header", for: indexPath) as! HistorySectionHeaderView
+            headerView.configure(title: historySections[indexPath.section].title)
+            return headerView
+        }
+        let footerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "history_footer", for: indexPath) as! HistoryFooterView
+        return footerView
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+        guard historyOnly else { return .zero }
+        return CGSize(width: collectionView.bounds.width, height: 32)
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
+        guard historyOnly, section == historySections.count - 1 else { return .zero }
+        return CGSize(width: collectionView.bounds.width, height: 42)
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        guard historyOnly else {
+            return super.collectionView(collectionView, layout: collectionViewLayout, sizeForItemAt: indexPath)
+        }
+        let flow = collectionViewLayout as? UICollectionViewFlowLayout
+        let horizontalInsets = flow.map { $0.sectionInset.left + $0.sectionInset.right } ?? 32
+        let viewportInsets = collectionView.adjustedContentInset
+        let width = max(0, collectionView.bounds.width - viewportInsets.left - viewportInsets.right - horizontalInsets)
+        return CGSize(width: width, height: 60)
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        if historyOnly {
+            let row = historySections[indexPath.section].rows[indexPath.item]
+            open(row.comic)
+            return
+        }
+        super.collectionView(collectionView, didSelectItemAt: indexPath)
+    }
+
+    private func presentQuickActionSheet(for comic: ComicSummary) {
+        let source = environment.source(for: comic)
+        let sourceName = source?.name ?? comic.sourceId
+        let isFav = environment.library.entry(for: comic)?.isFavorite == true
+        let allowRemove = !historyOnly && !localMode
+        let sheet = ComicQuickActionSheetController(
+            comic: comic,
+            sourceName: sourceName,
+            referer: source?.referer ?? "",
+            library: environment.localLibrary,
+            isFavorite: isFav,
+            showNotInterested: false,
+            allowRemoveFromShelf: allowRemove,
+            onToggleFavorite: { [weak self] in
+                guard let self else { return }
+                do {
+                    if isFav {
+                        let snapshot = try self.environment.removeFavoriteWithSnapshot(comic)
+                        self.refresh()
+                        RemToastView.show(message: "已移出《\(comic.title)》", kind: .empty, actionTitle: "撤销", in: self) { [weak self] in
+                            try? self?.environment.restoreFavorite(snapshot)
+                            self?.refresh()
+                        }
+                    } else {
+                        try self.environment.setFavorite(comic, favorite: true)
+                        self.refresh()
+                        RemToastView.show(message: "已加入书架", kind: .success, in: self)
+                    }
+                } catch { self.showError(error) }
+            },
+            onSwitchSource: { [weak self] in
+                guard let self else { return }
+                let switchSheet = SourceSwitchSheet(environment: self.environment, originalComic: comic)
+                switchSheet.onSourceReplaced = { [weak self] _ in self?.refresh() }
+                switchSheet.onUndoSourceReplaced = { [weak self] _ in self?.refresh() }
+                self.present(UINavigationController(rootViewController: switchSheet), animated: true)
+            },
+            onBlacklist: { [weak self] in
+                guard let self else { return }
+                BlacklistConfirmHelper.presentAndAdd(
+                    from: self,
+                    environment: self.environment,
+                    comic: comic,
+                    sourceName: sourceName
+                ) { [weak self] in
+                    self?.refresh()
+                }
+            },
+            onRemoveFromShelf: allowRemove ? { [weak self] in
+                guard let self else { return }
+                do {
+                    let snapshot = try self.environment.removeFavoriteWithSnapshot(comic)
+                    self.refresh()
+                    RemToastView.show(message: "已移出《\(comic.title)》", kind: .empty, actionTitle: "撤销", in: self) { [weak self] in
+                        try? self?.environment.restoreFavorite(snapshot)
+                        self?.refresh()
+                    }
+                } catch { self.showError(error) }
+            } : nil
+        )
+        present(sheet, animated: true)
+    }
+
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        if historyOnly {
+            let comic = historySections[indexPath.section].rows[indexPath.item].comic
+            let sourceName = environment.source(for: comic)?.name ?? comic.sourceId
+            return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+                let deleteAction = UIAction(title: "删除此条历史", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+                    self?.deleteHistoryConfirmed(comic)
+                }
+                let blacklistAction = UIAction(title: "拉黑", image: ParityIcon.blacklist.image(size: 18), attributes: .destructive) { [weak self] _ in
+                    guard let self else { return }
+                    BlacklistConfirmHelper.presentAndAdd(from: self, environment: self.environment, comic: comic, sourceName: sourceName) { [weak self] in
+                        self?.refresh()
+                    }
+                }
+                return UIMenu(children: [deleteAction, blacklistAction])
+            }
+        }
+        let comic = comics[indexPath.item]
+        let sourceName = environment.source(for: comic)?.name ?? comic.sourceId
         if localMode {
             return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
                 guard let self else { return nil }
@@ -904,6 +1272,15 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                     })
                     self.present(alert, animated: true)
                 }
+                let quickAction = UIAction(title: "快捷操作", image: ParityIcon.moreDots.image(size: 18)) { [weak self] _ in
+                    self?.presentQuickActionSheet(for: comic)
+                }
+                let blacklistAction = UIAction(title: "拉黑", image: ParityIcon.blacklist.image(size: 18), attributes: .destructive) { [weak self] _ in
+                    guard let self else { return }
+                    BlacklistConfirmHelper.presentAndAdd(from: self, environment: self.environment, comic: comic, sourceName: sourceName) { [weak self] in
+                        self?.refresh()
+                    }
+                }
                 let isDownload = comic.sourceId != "local" || (try? DownloadModels.bookId(source: comic.sourceId, comic: comic.comicId)).flatMap { self.environment.downloadStore.snapshot(id: $0) } != nil
                 let deleteTitle = isDownload ? "删除离线漫画" : "删除本地漫画"
                 let deleteMessage = isDownload
@@ -939,7 +1316,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                     }
                     self.present(alert, animated: true)
                 }
-                return UIMenu(children: [moveAction, manageAction, renameAction, deleteAction])
+                return UIMenu(children: [moveAction, manageAction, renameAction, quickAction, blacklistAction, deleteAction])
             }
         }
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
@@ -961,6 +1338,15 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             }
             let downloadAction = UIAction(title: "下载", image: UIImage(systemName: "arrow.down.circle")) { [weak self] _ in
                 self?.openDownloadSelection(comic)
+            }
+            let quickAction = UIAction(title: "快捷操作", image: ParityIcon.moreDots.image(size: 18)) { [weak self] _ in
+                self?.presentQuickActionSheet(for: comic)
+            }
+            let blacklistAction = UIAction(title: "拉黑", image: ParityIcon.blacklist.image(size: 18), attributes: .destructive) { [weak self] _ in
+                guard let self else { return }
+                BlacklistConfirmHelper.presentAndAdd(from: self, environment: self.environment, comic: comic, sourceName: sourceName) { [weak self] in
+                    self?.refresh()
+                }
             }
             let deleteAction = UIAction(title: "移出收藏", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
                 guard let self else { return }
@@ -986,7 +1372,188 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
                     )
                 } catch { self.showError(error) }
             }
-            return UIMenu(children: [moveAction, switchSourceAction, downloadAction, deleteAction])
+            return UIMenu(children: [moveAction, switchSourceAction, downloadAction, quickAction, blacklistAction, deleteAction])
         }
     }
+}
+
+@MainActor
+private final class HistoryRowCell: UICollectionViewCell {
+    private let coverView = RemoteImageView()
+    private let titleLabel = UILabel()
+    private let retiredPillHost = UIStackView()
+    private let retiredPill = RetiredSourceBadgeView.createInlinePill()
+    private let subtitleLabel = UILabel()
+    private let deleteButton = UIButton(type: .system)
+    private let divider = UIView()
+    private var onDelete: (() -> Void)?
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = Palette.card
+        contentView.backgroundColor = Palette.card
+        layer.borderWidth = 1 / UIScreen.main.scale
+        layer.borderColor = Palette.borderSoft.cgColor
+        clipsToBounds = true
+
+        coverView.contentMode = .scaleAspectFill
+        coverView.clipsToBounds = true
+        coverView.layer.cornerRadius = 4
+        coverView.layer.borderWidth = 1 / UIScreen.main.scale
+        coverView.layer.borderColor = Palette.borderSoft.cgColor
+        coverView.translatesAutoresizingMaskIntoConstraints = false
+
+        titleLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        titleLabel.textColor = Palette.text
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        retiredPill.setContentCompressionResistancePriority(.required, for: .horizontal)
+        retiredPill.setContentHuggingPriority(.required, for: .horizontal)
+        retiredPill.isHidden = true
+
+        retiredPillHost.axis = .horizontal
+        retiredPillHost.alignment = .center
+        retiredPillHost.spacing = 6
+        retiredPillHost.addArrangedSubview(titleLabel)
+        retiredPillHost.addArrangedSubview(retiredPill)
+
+        subtitleLabel.font = .systemFont(ofSize: 11)
+        subtitleLabel.textColor = Palette.text3
+        subtitleLabel.lineBreakMode = .byTruncatingTail
+
+        let textStack = UIStackView(arrangedSubviews: [retiredPillHost, subtitleLabel])
+        textStack.axis = .vertical
+        textStack.spacing = 3
+        textStack.translatesAutoresizingMaskIntoConstraints = false
+
+        deleteButton.setImage(ParityIcon.trash.image(size: 18), for: .normal)
+        deleteButton.tintColor = Palette.text3
+        deleteButton.accessibilityLabel = "删除记录"
+        deleteButton.accessibilityIdentifier = "history.row.delete"
+        deleteButton.translatesAutoresizingMaskIntoConstraints = false
+        deleteButton.addTarget(self, action: #selector(deleteTapped), for: .touchUpInside)
+
+        divider.backgroundColor = Palette.borderSoft
+        divider.translatesAutoresizingMaskIntoConstraints = false
+
+        contentView.addSubview(coverView)
+        contentView.addSubview(textStack)
+        contentView.addSubview(deleteButton)
+        contentView.addSubview(divider)
+
+        NSLayoutConstraint.activate([
+            coverView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),
+            coverView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            coverView.widthAnchor.constraint(equalToConstant: 34),
+            coverView.heightAnchor.constraint(equalToConstant: 46),
+
+            textStack.leadingAnchor.constraint(equalTo: coverView.trailingAnchor, constant: 10),
+            textStack.trailingAnchor.constraint(lessThanOrEqualTo: deleteButton.leadingAnchor, constant: -6),
+            textStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+
+            deleteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
+            deleteButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            deleteButton.widthAnchor.constraint(equalToConstant: 44),
+            deleteButton.heightAnchor.constraint(equalToConstant: 44),
+
+            divider.topAnchor.constraint(equalTo: contentView.topAnchor),
+            divider.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),
+            divider.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
+            divider.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale)
+        ])
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:)") }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        layer.borderColor = Palette.borderSoft.resolvedColor(with: traitCollection).cgColor
+        coverView.layer.borderColor = Palette.borderSoft.resolvedColor(with: traitCollection).cgColor
+    }
+
+    func configure(
+        comic: ComicSummary,
+        referer: String,
+        library: LocalLibrary,
+        subtitle: String,
+        isRetired: Bool,
+        isFirst: Bool,
+        isLast: Bool,
+        onDelete: @escaping () -> Void
+    ) {
+        self.onDelete = onDelete
+        titleLabel.text = comic.title
+        accessibilityIdentifier = comic.title
+        accessibilityLabel = comic.title
+        accessibilityValue = subtitle
+        subtitleLabel.text = subtitle
+        retiredPill.isHidden = !isRetired
+        divider.isHidden = isFirst
+        coverView.loadCover(comic, referer: referer, library: library)
+
+        var corners: CACornerMask = []
+        if isFirst { corners.formUnion([.layerMinXMinYCorner, .layerMaxXMinYCorner]) }
+        if isLast { corners.formUnion([.layerMinXMaxYCorner, .layerMaxXMaxYCorner]) }
+        layer.cornerRadius = corners.isEmpty ? 0 : 8
+        layer.maskedCorners = corners
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        coverView.cancel()
+        coverView.image = nil
+        retiredPill.isHidden = true
+        onDelete = nil
+    }
+
+    @objc private func deleteTapped() {
+        onDelete?()
+    }
+}
+
+@MainActor
+private final class HistorySectionHeaderView: UICollectionReusableView {
+    private let label = UILabel()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        label.font = .systemFont(ofSize: 13, weight: .bold)
+        label.textColor = Palette.text2
+        label.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(label)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 18),
+            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -18),
+            label.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4)
+        ])
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:)") }
+
+    func configure(title: String) {
+        label.text = title
+    }
+}
+
+@MainActor
+private final class HistoryFooterView: UICollectionReusableView {
+    private let label = UILabel()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        label.text = "删除记录不会移除书架收藏，也不会清理漫画缓存。"
+        label.font = .systemFont(ofSize: 11)
+        label.textColor = Palette.text3
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(label)
+        NSLayoutConstraint.activate([
+            label.topAnchor.constraint(equalTo: topAnchor, constant: 10),
+            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 18),
+            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -18)
+        ])
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:)") }
 }

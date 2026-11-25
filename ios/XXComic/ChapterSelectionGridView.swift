@@ -243,7 +243,7 @@ public final class ChapterSelectionGridView: UIView, UICollectionViewDataSource,
         guard width > 0 else { return }
 
         let gap: CGFloat = 6
-        let cellBaseWidth: CGFloat = isCompact ? 64 : 84
+        let cellBaseWidth: CGFloat = isCompact ? 74 : 84
         let scale = max(1.0, traitCollection.preferredContentSizeCategory.isAccessibilityCategory ? 1.2 : 1.0)
         let scaledWidth = round(cellBaseWidth * scale)
         let availableWidth = width - layout.sectionInset.left - layout.sectionInset.right
@@ -251,7 +251,7 @@ public final class ChapterSelectionGridView: UIView, UICollectionViewDataSource,
         let columns = max(2, Int((availableWidth + gap) / (scaledWidth + gap)))
         let totalGaps = CGFloat(columns - 1) * gap
         let itemWidth = floor((availableWidth - totalGaps) / CGFloat(columns))
-        let itemHeight: CGFloat = isCompact ? 48 : 64
+        let itemHeight: CGFloat = isCompact ? 52 : 64
 
         let newSize = CGSize(width: itemWidth, height: itemHeight)
         if layout.itemSize != newSize {
@@ -665,17 +665,32 @@ final class ChapterSelectionCell: UICollectionViewCell {
         accessibilityIdentifier = "chapter:\(item.id)"
         boxView.tag = item.id.hashValue
 
+        let trimmedSub = item.subtitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let showSub = !trimmedSub.isEmpty
+
         titleLabel.text = item.title
         titleLabel.font = .systemFont(ofSize: isCompact ? 12 : 13, weight: isSelected ? .bold : .regular)
-        titleLabel.numberOfLines = isCompact ? 1 : 2
+        titleLabel.numberOfLines = isCompact ? (showSub ? 1 : 2) : 2
 
-        subtitleLabel.text = item.subtitle
-        subtitleLabel.isHidden = isCompact || item.subtitle.isEmpty
+        subtitleLabel.text = showSub ? trimmedSub : nil
+        subtitleLabel.font = .systemFont(ofSize: isCompact ? 10 : 11)
+        subtitleLabel.isHidden = !showSub
 
         let enabled = isInteractive && (item.selectable || item.open != nil)
         isUserInteractionEnabled = enabled
 
-        badgeLabel.isHidden = !item.isDownloaded
+        badgeLabel.isHidden = !item.isDownloaded || showSub
+
+        let subtitleToneColor: UIColor
+        if trimmedSub.contains("失败") || trimmedSub.contains("可重试") {
+            subtitleToneColor = Palette.danger
+        } else if trimmedSub.contains("下载中") || trimmedSub.contains("排队") || trimmedSub.contains("读取")
+            || trimmedSub.contains("获取") || trimmedSub.contains("校验")
+            || trimmedSub.contains("等待") || trimmedSub.contains("冷却") || trimmedSub.contains("删除中") {
+            subtitleToneColor = Palette.accentText
+        } else {
+            subtitleToneColor = Palette.text3
+        }
 
         if isSelected {
             boxView.backgroundColor = Palette.accent
@@ -688,13 +703,13 @@ final class ChapterSelectionCell: UICollectionViewCell {
             boxView.layer.borderColor = Palette.border.cgColor
             boxView.layer.borderWidth = 0.5
             titleLabel.textColor = Palette.text
-            subtitleLabel.textColor = Palette.text3
+            subtitleLabel.textColor = subtitleToneColor
         } else {
             boxView.backgroundColor = Palette.cardSoft
             boxView.layer.borderColor = Palette.borderSoft.cgColor
             boxView.layer.borderWidth = 0.5
             titleLabel.textColor = Palette.text3
-            subtitleLabel.textColor = Palette.text3
+            subtitleLabel.textColor = subtitleToneColor
         }
 
         let fullDesc = (item.fullTitle.isEmpty || item.fullTitle == item.title) ? "" : "，原名 \(item.fullTitle)"

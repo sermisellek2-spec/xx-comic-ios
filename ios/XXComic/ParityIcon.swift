@@ -3,28 +3,56 @@ import UIKit
 /// 24-point paths copied from the frozen Android drawable geometry.
 /// Template rendering lets the same glyph follow the application's theme tokens.
 enum ParityIcon {
-    case bookshelf, search, profile, source, history, download, trash, lightning, automatic, sun, moon, chapterList, detail, layoutList, layoutGrid, swap, readerStrip, readerPage, readerManga, back, chevronDown, settings, plus
+    case bookshelf, search, profile, source, history, download, trash, lightning, automatic, sun, moon
+    case chapterList, detail, layoutList, layoutGrid, swap, readerStrip, readerPage, readerManga
+    case back, chevronDown, settings, plus
+    case arrowUpTop, blacklist, eyeOff, share, sliders, moreDots, cloudOff, folder, check
+    case favorite, favoriteFill, refresh, chevronRight, close
+
+    private var strokeWidth: CGFloat {
+        switch self {
+        case .check: return 2.8
+        case .swap, .plus, .chevronDown, .arrowUpTop: return 2.0
+        case .share: return 1.9
+        case .download, .layoutList, .layoutGrid, .folder, .refresh: return 1.8
+        case .readerStrip, .readerPage, .readerManga: return 1.6
+        default: return 1.5
+        }
+    }
+
+    private var isFilled: Bool {
+        switch self {
+        case .moreDots, .favoriteFill: return true
+        default: return false
+        }
+    }
 
     func image(size: CGFloat = 24) -> UIImage {
         UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { context in
             context.cgContext.scaleBy(x: size / 24, y: size / 24)
             UIColor.black.setStroke()
+            UIColor.black.setFill()
             let path = UIBezierPath()
-            path.lineWidth = [.swap, .plus, .chevronDown].contains(self) ? 2 : ([.readerStrip, .readerPage, .readerManga].contains(self) ? 1.6 : ([.download, .layoutList, .layoutGrid].contains(self) ? 1.8 : 1.5))
-            path.lineCapStyle = .round; path.lineJoinStyle = .round
+            path.lineWidth = strokeWidth
+            path.lineCapStyle = .round
+            path.lineJoinStyle = .round
+
             func line(_ points: [(CGFloat, CGFloat)], closed: Bool = false) {
                 guard let first = points.first else { return }
                 path.move(to: CGPoint(x: first.0, y: first.1))
                 for point in points.dropFirst() { path.addLine(to: CGPoint(x: point.0, y: point.1)) }
                 if closed { path.close() }
             }
+
             func circle(_ x: CGFloat, _ y: CGFloat, _ radius: CGFloat) {
                 path.append(UIBezierPath(ovalIn: CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2)))
             }
+
             // Android's A commands here are circular arcs with no rotation.
             func arc(to end: CGPoint, radius: CGFloat, clockwise: Bool, largeArc: Bool = false) {
                 let start = path.currentPoint, dx = end.x - start.x, dy = end.y - start.y
                 let distance = hypot(dx, dy)
+                guard distance > 0 else { return }
                 let height = sqrt(max(0, radius * radius - distance * distance / 4))
                 for sign: CGFloat in [1, -1] {
                     let center = CGPoint(x: (start.x + end.x) / 2 - sign * dy * height / distance,
@@ -39,13 +67,74 @@ enum ParityIcon {
                     }
                 }
             }
+
+            func addHeartPath() {
+                path.move(to: CGPoint(x: 12, y: 21))
+                path.addCurve(to: CGPoint(x: 4, y: 9), controlPoint1: CGPoint(x: 12, y: 21), controlPoint2: CGPoint(x: 4, y: 15))
+                path.addCurve(to: CGPoint(x: 9, y: 4), controlPoint1: CGPoint(x: 4, y: 6), controlPoint2: CGPoint(x: 6, y: 4))
+                path.addCurve(to: CGPoint(x: 12, y: 7), controlPoint1: CGPoint(x: 10.5, y: 4), controlPoint2: CGPoint(x: 12, y: 5))
+                path.addCurve(to: CGPoint(x: 15, y: 4), controlPoint1: CGPoint(x: 12, y: 5), controlPoint2: CGPoint(x: 13.5, y: 4))
+                path.addCurve(to: CGPoint(x: 20, y: 9), controlPoint1: CGPoint(x: 18, y: 4), controlPoint2: CGPoint(x: 20, y: 6))
+                path.addCurve(to: CGPoint(x: 12, y: 21), controlPoint1: CGPoint(x: 20, y: 15), controlPoint2: CGPoint(x: 12, y: 21))
+                path.close()
+            }
+
             switch self {
             case .back:
                 path.move(to: CGPoint(x: 15, y: 4)); path.addLine(to: CGPoint(x: 8, y: 12)); path.addLine(to: CGPoint(x: 15, y: 20))
+            case .chevronRight:
+                line([(9, 4), (16, 12), (9, 20)])
             case .chevronDown:
                 line([(6, 9), (12, 15), (18, 9)])
             case .plus:
                 line([(12, 5), (12, 19)]); line([(5, 12), (19, 12)])
+            case .close:
+                line([(6, 6), (18, 18)]); line([(18, 6), (6, 18)])
+            case .check:
+                line([(5, 12.5), (9.5, 17), (19, 7.5)])
+            case .arrowUpTop:
+                line([(5, 5), (19, 5)]); line([(12, 9), (12, 19)]); line([(7, 14), (12, 9), (17, 14)])
+            case .blacklist:
+                circle(12, 12, 9); line([(5.64, 5.64), (18.36, 18.36)])
+            case .eyeOff:
+                path.move(to: CGPoint(x: 10.5, y: 5.1))
+                path.addCurve(to: CGPoint(x: 12, y: 5), controlPoint1: CGPoint(x: 11, y: 5), controlPoint2: CGPoint(x: 11.5, y: 5))
+                path.addCurve(to: CGPoint(x: 22, y: 12), controlPoint1: CGPoint(x: 16.5, y: 5), controlPoint2: CGPoint(x: 20.2, y: 7.9))
+                path.addCurve(to: CGPoint(x: 19.35, y: 15.85), controlPoint1: CGPoint(x: 21.35, y: 13.45), controlPoint2: CGPoint(x: 20.45, y: 14.75))
+                path.move(to: CGPoint(x: 17.3, y: 17.3))
+                path.addCurve(to: CGPoint(x: 12, y: 19), controlPoint1: CGPoint(x: 15.75, y: 18.4), controlPoint2: CGPoint(x: 13.95, y: 19))
+                path.addCurve(to: CGPoint(x: 2, y: 12), controlPoint1: CGPoint(x: 7.5, y: 19), controlPoint2: CGPoint(x: 3.8, y: 16.1))
+                path.addCurve(to: CGPoint(x: 5.8, y: 7.15), controlPoint1: CGPoint(x: 2.85, y: 10.05), controlPoint2: CGPoint(x: 4.2, y: 8.35))
+                path.move(to: CGPoint(x: 14.12, y: 14.12))
+                arc(to: CGPoint(x: 9.88, y: 9.88), radius: 3, clockwise: true)
+                line([(3, 3), (21, 21)])
+            case .share:
+                line([(14, 5), (20, 11), (14, 17)])
+                path.move(to: CGPoint(x: 20, y: 11)); path.addLine(to: CGPoint(x: 11.5, y: 11))
+                path.addCurve(to: CGPoint(x: 4, y: 18.5), controlPoint1: CGPoint(x: 7.36, y: 11), controlPoint2: CGPoint(x: 4, y: 14.36))
+                path.addLine(to: CGPoint(x: 4, y: 19))
+            case .sliders:
+                line([(4, 6), (6.5, 6)]); line([(10.5, 6), (20, 6)]); circle(8.5, 6, 2)
+                line([(4, 12), (13.5, 12)]); line([(17.5, 12), (20, 12)]); circle(15.5, 12, 2)
+                line([(4, 18), (8.5, 18)]); line([(12.5, 18), (20, 18)]); circle(10.5, 18, 2)
+            case .moreDots:
+                circle(6, 12, 2); circle(12, 12, 2); circle(18, 12, 2)
+            case .cloudOff:
+                path.move(to: CGPoint(x: 6, y: 18))
+                path.addLine(to: CGPoint(x: 16, y: 18))
+                arc(to: CGPoint(x: 16, y: 10), radius: 4, clockwise: false)
+                arc(to: CGPoint(x: 6, y: 12), radius: 6, clockwise: false)
+                arc(to: CGPoint(x: 6, y: 18), radius: 4, clockwise: false)
+                path.close()
+                line([(5, 5), (19, 19)])
+            case .folder:
+                line([(3, 6), (10, 6), (12, 8), (21, 8), (21, 20), (3, 20)], closed: true)
+            case .favorite, .favoriteFill:
+                addHeartPath()
+            case .refresh:
+                line([(20, 3), (20, 7), (16, 7)])
+                path.move(to: CGPoint(x: 20, y: 7))
+                arc(to: CGPoint(x: 20, y: 16), radius: 8, clockwise: false, largeArc: true)
             case .settings:
                 circle(12, 12, 3)
                 path.move(to: CGPoint(x: 19.4, y: 15))
@@ -144,7 +233,11 @@ enum ParityIcon {
                 arc(to: CGPoint(x: 11, y: 3), radius: 9, clockwise: true)
                 arc(to: CGPoint(x: 21, y: 13), radius: 7, clockwise: false); path.close()
             }
-            path.stroke()
+            if isFilled {
+                path.fill()
+            } else {
+                path.stroke()
+            }
         }.withRenderingMode(.alwaysTemplate)
     }
 }

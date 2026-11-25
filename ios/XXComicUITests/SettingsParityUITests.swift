@@ -50,7 +50,7 @@ final class SettingsParityUITests: ParityUITestCase {
         XCTAssertTrue(app.alerts["检查更新失败"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.alerts.buttons["查看发布页"].exists)
         app.alerts.buttons["重试"].tap()
-        let release = app.alerts["发现新版本 XX Comic 2.0.50"]
+        let release = app.alerts["发现新版本 XX Comic 2.0.57"]
         XCTAssertTrue(release.waitForExistence(timeout: 10))
         XCTAssertTrue(release.staticTexts.matching(NSPredicate(format: "label CONTAINS '验收新版本说明' AND label CONTAINS '下载 IPA' AND label CONTAINS '签名工具'")).firstMatch.exists)
         XCTAssertTrue(release.buttons["浏览器更新"].isHittable)
@@ -62,14 +62,14 @@ final class SettingsParityUITests: ParityUITestCase {
         var app = launch(["--matrix-update-fixture", "--matrix-update-current"])
         openItem("settings.update", app: app)
         XCTAssertTrue(app.alerts["已经是最新版本"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.alerts.staticTexts["XX Comic 2.0.49 (349)"].exists)
+        XCTAssertTrue(app.alerts.staticTexts["XX Comic 2.0.56 (356)"].exists)
         dismissAlert(app, button: "知道了"); app.terminate()
         app = launch(["--matrix-update-fixture", "--matrix-update-hold-once"])
         openItem("settings.update", app: app)
         XCTAssertTrue(app.alerts["检查更新中…"].waitForExistence(timeout: 5))
         dismissAlert(app, button: "取消")
         openItem("settings.update", app: app)
-        XCTAssertTrue(app.alerts["发现新版本 XX Comic 2.0.50"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.alerts["发现新版本 XX Comic 2.0.57"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.alerts["检查更新失败"].exists)
         dismissAlert(app, button: "稍后")
     }
@@ -90,16 +90,16 @@ final class SettingsParityUITests: ParityUITestCase {
         XCTAssertTrue(app.tables.cells["settings.statistics"].staticTexts["已开启"].exists)
     }
 
-    func testLaunchShelfPersistsAndAboutCountsOnlyTheCurrent51Sources() {
+    func testLaunchShelfPersistsAndAboutCountsOnlyTheCurrent61Sources() {
         let app = launch(["--matrix-catalog-fixtures"])
         openItem("settings.launch", app: app)
         app.tables.staticTexts["本地书架"].tap()
         app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(app.tables.cells["settings.launch"].staticTexts["本地书架"].exists)
         openItem("settings.about", app: app)
-        XCTAssertTrue(app.tables.staticTexts["2.0.49 (349)"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.tables.staticTexts["51 个"].exists)
-        XCTAssertFalse(app.tables.staticTexts["53 个"].exists)
+        XCTAssertTrue(app.tables.staticTexts["2.0.56 (356)"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tables.staticTexts["61 个"].exists)
+        XCTAssertFalse(app.tables.staticTexts["63 个"].exists)
         app.terminate(); app.launch()
         XCTAssertTrue(app.buttons["bookshelf.tab.1"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["bookshelf.tab.1"].isSelected)
@@ -125,7 +125,7 @@ final class SettingsParityUITests: ParityUITestCase {
 
     func testSettingsUsesCurrentAndroidSectionsAndThemeDrawer() {
         let app = launch()
-        XCTAssertEqual(app.tables.cells.count, 11)
+        XCTAssertEqual(app.tables.cells.count, 13)
         XCTAssertFalse(app.tables.staticTexts["阅读设置"].exists)
         app.tables.cells["settings.theme"].tap()
         XCTAssertTrue(app.buttons["theme.0"].waitForExistence(timeout: 5))

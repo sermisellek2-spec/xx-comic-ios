@@ -199,12 +199,18 @@ public enum SourceOrder {
 
 /// Value state owned by the UI actor; networking carries the returned generation.
 public struct GlobalSearchState: Sendable {
+    public static let allSourcesID = DiscoveryModels.globalAllSourcesId
+
     public private(set) var generation = UUID()
     public private(set) var query = ""
     public private(set) var sourceIDs: [String] = []
     public private(set) var selectedSourceID: String?
     public private(set) var results: [String: [ComicSummary]] = [:]
     public private(set) var exactSourceIDs = Set<String>()
+    public private(set) var completedSourceIDs = Set<String>()
+    public private(set) var failedSourceIDs = Set<String>()
+    public private(set) var verificationRequiredSourceIDs = Set<String>()
+    public private(set) var preferAllSources = false
     private var bestScores: [String: Int] = [:]
     private var manuallySelected = false
     private var selectedFirstResult = false
@@ -212,13 +218,23 @@ public struct GlobalSearchState: Sendable {
     public init() {}
 
     @discardableResult
-    public mutating func begin(query: String, sourceIDs: [String], restoringSelectedSourceID: String? = nil) -> UUID {
+    public mutating func begin(
+        query: String,
+        sourceIDs: [String],
+        restoringSelectedSourceID: String? = nil,
+        preferAllSources: Bool = false
+    ) -> UUID {
         self = GlobalSearchState()
         self.query = SearchRules.trim(query)
         self.sourceIDs = SourceOrder.normalize([], available: sourceIDs)
-        if let restoringSelectedSourceID, self.sourceIDs.contains(restoringSelectedSourceID) {
+        self.preferAllSources = preferAllSources
+        if let restoringSelectedSourceID,
+           !restoringSelectedSourceID.isEmpty,
+           self.sourceIDs.contains(restoringSelectedSourceID) {
             selectedSourceID = restoringSelectedSourceID
             manuallySelected = true
+        } else if preferAllSources {
+            selectedSourceID = Self.allSourcesID
         } else {
             selectedSourceID = self.sourceIDs.first
         }
@@ -226,6 +242,11 @@ public struct GlobalSearchState: Sendable {
     }
 
     public mutating func select(_ sourceID: String) {
+        if preferAllSources && sourceID == Self.allSourcesID {
+            selectedSourceID = Self.allSourcesID
+            manuallySelected = true
+            return
+        }
         guard sourceIDs.contains(sourceID) else { return }
         selectedSourceID = sourceID
         manuallySelected = true
@@ -237,19 +258,78 @@ public struct GlobalSearchState: Sendable {
         let prioritized = SearchRules.prioritize(items, query: query)
         results[sourceID] = prioritized
         bestScores[sourceID] = SearchRules.bestMatchScore(prioritized, query: query)
+        completedSourceIDs.insert(sourceID)
+        failedSourceIDs.remove(sourceID)
+        verificationRequiredSourceIDs.remove(sourceID)
         if SearchRules.hasExact(prioritized, query: query) { exactSourceIDs.insert(sourceID) }
         else { exactSourceIDs.remove(sourceID) }
-        if !prioritized.isEmpty && !manuallySelected && !selectedFirstResult {
+        if !preferAllSources && !prioritized.isEmpty && !manuallySelected && !selectedFirstResult {
             selectedSourceID = sourceID
             selectedFirstResult = true
         }
         return true
     }
 
+    @discardableResult
+    public mutating func recordFailure(
+        sourceID: String,
+        offerVerification: Bool = false,
+        generation: UUID
+    ) -> Bool {
+        guard generation == self.generation, sourceIDs.contains(sourceID) else { return false }
+        completedSourceIDs.insert(sourceID)
+        if offerVerification {
+            verificationRequiredSourceIDs.insert(sourceID)
+            failedSourceIDs.remove(sourceID)
+        } else {
+            failedSourceIDs.insert(sourceID)
+        }
+        return true
+    }
+
+    /// Per-source capped results (max 6 items) for aggregated Global Search view.
+    public func cappedResults(for sourceID: String) -> [ComicSummary] {
+        DiscoveryModels.capGlobalItems(results[sourceID])
+    }
+
     /// Sources with non-empty results, ranked by match relevance (DISC-03), preserving user sourceIDs tie-break.
     public var visibleSourceIDs: [String] {
         let nonEmpty = sourceIDs.filter { !(results[$0]?.isEmpty ?? true) }
         return SourceOrder.rankByScore(nonEmpty) { bestScores[$0] ?? 0 }
+    }
+
+    /// Verification-required sources that have not returned any results yet.
+    public var verificationRequiredWithoutResultsSourceIDs: [String] {
+        sourceIDs.filter { verificationRequiredSourceIDs.contains($0) && (results[$0]?.isEmpty ?? true) }
+    }
+
+    /// Total displayed hits across visible sources after applying the per-source 6-item cap.
+    public var totalDisplayedGlobalHits: Int {
+        visibleSourceIDs.reduce(0) { total, id in
+            total + min(DiscoveryModels.globalMaxItemsPerSource, results[id]?.count ?? 0)
+        }
+    }
+
+    /// Builds Discovery virtualized rows for the current selection (`""` aggregated or single source).
+    public func buildGlobalRows(sourceMetaByID: [String: DiscoverySourceMeta]) -> [DiscoveryRowItem] {
+        let hitMetas = visibleSourceIDs.map { id in
+            if let existing = sourceMetaByID[id] {
+                return existing
+            }
+            let capped = cappedResults(for: id)
+            let exact = SearchRules.hasExact(capped, query: query)
+            return DiscoverySourceMeta(id: id, name: id, requiresVpn: false, hasExactMatch: exact)
+        }
+        let verifyMetas = verificationRequiredWithoutResultsSourceIDs.map { id in
+            sourceMetaByID[id] ?? DiscoverySourceMeta(id: id, name: id, requiresVpn: false, hasExactMatch: false)
+        }
+        return DiscoveryModels.buildGlobalRows(
+            selectedSourceId: selectedSourceID ?? (preferAllSources ? Self.allSourcesID : nil),
+            orderedHitSources: hitMetas,
+            verificationSources: verifyMetas,
+            resultsBySource: results,
+            query: query
+        )
     }
 }
 

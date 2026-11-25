@@ -66,10 +66,10 @@ final class BookshelfGroupBar: UIView {
 
             addGroupButton.centerYAnchor.constraint(equalTo: centerYAnchor),
             addGroupButton.trailingAnchor.constraint(equalTo: trailingAnchor),
-            addGroupButton.widthAnchor.constraint(equalToConstant: 36),
-            addGroupButton.heightAnchor.constraint(equalToConstant: 36),
+            addGroupButton.widthAnchor.constraint(equalToConstant: 44),
+            addGroupButton.heightAnchor.constraint(equalToConstant: 44),
 
-            heightAnchor.constraint(greaterThanOrEqualToConstant: 40)
+            heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
         ])
     }
 

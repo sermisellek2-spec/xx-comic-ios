@@ -238,12 +238,18 @@ public final class RuleHttp: @unchecked Sendable {
         let config = URLSessionConfiguration.ephemeral
         config.httpShouldSetCookies = false
         config.httpCookieAcceptPolicy = .never
+        config.httpMaximumConnectionsPerHost = 12
         config.urlCache = nil
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
         config.timeoutIntervalForRequest = 20
         config.timeoutIntervalForResource = 30
         return URLSession(configuration: config, delegate: NoRedirectSessionDelegate(), delegateQueue: nil)
     }()
+
+    /// Shared keep-alive session factory for rule requests and rule image fetches.
+    internal static func getSharedSession() -> URLSession {
+        sharedSession
+    }
 
     public init(rule: RuleDefinition,
                 debug: Bool = false,
@@ -494,7 +500,9 @@ public final class RuleHttp: @unchecked Sendable {
             if httpResult.statusCode >= 200 && httpResult.statusCode < 300 && persistCookies {
                 RuleSessions.receive(rule: rule, url: url, fresh: cookies)
             }
-            RuleSessions.receive(rule: rule, url: url, fresh: httpResult.responseCookies)
+            if persistCookies {
+                RuleSessions.receiveResponse(rule: rule, url: url, fresh: httpResult.responseCookies)
+            }
             try checkCall()
 
             let status = httpResult.statusCode
@@ -574,14 +582,26 @@ public final class RuleHttp: @unchecked Sendable {
         req.timeoutInterval = max(1.0, Double(remainingMs) / 1000.0)
         req.setValue(Self.defaultUserAgent, forHTTPHeaderField: "User-Agent")
         req.setValue("zh-CN,zh;q=0.9", forHTTPHeaderField: "Accept-Language")
-        for (k, v) in headers {
-            req.setValue(v, forHTTPHeaderField: k)
+        if !headers.keys.contains(where: { $0.caseInsensitiveCompare("Referer") == .orderedSame }) {
+            req.setValue(rule.baseUrl + "/", forHTTPHeaderField: "Referer")
         }
         if !cookies.isEmpty {
             req.setValue(RuleSessions.header(cookies), forHTTPHeaderField: "Cookie")
         }
-        if let bodyBytes {
-            req.httpBody = bodyBytes
+        var hasContentType = false
+        for (k, v) in headers {
+            if k.caseInsensitiveCompare("Content-Type") == .orderedSame {
+                hasContentType = true
+            }
+            req.setValue(v, forHTTPHeaderField: k)
+        }
+        if method == "POST" {
+            if !hasContentType {
+                req.setValue("application/x-www-form-urlencoded; charset=UTF-8", forHTTPHeaderField: "Content-Type")
+            }
+            if let bodyBytes {
+                req.httpBody = bodyBytes
+            }
         }
 
         final class Box: @unchecked Sendable {
@@ -650,18 +670,76 @@ public final class RuleHttp: @unchecked Sendable {
 
     private static func parseResponseCookies(http: HTTPURLResponse, url: URL) -> [String: String] {
         var headerStrings = [String: String]()
+        var rawSetCookies = [String]()
         for (k, v) in http.allHeaderFields {
-            headerStrings[String(describing: k)] = String(describing: v)
+            let key = String(describing: k)
+            let val = String(describing: v)
+            headerStrings[key] = val
+            if key.caseInsensitiveCompare("Set-Cookie") == .orderedSame ||
+               key.caseInsensitiveCompare("Set-Cookie2") == .orderedSame {
+                rawSetCookies.append(val)
+            }
         }
         var parsed = [String: String]()
         let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerStrings, for: url)
         for c in cookies {
-            if c.name.range(of: #"^[A-Za-z0-9_.$-]{1,128}$"#, options: .regularExpression) != nil &&
-               c.value.count <= 4096 && !c.value.contains(";") {
+            if isValidCookieNameValue(name: c.name, value: c.value) {
                 parsed[c.name] = c.value
             }
         }
+        for (name, value) in parseLenientSetCookies(rawSetCookies) where parsed[name] == nil {
+            parsed[name] = value
+        }
         return parsed
+    }
+
+    internal static func parseLenientSetCookies(_ rawHeaders: [String]) -> [String: String] {
+        var parsed = [String: String]()
+        for rawHeader in rawHeaders {
+            for candidate in splitFoldedSetCookieHeader(rawHeader) {
+                let firstPart = candidate.split(separator: ";", maxSplits: 1, omittingEmptySubsequences: false).first.map(String.init) ?? candidate
+                guard let eqIdx = firstPart.firstIndex(of: "=") else { continue }
+                let name = firstPart[..<eqIdx].trimmingCharacters(in: .whitespacesAndNewlines)
+                let value = firstPart[firstPart.index(after: eqIdx)...].trimmingCharacters(in: .whitespacesAndNewlines)
+                if isValidCookieNameValue(name: name, value: value) {
+                    parsed[name] = value
+                }
+            }
+        }
+        return parsed
+    }
+
+    private static func splitFoldedSetCookieHeader(_ rawHeader: String) -> [String] {
+        // HTTP responses may join multiple Set-Cookie headers with commas; only split before a new `name=` pair so Expires dates stay intact.
+        guard let regex = try? NSRegularExpression(pattern: #",\s*(?=[A-Za-z0-9_.$-]{1,128}=)"#) else {
+            return [rawHeader]
+        }
+        let ns = rawHeader as NSString
+        let matches = regex.matches(in: rawHeader, range: NSRange(location: 0, length: ns.length))
+        if matches.isEmpty {
+            return [rawHeader]
+        }
+        var segments = [String]()
+        var cursor = 0
+        for m in matches {
+            let len = m.range.location - cursor
+            if len > 0 {
+                segments.append(ns.substring(with: NSRange(location: cursor, length: len)))
+            }
+            cursor = m.range.location + m.range.length
+        }
+        if cursor <= ns.length {
+            segments.append(ns.substring(from: cursor))
+        }
+        return segments
+    }
+
+    private static func isValidCookieNameValue(name: String, value: String) -> Bool {
+        name.range(of: #"^[A-Za-z0-9_.$-]{1,128}$"#, options: .regularExpression) != nil &&
+            value.count <= 4096 &&
+            !value.contains(";") &&
+            !value.contains("\r") &&
+            !value.contains("\n")
     }
 
     private static func isTransientNetworkError(_ error: Error) -> Bool {
@@ -679,7 +757,7 @@ public final class RuleHttp: @unchecked Sendable {
         if bytes.count >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF {
             bytes = bytes.dropFirst(3)
         }
-        let detected = resolveCharset(explicitCharset: explicitCharset, contentType: contentType, head: bytes.prefix(2048))
+        let detected = resolveCharset(explicitCharset: explicitCharset, contentType: contentType, head: bytes.prefix(4096))
         if detected == "GBK" || detected == "GB2312" || detected == "GB18030" {
             let cfEnc = CFStringEncodings.GB_18030_2000.rawValue
             let nsEnc = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(cfEnc)))
@@ -720,11 +798,387 @@ public final class RuleHttp: @unchecked Sendable {
     }
 }
 
+// MARK: - RuleImages (Network Open / Cover Refresh / Header Application)
+
+extension RuleImages {
+    public static let coverConnectTimeoutMs = 6000
+    public static let coverReadTimeoutMs = 10000
+    public static let defaultConnectTimeoutMs = 10000
+    public static let defaultReadTimeoutMs = 25000
+    public static let imageAcceptHeader = "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
+
+    public struct ImageFetchResult: @unchecked Sendable {
+        public let resolved: Resolved
+        public let data: Data
+        public let statusCode: Int
+        public let contentType: String?
+        public let finalUrl: String
+
+        public init(resolved: Resolved, data: Data, statusCode: Int, contentType: String?, finalUrl: String) {
+            self.resolved = resolved
+            self.data = data
+            self.statusCode = statusCode
+            self.contentType = contentType
+            self.finalUrl = finalUrl
+        }
+    }
+
+    public static func open(
+        catalog: RuleCatalog,
+        tagged: String,
+        debug: Bool = false,
+        cancelToken: RuleCancelToken? = nil
+    ) throws -> ImageFetchResult {
+        let token = cancelToken ?? RuleCancelToken.current ?? RuleCancelToken()
+        var tried = Set<String>()
+        var lastError: Error?
+        var success = false
+        defer {
+            if !success {
+                invalidateResolved(tagged)
+            }
+        }
+        for attempt in 0..<4 {
+            try token.throwIfCancelled()
+            let r = try resolve(catalog: catalog, tagged: tagged, force: attempt > 0)
+            if attempt > 1 && !tried.insert(r.url).inserted {
+                break
+            }
+            tried.insert(r.url)
+            let fetched: ImageFetchResult
+            do {
+                fetched = try openResolved(
+                    r,
+                    debug: debug,
+                    connectTimeoutMs: defaultConnectTimeoutMs,
+                    readTimeoutMs: defaultReadTimeoutMs,
+                    cancelToken: token
+                )
+            } catch let cancelErr as RuleCancelledError {
+                throw cancelErr
+            } catch {
+                lastError = error
+                if r.rule.imageRefresh && attempt < 3 && !token.isCancelled {
+                    continue
+                }
+                throw error
+            }
+            let code = fetched.statusCode
+            let canRetry = (attempt == 0 && (code == 403 || code == 410)) ||
+                (r.rule.imageRefresh && attempt < 3 && (code >= 400 || isNonImageContentType(fetched.contentType)))
+            if canRetry {
+                lastError = RuleError("图片请求失败 HTTP \(code)")
+                continue
+            }
+            success = true
+            return fetched
+        }
+        if let lastError {
+            throw lastError
+        }
+        throw RuleError("规则图片地址刷新失败")
+    }
+
+    public static func openForCover(
+        catalog: RuleCatalog,
+        tagged: String,
+        debug: Bool = false,
+        cancelToken: RuleCancelToken? = nil
+    ) throws -> ImageFetchResult {
+        let token = cancelToken ?? RuleCancelToken.current ?? RuleCancelToken()
+        return try openForCoverWithResolver(
+            resolver: { force in try resolve(catalog: catalog, tagged: tagged, force: force) },
+            cacheKey: tagged,
+            debug: debug,
+            connectTimeoutMs: coverConnectTimeoutMs,
+            readTimeoutMs: coverReadTimeoutMs,
+            cancelToken: token
+        )
+    }
+
+    internal static func openForCoverWithResolver(
+        resolver: (Bool) throws -> Resolved,
+        cacheKey: String?,
+        debug: Bool,
+        connectTimeoutMs: Int,
+        readTimeoutMs: Int,
+        cancelToken: RuleCancelToken = RuleCancelToken(),
+        transport: ((Resolved, Bool, Int, Int, RuleCancelToken) throws -> ImageFetchResult)? = nil
+    ) throws -> ImageFetchResult {
+        var tried = Set<String>()
+        var lastError: Error?
+        var success = false
+        defer {
+            if !success, let cacheKey {
+                invalidateResolved(cacheKey)
+            }
+        }
+        for attempt in 0..<3 {
+            try cancelToken.throwIfCancelled()
+            let r = try resolver(attempt > 0)
+            if attempt > 0 && !tried.insert(r.url).inserted {
+                break
+            }
+            tried.insert(r.url)
+            let fetched: ImageFetchResult
+            do {
+                if let transport {
+                    fetched = try transport(r, debug, connectTimeoutMs, readTimeoutMs, cancelToken)
+                } else {
+                    fetched = try openResolved(
+                        r,
+                        debug: debug,
+                        connectTimeoutMs: connectTimeoutMs,
+                        readTimeoutMs: readTimeoutMs,
+                        cancelToken: cancelToken
+                    )
+                }
+            } catch let cancelErr as RuleCancelledError {
+                throw cancelErr
+            } catch {
+                lastError = error
+                if r.rule.imageRefresh && attempt < 2 && !cancelToken.isCancelled {
+                    continue
+                }
+                throw error
+            }
+            let code = fetched.statusCode
+            let canRetry = (attempt == 0 && (code == 403 || code == 410)) ||
+                (r.rule.imageRefresh && attempt < 2 && (code >= 400 || isNonImageContentType(fetched.contentType)))
+            if canRetry {
+                lastError = RuleError("图片请求失败 HTTP \(code)")
+                continue
+            }
+            success = true
+            return fetched
+        }
+        if let lastError {
+            throw lastError
+        }
+        throw RuleError("规则图片地址刷新失败")
+    }
+
+    public static func applyImageHeaders(
+        to request: inout URLRequest,
+        urlString: String,
+        referer: String?
+    ) {
+        request.setValue(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            forHTTPHeaderField: "User-Agent"
+        )
+        request.setValue(imageAcceptHeader, forHTTPHeaderField: "Accept")
+        request.setValue("zh-CN,zh;q=0.9,en;q=0.8", forHTTPHeaderField: "Accept-Language")
+        request.setValue("image", forHTTPHeaderField: "Sec-Fetch-Dest")
+        request.setValue("no-cors", forHTTPHeaderField: "Sec-Fetch-Mode")
+        request.setValue("cross-site", forHTTPHeaderField: "Sec-Fetch-Site")
+        request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
+        if let referer, !referer.isEmpty {
+            request.setValue(referer, forHTTPHeaderField: "Referer")
+            if ManwaImageDecoder.usesImageHost(urlString),
+               let refUrl = URL(string: referer),
+               let scheme = refUrl.scheme,
+               let host = refUrl.host {
+                let portSuffix = refUrl.port.map { ":\($0)" } ?? ""
+                request.setValue("\(scheme)://\(host)\(portSuffix)", forHTTPHeaderField: "Origin")
+            }
+        }
+    }
+
+    private static func openResolved(
+        _ r: Resolved,
+        debug: Bool,
+        connectTimeoutMs: Int,
+        readTimeoutMs: Int,
+        cancelToken: RuleCancelToken
+    ) throws -> ImageFetchResult {
+        let guardHttp = RuleHttp(rule: r.rule, debug: debug, cancelToken: cancelToken, timeoutMillis: max(connectTimeoutMs, readTimeoutMs))
+        var url = r.url
+        var headers = r.headers
+        let descriptorCookies = (try? RuleSessions.checked(r.descriptor["cookies"] as? [String: Any])) ?? [:]
+        let initialHost = URL(string: r.url)?.host?.lowercased() ?? ""
+
+        for _ in 0..<6 {
+            try cancelToken.throwIfCancelled()
+            try guardHttp.checkUrl(url)
+            guard let targetUrl = URL(string: url) else {
+                throw RuleError("图片地址无效")
+            }
+            var req = URLRequest(url: targetUrl)
+            req.httpMethod = "GET"
+            req.cachePolicy = .reloadIgnoringLocalCacheData
+            req.timeoutInterval = max(1.0, Double(max(connectTimeoutMs, readTimeoutMs)) / 1000.0)
+            applyImageHeaders(to: &req, urlString: url, referer: r.referer)
+            var cookies = RuleSessions.get(rule: r.rule, url: url)
+            if (targetUrl.host?.lowercased() ?? "") == initialHost {
+                for (k, v) in descriptorCookies {
+                    cookies[k] = v
+                }
+            }
+            if !cookies.isEmpty {
+                req.setValue(RuleSessions.header(cookies), forHTTPHeaderField: "Cookie")
+            }
+            for (k, v) in headers {
+                req.setValue(v, forHTTPHeaderField: k)
+            }
+
+            final class Box: @unchecked Sendable {
+                var data: Data?
+                var response: URLResponse?
+                var error: Error?
+            }
+            let box = Box()
+            let sema = DispatchSemaphore(value: 0)
+            let dataTask = RuleHttp.getSharedSession().dataTask(with: req) { d, resp, err in
+                box.data = d
+                box.response = resp
+                box.error = err
+                sema.signal()
+            }
+            let handle = try cancelToken.register {
+                dataTask.cancel()
+            }
+            defer { handle.close() }
+
+            dataTask.resume()
+            let totalWaitMs = max(connectTimeoutMs, readTimeoutMs) + 500
+            if sema.wait(timeout: .now() + .milliseconds(totalWaitMs)) == .timedOut {
+                dataTask.cancel()
+                throw RuleError("图片请求超时")
+            }
+            if cancelToken.isCancelled {
+                dataTask.cancel()
+                throw RuleCancelledError("规则调用已取消")
+            }
+            if let err = box.error {
+                let nsErr = err as NSError
+                if nsErr.domain == NSURLErrorDomain && nsErr.code == NSURLErrorCancelled {
+                    throw RuleCancelledError("规则调用已取消")
+                }
+                throw err
+            }
+            guard let http = box.response as? HTTPURLResponse else {
+                throw RuleError("无效的图片响应")
+            }
+            let status = http.statusCode
+            if [301, 302, 303, 307, 308].contains(status) {
+                var location: String?
+                for (rk, rv) in http.allHeaderFields {
+                    if String(describing: rk).caseInsensitiveCompare("Location") == .orderedSame {
+                        location = String(describing: rv)
+                        break
+                    }
+                }
+                guard let location, !location.isEmpty,
+                      let nextUrl = URL(string: location, relativeTo: targetUrl)?.absoluteURL else {
+                    throw RuleError("图片重定向缺少地址")
+                }
+                if (nextUrl.host?.lowercased() ?? "") != (targetUrl.host?.lowercased() ?? "") {
+                    headers = [:]
+                }
+                url = nextUrl.absoluteString
+                continue
+            }
+            var contentType: String?
+            for (rk, rv) in http.allHeaderFields {
+                if String(describing: rk).caseInsensitiveCompare("Content-Type") == .orderedSame {
+                    contentType = String(describing: rv)
+                    break
+                }
+            }
+            return ImageFetchResult(
+                resolved: r,
+                data: box.data ?? Data(),
+                statusCode: status,
+                contentType: contentType,
+                finalUrl: url
+            )
+        }
+        throw RuleError("图片重定向过多")
+    }
+}
+
 // MARK: - RuleWebRenderer
 
 public enum RuleWebRenderer {
     public static let maxHtmlBytes = 6 * 1024 * 1024
     private static let concurrencyGuard = DispatchSemaphore(value: 2)
+    private static let heavyExtensions = [
+        ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".svg", ".ico",
+        ".woff", ".woff2", ".ttf", ".otf", ".mp4", ".webm", ".mp3", ".m4a"
+    ]
+
+    public static func isErrorOrBlankUrl(_ url: String?) -> Bool {
+        guard let url else { return true }
+        let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return true }
+        let lower = trimmed.lowercased()
+        return lower == "about:blank" || lower.hasPrefix("chrome-error://")
+    }
+
+    public static func isDocumentReadyForCapture(pageFinished: Bool, actualUrl: String?, readyState: String?) -> Bool {
+        guard pageFinished, !isErrorOrBlankUrl(actualUrl) else { return false }
+        let state = (readyState ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return state == "complete"
+    }
+
+    public static func isBlankHtml(_ html: String?) -> Bool {
+        guard let html else { return true }
+        if html.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return true }
+        guard let regex = try? NSRegularExpression(pattern: #"</?(?:html|head|body)\b[^>]*>|\s+"#, options: [.caseInsensitive]) else {
+            return html.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        let range = NSRange(location: 0, length: (html as NSString).length)
+        let stripped = regex.stringByReplacingMatches(in: html, range: range, withTemplate: "")
+        return stripped.isEmpty
+    }
+
+    public static func isHeavySubresource(_ path: String?) -> Bool {
+        guard let path, !path.isEmpty else { return false }
+        let lowerPath = (URL(string: path)?.path ?? path).lowercased()
+        return heavyExtensions.contains { lowerPath.hasSuffix($0) }
+    }
+
+    public static func buildRenderResult(
+        requestedUrl: String,
+        actualUrl: String?,
+        html: String?,
+        httpStatus: Int,
+        networkError: String?
+    ) throws -> [String: Any] {
+        let safeActual = actualUrl ?? ""
+        let safeHtml = html ?? ""
+        let blankOrErrorUrl = isErrorOrBlankUrl(safeActual)
+        let blankHtml = isBlankHtml(safeHtml)
+        if let networkError, !networkError.isEmpty, (blankOrErrorUrl || blankHtml) {
+            throw RuleError("网页加载失败: " + networkError)
+        }
+        if blankOrErrorUrl {
+            if httpStatus >= 400 {
+                throw RuleError("网页请求失败 HTTP \(httpStatus)")
+            }
+            throw RuleError("网页未加载完成")
+        }
+        if httpStatus >= 400 && blankHtml {
+            throw RuleError("网页请求失败 HTTP \(httpStatus)")
+        }
+        if safeHtml.isEmpty {
+            throw RuleError("未能读取渲染后的网页内容")
+        }
+        if safeHtml.utf8.count > maxHtmlBytes {
+            throw RuleError("渲染网页内容超过 6MiB")
+        }
+        let status = httpStatus >= 400 ? httpStatus : 200
+        let chosenUrl = safeActual.isEmpty ? requestedUrl : safeActual
+        let finalUrl = chosenUrl.components(separatedBy: "#")[0]
+        return [
+            "url": finalUrl,
+            "status": status,
+            "body": safeHtml,
+            "headers": [String: String](),
+            "cookies": [String: String]()
+        ]
+    }
 
     public static func render(
         rule: RuleDefinition,
@@ -811,16 +1265,31 @@ private final class WebKitNavigationBridge: NSObject, WKNavigationDelegate {
         session?.handleNavigationPolicy(navigationAction: navigationAction, decisionHandler: decisionHandler) ?? decisionHandler(.cancel)
     }
 
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        session?.handlePageStarted(urlString: webView.url?.absoluteString)
+    }
+
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationResponse: WKNavigationResponse,
+                 decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+        if navigationResponse.isForMainFrame,
+           let httpResp = navigationResponse.response as? HTTPURLResponse,
+           httpResp.statusCode >= 400 {
+            session?.recordMainHttpStatus(httpResp.statusCode)
+        }
+        decisionHandler(.allow)
+    }
+
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        session?.complete(error: RuleError("网页加载失败：" + error.localizedDescription))
+        session?.handleNavigationFailure(urlString: webView.url?.absoluteString, error: error)
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        session?.complete(error: RuleError("网页渲染失败：" + error.localizedDescription))
+        session?.handleNavigationFailure(urlString: webView.url?.absoluteString, error: error)
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        session?.scheduleExtraction()
+        session?.handlePageFinished(urlString: webView.url?.absoluteString)
     }
 }
 
@@ -828,6 +1297,7 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
     private static let ruleListLock = NSLock()
     private static var cachedBlockList: WKContentRuleList?
 
+    private let requestedUrl: String
     private let http: RuleHttp
     private let waitSelector: String
     private let waitMs: Int
@@ -838,13 +1308,18 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
 
     private let stateLock = NSLock()
     private var finished = false
+    private var pageFinished = false
+    private var pollStarted = false
+    private var mainHttpStatus = 0
+    private var networkError: String?
     private var resultDict: [String: Any]?
     private var resultError: Error?
     private var webView: WKWebView?
     private var navBridge: WebKitNavigationBridge?
     private var pollTimer: DispatchSourceTimer?
 
-    private init(http: RuleHttp, waitSelector: String, waitMs: Int, timeoutMs: Int, cancelToken: RuleCancelToken) {
+    private init(requestedUrl: String, http: RuleHttp, waitSelector: String, waitMs: Int, timeoutMs: Int, cancelToken: RuleCancelToken) {
+        self.requestedUrl = requestedUrl
         self.http = http
         self.waitSelector = waitSelector
         self.waitMs = waitMs
@@ -861,12 +1336,12 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
         }
         ruleListLock.unlock()
 
-        let rulesJson = #"[{"trigger":{"url-filter":".*","resource-type":["image","media","font"]},"action":{"type":"block"}}]"#
+        let rulesJson = #"[{"trigger":{"url-filter":".*","resource-type":["image","media","font"]},"action":{"type":"block"}},{"trigger":{"url-filter":".*\\.[aA][vV][iI][fF]$"},"action":{"type":"block"}},{"trigger":{"url-filter":".*\\.[aA][vV][iI][fF]\\?.*"},"action":{"type":"block"}}]"#
         var compiled: WKContentRuleList?
         let done = DispatchSemaphore(value: 0)
         let runCompile = {
             WKContentRuleListStore.default().compileContentRuleList(
-                forIdentifier: "xxcomic.rule.render.blockmedia",
+                forIdentifier: "xxcomic.rule.render.blockmedia.v2",
                 encodedContentRuleList: rulesJson
             ) { list, _ in
                 compiled = list
@@ -901,7 +1376,7 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
         headers: [String: String],
         cancelToken: RuleCancelToken
     ) throws -> [String: Any] {
-        let session = WebKitHeadlessSession(http: http, waitSelector: waitSelector, waitMs: waitMs, timeoutMs: timeoutMs, cancelToken: cancelToken)
+        let session = WebKitHeadlessSession(requestedUrl: urlString, http: http, waitSelector: waitSelector, waitMs: waitMs, timeoutMs: timeoutMs, cancelToken: cancelToken)
         let blockList = obtainBlockRuleList()
 
         let handle = try cancelToken.register {
@@ -943,6 +1418,10 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
                 req.setValue(v, forHTTPHeaderField: k)
             }
             wv.load(req)
+            // Fallback poll if didFinish is delayed or suppressed on dynamic pages.
+            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(800)) { [weak session] in
+                session?.startPollingIfNeeded(initialDelayMs: 250)
+            }
         }
 
         if Thread.isMainThread {
@@ -977,6 +1456,57 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
         return dict
     }
 
+    fileprivate func handlePageStarted(urlString: String?) {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        if !RuleWebRenderer.isErrorOrBlankUrl(urlString) {
+            pageFinished = false
+            mainHttpStatus = 0
+            networkError = nil
+        }
+    }
+
+    fileprivate func recordMainHttpStatus(_ statusCode: Int) {
+        stateLock.lock()
+        mainHttpStatus = statusCode
+        stateLock.unlock()
+    }
+
+    fileprivate func handleNavigationFailure(urlString: String?, error: Error) {
+        let desc = error.localizedDescription.isEmpty ? "ERR_\((error as NSError).code)" : error.localizedDescription
+        stateLock.lock()
+        if finished {
+            stateLock.unlock()
+            return
+        }
+        networkError = desc
+        let isErrorPage = RuleWebRenderer.isErrorOrBlankUrl(urlString)
+        stateLock.unlock()
+        if isErrorPage {
+            complete(error: RuleError("网页加载失败: " + desc))
+        }
+    }
+
+    fileprivate func handlePageFinished(urlString: String?) {
+        stateLock.lock()
+        if finished {
+            stateLock.unlock()
+            return
+        }
+        let netErr = networkError
+        let blankOrError = RuleWebRenderer.isErrorOrBlankUrl(urlString)
+        if let netErr, !netErr.isEmpty, blankOrError {
+            stateLock.unlock()
+            complete(error: RuleError("网页加载失败: " + netErr))
+            return
+        }
+        if !blankOrError {
+            pageFinished = true
+        }
+        stateLock.unlock()
+        startPollingIfNeeded(initialDelayMs: 50)
+    }
+
     fileprivate func handleNavigationPolicy(navigationAction: WKNavigationAction,
                                             decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = navigationAction.request.url else {
@@ -1003,7 +1533,8 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
                 complete(error: error)
             }
         } else {
-            if let host = url.host, http.rule.allows(host),
+            if !RuleWebRenderer.isHeavySubresource(url.path),
+               let host = url.host, http.rule.allows(host),
                (scheme == "https" || http.rule.allowsCleartext(host) || (http.debug && host == "127.0.0.1")) {
                 decisionHandler(.allow)
             } else {
@@ -1012,20 +1543,21 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
         }
     }
 
-    fileprivate func scheduleExtraction() {
-        let selectorJson = RuleScript.quoteJsonString(waitSelector)
+    fileprivate func startPollingIfNeeded(initialDelayMs: Int) {
         let timer = DispatchSource.makeTimerSource(queue: .main)
         stateLock.lock()
-        if finished {
+        if finished || pollStarted {
             stateLock.unlock()
             return
         }
+        pollStarted = true
         pollTimer?.cancel()
         pollTimer = timer
         stateLock.unlock()
 
+        let selectorJson = RuleScript.quoteJsonString(waitSelector)
         var readySince: Date?
-        timer.schedule(deadline: .now() + .milliseconds(50), repeating: .milliseconds(120))
+        timer.schedule(deadline: .now() + .milliseconds(initialDelayMs), repeating: .milliseconds(250))
         timer.setEventHandler { [weak self] in
             guard let self else { return }
             if self.cancelToken.isCancelled {
@@ -1035,50 +1567,108 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
             self.stateLock.lock()
             let wv = self.webView
             let isDone = self.finished
+            let isPageFinished = self.pageFinished
+            let netErr = self.networkError
+            let httpStatus = self.mainHttpStatus
             self.stateLock.unlock()
             guard !isDone, let wv else { return }
 
-            let pastDeadline = Date().addingTimeInterval(0.25) >= self.deadline
-            let checkAndDumpJs: String
-            if self.waitSelector.isEmpty || pastDeadline {
-                checkAndDumpJs = "JSON.stringify({ready:true,url:String(location.href||''),body:document.documentElement?document.documentElement.outerHTML:''})"
-            } else if let readyAt = readySince {
-                if Date().timeIntervalSince(readyAt) * 1000.0 < Double(self.waitMs) {
-                    return
+            let now = Date()
+            let pastDeadline = now >= self.deadline || now.addingTimeInterval(0.25) >= self.deadline
+
+            let captureNow = {
+                let extractJs = "JSON.stringify({url:String(location.href||''),body:document&&document.documentElement?document.documentElement.outerHTML:''})"
+                wv.evaluateJavaScript(extractJs) { [weak self] val, err in
+                    guard let self else { return }
+                    if let err {
+                        self.complete(error: RuleError("读取渲染 DOM 失败：" + err.localizedDescription))
+                        return
+                    }
+                    guard let jsonStr = val as? String,
+                          let data = jsonStr.data(using: .utf8),
+                          let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+                        self.complete(error: RuleError("未能读取渲染后的网页内容"))
+                        return
+                    }
+                    self.stateLock.lock()
+                    let latestStatus = self.mainHttpStatus
+                    let latestNetErr = self.networkError
+                    self.stateLock.unlock()
+                    do {
+                        let built = try RuleWebRenderer.buildRenderResult(
+                            requestedUrl: self.requestedUrl,
+                            actualUrl: obj["url"] as? String,
+                            html: obj["body"] as? String,
+                            httpStatus: latestStatus > 0 ? latestStatus : httpStatus,
+                            networkError: latestNetErr ?? netErr
+                        )
+                        self.complete(dict: built)
+                    } catch {
+                        self.complete(error: error)
+                    }
                 }
-                checkAndDumpJs = "JSON.stringify({ready:true,url:String(location.href||''),body:document.documentElement?document.documentElement.outerHTML:''})"
-            } else {
-                checkAndDumpJs = "(function(){var el=document.querySelector(\(selectorJson));if(!el)return JSON.stringify({ready:false});return JSON.stringify({ready:true,url:String(location.href||''),body:document.documentElement?document.documentElement.outerHTML:''});})()"
             }
-            wv.evaluateJavaScript(checkAndDumpJs) { [weak self] val, err in
+
+            if pastDeadline {
+                captureNow()
+                return
+            }
+
+            if self.waitSelector.isEmpty {
+                guard isPageFinished else { return }
+                let readyJs = "(function(){try{return JSON.stringify({url:String(location.href||''),ready:String(document&&document.readyState||'')});}catch(e){return '';}})()"
+                wv.evaluateJavaScript(readyJs) { [weak self] val, _ in
+                    guard let self else { return }
+                    var actualUrl = ""
+                    var readyState = ""
+                    if let jsonStr = val as? String,
+                       let data = jsonStr.data(using: .utf8),
+                       let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] {
+                        actualUrl = (obj["url"] as? String) ?? ""
+                        readyState = (obj["ready"] as? String) ?? ""
+                    }
+                    if let netErr, !netErr.isEmpty, RuleWebRenderer.isErrorOrBlankUrl(actualUrl) {
+                        self.complete(error: RuleError("网页加载失败: " + netErr))
+                        return
+                    }
+                    if RuleWebRenderer.isDocumentReadyForCapture(pageFinished: isPageFinished, actualUrl: actualUrl, readyState: readyState) {
+                        if readySince == nil && self.waitMs > 0 {
+                            readySince = Date()
+                            return
+                        }
+                        if let readyAt = readySince, Date().timeIntervalSince(readyAt) * 1000.0 < Double(self.waitMs) {
+                            return
+                        }
+                        captureNow()
+                    }
+                }
+                return
+            }
+
+            let checkJs = "(function(){try{return JSON.stringify({url:String(location.href||''),found:Boolean(document&&document.querySelector(\(selectorJson)))});}catch(e){return '';}})()"
+            wv.evaluateJavaScript(checkJs) { [weak self] val, _ in
                 guard let self else { return }
-                if let err {
-                    self.complete(error: RuleError("读取渲染 DOM 失败：" + err.localizedDescription))
+                var actualUrl = ""
+                var found = false
+                if let jsonStr = val as? String,
+                   let data = jsonStr.data(using: .utf8),
+                   let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] {
+                    actualUrl = (obj["url"] as? String) ?? ""
+                    found = (obj["found"] as? Bool) == true
+                }
+                if let netErr, !netErr.isEmpty, RuleWebRenderer.isErrorOrBlankUrl(actualUrl) {
+                    self.complete(error: RuleError("网页加载失败: " + netErr))
                     return
                 }
-                guard let jsonStr = val as? String,
-                      let data = jsonStr.data(using: .utf8),
-                      let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
-                    return
-                }
-                if (obj["ready"] as? Bool) == true {
-                    if !self.waitSelector.isEmpty && !pastDeadline && readySince == nil && self.waitMs > 0 {
+                if found && !RuleWebRenderer.isErrorOrBlankUrl(actualUrl) {
+                    if readySince == nil && self.waitMs > 0 {
                         readySince = Date()
                         return
                     }
-                    let body = (obj["body"] as? String) ?? ""
-                    if body.utf8.count > RuleWebRenderer.maxHtmlBytes {
-                        self.complete(error: RuleError("渲染网页内容超过 6MiB"))
+                    if let readyAt = readySince, Date().timeIntervalSince(readyAt) * 1000.0 < Double(self.waitMs) {
                         return
                     }
-                    let finalUrl = ((obj["url"] as? String) ?? "").components(separatedBy: "#")[0]
-                    self.complete(dict: [
-                        "url": finalUrl,
-                        "status": 200,
-                        "body": body,
-                        "headers": [String: String](),
-                        "cookies": [String: String]()
-                    ])
+                    captureNow()
                 }
             }
         }
@@ -1127,11 +1717,48 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
 // MARK: - RuleHostExecutor (Production Budgeted Invoker)
 
 public enum RuleHostExecutor {
-    public static let searchPermitsCount = 12
-    public static let foregroundPermitsCount = 4
+    public enum PermitChannel: String, Sendable {
+        case foreground
+        case search
+        case background
+    }
 
-    private static let searchSemaphore = DispatchSemaphore(value: searchPermitsCount)
+    public static let foregroundPermitsCount = 4
+    public static let searchPermitsCount = 12
+    public static let backgroundPermitsCount = 2
+    public static let hostThreadsCount = 24
+    public static let hostQueueCapacity = 64
+    public static let searchQueueReserveForForeground = 8
+
     private static let foregroundSemaphore = DispatchSemaphore(value: foregroundPermitsCount)
+    private static let searchSemaphore = DispatchSemaphore(value: searchPermitsCount)
+    private static let backgroundSemaphore = DispatchSemaphore(value: backgroundPermitsCount)
+    private static let hostSlotSemaphore = DispatchSemaphore(value: hostThreadsCount)
+    private static let hostQueueLock = NSLock()
+    private static var queuedHostTasksCount = 0
+
+    public static func selectPermitChannel(method: String, isBackground: Bool = RuleCallPriority.currentIsBackground()) -> PermitChannel {
+        if method == "search" {
+            return .search
+        }
+        return isBackground ? .background : .foreground
+    }
+
+    public static func shouldRejectForForegroundReserve(isSearch: Bool, isBackground: Bool, queuedHostTasks: Int) -> Bool {
+        (isSearch || isBackground) && queuedHostTasks >= (hostQueueCapacity - searchQueueReserveForForeground)
+    }
+
+    public static func hostTimeoutMillis(rule: RuleDefinition, method: String) -> Int {
+        method == "search" ? 8000 : min(max(10000, rule.timeoutSeconds * 1000), 20000)
+    }
+
+    private static func semaphore(for channel: PermitChannel) -> DispatchSemaphore {
+        switch channel {
+        case .foreground: return foregroundSemaphore
+        case .search: return searchSemaphore
+        case .background: return backgroundSemaphore
+        }
+    }
 
     public static func errorReply(_ error: Error) -> String {
         var raw = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -1167,20 +1794,28 @@ public enum RuleHostExecutor {
         try token.throwIfCancelled()
 
         let isSearch = (method == "search")
-        let semaphore = isSearch ? searchSemaphore : foregroundSemaphore
+        let isBackground = RuleCallPriority.currentIsBackground()
+        let channel = selectPermitChannel(method: method, isBackground: isBackground)
+        let semaphore = Self.semaphore(for: channel)
         let acquireBudgetSec = isSearch ? 10.0 : 25.0
         let deadline = Date(timeIntervalSinceNow: acquireBudgetSec)
 
         while semaphore.wait(timeout: .now() + .milliseconds(50)) == .timedOut {
             try token.throwIfCancelled()
             if Date() >= deadline {
-                throw RuleError(isSearch ? "搜索并发繁忙，请稍后重试" : "站源请求繁忙，请稍后重试")
+                let msg: String
+                switch channel {
+                case .search: msg = "搜索并发繁忙，请稍后重试"
+                case .background: msg = "后台规则任务繁忙，请稍后重试"
+                case .foreground: msg = "站源请求繁忙，请稍后重试"
+                }
+                throw RuleError(msg)
             }
         }
         defer { semaphore.signal() }
         try token.throwIfCancelled()
 
-        let httpTimeoutMs = isSearch ? 8000 : min(max(10000, rule.timeoutSeconds * 1000), 20000)
+        let httpTimeoutMs = hostTimeoutMillis(rule: rule, method: method)
         let http = RuleHttp(rule: rule, debug: debug, cancelToken: token, timeoutMillis: httpTimeoutMs)
 
         return try RuleCancelToken.withCurrent(token) {
@@ -1190,6 +1825,35 @@ public enum RuleHostExecutor {
                       let dict = (try? JSONSerialization.jsonObject(with: bytes)) as? [String: Any] else {
                     return errorReply(RuleError("规则宿主参数无效"))
                 }
+
+                hostQueueLock.lock()
+                if queuedHostTasksCount >= hostQueueCapacity ||
+                   shouldRejectForForegroundReserve(isSearch: isSearch, isBackground: isBackground, queuedHostTasks: queuedHostTasksCount) {
+                    hostQueueLock.unlock()
+                    return errorReply(RuleError("规则宿主队列繁忙，请稍后重试"))
+                }
+                queuedHostTasksCount += 1
+                hostQueueLock.unlock()
+
+                var acquiredHostSlot = false
+                defer {
+                    if !acquiredHostSlot {
+                        hostQueueLock.lock()
+                        queuedHostTasksCount = max(0, queuedHostTasksCount - 1)
+                        hostQueueLock.unlock()
+                    } else {
+                        hostSlotSemaphore.signal()
+                    }
+                }
+
+                while hostSlotSemaphore.wait(timeout: .now() + .milliseconds(50)) == .timedOut {
+                    try token.throwIfCancelled()
+                }
+                hostQueueLock.lock()
+                queuedHostTasksCount = max(0, queuedHostTasksCount - 1)
+                hostQueueLock.unlock()
+                acquiredHostSlot = true
+
                 do {
                     if op == "cache" {
                         return try RuleCache.call(ruleHash: rule.hash, data: dict)

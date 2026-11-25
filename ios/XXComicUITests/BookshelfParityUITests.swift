@@ -119,7 +119,7 @@ final class BookshelfParityUITests: ParityUITestCase {
         let app = launch()
         let resume = app.buttons["bookshelf.resume"]
         XCTAssertTrue(resume.waitForExistence(timeout: 5))
-        XCTAssertEqual(resume.value as? String, "电锯人，上次看到 · 第 1 话")
+        XCTAssertEqual(resume.value as? String, "电锯人，上次看到 · 第1话")
         resume.tap()
         XCTAssertTrue(app.navigationBars["第1话"].waitForExistence(timeout: 10), "A single resume action must enter the saved chapter")
         app.navigationBars.buttons.firstMatch.tap()

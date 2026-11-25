@@ -6,21 +6,42 @@ import FoundationNetworking
 public protocol ComicSource: Sendable {
     var id: String { get }
     var name: String { get }
+    var domain: String { get }
     var referer: String { get }
     var supportsSearch: Bool { get }
+    var searchRequiresVpn: Bool { get }
+    var hasBackupFailover: Bool { get }
 
+    func referer(forUrl url: String) -> String?
     func latest(page: Int) async throws -> [ComicSummary]
     func search(keyword: String, page: Int) async throws -> [ComicSummary]
     func detail(comicId: String) async throws -> ComicDetail
     func chapters(comicId: String) async throws -> [Chapter]
     func chapter(url: String) async throws -> ChapterPage
     func filterGroups() async throws -> [SourceFilterGroup]
+    func filterGroupsForSelection(_ selection: [String: String]) -> [SourceFilterGroup]
+    func dependentFilterKeys(_ changedKey: String) -> [String]
     func category(filters: [String: String], page: Int) async throws -> [ComicSummary]
+    func hasMoreCategoryPage(_ items: [ComicSummary]) -> Bool
+    func hasMoreSearchPage(_ items: [ComicSummary]) -> Bool
     func healthCheck() async -> Bool
 }
 
 public extension ComicSource {
+    var domain: String { "" }
     var supportsSearch: Bool { true }
+    var searchRequiresVpn: Bool { false }
+    var hasBackupFailover: Bool { false }
+
+    func referer(forUrl url: String) -> String? { referer }
+
+    func filterGroupsForSelection(_ selection: [String: String]) -> [SourceFilterGroup] { [] }
+
+    func dependentFilterKeys(_ changedKey: String) -> [String] { [] }
+
+    func hasMoreCategoryPage(_ items: [ComicSummary]) -> Bool { !items.isEmpty }
+
+    func hasMoreSearchPage(_ items: [ComicSummary]) -> Bool { !items.isEmpty }
 
     func healthCheck() async -> Bool {
         do {

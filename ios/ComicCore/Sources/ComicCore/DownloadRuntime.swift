@@ -7,6 +7,9 @@ import Glibc
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
+#if canImport(ImageIO)
+import ImageIO
+#endif
 
 public protocol DownloadImageFetcherProtocol: Sendable {
     func fetch(sourceId: String,
@@ -21,24 +24,108 @@ public protocol DownloadSourceResolverProtocol: Sendable {
     func resolveReferer(sourceId: String, chapterUrl: String) -> String
     func resolveImageUrl(sourceId: String, imageUrl: String, force: Bool) async throws -> String
     func fetchCover(sourceId: String, coverUrl: String, destination: URL, check: @escaping () throws -> Void) async throws
+    func resolveSource(sourceId: String) -> (any ComicSource)?
 }
 
 public extension DownloadSourceResolverProtocol {
     func resolveImageUrl(sourceId: String, imageUrl: String, force: Bool) async throws -> String {
         imageUrl
     }
+    func resolveSource(sourceId: String) -> (any ComicSource)? {
+        nil
+    }
 }
 
 public enum ImageValidator {
     public static func isValidImage(data: Data) -> Bool {
+        if hasCompleteImageContainer(data: data) {
+            return true
+        }
+        #if canImport(ImageIO)
+        if hasKnownImageHeader(data: data) {
+            return canDecodeThumbnail(data: data)
+        }
+        #endif
+        return false
+    }
+
+    public static func hasKnownImageHeader(data: Data) -> Bool {
         if data.count < 4 { return false }
         if data.starts(with: [0xff, 0xd8, 0xff]) { return true } // JPEG
         if data.starts(with: [0x89, 0x50, 0x4e, 0x47]) { return true } // PNG
         if data.starts(with: "GIF87a".utf8) || data.starts(with: "GIF89a".utf8) { return true } // GIF
         if data.starts(with: "RIFF".utf8) && data.count >= 12 && data.dropFirst(8).starts(with: "WEBP".utf8) { return true } // WebP
         if data.starts(with: [0x42, 0x4d]) { return true } // BMP
+        if RuleImageData.isIsoBmffImageHeader(data) { return true } // AVIF / HEIF
         return false
     }
+
+    public static func hasCompleteImageContainer(data: Data) -> Bool {
+        let len = data.count
+        guard len >= 12 else { return false }
+
+        // JPEG: SOI (FF D8 FF) ... EOI (FF D9)
+        if data.starts(with: [0xff, 0xd8, 0xff]) {
+            let tail = data.suffix(2)
+            let b0 = tail[tail.startIndex]
+            let b1 = tail[tail.index(after: tail.startIndex)]
+            return b0 == 0xff && b1 == 0xd9
+        }
+
+        // PNG: 89 50 4E 47 0D 0A 1A 0A ... IEND (00 00 00 00 49 45 4E 44)
+        if len >= 24 && data.starts(with: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) {
+            let tail = Array(data.suffix(12))
+            return tail[0] == 0 && tail[1] == 0 && tail[2] == 0 && tail[3] == 0
+                && tail[4] == 0x49 && tail[5] == 0x45 && tail[6] == 0x4e && tail[7] == 0x44
+        }
+
+        // WebP: RIFF <size> WEBP where size + 8 == file length
+        if data.starts(with: "RIFF".utf8) && data.dropFirst(8).starts(with: "WEBP".utf8) {
+            let idx = data.startIndex
+            let riffSize = UInt64(data[idx + 4])
+                | (UInt64(data[idx + 5]) << 8)
+                | (UInt64(data[idx + 6]) << 16)
+                | (UInt64(data[idx + 7]) << 24)
+            return riffSize + 8 == UInt64(len)
+        }
+
+        // GIF: GIF87a / GIF89a ... 0x3B
+        if data.starts(with: "GIF87a".utf8) || data.starts(with: "GIF89a".utf8) {
+            return data.last == 0x3b
+        }
+
+        // BMP: BM + 4-byte little-endian file size
+        if len >= 14 && data.starts(with: [0x42, 0x4d]) {
+            let idx = data.startIndex
+            let bmpSize = UInt64(data[idx + 2])
+                | (UInt64(data[idx + 3]) << 8)
+                | (UInt64(data[idx + 4]) << 16)
+                | (UInt64(data[idx + 5]) << 24)
+            return bmpSize >= 14 && bmpSize <= UInt64(len)
+        }
+
+        // AVIF / ISOBMFF container completeness
+        if RuleImageData.isIsoBmffImageHeader(data) {
+            return AvifImageHelper.hasCompleteContainer(data: data)
+        }
+
+        return false
+    }
+
+    #if canImport(ImageIO)
+    private static func canDecodeThumbnail(data: Data) -> Bool {
+        autoreleasepool {
+            guard let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary),
+                  CGImageSourceGetCount(source) > 0 else {
+                return false
+            }
+            return CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceThumbnailMaxPixelSize: 256
+            ] as CFDictionary) != nil
+        }
+    }
+    #endif
 
     public static func isTextOrHtml(data: Data) -> Bool {
         guard let text = String(data: data.prefix(256), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() else {
@@ -52,6 +139,211 @@ public final class DefaultDownloadImageFetcher: DownloadImageFetcherProtocol, @u
     public static let shared = DefaultDownloadImageFetcher()
     public static let maxPageBytes: Int64 = 128 * 1024 * 1024 // 128 MiB
 
+    private final class DownloadSessionTaskBox: @unchecked Sendable {
+        private let lock = NSLock()
+        private var task: URLSessionDataTask?
+        private var cancelled = false
+
+        func set(_ task: URLSessionDataTask) {
+            lock.lock()
+            self.task = task
+            let shouldCancel = cancelled
+            lock.unlock()
+            if shouldCancel { task.cancel() }
+        }
+
+        func cancel() {
+            lock.lock()
+            cancelled = true
+            let current = task
+            lock.unlock()
+            current?.cancel()
+        }
+    }
+
+    private final class ImageStreamDelegate: @unchecked Sendable {
+        let destination: URL
+        let maxBytes: Int64
+        let check: () throws -> Void
+
+        private(set) var written: Int64 = 0
+        private(set) var expectedLength: Int64 = -1
+        private(set) var statusCode: Int = 0
+        private(set) var streamError: Error?
+        private var fileHandle: FileHandle?
+        private var continuation: CheckedContinuation<Void, Error>?
+        private let lock = NSLock()
+        private var isResumed = false
+
+        init(destination: URL, maxBytes: Int64, check: @escaping () throws -> Void) {
+            self.destination = destination
+            self.maxBytes = maxBytes
+            self.check = check
+        }
+
+        func attachContinuation(_ cont: CheckedContinuation<Void, Error>) {
+            lock.lock()
+            self.continuation = cont
+            lock.unlock()
+        }
+
+        private func finish(error: Error?) {
+            lock.lock()
+            guard !isResumed else {
+                lock.unlock()
+                return
+            }
+            isResumed = true
+            let cont = self.continuation
+            self.continuation = nil
+            let handle = self.fileHandle
+            self.fileHandle = nil
+            lock.unlock()
+
+            try? handle?.close()
+
+            if let error {
+                cont?.resume(throwing: error)
+            } else {
+                cont?.resume(returning: ())
+            }
+        }
+
+        func handleResponse(_ response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+            guard let http = response as? HTTPURLResponse else {
+                streamError = DownloadError.corruptedData("无效的服务器响应")
+                completionHandler(.cancel)
+                return
+            }
+            statusCode = http.statusCode
+            if statusCode == 206 {
+                streamError = DownloadError.corruptedData("图片下载不接受部分响应")
+                completionHandler(.cancel)
+                return
+            }
+            if statusCode != 200 {
+                let retryHeader = http.allHeaderFields.first {
+                    $0.key.description.caseInsensitiveCompare("Retry-After") == .orderedSame
+                }?.value as? String
+                let retryDelay = (retryHeader.flatMap { Double($0) } ?? (statusCode == 429 ? 60 : 0)) * 1000
+                streamError = DownloadHTTPError(statusCode: statusCode, retryAfterMs: Int64(retryDelay))
+                completionHandler(.cancel)
+                return
+            }
+
+            if let type = (http.allHeaderFields.first { $0.key.description.caseInsensitiveCompare("Content-Type") == .orderedSame }?.value as? String)?.lowercased() {
+                if type.contains("text/") || type.contains("json") {
+                    streamError = DownloadError.corruptedData("服务器返回了网页，未下载图片")
+                    completionHandler(.cancel)
+                    return
+                }
+            }
+
+            if let cl = (http.allHeaderFields.first { $0.key.description.caseInsensitiveCompare("Content-Length") == .orderedSame }?.value as? String).flatMap({ Int64($0) }) {
+                expectedLength = cl
+                if cl > maxBytes {
+                    streamError = DownloadError.corruptedData("单页超过 128MiB 限制")
+                    completionHandler(.cancel)
+                    return
+                }
+            }
+
+            do {
+                let empty = Data()
+                try empty.write(to: destination, options: .atomic)
+                let handle = try FileHandle(forWritingTo: destination)
+                lock.lock()
+                fileHandle = handle
+                lock.unlock()
+                written = 0
+                completionHandler(.allow)
+            } catch {
+                streamError = error
+                completionHandler(.cancel)
+            }
+        }
+
+        func handleData(_ data: Data, task: URLSessionDataTask) {
+            do {
+                try check()
+            } catch {
+                streamError = error
+                task.cancel()
+                return
+            }
+
+            written += Int64(data.count)
+            if written > maxBytes {
+                streamError = DownloadError.corruptedData("单页超过 128MiB 限制")
+                task.cancel()
+                return
+            }
+
+            lock.lock()
+            let handle = fileHandle
+            lock.unlock()
+            handle?.write(data)
+        }
+
+        func handleComplete(error: Error?) {
+            if let err = streamError ?? error {
+                finish(error: err)
+            } else {
+                finish(error: nil)
+            }
+        }
+    }
+
+    /// Shared Keep-Alive URLSession + task-identifier router to avoid per-image session/socket leaks.
+    private final class SessionRouter: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+        private let lock = NSLock()
+        private var delegates: [Int: ImageStreamDelegate] = [:]
+        private lazy var session: URLSession = {
+            let config = URLSessionConfiguration.ephemeral
+            config.timeoutIntervalForRequest = 25
+            config.httpMaximumConnectionsPerHost = 6
+            config.requestCachePolicy = .reloadIgnoringLocalCacheData
+            config.urlCache = nil
+            return URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        }()
+
+        func startTask(request: URLRequest, delegate: ImageStreamDelegate) -> URLSessionDataTask {
+            let task = session.dataTask(with: request)
+            lock.lock()
+            delegates[task.taskIdentifier] = delegate
+            lock.unlock()
+            task.resume()
+            return task
+        }
+
+        func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+            lock.lock()
+            let delegate = delegates[dataTask.taskIdentifier]
+            lock.unlock()
+            guard let delegate else {
+                completionHandler(.cancel)
+                return
+            }
+            delegate.handleResponse(response, completionHandler: completionHandler)
+        }
+
+        func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+            lock.lock()
+            let delegate = delegates[dataTask.taskIdentifier]
+            lock.unlock()
+            delegate?.handleData(data, task: dataTask)
+        }
+
+        func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+            lock.lock()
+            let delegate = delegates.removeValue(forKey: task.taskIdentifier)
+            lock.unlock()
+            delegate?.handleComplete(error: error)
+        }
+    }
+
+    private let router = SessionRouter()
+
     public init() {}
 
     public func fetch(sourceId: String,
@@ -59,224 +351,102 @@ public final class DefaultDownloadImageFetcher: DownloadImageFetcherProtocol, @u
                       referer: String,
                       destination: URL,
                       check: @escaping () throws -> Void) async throws -> (bytes: Int64, hash: String) {
-        try check()
-        let ruleInfo = RuleImages.isRule(url) ? (try? RuleImages.requestHeaders(tagged: url, fallbackReferer: referer)) : nil
-        let cleanUrl = ruleInfo?.url ?? RuleImages.strip(PublicSourceImages.strip(url))
-        guard let requestUrl = URL(string: cleanUrl) else {
-            throw DownloadError.corruptedData("无效的图片地址")
-        }
-        var request = URLRequest(url: requestUrl)
-        request.timeoutInterval = 25
-        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
-        request.setValue("image/webp,image/apng,image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
-        request.setValue("zh-CN,zh;q=0.9,en;q=0.8", forHTTPHeaderField: "Accept-Language")
-        request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
-        let effectiveReferer = ruleInfo?.referer ?? PublicSourceImages.referer(url, fallback: referer)
-        if !effectiveReferer.isEmpty {
-            request.setValue(effectiveReferer, forHTTPHeaderField: "Referer")
-        }
-        if let ruleInfo {
-            if let cookieHeader = ruleInfo.cookieHeader, !cookieHeader.isEmpty {
-                request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
-            }
-            for (k, v) in ruleInfo.headers {
-                request.setValue(v, forHTTPHeaderField: k)
-            }
-        }
-
-        let destDir = destination.deletingLastPathComponent()
-        if !FileManager.default.fileExists(atPath: destDir.path) {
-            try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
-        }
-
-        final class ImageStreamDelegate: NSObject, URLSessionDataDelegate, @unchecked Sendable {
-            let destination: URL
-            let maxBytes: Int64
-            let check: () throws -> Void
-
-            private(set) var written: Int64 = 0
-            private(set) var expectedLength: Int64 = -1
-            private(set) var statusCode: Int = 0
-            private(set) var streamError: Error?
-            private var fileHandle: FileHandle?
-            private var continuation: CheckedContinuation<Void, Error>?
-            private let lock = NSLock()
-            private var isResumed = false
-
-            init(destination: URL, maxBytes: Int64, check: @escaping () throws -> Void) {
-                self.destination = destination
-                self.maxBytes = maxBytes
-                self.check = check
-            }
-
-            func attachContinuation(_ cont: CheckedContinuation<Void, Error>) {
-                self.continuation = cont
-            }
-
-            private func finish(error: Error?) {
-                lock.lock()
-                guard !isResumed else {
-                    lock.unlock()
-                    return
-                }
-                isResumed = true
-                let cont = self.continuation
-                self.continuation = nil
-                lock.unlock()
-
-                try? fileHandle?.close()
-                fileHandle = nil
-
-                if let error {
-                    cont?.resume(throwing: error)
-                } else {
-                    cont?.resume(returning: ())
-                }
-            }
-
-            func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
-                guard let http = response as? HTTPURLResponse else {
-                    streamError = DownloadError.corruptedData("无效的服务器响应")
-                    completionHandler(.cancel)
-                    return
-                }
-                statusCode = http.statusCode
-                if statusCode == 206 {
-                    streamError = DownloadError.corruptedData("图片下载不接受部分响应")
-                    completionHandler(.cancel)
-                    return
-                }
-                if statusCode != 200 {
-                    let retryHeader = http.allHeaderFields["Retry-After"] as? String
-                    let retryDelay = (retryHeader.flatMap { Double($0) } ?? (statusCode == 429 ? 60 : 0)) * 1000
-                    streamError = DownloadHTTPError(statusCode: statusCode, retryAfterMs: Int64(retryDelay))
-                    completionHandler(.cancel)
-                    return
-                }
-
-                if let type = (http.allHeaderFields.first { $0.key.description.caseInsensitiveCompare("Content-Type") == .orderedSame }?.value as? String)?.lowercased() {
-                    if type.contains("text/") || type.contains("json") {
-                        streamError = DownloadError.corruptedData("服务器返回了网页，未下载图片")
-                        completionHandler(.cancel)
-                        return
-                    }
-                }
-
-                if let cl = (http.allHeaderFields.first { $0.key.description.caseInsensitiveCompare("Content-Length") == .orderedSame }?.value as? String).flatMap({ Int64($0) }) {
-                    expectedLength = cl
-                    if cl > maxBytes {
-                        streamError = DownloadError.corruptedData("单页超过 128MiB 限制")
-                        completionHandler(.cancel)
-                        return
-                    }
-                }
-
-                do {
-                    let empty = Data()
-                    try empty.write(to: destination, options: .atomic)
-                    fileHandle = try FileHandle(forWritingTo: destination)
-                    written = 0
-                    completionHandler(.allow)
-                } catch {
-                    streamError = error
-                    completionHandler(.cancel)
-                }
-            }
-
-            func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-                do {
-                    try check()
-                } catch {
-                    streamError = error
-                    dataTask.cancel()
-                    return
-                }
-
-                written += Int64(data.count)
-                if written > maxBytes {
-                    streamError = DownloadError.corruptedData("单页超过 128MiB 限制")
-                    dataTask.cancel()
-                    return
-                }
-
-                fileHandle?.write(data)
-            }
-
-            func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-                if let err = streamError ?? error {
-                    finish(error: err)
-                } else {
-                    finish(error: nil)
-                }
-            }
-        }
-
-        let delegate = ImageStreamDelegate(destination: destination, maxBytes: Self.maxPageBytes, check: check)
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 25
-        let session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
-
-        do {
-            try await withTaskCancellationHandler {
-                try await withCheckedThrowingContinuation { continuation in
-                    delegate.attachContinuation(continuation)
-                    let task = session.dataTask(with: request)
-                    task.resume()
-                }
-            } onCancel: {
-                session.invalidateAndCancel()
-            }
-
+        try await RuleCallPriority.withBackgroundPriority {
             try check()
-
-            if delegate.written == 0 {
-                throw DownloadError.corruptedData("图片文件为空")
+            let ruleInfo = RuleImages.isRule(url) ? (try? RuleImages.requestHeaders(tagged: url, fallbackReferer: referer)) : nil
+            let cleanUrl = ruleInfo?.url ?? RuleImages.strip(PublicSourceImages.strip(url))
+            guard let requestUrl = URL(string: cleanUrl) else {
+                throw DownloadError.corruptedData("无效的图片地址")
             }
-            if delegate.expectedLength >= 0 && delegate.written != delegate.expectedLength {
-                throw DownloadError.corruptedData("图片传输不完整，请重试")
+            var request = URLRequest(url: requestUrl)
+            request.timeoutInterval = 25
+            request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
+            request.setValue("image/avif,image/webp,image/apng,image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
+            request.setValue("zh-CN,zh;q=0.9,en;q=0.8", forHTTPHeaderField: "Accept-Language")
+            request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
+            let effectiveReferer = ruleInfo?.referer ?? PublicSourceImages.referer(url, fallback: referer)
+            if !effectiveReferer.isEmpty {
+                request.setValue(effectiveReferer, forHTTPHeaderField: "Referer")
             }
-
-            var rawData = try Data(contentsOf: destination)
-            if RuleImages.isRule(url) {
-                let decoded = try RuleImages.decode(rawData, tagged: url)
-                if decoded != rawData {
-                    try decoded.write(to: destination, options: .atomic)
-                    rawData = decoded
+            if let ruleInfo {
+                if let cookieHeader = ruleInfo.cookieHeader, !cookieHeader.isEmpty {
+                    request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
                 }
-            } else if !PublicSourceImages.sourceId(url).isEmpty || PublicSourceRegistry.contains(sourceId) {
-                let decoded = try PublicSourceImages.decodeForSource(sourceId: sourceId, url: url, data: rawData)
-                if decoded != rawData {
-                    try decoded.write(to: destination, options: .atomic)
-                    rawData = decoded
-                }
-            } else if sourceId == "xinmanhua" || XinmanhuaImageDecoder.usesImageHost(url) {
-                let decoded = try XinmanhuaImageDecoder.decode(rawData)
-                if decoded != rawData {
-                    try decoded.write(to: destination, options: .atomic)
-                    rawData = decoded
-                }
-            } else if sourceId == "manwa" || ManwaImageDecoder.usesImageHost(url) {
-                let decoded = try ManwaImageDecoder.decode(rawData)
-                if decoded != rawData {
-                    try decoded.write(to: destination, options: .atomic)
-                    rawData = decoded
+                for (k, v) in ruleInfo.headers {
+                    request.setValue(v, forHTTPHeaderField: k)
                 }
             }
 
-            if ImageValidator.isTextOrHtml(data: rawData) {
-                throw DownloadError.corruptedData("服务器返回了网页，未下载图片")
+            let destDir = destination.deletingLastPathComponent()
+            if !FileManager.default.fileExists(atPath: destDir.path) {
+                try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
             }
 
-            guard ImageValidator.isValidImage(data: rawData) else {
-                throw DownloadError.corruptedData("图片格式不受支持或文件损坏")
+            let delegate = ImageStreamDelegate(destination: destination, maxBytes: Self.maxPageBytes, check: check)
+            let taskBox = DownloadSessionTaskBox()
+
+            do {
+                try await withTaskCancellationHandler {
+                    try await withCheckedThrowingContinuation { continuation in
+                        delegate.attachContinuation(continuation)
+                        let task = router.startTask(request: request, delegate: delegate)
+                        taskBox.set(task)
+                    }
+                } onCancel: {
+                    taskBox.cancel()
+                }
+
+                try check()
+
+                if delegate.written == 0 {
+                    throw DownloadError.corruptedData("图片文件为空")
+                }
+                if delegate.expectedLength >= 0 && delegate.written != delegate.expectedLength {
+                    throw DownloadError.corruptedData("图片传输不完整，请重试")
+                }
+
+                var rawData = try Data(contentsOf: destination)
+                if RuleImages.isRule(url) {
+                    let decoded = try RuleImages.decode(rawData, tagged: url)
+                    if decoded != rawData {
+                        try decoded.write(to: destination, options: .atomic)
+                        rawData = decoded
+                    }
+                } else if !PublicSourceImages.sourceId(url).isEmpty || PublicSourceRegistry.contains(sourceId) {
+                    let decoded = try PublicSourceImages.decodeForSource(sourceId: sourceId, url: url, data: rawData)
+                    if decoded != rawData {
+                        try decoded.write(to: destination, options: .atomic)
+                        rawData = decoded
+                    }
+                } else if sourceId == "xinmanhua" || XinmanhuaImageDecoder.usesImageHost(url) {
+                    let decoded = try XinmanhuaImageDecoder.decode(rawData)
+                    if decoded != rawData {
+                        try decoded.write(to: destination, options: .atomic)
+                        rawData = decoded
+                    }
+                } else if sourceId == "manwa" || ManwaImageDecoder.usesImageHost(url) {
+                    let decoded = try ManwaImageDecoder.decode(rawData)
+                    if decoded != rawData {
+                        try decoded.write(to: destination, options: .atomic)
+                        rawData = decoded
+                    }
+                }
+
+                if ImageValidator.isTextOrHtml(data: rawData) {
+                    throw DownloadError.corruptedData("服务器返回了网页，未下载图片")
+                }
+
+                guard ImageValidator.isValidImage(data: rawData) else {
+                    throw DownloadError.corruptedData("图片格式不受支持或文件损坏")
+                }
+
+                let hash = DownloadModels.sha256Hex(rawData)
+                return (bytes: Int64(rawData.count), hash: hash)
+
+            } catch {
+                try? FileManager.default.removeItem(at: destination)
+                throw error
             }
-
-            let hash = DownloadModels.sha256Hex(rawData)
-            return (bytes: Int64(rawData.count), hash: hash)
-
-        } catch {
-            try? FileManager.default.removeItem(at: destination)
-            throw error
         }
     }
 }
@@ -664,9 +834,78 @@ public final class DownloadRuntime: @unchecked Sendable {
                     self.kickLocked()
                     self.lock.unlock()
                 }
-                await self.downloadTask(task)
+                await RuleCallPriority.withBackgroundPriority {
+                    await self.downloadTask(task)
+                }
             }
         }
+    }
+
+    public static func isPausableState(_ state: DownloadState) -> Bool {
+        DownloadModels.active(state)
+            || state == .queued
+            || state == .waitingNetwork
+            || state == .waitingVerification
+    }
+
+    public func findMatchingBookIdsByTitle(
+        _ rawTitle: String?,
+        extraTitlesByBookId: [String: String] = [:]
+    ) -> [String] {
+        let normalizedTarget = ComicTitleNormalizer.normalize(rawTitle)
+        guard !normalizedTarget.isEmpty else { return [] }
+        var matched: [String] = []
+        var seen = Set<String>()
+        for (bookId, title) in extraTitlesByBookId {
+            if !bookId.isEmpty,
+               ComicTitleNormalizer.normalize(title) == normalizedTarget,
+               seen.insert(bookId).inserted {
+                matched.append(bookId)
+            }
+        }
+        for t in store.list() {
+            guard !t.bookId.isEmpty, !seen.contains(t.bookId) else { continue }
+            let snapTitle = store.snapshot(id: t.bookId)?.summary.title ?? extraTitlesByBookId[t.bookId]
+            if ComicTitleNormalizer.normalize(snapTitle) == normalizedTarget {
+                seen.insert(t.bookId)
+                matched.append(t.bookId)
+            }
+        }
+        return matched
+    }
+
+    public func hasPausableTasks<S: Sequence>(forBookIds bookIds: S) -> Bool where S.Element == String {
+        let set = Set(bookIds)
+        guard !set.isEmpty else { return false }
+        return store.list().contains { set.contains($0.bookId) && Self.isPausableState($0.state) }
+    }
+
+    @discardableResult
+    public func pauseTasks<S: Sequence>(forBookIds bookIds: S) -> [String] where S.Element == String {
+        let set = Set(bookIds)
+        guard !set.isEmpty else { return [] }
+        lock.lock()
+        defer {
+            kickLocked()
+            lock.unlock()
+        }
+        var paused: [String] = []
+        for t in store.list() where set.contains(t.bookId) && Self.isPausableState(t.state) {
+            queue.pause(id: t.id)
+            paused.append(t.id)
+        }
+        return paused
+    }
+
+    public func resumeTasks<S: Sequence>(taskIds: S) where S.Element == String {
+        let set = Set(taskIds)
+        guard !set.isEmpty else { return }
+        lock.lock()
+        defer { lock.unlock() }
+        for t in store.list() where set.contains(t.id) && t.state == .pausedUser {
+            queue.resume(id: t.id)
+        }
+        kickLocked()
     }
 
     public func pauseAll() {
@@ -695,7 +934,7 @@ public final class DownloadRuntime: @unchecked Sendable {
     /// same identity. Online favorites and reading positions belong to another store.
     public func redownloadChapter(id: String) async throws {
         guard let original = store.get(id: id), original.state == .completed else { throw DownloadError.corruptedData("此章节尚未完成，请使用继续或重试") }
-        try await deleteChapter(id: id)
+        try await deleteChapterInternal(id: id, preserveBookMapping: true)
         try requeueCompleted(original)
     }
     private func requeueCompleted(_ original: DownloadTask) throws {
@@ -730,6 +969,10 @@ public final class DownloadRuntime: @unchecked Sendable {
         store.save(task: restored)
     }
     public func deleteChapter(id: String) async throws {
+        try await deleteChapterInternal(id: id, preserveBookMapping: false)
+    }
+
+    private func deleteChapterInternal(id: String, preserveBookMapping: Bool) async throws {
         try Task.checkCancellation()
         let original = try beginChapterDeletion(id)
         var success = false, changedFiles = false
@@ -757,7 +1000,12 @@ public final class DownloadRuntime: @unchecked Sendable {
         }
         if original.isFileTask, FileManager.default.fileExists(atPath: work.path) { try FileManager.default.removeItem(at: work) }
         try store.removeConfirmedTask(id)
-        if original.isFileTask { try storageLocations?.removeMapping(bookID: original.bookId) }
+        if !preserveBookMapping {
+            let hasRemainingBookTasks = store.list().contains { $0.bookId == original.bookId }
+            if original.isFileTask || !hasRemainingBookTasks {
+                try storageLocations?.removeMapping(bookID: original.bookId)
+            }
+        }
         success = true
     }
 
@@ -967,43 +1215,45 @@ public final class DownloadRuntime: @unchecked Sendable {
     private func schedulePrefetchNextChapters(currentTaskId: String, resolver: DownloadSourceResolverProtocol) {
         Task.detached(priority: .utility) { [weak self] in
             guard let self else { return }
-            let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
-            let candidates = self.store.list().filter { candidate in
-                !candidate.isFileTask &&
-                candidate.id != currentTaskId &&
-                candidate.state == .queued &&
-                candidate.nextAttempt <= nowMs &&
-                !candidate.sourceId.hasPrefix("fixture_") &&
-                !candidate.url.isEmpty
-            }
-            var prefetchedCount = 0
-            for candidate in candidates {
-                self.lock.lock()
-                let canContinue = self.isInitialized && !self.suspendedForBackground && self.isNetworkConnected && (!self.isWifiOnly || self.isWifiConnected)
-                let key = Self.prefetchKey(sourceId: candidate.sourceId, chapterUrl: candidate.url)
-                let shouldFetch = canContinue && self.prefetchedChapters[key] == nil && self.prefetchingKeys.insert(key).inserted
-                self.lock.unlock()
-                if !canContinue { return }
-                if !shouldFetch { continue }
-                defer {
-                    self.lock.lock()
-                    self.prefetchingKeys.remove(key)
-                    self.lock.unlock()
+            await RuleCallPriority.withBackgroundPriority {
+                let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+                let candidates = self.store.list().filter { candidate in
+                    !candidate.isFileTask &&
+                    candidate.id != currentTaskId &&
+                    candidate.state == .queued &&
+                    candidate.nextAttempt <= nowMs &&
+                    !candidate.sourceId.hasPrefix("fixture_") &&
+                    !candidate.url.isEmpty
                 }
-                if let page = try? await resolver.resolveChapter(sourceId: candidate.sourceId, url: candidate.url),
-                   !page.imageUrls.isEmpty {
+                var prefetchedCount = 0
+                for candidate in candidates {
                     self.lock.lock()
-                    self.prefetchedChapters[key] = page
-                    self.prefetchOrder.removeAll { $0 == key }
-                    self.prefetchOrder.append(key)
-                    while self.prefetchOrder.count > 16 {
-                        let oldest = self.prefetchOrder.removeFirst()
-                        self.prefetchedChapters.removeValue(forKey: oldest)
+                    let canContinue = self.isInitialized && !self.suspendedForBackground && self.isNetworkConnected && (!self.isWifiOnly || self.isWifiConnected)
+                    let key = Self.prefetchKey(sourceId: candidate.sourceId, chapterUrl: candidate.url)
+                    let shouldFetch = canContinue && self.prefetchedChapters[key] == nil && self.prefetchingKeys.insert(key).inserted
+                    self.lock.unlock()
+                    if !canContinue { return }
+                    if !shouldFetch { continue }
+                    defer {
+                        self.lock.lock()
+                        self.prefetchingKeys.remove(key)
+                        self.lock.unlock()
                     }
-                    self.lock.unlock()
+                    if let page = try? await resolver.resolveChapter(sourceId: candidate.sourceId, url: candidate.url),
+                       !page.imageUrls.isEmpty {
+                        self.lock.lock()
+                        self.prefetchedChapters[key] = page
+                        self.prefetchOrder.removeAll { $0 == key }
+                        self.prefetchOrder.append(key)
+                        while self.prefetchOrder.count > 16 {
+                            let oldest = self.prefetchOrder.removeFirst()
+                            self.prefetchedChapters.removeValue(forKey: oldest)
+                        }
+                        self.lock.unlock()
+                    }
+                    prefetchedCount += 1
+                    if prefetchedCount >= 2 { break }
                 }
-                prefetchedCount += 1
-                if prefetchedCount >= 2 { break }
             }
         }
     }
@@ -1021,7 +1271,10 @@ public final class DownloadRuntime: @unchecked Sendable {
             && !uniqueUrls.contains(where: { $0.contains("fixture.invalid") })
             && !ProcessInfo.processInfo.arguments.contains("--ui-testing")
         let concurrency = canUseConcurrentPageWorkers ? max(1, min(Self.pageWorkersPerChapter, total)) : 1
-        let referer = resolver.resolveReferer(sourceId: task.sourceId, chapterUrl: task.url)
+        let memberReferer = resolver.resolveSource(sourceId: task.sourceId)?.referer(forUrl: task.url)
+        let referer = (memberReferer?.isEmpty == false)
+            ? memberReferer!
+            : resolver.resolveReferer(sourceId: task.sourceId, chapterUrl: task.url)
 
         if concurrency == 1 {
             var completedPages: [DownloadPage] = []

@@ -18,7 +18,9 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
     private var configFeedback = ""
     private var sourcesObserver: NSObjectProtocol?
     private var configBusy: Bool { configTask != nil || configPickerPurpose != nil }
-    private var ids: [String] { environment.sourcePreferences.orderedIDs }
+    private var ids: [String] {
+        environment.sourcePreferences.orderedIDs.filter { !environment.ruleCatalog.isHiddenBackup($0) }
+    }
     init(environment: AppEnvironment, onVerified: (() -> Void)? = nil) {
         self.environment = environment; self.onVerified = onVerified
         super.init(style: .insetGrouped)
@@ -31,7 +33,7 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
     }
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "站源管理"
+        SecondaryHeaderBar.apply(to: self, title: "站源管理")
         tableView.backgroundColor = Palette.background
         tableView.setEditing(true, animated: false)
         tableView.allowsSelectionDuringEditing = true
@@ -91,7 +93,7 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
             } else {
                 cell.textLabel?.text = "规则与批量管理"
                 cell.accessibilityIdentifier = "source.rule.manager"
-                let ruleCount = environment.ruleCatalog.entries().filter { !$0.removed && !environment.ruleCatalog.hidden($0.rule.id) }.count
+                let ruleCount = environment.ruleCatalog.visibleEntries().filter { !$0.removed && !environment.ruleCatalog.hidden($0.rule.id) }.count
                 cell.detailTextLabel?.text = ruleCount > 0 ? "已安装 \(ruleCount) 个规则 · 支持订阅更新与批量管理" : "添加规则订阅、从文件导入或批量管理"
             }
             return cell
@@ -479,11 +481,19 @@ final class SourceSettingsViewController: UITableViewController, UIDocumentPicke
         tableView.isUserInteractionEnabled = !configBusy
         let item: UIBarButtonItem
         if configBusy {
-            item = UIBarButtonItem(title: "取消", style: .plain, target: self, action: #selector(cancelConfigOperation))
-            item.accessibilityIdentifier = "source.config.cancel"
+            item = SecondaryHeaderBar.textButton(
+                title: "取消",
+                accessibilityIdentifier: "source.config.cancel",
+                target: self,
+                action: #selector(cancelConfigOperation)
+            )
         } else {
-            item = UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), style: .plain, target: self, action: #selector(showMoreMenu))
-            item.accessibilityLabel = "站源管理操作"; item.accessibilityIdentifier = "source.config.more"
+            item = SecondaryHeaderBar.moreButton(
+                accessibilityLabel: "站源管理操作",
+                accessibilityIdentifier: "source.config.more",
+                target: self,
+                action: #selector(showMoreMenu)
+            )
         }
         navigationItem.rightBarButtonItems = [item]; tableView.reloadData()
     }

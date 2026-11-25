@@ -42,7 +42,7 @@ public struct UsageStatsState: Codable, Equatable, Sendable {
 
 public final class UsageStatsClient: @unchecked Sendable {
     public static let shared = UsageStatsClient()
-    public static let endpoint = "https://weifeng.cloud/xx-comic/telemetry/collect"
+    public static let endpoint = "https://weifeng.cloud/telemetry/collect"
 
     private let lock = NSLock()
     private let fileURL: URL

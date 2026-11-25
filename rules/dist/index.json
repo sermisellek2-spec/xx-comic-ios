@@ -1,10 +1,76 @@
 {
   "schema": "xx-comic.rule-repository",
   "version": 1,
+  "retiredSources": [
+    {
+      "id": "baozimh",
+      "name": "包子漫画"
+    },
+    {
+      "id": "mhua5",
+      "name": "漫画屋"
+    },
+    {
+      "id": "duya",
+      "name": "毒牙漫画"
+    },
+    {
+      "id": "xcomic",
+      "name": "XCOMIC"
+    },
+    {
+      "id": "mh250",
+      "name": "250漫画"
+    },
+    {
+      "id": "xiuxiu",
+      "name": "羞羞漫画"
+    },
+    {
+      "id": "aimi",
+      "name": "艾米漫画"
+    },
+    {
+      "id": "comic51",
+      "name": "51漫画"
+    },
+    {
+      "id": "favcomic",
+      "name": "喜漫漫画"
+    },
+    {
+      "id": "waiwai",
+      "name": "歪歪漫画"
+    },
+    {
+      "id": "hiperdex",
+      "name": "HiperDEX"
+    },
+    {
+      "id": "momic",
+      "name": "MOMIC"
+    },
+    {
+      "id": "jcomic",
+      "name": "JComic"
+    },
+    {
+      "id": "fuman",
+      "name": "腐漫"
+    },
+    {
+      "id": "pipigou_bika",
+      "name": "哔咔庇护所"
+    },
+    {
+      "id": "cl1024_pic",
+      "name": "1024图区"
+    }
+  ],
   "packages": [
     {
       "url": "xx-comic-all-sources.xxrules.json",
-      "sha256": "5827d937922b07375f174ef547c8830ec9fb96ac325f4ec5bd261ec030fd0917"
+      "sha256": "74025dfec4b5f8985e863dfda130b3ff8397ab4ccc9404d5b617fe33452086aa"
     }
   ]
 }

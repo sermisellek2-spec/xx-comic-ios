@@ -24,7 +24,7 @@ final class BuiltinSourceRegistrationTests: XCTestCase {
         let registered = AppEnvironment.createSources(preferences: preferences, browserSession: nil)
         let active = registered.filter { !BuiltinSourceCatalog.retiredIDs.contains($0.id) }
         XCTAssertEqual(active.map(\.id), preferences.orderedIDs)
-        XCTAssertEqual(active.count, 51)
+        XCTAssertEqual(active.count, 61)
         // Display names from the frozen Android catalog, using a fresh preference suite.
         XCTAssertEqual(active.map(\.name), [
             "漫画160",
@@ -49,6 +49,7 @@ final class BuiltinSourceRegistrationTests: XCTestCase {
             "新漫画-A",
             "再漫画",
             "瓜子漫画",
+            "卡拉漫画",
             "动漫屋",
             "极速漫画",
             "漫画人",
@@ -77,7 +78,16 @@ final class BuiltinSourceRegistrationTests: XCTestCase {
             "喜漫漫画",
             "天天看漫画",
             "来漫画",
-            "L漫画"
+            "L漫画",
+            "MangaBZ",
+            "好看漫画",
+            "311漫画",
+            "飞翔漫画",
+            "MangaDex",
+            "XCOMIC",
+            "嬉皮漫画",
+            "nhentai",
+            "绅士漫画 WNACG"
         ])
         XCTAssertEqual(Set(registered.map(\.id)).count, registered.count)
         XCTAssertEqual(Set(registered.map(\.id)), Set(BuiltinSourceCatalog.activeIDs + ["baozimh", "mhua5"]))

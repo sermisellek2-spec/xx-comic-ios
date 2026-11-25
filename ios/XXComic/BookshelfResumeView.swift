@@ -35,8 +35,14 @@ final class BookshelfResumeView: UIControl {
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
 
-    func configure(comic: ComicSummary, chapterIndex: Int, environment: AppEnvironment) {
-        heading.text = comic.title; position.text = "上次看到 · 第 \(chapterIndex + 1) 话"
+    func configure(comic: ComicSummary, chapterIndex: Int, chapterTitle: String? = nil, environment: AppEnvironment) {
+        heading.text = comic.title
+        let trimmed = chapterTitle?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !trimmed.isEmpty {
+            position.text = "上次看到 · \(trimmed)"
+        } else {
+            position.text = "上次看到 · 第 \(chapterIndex + 1) 话"
+        }
         accessibilityValue = comic.title + "，" + (position.text ?? "")
         cover.loadCover(comic, referer: environment.source(for: comic)?.referer ?? "", library: environment.localLibrary)
     }

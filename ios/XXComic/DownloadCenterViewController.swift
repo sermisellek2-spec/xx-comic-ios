@@ -32,7 +32,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "下载中心"
+        SecondaryHeaderBar.apply(to: self, title: "下载中心")
         view.backgroundColor = Palette.background
 
         setupNavigationBar()
@@ -42,6 +42,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        SecondaryHeaderBar.configureNavigationBarAppearance(for: navigationController)
         loadTasks()
         startProgressTimer()
     }
@@ -53,7 +54,12 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
 
     private func setupNavigationBar() {
         let wifiTitle = environment.downloadRuntime.isWifiOnly ? "仅 Wi-Fi" : "全网络"
-        let wifiItem = UIBarButtonItem(title: wifiTitle, style: .plain, target: self, action: #selector(toggleWifiOnly))
+        let wifiItem = SecondaryHeaderBar.textButton(
+            title: wifiTitle,
+            accessibilityIdentifier: "download.network.toggle",
+            target: self,
+            action: #selector(toggleWifiOnly)
+        )
         navigationItem.rightBarButtonItem = wifiItem
     }
 
@@ -61,6 +67,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
         let runtime = environment.downloadRuntime, enabled = !runtime.isWifiOnly
         let defaults = environment.defaults
         navigationItem.rightBarButtonItem?.isEnabled = false
+        (navigationItem.rightBarButtonItem?.customView as? UIControl)?.isEnabled = false
         mutateQueue({ runtime.updateWifiOnly(enabled) }) { [weak self] in
             defaults.set(enabled, forKey: "downloads.wifiOnly")
             guard let self else { return }
@@ -255,6 +262,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
         if allTasks.isEmpty {
             groups = []
             emptyView.isHidden = false
+            SecondaryHeaderBar.updateMeta(nil, on: self)
             tableView.reloadData()
             return
         }
@@ -279,6 +287,7 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
         }
         guard groups != nextGroups else { return }
         groups = nextGroups
+        SecondaryHeaderBar.updateMeta("\(groups.count) 本", on: self)
         tableView.reloadData()
     }
 
@@ -340,6 +349,55 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
         groups[section].title
     }
 
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let group = groups[section]
+        let hasExportable = group.tasks.contains { !$0.isFileTask && $0.state == .completed }
+
+        let header = UIView()
+        let titleLabel = UILabel()
+        titleLabel.text = group.title
+        titleLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+        titleLabel.textColor = Palette.text2
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        header.addSubview(titleLabel)
+
+        let exportBtn = UIButton(type: .system)
+        exportBtn.setTitle("导出图片", for: .normal)
+        exportBtn.titleLabel?.font = .systemFont(ofSize: 12, weight: .semibold)
+        exportBtn.setTitleColor(Palette.accentText, for: .normal)
+        exportBtn.backgroundColor = Palette.accentSoft
+        exportBtn.layer.cornerRadius = 12
+        exportBtn.contentEdgeInsets = UIEdgeInsets(top: 4, left: 10, bottom: 4, right: 10)
+        exportBtn.isHidden = !hasExportable
+        exportBtn.accessibilityIdentifier = "download.book.export.\(group.bookId)"
+        exportBtn.accessibilityLabel = "导出《\(group.title)》图片"
+        exportBtn.translatesAutoresizingMaskIntoConstraints = false
+        exportBtn.setContentHuggingPriority(.required, for: .horizontal)
+        exportBtn.setContentCompressionResistancePriority(.required, for: .horizontal)
+        exportBtn.addAction(UIAction { [weak self] _ in
+            guard let self else { return }
+            DownloadBookExportController.present(from: self, environment: self.environment, bookId: group.bookId)
+        }, for: .touchUpInside)
+        header.addSubview(exportBtn)
+
+        NSLayoutConstraint.activate([
+            header.heightAnchor.constraint(greaterThanOrEqualToConstant: 36),
+            titleLabel.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 4),
+            titleLabel.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: exportBtn.leadingAnchor, constant: -8),
+
+            exportBtn.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -4),
+            exportBtn.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            exportBtn.heightAnchor.constraint(greaterThanOrEqualToConstant: 28)
+        ])
+        return header
+    }
+
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        38
+    }
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         groups[section].tasks.count
     }
@@ -384,10 +442,21 @@ final class DownloadCenterViewController: UIViewController, UITableViewDataSourc
         let task = groups[indexPath.section].tasks[indexPath.row]
         guard task.state == .completed else { return nil }
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
-            UIMenu(title: task.title, children: [
-                UIAction(title: "删除此章", attributes: .destructive) { _ in self?.confirmCompletedAction(task, redownload: false) },
-                UIAction(title: "重新下载此章") { _ in self?.confirmCompletedAction(task, redownload: true) }
-            ])
+            var actions: [UIAction] = []
+            if !task.isFileTask {
+                actions.append(UIAction(title: "导出图片", image: ParityIcon.folder.image(size: 18)) { [weak self] _ in
+                    guard let self else { return }
+                    DownloadBookExportController.present(
+                        from: self,
+                        environment: self.environment,
+                        bookId: task.bookId,
+                        initialChapterIds: [task.id]
+                    )
+                })
+            }
+            actions.append(UIAction(title: "删除此章", attributes: .destructive) { _ in self?.confirmCompletedAction(task, redownload: false) })
+            actions.append(UIAction(title: "重新下载此章") { _ in self?.confirmCompletedAction(task, redownload: true) })
+            return UIMenu(title: task.title, children: actions)
         }
     }
     func tableView(_ tableView: UITableView, willDisplayContextMenu configuration: UIContextMenuConfiguration,

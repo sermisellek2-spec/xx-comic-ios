@@ -320,9 +320,9 @@ public enum SourceConfigDefaults {
         SourceConfigItem(
             id: "manwa",
             name: "漫蛙",
-            domain: "manwace.cc",
-            baseUrl: "https://manwace.cc",
-            referer: "https://manwace.cc/",
+            domain: "manwadz.cc",
+            baseUrl: "https://manwadz.cc",
+            referer: "https://manwadz.cc/",
             latestPath: "",
             searchPath: "/api/search?type=mh&page={page}&pageSize=20&keyword={keyword}",
             categoryPath: "/api/cate",
@@ -335,7 +335,7 @@ public enum SourceConfigDefaults {
                 "chapters": "/api/comic/{comicId}/chapters",
                 "chapterInfo": "/api/comic/chapter/info/{chapterId}",
                 "images": "/api/comic/image/{chapterId}?page={page}&page_size=100&image_source={imageSource}",
-                "imageSource": "https://tu.mwzu.cc",
+                "imageSource": "https://182.16.62.30:8088",
                 "imageKey": "0B6666A0-BB59-1381-B746-a0E4C9AC"
             ],
             filters: [:]

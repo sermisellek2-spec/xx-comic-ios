@@ -41,12 +41,18 @@ final class LocalStorageViewController: UIViewController, UITableViewDataSource,
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "本地存储管理"
+        SecondaryHeaderBar.apply(to: self, title: "本地存储管理")
         view.backgroundColor = Palette.background
 
         setupViews()
         NotificationCenter.default.addObserver(self, selector: #selector(reloadTapped), name: AppEnvironment.libraryChanged, object: nil)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "arrow.clockwise"), style: .plain, target: self, action: #selector(reloadTapped))
+        navigationItem.rightBarButtonItem = SecondaryHeaderBar.iconButton(
+            icon: .refresh,
+            accessibilityLabel: "刷新空间统计",
+            accessibilityIdentifier: "storage.refresh",
+            target: self,
+            action: #selector(reloadTapped)
+        )
     }
 
     override func viewWillAppear(_ animated: Bool) {

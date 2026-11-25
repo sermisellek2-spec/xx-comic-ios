@@ -29,6 +29,7 @@
         </dict>
     </dict>
     <key>ITSAppUsesNonExemptEncryption</key><false/>
+    <key>NSPhotoLibraryAddUsageDescription</key><string>保存分享海报或导出的漫画图片到系统相册</string>
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>

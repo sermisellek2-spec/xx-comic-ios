@@ -1,28 +1,89 @@
 import UIKit
 import ImageIO
 import CoreImage
+import CryptoKit
 import ComicCore
 
 @MainActor
 final class RemoteImageView: UIImageView {
     static var imageUrlResolver: ((_ imageUrl: String, _ force: Bool) async throws -> String)?
+    static var refererResolver: ((_ sourceId: String, _ url: String) -> String?)?
+    static var coverMaxDimension: Int = 600
+    private(set) static var diskCacheTrimmer: ImageDiskCacheTrimmer?
+
+    private static let coverSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.httpMaximumConnectionsPerHost = 4
+        config.timeoutIntervalForRequest = 20
+        config.urlCache = .shared
+        return URLSession(configuration: config)
+    }()
+
+    private static let readerSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.httpMaximumConnectionsPerHost = 8
+        config.timeoutIntervalForRequest = 30
+        config.httpShouldUsePipelining = true
+        config.urlCache = .shared
+        return URLSession(configuration: config)
+    }()
+
+    private static let inFlightBytesCoalescer = CoverInFlightCoalescer<Data>()
+
     private static let cache: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
         cache.totalCostLimit = 64 * 1024 * 1024
         return cache
     }()
     private static var cacheGeneration = UUID()
+
+    static func diskCacheDirectory(in appDirectory: URL) -> URL {
+        appDirectory.appendingPathComponent("cache", isDirectory: true)
+            .appendingPathComponent("images", isDirectory: true)
+    }
+
+    @discardableResult
+    static func configureDiskCache(directory: URL) -> ImageDiskCacheTrimmer {
+        let trimmer = ImageDiskCacheTrimmer(cacheDir: directory)
+        diskCacheTrimmer = trimmer
+        return trimmer
+    }
+
     static func clearMemoryCache() {
         cacheGeneration = UUID()
         cache.removeAllObjects()
     }
+
+    static func clearDiskCache() {
+        cacheGeneration = UUID()
+        guard let trimmer = diskCacheTrimmer else { return }
+        clearDiskCacheFiles(using: trimmer)
+    }
+
+    nonisolated static func clearDiskCacheFiles(using trimmer: ImageDiskCacheTrimmer) {
+        let dir = trimmer.cacheDir
+        let fm = FileManager.default
+        if let urls = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey], options: []) {
+            for url in urls {
+                if let vals = try? url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]),
+                   vals.isRegularFile == true,
+                   vals.isSymbolicLink != true {
+                    try? fm.removeItem(at: url)
+                }
+            }
+        }
+        trimmer.resetTrackedBytes(0)
+    }
+
     static func cachedReaderImage(forKey key: String) -> UIImage? {
         cache.object(forKey: ("virtual\n" + key) as NSString)
     }
+
     static func cacheReaderImage(_ image: UIImage, forKey key: String) {
         let cost = max(1, Int(image.size.width * image.size.height * image.scale * image.scale * 4))
         cache.setObject(image, forKey: ("virtual\n" + key) as NSString, cost: cost)
     }
+
     private static func resolvedCacheKey(url text: String, referer: String, reader: Bool) -> NSString {
         var cacheIdentity: String
         if RuleImages.isRule(text) {
@@ -65,9 +126,16 @@ final class RemoteImageView: UIImageView {
         return false
     }
 
+    nonisolated private static func diskCacheFileURL(in dir: URL, key: String) -> URL {
+        let digest = SHA256.hash(data: Data(key.utf8))
+        let hex = digest.map { String(format: "%02x", $0) }.joined()
+        return dir.appendingPathComponent(hex + ".img")
+    }
+
     private static func fetchDecodedImageBytes(
         url text: String,
         referer: String,
+        reader: Bool = true,
         localPageImage: (@Sendable (URL) throws -> Data)? = nil
     ) async throws -> (data: Data, resolvedText: String) {
         let initialURLString = RuleImages.isRule(text) ? RuleImages.strip(text) : text
@@ -75,18 +143,21 @@ final class RemoteImageView: UIImageView {
               ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") || (["xxcomic-epub", "xxcomic-pdf", "xxcomic-folder"].contains(url.scheme ?? "") && localPageImage != nil) else {
             throw URLError(.unsupportedURL)
         }
-        let effectiveReferer = PublicSourceImages.referer(text, fallback: referer)
+        var effectiveReferer = PublicSourceImages.referer(text, fallback: referer)
+        if effectiveReferer.isEmpty, let dynamicRef = Self.refererResolver?("", initialURLString), !dynamicRef.isEmpty {
+            effectiveReferer = dynamicRef
+        }
         var request = URLRequest(url: url)
         if !effectiveReferer.isEmpty {
             request.setValue(effectiveReferer, forHTTPHeaderField: "Referer")
         }
         request.setValue("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
-        request.setValue("image/webp,image/apng,image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
+        request.setValue("image/avif,image/webp,image/apng,image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
         request.setValue("zh-CN,zh;q=0.9,en;q=0.8", forHTTPHeaderField: "Accept-Language")
         request.setValue("image", forHTTPHeaderField: "Sec-Fetch-Dest")
         request.setValue("no-cors", forHTTPHeaderField: "Sec-Fetch-Mode")
         request.setValue("cross-site", forHTTPHeaderField: "Sec-Fetch-Site")
-        request.timeoutInterval = 30
+        request.timeoutInterval = reader ? 30 : 20
         if ["xxcomic-epub", "xxcomic-pdf", "xxcomic-folder"].contains(url.scheme ?? "") || (url.isFileURL && localPageImage != nil) {
             guard let localPageImage else { throw URLError(.unsupportedURL) }
             let worker = Task.detached(priority: .userInitiated) {
@@ -113,89 +184,213 @@ final class RemoteImageView: UIImageView {
             let decoded = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
             return (decoded, text)
         } else {
-            let isRule = RuleImages.isRule(text)
-            let isSigned = isRule || text.contains("#xx-")
-            let maxAttempts = isSigned ? 2 : 1
-            let hasResolver = Self.imageUrlResolver != nil
-            var lastError: Error = URLError(.badServerResponse)
-            for attempt in 0..<maxAttempts {
-                try Task.checkCancellation()
-                if attempt > 0 && isRule {
-                    RuleImages.invalidateResolved(text)
-                }
-                do {
-                    let resolvedText: String
-                    if isSigned, let resolver = Self.imageUrlResolver {
-                        resolvedText = try await resolver(text, attempt > 0)
-                    } else {
-                        resolvedText = isRule ? text : RuleImages.strip(PublicSourceImages.strip(text))
+            let trimmer = Self.diskCacheTrimmer
+            let cacheIdentityKey = String(Self.resolvedCacheKey(url: text, referer: effectiveReferer, reader: reader))
+            if let trimmer, !RuleImages.isRule(text) {
+                let fileURL = Self.diskCacheFileURL(in: trimmer.cacheDir, key: cacheIdentityKey)
+                let cachedDisk: Data? = await Task.detached(priority: .utility) {
+                    guard FileManager.default.fileExists(atPath: fileURL.path),
+                          let data = try? Data(contentsOf: fileURL),
+                          !data.isEmpty else {
+                        return nil
                     }
-                    let ruleInfo = RuleImages.isRule(resolvedText) ? (try? RuleImages.requestHeaders(tagged: resolvedText, fallbackReferer: effectiveReferer)) : nil
-                    let targetUrlText = ruleInfo?.url ?? RuleImages.strip(PublicSourceImages.strip(resolvedText))
-                    guard let resolvedURL = URL(string: targetUrlText),
-                          let scheme = resolvedURL.scheme?.lowercased(),
-                          scheme == "https" || scheme == "http" else {
-                        throw URLError(.badURL)
-                    }
-                    if scheme == "http" && (!isRule || !hasResolver) {
-                        guard let host = resolvedURL.host, isAllowedCleartextImageHost(host) else {
-                            throw URLError(.appTransportSecurityRequiresSecureConnection)
-                        }
-                    }
-                    var req = request
-                    req.url = resolvedURL
-                    let ref = ruleInfo?.referer ?? PublicSourceImages.referer(resolvedText, fallback: effectiveReferer)
-                    if !ref.isEmpty {
-                        req.setValue(ref, forHTTPHeaderField: "Referer")
-                    }
-                    if let ruleInfo {
-                        if let cookieHeader = ruleInfo.cookieHeader, !cookieHeader.isEmpty {
-                            req.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
-                        }
-                        for (k, v) in ruleInfo.headers {
-                            req.setValue(v, forHTTPHeaderField: k)
-                        }
-                    }
-                    let (bytes, response) = try await URLSession.shared.data(for: req)
-                    try Task.checkCancellation()
-                    guard let http = response as? HTTPURLResponse else {
-                        throw URLError(.badServerResponse)
-                    }
-                    guard (200..<300).contains(http.statusCode), bytes.count <= 40 * 1024 * 1024 else {
-                        throw URLError(.badServerResponse)
-                    }
-                    if isRule && RuleImages.isNonImageContentType(http.value(forHTTPHeaderField: "Content-Type")) {
-                        throw URLError(.cannotDecodeContentData)
-                    }
-                    let decodeTarget = RuleImages.isRule(resolvedText) ? resolvedText : text
-                    let worker = Task.detached(priority: .userInitiated) { () throws -> Data in
-                        try Task.checkCancellation()
-                        let out = try Self.decodeImageBytes(bytes, for: decodeTarget)
-                        if isRule {
-                            guard RuleImageData.isImage(out) || CGImageSourceCreateWithData(out as CFData, nil) != nil else {
-                                throw URLError(.cannotDecodeContentData)
-                            }
-                        }
-                        return out
-                    }
-                    let decoded = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
-                    return (decoded, decodeTarget)
-                } catch {
-                    if error is CancellationError || Task.isCancelled {
-                        throw error
-                    }
-                    lastError = error
-                    if attempt + 1 < maxAttempts {
-                        continue
-                    }
+                    trimmer.touchAccessTimeIfNeeded(at: fileURL)
+                    return data
+                }.value
+                if let cachedDisk {
+                    return (cachedDisk, text)
                 }
             }
-            throw lastError
+
+            let session = reader ? Self.readerSession : Self.coverSession
+            let isRule = RuleImages.isRule(text)
+            let isSigned = isRule || text.contains("#xx-")
+            let isManwa = !isRule && ManwaImageDecoder.usesImageHost(text)
+            let maxAttempts = isSigned ? 2 : (isManwa ? (ManwaImageDecoder.imageHostCount + 1) : 1)
+            let hasResolver = Self.imageUrlResolver != nil
+            let refResolver = Self.refererResolver
+
+            let coalescedKey = cacheIdentityKey
+            let fetchedData: Data
+            if !isSigned && !isManwa {
+                fetchedData = try await fetchWithCoalescer(key: coalescedKey) {
+                    try await Self.performNetworkFetch(
+                        text: text,
+                        effectiveReferer: effectiveReferer,
+                        baseRequest: request,
+                        session: session,
+                        isRule: isRule,
+                        isSigned: isSigned,
+                        isManwa: isManwa,
+                        maxAttempts: maxAttempts,
+                        hasResolver: hasResolver,
+                        refererResolver: refResolver,
+                        trimmer: trimmer,
+                        diskCacheKey: cacheIdentityKey
+                    ).data
+                }
+                return (fetchedData, text)
+            }
+
+            return try await Self.performNetworkFetch(
+                text: text,
+                effectiveReferer: effectiveReferer,
+                baseRequest: request,
+                session: session,
+                isRule: isRule,
+                isSigned: isSigned,
+                isManwa: isManwa,
+                maxAttempts: maxAttempts,
+                hasResolver: hasResolver,
+                refererResolver: refResolver,
+                trimmer: trimmer,
+                diskCacheKey: cacheIdentityKey
+            )
         }
     }
 
+    private static func fetchWithCoalescer(
+        key: String,
+        operation: @escaping @Sendable () async throws -> Data
+    ) async throws -> Data {
+        try await withCheckedThrowingContinuation { continuation in
+            let epoch = inFlightBytesCoalescer.registerLeader(key: key) { value, error, cancelled in
+                if let value {
+                    continuation.resume(returning: value)
+                } else if cancelled {
+                    continuation.resume(throwing: CancellationError())
+                } else {
+                    continuation.resume(throwing: error ?? URLError(.badServerResponse))
+                }
+            }
+            guard epoch >= 0 else { return }
+            Task.detached(priority: .userInitiated) {
+                do {
+                    let result = try await operation()
+                    inFlightBytesCoalescer.finishForEpoch(key: key, expectedEpoch: epoch, value: result, error: nil, cancelled: false)
+                } catch is CancellationError {
+                    inFlightBytesCoalescer.finishForEpoch(key: key, expectedEpoch: epoch, value: nil, error: nil, cancelled: true)
+                } catch {
+                    inFlightBytesCoalescer.finishForEpoch(key: key, expectedEpoch: epoch, value: nil, error: error, cancelled: false)
+                }
+            }
+        }
+    }
+
+    private static func performNetworkFetch(
+        text: String,
+        effectiveReferer: String,
+        baseRequest: URLRequest,
+        session: URLSession,
+        isRule: Bool,
+        isSigned: Bool,
+        isManwa: Bool,
+        maxAttempts: Int,
+        hasResolver: Bool,
+        refererResolver: ((_ sourceId: String, _ url: String) -> String?)?,
+        trimmer: ImageDiskCacheTrimmer?,
+        diskCacheKey: String
+    ) async throws -> (data: Data, resolvedText: String) {
+        var lastError: Error = URLError(.badServerResponse)
+        for attempt in 0..<maxAttempts {
+            try Task.checkCancellation()
+            if attempt > 0 && isRule {
+                RuleImages.invalidateResolved(text)
+            }
+            do {
+                let resolvedText: String
+                if isSigned, let resolver = Self.imageUrlResolver {
+                    resolvedText = try await resolver(text, attempt > 0)
+                } else if isManwa {
+                    resolvedText = ManwaImageDecoder.resolveImageUrl(text, attempt: attempt)
+                } else {
+                    resolvedText = isRule ? text : RuleImages.strip(PublicSourceImages.strip(text))
+                }
+                let ruleInfo = RuleImages.isRule(resolvedText) ? (try? RuleImages.requestHeaders(tagged: resolvedText, fallbackReferer: effectiveReferer)) : nil
+                let targetUrlText = ruleInfo?.url ?? RuleImages.strip(PublicSourceImages.strip(resolvedText))
+                guard let resolvedURL = URL(string: targetUrlText),
+                      let scheme = resolvedURL.scheme?.lowercased(),
+                      scheme == "https" || scheme == "http" else {
+                    throw URLError(.badURL)
+                }
+                if scheme == "http" && (!isRule || !hasResolver) {
+                    guard let host = resolvedURL.host, isAllowedCleartextImageHost(host) else {
+                        throw URLError(.appTransportSecurityRequiresSecureConnection)
+                    }
+                }
+                var req = baseRequest
+                req.url = resolvedURL
+                var ref = ruleInfo?.referer ?? PublicSourceImages.referer(resolvedText, fallback: effectiveReferer)
+                if ref.isEmpty, let dynamicRef = refererResolver?("", targetUrlText), !dynamicRef.isEmpty {
+                    ref = dynamicRef
+                }
+                if !ref.isEmpty {
+                    req.setValue(ref, forHTTPHeaderField: "Referer")
+                }
+                if let ruleInfo {
+                    if let cookieHeader = ruleInfo.cookieHeader, !cookieHeader.isEmpty {
+                        req.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+                    }
+                    for (k, v) in ruleInfo.headers {
+                        req.setValue(v, forHTTPHeaderField: k)
+                    }
+                }
+                let (bytes, response) = try await session.data(for: req)
+                try Task.checkCancellation()
+                guard let http = response as? HTTPURLResponse else {
+                    throw URLError(.badServerResponse)
+                }
+                guard (200..<300).contains(http.statusCode), bytes.count <= 40 * 1024 * 1024 else {
+                    throw URLError(.badServerResponse)
+                }
+                if isRule && RuleImages.isNonImageContentType(http.value(forHTTPHeaderField: "Content-Type")) {
+                    throw URLError(.cannotDecodeContentData)
+                }
+                let decodeTarget = RuleImages.isRule(resolvedText) ? resolvedText : text
+                let worker = Task.detached(priority: .userInitiated) { () throws -> Data in
+                    try Task.checkCancellation()
+                    let out = try Self.decodeImageBytes(bytes, for: decodeTarget)
+                    if isRule {
+                        guard RuleImageData.isImage(out) || CGImageSourceCreateWithData(out as CFData, nil) != nil else {
+                            throw URLError(.cannotDecodeContentData)
+                        }
+                    }
+                    return out
+                }
+                let decoded = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+                if isManwa {
+                    ManwaImageDecoder.markImageHostSuccess(targetUrlText)
+                }
+                if let trimmer, !isRule, !decoded.isEmpty {
+                    let fileURL = Self.diskCacheFileURL(in: trimmer.cacheDir, key: diskCacheKey)
+                    Task.detached(priority: .utility) {
+                        do {
+                            try FileManager.default.createDirectory(at: trimmer.cacheDir, withIntermediateDirectories: true)
+                            let previousSize: Int64 = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize).map { Int64($0) } ?? 0
+                            try AtomicFileOps.writeAtomically(decoded, to: fileURL)
+                            trimmer.recordWrite(deltaBytes: Int64(decoded.count) - previousSize)
+                            trimmer.trimIfNeededAsync()
+                        } catch {
+                            // Disk cache write is best-effort.
+                        }
+                    }
+                }
+                return (decoded, decodeTarget)
+            } catch {
+                if error is CancellationError || Task.isCancelled {
+                    throw error
+                }
+                lastError = error
+                if attempt + 1 < maxAttempts {
+                    continue
+                }
+            }
+        }
+        throw lastError
+    }
+
     static func fetchImageData(url text: String, referer: String, localPageImage: (@Sendable (URL) throws -> Data)? = nil) async throws -> Data {
-        try await fetchDecodedImageBytes(url: text, referer: referer, localPageImage: localPageImage).data
+        try await fetchDecodedImageBytes(url: text, referer: referer, reader: true, localPageImage: localPageImage).data
     }
 
     nonisolated private static func decodeImageBytes(_ data: Data, for text: String) throws -> Data {
@@ -224,13 +419,25 @@ final class RemoteImageView: UIImageView {
             return cached
         }
         let cacheToken = Self.cacheGeneration
-        let (imageData, effectiveText) = try await fetchDecodedImageBytes(url: text, referer: referer, localPageImage: localPageImage)
+        let (imageData, effectiveText) = try await fetchDecodedImageBytes(url: text, referer: referer, reader: reader, localPageImage: localPageImage)
         try Task.checkCancellation()
+        let coverLimit = Self.coverMaxDimension
         let decoder = Task.detached(priority: .userInitiated) { () throws -> UIImage? in
             try Task.checkCancellation()
-            guard let source = CGImageSourceCreateWithData(imageData as CFData, nil) else { return nil }
+            guard let source = CGImageSourceCreateWithData(imageData as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) else {
+                return nil
+            }
+            if !reader {
+                return try Self.decodeCoverCGImage(
+                    from: source,
+                    effectiveText: effectiveText,
+                    originalText: text,
+                    coverLimit: coverLimit
+                ).map { UIImage(cgImage: $0) }
+            }
+
             var maximumDimension = 4096
-            if reader, let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+            if let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
                let width = properties[kCGImagePropertyPixelWidth] as? NSNumber,
                let height = properties[kCGImagePropertyPixelHeight] as? NSNumber,
                width.doubleValue > 0, height.doubleValue > 0 {
@@ -242,23 +449,11 @@ final class RemoteImageView: UIImageView {
                 kCGImageSourceThumbnailMaxPixelSize: maximumDimension,
                 kCGImageSourceCreateThumbnailWithTransform: true
             ] as CFDictionary) else { return nil }
-            let shouldRestore = reader
-                || RuleImages.isRule(effectiveText)
-                || RuleImages.isRule(text)
-                || effectiveText.contains("#xx-tx=")
-                || effectiveText.contains("#xx-bands=")
-                || effectiveText.contains("#jm-origin=")
-                || text.contains("#xx-tx=")
-                || text.contains("#xx-bands=")
-                || text.contains("#jm-origin=")
-            if shouldRestore {
-                var restored = try JmImageTransform.restore(image, imageURL: effectiveText)
-                if restored === image && effectiveText != text {
-                    restored = try JmImageTransform.restore(image, imageURL: text)
-                }
-                return UIImage(cgImage: restored)
+            var restored = try JmImageTransform.restore(image, imageURL: effectiveText)
+            if restored === image && effectiveText != text {
+                restored = try JmImageTransform.restore(image, imageURL: text)
             }
-            return UIImage(cgImage: image)
+            return UIImage(cgImage: restored)
         }
         let decoded = try await withTaskCancellationHandler { try await decoder.value } onCancel: { decoder.cancel() }
         try Task.checkCancellation()
@@ -267,6 +462,66 @@ final class RemoteImageView: UIImageView {
             Self.cache.setObject(decoded, forKey: key, cost: Int(decoded.size.width * decoded.size.height * 4))
         }
         return decoded
+    }
+
+    nonisolated private static func decodeCoverCGImage(
+        from source: CGImageSource,
+        effectiveText: String,
+        originalText: String,
+        coverLimit: Int
+    ) throws -> CGImage? {
+        let props = CGImageSourceCopyPropertiesAtIndex(source, 0, [kCGImageSourceShouldCache: false] as CFDictionary) as? [CFString: Any]
+        let rawW = (props?[kCGImagePropertyPixelWidth] as? NSNumber)?.intValue ?? 0
+        let rawH = (props?[kCGImagePropertyPixelHeight] as? NSNumber)?.intValue ?? 0
+
+        let transform = !CoverBitmapDecoder.resolveRuleTransform(effectiveText).isEmpty
+            ? CoverBitmapDecoder.resolveRuleTransform(effectiveText)
+            : (!CoverBitmapDecoder.resolveRuleTransform(originalText).isEmpty
+                ? CoverBitmapDecoder.resolveRuleTransform(originalText)
+                : (((try? JmImageTransform.resolveTransformSpec(imageURL: effectiveText)) ?? "").isEmpty
+                    ? ((try? JmImageTransform.resolveTransformSpec(imageURL: originalText)) ?? "")
+                    : ((try? JmImageTransform.resolveTransformSpec(imageURL: effectiveText)) ?? "")))
+
+        if !transform.isEmpty {
+            guard let fullImage = CGImageSourceCreateImageAtIndex(source, 0, [
+                kCGImageSourceShouldCacheImmediately: true
+            ] as CFDictionary) else {
+                return nil
+            }
+            var restored = try JmImageTransform.restore(fullImage, imageURL: effectiveText)
+            if restored === fullImage && effectiveText != originalText {
+                restored = try JmImageTransform.restore(fullImage, imageURL: originalText)
+            }
+            let req = max(1, coverLimit)
+            if CoverBitmapDecoder.shouldDownscaleRestoredBitmap(width: restored.width, height: restored.height, reqWidth: req, reqHeight: req) {
+                let scaled = CoverBitmapDecoder.computeScaledDimensions(width: restored.width, height: restored.height, maxWidth: req, maxHeight: req)
+                if scaled.width > 0, scaled.height > 0,
+                   let ctx = CGContext(
+                       data: nil,
+                       width: scaled.width,
+                       height: scaled.height,
+                       bitsPerComponent: 8,
+                       bytesPerRow: scaled.width * 4,
+                       space: CGColorSpaceCreateDeviceRGB(),
+                       bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue
+                   ) {
+                    ctx.interpolationQuality = .high
+                    ctx.draw(restored, in: CGRect(x: 0, y: 0, width: scaled.width, height: scaled.height))
+                    if let downscaled = ctx.makeImage() {
+                        return downscaled
+                    }
+                }
+            }
+            return restored
+        }
+
+        let maxDim = max(rawW, rawH)
+        let targetMax = maxDim > 0 ? min(max(1, coverLimit), maxDim) : max(1, coverLimit)
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceThumbnailMaxPixelSize: targetMax,
+            kCGImageSourceCreateThumbnailWithTransform: true
+        ] as CFDictionary)
     }
 
     static func probeImageDimensions(
@@ -278,7 +533,7 @@ final class RemoteImageView: UIImageView {
         if let cached = Self.cache.object(forKey: key), let cg = cached.cgImage {
             return CGSize(width: cg.width, height: cg.height)
         }
-        let (imageData, _) = try await fetchDecodedImageBytes(url: text, referer: referer, localPageImage: localPageImage)
+        let (imageData, _) = try await fetchDecodedImageBytes(url: text, referer: referer, reader: true, localPageImage: localPageImage)
         try Task.checkCancellation()
         let prober = Task.detached(priority: .utility) { () throws -> CGSize? in
             try Task.checkCancellation()
@@ -300,6 +555,7 @@ final class RemoteImageView: UIImageView {
         original = decoded
         render()
     }
+
     private var task: Task<Void, Never>?
     private var generation = UUID()
     private var original: UIImage?
@@ -322,13 +578,16 @@ final class RemoteImageView: UIImageView {
             image = nil
             contentMode = loadedContentMode
         } else {
-            image = UIImage(named: "rem_no_image")
+            AppIllustrationCache.bind(self, assetName: "rem_no_image", maxSideDp: 148)
             contentMode = .scaleAspectFit
         }
     }
 
     func loadCover(_ comic: ComicSummary, referer: String, library: LocalLibrary) {
-        guard comic.sourceId == "local" else { load(comic.coverUrl, referer: referer); return }
+        guard comic.sourceId == "local" else {
+            loadCover(primaryUrl: comic.coverUrl, fallbackUrls: [], referer: referer, library: library)
+            return
+        }
         if !comic.coverUrl.isEmpty {
             load(comic.coverUrl, referer: referer, localPageImage: { try library.ownedImageData(at: $0) })
             return
@@ -357,11 +616,65 @@ final class RemoteImageView: UIImageView {
         }
     }
 
+    func loadCover(primaryUrl: String, fallbackUrls: [String] = [], referer: String, library: LocalLibrary) {
+        let candidates = CoverLoadCoordinator<Data>.buildCandidateUrls(primaryUrl: primaryUrl, fallbackUrls: fallbackUrls)
+        guard !candidates.isEmpty else {
+            beginLoad(reader: false)
+            onFailure?()
+            return
+        }
+        if candidates.count == 1 {
+            load(candidates[0], referer: referer, reader: false)
+            return
+        }
+        beginLoad(reader: false)
+        for candidate in candidates {
+            guard Self.isSupportedURL(candidate, allowLocalSchemes: false) else { continue }
+            let key = Self.resolvedCacheKey(url: candidate, referer: referer, reader: false)
+            if let cached = Self.cache.object(forKey: key) {
+                original = cached
+                render()
+                return
+            }
+        }
+        let token = generation
+        let shouldFadeCover = !ProcessInfo.processInfo.arguments.contains("--ui-testing")
+        task = Task { [weak self] in
+            defer { if self?.generation == token { self?.task = nil } }
+            for candidate in candidates {
+                guard !Task.isCancelled else { return }
+                guard Self.isSupportedURL(candidate, allowLocalSchemes: false) else { continue }
+                do {
+                    let decoded = try await Self.fetchDecodedImage(url: candidate, referer: referer, reader: false)
+                    try Task.checkCancellation()
+                    guard let self, self.generation == token else { return }
+                    self.original = decoded
+                    self.render(fade: shouldFadeCover)
+                    return
+                } catch {
+                    if error is CancellationError || Task.isCancelled { return }
+                    continue
+                }
+            }
+            guard let self, self.generation == token, !Task.isCancelled else { return }
+            self.onFailure?()
+        }
+    }
+
+    private static func isSupportedURL(_ text: String, allowLocalSchemes: Bool) -> Bool {
+        let checkURLString = RuleImages.isRule(text) ? RuleImages.strip(text) : text
+        guard let url = URL(string: checkURLString), let scheme = url.scheme?.lowercased() else {
+            return false
+        }
+        if ["https", "http", "file"].contains(scheme) {
+            return true
+        }
+        return allowLocalSchemes && ["xxcomic-epub", "xxcomic-pdf", "xxcomic-folder"].contains(scheme)
+    }
+
     func load(_ text: String, referer: String, reader: Bool = false, localPageImage: (@Sendable (URL) throws -> Data)? = nil) {
         beginLoad(reader: reader)
-        let checkURLString = RuleImages.isRule(text) ? RuleImages.strip(text) : text
-        guard let url = URL(string: checkURLString),
-              ["https", "http", "file"].contains(url.scheme?.lowercased() ?? "") || (["xxcomic-epub", "xxcomic-pdf", "xxcomic-folder"].contains(url.scheme ?? "") && localPageImage != nil) else {
+        guard Self.isSupportedURL(text, allowLocalSchemes: localPageImage != nil) else {
             onFailure?(); return
         }
         let key = Self.resolvedCacheKey(url: text, referer: referer, reader: reader)
@@ -391,6 +704,7 @@ final class RemoteImageView: UIImageView {
         cropMargins = crop; cropVertical = vertical; inkScreen = ink
         render()
     }
+
     private func render(fade: Bool = false) {
         effectsTask?.cancel(); effectsID = UUID()
         guard let original else { return }
@@ -444,10 +758,12 @@ final class RemoteImageView: UIImageView {
             self.image = rendered; self.onLoaded?(rendered.size)
         }
     }
+
     func cancel() {
         generation = UUID(); task?.cancel(); task = nil
         effectsID = UUID(); effectsTask?.cancel(); effectsTask = nil
     }
+
     deinit { task?.cancel(); effectsTask?.cancel() }
 }
 
@@ -545,18 +861,25 @@ final class ComicCell: UICollectionViewCell {
         nameLabel.text = comic.title
         accessibilityLabel = comic.title
         sourceLabel.text = sourceName; sourceLabel.isHidden = sourceName == nil
+        cover.loadCover(comic, referer: referer, library: library)
+        updateBadgeAndLatest(badgeText: badgeText, badgeColor: badgeColor, latestChapter: latestChapter)
+    }
+
+    func updateBadgeAndLatest(badgeText: String? = nil, badgeColor: UIColor? = nil, latestChapter: String? = nil) {
         latestOverlay.isHidden = latestChapter?.isEmpty != false
         latestLabel.text = latestChapter.map { BookshelfLayoutHelper.formatOnlineLatestChapter($0) }
-        cover.loadCover(comic, referer: referer, library: library)
 
         if let badgeText, !badgeText.isEmpty {
             badgeLabel.text = badgeText
-            badgeContainer.backgroundColor = badgeColor ?? Palette.accent
+            let resolvedBg = badgeColor ?? Palette.accent
+            badgeContainer.backgroundColor = resolvedBg
+            badgeLabel.textColor = (resolvedBg == Palette.updateBlue) ? Palette.onAccent : .white
             badgeContainer.isHidden = false
         } else {
             badgeContainer.isHidden = true
         }
     }
+
     override func prepareForReuse() {
         super.prepareForReuse()
         cover.cancel()
@@ -665,7 +988,9 @@ final class ComicListCell: UICollectionViewCell {
 
         if let badgeText, !badgeText.isEmpty {
             badgeLabel.text = badgeText
-            badgeContainer.backgroundColor = badgeColor ?? Palette.accent
+            let resolvedBg = badgeColor ?? Palette.accent
+            badgeContainer.backgroundColor = resolvedBg
+            badgeLabel.textColor = (resolvedBg == Palette.updateBlue) ? Palette.onAccent : .white
             badgeContainer.isHidden = false
         } else {
             badgeContainer.isHidden = true

@@ -9,7 +9,7 @@ public enum ChapterMatching {
         return title.replacingOccurrences(of: pattern, with: "", options: .regularExpression).lowercased()
     }
 
-    /// Finds matching chapter index across different sources by exact match, normalized match, substring containment, or fallback index.
+    /// Finds matching chapter index across different sources by exact match, structured alignment via `FailoverChapterAligner`, or fallback index.
     public static func findMatchingChapterIndex(chapters: [Chapter], currentTitle: String?, defaultIndex: Int) -> Int {
         guard !chapters.isEmpty else { return 0 }
         if let currentTitle = currentTitle?.trimmingCharacters(in: .whitespacesAndNewlines), !currentTitle.isEmpty {
@@ -19,22 +19,11 @@ public enum ChapterMatching {
                     return i
                 }
             }
-            // 2. Normalized chapter name match
-            let normCurrent = normalizeChapterName(currentTitle)
-            if !normCurrent.isEmpty {
-                for (i, ch) in chapters.enumerated() {
-                    let normTarget = normalizeChapterName(ch.title)
-                    if normCurrent.caseInsensitiveCompare(normTarget) == .orderedSame {
-                        return i
-                    }
-                }
-                // 3. Substring containment match
-                for (i, ch) in chapters.enumerated() {
-                    let normTarget = normalizeChapterName(ch.title)
-                    if !normTarget.isEmpty && (normCurrent.contains(normTarget) || normTarget.contains(normCurrent)) {
-                        return i
-                    }
-                }
+            // 2. Structured alignment without substring false positives
+            let syntheticTarget = Chapter(chapterId: "", title: currentTitle, url: "", sectionSlot: 0, chapterSlot: Int.min)
+            if let matched = FailoverChapterAligner.findMatchingChapter(target: syntheticTarget, candidates: chapters),
+               let idx = chapters.firstIndex(of: matched) {
+                return idx
             }
         }
         return max(0, min(defaultIndex, chapters.count - 1))

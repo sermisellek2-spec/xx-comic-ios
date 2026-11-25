@@ -117,11 +117,28 @@ public struct SourceFilterGroup: Codable, Equatable, Sendable {
     public let key: String
     public let label: String
     public let options: [SourceFilterOption]
+    public let exclusiveGroup: String
 
-    public init(key: String, label: String, options: [SourceFilterOption]) {
+    public init(key: String, label: String, options: [SourceFilterOption], exclusiveGroup: String = "") {
         self.key = key
         self.label = label
         self.options = options
+        self.exclusiveGroup = exclusiveGroup
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case key
+        case label
+        case options
+        case exclusiveGroup
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.label = try container.decode(String.self, forKey: .label)
+        self.options = try container.decode([SourceFilterOption].self, forKey: .options)
+        self.exclusiveGroup = try container.decodeIfPresent(String.self, forKey: .exclusiveGroup) ?? ""
     }
 }
 

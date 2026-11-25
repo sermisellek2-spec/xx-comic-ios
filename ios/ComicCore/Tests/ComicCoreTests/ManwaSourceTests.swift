@@ -3,7 +3,7 @@ import XCTest
 @testable import ComicCore
 
 final class ManwaSourceTests: XCTestCase {
-    private let chapterURL = "https://manwace.cc/comic/163037/2161449"
+    private let chapterURL = "https://manwadz.cc/comic/163037/2161449"
     private let empty = #"{"code":200,"data":{"list":[]}}"#
     private let info = #"{"code":200,"data":{"current":{"comicId":163037,"id":2161449,"title":"第01话"}}}"#
 
@@ -39,9 +39,9 @@ final class ManwaSourceTests: XCTestCase {
         let requests = await transport.requests
         XCTAssertEqual(requests.map(\.method), ["POST", "POST", "GET"])
         XCTAssertEqual(requests.map { $0.headers["Cookie"] }, ["typeId=2", "typeId=0", nil])
-        XCTAssertEqual(requests[0].url, "https://manwace.cc/api/cate")
-        XCTAssertEqual(requests[0].headers["Referer"], "https://manwace.cc/cate")
-        XCTAssertEqual(requests[0].headers["Origin"], "https://manwace.cc")
+        XCTAssertEqual(requests[0].url, "https://manwadz.cc/api/cate")
+        XCTAssertEqual(requests[0].headers["Referer"], "https://manwadz.cc/cate")
+        XCTAssertEqual(requests[0].headers["Origin"], "https://manwadz.cc")
         XCTAssertEqual(requests[0].headers["Content-Type"], "application/json; charset=UTF-8")
         let body = try XCTUnwrap(JSONSerialization.jsonObject(with: requests[0].body!) as? [String:Any])
         XCTAssertEqual(body["category"] as? String, "comic")
@@ -51,7 +51,7 @@ final class ManwaSourceTests: XCTestCase {
         XCTAssertEqual(comic["typeId"] as? Int, 2)
         XCTAssertEqual(comic["status"] as? Int, -1)
         XCTAssertEqual((body["novel"] as? [String:Int])?["status"], -1)
-        XCTAssertEqual(requests[2].url, "https://manwace.cc/api/search?type=mh&page=2&pageSize=20&keyword=%E5%8F%B2%E8%8E%B1%E5%A7%86+%26+A")
+        XCTAssertEqual(requests[2].url, "https://manwadz.cc/api/search?type=mh&page=2&pageSize=20&keyword=%E5%8F%B2%E8%8E%B1%E5%A7%86+%26+A")
         _ = try await source.search(keyword: " ", page: 1)
         let count = await transport.requests.count
         XCTAssertEqual(count, 3)
@@ -67,7 +67,7 @@ final class ManwaSourceTests: XCTestCase {
         for option in groups[2].options.dropFirst() { _ = try await source.category(filters: ["tag":option.value], page: 1) }
         _ = try await source.category(filters: ["level":"0","type":"1","region":"3","state":"0","day":"2","tag":"冒险","sort":"3"], page: 3)
         let requests = await transport.requests
-        XCTAssertEqual(Array(requests.prefix(22)).map(\.url), slugs.map { "https://manwace.cc/api/cate/" + $0 })
+        XCTAssertEqual(Array(requests.prefix(22)).map(\.url), slugs.map { "https://manwadz.cc/api/cate/" + $0 })
         let body = try XCTUnwrap(JSONSerialization.jsonObject(with: requests[22].body!) as? [String:Any])
         let comic = try XCTUnwrap(body["comic"] as? [String:Any])
         XCTAssertEqual(comic["level"] as? Int, 0)
@@ -85,7 +85,7 @@ final class ManwaSourceTests: XCTestCase {
         XCTAssertEqual(result[0].title, "史莱姆&圣女")
         XCTAssertEqual(result[0].coverUrl, "https://mwtuwu.cc/a.jpg")
         XCTAssertEqual(result[0].tags, ["魔幻","冒险","热血","恋爱"])
-        XCTAssertEqual(result[1].coverUrl, "https://manwace.cc/b.jpg")
+        XCTAssertEqual(result[1].coverUrl, "https://manwadz.cc/b.jpg")
     }
 
     func testDetailIsOnDemandAndUsesRealCoverAndNestedTags() async throws {
@@ -94,14 +94,14 @@ final class ManwaSourceTests: XCTestCase {
         let detail = try await ManwaComicSource(transport: transport).detail(comicId: "manwa:163037")
         XCTAssertEqual(detail.summary.title, "最速进化")
         XCTAssertEqual(detail.author, "甲，乙")
-        XCTAssertEqual(detail.summary.coverUrl, "https://manwace.cc/real.jpg")
+        XCTAssertEqual(detail.summary.coverUrl, "https://manwadz.cc/real.jpg")
         XCTAssertEqual(detail.summary.tags, ["魔幻","冒险"])
         XCTAssertEqual(detail.description, "简介&内容")
         XCTAssertEqual(detail.status, "连载中")
         XCTAssertEqual(detail.latestChapter, "第01话")
         XCTAssertTrue(detail.chapters.isEmpty)
         let requests = await transport.requests
-        XCTAssertEqual(requests.map(\.url), ["https://manwace.cc/comic/163037"])
+        XCTAssertEqual(requests.map(\.url), ["https://manwadz.cc/comic/163037"])
     }
 
     func testDirectoryPreservesFractionalStableOrderAndAll878Chapters() async throws {
@@ -112,7 +112,7 @@ final class ManwaSourceTests: XCTestCase {
         let chapters = try await source.chapters(comicId: "manwa:163037")
         XCTAssertEqual(chapters.map(\.chapterId), ["500","3","4","90"])
         XCTAssertEqual(chapters.map(\.chapterSlot), [0,1,2,3])
-        XCTAssertEqual(chapters[0].url, "https://manwace.cc/comic/163037/500")
+        XCTAssertEqual(chapters[0].url, "https://manwadz.cc/comic/163037/500")
         let large = try await source.chapters(comicId: "7751")
         XCTAssertEqual(large.count, 878)
         XCTAssertEqual(large.last?.chapterId, "878")
@@ -150,7 +150,7 @@ final class ManwaSourceTests: XCTestCase {
             let chapters = try await source.chapters(comicId: "163037")
             XCTAssertEqual(chapters.map(\.chapterId), ["1"])
             let page = try await source.chapter(url: chapterURL)
-            XCTAssertEqual(page.imageUrls, ["https://manwace.cc/a.jpg"])
+            XCTAssertEqual(page.imageUrls, ["https://manwadz.cc/a.jpg"])
         }
     }
 
@@ -160,9 +160,9 @@ final class ManwaSourceTests: XCTestCase {
         XCTAssertEqual(result.chapterId, chapterURL)
         XCTAssertEqual(result.title, "第01话")
         XCTAssertEqual(result.nextPageUrl, "")
-        XCTAssertEqual(result.imageUrls, ["https://manwace.cc/a.jpg","https://tu.mwzu.cc/b.jpg","https://tu.mwzu.cc/c.jpg"])
+        XCTAssertEqual(result.imageUrls, ["https://manwadz.cc/a.jpg","https://tu.mwzu.cc/b.jpg","https://tu.mwzu.cc/c.jpg"])
         let requests = await transport.requests
-        XCTAssertEqual(requests.map(\.url), ["https://manwace.cc/api/comic/chapter/info/2161449", "https://manwace.cc/api/comic/image/2161449?page=1&page_size=100&image_source=https%3A%2F%2Ftu.mwzu.cc", "https://manwace.cc/api/comic/image/2161449?page=2&page_size=100&image_source=https%3A%2F%2Ftu.mwzu.cc"])
+        XCTAssertEqual(requests.map(\.url), ["https://manwadz.cc/api/comic/chapter/info/2161449", "https://manwadz.cc/api/comic/image/2161449?page=1&page_size=100&image_source=https%3A%2F%2F182.16.62.30%3A8088", "https://manwadz.cc/api/comic/image/2161449?page=2&page_size=100&image_source=https%3A%2F%2F182.16.62.30%3A8088"])
         XCTAssertTrue(requests.allSatisfy { $0.headers["Referer"] == chapterURL })
     }
 
@@ -191,10 +191,10 @@ final class ManwaSourceTests: XCTestCase {
         let source = ManwaComicSource(transport: transport)
         do { _ = try await source.detail(comicId: "bad"); XCTFail() } catch {}
         do { _ = try await source.chapter(url: "/search"); XCTFail() } catch {}
-        do { _ = try await source.chapter(url: "https://manwace.cc/comic/123/2161449"); XCTFail() } catch {}
+        do { _ = try await source.chapter(url: "https://manwadz.cc/comic/123/2161449"); XCTFail() } catch {}
         let count = await transport.requests.count
         XCTAssertEqual(count, 1)
-        do { _ = try await ManwaComicSource(transport: ManwaTransport([""], status: 401)).latest(page: 1); XCTFail() }
+        do { _ = try await ManwaComicSource(transport: ManwaTransport(Array(repeating: "", count: 24), status: 401)).latest(page: 1); XCTFail() }
         catch { XCTAssertTrue(error.localizedDescription.contains("访问受限")) }
     }
 

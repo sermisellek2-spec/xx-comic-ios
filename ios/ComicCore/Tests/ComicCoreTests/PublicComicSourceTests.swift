@@ -396,7 +396,7 @@ final class PublicComicSourceTests: XCTestCase {
     }
 
     func testRegistryConfigsRoundTripAndIdsAreUnique() {
-        XCTAssertEqual(29, PublicSourceRegistry.ids().count)
+        XCTAssertEqual(39, PublicSourceRegistry.ids().count)
         XCTAssertFalse(PublicSourceRegistry.contains("haoman"))
         XCTAssertFalse(PublicSourceRegistry.contains("mengjie"))
         XCTAssertFalse(PublicSourceRegistry.contains("mumu"))

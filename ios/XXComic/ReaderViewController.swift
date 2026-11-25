@@ -82,6 +82,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     private var pagePanBeganAt: TimeInterval?
     private var habitTimer: Timer?
     private var leavingReader = false
+    private var embeddedTextReader: TextReaderViewController?
+    private var localBookResolveTask: Task<Void, Never>?
     var onSourceChanged: ((ComicDetail) -> Void)?
 #if DEBUG
     private var readerTrace: [String] = []
@@ -100,7 +102,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
 
     init(comic: ComicSummary, chapters: [Chapter], chapterIndex: Int, directoryIncomplete: Bool, environment: AppEnvironment) {
         self.comic = comic; self.chapters = chapters; self.environment = environment
-        source = environment.source(for: comic)!
+        source = environment.source(for: comic) ?? RetiredComicSource(id: comic.sourceId, name: comic.sourceId)
         if comic.sourceId == "local" {
             let library = environment.localLibrary
             localPageImage = { url in
@@ -123,6 +125,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
     deinit {
+        localBookResolveTask?.cancel()
         loadTask?.cancel(); directoryTask?.cancel(); continuationTask?.cancel(); scanTask?.cancel()
         pendingSaveTask?.cancel()
         if Thread.isMainThread {
@@ -134,9 +137,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             }
         }
     }
-    override var prefersStatusBarHidden: Bool { true }
-    override var preferredStatusBarStyle: UIStatusBarStyle { overrideUserInterfaceStyle == .dark ? .lightContent : .darkContent }
-    override var prefersHomeIndicatorAutoHidden: Bool { fullscreen }
+    override var prefersStatusBarHidden: Bool { embeddedTextReader?.prefersStatusBarHidden ?? true }
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        embeddedTextReader?.preferredStatusBarStyle ?? (overrideUserInterfaceStyle == .dark ? .lightContent : .darkContent)
+    }
+    override var prefersHomeIndicatorAutoHidden: Bool { embeddedTextReader?.prefersHomeIndicatorAutoHidden ?? fullscreen }
     override func viewDidLoad() {
         super.viewDidLoad()
         oldNavigationStyle = navigationController?.overrideUserInterfaceStyle ?? .unspecified
@@ -323,17 +328,98 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         environment.readingHabits.enterReader(comicID: comic.comicId, isLocal: comic.sourceId == "local")
         syncHabitOverlay()
         applySettings()
-        loadChapter(session.chapterIndex)
+        if comic.sourceId == "local" {
+            startLocalChapterOrTextEpub()
+        } else {
+            loadChapter(session.chapterIndex)
+        }
         if incompleteDirectory { loadDirectory() }
         let revision = FavoriteRevision.fromChapters(latestChapterName: chapters.last?.title, chapters: chapters)
         environment.favoriteUpdateCoordinator.acknowledge(sourceId: comic.sourceId, comicId: comic.comicId, revision: revision)
     }
+
+    private func startLocalChapterOrTextEpub() {
+        localBookResolveTask?.cancel()
+        let library = environment.localLibrary
+        let comicID = comic.comicId
+        let activeChapter = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex] : nil
+        let targetIndex = session.chapterIndex
+        localBookResolveTask = Task { [weak self] in
+            let textBook: LocalBook? = await Task.detached(priority: .userInitiated) {
+                let targetVolumeID: String
+                if let activeChapter {
+                    let parts = activeChapter.url.split(separator: "/", omittingEmptySubsequences: false)
+                    targetVolumeID = (!parts.isEmpty && !parts[0].isEmpty) ? String(parts[0]) : comicID
+                } else {
+                    targetVolumeID = comicID
+                }
+                if let directBook = try? library.book(id: targetVolumeID),
+                   let pub = directBook.epub,
+                   !pub.isPurePictureEpub {
+                    return directBook
+                }
+                if let series = try? await library.series(id: comicID),
+                   let firstID = series.volumeIDs.first,
+                   let firstBook = try? library.book(id: firstID),
+                   let pub = firstBook.epub,
+                   !pub.isPurePictureEpub {
+                    return firstBook
+                }
+                return nil
+            }.value
+            guard let self, !Task.isCancelled, !self.leavingReader else { return }
+            if let textBook {
+                self.embedTextReader(for: textBook, chapterIndex: targetIndex)
+            } else {
+                self.loadChapter(targetIndex)
+            }
+        }
+    }
+
+    private func embedTextReader(for book: LocalBook, chapterIndex: Int) {
+        guard embeddedTextReader == nil else { return }
+        loadTask?.cancel()
+        directoryTask?.cancel()
+        cancelScan()
+        cancelContinuation()
+        pages.isHidden = true
+        toolbar.isHidden = true
+        topChrome.isHidden = true
+        bottomChrome.isHidden = true
+        chapterProgress.isHidden = true
+        status.isHidden = true
+        badge.isHidden = true
+        enhancementBadge.isHidden = true
+
+        let textVC = TextReaderViewController(
+            comic: comic,
+            chapters: chapters,
+            chapterIndex: chapterIndex,
+            environment: environment,
+            initialBook: book
+        )
+        embeddedTextReader = textVC
+        addChild(textVC)
+        textVC.view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(textVC.view)
+        NSLayoutConstraint.activate([
+            textVC.view.topAnchor.constraint(equalTo: view.topAnchor),
+            textVC.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            textVC.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            textVC.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+        textVC.didMove(toParent: self)
+        setNeedsStatusBarAppearanceUpdate()
+        setNeedsUpdateOfHomeIndicatorAutoHidden()
+    }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        guard embeddedTextReader == nil else { return }
         applySettings()
     }
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        guard embeddedTextReader == nil else { return }
         if oldInteractivePopEnabled == nil {
             oldInteractivePopEnabled = navigationController?.interactivePopGestureRecognizer?.isEnabled
         }
@@ -354,6 +440,10 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         super.viewWillDisappear(animated)
         habitTimer?.invalidate(); habitTimer = nil
         leavingReader = isMovingFromParent
+        if isMovingFromParent {
+            localBookResolveTask?.cancel()
+        }
+        guard embeddedTextReader == nil else { return }
         savePosition()
         if isMovingFromParent {
             downloadRepairAction = nil; downloadRepairController = nil
@@ -375,7 +465,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         if leavingReader {
-            environment.readingHabits.exitReader()
+            if embeddedTextReader == nil {
+                environment.readingHabits.exitReader()
+            }
             leavingReader = false
         }
     }
@@ -508,8 +600,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             }
         }
     }
-    private func loadChapter(_ index: Int, atEnd: Bool = false, restoreSaved: Bool = true) {
-        guard chapters.indices.contains(index) else { return }
+    private func loadChapter(_ index: Int, atEnd: Bool = false, restoreSaved: Bool = true, forceRefresh: Bool = false) {
+        guard embeddedTextReader == nil, chapters.indices.contains(index) else { return }
         savePosition()
         pendingPosition = nil; pendingPositionNeedsContinuation = false
         cancelScan()
@@ -522,13 +614,13 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         loadState.chapterStarted()
         chapterRetryAction = { [weak self] in
             guard let self, let currentIndex = self.chapters.firstIndex(where: { $0.chapterId == chapter.chapterId || $0.url == chapter.url }) else { return }
-            self.loadChapter(currentIndex, atEnd: atEnd, restoreSaved: restoreSaved)
+            self.loadChapter(currentIndex, atEnd: atEnd, restoreSaved: restoreSaved, forceRefresh: true)
         }
         updateLoadStatus()
         loadTask = Task { [weak self] in
             do {
                 guard let self else { return }
-                let page = try await self.fetchChapterPage(chapter: chapter, index: index, comic: requestComic, chapters: requestChapters, source: requestSource)
+                let page = try await self.fetchChapterPage(chapter: chapter, index: index, comic: requestComic, chapters: requestChapters, source: requestSource, forceRefresh: forceRefresh)
                 try Task.checkCancellation()
                 guard self.requestID == token else { return }
                 guard !page.imageUrls.isEmpty else { throw ReaderError.noImages }
@@ -563,8 +655,11 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             }
         }
     }
-    private func fetchChapterPage(chapter: Chapter, index: Int, comic: ComicSummary, chapters: [Chapter], source: any ComicSource) async throws -> ChapterPage {
+    private func fetchChapterPage(chapter: Chapter, index: Int, comic: ComicSummary, chapters: [Chapter], source: any ComicSource, forceRefresh: Bool = false) async throws -> ChapterPage {
         guard comic.sourceId != "local" else { return try await source.chapter(url: chapter.url) }
+        if let failover = source as? FailoverComicSource {
+            failover.seedChapter(comicId: comic.comicId, title: comic.title, author: nil, chapter: chapter)
+        }
         let runtime = environment.downloadRuntime
         if let taskID = try? DownloadModels.key(comic.sourceId, comic.comicId, chapter.chapterId),
            let task = runtime.store.get(id: taskID), task.state == .completed {
@@ -582,8 +677,25 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 throw error
             }
         }
+        if !forceRefresh {
+            let cached = (!chapter.chapterId.isEmpty ? environment.cachedChapterPage(chapterId: chapter.chapterId) : nil)
+                ?? (!chapter.url.isEmpty ? environment.cachedChapterPage(chapterId: chapter.url) : nil)
+            if let cached, !cached.imageUrls.isEmpty {
+                return cached
+            }
+        }
         guard runtime.isNetworkConnected else { throw DownloadError.corruptedData("这一章还没有下载哦") }
-        return try await source.chapter(url: chapter.url)
+        let page = try await source.chapter(url: chapter.url)
+        if !page.imageUrls.isEmpty {
+            let cacheId = !chapter.chapterId.isEmpty ? chapter.chapterId : (!page.chapterId.isEmpty ? page.chapterId : chapter.url)
+            if !cacheId.isEmpty {
+                let toCache = page.chapterId == cacheId
+                    ? page
+                    : ChapterPage(chapterId: cacheId, title: page.title, nextPageUrl: page.nextPageUrl, imageUrls: page.imageUrls)
+                environment.saveCachedChapterPage(toCache)
+            }
+        }
+        return page
     }
 
     private var nextContinuousChapterIndex: Int? {
@@ -1092,12 +1204,22 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             let location = pan.location(in: pages)
             if let indexPath = pages.indexPathForItem(at: location),
                let cell = pages.cellForItem(at: indexPath) as? ReaderImageCell,
-               cell.canPanHorizontally(dx: velocity.x) {
+               cell.needsHorizontalPan,
+               (cell.canPanHorizontally(dx: velocity.x) || cell.isHorizontalPanActive) {
                 return false
             }
             return true
         }
         return true
+    }
+
+    private func effectiveReferer(forChapterUrl chapterUrl: String? = nil) -> String {
+        let targetUrl = chapterUrl
+            ?? (chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex].url : "")
+        if let failover = source as? FailoverComicSource {
+            return failover.referer(forUrl: targetUrl) ?? source.referer
+        }
+        return source.referer(forUrl: targetUrl) ?? source.referer
     }
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         var touched = touch.view
@@ -1303,7 +1425,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         cancelScan()
         let book = bookKey
         let posKey = chapterPositionKey(chapter)
-        let referer = source.referer
+        let referer = effectiveReferer(forChapterUrl: chapter.url)
         let localLoader = localPageImage
         let token = scanToken
 
@@ -1567,7 +1689,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
         var firstOnLeft = settings.pageDirection != .rightToLeft
         var loadRevision = 0
         var previewTask: Task<Void, Never>?
-        let referer = source.referer
+        let referer = effectiveReferer()
         let localLoader = localPageImage
         let urlA = plan.originals[first]
         let urlB = plan.originals[first + 1]
@@ -1684,7 +1806,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 })
             }
 
-            let referer = self.source.referer
+            let referer = self.effectiveReferer()
             let maintenance: [ReaderSpreadAction] = [
                 ReaderSpreadAction(
                     title: "重试当前图片",
@@ -1790,7 +1912,7 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
                 }
             ]
 
-            let referer = self.source.referer
+            let referer = self.effectiveReferer()
             let maintenance: [ReaderSpreadAction] = [
                 ReaderSpreadAction(
                     title: "重试当前图片",
@@ -1897,7 +2019,9 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             self.applySwitchedSource(targetDetail: targetDetail)
         }
         sheet.onUndoSourceReplaced = { [weak self] _ in
-            guard let self, let restoredSource = self.environment.source(for: previousComic) else { return }
+            guard let self else { return }
+            let restoredSource = self.environment.source(for: previousComic)
+                ?? RetiredComicSource(id: previousComic.sourceId, name: previousComic.sourceId)
             self.loadTask?.cancel(); self.directoryTask?.cancel(); self.directoryTask = nil
             self.cancelScan()
             self.cancelContinuation(); self.pendingPosition = nil; self.pendingPositionNeedsContinuation = false
@@ -1932,7 +2056,8 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
     }
 
     private func applySwitchedSource(targetDetail: ComicDetail) {
-        guard let targetSource = environment.source(for: targetDetail.summary) else { return }
+        let targetSource = environment.source(for: targetDetail.summary)
+            ?? RetiredComicSource(id: targetDetail.summary.sourceId, name: targetDetail.summary.sourceId)
         let currentTitle = chapters.indices.contains(session.chapterIndex) ? chapters[session.chapterIndex].title : ""
         let currentIndex = session.chapterIndex
         let targetChapters = targetDetail.chapters
@@ -2016,10 +2141,13 @@ final class ReaderViewController: UIViewController, UICollectionViewDataSource, 
             }
         }
         cell.onEnhancement = { [weak self] in self?.updateBadge() }
+        let itemChapterUrl = settings.layout == .strip
+            ? continuousPages.location(at: indexPath.item)?.chapter.url
+            : nil
         cell.configure(
             url: url,
             virtualUnit: virtualUnits[url],
-            referer: source.referer,
+            referer: effectiveReferer(forChapterUrl: itemChapterUrl),
             settings: settings,
             autoScaleEnabled: autoScale,
             scaleMode: scaleMode,
@@ -2235,6 +2363,7 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
     private var autoScaleEnabled = false
     private var scaleMode = ReaderScalePolicy.SMART
     private var readerViewportHeight: CGFloat = 1
+    private var lastCenteredGeometryKey: String?
     private(set) var isFailed = false
     private var enhancementTask: Task<Void, Never>?
     private var enhancementGeneration = UUID()
@@ -2288,8 +2417,16 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
     }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
 
+    var needsHorizontalPan: Bool {
+        scroll.zoomScale > 1.05 || scroll.contentSize.width > scroll.bounds.width + 1
+    }
+
+    var isHorizontalPanActive: Bool {
+        scroll.isDragging || scroll.isDecelerating
+    }
+
     func canPanHorizontally(dx: CGFloat) -> Bool {
-        guard scroll.contentSize.width > scroll.bounds.width + 1 else { return false }
+        guard needsHorizontalPan, scroll.contentSize.width > scroll.bounds.width + 1 else { return false }
         if dx > 0 {
             return scroll.contentOffset.x > 1
         }
@@ -2382,6 +2519,7 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
             image.frame = scroll.bounds
             scroll.contentSize = scroll.bounds.size
             scroll.isScrollEnabled = !isStripLayout
+            lastCenteredGeometryKey = nil
             return
         }
         let screenScale = max(1, UIScreen.main.scale)
@@ -2402,14 +2540,26 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
         )
         let targetW = max(1, CGFloat(g.width))
         let targetH = max(1, CGFloat(g.height))
-        let x = max(0, CGFloat(g.left))
+        let overflowsHorizontally = targetW > scroll.bounds.width + 1
+        let x = overflowsHorizontally ? 0 : max(0, CGFloat(g.left))
         let y = isStripLayout ? 0 : max(0, CGFloat(g.top))
         image.contentMode = .scaleToFill
         image.frame = CGRect(x: x, y: y, width: targetW, height: targetH)
         let contentW = max(scroll.bounds.width, x + targetW)
         let contentH = isStripLayout ? scroll.bounds.height : max(scroll.bounds.height, y + targetH)
         scroll.contentSize = CGSize(width: contentW, height: contentH)
-        scroll.isScrollEnabled = !isStripLayout || contentW > scroll.bounds.width + 1
+        scroll.isScrollEnabled = !isStripLayout || needsHorizontalPan
+
+        if overflowsHorizontally {
+            let geometryKey = "\(url)|\(scaleMode)|\(isStripLayout)|\(vw)x\(vh)|\(Int(targetW.rounded()))x\(Int(targetH.rounded()))"
+            if lastCenteredGeometryKey != geometryKey {
+                lastCenteredGeometryKey = geometryKey
+                let centeredX = max(0, (contentW - scroll.bounds.width) / 2.0)
+                scroll.contentOffset = CGPoint(x: centeredX, y: scroll.contentOffset.y)
+            }
+        } else {
+            lastCenteredGeometryKey = nil
+        }
     }
 
     override func layoutSubviews() {
@@ -2434,6 +2584,7 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
         virtualTask?.cancel()
         virtualTask = nil
         rawImage = nil
+        lastCenteredGeometryKey = nil
         isFailed = false
         self.url = url
         self.virtualUnit = virtualUnit
@@ -2454,6 +2605,9 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
     func apply(_ settings: ReaderPreferences) {
         let changedMode = currentMode != settings.enhancementMode
         if changedMode { stopEnhancement() }
+        if self.isStripLayout != (settings.layout == .strip) {
+            lastCenteredGeometryKey = nil
+        }
         self.currentMode = settings.enhancementMode
         self.comparisonEnabled = settings.enhancementComparison
         self.isStripLayout = settings.layout == .strip
@@ -2528,7 +2682,10 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
     }
 
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { image }
-    func scrollViewDidZoom(_ scrollView: UIScrollView) { onZoom?(scrollView.zoomScale > 1.05) }
+    func scrollViewDidZoom(_ scrollView: UIScrollView) {
+        scroll.isScrollEnabled = !isStripLayout || needsHorizontalPan
+        onZoom?(scrollView.zoomScale > 1.05)
+    }
     func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) { onUserAction?() }
     func cancel() {
         virtualToken = UUID()
@@ -2542,6 +2699,7 @@ final class ReaderImageCell: UICollectionViewCell, UIScrollViewDelegate {
         cancel()
         virtualUnit = nil
         localPageImage = nil
+        lastCenteredGeometryKey = nil
         onSize = nil
         onZoom = nil
         onUserAction = nil

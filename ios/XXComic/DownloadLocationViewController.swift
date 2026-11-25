@@ -13,7 +13,8 @@ final class DownloadLocationViewController: UITableViewController, UIDocumentPic
     init(locations: DownloadStorageLocations) { self.locations = locations; super.init(style: .insetGrouped) }
     required init?(coder: NSCoder) { fatalError("init(coder:)") }
     override func viewDidLoad() {
-        super.viewDidLoad(); title = "离线下载位置"
+        super.viewDidLoad()
+        SecondaryHeaderBar.apply(to: self, title: "离线下载位置")
         tableView.backgroundColor = Palette.background
         tableView.rowHeight = UITableView.automaticDimension; tableView.estimatedRowHeight = 60
     }

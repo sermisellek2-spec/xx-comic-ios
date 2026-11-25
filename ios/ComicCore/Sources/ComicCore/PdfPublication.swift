@@ -19,11 +19,12 @@ public struct PdfPublication: Codable, Equatable, Sendable {
 
     public static func renderSize(width: Double, height: Double, maximumDimension: Int = 2048) throws -> PageSize {
         guard width.isFinite, height.isFinite, width > 0, height > 0 else { throw PdfError.invalidDocument }
-        let scale = min(2.5, max(1, Double(maximumDimension > 0 ? maximumDimension : 2048) / max(width, height)))
+        let targetMax = Double(maximumDimension > 0 ? maximumDimension : 2048)
+        let scale = min(2.5, targetMax / max(width, height))
         let w = max(1, (width * scale).rounded()), h = max(1, (height * scale).rounded())
-        let budget = 24_000_000.0
+        let budget = 6_000_000.0
         guard w > budget / h else { return PageSize(width: w, height: h) }
-        // Unlike Android, cap allocation at 24M pixels, also for extremely elongated pages.
+        // Cap allocation at 6M pixels, also for extremely elongated pages.
         // Ratio form avoids overflow when finite source dimensions have an infinite product.
         let ratio = min(w, h) / max(w, h)
         let long = floor(min(budget, sqrt(budget / ratio)))

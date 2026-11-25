@@ -27,14 +27,14 @@ final class SourceConfigDocumentsTests: XCTestCase {
         XCTAssertEqual(exported.url.lastPathComponent, "xx-comic-sources.json")
         let json = try JSONDecoder().decode(SourceExportPackage.self, from: Data(contentsOf: exported.url))
         XCTAssertEqual(json.schema, "xx-comic.sources"); XCTAssertEqual(json.version, 2)
-        XCTAssertEqual(json.sources.count, 51); XCTAssertEqual(json.sources.filter(\.enabled).count, 50)
+        XCTAssertEqual(json.sources.count, 61); XCTAssertEqual(json.sources.filter(\.enabled).count, 60)
         let prepared = try await worker.prepareImport(from: exported.url, snapshot: target.importSnapshot())
         XCTAssertEqual(target.orderedIDs, BuiltinSourceCatalog.activeIDs, "Preparing a file must not save preferences")
         let result = try target.applyImport(prepared)
-        XCTAssertEqual(result.totalSources, 51); XCTAssertTrue(result.warnings.isEmpty)
+        XCTAssertEqual(result.totalSources, 61); XCTAssertTrue(result.warnings.isEmpty)
         let reloaded = SourcePreferences(defaults: defaults, defaultIDs: BuiltinSourceCatalog.activeIDs)
         XCTAssertEqual(reloaded.orderedIDs, Array(BuiltinSourceCatalog.activeIDs.reversed()))
-        XCTAssertEqual(reloaded.enabledIDs.count, 50); XCTAssertFalse(reloaded.isEnabled("duya"))
+        XCTAssertEqual(reloaded.enabledIDs.count, 60); XCTAssertFalse(reloaded.isEnabled("duya"))
         XCTAssertEqual(try Data(contentsOf: original), Data([1, 2, 3]))
         try await worker.discardExport(exported)
         XCTAssertFalse(FileManager.default.fileExists(atPath: exported.url.path))
@@ -65,7 +65,7 @@ final class SourceConfigDocumentsTests: XCTestCase {
         let result = try target.applyImport(prepared)
         XCTAssertEqual(result.totalSources, 1); XCTAssertEqual(result.skippedSources, ["baozimh", "custom-test"])
         XCTAssertTrue(result.warnings.contains { $0.contains("gmh.routes.fictional") })
-        XCTAssertEqual(target.orderedIDs.count, 51); XCTAssertNil(target.config(for: "gmh")?.routes?["fictional"])
+        XCTAssertEqual(target.orderedIDs.count, 61); XCTAssertNil(target.config(for: "gmh")?.routes?["fictional"])
     }
 
     func testCancelledFileReadCannotWritePreferences() async throws {

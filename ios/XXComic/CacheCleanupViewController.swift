@@ -23,7 +23,7 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "缓存清理"
+        SecondaryHeaderBar.apply(to: self, title: "缓存清理", meta: cacheSizeText)
         view.backgroundColor = Palette.background
 
         setupNavigation()
@@ -31,14 +31,18 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
         calculateCacheSize()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        SecondaryHeaderBar.configureNavigationBarAppearance(for: navigationController)
+    }
+
     private func setupNavigation() {
-        let moreButton = UIBarButtonItem(
-            image: UIImage(systemName: "ellipsis"),
-            style: .plain,
+        navigationItem.rightBarButtonItem = SecondaryHeaderBar.moreButton(
+            accessibilityLabel: "缓存更多操作",
+            accessibilityIdentifier: "cache.more",
             target: self,
             action: #selector(showMenu)
         )
-        navigationItem.rightBarButtonItem = moreButton
     }
 
     private func setupViews() {
@@ -50,7 +54,7 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
 
         confirmButton.translatesAutoresizingMaskIntoConstraints = false
         confirmButton.setTitle("确认清理", for: .normal)
-        confirmButton.setTitleColor(.white, for: .normal)
+        confirmButton.setTitleColor(Palette.onAccent, for: .normal)
         confirmButton.backgroundColor = Palette.accent
         confirmButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .bold)
         confirmButton.layer.cornerRadius = 10
@@ -78,19 +82,24 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
         ])
     }
 
-    private func calculateCacheSize() {
+    private func calculateCacheSize(showUpdatedToast: Bool = false) {
         sizeTask?.cancel()
         let token = UUID(); sizeGeneration = token
-        let cache = environment.responseCache
+        let env = environment
         sizeTask = Task { [weak self] in
             do {
-                let usage = try await cache.usage()
+                let totals = try await env.totalCacheBytes()
                 guard let self, self.sizeGeneration == token, !Task.isCancelled else { return }
-                self.cacheSizeText = StorageCalculator.formatBytes(usage.totalBytes)
+                self.cacheSizeText = StorageCalculator.formatBytes(totals.totalBytes)
+                SecondaryHeaderBar.updateMeta(self.cacheSizeText, on: self)
                 self.tableView.reloadData()
+                if showUpdatedToast {
+                    RemToastView.show(message: "缓存大小已更新", kind: .success, in: self)
+                }
             } catch {
                 guard let self, self.sizeGeneration == token, !Task.isCancelled else { return }
                 self.cacheSizeText = "计算失败，可重试"
+                SecondaryHeaderBar.updateMeta(self.cacheSizeText, on: self)
                 self.tableView.reloadData()
             }
         }
@@ -99,7 +108,7 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
     @objc private func showMenu() {
         let sheet = UIAlertController(title: "缓存操作", message: nil, preferredStyle: .actionSheet)
         sheet.addAction(UIAlertAction(title: "重新计算大小", style: .default) { [weak self] _ in
-            self?.calculateCacheSize()
+            self?.calculateCacheSize(showUpdatedToast: true)
         })
         sheet.addAction(UIAlertAction(title: "清理全部缓存", style: .destructive) { [weak self] _ in
             self?.confirmCleanupTapped()
@@ -190,18 +199,12 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
-        cell.backgroundColor = Palette.card
-        cell.selectionStyle = .none
-        cell.textLabel?.textColor = Palette.text
-        cell.textLabel?.font = .systemFont(ofSize: 15)
-
         if indexPath.section == 0 {
             if indexPath.row == 0 {
                 let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
                 cell.backgroundColor = Palette.card
                 cell.selectionStyle = .none
-                cell.imageView?.image = UIImage(systemName: "photo.stack")
+                cell.imageView?.image = ParityIcon.bookshelf.image(size: 20)
                 cell.imageView?.tintColor = Palette.accent
                 cell.textLabel?.text = "漫画图片缓存"
                 cell.textLabel?.textColor = Palette.text
@@ -221,7 +224,7 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
                 let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
                 cell.backgroundColor = Palette.card
                 cell.selectionStyle = .none
-                cell.imageView?.image = UIImage(systemName: "network")
+                cell.imageView?.image = ParityIcon.source.image(size: 20)
                 cell.imageView?.tintColor = Palette.accent
                 cell.textLabel?.text = "页面解析与验证缓存"
                 cell.textLabel?.textColor = Palette.text
@@ -242,7 +245,7 @@ final class CacheCleanupViewController: UIViewController, UITableViewDataSource,
             let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
             cell.backgroundColor = Palette.card
             cell.selectionStyle = .none
-            cell.imageView?.image = UIImage(systemName: "bookmark.fill")
+            cell.imageView?.image = ParityIcon.history.image(size: 20)
             cell.imageView?.tintColor = Palette.accent
             cell.textLabel?.text = "书架收藏、历史与进度"
             cell.textLabel?.textColor = Palette.text
