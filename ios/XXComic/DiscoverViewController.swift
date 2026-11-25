@@ -92,7 +92,7 @@ final class DiscoverViewController: UIViewController, UICollectionViewDataSource
     private var needsReload = false
     private var hasPendingDirtyReload = false
 
-    private var global = GlobalSearchState(preferAllSources: true)
+    private var global = GlobalSearchState()
     private var pendingGlobalSources: [any ComicSource] = []
     private var activeGlobalCount = 0
     private var currentGlobalGeneration = UUID()

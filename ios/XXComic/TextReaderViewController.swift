@@ -125,11 +125,11 @@ final class TextReaderViewController: UIViewController, WKNavigationDelegate, WK
 
     // MARK: - Constants & Resource Streaming
 
-    static let urlScheme = "xxcomic-epub-text"
-    static let urlHost = "epub.local"
-    static let maxResourceBytes = 16 * 1024 * 1024
+    nonisolated static let urlScheme = "xxcomic-epub-text"
+    nonisolated static let urlHost = "epub.local"
+    nonisolated static let maxResourceBytes = 16 * 1024 * 1024
 
-    private enum Backend {
+    enum Backend {
         case localLibrary(library: LocalLibrary, bookID: String, initialBook: LocalBook?)
         case directArchive(epubURL: URL)
     }
