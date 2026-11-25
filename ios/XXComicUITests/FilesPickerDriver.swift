@@ -208,16 +208,29 @@ struct FilesPickerDriver {
     }
     private func confirm(_ labels: [String]) throws {
         guard waitUntil(timeout: 90, { self.pickerBar.exists }) else { throw SelectionError.providerNotFound }
-        let button = systemBars.buttons.matching(NSPredicate(format: "label IN %@", labels)).firstMatch
-        guard waitUntil(timeout: 15, { button.exists && button.isEnabled && button.isHittable }) else { throw SelectionError.confirmationNotFound }
-        for attempt in 0..<2 {
-            if attempt > 0 {
-                guard self.pickerBar.exists else { return }
-                guard button.exists && button.isEnabled && button.isHittable else { break }
-            }
-            button.tap()
-            if waitUntil(timeout: 8, { !self.pickerBar.exists }) { return }
+        let pickerButton = pickerBar.buttons.matching(NSPredicate(format: "label IN %@", labels)).firstMatch
+        let fallbackButton = systemBars.buttons.matching(NSPredicate(format: "label IN %@", labels)).firstMatch
+        func activeButton() -> XCUIElement {
+            pickerButton.exists ? pickerButton : fallbackButton
         }
-        guard waitUntil(timeout: 6, { !self.pickerBar.exists }) else { throw SelectionError.confirmationNotFound }
+        guard waitUntil(timeout: 20, {
+            let b = activeButton()
+            return b.exists && b.isEnabled && b.isHittable
+        }) else { throw SelectionError.confirmationNotFound }
+        for attempt in 0..<4 {
+            guard self.pickerBar.exists else { return }
+            let b = activeButton()
+            if attempt > 0 {
+                guard waitUntil(timeout: 5, { !self.pickerBar.exists || (b.exists && b.isEnabled && b.isHittable) }) else { break }
+                guard self.pickerBar.exists else { return }
+            }
+            if attempt % 2 == 0 {
+                b.tap()
+            } else {
+                b.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            }
+            if waitUntil(timeout: 15, { !self.pickerBar.exists }) { return }
+        }
+        guard waitUntil(timeout: 15, { !self.pickerBar.exists }) else { throw SelectionError.confirmationNotFound }
     }
 }

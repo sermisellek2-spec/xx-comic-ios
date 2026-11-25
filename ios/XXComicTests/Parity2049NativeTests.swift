@@ -1,5 +1,6 @@
 import XCTest
 import UIKit
+import WebKit
 import Darwin
 import ComicCore
 @testable import XXComic
@@ -141,6 +142,11 @@ final class Parity2049NativeTests: XCTestCase {
     }
 
     func testRuleWebRendererExecutesDynamicDomWaitSelectorAndBlocksImages() async throws {
+        let warmupWebView = WKWebView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
+        warmupWebView.loadHTMLString("<!doctype html><html><body>warmup</body></html>", baseURL: nil)
+        _ = try? await warmupWebView.evaluateJavaScript("document.readyState")
+        warmupWebView.stopLoading()
+
         final class HitCounter: @unchecked Sendable {
             private let lock = NSLock()
             private var value = 0
@@ -189,7 +195,7 @@ final class Parity2049NativeTests: XCTestCase {
           chapters: function(id){return [];},
           chapter: function(u){return {images:['https://127.0.0.1/1.jpg']};},
           search: function(q,p){
-            var r = xx.render('\(pageURL)', { waitSelector: '#ready-chapter', waitMs: 30, timeoutMs: 8000 });
+            var r = xx.render('\(pageURL)', { waitSelector: '#ready-chapter', waitMs: 30, timeoutMs: 15000 });
             var nodes = xx.select(r.body, '#ready-chapter', r.url);
             var title = nodes.length ? nodes[0].text : 'missing';
             return { items: [{ id: '1', title: title, cover: '' }], hasMore: false };

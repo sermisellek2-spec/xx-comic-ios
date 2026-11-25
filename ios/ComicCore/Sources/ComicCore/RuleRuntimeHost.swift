@@ -1302,8 +1302,9 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
     private let waitSelector: String
     private let waitMs: Int
     private let timeoutMs: Int
-    private let deadline: Date
+    private var deadline: Date
     private let cancelToken: RuleCancelToken
+    private let startedSemaphore = DispatchSemaphore(value: 0)
     private let doneSemaphore = DispatchSemaphore(value: 0)
 
     private let stateLock = NSLock()
@@ -1350,13 +1351,13 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
         }
         if Thread.isMainThread {
             runCompile()
-            let deadline = Date(timeIntervalSinceNow: 5.0)
+            let deadline = Date(timeIntervalSinceNow: 15.0)
             while done.wait(timeout: .now()) == .timedOut && Date() < deadline {
                 RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.01))
             }
         } else {
             DispatchQueue.main.async(execute: runCompile)
-            _ = done.wait(timeout: .now() + .seconds(5))
+            _ = done.wait(timeout: .now() + .seconds(15))
         }
         if let compiled {
             ruleListLock.lock()
@@ -1378,6 +1379,7 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
     ) throws -> [String: Any] {
         let session = WebKitHeadlessSession(requestedUrl: urlString, http: http, waitSelector: waitSelector, waitMs: waitMs, timeoutMs: timeoutMs, cancelToken: cancelToken)
         let blockList = obtainBlockRuleList()
+        try cancelToken.throwIfCancelled()
 
         let handle = try cancelToken.register {
             session.complete(error: RuleCancelledError("规则调用已取消"))
@@ -1385,6 +1387,7 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
         defer { handle.close() }
 
         let startWork = {
+            defer { session.startedSemaphore.signal() }
             guard let targetUrl = URL(string: urlString) else {
                 session.complete(error: RuleError("网页渲染地址无效"))
                 return
@@ -1404,6 +1407,7 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
             session.stateLock.lock()
             session.webView = wv
             session.navBridge = bridge
+            session.deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
             let alreadyDone = session.finished
             session.stateLock.unlock()
             if alreadyDone {
@@ -1440,7 +1444,23 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
             }
         } else {
             DispatchQueue.main.async(execute: startWork)
-            if session.doneSemaphore.wait(timeout: .now() + .milliseconds(timeoutMs + 1500)) == .timedOut {
+            let startupDeadline = Date(timeIntervalSinceNow: 45.0)
+            var started = false
+            while Date() < startupDeadline {
+                if session.startedSemaphore.wait(timeout: .now() + .milliseconds(100)) == .success {
+                    started = true
+                    break
+                }
+                if cancelToken.isCancelled {
+                    session.complete(error: RuleCancelledError("规则调用已取消"))
+                    break
+                }
+            }
+            if !started {
+                if !cancelToken.isCancelled {
+                    session.complete(error: RuleError("网页渲染启动超时"))
+                }
+            } else if session.doneSemaphore.wait(timeout: .now() + .milliseconds(timeoutMs + 1500)) == .timedOut {
                 session.complete(error: RuleError("网页渲染超时"))
             }
         }
@@ -1570,11 +1590,12 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
             let isPageFinished = self.pageFinished
             let netErr = self.networkError
             let httpStatus = self.mainHttpStatus
+            let currentDeadline = self.deadline
             self.stateLock.unlock()
             guard !isDone, let wv else { return }
 
             let now = Date()
-            let pastDeadline = now >= self.deadline || now.addingTimeInterval(0.25) >= self.deadline
+            let pastDeadline = now >= currentDeadline || now.addingTimeInterval(0.25) >= currentDeadline
 
             let captureNow = {
                 let extractJs = "JSON.stringify({url:String(location.href||''),body:document&&document.documentElement?document.documentElement.outerHTML:''})"
