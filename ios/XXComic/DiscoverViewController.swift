@@ -1305,8 +1305,7 @@ final class DiscoverViewController: UIViewController, UICollectionViewDataSource
         }
 
         for comic in visibleSingleComics {
-            let remark = comic.latestChapter ?? comic.subtitle
-            nextRows.append(.poster(DiscoveryPosterRow(sectionSourceId: sourceId, comic: comic, remark: remark)))
+            nextRows.append(.poster(DiscoveryPosterRow(sectionSourceId: sourceId, comic: comic)))
         }
 
         let footerState: DiscoveryFooterState
@@ -1575,8 +1574,7 @@ final class DiscoverViewController: UIViewController, UICollectionViewDataSource
                     actionType: .singleSearch
                 )))
                 for item in shown {
-                    let remark = item.latestChapter ?? item.subtitle
-                    builtRows.append(.poster(DiscoveryPosterRow(sectionSourceId: meta.id, comic: item, remark: remark)))
+                    builtRows.append(.poster(DiscoveryPosterRow(sectionSourceId: meta.id, comic: item)))
                 }
             }
             for verifyMeta in verifyMetas {
@@ -1612,7 +1610,7 @@ final class DiscoverViewController: UIViewController, UICollectionViewDataSource
                         actionType: .singleSearch
                     )))
                     for item in allForSelected {
-                        builtRows.append(.poster(DiscoveryPosterRow(sectionSourceId: selectedID, comic: item, remark: item.latestChapter ?? item.subtitle)))
+                        builtRows.append(.poster(DiscoveryPosterRow(sectionSourceId: selectedID, comic: item)))
                     }
                 }
             } else {
