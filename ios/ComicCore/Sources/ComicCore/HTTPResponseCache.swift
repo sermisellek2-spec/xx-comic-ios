@@ -6,6 +6,10 @@ import FoundationNetworking
 public struct HTTPResponseCacheUsage: Equatable, Sendable {
     public let memoryBytes: Int64
     public let diskBytes: Int64
+    public init(memoryBytes: Int64, diskBytes: Int64) {
+        self.memoryBytes = memoryBytes
+        self.diskBytes = diskBytes
+    }
     public var totalBytes: Int64 { memoryBytes + diskBytes }
     public var isEmpty: Bool { totalBytes == 0 }
 }
