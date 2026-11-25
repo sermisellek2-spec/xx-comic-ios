@@ -1097,28 +1097,45 @@ final class DiscoverViewController: UIViewController, UICollectionViewDataSource
     }
 
     @objc private func discoveryDrag(_ gesture: UIPanGestureRecognizer) {
-        let point = gesture.location(in: collection)
+        guard gesture.numberOfTouches <= 1, !searchBar.isFirstResponder else {
+            headerGesture.end()
+            return
+        }
+        let point = gesture.location(in: nil)
         switch gesture.state {
         case .began:
             headerGesture.begin(x: point.x, y: point.y)
         case .changed:
             let direction = headerGesture.move(x: point.x, y: point.y)
-            if direction < 0 { setToolsHidden(true) }
-            else if direction > 0 { setToolsHidden(false) }
+            let canScroll = collection.contentSize.height > collection.bounds.height
+                || collection.contentOffset.y > -collection.adjustedContentInset.top
+            if direction < 0 && canScroll {
+                setToolsHidden(true)
+            } else if direction > 0 {
+                setToolsHidden(false)
+            }
         default:
             headerGesture.end()
         }
     }
 
-    private func setToolsHidden(_ hidden: Bool) {
+    private func setToolsHidden(_ hidden: Bool, animated: Bool = true) {
         guard hidden != toolsHidden else { return }
         toolsHidden = hidden
-        collapsedToolsHeight.isActive = hidden
+        tools.accessibilityElementsHidden = hidden
         if hidden {
             searchBar.resignFirstResponder()
         }
-        UIView.animate(withDuration: 0.2, delay: 0, options: [.curveEaseOut]) {
+        view.layoutIfNeeded()
+        let update = {
+            self.collapsedToolsHeight.isActive = hidden
+            self.tools.alpha = hidden ? 0 : 1
             self.view.layoutIfNeeded()
+        }
+        if animated {
+            UIView.animate(withDuration: 0.18, delay: 0, options: [.beginFromCurrentState, .curveEaseOut], animations: update)
+        } else {
+            update()
         }
     }
 

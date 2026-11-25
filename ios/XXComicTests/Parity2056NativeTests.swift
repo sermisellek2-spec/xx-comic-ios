@@ -129,7 +129,8 @@ final class Parity2056NativeTests: XCTestCase {
         XCTAssertEqual(bundle.rules.count, 162)
         XCTAssertEqual(bundle.rules.filter(\.requiresVpn).count, 61)
         XCTAssertEqual(bundle.rules.filter { !$0.fallbackOf.isEmpty }.count, 22)
-        XCTAssertEqual(bundle.rules.filter { $0.engineApi == 3 }.count, 162)
+        XCTAssertEqual(bundle.rules.filter { $0.engineApi == 2 || $0.engineApi == 3 }.count, 162)
+        XCTAssertEqual(bundle.rules.filter { $0.engineApi == 3 }.count, 16)
 
         let indexJSON = try XCTUnwrap(JSONSerialization.jsonObject(with: try Data(contentsOf: indexURL)) as? [String: Any])
         let retired = try XCTUnwrap(indexJSON["retiredSources"] as? [[String: Any]])

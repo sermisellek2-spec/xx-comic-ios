@@ -592,7 +592,9 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
         let anchor = renderedContext == currentContext ? captureAnchor() : nil
 
         if localMode {
-            configureResume(nil)
+            if renderedContext != currentContext {
+                configureResume(nil)
+            }
             let local = environment.localLibrary, downloads = environment.downloadStore
             let visibleHistoryEntries = environment.visibleHistory()
             let readTimes = Dictionary(grouping: visibleHistoryEntries, by: { $0.summary.sourceId }).mapValues { entries in
@@ -701,7 +703,7 @@ final class BookshelfViewController: ComicGridViewController, UIDocumentPickerDe
             resume.configure(
                 comic: entry.summary,
                 chapterIndex: entry.reading?.chapterIndex ?? 0,
-                chapterTitle: entry.reading?.chapter.title,
+                chapterTitle: localMode ? nil : entry.reading?.chapter.title,
                 environment: environment
             )
         }

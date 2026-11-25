@@ -369,7 +369,7 @@ final class Parity2049CoreTests: XCTestCase {
             let data = try Data(contentsOf: bundleURL)
             let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
             let bundle = try RuleStore.parseCompatible(json: json)
-            XCTAssertEqual(bundle.rules.count, 111)
+            XCTAssertEqual(bundle.rules.count, 162)
             for rule in bundle.rules {
                 XCTAssertFalse(RuleScript.hasUnboundedTightLoop(rule.script), "False positive on \(rule.id)")
             }

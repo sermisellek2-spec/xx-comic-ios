@@ -8,15 +8,15 @@ public enum FailoverChapterAligner {
     )
     private static let whitespaceRegex = try! NSRegularExpression(pattern: #"\s+"#, options: [])
     private static let episodePrefixRegex = try! NSRegularExpression(
-        pattern: #"第\s*(\d+(?:\.\d+)?|[零〇一二两三四五六七八九十百千万]+)\s*[话話章回集幕]"#,
+        pattern: #"第\s*([0-9]+(?:\.[0-9]+)?|[零〇一二两三四五六七八九十百千万]+)\s*[话話章回集幕]"#,
         options: []
     )
     private static let englishEpisodeRegex = try! NSRegularExpression(
-        pattern: #"(?:chapter|chap|ch|episode|ep)\.?\s*(\d+(?:\.\d+)?)|#\s*(\d+(?:\.\d+)?)"#,
+        pattern: #"(?:chapter|chap|ch|episode|ep)\.?\s*([0-9]+(?:\.[0-9]+)?)|#\s*([0-9]+(?:\.[0-9]+)?)"#,
         options: [.caseInsensitive]
     )
     private static let leadingNumberRegex = try! NSRegularExpression(
-        pattern: #"^(\d+(?:\.\d+)?)(?:\s|$|[话話章回集幕.\-_:：])"#,
+        pattern: #"^([0-9]+(?:\.[0-9]+)?)(?:\s|$|[话話章回集幕.\-_:：])"#,
         options: []
     )
     private static let cnStandaloneRegex = try! NSRegularExpression(
@@ -24,11 +24,11 @@ public enum FailoverChapterAligner {
         options: []
     )
     private static let volumePatternRegex = try! NSRegularExpression(
-        pattern: #"第\s*(\d+(?:\.\d+)?|[零〇一二两三四五六七八九十百千万]+)\s*[卷捲册]|vol\.?\s*(\d+(?:\.\d+)?)"#,
+        pattern: #"第\s*([0-9]+(?:\.[0-9]+)?|[零〇一二两三四五六七八九十百千万]+)\s*[卷捲册]|vol\.?\s*([0-9]+(?:\.[0-9]+)?)"#,
         options: [.caseInsensitive]
     )
     private static let extraNumberRegex = try! NSRegularExpression(
-        pattern: #"(?:番外|extra|sp|ex)\s*(\d+(?:\.\d+)?)"#,
+        pattern: #"(?:番外|extra|sp|ex)\s*([0-9]+(?:\.[0-9]+)?)"#,
         options: [.caseInsensitive]
     )
 
@@ -293,7 +293,7 @@ public enum FailoverChapterAligner {
 
     private static func canonicalNumberToken(_ raw: String) -> String {
         guard !raw.isEmpty else { return "" }
-        if raw.range(of: #"^\d+(?:\.\d+)?$"#, options: .regularExpression) != nil {
+        if raw.range(of: #"^[0-9]+(?:\.[0-9]+)?$"#, options: .regularExpression) != nil {
             if let dot = raw.firstIndex(of: ".") {
                 var intPart = String(raw[..<dot]).replacingOccurrences(of: #"^0+(?!$)"#, with: "", options: .regularExpression)
                 let fracPart = String(raw[raw.index(after: dot)...]).replacingOccurrences(of: #"0+$"#, with: "", options: .regularExpression)

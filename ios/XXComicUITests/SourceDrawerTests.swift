@@ -31,7 +31,7 @@ final class SourceDrawerTests: ParityUITestCase {
         let searchField = app.descendants(matching: .any)["source.chooser.search"]
         if searchField.exists && searchField.isHittable {
             searchField.tap()
-            searchField.typeText("cuimh")
+            searchField.typeText("cuimh\n")
         }
         let source = chooser.cells["source.chooser.item.cuimh"]
         for _ in 0..<10 where !source.isSafelyHittable(in: app) {

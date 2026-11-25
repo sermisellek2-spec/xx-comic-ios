@@ -160,14 +160,21 @@ final class RemoteImageView: UIImageView {
         request.timeoutInterval = reader ? 30 : 20
         if ["xxcomic-epub", "xxcomic-pdf", "xxcomic-folder"].contains(url.scheme ?? "") || (url.isFileURL && localPageImage != nil) {
             guard let localPageImage else { throw URLError(.unsupportedURL) }
-            let worker = Task.detached(priority: .userInitiated) {
-                try Task.checkCancellation()
-                let bytes = try localPageImage(url)
-                try Task.checkCancellation()
-                guard bytes.count <= LocalLibrary.maximumImageBytes else { throw LocalLibraryError.imageTooLarge }
-                return try Self.decodeImageBytes(bytes, for: text)
+            try Task.checkCancellation()
+            let decoded: Data = try await withCheckedThrowingContinuation { continuation in
+                DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        let bytes = try localPageImage(url)
+                        guard bytes.count <= LocalLibrary.maximumImageBytes else {
+                            throw LocalLibraryError.imageTooLarge
+                        }
+                        continuation.resume(returning: try Self.decodeImageBytes(bytes, for: text))
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
+                }
             }
-            let decoded = try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
+            try Task.checkCancellation()
             return (decoded, text)
         } else if url.isFileURL {
             let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
@@ -578,7 +585,7 @@ final class RemoteImageView: UIImageView {
             image = nil
             contentMode = loadedContentMode
         } else {
-            AppIllustrationCache.bind(self, assetName: "rem_no_image", maxSideDp: 148)
+            image = UIImage(named: "rem_no_image")
             contentMode = .scaleAspectFit
         }
     }

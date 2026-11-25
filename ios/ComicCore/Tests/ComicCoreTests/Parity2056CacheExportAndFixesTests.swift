@@ -261,9 +261,9 @@ final class Parity2056CacheExportAndFixesTests: XCTestCase {
             reqWidth: 360,
             reqHeight: 480
         ))
-        // Downscaled >1.5x from 800x1000 into 360x480 -> 384x480
-        XCTAssertEqual(decoded.width, 384)
-        XCTAssertEqual(decoded.height, 480)
+        // Downscaled >1.5x from 800x1000 into 360x480 -> 360x450
+        XCTAssertEqual(decoded.width, 360)
+        XCTAssertEqual(decoded.height, 450)
     }
     #endif
 

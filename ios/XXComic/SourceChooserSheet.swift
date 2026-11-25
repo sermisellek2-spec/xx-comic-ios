@@ -35,6 +35,7 @@ final class SourceChooserSheetController: UIViewController {
     private var searchQuery: String = ""
     private var isClosing = false
     private var didScrollToInitialSource = false
+    private var sheetPanGesture: UIPanGestureRecognizer?
 
     init(
         environment: AppEnvironment,
@@ -196,7 +197,8 @@ final class SourceChooserSheetController: UIViewController {
 
         panelWidthConstraint = panelView.widthAnchor.constraint(equalToConstant: view.bounds.width)
         panelHeightConstraint = panelView.heightAnchor.constraint(equalToConstant: 460)
-        panelBottomConstraint = panelView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 600)
+        panelHeightConstraint.priority = .defaultHigh
+        panelBottomConstraint = panelView.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: 600)
         searchTopConstraint = searchField.topAnchor.constraint(equalTo: groupChipsScroll.bottomAnchor, constant: 10)
         searchHeightConstraint = searchField.heightAnchor.constraint(equalToConstant: 36)
 
@@ -207,6 +209,7 @@ final class SourceChooserSheetController: UIViewController {
             backdropView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             panelView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            panelView.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
             panelBottomConstraint,
             panelWidthConstraint,
             panelHeightConstraint,
@@ -251,6 +254,8 @@ final class SourceChooserSheetController: UIViewController {
         ])
 
         let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        pan.delegate = self
+        sheetPanGesture = pan
         panelView.addGestureRecognizer(pan)
     }
 
@@ -269,10 +274,12 @@ final class SourceChooserSheetController: UIViewController {
         let maxW: CGFloat = traitCollection.horizontalSizeClass == .regular ? 560 : view.bounds.width
         panelWidthConstraint.constant = min(view.bounds.width, maxW)
         let maxH = min(max(320, view.bounds.height * 0.80), 660)
-        let rowCount = max(3, filteredSources.count)
+        let searching = searchField.isFirstResponder || !searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let minPanelH: CGFloat = searching ? 360 : 300
+        let rowCount = max(searching ? 4 : 3, filteredSources.count)
         let searchAddon: CGFloat = searchField.isHidden ? 0 : 46
         let desired = min(maxH, 136 + searchAddon + CGFloat(rowCount) * 50 + view.safeAreaInsets.bottom)
-        panelHeightConstraint.constant = max(300, desired)
+        panelHeightConstraint.constant = min(maxH, max(minPanelH, desired))
     }
 
     private func animateIn() {
@@ -474,6 +481,19 @@ extension SourceChooserSheetController: UITableViewDataSource, UITableViewDelega
 extension SourceChooserSheetController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
+        return true
+    }
+}
+
+extension SourceChooserSheetController: UIGestureRecognizerDelegate {
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard let pan = gestureRecognizer as? UIPanGestureRecognizer, pan === sheetPanGesture else { return true }
+        let velocity = pan.velocity(in: panelView)
+        guard velocity.y > abs(velocity.x) else { return false }
+        let loc = pan.location(in: tableView)
+        if tableView.bounds.contains(loc) {
+            return tableView.contentOffset.y <= -tableView.adjustedContentInset.top + 1
+        }
         return true
     }
 }

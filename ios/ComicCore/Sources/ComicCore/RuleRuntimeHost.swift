@@ -1350,13 +1350,13 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
         }
         if Thread.isMainThread {
             runCompile()
-            let deadline = Date(timeIntervalSinceNow: 2.0)
+            let deadline = Date(timeIntervalSinceNow: 5.0)
             while done.wait(timeout: .now()) == .timedOut && Date() < deadline {
                 RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.01))
             }
         } else {
             DispatchQueue.main.async(execute: runCompile)
-            _ = done.wait(timeout: .now() + .seconds(2))
+            _ = done.wait(timeout: .now() + .seconds(5))
         }
         if let compiled {
             ruleListLock.lock()
@@ -1544,12 +1544,12 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
     }
 
     fileprivate func startPollingIfNeeded(initialDelayMs: Int) {
-        let timer = DispatchSource.makeTimerSource(queue: .main)
         stateLock.lock()
         if finished || pollStarted {
             stateLock.unlock()
             return
         }
+        let timer = DispatchSource.makeTimerSource(queue: .main)
         pollStarted = true
         pollTimer?.cancel()
         pollTimer = timer
@@ -1694,16 +1694,18 @@ private final class WebKitHeadlessSession: @unchecked Sendable {
     }
 
     private func teardownOnMain() {
-        let cleanup = { [weak self] in
-            guard let self else { return }
-            self.stateLock.lock()
-            let wv = self.webView
-            self.webView = nil
-            self.navBridge = nil
-            self.stateLock.unlock()
+        stateLock.lock()
+        let wv = self.webView
+        let bridge = self.navBridge
+        self.webView = nil
+        self.navBridge = nil
+        stateLock.unlock()
+        guard wv != nil || bridge != nil else { return }
+        let cleanup = {
             wv?.stopLoading()
             wv?.navigationDelegate = nil
             wv?.configuration.userContentController.removeAllContentRuleLists()
+            _ = bridge
         }
         if Thread.isMainThread {
             cleanup()
