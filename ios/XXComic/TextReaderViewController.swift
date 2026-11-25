@@ -260,7 +260,7 @@ final class TextReaderViewController: UIViewController, WKNavigationDelegate, WK
         self.activeBookID = bookID
         self.activePublication = nil
         self.settings = Settings.load(from: resolvedDefaults, fallbackPrefs: environment?.preferences.load())
-        self.schemeHandler = EpubSchemeHandler(backend: .directArchive(epubURL: epubURL))
+        self.schemeHandler = EpubSchemeHandler(backend: BackendAccess.directArchive(epubURL: epubURL))
 
         let config = WKWebViewConfiguration()
         config.defaultWebpagePreferences.allowsContentJavaScript = true
@@ -1960,7 +1960,7 @@ private extension EpubSchemeHandler {
         case .localLibrary(let library, let bookID, _):
             self.init(backend: .localLibrary(library: library, bookID: bookID))
         case .directArchive(let epubURL):
-            self.init(backend: .directArchive(epubURL: epubURL))
+            self.init(backend: TextReaderViewController.BackendAccess.directArchive(epubURL: epubURL))
         }
     }
 }

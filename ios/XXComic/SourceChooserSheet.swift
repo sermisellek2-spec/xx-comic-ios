@@ -358,9 +358,13 @@ final class SourceChooserSheetController: UIViewController {
             chip.accessibilityLabel = group.name
             chip.addAction(UIAction { [weak self] _ in
                 guard let self else { return }
-                self.environment.sourceGroupStore.select(id: group.id)
-                self.reloadData(scrollToSelected: true)
-                self.onGroupChanged?()
+                do {
+                    try self.environment.sourceGroupStore.select(id: group.id)
+                    self.reloadData(scrollToSelected: true)
+                    self.onGroupChanged?()
+                } catch {
+                    RemToastView.show(message: error.localizedDescription, kind: .error, in: self)
+                }
             }, for: .touchUpInside)
             groupChipsStack.addArrangedSubview(chip)
         }
@@ -403,9 +407,13 @@ final class SourceChooserSheetController: UIViewController {
             searchField.text = nil
             reloadData(scrollToSelected: true)
         } else if environment.sourceGroupStore.selectedId != SourceGroupStore.allId {
-            environment.sourceGroupStore.select(id: SourceGroupStore.allId)
-            reloadData(scrollToSelected: true)
-            onGroupChanged?()
+            do {
+                try environment.sourceGroupStore.select(id: SourceGroupStore.allId)
+                reloadData(scrollToSelected: true)
+                onGroupChanged?()
+            } catch {
+                RemToastView.show(message: error.localizedDescription, kind: .error, in: self)
+            }
         } else {
             openManageTapped()
         }

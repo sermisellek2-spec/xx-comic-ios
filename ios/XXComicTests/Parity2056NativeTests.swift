@@ -249,7 +249,8 @@ final class Parity2056NativeTests: XCTestCase {
             try? FileManager.default.removeItem(at: outRoot)
         }
 
-        let store = try DownloadStore(directory: root)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let store = try DownloadStore(file: root.appendingPathComponent("downloads.json"))
         let runtime = DownloadRuntime(store: store, downloadsDirectory: root)
         let bookID = try DownloadModels.bookId(source: "fixture", comic: "export-comic")
         let taskID = try DownloadModels.key("fixture", "export-comic", "ch-1")
