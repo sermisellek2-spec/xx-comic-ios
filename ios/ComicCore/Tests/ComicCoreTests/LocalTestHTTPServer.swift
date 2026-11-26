@@ -250,5 +250,10 @@ public final class LocalTestHTTPServer: @unchecked Sendable {
                 }
             }
         }
+        #if canImport(Darwin)
+        _ = shutdown(clientFd, SHUT_WR)
+        #else
+        _ = shutdown(clientFd, Int32(SHUT_WR))
+        #endif
     }
 }

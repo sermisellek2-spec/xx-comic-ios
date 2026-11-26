@@ -59,6 +59,7 @@ public final class UsageStatsClient: @unchecked Sendable {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 3
         configuration.timeoutIntervalForResource = 3
+        configuration.httpAdditionalHeaders = ["Connection": "close"]
         return URLSessionHTTPTransport(session: URLSession(configuration: configuration, delegate: UsageStatsNoRedirect(), delegateQueue: nil), timeoutInterval: 3)
     }()
 

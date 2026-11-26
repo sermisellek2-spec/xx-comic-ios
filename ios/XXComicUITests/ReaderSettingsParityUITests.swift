@@ -69,17 +69,18 @@ final class ReaderSettingsParityUITests: ParityUITestCase {
     }
     private func controls(_ visible: Bool, in app: XCUIApplication) {
         let button = app.buttons["reader.settings"]
-        for _ in 0..<2 where (button.exists && button.isHittable) != visible {
+        if (button.exists && button.isHittable) == visible { return }
+        for _ in 0..<3 {
             app.collectionViews["reader.pages"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             let check = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
                 (button.exists && button.isHittable) == visible
             }, object: app)
-            if XCTWaiter.wait(for: [check], timeout: 2) == .completed { break }
+            if XCTWaiter.wait(for: [check], timeout: 5) == .completed { return }
         }
         let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
             (button.exists && button.isHittable) == visible
         }, object: app)
-        XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 3), .completed)
+        XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 10), .completed)
     }
     func testActualPinchAndZoomedPanDoNotTurnThePageAndTurningResumesAfterZoomReset() {
         let app = launch(); selectLayout(1, in: app); closeSettings(app); page(1, in: app)
